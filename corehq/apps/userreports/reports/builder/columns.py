@@ -31,8 +31,8 @@ class ColumnOption(object):
             return ("Count per Choice",)
         return ("Count per Choice", "Sum", "Average")
 
-    def to_column_dict(self, index, display_text, aggregation):
-        return {
+    def to_column_dicts(self, index, display_text, aggregation):
+        return [{
             "format": "default",
             "aggregation": self.aggregation_map[aggregation],
             "field": self.indicator_id,
@@ -40,7 +40,7 @@ class ColumnOption(object):
             "type": "field",
             "display": display_text,
             "transform": {'type': 'custom', 'custom_type': 'short_decimal_display'},
-        }
+        }]
 
 
 class QuestionColumnOption(ColumnOption):
@@ -62,8 +62,8 @@ class CountColumn(ColumnOption):
         # be more accurate.
         return ("Count",)
 
-    def to_column_dict(self, index, display_text, aggregation):
+    def to_column_dicts(self, index, display_text, aggregation):
         # aggregation is only an arg so that we match the the parent's method signature.
-        column_dict = super(CountColumn, self).to_column_dict(index, display_text, "Sum")
-        del column_dict['transform']
-        return column_dict
+        column_dicts = super(CountColumn, self).to_column_dicts(index, display_text, "Sum")
+        del column_dicts[0]['transform']
+        return column_dicts

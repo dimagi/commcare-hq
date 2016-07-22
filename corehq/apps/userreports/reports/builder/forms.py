@@ -1098,11 +1098,10 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 
     @property
     def _report_columns(self):
-        return [
-            self.report_column_options[conf['property']].to_column_dict(
-                i, conf['display_text'], "simple"
-            ) for i, conf in enumerate(self.cleaned_data['columns'])
-        ]
+        columns = []
+        for i, conf in enumerate(self.cleaned_data['columns']):
+            columns.extend(self.report_column_options[conf['property']].to_column_dicts(i, conf['display_text'], "simple"))
+        return columns
 
     @property
     def _report_aggregation_cols(self):
@@ -1147,21 +1146,22 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
         agg_field_id = self.data_source_properties[self.aggregation_field].column_id
         agg_field_text = self.data_source_properties[self.aggregation_field].text
 
-        columns = [
-            self.report_column_options[conf['property']].to_column_dict(
-                i, conf['display_text'], conf['calculation']
+        columns = []
+        for i, conf in enumerate(self.cleaned_data['columns']):
+            columns.extend(
+                self.report_column_options[conf['property']].to_column_dicts(
+                    i, conf['display_text'], conf['calculation']
+                )
             )
-            for i, conf in enumerate(self.cleaned_data['columns'])
-        ]
 
         # Add the aggregation indicator to the columns if it's not already present.
         displaying_agg_column = bool([c for c in columns if c['field'] == agg_field_id])
         if not displaying_agg_column:
-            columns = [
-                self._get_column_option_by_indicator_id(agg_field_id).to_column_dict(
-                    "agg", agg_field_text, 'simple'
-                )
-            ] + columns
+            new_columns = self._get_column_option_by_indicator_id(agg_field_id).to_column_dicts(
+                "agg", agg_field_text, 'simple'
+            )
+            new_columns.extend(columns)
+            columns = new_columns
         else:
             # Don't expand the aggregation column
             for c in columns:
