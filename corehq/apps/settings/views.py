@@ -13,6 +13,7 @@ from corehq.apps.style.decorators import use_select2
 from corehq.apps.users.forms import AddPhoneNumberForm
 from django.conf import settings
 from django.contrib import messages
+from django.http import Http404
 from django.views.decorators.http import require_POST
 from corehq.mobile_flags import SUPERUSER
 from corehq.tabs.tabclasses import MySettingsTab
@@ -228,7 +229,9 @@ class MyProjectsList(BaseMyAccountView):
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        # this is only here to add the login_required decorator
+        if not request.couch_user.is_web_user():
+            raise Http404
+
         return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
 
     @property
