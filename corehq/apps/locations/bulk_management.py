@@ -15,10 +15,6 @@ from .tree_utils import BadParentError, CycleError, assert_no_cycles
 from .const import LOCATION_SHEET_HEADERS, LOCATION_TYPE_SHEET_HEADERS, ROOT_LOCATION_TYPE
 
 
-class MissingLocationIDAndSiteCode(Exception):
-    pass
-
-
 class LocationExcelSheetError(Exception):
     pass
 
@@ -41,6 +37,7 @@ class LocationTypeStub(object):
                  view_descendants, expand_from, sync_to, index):
         self.name = name
         self.code = code
+        # if parent_code is '', it must be top location type
         self.parent_code = parent_code or ROOT_LOCATION_TYPE
         self.do_delete = do_delete
         self.shares_cases = shares_cases
@@ -49,6 +46,7 @@ class LocationTypeStub(object):
         self.sync_to = sync_to
         self.index = index
 
+    @classmethod
     def from_excel_row(cls, row, index):
         name = row.get(cls.titles['name'])
         code = row.get(cls.titles['code'])
@@ -78,6 +76,7 @@ class LocationStub(object):
         self.do_delete = do_delete
         self.external_id = external_id
         self.index = index
+        self.is_new = False
         self.hardfail_reason = None
         self.warnings = []
 
@@ -96,25 +95,49 @@ class LocationStub(object):
         return cls(name, site_code, location_type, parent_code, location_id,
                    do_delete, external_id, latitude, longitude, index)
 
-    def _lookup_location_id_site_code(self):
-        # if one of location_id/site_code are missing, check against existing location_id/site_code
-        # lookup them and set it
+    def autoset_location_id_or_site_code(self, old_collection):
+        # if one of location_id/site_code are missing, lookup for the other in
+        # location_id/site_code pairs autoset the other if found.
+        # self.is_new is set to True if new location
+
+        if self.location_id and self.site_code:
+            return
+
         if not self.location_id and not self.site_code:
-            raise MissingLocationIDAndSiteCode
+            # Both can't be empty, this should have already been caught
+            raise Exception
+
+        old_locations_by_id = old_collection.locations_by_id
+        old_locations_by_site_code = old_collection.locations_by_site_code
+        # must be an existing location specified with just location_id
+        if not self.site_code:
+            if self.location_id in old_locations_by_id:
+                self.site_code = old_locations_by_id[self.location_id].site_code
+            else:
+                # Unknown location_id, this should have already been caught
+                raise Exception
+        elif not self.location_id:
+            if self.site_code in old_locations_by_site_code:
+                # existing location specified with just site_code
+                self.location_id = old_locations_by_site_code[self.site_code].location_id
+            else:
+                # must be a new location
+                self.is_new = True
 
 
 class LocationCollection(object):
-    def __init__(self, domain):
-        self.domain_obj = Domain.get_by_name(self.domain)
-        self.types = self.domain_obj.location_types
+    def __init__(self, domain_obj):
+        self.types = domain_obj.location_types
+        self.locations = [
+            Location.filter_by_type(self.domain, loc_type.name)
+            for loc_type in self.types
+        ]
 
-    @memoized
-    def locations(self):
-        return [Location.filter_by_type(self.domain, loc_type.name) for loc_type in self.types]
-
+    @property
     def locations_by_id(self):
         return {l.location_id: l for l in self.locations}
 
+    @property
     def locations_by_site_code(self):
         return {l.site_code: l for l in self.locations}
 
@@ -130,7 +153,7 @@ class NewLocationImporter(object):
         self.excel_importer = excel_importer
         self.sheets_by_title = self._validate_and_index_sheets()
         self.result = LocationUploadResult()
-        self.old_collection = LocationCollection(domain)
+        self.old_collection = LocationCollection(self.domain_obj)
 
     def _validate_and_index_sheets(self):
         # validate excel format/headers
@@ -167,27 +190,17 @@ class NewLocationImporter(object):
 
     def _prepare_types(self, rows):
         # takes raw excel row dicts and converts them to list of LocationTypeStub objects
-        type_rows = []
-        for index, row in enumerate(rows):
-            try:
-                type_rows.append(LocationTypeStub.from_excel_row(row, index))
-            except Exception as e:
-                self.result.errors.append(
-                    "Issue with row number {i} in types sheet: {ex}".format(i=index, ex=e)
-                )
-        return type_rows
+        return [
+            LocationTypeStub.from_excel_row(row, index)
+            for index, row in enumerate(rows)
+        ]
 
     def _prepare_locations(self, rows, location_type):
         # takes raw excel row dicts and converts them to list of LocationStub objects
-        location_rows = []
-        for index, row in enumerate(rows):
-            try:
-                location_rows.append(LocationStub.from_excel_row(row, index, location_type))
-            except Exception as e:
-                self.result.errors.append(
-                    "Issue with row number {i} in sheet {sh}: {ex}".format(i=index, sh=location_type, ex=e)
-                )
-        return location_rows
+        return [
+            LocationStub.from_excel_row(row, index, location_type)
+            for index, row in enumerate(rows)
+        ]
 
     def commit_changes(self, type_rows, location_rows):
         # assumes all valdiations are done, just saves them
@@ -217,16 +230,23 @@ class LocationTreeValidator(object):
     def errors(self):
         # We want to find as many errors as possible up front, but some high
         # level errors make it unrealistic to keep validating
-        uniqueness_errors = (self._check_unique_type_codes() +
-                             self._check_unique_location_codes() +
-                             self._check_unique_location_ids())
+
+        location_row_errors = (self._site_code_and_location_id_missing() +
+                               self._check_unknown_location_ids())
+
+        if not location_row_errors:
+            for loc in self.all_listed_locations:
+                loc.autoset_location_id_or_site_code(self.old_collection)
 
         unknown_or_missing_errors = []
         if self.old_collection:
             # all old types/locations should be listed in excel
             unknown_or_missing_errors = (self._check_unlisted_type_codes() +
-                                         self._check_unlisted_location_ids() +
-                                         self._check_unknown_location_ids())
+                                         self._check_unlisted_location_ids())
+
+        uniqueness_errors = (self._check_unique_type_codes() +
+                             self._check_unique_location_codes() +
+                             self._check_unique_location_ids())
 
         basic_errors = uniqueness_errors + unknown_or_missing_errors
 
@@ -246,6 +266,14 @@ class LocationTreeValidator(object):
         # Location names must be unique among siblings
         errors.extend(self._check_location_names())
         return errors
+
+    @memoized
+    def _site_code_and_location_id_missing(self):
+        return [
+            "Location in sheet '{type}', index {index} has no site_code and location_id"
+            .format(type=l.location_type, index=l.index)
+            for l in self.all_listed_locations
+        ]
 
     @memoized
     def _check_unique_type_codes(self):
