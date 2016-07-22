@@ -4,8 +4,7 @@ from mock import patch
 from corehq.apps.reports.daterange import (
     get_simple_dateranges,
     get_daterange_start_end_dates,
-    get_complex_dateranges,
-)
+    get_all_daterange_choices)
 from corehq.apps.reports.exceptions import InvalidDaterangeException
 
 
@@ -16,7 +15,7 @@ class DateRangeTest(SimpleTestCase):
             get_daterange_start_end_dates(daterange.slug)
 
     def test_exceptions_on_complex_calls(self):
-        for daterange in get_complex_dateranges():
+        for daterange in filter(lambda choice: not choice.simple, get_all_daterange_choices()):
             with self.assertRaises(InvalidDaterangeException):
                 get_daterange_start_end_dates(daterange.slug)
 
