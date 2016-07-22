@@ -2,7 +2,7 @@ from django.test import TestCase
 import datetime
 from dimagi.utils.dates import add_months
 from corehq.apps.reports.standard.project_health import MonthlyPerformanceSummary,\
-                                                        ProjectHealthDashboard, MonthlyMALTRows
+    ProjectHealthDashboard, MonthlyMALTRows
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.const import MISSING_APP_ID
 from corehq.apps.domain.models import Domain

@@ -51,11 +51,11 @@ class MonthlyMALTRows(jsonobject.JsonObject):
 
     def __init__(self, domain, month, performance_threshold, not_deleted_active_users, users, has_filter):
         self._rows = MALTRow.objects.filter(
-                        domain_name=domain,
-                        month=month,
-                        user_type__in=['CommCareUser', 'CommCareUser-Deleted'],
-                        user_id__in=not_deleted_active_users,
-                     ).distinct('user_id')
+            domain_name=domain,
+            month=month,
+            user_type__in=['CommCareUser', 'CommCareUser-Deleted'],
+            user_id__in=not_deleted_active_users,
+        ).distinct('user_id')
 
         if has_filter:
             self._rows = self._rows.filter(user_id__in=users).distinct('user_id')
