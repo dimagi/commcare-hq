@@ -76,11 +76,11 @@ class ProcessorProgressLogger(object):
     def document_skipped(self, doc_dict):
         print("Skip: {doc_type} {_id}".format(**doc_dict))
 
-    def progress(self, total, processed, visited, time_elapsed, time_remaining):
+    def progress(self, processed, visited, total, time_elapsed, time_remaining):
         print("Processed {}/{} of {} documents in {} ({} remaining)"
               .format(processed, visited, total, time_elapsed, time_remaining))
 
-    def progress_complete(self, total, processed, visited, previously_visited, filtered):
+    def progress_complete(self, processed, visited, total, previously_visited, filtered):
         print("Processed {}/{} of {} documents ({} previously processed, {} filtered out).".format(
             processed,
             visited,
@@ -145,7 +145,7 @@ class DocumentProcessorController(object):
         self.start = None
 
     def has_started(self):
-        return bool(self.document_iterator.progress_info)
+        return bool(self.document_iterator.get_iterator_detail('progress'))
 
     @property
     def session_visited(self):
@@ -175,8 +175,8 @@ class DocumentProcessorController(object):
 
         if self.reset:
             self.document_iterator.discard_state()
-        elif self.document_iterator.progress_info:
-            info = self.document_iterator.progress_info
+        elif self.document_iterator.get_iterator_detail('progress'):
+            info = self.document_iterator.get_iterator_detail('progress')
             old_total = info["total"]
             # Estimate already visited based on difference of old/new
             # totals. The theory is that new or deleted records will be
@@ -221,7 +221,7 @@ class DocumentProcessorController(object):
     def _update_progress(self):
         self.visited += 1
         if self.visited % self.chunk_size == 0:
-            self.document_iterator.progress_info = {"visited": self.visited, "total": self.total}
+            self.document_iterator.set_iterator_detail('progress', {"visited": self.visited, "total": self.total})
 
         if self.attempted % self.chunk_size == 0:
             elapsed, remaining = self.timing
@@ -231,7 +231,7 @@ class DocumentProcessorController(object):
 
     def _processing_complete(self):
         if self.session_visited:
-            self.document_iterator.progress_info = {"visited": self.visited, "total": self.total}
+            self.document_iterator.set_iterator_detail('progress', {"visited": self.visited, "total": self.total})
         self.doc_processor.processing_complete(self.skipped)
         self.progress_logger.progress_complete(
             self.processed,
@@ -306,7 +306,7 @@ class BulkDocProcessor(DocumentProcessorController):
     def _update_progress(self):
         self.visited += 1
         if self.visited % self.chunk_size == 0:
-            self.document_iterator.progress_info = {"visited": self.visited, "total": self.total}
+            self.document_iterator.set_iterator_detail('progress', {"visited": self.visited, "total": self.total})
 
             elapsed, remaining = self.timing
             self.progress_logger.progress(

@@ -1,6 +1,6 @@
 from collections import namedtuple
 import datetime
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
@@ -53,7 +53,9 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     active = jsonobject.IntegerProperty()
     performing = jsonobject.IntegerProperty()
 
-    def __init__(self, domain, month, users, has_filter, performance_threshold, previous_summary=None):
+    def __init__(self, domain, month, users, has_filter,
+                 performance_threshold, previous_summary=None,
+                 delta_high_performers=0, delta_low_performers=0):
         self._previous_summary = previous_summary
         self._next_summary = None
         base_queryset = MALTRow.objects.filter(
@@ -67,20 +69,29 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             )
         self._distinct_user_ids = base_queryset.distinct('user_id')
 
-        num_performing_user = (base_queryset
-                               .filter(num_of_forms__gte=performance_threshold)
-                               .distinct('user_id')
-                               .count())
+        num_performing_users = (base_queryset
+                                .filter(num_of_forms__gte=performance_threshold)
+                                .distinct('user_id')
+                                .count())
+
+        num_active_users = self._distinct_user_ids.count()
+        num_low_performing_user = num_active_users - num_performing_users
+
+        if self._previous_summary:
+            delta_high_performers = num_performing_users - self._previous_summary.number_of_performing_users
+            delta_low_performers = num_low_performing_user - self._previous_summary.number_of_low_performing_users
 
         super(MonthlyPerformanceSummary, self).__init__(
             month=month,
             domain=domain,
             performance_threshold=performance_threshold,
-            active=self._distinct_user_ids.count(),
+            active=num_active_users,
             inactive=0,
             total_users_by_month=0,
             percent_active=0,
-            performing=num_performing_user,
+            performing=num_performing_users,
+            delta_high_performers=delta_high_performers,
+            delta_low_performers=delta_low_performers,
         )
 
     def set_next_month_summary(self, next_month_summary):
@@ -91,7 +102,10 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
 
     def set_percent_active(self):
         self.total_users_by_month = self.number_of_inactive_users + self.number_of_active_users
-        self.percent_active = float(self.number_of_active_users) / float(self.total_users_by_month)
+        if self.total_users_by_month:
+            self.percent_active = float(self.number_of_active_users) / float(self.total_users_by_month)
+        else:
+            self.percent_active = 0
 
     @property
     def number_of_performing_users(self):
@@ -115,16 +129,18 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         return datetime.datetime(prev_year, prev_month, 1)
 
     @property
-    def delta_performing(self):
+    def delta_high_performing(self):
         if self._previous_summary:
             return self.number_of_performing_users - self._previous_summary.number_of_performing_users
         else:
             return self.number_of_performing_users
 
     @property
-    def delta_performing_pct(self):
-        if self.delta_performing and self._previous_summary and self._previous_summary.number_of_performing_users:
-            return float(self.delta_performing / float(self._previous_summary.number_of_performing_users)) * 100.
+    def delta_high_performing_pct(self):
+        if (self.delta_high_performing and self._previous_summary and
+           self._previous_summary.number_of_performing_users):
+            return float(self.delta_high_performing /
+                         float(self._previous_summary.number_of_performing_users)) * 100.
 
     @property
     def delta_low_performing(self):
@@ -241,14 +257,36 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             return sorted(dropouts, key=lambda stub: -stub.delta_forms)
 
 
+def build_worksheet(title, headers, rows):
+    worksheet = []
+    worksheet.append(headers)
+    worksheet.extend(rows)
+    return [
+        title,
+        worksheet
+    ]
+
+
 class ProjectHealthDashboard(ProjectReport):
     slug = 'project_health'
-    name = ugettext_noop("Project Performance")
-    base_template = "reports/project_health/project_health_dashboard.html"
+    name = ugettext_lazy("Project Performance")
+    report_template_path = "reports/project_health/project_health_dashboard.html"
 
     fields = [
         'corehq.apps.reports.filters.location.LocationGroupFilter',
+        'corehq.apps.reports.filters.dates.HiddenLastMonthDateFilter',
     ]
+
+    exportable = True
+    emailable = True
+    asynchronous = False
+
+    @property
+    @memoized
+    def template_report(self):
+        if self.is_rendered_as_email:
+            self.report_template_path = "reports/project_health/project_health_email.html"
+        return super(ProjectHealthDashboard, self).template_report
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
@@ -327,6 +365,39 @@ class ProjectHealthDashboard(ProjectReport):
             last_month_summary = this_month_summary
         return six_month_summary[1:]
 
+    def export_summary(self, six_months):
+        return build_worksheet(title="Six Month Performance Summary",
+                               headers=['month', 'num_high_performing_users', 'num_low_performing_users',
+                                        'total_active', 'total_inactive', 'total_num_users'],
+                               rows=[[monthly_summary.month.isoformat(),
+                                      monthly_summary.number_of_performing_users,
+                                      monthly_summary.number_of_low_performing_users, monthly_summary.active,
+                                      monthly_summary.inactive, monthly_summary.total_users_by_month]
+                                     for monthly_summary in six_months])
+
+    @property
+    def export_table(self):
+        six_months_reports = self.previous_six_months()
+        last_month = six_months_reports[-2]
+
+        header = ['user_id', 'username', 'last_month_forms', 'delta_last_month',
+                  'this_month_forms', 'delta_this_month', 'is_performing']
+
+        def extract_user_stat(user_list):
+            return [[user.user_id, user.username, user.num_forms_submitted, user.delta_forms,
+                    user.num_forms_submitted_next_month, user.delta_forms_next_month,
+                    user.is_performing] for user in user_list]
+
+        return [
+            self.export_summary(six_months_reports),
+            build_worksheet(title="Inactive Users", headers=header,
+                            rows=extract_user_stat(last_month.get_dropouts())),
+            build_worksheet(title="Low Performing Users", headers=header,
+                            rows=extract_user_stat(last_month.get_unhealthy_users())),
+            build_worksheet(title="New Performing Users", headers=header,
+                            rows=extract_user_stat(last_month.get_newly_performing())),
+        ]
+
     @property
     def template_context(self):
         six_months_reports = self.previous_six_months()
@@ -336,4 +407,5 @@ class ProjectHealthDashboard(ProjectReport):
             'this_month': six_months_reports[-1],
             'last_month': six_months_reports[-2],
             'threshold': performance_threshold,
+            'domain': self.domain,
         }

@@ -128,45 +128,6 @@ class HqTestFinderPlugin(Plugin):
         return "tests" in module.__name__.split(".")
 
 
-class OmitDjangoInitModuleTestsPlugin(Plugin):
-    """Omit tests imported from other modules into tests/__init__.py
-
-    This is a temporary plugin to allow coexistence of the (old, pre-1.7)
-    Django test runner and nose.
-    """
-    enabled = True
-    module = None
-    path = None
-
-    def options(self, parser, env):
-        """Avoid adding a ``--with`` option for this plugin."""
-
-    def configure(self, options, conf):
-        self.seen = set()
-
-    def prepareTestLoader(self, loader):
-        # patch the loader so we can get the module in wantClass
-        realLoadTestsFromModule = loader.loadTestsFromModule
-
-        def loadTestsFromModule(module, path=None, *args, **kw):
-            self.module = module
-            self.path = path
-            return realLoadTestsFromModule(module, path, *args, **kw)
-        loader.loadTestsFromModule = loadTestsFromModule
-
-    def wantClass(self, cls):
-        if issubclass(cls, TestCase):
-            key = (self.module, cls)
-            if key in self.seen:
-                log.error("ignoring duplicate test: %s in %s "
-                          "(INVESTIGATE THIS)", cls, self.module)
-                return False
-            self.seen.add(key)
-            if self.path and os.path.basename(self.path) == "tests":
-                return cls.__module__ == self.module.__name__
-        return None  # defer to default selector
-
-
 class ErrorOnDbAccessContext(object):
     """Ensure that touching a database raises an error."""
 

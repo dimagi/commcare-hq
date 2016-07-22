@@ -57,24 +57,13 @@ class PillowtopReindexerTest(TestCase):
         self.assertEqual('Domain', domain_doc['doc_type'])
         delete_es_index(DOMAIN_INDEX)
 
-    def test_case_reindexer(self):
-        FormProcessorTestUtils.delete_all_cases()
-        case = _create_and_save_a_case()
-        call_command('ptop_fast_reindex_cases', noinput=True, bulk=True)
-        self._assert_case_is_in_es(case)
-
     @run_with_all_backends
     def test_case_reindexer_v2(self):
         FormProcessorTestUtils.delete_all_cases()
         case = _create_and_save_a_case()
 
-        extra_options = {}
-        if settings.TESTS_SHOULD_USE_SQL_BACKEND:
-            index_id = 'sql-case'
-        else:
-            index_id = 'case'
-            extra_options = {'reset': True}
-        call_command('ptop_reindexer_v2', index_id, cleanup=True, noinput=True, **extra_options)
+        index_id = 'sql-case' if settings.TESTS_SHOULD_USE_SQL_BACKEND else 'case'
+        call_command('ptop_reindexer_v2', index_id, cleanup=True, noinput=True, reset=True)
 
         self._assert_case_is_in_es(case)
 
@@ -100,27 +89,13 @@ class PillowtopReindexerTest(TestCase):
         es.indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
         self._assert_case_is_in_es(case, esquery=CaseSearchES())
 
-    def test_xform_reindexer(self):
-        FormProcessorTestUtils.delete_all_xforms()
-        form = create_and_save_a_form(DOMAIN)
-
-        call_command('ptop_fast_reindex_xforms', noinput=True, bulk=True)
-
-        self._assert_form_is_in_es(form)
-        form.delete()
-
     @run_with_all_backends
     def test_xform_reindexer_v2(self):
         FormProcessorTestUtils.delete_all_xforms()
         form = create_and_save_a_form(DOMAIN)
 
-        extra_options = {}
-        if settings.TESTS_SHOULD_USE_SQL_BACKEND:
-            index_id = 'sql-form'
-        else:
-            index_id = 'form'
-            extra_options = {'reset': True}
-        call_command('ptop_reindexer_v2', index_id, cleanup=True, noinput=True, **extra_options)
+        index_id = 'sql-form' if settings.TESTS_SHOULD_USE_SQL_BACKEND else 'form'
+        call_command('ptop_reindexer_v2', index_id, cleanup=True, noinput=True, reset=True)
 
         self._assert_form_is_in_es(form)
 

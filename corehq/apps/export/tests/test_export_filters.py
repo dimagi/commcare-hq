@@ -34,7 +34,7 @@ from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
-from pillowtop.es_utils import completely_initialize_pillow_index, initialize_index_and_mapping
+from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class ExportFilterTest(SimpleTestCase):

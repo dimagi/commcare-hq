@@ -72,18 +72,18 @@ class TestResumableFunctionIterator(SimpleTestCase):
         self.itr = self.get_iterator()
         self.assertEqual(list(self.itr), self.all_items)
 
-    def test_iteration_with_progress_info(self):
+    def test_iteration_with_iterator_detail(self):
         itr = iter(self.itr)
         self.assertEqual([next(itr) for i in range(6)], self.all_items[:6])
-        self.assertEqual(self.itr.progress_info, {})
-        self.itr.progress_info = {"visited": 6}
+        self.assertEqual(self.itr.get_iterator_detail('progress'), None)
+        self.itr.set_iterator_detail('progress', {"visited": 6})
         # stop/resume iteration
         self.itr = self.get_iterator()
-        self.assertEqual(self.itr.progress_info, {"visited": 6})
-        self.itr.progress_info = {"visited": "six"}
+        self.assertEqual(self.itr.get_iterator_detail('progress'), {"visited": 6})
+        self.itr.set_iterator_detail('progress', {"visited": "six"})
         # stop/resume iteration
         self.itr = self.get_iterator()
-        self.assertEqual(self.itr.progress_info, {"visited": "six"})
+        self.assertEqual(self.itr.get_iterator_detail('progress'), {"visited": "six"})
         self.assertEqual([item for item in self.itr], self.all_items[3:])
 
     def test_iteration_with_retry(self):
@@ -124,7 +124,7 @@ class TestResumableFunctionIterator(SimpleTestCase):
         self.assertEqual(list(self.get_iterator()), [])
 
     def test_iteration_with_missing_retry_doc(self):
-        iterator = self.get_iterator("0")
+        iterator = self.get_iterator(missing_items=["0"])
         itr = iter(iterator)
         item = next(itr)
         self.assertEqual(item, 0)

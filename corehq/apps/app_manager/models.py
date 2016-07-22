@@ -136,7 +136,7 @@ from .exceptions import (
     CaseXPathValidationError,
     UserCaseXPathValidationError,
 )
-from corehq.apps.reports.daterange import get_daterange_start_end_dates
+from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_simple_dateranges
 from jsonpath_rw import jsonpath, parse
 
 WORKFLOW_DEFAULT = 'default'  # go to the app main screen
@@ -1764,6 +1764,7 @@ class CaseListLookupMixin(DocumentSchema):
 
     """
     lookup_enabled = BooleanProperty(default=False)
+    lookup_autolaunch = BooleanProperty(default=False)
     lookup_action = StringProperty()
     lookup_name = StringProperty()
     lookup_image = JRResourceProperty(required=False)
@@ -1852,6 +1853,7 @@ class CaseSearch(DocumentSchema):
     """
     command_label = DictProperty(default={'en': 'Search All Cases'})
     properties = SchemaListProperty(CaseSearchProperty)
+    relevant = StringProperty(default=CLAIM_DEFAULT_RELEVANT_CONDITION)
 
 
 class ParentSelect(DocumentSchema):
@@ -3489,13 +3491,7 @@ class StaticChoiceListFilter(ReportAppFilter):
 
 class StaticDatespanFilter(ReportAppFilter):
     date_range = StringProperty(
-        choices=[
-            'last7',
-            'last30',
-            'thismonth',
-            'lastmonth',
-            'lastyear',
-        ],
+        choices=[choice.slug for choice in get_simple_dateranges()],
         required=True,
     )
 
@@ -5604,7 +5600,7 @@ class RemoteApp(ApplicationBase):
     manage_urls = BooleanProperty(default=False)
 
     questions_map = DictProperty(required=False)
-
+    
     def is_remote_app(self):
         return True
 

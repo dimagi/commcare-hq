@@ -1,4 +1,4 @@
-from datetime import timedelta
+import datetime
 
 from django.core.urlresolvers import reverse
 
@@ -72,8 +72,8 @@ class DateFilterValue(FilterValue):
         startdate = self.value.startdate
         enddate = self.value.enddate
 
-        if self.value.inclusive and enddate:
-            enddate = enddate + timedelta(days=1) - timedelta.resolution
+        if self.value.inclusive:
+            enddate = self._offset_enddate(enddate)
 
         if self.filter.compare_as_string:
             startdate = str(startdate) if startdate is not None else None
@@ -86,6 +86,14 @@ class DateFilterValue(FilterValue):
             sql_values.update({'%s_enddate' % self.filter.slug: enddate})
 
         return sql_values
+
+    def _offset_enddate(self, enddate):
+        # offset enddate for SQL query
+        # if it is datetime.date object it should not be offset
+        # if it is datetime.datetime object it should be offset to last microsecond of the day
+        if enddate and type(enddate) is datetime.datetime:
+            enddate = enddate + datetime.timedelta(days=1) - datetime.timedelta.resolution
+        return enddate
 
 
 class NumericFilterValue(FilterValue):

@@ -352,7 +352,7 @@ def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
     aggregations = query.run().aggregations
     user_buckets = aggregations.user_id.buckets_list
     if missing_users:
-        user_buckets.add(aggregations.missing_user_id.bucket)
+        user_buckets.append(aggregations.missing_user_id.bucket)
 
     for user_bucket in user_buckets:
         app_buckets = user_bucket.app_id.buckets_list

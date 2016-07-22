@@ -102,7 +102,7 @@ class BucketResult(AggregationResult):
 
     @property
     def buckets_list(self):
-        return {Bucket(b, self._aggregations) for b in self.normalized_buckets}
+        return [Bucket(b, self._aggregations) for b in self.normalized_buckets]
 
     @property
     def raw_buckets(self):
@@ -219,6 +219,11 @@ class TermsAggregation(Aggregation):
     def order(self, field, order="desc"):
         query = deepcopy(self)
         query.body['order'] = {field: order}
+        return query
+
+    def size(self, size):
+        query = deepcopy(self)
+        query.body['size'] = size
         return query
 
 

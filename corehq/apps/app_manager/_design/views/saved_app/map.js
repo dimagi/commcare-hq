@@ -20,7 +20,8 @@ function(doc){
             comment_from: doc.comment_from,
             is_released: doc.is_released,
             case_sharing: doc.case_sharing,
-            build_profiles: doc.build_profiles
+            build_profiles: doc.build_profiles,
+            vellum_case_management: !!doc.vellum_case_management
         });
     }
 }

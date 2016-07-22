@@ -4,15 +4,16 @@ from django.test import TestCase
 from elasticsearch.exceptions import ConnectionError
 
 from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.tests import AppFactory
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.pillow import get_application_db_kafka_pillow
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
+from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.es import AppES
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from corehq.pillows.application import AppPillow, get_app_to_elasticsearch_pillow
+from corehq.pillows.application import get_app_to_elasticsearch_pillow
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
@@ -37,27 +38,10 @@ class AppPillowTest(TestCase):
         ensure_index_deleted(APP_INDEX_INFO.index)
         super(AppPillowTest, self).tearDown()
 
-    def test_app_pillow_couch(self):
-        since = get_current_seq(Application.get_db())
-
-        name = 'app-{}'.format(uuid.uuid4().hex)
-        app = self._create_app(name)
-        pillow = AppPillow()
-        pillow.process_changes(since, forever=False)
-        self.es.indices.refresh(APP_INDEX_INFO.index)
-
-        # verify there
-        results = AppES().run()
-        self.assertEqual(1, results.total)
-        app_doc = results.hits[0]
-        self.assertEqual(self.domain, app_doc['domain'])
-        self.assertEqual(app['_id'], app_doc['_id'])
-        self.assertEqual(name, app_doc['name'])
-
     def test_app_pillow_kafka(self):
         consumer = get_test_kafka_consumer(topics.APP)
         # have to get the seq id before the change is processed
-        kafka_seq = consumer.offsets()['fetch'][(topics.APP, 0)]
+        kafka_seq = get_topic_offset(topics.APP)
         couch_seq = get_current_seq(Application.get_db())
 
         app_name = 'app-{}'.format(uuid.uuid4().hex)
