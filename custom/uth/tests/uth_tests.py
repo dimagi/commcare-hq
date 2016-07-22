@@ -1,5 +1,5 @@
 import uuid
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.users.models import CommCareUser
@@ -118,6 +118,7 @@ class VscanTests(UTHTests):
 
         return packed_directory
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testAttachments(self):
         self.assertEqual(len(CommCareCase.get(self.case_id).case_attachments), 0)
         scan_path = os.path.join(

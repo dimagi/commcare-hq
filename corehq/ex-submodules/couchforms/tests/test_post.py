@@ -1,5 +1,5 @@
 import json
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.conf import settings
 import os
 from corehq.apps.tzmigration import phone_timezones_should_be_processed
@@ -59,6 +59,7 @@ class PostTest(TestCase, TestFileMixin):
         self.assertDictEqual(xform_json, expected)
 
     @run_pre_and_post_timezone_migration
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_cloudant_template(self):
         self._test('cloudant-template', tz_differs=True)
         FormProcessorTestUtils.delete_all_xforms()

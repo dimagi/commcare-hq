@@ -1,5 +1,7 @@
 from decimal import Decimal
 from casexml.apps.stock.models import StockReport, StockTransaction
+from django.test import override_settings
+
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.commtrack.tests.util import CommTrackTest, FIXED_USER, ROAMING_USER
 from corehq.apps.commtrack.sms import handle
@@ -36,6 +38,7 @@ class SMSTests(CommTrackTest):
 class StockReportTest(SMSTests):
     user_definitions = [ROAMING_USER, FIXED_USER]
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testStockReportRoaming(self):
         self.assertEqual(0, len(get_commtrack_forms(self.domain.name)))
         amounts = {
@@ -66,6 +69,7 @@ class StockReportTest(SMSTests):
             self.assertEqual(0, trans.quantity)
             self.assertEqual(amt, trans.stock_on_hand)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testStockReportFixed(self):
         self.assertEqual(0, len(get_commtrack_forms(self.domain.name)))
 
@@ -103,6 +107,7 @@ class StockReportTest(SMSTests):
                 subtype
             )
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testStockReceipt(self):
         original_amounts = {
             'pp': 10,
@@ -136,6 +141,7 @@ class StockReportTest(SMSTests):
             expected_amount = original_amounts[code] + received_amounts[code]
             self.check_stock(code, expected_amount)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testStockLosses(self):
         original_amounts = {
             'pp': 10,
@@ -168,6 +174,7 @@ class StockReportTest(SMSTests):
             expected_amount = original_amounts[code] - lost_amounts[code]
             self.check_stock(code, expected_amount)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testStockConsumption(self):
         original_amounts = {
             'pp': 10,
@@ -209,6 +216,7 @@ class StockAndReceiptTest(SMSTests):
         super(StockAndReceiptTest, self).setUp()
         STOCK_AND_RECEIPT_SMS_HANDLER.set(self.domain, True, NAMESPACE_DOMAIN)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_soh_and_receipt(self):
         handled = handle(self.users[0].get_verified_number(), 'pp 20.30')
         self.assertTrue(handled)

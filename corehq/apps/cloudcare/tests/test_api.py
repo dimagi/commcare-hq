@@ -1,7 +1,7 @@
 import json
 import uuid
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.core.urlresolvers import reverse
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -117,55 +117,66 @@ class CaseAPITest(TestCase):
     def expectedAll(self):
         return len(self.user_ids) * len(self.case_types) * 3
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testGetAllOpen(self):
         list = get_filtered_cases(self.domain, status=CASE_STATUS_OPEN)
         self.assertEqual(self.expectedOpen, len(list))
         self.assertListMatches(list, lambda c: not c['closed'])
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testGetAllWithClosed(self):
         list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL)
         self.assertEqual(self.expectedOpen + self.expectedClosed, len(list))
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testGetAllOpenWithType(self):
         list = get_filtered_cases(self.domain, status=CASE_STATUS_OPEN, case_type=self.test_type)
         self.assertEqual(self.expectedOpenByType, len(list))
         self.assertListMatches(list, lambda c: not c['closed'] and c['properties']['case_type'] == self.test_type)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testGetAllWithClosedAndType(self):
         list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL, case_type=self.test_type)
         self.assertEqual(self.expectedByType, len(list))
         self.assertListMatches(list, lambda c: c['properties']['case_type'] == self.test_type)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testGetOwnedOpen(self):
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_OPEN, footprint=False)
         self.assertEqual(self.expectedOpenByUser, len(list))
         self.assertListMatches(list, lambda c: not c['closed'] and c['user_id'] == self.test_user_id)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testGetOwnedClosed(self):
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_CLOSED, footprint=False)
         self.assertEqual(self.expectedClosedByUser, len(list))
         self.assertListMatches(list, lambda c: c['closed'] and c['user_id'] == self.test_user_id)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testGetOwnedBoth(self):
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_ALL, footprint=False)
         self.assertEqual(self.expectedByUser, len(list))
         self.assertListMatches(list, lambda c: c['user_id'] == self.test_user_id)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testGetOwnedOpenWithFootprint(self):
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_OPEN, footprint=True)
         self.assertEqual(self.expectedOpenByUserWithFootprint, len(list))
         self.assertListMatches(list, lambda c: not c['closed'] or c['user_id'] != self.test_user_id)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testGetOwnedClosedWithFootprint(self):
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_CLOSED, footprint=True)
         self.assertEqual(self.expectedClosedByUserWithFootprint, len(list))
         self.assertListMatches(list, lambda c: c['closed'] or c['user_id'] != self.test_user_id)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testGetOwnedBothWithFootprint(self):
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_ALL, footprint=True)
         self.assertEqual(self.expectedOpenByUserWithFootprint + self.expectedClosedByUserWithFootprint, len(list))
         # I don't think we can say anything super useful about this base set
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testGetAllStripHistory(self):
         list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL, footprint=True,
                                   strip_history=True)
@@ -173,6 +184,7 @@ class CaseAPITest(TestCase):
         self.assertListMatches(list, lambda c: len(c._couch_doc.actions) == 0)
         self.assertListMatches(list, lambda c: len(c._couch_doc.xform_ids) == 0)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testGetAllIdsOnly(self):
         list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL, footprint=True,
                                   ids_only=True)
@@ -180,6 +192,7 @@ class CaseAPITest(TestCase):
         self.assertListMatches(list, lambda c: isinstance(c._couch_doc, dict))
         self.assertListMatches(list, lambda c: isinstance(c.to_json(), basestring))
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testGetAllIdsOnlyStripHistory(self):
         list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL, footprint=True,
                                   ids_only=True, strip_history=True)
@@ -189,18 +202,21 @@ class CaseAPITest(TestCase):
         self.assertListMatches(list, lambda c: 'xform_ids' not in c._couch_doc)
         self.assertListMatches(list, lambda c: isinstance(c.to_json(), basestring))
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testFiltersOnAll(self):
         list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL,
                                   filters={"properties/case_name": _type_to_name(self.test_type)})
         self.assertEqual(self.expectedByType, len(list))
         self.assertListMatches(list, lambda c: c['properties']['case_name'] == _type_to_name(self.test_type))
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testFiltersOnOwned(self):
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_ALL,
                                   filters={"properties/case_name": _type_to_name(self.test_type)})
         self.assertEqual(2, len(list))
         self.assertListMatches(list, lambda c: c['properties']['case_name'] == _type_to_name(self.test_type))
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testFiltersWithoutFootprint(self):
         name = _type_to_name(_child_case_type(self.test_type))
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_ALL,
@@ -209,6 +225,7 @@ class CaseAPITest(TestCase):
         self.assertEqual(1, len(list))
         self.assertListMatches(list, lambda c: c['properties']['case_name'] == name)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testFiltersWithFootprint(self):
         name = _type_to_name(_child_case_type(self.test_type))
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_ALL,
@@ -218,6 +235,7 @@ class CaseAPITest(TestCase):
         # so just ensure the whole footprint including open and closed is available
         self.assertEqual(self.expectedOpenByUserWithFootprint + self.expectedClosedByUserWithFootprint, len(list))
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testCaseAPIResultJSON(self):
         try:
             case = CommCareCase()
@@ -236,6 +254,7 @@ class CaseAPITest(TestCase):
         finally:
             case.delete()
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testGetCasesCaching(self):
         user = self.users[0]
 
@@ -263,6 +282,7 @@ class CaseAPITest(TestCase):
         cases_not_cached = json.loads(result.content)
         self.assertEqual(len(cases) + 1, len(cases_not_cached))
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testGetCasesNoCaching(self):
         """
         Tests get_cases when it shouldn't cache. E.g. when ids_only is false or cache is false

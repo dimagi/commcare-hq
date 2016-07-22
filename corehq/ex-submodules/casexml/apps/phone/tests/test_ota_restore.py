@@ -137,6 +137,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         self.assertNotEqual(restore_payload, restore_config_cached.get_payload().as_string())
         self.assertNotEqual(restore_payload, restore_config_overwrite.get_payload().as_string())
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testUserRestoreWithCase(self):
         xml_data = self.get_xml('create_short')
         xml_data = xml_data.format(user_id=self.restore_user.user_id)
@@ -202,9 +203,11 @@ class OtaRestoreTest(BaseOtaRestoreTest):
             restore_payload
         )
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testSyncTokenWithItems(self):
         self._test_sync_token(items=True)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testSyncTokenWithoutItems(self):
         self._test_sync_token(items=False)
 
@@ -286,6 +289,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         check_xml_line_by_line(self, expected_sync_restore_payload,
                                sync_restore_payload)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testRestoreAttributes(self):
         xml_data = self.get_xml('attributes')
         xml_data = xml_data.format(user_id=self.restore_user.user_id)

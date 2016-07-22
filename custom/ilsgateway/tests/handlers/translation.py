@@ -1,3 +1,5 @@
+from django.test import override_settings
+
 from corehq.apps.commtrack.models import StockState
 from corehq.util.translation import localize
 from custom.ilsgateway.tanzania.reminders import LANGUAGE_CONFIRM, SOH_CONFIRM
@@ -9,6 +11,7 @@ class TranslationTest(ILSTestScript):
     def setUp(self):
         super(TranslationTest, self).setUp()
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_soh(self):
         with localize('sw'):
             response1 = unicode(SOH_CONFIRM)

@@ -4,7 +4,7 @@ import uuid
 from mock import patch
 from django.http import HttpRequest
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from casexml.apps.case.signals import case_post_save
 
 from corehq.apps.userreports import tasks
@@ -157,6 +157,7 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         super(ConfigurableReportViewTest, self).setUp()
         self._delete_everything()
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_export_table(self):
         """
         Test the output of ConfigurableReport.export_table()
@@ -174,12 +175,14 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         ]
         self.assertEqual(view.export_table, expected)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_export_to_excel_size_under_limit(self):
         report, view = self._build_report_and_view()
 
         response = json.loads(view.export_size_check_response.content)
         self.assertEqual(response['export_allowed'], True)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_export_to_excel_size_over_limit(self):
         report, view = self._build_report_and_view()
 

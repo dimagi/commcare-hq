@@ -6,7 +6,7 @@ import hashlib
 from django.conf import settings
 from django.template import Template, Context
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 import lxml
 from django.core.files.uploadedfile import UploadedFile
 from mock import patch
@@ -259,6 +259,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
                 hashlib.md5(case.get_attachment(attach_name)).hexdigest()
             )
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testUpdateWithNoNewAttachment(self):
         _, case = self._doCreateCaseWithMultimedia()
         bulk_save = XFormInstance.get_db().bulk_save

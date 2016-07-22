@@ -1,6 +1,6 @@
 from decimal import Decimal
 from django.core.urlresolvers import reverse
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from casexml.apps.stock.models import StockTransaction, StockReport
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
@@ -209,6 +209,7 @@ class TestInputStockView(TestCase, DomainSubscriptionMixin):
         response = self.client.get(view_url, follow=True)
         self.assertEqual(response.status_code, 200)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_web_user_report_submission(self):
         self.client.login(username=self.username5, password=self.password5)
         view_url = reverse('input_stock', kwargs={'domain': TEST_DOMAIN, 'site_code': 'tsactive'})
@@ -270,6 +271,7 @@ class TestInputStockView(TestCase, DomainSubscriptionMixin):
 
         self.assertEqual(reports.count(), 2)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_incomplete_report_submission(self):
         self.client.login(username=self.username5, password=self.password5)
         view_url = reverse('input_stock', kwargs={'domain': TEST_DOMAIN, 'site_code': 'tsactive'})

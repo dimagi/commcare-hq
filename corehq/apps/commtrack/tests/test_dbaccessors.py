@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.interfaces.supply import SupplyInterface
@@ -28,6 +28,7 @@ class SupplyPointDBAccessorsTest(TestCase):
         self.project.delete()
         super(SupplyPointDBAccessorsTest, self).tearDown()
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_get_supply_point_ids_in_domain_by_location(self):
         actual = get_supply_point_ids_in_domain_by_location(self.domain)
         expected = {

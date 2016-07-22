@@ -13,6 +13,7 @@ class OutOfOrderCaseTest(TestCase):
         super(OutOfOrderCaseTest, self).setUp()
         delete_all_cases()
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testOutOfOrderSubmissions(self):
         dir = os.path.join(os.path.dirname(__file__), "data", "ordering")
         for fname in ('update_oo.xml', 'create_oo.xml'):

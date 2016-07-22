@@ -1,7 +1,7 @@
 import uuid
 
 from sqlagg import SumWhen
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.userreports import tasks
@@ -206,6 +206,7 @@ class TestExpandedColumn(TestCase):
         connection_manager.dispose_engine(UCR_ENGINE_ID)
         super(TestExpandedColumn, self).tearDown()
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_getting_distinct_values(self):
         data_source, column = self._build_report([
             'apple',
@@ -221,6 +222,7 @@ class TestExpandedColumn(TestCase):
         distinct_vals, too_many_values = _get_distinct_values(data_source.config, column)
         self.assertListEqual(distinct_vals, [])
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_too_large_expansion(self):
         vals = ['foo' + str(i) for i in range(DEFAULT_MAXIMUM_EXPANSION + 1)]
         data_source, column = self._build_report(vals)
@@ -228,6 +230,7 @@ class TestExpandedColumn(TestCase):
         self.assertTrue(too_many_values)
         self.assertEqual(len(distinct_vals), DEFAULT_MAXIMUM_EXPANSION)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_allowed_expansion(self):
         num_columns = DEFAULT_MAXIMUM_EXPANSION + 1
         vals = ['foo' + str(i) for i in range(num_columns)]
@@ -241,6 +244,7 @@ class TestExpandedColumn(TestCase):
         self.assertFalse(too_many_values)
         self.assertEqual(len(distinct_vals), num_columns)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_unbuilt_data_source(self):
         data_source, column = self._build_report(['apple'], build_data_source=False)
         distinct_vals, too_many_values = _get_distinct_values(data_source.config, column)
@@ -261,6 +265,7 @@ class TestExpandedColumn(TestCase):
         self.assertEqual(type(cols[0].view), SumWhen)
         self.assertEqual(cols[1].view.whens, {'negative': 1})
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_none_in_values(self):
         """
         Confirm that expanded columns work when one of the distinct values is None.

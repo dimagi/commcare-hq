@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 
 from casexml.apps.stock.models import StockTransaction, StockReport
+from django.test import override_settings
 
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.tests.util import make_loc
@@ -309,6 +310,7 @@ class TestReminders(EWSTestCase):
         smses = SMS.objects.all()
         self.assertEqual(smses.count(), 2)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_visit_reminder(self):
         reminder_to_visit_website()
         smses = SMS.objects.all()

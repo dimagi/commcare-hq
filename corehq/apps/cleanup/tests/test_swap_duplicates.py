@@ -2,7 +2,7 @@ import os
 import uuid
 
 from django.core.management import call_command
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from testil import tempdir
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin
@@ -23,6 +23,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
         _, xform, __ = submit_form_locally(xform_source, DOMAIN)
         return xform
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_simple_swap(self):
         # Test a form with a single dup
         bad_form_id = self._submit_form()._id
@@ -52,6 +53,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
                 )
             )
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_non_swaps(self):
         # Test a form with multiple dups
         form_with_multi_dups_id = self._submit_form()._id

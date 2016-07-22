@@ -5,7 +5,7 @@ from xml.etree import ElementTree
 from corehq.util.test_utils import flag_enabled
 
 from datetime import datetime, timedelta
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from casexml.apps.phone.models import SyncLog
 from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.domain.shortcuts import create_domain
@@ -269,6 +269,7 @@ class ForkedHierarchyLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLo
         self.location_types = setup_location_types_with_structure(self.domain, self.location_type_structure)
         self.locations = setup_locations_with_structure(self.domain, self.location_structure)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_forked_locations(self, *args):
         self.user.set_location(self.locations['Massachusetts'].couch_location)
         location_type = self.locations['Massachusetts'].location_type
