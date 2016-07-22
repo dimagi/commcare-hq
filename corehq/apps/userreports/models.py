@@ -28,6 +28,7 @@ from corehq.apps.userreports.exceptions import (
     ReportConfigurationNotFoundError,
     StaticDataSourceConfigurationNotFoundError,
 )
+from corehq.apps.userreports.const import UCR_SQL_BACKEND
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
@@ -77,6 +78,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     """
     domain = StringProperty(required=True)
     engine_id = StringProperty(default=UCR_ENGINE_ID)
+    backend_id = StringProperty(default=UCR_SQL_BACKEND)
     referenced_doc_type = StringProperty(required=True)
     table_id = StringProperty(required=True)
     display_name = StringProperty()
