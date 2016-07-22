@@ -1,18 +1,16 @@
 import sys
 import uuid
 from datetime import datetime
+
 from dateutil.parser import parse
 from django.conf import settings
+from django.test import TestCase
 from mock import MagicMock
 
-from pillow_retry.models import PillowError, Stub
-from django.test import TestCase
+from pillow_retry.models import PillowError
 from pillow_retry.tasks import process_pillow_retry
-from dimagi.utils.decorators.memoized import memoized
 from pillowtop import get_all_pillow_configs
-from pillowtop.couchdb import CachedCouchDB
 from pillowtop.feed.interface import Change
-from pillowtop.listener import BasicPillow
 from pillowtop.tests import make_fake_constructed_pillow
 
 
