@@ -74,7 +74,8 @@ class CommCareBuild(Document):
     @classmethod
     def create_from_zip(cls, f, version, build_number):
         """f should be a file-like object or a path to a zipfile"""
-        self = cls(build_number=build_number, version=version, time=datetime.utcnow())
+        self = cls(build_number=build_number, version=version,
+                   time=datetime.utcnow(), j2me_enabled=True)
         self.save()
 
         with ZipFile(f) as z:
