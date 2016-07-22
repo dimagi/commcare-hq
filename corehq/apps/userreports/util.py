@@ -1,8 +1,15 @@
 import collections
+from corehq.util.soft_assert import soft_assert
 from corehq import privileges, toggles
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
+from corehq.apps.userreports.const import (
+    REPORT_BUILDER_EVENTS_KEY,
+    UCR_SQL_BACKEND,
+    UCR_ES_BACKEND
+)
 from django_prbac.utils import has_privilege
+
+from corehq.apps.userreports.exceptions import BadBuilderConfigError
 
 
 def localize(value, lang):
@@ -95,3 +102,17 @@ def number_of_report_builder_reports(domain):
         lambda report: report.report_meta.created_by_builder, existing_reports
     )
     return len(builder_reports)
+
+def get_indicator_adapter(config):
+    from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter
+    from corehq.apps.userreports.es.adapter import IndicatorESAdapter
+
+    backend_id = config.get('backend_id', UCR_SQL_BACKEND)
+    if backend_id == UCR_SQL_BACKEND:
+        return IndicatorSqlAdapter(config)
+    elif backend_id == UCR_ES_BACKEND:
+        return IndicatorESAdapter(config)
+    else:
+        _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
+        _soft_assert(False, "Backend id not found in config")
+        raise BadBuilderConfigError(_("The data source was not found"))
