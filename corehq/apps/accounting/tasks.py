@@ -481,15 +481,12 @@ def weekly_digest():
     ]]
 
     def _fmt_row(sub):
-        try:
-            created_by_adj = SubscriptionAdjustment.objects.filter(
-                subscription=sub,
-                reason=SubscriptionAdjustmentReason.CREATE
-            ).order_by('date_created')[0]
-            created_by = dict(SubscriptionAdjustmentMethod.CHOICES).get(
-                created_by_adj.method, "Unknown")
-        except (IndexError, SubscriptionAdjustment.DoesNotExist):
-            created_by = "Unknown"
+        created_by_adj = SubscriptionAdjustment.objects.filter(
+            subscription=sub,
+            reason=SubscriptionAdjustmentReason.CREATE
+        ).order_by('date_created')[0]
+        created_by = dict(SubscriptionAdjustmentMethod.CHOICES).get(
+            created_by_adj.method, "Unknown")
         return [
             sub.subscriber.domain,
             "%s (%s)" % (sub.account.name, sub.account.id),
