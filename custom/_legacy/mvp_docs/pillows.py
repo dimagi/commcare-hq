@@ -3,8 +3,6 @@ import logging
 from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.apps.indicators.models import FormIndicatorDefinition, \
     CaseIndicatorDefinition, CaseDataInFormIndicatorDefinition
 from corehq.apps.indicators.utils import get_indicator_domains
