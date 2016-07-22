@@ -70,8 +70,8 @@ class ReportBuilderTest(TestCase):
 
     def test_updating_report_data_source(self):
         """
-        Test that changing the app or number column for a report results in an update to the data source next time the
-        report is saved.
+        Test that changing the app or number column for a report results in an update to the data source next time
+        the report is saved.
         """
 
         # Make report
@@ -102,8 +102,9 @@ class ReportBuilderTest(TestCase):
             data={
                 'group_by': 'closed',
                 'filters': '[]',
-                # Note that a "Sum" calculation on the closed case property isn't very sensical, but doing it so that
-                # I can have a numeric calculation without having to create real case properties for this case type.
+                # Note that a "Sum" calculation on the closed case property isn't very sensical, but doing it so
+                # that I can have a numeric calculation without having to create real case properties for this case
+                #  type.
                 'columns': '[{"property": "closed", "display_text": "closed", "calculation": "Sum"}]',
             }
         )
@@ -112,8 +113,8 @@ class ReportBuilderTest(TestCase):
 
         # reload report data source, because report.config is memoized
         data_source = DataSourceConfiguration.get(report.config._id)
-        # The closed property indicator should now be decimal type because the user indicated that it was numeric by
-        # giving the column the "Sum" aggregation.
+        # The closed property indicator should now be decimal type because the user indicated that it was numeric
+        # by giving the column the "Sum" aggregation.
         self.assertEqual(data_source.configured_indicators[0]['datatype'], "decimal")
 
     def test_updating_report_that_shares_data_source(self):
