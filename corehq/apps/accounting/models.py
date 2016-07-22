@@ -1929,6 +1929,8 @@ class SubscriptionAdjustment(models.Model):
     new_salesforce_contract_id = models.CharField(blank=True, null=True, max_length=80)
     last_modified = models.DateTimeField(auto_now=True)
 
+    # add toggle to suppress: is_hidden_to_ops
+
     class Meta:
         app_label = 'accounting'
 
