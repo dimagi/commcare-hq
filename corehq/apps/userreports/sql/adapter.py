@@ -1,5 +1,6 @@
 import sqlalchemy
 from sqlalchemy.exc import IntegrityError, ProgrammingError
+from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.apps.userreports.exceptions import TableRebuildError, TableNotFoundWarning
 from corehq.apps.userreports.sql.columns import column_to_sql
 from corehq.apps.userreports.sql.connection import get_engine_id
@@ -12,10 +13,10 @@ from dimagi.utils.logging import notify_exception
 metadata = sqlalchemy.MetaData()
 
 
-class IndicatorSqlAdapter(object):
+class IndicatorSqlAdapter(IndicatorAdapter):
 
     def __init__(self, config):
-        self.config = config
+        super(IndicatorSqlAdapter, self).__init__(config)
         self.engine_id = get_engine_id(config)
         self.session_helper = connection_manager.get_session_helper(self.engine_id)
         self.engine = self.session_helper.engine
@@ -44,31 +45,6 @@ class IndicatorSqlAdapter(object):
         Get a sqlalchemy query object ready to query this table
         """
         return self.session_helper.Session.query(self.get_table())
-
-    def best_effort_save(self, doc):
-        """
-        Does a best-effort save of the document. Will fail silently if the save is not successful.
-
-        For certain known, expected errors this will do no additional logging.
-        For unexpected errors it will log them.
-        """
-        try:
-            self.save(doc)
-        except IntegrityError:
-            pass  # can be due to users messing up their tables/data so don't bother logging
-        except Exception as e:
-            self.handle_exception(doc, e)
-
-    def handle_exception(self, doc, exception):
-        notify_exception(
-            None,
-            u'unexpected error saving UCR doc: {}'.format(exception),
-            details={
-                'domain': self.config.domain,
-                'doc_id': doc.get('_id', '<unknown>'),
-                'table': '{} ({})'.format(self.config.display_name, self.config._id)
-            }
-        )
 
     def save(self, doc):
         """
