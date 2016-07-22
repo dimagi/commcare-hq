@@ -54,6 +54,21 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
         super(QuestionColumnOption, self).__init__(id, display, indicator_id, False)
         self.question_source = question_source
 
+    def to_column_dicts(self, index, display_text, aggregation):
+
+        columns = []
+        for choice_index, choice in enumerate(self.question_source['options']):
+            columns.append({
+                "type": "field",
+                "column_id": "column_{}_{}".format(index, choice_index),
+                "format": "default",
+                "aggregation": self.aggregation_map[aggregation],
+                "field": "{}_{}".format(self.indicator_id, choice['value']),
+                "display": "{} - {}".format(display_text, choice['label']),
+            })
+
+        return columns
+
 
 class CountColumn(ColumnOption):
     def __init__(self, display):

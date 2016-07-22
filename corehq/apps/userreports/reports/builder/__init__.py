@@ -178,6 +178,18 @@ def make_form_question_indicator(question, column_id=None):
     }
 
 
+def make_multiselect_question_indicator(question, column_id=None):
+    path = question['value'].split('/')
+    return {
+        "type": "choice_list",
+        "column_id": column_id or question['value'],
+        "display_name": path[-1],
+        "property_path": ['form'] + path[2:],
+        "select_style": "multiple",
+        "choices": [o['value'] for o in question['options']],
+    }
+
+
 def make_form_meta_block_indicator(spec, column_id=None):
     """
     Return a data source indicator configuration (a dict) for the given

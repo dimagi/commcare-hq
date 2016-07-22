@@ -46,7 +46,7 @@ from corehq.apps.userreports.reports.builder import (
     make_form_question_indicator,
     make_owner_name_indicator,
     get_filter_format_from_question_type,
-    make_user_name_indicator)
+    make_user_name_indicator, make_multiselect_question_indicator)
 from corehq.apps.userreports.exceptions import BadBuilderConfigError
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
@@ -213,13 +213,14 @@ class DataSourceBuilder(object):
                     prop.source, prop.column_id
                 ))
             elif prop.type == "question":
-                indicator = make_form_question_indicator(
-                    prop.source, prop.column_id
-                )
-                if prop.source['type'] == "DataBindOnly" and number_columns:
-                    if indicator['column_id'] in number_columns:
-                        indicator['datatype'] = 'decimal'
-                ret.append(indicator)
+                if prop.source['type'] == "MSelect":
+                    ret.append(make_multiselect_question_indicator(prop.source, prop.column_id))
+                else:
+                    indicator = make_form_question_indicator(prop.source, prop.column_id)
+                    if prop.source['type'] == "DataBindOnly" and number_columns:
+                        if indicator['column_id'] in number_columns:
+                            indicator['datatype'] = 'decimal'
+                    ret.append(indicator)
             elif prop.type == 'case_property' and prop.source == 'computed/owner_name':
                 ret.append(make_owner_name_indicator(prop.column_id))
             elif prop.type == 'case_property' and prop.source == 'computed/user_name':
