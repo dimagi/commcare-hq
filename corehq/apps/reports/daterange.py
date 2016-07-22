@@ -17,6 +17,7 @@ def get_all_daterange_choices():
         DateRangeChoice('lastyear', _('Last Year'), True),
         DateRangeChoice('since', _('Since a Date'), False),
         DateRangeChoice('range', _('Date Range'), False),
+        DateRangeChoice('thismonth', _('This Month'), True),
     )
 
 
