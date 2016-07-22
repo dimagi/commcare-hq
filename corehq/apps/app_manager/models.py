@@ -1318,7 +1318,10 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
 
     @memoized
     def get_action_type(self):
-        if self.get_subcase_types():
+
+        if self.actions.close_case.condition.type != 'never':
+            return 'close'
+        elif self.get_subcase_types():
             return 'open'
         elif self.requires_case():
             return 'update'
@@ -1333,7 +1336,10 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         if subcases:
             messages.append(_('This form opens a {}').format(', '.join(subcases)))
 
-        if self.requires_case():
+        if self.actions.close_case.condition != 'never':
+            messages.append(_('This form closes a {}').format(self.get_module().case_type))
+
+        elif self.requires_case():
             messages.append(_('This form updates a {}').format(self.get_module().case_type))
 
         return '. '.join(messages)

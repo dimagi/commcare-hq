@@ -216,6 +216,14 @@
                                                 title="{{ form.get_icon_help_text }}"
                                                 >
                                             </i>
+                                            {% elif form.get_action_type == 'close' %}
+                                            <i
+                                                class="fa fa-ban"
+                                                data-toggle="tooltip"
+                                                data-placement="top"
+                                                title="{{ form.get_icon_help_text }}"
+                                                >
+                                            </i>
                                             {% elif form.get_action_type == 'update' %}
                                             <i
                                                 class="fa fa-pencil-square"
