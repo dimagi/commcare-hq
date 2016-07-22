@@ -1322,6 +1322,10 @@ class Subscription(models.Model):
             self, method=adjustment_method, note=note, web_user=web_user,
             reason=change_status_result.adjustment_reason, related_subscription=new_subscription
         )
+        SubscriptionAdjustment.record_adjustment(
+            new_subscription, method=adjustment_method, note=note, web_user=web_user,
+            reason=SubscriptionAdjustmentReason.CREATE
+        )
 
         upgrade_reasons = [SubscriptionAdjustmentReason.UPGRADE, SubscriptionAdjustmentReason.CREATE]
         if web_user and adjustment_method == SubscriptionAdjustmentMethod.USER:
