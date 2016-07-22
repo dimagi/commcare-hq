@@ -457,9 +457,9 @@ class AddToBlockNode(template.Node):
     @staticmethod
     def get_request_blocks(context):
         try:
-            request_blocks = context['request']._addblock_contents
+            request_blocks = context.render_context._addtoblock_contents
         except AttributeError:
-            request_blocks = context['request']._addblock_contents = {}
+            request_blocks = context.render_context._addtoblock_contents = {}
         return request_blocks
 
 
