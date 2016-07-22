@@ -13,6 +13,7 @@ from pillowtop import get_all_pillow_configs
 from pillowtop.couchdb import CachedCouchDB
 from pillowtop.feed.interface import Change
 from pillowtop.listener import BasicPillow
+from pillowtop.tests import make_fake_constructed_pillow
 
 
 def get_ex_tb(message, ex_class=None):
@@ -21,6 +22,10 @@ def get_ex_tb(message, ex_class=None):
         raise ex_class(message)
     except Exception as e:
         return e, sys.exc_info()[2]
+
+
+def FakePillow():
+    return make_fake_constructed_pillow('FakePillow', 'fake-checkpoint')
 
 
 def create_error(change, message='message', attempts=0, pillow=None, ex_class=None):
@@ -78,7 +83,8 @@ class PillowRetryTestCase(TestCase):
         self.assertEqual(get.current_attempt, 2)
         self.assertTrue(message in error.error_traceback)
 
-        new = PillowError.get_or_create({'id': id}, FakePillow1())
+        another_pillow = make_fake_constructed_pillow('FakePillow1', '')
+        new = PillowError.get_or_create({'id': id}, another_pillow)
         self.assertIsNone(new.id)
         self.assertEqual(new.current_attempt, 0)
 
@@ -269,27 +275,6 @@ class PillowRetryTestCase(TestCase):
         process_pillow_retry(error.id)
         # and that its total_attempts was bumped above the threshold
         self.assertTrue(PillowError.objects.get(pk=error.pk).total_attempts > PillowError.multi_attempts_cutoff())
-
-
-class FakePillow(BasicPillow):
-
-    @staticmethod
-    @memoized
-    def get_couch_db():
-        return CachedCouchDB(Stub.get_db().uri, readonly=True)
-
-    def process_change(self, change):
-        #  see test_include_doc
-        if not change.get('deleted') and 'doc' not in change:
-            raise Exception('missing doc in change')
-
-
-class FakePillow1(BasicPillow):
-
-    @staticmethod
-    @memoized
-    def get_couch_db(self):
-        return CachedCouchDB(Stub.get_db().uri, readonly=True)
 
 
 class ExceptionA(Exception):
