@@ -1331,10 +1331,10 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         messages = []
 
         if subcases:
-            messages.append(_('This form opens cases for {}').format(', '.join(subcases)))
+            messages.append(_('This form opens a {}').format(', '.join(subcases)))
 
         if self.requires_case():
-            messages.append(('This form updates the {} case').format(self.get_module().case_type))
+            messages.append(_('This form updates a {}').format(self.get_module().case_type))
 
         return '. '.join(messages)
 
