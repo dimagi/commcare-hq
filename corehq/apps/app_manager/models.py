@@ -1316,6 +1316,15 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                 actions[action_type] = a
         return actions
 
+    @memoized
+    def get_action_type(self):
+        if self.get_subcase_types():
+            return 'open'
+        elif self.requires_case():
+            return 'update'
+        else:
+            return 'none'
+
     def active_actions(self):
         if self.get_app().application_version == APP_V1:
             action_types = (
