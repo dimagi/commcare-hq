@@ -120,8 +120,8 @@ class LocationForm(forms.Form):
 
     def get_fields(self, is_new):
         if is_new:
-            parent = (Location.get(self.location.parent_id)
-                      if self.location.parent_id else None)
+            parent = (Location.get(self.location.parent_location_id)
+                      if self.location.parent_location_id else None)
             child_types = allowed_child_types(self.location.domain, parent)
             return filter(None, [
                 _("Location Information"),
