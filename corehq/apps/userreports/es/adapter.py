@@ -1,4 +1,5 @@
 from elasticsearch import NotFoundError
+from corehq.apps.userreports.sql.util import get_table_name
 from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.elastic import get_es_new
 
@@ -8,15 +9,15 @@ class IndicatorESAdapter(IndicatorAdapter):
     def __init__(self, config):
         super(IndicatorESAdapter, self).__init__(config)
         self.es = get_es_new()
-        self.config_id = config._id
+        self.table_name = get_table_name(config.domain, config.table_id)
 
     def rebuild_table(self):
         self.drop_table()
-        self.es.indices.create(index=self.config_id)
+        self.es.indices.create(index=self.table_name)
 
     def drop_table(self):
         try:
-            self.es.indices.delete(index=self.config_id)
+            self.es.indices.delete(index=self.table_name)
         except NotFoundError:
             # index doesn't exist yet
             pass
@@ -31,4 +32,4 @@ class IndicatorESAdapter(IndicatorAdapter):
             for indicator_row in indicator_rows:
                 primary_key_values = [i.value for i in indicator_row if i.column.is_primary_key]
                 all_values = {i.column.database_column_name: i.value for i in indicator_row}
-                es.create(index=self.config_id, body=all_values, id='-'.join(primary_key_values), doc_type="indicator")
+                es.create(index=self.table_name, body=all_values, id='-'.join(primary_key_values), doc_type="indicator")
