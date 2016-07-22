@@ -6,7 +6,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.fake.groups_fake import GroupESFake
 from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.tests import delete_all_locations
+from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceProvider, \

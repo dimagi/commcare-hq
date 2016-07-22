@@ -1,6 +1,6 @@
 import mock
 from django.test import TestCase, SimpleTestCase
-from corehq.apps.app_manager.tests import TestXmlMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult

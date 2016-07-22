@@ -2,7 +2,7 @@ from django.test import TestCase, SimpleTestCase
 from casexml.apps.case.xml import V1, V2
 from casexml.apps.phone.models import SyncLog, CaseState
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from corehq.form_processor.tests import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 
 class PhoneFootprintTest(SimpleTestCase):
