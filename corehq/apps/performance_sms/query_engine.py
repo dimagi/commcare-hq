@@ -1,4 +1,5 @@
 from collections import namedtuple, defaultdict
+from datetime import timedelta
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.models import Form
 from corehq.apps.es import FormES
@@ -89,6 +90,8 @@ class QueryEngine(object):
         # todo: support other types and options
         assert template.type == 'form'
         startdate, enddate = get_daterange_start_end_dates(template.time_range)
+        # ES queries are not inclusive so add a day on to the end date
+        enddate = enddate + timedelta(days=1)
         xmlns = Form.get_form(template.source_id).xmlns
         return FormES().user_id(query_context.user._id).xmlns([xmlns]).submitted(
             gte=startdate,
