@@ -7,7 +7,9 @@ from pillowtop.exceptions import PillowtopIndexingError
 from pillowtop.logger import pillow_logging
 from .interface import PillowProcessor
 
-IDENTITY_FN = lambda x: x
+
+def identity(x):
+    return x
 
 RETRY_INTERVAL = 2  # seconds, exponentially increasing
 MAX_RETRIES = 4  # exponential factor threshold for alerts
@@ -19,7 +21,7 @@ class ElasticProcessor(PillowProcessor):
         self.doc_filter_fn = doc_filter_fn
         self.elasticsearch = elasticsearch
         self.index_info = index_info
-        self.doc_transform_fn = doc_prep_fn or IDENTITY_FN
+        self.doc_transform_fn = doc_prep_fn or identity
 
     def es_getter(self):
         return self.elasticsearch
