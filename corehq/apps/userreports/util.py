@@ -1,5 +1,8 @@
 import collections
 import hashlib
+
+from django.utils.translation import ugettext_lazy as _
+
 from corehq.util.soft_assert import soft_assert
 from corehq import privileges, toggles
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
@@ -119,6 +122,7 @@ def get_indicator_adapter(config, raise_errors=False):
         _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
         _soft_assert(False, "Backend id not found in config")
         raise BadBuilderConfigError(_("The data source was not found"))
+
 
 def get_table_name(domain, table_id):
     def _hash(domain, table_id):

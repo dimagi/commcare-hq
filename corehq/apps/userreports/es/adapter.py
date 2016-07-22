@@ -38,4 +38,7 @@ class IndicatorESAdapter(IndicatorAdapter):
             for indicator_row in indicator_rows:
                 primary_key_values = [i.value for i in indicator_row if i.column.is_primary_key]
                 all_values = {i.column.database_column_name: i.value for i in indicator_row}
-                es.create(index=self.table_name, body=all_values, id='-'.join(primary_key_values), doc_type="indicator")
+                es.create(
+                    index=self.table_name, body=all_values,
+                    id='-'.join(primary_key_values), doc_type="indicator"
+                )

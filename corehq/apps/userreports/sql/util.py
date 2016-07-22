@@ -1,7 +1,7 @@
 import hashlib
 
 
-
+def get_column_name(path):
     """
     :param path: xpath from form or case
     :return: column name for postgres
