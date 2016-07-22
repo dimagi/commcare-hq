@@ -778,6 +778,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     user_data = DictProperty()
     location_id = StringProperty()
     has_built_app = BooleanProperty(default=False)
+    analytics_enabled = BooleanProperty(default=True)
 
     _user = None
 

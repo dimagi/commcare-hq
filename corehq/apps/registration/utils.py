@@ -21,7 +21,7 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.analytics.tasks import track_created_new_project_space_on_hubspot
-from corehq.apps.analytics.utils import get_meta
+from corehq.apps.analytics.utils import get_meta, analytics_enabled_for_email
 
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
@@ -191,7 +191,8 @@ def send_domain_registration_email(recipient, domain_name, guid, full_name):
     try:
         send_html_email_async.delay(subject, recipient, message_html,
                                     text_content=message_plaintext,
-                                    email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True)
+                                    email_from=settings.DEFAULT_FROM_EMAIL,
+                                    ga_track=analytics_enabled_for_email(recipient))
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 

@@ -22,6 +22,8 @@ from corehq.util.decorators import analytics_task
 
 from dimagi.utils.logging import notify_exception
 
+from .utils import analytics_enabled_for_email
+
 
 logger = logging.getLogger('analytics')
 logger.setLevel('DEBUG')
@@ -57,18 +59,18 @@ def _track_on_hubspot(webuser, properties):
     properties is a dictionary mapping property names to values.
     Note that property names must exist on hubspot prior to use.
     """
-    # Note: Hubspot recommends OAuth instead of api key
-
-    _hubspot_post(
-        url=u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
-            urllib.quote(webuser.get_email())
-        ),
-        data=json.dumps(
-            {'properties': [
-                {'property': k, 'value': v} for k, v in properties.items()
-            ]}
-        ),
-    )
+    if webuser.analytics_enabled:
+        # Note: Hubspot recommends OAuth instead of api key
+        _hubspot_post(
+            url=u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
+                urllib.quote(webuser.get_email())
+            ),
+            data=json.dumps(
+                {'properties': [
+                    {'property': k, 'value': v} for k, v in properties.items()
+                ]}
+            ),
+        )
 
 
 def batch_track_on_hubspot(users_json):
@@ -116,7 +118,7 @@ def _hubspot_post(url, data):
 
 def _get_user_hubspot_id(webuser):
     api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
-    if api_key:
+    if api_key and webuser.analytics_enabled:
         req = requests.get(
             u"https://api.hubapi.com/contacts/v1/contact/email/{}/profile".format(
                 urllib.quote(webuser.username)
@@ -144,6 +146,9 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta, extra_fields=None, em
     This sends hubspot the user's first and last names and tracks everything they did
     up until the point they signed up.
     """
+    if webuser and not webuser.analytics_enabled:
+        return
+
     hubspot_id = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
     hubspot_cookie = cookies.get(HUBSPOT_COOKIE)
     if hubspot_id and hubspot_cookie:
@@ -268,7 +273,7 @@ def track_clicked_signup_on_hubspot(email, cookies, meta):
         data['a_b_test_variable_newsletter'] = 'B'
     else:
         data['a_b_test_variable_newsletter'] = 'C'
-    if email:
+    if email and analytics_enabled_for_email(email):
         _send_form_to_hubspot(HUBSPOT_CLICKED_SIGNUP_FORM, None, cookies, meta, extra_fields=data, email=email)
 
 
@@ -280,8 +285,9 @@ def track_workflow(email, event, properties=None):
     :param properties: A dictionary or properties to set on the user.
     :return:
     """
-    timestamp = unix_time(datetime.utcnow())   # Dimagi KISSmetrics account uses UTC
-    _track_workflow_task.delay(email, event, properties, timestamp)
+    if analytics_enabled_for_email(email):
+        timestamp = unix_time(datetime.utcnow())   # Dimagi KISSmetrics account uses UTC
+        _track_workflow_task.delay(email, event, properties, timestamp)
 
 
 @analytics_task()
@@ -304,7 +310,7 @@ def identify(email, properties):
     :return:
     """
     api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
-    if api_key:
+    if api_key and analytics_enabled_for_email(email):
         km = KISSmetrics.Client(key=api_key)
         res = km.set(email, properties)
         _log_response("KM", {'email': email, 'properties': properties}, res)
@@ -320,8 +326,10 @@ def track_periodic_data():
     """
     # Start by getting a list of web users mapped to their domains
     six_months_ago = date.today() - timedelta(days=180)
-    users_to_domains = UserES().web_users().last_logged_in(gte=six_months_ago).fields(['domains', 'email'])\
-                               .run().hits
+    users_to_domains = (UserES().web_users().
+                        last_logged_in(gte=six_months_ago).fields(['domains', 'email'])
+                        .analytics_enabled()
+                        .run().hits)
     # users_to_domains is a list of dicts
     domains_to_forms = FormES().terms_aggregation('domain', 'domain').size(0).run()\
         .aggregations.domain.counts_by_bucket()

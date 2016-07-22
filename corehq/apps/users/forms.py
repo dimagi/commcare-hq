@@ -228,6 +228,16 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         required=False,
         label=ugettext_lazy("Opt out of emails about CommCare updates."),
     )
+    analytics_enabled = forms.BooleanField(
+        required=False,
+        label=ugettext_lazy("Enable Tracking"),
+        help_text=ugettext_lazy(
+            "Allow Dimagi to collect usage information to improve CommCare. "
+            "You can learn more about the information we collect and the ways "
+            "we use it in our "
+            '<a href="http://www.dimagi.com/policy/">privacy policy</a>'
+        ),
+    )
 
     def __init__(self, *args, **kwargs):
         self.username = kwargs.pop('username') if 'username' in kwargs else None
@@ -273,6 +283,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
                 hqcrispy.Field('last_name'),
                 hqcrispy.Field('email'),
                 twbscrispy.PrependedText('email_opt_out', ''),
+                twbscrispy.PrependedText('analytics_enabled', ''),
             ),
             cb3_layout.Fieldset(
                 ugettext_lazy("Other Options"),
