@@ -3,6 +3,7 @@ import json
 import warnings
 
 from django.conf import settings
+from django.template import loader_tags
 from django.template.base import Variable, VariableDoesNotExist
 from django.template.loader import render_to_string
 from django.utils.datastructures import SortedDict
@@ -411,3 +412,64 @@ def prelogin_url(context, urlname):
         return reverse(urlname, args=[context['LANGUAGE_CODE']])
     else:
         return reverse(urlname)
+
+
+@register.tag
+def addtoblock(parser, token):
+    try:
+        tag_name, args = token.split_contents()
+    except ValueError:
+        raise template.TemplateSyntaxError("'addtoblock' tag requires a block_name.")
+
+    nodelist = parser.parse(('endaddtoblock',))
+    parser.delete_first_token()
+    return AddToBlockNode(nodelist, args)
+
+
+@register.tag(name='block')
+def appending_block(parser, token):
+    """
+    this overrides {% block %} to include the combined contents of
+    all {% addtoblock %} nodes
+    """
+    node = loader_tags.do_block(parser, token)
+    node.__class__ = AppendingBlockNode
+    return node
+
+
+class AddToBlockNode(template.Node):
+
+    def __init__(self, nodelist, block_name):
+        self.nodelist = nodelist
+        self.block_name = block_name
+
+    def write(self, context, text):
+        request_blocks = self.get_request_blocks(context)
+        if self.block_name not in request_blocks:
+            request_blocks[self.block_name] = ''
+        request_blocks[self.block_name] += text
+
+    def render(self, context):
+        output = self.nodelist.render(context)
+        self.write(context, output)
+        return ''
+
+    @staticmethod
+    def get_request_blocks(context):
+        try:
+            request_blocks = context.render_context._addtoblock_contents
+        except AttributeError:
+            request_blocks = context.render_context._addtoblock_contents = {}
+        return request_blocks
+
+
+class AppendingBlockNode(loader_tags.BlockNode):
+
+    def render(self, context):
+        super_result = super(AppendingBlockNode, self).render(context)
+        request_blocks = AddToBlockNode.get_request_blocks(context)
+        if self.name not in request_blocks:
+            request_blocks[self.name] = ''
+
+        contents = request_blocks.pop(self.name, '')
+        return super_result + contents
