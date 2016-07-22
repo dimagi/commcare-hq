@@ -19,16 +19,6 @@ def truncate_value(value, max_length=63, from_left=True):
     return value
 
 
-def get_table_name(domain, table_id):
-    def _hash(domain, table_id):
-        return hashlib.sha1('{}_{}'.format(hashlib.sha1(domain).hexdigest(), table_id)).hexdigest()[:8]
-
-    return truncate_value(
-        'config_report_{}_{}_{}'.format(domain, table_id, _hash(domain, table_id)),
-        from_left=False
-    )
-
-
 def get_column_name(path):
     """
     :param path: xpath from form or case

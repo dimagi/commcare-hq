@@ -116,3 +116,12 @@ def get_indicator_adapter(config):
         _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
         _soft_assert(False, "Backend id not found in config")
         raise BadBuilderConfigError(_("The data source was not found"))
+
+def get_table_name(domain, table_id):
+    def _hash(domain, table_id):
+        return hashlib.sha1('{}_{}'.format(hashlib.sha1(domain).hexdigest(), table_id)).hexdigest()[:8]
+
+    return truncate_value(
+        'config_report_{}_{}_{}'.format(domain, table_id, _hash(domain, table_id)),
+        from_left=False
+    )

@@ -4,7 +4,7 @@ from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.apps.userreports.exceptions import TableRebuildError, TableNotFoundWarning
 from corehq.apps.userreports.sql.columns import column_to_sql
 from corehq.apps.userreports.sql.connection import get_engine_id
-from corehq.apps.userreports.sql.util import get_table_name
+from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import connection_manager
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception

@@ -1,5 +1,5 @@
 from elasticsearch import NotFoundError
-from corehq.apps.userreports.sql.util import get_table_name
+from corehq.apps.userreports.util import get_table_name
 from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.elastic import get_es_new
 
