@@ -223,21 +223,30 @@ def get_form_indicators(namespaces, domain, xmlns):
 
 
 def get_mvp_form_indicator_pillow(pillow_id='MVPFormIndicatorPillow'):
-    return _get_mvp_indicator_pillow(pillow_id, MVPFormIndicatorProcessor(), topics.FORM)
+    return _get_mvp_indicator_pillow(pillow_id, MVPFormIndicatorProcessor())
 
 
 def get_mvp_case_indicator_pillow(pillow_id='MVPCaseIndicatorPillow'):
-    return _get_mvp_indicator_pillow(pillow_id, MVPCaseIndicatorProcessor(), topics.CASE)
+    return _get_mvp_indicator_pillow(pillow_id, MVPCaseIndicatorProcessor())
 
 
-def _get_mvp_indicator_pillow(pillow_id, processor, topic):
+def _get_mvp_indicator_pillow(pillow_id, processor):
     checkpoint = PillowCheckpoint(
         'mvp_docs.pillows.{}.{}'.format(pillow_id, get_machine_id()),
+    )
+    feed = CouchChangeFeed(
+        XFormInstance.get_db(),
+        include_docs=True,
+        couch_filter='hqadmin/domains_and_doc_types',
+        extra_couch_view_params={
+            'domains': ' '.join(processor.domains),
+            'doc_types': ' '.join(processor.doc_types),
+        }
     )
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
-        change_feed=CouchChangeFeed(XFormInstance.get_db(), include_docs=False),
+        change_feed=feed,
         processor=processor,
         change_processed_event_handler=PillowCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100
