@@ -60,12 +60,7 @@ class PerformanceMessageEditForm(forms.Form):
         )
 
     def clean_template(self):
-        template = self.cleaned_data['template']
-        try:
-            parser.validate(template)
-        except InvalidParameterException as e:
-            raise forms.ValidationError(unicode(e))
-        return template
+        return _clean_template(self.cleaned_data['template'])
 
     def clean_schedule(self):
         # todo: support other scheduling options
@@ -109,3 +104,11 @@ def _get_default_form_helper():
     helper.form_id = "performance-form"
     helper.form_method = 'post'
     return helper
+
+
+def _clean_template(template):
+    try:
+        parser.validate(template)
+    except InvalidParameterException as e:
+        raise forms.ValidationError(unicode(e))
+    return template
