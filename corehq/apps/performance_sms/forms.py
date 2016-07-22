@@ -44,14 +44,7 @@ class PerformanceMessageEditForm(forms.Form):
         data_source_fields = self.app_source_helper.get_fields()
         self.fields.update(data_source_fields)
 
-        self.helper = FormHelper()
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.form_class = "form-horizontal"
-        self.helper.form_id = "performance-form"
-
-        self.helper.form_method = 'post'
-
+        self.helper = _get_default_form_helper()
         form_layout = self.fields.keys()
         form_layout.append(
             hqcrispy.FormActions(
@@ -106,3 +99,13 @@ class PerformanceMessageEditForm(forms.Form):
         if self.config.template_variables:
             return self.config.template_variables[0].source_id
         return ''
+
+
+def _get_default_form_helper():
+    helper = FormHelper()
+    helper.label_class = 'col-sm-3 col-md-2'
+    helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+    helper.form_class = "form-horizontal"
+    helper.form_id = "performance-form"
+    helper.form_method = 'post'
+    return helper
