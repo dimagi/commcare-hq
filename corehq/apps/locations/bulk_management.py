@@ -225,6 +225,18 @@ class LocationTreeValidator(object):
         self.types_by_code = {lt.code: lt for lt in self.location_types}
         self.locations_by_code = {l.site_code: l for l in self.locations}
 
+    def warnings(self):
+        # should be called after errors are found
+        def bad_deletes():
+            return [
+                "Location deletion in sheet '{type}', row '{i}' is ignored, "
+                "as the location does not exist"
+                .format(type=loc.location_type, i=loc.index)
+                for loc in self.all_listed_locations
+                if not loc.is_new and loc.do_delete
+            ]
+        return bad_deletes()
+
     @property
     @memoized
     def errors(self):
