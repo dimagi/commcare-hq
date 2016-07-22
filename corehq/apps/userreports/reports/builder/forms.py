@@ -13,7 +13,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 
 from corehq.apps.userreports.reports.builder.columns import \
-    QuestionColumnOption, ColumnOption, CountColumn
+    QuestionColumnOption, ColumnOption, CountColumn, MultiselectQuestionColumnOption
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
@@ -614,7 +614,10 @@ class ConfigureNewReportBase(forms.Form):
         options = OrderedDict()
         for id_, prop in self.data_source_properties.iteritems():
             if prop.type == "question":
-                option = QuestionColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric, prop.source)
+                if prop.source['type'] == "MSelect":
+                    option = MultiselectQuestionColumnOption(id_, prop.text, prop.column_id, prop.source)
+                else:
+                    option = QuestionColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric, prop.source)
             else:
                 # meta properties
                 option = ColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric)

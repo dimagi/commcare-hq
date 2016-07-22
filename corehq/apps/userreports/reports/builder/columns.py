@@ -49,6 +49,12 @@ class QuestionColumnOption(ColumnOption):
         self.question_source = question_source
 
 
+class MultiselectQuestionColumnOption(QuestionColumnOption):
+    def __init__(self, id, display, indicator_id, question_source):
+        super(QuestionColumnOption, self).__init__(id, display, indicator_id, False)
+        self.question_source = question_source
+
+
 class CountColumn(ColumnOption):
     def __init__(self, display):
         super(CountColumn, self).__init__('computed/count', display, "count", False)
