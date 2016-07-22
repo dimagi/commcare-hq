@@ -152,17 +152,6 @@ class ComposeMessageView(BaseMessagingSectionView):
         return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
 
 
-@csrf_exempt
-def post(request, domain):
-    """
-    I don't know of anywhere this is being invoked from. If the soft asserts
-    don't produce any results then I'll remove it.
-    """
-    _assert = soft_assert('@'.join(['gcapalbo', 'dimagi.com']), exponential_backoff=False)
-    _assert(False, "sms post invoked")
-    return HttpResponse('OK')
-
-
 @require_api_user_permission(PERMISSION_POST_SMS)
 def sms_in(request):
     """
