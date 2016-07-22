@@ -16,11 +16,17 @@ from mvp_docs.models import IndicatorXForm, IndicatorCase
 from pillowtop.checkpoints.manager import PillowCheckpoint, \
     PillowCheckpointEventHandler
 from pillowtop.checkpoints.util import get_machine_id
-from pillowtop.listener import lock_manager
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.interface import PillowProcessor
 
 pillow_logging = logging.getLogger("pillowtop")
+
+
+def lock_manager(obj):
+    if isinstance(obj, LockManager):
+        return obj
+    else:
+        return LockManager(obj, None)
 
 
 class MVPIndicatorProcessorBase(PillowProcessor):

@@ -51,13 +51,6 @@ def ms_from_timedelta(td):
     return (td.seconds * 1000) + (td.microseconds / 1000.0)
 
 
-def lock_manager(obj):
-    if isinstance(obj, LockManager):
-        return obj
-    else:
-        return LockManager(obj, None)
-
-
 def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, retries=MAX_RETRIES,
         except_on_failure=False, update=False, delete=False):
     """
