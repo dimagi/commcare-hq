@@ -123,6 +123,17 @@
                                            class="field-include"
                                            data-bind="checked: column.selected" />
                                     <!--/ko-->
+                                    <!-- ko if: column.isUserDefined -->
+                                    <div class="remove-user-defined-column pull-right">
+                                        <button class="btn btn-danger btn-xs" data-bind="
+                                            click: function() {
+                                                $parent.columns.remove(column)
+                                            }
+                                        ">
+                                        Remove
+                                        </button>
+                                    </div>
+                                    <!-- /ko -->
                                 </td>
                                 <td>
                                     <span data-bind="foreach: { data: column.tags, as: 'tag' }">
