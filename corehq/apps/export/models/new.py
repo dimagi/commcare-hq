@@ -1324,6 +1324,10 @@ class UserDefinedExportColumn(ExportColumn):
     # export schema, the path is defined on the column.
     custom_path = SchemaListProperty(PathNode)
 
+    def get_value(self, domain, doc_id, doc, base_path, **kwargs):
+        path = [x.name for x in self.custom_path[len(base_path):]]
+        return NestedDictGetter(path)(doc)
+
 
 class SplitUserDefinedExportColumn(ExportColumn):
     split_type = StringProperty(
