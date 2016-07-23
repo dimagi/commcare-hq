@@ -19,9 +19,16 @@ hqDefine('export/js/utils.js', function () {
         }, 'slow', undefined, callback);
     };
 
+    var readablePath = function(pathNodes) {
+        return _.map(pathNodes, function(pathNode) {
+            return pathNode.name();
+        }).join('.')
+    };
+
     return {
         getTagCSSClass: getTagCSSClass,
         redirect: redirect,
         animateToEl: animateToEl,
+        readablePath: readablePath,
     };
 });

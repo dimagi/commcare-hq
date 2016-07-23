@@ -266,6 +266,8 @@ class ExportColumn(DocumentSchema):
                 return CaseIndexExportColumn.wrap(data)
             elif doc_type == 'SplitUserDefinedExportColumn':
                 return SplitUserDefinedExportColumn.wrap(data)
+            elif doc_type == 'UserDefinedExportColumn':
+                return UserDefinedExportColumn.wrap(data)
             elif doc_type == 'SplitGPSExportColumn':
                 return SplitGPSExportColumn.wrap(data)
             elif doc_type == 'MultiMediaExportColumn':
@@ -1309,6 +1311,18 @@ def _merge_dicts(one, two, resolvefn):
         for key in one.viewkeys() & two.viewkeys()
     })
     return merged
+
+
+class UserDefinedExportColumn(ExportColumn):
+    """
+    This model represents a column that a user has defined the path to the
+    data within the form. It should only be needed for RemoteApps
+    """
+
+    # On normal columns, the path is defined on an ExportItem.
+    # Since a UserDefinedExportColumn is not associated with the
+    # export schema, the path is defined on the column.
+    custom_path = SchemaListProperty(PathNode)
 
 
 class SplitUserDefinedExportColumn(ExportColumn):

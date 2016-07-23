@@ -159,11 +159,26 @@ hqDefine('export/js/models.js', function () {
         });
     };
 
+    TableConfiguration.prototype.addUserDefinedExportColumn = function(table, e) {
+        e.preventDefault();
+        table.columns.push(new UserDefinedExportColumn({
+            selected: true,
+            deid_transform: null,
+            doc_type: 'UserDefinedExportColumn',
+            label: '',
+            custom_path: [],
+        }))
+    };
+
     TableConfiguration.mapping = {
         include: ['name', 'path', 'columns', 'selected', 'label', 'is_deleted'],
         columns: {
             create: function(options) {
-                return new ExportColumn(options.data);
+                if (options.data.doc_type === 'UserDefinedExportColumn') {
+                    return new UserDefinedExportColumn(options.data);
+                } else {
+                    return new ExportColumn(options.data);
+                }
             },
         },
         path: {
@@ -178,6 +193,7 @@ hqDefine('export/js/models.js', function () {
         ko.mapping.fromJS(columnJSON, ExportColumn.mapping, self);
         self.showOptions = ko.observable(false);
         self.userDefinedOptionToAdd = ko.observable('');
+        self.isUserDefined = false;
     };
 
     ExportColumn.prototype.isQuestion = function() {
@@ -251,6 +267,53 @@ hqDefine('export/js/models.js', function () {
         },
     };
 
+    /*
+     * UserDefinedExportColumn
+     *
+     * This model represents a column that a user has defined the path to the
+     * data within the form. It should only be needed for RemoteApps
+     */
+    UserDefinedExportColumn = function(columnJSON) {
+        var self = this;
+        ko.mapping.fromJS(columnJSON, UserDefinedExportColumn.mapping, self);
+        self.showOptions = ko.observable(false);
+        self.isUserDefined = true;
+        self.customPathString = ko.observable(utils.readablePath(self.custom_path()));
+        self.customPathString.subscribe(self.customPathToNodes.bind(self));
+    };
+    UserDefinedExportColumn.prototype = Object.create(ExportColumn.prototype);
+
+    UserDefinedExportColumn.prototype.isVisible = function() {
+        return true;
+    };
+
+    UserDefinedExportColumn.prototype.customPathToNodes = function() {
+        var parts = this.customPathString().split('.');
+        console.log(parts)
+        this.custom_path(_.map(parts, function(part) {
+            return new PathNode({
+                name: part,
+                is_repeat: false,
+                doc_type: 'PathNode',
+            });
+        }));
+    };
+
+    UserDefinedExportColumn.mapping = {
+        include: [
+            'selected',
+            'deid_transform',
+            'doc_type',
+            'custom_path',
+            'label',
+        ],
+        custom_path: {
+            create: function(options) {
+                return new PathNode(options.data);
+            },
+        }
+    };
+
     var ExportItem = function(itemJSON) {
         var self = this;
         ko.mapping.fromJS(itemJSON, ExportItem.mapping, self);
@@ -261,9 +324,7 @@ hqDefine('export/js/models.js', function () {
     };
 
     ExportItem.prototype.readablePath = function() {
-        return _.map(this.path(), function(pathNode) {
-            return pathNode.name();
-        }).join('.');
+        return utils.readablePath(this.path());
     };
 
     ExportItem.mapping = {

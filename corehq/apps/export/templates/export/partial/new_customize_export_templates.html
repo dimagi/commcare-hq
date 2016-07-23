@@ -87,6 +87,17 @@
                             {% endif %}
                         </tr>
                         </thead>
+                        <tfoot>
+                            <tr>
+                                <td colspan="100%">
+                                    <button class="btn btn-default btn-sm" data-bind="
+                                        click: table.addUserDefinedExportColumn
+                                    ">
+                                    Add custom export property
+                                    </button>
+                                </td>
+                            </tr>
+                        </tfoot>
                         <tbody data-bind="
                             sortable: {
                                 data: table.columns,
@@ -119,6 +130,8 @@
                                             text: tag,
                                             attr: { class: hqImport('export/js/utils.js').getTagCSSClass(tag) }"></span>
                                     </span>
+
+                                    <!-- ko if: !column.isUserDefined -->
                                     <code data-toggle="tooltip" data-placement="top" 
                                         data-bind="
                                             text: column.formatProperty(),
@@ -130,6 +143,16 @@
                                                 'export-tooltip': column.translatedHelp()
                                             }
                                         "></code>
+                                    <!-- /ko -->
+                                    <!-- ko if: column.isUserDefined -->
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        data-bind="
+                                            value: column.customPathString
+                                        "
+                                    />
+                                    <!-- /ko -->
                                 </td>
                                 <td><input class="form-control" type="text" data-bind="value: column.label" /></td>
                                 {% if export_instance.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
