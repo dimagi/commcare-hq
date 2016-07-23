@@ -124,6 +124,32 @@ class LocationStub(object):
                 # must be a new location
                 self.is_new = True
 
+    def save_needed(self, old_collection):
+        # returns True if this should be saved
+        # assumes self.autoset_location_id_or_site_code is already called
+        if self.is_new or self.do_delete:
+            return True
+
+        old_version = old_collection.locations_by_id[self.location_id]
+        for attr in ['name', 'site_code', 'location_type', 'parent_code',
+                     'latitude', 'longitude', 'external_id']:
+            if getattr(old_version, attr, None) != getattr(self, attr, None)
+                return True
+
+        return False
+
+    def as_db_object(self, old_collection):
+        assert self.save_needed(old_collection)
+
+        data_attrs = ['name', 'site_code', 'location_type', 'parent_code',
+                      'latitude', 'longitude', 'external_id']
+        if self.is_new:
+            SQLLocation()
+
+        old_version = old_collection.locations_by_id[self.location_id]
+        for attr in data_attrs:
+            old_version.setattr(attr, getattr(self, attr))
+
 
 class LocationCollection(object):
     def __init__(self, domain_obj):
