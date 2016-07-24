@@ -32,7 +32,7 @@ describe('Export Utility functions', function() {
             var nodes = utils.customPathToNodes(customPath);
 
             assert.equal(nodes.length, 2);
-            assert.isTrue(_.all(nodes, function(n) { return n instanceof models.PathNode }));
+            assert.isTrue(_.all(nodes, function(n) { return n instanceof models.PathNode; }));
 
             assert.equal(nodes[0].name(), 'form');
             assert.isFalse(nodes[0].is_repeat());

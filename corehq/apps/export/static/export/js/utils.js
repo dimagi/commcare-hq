@@ -31,7 +31,7 @@ hqDefine('export/js/utils.js', function () {
     var readablePath = function(pathNodes) {
         return _.map(pathNodes, function(pathNode) {
             return pathNode.name();
-        }).join('.')
+        }).join('.');
     };
 
     /**

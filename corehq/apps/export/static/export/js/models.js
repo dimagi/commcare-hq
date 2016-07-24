@@ -167,7 +167,7 @@ hqDefine('export/js/models.js', function () {
             doc_type: 'UserDefinedExportColumn',
             label: '',
             custom_path: [],
-        }))
+        }));
     };
 
     TableConfiguration.mapping = {
@@ -303,7 +303,7 @@ hqDefine('export/js/models.js', function () {
             create: function(options) {
                 return new PathNode(options.data);
             },
-        }
+        },
     };
 
     var ExportItem = function(itemJSON) {
