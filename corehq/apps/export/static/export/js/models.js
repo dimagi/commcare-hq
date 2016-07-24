@@ -288,15 +288,7 @@ hqDefine('export/js/models.js', function () {
     };
 
     UserDefinedExportColumn.prototype.customPathToNodes = function() {
-        var parts = this.customPathString().split('.');
-        console.log(parts)
-        this.custom_path(_.map(parts, function(part) {
-            return new PathNode({
-                name: part,
-                is_repeat: false,
-                doc_type: 'PathNode',
-            });
-        }));
+        this.custom_path(utils.customPathToNodes(this.customPathString()));
     };
 
     UserDefinedExportColumn.mapping = {

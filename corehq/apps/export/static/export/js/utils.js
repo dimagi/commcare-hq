@@ -25,10 +25,22 @@ hqDefine('export/js/utils.js', function () {
         }).join('.')
     };
 
+    var customPathToNodes = function(customPath) {
+        var parts = customPathString.split('.');
+        return _.map(parts, function(part) {
+            return new PathNode({
+                name: part,
+                is_repeat: false,
+                doc_type: 'PathNode',
+            });
+        });
+    };
+
     return {
         getTagCSSClass: getTagCSSClass,
         redirect: redirect,
         animateToEl: animateToEl,
         readablePath: readablePath,
+        customPathToNodes: customPathToNodes,
     };
 });
