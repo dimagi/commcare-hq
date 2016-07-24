@@ -1,15 +1,33 @@
 /* globals analytics */
+/**
+ * @file Defines all models for the export page. Models map to python models in
+ * corehq/apps/export/models/new.py
+ *
+ */
 
 hqDefine('export/js/models.js', function () {
     var constants = hqImport('export/js/const.js');
     var utils = hqImport('export/js/utils.js');
 
+    /**
+     * ExportInstance
+     * @class
+     *
+     * This is an instance of an export. It contains the tables to export
+     * and other presentation properties.
+     */
     var ExportInstance = function(instanceJSON, options) {
         options = options || {};
         var self = this;
         ko.mapping.fromJS(instanceJSON, ExportInstance.mapping, self);
+
+        // Detetrmines the state of the save. Used for controlling the presentaiton
+        // of the Save button.
         self.saveState = ko.observable(constants.SAVE_STATES.READY);
+
+        // The url to save the export to.
         self.saveUrl = options.saveUrl;
+
         // If any column has a deid transform, show deid column
         self.isDeidColumnVisible = ko.observable(self.is_deidentified() || _.any(self.tables(), function(table) {
             return table.selected() && _.any(table.columns(), function(column) {
@@ -34,6 +52,13 @@ hqDefine('export/js/models.js', function () {
         }
     };
 
+    /**
+     * isNew
+     *
+     * Determines if an export has been saved or not
+     *
+     * @returns {Boolean} - Returns true if the export has been saved, false otherwise.
+     */
     ExportInstance.prototype.isNew = function() {
         return !ko.utils.unwrapObservable(this._id);
     };
@@ -42,6 +67,12 @@ hqDefine('export/js/models.js', function () {
         return this.isNew() ? gettext('Create') : gettext('Save');
     };
 
+    /**
+     * save
+     *
+     * Saves an ExportInstance by serializing it and POSTing it
+     * to the server.
+     */
     ExportInstance.prototype.save = function() {
         var self = this,
             serialized;
@@ -60,6 +91,14 @@ hqDefine('export/js/models.js', function () {
             });
     };
 
+    /**
+     * recordSaveAnalytics
+     *
+     * Reports to analytics what type of configurations people are saving
+     * exports as.
+     *
+     * @param {function} callback - A funtion to be called after recording analytics.
+     */
     ExportInstance.prototype.recordSaveAnalytics = function(callback) {
         var analyticsAction = this.is_daily_saved_export() ? 'Saved' : 'Regular',
             analyticsExportType = _.capitalize(this.type()),
@@ -84,6 +123,12 @@ hqDefine('export/js/models.js', function () {
         }
     };
 
+    /**
+     * showDeidColumn
+     *
+     * Makse the deid column visible and scrolls the user back to the
+     * top of the export.
+     */
     ExportInstance.prototype.showDeidColumn = function() {
         utils.animateToEl('#field-select', function() {
             this.isDeidColumnVisible(true);
@@ -114,8 +159,16 @@ hqDefine('export/js/models.js', function () {
         },
     };
 
+    /**
+     * TableConfiguration
+     * @class
+     *
+     * The TableConfiguration represents one excel sheet in an export.
+     * It contains a list of columns and other presentation properties
+     */
     var TableConfiguration = function(tableJSON) {
         var self = this;
+        // Whether or not to show advanced columns in the UI
         self.showAdvanced = ko.observable(false);
         ko.mapping.fromJS(tableJSON, TableConfiguration.mapping, self);
     };
@@ -135,14 +188,35 @@ hqDefine('export/js/models.js', function () {
         }.bind(this));
     };
 
+    /**
+     * selectAll
+     *
+     * @param {TableConfiguration} table
+     *
+     * Selects all visible columns in the table.
+     */
     TableConfiguration.prototype.selectAll = function(table) {
         table._select(true);
     };
 
+    /**
+     * selectNone
+     *
+     * @param {TableConfiguration} table
+     *
+     * Deselects all visible columns in the table.
+     */
     TableConfiguration.prototype.selectNone = function(table) {
         table._select(false);
     };
 
+    /**
+     * useLabels
+     *
+     * @param {TableConfiguration} table
+     *
+     * Uses the question labels for the all the label values in the column.
+     */
     TableConfiguration.prototype.useLabels = function(table) {
         _.each(table.columns(), function(column) {
             if (column.isQuestion()) {
@@ -151,6 +225,13 @@ hqDefine('export/js/models.js', function () {
         });
     };
 
+    /**
+     * useIds
+     *
+     * @param {TableConfiguration} table
+     *
+     * Uses the question ids for the all the label values in the column.
+     */
     TableConfiguration.prototype.useIds = function(table) {
         _.each(table.columns(), function(column) {
             if (column.isQuestion()) {
@@ -173,19 +254,41 @@ hqDefine('export/js/models.js', function () {
         },
     };
 
+    /**
+     * ExportColumn
+     * @class
+     *
+     * The model that represents a column in an export. Each column has a one-to-one
+     * mapping with an ExportItem. The column controls the presentation of that item.
+     */
     var ExportColumn = function(columnJSON) {
         var self = this;
         ko.mapping.fromJS(columnJSON, ExportColumn.mapping, self);
+        // showOptions is used a boolean for whether to show options for user defined option
+        // lists. This is used for the feature preview SPLIT_MULTISELECT_CASE_EXPORT
         self.showOptions = ko.observable(false);
         self.userDefinedOptionToAdd = ko.observable('');
     };
 
+    /**
+     * isQuestion
+     *
+     * @returns {Boolean} - Returns true if the column is associated with a form question
+     *      or a case property, false otherwise.
+     */
     ExportColumn.prototype.isQuestion = function() {
         var disallowedTags = ['info', 'case', 'server', 'row', 'app', 'stock'],
             self = this;
         return !_.any(disallowedTags, function(tag) { return _.include(self.tags(), tag); });
     };
 
+
+    /**
+     * addUserDefinedOption
+     *
+     * This adds an options to the user defined options. This is used for the
+     * feature preview: SPLIT_MULTISELECT_CASE_EXPORT
+     */
     ExportColumn.prototype.addUserDefinedOption = function() {
         var option = this.userDefinedOptionToAdd();
         if (option) {
@@ -194,10 +297,22 @@ hqDefine('export/js/models.js', function () {
         this.userDefinedOptionToAdd('');
     };
 
+    /**
+     * removeUserDefinedOption
+     *
+     * Removes a user defined option.
+     */
     ExportColumn.prototype.removeUserDefinedOption = function(option) {
         this.user_defined_options.remove(option);
     };
 
+    /**
+     * formatProperty
+     *
+     * Formats a property/question for display.
+     *
+     * @returns {string} - Returns a string representation of the property/question
+     */
     ExportColumn.prototype.formatProperty = function() {
         if (this.tags().length !== 0){
             return this.label();
@@ -206,10 +321,21 @@ hqDefine('export/js/models.js', function () {
         }
     };
 
+    /**
+     * getDeidOptions
+     *
+     * @returns {Array} - A list of all deid option choices
+     */
     ExportColumn.prototype.getDeidOptions = function() {
         return _.map(constants.DEID_OPTIONS, function(value) { return value; });
     };
 
+    /**
+     * getDeidOptionText
+     *
+     * @param {string} deidOption - A deid option
+     * @returns {string} - Given a deid option, returns the human readable label
+     */
     ExportColumn.prototype.getDeidOptionText = function(deidOption) {
         if (deidOption === constants.DEID_OPTIONS.ID) {
             return gettext('Sensitive ID');
@@ -220,10 +346,24 @@ hqDefine('export/js/models.js', function () {
         }
     };
 
+    /**
+     * isVisible
+     *
+     * Determines whether the column is visible to the user.
+     *
+     * @returns {Boolean} - True if the column is visible false otherwise.
+     */
     ExportColumn.prototype.isVisible = function(table) {
         return table.showAdvanced() || (!this.is_advanced() || this.selected());
     };
 
+    /**
+     * isCaseName
+     *
+     * Checks to see if the column is the name of the case property
+     *
+     * @returns {Boolean} - True if it is the case name property False otherwise.
+     */
     ExportColumn.prototype.isCaseName = function() {
         return this.item.isCaseName();
     };
@@ -251,11 +391,24 @@ hqDefine('export/js/models.js', function () {
         },
     };
 
+    /**
+     * ExportItem
+     * @class
+     *
+     * An item for export that is generated from the schema generation
+     */
     var ExportItem = function(itemJSON) {
         var self = this;
         ko.mapping.fromJS(itemJSON, ExportItem.mapping, self);
     };
 
+    /**
+     * isCaseName
+     *
+     * Checks to see if the item is the name of the case
+     *
+     * @returns {Boolean} - True if it is the case name property False otherwise.
+     */
     ExportItem.prototype.isCaseName = function() {
         return this.path()[this.path().length - 1].name === 'name';
     };
@@ -275,6 +428,12 @@ hqDefine('export/js/models.js', function () {
         },
     };
 
+    /**
+     * PathNode
+     * @class
+     *
+     * An node representing a portion of the path to item to export.
+     */
     var PathNode = function(pathNodeJSON) {
         ko.mapping.fromJS(pathNodeJSON, PathNode.mapping, this);
     };
