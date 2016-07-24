@@ -87,6 +87,9 @@
                             {% endif %}
                         </tr>
                         </thead>
+
+
+                        {% if request|toggle_enabled:ALLOW_USER_DEFINED_EXPORT_COLUMNS %}
                         <tfoot>
                             <tr>
                                 <td colspan="100%">
@@ -98,6 +101,8 @@
                                 </td>
                             </tr>
                         </tfoot>
+                        {% endif %}
+
                         <tbody data-bind="
                             sortable: {
                                 data: table.columns,
