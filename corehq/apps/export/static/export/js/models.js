@@ -273,7 +273,7 @@ hqDefine('export/js/models.js', function () {
      * This model represents a column that a user has defined the path to the
      * data within the form. It should only be needed for RemoteApps
      */
-    UserDefinedExportColumn = function(columnJSON) {
+    var UserDefinedExportColumn = function(columnJSON) {
         var self = this;
         ko.mapping.fromJS(columnJSON, UserDefinedExportColumn.mapping, self);
         self.showOptions = ko.observable(false);
