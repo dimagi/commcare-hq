@@ -25,10 +25,11 @@ hqDefine('export/js/utils.js', function () {
         }).join('.')
     };
 
-    var customPathToNodes = function(customPath) {
+    var customPathToNodes = function(customPathString) {
+        var models = hqImport('export/js/models.js');
         var parts = customPathString.split('.');
         return _.map(parts, function(part) {
-            return new PathNode({
+            return new models.PathNode({
                 name: part,
                 is_repeat: false,
                 doc_type: 'PathNode',

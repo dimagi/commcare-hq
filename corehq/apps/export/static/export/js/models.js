@@ -340,6 +340,7 @@ hqDefine('export/js/models.js', function () {
         ExportInstance: ExportInstance,
         ExportColumn: ExportColumn,
         ExportItem: ExportItem,
+        PathNode: PathNode,
     };
 
 });
