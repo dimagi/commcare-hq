@@ -19,12 +19,31 @@ hqDefine('export/js/utils.js', function () {
         }, 'slow', undefined, callback);
     };
 
+    /**
+     * readablePath
+     *
+     * Takes an array of PathNodes and converts them to a string dot path.
+     *
+     * @param {Array} pathNodes - An array of PathNodes to be converted to a string
+     *      dot path.
+     * @returns {string} A string dot path that represents the array of PathNodes
+     */
     var readablePath = function(pathNodes) {
         return _.map(pathNodes, function(pathNode) {
             return pathNode.name();
         }).join('.')
     };
 
+    /**
+     * customPathToNodes
+     *
+     * This function takes a string path like form.meta.question and
+     * returns the equivalent path in an array of PathNodes.
+     *
+     * @param {string} customPathString - A string dot path to be converted
+     *      to PathNodes.
+     * @returns {Array} Returns an array of PathNodes.
+     */
     var customPathToNodes = function(customPathString) {
         var models = hqImport('export/js/models.js');
         var parts = customPathString.split('.');
