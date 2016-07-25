@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, namedtuple, OrderedDict
 from copy import deepcopy
 import functools
 import json
@@ -734,3 +734,25 @@ def purge_report_from_mobile_ucr(report_config):
             app.save()
             did_purge_something = True
     return did_purge_something
+
+
+SortOnlyElement = namedtuple("SortOnlyElement", "field, sort_element, order")
+
+
+def get_sort_and_sort_only_columns(detail, sort_elements):
+    """
+    extracts out info about columns that are added as only sort fields and columns added as both
+    sort and display fields
+    """
+    sort_elements = OrderedDict((s.field, (s, i+1 )) for i, s in enumerate(sort_elements))
+    sort_columns = {}
+    for column in detail.get_columns():
+        sort_element, order = sort_elements.pop(column.field, (None, None))
+        if sort_element:
+            sort_columns[column.field] = (sort_element, order)
+
+    sort_only_elements = [
+        SortOnlyElement(field, element, order)
+        for field, (element, order) in sort_elements.items()
+    ]
+    return sort_only_elements, sort_columns

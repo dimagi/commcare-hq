@@ -4,7 +4,7 @@ from django.utils.translation import ugettext
 
 from corehq.apps.app_manager import id_strings
 from dimagi.utils.decorators.memoized import memoized
-from corehq.apps.app_manager.util import module_offers_search, create_temp_sort_column
+from corehq.apps.app_manager.util import module_offers_search, create_temp_sort_column, get_sort_and_sort_only_columns
 import langcodes
 import commcare_translations
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
@@ -91,10 +91,8 @@ def _create_custom_app_strings(app, lang, for_default=False):
 
             # To list app strings for properties used as sorting properties only
             if detail.sort_elements:
-                sort_elements = {s.field: (s, i + 1) for i, s in enumerate(detail.sort_elements)}
-                [sort_elements.pop(column.field, None) for column in detail.get_columns()]
-                sort_only = sorted(sort_elements.items(), key=lambda (field, (sort_element, order)): order)
-                for field, (sort_element, order) in sort_only:
+                sort_only, sort_columns = get_sort_and_sort_only_columns(detail, detail.sort_elements)
+                for field, sort_element, order in sort_only:
                     if bool(sort_element.header):
                         column = create_temp_sort_column(sort_element, order)
                         yield id_strings.detail_column_header_locale(module, detail_type, column), trans(column.header)
