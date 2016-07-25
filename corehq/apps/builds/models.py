@@ -74,9 +74,10 @@ class CommCareBuild(Document):
     @classmethod
     def create_from_zip(cls, f, version, build_number):
         """f should be a file-like object or a path to a zipfile"""
-        self = cls(build_number=build_number, version=version,
-                   time=datetime.utcnow(), j2me_enabled=True)
+        self = cls(build_number=build_number, version=version, time=datetime.utcnow())
         self.save()
+        # Clear cache to have this new build included immediately
+        cls.j2me_enabled_builds.clear(cls)
 
         with ZipFile(f) as z:
             try:
@@ -95,6 +96,9 @@ class CommCareBuild(Document):
         self = cls(build_number=build_number, version=version,
                    time=datetime.utcnow(), j2me_enabled=False)
         self.save()
+        # Clear cache to have this build number excluded immediately if build added
+        # with existing version number but not supporting j2me now
+        cls.j2me_enabled_builds.clear(cls)
         return self
 
     def minor_release(self):
@@ -143,7 +147,6 @@ class CommCareBuild(Document):
 
     @classmethod
     @quickcache([], timeout=5 * 60)
-    #This seems to be not working.
     def j2me_enabled_builds(cls):
         return [build for build in cls.all_builds() if build.j2me_enabled]
 
