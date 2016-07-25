@@ -16,7 +16,7 @@ from django.template import Context
 from django_countries.data import COUNTRIES
 
 from corehq import toggles
-from corehq.apps.domain.forms import EditBillingAccountInfoForm
+from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
 from corehq.apps.users.models import CouchUser
@@ -333,8 +333,15 @@ class RoleForm(forms.Form):
 
 class SetUserPasswordForm(SetPasswordForm):
 
-    def __init__(self, domain, user_id, **kwargs):
+    new_password1 = forms.CharField(
+        label=ugettext_lazy("New password"),
+        widget=forms.PasswordInput(),
+        help_text=mark_safe('<span data-bind="text: passwordHelp, css: color">'),
+    )
+
+    def __init__(self, project, user_id, **kwargs):
         super(SetUserPasswordForm, self).__init__(**kwargs)
+        self.project = project
 
         self.helper = FormHelper()
 
@@ -343,19 +350,27 @@ class SetUserPasswordForm(SetPasswordForm):
 
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.form_action = reverse("change_password", args=[domain, user_id])
+        self.helper.form_action = reverse("change_password", args=[project.name, user_id])
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Reset Password for Mobile Worker"),
-                'new_password1',
+                crispy.Field(
+                    'new_password1',
+                    data_bind="value: password, valueUpdate: 'input'",
+                ),
                 'new_password2',
                 hqcrispy.FormActions(
                     crispy.ButtonHolder(
                         Submit('submit', _('Reset Password'))
                     )
                 ),
+                css_class="check-password",
             ),
         )
+
+    def clean_new_password1(self):
+        if self.project.strong_mobile_passwords:
+            return clean_password(self.cleaned_data.get('new_password1'))
 
 
 class CommCareAccountForm(forms.Form):
@@ -462,16 +477,18 @@ class NewMobileWorkerForm(forms.Form):
         label=ugettext_noop("Last Name")
     )
     password = forms.CharField(
-        widget=PasswordInput(),
+        widget=forms.PasswordInput(),
         required=True,
         min_length=1,
-        label=ugettext_noop("Password")
+        label=ugettext_noop("Password"),
+        help_text=mark_safe('<span data-bind="text: passwordHelp, css: color">')
     )
 
-    def __init__(self, domain, *args, **kwargs):
+    def __init__(self, project, *args, **kwargs):
         super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
-        email_string = u"@{}.commcarehq.org".format(domain)
+        email_string = u"@{}.commcarehq.org".format(project.name)
         max_chars_username = 80 - len(email_string)
+        self.project = project
 
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -511,8 +528,10 @@ class NewMobileWorkerForm(forms.Form):
                 crispy.Field(
                     'password',
                     ng_required="true",
-                    ng_model='mobileWorker.password'
+                    ng_model='mobileWorker.password',
+                    data_bind="value: password, valueUpdate: 'input'",
                 ),
+                css_class="check-password",
             )
         )
 
@@ -521,6 +540,10 @@ class NewMobileWorkerForm(forms.Form):
         if username == 'admin' or username == 'demo_user':
             raise forms.ValidationError("The username %s is reserved for CommCare." % username)
         return username
+
+    def clean_password(self):
+        if self.project.strong_mobile_passwords:
+            return clean_password(self.cleaned_data.get('password'))
 
 
 class MultipleSelectionForm(forms.Form):

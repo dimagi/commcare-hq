@@ -109,6 +109,7 @@ class EditCommCareUserView(BaseEditUserView):
         context = super(EditCommCareUserView, self).main_context
         context.update({
             'edit_user_form_title': self.edit_user_form_title,
+            'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
         })
         return context
 
@@ -145,7 +146,7 @@ class EditCommCareUserView(BaseEditUserView):
     @property
     @memoized
     def reset_password_form(self):
-        return SetUserPasswordForm(self.domain, self.editable_user_id, user="")
+        return SetUserPasswordForm(self.request.project, self.editable_user_id, user="")
 
     @property
     @memoized
@@ -546,8 +547,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     @memoized
     def new_mobile_worker_form(self):
         if self.request.method == "POST":
-            return NewMobileWorkerForm(self.domain, self.request.POST)
-        return NewMobileWorkerForm(self.domain)
+            return NewMobileWorkerForm(self.request.project, self.request.POST)
+        return NewMobileWorkerForm(self.request.project)
 
     @property
     @memoized
@@ -571,7 +572,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'can_add_extra_users': self.can_add_extra_users,
             'pagination_limit_cookie_name': (
                 'hq.pagination.limit.mobile_workers_list.%s' % self.domain),
-            'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain)
+            'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain),
+            'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
         }
 
     @property
