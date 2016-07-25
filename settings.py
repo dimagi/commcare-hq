@@ -771,12 +771,6 @@ PRELOGIN_APPS = (
     'corehq.apps.prelogin',
 )
 
-# If there are existing doc_ids and case_ids you want to check directly,
-# they are referenced in your localsettings for more accurate direct checks,
-# otherwise use view-based which can be inaccurate.
-ES_CASE_CHECK_DIRECT_DOC_ID = None
-ES_XFORM_CHECK_DIRECT_DOC_ID = None
-
 # our production logstash aggregation
 LOGSTASH_DEVICELOG_PORT = 10777
 LOGSTASH_COUCHLOG_PORT = 10888
