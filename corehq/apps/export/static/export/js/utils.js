@@ -43,7 +43,7 @@ hqDefine('export/js/utils.js', function() {
     var readablePath = function(pathNodes) {
         return _.map(pathNodes, function(pathNode) {
             var name = pathNode.name();
-            return pathNode.is_repeat() ? name + '[]' : name;
+            return ko.utils.unwrapObservable(pathNode.is_repeat) ? name + '[]' : name;
         }).join('.');
     };
 

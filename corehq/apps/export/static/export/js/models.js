@@ -231,12 +231,20 @@ hqDefine('export/js/models.js', function () {
         var self = this;
         ko.mapping.fromJS(tableJSON, TableConfiguration.mapping, self);
         self.customPathString = ko.observable(utils.readablePath(self.path()));
+        self.customPathString.extend({
+            required: true,
+            pattern: {
+                message: gettext('The table path should end with []'),
+                params: /^.*\[\]$/,
+            }
+        })
+
         self.showAdvanced = ko.observable(false);
-        self.customPathString.subscribe(self.customPathToNodes.bind(self));
+        self.customPathString.subscribe(self.onCustomPathChange.bind(self));
     };
     UserDefinedTableConfiguration.prototype = Object.create(TableConfiguration.prototype);
 
-    UserDefinedTableConfiguration.prototype.customPathToNodes = function() {
+    UserDefinedTableConfiguration.prototype.onCustomPathChange = function() {
         var rowColumn,
             nestedRepeatCount;
         this.path(utils.customPathToNodes(this.customPathString()));
@@ -340,7 +348,9 @@ hqDefine('export/js/models.js', function () {
         ko.mapping.fromJS(columnJSON, UserDefinedExportColumn.mapping, self);
         self.showOptions = ko.observable(false);
         self.isUserDefined = true;
-        self.customPathString = ko.observable(utils.readablePath(self.custom_path()));
+        self.customPathString = ko.observable(utils.readablePath(self.custom_path())).extend({
+            required: true,
+        });
         self.customPathString.subscribe(self.customPathToNodes.bind(self));
     };
     UserDefinedExportColumn.prototype = Object.create(ExportColumn.prototype);

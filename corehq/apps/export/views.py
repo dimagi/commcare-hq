@@ -80,6 +80,7 @@ from corehq.apps.style.decorators import (
     use_select2,
     use_daterangepicker,
     use_jquery_ui,
+    use_ko_validation,
     use_angular_js)
 from corehq.apps.style.forms.widgets import DateRangePickerWidget
 from corehq.apps.style.utils import format_angular_error, format_angular_success
@@ -1465,6 +1466,7 @@ class BaseNewExportView(BaseExportView):
 
 class BaseModifyNewCustomView(BaseNewExportView):
 
+    @use_ko_validation
     @method_decorator(require_can_edit_data)
     def dispatch(self, request, *args, **kwargs):
         return super(BaseModifyNewCustomView, self).dispatch(request, *args, **kwargs)
