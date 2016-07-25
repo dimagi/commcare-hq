@@ -162,14 +162,14 @@
     },
     "MVPCaseIndicatorPillow": {
         "advertised_name": "MVPCaseIndicatorPillow",
-        "change_feed_type": "KafkaChangeFeed",
+        "change_feed_type": "CouchChangeFeed",
         "checkpoint_id": "mvp_docs.pillows.MVPCaseIndicatorPillow.testhq",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "MVPCaseIndicatorPillow"
     },
     "MVPFormIndicatorPillow": {
         "advertised_name": "MVPFormIndicatorPillow",
-        "change_feed_type": "KafkaChangeFeed",
+        "change_feed_type": "CouchChangeFeed",
         "checkpoint_id": "mvp_docs.pillows.MVPFormIndicatorPillow.testhq",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "MVPFormIndicatorPillow"
