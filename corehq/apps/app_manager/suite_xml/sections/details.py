@@ -361,28 +361,28 @@ def get_detail_column_infos(detail, include_sort):
     if not include_sort:
         return [DetailColumnInfo(column, None, None) for column in detail.get_columns()]
 
+       columns = []
+    for column in detail.get_columns():
+        columns.append(DetailColumnInfo(column, sort_element, order))
+
+    for element in get_sort_only_elements(detail):
+        column = create_temp_sort_column(element.field)
+        columns.append(DetailColumnInfo(column, element.sort_element, element.order))
+    return columns
+    
+    
+SortOnlyElement = namedtuple("SortOnlyElement", "field, sort_element, order")
+
+
+def get_sort_only_elements(detail):
     if detail.sort_elements:
         sort_elements = detail.sort_elements
     else:
         sort_elements = get_default_sort_elements(detail)
-
-    # order is 1-indexed
-    sort_elements = {s.field: (s, i + 1)
-                     for i, s in enumerate(sort_elements)}
-    columns = []
-    for column in detail.get_columns():
-        sort_element, order = sort_elements.pop(column.field, (None, None))
-        columns.append(DetailColumnInfo(column, sort_element, order))
-
-    # sort elements is now populated with only what's not in any column
-    # add invisible columns for these
-    sort_only = sorted(sort_elements.items(),
-                       key=lambda (field, (sort_element, order)): order)
-
-    for field, (sort_element, order) in sort_only:
-        column = create_temp_sort_column(field)
-        columns.append(DetailColumnInfo(column, sort_element, order))
-    return columns
+    
+	sort_elements = OrderedDict((s.field, (s, i + 1)) for i, s in enumerate(sort_elements))
+	[sort_elements.pop(column.field, None) for column in detail.get_columns()]
+	return [SortOnlyElement(field, element, order) for field, (element, order) in sort_elements.items()]:
 
 
 def get_instances_for_module(app, module, additional_xpaths=None):
