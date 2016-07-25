@@ -176,6 +176,7 @@ class RecentMessages(ILSData):
     def rows(self):
         data = (SMS.by_domain(self.config['domain'])
                 .filter(location_id=self.config['location_id'])
+                .exclude(processed=False)
                 .order_by('-date'))
         messages = []
         for message in data:
