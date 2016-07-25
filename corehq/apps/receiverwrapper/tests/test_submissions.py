@@ -52,10 +52,7 @@ class SubmissionTest(TestCase):
         with open(file_path, "rb") as f:
             expected = json.load(f)
 
-        if '_id' in expected:
-            expected['_id'] = form_id
-        else:
-            expected['form_id'] = unicode(form_id)
+        expected['_id'] = form_id
         expected['xmlns'] = unicode(xmlns)
 
         return expected
@@ -124,6 +121,7 @@ class SubmissionSQLTransactionsTest(TestCase, TestFileMixin):
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms(self.domain)
         FormProcessorTestUtils.delete_all_cases(self.domain)
+        super(SubmissionSQLTransactionsTest, self).tearDown()
 
     def test_case_ledger_form(self):
         form_xml = self.get_xml('case_ledger_form')

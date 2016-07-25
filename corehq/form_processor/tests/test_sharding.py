@@ -6,7 +6,7 @@ from django.test.utils import override_settings
 from unittest import skipUnless, SkipTest
 
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
-from corehq.form_processor.tests import create_form_for_test, FormProcessorTestUtils
+from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils
 from corehq.sql_db.config import PartitionConfig
 
 DOMAIN = 'sharding-test'

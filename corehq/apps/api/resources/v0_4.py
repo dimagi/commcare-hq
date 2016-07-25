@@ -120,6 +120,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
 
         def wrapper(doc):
             if doc['doc_type'] in xform_doc_types:
+                doc.pop('user_id', None)  # needed when xform is stored in sql
                 return xform_doc_types[doc['doc_type']].wrap(doc)
             else:
                 return doc

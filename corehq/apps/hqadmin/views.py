@@ -4,7 +4,7 @@ import HTMLParser
 import json
 import socket
 import csv
-from datetime import timedelta, date
+from datetime import timedelta, date, datetime
 from collections import defaultdict, namedtuple, OrderedDict
 from StringIO import StringIO
 
@@ -17,6 +17,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import login
 from django.core import management, cache
 from django.shortcuts import render
+from django.template.loader import render_to_string
 from django.views.generic import FormView, TemplateView
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -31,8 +32,10 @@ from restkit.errors import Unauthorized
 from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.phone.xml import SYNC_XMLNS
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.callcenter.utils import CallCenterCase
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_nvd3_v3
@@ -63,6 +66,7 @@ from corehq.elastic import parse_args_for_es, run_query, ES_META
 from corehq.util.timer import TimingContext
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
+from dimagi.utils.dates import force_to_date
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_date
@@ -73,7 +77,7 @@ from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_co
 from . import service_checks, escheck
 from .forms import AuthenticateAsForm, BrokenBuildsForm
 from .history import get_recent_changes, download_changes
-from .models import HqDeploy
+from .models import HqDeploy, VCMMigration
 from .reporting.reports import get_project_spaces, get_stats_data
 from .utils import get_celery_stats
 
@@ -234,7 +238,7 @@ def system_ajax(request):
         supervisor_status = all_pillows_supervisor_status([meta['name'] for meta in pillow_meta])
         for meta in pillow_meta:
             meta.update(supervisor_status[meta['name']])
-        return json_response(sorted(pillow_meta, key=lambda m: m['name']))
+        return json_response(sorted(pillow_meta, key=lambda m: m['name'].lower()))
     elif type == 'stale_pillows':
         es_index_status = [
             escheck.check_case_es_index(interval=3),
@@ -349,7 +353,7 @@ def pillow_operation_api(request):
     @any_toggle_enabled(SUPPORT)
     def reset_pillow(request):
         pillow.reset_checkpoint()
-        if supervisor.restart_pillow(pillow_name):
+        if PillowtopSupervisorApi().restart_pillow(pillow_name):
             return get_response()
         else:
             return get_response("Checkpoint reset but failed to restart pillow. "
@@ -357,24 +361,19 @@ def pillow_operation_api(request):
 
     @any_toggle_enabled(SUPPORT)
     def start_pillow(request):
-        if supervisor.start_pillow(pillow_name):
+        if PillowtopSupervisorApi().start_pillow(pillow_name):
             return get_response()
         else:
             return get_response('Unknown error')
 
     @any_toggle_enabled(SUPPORT)
     def stop_pillow(request):
-        if supervisor.stop_pillow(pillow_name):
+        if PillowtopSupervisorApi().stop_pillow(pillow_name):
             return get_response()
         else:
             return get_response('Unknown error')
 
     if pillow:
-        try:
-            supervisor = PillowtopSupervisorApi()
-        except Exception as e:
-            return get_response(str(e))
-
         try:
             if operation == 'reset_checkpoint':
                 reset_pillow(request)
@@ -385,7 +384,7 @@ def pillow_operation_api(request):
             if operation == 'refresh':
                 return get_response()
         except SupervisorException as e:
-                return get_response(str(e))
+            return get_response(str(e))
     else:
         return get_response("No pillow found with name '{}'".format(pillow_name))
 
@@ -407,7 +406,6 @@ class AdminRestoreView(TemplateView):
         if not self.user:
             return HttpResponseNotFound('User %s not found.' % full_username)
 
-        self.overwrite_cache = request.GET.get('ignore_cache') == 'true'
         self.app_id = kwargs.get('app_id', None)
 
         raw = request.GET.get('raw') == 'true'
@@ -419,7 +417,7 @@ class AdminRestoreView(TemplateView):
 
     def _get_restore_response(self):
         return get_restore_response(
-            self.user.domain, self.user, overwrite_cache=self.overwrite_cache, app_id=self.app_id,
+            self.user.domain, self.user, app_id=self.app_id,
             **get_restore_params(self.request)
         )
 
@@ -429,9 +427,11 @@ class AdminRestoreView(TemplateView):
         timing_context = timing_context or TimingContext(self.user.username)
         string_payload = ''.join(response.streaming_content)
         xml_payload = etree.fromstring(string_payload)
+        restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
         formatted_payload = etree.tostring(xml_payload, pretty_print=True)
         context.update({
             'payload': formatted_payload,
+            'restore_id': restore_id_element.text if restore_id_element is not None else None,
             'status_code': response.status_code,
             'timing_data': timing_context.to_list()
         })
@@ -456,6 +456,61 @@ class ManagementCommandsView(BaseAdminSectionView):
         context["hide_filters"] = True
         context["commands"] = commands
         return context
+
+
+class VCMMigrationView(BaseAdminSectionView):
+    urlname = 'vcm_migration'
+    page_title = ugettext_lazy("Vellum Case Management Migration")
+    template_name = 'hqadmin/vcm_migration.html'
+    email_template_html = 'hqadmin/vcm_email_content.html'
+    email_template_txt = 'hqadmin/vcm_email_content.txt'
+
+    email_subject = _("CommCare Easy References Upgrade")
+
+    @property
+    def migration_date(self):
+        return force_to_date(datetime.now() + timedelta(days=14))
+
+    @property
+    def page_context(self):
+        context = get_hqadmin_base_context(self.request)
+        context.update({
+            'audits': VCMMigration.objects.order_by('-migrated', '-emailed', 'domain'),
+            'email_body': render_to_string(self.email_template_html, {
+                'domain': 'DOMAIN',
+                'migration_date': self.migration_date,
+            }),
+            'email_subject': self.email_subject,
+            'url': reverse(self.urlname),
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        action = self.request.POST['action']
+        if action == 'notes':
+            m = VCMMigration.objects.get(domain=self.request.POST['domain'])
+            m.notes = self.request.POST['notes']
+            m.save()
+        else:
+            domains = self.request.POST['domains'].split(",")
+            for d in domains:
+                m = VCMMigration.objects.get(domain=d)
+                if action == 'email':
+                    email_context = {
+                        'domain': d,
+                        'migration_date': self.migration_date,
+                    }
+                    text_content = render_to_string(self.email_template_html, email_context)
+                    html_content = render_to_string(self.email_template_txt, email_context)
+                    send_html_email_async.delay(
+                        self.email_subject,
+                        m.admins,
+                        html_content,
+                        text_content=text_content,
+                        email_from=settings.SUPPORT_EMAIL)
+                    m.emailed = datetime.now()
+                    m.save()
+        return json_response({'status': 'success'})
 
 
 @require_POST

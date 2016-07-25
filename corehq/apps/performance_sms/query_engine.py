@@ -1,4 +1,5 @@
 from collections import namedtuple, defaultdict
+from datetime import timedelta
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.models import Form
 from corehq.apps.es import FormES
@@ -92,5 +93,5 @@ class QueryEngine(object):
         xmlns = Form.get_form(template.source_id).xmlns
         return FormES().user_id(query_context.user._id).xmlns([xmlns]).submitted(
             gte=startdate,
-            lt=enddate,
+            lte=enddate,
         ).size(0).count()

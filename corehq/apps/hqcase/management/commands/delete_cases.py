@@ -1,8 +1,9 @@
 from optparse import make_option
-from django.core.management.base import NoArgsCommand, BaseCommand
+from django.core.management.base import NoArgsCommand, BaseCommand, CommandError
 from couchdbkit import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
+from corehq.form_processor.utils import should_use_sql_backend
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch.database import iter_bulk_delete
 from corehq.apps.users.models import CouchUser, CommCareUser
@@ -51,6 +52,9 @@ class Command(BaseCommand):
             exit(1)
 
         self.domain = self.user.domain
+
+        if should_use_sql_backend(self.domain):
+            raise CommandError('This command only works for couch-based domains.')
 
         if not options.get('no_prompt'):
             msg = "Delete all cases owned by {}? (y/n)\n".format(

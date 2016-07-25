@@ -9,6 +9,7 @@ from custom.intrahealth.models import TauxDeSatisfactionFluff, CouvertureFluff
 import sqlalchemy
 
 from custom.intrahealth.tests.test_utils import IntraHealthTestCase, TEST_DOMAIN
+from testapps.test_pillowtop.utils import real_pillow_settings
 
 DATAPATH = os.path.join(os.path.dirname(__file__), 'data')
 
@@ -46,12 +47,11 @@ class TestFluffs(IntraHealthTestCase):
         super(TestFluffs, cls).tearDownClass()
 
     def test_taux_de_satifisfaction_fluff(self):
-        management.call_command(
-            'ptop_fast_reindex_fluff',
-            TEST_DOMAIN,
-            'custom.intrahealth.models.TauxDeSatisfactionFluffPillow',
-            noinput=True
-        )
+        with real_pillow_settings():
+            management.call_command(
+                'ptop_reindexer_fluff',
+                'TauxDeSatisfactionFluffPillow',
+            )
 
         query = sqlalchemy.select(
             [
@@ -94,12 +94,11 @@ class TestFluffs(IntraHealthTestCase):
         )
 
     def test_couverture_fluff(self):
-        management.call_command(
-            'ptop_fast_reindex_fluff',
-            TEST_DOMAIN,
-            'custom.intrahealth.models.CouvertureFluffPillow',
-            noinput=True
-        )
+        with real_pillow_settings():
+            management.call_command(
+                'ptop_reindexer_fluff',
+                'CouvertureFluffPillow',
+            )
 
         query = sqlalchemy.select(
             [

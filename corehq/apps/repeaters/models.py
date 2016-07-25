@@ -333,13 +333,17 @@ class FormRepeater(Repeater):
     """
 
     include_app_id_param = BooleanProperty(default=True)
+    white_listed_form_xmlns = StringListProperty(default=[])  # empty value means all form xmlns are accepted
 
     @memoized
     def payload_doc(self, repeat_record):
         return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
 
     def allowed_to_forward(self, payload):
-        return payload.xmlns != DEVICE_LOG_XMLNS
+        return (
+            payload.xmlns != DEVICE_LOG_XMLNS and
+            (not self.white_listed_form_xmlns or payload.xmlns in self.white_listed_form_xmlns)
+        )
 
     def get_url(self, repeat_record):
         url = super(FormRepeater, self).get_url(repeat_record)
@@ -459,7 +463,7 @@ class RepeatRecord(Document):
     def url(self):
         try:
             return self.repeater.get_url(self)
-        except XFormNotFound:
+        except (XFormNotFound, ResourceNotFound):
             return None
 
     @property

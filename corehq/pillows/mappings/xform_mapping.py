@@ -52,7 +52,6 @@ XFORM_MAPPING = {
             'type': 'object'
         },
         '__retrieved_case_ids': {'index': 'not_analyzed', 'type': 'string'},
-        '__props_for_querying': {'index': 'not_analyzed', 'type': 'string'},
         'form': {
             'dynamic': False,
             'properties': {

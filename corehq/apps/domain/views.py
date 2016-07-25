@@ -40,8 +40,6 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_ca
 
 from corehq.const import USER_DATE_FORMAT
 from corehq.tabs.tabclasses import ProjectSettingsTab
-from custom.dhis2.forms import Dhis2SettingsForm
-from custom.dhis2.models import Dhis2Settings
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.hqwebapp.tasks import send_mail_async
@@ -496,35 +494,6 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
         if self.my_project_settings_form.is_valid():
             self.my_project_settings_form.save(self.request.couch_user, self.domain)
             messages.success(request, _("Your project settings have been saved!"))
-        return self.get(request, *args, **kwargs)
-
-
-class EditDhis2SettingsView(BaseProjectSettingsView):
-    template_name = 'domain/admin/dhis2_settings.html'
-    urlname = 'dhis2_settings'
-    page_title = ugettext_lazy("DHIS2 API settings")
-
-    @property
-    @memoized
-    def dhis2_settings_form(self):
-        settings_ = Dhis2Settings.for_domain(self.domain_object.name)
-        initial = settings_.dhis2 if settings_ else {'enabled': False}
-        if self.request.method == 'POST':
-            return Dhis2SettingsForm(self.request.POST, initial=initial)
-        return Dhis2SettingsForm(initial=initial)
-
-    @property
-    def page_context(self):
-        return {
-            'dhis2_settings_form': self.dhis2_settings_form,
-        }
-
-    def post(self, request, *args, **kwargs):
-        if self.dhis2_settings_form.is_valid():
-            if self.dhis2_settings_form.save(self.domain_object):
-                messages.success(request, _('DHIS2 API settings successfully updated'))
-            else:
-                messages.error(request, _('There seems to have been an error. Please try again.'))
         return self.get(request, *args, **kwargs)
 
 
@@ -2754,6 +2723,7 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
     def page_context(self):
         return {
             'flags': self.enabled_flags(),
+            'use_sql_backend': self.domain_object.use_sql_backend
         }
 
 

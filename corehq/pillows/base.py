@@ -1,6 +1,3 @@
-from pillowtop.listener import AliasedElasticPillow
-
-
 VALUE_TAG = '#value'
 DEFAULT_META = {
     "settings": {
@@ -74,8 +71,3 @@ def restore_property_dict(report_dict_item):
             restored[k] = v
 
     return restored
-
-
-class HQPillow(AliasedElasticPillow):
-    es_timeout = 60
-    es_meta = DEFAULT_META

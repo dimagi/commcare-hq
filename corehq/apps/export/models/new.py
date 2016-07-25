@@ -9,14 +9,13 @@ from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
-from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.decorators.memoized import memoized
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
 from corehq import feature_previews
 from corehq.apps.userreports.expressions.getters import NestedDictGetter
 from corehq.apps.app_manager.dbaccessors import (
-    get_built_app_ids_for_app_id,
+    get_built_app_ids_with_submissions_for_app_id,
     get_all_built_app_ids_and_versions,
     get_latest_app_ids_and_versions,
 )
@@ -869,9 +868,7 @@ class ExportDataSchema(Document):
         if app_id:
             app_build_ids.append(app_id)
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
-            # TODO: Remove this when we mark applications that have been submitted
-            if (should_use_sql_backend(domain) and
-                    not app_doc.get('is_released', False) and
+            if (not app_doc.get('has_submissions', False) and
                     app_doc.get('copy_of')):
                 continue
 
@@ -996,7 +993,7 @@ class FormExportDataSchema(ExportDataSchema):
 
     @staticmethod
     def _get_app_build_ids_to_process(domain, app_id, last_app_versions):
-        return get_built_app_ids_for_app_id(
+        return get_built_app_ids_with_submissions_for_app_id(
             domain,
             app_id,
             last_app_versions.get(app_id)

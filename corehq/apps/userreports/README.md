@@ -456,7 +456,7 @@ The date_expression and count_expression can be any valid expressions, or simply
 `add_months` offsets given date by given number of calendar months.
 If offset results in an invalid day (for e.g. Feb 30, April 31), the day of resulting date will be adjusted to last day of the resulting calendar month.
 
-The date_expression and months_expression can be any valid expressions, or simply constants, including nagative numbers.
+The date_expression and months_expression can be any valid expressions, or simply constants, including negative numbers.
 
 ```json
 {
@@ -514,7 +514,7 @@ Variables can be any valid numbers (Python datatypes `int`, `float` and `long` a
 Only the following functions are permitted:
 
 * `rand()`: generate a random number between 0 and 1
-* `randint(max)`: generate a random integer beween 0 and `max`
+* `randint(max)`: generate a random integer between 0 and `max`
 * `int(value)`: convert `value` to an int. Value can be a number or a string representation of a number
 * `float(value)`: convert `value` to a floating point number
 * `str(value)`: convert `value` to a string
@@ -596,7 +596,7 @@ Above returns list of ages. Note that the `property_path` in `map_expression` is
 
 ##### sort_items Expression
 
-`sort_items` returns a sorted list of items based on sort value of each item.The sort value of an item is speicifed by `sort_expression`. By default, list will be in ascending order. Order can be changed by adding optional `order` expression with one of `DESC` (for descending) or `ASC` (for ascending) If a sort-value of an item is `None`, the item will appear in the start of list. If sort-values of any two items can't be compared, an empty list is returned.
+`sort_items` returns a sorted list of items based on sort value of each item.The sort value of an item is specified by `sort_expression`. By default, list will be in ascending order. Order can be changed by adding optional `order` expression with one of `DESC` (for descending) or `ASC` (for ascending) If a sort-value of an item is `None`, the item will appear in the start of list. If sort-values of any two items can't be compared, an empty list is returned.
 
 `items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned.
 
@@ -663,7 +663,7 @@ Last, but certainly not least, are named expressions.
 These are special expressions that can be defined once in a data source and then used throughout other filters and indicators in that data source.
 This allows you to write out a very complicated expression a single time, but still use it in multiple places with a simple syntax.
 
-Named expressions are defined in a special section of the data source. To reference a named expression, you just specify the type of `"named"` and the name as folllows:
+Named expressions are defined in a special section of the data source. To reference a named expression, you just specify the type of `"named"` and the name as follows:
 
 ```json
 {

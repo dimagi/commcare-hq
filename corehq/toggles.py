@@ -341,6 +341,13 @@ SYNC_ALL_LOCATIONS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+FLAT_LOCATION_FIXTURE = StaticToggle(
+    'flat_location_fixture',
+    'Sync the location fixture in a flat format.',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
 EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     'extension_sync',
     'Enable extension syncing',
@@ -441,13 +448,6 @@ TRANSFER_DOMAIN = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-DHIS2_DOMAIN = StaticToggle(
-    'dhis2_domain',
-    'Enable DHIS2 integration for this domain',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
-)
-
 PRIME_RESTORE = StaticToggle(
     'prime_restore',
     'Prime restore cache',
@@ -472,24 +472,10 @@ VELLUM_SAVE_TO_CASE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-VELLUM_EXPERIMENTAL_UI = StaticToggle(
-    'experimental_ui',
-    "Enables some experimental UI enhancements for the form builder",
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
-)
-
 VELLUM_PRINTING = StaticToggle(
     'printing',
     "Enables the Print Android App Callout",
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
-VELLUM_RICH_TEXT = StaticToggle(
-    'rich_text',
-    "Enables rich text for the form builder",
-    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
 
@@ -607,13 +593,6 @@ OPENCLINICA = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-OPENLMIS = StaticToggle(
-    'openlmis',
-    'Offer OpenLMIS settings',
-    TAG_UNKNOWN,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 CUSTOM_MENU_BAR = StaticToggle(
     'custom_menu_bar',
     "Hide Dashboard and Applications from top menu bar "
@@ -665,8 +644,8 @@ HSPH_HACK = StaticToggle(
 
 USE_FORMPLAYER_FRONTEND = StaticToggle(
     'use_formplayer_frontend',
-    'Use the new formplayer frontend',
-    TAG_ONE_OFF,
+    'Use New CloudCare',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
 
@@ -859,4 +838,20 @@ SEND_UCR_REBUILD_INFO = StaticToggle(
     'Notify when UCR rebuilds finish or error.',
     TAG_EXPERIMENTAL,
     [NAMESPACE_USER]
+)
+
+
+ZAPIER_INTEGRATION = StaticToggle(
+    'zapier_integration',
+    'Allow to use domain in Zapier application',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
+
+EMG_AND_REC_SMS_HANDLERS = StaticToggle(
+    'emg_and_rec_sms_handlers',
+    'Enable emergency and receipt sms handlers used in ILSGateway',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
 )

@@ -11,53 +11,13 @@ from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.utils import get_user_type
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 from corehq.util.doc_processor.sql import SqlDocumentProvider
-from dimagi.utils.couch import LockManager
-from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
-from pillowtop.es_utils import doc_exists
-from pillowtop.listener import lock_manager
+from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
-from .base import HQPillow
-
-UNKNOWN_DOMAIN = "__nodomain__"
-UNKNOWN_TYPE = "__notype__"
-
 
 pillow_logging = logging.getLogger("pillowtop")
 pillow_logging.setLevel(logging.INFO)
-
-
-class CasePillow(HQPillow):
-    """
-    Simple/Common Case properties Indexer
-    """
-    document_class = CommCareCase
-    couch_filter = "case/casedocs"
-    es_alias = CASE_INDEX_INFO.alias
-    es_type = CASE_INDEX_INFO.type
-
-    es_index = CASE_INDEX_INFO.index
-    default_mapping = CASE_INDEX_INFO.mapping
-
-    @classmethod
-    def get_unique_id(cls):
-        # TODO: remove this next time the index name changes
-        return '85e1a25ff57c5892b6fa95caf949ae4c'
-
-    def change_trigger(self, changes_dict):
-        doc_dict, lock = lock_manager(
-            super(CasePillow, self).change_trigger(changes_dict)
-        )
-        if doc_dict and doc_dict['doc_type'] == 'CommCareCase-Deleted':
-            if doc_exists(self, doc_dict):
-                self.get_es_new().delete(self.es_index, self.es_type, doc_dict['_id'])
-            return None
-        else:
-            return LockManager(doc_dict, lock)
-
-    def change_transform(self, doc_dict):
-        return transform_case_for_elasticsearch(doc_dict)
 
 
 def transform_case_for_elasticsearch(doc_dict):
@@ -95,7 +55,7 @@ def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow'):
 
 def get_couch_case_reindexer():
     iteration_key = "CouchCaseToElasticsearchPillow_{}_reindexer".format(CASE_INDEX_INFO.index)
-    doc_provider = CouchDocumentProvider(iteration_key, doc_types=[
+    doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
         CommCareCase,
         ("CommCareCase-Deleted", CommCareCase)
     ])

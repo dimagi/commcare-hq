@@ -415,36 +415,42 @@ class AutoPayInvoicePaymentHandler(object):
         """ Pays the full balance of all autopayable invoices on date_due """
         autopayable_invoices = Invoice.autopayable_invoices(date_due)
         for invoice in autopayable_invoices:
-            log_accounting_info("[Autopay] Autopaying invoice {}".format(invoice.id))
-            amount = invoice.balance.quantize(Decimal(10) ** -2)
-            if not amount:
-                continue
-
-            auto_payer = invoice.subscription.account.auto_pay_user
-            payment_method = StripePaymentMethod.objects.get(web_user=auto_payer)
-            autopay_card = payment_method.get_autopay_card(invoice.subscription.account)
-            if autopay_card is None:
-                continue
-
             try:
-                payment_record = payment_method.create_charge(
+                self._pay_invoice(invoice)
+            except Exception as e:
+                log_accounting_error("Error autopaying invoice %d: %s" % (invoice.id, e.message))
+
+    def _pay_invoice(self, invoice):
+        log_accounting_info("[Autopay] Autopaying invoice {}".format(invoice.id))
+        amount = invoice.balance.quantize(Decimal(10) ** -2)
+        if not amount:
+            return
+
+        auto_payer = invoice.subscription.account.auto_pay_user
+        payment_method = StripePaymentMethod.objects.get(web_user=auto_payer)
+        autopay_card = payment_method.get_autopay_card(invoice.subscription.account)
+        if autopay_card is None:
+            return
+
+        try:
+            with transaction.atomic():
+                payment_record = PaymentRecord.create_record(payment_method, 'temp_transaction_id', amount)
+                invoice.pay_invoice(payment_record)
+                invoice.subscription.account.last_payment_method = LastPayment.CC_AUTO
+                invoice.account.save()
+                transaction_id = payment_method.create_charge(
                     autopay_card,
                     amount_in_dollars=amount,
                     description='Auto-payment for Invoice %s' % invoice.invoice_number,
                 )
-            except stripe.error.CardError:
-                self._handle_card_declined(invoice, payment_method)
-                continue
-            except payment_method.STRIPE_GENERIC_ERROR as e:
-                self._handle_card_errors(invoice, e)
-                continue
-            else:
-                with transaction.atomic():
-                    invoice.pay_invoice(payment_record)
-                    invoice.subscription.account.last_payment_method = LastPayment.CC_AUTO
-                    invoice.account.save()
-
-                self._send_payment_receipt(invoice, payment_record)
+        except stripe.error.CardError:
+            self._handle_card_declined(invoice, payment_method)
+        except payment_method.STRIPE_GENERIC_ERROR as e:
+            self._handle_card_errors(invoice, e)
+        else:
+            payment_record.transaction_id = transaction_id
+            payment_record.save()
+            self._send_payment_receipt(invoice, payment_record)
 
     def _send_payment_receipt(self, invoice, payment_record):
         from corehq.apps.accounting.tasks import send_purchase_receipt

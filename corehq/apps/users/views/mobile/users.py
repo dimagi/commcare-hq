@@ -88,10 +88,16 @@ DEFAULT_USER_LIST_LIMIT = 10
 
 
 class EditCommCareUserView(BaseEditUserView):
-    template_name = "users/edit_commcare_user.html"
     urlname = "edit_commcare_user"
     user_update_form_class = UpdateCommCareUserInfoForm
     page_title = ugettext_noop("Edit Mobile Worker")
+
+    @property
+    def template_name(self):
+        if self.editable_user.is_deleted():
+            return "users/deleted_account.html"
+        else:
+            return "users/edit_commcare_user.html"
 
     @use_multiselect
     @method_decorator(require_can_edit_commcare_users)
@@ -124,8 +130,6 @@ class EditCommCareUserView(BaseEditUserView):
             user = CommCareUser.get_by_user_id(self.editable_user_id, self.domain)
             if not user:
                 raise Http404()
-            if user.is_deleted():
-                self.template_name = "users/deleted_account.html"
             return user
         except (ResourceNotFound, CouchUser.AccountTypeError, KeyError):
             raise Http404()
@@ -1035,9 +1039,11 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
     @memoized
     def form(self):
         if self.request.method == 'POST':
-            return SelfRegistrationForm(self.request.POST, domain=self.domain)
+            return SelfRegistrationForm(self.request.POST, domain=self.domain,
+                require_email=self.invitation.require_email)
         else:
-            return SelfRegistrationForm(domain=self.domain)
+            return SelfRegistrationForm(domain=self.domain,
+                require_email=self.invitation.require_email)
 
     def get_context_data(self, **kwargs):
         context = super(CommCareUserSelfRegistrationView, self).get_context_data(**kwargs)
@@ -1072,8 +1078,10 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
                 self.domain,
                 self.form.cleaned_data.get('username'),
                 self.form.cleaned_data.get('password'),
+                email=self.form.cleaned_data.get('email'),
                 phone_number=self.invitation.phone_number,
                 device_id='Generated from HQ',
+                user_data=self.invitation.custom_user_data,
             )
             # Since the user is being created by following the link and token
             # we sent to their phone by SMS, we can verify their phone number

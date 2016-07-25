@@ -111,7 +111,8 @@ def get_restore_params(request):
         'state': request.GET.get('state'),
         'items': request.GET.get('items') == 'true',
         'as_user': request.GET.get('as'),
-        'has_data_cleanup_privelege': has_privilege(request, privileges.DATA_CLEANUP)
+        'has_data_cleanup_privelege': has_privilege(request, privileges.DATA_CLEANUP),
+        'overwrite_cache': request.GET.get('overwrite_cache') == 'true',
     }
 
 
@@ -135,7 +136,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
 
     restore_user = get_restore_user(domain, couch_user, as_user)
     if not restore_user:
-        return HttpResponse('Could not find user', status=404)
+        return HttpResponse('Could not find user', status=404), None
 
     project = Domain.get_by_name(domain)
     app = get_app(domain, app_id) if app_id else None

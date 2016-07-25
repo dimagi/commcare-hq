@@ -3,6 +3,7 @@ from django.core.management.base import LabelCommand, CommandError
 from casexml.apps.case.dbaccessors import get_reverse_indices
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domainsync.management.commands.copy_utils import copy_postgres_data_for_docs
+from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.couch_helpers import OverrideDB
 from corehq.util.couchdb_management import CouchConfig
 from couchforms.models import XFormInstance
@@ -29,6 +30,8 @@ class Command(LabelCommand):
         doc_ids = [case_id]
 
         domain = args[2] if len(args) > 2 else None
+        if should_use_sql_backend(domain):
+            raise CommandError('This command only works for couch-based domains.')
 
         def _migrate_case(case_id):
             print 'getting case %s' % case_id
