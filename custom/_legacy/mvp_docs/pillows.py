@@ -21,7 +21,7 @@ from pillowtop.processors.interface import PillowProcessor
 pillow_logging = logging.getLogger("pillowtop")
 
 
-def lock_manager(obj):
+def _lock_manager(obj):
     if isinstance(obj, LockManager):
         return obj
     else:
@@ -35,7 +35,7 @@ class MVPIndicatorProcessorBase(PillowProcessor):
     def process_change(self, pillow_instance, change):
         from corehq.apps.indicators.utils import get_namespaces
 
-        with lock_manager(self._get_lock(change)):
+        with _lock_manager(self._get_lock(change)):
             domain = _domain_for_change(change)
             doc_type = _doc_type_for_change(change)
             if self._should_process_change(domain, doc_type):
