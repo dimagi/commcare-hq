@@ -70,13 +70,13 @@ FormplayerFrontend.reqres.setHandler('clearMenu', function () {
 $(document).bind("ajaxStart", function(){
     var requestElements = $(".formplayer-request");
     for (var i = 0; i < requestElements.length; i++ ) {
-        requestElements[i].style.pointerEvents = 'none';
+        requestElements.css('pointer-events', 'none');
     }
     tfLoading();
 }).bind("ajaxStop", function() {
     var requestElements = $(".formplayer-request");
     for (var i = 0; i < requestElements.length; i++) {
-        requestElements[i].style.pointerEvents = 'auto';
+        requestElements.css('pointer-events', 'auto');
     }
     tfLoadingComplete();
 });
