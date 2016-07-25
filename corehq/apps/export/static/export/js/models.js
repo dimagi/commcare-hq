@@ -178,7 +178,7 @@ hqDefine('export/js/models.js', function () {
 
     TableConfiguration.prototype.useLabels = function(table) {
         _.each(table.columns(), function(column) {
-            if (column.isQuestion()) {
+            if (column.isQuestion() && !column.isUserDefined) {
                 column.label(column.item.label() || column.label());
             }
         });
@@ -186,7 +186,7 @@ hqDefine('export/js/models.js', function () {
 
     TableConfiguration.prototype.useIds = function(table) {
         _.each(table.columns(), function(column) {
-            if (column.isQuestion()) {
+            if (column.isQuestion() && !column.isUserDefined) {
                 column.label(column.item.readablePath() || column.label());
             }
         });
