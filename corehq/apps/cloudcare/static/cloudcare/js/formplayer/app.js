@@ -18,7 +18,7 @@ FormplayerFrontend.on("before:start", function () {
 
         regions: {
             main: "#menu-region",
-            breadcrumb: "#breadcrumb-region"
+            breadcrumb: "#breadcrumb-region",
         },
     });
 

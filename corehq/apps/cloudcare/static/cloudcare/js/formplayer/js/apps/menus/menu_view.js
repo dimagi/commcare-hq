@@ -174,9 +174,6 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 styles: this.options.styles,
                 tiles: this.options.tiles,
                 breadcrumbs: this.options.breadcrumbs,
-                breadcrumbClick: function(index) {
-                    debugger;
-                },
             };
         },
     });
