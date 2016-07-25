@@ -86,8 +86,7 @@ class UserLocMapTest(CommTrackTest):
             self.assertEqual(get_supply_point.call_count, 1)
 
 
-class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
-
+class TestUserBulkUpload(TestCase, DomainSubscriptionMixin): 
     def setUp(self):
         super(TestUserBulkUpload, self).setUp()
         delete_all_users()
@@ -192,3 +191,59 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             list([])
         )
         self.assertEqual(self.user.email, updated_user_spec['email'].lower())
+
+
+class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
+    def setUp(self):
+        super(TestUserBulkUploadStrongPassword, self).setUp()
+        delete_all_users()
+        self.domain_name = 'mydomain'
+        self.domain = Domain(name=self.domain_name)
+        self.domain.strong_mobile_passwords = True
+        self.domain.save()
+        self.user_specs = [{
+            u'username': u'tswift',
+            u'user_id': u'1989',
+            u'name': u'Taylor Swift',
+            u'language': None,
+            u'is_active': u'True',
+            u'phone-number': u'8675309',
+            u'password': 'TaylorSwift89!',
+            u'email': None
+        }]
+
+    def tearDown(self):
+        self.domain.delete()
+        super(TestUserBulkUploadStrongPassword, self).tearDown()
+
+    def test_duplicate_password(self):
+        user_spec = [{
+            u'username': u'thiddleston',
+            u'user_id': u'1990',
+            u'name': u'Tom Hiddleston',
+            u'language': None,
+            u'is_active': u'True',
+            u'phone-number': u'8675309',
+            u'password': 'TaylorSwift89!',
+            u'email': None
+        }]
+
+        rows = bulk_upload_async(
+            self.domain.name,
+            list(user_spec + self.user_specs),
+            list([]),
+            list([])
+        )['messages']['rows']
+        self.assertEqual(rows[0]['flag'], 'Provide a unique password for each mobile worker')
+
+    def test_weak_password(self):
+        updated_user_spec = deepcopy(self.user_specs[0])
+        updated_user_spec["password"] = '123'
+
+        rows = bulk_upload_async(
+            self.domain.name,
+            list([updated_user_spec]),
+            list([]),
+            list([])
+        )['messages']['rows']
+        self.assertEqual(rows[0]['flag'], 'Please provide a stronger password')

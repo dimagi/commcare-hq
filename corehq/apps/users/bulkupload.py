@@ -388,7 +388,7 @@ def users_with_duplicate_passwords(rows):
 
     for usernames in password_dict.values():
         if len(usernames) > 1:
-            ret.union(usernames)
+            ret = ret.union(usernames)
 
     return ret
 
@@ -479,7 +479,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                         user = CommCareUser.get_by_username(username)
 
                     if project.strong_mobile_passwords and is_password(password):
-                        if username in users_with_duplicate_passwords:
+                        if raw_username(username) in usernames_with_dupe_passwords:
                             raise UserUploadError(_("Provide a unique password for each mobile worker"))
 
                         try:
