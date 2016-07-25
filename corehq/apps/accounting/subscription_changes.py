@@ -200,9 +200,10 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
 
     @staticmethod
     def response_domain_security(domain, new_plan_version):
-        if domain.two_factor_auth or domain.secure_sessions:
+        if domain.two_factor_auth or domain.secure_sessions or domain.strong_mobile_passwords:
             domain.two_factor_auth = False
             domain.secure_sessions = False
+            domain.strong_mobile_passwords = False
             domain.save()
 
     @staticmethod
@@ -602,6 +603,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         two_factor = domain.two_factor_auth
         secure_sessions = domain.secure_sessions
+        strong_mobile_passwords = domain.strong_mobile_passwords
         msgs = []
         if secure_sessions:
             msgs.append(_("Your project has enabled a 30 minute session timeout setting. "
@@ -613,6 +615,10 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                           "plan you will lose the ability to enforce this requirement. "
                           "However, any web user who still wants to use two factor "
                           "authentication will be able to continue using it."))
+        if strong_mobile_passwords:
+            msgs.append(_("Your project currently requires all mobile workers to have "
+                          "strong passwords. By changing to a different plan, you will "
+                          "lose the ability to enforce these password requirements."))
         if msgs:
             return _fmt_alert(
                 _("The following security features will be affected if you select this plan:"),

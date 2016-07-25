@@ -769,6 +769,7 @@ class PrivacySecurityForm(forms.Form):
         self.helper[5] = twbscrispy.PrependedText('two_factor_auth', '')
         self.helper[6] = twbscrispy.PrependedText('strong_mobile_passwords', '')
         if not domain_has_privilege(domain, privileges.ADVANCED_DOMAIN_SECURITY):
+            self.helper.layout.pop(6)
             self.helper.layout.pop(5)
         if not HIPAA_COMPLIANCE_CHECKBOX.enabled(user_name):
             self.helper.layout.pop(4)
