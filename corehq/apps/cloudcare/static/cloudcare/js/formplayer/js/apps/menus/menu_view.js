@@ -181,6 +181,15 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     MenuList.BreadcrumbView = Marionette.ItemView.extend({
         tagName: "li",
         template: "#breadcrumb-item-template",
+        events: {
+            "click": "crumbClick",
+        },
+
+        crumbClick: function (e) {
+            e.preventDefault();
+            var crumbId = this.options.model.get('id');
+            FormplayerFrontend.trigger("breadcrumbSelect", crumbId);
+        },
     });
 
     MenuList.BreadcrumbListView = Marionette.CompositeView.extend({

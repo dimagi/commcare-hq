@@ -30,11 +30,11 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         showDetail: function (model) {
             SessionNavigate.MenuList.Controller.showDetail(model);
         },
-        listSessions: function() {
+        listSessions: function () {
             SessionNavigate.SessionList.Controller.listSessions();
         },
 
-        getIncompleteForm: function(sessionId) {
+        getIncompleteForm: function (sessionId) {
             FormplayerFrontend.request("getIncompleteForm", sessionId);
         },
     };
@@ -105,5 +105,13 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             controller: API,
         });
     });
+
+    FormplayerFrontend.on("breadcrumbSelect", function (index) {
+        var currentFragment = Backbone.history.getFragment();
+        var paramMap = Util.getSteps(currentFragment);
+        debugger;
+        var steps = paramMap.steps;
+    });
+
 
 });
