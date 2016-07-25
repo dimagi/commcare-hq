@@ -12,6 +12,31 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client, RedisClientErr
 from dimagi.utils.logging import notify_exception
 
 
+def retry_on_connection_failure(fn):
+    @wraps(fn)
+    def _inner(*args, **kwargs):
+        retry = kwargs.pop('retry', True)
+        try:
+            return fn(*args, **kwargs)
+        except db.utils.DatabaseError:
+            # we have to do this manually to avoid issues with
+            # open transactions and already closed connections
+            db.transaction.rollback()
+            # re raise the exception for additional error handling
+            raise
+        except (Psycopg2InterfaceError, DjangoInterfaceError):
+            # force closing the connection to prevent Django from trying to reuse it.
+            # http://www.tryolabs.com/Blog/2014/02/12/long-time-running-process-and-django-orm/
+            db.connection.close()
+            if retry:
+                _inner(retry=False, *args, **kwargs)
+            else:
+                # re raise the exception for additional error handling
+                raise
+
+    return _inner
+
+
 class GenericEnqueuingOperation(BaseCommand):
     """
     Implements a generic enqueuing operation.
@@ -104,28 +129,3 @@ class GenericEnqueuingOperation(BaseCommand):
     def validate_args(self, **options):
         """Validate the options passed at the command line."""
         pass
-
-
-def retry_on_connection_failure(fn):
-    @wraps(fn)
-    def _inner(*args, **kwargs):
-        retry = kwargs.pop('retry', True)
-        try:
-            return fn(*args, **kwargs)
-        except db.utils.DatabaseError:
-            # we have to do this manually to avoid issues with
-            # open transactions and already closed connections
-            db.transaction.rollback()
-            # re raise the exception for additional error handling
-            raise
-        except (Psycopg2InterfaceError, DjangoInterfaceError):
-            # force closing the connection to prevent Django from trying to reuse it.
-            # http://www.tryolabs.com/Blog/2014/02/12/long-time-running-process-and-django-orm/
-            db.connection.close()
-            if retry:
-                _inner(retry=False, *args, **kwargs)
-            else:
-                # re raise the exception for additional error handling
-                raise
-
-    return _inner
