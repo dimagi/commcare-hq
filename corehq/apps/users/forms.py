@@ -223,7 +223,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         if not self.user:
-            raise MyAccountInfoFormException("Expected to be passed a user kwarg")
+            raise UpdateMyAccountInfoForm.MyAccountInfoFormException("Expected to be passed a user kwarg")
 
         self.username = self.user.username
         api_key = kwargs.pop('api_key') if 'api_key' in kwargs else None
