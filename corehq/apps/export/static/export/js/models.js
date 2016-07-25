@@ -94,6 +94,18 @@ hqDefine('export/js/models.js', function () {
         return ko.mapping.toJS(this, ExportInstance.mapping);
     };
 
+    ExportInstance.prototype.addUserDefinedTableConfiguration = function(instance, e) {
+        e.preventDefault();
+        instance.tables.push(new UserDefinedTableConfiguration({
+            selected: true,
+            doc_type: 'TableConfiguration',
+            label: 'Sheet',
+            is_user_defined: true,
+            path: [],
+            columns: [],
+        }));
+    };
+
     ExportInstance.mapping = {
         include: [
             '_id',
@@ -109,7 +121,11 @@ hqDefine('export/js/models.js', function () {
         ],
         tables: {
             create: function(options) {
-                return new TableConfiguration(options.data);
+                if (options.data.is_user_defined) {
+                    return new UserDefinedTableConfiguration(options.data);
+                } else {
+                    return new TableConfiguration(options.data);
+                }
             },
         },
     };
@@ -171,7 +187,7 @@ hqDefine('export/js/models.js', function () {
     };
 
     TableConfiguration.mapping = {
-        include: ['name', 'path', 'columns', 'selected', 'label', 'is_deleted'],
+        include: ['name', 'path', 'columns', 'selected', 'label', 'is_deleted', 'doc_type', 'is_user_defined'],
         columns: {
             create: function(options) {
                 if (options.data.doc_type === 'UserDefinedExportColumn') {
@@ -186,6 +202,19 @@ hqDefine('export/js/models.js', function () {
                 return new PathNode(options.data);
             },
         },
+    };
+
+    var UserDefinedTableConfiguration = function(tableJSON) {
+        var self = this;
+        ko.mapping.fromJS(tableJSON, TableConfiguration.mapping, self);
+        self.customPathString = ko.observable(utils.readablePath(self.path()));
+        self.showAdvanced = ko.observable(false);
+        self.customPathString.subscribe(self.customPathToNodes.bind(self));
+    };
+    UserDefinedTableConfiguration.prototype = Object.create(TableConfiguration.prototype);
+
+    UserDefinedTableConfiguration.prototype.customPathToNodes = function() {
+        this.path(utils.customPathToNodes(this.customPathString()));
     };
 
     var ExportColumn = function(columnJSON) {

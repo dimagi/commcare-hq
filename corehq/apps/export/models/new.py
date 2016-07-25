@@ -297,6 +297,7 @@ class TableConfiguration(DocumentSchema):
     columns = ListProperty(ExportColumn)
     selected = BooleanProperty(default=False)
     is_deleted = BooleanProperty(default=False)
+    is_user_defined = BooleanProperty(default=False)
 
     def __hash__(self):
         return hash(tuple(self.path))
