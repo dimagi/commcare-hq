@@ -341,6 +341,13 @@ SYNC_ALL_LOCATIONS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+FLAT_LOCATION_FIXTURE = StaticToggle(
+    'flat_location_fixture',
+    'Sync the location fixture in a flat format.',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
 EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     'extension_sync',
     'Enable extension syncing',
@@ -637,8 +644,8 @@ HSPH_HACK = StaticToggle(
 
 USE_FORMPLAYER_FRONTEND = StaticToggle(
     'use_formplayer_frontend',
-    'Use the new formplayer frontend',
-    TAG_ONE_OFF,
+    'Use New CloudCare',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
 

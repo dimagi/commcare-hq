@@ -10,7 +10,7 @@ from casexml.apps.phone.data_providers.case.clean_owners import pop_ids
 from casexml.apps.phone.exceptions import InvalidDomainError, InvalidOwnerIdError
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
-from corehq.form_processor.tests import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 
 @override_settings(TESTS_SHOULD_TRACK_CLEANLINESS=None)

@@ -2,7 +2,7 @@
 import doctest
 from django.test import SimpleTestCase
 import re
-from corehq.apps.app_manager.tests import TestXmlMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 import corehq.apps.app_manager.xform_builder
 

@@ -20,7 +20,7 @@ class FakePillow(ConstructedPillow):
         )
 
 
-@override_settings(PILLOWTOPS={'test': ['pillowtop.tests.FakePillow']})
+@override_settings(PILLOWTOPS={'test': ['pillowtop.tests.test_import_pillows.FakePillow']})
 class PillowImportTestCase(SimpleTestCase):
 
     def test_get_all_pillow_classes(self):
@@ -52,8 +52,8 @@ PILLOWTOPS_OVERRIDE = {
     'test': [
         {
             'name': 'FakeConstructedPillowName',
-            'class': 'pillowtop.tests.FakeConstructedPillow',
-            'instance': 'pillowtop.tests.make_fake_pillow'
+            'class': 'pillowtop.tests.test_import_pillows.FakeConstructedPillow',
+            'instance': 'pillowtop.tests.test_import_pillows.make_fake_pillow'
         }
     ]
 }

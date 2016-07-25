@@ -527,7 +527,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
 
     def _get_start_param(self, bundle):
         try:
-            start = int(bundle.request.GET.get('start', 0))
+            start = int(bundle.request.GET.get('offset', 0))
             if start < 0:
                 raise ValueError
         except (ValueError, TypeError):
@@ -550,7 +550,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         if total_records > start + limit:
             start += limit
             new_get_params = get_query_dict.copy()
-            new_get_params["start"] = start
+            new_get_params["offset"] = start
             # limit has not changed, but it may not have been present in get params before.
             new_get_params["limit"] = limit
             return reverse('api_dispatch_detail', kwargs=dict(
@@ -629,8 +629,8 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         uri = super(ConfigurableReportDataResource, self).get_resource_uri(bundle_or_obj, url_name)
         if bundle_or_obj is not None and uri:
             get_params = get_obj(bundle_or_obj).get_params.copy()
-            if "start" not in get_params:
-                get_params["start"] = 0
+            if "offset" not in get_params:
+                get_params["offset"] = 0
             if "limit" not in get_params:
                 get_params["limit"] = self.LIMIT_DEFAULT
             uri += "?{}".format(get_params.urlencode())
@@ -641,21 +641,34 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         detail_allowed_methods = ["get"]
 
 
+class DoesNothingPaginator(Paginator):
+    def page(self):
+        return {
+            self.collection_name: self.objects,
+            "meta": {'total_count': self.get_count()}
+        }
+
+
 class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
+    title = fields.CharField(readonly=True, attribute="title", null=True)
     filters = fields.ListField(readonly=True)
     columns = fields.ListField(readonly=True)
 
     def dehydrate_filters(self, bundle):
         obj_filters = bundle.obj.filters
         return [{
+            "type": f["type"],
             "datatype": f["datatype"],
             "slug": f["slug"]
         } for f in obj_filters]
 
     def dehydrate_columns(self, bundle):
         obj_columns = bundle.obj.columns
-        return [c['column_id'] for c in obj_columns]
+        return [{
+            "column_id": c['column_id'],
+            "display": c['display'],
+        } for c in obj_columns]
 
     def obj_get(self, bundle, **kwargs):
         domain = kwargs['domain']
@@ -666,6 +679,11 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
             raise NotFound(e.message)
         return report_configuration
 
+    def obj_get_list(self, bundle, **kwargs):
+        domain = kwargs['domain']
+        print domain
+        return ReportConfiguration.by_domain(domain)
+
     def detail_uri_kwargs(self, bundle_or_obj):
         return {
             'domain': get_obj(bundle_or_obj).domain,
@@ -673,8 +691,9 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
         }
 
     class Meta(CustomResourceMeta):
-        list_allowed_methods = []
+        list_allowed_methods = ["get"]
         detail_allowed_methods = ["get"]
+        paginator_class = DoesNothingPaginator
 
 
 UserDomain = namedtuple('UserDomain', 'domain_name project_name')

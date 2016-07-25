@@ -148,15 +148,16 @@ class MonthlyPerformanceSummaryTests(SetupProjectPerformanceMixin, TestCase):
 
     def test_delta_performing_additional_user(self):
         """
-        delta_performing() should return 1 when there is one more performing user
+        delta_high_performing() should return 1 when there is one more performing user
         """
-        self.assertEqual(self.month.delta_performing, 1)
+        self.assertEqual(self.month.delta_high_performing, 1)
 
     def test_delta_performing_no_user(self):
         """
-        delta_performing() should return this month's performing user1 when there is no summary from previous month
+        delta_high_performing() should return this month's
+        performing user1 when there is no summary from previous month
         """
-        self.assertEqual(self.prev_month.delta_performing, 1)
+        self.assertEqual(self.prev_month.delta_high_performing, 1)
 
     def test_get_all_user_stubs(self):
         """
