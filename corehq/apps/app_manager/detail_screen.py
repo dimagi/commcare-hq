@@ -400,6 +400,12 @@ class Invisible(HideShortColumn):
             header = super(Invisible, self).header
         return header
 
+    @property
+    def locale_id(self):
+        return self.id_strings.invisible_column_header_locale(
+            self.module, self.detail_type, self.column
+        )
+
 
 @register_format_type('filter')
 class Filter(HideShortColumn):

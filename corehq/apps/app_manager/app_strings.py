@@ -93,9 +93,9 @@ def _create_custom_app_strings(app, lang, for_default=False):
             if detail.sort_elements:
                 sort_only, sort_columns = get_sort_and_sort_only_columns(detail, detail.sort_elements)
                 for field, sort_element, order in sort_only:
-                    if bool(sort_element.header):
+                    if bool(sort_element.display):
                         column = create_temp_sort_column(sort_element, order)
-                        yield id_strings.detail_column_header_locale(module, detail_type, column), trans(column.header)
+                        yield id_strings.invisible_column_header_locale(module, detail_type, column), trans(column.header)
 
             for tab in detail.get_tabs():
                 yield id_strings.detail_tab_title_locale(module, detail_type, tab), trans(tab.header)

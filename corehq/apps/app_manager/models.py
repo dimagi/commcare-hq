@@ -1734,7 +1734,7 @@ class SortElement(IndexedSchema):
     field = StringProperty()
     type = StringProperty()
     direction = StringProperty()
-    header = DictProperty()
+    display = DictProperty()
 
 
 class CaseListLookupMixin(DocumentSchema):

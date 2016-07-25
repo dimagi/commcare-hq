@@ -469,7 +469,7 @@ def create_temp_sort_column(sort_element, order):
         model='case',
         field=sort_element.field,
         format='invisible',
-        header=sort_element.header,
+        header=sort_element.display,
     )
     col._i = order
     return col
