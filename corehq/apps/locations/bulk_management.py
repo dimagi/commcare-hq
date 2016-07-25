@@ -133,7 +133,7 @@ class LocationStub(object):
         old_version = old_collection.locations_by_id[self.location_id]
         for attr in ['name', 'site_code', 'location_type', 'parent_code',
                      'latitude', 'longitude', 'external_id']:
-            if getattr(old_version, attr, None) != getattr(self, attr, None)
+            if getattr(old_version, attr, None) != getattr(self, attr, None):
                 return True
 
         return False
