@@ -134,12 +134,12 @@ class MyAccountSettingsView(BaseMyAccountView):
         from corehq.apps.users.forms import UpdateMyAccountInfoForm
         if self.request.method == 'POST':
             form = UpdateMyAccountInfoForm(
-                self.request.POST, username=self.request.couch_user.username,
+                self.request.POST, user=self.request.couch_user,
                 api_key=api_key
             )
         else:
             form = UpdateMyAccountInfoForm(
-                username=self.request.couch_user.username,
+                user=self.request.couch_user,
                 api_key=api_key
             )
         try:
