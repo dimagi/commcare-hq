@@ -1,5 +1,7 @@
 from StringIO import StringIO
 import logging
+from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
@@ -20,6 +22,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.commtrack.util import submit_mapping_case_block, get_supply_point_and_location
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.groups.models import Group
+from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.dbaccessors.all_commcare_users import get_all_commcare_users_by_domain
@@ -378,6 +381,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
     can_access_locations = domain_has_privilege(domain, privileges.LOCATIONS)
     if can_access_locations:
         location_cache = SiteCodeToLocationCache(domain)
+    project = Domain.get_by_name(domain)
     try:
         for row in user_specs:
             _set_progress(current)
@@ -447,6 +451,18 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                             if c != "*":
                                 return True
                         return False
+
+                    if project.strong_mobile_passwords and is_password(password):
+                        try:
+                            clean_password(password)
+                        except forms.ValidationError:
+                            if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
+                                msg = _("Mobile Worker passwords must be 8 "
+                                    "characters long with at least 1 capital "
+                                    "letter, 1 special character and 1 number")
+                            else:
+                                msg = _("Please provide a stronger password")
+                            raise UserUploadError(msg)
 
                     if user:
                         if user.domain != domain:
