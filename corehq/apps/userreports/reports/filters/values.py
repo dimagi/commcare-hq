@@ -12,7 +12,7 @@ from sqlagg.filters import (
     LTEFilter,
     LTFilter,
     NOTEQFilter,
-)
+    RawFilter)
 from corehq.apps.reports.util import (
     get_INFilter_bindparams,
     get_INFilter_element_bindparam,
@@ -126,6 +126,37 @@ class NumericFilterValue(FilterValue):
         return {
             self.filter.slug: self.value["operand"],
         }
+
+
+class AutoFilterValue(FilterValue):
+
+    def is_null(self):
+        return self.value is None
+
+    def is_list(self):
+        return isinstance(self.value, list)
+
+    def to_sql_filter(self):
+        if self.is_null():
+            return ISNULLFilter(self.filter.field)
+        elif self.is_list():
+            return INFilter(
+                self.filter.field,
+                get_INFilter_bindparams(self.filter.slug, self.value)
+            )
+        else:
+            return EQFilter(self.filter.field, self.filter.slug)
+
+    def to_sql_values(self):
+        if self.is_null():
+            return {}
+        elif self.is_list():
+            return {
+                get_INFilter_element_bindparam(self.filter.slug, i): v
+                for i, v in enumerate(self.value)
+            }
+        else:
+            return {self.filter.slug: self.value}
 
 
 class ChoiceListFilterValue(FilterValue):
