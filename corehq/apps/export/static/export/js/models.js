@@ -102,7 +102,24 @@ hqDefine('export/js/models.js', function () {
             label: 'Sheet',
             is_user_defined: true,
             path: [],
-            columns: [],
+            columns: [
+                {
+                    doc_type: 'RowNumberColumn',
+                    tags: ['row'],
+                    item: {
+                        doc_type: 'ExportItem',
+                        path: [{
+                            doc_type: 'PathNode',
+                            name: 'number',
+                        }]
+                    },
+                    selected: true,
+                    is_advanced: false,
+                    label: 'number',
+                    deid_transform: null,
+                    repeat: null,
+                }
+            ],
         }));
     };
 
@@ -175,6 +192,12 @@ hqDefine('export/js/models.js', function () {
         });
     };
 
+    TableConfiguration.prototype.getColumn = function(path) {
+        return _.find(this.columns(), function(column) {
+            return utils.readablePath(column.item.path()) === path
+        });
+    }
+
     TableConfiguration.prototype.addUserDefinedExportColumn = function(table, e) {
         e.preventDefault();
         table.columns.push(new UserDefinedExportColumn({
@@ -214,7 +237,17 @@ hqDefine('export/js/models.js', function () {
     UserDefinedTableConfiguration.prototype = Object.create(TableConfiguration.prototype);
 
     UserDefinedTableConfiguration.prototype.customPathToNodes = function() {
+        var rowColumn,
+            nestedRepeatCount;
         this.path(utils.customPathToNodes(this.customPathString()));
+
+        // Update the rowColumn's repeat count by counting the number of
+        // repeats in the table path
+        nestedRepeatCount = _.filter(this.path(), function(node) { return node.is_repeat() }).length;
+        rowColumn = this.getColumn('number');
+        if (rowColumn) {
+            rowColumn.repeat(nestedRepeatCount);
+        }
     };
 
     var ExportColumn = function(columnJSON) {
