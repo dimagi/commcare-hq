@@ -766,8 +766,12 @@ class SelfRegistrationForm(forms.Form):
         if 'domain' not in kwargs:
             raise Exception('Expected kwargs: domain')
         self.domain = kwargs.pop('domain')
+        require_email = kwargs.pop('require_email', False)
 
         super(SelfRegistrationForm, self).__init__(*args, **kwargs)
+
+        if require_email:
+            self.fields['email'].required = True
 
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
@@ -779,6 +783,7 @@ class SelfRegistrationForm(forms.Form):
                 crispy.Field('username'),
                 crispy.Field('password'),
                 crispy.Field('password2'),
+                crispy.Field('email'),
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -803,6 +808,10 @@ class SelfRegistrationForm(forms.Form):
         required=True,
         label=ugettext_lazy('Re-enter Password'),
         widget=PasswordInput(),
+    )
+    email = forms.EmailField(
+        required=False,
+        label=ugettext_lazy('Email address'),
     )
 
     def clean_username(self):
