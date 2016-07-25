@@ -34,7 +34,8 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             });
         },
 
-        showDetail: function myself (model, index) {
+        showDetail: function (model, index) {
+            var self = this;
             var detailObjects = model.options.model.get('details');
             var detailObject = detailObjects[index];
             var headers = detailObject.headers;
@@ -54,19 +55,13 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 collection: detailCollection,
             });
 
-            var tabModel = [];
-            for (var j = 0; j < detailObjects.length; j++) {
-                var tabObject = {};
-                tabObject.title = detailObjects[j].title;
-                tabObject.id = j;
-                tabModel.push(tabObject);
-            }
+            var tabModels = _.map(detailObjects, function(detail, index) { return { title: detail.title, id: index }; });
             var tabCollection = new Backbone.Collection();
-            tabCollection.reset(tabModel);
+            tabCollection.reset(tabModels);
             var tabListView = new MenuList.DetailTabListView({
                 collection: tabCollection,
                 showDetail: function(index) {
-                    myself(model, index);
+                    self.showDetail(model, index);
                 },
             });
 
