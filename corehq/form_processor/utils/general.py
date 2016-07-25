@@ -22,10 +22,14 @@ def set_local_domain_sql_backend_override(domain):
 
 
 def should_use_sql_backend(domain_object_or_name):
-    from corehq.apps.domain.models import Domain
     if settings.UNIT_TESTING:
         return _should_use_sql_backend_in_tests(domain_object_or_name)
 
+    return should_use_sql_backend_in_prod(domain_object_or_name)
+
+
+def should_use_sql_backend_in_prod(domain_object_or_name):
+    from corehq.apps.domain.models import Domain
     # TODO: remove toggle once all domains have been migrated
     if isinstance(domain_object_or_name, Domain):
         domain_name = domain_object_or_name.name
