@@ -11,7 +11,7 @@ from pillow_retry.models import PillowError
 from pillow_retry.tasks import process_pillow_retry
 from pillowtop import get_all_pillow_configs
 from pillowtop.feed.interface import Change
-from pillowtop.tests import make_fake_constructed_pillow
+from pillowtop.tests.utils import make_fake_constructed_pillow
 
 
 def get_ex_tb(message, ex_class=None):
