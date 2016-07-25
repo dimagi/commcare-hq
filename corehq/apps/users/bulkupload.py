@@ -375,7 +375,7 @@ def users_with_duplicate_passwords(rows):
 
     for row in rows:
         username = row.get('username')
-        password = row.get('password')
+        password = unicode(row.get('password'))
         if not is_password(password):
             continue
 
