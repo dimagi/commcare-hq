@@ -3,7 +3,6 @@ from django.test import TestCase
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.util import format_username
 from corehq.util.dates import iso_string_to_date
-from corehq.util.test_utils import softer_assert
 from couchforms.models import XFormInstance
 from corehq.apps.users.models import CouchUser, WebUser, CommCareUser
 from dimagi.utils.dates import force_to_datetime
@@ -93,16 +92,13 @@ class CreateTestCase(TestCase):
         django_user = couch_user.get_django_user()
         self.assertEqual(couch_user.user_id, CouchUser.from_django_user(django_user).user_id)
 
-    @softer_assert
     def testCreateUserFromRegistration(self):
         self._runCreateUserFromRegistrationTest()
 
-    @softer_assert
     def testCreateUserFromOldRegistration(self):
         self.xform.xmlns = USER_REGISTRATION_XMLNS_DEPRECATED
         self._runCreateUserFromRegistrationTest()
 
-    @softer_assert
     def testCreateDuplicateUsersFromRegistration(self):
         """
         use case: chw on phone registers a username/password/domain triple somewhere
@@ -119,7 +115,6 @@ class CreateTestCase(TestCase):
         self.assertEqual("test_reg", first_user.username.split("@")[0])
         self.assertEqual("test_reg2", second_user.username.split("@")[0])
 
-    @softer_assert
     def testEditUserFromRegistration(self):
         """
         Edit a user via registration XML
@@ -152,7 +147,6 @@ class CreateTestCase(TestCase):
         self.assertNotEqual(original_django_user.username, updated_django_user.username)
         self.assertNotEqual(original_django_user.password, updated_django_user.password)
 
-    @softer_assert
     def testEditUserFromRegistrationWithConflicts(self):
         original_user, created = CommCareUser.create_or_update_from_xform(self.xform)
         self.assertEqual("test_reg", original_user.username.split("@")[0])
