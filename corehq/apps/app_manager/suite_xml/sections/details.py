@@ -361,8 +361,10 @@ def get_detail_column_infos(detail, include_sort):
     if not include_sort:
         return [DetailColumnInfo(column, None, None) for column in detail.get_columns()]
 
-       columns = []
+    sort_only_elements, sort_columns = get_sort_elements(detail)
+    columns = []
     for column in detail.get_columns():
+    	sort_element = sort_columns.pop(column.field, None)
         columns.append(DetailColumnInfo(column, sort_element, order))
 
     for element in get_sort_only_elements(detail):
@@ -374,15 +376,26 @@ def get_detail_column_infos(detail, include_sort):
 SortOnlyElement = namedtuple("SortOnlyElement", "field, sort_element, order")
 
 
-def get_sort_only_elements(detail):
+def get_sort_elements(detail):
+    """needs a good docstring - also not sure about the function name"""
     if detail.sort_elements:
         sort_elements = detail.sort_elements
     else:
         sort_elements = get_default_sort_elements(detail)
     
 	sort_elements = OrderedDict((s.field, (s, i + 1)) for i, s in enumerate(sort_elements))
-	[sort_elements.pop(column.field, None) for column in detail.get_columns()]
-	return [SortOnlyElement(field, element, order) for field, (element, order) in sort_elements.items()]:
+	
+    sort_columns = {}
+    for column in detail.get_columns():
+        sort_element, order = sort_elements.pop(column.field, (None, None))
+        if sort_element:
+            sort_columns[column.field] = sort_element
+	
+	sort_only_elements = [
+	    SortOnlyElement(field, element, order) 
+	    for field, (element, order) in sort_elements.items()
+	]
+	return sort_only_elemets, sort_columns
 
 
 def get_instances_for_module(app, module, additional_xpaths=None):
