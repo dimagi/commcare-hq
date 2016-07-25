@@ -275,7 +275,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
                 ugettext_lazy("Basic"),
                 *basic_fields
             ),
-            cb3_layout.Fieldset(
+            (hqcrispy.FieldsetAccordionGroup if self.collapse_other_options else cb3_layout.Fieldset)(
                 ugettext_lazy("Other Options"),
                 hqcrispy.Field('language'),
                 cb3_layout.Div(*api_key_controls),
@@ -292,6 +292,10 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     @property
     def set_email_opt_out(self):
         return self.user.is_web_user()
+
+    @property
+    def collapse_other_options(self):
+        return self.user.is_commcare_user()
 
     @property
     def direct_properties(self):
