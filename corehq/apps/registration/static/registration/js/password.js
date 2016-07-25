@@ -29,5 +29,5 @@
     };
 
     var passwordModel = new PasswordModel();
-    $('fieldset').koApplyBindings(passwordModel);
+    $('.check-password').koApplyBindings(passwordModel);
 })();
