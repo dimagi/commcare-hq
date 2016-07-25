@@ -164,31 +164,31 @@ class NumericFilter(BaseFilter):
         return None
 
 
-class AutoFilter(BaseFilter):
-    template = "reports_core/filters/auto_filter.html"
+class PreFilter(BaseFilter):
+    template = "reports_core/filters/pre_filter.html"
 
-    def __init__(self, name, datatype, auto_value):
+    def __init__(self, name, datatype, pre_value):
         self.css_id = self.label = name  # Will not be rendered, but we need to duck-type filters that are.
-        super(AutoFilter, self).__init__(name=name)
+        super(PreFilter, self).__init__(name=name)
         self.datatype = datatype
-        self.auto_value = auto_value
+        self.pre_value = pre_value
 
     def value(self):
         return self.default_value()
 
     def default_value(self):
-        if self.auto_value is None:
+        if self.pre_value is None:
             return None
-        elif isinstance(self.auto_value, list) and self.datatype != 'array':
+        elif isinstance(self.pre_value, list) and self.datatype != 'array':
             # We are assuming that `auto_value` is a list of items of type `datatype`. See
             # `transform_from_datatype()` for list of recognised data types.
             #
             # If `auto_value` is a list, and `datatype` == "array", we assume that the user meant the data type to
             # refer to `auto_value` itself (handled by the `else` clause below) and not the data type of the items
             # inside it. (i.e. We assume that `auto_value` is not an array of arrays.)
-            return [transform_from_datatype(self.datatype)(v) for v in self.auto_value]
+            return [transform_from_datatype(self.datatype)(v) for v in self.pre_value]
         else:
-            return transform_from_datatype(self.datatype)(self.auto_value)
+            return transform_from_datatype(self.datatype)(self.pre_value)
 
 
 Choice = namedtuple('Choice', ['value', 'display'])

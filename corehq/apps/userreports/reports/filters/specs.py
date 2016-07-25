@@ -9,7 +9,7 @@ from jsonobject.base import DefaultProperty
 from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.reports.filters.choice_providers import DATA_SOURCE_COLUMN
 from corehq.apps.userreports.reports.filters.values import (
-    AutoFilterValue,
+    PreFilterValue,
     ChoiceListFilterValue,
     DateFilterValue,
     NumericFilterValue,
@@ -34,7 +34,7 @@ class ReportFilter(JsonObject):
         return {
             'date': DateFilterValue,
             'numeric': NumericFilterValue,
-            'auto': AutoFilterValue,
+            'pre': PreFilterValue,
             'choice_list': ChoiceListFilterValue,
             'dynamic_choice_list': ChoiceListFilterValue,
         }[self.type](self, value)
@@ -53,7 +53,7 @@ class FilterSpec(JsonObject):
     This is the spec for a report filter - a thing that should show up as a UI filter element
     in a report (like a date picker or a select list).
     """
-    type = StringProperty(required=True, choices=['date', 'numeric', 'choice_list', 'dynamic_choice_list', 'auto'])
+    type = StringProperty(required=True, choices=['date', 'numeric', 'pre', 'choice_list', 'dynamic_choice_list'])
     # this shows up as the ID in the filter HTML.
     slug = StringProperty(required=True)
     field = StringProperty(required=True)  # this is the actual column that is queried
@@ -89,9 +89,9 @@ class DynamicChoiceListFilterSpec(FilterSpec):
         return []
 
 
-class AutoFilterSpec(FilterSpec):
-    type = TypeProperty('auto')
-    auto_value = StringProperty(required=True)
+class PreFilterSpec(FilterSpec):
+    type = TypeProperty('pre')
+    pre_value = StringProperty(required=True)
 
 
 class NumericFilterSpec(FilterSpec):

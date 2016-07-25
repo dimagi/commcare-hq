@@ -128,7 +128,7 @@ class NumericFilterValue(FilterValue):
         }
 
 
-class AutoFilterValue(FilterValue):
+class PreFilterValue(FilterValue):
 
     def is_null(self):
         return self.value is None
