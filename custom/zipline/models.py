@@ -9,7 +9,7 @@ class EmergencyOrderStatusUpdate(models.Model):
     STATUS_RECEIVED = 'RECEIVED'
     STATUS_REJECTED = 'REJECTED'
     STATUS_APPROVED = 'APPROVED'
-    STATUS_CANCELED = 'CANCELED'
+    STATUS_CANCELLED = 'CANCELLED'
     STATUS_DISPATCHED = 'DISPATCHED'
     STATUS_DELIVERED = 'DELIVERED'
     STATUS_CONFIRMED = 'CONFIRMED'
@@ -136,8 +136,8 @@ class EmergencyOrder(models.Model):
     approved_status = models.ForeignKey('EmergencyOrderStatusUpdate', on_delete=models.PROTECT,
         related_name='+', null=True)
 
-    # A pointer to the EmergencyOrderStatusUpdate record representing the canceled status update
-    canceled_status = models.ForeignKey('EmergencyOrderStatusUpdate', on_delete=models.PROTECT,
+    # A pointer to the EmergencyOrderStatusUpdate record representing the cancelled status update
+    cancelled_status = models.ForeignKey('EmergencyOrderStatusUpdate', on_delete=models.PROTECT,
         related_name='+', null=True)
 
     # A pointer to the EmergencyOrderStatusUpdate record representing the dispatched status
