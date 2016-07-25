@@ -361,6 +361,38 @@ def get_location_from_site_code(site_code, location_cache):
         )
 
 
+def is_password(password):
+    if not password:
+        return False
+    for c in password:
+        if c != "*":
+            return True
+    return False
+
+
+def users_with_duplicate_passwords(rows):
+    password_dict = dict()
+
+    for row in rows:
+        username = row.get('username')
+        password = row.get('password')
+        if not is_password(password):
+            continue
+
+        if password_dict.get(password):
+            password_dict[password].add(username)
+        else:
+            password_dict[password] = {username}
+
+    ret = set()
+
+    for usernames in password_dict.values():
+        if len(usernames) > 1:
+            ret.union(usernames)
+
+    return ret
+
+
 def create_or_update_users_and_groups(domain, user_specs, group_specs, location_specs, task=None):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
     custom_data_validator = UserFieldsView.get_validator(domain)
@@ -382,6 +414,8 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
     if can_access_locations:
         location_cache = SiteCodeToLocationCache(domain)
     project = Domain.get_by_name(domain)
+    usernames_with_dupe_passwords = users_with_duplicate_passwords(user_specs)
+
     try:
         for row in user_specs:
             _set_progress(current)
@@ -444,15 +478,10 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                     else:
                         user = CommCareUser.get_by_username(username)
 
-                    def is_password(password):
-                        if not password:
-                            return False
-                        for c in password:
-                            if c != "*":
-                                return True
-                        return False
-
                     if project.strong_mobile_passwords and is_password(password):
+                        if username in users_with_duplicate_passwords:
+                            raise UserUploadError(_("Provide a unique password for each mobile worker"))
+
                         try:
                             clean_password(password)
                         except forms.ValidationError:
