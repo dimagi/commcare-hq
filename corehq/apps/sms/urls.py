@@ -27,7 +27,6 @@ from corehq.messaging.smsbackends.telerivet.urls import domain_specific as teler
 
 urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^$', 'default', name='sms_default'),
-    url(r'^post/?$', 'post', name='sms_post'),
     url(r'^send_to_recipients/$', 'send_to_recipients', name='send_to_recipients'),
     url(r'^compose/$', ComposeMessageView.as_view(), name=ComposeMessageView.urlname),
     url(r'^message_test/(?P<phone_number>\d+)/$',

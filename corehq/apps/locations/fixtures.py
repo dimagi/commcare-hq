@@ -1,3 +1,4 @@
+from itertools import groupby
 from collections import defaultdict
 from xml.etree.ElementTree import Element
 from casexml.apps.phone.models import OTARestoreUser
@@ -204,17 +205,15 @@ def _valid_parent_type(location):
 
 
 def _append_children(node, location_db, locations):
-    by_type = _group_by_type(locations)
-    for type, locs in by_type.items():
+    for type, locs in _group_by_type(locations):
         locs = sorted(locs, key=lambda loc: loc.name)
         node.append(_types_to_fixture(location_db, type, locs))
 
 
 def _group_by_type(locations):
-    by_type = defaultdict(lambda: [])
-    for loc in locations:
-        by_type[loc.location_type].append(loc)
-    return by_type
+    key = lambda loc: (loc.location_type.code, loc.location_type)
+    for (code, type), locs in groupby(sorted(locations, key=key), key=key):
+        yield type, list(locs)
 
 
 def _types_to_fixture(location_db, type, locs):

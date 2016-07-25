@@ -136,6 +136,6 @@ def get_first_claim(domain, user_id, case_id):
     identifier = DEFAULT_CASE_INDEX_IDENTIFIERS[CASE_INDEX_EXTENSION]
     try:
         return next((c for c in case.get_subcases(identifier)
-                     if c.type == CLAIM_CASE_TYPE and c.owner_id == user_id))
+                     if c.type == CLAIM_CASE_TYPE and c.owner_id == user_id and c.closed is False))
     except StopIteration:
         return None
