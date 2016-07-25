@@ -24,6 +24,14 @@ describe('Export Utility functions', function() {
             ];
             assert.equal(utils.readablePath(nodes), 'form.photo');
         });
+
+        it('Should convert an array of PathNode to a dot path with repeats', function() {
+            var nodes = [
+                new models.PathNode({ name: 'form', is_repeat: false, doc_type: 'PathNode' }),
+                new models.PathNode({ name: 'repeat', is_repeat: true, doc_type: 'PathNode' }),
+            ];
+            assert.equal(utils.readablePath(nodes), 'form.repeat[]');
+        });
     });
 
     describe('#customPathToNodes', function() {
@@ -39,6 +47,20 @@ describe('Export Utility functions', function() {
 
             assert.equal(nodes[1].name(), 'photo');
             assert.isFalse(nodes[1].is_repeat());
+        });
+
+        it('Should convert a string path to PathNodes with repeats', function () {
+            var customPath = 'form.repeat[]';
+            var nodes = utils.customPathToNodes(customPath);
+
+            assert.equal(nodes.length, 2);
+            assert.isTrue(_.all(nodes, function(n) { return n instanceof models.PathNode; }));
+
+            assert.equal(nodes[0].name(), 'form');
+            assert.isFalse(nodes[0].is_repeat());
+
+            assert.equal(nodes[1].name(), 'repeat');
+            assert.isTrue(nodes[1].is_repeat());
         });
     });
 });
