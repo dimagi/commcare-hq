@@ -94,6 +94,15 @@ hqDefine('export/js/models.js', function () {
         return ko.mapping.toJS(this, ExportInstance.mapping);
     };
 
+    /**
+     * addUserDefinedTableConfiguration
+     *
+     * This will add a new table to the export configuration and seed it with
+     * one column, row number.
+     *
+     * @param {ExportInstance} instance
+     * @param {Object} e - The window's click event
+     */
     ExportInstance.prototype.addUserDefinedTableConfiguration = function(instance, e) {
         e.preventDefault();
         instance.tables.push(new UserDefinedTableConfiguration({
@@ -227,6 +236,23 @@ hqDefine('export/js/models.js', function () {
         },
     };
 
+    /**
+     * UserDefinedTableConfiguration
+     * @class
+     *
+     * This represents a table configuration that has been defined by the user. It
+     * is very similar to a TableConfiguration except that the user defines the
+     * path to where the new sheet should be.
+     *
+     * The customPathString for a table should always end in [] since a new export
+     * table should be an array.
+     *
+     * When specifying questions/properties in a user defined table, you'll need
+     * to include the base table path in the property. For example:
+     *
+     * table path: form.repeat[]
+     * question path: form.repeat[].question1
+     */
     var UserDefinedTableConfiguration = function(tableJSON) {
         var self = this;
         ko.mapping.fromJS(tableJSON, TableConfiguration.mapping, self);
