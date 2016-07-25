@@ -194,6 +194,7 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
         user.domain_membership = DomainMembership(domain=domain)
         doc = user._doc
         doc['username.exact'] = doc['username']
+        doc['base_username'] = username
         UserESFake.save_doc(doc)
         return user
 
@@ -205,6 +206,7 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
         user.domain_memberships = [DomainMembership(domain=cls.domain)]
         doc = user._doc
         doc['username.exact'] = doc['username']
+        doc['base_username'] = email
         UserESFake.save_doc(doc)
         return user
 

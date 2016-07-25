@@ -41,7 +41,7 @@ class ConsumptionHelper(object):
 
     def get_monthly_consumption(self):
         if self.daily_consumption is not None:
-            return self.daily_consumption * Decimal(DAYS_IN_MONTH)
+            return Decimal(self.daily_consumption) * Decimal(DAYS_IN_MONTH)
         else:
             return self.get_default_monthly_consumption()
 
