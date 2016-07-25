@@ -885,7 +885,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             COMMCARE_USER_TYPE_DEMO
         )
 
-        session_data = copy.deepcopy(dict(self.user_data))
+        session_data = self.to_json().get('user_data')
 
         if self.is_commcare_user() and self.is_demo_user:
             session_data.update({
@@ -1443,6 +1443,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @classmethod
     def create_or_update_from_xform(cls, xform):
+        _assert = soft_assert('@'.join(['droberts', 'dimagi.com']))
+        _assert(False, 'someone actually called CommCareUser.create_or_update_from_xform')
         # if we have 1,000,000 users with the same name in a domain
         # then we have bigger problems then duplicate user accounts
         MAX_DUPLICATE_USERS = 1000000
@@ -1922,7 +1924,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
     def get_usercase_id(self):
-        return CaseAccessors(self.domain).get_case_by_domain_hq_user_id(self._id, USERCASE_TYPE)
+        case = CaseAccessors(self.domain).get_case_by_domain_hq_user_id(self._id, USERCASE_TYPE)
+        return case.case_id if case else None
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):

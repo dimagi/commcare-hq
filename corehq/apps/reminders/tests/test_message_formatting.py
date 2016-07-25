@@ -186,3 +186,11 @@ class MessageTestCase(TestCase):
             expected_result['case']['owner'] = self.get_expected_template_params_for_location()
             expected_result['case']['last_modified_by'] = self.get_expected_template_params_for_web()
             self.assertEqual(get_message_template_params(case), expected_result)
+
+    def test_unicode_template_params(self):
+        message = u'Case name {case.name}'
+        context = {'case': {'name': u'\u0928\u092e\u0938\u094d\u0924\u0947'}}
+        self.assertEqual(
+            Message.render(message, **context),
+            u'Case name \u0928\u092e\u0938\u094d\u0924\u0947'
+        )

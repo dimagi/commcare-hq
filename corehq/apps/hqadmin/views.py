@@ -32,6 +32,7 @@ from restkit.errors import Unauthorized
 from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.phone.xml import SYNC_XMLNS
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.callcenter.utils import CallCenterCase
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -405,7 +406,6 @@ class AdminRestoreView(TemplateView):
         if not self.user:
             return HttpResponseNotFound('User %s not found.' % full_username)
 
-        self.overwrite_cache = request.GET.get('ignore_cache') == 'true'
         self.app_id = kwargs.get('app_id', None)
 
         raw = request.GET.get('raw') == 'true'
@@ -417,7 +417,7 @@ class AdminRestoreView(TemplateView):
 
     def _get_restore_response(self):
         return get_restore_response(
-            self.user.domain, self.user, overwrite_cache=self.overwrite_cache, app_id=self.app_id,
+            self.user.domain, self.user, app_id=self.app_id,
             **get_restore_params(self.request)
         )
 
@@ -427,9 +427,11 @@ class AdminRestoreView(TemplateView):
         timing_context = timing_context or TimingContext(self.user.username)
         string_payload = ''.join(response.streaming_content)
         xml_payload = etree.fromstring(string_payload)
+        restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
         formatted_payload = etree.tostring(xml_payload, pretty_print=True)
         context.update({
             'payload': formatted_payload,
+            'restore_id': restore_id_element.text if restore_id_element is not None else None,
             'status_code': response.status_code,
             'timing_data': timing_context.to_list()
         })

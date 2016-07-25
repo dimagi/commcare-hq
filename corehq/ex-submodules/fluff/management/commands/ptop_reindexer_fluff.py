@@ -31,10 +31,14 @@ class ReindexEventHandler(PaginationEventHandler):
 
 
 class Command(BaseCommand):
-    args = '<pillow_name>'
+    args = '<pillow_name> <domain domain ...>'
+    help = (
+        'Reindex a fluff pillow. '
+        'If no domains are specified all domains for the pillow will be re-indexed.'
+    )
 
     def handle(self, *args, **options):
-        if len(args) != 1:
+        if len(args) < 1:
             raise CommandError('Usage is ptop_reindexer_fluff %s' % self.args)
 
         fluff_configs = {config.name: config for config in get_fluff_pillow_configs()}
@@ -47,6 +51,19 @@ class Command(BaseCommand):
         pillow_getter = get_pillow_by_name(pillow_name, instantiate=False)
         pillow = pillow_getter(delete_filtered=True)
 
+        if len(args) == 1:
+            domains = pillow.domains
+        else:
+            domains = args[1:]
+            domains_not_in_pillow = set(domains) - set(pillow.domains)
+            if domains_not_in_pillow:
+                bad_domains = ', '.join(domains_not_in_pillow)
+                available_domains = ', '.join(pillow.domains)
+                raise CommandError(
+                    "The following domains aren't for this pillow: {}.\nAvailable domains are: {}".format(
+                        bad_domains, available_domains
+                    ))
+
         if pillow.kafka_topic in (topics.CASE, topics.FORM):
             couch_db = couch_config.get_db(None)
         elif pillow.kafka_topic == topics.COMMCARE_USER:
@@ -56,7 +73,7 @@ class Command(BaseCommand):
 
         change_provider = CouchDomainDocTypeChangeProvider(
             couch_db=couch_db,
-            domains=pillow.domains,
+            domains=domains,
             doc_types=[pillow.doc_type],
             event_handler=ReindexEventHandler(pillow_name),
         )

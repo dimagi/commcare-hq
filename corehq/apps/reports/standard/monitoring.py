@@ -34,6 +34,7 @@ from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport
 from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter
+from corehq.apps.reports.filters.select import CaseTypeFilter
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.models import HQUserType
@@ -152,6 +153,27 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     emailable = True
     description = ugettext_noop("Followup rates on active cases.")
     is_cacheable = True
+    ajax_pagination = True
+
+    @property
+    def shared_pagination_GET_params(self):
+        params = [
+            dict(
+                name=EMWF.slug,
+                value=EMWF.get_value(self.request, self.domain)),
+            dict(
+                name=CaseTypeFilter.slug,
+                value=CaseTypeFilter.get_value(self.request, self.domain)),
+            dict(
+                name='milestone',
+                value=self.request.GET.get('milestone')
+            ),
+            dict(
+                name='landmark',
+                value=self.request.GET.get('landmark')
+            )
+        ]
+        return params
 
     @property
     def landmark_columns(self):
@@ -224,6 +246,10 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         return datetime.datetime.utcnow()
 
     @property
+    def total_records(self):
+        return len(self.user_ids)
+
+    @property
     def headers(self):
 
         def make_column(title, help_text, num_days):
@@ -266,6 +292,56 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     def user_ids(self):
         return self.users_by_id.keys()
 
+    @property
+    @memoized
+    def paginated_users(self):
+        if self.sort_column is None:
+            return sorted(
+                self.all_users, key=lambda u: u.raw_username, reverse=self.pagination.desc
+            )[self.pagination.start:self.pagination.start + self.pagination.count]
+        return self.all_users
+
+    @property
+    @memoized
+    def paginated_users_by_id(self):
+        return [(user.user_id, user) for user in self.paginated_users]
+
+    @property
+    @memoized
+    def paginated_user_ids(self):
+        return [user.user_id for user in self.paginated_users]
+
+    @property
+    def sort_column(self):
+        column_num = self.request_params.get('iSortCol_0', 0)
+        num_columns = self.request_params.get('iColumns', 15)
+        if column_num == 0:
+            return None  # user
+        elif column_num == (num_columns - 2):
+            return "active_total"
+        elif column_num == (num_columns - 1):
+            return "inactive_total"
+        else:
+            landmark = column_num // 4
+            sub_col = column_num % 4
+            if sub_col == 1:
+                column = ""  # this will sort by doc_count
+            elif sub_col == 2:
+                column = "active"
+            elif sub_col == 3:
+                column = "closed"
+            else:
+                return None  # Can't actually select this in the UI
+
+        if column:
+            return "landmark_%d>%s" % (landmark, column)
+        else:
+            return "landmark_%d" % (landmark,)
+
+    @property
+    def should_sort_by_username(self):
+        return self.request_params.get('iSortCol_0', 0) == 0
+
     def _format_row(self, row):
         cells = [row.header()]
         total_touched = row.total_touched_count()
@@ -293,13 +369,40 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def rows(self):
-        es_results = self.es_queryset()
-        buckets = {user_id: bucket for user_id, bucket in es_results.aggregations.users.buckets_dict.items()}
+        es_results = self.es_queryset(
+            user_ids=self.paginated_user_ids,
+            size=self.pagination.start + self.pagination.count
+        )
+        buckets = es_results.aggregations.users.buckets_list
         if self.missing_users:
             buckets[None] = es_results.aggregations.missing_users.bucket
         rows = []
-        for user_id, user in self.users_by_id.items():
-            bucket = buckets.get(user_id, None)
+        for bucket in buckets:
+            user = self.users_by_id[bucket.key]
+            rows.append(self.Row(self, user, bucket))
+
+        if self.should_sort_by_username:
+            # ES handles sorting for all other columns
+            rows.sort(key=lambda row: row.user)
+
+        self.total_row = self._total_row
+        if len(rows) == self.pagination.count:
+            return map(self._format_row, rows)
+        else:
+            start = self.pagination.start
+            end = start + self.pagination.count
+            paginated_rows = rows[start:end]
+            return map(self._format_row, paginated_rows)
+
+    @property
+    def get_all_rows(self):
+        es_results = self.es_queryset(user_ids=self.all_user_ids)
+        buckets = es_results.aggregations.users.buckets_list
+        if self.missing_users:
+            buckets[None] = es_results.aggregations.missing_users.bucket
+        rows = []
+        for bucket in buckets:
+            user = self.users_by_id[bucket.key]
             rows.append(self.Row(self, user, bucket))
 
         self.total_row = self._total_row
@@ -354,7 +457,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     def milestone_start(self):
         return ServerTime(self.utc_now - self.milestone).phone_time(self.timezone).done()
 
-    def es_queryset(self):
+    def es_queryset(self, user_ids, size=None):
         top_level_aggregation = (
             TermsAggregation('users', 'user_id')
             .aggregation(self._touched_total_aggregation)
@@ -364,14 +467,21 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
         top_level_aggregation = self.add_landmark_aggregations(top_level_aggregation, self.end_date)
 
+        if size:
+            top_level_aggregation.size(size)
+
+        if self.sort_column:
+            order = "desc" if self.pagination.desc else "asc"
+            top_level_aggregation = top_level_aggregation.order(self.sort_column, order)
+
         query = (
             case_es.CaseES()
             .domain(self.domain)
-            .user_ids_handle_unknown(self.user_ids)
+            .user_ids_handle_unknown(user_ids)
             .size(0)
         )
         if self.case_type:
-            query = query.filter(case_es.case_type(self.case_type))
+            query = query.case_type(self.case_type)
         else:
             query = query.filter(filters.NOT(case_es.case_type('commcare-user')))
 
@@ -399,11 +509,11 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         return (
             FilterAggregation(key,
                 filters.AND(
-                    filters.date_range('modified_on', gte=start_date, lt=end_date),
+                    case_es.modified_range(gte=start_date, lt=end_date),
                 )
             )
-            .aggregation(FilterAggregation('active', filters.term('closed', False)))
-            .aggregation(FilterAggregation('closed', filters.term('closed', True)))
+            .aggregation(FilterAggregation('active', case_es.is_closed(False)))
+            .aggregation(FilterAggregation('closed', case_es.is_closed()))
         )
 
     class Row(object):
@@ -414,25 +524,61 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             self.bucket = bucket
 
         def active_count(self, landmark_key):
-            return 0 if not self.bucket else getattr(self.bucket, landmark_key).result['active']['doc_count']
+            if not self.bucket:
+                return 0
+            else:
+                landmark = self.bucket.result.get(landmark_key, None)
+                if landmark:
+                    return landmark['active']['doc_count']
+                return 0
 
         def modified_count(self, landmark_key):
-            return 0 if not self.bucket else getattr(self.bucket, landmark_key).doc_count
+            if not self.bucket:
+                return 0
+            else:
+                landmark = self.bucket.result.get(landmark_key, None)
+                if landmark:
+                    return landmark['doc_count']
+                return 0
 
         def closed_count(self, landmark_key):
-            return 0 if not self.bucket else getattr(self.bucket, landmark_key).result['closed']['doc_count']
+            if not self.bucket:
+                return 0
+            else:
+                landmark = self.bucket.result.get(landmark_key, None)
+                if landmark:
+                    return landmark['closed']['doc_count']
+                return 0
 
         def total_touched_count(self):
-            return 0 if not self.bucket else self.bucket.touched_total.doc_count
+            if not self.bucket:
+                return 0
+            else:
+                landmark = self.bucket.result.get('touched_total', None)
+                if landmark:
+                    return landmark['doc_count']
+                return 0
 
         def total_inactive_count(self):
-            return 0 if not self.bucket else self.bucket.inactive_total.doc_count
+            if not self.bucket:
+                return 0
+            else:
+                landmark = self.bucket.result.get('inactive_total', None)
+                if landmark:
+                    return landmark['doc_count']
+                return 0
 
         def total_active_count(self):
-            return 0 if not self.bucket else self.bucket.active_total.doc_count
+            if not self.bucket:
+                return 0
+            else:
+                landmark = self.bucket.result.get('active_total', None)
+                if landmark:
+                    return landmark['doc_count']
+                return 0
 
         def header(self):
-            return self.report.get_user_link(self.user)
+            return self.report.get_user_link(self.user)['html']
 
     class TotalRow(object):
 

@@ -473,3 +473,16 @@ class AppendingBlockNode(loader_tags.BlockNode):
 
         contents = request_blocks.pop(self.name, '')
         return super_result + contents
+
+
+@register.simple_tag(takes_context=True)
+def url_replace(context, field, value):
+    """Usage <a href="?{% url_replace 'since' restore_id %}">
+    will replace the 'since' parmeter in the url with <restore_id>
+    note the presense of the '?' in the href value
+
+    http://stackoverflow.com/a/16609591/2957657
+    """
+    params = context['request'].GET.copy()
+    params[field] = value
+    return params.urlencode()

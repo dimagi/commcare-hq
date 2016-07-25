@@ -94,10 +94,6 @@
 
 {% block page_content %}
 
-    <div id="menu-container">
-        <div id="menu-region" class="container"></div>
-    </div>
-
     <!-- For now we won't touch this since the form entry code is coupled with it  -->
     <div id="cloudcare-main">
         <section id="cloudcare-notifications"></section>
@@ -112,6 +108,10 @@
             }
         "></section>
         {% endif %}
+    </div>
+
+    <div id="menu-container">
+        <div id="menu-region" class="container"></div>
     </div>
 
     {% include 'formplayer/fullform-ui/templates.html' %}

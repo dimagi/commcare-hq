@@ -76,24 +76,6 @@ class ConfigurableReportTableManagerMixin(object):
                         self.rebuild_table(sql_adapter)
                     except TableRebuildError, e:
                         _notify_cory(unicode(e), sql_adapter.config.to_json())
-                    else:
-                        # note: this fancy logging can be removed as soon as we get to the
-                        # bottom of http://manage.dimagi.com/default.asp?211297
-                        # if no signs of it popping back up by april 2016, should remove this
-                        rev_after_rebuild = sql_adapter.config.get_db().get_rev(sql_adapter.config._id)
-                        _notify_cory(
-                            u'rebuilt table {} ({})'.format(
-                                table_name,
-                                u'{} [{}]'.format(sql_adapter.config.display_name, sql_adapter.config._id),
-                            ),
-                            {
-                                'data_source': sql_adapter.config.to_json(),
-                                'table_diffs': diffs,
-                                'rev_before_rebuild': rev_before_rebuild,
-                                'rev_after_rebuild': rev_after_rebuild
-                            }
-
-                        )
                 else:
                     self.rebuild_table(sql_adapter)
 
