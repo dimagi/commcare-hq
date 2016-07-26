@@ -175,21 +175,6 @@ def _get_or_update_cases(xforms, case_db):
     domain = getattr(case_db, 'domain', None)
     touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, xforms)
 
-    def _validate_indices(cases):
-        for case in cases:
-            if case.indices:
-                for index in case.indices:
-                    # call get and not doc_exists to force domain checking
-                    # see CaseDbCache._validate_case
-                    referenced_case = case_db.get(index.referenced_id)
-                    if not referenced_case:
-                        # just log, don't raise an error or modify the index
-                        logging.error(
-                            "Case '%s' references non-existent case '%s'",
-                            case.case_id,
-                            index.referenced_id,
-                        )
-
     def _get_dirtiness_flags_for_outgoing_indices(case, tree_owners=None):
         """ if the outgoing indices touch cases owned by another user this cases owner is dirty """
         if tree_owners is None:
@@ -249,7 +234,7 @@ def _get_or_update_cases(xforms, case_db):
     dirtiness_flags = []
     extensions_to_close = set()
 
-    _validate_indices([case_update_meta.case for case_update_meta in touched_cases])
+    _validate_indices(case_db, [case_update_meta.case for case_update_meta in touched_cases])
 
     # process the temporary dirtiness flags first so that any hints for real dirtiness get overridden
     dirtiness_flags += list(_get_dirtiness_flags_for_reassigned_case(touched_cases.values()))
@@ -264,6 +249,22 @@ def _get_or_update_cases(xforms, case_db):
         dirtiness_flags,
         extensions_to_close
     )
+
+
+def _validate_indices(case_db, cases):
+    for case in cases:
+        if case.indices:
+            for index in case.indices:
+                # call get and not doc_exists to force domain checking
+                # see CaseDbCache._validate_case
+                referenced_case = case_db.get(index.referenced_id)
+                if not referenced_case:
+                    # just log, don't raise an error or modify the index
+                    logging.error(
+                        "Case '%s' references non-existent case '%s'",
+                        case.case_id,
+                        index.referenced_id,
+                    )
 
 
 def _is_change_of_ownership(previous_owner_id, next_owner_id):
