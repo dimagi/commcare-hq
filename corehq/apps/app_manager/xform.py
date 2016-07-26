@@ -1192,10 +1192,12 @@ class XForm(WrappedNode):
         )
 
         # never add pollsensor to a pre-2.14 app
-        if form.get_app().enable_auto_gps:
+        app = form.get_app()
+        if app.enable_auto_gps:
             if form.get_auto_gps_capture():
                 self.add_pollsensor(ref=self.resolve_path("meta/location"))
-                self.add_pollsensor(ref=self.resolve_path("meta/location"), event="xforms-revalidate")
+                if app.enable_auto_gps_poll_optimization:
+                    self.add_pollsensor(ref=self.resolve_path("meta/location"), event="xforms-revalidate")
             elif self.model_node.findall("{f}bind[@type='geopoint']"):
                 self.add_pollsensor()
 
