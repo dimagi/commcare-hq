@@ -954,7 +954,8 @@ class Subscriber(models.Model):
         upgraded_privileges is the list of privileges that should be added
         """
         _soft_assert_domain_not_loaded(isinstance(self.domain, basestring), "domain is object")
-
+        print old_subscription
+        print new_subscription
 
         if new_plan_version is None:
             new_plan_version = DefaultProductPlan.get_default_plan()
@@ -971,6 +972,9 @@ class Subscriber(models.Model):
             Subscriber._process_upgrade(self.domain, upgraded_privileges, new_plan_version)
 
         if Subscriber.should_send_subscription_notification(old_subscription, new_subscription):
+            print old_subscription
+            print new_subscription
+            return
             send_subscription_change_alert(self.domain, new_subscription, old_subscription, internal_change)
 
         subscription_upgrade_or_downgrade.send_robust(None, domain=self.domain)
