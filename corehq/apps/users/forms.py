@@ -371,6 +371,7 @@ class SetUserPasswordForm(SetPasswordForm):
     def clean_new_password1(self):
         if self.project.strong_mobile_passwords:
             return clean_password(self.cleaned_data.get('new_password1'))
+        return self.clean_data.get('new_password1')
 
 
 class CommCareAccountForm(forms.Form):
@@ -544,6 +545,7 @@ class NewMobileWorkerForm(forms.Form):
     def clean_password(self):
         if self.project.strong_mobile_passwords:
             return clean_password(self.cleaned_data.get('password'))
+        return self.cleaned_data.get('password')
 
 
 class MultipleSelectionForm(forms.Form):
