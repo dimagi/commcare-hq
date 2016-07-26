@@ -1,7 +1,8 @@
 from django.test import TestCase
 import datetime
 from dimagi.utils.dates import add_months
-from corehq.apps.reports.standard.project_health import MonthlyPerformanceSummary, ProjectHealthDashboard
+from corehq.apps.reports.standard.project_health import MonthlyPerformanceSummary,\
+    ProjectHealthDashboard, MonthlyMALTRows
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.const import MISSING_APP_ID
 from corehq.apps.domain.models import Domain
@@ -92,28 +93,90 @@ class SetupProjectPerformanceMixin(object):
         malt_user_prev.save()
 
 
+class MonthlyMALTRowsTests(SetupProjectPerformanceMixin, TestCase):
+    DOMAIN_NAME = "test_domain"
+    now = datetime.datetime.utcnow()
+    year, month = add_months(now.year, now.month, 1)
+    month_as_date = datetime.date(year, month, 1)
+    prev_month_as_date = datetime.date(year, month - 1, 1)
+
+    @classmethod
+    def setUpClass(cls):
+        super(MonthlyMALTRowsTests, cls).setUpClass()
+        cls.class_setup()
+        not_deleted_active_users = [cls.user._id, cls.user1._id, cls.user2._id]
+        cls.prev_month_malt_rows = MonthlyMALTRows(
+            domain=cls.DOMAIN_NAME,
+            month=cls.prev_month_as_date,
+            performance_threshold=15,
+            users=[],
+            has_filter=False,
+            not_deleted_active_users=not_deleted_active_users,
+        )
+        cls.month_malt_rows = MonthlyMALTRows(
+            domain=cls.DOMAIN_NAME,
+            month=cls.month_as_date,
+            performance_threshold=15,
+            users=[],
+            has_filter=False,
+            not_deleted_active_users=not_deleted_active_users,
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        super(MonthlyMALTRowsTests, cls).tearDownClass()
+        cls.class_teardown()
+
+    def test_get_num_high_performing_users(self):
+        """
+        get_num_high_performing_users() should return 2 when there are 2 users
+        who submitted more or equal to the performance threhold
+        """
+        self.assertEqual(self.month_malt_rows.get_num_high_performing_users(), 2)
+
+    def test_get_num_active_users(self):
+        """
+        get_num_active_users() should return 2 when there are 2 users
+        who submitted any forms
+        """
+        self.assertEqual(self.month_malt_rows.get_num_active_users(), 2)
+
+
 class MonthlyPerformanceSummaryTests(SetupProjectPerformanceMixin, TestCase):
 
     @classmethod
     def setUpClass(cls):
         super(MonthlyPerformanceSummaryTests, cls).setUpClass()
         cls.class_setup()
-        users_in_group = []
+        not_deleted_active_users = [cls.user._id, cls.user1._id, cls.user2._id]
+        filtered_users = []
+        previous_month_malt_rows = MonthlyMALTRows(
+            domain=cls.DOMAIN_NAME,
+            month=cls.prev_month_as_date,
+            performance_threshold=15,
+            users=filtered_users,
+            has_filter=False,
+            not_deleted_active_users=not_deleted_active_users,
+        )
+        this_month_malt_rows = MonthlyMALTRows(
+            domain=cls.DOMAIN_NAME,
+            month=cls.month_as_date,
+            performance_threshold=15,
+            users=filtered_users,
+            has_filter=False,
+            not_deleted_active_users=not_deleted_active_users,
+        )
         cls.prev_month = MonthlyPerformanceSummary(
             domain=cls.DOMAIN_NAME,
-            performance_threshold=15,
             month=cls.prev_month_as_date,
             previous_summary=None,
-            users=users_in_group,
-            has_filter=False,
+            monthly_malt_rows=previous_month_malt_rows,
         )
         cls.month = MonthlyPerformanceSummary(
             domain=cls.DOMAIN_NAME,
-            performance_threshold=15,
             month=cls.month_as_date,
             previous_summary=cls.prev_month,
-            users=users_in_group,
-            has_filter=False,
+            monthly_malt_rows=this_month_malt_rows,
         )
 
     @classmethod
@@ -161,9 +224,9 @@ class MonthlyPerformanceSummaryTests(SetupProjectPerformanceMixin, TestCase):
 
     def test_get_all_user_stubs(self):
         """
-        get_all_user_stubs() should contain two users from this month
+        _get_all_user_stubs() should contain two users from this month
         """
-        self.assertEqual(len(self.month.get_all_user_stubs().keys()), 2)
+        self.assertEqual(len(self.month._get_all_user_stubs().keys()), 2)
 
 
 @mock.patch('corehq.apps.reports.standard.project_health.GroupES', GroupESFake)
