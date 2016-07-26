@@ -53,6 +53,7 @@ from corehq.util.supervisord.api import (
     pillow_supervisor_status
 )
 from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
 from corehq.apps.data_analytics.models import MALTRow, GIRRow
 from corehq.apps.data_analytics.const import GIR_FIELDS
 from corehq.apps.data_analytics.admin import MALTRowAdmin
@@ -491,6 +492,8 @@ class VCMMigrationView(BaseAdminSectionView):
             m.save()
         else:
             domains = self.request.POST['domains'].split(",")
+            errors = set([])
+            successes = set([])
             for d in domains:
                 m = VCMMigration.objects.get(domain=d)
                 if action == 'email':
@@ -508,7 +511,20 @@ class VCMMigrationView(BaseAdminSectionView):
                         email_from=settings.SUPPORT_EMAIL)
                     m.emailed = datetime.now()
                     m.save()
-        return json_response({'status': 'success'})
+                    successes.add(d)
+                elif action == 'migrate':
+                    for app_id in get_app_ids_in_domain(d):
+                        try:
+                            management.call_command('migrate_app_to_cmitfb', app_id)
+                        except Exception as x:
+                            import pdb; pdb.set_trace()
+                            m.notes = m.notes + "{}failed on app {}".format('; ' if m.notes else '', app_id)
+                            errors.add(d)
+                    if d not in errors:
+                        successes.add(d)
+                    m.migrated = datetime.now()
+                    m.save()
+        return json_response({'successes': list(successes), 'errors': list(errors)})
 
 
 @require_POST

@@ -82,8 +82,18 @@
                         action: action,
                         domains: domains.join(","),
                     },
-                    success: function() {
-                        alert_user('Success! Best to refresh this page.', 'success');
+                    success: function(data) {
+                        if (data.errors.length) {
+                            alert_user('Errors in the following ' + data.errors.length
+                                        + ' domains (view each domain\'s notes for details): '
+                                        + data.errors.join(", "), 'danger');
+                        }
+                        if (data.successes.length) {
+                            alert_user('Succeeded with the following ' + data.successes.length
+                                        + ' domains: ' + data.successes.join(", "), 'success');
+                        }
+                        // TODO: do this for them, make this a form
+                        alert_user('Best to refresh this page.', 'info');
                     },
                     error: function() {
                         alert_user('Error taking action.', 'danger');
@@ -97,7 +107,7 @@
 {% block page_content %}
     <div id="bulk-actions">
         <button class="btn btn-default" data-action="email"><i class="fa fa-envelope"></i> Email Selected Domains</button>
-        <button class="btn btn-default hide" data-action="migrate"><i class="fa fa-gears"></i> Migrate Selected Domains</button>
+        <button class="btn btn-default" data-action="migrate"><i class="fa fa-gears"></i> Migrate Selected Domains</button>
     </div>
     <br />
     <div class="text-muted">Shift+Click to select multiple rows, click in "Notes" column to edit.</div>
