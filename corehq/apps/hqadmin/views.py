@@ -492,41 +492,47 @@ class VCMMigrationView(BaseAdminSectionView):
             m = VCMMigration.objects.get(domain=self.request.POST['domain'])
             m.notes = self.request.POST['notes']
             m.save()
-        else:
-            domains = self.request.POST['domains'].split(",")
-            errors = set([])
-            successes = set([])
-            for d in domains:
-                m = VCMMigration.objects.get(domain=d)
-                if action == 'email':
-                    email_context = {
-                        'domain': d,
-                        'migration_date': self.migration_date,
-                    }
-                    text_content = render_to_string(self.email_template_html, email_context)
-                    html_content = render_to_string(self.email_template_txt, email_context)
-                    send_html_email_async.delay(
-                        self.email_subject,
-                        m.admins,
-                        html_content,
-                        text_content=text_content,
-                        email_from=settings.SUPPORT_EMAIL)
-                    m.emailed = datetime.now()
-                    m.save()
+            return json_response({'success': 'success'})
+
+        domains = self.request.POST['domains'].split(",")
+        errors = set([])
+        successes = set([])
+        for d in domains:
+            m = VCMMigration.objects.get(domain=d)
+            if action == 'email':
+                email_context = {
+                    'domain': d,
+                    'migration_date': self.migration_date,
+                }
+                text_content = render_to_string(self.email_template_html, email_context)
+                html_content = render_to_string(self.email_template_txt, email_context)
+                send_html_email_async.delay(
+                    self.email_subject,
+                    m.admins,
+                    html_content,
+                    text_content=text_content,
+                    email_from=settings.SUPPORT_EMAIL)
+                m.emailed = datetime.now()
+                m.save()
+                successes.add(d)
+            elif action == 'migrate':
+                for app_id in get_app_ids_in_domain(d):
+                    try:
+                        management.call_command('migrate_app_to_cmitfb', app_id)
+                    except Exception as x:
+                        m.notes = m.notes + "{}failed on app {}".format('; ' if m.notes else '', app_id)
+                        errors.add(d)
+                if d not in errors:
                     successes.add(d)
-                elif action == 'migrate':
-                    for app_id in get_app_ids_in_domain(d):
-                        try:
-                            management.call_command('migrate_app_to_cmitfb', app_id)
-                        except Exception as x:
-                            import pdb; pdb.set_trace()
-                            m.notes = m.notes + "{}failed on app {}".format('; ' if m.notes else '', app_id)
-                            errors.add(d)
-                    if d not in errors:
-                        successes.add(d)
-                    m.migrated = datetime.now()
-                    m.save()
-        return json_response({'successes': list(successes), 'errors': list(errors)})
+                m.migrated = datetime.now()
+                m.save()
+        if len(successes):
+            messages.success(request, "Succeeded with the following {} domains: {}".format(
+                                        len(successes), ", ".join(successes)))
+        if len(errors):
+            messages.error(request, "Errors in the following {} domains: {}".format(
+                                        len(errors), ", ".join(errors)))
+        return self.get(request, *args, **kwargs)
 
 
 @require_POST
