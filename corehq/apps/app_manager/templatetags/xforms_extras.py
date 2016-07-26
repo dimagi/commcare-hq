@@ -69,7 +69,7 @@ def inline_edit_trans(name, langs=None, url='', saveValueName='', readOnlyClass=
             name: 'name',
             value: '%(value)s',
             placeholder: '%(placeholder)s',
-            rows: 1,
+            nodeName: 'input',
             lang: '%(lang)s',
             url: '{}',
             saveValueName: '{}',
