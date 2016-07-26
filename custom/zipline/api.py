@@ -86,14 +86,14 @@ def get_order_update_critical_section_key(order_id):
 
 
 def update_order_products_delivered(order_id, products):
-    with CriticalSection(get_order_update_critical_section_key(order_id)):
+    with CriticalSection([get_order_update_critical_section_key(order_id)]):
         order = EmergencyOrder.objects.get(pk=order_id)
         update_product_quantity_json_field(order.products_delivered, products)
         order.save()
 
 
 def update_order_products_confirmed(order_id, products):
-    with CriticalSection(get_order_update_critical_section_key(order_id)):
+    with CriticalSection([get_order_update_critical_section_key(order_id)]):
         order = EmergencyOrder.objects.get(pk=order_id)
         update_product_quantity_json_field(order.products_confirmed, products)
         confirmed_status = EmergencyOrderStatusUpdate.create_for_order(
