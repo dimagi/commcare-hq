@@ -4,11 +4,11 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
 from corehq.apps.commtrack.helpers import make_product
-from corehq.apps.commtrack.tests import get_single_balance_block
+from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
-from corehq.form_processor.tests import FormProcessorTestUtils
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import get_simple_form_xml
 from corehq.util.test_utils import OverridableSettingsTestMixin, create_and_save_a_case, create_and_save_a_form
 

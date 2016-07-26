@@ -1,19 +1,26 @@
 import json
 import os
+
 from couchdbkit import ResourceConflict
 from django.test.testcases import TestCase
 from mock import patch
+
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.indicators.models import (
     FormLabelIndicatorDefinition,
     FormDataInCaseIndicatorDefinition,
     FormDataAliasIndicatorDefinition,
     CaseDataInFormIndicatorDefinition, IndicatorDefinition)
-from corehq.apps.indicators.utils import set_domain_namespace_entry
 from corehq.apps.indicators.tests.utils import delete_indicator_doc
-from mvp_docs.models import IndicatorXForm, IndicatorCase
-from mvp_docs.pillows import MVPFormIndicatorPillow, MVPCaseIndicatorPillow
+from corehq.apps.indicators.utils import set_domain_namespace_entry
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from couchforms.models import XFormInstance
+from mvp_docs.models import IndicatorXForm, IndicatorCase
+from mvp_docs.pillows import (
+    get_mvp_form_indicator_pillow, get_mvp_case_indicator_pillow,
+    process_indicators_for_case, process_indicators_for_form
+)
+from pillowtop.feed.couch import change_from_couch_row, get_current_seq
 
 INDICATOR_TEST_DOMAIN = 'indicator-domain'
 INDICATOR_TEST_NAMESPACE = 'indicator_test'
@@ -26,8 +33,8 @@ class IndicatorPillowTests(TestCase):
         set_domain_namespace_entry(INDICATOR_TEST_DOMAIN, [
             [INDICATOR_TEST_NAMESPACE, "INDICATOR TEST Namespace"],
         ])
-        cls.form_pillow = MVPFormIndicatorPillow()
-        cls.case_pillow = MVPCaseIndicatorPillow()
+        cls.form_pillow = get_mvp_form_indicator_pillow()
+        cls.case_pillow = get_mvp_case_indicator_pillow()
 
     def setUp(self):
         # memoization across tests can break things
@@ -36,6 +43,8 @@ class IndicatorPillowTests(TestCase):
     @classmethod
     def tearDownClass(cls):
         delete_indicator_doc()
+        FormProcessorTestUtils.delete_all_xforms()
+        FormProcessorTestUtils.delete_all_cases()
 
     def _save_doc_to_db(self, docname, doc_class):
         doc_dict = _get_doc_data(docname)
@@ -48,6 +57,7 @@ class IndicatorPillowTests(TestCase):
         return doc_dict['_id']
 
     def test_form_pillow_indicators(self):
+        since = get_current_seq(XFormInstance.get_db())
         form_id = self._save_doc_to_db('indicator_form.json', XFormInstance)
         form_instance = XFormInstance.get(form_id)
 
@@ -69,7 +79,7 @@ class IndicatorPillowTests(TestCase):
             xmlns='http://openrosa.org/formdesigner/indicator-create-xmlns',
         )
         form_alias.save()
-        self.form_pillow.process_changes(since=None, forever=False)
+        self.form_pillow.process_changes(since=since, forever=False)
 
         indicator_form = IndicatorXForm.get(form_id)
         self.assertNotEqual(
@@ -78,6 +88,7 @@ class IndicatorPillowTests(TestCase):
         self.assertNotEqual(indicator_form.computed_, {})
 
     def test_case_pillow_indicators(self):
+        since = get_current_seq(XFormInstance.get_db())
         self._save_doc_to_db('indicator_form.json', XFormInstance)
         case_id = self._save_doc_to_db('indicator_case.json', CommCareCase)
         case_instance = CommCareCase.get(case_id)
@@ -93,7 +104,7 @@ class IndicatorPillowTests(TestCase):
         )
         forgotten_property.save()
 
-        self.case_pillow.process_changes(since=None, forever=False)
+        self.case_pillow.process_changes(since=since, forever=False)
 
         indicator_case = IndicatorCase.get(case_id)
 
@@ -107,58 +118,50 @@ class IndicatorPillowTests(TestCase):
         form = IndicatorXForm()
         form.save()
         self.assertTrue(IndicatorXForm.get_db().doc_exist(form._id))
-        self.form_pillow.change_transform({'_id': form._id, 'doc_type': 'XFormArchived'})
+        self.form_pillow.process_change(_change_from_doc({'_id': form._id, 'doc_type': 'XFormArchived'}))
         self.assertFalse(IndicatorXForm.get_db().doc_exist(form._id))
 
     def test_delete_doc_that_doesnt_exist(self):
         # this test just makes sure we don't crash in this scenario so there are no assertions
-        self.form_pillow.change_transform(
+        self.form_pillow.process_change(_change_from_doc(
             {'_id': 'some-bad-id', '_rev': 'whatrever', 'doc_type': 'XFormArchived'}
-        )
+        ))
 
     def test_mixed_form_and_case_indicators_process_form_then_case(self):
         # this is a regression test for http://manage.dimagi.com/default.asp?165274
         def _test():
-            form, case = _save_form_and_case()
-            MVPFormIndicatorPillow().change_transform(form.to_json())
+            form, case = _save_form_and_case(self)
+            process_indicators_for_form(['mvp_indicators'], form.domain, form.to_json())
             updated_form = IndicatorXForm.get(form._id)
+            self.addCleanup(updated_form.delete)
             computed = updated_form.computed_['mvp_indicators']
             self.assertEqual(29, len(computed))
             self.assertEqual('child_visit_form', computed['child_visit_form']['value'])
             case_json = _get_doc_data('bug_case.json')
-            MVPCaseIndicatorPillow().change_transform(case_json)
+            process_indicators_for_case(['mvp_indicators'], case.domain, case.to_json())
             updated_form = IndicatorXForm.get(form._id)
             updated_computed = updated_form.computed_['mvp_indicators']
             self.assertEqual(29, len(updated_computed))
             self.assertEqual('child_visit_form', updated_computed['child_visit_form']['value'])
-
-            # cleanup
-            updated_form.delete()
-            form.delete()
-            case.delete()
 
         self._call_with_patches(_test)
 
     def test_mixed_form_and_case_indicators_process_case_then_form(self):
         # this is a regression test for http://manage.dimagi.com/default.asp?165274
         def _test():
-            form, case = _save_form_and_case()
-            MVPCaseIndicatorPillow().change_transform(case.to_json())
+            form, case = _save_form_and_case(self)
+            process_indicators_for_case(['mvp_indicators'], case.domain, case.to_json())
             updated_form = IndicatorXForm.get(form._id)
+            self.addCleanup(updated_form.delete)
             computed = updated_form.computed_['mvp_indicators']
             self.assertEqual(29, len(computed))
             self.assertEqual('child_visit_form', computed['child_visit_form']['value'])
 
-            MVPFormIndicatorPillow().change_transform(form.to_json())
+            process_indicators_for_form(['mvp_indicators'], form.domain, form.to_json())
             updated_form = IndicatorXForm.get(form._id)
             updated_computed = updated_form.computed_['mvp_indicators']
             self.assertEqual(29, len(updated_computed))
             self.assertEqual('child_visit_form', updated_computed['child_visit_form']['value'])
-
-            # cleanup
-            updated_form.delete()
-            form.delete()
-            case.delete()
 
         self._call_with_patches(_test)
 
@@ -175,11 +178,14 @@ class IndicatorPillowTests(TestCase):
         fn()
 
 
-def _save_form_and_case():
+def _save_form_and_case(test):
     form = XFormInstance.wrap(_get_doc_data('bug_form.json'))
     form.save()
+    test.addCleanup(form.delete)
+
     case = CommCareCase.wrap(_get_doc_data('bug_case.json'))
     case.save()
+    test.addCleanup(case.delete)
     return form, case
 
 
@@ -203,3 +209,10 @@ def _get_doc_data(docname):
     file_path = os.path.join(os.path.dirname(__file__), "data", docname)
     with open(file_path, "rb") as f:
         return json.loads(f.read())
+
+
+def _change_from_doc(doc_dict):
+    doc_dict['domain'] = INDICATOR_TEST_DOMAIN
+    return change_from_couch_row({
+        'id': doc_dict['_id'], 'doc': doc_dict
+    })

@@ -32,6 +32,7 @@ from restkit.errors import Unauthorized
 from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.phone.xml import SYNC_XMLNS
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.callcenter.utils import CallCenterCase
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -53,6 +54,7 @@ from corehq.util.supervisord.api import (
     pillow_supervisor_status
 )
 from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
 from corehq.apps.data_analytics.models import MALTRow, GIRRow
 from corehq.apps.data_analytics.const import GIR_FIELDS
 from corehq.apps.data_analytics.admin import MALTRowAdmin
@@ -405,7 +407,6 @@ class AdminRestoreView(TemplateView):
         if not self.user:
             return HttpResponseNotFound('User %s not found.' % full_username)
 
-        self.overwrite_cache = request.GET.get('ignore_cache') == 'true'
         self.app_id = kwargs.get('app_id', None)
 
         raw = request.GET.get('raw') == 'true'
@@ -417,7 +418,7 @@ class AdminRestoreView(TemplateView):
 
     def _get_restore_response(self):
         return get_restore_response(
-            self.user.domain, self.user, overwrite_cache=self.overwrite_cache, app_id=self.app_id,
+            self.user.domain, self.user, app_id=self.app_id,
             **get_restore_params(self.request)
         )
 
@@ -427,9 +428,11 @@ class AdminRestoreView(TemplateView):
         timing_context = timing_context or TimingContext(self.user.username)
         string_payload = ''.join(response.streaming_content)
         xml_payload = etree.fromstring(string_payload)
+        restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
         formatted_payload = etree.tostring(xml_payload, pretty_print=True)
         context.update({
             'payload': formatted_payload,
+            'restore_id': restore_id_element.text if restore_id_element is not None else None,
             'status_code': response.status_code,
             'timing_data': timing_context.to_list()
         })
@@ -489,26 +492,47 @@ class VCMMigrationView(BaseAdminSectionView):
             m = VCMMigration.objects.get(domain=self.request.POST['domain'])
             m.notes = self.request.POST['notes']
             m.save()
-        else:
-            domains = self.request.POST['domains'].split(",")
-            for d in domains:
-                m = VCMMigration.objects.get(domain=d)
-                if action == 'email':
-                    email_context = {
-                        'domain': d,
-                        'migration_date': self.migration_date,
-                    }
-                    text_content = render_to_string(self.email_template_html, email_context)
-                    html_content = render_to_string(self.email_template_txt, email_context)
-                    send_html_email_async.delay(
-                        self.email_subject,
-                        m.admins,
-                        html_content,
-                        text_content=text_content,
-                        email_from=settings.SUPPORT_EMAIL)
-                    m.emailed = datetime.now()
-                    m.save()
-        return json_response({'status': 'success'})
+            return json_response({'success': 'success'})
+
+        domains = self.request.POST['domains'].split(",")
+        errors = set([])
+        successes = set([])
+        for d in domains:
+            m = VCMMigration.objects.get(domain=d)
+            if action == 'email':
+                email_context = {
+                    'domain': d,
+                    'migration_date': self.migration_date,
+                }
+                text_content = render_to_string(self.email_template_html, email_context)
+                html_content = render_to_string(self.email_template_txt, email_context)
+                send_html_email_async.delay(
+                    self.email_subject,
+                    m.admins,
+                    html_content,
+                    text_content=text_content,
+                    email_from=settings.SUPPORT_EMAIL)
+                m.emailed = datetime.now()
+                m.save()
+                successes.add(d)
+            elif action == 'migrate':
+                for app_id in get_app_ids_in_domain(d):
+                    try:
+                        management.call_command('migrate_app_to_cmitfb', app_id)
+                    except Exception:
+                        m.notes = m.notes + "{}failed on app {}".format('; ' if m.notes else '', app_id)
+                        errors.add(d)
+                if d not in errors:
+                    successes.add(d)
+                m.migrated = datetime.now()
+                m.save()
+        if len(successes):
+            messages.success(request, "Succeeded with the following {} domains: {}".format(
+                                        len(successes), ", ".join(successes)))
+        if len(errors):
+            messages.error(request, "Errors in the following {} domains: {}".format(
+                                        len(errors), ", ".join(errors)))
+        return self.get(request, *args, **kwargs)
 
 
 @require_POST
