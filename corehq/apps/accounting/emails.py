@@ -11,8 +11,7 @@ def send_subscription_change_alert(domain, new_subscription, old_subscription, i
         new_subscription.account if new_subscription else
         old_subscription.account if old_subscription else None
     )
-    # this can be None, though usually this will be initiated
-    # by an http request
+    # request can be None if not initiated by an http request
     request = get_request()
     email_context = {
         'domain': domain,
@@ -36,6 +35,13 @@ def send_subscription_change_alert(domain, new_subscription, old_subscription, i
     sub_change_email_address = (settings.INTERNAL_SUBSCRIPTION_CHANGE_EMAIL
                                 if internal_change else settings.SUBSCRIPTION_CHANGE_EMAIL)
 
+    print old_subscription
+    print new_subscription
+
+    print email_context['old_subscription']
+    print email_context['new_subscription']
+
+    return
     send_html_email_async.delay(
         email_subject,
         sub_change_email_address,

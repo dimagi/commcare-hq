@@ -23,7 +23,7 @@ Previous Subscription
 {% if old_subscription %}
 Software Plan: {{ old_subscription.plan_version }}
 Start Date: {{ old_subscription.date_start }}
-End Date:{{ old_subscription.date_end }}
+End Date: {{ old_subscription.date_end }}
 Do not invoice: {{ old_subscription.do_not_invoice }}
 Auto generate credits: {{ old_subscription.auto_generate_credits }}
 {% else %}

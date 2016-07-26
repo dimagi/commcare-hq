@@ -974,7 +974,7 @@ class Subscriber(models.Model):
         if Subscriber.should_send_subscription_notification(old_subscription, new_subscription):
             print old_subscription
             print new_subscription
-            return
+            # return
             send_subscription_change_alert(self.domain, new_subscription, old_subscription, internal_change)
 
         subscription_upgrade_or_downgrade.send_robust(None, domain=self.domain)
