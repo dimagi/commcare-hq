@@ -2,7 +2,7 @@
     var PasswordModel = function () {
         var self = this;
         self.penalizedWords = ['dimagi', 'commcare', 'hq', 'commcarehq'];
-        self.password = ko.observable('');
+        self.password = ko.observable();
         self.strength = ko.computed(function () {
             return zxcvbn(self.password(), self.penalizedWords).score;
         });

@@ -85,6 +85,20 @@ def wrapped_language_validation(value):
                                     "enter a valid two or three digit code." % value)
 
 
+def _generate_strong_password():
+    import string
+    import random
+    possible = string.punctuation + string.ascii_lowercase + string.ascii_uppercase + string.digits
+    password = ''
+    password += random.choice(string.punctuation)
+    password += random.choice(string.ascii_lowercase)
+    password += random.choice(string.ascii_uppercase)
+    password += random.choice(string.digits)
+    password += ''.join(random.choice(possible) for i in range(random.randrange(6, 11)))
+
+    return ''.join(random.sample(password, len(password)))
+
+
 class LanguageField(forms.CharField):
     """
     Adds language code validation to a field
@@ -336,12 +350,20 @@ class SetUserPasswordForm(SetPasswordForm):
     new_password1 = forms.CharField(
         label=ugettext_lazy("New password"),
         widget=forms.PasswordInput(),
-        help_text=mark_safe('<span data-bind="text: passwordHelp, css: color">'),
     )
 
     def __init__(self, project, user_id, **kwargs):
         super(SetUserPasswordForm, self).__init__(**kwargs)
         self.project = project
+        initial_password = ''
+
+        if self.project.strong_mobile_passwords:
+            self.fields['new_password1'].widget = forms.TextInput()
+            self.fields['new_password1'].help_text = mark_safe("""
+                <i class="fa fa-warning"></i> This password will not be shown again. <br />
+                <span data-bind="text: passwordHelp, css: color">
+            """)
+            initial_password = _generate_strong_password()
 
         self.helper = FormHelper()
 
@@ -356,9 +378,13 @@ class SetUserPasswordForm(SetPasswordForm):
                 _("Reset Password for Mobile Worker"),
                 crispy.Field(
                     'new_password1',
-                    data_bind="value: password, valueUpdate: 'input'",
+                    data_bind="initializeValue: password, value: password, valueUpdate: 'input'",
+                    value=initial_password,
                 ),
-                'new_password2',
+                crispy.Field(
+                    'new_password2',
+                    value=initial_password,
+                ),
                 hqcrispy.FormActions(
                     crispy.ButtonHolder(
                         Submit('submit', _('Reset Password'))
