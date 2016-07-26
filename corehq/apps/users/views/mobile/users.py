@@ -744,8 +744,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         }
 
 
-# This is almost entirely a duplicate of CreateCommCareUserView. That view will
-# be going away soon, so I didn't bother to abstract out the commonalities.
 class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
     template_name = "users/new_mobile_worker_modal.html"
     urlname = 'new_mobile_worker_modal'
