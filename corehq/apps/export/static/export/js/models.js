@@ -120,7 +120,7 @@ hqDefine('export/js/models.js', function () {
                         path: [{
                             doc_type: 'PathNode',
                             name: 'number',
-                        },]
+                        }]
                     },
                     selected: true,
                     is_advanced: false,
