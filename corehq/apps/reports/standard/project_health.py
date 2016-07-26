@@ -46,50 +46,80 @@ class UserActivityStub(namedtuple('UserStub', ['user_id', 'username', 'num_forms
         return self.num_forms_submitted_next_month - self.num_forms_submitted
 
 
+class MonthlyMALTRows(jsonobject.JsonObject):
+    month = jsonobject.DateProperty()
+    domain = jsonobject.StringProperty()
+
+    def __init__(self, domain, month, performance_threshold, not_deleted_active_users, users, has_filter):
+        self._rows = MALTRow.objects.filter(
+                        domain_name=domain,
+                        month=month,
+                        user_type__in=['CommCareUser', 'CommCareUser-Deleted'],
+                        user_id__in=not_deleted_active_users,
+                     ).distinct('user_id')
+
+        if has_filter:
+            self._rows = self._rows.filter(user_id__in=users).distinct('user_id')
+
+        self._threshold = performance_threshold
+
+        super(MonthlyMALTRows, self).__init__(
+            domain=domain,
+            month=month,
+        )
+
+    def get_num_high_performing_users(self):
+        return self._rows.filter(num_of_forms__gte=self._threshold).count()
+
+    def get_num_active_users(self):
+        return self._rows.filter(num_of_forms__gt=0).count()
+
+    def get_num_low_performing_users(self):
+        return self.get_num_active_users() - self.get_num_high_performing_users()
+
+    def generate_user_stubs(self):
+        return {
+            row.user_id: UserActivityStub(
+                user_id=row.user_id,
+                username=raw_username(row.username),
+                num_forms_submitted=row.num_of_forms,
+                is_performing=row.num_of_forms >= self._threshold,
+                previous_stub=None,
+                next_stub=None,
+            ) for row in self._rows
+        }
+
+
 class MonthlyPerformanceSummary(jsonobject.JsonObject):
     month = jsonobject.DateProperty()
     domain = jsonobject.StringProperty()
-    performance_threshold = jsonobject.IntegerProperty()
     active = jsonobject.IntegerProperty()
     performing = jsonobject.IntegerProperty()
 
-    def __init__(self, domain, month, users, has_filter,
-                 performance_threshold, previous_summary=None,
-                 delta_high_performers=0, delta_low_performers=0):
+    def __init__(self, domain, month, monthly_malt_rows, previous_summary=None):
         self._previous_summary = previous_summary
         self._next_summary = None
-        base_queryset = MALTRow.objects.filter(
-            domain_name=domain,
-            month=month,
-            user_type__in=['CommCareUser', 'CommCareUser-Deleted'],
-        )
-        if has_filter:
-            base_queryset = base_queryset.filter(
-                user_id__in=users,
-            )
-        self._distinct_user_ids = base_queryset.distinct('user_id')
+        self._monthly_malt_rows = monthly_malt_rows
 
-        num_performing_users = (base_queryset
-                                .filter(num_of_forms__gte=performance_threshold)
-                                .distinct('user_id')
-                                .count())
-
-        num_active_users = self._distinct_user_ids.count()
-        num_low_performing_user = num_active_users - num_performing_users
-
-        if self._previous_summary:
-            delta_high_performers = num_performing_users - self._previous_summary.number_of_performing_users
-            delta_low_performers = num_low_performing_user - self._previous_summary.number_of_low_performing_users
+        num_high_performers = self._monthly_malt_rows.get_num_high_performing_users()
+        num_low_performers = self._monthly_malt_rows.get_num_low_performing_users()
+        num_active_users = self._monthly_malt_rows.get_num_active_users()
+        if previous_summary:
+            delta_high_performers = num_high_performers - previous_summary.performing
+            delta_low_performers = num_low_performers - previous_summary.low_performing
+        else:
+            delta_high_performers = 0
+            delta_low_performers = 0
 
         super(MonthlyPerformanceSummary, self).__init__(
             month=month,
             domain=domain,
-            performance_threshold=performance_threshold,
             active=num_active_users,
             inactive=0,
             total_users_by_month=0,
             percent_active=0,
-            performing=num_performing_users,
+            performing=num_high_performers,
+            low_performing=num_low_performers,
             delta_high_performers=delta_high_performers,
             delta_low_performers=delta_low_performers,
         )
@@ -176,18 +206,8 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                 return self.delta_inactive * 100.
             return float(self.delta_inactive / float(self._previous_summary.number_of_inactive_users)) * 100.
 
-    @memoized
-    def get_all_user_stubs(self):
-        return {
-            row.user_id: UserActivityStub(
-                user_id=row.user_id,
-                username=raw_username(row.username),
-                num_forms_submitted=row.num_of_forms,
-                is_performing=row.num_of_forms >= self.performance_threshold,
-                previous_stub=None,
-                next_stub=None,
-            ) for row in self._distinct_user_ids
-        }
+    def _get_all_user_stubs(self):
+        return self._monthly_malt_rows.generate_user_stubs()
 
     @memoized
     def get_all_user_stubs_with_extra_data(self):
@@ -340,28 +360,40 @@ class ProjectHealthDashboard(ProjectReport):
         users_set = self.get_unique_users(users_list_by_location, users_list_by_group)
         return users_set
 
+    def create_monthly_summary(self, month_as_date, threshold, filtered_users, last_month_summary):
+        monthly_malt_rows = MonthlyMALTRows(
+            domain=self.domain,
+            month=month_as_date,
+            performance_threshold=threshold,
+            users=filtered_users,
+            has_filter=bool(self.get_group_location_ids()),
+            not_deleted_active_users=UserES().domain(self.domain).values_list("_id", flat=True),
+        )
+        this_month_summary = MonthlyPerformanceSummary(
+            domain=self.domain,
+            month=month_as_date,
+            previous_summary=last_month_summary,
+            monthly_malt_rows=monthly_malt_rows,
+        )
+        if last_month_summary is not None:
+            last_month_summary.set_next_month_summary(this_month_summary)
+            this_month_summary.set_num_inactive_users(len(this_month_summary.get_dropouts()))
+        this_month_summary.set_percent_active()
+        return this_month_summary
+
     def previous_six_months(self):
         now = datetime.datetime.utcnow()
         six_month_summary = []
         last_month_summary = None
         performance_threshold = get_performance_threshold(self.domain)
         filtered_users = self.get_users_by_filter()
+
         for i in range(-6, 1):
             year, month = add_months(now.year, now.month, i)
             month_as_date = datetime.date(year, month, 1)
-            this_month_summary = MonthlyPerformanceSummary(
-                domain=self.domain,
-                performance_threshold=performance_threshold,
-                month=month_as_date,
-                previous_summary=last_month_summary,
-                users=filtered_users,
-                has_filter=bool(self.get_group_location_ids()),
-            )
+            this_month_summary = self.create_monthly_summary(month_as_date, performance_threshold,
+                                                             filtered_users, last_month_summary)
             six_month_summary.append(this_month_summary)
-            if last_month_summary is not None:
-                last_month_summary.set_next_month_summary(this_month_summary)
-                this_month_summary.set_num_inactive_users(len(this_month_summary.get_dropouts()))
-            this_month_summary.set_percent_active()
             last_month_summary = this_month_summary
         return six_month_summary[1:]
 
