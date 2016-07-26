@@ -30,6 +30,7 @@ class TestStrongSetUserPasswordForm(TestCase):
         form = self.form("TaylorSwift89!")
         self.assertTrue(form.is_valid())
 
+
 class TestWeakSetUserPasswordForm(TestCase):
     def setUp(self):
         super(TestWeakSetUserPasswordForm, self).setUp()

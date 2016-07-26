@@ -86,7 +86,7 @@ class UserLocMapTest(CommTrackTest):
             self.assertEqual(get_supply_point.call_count, 1)
 
 
-class TestUserBulkUpload(TestCase, DomainSubscriptionMixin): 
+class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
     def setUp(self):
         super(TestUserBulkUpload, self).setUp()
         delete_all_users()
