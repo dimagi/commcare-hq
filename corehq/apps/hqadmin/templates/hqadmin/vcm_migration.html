@@ -65,6 +65,7 @@
 
             $("#bulk-actions button").click(function() {
                 var $button = $(this),
+                    $form = $button.closest("form"),
                     action = $button.data("action"),
                     domains = _.map($("#migrations :checked"), function(c) { return $(c).data("domain"); });
                 if (!domains.length) {
@@ -74,31 +75,23 @@
                 if (!confirm('Are you sure you want to ' + action + ' these ' + domains.length + ' domains?')) {
                     return;
                 }
-                $button.siblings().andSelf().attr("disabled", true).addClass("disabled");
-                $.ajax({
-                    url: '{{ url }}',
-                    type: 'POST',
-                    data: {
-                        action: action,
-                        domains: domains.join(","),
-                    },
-                    success: function() {
-                        alert_user('Success! Best to refresh this page.', 'success');
-                    },
-                    error: function() {
-                        alert_user('Error taking action.', 'danger');
-                    },
-                });
+                $button.siblings("button").andSelf().attr("disabled", true).addClass("disabled");
+                $form.find("[name='action']").val(action);
+                $form.find("[name='domains']").val(domains.join(","));
+                $form.submit();
             });
         })
     </script>
 {% endblock %}
 
 {% block page_content %}
-    <div id="bulk-actions">
-        <button class="btn btn-default" data-action="email"><i class="fa fa-envelope"></i> Email Selected Domains</button>
-        <button class="btn btn-default hide" data-action="migrate"><i class="fa fa-gears"></i> Migrate Selected Domains</button>
-    </div>
+    <form id="bulk-actions" action="{{ url }}" method="POST">
+        {% csrf_token %}
+        <button class="btn btn-default" data-action="email"><i class="fa fa-envelope"></i> Send Email to Selected Domains</button>
+        <button class="btn btn-default" data-action="migrate"><i class="fa fa-gears"></i> Migrate Selected Domains</button>
+        <input type="hidden" name="action" />
+        <input type="hidden" name="domains" />
+    </form>
     <br />
     <div class="text-muted">Shift+Click to select multiple rows, click in "Notes" column to edit.</div>
     <table class="table table-condensed table-striped table-hover" id="migrations">

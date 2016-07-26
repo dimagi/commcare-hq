@@ -242,7 +242,7 @@ class LedgerResumableSqlModelIteratorTest(BaseResumableSqlModelIteratorTest, Tes
 
     @classmethod
     def create_docs(cls, domain, count):
-        from corehq.apps.commtrack.tests import get_single_balance_block
+        from corehq.apps.commtrack.tests.util import get_single_balance_block
         from corehq.apps.hqcase.utils import submit_case_blocks
         from corehq.apps.commtrack.helpers import make_product
         from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference

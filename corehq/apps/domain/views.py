@@ -2723,6 +2723,7 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
     def page_context(self):
         return {
             'flags': self.enabled_flags(),
+            'use_sql_backend': self.domain_object.use_sql_backend
         }
 
 

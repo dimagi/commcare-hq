@@ -1290,32 +1290,36 @@ class MySettingsTab(UITab):
             MyProjectsList,
             TwoFactorProfileView,
         )
-        items = [
-            [_("Manage My Settings"), [
-                {
-                    'title': _(MyAccountSettingsView.page_title),
-                    'url': reverse(MyAccountSettingsView.urlname),
-                },
-                {
-                    'title': _(MyProjectsList.page_title),
-                    'url': reverse(MyProjectsList.urlname),
-                },
-                {
-                    'title': _(ChangeMyPasswordView.page_title),
-                    'url': reverse(ChangeMyPasswordView.urlname),
-                },
-                {
-                    'title': _(TwoFactorProfileView.page_title),
-                    'url': reverse(TwoFactorProfileView.urlname),
-                }
-            ]]
+        menu_items = [
+            {
+                'title': MyAccountSettingsView.page_title,
+                'url': reverse(MyAccountSettingsView.urlname),
+            },
         ]
+
+        if self.couch_user and self.couch_user.is_web_user():
+            menu_items.append({
+                'title': MyProjectsList.page_title,
+                'url': reverse(MyProjectsList.urlname),
+            })
+
+        menu_items.extend([
+            {
+                'title': ChangeMyPasswordView.page_title,
+                'url': reverse(ChangeMyPasswordView.urlname),
+            },
+            {
+                'title': TwoFactorProfileView.page_title,
+                'url': reverse(TwoFactorProfileView.urlname),
+            }
+        ])
+
         if self.couch_user and self.couch_user.is_dimagi:
-            items[0][1].append({
-                'title': _(EnableSuperuserView.page_title),
+            menu_items.append({
+                'title': EnableSuperuserView.page_title,
                 'url': reverse(EnableSuperuserView.urlname),
             })
-        return items
+        return [[_("Manage My Settings"), menu_items]]
 
 
 class AccountingTab(UITab):

@@ -87,7 +87,7 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
         if (resp.status === "success") {
             FormplayerFrontend.request("clearForm");
             FormplayerFrontend.trigger("apps:list");
-            showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 2500);
+            showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
         } else {
             showError(resp.output, $("#cloudcare-notifications"));
         }
