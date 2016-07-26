@@ -283,6 +283,7 @@ def get_all_extensions_to_close(domain, case_updates):
     extensions_to_close = set()
     for case_update_meta in case_updates:
         extensions_to_close = extensions_to_close | get_extensions_to_close(case_update_meta.case, domain)
+    return extensions_to_close
 
 
 def get_extensions_to_close(case, domain):
