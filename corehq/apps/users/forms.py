@@ -482,7 +482,6 @@ class NewMobileWorkerForm(forms.Form):
         required=True,
         min_length=1,
         label=ugettext_noop("Password"),
-        help_text=mark_safe('<span data-bind="text: passwordHelp, css: color">')
     )
 
     def __init__(self, project, *args, **kwargs):
@@ -490,6 +489,13 @@ class NewMobileWorkerForm(forms.Form):
         email_string = u"@{}.commcarehq.org".format(project.name)
         max_chars_username = 80 - len(email_string)
         self.project = project
+
+        if self.project.strong_mobile_passwords:
+            self.fields['password'].widget = forms.TextInput()
+            self.fields['password'].help_text = mark_safe("""
+                <i class="fa fa-warning"></i> This password will not be shown again. <br />
+                <span data-bind="text: passwordHelp, css: color">
+            """)
 
         self.helper = FormHelper()
         self.helper.form_tag = False

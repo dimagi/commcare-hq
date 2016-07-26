@@ -74,6 +74,7 @@ $(function () {
                 });
         }
     });
+    mobileWorkerApp.constant('generateStrongPasswords', {{ strong_mobile_passwords|JSON }});
     {% angularjs %}
     mobileWorkerApp.directive('workertableHeader', function () {
         return {
