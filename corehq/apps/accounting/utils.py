@@ -251,11 +251,11 @@ def get_active_reminders_by_domain_name(domain_name):
     ]
 
 
-def make_anchor_tag(href, name, attrs={}):
+def make_anchor_tag(href, name, attrs=None):
     context = {
         'href': href,
         'name': name,
-        'attrs': attrs,
+        'attrs': attrs or {},
     }
     return render_to_string('accounting/partials/anchor_tag.html', context)
 
