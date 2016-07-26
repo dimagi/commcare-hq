@@ -276,7 +276,7 @@
                                     </div>
                                 {% endfor %}
                             {% endif %}
-                            <div id="message-alerts" data-bind="foreach: alerts">
+                            <div id="message-alerts" class="ko-template" data-bind="foreach: alerts">
                                 <div data-bind="attr: {'class': alert_class}">
                                     <a class="close" data-dismiss="alert" href="#">&times;</a>
                                     <span data-bind="text: message"></span>
