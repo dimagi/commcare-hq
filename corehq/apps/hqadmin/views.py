@@ -519,7 +519,7 @@ class VCMMigrationView(BaseAdminSectionView):
                 for app_id in get_app_ids_in_domain(d):
                     try:
                         management.call_command('migrate_app_to_cmitfb', app_id)
-                    except Exception as x:
+                    except Exception:
                         m.notes = m.notes + "{}failed on app {}".format('; ' if m.notes else '', app_id)
                         errors.add(d)
                 if d not in errors:
