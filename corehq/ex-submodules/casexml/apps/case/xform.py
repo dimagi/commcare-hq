@@ -175,21 +175,20 @@ def _get_or_update_cases(xforms, case_db):
     domain = getattr(case_db, 'domain', None)
     touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, xforms)
 
-    # once we've gotten through everything, validate all indices
-    # and check for new dirtiness flags
-    def _validate_indices(case):
-        if case.indices:
-            for index in case.indices:
-                # call get and not doc_exists to force domain checking
-                # see CaseDbCache._validate_case
-                referenced_case = case_db.get(index.referenced_id)
-                if not referenced_case:
-                    # just log, don't raise an error or modify the index
-                    logging.error(
-                        "Case '%s' references non-existent case '%s'",
-                        case.case_id,
-                        index.referenced_id,
-                    )
+    def _validate_indices(cases):
+        for case in cases:
+            if case.indices:
+                for index in case.indices:
+                    # call get and not doc_exists to force domain checking
+                    # see CaseDbCache._validate_case
+                    referenced_case = case_db.get(index.referenced_id)
+                    if not referenced_case:
+                        # just log, don't raise an error or modify the index
+                        logging.error(
+                            "Case '%s' references non-existent case '%s'",
+                            case.case_id,
+                            index.referenced_id,
+                        )
 
     def _get_dirtiness_flags_for_outgoing_indices(case, tree_owners=None):
         """ if the outgoing indices touch cases owned by another user this cases owner is dirty """
@@ -250,10 +249,11 @@ def _get_or_update_cases(xforms, case_db):
     dirtiness_flags = []
     extensions_to_close = set()
 
+    _validate_indices([case_update_meta.case for case_update_meta in touched_cases])
+
     # process the temporary dirtiness flags first so that any hints for real dirtiness get overridden
     dirtiness_flags += list(_get_dirtiness_flags_for_reassigned_case(touched_cases.values()))
     for case_update_meta in touched_cases.values():
-        _validate_indices(case_update_meta.case)
         extensions_to_close = extensions_to_close | get_extensions_to_close(case_update_meta.case, domain)
         dirtiness_flags += list(_get_dirtiness_flags_for_outgoing_indices(case_update_meta.case))
     dirtiness_flags += list(_get_dirtiness_flags_for_child_cases([meta.case for meta in touched_cases.values()]))
