@@ -56,7 +56,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
 
         rowClick: function (e) {
             e.preventDefault();
-            FormplayerFrontend.trigger("menu:show:detail", this);
+            FormplayerFrontend.trigger("menu:show:detail", this, 0);
         },
 
         templateHelpers: function () {
@@ -64,7 +64,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
-                resolveUri: function(uri) {
+                resolveUri: function (uri) {
                     return FormplayerFrontend.request('resourceMap', uri, appId);
                 },
             };
@@ -139,4 +139,33 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         childView: MenuList.DetailView,
         childViewContainer: "tbody",
     });
-});
+
+    MenuList.DetailTabView = Marionette.ItemView.extend({
+        tagName: "li",
+        template: "#detail-view-tab-item-template",
+        events: {
+            "click": "tabClick",
+        },
+        initialize: function (options) {
+            this.index = options.model.get('id');
+            this.showDetail = options.showDetail;
+        },
+        tabClick: function (e) {
+            e.preventDefault();
+            this.options.showDetail(this.index);
+        },
+    });
+
+    MenuList.DetailTabListView = Marionette.CompositeView.extend({
+        tagName: "div",
+        template: "#detail-view-tab-list-template",
+        childView: MenuList.DetailTabView,
+        childViewContainer: "ul",
+        childViewOptions: function () {
+            return {
+                showDetail: this.options.showDetail,
+            };
+        },
+    });
+})
+;
