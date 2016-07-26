@@ -52,17 +52,17 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     active = jsonobject.IntegerProperty()
     performing = jsonobject.IntegerProperty()
 
-    def __init__(self, domain, month, users, has_filter,
+    def __init__(self, domain, month, users, has_filter, active_not_deleted_users,
                  performance_threshold, previous_summary=None,
                  delta_high_performers=0, delta_low_performers=0):
         self._previous_summary = previous_summary
         self._next_summary = None
-        not_deleted_active_users = UserES().domain(domain).values_list("_id", flat=True)
+
         base_queryset = MALTRow.objects.filter(
             domain_name=domain,
             month=month,
             user_type__in=['CommCareUser', 'CommCareUser-Deleted'],
-            user_id__in=not_deleted_active_users,
+            user_id__in=active_not_deleted_users,
         )
         if has_filter:
             base_queryset = base_queryset.filter(
@@ -343,6 +343,7 @@ class ProjectHealthDashboard(ProjectReport):
         last_month_summary = None
         performance_threshold = get_performance_threshold(self.domain)
         filtered_users = self.get_users_by_filter()
+        active_not_deleted_users = UserES().domain(self.domain).values_list("_id", flat=True)
         for i in range(-6, 1):
             year, month = add_months(now.year, now.month, i)
             month_as_date = datetime.date(year, month, 1)
@@ -353,6 +354,7 @@ class ProjectHealthDashboard(ProjectReport):
                 previous_summary=last_month_summary,
                 users=filtered_users,
                 has_filter=bool(self.get_group_location_ids()),
+                active_not_deleted_users=active_not_deleted_users,
             )
             six_month_summary.append(this_month_summary)
             if last_month_summary is not None:
