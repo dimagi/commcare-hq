@@ -60,11 +60,6 @@ def process_pillow_retry(error_doc_id):
                 return
 
         change = error_doc.change_object
-        if getattr(pillow, 'include_docs', False):
-            try:
-                change.set_document(pillow.get_couch_db().open_doc(change.id))
-            except ResourceNotFound:
-                change.deleted = True
 
         try:
             try:

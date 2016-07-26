@@ -1,5 +1,5 @@
 from optparse import make_option
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.tzmigration import set_migration_started, \
     set_migration_complete, set_migration_not_started, get_migration_status, \
@@ -7,6 +7,7 @@ from corehq.apps.tzmigration import set_migration_started, \
 from corehq.apps.tzmigration.timezonemigration import prepare_planning_db, \
     get_planning_db, get_planning_db_filepath, delete_planning_db, \
     prepare_case_json, FormJsonDiff, commit_plan
+from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.dates import iso_string_to_datetime
 from couchforms.dbaccessors import get_form_ids_by_type
 
@@ -42,6 +43,9 @@ class Command(BaseCommand):
                    if key not in base_options and key != sole_option)
 
     def handle(self, domain, **options):
+        if should_use_sql_backend(domain):
+            raise CommandError('This command only works for couch-based domains.')
+
         filepath = get_planning_db_filepath(domain)
         self.stdout.write('Using file {}\n'.format(filepath))
         if options['BEGIN']:

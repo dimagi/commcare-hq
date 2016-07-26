@@ -11,7 +11,8 @@ from corehq.util.test_utils import trap_extra_setup
 from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS, update_settings, \
     set_index_reindex_settings, set_index_normal_settings, mapping_exists, initialize_index, \
     initialize_index_and_mapping, assume_alias
-from pillowtop.listener import send_to_elasticsearch, PillowtopIndexingError
+from pillowtop.exceptions import PillowtopIndexingError
+from pillowtop.processors.elastic import send_to_elasticsearch
 from .utils import get_doc_count, get_index_mapping, TEST_INDEX_INFO
 
 
