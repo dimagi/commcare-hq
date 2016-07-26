@@ -489,43 +489,44 @@ class VCMMigrationView(BaseAdminSectionView):
     def post(self, request, *args, **kwargs):
         action = self.request.POST['action']
         if action == 'notes':
-            m = VCMMigration.objects.get(domain=self.request.POST['domain'])
-            m.notes = self.request.POST['notes']
-            m.save()
+            migration = VCMMigration.objects.get(domain=self.request.POST['domain'])
+            migration.notes = self.request.POST['notes']
+            migration.save()
             return json_response({'success': 'success'})
 
         domains = self.request.POST['domains'].split(",")
         errors = set([])
         successes = set([])
-        for d in domains:
-            m = VCMMigration.objects.get(domain=d)
+        for domain in domains:
+            migration = VCMMigration.objects.get(domain=domain)
             if action == 'email':
                 email_context = {
-                    'domain': d,
+                    'domain': domain,
                     'migration_date': self.migration_date,
                 }
                 text_content = render_to_string(self.email_template_html, email_context)
                 html_content = render_to_string(self.email_template_txt, email_context)
                 send_html_email_async.delay(
                     self.email_subject,
-                    m.admins,
+                    migration.admins,
                     html_content,
                     text_content=text_content,
                     email_from=settings.SUPPORT_EMAIL)
-                m.emailed = datetime.now()
-                m.save()
-                successes.add(d)
+                migration.emailed = datetime.now()
+                migration.save()
+                successes.add(domain)
             elif action == 'migrate':
-                for app_id in get_app_ids_in_domain(d):
+                for app_id in get_app_ids_in_domain(domain):
                     try:
                         management.call_command('migrate_app_to_cmitfb', app_id)
                     except Exception:
-                        m.notes = m.notes + "{}failed on app {}".format('; ' if m.notes else '', app_id)
-                        errors.add(d)
-                if d not in errors:
-                    successes.add(d)
-                m.migrated = datetime.now()
-                m.save()
+                        migration.notes = migration.notes + "{}failed on app {}".format('; ' if migration.notes else '', app_id)
+                        migration.notes = migration.notes + "failed on app {}".format(app_id)
+                        errors.add(domain)
+                if domain not in errors:
+                    successes.add(domain)
+                migration.migrated = datetime.now()
+                migration.save()
         if len(successes):
             messages.success(request, "Succeeded with the following {} domains: {}".format(
                                         len(successes), ", ".join(successes)))
