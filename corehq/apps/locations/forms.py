@@ -277,18 +277,14 @@ class LocationForm(forms.Form):
                 prop_name = k[len('prop:'):]
                 setattr(location, prop_name, v)
 
-        orig_parent_id = self.cleaned_data.get('orig_parent_id')
-        reparented = orig_parent_id is not None
-        if reparented:
-            # todo: this property isn't used. could be deleted if we aren't expecting
-            # to do anything more with the data
-            location.flag_post_move = True
-            location.previous_parents.append(orig_parent_id)
         if commit:
             location.save()
 
         if not is_new:
-            location_edited.send(sender='loc_mgmt', loc=location, moved=reparented)
+            orig_parent_id = self.cleaned_data.get('orig_parent_id')
+            reparented = orig_parent_id is not None
+            location_edited.send(sender='loc_mgmt', loc=location,
+                                 moved=reparented, previous_parent=orig_parent_id)
 
         return location
 

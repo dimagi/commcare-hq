@@ -392,17 +392,20 @@ def process_sms_registration(msg):
                     else:
                         username = cleaned_phone_number
                     try:
-                        username = process_username(username, domain)
-                        password = random_password()
-                        new_user = CommCareUser.create(domain.name, username, password)
-                        new_user.add_phone_number(cleaned_phone_number)
-                        new_user.save_verified_number(domain.name, cleaned_phone_number, True, None)
-                        new_user.save()
-                        registration_processed = True
+                        user_data = {}
 
                         invitation = SelfRegistrationInvitation.by_phone(msg.phone_number)
                         if invitation:
                             invitation.completed()
+                            user_data = invitation.custom_user_data
+
+                        username = process_username(username, domain)
+                        password = random_password()
+                        new_user = CommCareUser.create(domain.name, username, password, user_data=user_data)
+                        new_user.add_phone_number(cleaned_phone_number)
+                        new_user.save_verified_number(domain.name, cleaned_phone_number, True, None)
+                        new_user.save()
+                        registration_processed = True
 
                         if domain.enable_registration_welcome_sms_for_mobile_worker:
                             send_sms(domain.name, None, cleaned_phone_number,

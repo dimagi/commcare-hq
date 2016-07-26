@@ -1627,12 +1627,14 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
         cls.report_columns = [
             {
                 "column_id": 'foo',
+                "display": "foo display",
                 "type": "field",
                 "field": "my_field",
                 "aggregation": "simple",
             },
             {
                 "column_id": 'bar',
+                "display": "bar display",
                 "type": "field",
                 "field": "my_field",
                 "aggregation": "simple",
@@ -1652,6 +1654,7 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
                 'slug': 'my_other_field_filter',
             }
         ]
+        cls.report_title = "test report"
 
         cls.data_source = DataSourceConfiguration(
             domain=cls.domain.name,
@@ -1661,12 +1664,18 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
         cls.data_source.save()
 
         cls.report_configuration = ReportConfiguration(
+            title=cls.report_title,
             domain=cls.domain.name,
             config_id=cls.data_source._id,
             columns=cls.report_columns,
             filters=cls.report_filters
         )
         cls.report_configuration.save()
+
+        another_report_configuration = ReportConfiguration(
+            domain=cls.domain.name, config_id=cls.data_source._id, columns=[], filters=[]
+        )
+        another_report_configuration.save()
 
     def test_get_detail(self):
         response = self._assert_auth_get_resource(
@@ -1678,17 +1687,29 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
 
         self.assertEqual(
             set(response_dict.keys()),
-            {'resource_uri', 'filters', 'columns', 'id'}
+            {'resource_uri', 'filters', 'columns', 'id', 'title'}
         )
 
         self.assertEqual(
-            [c['column_id'] for c in self.report_columns],
+            [{"column_id": c['column_id'], "display": c['display']} for c in self.report_columns],
             columns
         )
         self.assertEqual(
-            [{'datatype': x['datatype'], 'slug': x['slug']} for x in self.report_filters],
+            [{'datatype': x['datatype'], 'slug': x['slug'], 'type': x['type']} for x in self.report_filters],
             filters
         )
+        self.assertEqual(response_dict['title'], self.report_title)
+
+    def test_get_list(self):
+        response = self._assert_auth_get_resource(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+        response_dict = json.loads(response.content)
+
+        self.assertEqual(set(response_dict.keys()), {'meta', 'objects'})
+        self.assertEqual(set(response_dict['meta'].keys()), {'total_count'})
+
+        self.assertEqual(response_dict['meta']['total_count'], 2)
+        self.assertEqual(len(response_dict['objects']), 2)
 
     def test_disallowed_methods(self):
         response = self._assert_auth_post_resource(
@@ -1696,9 +1717,6 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
             {},
             failure_code=405
         )
-        self.assertEqual(response.status_code, 405)
-
-        response = self._assert_auth_get_resource(self.list_endpoint, failure_code=405)
         self.assertEqual(response.status_code, 405)
 
     def test_auth(self):
@@ -1832,9 +1850,9 @@ class TestConfigurableReportDataResource(APIResourceTest):
             self.single_endpoint(self.report_configuration._id, {"limit": 10000}))
         self.assertEqual(response.status_code, 400)
 
-    def test_page_start(self):
+    def test_page_offset(self):
         response = self.client.get(
-            self.single_endpoint(self.report_configuration._id, {"start": 2}))
+            self.single_endpoint(self.report_configuration._id, {"offset": 2}))
         response_dict = json.loads(response.content)
         self.assertEqual(response_dict["total_records"], len(self.cases))
         self.assertEqual(len(response_dict["data"]), len(self.cases) - 2)
@@ -1860,7 +1878,7 @@ class TestConfigurableReportDataResource(APIResourceTest):
         query_dict.update({"some_filter": "bar"})
         next = v0_5.ConfigurableReportDataResource(api_name=self.api_name)._get_next_page(
             self.domain.name, "123", 100, 50, 3450, query_dict)
-        self.assertEqual(next, self.single_endpoint("123", {"start": 150, "limit": 50, "some_filter": "bar"}))
+        self.assertEqual(next, self.single_endpoint("123", {"offset": 150, "limit": 50, "some_filter": "bar"}))
 
         # It's the last page
         next = v0_5.ConfigurableReportDataResource(api_name=self.api_name)._get_next_page(

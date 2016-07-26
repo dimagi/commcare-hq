@@ -4,18 +4,25 @@
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from django.test import TestCase
 from corehq.apps.locations.models import Location, LocationType
+from corehq.apps.locations.tests.util import delete_all_locations
 
 
 class SiteCodeTest(TestCase):
 
+    domain = 'test-site-code'
+
     def setUp(self):
-        self.domain = bootstrap_domain()
-        LocationType(domain=self.domain.name, name='type').save()
+        self.project = bootstrap_domain(self.domain)
+        LocationType(domain=self.domain, name='type').save()
+
+    def tearDown(self):
+        self.project.delete()
+        delete_all_locations()
 
     def testSimpleName(self):
         location = Location(
             name="Some Location",
-            domain=self.domain.name,
+            domain=self.domain,
             location_type="type"
         )
 
@@ -26,7 +33,7 @@ class SiteCodeTest(TestCase):
     def testOtherCharacters(self):
         location = Location(
             name=u"Somé$ #Location (Old)",
-            domain=self.domain.name,
+            domain=self.domain,
             location_type="type"
         )
 
@@ -37,7 +44,7 @@ class SiteCodeTest(TestCase):
     def testDoesntDuplicate(self):
         location = Location(
             name="Location",
-            domain=self.domain.name,
+            domain=self.domain,
             location_type="type"
         )
 
@@ -47,7 +54,7 @@ class SiteCodeTest(TestCase):
 
         location = Location(
             name="Location",
-            domain=self.domain.name,
+            domain=self.domain,
             location_type="type"
         )
 

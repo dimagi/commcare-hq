@@ -340,6 +340,7 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     template_name = 'app_manager/app_diff.html'
 
     @use_angular_js
+    @login_and_domain_required
     def dispatch(self, request, *args, **kwargs):
         try:
             self.first_app_id = self.kwargs["first_app_id"]
