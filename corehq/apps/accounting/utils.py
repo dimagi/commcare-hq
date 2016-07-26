@@ -201,7 +201,7 @@ def fmt_dollar_amount(decimal_value):
     return _("USD %s") % quantize_accounting_decimal(decimal_value)
 
 
-def get_customer_cards(account, username, domain):
+def get_customer_cards(username, domain):
     from corehq.apps.accounting.models import (
         StripePaymentMethod, PaymentMethodType,
     )
