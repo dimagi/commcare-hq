@@ -73,7 +73,8 @@ domain_specific = patterns('',
     (r'^_base_template/$', login_and_domain_required(
         lambda request, domain: render(request, 'style/base.html', {'domain': domain})
     )),
-    (r'^zapier/', include('corehq.apps.zapier.urls', namespace='zapier'))
+    (r'^zapier/', include('corehq.apps.zapier.urls', namespace='zapier')),
+    (r'^zipline/', include('custom.zipline.urls'))
 )
 
 urlpatterns = patterns('',
