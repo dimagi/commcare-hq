@@ -63,7 +63,7 @@ hqDefine('export/js/utils.js', function() {
         return _.map(parts, function(part) {
             var isRepeat = part.endsWith('[]');
             if (isRepeat) {
-                part = part.slice(0, part.length - 2)  // Remove the [] from the end of the path
+                part = part.slice(0, part.length - 2);  // Remove the [] from the end of the path
             }
             return new models.PathNode({
                 name: part,

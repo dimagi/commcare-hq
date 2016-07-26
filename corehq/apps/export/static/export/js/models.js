@@ -120,14 +120,14 @@ hqDefine('export/js/models.js', function () {
                         path: [{
                             doc_type: 'PathNode',
                             name: 'number',
-                        }]
+                        },]
                     },
                     selected: true,
                     is_advanced: false,
                     label: 'number',
                     deid_transform: null,
                     repeat: null,
-                }
+                },
             ],
         }));
     };
@@ -203,9 +203,9 @@ hqDefine('export/js/models.js', function () {
 
     TableConfiguration.prototype.getColumn = function(path) {
         return _.find(this.columns(), function(column) {
-            return utils.readablePath(column.item.path()) === path
+            return utils.readablePath(column.item.path()) === path;
         });
-    }
+    };
 
     TableConfiguration.prototype.addUserDefinedExportColumn = function(table, e) {
         e.preventDefault();
@@ -262,8 +262,8 @@ hqDefine('export/js/models.js', function () {
             pattern: {
                 message: gettext('The table path should end with []'),
                 params: /^.*\[\]$/,
-            }
-        })
+            },
+        });
 
         self.showAdvanced = ko.observable(false);
         self.customPathString.subscribe(self.onCustomPathChange.bind(self));
@@ -277,7 +277,7 @@ hqDefine('export/js/models.js', function () {
 
         // Update the rowColumn's repeat count by counting the number of
         // repeats in the table path
-        nestedRepeatCount = _.filter(this.path(), function(node) { return node.is_repeat() }).length;
+        nestedRepeatCount = _.filter(this.path(), function(node) { return node.is_repeat(); }).length;
         rowColumn = this.getColumn('number');
         if (rowColumn) {
             rowColumn.repeat(nestedRepeatCount);
