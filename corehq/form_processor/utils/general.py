@@ -29,6 +29,8 @@ def should_use_sql_backend(domain_object_or_name):
 
 
 def should_use_sql_backend_in_prod(domain_object_or_name):
+    # the only reason this method is "public" is so it can be called directly by a handful of tests.
+    # everything else should call should_use_sql_backend instead
     from corehq.apps.domain.models import Domain
     # TODO: remove toggle once all domains have been migrated
     if isinstance(domain_object_or_name, Domain):
