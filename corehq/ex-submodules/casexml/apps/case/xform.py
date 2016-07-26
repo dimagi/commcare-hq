@@ -232,7 +232,7 @@ def _get_dirtiness_flags_for_outgoing_indices(case_db, case, tree_owners=None):
     for unowned_host_case in unowned_host_cases:
         # A host case of this extension is unowned, which means it could potentially touch an owned case
         # Check these unowned cases' outgoing indices and mark dirty if appropriate
-        for dirtiness_flag in _get_dirtiness_flags_for_outgoing_indices(unowned_host_case,
+        for dirtiness_flag in _get_dirtiness_flags_for_outgoing_indices(case_db, unowned_host_case,
                                                                         tree_owners=tree_owners):
             yield dirtiness_flag
 
