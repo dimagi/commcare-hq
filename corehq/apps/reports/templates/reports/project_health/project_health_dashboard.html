@@ -156,10 +156,19 @@
         }
     }
 
+    function setupDataTables(){
+        $('.datatable').DataTable({
+            "ordering": false,
+            "searching": false,
+            "lengthChange": false,
+        })
+    }
+
     $(function() {
         setupCharts();
         setupPopovers();
         setupLineChart();
+        setupDataTables();
     });
 </script>
 {% endblock %}
