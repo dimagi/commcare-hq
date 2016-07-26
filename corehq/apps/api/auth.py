@@ -27,9 +27,9 @@ from corehq.apps.domain.decorators import (
     login_or_digest,
     login_or_basic,
     login_or_api_key,
-    superuser_digest_auth,
-    superuser_basic_auth,
-    superuser_apikey_auth)
+    superuser_or_dev_digest_auth,
+    superuser_or_dev_basic_auth,
+    superuser_or_dev_apikey_auth)
 
 # API imports
 from .serializers import CustomXMLSerializer
@@ -161,9 +161,9 @@ class AdminAuthentication(LoginAndDomainAuthentication):
     def decorator_map(self):
         # superuser decorators that authenticate user and check superuser permissions
         return {
-            'digest': superuser_digest_auth,
-            'basic': superuser_basic_auth,
-            'api_key': superuser_apikey_auth,
+            'digest': superuser_or_dev_digest_auth,
+            'basic': superuser_or_dev_basic_auth,
+            'api_key': superuser_or_dev_apikey_auth,
         }
 
     def is_authenticated(self, request, **kwargs):

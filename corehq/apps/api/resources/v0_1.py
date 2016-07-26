@@ -24,10 +24,7 @@ from corehq.apps.domain.decorators import (
     api_key_auth,
     login_or_digest,
     login_or_basic,
-    login_or_api_key,
-    superuser_digest_auth,
-    superuser_basic_auth,
-    superuser_apikey_auth)
+    login_or_api_key)
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 

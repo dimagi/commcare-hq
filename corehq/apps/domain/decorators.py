@@ -147,7 +147,7 @@ def api_key():
     return real_decorator
 
 
-def _superuser_auth_decorator(challenge_fn):
+def _superuser_or_developer_auth_decorator(challenge_fn):
     def _outer(fn):
         @wraps(fn)
         def safe_fn(request, *args, **kwargs):
@@ -172,9 +172,9 @@ def _superuser_auth_decorator(challenge_fn):
     return _outer
 
 # Use these decorators on superuser views that should not be accessible over sessions (e.g. API views)
-superuser_digest_auth = _superuser_auth_decorator(httpdigest)
-superuser_basic_auth = _superuser_auth_decorator(basicauth())
-superuser_apikey_auth = _superuser_auth_decorator(api_key())
+superuser_or_dev_digest_auth = _superuser_or_developer_auth_decorator(httpdigest)
+superuser_or_dev_basic_auth = _superuser_or_developer_auth_decorator(basicauth())
+superuser_or_dev_apikey_auth = _superuser_or_developer_auth_decorator(api_key())
 
 
 def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow_sessions=True):
