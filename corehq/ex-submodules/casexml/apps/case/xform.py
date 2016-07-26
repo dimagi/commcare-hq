@@ -174,15 +174,9 @@ def _get_or_update_cases(xforms, case_db):
     """
     domain = getattr(case_db, 'domain', None)
     touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, xforms)
-
-    extensions_to_close = set()
-
     _validate_indices(case_db, [case_update_meta.case for case_update_meta in touched_cases])
     dirtiness_flags = _get_all_dirtiness_flags_from_cases(case_db, touched_cases)
-
-    for case_update_meta in touched_cases.values():
-        extensions_to_close = extensions_to_close | get_extensions_to_close(case_update_meta.case, domain)
-
+    extensions_to_close = get_all_extensions_to_close(domain, touched_cases.values())
     return CaseProcessingResult(
         domain,
         [update.case for update in touched_cases.values()],
@@ -283,6 +277,12 @@ def _is_change_of_ownership(previous_owner_id, next_owner_id):
         and previous_owner_id != UNOWNED_EXTENSION_OWNER_ID
         and previous_owner_id != next_owner_id
     )
+
+
+def get_all_extensions_to_close(domain, case_updates):
+    extensions_to_close = set()
+    for case_update_meta in case_updates:
+        extensions_to_close = extensions_to_close | get_extensions_to_close(case_update_meta.case, domain)
 
 
 def get_extensions_to_close(case, domain):
