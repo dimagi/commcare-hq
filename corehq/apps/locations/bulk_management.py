@@ -10,7 +10,7 @@ from collections import Counter, defaultdict
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, SQLLocation, LocationType
 from .tree_utils import BadParentError, CycleError, assert_no_cycles
 from .const import LOCATION_SHEET_HEADERS, LOCATION_TYPE_SHEET_HEADERS, ROOT_LOCATION_TYPE
 
@@ -59,6 +59,45 @@ class LocationTypeStub(object):
         index = index
         return cls(name, code, parent_code, do_delete, shares_cases,
                    view_descendants, expand_from, sync_to, index)
+
+    def is_new(self, old_collection):
+        return self.code not in old_collection.types_by_code
+
+    def _needs_save(self, old_collection):
+        # returns True if this should be saved
+        # assumes self.autoset_location_id_or_site_code is already called
+        if self.is_new(old_collection) or self.do_delete:
+            return True
+
+        old_version = old_collection.types_by_code[self.code]
+        for attr in ['name', 'code', 'parent_code', 'shares_cases'
+                     'view_descendants', 'expand_from', 'sync_to']:
+            if getattr(old_version, attr, None) != getattr(self, attr, None):
+                return True
+        # Todo: does it need save if parent_code hasn't changed but parent has been resaved
+        return False
+
+    def _as_db_object(self, old_collection, parent_type):
+        # returns a SQLLocation version of the stub
+        if self.is_new:
+            obj = LocationType()
+        else:
+            obj = old_collection.types_by_code[self.code]
+
+        for attr in ['name', 'code', 'parent_code', 'shares_cases'
+                     'view_descendants', 'expand_from', 'sync_to']:
+            setattr(obj, getattr(self, attr, None))
+
+        obj.parent = parent_type
+        return obj
+
+    def save_if_needed(self, parent_type, old_collection):
+        db_object = self._as_db_object(old_collection, parent_type)
+
+        if self._needs_save(old_collection):
+            db_object.save()
+
+        return db_object
 
 
 class LocationStub(object):
@@ -124,7 +163,7 @@ class LocationStub(object):
                 # must be a new location
                 self.is_new = True
 
-    def save_needed(self, old_collection):
+    def _needs_save(self, old_collection):
         # returns True if this should be saved
         # assumes self.autoset_location_id_or_site_code is already called
         if self.is_new or self.do_delete:
@@ -135,20 +174,30 @@ class LocationStub(object):
                      'latitude', 'longitude', 'external_id']:
             if getattr(old_version, attr, None) != getattr(self, attr, None):
                 return True
-
+        # Todo: does it need save if parent_code hasn't changed but parent has been resaved
         return False
 
-    def as_db_object(self, old_collection):
-        assert self.save_needed(old_collection)
-
-        data_attrs = ['name', 'site_code', 'location_type', 'parent_code',
-                      'latitude', 'longitude', 'external_id']
+    def _as_db_object(self, old_collection, parent_location):
+        # returns a SQLLocation version of the stub
         if self.is_new:
-            SQLLocation()
+            obj = SQLLocation()
+        else:
+            obj = old_collection.locations_by_id[self.location_id]
 
-        old_version = old_collection.locations_by_id[self.location_id]
-        for attr in data_attrs:
-            old_version.setattr(attr, getattr(self, attr))
+        for attr in ['name', 'site_code', 'location_type', 'parent_code',
+                     'latitude', 'longitude', 'external_id']:
+            setattr(obj, getattr(self, attr, None))
+
+        obj.parent = parent_location
+        return obj
+
+    def save_if_needed(self, parent_location, old_collection):
+        db_object = self._as_db_object(old_collection, parent_location)
+
+        if self._needs_save(old_collection):
+            db_object.save()
+
+        return db_object
 
 
 class LocationCollection(object):
@@ -166,6 +215,10 @@ class LocationCollection(object):
     @property
     def locations_by_site_code(self):
         return {l.site_code: l for l in self.locations}
+
+    @property
+    def types_by_code(self):
+        return {lt.code: lt for lt in self.types}
 
 
 class NewLocationImporter(object):
@@ -228,9 +281,42 @@ class NewLocationImporter(object):
             for index, row in enumerate(rows)
         ]
 
-    def commit_changes(self, type_rows, location_rows):
+    def commit_changes(self, type_stubs, location_stubs):
         # assumes all valdiations are done, just saves them
-        pass
+        # ToDos
+        # 1. Transaction
+        # 2. Combine calls in same level into one DB call
+        # 3. tests
+        type_stubs_by_parent_code = defaultdict(list)
+        for lt in type_stubs:
+            type_stubs_by_parent_code[lt.parent_code].append(lt)
+
+        def create_child_types(parent_type):
+            if parent_type == 'TOP':
+                parent_code = 'TOP'
+            else:
+                parent_code = parent_type.code
+            child_stubs = type_stubs_by_parent_code[parent_code]
+
+            for type_stub in child_stubs:
+                type_object = type_stub.save_if_needed(self.old_collection, parent_type)
+                create_child_types(type_object)
+
+        create_child_types('TOP')
+
+        location_stubs_by_parent_code = defaultdict(list)
+        for l in location_stubs:
+            location_stubs_by_parent_code[l.parent_code].append(l)
+
+        def create_child_locations(parent_location):
+            parent_code = parent_location.site_code
+            child_stubs = location_stubs_by_parent_code[parent_code]
+
+            for child in child_stubs:
+                child_object = child.save_if_needed(self.old_collection, parent_location)
+                create_child_locations(child_object)
+
+        create_child_locations('TOP')
 
 
 class LocationTreeValidator(object):
