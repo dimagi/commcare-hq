@@ -349,6 +349,7 @@
             <script type="text/javascript" src="{% toggle_js_url request.domain request.user.username %}"></script>
         {% endif %}
 
+        {% addtoblock js-inline %}
         <script type="text/javascript">
             $(function(){
                 $('.hq-help-template').each(function () {
@@ -356,10 +357,12 @@
                 });
             });
         </script>
+        {% endaddtoblock %}
         {# JavaScript Display Logic Libaries #}
 
         {% if request.couch_user %}
         <script type="text/javascript" src="{% static 'notifications/js/NotificationsService.ko.js' %}"></script>
+        {% addtoblock js-inline %}
         <script type="text/javascript">
             $(function () {
                 var $notificationsMenu = $('#js-settingsmenu-notifications');
@@ -368,10 +371,11 @@
                 }
             });
         </script>
+        {% endaddtoblock %}
         {% endif %}
 
         {% include "style/includes/ko.html" %}
-
+        {% addtoblock js-inline %}
         <script type="text/javascript">
             /*
                 This is the knockout-based, javascript analog of messages in Django.
@@ -408,6 +412,7 @@
             }
 
         </script>
+        {% endaddtoblock %}
 
         {% if request.use_angular_js %}
         {% compress js %}
@@ -481,7 +486,9 @@
         {% endif %}
 
         {% if reqeust.maps_prefer_canvas %}
+        {% addtoblock js-inline %}
         <script>L_PREFER_CANVAS = true;</script>
+        {% endaddtoblock %}
         {% endif %}
 
         {% if request.use_maps %}
@@ -500,12 +507,14 @@
 
         {% if request.use_timeago %}
         <script src="{% static 'jquery-timeago/jquery.timeago.js' %}"></script>
+        {% addtoblock js-inline %}
         <script>
             $(function () {
                 $.timeago.settings.allowFuture = true;
                 $(".timeago").timeago();
             });
         </script>
+        {% endaddtoblock %}
         {% endif %}
 
         {% if request.use_multiselect %}
@@ -521,11 +530,13 @@
         {% compress js %}
             <script type="text/javascript" src="{% static 'blazy/blazy.js' %}"></script>
         {% endcompress %}
+        {% addtoblock js-inline %}
         <script type="text/javascript">
           var hqLazy = new Blazy({
             container: 'body',
           });
         </script>
+        {% endaddtoblock %}
         {% endif %}
 
         {% if request.use_ko_validation %}
