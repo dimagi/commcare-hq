@@ -1,4 +1,5 @@
-function Util() {}
+function Util() {
+}
 
 // from http://stackoverflow.com/questions/439463/how-to-get-get-and-post-variables-with-jquery
 Util.getQueryParams = function (qs) {
@@ -21,13 +22,15 @@ Util.getQueryParams = function (qs) {
 Util.getSteps = function (queryString) {
     var urlParams = Util.getQueryParams(queryString);
     var paramMap = {};
+    paramMap.appId = queryString.substring(queryString.indexOf('/') + 1, queryString.indexOf('/menu'));
+    paramMap.baseUrl = urlParams[0].k.substring(0, urlParams[0].k.indexOf('?step'));
     var steps = [];
     for (var i = 0; i < urlParams.length; i++) {
         if (urlParams[i].k.indexOf('step') > -1) {
             steps.push(urlParams[i].v);
-        } else if(urlParams[i].k.indexOf('page') > -1) {
+        } else if (urlParams[i].k.indexOf('page') > -1) {
             paramMap.page = (urlParams[i].v);
-        } else if(urlParams[i].k.indexOf('search') > -1) {
+        } else if (urlParams[i].k.indexOf('search') > -1) {
             paramMap.search = (urlParams[i].v);
         }
     }
@@ -35,10 +38,16 @@ Util.getSteps = function (queryString) {
     return paramMap;
 };
 
-Util.setCrossDomainAjaxOptions = function(options) {
+Util.setCrossDomainAjaxOptions = function (options) {
     options.type = 'POST';
     options.dataType = "json";
-    options.crossDomain = { crossDomain: true};
-    options.xhrFields = { withCredentials: true};
+    options.crossDomain = {crossDomain: true};
+    options.xhrFields = {withCredentials: true};
     options.contentType = "application/json";
+};
+
+Util.addParameterToURL = function(param) {
+    _url = location.href;
+    _url += (_url.split('?')[1] ? '&':'?') + param;
+    return _url;
 };

@@ -11,7 +11,7 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
 
         rowClick: function (e) {
             e.preventDefault();
-            FormplayerFrontend.trigger("app:select", this.model.attributes._id);
+            FormplayerFrontend.trigger("app:select", this.model.get('_id'));
         },
     });
 

@@ -109,8 +109,8 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     FormplayerFrontend.on("breadcrumbSelect", function (index) {
         var currentFragment = Backbone.history.getFragment();
         var paramMap = Util.getSteps(currentFragment);
-        debugger;
-        var steps = paramMap.steps;
+        var steps = paramMap.steps.slice(0, index);
+        SessionNavigate.MenuList.Controller.selectMenu(paramMap.appId, steps);
     });
 
 
