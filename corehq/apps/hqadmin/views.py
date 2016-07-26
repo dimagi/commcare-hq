@@ -10,6 +10,7 @@ from StringIO import StringIO
 
 import dateutil
 from django.utils.datastructures import SortedDict
+from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 from django.conf import settings
 from django.contrib import messages
@@ -61,7 +62,7 @@ from corehq.apps.data_analytics.admin import MALTRowAdmin
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
 from corehq.apps.ota.views import get_restore_response, get_restore_params
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
 from corehq.apps.users.util import format_username
 from corehq.elastic import parse_args_for_es, run_query, ES_META
 from corehq.util.timer import TimingContext
@@ -488,51 +489,92 @@ class VCMMigrationView(BaseAdminSectionView):
 
     def post(self, request, *args, **kwargs):
         action = self.request.POST['action']
+
+        # Ajax request
         if action == 'notes':
             migration = VCMMigration.objects.get(domain=self.request.POST['domain'])
             migration.notes = self.request.POST['notes']
             migration.save()
             return json_response({'success': 'success'})
 
-        domains = self.request.POST['domains'].split(",")
-        errors = set([])
-        successes = set([])
-        for domain in domains:
-            migration = VCMMigration.objects.get(domain=domain)
-            if action == 'email':
-                email_context = {
-                    'domain': domain,
-                    'migration_date': self.migration_date,
-                }
-                text_content = render_to_string(self.email_template_html, email_context)
-                html_content = render_to_string(self.email_template_txt, email_context)
-                send_html_email_async.delay(
-                    self.email_subject,
-                    migration.admins,
-                    html_content,
-                    text_content=text_content,
-                    email_from=settings.SUPPORT_EMAIL)
-                migration.emailed = datetime.now()
-                migration.save()
-                successes.add(domain)
-            elif action == 'migrate':
-                for app_id in get_app_ids_in_domain(domain):
-                    try:
-                        management.call_command('migrate_app_to_cmitfb', app_id)
-                    except Exception:
-                        migration.notes = migration.notes + "{}failed on app {}".format('; ' if migration.notes else '', app_id)
-                        migration.notes = migration.notes + "failed on app {}".format(app_id)
-                        errors.add(domain)
-                if domain not in errors:
+        # Form submission
+        if action == 'add':
+            emails = self.request.POST['items'].split(",")
+            notes = self.request.POST['notes']
+            errors = []
+            successes = []
+            for email in emails:
+                user = CouchUser.get_by_username(email)
+                if not user:
+                    errors.append("User {} not found".format(email))
+                else:
+                    for domain in user.domains:
+                        try:
+                            migration = VCMMigration.objects.get(domain=domain)
+                            successes.append("Updated domain {} for {}".format(domain, email))
+                        except VCMMigration.DoesNotExist:
+                            migration = VCMMigration.objects.create(domain=domain)
+                            successes.append("Added domain {} for {}".format(domain, email))
+                        finally:
+                            if notes:
+                                if migration.notes:
+                                    migration.notes = migration.notes + '; '
+                                else:
+                                    migration.notes = ''
+                                migration.notes = migration.notes + notes
+                                migration.save()
+            if len(successes):
+                messages.success(request, mark_safe("<br>".join(successes)), extra_tags='html')
+            if len(errors):
+                messages.error(request, mark_safe("<br>".join(errors)), extra_tags='html')
+        else:
+            domains = self.request.POST['items'].split(",")
+            errors = set([])
+            successes = set([])
+            for domain in domains:
+                migration = VCMMigration.objects.get(domain=domain)
+                if not migration.notes:
+                    migration.notes = ''
+                app_count = 0
+                if action == 'email':
+                    email_context = {
+                        'domain': domain,
+                        'migration_date': self.migration_date,
+                    }
+                    text_content = render_to_string(self.email_template_html, email_context)
+                    html_content = render_to_string(self.email_template_txt, email_context)
+                    send_html_email_async.delay(
+                        self.email_subject,
+                        migration.admins,
+                        html_content,
+                        text_content=text_content,
+                        email_from=settings.SUPPORT_EMAIL)
+                    migration.emailed = datetime.now()
+                    migration.save()
                     successes.add(domain)
-                migration.migrated = datetime.now()
-                migration.save()
-        if len(successes):
-            messages.success(request, "Succeeded with the following {} domains: {}".format(
-                                        len(successes), ", ".join(successes)))
-        if len(errors):
-            messages.error(request, "Errors in the following {} domains: {}".format(
-                                        len(errors), ", ".join(errors)))
+                elif action == 'migrate':
+                    for app_id in get_app_ids_in_domain(domain):
+                        try:
+                            management.call_command('migrate_app_to_cmitfb', app_id)
+                            app_count = app_count + 1
+                        except Exception:
+                            if migration.notes:
+                                migration.notes = migration.notes + '; '
+                            migration.notes = migration.notes + "failed on app {}".format(app_id)
+                            errors.add(domain)
+                    if domain not in errors:
+                        if migration.notes:
+                            migration.notes = migration.notes + '; '
+                        migration.notes = migration.notes + "successfully migrated {} domains".format(app_count)
+                        successes.add(domain)
+                    migration.migrated = datetime.now()
+                    migration.save()
+            if len(successes):
+                messages.success(request, "Succeeded with the following {} domains: {}".format(
+                                            len(successes), ", ".join(successes)))
+            if len(errors):
+                messages.error(request, "Errors in the following {} domains: {}".format(
+                                            len(errors), ", ".join(errors)))
         return self.get(request, *args, **kwargs)
 
 
