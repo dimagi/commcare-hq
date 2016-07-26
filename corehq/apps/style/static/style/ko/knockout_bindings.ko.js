@@ -695,5 +695,5 @@ ko.bindingHandlers.initializeValue = {
     update: function(element, valueAccessor) {
         var value = valueAccessor();
         element.setAttribute('value', ko.utils.unwrapObservable(value));
-    }
+    },
 };
