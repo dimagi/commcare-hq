@@ -1,11 +1,13 @@
 from datetime import datetime, date
 from django.test import SimpleTestCase
+from mock import Mock
+
 from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, \
-    NumericFilter, DynamicChoiceListFilter, Choice
+    NumericFilter, DynamicChoiceListFilter, Choice, PreFilter
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, \
-    CHOICE_DELIMITER, NumericFilterValue, DateFilterValue
+    CHOICE_DELIMITER, NumericFilterValue, DateFilterValue, PreFilterValue
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.apps.userreports.reports.filters.specs import ReportFilter
 from dimagi.utils.dates import DateSpan
@@ -137,6 +139,71 @@ class NumericFilterTestCase(SimpleTestCase):
         NumericFilterValue(filter, {'operator': '<', 'operand': 3})
         with self.assertRaises(AssertionError):
             NumericFilterValue(filter, {'operator': 'sql injection', 'operand': 3})
+
+
+class PreFilterTestCase(SimpleTestCase):
+
+    def test_auto_filter(self):
+        filter_ = ReportFilterFactory.from_spec({
+            'type': 'pre',
+            'field': 'at_risk_field',
+            'slug': 'at_risk_slug',
+            'datatype': 'string',
+            'pre_value': 'true'
+        })
+        self.assertEqual(type(filter_), PreFilter)
+        self.assertEqual(filter_.name, 'at_risk_slug')
+        self.assertEqual(filter_.default_value(), 'true')
+
+    def test_auto_filter_value(self):
+        pre_value = 'yes'
+        filter_ = ReportFilter.wrap({
+            'type': 'pre',
+            'field': 'at_risk_field',
+            'slug': 'at_risk_slug',
+            'datatype': 'string',
+            'pre_value': pre_value
+        })
+        value = PreFilterValue(filter_, pre_value)
+        self.assertEqual(value.to_sql_values(), {'at_risk_slug': 'yes'})
+
+    def test_auto_filter_value_null(self):
+        column = Mock()
+        column.name = 'at_risk_field'
+        column.is_.return_value = 'foo'
+        table = Mock()
+        table.c = [column]
+
+        pre_value = None
+        filter_ = ReportFilter.wrap({
+            'type': 'pre',
+            'field': 'at_risk_field',
+            'slug': 'at_risk_slug',
+            'datatype': 'string',
+            'pre_value': pre_value
+        })
+        value = PreFilterValue(filter_, pre_value)
+        self.assertEqual(value.to_sql_values(), {})
+        self.assertEqual(value.to_sql_filter().build_expression(table), 'foo')
+
+    def test_auto_filter_value_array(self):
+        column = Mock()
+        column.name = 'at_risk_field'
+        column.in_.return_value = 'foo'
+        table = Mock()
+        table.c = [column]
+
+        pre_value = ['yes', 'maybe']
+        filter_ = ReportFilter.wrap({
+            'type': 'pre',
+            'field': 'at_risk_field',
+            'slug': 'at_risk_slug',
+            'datatype': 'array',
+            'pre_value': pre_value
+        })
+        value = PreFilterValue(filter_, pre_value)
+        self.assertEqual(value.to_sql_values(), {'at_risk_slug_0': 'yes', 'at_risk_slug_1': 'maybe'})
+        self.assertEqual(value.to_sql_filter().build_expression(table), 'foo')
 
 
 class ChoiceListFilterTestCase(SimpleTestCase):
