@@ -16,7 +16,7 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    <script type="text/javascript">
+    <script>
         // Multiselect widget
         $(function () {
             var multiselect_utils = hqImport('style/js/components/multiselect_utils');
@@ -28,7 +28,7 @@
             );
         });
     </script>
-    <script type="text/javascript">
+    <script>
         $(function () {
             // custom data
             var customDataEditor = uiElement.map_list('{{ group.group_id }}', "{% trans "Group Information" %}");
