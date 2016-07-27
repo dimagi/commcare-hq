@@ -17,7 +17,7 @@ class EmergencyOrderStatusUpdate(models.Model):
 
     class Meta:
         index_together = [
-            ['order', 'vehicle_number'],
+            ['order', 'package_number'],
         ]
 
     order = models.ForeignKey('EmergencyOrder')
@@ -37,13 +37,15 @@ class EmergencyOrderStatusUpdate(models.Model):
     # error code or error message
     additional_text = models.TextField(null=True)
 
-    # The vehicle number that this status update applies to, ranging from 1 to
-    # order.total_vehicles; this only applies to statuses that are received on
+    # The package number that this status update applies to, ranging from 1 to
+    # order.total_packages; this only applies to statuses that are received on
     # a per-vehicle basis, like STATUS_DISPATCHED and STATUS_DELIVERED
-    vehicle_number = models.IntegerField(null=True)
+    package_number = models.IntegerField(null=True)
 
-    # The unique id in zipline used to identify the vehicle; only applies when
-    # vehicle_number also applies
+    # The unique id zipline uses to identify the package
+    package_id = models.CharField(max_length=126, null=True)
+
+    # The unique id zipline uses to identify the vehicle
     vehicle_id = models.CharField(max_length=126, null=True)
 
     # If status == STATUS_DISPATCHED, this should be the products and quantities
@@ -115,8 +117,8 @@ class EmergencyOrder(models.Model):
     # The timestamp in CommCareHQ that the order was created
     timestamp = models.DateTimeField()
 
-    # The total number of vehicles that will be used to fulfill the request
-    total_vehicles = models.IntegerField(null=True)
+    # The total number of packages that will be used to fulfill the request
+    total_packages = models.IntegerField(null=True)
 
     # The total number of attempts made while sending this emergency order to Zipline
     zipline_request_attempts = models.IntegerField(default=0)
