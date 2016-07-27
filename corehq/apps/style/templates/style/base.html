@@ -345,10 +345,6 @@
         <script type="text/javascript" src="{% static 'style/js/main.js' %}"></script>
         {% endcompress %}
 
-        {% if request.domain and request.user.username %}
-            <script type="text/javascript" src="{% toggle_js_url request.domain request.user.username %}"></script>
-        {% endif %}
-
         {% addtoblock js-inline %}
         <script type="text/javascript">
             $(function(){
@@ -544,6 +540,11 @@
           <script type="text/javascript" src="{% static 'style/ko/validators.ko.js' %}"></script>
         {% endif %}
 
+        {# This should be loaded relatively late, because as a non-static import it takes longer to load #}
+        {# If it's loaded early, then execution of all following scripts block on it #}
+        {% if request.domain and request.user.username %}
+            <script type="text/javascript" src="{% toggle_js_url request.domain request.user.username %}"></script>
+        {% endif %}
         {% block js %}{% endblock js %}
 
         {# Report Issue #}

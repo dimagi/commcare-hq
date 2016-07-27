@@ -3520,7 +3520,7 @@ class CustomDatespanFilter(ReportAppFilter):
             "CustomDatespanFilter.get_filter_value must be called "
             "with an OTARestoreUser object, not None")
 
-        timezone = get_timezone_for_domain(user.user_id, user.domain)
+        timezone = get_timezone_for_domain(user.domain)
         today = ServerTime(datetime.datetime.utcnow()).user_time(timezone).done().date()
         start_date = end_date = None
         days = int(self.date_number)
