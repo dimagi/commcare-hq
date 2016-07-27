@@ -1268,7 +1268,6 @@ def _question_path_to_path_nodes(string_path, repeats):
         repeat_test_string += "/" + part
         path.append(PathNode(name=part, is_repeat=repeat_test_string in repeats))
 
-    assert path[0] == PathNode(name="data"), 'First node should be "data"'
     path[0].name = "form"
     return path
 
