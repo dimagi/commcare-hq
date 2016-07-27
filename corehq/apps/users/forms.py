@@ -505,9 +505,9 @@ class NewMobileWorkerForm(forms.Form):
             locations = SQLLocation.by_domain(project.name)
             self.fields['location_id'].choices = [(l.location_id, l.name) for l in locations]
             location_field = crispy.Field(
-                    'location_id',
-                    ng_model='mobileWorker.location_id',
-                )
+                'location_id',
+                ng_model='mobileWorker.location_id',
+            )
         else:
             location_field = crispy.Hidden(
                 'location_id',
