@@ -39,6 +39,13 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         },
     };
 
+    FormplayerFrontend.on("apps:currentApp", function () {
+        var oldRoute = Backbone.history.getFragment();
+        var appId = Util.getAppId(oldRoute);
+        FormplayerFrontend.navigate("apps/" + appId);
+        API.selectApp(appId);
+    });
+
     FormplayerFrontend.on("apps:list", function () {
         FormplayerFrontend.navigate("apps");
         API.listApps();

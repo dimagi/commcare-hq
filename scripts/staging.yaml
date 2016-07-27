@@ -45,6 +45,9 @@
 trunk: master
 name: autostaging
 branches:
+  - addtoblock-js-inline+remove-type-javascript  # Danny 7/27
+  - remove-type-javascript  # Danny 7/27
+  - move-togglejs-to-end  # Danny 7/27
   - fix-flashing  # Danny 7/26
   - addtoblock-js-inline  # Danny 7/20
   - reduce-all_forms-view  # Danny 7/20

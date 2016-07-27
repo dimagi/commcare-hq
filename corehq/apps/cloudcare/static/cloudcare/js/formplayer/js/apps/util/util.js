@@ -35,6 +35,13 @@ Util.getSteps = function (queryString) {
     return paramMap;
 };
 
+Util.getAppId = function (queryString) {
+    var startIndex = queryString.indexOf('/');
+    var startTrimmed = queryString.substring(startIndex + 1);
+    var endIndex = startTrimmed.indexOf('/');
+    return startTrimmed.substring(0, endIndex);
+};
+
 Util.setCrossDomainAjaxOptions = function(options) {
     options.type = 'POST';
     options.dataType = "json";
