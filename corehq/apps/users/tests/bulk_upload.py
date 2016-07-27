@@ -4,7 +4,7 @@ from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc
 from corehq.apps.users.bulkupload import UserLocMapping, SiteCodeToSupplyPointCache
 from corehq.apps.users.tasks import bulk_upload_async
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, UserRole, Permissions
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.domain.models import Domain
 from corehq.toggles import MULTIPLE_LOCATIONS_PER_USER, NAMESPACE_DOMAIN
@@ -97,15 +97,18 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.user_specs = [{
             u'username': u'hello',
             u'user_id': u'should not update',
-            u'name': u'Another One',
-            u'language': None,
+            u'name': u'Another One', u'language': None,
             u'is_active': u'True',
             u'phone-number': u'23424123',
             u'password': 123,
             u'email': None
         }]
 
+        permissions = Permissions(edit_apps=True, view_reports=True)
+        self.role = UserRole.get_or_create_with_permissions(self.domain.name, permissions, 'edit-apps')
+
     def tearDown(self):
+        self.role.delete()
         self.domain.delete()
         super(TestUserBulkUpload, self).tearDown()
 
@@ -192,3 +195,15 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             list([])
         )
         self.assertEqual(self.user.email, updated_user_spec['email'].lower())
+
+    def test_set_role(self):
+        updated_user_spec = deepcopy(self.user_specs[0])
+        updated_user_spec["role"] = self.role.name
+
+        bulk_upload_async(
+            self.domain.name,
+            list([updated_user_spec]),
+            list([]),
+            list([])
+        )
+        self.assertEqual(self.user.get_role(self.domain_name).name, updated_user_spec['role'])

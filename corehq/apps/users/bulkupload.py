@@ -23,6 +23,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.dbaccessors.all_commcare_users import get_all_commcare_users_by_domain
+from corehq.apps.users.models import UserRole
 
 from .forms import get_mobile_worker_max_username_length
 from .models import CommCareUser, CouchUser
@@ -36,7 +37,7 @@ class UserUploadError(Exception):
 required_headers = set(['username'])
 allowed_headers = set([
     'data', 'email', 'group', 'language', 'name', 'password', 'phone-number',
-    'uncategorized_data', 'user_id', 'is_active', 'location_code',
+    'uncategorized_data', 'user_id', 'is_active', 'location_code', 'role',
 ]) | required_headers
 old_headers = {
     # 'old_header_name': 'new_header_name'
@@ -375,6 +376,8 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
     user_ids = set()
     allowed_groups = set(group_memoizer.groups)
     allowed_group_names = [group.name for group in allowed_groups]
+    allowed_roles = UserRole.by_domain(domain)
+    roles_by_name = {role.name: role for role in allowed_roles}
     can_access_locations = domain_has_privilege(domain, privileges.LOCATIONS)
     if can_access_locations:
         location_cache = SiteCodeToLocationCache(domain)
@@ -394,6 +397,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
             user_id = row.get('user_id')
             username = row.get('username')
             location_code = row.get('location_code', '')
+            role = row.get('role', '')
 
             if password:
                 password = unicode(password)
@@ -504,6 +508,14 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                             loc = get_location_from_site_code(location_code, location_cache)
                         else:
                             loc = None
+
+                    if role:
+                        if role in roles_by_name:
+                            user.set_role(domain, roles_by_name[role].get_qualified_id())
+                        else:
+                            raise UserUploadError(_(
+                                "Role '%s' does not exist"
+                            ) % role)
 
                     user.save()
                     if can_access_locations and loc:
