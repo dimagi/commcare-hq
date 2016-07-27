@@ -358,9 +358,9 @@ hqDefine('export/js/models.js', function () {
 
         // Update the rowColumn's repeat count by counting the number of
         // repeats in the table path
-        nestedRepeatCount = _.filter(this.path(), function(node) { return node.is_repeat(); }).length;
         rowColumn = this.getColumn('number');
         if (rowColumn) {
+            nestedRepeatCount = _.filter(this.path(), function(node) { return node.is_repeat(); }).length;
             rowColumn.repeat(nestedRepeatCount);
         }
     };
