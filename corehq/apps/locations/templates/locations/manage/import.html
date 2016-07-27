@@ -4,7 +4,7 @@
     <script src="{% static 'commtrack/ko/location_bulk_upload_file.js' %}"></script>
 {% endblock %}
 {% block js-inline %} {{ block.super }}
-    <script type="text/javascript">
+    <script>
         $(function() {
             gaTrackLink($('#download_link'), 'Organization Structure', 'Bulk Import', 'Download');
             $("button[type='submit']").click(function() {
