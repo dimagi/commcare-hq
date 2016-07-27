@@ -571,10 +571,10 @@ class VCMMigrationView(BaseAdminSectionView):
                     migration.save()
             if len(successes):
                 messages.success(request, "Succeeded with the following {} domains: {}".format(
-                                            len(successes), ", ".join(successes)))
+                                 len(successes), ", ".join(successes)))
             if len(errors):
                 messages.error(request, "Errors in the following {} domains: {}".format(
-                                            len(errors), ", ".join(errors)))
+                               len(errors), ", ".join(errors)))
         return self.get(request, *args, **kwargs)
 
 
