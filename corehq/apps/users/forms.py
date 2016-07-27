@@ -18,7 +18,7 @@ from django_countries.data import COUNTRIES
 from corehq import toggles
 from corehq.apps.domain.forms import EditBillingAccountInfoForm
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username, cc_user_domain
 from corehq.apps.app_manager.models import validate_lang
@@ -485,6 +485,10 @@ class NewMobileWorkerForm(forms.Form):
         required=False,
         label=ugettext_noop("Last Name")
     )
+    location_id = forms.ChoiceField(
+        label=ugettext_noop("Location"),
+        required=False,
+    )
     password = forms.CharField(
         widget=PasswordInput(),
         required=True,
@@ -492,10 +496,25 @@ class NewMobileWorkerForm(forms.Form):
         label=ugettext_noop("Password")
     )
 
-    def __init__(self, domain, *args, **kwargs):
+    def __init__(self, project, *args, **kwargs):
         super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
-        email_string = u"@{}.commcarehq.org".format(domain)
+        email_string = u"@{}.commcarehq.org".format(project.name)
         max_chars_username = 80 - len(email_string)
+
+        if project.uses_locations:
+            locations = SQLLocation.by_domain(project.name)
+            self.fields['location_id'].choices = [(l.location_id, l.name) for l in locations]
+            location_field = crispy.Field(
+                    'location_id',
+                    ng_model='mobileWorker.location_id',
+                )
+        else:
+            location_field = crispy.Hidden(
+                'location_id',
+                '',
+                ng_model='mobileWorker.location_id',
+            )
+
 
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -532,6 +551,7 @@ class NewMobileWorkerForm(forms.Form):
                     ng_model='mobileWorker.last_name',
                     ng_maxlength="50",
                 ),
+                location_field,
                 crispy.Field(
                     'password',
                     ng_required="true",

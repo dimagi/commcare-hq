@@ -17,6 +17,9 @@ $(function () {
    'use strict';
     $('#newMobileWorkerModal').on('shown.bs.modal', function () {
         $('#id_username').focus();
+        $('#id_location_id').select2({
+            allowClear: true,
+        });
     });
 });
 (function (angular, undefined) {

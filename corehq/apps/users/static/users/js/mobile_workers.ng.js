@@ -62,6 +62,7 @@
         self.first_name = data.first_name || '';
         self.last_name = data.last_name || '';
         self.editUrl = data.editUrl || '';
+        self.location_id = data.location_id || '';
 
         self.password = '';
 
