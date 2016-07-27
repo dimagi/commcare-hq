@@ -55,14 +55,15 @@ class EmergencyOrderStatusUpdate(models.Model):
 
     @classmethod
     def create_for_order(cls, order_id, status, zipline_timestamp=None,
-            vehicle_number=None, vehicle_id=None, additional_text=None,
+            package_number=None, package_id=None, vehicle_id=None, additional_text=None,
             products=None):
         """
         Creates an EmergencyOrderStatusUpdate record for the given order.
         :param order_id: the id of the EmergencyOrder
         :param status: one of the STATUS_* constants
         :param zipline_timestamp: the value for zipline_timestamp
-        :param vehicle_number: the value for vehicle_number
+        :param package_number: the value for package_number
+        :param package_id: the value for package_id
         :param vehicle_id: the value for vehicle_id
         :param additional_text: the value for additional_text
         :param products: a list of ProductQuantity objects if this status
@@ -73,7 +74,8 @@ class EmergencyOrderStatusUpdate(models.Model):
             timestamp=datetime.utcnow(),
             zipline_timestamp=zipline_timestamp,
             status=status,
-            vehicle_number=vehicle_number,
+            package_number=package_number,
+            package_id=package_id,
             vehicle_id=vehicle_id,
             additional_text=additional_text
         )
