@@ -5,15 +5,21 @@ from django.db import models
 
 
 class EmergencyOrderStatusUpdate(models.Model):
-    STATUS_PENDING = 'PENDING'
-    STATUS_RECEIVED = 'RECEIVED'
-    STATUS_REJECTED = 'REJECTED'
-    STATUS_APPROVED = 'APPROVED'
-    STATUS_CANCELLED = 'CANCELLED'
-    STATUS_DISPATCHED = 'DISPATCHED'
-    STATUS_DELIVERED = 'DELIVERED'
-    STATUS_CONFIRMED = 'CONFIRMED'
-    STATUS_ERROR = 'ERROR'
+    STATUS_PENDING = 'pending'
+    STATUS_ERROR = 'error'
+    STATUS_RECEIVED = 'received'
+    STATUS_REJECTED = 'rejected'
+    STATUS_CONFIRMED = 'confirmed'
+
+    # The following statuses match the values received from zipline via our
+    # API. Do not change these constants otherwise the API will not work properly.
+    STATUS_APPROVED = 'approved'
+    STATUS_CANCELLED = 'cancelled'
+    STATUS_CANCELLED_IN_FLIGHT = 'cancelledInFlight'
+    STATUS_DISPATCHED = 'dispatched'
+    STATUS_APPROACHING_ETA = 'approachingEta'
+    STATUS_ETA_DELAYED = 'etaDelayed'
+    STATUS_DELIVERED = 'delivered'
 
     class Meta:
         index_together = [

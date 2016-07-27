@@ -1,9 +1,10 @@
 import json
 from corehq.apps.domain.views import DomainViewMixin
 from custom.zipline.api import get_order_update_critical_section_key
-from custom.zipline.models import EmergencyOrder
+from custom.zipline.models import EmergencyOrder, EmergencyOrderStatusUpdate
 from dateutil.parser import parse as parse_timestamp
 from dimagi.utils.couch import CriticalSection
+from django.db import transaction
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
@@ -63,13 +64,56 @@ class ZiplineOrderStatusView(View, DomainViewMixin):
         if not isinstance(value, basestring):
             raise OrderStatusValidationError(error_msg)
 
+    def validate_status_is_not(self, status, order, data):
+        error_msg = "Cannot set a status of {} because status is already {}".format(data['status'], status)
+        if order.status == status:
+            raise OrderStatusValidationError(error_msg)
+
     def get_validate_and_clean_method(self, status):
         return {
+            EmergencyOrderStatusUpdate.STATUS_APPROVED: self.validate_and_clean_approved_status,
         }.get(status)
 
     def get_process_method(self, status):
         return {
+            EmergencyOrderStatusUpdate.STATUS_APPROVED: self.process_approved_status,
         }.get(status)
+
+    def get_send_sms_method(self, status):
+        return {
+            EmergencyOrderStatusUpdate.STATUS_APPROVED: self.send_sms_for_approved_status,
+        }.get(status)
+
+    def validate_and_clean_approved_status(self, order, data):
+        self.validate_and_clean_int(data, 'totalPackages')
+        self.validate_status_is_not(EmergencyOrderStatusUpdate.STATUS_REJECTED, order, data)
+        self.validate_status_is_not(EmergencyOrderStatusUpdate.STATUS_CANCELLED, order, data)
+
+    def process_approved_status(self, order, data):
+        send_sms_response = False
+        approved_status = EmergencyOrderStatusUpdate.create_for_order(
+            order.pk,
+            EmergencyOrderStatusUpdate.STATUS_APPROVED,
+            zipline_timestamp=data['timestamp']
+        )
+
+        if order.status in (
+            EmergencyOrderStatusUpdate.STATUS_PENDING,
+            EmergencyOrderStatusUpdate.STATUS_ERROR,
+            EmergencyOrderStatusUpdate.STATUS_RECEIVED,
+        ):
+            order.status = EmergencyOrderStatusUpdate.STATUS_APPROVED
+
+        if not order.approved_status:
+            send_sms_response = True
+            order.total_packages = data['totalPackages']
+            order.approved_status = approved_status
+
+        order.save()
+        return send_sms_response, {'status': 'success'}
+
+    def send_sms_for_approved_status(self, order, data):
+        pass
 
     def post(self, request, *args, **kwargs):
         try:
@@ -96,12 +140,7 @@ class ZiplineOrderStatusView(View, DomainViewMixin):
         if validate_and_clean is None or process is None:
             return self.get_error_response("Unkown status received: '{}'".format(status))
 
-        try:
-            validate_and_clean(data)
-        except OrderStatusValidationError as e:
-            return self.get_error_response(e.error_message)
-
-        with CriticalSection([get_order_update_critical_section_key(order_id)]):
+        with CriticalSection([get_order_update_critical_section_key(order_id)]), transaction.atomic():
             try:
                 order = EmergencyOrder.objects.get(pk=order_id)
             except EmergencyOrder.DoesNotExist:
@@ -110,6 +149,17 @@ class ZiplineOrderStatusView(View, DomainViewMixin):
             if order.domain != self.domain:
                 return self.get_error_response('Order not found')
 
-            response_dict = process(order, data)
+            try:
+                validate_and_clean(order, data)
+            except OrderStatusValidationError as e:
+                return self.get_error_response(e.error_message)
+
+            send_sms_response, response_dict = process(order, data)
+
+        send_sms = self.get_send_sms_method(status)
+        if send_sms_response and send_sms is not None:
+            # This should be done outside of the transaction to prevent issues with QueuedSMS pk's
+            # being available immediately.
+            send_sms(order, data)
 
         return JsonResponse(response_dict)
