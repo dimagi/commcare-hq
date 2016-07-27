@@ -178,15 +178,15 @@
         {% endcompress %}
         {% endif %}
 
-        <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+        <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
 
         {# Up here because if daterangepicker is called from within a form widget, #}
         {# the javascript requiring the config file is run before js-inline #}
         {% if request.use_daterangepicker %}
         {% compress js %}
-        <script type="text/javascript" src="{% static 'moment/moment.js' %}"></script>
-        <script type="text/javascript" src="{% static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
-        <script type="text/javascript" src="{% static 'style/js/daterangepicker.config.js' %}"></script>
+        <script src="{% static 'moment/moment.js' %}"></script>
+        <script src="{% static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
+        <script src="{% static 'style/js/daterangepicker.config.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
@@ -336,27 +336,30 @@
         <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
         {% compress js %}
         <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
-        <script type="text/javascript" src="{% static 'style/js/hq-bug-report.js' %}"></script>
-        <script type="text/javascript" src="{% static 'style/js/layout.js' %}"></script>
-        <script type="text/javascript" src="{% static 'style/js/form_tools.js' %}"></script>
-        <script type="text/javascript" src="{% static 'style/js/hq.helpers.js' %}"></script>
-        <script type="text/javascript" src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
-        <script type="text/javascript" src="{% static 'hqwebapp/js/toggles.js' %}"></script>
-        <script type="text/javascript" src="{% static 'style/js/main.js' %}"></script>
+        <script src="{% static 'style/js/hq-bug-report.js' %}"></script>
+        <script src="{% static 'style/js/layout.js' %}"></script>
+        <script src="{% static 'style/js/form_tools.js' %}"></script>
+        <script src="{% static 'style/js/hq.helpers.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
+        <script src="{% static 'style/js/main.js' %}"></script>
         {% endcompress %}
 
-        <script type="text/javascript">
+        {% addtoblock js-inline %}
+        <script>
             $(function(){
                 $('.hq-help-template').each(function () {
                     COMMCAREHQ.transformHelpTemplate($(this), true);
                 });
             });
         </script>
+        {% endaddtoblock %}
         {# JavaScript Display Logic Libaries #}
 
         {% if request.couch_user %}
-        <script type="text/javascript" src="{% static 'notifications/js/NotificationsService.ko.js' %}"></script>
-        <script type="text/javascript">
+        <script src="{% static 'notifications/js/NotificationsService.ko.js' %}"></script>
+        {% addtoblock js-inline %}
+        <script>
             $(function () {
                 var $notificationsMenu = $('#js-settingsmenu-notifications');
                 if ($notificationsMenu.length > 0) {
@@ -364,11 +367,12 @@
                 }
             });
         </script>
+        {% endaddtoblock %}
         {% endif %}
 
         {% include "style/includes/ko.html" %}
-
-        <script type="text/javascript">
+        {% addtoblock js-inline %}
+        <script>
             /*
                 This is the knockout-based, javascript analog of messages in Django.
 
@@ -404,6 +408,7 @@
             }
 
         </script>
+        {% endaddtoblock %}
 
         {% if request.use_angular_js %}
         {% compress js %}
@@ -413,13 +418,13 @@
 
         {% if request.use_select2 %}
         {% compress js %}
-        <script type="text/javascript" src="{% static 'select2-3.5.2-legacy/select2.js' %}"></script>
+        <script src="{% static 'select2-3.5.2-legacy/select2.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
         {% if request.use_select2_v4 %}
         {% compress js %}
-        <script type="text/javascript" src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
+        <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
@@ -427,16 +432,16 @@
         {% compress js %}
         <script src="{% static 'nvd3/lib/d3.v2.js' %}"></script>
         <script src="{% static 'nvd3/lib/fisheye.js' %}"></script>
-        <script type="text/javascript" src="{% static 'd3/d3.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'nvd3/nv.d3.min.js' %}"></script>
+        <script src="{% static 'd3/d3.min.js' %}"></script>
+        <script src="{% static 'nvd3/nv.d3.min.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
         {% if request.use_nvd3_v3 %}
         {% compress js %}
         <script src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
-        <script type="text/javascript" src="{% static 'd3/d3.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'nvd3/nv.d3.min.js' %}"></script>
+        <script src="{% static 'd3/d3.min.js' %}"></script>
+        <script src="{% static 'nvd3/nv.d3.min.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
@@ -457,27 +462,29 @@
 
         {% if request.use_timepicker %}
         {% compress js %}
-        <script type="text/javascript" src="{% static 'bootstrap-timepicker/js/bootstrap-timepicker.js' %}"></script>
+        <script src="{% static 'bootstrap-timepicker/js/bootstrap-timepicker.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
         {% if request.guided_tour %}
         {% compress js %}
         <script src="{% static 'tour/js/tour.utils.js' %}"></script>
-        <script type="text/javascript" src="{% static 'bootstrap-tour/build/js/bootstrap-tour.min.js' %}"></script>
+        <script src="{% static 'bootstrap-tour/build/js/bootstrap-tour.min.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
 
         {% if request.use_maps or request.use_maps_async %}
         {% compress js %}
-        <script type="text/javascript" src="{% static 'jquery-color/jquery.color.js' %}"></script>
-        <script type="text/javascript" src="{% static 'leaflet/dist/leaflet.js' %}"></script>
+        <script src="{% static 'jquery-color/jquery.color.js' %}"></script>
+        <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
         {% if reqeust.maps_prefer_canvas %}
+        {% addtoblock js-inline %}
         <script>L_PREFER_CANVAS = true;</script>
+        {% endaddtoblock %}
         {% endif %}
 
         {% if request.use_maps %}
@@ -496,12 +503,14 @@
 
         {% if request.use_timeago %}
         <script src="{% static 'jquery-timeago/jquery.timeago.js' %}"></script>
+        {% addtoblock js-inline %}
         <script>
             $(function () {
                 $.timeago.settings.allowFuture = true;
                 $(".timeago").timeago();
             });
         </script>
+        {% endaddtoblock %}
         {% endif %}
 
         {% if request.use_multiselect %}
@@ -515,24 +524,26 @@
         {% if request.use_blazy %}
         {# Blazy for async loading images #}
         {% compress js %}
-            <script type="text/javascript" src="{% static 'blazy/blazy.js' %}"></script>
+            <script src="{% static 'blazy/blazy.js' %}"></script>
         {% endcompress %}
-        <script type="text/javascript">
+        {% addtoblock js-inline %}
+        <script>
           var hqLazy = new Blazy({
             container: 'body',
           });
         </script>
+        {% endaddtoblock %}
         {% endif %}
 
         {% if request.use_ko_validation %}
-          <script type="text/javascript" src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
-          <script type="text/javascript" src="{% static 'style/ko/validators.ko.js' %}"></script>
+          <script src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
+          <script src="{% static 'style/ko/validators.ko.js' %}"></script>
         {% endif %}
 
         {# This should be loaded relatively late, because as a non-static import it takes longer to load #}
         {# If it's loaded early, then execution of all following scripts block on it #}
         {% if request.domain and request.user.username %}
-            <script type="text/javascript" src="{% toggle_js_url request.domain request.user.username %}"></script>
+            <script src="{% toggle_js_url request.domain request.user.username %}"></script>
         {% endif %}
         {% block js %}{% endblock js %}
 

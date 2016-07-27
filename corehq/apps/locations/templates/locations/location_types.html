@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
-    <script type="text/javascript">
+    <script>
         $(function() {
             var loc_types = {{ location_types|JSON }};
             var commtrack_enabled = {{ commtrack_enabled|JSON }};

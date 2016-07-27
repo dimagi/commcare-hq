@@ -20,7 +20,7 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-<script type="text/javascript">
+<script>
     // "Performing / Active User Trends" Chart
     function setupCharts() {
         var data = {{ six_months_reports|JSON }};

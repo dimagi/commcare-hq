@@ -1,7 +1,7 @@
 {% extends "reminders/reminders_base.html" %}
 g{% load i18n %}
 {% block js-inline %}{{ block.super }}
-    <script type="text/javascript">
+    <script>
         $(function () {
             $('.send-message').click(function (event) {
                 var configId = $(this).data('config');

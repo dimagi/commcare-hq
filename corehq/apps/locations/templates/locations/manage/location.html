@@ -5,13 +5,13 @@
 {% load crispy_forms_tags %}
 
 {% block js %}{{ block.super }}
-    <script type="text/javascript" src="{% static 'locations/ko/location_drilldown.async.js' %}"></script>
-    <script type="text/javascript" src="{% static 'locations/ko/location.js' %}"></script>
-    <script type="text/javascript" src="{% static 'style/js/ui-element.js' %}"></script>
+    <script src="{% static 'locations/ko/location_drilldown.async.js' %}"></script>
+    <script src="{% static 'locations/ko/location.js' %}"></script>
+    <script src="{% static 'style/js/ui-element.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    <script type="text/javascript">
+    <script>
         // Multiselect widget
         $(function () {
             var multiselect_utils = hqImport('style/js/components/multiselect_utils');
@@ -29,7 +29,7 @@
             );
         });
     </script>
-    <script type="text/javascript">
+    <script>
         var LOAD_LOCS_URL = '{{ api_root }}';
     </script>
 {% endblock %}
