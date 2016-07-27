@@ -90,10 +90,8 @@ class QueryEngine(object):
         # todo: support other types and options
         assert template.type == 'form'
         startdate, enddate = get_daterange_start_end_dates(template.time_range)
-        # ES queries are not inclusive so add a day on to the end date
-        enddate = enddate + timedelta(days=1)
         xmlns = Form.get_form(template.source_id).xmlns
         return FormES().user_id(query_context.user._id).xmlns([xmlns]).submitted(
             gte=startdate,
-            lt=enddate,
+            lte=enddate,
         ).size(0).count()

@@ -61,8 +61,28 @@ DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
 
 class PathNode(DocumentSchema):
+    """
+    A PathNode represents a portion of a path to value in a document.
+
+    For example, if a document looked like:
+
+    {
+        'form': {
+            'question': 'one'
+        }
+
+    }
+
+    A path to the data 'one' would be ['form']['question']. A PathNode represents
+    one step in that path. In this example, a list of PathNodes would represent
+    fetching the 'one':
+
+    [PathNode(name='form'), PathNode(name='question')]
+    """
 
     name = StringProperty(required=True)
+
+    # This is true if this step in the path corresponds with an array (such as a repeat group)
     is_repeat = BooleanProperty(default=False)
 
     def __eq__(self, other):
@@ -130,6 +150,11 @@ class ExportItem(DocumentSchema):
 
 
 class ExportColumn(DocumentSchema):
+    """
+    The model that represents a column in an export. Each column has a one-to-one
+    mapping with an ExportItem. The column controls the presentation of that item.
+    """
+
     item = SchemaProperty(ExportItem)
     label = StringProperty()
     # Determines whether or not to show the column in the UI Config without clicking advanced
@@ -291,6 +316,10 @@ class DocRow(namedtuple("DocRow", ["doc", "row"])):
 
 
 class TableConfiguration(DocumentSchema):
+    """
+    The TableConfiguration represents one excel sheet in an export.
+    It contains a list of columns and other presentation properties
+    """
     # label saves the user's decision for the table name
     label = StringProperty()
     path = ListProperty(PathNode)
@@ -409,6 +438,11 @@ class TableConfiguration(DocumentSchema):
 
 
 class ExportInstance(BlobMixin, Document):
+    """
+    This is an instance of an export. It contains the tables to export and
+    other presentation properties.
+    """
+
     name = StringProperty()
     domain = StringProperty()
     tables = ListProperty(TableConfiguration)
@@ -1511,6 +1545,9 @@ class SplitExportColumn(ExportColumn):
 
 
 class RowNumberColumn(ExportColumn):
+    """
+    This column represents the `number` column.
+    """
     repeat = IntegerProperty(default=0)
 
     def get_headers(self, **kwargs):
@@ -1531,6 +1568,9 @@ class RowNumberColumn(ExportColumn):
 
 
 class CaseIndexExportColumn(ExportColumn):
+    """
+    A column that exports a case index's referenced ids
+    """
 
     def get_value(self, domain, doc_id, doc, base_path, **kwargs):
         path = [self.item.path[0].name]  # Index columns always are just a reference to 'indices'

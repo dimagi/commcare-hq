@@ -644,8 +644,8 @@ HSPH_HACK = StaticToggle(
 
 USE_FORMPLAYER_FRONTEND = StaticToggle(
     'use_formplayer_frontend',
-    'Use the new formplayer frontend',
-    TAG_ONE_OFF,
+    'Use New CloudCare',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
 
