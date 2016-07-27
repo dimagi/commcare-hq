@@ -72,47 +72,94 @@ class ZiplineOrderStatusView(View, DomainViewMixin):
     def get_validate_and_clean_method(self, status):
         return {
             EmergencyOrderStatusUpdate.STATUS_APPROVED: self.validate_and_clean_approved_status,
+            EmergencyOrderStatusUpdate.STATUS_CANCELLED: self.validate_and_clean_cancelled_status,
         }.get(status)
 
     def get_process_method(self, status):
         return {
             EmergencyOrderStatusUpdate.STATUS_APPROVED: self.process_approved_status,
+            EmergencyOrderStatusUpdate.STATUS_CANCELLED: self.process_cancelled_status,
         }.get(status)
 
     def get_send_sms_method(self, status):
         return {
             EmergencyOrderStatusUpdate.STATUS_APPROVED: self.send_sms_for_approved_status,
+            EmergencyOrderStatusUpdate.STATUS_CANCELLED: self.send_sms_for_cancelled_status,
         }.get(status)
 
     def validate_and_clean_approved_status(self, order, data):
+        """
+        approved - validates parameters in the json payload
+        :param order: the order that this request pertains to
+        :param data: the cleaned json payload in this request
+        """
         self.validate_and_clean_int(data, 'totalPackages')
-        self.validate_status_is_not(EmergencyOrderStatusUpdate.STATUS_REJECTED, order, data)
-        self.validate_status_is_not(EmergencyOrderStatusUpdate.STATUS_CANCELLED, order, data)
 
     def process_approved_status(self, order, data):
-        send_sms_response = False
+        """
+        approved - processes the status update
+        :param order: the order that this request pertains to
+        :param data: the cleaned json payload in this request
+        """
         approved_status = EmergencyOrderStatusUpdate.create_for_order(
             order.pk,
             EmergencyOrderStatusUpdate.STATUS_APPROVED,
             zipline_timestamp=data['timestamp']
         )
 
-        if order.status in (
-            EmergencyOrderStatusUpdate.STATUS_PENDING,
-            EmergencyOrderStatusUpdate.STATUS_ERROR,
-            EmergencyOrderStatusUpdate.STATUS_RECEIVED,
-        ):
-            order.status = EmergencyOrderStatusUpdate.STATUS_APPROVED
-
+        send_sms_response = False
         if not order.approved_status:
             send_sms_response = True
+            order.status = EmergencyOrderStatusUpdate.STATUS_APPROVED
             order.total_packages = data['totalPackages']
             order.approved_status = approved_status
+            order.save()
 
-        order.save()
         return send_sms_response, {'status': 'success'}
 
     def send_sms_for_approved_status(self, order, data):
+        """
+        approved - sends sms for the status update
+        :param order: the order that this request pertains to
+        :param data: the cleaned json payload in this request
+        """
+        pass
+
+    def validate_and_clean_cancelled_status(self, order, data):
+        """
+        cancelled - validates parameters in the json payload
+        :param order: the order that this request pertains to
+        :param data: the cleaned json payload in this request
+        """
+        pass
+
+    def process_cancelled_status(self, order, data):
+        """
+        cancelled - processes the status update
+        :param order: the order that this request pertains to
+        :param data: the cleaned json payload in this request
+        """
+        cancelled_status = EmergencyOrderStatusUpdate.create_for_order(
+            order.pk,
+            EmergencyOrderStatusUpdate.STATUS_CANCELLED,
+            zipline_timestamp=data['timestamp']
+        )
+
+        send_sms_response = False
+        if not order.cancelled_status:
+            send_sms_response = True
+            order.status = EmergencyOrderStatusUpdate.STATUS_CANCELLED
+            order.cancelled_status = cancelled_status
+            order.save()
+
+        return send_sms_response, {'status': 'success'}
+
+    def send_sms_for_cancelled_status(self, order, data):
+        """
+        cancelled - sends sms for the status update
+        :param order: the order that this request pertains to
+        :param data: the cleaned json payload in this request
+        """
         pass
 
     def post(self, request, *args, **kwargs):
