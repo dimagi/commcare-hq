@@ -222,7 +222,16 @@
             <div id="hq-navigation"
                  class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
                 <div class="container-fluid">
-                    <div class="navbar-header">
+                    <ul class="nav navbar-nav collapse-fullmenu-toggle" id="hq-fullmenu-responsive" role="menu">
+                        <li>
+                            <a href="#hq-full-menu" data-toggle="collapse">
+                                <i class="fa fa-bars"></i>
+                                {% trans "Menu" %}
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="navbar-header hq-header">
                         <a href="{% url "homepage" %}" class="navbar-brand">
                             {% if CUSTOM_LOGO_URL %}
                                 <img src="{{ CUSTOM_LOGO_URL }}" alt="CommCare HQ Logo" />
@@ -232,10 +241,17 @@
                             {% endif %}
                         </a>
                     </div>
-                    <nav class="collapse navbar-collapse" role="navigation">
-                        {% block tabs %}
-                            {% format_main_menu %}
-                        {% endblock %}
+
+                    <ul class="nav navbar-nav collapse-mainmenu-toggle" id="hq-mainmenu-responsive" role="menu">
+                        <li>
+                            <a href="#hq-main-tabs" data-toggle="collapse">
+                                <i class="fa fa-bars"></i>
+                                {% trans "Menu" %}
+                            </a>
+                        </li>
+                    </ul>
+
+                    <nav class="navbar-menus fullmenu collapse" id="hq-full-menu" role="navigation">
                         <div class="nav-settings-bar pull-right">
                         {% if request.user.is_authenticated %}
                             {% include 'style/includes/global_navigation_bar.html' %}
@@ -243,6 +259,9 @@
                             <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
                         {% endif %}
                         </div>
+                        {% block tabs %}
+                            {% format_main_menu %}
+                        {% endblock %}
                     </nav>
                 </div>
             </div>
