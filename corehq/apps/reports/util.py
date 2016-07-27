@@ -9,6 +9,7 @@ from django.conf import settings
 from django.http import Http404
 from django.utils import html, safestring
 from corehq.apps.users.permissions import get_extra_permissions
+from corehq.form_processor.utils import use_new_exports
 
 from couchexport.util import SerializableFunction
 from couchforms.analytics import get_first_form_submission_received
@@ -36,32 +37,20 @@ DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER = (
 )
 
 
-def make_form_couch_key(domain, by_submission_time=True,
-                   xmlns=None, user_id=Ellipsis, app_id=None):
+def make_form_couch_key(domain, user_id=Ellipsis):
     """
         This sets up the appropriate query for couch based on common report parameters.
 
         Note: Ellipsis is used as the default for user_id because
         None is actually emitted as a user_id on occasion in couch
     """
-    prefix = ["submission"] if by_submission_time else ["completion"]
+    prefix = ["submission"]
     key = [domain] if domain is not None else []
-    if xmlns == "":
-        prefix.append('xmlns')
-    elif app_id == "":
-        prefix.append('app')
-    elif user_id == "":
+    if user_id == "":
         prefix.append('user')
-    else:
-        if xmlns:
-            prefix.append('xmlns')
-            key.append(xmlns)
-        if app_id:
-            prefix.append('app')
-            key.append(app_id)
-        if user_id is not Ellipsis:
-            prefix.append('user')
-            key.append(user_id)
+    elif user_id is not Ellipsis:
+        prefix.append('user')
+        key.append(user_id)
     return [" ".join(prefix)] + key
 
 
@@ -435,8 +424,7 @@ def numcell(text, value=None, convert='int', raw=None):
 
 
 def datespan_from_beginning(domain_object, timezone):
-    from corehq import toggles
-    if toggles.NEW_EXPORTS.enabled(domain_object.name):
+    if use_new_exports(domain_object.name):
         startdate = domain_object.date_created
     else:
         startdate = get_first_form_submission_received(domain_object.name)
@@ -449,13 +437,6 @@ def datespan_from_beginning(domain_object, timezone):
 def get_installed_custom_modules():
 
     return [import_module(module) for module in settings.CUSTOM_MODULES]
-
-
-def make_ctable_table_name(name):
-    if getattr(settings, 'CTABLE_PREFIX', None):
-        return '{0}_{1}'.format(settings.CTABLE_PREFIX, name)
-
-    return name
 
 
 def is_mobile_worker_with_report_access(couch_user, domain):

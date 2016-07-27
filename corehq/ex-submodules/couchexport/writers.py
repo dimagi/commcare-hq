@@ -1,3 +1,4 @@
+from base64 import b64decode
 from codecs import BOM_UTF8
 import os
 import re
@@ -5,6 +6,7 @@ import tempfile
 import zipfile
 import csv
 import json
+import bz2
 from django.template import Context
 from django.template.loader import render_to_string, get_template
 import xlwt
@@ -534,4 +536,27 @@ class CdiscOdmExportWriter(InMemoryExportWriter):
                 self.context['subjects'].append(dict(zip(self.subject_keys, row)))
 
     def _close(self):
+        from custom.openclinica.models import OpenClinicaAPI, OpenClinicaSettings
+
+        # Create the subjects and events that are in the ODM export using the API
+        oc_settings = OpenClinicaSettings.for_domain(self.context['domain'])
+        if oc_settings.study.is_ws_enabled:
+            password = bz2.decompress(b64decode(oc_settings.study.password))
+            api = OpenClinicaAPI(
+                oc_settings.study.url,
+                oc_settings.study.username,
+                password,
+                oc_settings.study.protocol_id
+            )
+            subject_keys = api.get_subject_keys()
+            for subject in self.context['subjects']:
+                if subject['subject_key'][3:] not in subject_keys:
+                    # Skip 'SS_' prefix   ^^ that OpenClinica wants in ODM, but isn't in API's subject keys
+                    api.create_subject(subject)
+                    # NOTE: In the interests of keeping data in OpenClinica tidy, we are only scheduling events for
+                    # subjects who don't yet exist in OpenClinica. New events of existing subjects must be added
+                    # manually, or subjects must be deleted from OpenClinica before a re-import.
+                    for event in subject['events']:
+                        api.schedule_event(subject, event)
+
         self.file.write(render_to_string('couchexport/odm_export.xml', self.context))

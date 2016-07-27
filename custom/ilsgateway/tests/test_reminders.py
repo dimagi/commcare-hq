@@ -2,12 +2,11 @@ from datetime import datetime
 
 from django.test.testcases import TestCase
 
-from corehq.apps.accounting import generator
+from corehq.apps.accounting.tests import generator
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import SMS
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend
-
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes
 from custom.ilsgateway.tanzania.reminders import REMINDER_R_AND_R_FACILITY, REMINDER_R_AND_R_DISTRICT, \
     DELIVERY_REMINDER_FACILITY, DELIVERY_REMINDER_DISTRICT, REMINDER_STOCKONHAND, SUPERVISION_REMINDER

@@ -8,8 +8,8 @@ from corehq.apps.accounting.models import (
     BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
     SubscriptionType, PreOrPostPay
 )
+from corehq.apps.accounting.tasks import ensure_explicit_community_subscription
 from corehq.apps.registration.models import RegistrationRequest
-from corehq.toggles import enable_toggles_for_scale_beta
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.name_to_url import name_to_url
 from dimagi.utils.web import get_ip, get_url_base, get_site_domain
@@ -63,16 +63,18 @@ def request_new_domain(request, form, is_new_user=True):
         dom_req.request_ip = get_ip(request)
         dom_req.activation_guid = uuid.uuid1().hex
 
-    name = name_to_url(form.cleaned_data['hr_name'], "project")
+    project_name = form.cleaned_data.get('hr_name') or form.cleaned_data.get('project_name')
+    name = name_to_url(project_name, "project")
     with CriticalSection(['request_domain_name_{}'.format(name)]):
         name = Domain.generate_name(name)
         new_domain = Domain(
             name=name,
-            hr_name=form.cleaned_data['hr_name'],
+            hr_name=project_name,
             is_active=False,
             date_created=datetime.utcnow(),
             creating_user=current_user.username,
             secure_submissions=True,
+            use_sql_backend=True
         )
 
         if form.cleaned_data.get('domain_timezone'):
@@ -80,10 +82,6 @@ def request_new_domain(request, form, is_new_user=True):
 
         if not is_new_user:
             new_domain.is_active = True
-
-        force_sql_backed = getattr(settings, 'NEW_DOMAINS_USE_SQL_BACKEND', False)
-        if force_sql_backed or current_user.is_superuser and form.cleaned_data.get('use_new_backend') == ['yes']:
-            enable_toggles_for_scale_beta(new_domain.name)
 
         # ensure no duplicate domain documents get created on cloudant
         new_domain.save(**get_safe_write_kwargs())
@@ -96,6 +94,8 @@ def request_new_domain(request, form, is_new_user=True):
         # Only new-user domains are eligible for Advanced trial
         # domains with no subscription are equivalent to be on free Community plan
         create_30_day_advanced_trial(new_domain)
+    else:
+        ensure_explicit_community_subscription(new_domain.name, date.today())
 
     UserRole.init_domain_with_presets(new_domain.name)
 
@@ -231,8 +231,8 @@ You can view the %s here: %s""" % (
 # Only new-users are eligible for advanced trial
 def create_30_day_advanced_trial(domain_obj):
     # Create a 30 Day Trial subscription to the Advanced Plan
-    advanced_plan_version = DefaultProductPlan.get_default_plan_by_domain(
-        domain_obj, edition=SoftwarePlanEdition.ADVANCED, is_trial=True
+    advanced_plan_version = DefaultProductPlan.get_default_plan(
+        edition=SoftwarePlanEdition.ADVANCED, is_trial=True
     )
     expiration_date = date.today() + timedelta(days=30)
     trial_account = BillingAccount.objects.get_or_create(

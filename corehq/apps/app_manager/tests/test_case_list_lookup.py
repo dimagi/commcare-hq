@@ -2,7 +2,7 @@
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module
-from corehq.apps.app_manager.tests import AppFactory
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 
@@ -45,6 +45,27 @@ class CaseListLookupTest(SimpleTestCase, TestXmlMixin):
                 <lookup action="{}" image="{}"/>
             </partial>
         """.format(action, image)
+
+        self.assertXmlPartialEqual(
+            expected,
+            app.create_suite(),
+            "./detail/lookup"
+        )
+
+    def test_case_list_lookup_autolaunch(self):
+        action = "callout.commcarehq.org.dummycallout.LAUNCH"
+        app = Application.new_app('domain', 'Untitled Application', application_version=APP_V2)
+        module = app.add_module(Module.new_module('Untitled Module', None))
+        module.case_type = 'patient'
+        module.case_details.short.lookup_enabled = True
+        module.case_details.short.lookup_autolaunch = True
+        module.case_details.short.lookup_action = action
+
+        expected = u"""
+            <partial>
+                <lookup action="{action}" auto_launch="true"/>
+            </partial>
+        """.format(action=action)
 
         self.assertXmlPartialEqual(
             expected,

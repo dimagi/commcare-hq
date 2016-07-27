@@ -8,9 +8,10 @@ from corehq.apps.app_manager.dbaccessors import (
     get_brief_apps_in_domain,
     get_build_doc_by_version,
     get_built_app_ids_for_app_id,
+    get_built_app_ids_with_submissions_for_app_id,
     get_current_app,
     get_latest_build_doc,
-    get_latest_built_app_ids_and_versions,
+    get_latest_app_ids_and_versions,
     get_latest_released_app_doc,
 )
 from corehq.apps.app_manager.models import Application, RemoteApp, Module
@@ -39,7 +40,12 @@ class DBAccessorsTest(TestCase, DocTestMixin):
 
         cls.decoy_apps = [
             # this one is a build
-            Application(domain=cls.domain, copy_of=cls.apps[0].get_id, version=cls.first_saved_version),
+            Application(
+                domain=cls.domain,
+                copy_of=cls.apps[0].get_id,
+                version=cls.first_saved_version,
+                has_submissions=True,
+            ),
             # this one is another build
             Application(domain=cls.domain, copy_of=cls.apps[0].get_id, version=12),
 
@@ -110,21 +116,32 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         self.assertEqual(len(app_ids), 1)
         self.assertEqual(self.decoy_apps[1].get_id, app_ids[0])
 
+    def test_get_built_app_ids_with_submissions_for_app_id(self):
+        app_ids = get_built_app_ids_with_submissions_for_app_id(self.domain, self.apps[0].get_id)
+        self.assertEqual(len(app_ids), 1)  # Should get the one that has_submissions
+
+        app_ids = get_built_app_ids_with_submissions_for_app_id(
+            self.domain,
+            self.apps[0].get_id,
+            self.first_saved_version
+        )
+        self.assertEqual(len(app_ids), 0)  # Should skip the one that has_submissions
+
     def test_get_all_app_ids_for_domain(self):
         app_ids = get_all_app_ids(self.domain)
         self.assertEqual(len(app_ids), 3)
 
     def test_get_latest_built_app_ids_and_versions(self):
-        build_ids_and_versions = get_latest_built_app_ids_and_versions(self.domain)
+        build_ids_and_versions = get_latest_app_ids_and_versions(self.domain)
         self.assertEqual(build_ids_and_versions, {
-            self.apps[0].get_id: 12,
-            '1234': 12,
+            self.apps[0].get_id: self.apps[0].version,
+            self.apps[1].get_id: self.apps[1].version,
         })
 
     def test_get_latest_built_app_ids_and_versions_with_app_id(self):
-        build_ids_and_versions = get_latest_built_app_ids_and_versions(self.domain, self.apps[0].get_id)
+        build_ids_and_versions = get_latest_app_ids_and_versions(self.domain, self.apps[0].get_id)
         self.assertEqual(build_ids_and_versions, {
-            self.apps[0].get_id: 12,
+            self.apps[0].get_id: self.apps[0].version,
         })
 
     def test_get_all_built_app_ids_and_versions(self):

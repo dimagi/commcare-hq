@@ -5,7 +5,7 @@ from datetime import datetime
 from django.test import TestCase
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock.models import StockReport, StockTransaction
-from casexml.apps.stock.tests import ago
+from casexml.apps.stock.tests.mock_consumption import ago
 from casexml.apps.stock import const
 from corehq.apps.commtrack.consumption import should_exclude_invalid_periods
 from corehq.apps.commtrack.models import CommtrackConfig, ConsumptionConfig

@@ -58,14 +58,14 @@ def BOOL(obj):
 def dict_lookup(dict, key):
     '''Get an item from a dictionary.'''
     return dict.get(key)
-    
+
 
 @register.filter
 def array_lookup(array, index):
     '''Get an item from an array.'''
     if index < len(array):
         return array[index]
-    
+
 
 @register.simple_tag
 def dict_as_query_string(dict, prefix=""):
@@ -80,8 +80,8 @@ def add_days(date, days=1):
     try:
         return date + span
     except:
-        return datetime.strptime(date,'%m/%d/%Y').date() + span 
-    
+        return datetime.strptime(date, '%m/%d/%Y').date() + span
+
 
 @register.filter
 def concat(str1, str2):
@@ -140,10 +140,10 @@ def domains_for_user(context, request, selected_domain=None):
         'domain_list': domain_list,
         'current_domain': selected_domain,
         'can_publish_to_exchange': (
-            selected_domain is not None and selected_domain != 'public'
-            and request.couch_user and request.couch_user.can_edit_apps() and
-                (request.couch_user.is_member_of(selected_domain)
-                 or request.couch_user.is_superuser)
+            selected_domain is not None and selected_domain != 'public' and
+            request.couch_user and request.couch_user.can_edit_apps() and
+            (request.couch_user.is_member_of(selected_domain) or
+             request.couch_user.is_superuser)
         ),
     }
     return mark_safe(render_to_string('style/includes/domain_list_dropdown.html', ctxt))
@@ -375,6 +375,19 @@ def chevron(value):
 
 
 @register.simple_tag
+def reverse_chevron(value):
+    """
+    Displays a red up chevron if value > 0, and a green down chevron if value < 0
+    """
+    if value > 0:
+        return '<span class="fa fa-chevron-up" style="color: #8b0000;"></span>'
+    elif value < 0:
+        return '<span class="fa fa-chevron-down" style="color: #006400;"> </span>'
+    else:
+        return ''
+
+
+@register.simple_tag
 def maintenance_alert():
     try:
         alert = (MaintenanceAlert.objects
@@ -398,3 +411,16 @@ def prelogin_url(context, urlname):
         return reverse(urlname, args=[context['LANGUAGE_CODE']])
     else:
         return reverse(urlname)
+
+
+@register.simple_tag(takes_context=True)
+def url_replace(context, field, value):
+    """Usage <a href="?{% url_replace 'since' restore_id %}">
+    will replace the 'since' parmeter in the url with <restore_id>
+    note the presense of the '?' in the href value
+
+    http://stackoverflow.com/a/16609591/2957657
+    """
+    params = context['request'].GET.copy()
+    params[field] = value
+    return params.urlencode()

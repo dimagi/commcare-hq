@@ -212,7 +212,6 @@ class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectRepo
             ),
             DataTablesColumn(_("Form"), prop_name='form.@name'),
         ]
-        h.extend([DataTablesColumn(field) for field in self.other_fields])
         return DataTablesHeader(*h)
 
     @property
@@ -232,7 +231,7 @@ class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectRepo
                 display.username,
                 display.submission_or_completion_time,
                 display.readable_form_name,
-            ] + display.other_columns
+            ]
 
     @property
     def form_ids_response(self):

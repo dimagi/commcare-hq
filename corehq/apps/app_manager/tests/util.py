@@ -8,7 +8,7 @@ import difflib
 from lxml import etree
 
 import commcare_translations
-from corehq.util.test_utils import TestFileMixin
+from corehq.util.test_utils import TestFileMixin, unit_testing_only
 from corehq.apps.app_manager.models import Application
 
 
@@ -168,3 +168,19 @@ def commtrack_enabled(is_enabled):
         'corehq.apps.app_manager.models.Application.commtrack_enabled',
         new=is_enabled,
     )
+
+
+@unit_testing_only
+def delete_all_apps():
+    results = Application.get_db().view(
+        'app_manager/applications',
+        reduce=False,
+        include_docs=False,
+    ).all()
+    for result in results:
+        try:
+            app = Application.get(result['id'])
+        except Exception:
+            pass
+        else:
+            app.delete()

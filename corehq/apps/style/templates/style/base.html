@@ -215,6 +215,7 @@
         {% endif %}
     </head>
     <body>
+        {% block background_content %}{% endblock %}
         {% maintenance_alert %}
         <!-- .hide used for A/B test of account creation page -->
         <div class="hq-container{% if is_register_user %} molly{% endif %}">
@@ -252,16 +253,18 @@
             {% endif %}
 
             {% if not no_header %}
-                <div id="unsupported-browser" class="alert alert-error alert-block alert-full" style="display: none;">
-                    <p><i class="fa fa-warning-sign"></i><strong>{% trans 'CommCare HQ does not work well with Internet Explorer.'%}</strong></p>
-                    <p>
-                        {% blocktrans %}
-                        We recommend
-                        <a href="https://www.google.com/chrome">Chrome</a>
-                        or <a href="http://www.mozilla.org/">Firefox</a>.
-                        {% endblocktrans %}
-                    </p>
-                </div>
+                <!--[if IE]>
+                    <div id="unsupported-browser" class="alert alert-error alert-block alert-full">
+                        <p><i class="fa fa-warning-sign"></i><strong>{% trans 'CommCare HQ does not work well with Internet Explorer.'%}</strong></p>
+                        <p>
+                            {% blocktrans %}
+                            We recommend
+                            <a href="https://www.google.com/chrome">Chrome</a>
+                            or <a href="http://www.mozilla.org/">Firefox</a>.
+                            {% endblocktrans %}
+                        </p>
+                    </div>
+                <![endif]-->
                 <div class="container-fluid">
                     <div class="row">
                         <div class="col-sm-12">
@@ -273,7 +276,7 @@
                                     </div>
                                 {% endfor %}
                             {% endif %}
-                            <div id="message-alerts" data-bind="foreach: alerts">
+                            <div id="message-alerts" class="ko-template" data-bind="foreach: alerts">
                                 <div data-bind="attr: {'class': alert_class}">
                                     <a class="close" data-dismiss="alert" href="#">&times;</a>
                                     <span data-bind="text: message"></span>
@@ -355,11 +358,14 @@
         </script>
         {# JavaScript Display Logic Libaries #}
 
-        {% if request.couch_user and request|toggle_enabled:"NOTIFICATIONS" %}
-        <script type="text/javascript" src="{% static '/notifications/js/NotificationsService.ko.js' %}"></script>
+        {% if request.couch_user %}
+        <script type="text/javascript" src="{% static 'notifications/js/NotificationsService.ko.js' %}"></script>
         <script type="text/javascript">
             $(function () {
-                $('#js-settingsmenu-notifications').startNotificationsService('{% url 'notifications_service' %}');
+                var $notificationsMenu = $('#js-settingsmenu-notifications');
+                if ($notificationsMenu.length > 0) {
+                    $notificationsMenu.startNotificationsService('{% url 'notifications_service' %}');
+                }
             });
         </script>
         {% endif %}
@@ -510,6 +516,23 @@
         {% endcompress %}
         {% endif %}
 
+        {% if request.use_blazy %}
+        {# Blazy for async loading images #}
+        {% compress js %}
+            <script type="text/javascript" src="{% static 'blazy/blazy.js' %}"></script>
+        {% endcompress %}
+        <script type="text/javascript">
+          var hqLazy = new Blazy({
+            container: 'body',
+          });
+        </script>
+        {% endif %}
+
+        {% if request.use_ko_validation %}
+          <script type="text/javascript" src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
+          <script type="text/javascript" src="{% static 'style/ko/validators.ko.js' %}"></script>
+        {% endif %}
+
         {% block js %}{% endblock js %}
 
         {# Report Issue #}
@@ -521,14 +544,6 @@
         {# 30 Day Trial #}
         {% include 'style/includes/modal_30_day_trial.html' %}
 
-        <!--[if IE]>
-        <script>
-            $(function () {
-                $('#unsupported-browser').show();
-            });
-        </script>
-        <![endif]-->
-        
         {% block js-inline %}{% endblock js-inline %}
 
     </body>

@@ -6,7 +6,7 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.tests import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.toggles import ENABLE_LOADTEST_USERS
 
 

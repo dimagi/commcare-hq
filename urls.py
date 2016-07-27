@@ -60,7 +60,6 @@ domain_specific = patterns('',
     (r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     (r'^fixtures/', include('corehq.apps.fixtures.urls')),
     (r'^importer/', include('corehq.apps.importer.urls')),
-    (r'^sqlextract/', include('ctable_view.urls')),
     (r'^fri/', include('custom.fri.urls')),
     (r'^ilsgateway/', include('custom.ilsgateway.urls')),
     (r'^ewsghana/', include('custom.ewsghana.urls')),
@@ -73,7 +72,8 @@ domain_specific = patterns('',
     (r'^', include('custom.icds.urls')),
     (r'^_base_template/$', login_and_domain_required(
         lambda request, domain: render(request, 'style/base.html', {'domain': domain})
-    ))
+    )),
+    (r'^zapier/', include('corehq.apps.zapier.urls', namespace='zapier'))
 )
 
 urlpatterns = patterns('',
@@ -118,7 +118,6 @@ urlpatterns = patterns('',
     (r'^builds/', include('corehq.apps.builds.urls')),
     (r'^downloads/temp/', include('soil.urls')),
     (r'^test/CommCare.jar', 'corehq.apps.app_manager.views.download_test_jar'),
-    (r'^sqlextract/', include('ctable_view.urls')),
     (r'^styleguide/', include('corehq.apps.styleguide.urls')),
     (r'^500/$', TemplateView.as_view(template_name='500.html')),
     (r'^404/$', TemplateView.as_view(template_name='404.html')),

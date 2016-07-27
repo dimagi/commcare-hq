@@ -56,12 +56,17 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
 
         rowClick: function (e) {
             e.preventDefault();
-            FormplayerFrontend.trigger("menu:show:detail", this);
+            FormplayerFrontend.trigger("menu:show:detail", this, 0);
         },
 
         templateHelpers: function () {
+            var appId = this.model.collection.appId;
             return {
                 data: this.options.model.get('data'),
+                styles: this.options.styles,
+                resolveUri: function (uri) {
+                    return FormplayerFrontend.request('resourceMap', uri, appId);
+                },
             };
         },
     });
@@ -72,18 +77,36 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         childView: MenuList.CaseView,
         childViewContainer: "tbody",
 
+        initialize: function (options) {
+            this.styles = options.styles;
+        },
+
+        childViewOptions: function () {
+            return {
+                styles: this.options.styles,
+            };
+        },
+
         ui: {
-            button: '#double-management',
+            actionButton: '#double-management',
+            searchButton: '#case-list-search-button',
             paginators: '.page-link',
         },
 
         events: {
-            'click @ui.button': 'caseListAction',
+            'click @ui.actionButton': 'caseListAction',
+            'click @ui.searchButton': 'caseListSearch',
             'click @ui.paginators': 'paginateAction',
         },
 
         caseListAction: function () {
             FormplayerFrontend.trigger("menu:select", "action 0", this.options.collection.appId);
+        },
+
+        caseListSearch: function (e) {
+            e.preventDefault();
+            var searchText = $('#searchText').val();
+            FormplayerFrontend.trigger("menu:search", searchText, this.options.collection.appId);
         },
 
         paginateAction: function (e) {
@@ -99,6 +122,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 action: this.options.action,
                 currentPage: this.options.currentPage,
                 pageCount: this.options.pageCount,
+                styles: this.options.styles,
             };
         },
     });
@@ -115,4 +139,33 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         childView: MenuList.DetailView,
         childViewContainer: "tbody",
     });
-});
+
+    MenuList.DetailTabView = Marionette.ItemView.extend({
+        tagName: "li",
+        template: "#detail-view-tab-item-template",
+        events: {
+            "click": "tabClick",
+        },
+        initialize: function (options) {
+            this.index = options.model.get('id');
+            this.showDetail = options.showDetail;
+        },
+        tabClick: function (e) {
+            e.preventDefault();
+            this.options.showDetail(this.index);
+        },
+    });
+
+    MenuList.DetailTabListView = Marionette.CompositeView.extend({
+        tagName: "div",
+        template: "#detail-view-tab-list-template",
+        childView: MenuList.DetailTabView,
+        childViewContainer: "ul",
+        childViewOptions: function () {
+            return {
+                showDetail: this.options.showDetail,
+            };
+        },
+    });
+})
+;

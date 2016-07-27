@@ -31,8 +31,6 @@ class CouvertureFluff(fluff.IndicatorDocument):
 
     domains = INTRAHEALTH_DOMAINS
     group_by = ('domain', fluff.AttributeGetter('location_id', get_location_id))
-    save_direct_to_sql = True
-    kafka_topic = topics.FORM
     deleted_types = IH_DELETED_TYPES
 
     location_id = flat_field(get_location_id)
@@ -58,8 +56,6 @@ class TauxDeSatisfactionFluff(fluff.IndicatorDocument):
     domains = INTRAHEALTH_DOMAINS
     group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'productName')),
                 fluff.AttributeGetter('product_id', lambda f: get_products_id(f, 'productName')))
-    save_direct_to_sql = True
-    kafka_topic = topics.FORM
 
     region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
     district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
@@ -91,8 +87,6 @@ class IntraHealthFluff(fluff.IndicatorDocument):
     )
     domains = INTRAHEALTH_DOMAINS
     deleted_types = IH_DELETED_TYPES
-    save_direct_to_sql = True
-    kafka_topic = topics.FORM
     group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'product_name')),
                 fluff.AttributeGetter('product_id', lambda f: get_products_id(f, 'product_name')))
 
@@ -127,8 +121,6 @@ class RecapPassageFluff(fluff.IndicatorDocument):
     deleted_types = IH_DELETED_TYPES
     group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'product_name')),
                 fluff.AttributeGetter('product_id', lambda f: get_products_id(f, 'product_name')))
-    save_direct_to_sql = True
-    kafka_topic = topics.FORM
 
     location_id = flat_field(get_location_id)
     region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
@@ -147,8 +139,6 @@ class TauxDeRuptureFluff(fluff.IndicatorDocument):
     ])
     domains = INTRAHEALTH_DOMAINS
     deleted_types = IH_DELETED_TYPES
-    save_direct_to_sql = True
-    kafka_topic = topics.FORM
     group_by = (fluff.AttributeGetter('product_name', lambda f: get_rupture_products(f)),
                 fluff.AttributeGetter('product_id', lambda f: get_rupture_products_ids(f)))
 
@@ -166,8 +156,6 @@ class LivraisonFluff(fluff.IndicatorDocument):
 
     domains = INTRAHEALTH_DOMAINS
     group_by = ('domain', )
-    save_direct_to_sql = True
-    kafka_topic = topics.FORM
     deleted_types = IH_DELETED_TYPES
 
     month = flat_field(lambda f: get_month(f, 'mois_visite'))
@@ -188,8 +176,6 @@ class RecouvrementFluff(fluff.IndicatorDocument):
 
     domains = INTRAHEALTH_DOMAINS
     deleted_types = IH_DELETED_CASE_TYPES
-    save_direct_to_sql = True
-    kafka_topic = topics.CASE
     group_by = ('domain', fluff.AttributeGetter('district_name',
                                                 lambda case: case.get_case_property('district_name')))
 

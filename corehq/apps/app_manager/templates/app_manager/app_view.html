@@ -75,7 +75,7 @@
                 return self;
             }());
             $("#multimedia").koApplyBindings(multimedia_tab);
-            $('#demand-multimedia').on('show.bs.tab', function () {
+            $('#demand-multimedia').on('shown.bs.tab', function () {
                 if (multimedia_tab.load_state() === null) {
                     multimedia_tab.load_if_necessary();
                 }
@@ -89,11 +89,7 @@
                 $loading = $main.find(".hq-loading").remove(),
                 $loadingError = $main.find(".hq-loading-error").remove();
 
-            $('#demand-releases').on('show.bs.tab', _.throttle(function (event) {
-                if (event && (event.metaKey || event.ctrlKey || event.which === 2)) {
-                    window.open("{% url 'release_manager' domain app.get_id %}", '_blank');
-                    return
-                }
+            $('#demand-releases').on('shown.bs.tab', function () {
                 if (state === "loading" || state === "loaded") {
                     return;
                 }
@@ -119,7 +115,7 @@
                     showSpinner = false;
                     $main.html($loadingError.html());
                 });
-            }, 300));
+            });
         });
 
     </script>

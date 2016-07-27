@@ -1,4 +1,5 @@
 import pytz
+import string
 from datetime import timedelta, datetime, date, time
 import re
 from collections import namedtuple
@@ -28,6 +29,7 @@ from random import randint
 from django.conf import settings
 from dimagi.utils.couch.database import iter_docs
 from django.db import models
+from string import Formatter
 
 
 class IllegalModelStateException(Exception):
@@ -208,8 +210,8 @@ class MessageVariable(object):
     def __init__(self, variable):
         self.variable = variable
 
-    def __unicode__(self):
-        return unicode(self.variable)
+    def __repr__(self):
+        return unicode(self.variable).encode('utf-8')
 
     @property
     def days_until(self):
@@ -233,19 +235,33 @@ class MessageVariable(object):
             return MessageVariable(self.variable[item])
         except Exception:
             pass
-        return "(?)"
+        return MessageVariable('(?)')
+
+
+class MessageParamDict(dict):
+    def __missing__(self, key):
+        return MessageVariable('(?)')
+
+
+class MessageFormatter(Formatter):
+
+    def format_field(self, value, format_spec):
+        value = super(MessageFormatter, self).format_field(value, format_spec)
+        if isinstance(value, str):
+            value = value.decode('utf-8')
+        return value
 
 
 class Message(object):
 
     def __init__(self, template, **params):
         self.template = template
-        self.params = {}
+        self.params = MessageParamDict()
         for key, value in params.items():
             self.params[key] = MessageVariable(value)
 
     def __unicode__(self):
-        return self.template.format(**self.params)
+        return MessageFormatter().vformat(self.template, (), self.params)
 
     @classmethod
     def render(cls, template, **params):

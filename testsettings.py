@@ -19,7 +19,6 @@ NOSE_ARGS = [
 NOSE_PLUGINS = [
     'corehq.tests.nose.AppLabelsPlugin',
     'corehq.tests.nose.HqTestFinderPlugin',
-    'corehq.tests.nose.OmitDjangoInitModuleTestsPlugin',
     'corehq.tests.noseplugins.dividedwerun.DividedWeRunPlugin',
     'corehq.tests.noseplugins.djangomigrations.DjangoMigrationsPlugin',
 
@@ -40,8 +39,6 @@ for key, value in {
     'NOSE_IGNORE_FILES': '^localsettings',
 
     'NOSE_EXCLUDE_DIRS': ';'.join([
-        'corehq/apps/cloudcare/tests/selenium',
-        'corehq/apps/reports/tests/selenium',
         'scripts',
 
         # strange error:

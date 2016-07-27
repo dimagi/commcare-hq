@@ -40,6 +40,7 @@ class OdmExportReport(ProjectReport, CaseListMixin, GenericReportView):
 
     @property
     def headers(self):
+        # These match the values returned by rows()
         return DataTablesHeader(
             DataTablesColumn('Subject Key'),
             DataTablesColumn('Study Subject ID'),
@@ -51,10 +52,13 @@ class OdmExportReport(ProjectReport, CaseListMixin, GenericReportView):
 
     @staticmethod
     def subject_headers():
+        # These match the values returned by get_all_rows()
         return [
-            # odm_export_subject.xml expects these to be subject attributes
             'subject_key',
             'study_subject_id',
+            'enrollment_date',
+            'sex',
+            'dob',
             'events'
         ]
 
@@ -82,6 +86,7 @@ class OdmExportReport(ProjectReport, CaseListMixin, GenericReportView):
             # "admin_data_xml" which come from the study metadata.
             'study_xml': get_study_constant(self.domain, 'study_xml'),
             'admin_data_xml': get_study_constant(self.domain, 'admin_data_xml'),
+            'domain': self.domain,
         }
         return [
             [
@@ -108,8 +113,9 @@ class OdmExportReport(ProjectReport, CaseListMixin, GenericReportView):
     @property
     def rows(self):
         audit_log_id_ref = {'id': 0}  # To exclude audit logs, set `custom.openclinica.const.AUDIT_LOGS = False`
-        for res in self.es_results['hits'].get('hits', []):
-            case = CommCareCase.wrap(res['_source'])
+        query = self._build_query().case_type(CC_SUBJECT_CASE_TYPE)
+        for result in query.scroll():
+            case = CommCareCase.wrap(result)
             if not self.is_subject_selected(case):
                 continue
             subject = Subject.wrap(case, audit_log_id_ref)
@@ -130,9 +136,12 @@ class OdmExportReport(ProjectReport, CaseListMixin, GenericReportView):
 
         CdiscOdmExportWriter will render this using the odm_export.xml template to combine subjects into a single
         ODM XML document.
+
+        The values are also used to register new subjects if the web service is enabled.
         """
         audit_log_id_ref = {'id': 0}  # To exclude audit logs, set `custom.openclinica.const.AUDIT_LOGS = False`
-        query = self._build_query().start(0).size(SIZE_LIMIT)
+        query = self._build_query().case_type(CC_SUBJECT_CASE_TYPE).start(0).size(SIZE_LIMIT)
+        rows = []
         for result in query.scroll():
             case = CommCareCase.wrap(result)
             if not self.is_subject_selected(case):
@@ -141,6 +150,10 @@ class OdmExportReport(ProjectReport, CaseListMixin, GenericReportView):
             row = [
                 'SS_' + subject.subject_key,  # OpenClinica prefixes subject key with "SS_" to make the OID
                 subject.study_subject_id,
+                subject.enrollment_date,
+                subject.sex,
+                subject.dob,
                 subject.get_export_data(),
             ]
-            yield row
+            rows.append(row)
+        return rows

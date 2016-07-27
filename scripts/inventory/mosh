@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
-# usage: scripts/inventory/mosh <environment> <group> [<n>]
-CHOICE=$(bash scripts/inventory/getone.sh $@)
-if [[ $? == 0 ]]
-then
-    echo "mosh ${CHOICE}"
-    mosh ${CHOICE}
+# usage: scripts/inventory/mosh <environment> <group>[:<n>]
+
+CHOICE=$(SCRIPT=$0 python scripts/inventory/getinventory.py $1 $2)
+if [[ -n "$CHOICE" ]]; then
+    shift; shift  # drop environment and group
+    echo "mosh ${CHOICE} $@"
+    mosh ${CHOICE} "$@"
+else
+    exit 1
 fi

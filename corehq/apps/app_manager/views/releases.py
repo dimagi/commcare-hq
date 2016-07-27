@@ -1,6 +1,7 @@
 import json
 import uuid
 
+from django.core.exceptions import PermissionDenied
 from django.db.models import Count
 from django.http import HttpResponse, Http404
 from django.http import HttpResponseRedirect
@@ -102,7 +103,8 @@ def releases_ajax(request, domain, app_id, template='app_manager/partials/releas
             get_sms_autocomplete_context(request, domain)['sms_contacts']
             if can_send_sms else []
         ),
-        'build_profile_access': build_profile_access
+        'build_profile_access': build_profile_access,
+        'vellum_case_management': app.vellum_case_management,
     })
     if not app.is_remote_app():
         # Multimedia is not supported for remote applications at this time.
@@ -160,8 +162,6 @@ def save_copy(request, domain, app_id):
     track_built_app_on_hubspot.delay(request.couch_user)
     comment = request.POST.get('comment')
     app = get_app(domain, app_id)
-    if not app.is_remote_app():
-        app.update_mm_map()
     try:
         errors = app.validate_app()
     except ModuleIdMissingException:
@@ -237,7 +237,7 @@ def odk_install(request, domain, app_id, with_media=False):
     qr_code_view = "odk_qr_code" if not with_media else "odk_media_qr_code"
     build_profile_id = request.GET.get('profile')
     profile_url = app.odk_profile_display_url if not with_media else app.odk_media_profile_display_url
-    if build_profile_id:
+    if build_profile_id is not None:
         profile_url += '?profile={profile}'.format(profile=build_profile_id)
     context = {
         "domain": domain,
@@ -340,12 +340,17 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     template_name = 'app_manager/app_diff.html'
 
     @use_angular_js
+    @login_and_domain_required
     def dispatch(self, request, *args, **kwargs):
         try:
             self.first_app_id = self.kwargs["first_app_id"]
             self.second_app_id = self.kwargs["second_app_id"]
             self.first_app = Application.get(self.first_app_id)
             self.second_app = Application.get(self.second_app_id)
+            if not (request.couch_user.is_member_of(self.first_app.domain)
+                    and request.couch_user.is_member_of(self.second_app.domain)):
+                raise PermissionDenied()
+
         except (ResourceNotFound, KeyError):
             raise Http404()
 

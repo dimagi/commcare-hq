@@ -6,6 +6,7 @@ from corehq.apps.es.sms import SMSES
 from corehq.apps.hqadmin.reporting.reports import (
     get_mobile_users
 )
+from corehq.apps.data_analytics.const import DEFAULT_EXPERIENCED_THRESHOLD
 
 from dimagi.utils.dates import add_months
 
@@ -44,7 +45,7 @@ def active_mobile_users(domain, start, end, *args):
     form_users = (FormES()
                   .domain(domain.name)
                   .user_aggregation()
-                  .submitted(gte=start, lte=end)
+                  .submitted(gte=start, lt=end)
                   .user_id(user_ids)
                   .size(0)
                   .run()
@@ -56,7 +57,7 @@ def active_mobile_users(domain, start, end, *args):
         .user_aggregation()
         .to_commcare_user()
         .domain(domain.name)
-        .received(gte=start, lte=end)
+        .received(gte=start, lt=end)
         .size(0)
         .run()
         .aggregations.user.keys
@@ -68,7 +69,8 @@ def active_mobile_users(domain, start, end, *args):
 def get_possibly_experienced(domain, start):
 
     user_ids = get_mobile_users(domain.name)
-    months = domain.internal.experienced_threshold - 1
+    threshold = domain.internal.experienced_threshold or DEFAULT_EXPERIENCED_THRESHOLD
+    months = threshold - 2
     threshold_month = add_months(start.startdate.year, start.startdate.month, -months)
     end_month = datetime.date(day=1, year=threshold_month[0], month=threshold_month[1])
 

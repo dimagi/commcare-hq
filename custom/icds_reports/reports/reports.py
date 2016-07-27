@@ -1,8 +1,8 @@
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
-from corehq.apps.reports.filters.select import MonthFilter
 from corehq.apps.reports.filters.select import YearFilter
 from custom.icds_reports.asr_sqldata import ASRIdentification, ASROperationalization, ASRPopulation, Annual, \
     DisabledChildren, Infrastructure, Equipment
+from custom.icds_reports.filters import ICDSMonthFilter
 from custom.icds_reports.mpr_sqldata import MPRIdentification, MPRSectors, MPRPopulation, MPRBirthsAndDeaths, \
     MPRAWCDetails, MPRSupplementaryNutrition, MPRUsingSalt, MPRProgrammeCoverage, MPRPreschoolEducation, \
     MPRGrowthMonitoring, MPRImmunizationCoverage, MPRVhnd, MPRReferralServices, MPRMonitoring
@@ -13,11 +13,11 @@ from dimagi.utils.decorators.memoized import memoized
 
 class MPRReport(IcdsBaseReport):
 
-    title = 'Block MPR'
+    title = '1. Identification and Basic Information'
     slug = 'mpr_report'
     name = 'Block MPR'
 
-    fields = [AsyncLocationFilter, MonthFilter, YearFilter]
+    fields = [AsyncLocationFilter, ICDSMonthFilter, YearFilter]
 
     @property
     @memoized
@@ -44,7 +44,7 @@ class MPRReport(IcdsBaseReport):
 
 class ASRReport(IcdsBaseReport):
 
-    title = 'Block ASR'
+    title = '1. Identification and Basic Information'
     slug = 'asr_report'
     name = 'Block ASR'
 

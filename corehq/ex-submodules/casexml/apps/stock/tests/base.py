@@ -35,13 +35,13 @@ class StockTestBase(TestCase):
         )
 
     def tearDown(self):
-        from corehq.form_processor.tests import FormProcessorTestUtils
+        from corehq.form_processor.tests.utils import FormProcessorTestUtils
         FormProcessorTestUtils.delete_all_xforms(self.domain.name)
         FormProcessorTestUtils.delete_all_cases(self.domain.name)
 
 
 def _stock_report(domain, case_id, product_id, amount, days_ago):
-    from corehq.apps.commtrack.tests import get_single_balance_block
+    from corehq.apps.commtrack.tests.util import get_single_balance_block
     from corehq.apps.hqcase.utils import submit_case_blocks
     from dimagi.utils.parsing import json_format_date
     date_string = json_format_date(ago(days_ago))
@@ -52,7 +52,7 @@ def _stock_report(domain, case_id, product_id, amount, days_ago):
 
 
 def _receipt_report(domain, case_id, product_id, amount, days_ago):
-    from corehq.apps.commtrack.tests import get_single_transfer_block
+    from corehq.apps.commtrack.tests.util import get_single_transfer_block
     from dimagi.utils.parsing import json_format_date
     from corehq.apps.hqcase.utils import submit_case_blocks
     date_string = json_format_date(ago(days_ago))

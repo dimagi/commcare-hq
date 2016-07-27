@@ -115,11 +115,8 @@ def get_all_pillows_json():
 
 def get_pillow_json(pillow_config):
     assert isinstance(pillow_config, PillowConfig)
-    from pillowtop.listener import AliasedElasticPillow
 
-    pillow_class = pillow_config.get_class()
-    pillow = (pillow_class(online=False) if issubclass(pillow_class, AliasedElasticPillow)
-              else pillow_config.get_instance())
+    pillow = pillow_config.get_instance()
 
     checkpoint = pillow.get_checkpoint()
     timestamp = checkpoint.timestamp
@@ -136,18 +133,59 @@ def get_pillow_json(pillow_config):
     else:
         time_since_last = ''
         hours_since_last = None
-    try:
-        db_seq = pillow.get_change_feed().get_latest_change_id()
-    except ValueError:
-        db_seq = None
+    offsets = pillow.get_change_feed().get_current_offsets()
+
+    def _couch_seq_to_int(checkpoint, seq):
+        return force_seq_int(seq) if checkpoint.sequence_format != 'json' else seq
+
     return {
         'name': pillow_config.name,
-        'seq': force_seq_int(checkpoint.wrapped_sequence),
-        'old_seq': force_seq_int(checkpoint.old_sequence) or 0,
-        'db_seq': force_seq_int(db_seq),
+        'seq_format': checkpoint.sequence_format,
+        'seq': _couch_seq_to_int(checkpoint, checkpoint.wrapped_sequence),
+        'old_seq': _couch_seq_to_int(checkpoint, checkpoint.old_sequence) or 0,
+        'offsets': offsets,
         'time_since_last': time_since_last,
         'hours_since_last': hours_since_last
     }
+
+ChangeError = namedtuple('ChangeError', 'change exception')
+
+
+class ErrorCollector(object):
+    def __init__(self):
+        self.errors = []
+
+    def add_error(self, error):
+        self.errors.append(error)
+
+
+def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=None):
+    doc_transform = doc_transform or (lambda x: x)
+    for change in changes:
+        if change.deleted and change.id:
+            yield {
+                "delete": {
+                    "_index": index_info.index,
+                    "_type": index_info.type,
+                    "_id": change.id
+                }
+            }
+        elif not change.deleted:
+            try:
+                doc = change.get_document()
+                doc = doc_transform(doc)
+                yield {
+                    "index": {
+                        "_index": index_info.index,
+                        "_type": index_info.type,
+                        "_id": doc['_id']
+                    }
+                }
+                yield doc
+            except Exception as e:
+                if not error_collector:
+                    raise
+                error_collector.add_error(ChangeError(change, e))
 
 
 def prepare_bulk_payloads(bulk_changes, max_size, chunk_size=100):

@@ -13,7 +13,7 @@ class AppFormSubmissionTrackerProcessor(PillowProcessor):
     """
 
     def process_change(self, pillow_instance, change):
-        if change.deleted:
+        if change.deleted or change.metadata is None:
             return
 
         doc = change.get_document()

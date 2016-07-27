@@ -77,20 +77,7 @@ class TableCardReport(CareBaseReport):
 
     @property
     def fields(self):
-        filters = [GeographyFilter]
-        if self.domain == 'care-macf-malawi':
-            filters.append(MalawiPPTYearFilter)
-        else:
-            filters.append(PPTYearFilter)
-        filters.extend([
-            GenderFilter,
-            GroupLeadershipFilter,
-            CBTNameFilter
-        ])
-        if self.domain == 'care-macf-malawi':
-            filters.append(RealOrTestFilter)
-        if self.domain == 'pathways-india-mis':
-            filters.append(ScheduleFilter)
+        filters = super(TableCardReport, self).fields
         filters.append(TableCardTypeFilter)
         filters.append(TableCardGroupByFilter)
         return filters
