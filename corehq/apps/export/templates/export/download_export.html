@@ -36,11 +36,11 @@
 {% endblock stylesheets %}
 
 {% block js %}
-<script type="text/javascript" src="{% static 'export/js/download_export.ng.js' %}"></script>
+<script src="{% static 'export/js/download_export.ng.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}
-<script type="text/javascript">
+<script>
 (function (angular, undefined) {
    'use strict';
     var downloadExportsApp = angular.module('downloadExportsApp', ['hq.download_export']);
