@@ -1,7 +1,8 @@
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.change_feed.consumer.feed import (KafkaChangeFeed,
+    MultiTopicCheckpointEventHandler)
 from corehq.blobs import get_blob_db
-from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
+from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
 
@@ -29,16 +30,18 @@ def get_blob_deletion_pillow(pillow_id):
     """Get blob deletion pillow
     """
     checkpoint = PillowCheckpoint(pillow_id)
+    feed = KafkaChangeFeed(
+        topics=[topics.META, topics.APP],
+        group_id='blob-deletion-group',
+    )
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(
-            topics=[topics.META, topics.APP],
-            group_id='blob-deletion-group',
-        ),
+        change_feed=feed,
         processor=BlobDeletionProcessor(get_blob_db()),
-        change_processed_event_handler=PillowCheckpointEventHandler(
+        change_processed_event_handler=MultiTopicCheckpointEventHandler(
             checkpoint=checkpoint,
             checkpoint_frequency=KAFKA_CHECKPOINT_FREQUENCY,
+            change_feed=feed,
         ),
     )
