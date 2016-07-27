@@ -163,10 +163,10 @@ class LocationsTest(LocationTestBase):
             test_state1.siblings()
         )
 
-        # parent and parent_id
+        # parent and parent_location_id
         self.assertEqual(
             self.user.location.location_id,
-            test_state1.parent_id
+            test_state1.parent_location_id
         )
         self.assertEqual(
             self.user.location.location_id,
