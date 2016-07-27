@@ -108,7 +108,7 @@ class PublicSMSRatesAsyncHandler(BaseAsyncHandler):
     def public_rate_response(self):
         return self.get_rate_table(self.data.get('country_code'))
 
-    @quickcache(['country_code'], timeout=24 * 60 * 60)
+    # @quickcache(['country_code'], timeout=24 * 60 * 60)
     def get_rate_table(self, country_code):
         backends = SQLMobileBackend.get_global_backends(SQLMobileBackend.SMS)
 
