@@ -9,12 +9,15 @@ class TestBlobDeletionProcessor(BaseTestCase):
 
     def setUp(self):
         super(TestBlobDeletionProcessor, self).setUp()
-        db_name = _get_couchdb_name(type(self.obj))
-        self.processor = BlobDeletionProcessor(self.db, db_name)
+        self.processor = BlobDeletionProcessor(self.db)
 
     def test_process_change_with_deleted_document(self):
         self.obj.put_attachment("content", "name")
-        change = Config(id=self.obj._id, deleted=True)
+        change = Config(
+            id=self.obj._id,
+            deleted=True,
+            metadata=Config(data_source_name=_get_couchdb_name(type(self.obj))),
+        )
         self.processor.process_change(None, change)
         msg = "FakeCouchDocument attachment: 'name'"
         with assert_raises(ResourceNotFound, msg=msg):

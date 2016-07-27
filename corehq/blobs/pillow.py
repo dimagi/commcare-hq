@@ -20,7 +20,8 @@ class BlobDeletionProcessor(PillowProcessor):
 
     def process_change(self, pillow_instance, change):
         if change.deleted:
-            bucket = "{}/{}".format(change.meta.data_source_name, change.id)
+            dbname = change.metadata.data_source_name
+            bucket = "{}/{}".format(dbname, change.id)
             self.blob_db.delete(bucket=bucket)
 
 
