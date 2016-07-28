@@ -156,6 +156,18 @@ def check_couch():
     return ServiceStatus(True, "Successfully queried an arbitrary couch view")
 
 
+def check_formplayer():
+    try:
+        res = requests.get('{}/serverup'.format(settings.FORMPLAYER_URL), timeout=5)
+    except requests.exceptions.ConnectTimeout:
+        return ServiceStatus(False, "Could not establish a connection in time")
+    except requests.ConnectionError:
+        return ServiceStatus(False, "Could not connect to formplayer")
+    else:
+        msg = "Formplayer returned a {} status code".format(res.status_code)
+        return ServiceStatus(res.ok, msg)
+
+
 checks = (
     check_pillowtop,
     check_kafka,
@@ -168,4 +180,5 @@ checks = (
     check_elasticsearch,
     check_shared_dir,
     check_blobdb,
+    check_formplayer,
 )
