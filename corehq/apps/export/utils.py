@@ -149,7 +149,13 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
                         transform,
                     ))
 
-                guess_types = ['ScalarItem', 'MultipleChoiceItem', 'ExportItem']
+                guess_types = [
+                    'ScalarItem',
+                    'MultipleChoiceItem',
+                    'GeopointItem',
+                    'MultiMediaItem',
+                    'ExportItem',
+                ]
                 # Since old exports had no concept of item type, we just guess all
                 # the types and see if there are any matches.
                 for guess_type in guess_types:
