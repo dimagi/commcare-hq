@@ -11,6 +11,13 @@ from django.views.generic import View
 from django.utils.decorators import method_decorator
 
 
+def get_error_response(description):
+    return JsonResponse({
+        'status': 'error',
+        'description': description,
+    })
+
+
 class OrderStatusValidationError(Exception):
 
     def __init__(self, message, *args, **kwargs):
@@ -19,18 +26,39 @@ class OrderStatusValidationError(Exception):
 
 
 class ZiplineOrderStatusView(View, DomainViewMixin):
-
     urlname = 'zipline_order_status'
 
     @method_decorator(csrf_exempt)
     def dispatch(self, *args, **kwargs):
         return super(ZiplineOrderStatusView, self).dispatch(*args, **kwargs)
 
-    def get_error_response(self, description):
-        return JsonResponse({
-            'status': 'error',
-            'description': description,
-        })
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+        except (TypeError, ValueError):
+            return get_error_response('Could not parse JSON')
+
+        if not isinstance(data, dict):
+            return get_error_response('JSON object expected')
+
+        status = data.get('status')
+
+        view = {
+            EmergencyOrderStatusUpdate.STATUS_APPROVED: ApprovedStatusUpdateView,
+            EmergencyOrderStatusUpdate.STATUS_CANCELLED: CancelledStatusUpdateView,
+        }.get(status)
+
+        if view is None:
+            return get_error_response("Unknown status received: '{}'".format(status))
+
+        return view.as_view()(request, *args, **kwargs)
+
+
+class BaseZiplineStatusUpdateView(View, DomainViewMixin):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, *args, **kwargs):
+        return super(BaseZiplineStatusUpdateView, self).dispatch(*args, **kwargs)
 
     def validate_and_clean_int(self, data, field_name):
         value = data.get(field_name)
@@ -69,38 +97,72 @@ class ZiplineOrderStatusView(View, DomainViewMixin):
         if order.status == status:
             raise OrderStatusValidationError(error_msg)
 
-    def get_validate_and_clean_method(self, status):
-        return {
-            EmergencyOrderStatusUpdate.STATUS_APPROVED: self.validate_and_clean_approved_status,
-            EmergencyOrderStatusUpdate.STATUS_CANCELLED: self.validate_and_clean_cancelled_status,
-        }.get(status)
-
-    def get_process_method(self, status):
-        return {
-            EmergencyOrderStatusUpdate.STATUS_APPROVED: self.process_approved_status,
-            EmergencyOrderStatusUpdate.STATUS_CANCELLED: self.process_cancelled_status,
-        }.get(status)
-
-    def get_send_sms_method(self, status):
-        return {
-            EmergencyOrderStatusUpdate.STATUS_APPROVED: self.send_sms_for_approved_status,
-            EmergencyOrderStatusUpdate.STATUS_CANCELLED: self.send_sms_for_cancelled_status,
-        }.get(status)
-
-    def validate_and_clean_approved_status(self, order, data):
+    def validate_and_clean_payload(self, order, data):
         """
-        approved - validates parameters in the json payload
+        Validates and cleans parameters in the data dict.
         :param order: the order that this request pertains to
         :param data: the cleaned json payload in this request
         """
+        raise NotImplementedError()
+
+    def process_status_update(self, order, data):
+        """
+        Processes the status update.
+        :param order: the order that this request pertains to
+        :param data: the cleaned json payload in this request
+        """
+        raise NotImplementedError()
+
+    def send_sms_for_status_update(self, order, data):
+        """
+        Sends the necessary SMS, if any, for the status update.
+        :param order: the order that this request pertains to
+        :param data: the cleaned json payload in this request
+        """
+        raise NotImplementedError()
+
+    def post(self, request, *args, **kwargs):
+        # request.body already confirmed to be a valid json dict in ZiplineOrderStatusView
+        data = json.loads(request.body)
+
+        try:
+            self.validate_and_clean_int(data, 'orderId')
+            self.validate_and_clean_timestamp(data, 'timestamp')
+        except OrderStatusValidationError as e:
+            return get_error_response(e.error_message)
+
+        order_id = data['orderId']
+
+        with CriticalSection([get_order_update_critical_section_key(order_id)]), transaction.atomic():
+            try:
+                order = EmergencyOrder.objects.get(pk=order_id)
+            except EmergencyOrder.DoesNotExist:
+                return get_error_response('Order not found')
+
+            if order.domain != self.domain:
+                return get_error_response('Order not found')
+
+            try:
+                self.validate_and_clean_payload(order, data)
+            except OrderStatusValidationError as e:
+                return get_error_response(e.error_message)
+
+            send_sms_response, response_dict = self.process_status_update(order, data)
+
+        if send_sms_response:
+            # This should be done outside of the transaction to prevent issues with QueuedSMS pk's
+            # being available immediately.
+            self.send_sms_for_status_update(order, data)
+
+        return JsonResponse(response_dict)
+
+
+class ApprovedStatusUpdateView(BaseZiplineStatusUpdateView):
+
+    def validate_and_clean_payload(self, order, data):
         self.validate_and_clean_int(data, 'totalPackages')
 
-    def process_approved_status(self, order, data):
-        """
-        approved - processes the status update
-        :param order: the order that this request pertains to
-        :param data: the cleaned json payload in this request
-        """
+    def process_status_update(self, order, data):
         approved_status = EmergencyOrderStatusUpdate.create_for_order(
             order.pk,
             EmergencyOrderStatusUpdate.STATUS_APPROVED,
@@ -117,28 +179,16 @@ class ZiplineOrderStatusView(View, DomainViewMixin):
 
         return send_sms_response, {'status': 'success'}
 
-    def send_sms_for_approved_status(self, order, data):
-        """
-        approved - sends sms for the status update
-        :param order: the order that this request pertains to
-        :param data: the cleaned json payload in this request
-        """
+    def send_sms_for_status_update(self, order, data):
         pass
 
-    def validate_and_clean_cancelled_status(self, order, data):
-        """
-        cancelled - validates parameters in the json payload
-        :param order: the order that this request pertains to
-        :param data: the cleaned json payload in this request
-        """
+
+class CancelledStatusUpdateView(BaseZiplineStatusUpdateView):
+
+    def validate_and_clean_payload(self, order, data):
         pass
 
-    def process_cancelled_status(self, order, data):
-        """
-        cancelled - processes the status update
-        :param order: the order that this request pertains to
-        :param data: the cleaned json payload in this request
-        """
+    def process_status_update(self, order, data):
         cancelled_status = EmergencyOrderStatusUpdate.create_for_order(
             order.pk,
             EmergencyOrderStatusUpdate.STATUS_CANCELLED,
@@ -154,59 +204,5 @@ class ZiplineOrderStatusView(View, DomainViewMixin):
 
         return send_sms_response, {'status': 'success'}
 
-    def send_sms_for_cancelled_status(self, order, data):
-        """
-        cancelled - sends sms for the status update
-        :param order: the order that this request pertains to
-        :param data: the cleaned json payload in this request
-        """
+    def send_sms_for_status_update(self, order, data):
         pass
-
-    def post(self, request, *args, **kwargs):
-        try:
-            data = json.loads(request.body)
-        except (TypeError, ValueError):
-            return self.get_error_response('Could not parse JSON')
-
-        if not isinstance(data, dict):
-            return self.get_error_response('JSON object expected')
-
-        try:
-            self.validate_and_clean_int(data, 'orderId')
-            self.validate_and_clean_timestamp(data, 'timestamp')
-            self.validate_and_clean_string(data, 'status')
-        except OrderStatusValidationError as e:
-            return self.get_error_response(e.error_message)
-
-        order_id = data['orderId']
-        status = data['status']
-
-        validate_and_clean = self.get_validate_and_clean_method(status)
-        process = self.get_process_method(status)
-
-        if validate_and_clean is None or process is None:
-            return self.get_error_response("Unkown status received: '{}'".format(status))
-
-        with CriticalSection([get_order_update_critical_section_key(order_id)]), transaction.atomic():
-            try:
-                order = EmergencyOrder.objects.get(pk=order_id)
-            except EmergencyOrder.DoesNotExist:
-                return self.get_error_response('Order not found')
-
-            if order.domain != self.domain:
-                return self.get_error_response('Order not found')
-
-            try:
-                validate_and_clean(order, data)
-            except OrderStatusValidationError as e:
-                return self.get_error_response(e.error_message)
-
-            send_sms_response, response_dict = process(order, data)
-
-        send_sms = self.get_send_sms_method(status)
-        if send_sms_response and send_sms is not None:
-            # This should be done outside of the transaction to prevent issues with QueuedSMS pk's
-            # being available immediately.
-            send_sms(order, data)
-
-        return JsonResponse(response_dict)
