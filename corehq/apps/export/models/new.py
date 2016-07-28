@@ -1616,6 +1616,12 @@ class ConversionMeta(DocumentSchema):
     failure_reason = StringProperty()
     info = ListProperty()
 
+    def pretty_print(self):
+        print '---' * 15
+        print '{:<20}| {}'.format('Original Path', self.path)
+        print '{:<20}| {}'.format('Failure Reason', self.failure_reason)
+        print '{:<20}| {}'.format('Info', self.info)
+
 
 class ExportMigrationMeta(Document):
     saved_export_id = StringProperty()

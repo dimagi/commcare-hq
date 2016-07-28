@@ -80,7 +80,7 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
         if new_table:
             new_table.label = old_table.display
             new_table.selected = True
-            migration_meta.skipped_tables.append(ConversionMeta(
+            migration_meta.converted_tables.append(ConversionMeta(
                 path=old_table.index,
             ))
         else:
@@ -322,3 +322,15 @@ def migrate_domain(domain, dryrun=False):
                 print 'Failed parsing {}: {}'.format(old_export['_id'], e)
             else:
                 metas.append(migration_meta)
+    for meta in metas:
+        print 'Export information for export: {}'.format(meta.saved_export_id)
+
+        if meta.skipped_tables:
+            print '## Skipped tables: ##'
+            for table_meta in meta.skipped_tables:
+                table_meta.pretty_print()
+
+        if meta.skipped_columns:
+            print '## Skipped columns: ##'
+            for column_meta in meta.skipped_columns:
+                column_meta.pretty_print()
