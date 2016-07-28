@@ -119,7 +119,7 @@ class PublicSMSRatesAsyncHandler(BaseAsyncHandler):
                 backend_instance=backend_instance_id,
                 country_code=country_code
             )
-            if not gateway_fee:
+            if not gateway_fee or gateway_fee.amount is None:
                 return None
             usd_gateway_fee = gateway_fee.amount / gateway_fee.currency.rate_to_default
             usage_fee = SmsUsageFee.get_by_criteria(direction)

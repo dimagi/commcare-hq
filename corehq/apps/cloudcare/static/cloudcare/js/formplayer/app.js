@@ -67,6 +67,14 @@ FormplayerFrontend.reqres.setHandler('clearMenu', function () {
     $('#menu-region').html("");
 });
 
+$(document).bind("ajaxStart", function(){
+    $(".formplayer-request").addClass('formplayer-requester-disabled');
+    tfLoading();
+}).bind("ajaxStop", function() {
+    $(".formplayer-request").removeClass('formplayer-requester-disabled');
+    tfLoadingComplete();
+});
+
 FormplayerFrontend.reqres.setHandler('error', function(errorMessage) {
     showError(errorMessage, $("#cloudcare-notifications"), 10000);
 });

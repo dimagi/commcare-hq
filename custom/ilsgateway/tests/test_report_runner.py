@@ -88,7 +88,7 @@ class TestReportRunner(TestCase):
                 'name': location.name,
                 'data-field-group': group,
                 'location_type': location.location_type,
-                'parent_id': location.parent_id
+                'parent_id': location.parent_location_id
             }
         )
         form.save()

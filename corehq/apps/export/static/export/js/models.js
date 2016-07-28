@@ -139,6 +139,44 @@ hqDefine('export/js/models.js', function () {
         return ko.mapping.toJS(this, ExportInstance.mapping);
     };
 
+    /**
+     * addUserDefinedTableConfiguration
+     *
+     * This will add a new table to the export configuration and seed it with
+     * one column, row number.
+     *
+     * @param {ExportInstance} instance
+     * @param {Object} e - The window's click event
+     */
+    ExportInstance.prototype.addUserDefinedTableConfiguration = function(instance, e) {
+        e.preventDefault();
+        instance.tables.push(new UserDefinedTableConfiguration({
+            selected: true,
+            doc_type: 'TableConfiguration',
+            label: 'Sheet',
+            is_user_defined: true,
+            path: [],
+            columns: [
+                {
+                    doc_type: 'RowNumberColumn',
+                    tags: ['row'],
+                    item: {
+                        doc_type: 'ExportItem',
+                        path: [{
+                            doc_type: 'PathNode',
+                            name: 'number',
+                        }]
+                    },
+                    selected: true,
+                    is_advanced: false,
+                    label: 'number',
+                    deid_transform: null,
+                    repeat: null,
+                },
+            ],
+        }));
+    };
+
     ExportInstance.mapping = {
         include: [
             '_id',
@@ -154,7 +192,11 @@ hqDefine('export/js/models.js', function () {
         ],
         tables: {
             create: function(options) {
-                return new TableConfiguration(options.data);
+                if (options.data.is_user_defined) {
+                    return new UserDefinedTableConfiguration(options.data);
+                } else {
+                    return new TableConfiguration(options.data);
+                }
             },
         },
     };
@@ -219,7 +261,7 @@ hqDefine('export/js/models.js', function () {
      */
     TableConfiguration.prototype.useLabels = function(table) {
         _.each(table.columns(), function(column) {
-            if (column.isQuestion()) {
+            if (column.isQuestion() && !column.isUserDefined) {
                 column.label(column.item.label() || column.label());
             }
         });
@@ -234,17 +276,38 @@ hqDefine('export/js/models.js', function () {
      */
     TableConfiguration.prototype.useIds = function(table) {
         _.each(table.columns(), function(column) {
-            if (column.isQuestion()) {
+            if (column.isQuestion() && !column.isUserDefined) {
                 column.label(column.item.readablePath() || column.label());
             }
         });
     };
 
+    TableConfiguration.prototype.getColumn = function(path) {
+        return _.find(this.columns(), function(column) {
+            return utils.readablePath(column.item.path()) === path;
+        });
+    };
+
+    TableConfiguration.prototype.addUserDefinedExportColumn = function(table, e) {
+        e.preventDefault();
+        table.columns.push(new UserDefinedExportColumn({
+            selected: true,
+            deid_transform: null,
+            doc_type: 'UserDefinedExportColumn',
+            label: '',
+            custom_path: [],
+        }));
+    };
+
     TableConfiguration.mapping = {
-        include: ['name', 'path', 'columns', 'selected', 'label', 'is_deleted'],
+        include: ['name', 'path', 'columns', 'selected', 'label', 'is_deleted', 'doc_type', 'is_user_defined'],
         columns: {
             create: function(options) {
-                return new ExportColumn(options.data);
+                if (options.data.doc_type === 'UserDefinedExportColumn') {
+                    return new UserDefinedExportColumn(options.data);
+                } else {
+                    return new ExportColumn(options.data);
+                }
             },
         },
         path: {
@@ -255,6 +318,54 @@ hqDefine('export/js/models.js', function () {
     };
 
     /**
+     * UserDefinedTableConfiguration
+     * @class
+     *
+     * This represents a table configuration that has been defined by the user. It
+     * is very similar to a TableConfiguration except that the user defines the
+     * path to where the new sheet should be.
+     *
+     * The customPathString for a table should always end in [] since a new export
+     * table should be an array.
+     *
+     * When specifying questions/properties in a user defined table, you'll need
+     * to include the base table path in the property. For example:
+     *
+     * table path: form.repeat[]
+     * question path: form.repeat[].question1
+     */
+    var UserDefinedTableConfiguration = function(tableJSON) {
+        var self = this;
+        ko.mapping.fromJS(tableJSON, TableConfiguration.mapping, self);
+        self.customPathString = ko.observable(utils.readablePath(self.path()));
+        self.customPathString.extend({
+            required: true,
+            pattern: {
+                message: gettext('The table path should end with []'),
+                params: /^.*\[\]$/,
+            },
+        });
+
+        self.showAdvanced = ko.observable(false);
+        self.customPathString.subscribe(self.onCustomPathChange.bind(self));
+    };
+    UserDefinedTableConfiguration.prototype = Object.create(TableConfiguration.prototype);
+
+    UserDefinedTableConfiguration.prototype.onCustomPathChange = function() {
+        var rowColumn,
+            nestedRepeatCount;
+        this.path(utils.customPathToNodes(this.customPathString()));
+
+        // Update the rowColumn's repeat count by counting the number of
+        // repeats in the table path
+        rowColumn = this.getColumn('number');
+        if (rowColumn) {
+            nestedRepeatCount = _.filter(this.path(), function(node) { return node.is_repeat(); }).length;
+            rowColumn.repeat(nestedRepeatCount);
+        }
+    };
+
+     /**
      * ExportColumn
      * @class
      *
@@ -268,6 +379,7 @@ hqDefine('export/js/models.js', function () {
         // lists. This is used for the feature preview SPLIT_MULTISELECT_CASE_EXPORT
         self.showOptions = ko.observable(false);
         self.userDefinedOptionToAdd = ko.observable('');
+        self.isUserDefined = false;
     };
 
     /**
@@ -391,6 +503,47 @@ hqDefine('export/js/models.js', function () {
         },
     };
 
+    /*
+     * UserDefinedExportColumn
+     *
+     * This model represents a column that a user has defined the path to the
+     * data within the form. It should only be needed for RemoteApps
+     */
+    var UserDefinedExportColumn = function(columnJSON) {
+        var self = this;
+        ko.mapping.fromJS(columnJSON, UserDefinedExportColumn.mapping, self);
+        self.showOptions = ko.observable(false);
+        self.isUserDefined = true;
+        self.customPathString = ko.observable(utils.readablePath(self.custom_path())).extend({
+            required: true,
+        });
+        self.customPathString.subscribe(self.customPathToNodes.bind(self));
+    };
+    UserDefinedExportColumn.prototype = Object.create(ExportColumn.prototype);
+
+    UserDefinedExportColumn.prototype.isVisible = function() {
+        return true;
+    };
+
+    UserDefinedExportColumn.prototype.customPathToNodes = function() {
+        this.custom_path(utils.customPathToNodes(this.customPathString()));
+    };
+
+    UserDefinedExportColumn.mapping = {
+        include: [
+            'selected',
+            'deid_transform',
+            'doc_type',
+            'custom_path',
+            'label',
+        ],
+        custom_path: {
+            create: function(options) {
+                return new PathNode(options.data);
+            },
+        },
+    };
+
     /**
      * ExportItem
      * @class
@@ -414,9 +567,7 @@ hqDefine('export/js/models.js', function () {
     };
 
     ExportItem.prototype.readablePath = function() {
-        return _.map(this.path(), function(pathNode) {
-            return pathNode.name();
-        }).join('.');
+        return utils.readablePath(this.path());
     };
 
     ExportItem.mapping = {
@@ -446,6 +597,7 @@ hqDefine('export/js/models.js', function () {
         ExportInstance: ExportInstance,
         ExportColumn: ExportColumn,
         ExportItem: ExportItem,
+        PathNode: PathNode,
     };
 
 });
