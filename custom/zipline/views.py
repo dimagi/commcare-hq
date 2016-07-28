@@ -92,7 +92,7 @@ class BaseZiplineStatusUpdateView(View, DomainViewMixin):
 
         data[field_name] = value
 
-    def validate_and_clean_string(self, data, field_name):
+    def validate_string(self, data, field_name):
         value = data.get(field_name)
         error_msg = "Field '{}' is required and expected to be a string".format(field_name)
 
@@ -143,7 +143,7 @@ class BaseZiplineStatusUpdateView(View, DomainViewMixin):
             if not isinstance(item, dict):
                 raise OrderStatusValidationError(data_type_error)
 
-            self.validate_and_clean_string(item, 'productCode')
+            self.validate_string(item, 'productCode')
             self.validate_decimal(item, 'quantity')
             result.append(ProductQuantity(item['productCode'], item['quantity']))
 
@@ -308,8 +308,8 @@ class DispatchedStatusUpdateView(BaseZiplineStatusUpdateView):
 
     def validate_and_clean_payload(self, order, data):
         self.validate_and_clean_int(data, 'packageNumber')
-        self.validate_and_clean_string(data, 'packageId')
-        self.validate_and_clean_string(data, 'vehicleId')
+        self.validate_string(data, 'packageId')
+        self.validate_string(data, 'vehicleId')
         self.validate_and_clean_time(data, 'eta')
         self.validate_and_clean_products(data, 'products')
 
