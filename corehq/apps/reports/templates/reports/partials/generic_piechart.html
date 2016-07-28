@@ -1,7 +1,7 @@
 {% load i18n %}
 {% with chartdiv|default:"pieplaceholder" as chartdiv %}
     {% with hoverdiv|default:"piehoverplaceholder" as hoverdiv %}
-    <script type="text/javascript">
+    <script>
         $(document).ready(function() {
             var data = [
             {% for point in chart_data %}

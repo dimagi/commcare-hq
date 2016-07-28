@@ -5,8 +5,8 @@
 {% load djangular_tags %}
 
 {% block js %}
-<script type="text/javascript" src="{% static 'style/js/pagination.ng.js' %}"></script>
-<script type="text/javascript" src="{% static 'users/js/mobile_workers.ng.js' %}"></script>
+<script src="{% static 'style/js/pagination.ng.js' %}"></script>
+<script src="{% static 'users/js/mobile_workers.ng.js' %}"></script>
 {% if strong_mobile_passwords %}
     <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
     <script src="{% static 'registration/js/password.js' %}"></script>
@@ -14,7 +14,7 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-<script type="text/javascript">
+<script>
 $(function () {
    'use strict';
     $('#newMobileWorkerModal').on('shown.bs.modal', function () {

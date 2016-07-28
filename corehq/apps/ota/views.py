@@ -111,7 +111,8 @@ def get_restore_params(request):
         'state': request.GET.get('state'),
         'items': request.GET.get('items') == 'true',
         'as_user': request.GET.get('as'),
-        'has_data_cleanup_privelege': has_privilege(request, privileges.DATA_CLEANUP)
+        'has_data_cleanup_privelege': has_privilege(request, privileges.DATA_CLEANUP),
+        'overwrite_cache': request.GET.get('overwrite_cache') == 'true',
     }
 
 

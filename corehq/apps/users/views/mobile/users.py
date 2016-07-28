@@ -62,7 +62,13 @@ from corehq.apps.style.decorators import (
     use_multiselect,
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
-from corehq.apps.users.bulkupload import check_headers, dump_users_and_groups, GroupNameError, UserUploadError
+from corehq.apps.users.bulkupload import (
+    check_duplicate_usernames,
+    check_headers,
+    dump_users_and_groups,
+    GroupNameError,
+    UserUploadError,
+)
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.forms import (
     CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm,
@@ -898,6 +904,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
 
         try:
             check_headers(self.user_specs)
+            check_duplicate_usernames(self.user_specs)
         except UserUploadError as e:
             messages.error(request, _(e.message))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
@@ -1039,9 +1046,11 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
     @memoized
     def form(self):
         if self.request.method == 'POST':
-            return SelfRegistrationForm(self.request.POST, domain=self.domain)
+            return SelfRegistrationForm(self.request.POST, domain=self.domain,
+                require_email=self.invitation.require_email)
         else:
-            return SelfRegistrationForm(domain=self.domain)
+            return SelfRegistrationForm(domain=self.domain,
+                require_email=self.invitation.require_email)
 
     def get_context_data(self, **kwargs):
         context = super(CommCareUserSelfRegistrationView, self).get_context_data(**kwargs)
@@ -1076,8 +1085,10 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
                 self.domain,
                 self.form.cleaned_data.get('username'),
                 self.form.cleaned_data.get('password'),
+                email=self.form.cleaned_data.get('email'),
                 phone_number=self.invitation.phone_number,
                 device_id='Generated from HQ',
+                user_data=self.invitation.custom_user_data,
             )
             # Since the user is being created by following the link and token
             # we sent to their phone by SMS, we can verify their phone number

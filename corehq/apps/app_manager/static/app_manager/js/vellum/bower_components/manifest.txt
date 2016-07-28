@@ -21,5 +21,6 @@
 ├── requirejs-text#2.0.15
 ├── requirejs-tpl#a3ca1e0e7f
 ├── underscore#1.6.0 (latest is 1.8.3)
+├── when#2.8.0 extraneous (latest is 3.7.7)
 ├── xpath#0.0.2
 └── xrayquire#396ae6569b

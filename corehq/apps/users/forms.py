@@ -243,9 +243,15 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         label=ugettext_lazy("Opt out of emails about CommCare updates."),
     )
 
+    class MyAccountInfoFormException(Exception):
+        pass
+
     def __init__(self, *args, **kwargs):
-        self.username = kwargs.pop('username') if 'username' in kwargs else None
-        self.user = kwargs.pop('user') if 'user' in kwargs else None
+        self.user = kwargs.pop('user', None)
+        if not self.user:
+            raise UpdateMyAccountInfoForm.MyAccountInfoFormException("Expected to be passed a user kwarg")
+
+        self.username = self.user.username
         api_key = kwargs.pop('api_key') if 'api_key' in kwargs else None
 
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
@@ -279,16 +285,23 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         }
         self.new_helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
         self.new_helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+
+        basic_fields = [
+            cb3_layout.Div(*username_controls),
+            hqcrispy.Field('first_name'),
+            hqcrispy.Field('last_name'),
+            hqcrispy.Field('email'),
+        ]
+
+        if self.set_email_opt_out:
+            basic_fields.append(twbscrispy.PrependedText('email_opt_out', ''))
+
         self.new_helper.layout = cb3_layout.Layout(
             cb3_layout.Fieldset(
                 ugettext_lazy("Basic"),
-                cb3_layout.Div(*username_controls),
-                hqcrispy.Field('first_name'),
-                hqcrispy.Field('last_name'),
-                hqcrispy.Field('email'),
-                twbscrispy.PrependedText('email_opt_out', ''),
+                *basic_fields
             ),
-            cb3_layout.Fieldset(
+            (hqcrispy.FieldsetAccordionGroup if self.collapse_other_options else cb3_layout.Fieldset)(
                 ugettext_lazy("Other Options"),
                 hqcrispy.Field('language'),
                 cb3_layout.Div(*api_key_controls),
@@ -303,8 +316,19 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         )
 
     @property
+    def set_email_opt_out(self):
+        return self.user.is_web_user()
+
+    @property
+    def collapse_other_options(self):
+        return self.user.is_commcare_user()
+
+    @property
     def direct_properties(self):
-        return self.fields.keys()
+        result = self.fields.keys()
+        if not self.set_email_opt_out:
+            result.remove('email_opt_out')
+        return result
 
 
 class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
@@ -606,7 +630,7 @@ class MultipleSelectionForm(forms.Form):
             return super(MyView, self).dispatch(request, *args, **kwargs)
 
         # html
-        <script type="text/javascript">
+        <script>
             // Multiselect widget
             $(function () {
                 var multiselect_utils = hqImport('style/js/components/multiselect_utils');
@@ -823,8 +847,12 @@ class SelfRegistrationForm(forms.Form):
         if 'domain' not in kwargs:
             raise Exception('Expected kwargs: domain')
         self.domain = kwargs.pop('domain')
+        require_email = kwargs.pop('require_email', False)
 
         super(SelfRegistrationForm, self).__init__(*args, **kwargs)
+
+        if require_email:
+            self.fields['email'].required = True
 
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
@@ -836,6 +864,7 @@ class SelfRegistrationForm(forms.Form):
                 crispy.Field('username'),
                 crispy.Field('password'),
                 crispy.Field('password2'),
+                crispy.Field('email'),
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -860,6 +889,10 @@ class SelfRegistrationForm(forms.Form):
         required=True,
         label=ugettext_lazy('Re-enter Password'),
         widget=PasswordInput(),
+    )
+    email = forms.EmailField(
+        required=False,
+        label=ugettext_lazy('Email address'),
     )
 
     def clean_username(self):
