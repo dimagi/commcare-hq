@@ -1,14 +1,13 @@
 from optparse import make_option
-from django.core.management.base import BaseCommand
+from django.core.management.base import LabelCommand
 
 from corehq.apps.export.utils import migrate_domain
-from corehq.apps.domain.models import Domain
 
 
-class Command(BaseCommand):
-    help = "Migrates old exports to new ones"
+class Command(LabelCommand):
+    help = "Migrates old exports to new ones for a given domain"
 
-    option_list = (
+    option_list = LabelCommand.option_list + (
         make_option(
             '--dry-run',
             action='store_true',
@@ -18,11 +17,8 @@ class Command(BaseCommand):
         ),
     )
 
-    def handle(self, *args, **options):
+    def handle(self, domain, *args, **options):
         dryrun = options.pop('dryrun')
         if dryrun:
             print '*** Running in dryrun mode. Will not save any conversion ***'
-
-        for doc in Domain.get_all(include_docs=False):
-            domain = doc['key']
-            migrate_domain(domain, dryrun)
+        migrate_domain(domain, dryrun)

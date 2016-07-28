@@ -1558,7 +1558,7 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
                         legacy_export.converted_saved_export_id
                     )
                 else:
-                    export_instance = convert_saved_export_to_export_instance(
+                    export_instance, _ = convert_saved_export_to_export_instance(
                         self.domain,
                         legacy_export,
                     )

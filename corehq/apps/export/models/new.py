@@ -233,7 +233,7 @@ class ExportColumn(DocumentSchema):
                 help_text=_(u'The ID of the associated {} case type').format(item.case_type),
                 **constructor_args
             )
-        elif feature_previews.SPLIT_MULTISELECT_CASE_EXPORT.enabled(get_request().domain):
+        elif get_request() and feature_previews.SPLIT_MULTISELECT_CASE_EXPORT.enabled(get_request().domain):
             column = SplitUserDefinedExportColumn(**constructor_args)
         else:
             column = ExportColumn(**constructor_args)
@@ -1628,6 +1628,33 @@ class StockExportColumn(ExportColumn):
                 state_index = self._column_tuples.index(column_tuple)
                 values[state_index] = state.stock_on_hand
         return values
+
+
+class ConversionMeta(DocumentSchema):
+    path = StringProperty()
+    failure_reason = StringProperty()
+    info = ListProperty()
+
+    def pretty_print(self):
+        print '---' * 15
+        print '{:<20}| {}'.format('Original Path', self.path)
+        print '{:<20}| {}'.format('Failure Reason', self.failure_reason)
+        print '{:<20}| {}'.format('Info', self.info)
+
+
+class ExportMigrationMeta(Document):
+    saved_export_id = StringProperty()
+    domain = StringProperty()
+
+    skipped_tables = SchemaListProperty(ConversionMeta)
+    skipped_columns = SchemaListProperty(ConversionMeta)
+
+    converted_tables = SchemaListProperty(ConversionMeta)
+    converted_columns = SchemaListProperty(ConversionMeta)
+
+    class Meta:
+        app_label = 'export'
+
 
 # These must match the constants in corehq/apps/export/static/export/js/const.js
 MAIN_TABLE = []
