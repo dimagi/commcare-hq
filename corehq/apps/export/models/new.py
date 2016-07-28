@@ -1633,6 +1633,9 @@ class ExportMigrationMeta(Document):
     converted_tables = SchemaListProperty(ConversionMeta)
     converted_columns = SchemaListProperty(ConversionMeta)
 
+    class Meta:
+        app_label = 'export'
+
 
 # These must match the constants in corehq/apps/export/static/export/js/const.js
 MAIN_TABLE = []

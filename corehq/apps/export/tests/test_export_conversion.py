@@ -5,6 +5,7 @@ import mock
 from django.test import TestCase, SimpleTestCase
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.couch.database import safe_delete
 from couchexport.models import SavedExportSchema
 
 from corehq.util.test_utils import TestFileMixin, generate_cases
@@ -17,6 +18,7 @@ from corehq.apps.export.models import (
     FormExportInstance,
     CaseExportInstance,
 )
+from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.export.utils import (
     convert_saved_export_to_export_instance,
     _convert_index_to_path_nodes,
@@ -32,6 +34,9 @@ from corehq.apps.export.models import (
     PARENT_CASE_TABLE,
     PathNode,
     CASE_HISTORY_TABLE,
+)
+from corehq.apps.export.dbaccessors import (
+    delete_all_export_instances,
 )
 
 MockRequest = namedtuple('MockRequest', 'domain')
@@ -77,6 +82,13 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestCase, TestFileMixin):
                 ),
             ],
         )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.project.delete()
+
+    def setUp(self):
+        delete_all_export_instances()
 
     def test_basic_conversion(self, _):
         saved_export_schema = SavedExportSchema.wrap(self.get_json('case'))
@@ -227,6 +239,9 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
                 ),
             ],
         )
+
+    def setUp(self):
+        delete_all_export_instances()
 
     def test_basic_conversion(self, _):
 
