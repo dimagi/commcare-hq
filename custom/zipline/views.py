@@ -51,6 +51,8 @@ class ZiplineOrderStatusView(View, DomainViewMixin):
             EmergencyOrderStatusUpdate.STATUS_DISPATCHED: DispatchedStatusUpdateView,
             EmergencyOrderStatusUpdate.STATUS_DELIVERED: DeliveredStatusUpdateView,
             EmergencyOrderStatusUpdate.STATUS_CANCELLED_IN_FLIGHT: CancelledInFlightStatusUpdateView,
+            EmergencyOrderStatusUpdate.STATUS_APPROACHING_ETA: ApproachingEtaStatusUpdateView,
+            EmergencyOrderStatusUpdate.STATUS_ETA_DELAYED: EtaDelayedStatusUpdateView,
         }.get(status)
 
         if view is None:
@@ -381,6 +383,46 @@ class CancelledInFlightStatusUpdateView(BaseZiplineStatusUpdateView):
             order.status = EmergencyOrderStatusUpdate.STATUS_CANCELLED
             order.cancelled_status = cancelled_in_flight_status
             order.save()
+
+        return True, {'status': 'success'}
+
+    def send_sms_for_status_update(self, order, data):
+        pass
+
+
+class ApproachingEtaStatusUpdateView(BaseZiplineStatusUpdateView):
+
+    def validate_and_clean_payload(self, order, data):
+        self.validate_and_clean_int(data, 'packageNumber')
+        self.validate_and_clean_int(data, 'minutesRemaining')
+
+    def process_status_update(self, order, data):
+        EmergencyOrderStatusUpdate.create_for_order(
+            order.pk,
+            EmergencyOrderStatusUpdate.STATUS_APPROACHING_ETA,
+            zipline_timestamp=data['timestamp'],
+            package_number=data['packageNumber']
+        )
+
+        return True, {'status': 'success'}
+
+    def send_sms_for_status_update(self, order, data):
+        pass
+
+
+class EtaDelayedStatusUpdateView(BaseZiplineStatusUpdateView):
+
+    def validate_and_clean_payload(self, order, data):
+        self.validate_and_clean_int(data, 'packageNumber')
+        self.validate_and_clean_time(data, 'newEta')
+
+    def process_status_update(self, order, data):
+        EmergencyOrderStatusUpdate.create_for_order(
+            order.pk,
+            EmergencyOrderStatusUpdate.STATUS_ETA_DELAYED,
+            zipline_timestamp=data['timestamp'],
+            package_number=data['packageNumber']
+        )
 
         return True, {'status': 'success'}
 
