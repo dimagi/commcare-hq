@@ -27,7 +27,7 @@ def is_occurrence_deleted(last_occurrences, app_ids_and_versions):
     return is_deleted
 
 
-def convert_saved_export_to_export_instance(domain, saved_export):
+def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
     from .models import (
         FormExportDataSchema,
         FormExportInstance,
@@ -51,6 +51,7 @@ def convert_saved_export_to_export_instance(domain, saved_export):
         instance_cls = CaseExportInstance
         schema = CaseExportDataSchema.generate_schema_from_builds(
             domain,
+            None,
             _extract_casetype_from_index(saved_export.index),
         )
 
@@ -138,11 +139,12 @@ def convert_saved_export_to_export_instance(domain, saved_export):
                 # Must be deid transform
                 new_column.deid_transform = transform
 
-    instance.save()
+    if not dryrun:
+        instance.save()
 
-    saved_export.doc_type += DELETED_SUFFIX
-    saved_export.converted_saved_export_id = instance._id
-    saved_export.save()
+        saved_export.doc_type += DELETED_SUFFIX
+        saved_export.converted_saved_export_id = instance._id
+        saved_export.save()
 
     return instance
 
@@ -252,7 +254,8 @@ def revert_new_exports(new_exports):
     return reverted_exports
 
 
-def migrate_domain(domain):
+def migrate_domain(domain, dryrun=False):
+    from couchexport.models import SavedExportSchema
     export_count = stale_get_export_count(domain)
     if export_count:
         for old_export in with_progress_bar(
@@ -260,6 +263,10 @@ def migrate_domain(domain):
                 length=export_count,
                 prefix=domain):
             try:
-                convert_saved_export_to_export_instance(domain, old_export)
+                convert_saved_export_to_export_instance(
+                    domain,
+                    SavedExportSchema.wrap(old_export),
+                    dryrun=dryrun
+                )
             except Exception, e:
-                print 'Failed parsing {}: {}'.format(old_export._id, e)
+                print 'Failed parsing {}: {}'.format(old_export['_id'], e)
