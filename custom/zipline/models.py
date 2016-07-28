@@ -179,6 +179,44 @@ class EmergencyOrder(models.Model):
         related_name='+', null=True)
 
 
+class EmergencyOrderPackage(models.Model):
+
+    class Meta:
+        index_together = [
+            ['order', 'package_number'],
+        ]
+
+        unique_together = [
+            ['order', 'package_number'],
+        ]
+
+    # (order, package_number) matches up with the same-named fields on EmergencyOrderStatusUpdate
+    order = models.ForeignKey('EmergencyOrder')
+    package_number = models.IntegerField()
+
+    # Same format as EmergencyOrder.products_requested; represents products and quantities
+    # in this package
+    products = jsonfield.JSONField(default=dict)
+
+    # Should either be STATUS_DISPATCHED, STATUS_DELIVERED, or STATUS_CANCELLED_IN_FLIGHT
+    status = models.CharField(max_length=126)
+
+    # A pointer to the EmergencyOrderStatusUpdate representing the dispatched status update
+    # for this package
+    dispatched_status = models.ForeignKey('EmergencyOrderStatusUpdate', on_delete=models.PROTECT,
+        related_name='+', null=True)
+
+    # A pointer to the EmergencyOrderStatusUpdate representing the delivered status update
+    # for this package
+    delivered_status = models.ForeignKey('EmergencyOrderStatusUpdate', on_delete=models.PROTECT,
+        related_name='+', null=True)
+
+    # A pointer to the EmergencyOrderStatusUpdate representing the cancelled in flight status update
+    # for this package
+    cancelled_status = models.ForeignKey('EmergencyOrderStatusUpdate', on_delete=models.PROTECT,
+        related_name='+', null=True)
+
+
 def update_product_quantity_json_field(json_field, products):
     """
     Updates the product quantities stored in the given field.
