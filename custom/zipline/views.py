@@ -1,8 +1,10 @@
 import json
+import re
 from corehq.apps.domain.views import DomainViewMixin
-from custom.zipline.api import get_order_update_critical_section_key
+from custom.zipline.api import get_order_update_critical_section_key, ProductQuantity
 from custom.zipline.models import EmergencyOrder, EmergencyOrderStatusUpdate
 from dateutil.parser import parse as parse_timestamp
+from decimal import Decimal
 from dimagi.utils.couch import CriticalSection
 from django.db import transaction
 from django.http import JsonResponse
@@ -46,6 +48,7 @@ class ZiplineOrderStatusView(View, DomainViewMixin):
         view = {
             EmergencyOrderStatusUpdate.STATUS_APPROVED: ApprovedStatusUpdateView,
             EmergencyOrderStatusUpdate.STATUS_CANCELLED: CancelledStatusUpdateView,
+            EmergencyOrderStatusUpdate.STATUS_DISPATCHED: DispatchedStatusUpdateView,
         }.get(status)
 
         if view is None:
@@ -91,6 +94,56 @@ class BaseZiplineStatusUpdateView(View, DomainViewMixin):
 
         if not isinstance(value, basestring):
             raise OrderStatusValidationError(error_msg)
+
+    def validate_and_clean_time(self, data, field_name):
+        value = data.get(field_name)
+        error_msg = "Field '{}' is required and expected to be a 24-hour time string HH:MM".format(field_name)
+
+        if not isinstance(value, basestring):
+            raise OrderStatusValidationError(error_msg)
+
+        if not re.match('^\d\d?:\d\d$', value):
+            raise OrderStatusValidationError(error_msg)
+
+        try:
+            value = parse_timestamp(value).time()
+        except ValueError:
+            raise OrderStatusValidationError(error_msg)
+
+        data[field_name] = value
+
+    def validate_decimal(self, data, field_name):
+        value = data.get(field_name)
+        error_msg = "Field '{}' is required and expected to be a numeric string".format(field_name)
+
+        if not isinstance(value, basestring):
+            raise OrderStatusValidationError(error_msg)
+
+        try:
+            Decimal(value)
+        except:
+            raise OrderStatusValidationError(error_msg)
+
+    def validate_and_clean_products(self, data, field_name):
+        value = data.get(field_name)
+        result = []
+        data_type_error = "Field {} is required and expected to be a non-empty list of JSON objects".format(field_name)
+
+        if not isinstance(value, list):
+            raise OrderStatusValidationError(data_type_error)
+
+        if len(value) == 0:
+            raise OrderStatusValidationError(data_type_error)
+
+        for item in value:
+            if not isinstance(item, dict):
+                raise OrderStatusValidationError(data_type_error)
+
+            self.validate_and_clean_string(item, 'productCode')
+            self.validate_decimal(item, 'quantity')
+            result.append(ProductQuantity(item['productCode'], item['quantity']))
+
+        data[field_name] = result
 
     def validate_status_is_not(self, status, order, data):
         error_msg = "Cannot set a status of {} because status is already {}".format(data['status'], status)
@@ -203,6 +256,37 @@ class CancelledStatusUpdateView(BaseZiplineStatusUpdateView):
             order.save()
 
         return send_sms_response, {'status': 'success'}
+
+    def send_sms_for_status_update(self, order, data):
+        pass
+
+
+class DispatchedStatusUpdateView(BaseZiplineStatusUpdateView):
+
+    def validate_and_clean_payload(self, order, data):
+        self.validate_and_clean_int(data, 'packageNumber')
+        self.validate_and_clean_string(data, 'packageId')
+        self.validate_and_clean_string(data, 'vehicleId')
+        self.validate_and_clean_time(data, 'eta')
+        self.validate_and_clean_products(data, 'products')
+
+    def process_status_update(self, order, data):
+        dispatched_status = EmergencyOrderStatusUpdate.create_for_order(
+            order.pk,
+            EmergencyOrderStatusUpdate.STATUS_DISPATCHED,
+            zipline_timestamp=data['timestamp'],
+            package_number=data['packageNumber'],
+            package_id=data['packageId'],
+            vehicle_id=data['vehicleId'],
+            products=data['products']
+        )
+
+        if not order.dispatched_status:
+            order.status = EmergencyOrderStatusUpdate.STATUS_DISPATCHED
+            order.dispatched_status = dispatched_status
+            order.save()
+
+        return True, {'status': 'success'}
 
     def send_sms_for_status_update(self, order, data):
         pass
