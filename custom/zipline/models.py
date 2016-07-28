@@ -10,6 +10,7 @@ class EmergencyOrderStatusUpdate(models.Model):
     STATUS_RECEIVED = 'received'
     STATUS_REJECTED = 'rejected'
     STATUS_CONFIRMED = 'confirmed'
+    STATUS_CANCELLED_BY_USER = 'cancelledByUser'
 
     # The following statuses match the values received from zipline via our
     # API. Do not change these constants otherwise the API will not work properly.
