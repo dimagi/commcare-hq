@@ -47,7 +47,7 @@
 {% endif %}
 
 {% block js-inline %}
-<script type="text/javascript">
+<script>
     $('#id_add_phone_number').on('paste', function (event) {
         var clipboardData = event.clipboardData  ||  event.originalEvent.clipboardData;
         var pasteText = clipboardData.getData("Text");
