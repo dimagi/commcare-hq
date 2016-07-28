@@ -77,7 +77,9 @@
     </field>
     <field>
       <header width="0">
-        <text/>
+        <text>
+          <locale id="m0.case_short.case_top_of_tech_support_list_3.header"/>
+        </text>
       </header>
       <template width="0">
         <text>
@@ -93,7 +95,7 @@
     <field>
       <header width="0">
         <text>
-          <locale id="m0.case_short.phone_number.display"/>
+          <locale id="m0.case_short.case_phone_number_3.header"/>
         </text>
       </header>
       <template width="0">

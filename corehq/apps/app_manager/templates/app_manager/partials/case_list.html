@@ -113,6 +113,7 @@
                     </th>
                     <th>{% trans "Direction" %}</th>
                     <th>{% trans "Format" %}</th>
+                    <th>{% trans "Display" %}</th>
                     <th></th>
                 </tr>
             </thead>
@@ -183,7 +184,7 @@
 
     <div class="form-group">
         <button class="btn btn-default btn-sm" data-bind="
-            click: function(data){data.addSortRow('', '', '', true);}"
+            click: function(data){data.addSortRow('', '', '', '', true);}"
         >
             <i class="fa fa-plus"></i>
             {% trans "Add sort property" %}

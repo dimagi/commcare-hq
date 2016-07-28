@@ -89,21 +89,23 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         self.hasValidPropertyName = function(){
             return module.DetailScreenConfig.field_val_re.test(self.textField.val());
         };
+        self.display = ko.observable(typeof params.display !== 'undefined' ? params.display : "");
+        self.display.subscribe(function () {
+            self.notifyButton();
+        });
+        self.toTitleCase = module.CC_DETAIL_SCREEN.toTitleCase;
         this.textField.on('change', function(){
             if (!self.hasValidPropertyName()){
                 self.showWarning(true);
             } else {
                 self.showWarning(false);
+                self.display(self.toTitleCase(this.val()));
                 self.notifyButton();
             }
         });
 
-        self.display = ko.observable(typeof params.display !== 'undefined' ? params.display : "");
         self.type = ko.observable(typeof params.type !== 'undefined' ? params.type : "");
         self.type.subscribe(function () {
-            self.notifyButton();
-        });
-        self.display.subscribe(function () {
             self.notifyButton();
         });
         self.direction = ko.observable(typeof params.direction !== 'undefined' ? params.direction : "");
