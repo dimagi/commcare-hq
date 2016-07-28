@@ -23,6 +23,7 @@ from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.database import get_safe_read_kwargs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.mixins import UnicodeMixIn
+from jsonobject.exceptions import WrappingAttributeError
 from corehq.util.soft_assert import soft_assert
 from corehq.form_processor.abstract_models import AbstractXFormInstance
 from corehq.form_processor.exceptions import XFormNotFound
@@ -135,7 +136,13 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
                 doc = db.get(docid, rev=rev, **extras)
                 if doc['doc_type'] in doc_types():
                     return doc_types()[doc['doc_type']].wrap(doc)
-                return XFormInstance.wrap(doc)
+                try:
+                    return XFormInstance.wrap(doc)
+                except WrappingAttributeError:
+                    raise ResourceNotFound(
+                        "The doc with _id {} and doc_type {} can't be wrapped "
+                        "as an XFormInstance".format(docid, doc['doc_type'])
+                    )
             return db.get(docid, rev=rev, wrapper=cls.wrap, **extras)
         except ResourceNotFound:
             raise XFormNotFound
