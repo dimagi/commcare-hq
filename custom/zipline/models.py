@@ -59,10 +59,18 @@ class EmergencyOrderStatusUpdate(models.Model):
     # the format of EmergencyOrder.products_requested
     products = jsonfield.JSONField(default=dict)
 
+    # If status == STATUS_DISPATCHED or STATUS_ETA_DELAYED, this will be the eta of
+    # this package's delivery, in UTC
+    eta = models.TimeField(null=True)
+
+    # If status == STATUS_APPROACHING_ETA, this will be the minutes left until the
+    # package will be delivered
+    eta_minutes_remaining = models.IntegerField(null=True)
+
     @classmethod
     def create_for_order(cls, order_id, status, zipline_timestamp=None,
             package_number=None, package_id=None, vehicle_id=None, additional_text=None,
-            products=None):
+            products=None, eta=None, eta_minutes_remaining=None):
         """
         Creates an EmergencyOrderStatusUpdate record for the given order.
         :param order_id: the id of the EmergencyOrder
@@ -83,7 +91,9 @@ class EmergencyOrderStatusUpdate(models.Model):
             package_number=package_number,
             package_id=package_id,
             vehicle_id=vehicle_id,
-            additional_text=additional_text
+            additional_text=additional_text,
+            eta=eta,
+            eta_minutes_remaining=eta_minutes_remaining
         )
 
         if products:

@@ -321,7 +321,8 @@ class DispatchedStatusUpdateView(BaseZiplineStatusUpdateView):
             package_number=data['packageNumber'],
             package_id=data['packageId'],
             vehicle_id=data['vehicleId'],
-            products=data['products']
+            products=data['products'],
+            eta=data['eta']
         )
 
         if not order.dispatched_status:
@@ -401,7 +402,8 @@ class ApproachingEtaStatusUpdateView(BaseZiplineStatusUpdateView):
             order.pk,
             EmergencyOrderStatusUpdate.STATUS_APPROACHING_ETA,
             zipline_timestamp=data['timestamp'],
-            package_number=data['packageNumber']
+            package_number=data['packageNumber'],
+            eta_minutes_remaining=data['minutesRemaining']
         )
 
         return True, {'status': 'success'}
@@ -421,7 +423,8 @@ class EtaDelayedStatusUpdateView(BaseZiplineStatusUpdateView):
             order.pk,
             EmergencyOrderStatusUpdate.STATUS_ETA_DELAYED,
             zipline_timestamp=data['timestamp'],
-            package_number=data['packageNumber']
+            package_number=data['packageNumber'],
+            eta=data['newEta']
         )
 
         return True, {'status': 'success'}
