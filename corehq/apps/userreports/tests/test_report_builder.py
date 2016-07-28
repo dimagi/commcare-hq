@@ -4,7 +4,7 @@ from mock import patch
 
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module
-from corehq.apps.app_manager.tests import AppFactory
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.reports.builder.columns import CountColumn
