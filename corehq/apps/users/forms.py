@@ -675,8 +675,15 @@ class SupplyPointSelectWidget(forms.Widget):
 
 
 class CommtrackUserForm(forms.Form):
-    location = forms.CharField(label='Location:', required=False)
-    program_id = forms.ChoiceField(label="Program", choices=(), required=False)
+    location = forms.CharField(
+        label=ugettext_noop("Location"),
+        required=False
+    )
+    program_id = forms.ChoiceField(
+        label=ugettext_noop("Program"),
+        choices=(),
+        required=False
+    )
 
     def __init__(self, *args, **kwargs):
         domain = None
