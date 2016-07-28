@@ -21,6 +21,7 @@ from corehq.apps.export.models import (
     ExportItem,
     SplitUserDefinedExportColumn,
     SplitExportColumn,
+    UserDefinedExportColumn,
     MultipleChoiceItem,
     Option,
 )
@@ -315,4 +316,26 @@ class TestMultiMediaExportColumn(SimpleTestCase):
             '=HYPERLINK("{}?attachment=1234.jpg")'.format(
                 absolute_reverse('download_attachment', args=('my-domain', '1234'))
             )
+        )
+
+
+class TestUserDefinedExportColumn(SimpleTestCase):
+
+    def test_get_value(self):
+        column = UserDefinedExportColumn(
+            custom_path=[
+                PathNode(name='form'),
+                PathNode(name='question1'),
+            ]
+        )
+
+        result = column.get_value(
+            'my-domain',
+            '1234',
+            {'question1': '1234'},
+            [PathNode(name='form')]
+        )
+        self.assertEqual(
+            result,
+            '1234',
         )

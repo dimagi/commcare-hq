@@ -855,3 +855,10 @@ EMG_AND_REC_SMS_HANDLERS = StaticToggle(
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
+
+ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
+    'allow_user_defined_export_columns',
+    'Allows users to specify their own export columns',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)

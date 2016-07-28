@@ -10,6 +10,7 @@ from .new import (
     SplitUserDefinedExportColumn,
     StockExportColumn,
     MultiMediaExportColumn,
+    UserDefinedExportColumn,
     ExportRow,
     ExportInstance,
     FormExportInstance,
