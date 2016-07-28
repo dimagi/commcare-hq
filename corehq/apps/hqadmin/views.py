@@ -4,12 +4,13 @@ import HTMLParser
 import json
 import socket
 import csv
-from datetime import timedelta, date
+from datetime import timedelta, date, datetime
 from collections import defaultdict, namedtuple, OrderedDict
 from StringIO import StringIO
 
 import dateutil
 from django.utils.datastructures import SortedDict
+from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 from django.conf import settings
 from django.contrib import messages
@@ -17,6 +18,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import login
 from django.core import management, cache
 from django.shortcuts import render
+from django.template.loader import render_to_string
 from django.views.generic import FormView, TemplateView
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -31,8 +33,10 @@ from restkit.errors import Unauthorized
 from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.phone.xml import SYNC_XMLNS
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.callcenter.utils import CallCenterCase
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_nvd3_v3
@@ -51,17 +55,20 @@ from corehq.util.supervisord.api import (
     pillow_supervisor_status
 )
 from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
 from corehq.apps.data_analytics.models import MALTRow, GIRRow
 from corehq.apps.data_analytics.const import GIR_FIELDS
 from corehq.apps.data_analytics.admin import MALTRowAdmin
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
 from corehq.apps.ota.views import get_restore_response, get_restore_params
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
 from corehq.apps.users.util import format_username
 from corehq.elastic import parse_args_for_es, run_query, ES_META
+from corehq.util.timer import TimingContext
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
+from dimagi.utils.dates import force_to_date
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_date
@@ -72,7 +79,7 @@ from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_co
 from . import service_checks, escheck
 from .forms import AuthenticateAsForm, BrokenBuildsForm
 from .history import get_recent_changes, download_changes
-from .models import HqDeploy
+from .models import HqDeploy, VCMMigration
 from .reporting.reports import get_project_spaces, get_stats_data
 from .utils import get_celery_stats
 
@@ -233,7 +240,7 @@ def system_ajax(request):
         supervisor_status = all_pillows_supervisor_status([meta['name'] for meta in pillow_meta])
         for meta in pillow_meta:
             meta.update(supervisor_status[meta['name']])
-        return json_response(sorted(pillow_meta, key=lambda m: m['name']))
+        return json_response(sorted(pillow_meta, key=lambda m: m['name'].lower()))
     elif type == 'stale_pillows':
         es_index_status = [
             escheck.check_case_es_index(interval=3),
@@ -348,7 +355,7 @@ def pillow_operation_api(request):
     @any_toggle_enabled(SUPPORT)
     def reset_pillow(request):
         pillow.reset_checkpoint()
-        if supervisor.restart_pillow(pillow_name):
+        if PillowtopSupervisorApi().restart_pillow(pillow_name):
             return get_response()
         else:
             return get_response("Checkpoint reset but failed to restart pillow. "
@@ -356,24 +363,19 @@ def pillow_operation_api(request):
 
     @any_toggle_enabled(SUPPORT)
     def start_pillow(request):
-        if supervisor.start_pillow(pillow_name):
+        if PillowtopSupervisorApi().start_pillow(pillow_name):
             return get_response()
         else:
             return get_response('Unknown error')
 
     @any_toggle_enabled(SUPPORT)
     def stop_pillow(request):
-        if supervisor.stop_pillow(pillow_name):
+        if PillowtopSupervisorApi().stop_pillow(pillow_name):
             return get_response()
         else:
             return get_response('Unknown error')
 
     if pillow:
-        try:
-            supervisor = PillowtopSupervisorApi()
-        except Exception as e:
-            return get_response(str(e))
-
         try:
             if operation == 'reset_checkpoint':
                 reset_pillow(request)
@@ -384,7 +386,7 @@ def pillow_operation_api(request):
             if operation == 'refresh':
                 return get_response()
         except SupervisorException as e:
-                return get_response(str(e))
+            return get_response(str(e))
     else:
         return get_response("No pillow found with name '{}'".format(pillow_name))
 
@@ -406,7 +408,6 @@ class AdminRestoreView(TemplateView):
         if not self.user:
             return HttpResponseNotFound('User %s not found.' % full_username)
 
-        self.overwrite_cache = request.GET.get('ignore_cache') == 'true'
         self.app_id = kwargs.get('app_id', None)
 
         raw = request.GET.get('raw') == 'true'
@@ -418,18 +419,21 @@ class AdminRestoreView(TemplateView):
 
     def _get_restore_response(self):
         return get_restore_response(
-            self.user.domain, self.user, overwrite_cache=self.overwrite_cache, app_id=self.app_id,
+            self.user.domain, self.user, app_id=self.app_id,
             **get_restore_params(self.request)
         )
 
     def get_context_data(self, **kwargs):
         context = super(AdminRestoreView, self).get_context_data(**kwargs)
         response, timing_context = self._get_restore_response()
+        timing_context = timing_context or TimingContext(self.user.username)
         string_payload = ''.join(response.streaming_content)
         xml_payload = etree.fromstring(string_payload)
+        restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
         formatted_payload = etree.tostring(xml_payload, pretty_print=True)
         context.update({
             'payload': formatted_payload,
+            'restore_id': restore_id_element.text if restore_id_element is not None else None,
             'status_code': response.status_code,
             'timing_data': timing_context.to_list()
         })
@@ -454,6 +458,124 @@ class ManagementCommandsView(BaseAdminSectionView):
         context["hide_filters"] = True
         context["commands"] = commands
         return context
+
+
+class VCMMigrationView(BaseAdminSectionView):
+    urlname = 'vcm_migration'
+    page_title = ugettext_lazy("Vellum Case Management Migration")
+    template_name = 'hqadmin/vcm_migration.html'
+    email_template_html = 'hqadmin/vcm_email_content.html'
+    email_template_txt = 'hqadmin/vcm_email_content.txt'
+
+    email_subject = _("CommCare Easy References Upgrade")
+
+    @property
+    def migration_date(self):
+        return force_to_date(datetime.now() + timedelta(days=14))
+
+    @property
+    def page_context(self):
+        context = get_hqadmin_base_context(self.request)
+        context.update({
+            'audits': VCMMigration.objects.order_by('-migrated', '-emailed', 'domain'),
+            'email_body': render_to_string(self.email_template_html, {
+                'domain': 'DOMAIN',
+                'migration_date': self.migration_date,
+            }),
+            'email_subject': self.email_subject,
+            'url': reverse(self.urlname),
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        action = self.request.POST['action']
+
+        # Ajax request
+        if action == 'notes':
+            migration = VCMMigration.objects.get(domain=self.request.POST['domain'])
+            migration.notes = self.request.POST['notes']
+            migration.save()
+            return json_response({'success': 'success'})
+
+        # Form submission
+        if action == 'add':
+            emails = self.request.POST['items'].split(",")
+            notes = self.request.POST['notes']
+            errors = []
+            successes = []
+            for email in emails:
+                user = CouchUser.get_by_username(email)
+                if not user:
+                    errors.append("User {} not found".format(email))
+                else:
+                    for domain in user.domains:
+                        try:
+                            migration = VCMMigration.objects.get(domain=domain)
+                            successes.append("Updated domain {} for {}".format(domain, email))
+                        except VCMMigration.DoesNotExist:
+                            migration = VCMMigration.objects.create(domain=domain)
+                            successes.append("Added domain {} for {}".format(domain, email))
+                        finally:
+                            if notes:
+                                if migration.notes:
+                                    migration.notes = migration.notes + '; '
+                                else:
+                                    migration.notes = ''
+                                migration.notes = migration.notes + notes
+                                migration.save()
+            if len(successes):
+                messages.success(request, mark_safe("<br>".join(successes)), extra_tags='html')
+            if len(errors):
+                messages.error(request, mark_safe("<br>".join(errors)), extra_tags='html')
+        else:
+            domains = self.request.POST['items'].split(",")
+            errors = set([])
+            successes = set([])
+            for domain in domains:
+                migration = VCMMigration.objects.get(domain=domain)
+                if not migration.notes:
+                    migration.notes = ''
+                app_count = 0
+                if action == 'email':
+                    email_context = {
+                        'domain': domain,
+                        'migration_date': self.migration_date,
+                    }
+                    text_content = render_to_string(self.email_template_html, email_context)
+                    html_content = render_to_string(self.email_template_txt, email_context)
+                    send_html_email_async.delay(
+                        self.email_subject,
+                        migration.admins,
+                        html_content,
+                        text_content=text_content,
+                        email_from=settings.SUPPORT_EMAIL)
+                    migration.emailed = datetime.now()
+                    migration.save()
+                    successes.add(domain)
+                elif action == 'migrate':
+                    for app_id in get_app_ids_in_domain(domain):
+                        try:
+                            management.call_command('migrate_app_to_cmitfb', app_id)
+                            app_count = app_count + 1
+                        except Exception:
+                            if migration.notes:
+                                migration.notes = migration.notes + '; '
+                            migration.notes = migration.notes + "failed on app {}".format(app_id)
+                            errors.add(domain)
+                    if domain not in errors:
+                        if migration.notes:
+                            migration.notes = migration.notes + '; '
+                        migration.notes = migration.notes + "successfully migrated {} domains".format(app_count)
+                        successes.add(domain)
+                    migration.migrated = datetime.now()
+                    migration.save()
+            if len(successes):
+                messages.success(request, "Succeeded with the following {} domains: {}".format(
+                                 len(successes), ", ".join(successes)))
+            if len(errors):
+                messages.error(request, "Errors in the following {} domains: {}".format(
+                               len(errors), ", ".join(errors)))
+        return self.get(request, *args, **kwargs)
 
 
 @require_POST
@@ -566,6 +688,15 @@ _SQL_DBS = OrderedDict((db.dbname, db) for db in [
 ])
 
 
+def _get_db_from_db_name(db_name):
+    if db_name in _SQL_DBS:
+        return _SQL_DBS[db_name]
+    elif db_name == couch_config.get_db(None).dbname:  # primary db
+        return couch_config.get_db(None)
+    else:
+        return couch_config.get_db(db_name)
+
+
 def _lookup_id_in_database(doc_id, db_name=None):
     db_result = namedtuple('db_result', 'dbname result status')
     STATUSES = defaultdict(lambda: 'warning', {
@@ -574,11 +705,7 @@ def _lookup_id_in_database(doc_id, db_name=None):
     })
 
     if db_name:
-        db = _SQL_DBS.get(db_name, None)
-        if db:
-            dbs = [db]
-        else:
-            dbs = [couch_config.get_db(None if db_name == 'commcarehq' else db_name)]
+        dbs = [_get_db_from_db_name(db_name)]
     else:
         couch_dbs = couch_config.all_dbs_by_slug.values()
         sql_dbs = _SQL_DBS.values()
@@ -804,14 +931,19 @@ class DownloadGIRView(BaseAdminSectionView):
 
 def _gir_csv_response(month, year):
     query_month = "{year}-{month}-01".format(year=year, month=month)
-    queryset = GIRRow.objects.filter(month=query_month)
+    prev_month = "{year}-{month}-01".format(year=year, month=month - 1)
+    two_ago = "{year}-{month}-01".format(year=year, month=month - 2)
+    queryset = GIRRow.objects.filter(month__in=[query_month, prev_month, two_ago]).order_by('-month')
+    domain_months = defaultdict(list)
+    for item in queryset:
+        domain_months[item.domain_name].append(item)
     field_names = GIR_FIELDS
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = u'attachment; filename=gir.csv'
     writer = csv.writer(response)
     writer.writerow(list(field_names))
-    for obj in queryset:
-        writer.writerow(obj.export_row)
+    for months in domain_months.values():
+        writer.writerow(months[0].export_row(months[1:]))
     return response
 
 

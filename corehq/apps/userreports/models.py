@@ -162,7 +162,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def named_filter_objects(self):
-        return {name: FilterFactory.from_spec(filter, FactoryContext.empty())
+        return {name: FilterFactory.from_spec(filter, FactoryContext(self.named_expression_objects, {}))
                 for name, filter in self.named_filters.items()}
 
     def _get_factory_context(self):
@@ -439,10 +439,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
 
     @property
     def is_static(self):
-        return any(
-            self._id.startswith(prefix)
-            for prefix in [STATIC_PREFIX, CUSTOM_REPORT_PREFIX]
-        )
+        return report_config_id_is_static(self._id)
 
 STATIC_PREFIX = 'static-'
 CUSTOM_REPORT_PREFIX = 'custom-'
@@ -660,7 +657,7 @@ def id_is_static(data_source_id):
     return data_source_id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
 
 
-def is_report_config_id_static(config_id):
+def report_config_id_is_static(config_id):
     """
     Return True if the given report configuration id refers to a static report
     configuration.
@@ -680,7 +677,7 @@ def get_report_configs(config_ids, domain):
     static_report_config_ids = []
     dynamic_report_config_ids = []
     for config_id in config_ids:
-        if is_report_config_id_static(config_id):
+        if report_config_id_is_static(config_id):
             static_report_config_ids.append(config_id)
         else:
             dynamic_report_config_ids.append(config_id)
@@ -708,4 +705,4 @@ def get_report_config(config_id, domain):
     config_id may be a ReportConfiguration or StaticReportConfiguration id
     """
     config = get_report_configs([config_id], domain)[0]
-    return config, is_report_config_id_static(config_id)
+    return config, report_config_id_is_static(config_id)

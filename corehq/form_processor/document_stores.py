@@ -5,7 +5,6 @@ from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL, Ca
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound, LedgerValueNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.form_processor.utils.xform import add_couch_properties_to_sql_form_json
 from corehq.util.quickcache import quickcache
 from pillowtop.dao.django import DjangoDocumentStore
 from pillowtop.dao.exceptions import DocumentNotFoundError
@@ -20,7 +19,7 @@ class ReadonlyFormDocumentStore(ReadOnlyDocumentStore):
 
     def get_document(self, doc_id):
         try:
-            return add_couch_properties_to_sql_form_json(self.form_accessors.get_form(doc_id).to_json())
+            return self.form_accessors.get_form(doc_id).to_json(include_attachments=True)
         except (XFormNotFound, BlobError) as e:
             raise DocumentNotFoundError(e)
 
@@ -30,7 +29,7 @@ class ReadonlyFormDocumentStore(ReadOnlyDocumentStore):
 
     def iter_documents(self, ids):
         for wrapped_form in self.form_accessors.iter_forms(ids):
-            yield add_couch_properties_to_sql_form_json(wrapped_form.to_json())
+            yield wrapped_form.to_json()
 
 
 class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):

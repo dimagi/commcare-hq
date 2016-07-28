@@ -7,8 +7,10 @@ from django import http
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse as _reverse
+from django.utils.encoding import smart_bytes
 from django.utils.http import urlencode
 
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_url_base
 
 from corehq.util import global_request
@@ -68,6 +70,7 @@ def json_error(f):
         except BadRequest as e:
             return _get_json_exception_response(400, request, e)
         except Exception as e:
+            notify_exception(request, 'JSON exception response: {}'.format(smart_bytes(e)))
             return _get_json_exception_response(500, request, e)
     return inner
 

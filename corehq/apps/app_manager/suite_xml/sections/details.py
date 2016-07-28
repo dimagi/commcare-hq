@@ -153,9 +153,9 @@ class DetailContributor(SectionContributor):
                     and not module.put_in_root:
                 target_form = self.app.get_form(module.case_list_form.form_id)
                 if target_form.is_registration_form(module.case_type):
-                    self._add_reg_form_action_to_detail(d, module)
+                    d.actions.append(self._get_reg_form_action(module))
             if module_offers_search(module) and detail_type.endswith('short') and not module.put_in_root:
-                self._add_case_search_action_to_detail(d, module)
+                d.actions.append(self._get_case_search_action(module))
 
             try:
                 if not self.app.enable_multi_sort:
@@ -181,6 +181,7 @@ class DetailContributor(SectionContributor):
             field = None
         return Lookup(
             name=detail.lookup_name or None,
+            auto_launch=detail.lookup_autolaunch or False,
             action=detail.lookup_action,
             image=detail.lookup_image or None,
             extras=[Extra(**e) for e in detail.lookup_extras],
@@ -188,13 +189,15 @@ class DetailContributor(SectionContributor):
             field=field,
         )
 
-    def _add_reg_form_action_to_detail(self, detail, module):
-        # add registration form action to detail
+    def _get_reg_form_action(self, module):
+        """
+        Returns registration form action
+        """
         form = self.app.get_form(module.case_list_form.form_id)
 
         if self.app.enable_localized_menu_media:
             case_list_form = module.case_list_form
-            detail.action = LocalizedAction(
+            action = LocalizedAction(
                 menu_locale_id=id_strings.case_list_form_locale(module),
                 media_image=bool(len(case_list_form.all_image_paths())),
                 media_audio=bool(len(case_list_form.all_audio_paths())),
@@ -204,7 +207,7 @@ class DetailContributor(SectionContributor):
                 for_action_menu=True,
             )
         else:
-            detail.action = Action(
+            action = Action(
                 display=Display(
                     text=Text(locale_id=id_strings.case_list_form_locale(module)),
                     media_image=module.case_list_form.default_media_image,
@@ -238,11 +241,12 @@ class DetailContributor(SectionContributor):
                 frame.add_datum(StackDatum(id=s_datum.id, value=s_datum.function))
 
         frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(id_strings.menu_id(module))))
-        detail.action.stack.add_frame(frame)
+        action.stack.add_frame(frame)
+        return action
 
     @staticmethod
-    def _add_case_search_action_to_detail(detail, module):
-        detail.action = Action(
+    def _get_case_search_action(module):
+        action = Action(
             display=Display(
                 text=Text(locale_id=id_strings.case_search_locale(module))
             ),
@@ -250,7 +254,8 @@ class DetailContributor(SectionContributor):
         )
         frame = PushFrame()
         frame.add_command(XPath.string(id_strings.search_command(module)))
-        detail.action.stack.add_frame(frame)
+        action.stack.add_frame(frame)
+        return action
 
     @staticmethod
     def _get_persistent_case_context_detail(module):

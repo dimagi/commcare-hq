@@ -17,10 +17,17 @@ from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
+from corehq.util.soft_assert import soft_assert
 from mptt.models import MPTTModel, TreeForeignKey, TreeManager
 
 
 LOCATION_REPORTING_PREFIX = 'locationreportinggroup-'
+
+
+def notify_of_deprecation(msg):
+    _assert = soft_assert(notify_admins=True, fail_if_debug=True)
+    message = "Deprecated Locations feature used: {}".format(msg)
+    _assert(False, message)
 
 
 class LocationTypeManager(models.Manager):
@@ -202,6 +209,12 @@ class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
 
 
 class LocationManager(LocationQueriesMixin, TreeManager):
+
+    def get_or_None(self, **kwargs):
+        try:
+            return self.get(**kwargs)
+        except SQLLocation.DoesNotExist:
+            return None
 
     def _get_base_queryset(self):
         return LocationQuerySet(self.model, using=self._db)
@@ -477,6 +490,10 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
             return None
 
     @property
+    def parent_location_id(self):
+        return self.parent.location_id if self.parent else None
+
+    @property
     def location_type_object(self):
         return self.location_type
 
@@ -518,7 +535,6 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
     # a list of doc ids, referring to the parent location, then the
     # grand-parent, and so on up to the root location in the hierarchy
     lineage = StringListProperty()
-    previous_parents = StringListProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -698,8 +714,8 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         location_type = self._sql_location_type or sql_location.location_type
         sql_location.location_type = location_type
         # sync parent connection
-        sql_location.parent = (SQLLocation.objects.get(location_id=self.parent_id)
-                               if self.parent_id else None)
+        sql_location.parent = (SQLLocation.objects.get(location_id=self.parent_location_id)
+                               if self.parent_location_id else None)
 
         self._migration_sync_to_sql(sql_location)
 
@@ -793,14 +809,24 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         return not self.lineage
 
     @property
-    def parent_id(self):
+    def parent_location_id(self):
         if self.is_root:
             return None
         return self.lineage[0]
 
     @property
+    def parent_id(self):
+        # TODO this is deprecated as of 2016-07-19
+        # delete after we're sure this isn't called dynamically
+        # Django automagically reserves field_name+_id for foreign key fields,
+        # so because we have SQLLocation.parent, SQLLocation.parent_id refers
+        # to the Django primary key
+        notify_of_deprecation("parent_id should be replaced by parent_location_id")
+        return self.parent_location_id
+
+    @property
     def parent(self):
-        parent_id = self.parent_id
+        parent_id = self.parent_location_id
         return Location.get(parent_id) if parent_id else None
 
     def siblings(self, parent=None):

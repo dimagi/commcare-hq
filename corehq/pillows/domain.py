@@ -2,6 +2,7 @@ import copy
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.apps.change_feed.document_types import DOMAIN
+from corehq.apps.domain.dbaccessors import count_downloads_for_all_snapshots
 from corehq.apps.domain.models import Domain
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
@@ -23,13 +24,13 @@ def transform_domain_for_elasticsearch(doc_dict):
         doc_ret['subscription'] = sub[0].plan_version.plan.edition
     for country in countries:
         doc_ret['deployment']['countries'].append(COUNTRIES[country].upper())
+    if doc_dict.get('copy_history'):
+        doc_ret['full_downloads'] = count_downloads_for_all_snapshots(doc_dict['copy_history'][-1])
     return doc_ret
 
 
 def get_domain_kafka_to_elasticsearch_pillow(pillow_id='domain-kafka-to-es'):
-    checkpoint = PillowCheckpoint(
-        pillow_id,
-    )
+    checkpoint = PillowCheckpoint(pillow_id)
     domain_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=DOMAIN_INDEX_INFO,

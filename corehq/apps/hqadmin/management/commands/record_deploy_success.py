@@ -12,13 +12,22 @@ from pillow_retry.models import PillowError
 
 STYLE_MARKDOWN = 'markdown'
 STYLE_SLACK = 'slack'
+DASHBOARD_URL = 'https://p.datadoghq.com/sb/5c4af2ac8-1f739e93ef'
 
 
 def diff_link(style, url):
+    return make_link(style, 'here', url)
+
+
+def dashboard_link(style, url):
+    return make_link(style, 'dashboard', url)
+
+
+def make_link(style, label, url):
     if style == STYLE_MARKDOWN:
-        return '[here]({})'.format(url)
+        return '[{label}]({url})'.format(label=label, url=url)
     elif style == STYLE_SLACK:
-        return '<{}|here>'.format(url)
+        return '<{url}|{label}>'.format(label=label, url=url)
 
 
 class Command(BaseCommand):
@@ -50,7 +59,7 @@ class Command(BaseCommand):
                   "{} pillow errors queued for retry\n".format(rows_updated)
 
         deploy_notification_text = (
-            "CommCareHQ has been successfully deployed to *{}* by *{}*. "
+            "CommCareHQ has been successfully deployed to *{}* by *{}*. Monitor the {{dashboard_link}}. "
             "Find the diff {{diff_link}}".format(
                 options['environment'],
                 options['user'],
@@ -60,7 +69,10 @@ class Command(BaseCommand):
             link = diff_link(STYLE_SLACK, compare_url)
             requests.post(settings.MIA_THE_DEPLOY_BOT_API, data=json.dumps({
                 "username": "Igor the Iguana",
-                "text": deploy_notification_text.format(diff_link=link),
+                "text": deploy_notification_text.format(
+                    dashboard_link=dashboard_link(STYLE_SLACK, DASHBOARD_URL),
+                    diff_link=link,
+                ),
             }))
 
         if settings.DATADOG_API_KEY:
@@ -68,7 +80,10 @@ class Command(BaseCommand):
             link = diff_link(STYLE_MARKDOWN, compare_url)
             datadog_api.Event.create(
                 title="Deploy Success",
-                text=deploy_notification_text.format(diff_link=link),
+                text=deploy_notification_text.format(
+                    dashboard_link=dashboard_link(STYLE_MARKDOWN, DASHBOARD_URL),
+                    diff_link=link,
+                ),
                 tags=tags,
                 alert_type="success"
             )

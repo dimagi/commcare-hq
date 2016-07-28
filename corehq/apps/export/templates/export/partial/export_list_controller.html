@@ -163,6 +163,7 @@
 
                                 <p ng-if="export.emailedExport.hasFile">
                                     <a href="{{ export.emailedExport.fileData.downloadUrl }}"
+                                       ng-click="downloadRequested($event)"
                                        class="btn btn-info btn-xs">
                                         <i class="fa fa-download"></i>
                                         {% trans "Download" %}

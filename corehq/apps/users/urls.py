@@ -10,7 +10,7 @@ from .views.mobile.users import (
     UploadCommCareUsers, EditCommCareUserView,
     ConfirmBillingAccountForExtraUsersView, UserUploadStatusView,
     CommCareUserSelfRegistrationView, MobileWorkerListView,
-    CreateCommCareUserModal,
+    CreateCommCareUserModal, DemoRestoreStatusView
 )
 
 
@@ -43,7 +43,8 @@ urlpatterns = patterns('corehq.apps.users.views',
     url(r'^join/(?P<invitation_id>[ \w-]+)/$', 'accept_invitation', name='domain_accept_invitation'),
     url(r'^web/role/save/$', 'post_user_role', name='post_user_role'),
     url(r'^web/role/delete/$', 'delete_user_role', name='delete_user_role'),
-
+    url(r'^register_fcm_device_token/(?P<couch_user_id>[ \w-]+)/(?P<device_token>[ \w-]+)/$',
+        'register_fcm_device_token', name='register_fcm_device_token'),
     url(r'^httpdigest/?$', 'test_httpdigest'),
 ) + \
 patterns("corehq.apps.users.views.mobile.users",
@@ -59,6 +60,15 @@ patterns("corehq.apps.users.views.mobile.users",
     url(r'^commcare/unarchive/(?P<user_id>[ \w-]+)/$', 'archive_commcare_user',
         name='unarchive_commcare_user', kwargs={'is_active': True}),
     url(r'^commcare/delete/(?P<user_id>[ \w-]+)/$', 'delete_commcare_user', name='delete_commcare_user'),
+    url(r'^commcare/restore/(?P<user_id>[ \w-]+)/$', 'restore_commcare_user', name='restore_commcare_user'),
+    url(r'^commcare/toggle_demo_mode/(?P<user_id>[ \w-]+)/$', 'toggle_demo_mode', name='toggle_demo_mode'),
+    url(r'^commcare/reset_demo_user_restore/(?P<user_id>[ \w-]+)/$', 'reset_demo_user_restore',
+        name='reset_demo_user_restore'),
+    url(r'^commcare/demo_restore/status/(?P<download_id>[0-9a-fA-Z]{25,32})/(?P<user_id>[ \w-]+)/$',
+        DemoRestoreStatusView.as_view(),
+        name=DemoRestoreStatusView.urlname),
+    url(r'^commcare/demo_restore/poll/(?P<download_id>[0-9a-fA-Z]{25,32})/$', 'demo_restore_job_poll',
+        name='demo_restore_job_poll'),
     url(r'^commcare/upload/$', UploadCommCareUsers.as_view(), name=UploadCommCareUsers.urlname),
     url(r'^commcare/upload/status/(?P<download_id>[0-9a-fA-Z]{25,32})/$', UserUploadStatusView.as_view(),
         name=UserUploadStatusView.urlname),

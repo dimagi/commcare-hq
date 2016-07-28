@@ -1,7 +1,7 @@
 from StringIO import StringIO
 import logging
 from django.core.exceptions import ValidationError
-from django.core.validators import EmailValidator
+from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
 from corehq.util.spreadsheets.excel import flatten_json, json_to_headers, \
     alphanumeric_sort_key
@@ -66,6 +66,20 @@ def check_headers(user_specs):
                 label=label, headers=', '.join(header_set)))
     if messages:
         raise UserUploadError('\n'.join(messages))
+
+
+def check_duplicate_usernames(user_specs):
+    usernames = set()
+    duplicated_usernames = set()
+
+    for row in user_specs:
+        username = row.get('username')
+        if username and username in usernames:
+            duplicated_usernames.add(username)
+        usernames.add(username)
+
+    raise UserUploadError(_("The following usernames have duplicate entries in "
+        "your file: " + ', '.join(duplicated_usernames)))
 
 
 class GroupMemoizer(object):
@@ -487,12 +501,12 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                     if language:
                         user.language = language
                     if email:
-                        email_validator = EmailValidator()
                         try:
-                            email_validator(email)
-                            user.email = email
+                            validate_email(email)
                         except ValidationError:
                             raise UserUploadError(_("User has an invalid email address"))
+
+                        user.email = email.lower()
                     if is_active is not None:
                         user.is_active = is_active
 

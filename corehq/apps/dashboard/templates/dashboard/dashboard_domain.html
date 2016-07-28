@@ -4,13 +4,12 @@
 
 
 {% block js %}{{ block.super }}
-<script type="text/javascript"
+<script
         src="{% static 'dashboard/js/hq_dashboard.ng.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-{% if request.guided_tour %}{% include request.guided_tour.template %}{% endif %}
-<script type="text/javascript">
+<script>
 (function (angular, undefined) {
     'use strict';
     var dashboardApp = angular.module('dashboardApp', [

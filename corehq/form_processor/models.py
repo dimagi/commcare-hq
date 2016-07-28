@@ -263,10 +263,27 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
         return self.state & self.DELETED == self.DELETED
 
     @property
+    def doc_type(self):
+        from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
+        if self.is_deleted:
+            return 'XFormInstance' + DELETED_SUFFIX
+        return {v: k for k, v in doc_type_to_state.items()}.get(self.state, 'XFormInstance')
+
+    @property
     @memoized
     def attachments(self):
         from couchforms.const import ATTACHMENT_NAME
         return {att.name: att for att in self.get_attachments() if att.name != ATTACHMENT_NAME}
+
+    @property
+    @memoized
+    def serialized_attachments(self):
+        from couchforms.const import ATTACHMENT_NAME
+        from .serializers import XFormAttachmentSQLSerializer
+        return {
+            att.name: XFormAttachmentSQLSerializer(att).data
+            for att in self.get_attachments() if att.name != ATTACHMENT_NAME
+        }
 
     @property
     @memoized
@@ -299,9 +316,9 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
         FormAccessorSQL.soft_delete_forms(self.domain, [self.form_id])
         self.state |= self.DELETED
 
-    def to_json(self):
+    def to_json(self, include_attachments=False):
         from .serializers import XFormInstanceSQLSerializer
-        serializer = XFormInstanceSQLSerializer(self)
+        serializer = XFormInstanceSQLSerializer(self, include_attachments=include_attachments)
         return serializer.data
 
     def _get_attachment_from_db(self, attachment_name):
@@ -1255,6 +1272,10 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
         return UniqueLedgerReference(
             case_id=self.case_id, section_id=self.section_id, entry_id=self.entry_id
         )
+
+    @property
+    def ledger_id(self):
+        return self.ledger_reference.as_id()
 
     def to_json(self):
         from .serializers import LedgerValueSerializer

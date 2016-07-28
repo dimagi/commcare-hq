@@ -1,29 +1,43 @@
 import functools
+import logging
+from datetime import datetime
 from uuid import uuid4
 
 from couchdbkit import ResourceNotFound
-from datetime import datetime
+from django.conf import settings
 from nose.tools import nottest
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLog
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL, LedgerAccessorSQL
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseAccessorSQL, FormAccessorSQL, LedgerAccessorSQL, LedgerReindexAccessor
+)
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
+from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CaseTransaction, Attachment
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.general import should_use_sql_backend
+from corehq.sql_db.config import PartitionConfig
+from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import safe_delete
-from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
-from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CaseTransaction, Attachment
-from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 
 class FormProcessorTestUtils(object):
 
     @classmethod
     @unit_testing_only
+    def delete_all_cases_forms_ledgers(cls, domain=None):
+        cls.delete_all_ledgers(domain)
+        cls.delete_all_cases(domain)
+        cls.delete_all_xforms(domain)
+
+    @classmethod
+    @unit_testing_only
     def delete_all_cases(cls, domain=None):
+        logger.debug("Deleting all Couch cases for domain %s", domain)
         assert CommCareCase.get_db().dbname.startswith('test_')
         view_kwargs = {}
         if domain:
@@ -41,28 +55,50 @@ class FormProcessorTestUtils(object):
         FormProcessorTestUtils.delete_all_sql_cases(domain)
 
     @staticmethod
+    @unit_testing_only
     def delete_all_sql_cases(domain=None):
+        logger.debug("Deleting all SQL cases for domain %s", domain)
         CaseAccessorSQL.delete_all_cases(domain)
 
     @staticmethod
-    def delete_all_ledgers(domain):
-        if should_use_sql_backend(domain):
-            for case_id in CaseAccessorSQL.get_case_ids_in_domain(domain):
-                transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case_id)
-                form_ids = {tx.form_id for tx in transactions}
-                for form_id in form_ids:
-                    LedgerAccessorSQL.delete_ledger_transactions_for_form([case_id], form_id)
-                LedgerAccessorSQL.delete_ledger_values(case_id)
+    def delete_all_ledgers(domain=None):
+        FormProcessorTestUtils.delete_all_v2_ledgers(domain)
+        FormProcessorTestUtils.delete_all_v1_ledgers(domain)
+
+    @staticmethod
+    @unit_testing_only
+    def delete_all_v1_ledgers(domain=None):
+        logger.debug("Deleting all V1 ledgers for domain %s", domain)
+        from casexml.apps.stock.models import StockReport
+        from casexml.apps.stock.models import StockTransaction
+        stock_report_ids = StockReport.objects.filter(domain=domain).values_list('id', flat=True)
+        StockReport.objects.filter(domain=domain).delete()
+        StockTransaction.objects.filter(report_id__in=stock_report_ids).delete()
+
+    @staticmethod
+    @unit_testing_only
+    def delete_all_v2_ledgers(domain=None):
+        logger.debug("Deleting all V2 ledgers for domain %s", domain)
+
+        def _delete_ledgers_for_case(case_id):
+            transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case_id)
+            form_ids = {tx.form_id for tx in transactions}
+            for form_id in form_ids:
+                LedgerAccessorSQL.delete_ledger_transactions_for_form([case_id], form_id)
+            LedgerAccessorSQL.delete_ledger_values(case_id)
+
+        if not domain:
+            for db in _get_db_list_to_query():
+                for ledger in LedgerReindexAccessor().get_docs(db, None, limit=10000):
+                    _delete_ledgers_for_case(ledger.case_id)
         else:
-            from casexml.apps.stock.models import StockReport
-            from casexml.apps.stock.models import StockTransaction
-            stock_report_ids = StockReport.objects.filter(domain=domain).values_list('id', flat=True)
-            StockReport.objects.filter(domain=domain).delete()
-            StockTransaction.objects.filter(report_id__in=stock_report_ids).delete()
+            for case_id in CaseAccessorSQL.get_case_ids_in_domain(domain):
+                _delete_ledgers_for_case(case_id)
 
     @classmethod
     @unit_testing_only
     def delete_all_xforms(cls, domain=None, user_id=None):
+        logger.debug("Deleting all Couch xforms for domain %s", domain)
         view = 'couchforms/all_submissions_by_domain'
         view_kwargs = {}
         if domain and user_id:
@@ -87,12 +123,15 @@ class FormProcessorTestUtils(object):
         FormProcessorTestUtils.delete_all_sql_forms(domain, user_id)
 
     @staticmethod
+    @unit_testing_only
     def delete_all_sql_forms(domain=None, user_id=None):
+        logger.debug("Deleting all SQL xforms for domain %s", domain)
         FormAccessorSQL.delete_all_forms(domain, user_id)
 
     @classmethod
     @unit_testing_only
     def delete_all_sync_logs(cls):
+        logger.debug("Deleting all synclogs")
         cls._delete_all(SyncLog.get_db(), 'phone/sync_logs_by_user')
 
     @staticmethod
@@ -101,7 +140,7 @@ class FormProcessorTestUtils(object):
         deleted = set()
         for row in db.view(viewname, reduce=False, **view_kwargs):
             doc_id = row['id']
-            if id not in deleted:
+            if doc_id not in deleted:
                 try:
                     safe_delete(db, doc_id)
                     deleted.add(doc_id)
@@ -130,6 +169,12 @@ run_with_all_backends = functools.partial(
 )
 
 
+def _get_db_list_to_query():
+    if settings.USE_PARTITIONED_DATABASE:
+        return PartitionConfig().get_form_processing_dbs()
+    return [None]
+
+
 @unit_testing_only
 def post_xform(instance_xml, attachments=None, domain='test-domain'):
     """
@@ -145,7 +190,7 @@ def post_xform(instance_xml, attachments=None, domain='test-domain'):
 
 
 @nottest
-def create_form_for_test(domain, case_id=None, attachments=None, save=True):
+def create_form_for_test(domain, case_id=None, attachments=None, save=True, state=XFormInstanceSQL.NORMAL):
     """
     Create the models directly so that these tests aren't dependent on any
     other apps. Not testing form processing here anyway.
@@ -167,7 +212,8 @@ def create_form_for_test(domain, case_id=None, attachments=None, save=True):
         xmlns='http://openrosa.org/formdesigner/form-processor',
         received_on=utcnow,
         user_id=user_id,
-        domain=domain
+        domain=domain,
+        state=state
     )
 
     attachments = attachments or {}

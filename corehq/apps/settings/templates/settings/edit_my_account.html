@@ -4,7 +4,7 @@
 {% load i18n %}
 
 {% block js-inline %} {{ block.super }}
-    <script type="text/javascript">
+    <script>
         $(function() {
             $('form[name="user_information"]').activateSubmitOnlyOnChange();
             $('#id_language').select2();

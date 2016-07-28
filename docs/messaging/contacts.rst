@@ -11,7 +11,7 @@ Contacts have phone numbers which allows CommCareHQ to interact with them. All p
 must be stored in International Format, and the frameworks always assume a phone number is given in
 International Format.
 
-Regarding the + sign before the phone number, the rule of thumb is to never store to + when storing
+Regarding the + sign before the phone number, the rule of thumb is to never store the + when storing
 phone numbers, and to always display it when displaying phone numbers.
 
 Users

@@ -4,24 +4,8 @@ from rest_framework import serializers
 from corehq.apps.commtrack.models import StockState
 from corehq.form_processor.models import (
     CommCareCaseIndexSQL, CommCareCaseSQL, CaseTransaction,
-    XFormInstanceSQL, XFormOperationSQL,
+    XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL,
     LedgerValue)
-
-
-def get_instance_from_data(SerializerClass, data):
-    """
-    Return a deserialized instance from serialized data
-
-    cf. https://github.com/tomchristie/django-rest-framework/blob/master/rest_framework/serializers.py#L71
-    and https://github.com/tomchristie/django-rest-framework/blob/master/rest_framework/serializers.py#L882
-    """
-    # It does seem like you should be able to do this in one line. Django REST framework makes the assumption that
-    # you always want to save(). This function does everything ModelSerializer.save() does, just without saving.
-    ModelClass = SerializerClass.Meta.model
-    serializer = SerializerClass(data=data)
-    if not serializer.is_valid():
-        raise ValueError('Unable to deserialize data while creating {}: {}'.format(ModelClass, serializer.errors))
-    return ModelClass(**serializer.validated_data)
 
 
 class DeletableModelSerializer(serializers.ModelSerializer):
@@ -42,15 +26,29 @@ class XFormOperationSQLSerializer(serializers.ModelSerializer):
         model = XFormOperationSQL
 
 
+class XFormAttachmentSQLSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = XFormAttachmentSQL
+
+
 class XFormInstanceSQLSerializer(DeletableModelSerializer):
+    _id = serializers.CharField(source='form_id')
+    doc_type = serializers.CharField()
     history = XFormOperationSQLSerializer(many=True, read_only=True)
     form = serializers.JSONField(source='form_data')
     auth_context = serializers.DictField()
     openrosa_headers = serializers.DictField()
+    external_blobs = serializers.JSONField(source='serialized_attachments')
 
     class Meta:
         model = XFormInstanceSQL
-        exclude = ('id',)
+        exclude = ('id', 'form_id')
+
+    def __init__(self, *args, **kwargs):
+        include_attachments = kwargs.pop('include_attachments', False)
+        if not include_attachments:
+            self.fields.pop('external_blobs')
+        super(XFormInstanceSQLSerializer, self).__init__(*args, **kwargs)
 
 
 class XFormStateField(serializers.ChoiceField):
@@ -164,6 +162,8 @@ class CommCareCaseSQLAPISerializer(serializers.ModelSerializer):
 
 
 class LedgerValueSerializer(serializers.ModelSerializer):
+    _id = serializers.CharField(source='ledger_id')
+
     class Meta:
         model = LedgerValue
         exclude = ('id',)

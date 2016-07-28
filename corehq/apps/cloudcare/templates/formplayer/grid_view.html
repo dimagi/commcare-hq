@@ -6,12 +6,25 @@
         <h1>Applications</h1>
     </div>
 
-    <div class="row application-container">
+        <div class="row">
+        <div id="incompleteSessionsItem" class="grid-item col-sm-4 text-center formplayer-request">
+            <h3>Incomplete Forms</h3>
+            <i class="fa fa-list incomplete-icon" aria-hidden="true"></i>
+        </div>
+
+        <div id="syncItem" class="grid-item col-sm-4 text-center formplayer-request">
+            <h3>Sync</h3>
+            <i class="fa fa-refresh sync-icon" aria-hidden="true"></i>
+        </div>
+
+        <div class="application-container">
+
+        </div>
 
     </div>
 </script>
 
 <script id="row-template" type="text/template">
-        <h3><%- name %></h3>
-        <image class="app-icon" src="{% static 'cloudcare/images/cc_flower.png' %}"/>
+    <h3><%- name %></h3>
+    <img class="app-icon" src="{% static 'cloudcare/images/cc_flower.png' %}"/>
 </script>

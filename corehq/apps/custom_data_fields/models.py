@@ -8,9 +8,13 @@ from .dbaccessors import get_by_domain_and_type
 
 
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
+# If mobile-worker is demo, this will be set to value 'demo'
+COMMCARE_USER_TYPE_KEY = 'user_type'
+COMMCARE_USER_TYPE_DEMO = 'demo'
 # This list is used to grandfather in existing data, any new fields should use
 # the system prefix defined below
-SYSTEM_FIELDS = ("commtrack-supply-point", 'name', 'type', 'owner_id', 'external_id', 'hq_user_id')
+SYSTEM_FIELDS = ("commtrack-supply-point", 'name', 'type', 'owner_id', 'external_id', 'hq_user_id',
+                 COMMCARE_USER_TYPE_KEY)
 SYSTEM_PREFIX = "commcare"
 
 
@@ -27,6 +31,7 @@ def is_system_key(slug):
         validate_reserved_words(slug)
     except ValidationError:
         return True
+    return False
 
 
 class CustomDataField(JsonObject):
@@ -48,10 +53,10 @@ class CustomDataFieldsDefinition(Document):
 
     def get_fields(self, required_only=False, include_system=True):
         def _is_match(field):
-            if ((required_only and not field.is_required)
-                    or (not include_system and is_system_key(field.slug))):
-                return False
-            return True
+            return not (
+                (required_only and not field.is_required) or
+                (not include_system and is_system_key(field.slug))
+            )
         return filter(_is_match, self.fields)
 
     @classmethod

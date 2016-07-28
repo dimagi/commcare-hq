@@ -12,7 +12,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from casexml.apps.case.tests.util import check_xml_line_by_line
-from corehq.form_processor.tests import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 DOMAIN = 'fixture-test'
 SA_PROVINCES = 'sa_provinces'

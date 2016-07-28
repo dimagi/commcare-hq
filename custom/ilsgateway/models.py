@@ -543,7 +543,7 @@ def domain_pre_delete_receiver(domain, **kwargs):
 
 
 @receiver(location_edited)
-def location_edited_receiver(sender, loc, moved, **kwargs):
+def location_edited_receiver(sender, loc, moved, previous_parent, **kwargs):
     from custom.ilsgateway.utils import last_location_group
     config = ILSGatewayConfig.for_domain(loc.domain)
     if not config or not config.enabled:
@@ -558,7 +558,7 @@ def location_edited_receiver(sender, loc, moved, **kwargs):
             domain=loc.domain,
             type='parent_change',
             sql_location=loc.sql_location,
-            data={'previous_parent': loc.previous_parents[-1], 'current_parent': loc.parent_id}
+            data={'previous_parent': previous_parent, 'current_parent': loc.parent_location_id}
         )
 
     group = last_location_group(loc)

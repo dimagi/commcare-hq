@@ -52,6 +52,7 @@ from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
+from corehq.util.timezones.utils import get_timezone_for_domain
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
@@ -135,7 +136,7 @@ from .exceptions import (
     CaseXPathValidationError,
     UserCaseXPathValidationError,
 )
-from corehq.apps.reports.daterange import get_daterange_start_end_dates
+from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_simple_dateranges
 from jsonpath_rw import jsonpath, parse
 
 WORKFLOW_DEFAULT = 'default'  # go to the app main screen
@@ -1763,6 +1764,7 @@ class CaseListLookupMixin(DocumentSchema):
 
     """
     lookup_enabled = BooleanProperty(default=False)
+    lookup_autolaunch = BooleanProperty(default=False)
     lookup_action = StringProperty()
     lookup_name = StringProperty()
     lookup_image = JRResourceProperty(required=False)
@@ -1851,6 +1853,7 @@ class CaseSearch(DocumentSchema):
     """
     command_label = DictProperty(default={'en': 'Search All Cases'})
     properties = SchemaListProperty(CaseSearchProperty)
+    relevant = StringProperty(default=CLAIM_DEFAULT_RELEVANT_CONDITION)
 
 
 class ParentSelect(DocumentSchema):
@@ -2733,7 +2736,15 @@ class AdvancedModule(ModuleBase):
     has_schedule = BooleanProperty()
     schedule_phases = SchemaListProperty(SchedulePhase)
     get_schedule_phases = IndexedSchema.Getter('schedule_phases')
-    search_config = SchemaListProperty(CaseSearch)
+    search_config = SchemaProperty(CaseSearch)
+
+    @classmethod
+    def wrap(cls, data):
+        # lazy migration to accommodate search_config as empty list
+        # http://manage.dimagi.com/default.asp?231186
+        if data.get('search_config') == []:
+            data['search_config'] = {}
+        return super(AdvancedModule, cls).wrap(data)
 
     @classmethod
     def new_module(cls, name, lang):
@@ -3480,13 +3491,7 @@ class StaticChoiceListFilter(ReportAppFilter):
 
 class StaticDatespanFilter(ReportAppFilter):
     date_range = StringProperty(
-        choices=[
-            'last7',
-            'last30',
-            'thismonth',
-            'lastmonth',
-            'lastyear',
-        ],
+        choices=[choice.slug for choice in get_simple_dateranges()],
         required=True,
     )
 
@@ -3511,7 +3516,12 @@ class CustomDatespanFilter(ReportAppFilter):
     date_number2 = StringProperty()
 
     def get_filter_value(self, user, ui_filter):
-        today = datetime.date.today()
+        assert user is not None, (
+            "CustomDatespanFilter.get_filter_value must be called "
+            "with an OTARestoreUser object, not None")
+
+        timezone = get_timezone_for_domain(user.domain)
+        today = ServerTime(datetime.datetime.utcnow()).user_time(timezone).done().date()
         start_date = end_date = None
         days = int(self.date_number)
         if self.operator == 'between':
@@ -3589,19 +3599,29 @@ class CustomMonthFilter(ReportAppFilter):
             _, last_day = calendar.monthrange(date.year, date.month)
             return last_day
 
-        # Find the start and end dates of period 0
         start_of_month = int(self.start_of_month)
-        end_date = datetime.date.today()
-        start_day = start_of_month if start_of_month > 0 else get_last_day(end_date) + start_of_month
-        end_of_month = end_date if end_date.day >= start_day else get_last_month(end_date)
-        start_date = datetime.date(end_of_month.year, end_of_month.month, start_day)
+        today = datetime.date.today()
+        if start_of_month > 0:
+            start_day = start_of_month
+        else:
+            # start_of_month is zero or negative. Work backwards from the end of the month
+            start_day = get_last_day(today) + start_of_month
 
         # Loop over months backwards for period > 0
+        month = today if today.day >= start_day else get_last_month(today)
         for i in range(int(self.period)):
-            end_of_month = get_last_month(end_of_month)
-            end_date = start_date - datetime.timedelta(days=1)
-            start_day = start_of_month if start_of_month > 0 else get_last_day(end_of_month) + start_of_month
-            start_date = datetime.date(end_of_month.year, end_of_month.month, start_day)
+            month = get_last_month(month)
+
+        if start_of_month > 0:
+            start_date = datetime.date(month.year, month.month, start_day)
+            days = get_last_day(start_date) - 1
+            end_date = start_date + datetime.timedelta(days=days)
+        else:
+            start_day = get_last_day(month) + start_of_month
+            start_date = datetime.date(month.year, month.month, start_day)
+            next_month = datetime.date(month.year, month.month, get_last_day(month)) + datetime.timedelta(days=1)
+            end_day = get_last_day(next_month) + start_of_month - 1
+            end_date = datetime.date(next_month.year, next_month.month, end_day)
 
         return DateSpan(startdate=start_date, enddate=end_date)
 
@@ -3897,10 +3917,8 @@ class LazyBlobDoc(BlobMixin):
     Cache strategy:
     - on fetch, check in local memory, then cache
       - if both are a miss, fetch from couchdb and store in both
-    - before an attachment is committed to couchdb, clear cache
-      (allowing the next fetch to go all the way through).
-      Clear rather than write new value, in case something
-      goes wrong with the save.
+    - after an attachment is committed to the blob db and the
+      save save has succeeded, save the attachment in the cache
     """
 
     migrating_blobs_from_couch = True
@@ -3943,25 +3961,21 @@ class LazyBlobDoc(BlobMixin):
 
     def __set_cached_attachment(self, name, content):
         cache.set(self.__attachment_cache_key(name), content, timeout=60 * 60 * 24)
+        self._LAZY_ATTACHMENTS_CACHE[name] = content
 
     def __get_cached_attachment(self, name):
-        return cache.get(self.__attachment_cache_key(name))
-
-    def __remove_cached_attachment(self, name):
-        cache.delete(self.__attachment_cache_key(name))
-
-    def __store_lazy_attachment(self, content, name=None, content_type=None,
-                                content_length=None):
-        info = {
-            'content': content,
-            'content_type': content_type,
-            'content_length': content_length,
-        }
-        self._LAZY_ATTACHMENTS[name] = info
-        return info
+        try:
+            # it has been fetched already during this request
+            content = self._LAZY_ATTACHMENTS_CACHE[name]
+        except KeyError:
+            content = cache.get(self.__attachment_cache_key(name))
+            if content is not None:
+                self._LAZY_ATTACHMENTS_CACHE[name] = content
+        return content
 
     def put_attachment(self, content, name=None, *args, **kw):
-        self.__remove_cached_attachment(name)
+        cache.delete(self.__attachment_cache_key(name))
+        self._LAZY_ATTACHMENTS_CACHE.pop(name, None)
         return super(LazyBlobDoc, self).put_attachment(content, name, *args, **kw)
 
     def lazy_put_attachment(self, content, name=None, content_type=None,
@@ -3971,19 +3985,20 @@ class LazyBlobDoc(BlobMixin):
         and that upon self.save(), the attachments are put to the doc as well
 
         """
-        self.__store_lazy_attachment(content, name, content_type, content_length)
+        self._LAZY_ATTACHMENTS[name] = {
+            'content': content,
+            'content_type': content_type,
+            'content_length': content_length,
+        }
 
     def lazy_fetch_attachment(self, name):
         # it has been put/lazy-put already during this request
-        if name in self._LAZY_ATTACHMENTS and 'content' in self._LAZY_ATTACHMENTS[name]:
+        if name in self._LAZY_ATTACHMENTS:
             content = self._LAZY_ATTACHMENTS[name]['content']
-        # it has been fetched already during this request
-        elif name in self._LAZY_ATTACHMENTS_CACHE:
-            content = self._LAZY_ATTACHMENTS_CACHE[name]
         else:
             content = self.__get_cached_attachment(name)
 
-            if not content:
+            if content is None:
                 try:
                     content = self.fetch_attachment(name)
                 except ResourceNotFound as e:
@@ -3995,9 +4010,6 @@ class LazyBlobDoc(BlobMixin):
                     raise
                 finally:
                     self.__set_cached_attachment(name, content)
-                    self._LAZY_ATTACHMENTS_CACHE[name] = content
-            else:
-                self._LAZY_ATTACHMENTS_CACHE[name] = content
 
         if isinstance(content, ResourceNotFound):
             raise content
@@ -4018,8 +4030,11 @@ class LazyBlobDoc(BlobMixin):
                 for name, info in self._LAZY_ATTACHMENTS.items():
                     if not info['content_type']:
                         info['content_type'] = ';'.join(filter(None, guess_type(name)))
-                    self.__remove_cached_attachment(name)
                     super(LazyBlobDoc, self).put_attachment(name=name, **info)
+            # super_save() has succeeded by now
+            for name, info in self._LAZY_ATTACHMENTS.items():
+                self.__set_cached_attachment(name, info['content'])
+            self._LAZY_ATTACHMENTS.clear()
         else:
             super_save()
 
@@ -5225,7 +5240,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @classmethod
     def new_app(cls, domain, name, application_version, lang="en"):
-        app = cls(domain=domain, modules=[], name=name, langs=[lang], application_version=application_version)
+        app = cls(domain=domain, modules=[], name=name, langs=[lang],
+                  application_version=application_version, vellum_case_management=True)
         return app
 
     def add_module(self, module):
@@ -5584,7 +5600,7 @@ class RemoteApp(ApplicationBase):
     manage_urls = BooleanProperty(default=False)
 
     questions_map = DictProperty(required=False)
-
+    
     def is_remote_app(self):
         return True
 

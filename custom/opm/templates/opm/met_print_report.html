@@ -1,6 +1,5 @@
 {% extends original_template %}
 {% load hq_shared_tags %}
-{% load compress %}
 {% load i18n %}
 {% if show_time_notice %}{% endif %}
 
@@ -25,7 +24,6 @@
 {% endblock %}
 
 {% block reportcontent %}
-    {% compress css %}
     <style media="all">
         @page {
             size: A4 landscape;
@@ -75,7 +73,6 @@
             font-weight: normal;
         }
     </style>
-    {% endcompress %}
 {{ block.super }}
 {% endblock %}
 

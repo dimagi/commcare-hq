@@ -67,6 +67,7 @@ $(function () {
         // Set the selected tab to be the current state. But don't update the URL.
         var url = event.target.href.split("#")[0];
         var tab = event.target.href.split("#")[1];
+        var pageTitle = $(this).attr('data-pagetitle');
 
         var State = History.getState();
 
@@ -84,7 +85,7 @@ $(function () {
             var message = COMMCAREHQ.beforeUnloadCallback();
             var ask = message !== undefined && message !== undefined;
             if (!ask) {
-                History.pushState({'tab': tab}, null, url);
+                History.pushState({'tab': tab}, pageTitle, url);
             } else {
                 // instead of using tabs, reload page
                 // so as to trigger warning

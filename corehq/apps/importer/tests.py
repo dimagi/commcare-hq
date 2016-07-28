@@ -1,17 +1,27 @@
 import mock
 from django.test import TestCase, SimpleTestCase
-from casexml.apps.case.models import CommCareCase
+from django.test.utils import override_settings
+from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
 
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain, \
-    get_cases_in_domain
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
+from corehq.apps.export.models import (
+    CaseExportDataSchema,
+    ExportGroupSchema,
+    PathNode,
+    ExportItem,
+    MAIN_TABLE,
+)
 from corehq.apps.importer.exceptions import ImporterError
 from corehq.apps.importer.tasks import do_import, bulk_import_async
-from corehq.apps.importer.util import ImporterConfig, is_valid_owner
+from corehq.apps.importer.util import ImporterConfig, is_valid_owner, get_case_properties_for_case_type
 from corehq.apps.locations.models import LocationType
+from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.users.models import WebUser, CommCareUser, DomainMembership
+from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from .const import ImportErrors
 
@@ -71,10 +81,18 @@ class ImporterTest(TestCase):
         self.couch_user = WebUser.create(None, "test", "foobar")
         self.couch_user.add_domain_membership(self.domain, is_admin=True)
         self.couch_user.save()
+
+        self.accessor = CaseAccessors(self.domain)
+
+        self.factory = CaseFactory(domain=self.domain, case_defaults={
+            'case_type': self.default_case_type,
+        })
         delete_all_cases()
 
     def tearDown(self):
         self.couch_user.delete()
+        delete_all_locations()
+        LocationType.objects.all().delete()
         super(ImporterTest, self).tearDown()
 
     def _config(self, col_names=None, search_column=None, case_type=None,
@@ -98,12 +116,14 @@ class ImporterTest(TestCase):
             value_column='',
         )
 
+    @run_with_all_backends
     def testImportNone(self):
         res = bulk_import_async(self._config(), self.domain, None)
         self.assertEqual('Sorry, your session has expired. Please start over and try again.',
                          unicode(res['errors']))
         self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
 
+    @run_with_all_backends
     def testImporterErrors(self):
         with mock.patch('corehq.apps.importer.tasks.importer_util.get_spreadsheet', side_effect=ImporterError()):
             res = bulk_import_async(self._config(), self.domain, None)
@@ -111,6 +131,7 @@ class ImporterTest(TestCase):
                              unicode(res['errors']))
             self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
 
+    @run_with_all_backends
     def testImportBasic(self):
         config = self._config(self.default_headers)
         file = MockExcelFile(header_columns=self.default_headers, num_rows=5)
@@ -119,7 +140,8 @@ class ImporterTest(TestCase):
         self.assertEqual(0, res['match_count'])
         self.assertFalse(res['errors'])
         self.assertEqual(1, res['num_chunks'])
-        cases = list(get_cases_in_domain(self.domain))
+        case_ids = self.accessor.get_case_ids_in_domain()
+        cases = list(self.accessor.get_cases(case_ids))
         self.assertEqual(5, len(cases))
         properties_seen = set()
         for case in cases:
@@ -131,14 +153,16 @@ class ImporterTest(TestCase):
                 self.assertFalse(case.get_case_property(prop) in properties_seen)
                 properties_seen.add(case.get_case_property(prop))
 
+    @run_with_all_backends
     def testImportNamedColumns(self):
         config = self._config(self.default_headers, named_columns=True)
         file = MockExcelFile(header_columns=self.default_headers, num_rows=5)
         res = do_import(file, config, self.domain)
         # we create 1 less since we knock off the header column
         self.assertEqual(4, res['created_count'])
-        self.assertEqual(4, len(get_case_ids_in_domain(self.domain)))
+        self.assertEqual(4, len(self.accessor.get_case_ids_in_domain()))
 
+    @run_with_all_backends
     def testImportTrailingWhitespace(self):
         cols = ['case_id', 'age', u'sex\xa0', 'location']
         config = self._config(cols, named_columns=True)
@@ -146,80 +170,103 @@ class ImporterTest(TestCase):
         res = do_import(file, config, self.domain)
         # we create 1 less since we knock off the header column
         self.assertEqual(1, res['created_count'])
-        case_ids = get_case_ids_in_domain(self.domain)
+        case_ids = self.accessor.get_case_ids_in_domain()
         self.assertEqual(1, len(case_ids))
-        case = CommCareCase.get(case_ids[0])
-        self.assertTrue(bool(case.sex))  # make sure the value also got properly set
+        case = self.accessor.get_case(case_ids[0])
+        self.assertTrue(bool(case.get_case_property('sex')))  # make sure the value also got properly set
 
+    @run_with_all_backends
     def testCaseIdMatching(self):
         # bootstrap a stub case
-        case = CommCareCase(domain=self.domain, type=self.default_case_type)
-        case.importer_test_prop = 'foo'
-        case.save()
-        self.assertEqual(1, len(get_case_ids_in_domain(self.domain)))
+        [case] = self.factory.create_or_update_case(CaseStructure(attrs={
+            'create': True,
+            'update': {'importer_test_prop': 'foo'},
+        }))
+        self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
 
         config = self._config(self.default_headers)
-        file = MockExcelFile(header_columns=self.default_headers, num_rows=3, row_generator=id_match_generator(case._id))
+        file = MockExcelFile(
+            header_columns=self.default_headers,
+            num_rows=3,
+            row_generator=id_match_generator(case.case_id)
+        )
         res = do_import(file, config, self.domain)
         self.assertEqual(0, res['created_count'])
         self.assertEqual(3, res['match_count'])
         self.assertFalse(res['errors'])
 
         # shouldn't create any more cases, just the one
-        self.assertEqual(1, len(get_case_ids_in_domain(self.domain)))
-        [case] = get_cases_in_domain(self.domain)
+        case_ids = self.accessor.get_case_ids_in_domain()
+        self.assertEqual(1, len(case_ids))
+        [case] = self.accessor.get_cases(case_ids)
         for prop in self.default_headers[1:]:
             self.assertTrue(prop in case.get_case_property(prop))
 
         # shouldn't touch existing properties
-        self.assertEqual('foo', case.importer_test_prop)
+        self.assertEqual('foo', case.get_case_property('importer_test_prop'))
 
+    @run_with_all_backends
     def testCaseLookupTypeCheck(self):
-        case = CommCareCase(domain=self.domain, type='nonmatch-type')
-        case.save()
-        self.assertEqual(1, len(get_case_ids_in_domain(self.domain)))
+        [case] = self.factory.create_or_update_case(CaseStructure(attrs={
+            'create': True,
+            'case_type': 'nonmatch-type',
+        }))
+        self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
         config = self._config(self.default_headers)
         file = MockExcelFile(header_columns=self.default_headers, num_rows=3,
-                             row_generator=id_match_generator(case._id))
+                             row_generator=id_match_generator(case.case_id))
         res = do_import(file, config, self.domain)
         # because the type is wrong these shouldn't match
         self.assertEqual(3, res['created_count'])
         self.assertEqual(0, res['match_count'])
-        self.assertEqual(4, len(get_case_ids_in_domain(self.domain)))
+        self.assertEqual(4, len(self.accessor.get_case_ids_in_domain()))
 
+    @run_with_all_backends
     def testCaseLookupDomainCheck(self):
-        case = CommCareCase(domain='not-right-domain', type=self.default_case_type)
-        case.save()
-        self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
+        self.factory.domain = 'wrong-domain'
+        [case] = self.factory.create_or_update_case(CaseStructure(attrs={
+            'create': True,
+        }))
+        self.assertEqual(0, len(self.accessor.get_case_ids_in_domain()))
         config = self._config(self.default_headers)
-        file = MockExcelFile(header_columns=self.default_headers, num_rows=3,
-                             row_generator=id_match_generator(case._id))
+        file = MockExcelFile(
+            header_columns=self.default_headers,
+            num_rows=3,
+            row_generator=id_match_generator(case.case_id)
+        )
         res = do_import(file, config, self.domain)
 
         # because the domain is wrong these shouldn't match
         self.assertEqual(3, res['created_count'])
         self.assertEqual(0, res['match_count'])
-        self.assertEqual(3, len(get_case_ids_in_domain(self.domain)))
+        self.assertEqual(3, len(self.accessor.get_case_ids_in_domain()))
 
+    @run_with_all_backends
     def testExternalIdMatching(self):
         # bootstrap a stub case
-        case = CommCareCase(domain=self.domain, type=self.default_case_type)
         external_id = 'importer-test-external-id'
-        case.external_id = external_id
-        case.save()
-        self.assertEqual(1, len(get_case_ids_in_domain(self.domain)))
+        [case] = self.factory.create_or_update_case(CaseStructure(
+            attrs={
+                'create': True,
+                'external_id': external_id,
+            }
+        ))
+        self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
 
         headers = ['external_id', 'age', 'sex', 'location']
         config = self._config(headers, search_field='external_id')
-        file = MockExcelFile(header_columns=headers, num_rows=3,
-                             row_generator=id_match_generator(external_id))
+        file = MockExcelFile(
+            header_columns=headers,
+            num_rows=3,
+            row_generator=id_match_generator(external_id)
+        )
         res = do_import(file, config, self.domain)
         self.assertEqual(0, res['created_count'])
         self.assertEqual(3, res['match_count'])
         self.assertFalse(res['errors'])
 
         # shouldn't create any more cases, just the one
-        self.assertEqual(1, len(get_case_ids_in_domain(self.domain)))
+        self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
 
     def testNoCreateNew(self):
         config = self._config(self.default_headers, create_new_cases=False)
@@ -255,6 +302,7 @@ class ImporterTest(TestCase):
         self.assertEqual(5, res['created_count'])
         self.assertEqual(5, len(get_case_ids_in_domain(self.domain)))
 
+    @run_with_all_backends
     def testExternalIdChunking(self):
         # bootstrap a stub case
         external_id = 'importer-test-external-id'
@@ -272,22 +320,24 @@ class ImporterTest(TestCase):
         self.assertEqual(2, res['num_chunks']) # the lookup causes an extra chunk
 
         # should just create the one case
-        self.assertEqual(1, len(get_case_ids_in_domain(self.domain)))
-        [case] = get_cases_in_domain(self.domain)
+        case_ids = self.accessor.get_case_ids_in_domain()
+        self.assertEqual(1, len(case_ids))
+        [case] = self.accessor.get_cases(case_ids)
         self.assertEqual(external_id, case.external_id)
         for prop in self.default_headers[1:]:
             self.assertTrue(prop in case.get_case_property(prop))
 
+    @run_with_all_backends
     def testParentCase(self):
         headers = ['parent_id', 'name', 'case_id']
         config = self._config(headers, create_new_cases=True, search_column='case_id')
         rows = 3
-        parent_case = CommCareCase(domain=self.domain, type=self.default_case_type)
-        parent_case.save()
+        [parent_case] = self.factory.create_or_update_case(CaseStructure(attrs={'create': True}))
+        self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
 
         file = MockExcelFile(header_columns=headers,
                              num_rows=rows,
-                             row_generator=id_match_generator(parent_case['_id']))
+                             row_generator=id_match_generator(parent_case.case_id))
         file_missing = MockExcelFile(header_columns=headers,
                                      num_rows=rows)
 
@@ -313,6 +363,7 @@ class ImporterTest(TestCase):
         )
         return do_import(xls_file, config, self.domain)
 
+    @run_with_all_backends
     def testLocationOwner(self):
         # This is actually testing several different things, but I figure it's
         # worth it, as each of these tests takes a non-trivial amount of time.
@@ -335,7 +386,8 @@ class ImporterTest(TestCase):
             ['', 'duplicate-location-name', '', duplicate_loc.name],
             ['', 'non-case-owning-name', '', improper_loc.name],
         ])
-        cases = {c.name: c for c in list(get_cases_in_domain(self.domain))}
+        case_ids = self.accessor.get_case_ids_in_domain()
+        cases = {c.name: c for c in list(self.accessor.get_cases(case_ids))}
 
         self.assertEqual(cases['location-owner-id'].owner_id, location.group_id)
         self.assertEqual(cases['location-owner-code'].owner_id, location.group_id)
@@ -379,6 +431,36 @@ class ImporterUtilsTest(SimpleTestCase):
 
     def test_web_user_owner_nomatch(self):
         self.assertFalse(is_valid_owner(_mk_web_user(domains=['match', 'match2']), 'nomatch'))
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_get_case_properties_for_case_type(self):
+        schema = CaseExportDataSchema(
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[
+                        ExportItem(
+                            path=[PathNode(name='name')],
+                            label='name',
+                            last_occurrences={},
+                        ),
+                        ExportItem(
+                            path=[PathNode(name='color')],
+                            label='color',
+                            last_occurrences={},
+                        ),
+                    ],
+                    last_occurrences={},
+                ),
+            ],
+        )
+
+        with mock.patch(
+                'corehq.apps.export.models.new.CaseExportDataSchema.generate_schema_from_builds',
+                return_value=schema):
+            case_types = get_case_properties_for_case_type('test-domain', 'case-type')
+
+        self.assertEqual(sorted(case_types), ['color', 'name'])
 
 
 def _mk_user(domain):

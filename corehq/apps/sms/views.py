@@ -24,6 +24,7 @@ from corehq.apps.sms.api import (
     DomainScopeValidationError,
     MessageMetadata,
 )
+from corehq.apps.sms.resources.v0_5 import SelfRegistrationUserInfo
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
@@ -48,7 +49,7 @@ from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
                                    InitiateAddSMSBackendForm, SubscribeSMSForm,
                                    SettingsForm, SHOW_ALL, SHOW_INVALID, HIDE_ALL, ENABLED, DISABLED,
-                                   DEFAULT, CUSTOM, SendRegistrationInviationsForm,
+                                   DEFAULT, CUSTOM, SendRegistrationInvitationsForm,
                                    WELCOME_RECIPIENT_NONE, WELCOME_RECIPIENT_CASE,
                                    WELCOME_RECIPIENT_MOBILE_WORKER, WELCOME_RECIPIENT_ALL, ComposeMessageForm)
 from corehq.apps.sms.util import get_contact, get_sms_backend_classes, ContactNotFoundException
@@ -150,17 +151,6 @@ class ComposeMessageView(BaseMessagingSectionView):
     @use_typeahead
     def dispatch(self, *args, **kwargs):
         return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
-
-
-@csrf_exempt
-def post(request, domain):
-    """
-    I don't know of anywhere this is being invoked from. If the soft asserts
-    don't produce any results then I'll remove it.
-    """
-    _assert = soft_assert('@'.join(['gcapalbo', 'dimagi.com']), exponential_backoff=False)
-    _assert(False, "sms post invoked")
-    return HttpResponse('OK')
 
 
 @require_api_user_permission(PERMISSION_POST_SMS)
@@ -1986,13 +1976,17 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
     loading_message = ugettext_noop("Loading invitations...")
     strict_domain_fetching = True
 
+    @method_decorator(require_permission(Permissions.edit_data))
+    def dispatch(self, request, *args, **kwargs):
+        return super(ManageRegistrationInvitationsView, self).dispatch(request, *args, **kwargs)
+
     @property
     @memoized
     def invitations_form(self):
         if self.request.method == 'POST':
-            return SendRegistrationInviationsForm(self.request.POST, domain=self.domain)
+            return SendRegistrationInvitationsForm(self.request.POST, domain=self.domain)
         else:
-            return SendRegistrationInviationsForm(domain=self.domain)
+            return SendRegistrationInvitationsForm(domain=self.domain)
 
     @property
     @memoized
@@ -2077,10 +2071,14 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
             if self.invitations_form.is_valid():
                 phone_numbers = self.invitations_form.cleaned_data.get('phone_numbers')
                 app_id = self.invitations_form.cleaned_data.get('app_id')
+                custom_registration_message = self.invitations_form.cleaned_data.get('custom_registration_message')
                 result = SelfRegistrationInvitation.initiate_workflow(
                     self.domain,
-                    phone_numbers,
-                    app_id=app_id
+                    [SelfRegistrationUserInfo(p) for p in phone_numbers],
+                    app_id=app_id,
+                    custom_first_message=custom_registration_message,
+                    android_only=self.invitations_form.android_only,
+                    require_email=self.invitations_form.require_email,
                 )
                 success_numbers, invalid_format_numbers, numbers_in_use = result
                 if success_numbers:

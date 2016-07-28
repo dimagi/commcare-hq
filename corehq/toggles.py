@@ -306,6 +306,13 @@ REPORT_BUILDER = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+ASYNC_RESTORE = StaticToggle(
+    'async_restore',
+    'Generate restore response in an asynchronous task to prevent timeouts',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+)
+
 REPORT_BUILDER_BETA_GROUP = StaticToggle(
     'report_builder_beta_group',
     'RB beta group',
@@ -330,6 +337,13 @@ STOCK_TRANSACTION_EXPORT = StaticToggle(
 SYNC_ALL_LOCATIONS = StaticToggle(
     'sync_all_locations',
     'Sync the full location hierarchy when syncing location fixtures',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+FLAT_LOCATION_FIXTURE = StaticToggle(
+    'flat_location_fixture',
+    'Sync the location fixture in a flat format.',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
@@ -434,13 +448,6 @@ TRANSFER_DOMAIN = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-DHIS2_DOMAIN = StaticToggle(
-    'dhis2_domain',
-    'Enable DHIS2 integration for this domain',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
-)
-
 PRIME_RESTORE = StaticToggle(
     'prime_restore',
     'Prime restore cache',
@@ -465,24 +472,10 @@ VELLUM_SAVE_TO_CASE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-VELLUM_EXPERIMENTAL_UI = StaticToggle(
-    'experimental_ui',
-    "Enables some experimental UI enhancements for the form builder",
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
-)
-
 VELLUM_PRINTING = StaticToggle(
     'printing',
     "Enables the Print Android App Callout",
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
-VELLUM_RICH_TEXT = StaticToggle(
-    'rich_text',
-    "Enables rich text for the form builder",
-    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
 
@@ -600,13 +593,6 @@ OPENCLINICA = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-OPENLMIS = StaticToggle(
-    'openlmis',
-    'Offer OpenLMIS settings',
-    TAG_UNKNOWN,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 CUSTOM_MENU_BAR = StaticToggle(
     'custom_menu_bar',
     "Hide Dashboard and Applications from top menu bar "
@@ -658,8 +644,8 @@ HSPH_HACK = StaticToggle(
 
 USE_FORMPLAYER_FRONTEND = StaticToggle(
     'use_formplayer_frontend',
-    'Use the new formplayer frontend',
-    TAG_ONE_OFF,
+    'Use New CloudCare',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
 
@@ -757,9 +743,10 @@ VIEW_BUILD_SOURCE = StaticToggle(
 
 USE_SQL_BACKEND = StaticToggle(
     'sql_backend',
-    'Uses a sql backend instead of a couch backend for form processing (beta)',
+    'Uses a sql backend instead of a couch backend for form processing',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    description="This flag is deprecated. All new domains now use the sql backend."
 )
 
 
@@ -815,14 +802,6 @@ CASE_LIST_DISTANCE_SORT = StaticToggle(
 )
 
 
-NOTIFICATIONS = StaticToggle(
-    'hq_notifications',
-    'Shows notification icon when announcements need to be made',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_USER]
-)
-
-
 PROJECT_HEALTH_DASHBOARD = StaticToggle(
     'project_health_dashboard',
     'Shows the project performance dashboard in the reports navigation',
@@ -834,6 +813,13 @@ PROJECT_HEALTH_DASHBOARD = StaticToggle(
 UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
     'Allow unlimited reports created in report builder',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+MOBILE_USER_DEMO_MODE = StaticToggle(
+    'mobile_user_demo_mode',
+    'Ability to make a mobile worker into Demo only mobile worker',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
@@ -855,7 +841,24 @@ SEND_UCR_REBUILD_INFO = StaticToggle(
 )
 
 
-def enable_toggles_for_scale_beta(domain):
-    USE_SQL_BACKEND.set(domain, True, namespace=NAMESPACE_DOMAIN)
-    NEW_EXPORTS.set(domain, True, namespace=NAMESPACE_DOMAIN)
-    TF_USES_SQLITE_BACKEND.set(domain, True, namespace=NAMESPACE_DOMAIN)
+ZAPIER_INTEGRATION = StaticToggle(
+    'zapier_integration',
+    'Allow to use domain in Zapier application',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
+
+EMG_AND_REC_SMS_HANDLERS = StaticToggle(
+    'emg_and_rec_sms_handlers',
+    'Enable emergency and receipt sms handlers used in ILSGateway',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
+ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
+    'allow_user_defined_export_columns',
+    'Allows users to specify their own export columns',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)

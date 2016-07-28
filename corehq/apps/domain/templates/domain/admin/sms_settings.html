@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
-    <script type="text/javascript">
+    <script>
     $(function () {
         var settings = {{ settings|JSON }};
         var other_sms_codes = {{ other_sms_codes|JSON }};

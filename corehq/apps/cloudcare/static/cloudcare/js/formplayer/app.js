@@ -1,4 +1,4 @@
-/*global Marionette, Backbone, WebFormSession */
+/*global Marionette, Backbone, WebFormSession, Util */
 
 /**
  * The primary Marionette application managing menu navigation and launching form entry
@@ -10,6 +10,7 @@ var showError = hqImport('cloudcare/js/util.js').showError;
 var showSuccess = hqImport('cloudcare/js/util.js').showSuccess;
 var tfLoading = hqImport('cloudcare/js/util.js').tfLoading;
 var tfLoadingComplete = hqImport('cloudcare/js/util.js').tfLoadingComplete;
+var tfSyncComplete = hqImport('cloudcare/js/util.js').tfSyncComplete;
 
 FormplayerFrontend.on("before:start", function () {
     var RegionContainer = Marionette.LayoutView.extend({
@@ -66,49 +67,41 @@ FormplayerFrontend.reqres.setHandler('clearMenu', function () {
     $('#menu-region').html("");
 });
 
+$(document).bind("ajaxStart", function(){
+    $(".formplayer-request").addClass('formplayer-requester-disabled');
+    tfLoading();
+}).bind("ajaxStop", function() {
+    $(".formplayer-request").removeClass('formplayer-requester-disabled');
+    tfLoadingComplete();
+});
+
+FormplayerFrontend.reqres.setHandler('error', function(errorMessage) {
+    showError(errorMessage, $("#cloudcare-notifications"), 10000);
+});
+
 FormplayerFrontend.reqres.setHandler('startForm', function (data) {
     FormplayerFrontend.request("clearMenu");
 
     data.onLoading = tfLoading;
     data.onLoadingComplete = tfLoadingComplete;
-    data.xform_url = "/webforms/player_proxy";
-    //TODO yeah
-    data.domain = "test";
+    var user = FormplayerFrontend.request('currentUser');
+    data.xform_url = user.formplayer_url;
+    data.domain = user.domain;
+    data.formplayerEnabled = true;
     data.onerror = function (resp) {
         showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
     };
     data.onsubmit = function (resp) {
-        //TODO: Old Touchforms gets the "submit-all" action then returns the XML to the frontend
-        // to be submitted (here). Is there any reason FormPlayer shouldn't do the submitting itself?
-        var xml = resp.output;
-        var postUrl = resp.postUrl;
-        $.ajax({
-            type: 'POST',
-            url: postUrl,
-            data: xml,
-            success: function () {
-                FormplayerFrontend.request("clearForm");
-                // TODO form linking
-                FormplayerFrontend.trigger("apps:list");
-                showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 2500);
-            },
-            error: function (resp, status, message) {
-                if (message) {
-                    message = gettext("Error saving!") + message;
-                } else {
-                    message = gettext("Unknown error: ") + status + " " + resp.status;
-                    if (resp.status === 0) {
-                        message = (message + ". "
-                        + gettext("This can happen if you loaded CloudCare from a different address than the server address") + " (" + postUrl + ")");
-                    }
-                }
-                data.onerror({message: message});
-                // TODO change submit button text to something other than
-                // "Submitting..." and prevent "All changes saved!" message
-                // banner at top of the form.
-            },
-        });
+        if (resp.status === "success") {
+            FormplayerFrontend.request("clearForm");
+            FormplayerFrontend.trigger("apps:currentApp");
+            showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
+        } else {
+            showError(resp.output, $("#cloudcare-notifications"));
+        }
+        // TODO form linking
     };
+    data.formplayerEnabled = true;
     var sess = new WebFormSession(data);
     sess.renderFormXml(data, $('#webforms'));
 });
@@ -127,4 +120,23 @@ FormplayerFrontend.on("start", function (options) {
             FormplayerFrontend.trigger("apps:list", options.apps);
         }
     }
+});
+
+FormplayerFrontend.on("sync", function () {
+    var user = FormplayerFrontend.request('currentUser');
+    var username = user.username;
+    var domain = user.domain;
+    var formplayer_url = user.formplayer_url;
+    var options = {
+        url: formplayer_url + "/sync-db",
+        data: JSON.stringify({"username": username, "domain": domain}),
+    };
+    Util.setCrossDomainAjaxOptions(options);
+    var resp = $.ajax(options);
+    resp.done(function () {
+        tfSyncComplete(false);
+    });
+    resp.error(function () {
+        tfSyncComplete(true);
+    });
 });

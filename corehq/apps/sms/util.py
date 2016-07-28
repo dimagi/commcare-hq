@@ -241,3 +241,40 @@ def set_domain_default_backend_to_test_backend(domain):
         domain,
         test_backend
     )
+
+
+@quickcache(['domain', 'case_id'], timeout=60 * 60)
+def is_case_contact_active(domain, case_id):
+    from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+    from corehq.form_processor.exceptions import CaseNotFound
+
+    try:
+        case = CaseAccessors(domain).get_case(case_id)
+    except (ResourceNotFound, CaseNotFound):
+        return False
+
+    return not (case.closed or case.is_deleted)
+
+
+@quickcache(['domain', 'user_id'], timeout=60 * 60)
+def is_user_contact_active(domain, user_id):
+    try:
+        user = CouchUser.get_by_user_id(user_id, domain=domain)
+    except KeyError:
+        return False
+
+    if not user:
+        return False
+
+    return user.is_active
+
+
+def is_contact_active(domain, contact_doc_type, contact_id):
+    if contact_doc_type == 'CommCareCase':
+        return is_case_contact_active(domain, contact_id)
+    elif contact_doc_type in ('CommCareUser', 'WebUser'):
+        return is_user_contact_active(domain, contact_id)
+    else:
+        # We can't tie the contact to a document so since we can't say whether
+        # it's inactive, we count it as active
+        return True

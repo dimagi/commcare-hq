@@ -148,7 +148,7 @@ class BaseEditUserView(BaseUserSettingsView):
     @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(BaseEditUserView, self).dispatch(request, *args, **kwargs)
-    
+
     @property
     @memoized
     def page_url(self):
@@ -643,7 +643,7 @@ class UserInvitationView(object):
                 form = NewWebUserRegistrationForm(request.POST)
                 if form.is_valid():
                     # create the new user
-                    user = activate_new_user(form)
+                    user = activate_new_user(form, domain=invitation.domain)
                     user.save()
                     messages.success(request, _("User account for %s created!") % form.cleaned_data["email"])
                     self._invite(invitation, user)
@@ -661,10 +661,9 @@ class UserInvitationView(object):
                 if CouchUser.get_by_username(invitation.email):
                     return HttpResponseRedirect(reverse("login") + '?next=' +
                         reverse('domain_accept_invitation', args=[invitation.domain, invitation.get_id]))
-                domain = Domain.get_by_name(invitation.domain)
                 form = NewWebUserRegistrationForm(initial={
                     'email': invitation.email,
-                    'hr_name': domain.display_name() if domain else invitation.domain,
+                    'hr_name': invitation.domain,
                     'create_domain': False,
                 })
 
@@ -1004,4 +1003,13 @@ def location_restriction_for_users(request, domain):
     if "restrict_users" in request.POST:
         project.location_restriction_for_users = json.loads(request.POST["restrict_users"])
     project.save()
+    return HttpResponse()
+
+
+@require_POST
+@require_superuser
+def register_fcm_device_token(request, couch_user_id, device_token):
+    user = WebUser.get_by_user_id(couch_user_id)
+    user.fcm_device_token = device_token
+    user.save()
     return HttpResponse()

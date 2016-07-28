@@ -47,12 +47,6 @@ class BaseStripePaymentHandler(object):
         """
         raise NotImplementedError("you must implement cost_item_name")
 
-    @property
-    @memoized
-    def core_product(self):
-        domain = Domain.get_by_name(self.domain)
-        return SoftwareProductType.get_type_by_domain(domain)
-
     def create_charge(self, amount, card=None, customer=None):
         """Process the HTTPRequest used to make this payment
 
@@ -171,7 +165,7 @@ class BaseStripePaymentHandler(object):
         additional_context = self.get_email_context()
         from corehq.apps.accounting.tasks import send_purchase_receipt
         send_purchase_receipt.delay(
-            payment_record, self.core_product, self.domain, self.receipt_email_template,
+            payment_record, self.domain, self.receipt_email_template,
             self.receipt_email_template_plaintext, additional_context
         )
 
@@ -331,7 +325,7 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
         )
 
     def _humanized_features(self):
-        return [{'type': get_feature_name(feature['type'], self.core_product),
+        return [{'type': get_feature_name(feature['type'], SoftwareProductType.COMMCARE),
                  'amount': fmt_dollar_amount(feature['amount'])}
                 for feature in self.features]
 
@@ -421,36 +415,42 @@ class AutoPayInvoicePaymentHandler(object):
         """ Pays the full balance of all autopayable invoices on date_due """
         autopayable_invoices = Invoice.autopayable_invoices(date_due)
         for invoice in autopayable_invoices:
-            log_accounting_info("[Autopay] Autopaying invoice {}".format(invoice.id))
-            amount = invoice.balance.quantize(Decimal(10) ** -2)
-            if not amount:
-                continue
-
-            auto_payer = invoice.subscription.account.auto_pay_user
-            payment_method = StripePaymentMethod.objects.get(web_user=auto_payer)
-            autopay_card = payment_method.get_autopay_card(invoice.subscription.account)
-            if autopay_card is None:
-                continue
-
             try:
-                payment_record = payment_method.create_charge(
+                self._pay_invoice(invoice)
+            except Exception as e:
+                log_accounting_error("Error autopaying invoice %d: %s" % (invoice.id, e.message))
+
+    def _pay_invoice(self, invoice):
+        log_accounting_info("[Autopay] Autopaying invoice {}".format(invoice.id))
+        amount = invoice.balance.quantize(Decimal(10) ** -2)
+        if not amount:
+            return
+
+        auto_payer = invoice.subscription.account.auto_pay_user
+        payment_method = StripePaymentMethod.objects.get(web_user=auto_payer)
+        autopay_card = payment_method.get_autopay_card(invoice.subscription.account)
+        if autopay_card is None:
+            return
+
+        try:
+            with transaction.atomic():
+                payment_record = PaymentRecord.create_record(payment_method, 'temp_transaction_id', amount)
+                invoice.pay_invoice(payment_record)
+                invoice.subscription.account.last_payment_method = LastPayment.CC_AUTO
+                invoice.account.save()
+                transaction_id = payment_method.create_charge(
                     autopay_card,
                     amount_in_dollars=amount,
                     description='Auto-payment for Invoice %s' % invoice.invoice_number,
                 )
-            except stripe.error.CardError:
-                self._handle_card_declined(invoice, payment_method)
-                continue
-            except payment_method.STRIPE_GENERIC_ERROR as e:
-                self._handle_card_errors(invoice, e)
-                continue
-            else:
-                with transaction.atomic():
-                    invoice.pay_invoice(payment_record)
-                    invoice.subscription.account.last_payment_method = LastPayment.CC_AUTO
-                    invoice.account.save()
-
-                self._send_payment_receipt(invoice, payment_record)
+        except stripe.error.CardError:
+            self._handle_card_declined(invoice, payment_method)
+        except payment_method.STRIPE_GENERIC_ERROR as e:
+            self._handle_card_errors(invoice, e)
+        else:
+            payment_record.transaction_id = transaction_id
+            payment_record.save()
+            self._send_payment_receipt(invoice, payment_record)
 
     def _send_payment_receipt(self, invoice, payment_record):
         from corehq.apps.accounting.tasks import send_purchase_receipt
@@ -458,8 +458,6 @@ class AutoPayInvoicePaymentHandler(object):
         receipt_email_template_plaintext = 'accounting/invoice_receipt_email_plaintext.txt'
         try:
             domain = invoice.subscription.subscriber.domain
-            product = SoftwareProductType.get_type_by_domain(Domain.get_by_name(domain))
-
             context = {
                 'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
                 'balance': fmt_dollar_amount(invoice.balance),
@@ -468,7 +466,7 @@ class AutoPayInvoicePaymentHandler(object):
                 'invoice_num': invoice.invoice_number,
             }
             send_purchase_receipt.delay(
-                payment_record, product, domain, receipt_email_template, receipt_email_template_plaintext, context,
+                payment_record, domain, receipt_email_template, receipt_email_template_plaintext, context,
             )
         except:
             self._handle_email_failure(payment_record)

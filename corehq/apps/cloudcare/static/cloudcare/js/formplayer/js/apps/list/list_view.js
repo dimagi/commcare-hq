@@ -4,7 +4,7 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
     AppList.GridItem = Marionette.ItemView.extend({
         template: "#row-template",
         tagName: "div",
-        className: "grid-item col-sm-4 text-center",
+        className: "grid-item col-sm-4 text-center formplayer-request",
         events: {
             "click": "rowClick",
         },
@@ -20,5 +20,19 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
         template: "#grid-template",
         childView: AppList.GridItem,
         childViewContainer: ".application-container",
+
+        events: {
+            'click #incompleteSessionsItem': 'incompleteSessionsClick',
+            'click #syncItem': 'syncClick',
+        },
+        incompleteSessionsClick: function (e) {
+            e.preventDefault();
+            FormplayerFrontend.trigger("sessions");
+        },
+        syncClick: function (e) {
+            e.preventDefault();
+            FormplayerFrontend.trigger("sync");
+        },
     });
-});
+})
+;

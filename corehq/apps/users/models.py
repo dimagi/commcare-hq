@@ -879,9 +879,19 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @property
     def user_session_data(self):
-        from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
+        from corehq.apps.custom_data_fields.models import (
+            SYSTEM_PREFIX,
+            COMMCARE_USER_TYPE_KEY,
+            COMMCARE_USER_TYPE_DEMO
+        )
 
-        session_data = copy.copy(self.user_data)
+        session_data = self.to_json().get('user_data')
+
+        if self.is_commcare_user() and self.is_demo_user:
+            session_data.update({
+                COMMCARE_USER_TYPE_KEY: COMMCARE_USER_TYPE_DEMO
+            })
+
         session_data.update({
             '{}_first_name'.format(SYSTEM_PREFIX): self.first_name,
             '{}_last_name'.format(SYSTEM_PREFIX): self.last_name,
@@ -1055,6 +1065,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             # truncate names when saving to django
             if attr == 'first_name' or attr == 'last_name':
                 attr_val = attr_val[:30]
+            if attr == 'last_login' and attr_val == '':
+                attr_val = None
             setattr(django_user, attr, attr_val)
         django_user.DO_NOT_SAVE_COUCH_USER= True
         return django_user
@@ -1129,6 +1141,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     def clear_quickcache_for_user(self):
         from corehq.apps.hqwebapp.templatetags.hq_shared_tags import _get_domain_list
+        from corehq.apps.sms.util import is_user_contact_active
+
         self.get_by_username.clear(self.__class__, self.username)
         self.get_by_user_id.clear(self.__class__, self.user_id)
         domains = getattr(self, 'domains', None)
@@ -1137,6 +1151,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             domains = [domain] if domain else []
         for domain in domains:
             self.get_by_user_id.clear(self.__class__, self.user_id, domain)
+            is_user_contact_active.clear(domain, self.user_id)
         Domain.active_for_couch_user.clear(self)
         _get_domain_list.clear(self)
 
@@ -1327,6 +1342,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     registering_device_id = StringProperty()
     # used by loadtesting framework - should typically be empty
     loadtest_factor = IntegerProperty()
+    is_demo_user = BooleanProperty(default=False)
+    demo_restore_id = IntegerProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -1364,6 +1381,13 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                     message="Error occured while syncing user %s: %s" %
                             (self.username, repr(result[1]))
                 )
+
+    def delete(self):
+        from corehq.apps.ota.utils import delete_demo_restore_for_user
+        # clear demo restore objects if any
+        delete_demo_restore_for_user(self)
+
+        super(CommCareUser, self).delete()
 
     @property
     @memoized
@@ -1419,6 +1443,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @classmethod
     def create_or_update_from_xform(cls, xform):
+        _assert = soft_assert('@'.join(['droberts', 'dimagi.com']))
+        _assert(False, 'someone actually called CommCareUser.create_or_update_from_xform')
         # if we have 1,000,000 users with the same name in a domain
         # then we have bigger problems then duplicate user accounts
         MAX_DUPLICATE_USERS = 1000000
@@ -1510,10 +1536,34 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def _get_case_ids(self):
         return CaseAccessors(self.domain).get_case_ids_by_owners([self.user_id])
 
+    def _get_deleted_form_ids(self):
+        return FormAccessors(self.domain).get_deleted_form_ids_for_user(self.user_id)
+
+    def _get_deleted_case_ids(self):
+        return CaseAccessors(self.domain).get_deleted_case_ids_by_owner(self.user_id)
+
     def get_owner_ids(self, domain=None):
         owner_ids = [self.user_id]
         owner_ids.extend([g._id for g in self.get_case_sharing_groups()])
         return owner_ids
+
+    def unretire(self):
+        """
+        This un-deletes a user, but does not fully restore the state to
+        how it previously was. Using this has these caveats:
+        - It will not restore Case Indexes that were removed
+        - It will not restore the user's phone numbers
+        - It will not restore reminders for cases
+        """
+        if self.base_doc.endswith(DELETED_SUFFIX):
+            self.base_doc = self.base_doc[:-len(DELETED_SUFFIX)]
+
+        deleted_form_ids = self._get_deleted_form_ids()
+        FormAccessors(self.domain).soft_undelete_forms(deleted_form_ids)
+
+        deleted_case_ids = self._get_deleted_case_ids()
+        CaseAccessors(self.domain).soft_undelete_cases(deleted_case_ids)
+        self.save()
 
     def retire(self):
         suffix = DELETED_SUFFIX
@@ -1874,8 +1924,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
     def get_usercase_id(self):
-        from corehq.apps.hqcase.utils import get_case_id_by_domain_hq_user_id
-        return get_case_id_by_domain_hq_user_id(self.domain, self._id, USERCASE_TYPE)
+        case = CaseAccessors(self.domain).get_case_by_domain_hq_user_id(self._id, USERCASE_TYPE)
+        return case.case_id if case else None
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
@@ -1884,6 +1934,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     login_attempts = IntegerProperty(default=0)
     attempt_date = DateProperty()
+    fcm_device_token = StringProperty()
 
     def sync_from_old_couch_user(self, old_couch_user):
         super(WebUser, self).sync_from_old_couch_user(old_couch_user)

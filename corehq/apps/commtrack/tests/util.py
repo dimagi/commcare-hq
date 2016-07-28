@@ -56,7 +56,7 @@ FIXED_USER = {
 }
 
 
-def bootstrap_domain(domain_name=TEST_DOMAIN):
+def bootstrap_domain(domain_name):
     # little test utility that makes a commtrack-enabled domain with
     # a default config and a location
     domain_obj = create_domain(domain_name)
@@ -151,7 +151,7 @@ class CommTrackTest(TestCase):
 
         self.backend, self.backend_mapping = setup_default_sms_test_backend()
 
-        self.domain = bootstrap_domain()
+        self.domain = bootstrap_domain(TEST_DOMAIN)
         bootstrap_location_types(self.domain.name)
         bootstrap_products(self.domain.name)
         self.ct_settings = CommtrackConfig.for_domain(self.domain.name)

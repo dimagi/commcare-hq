@@ -12,6 +12,7 @@
 xforms/
 /data/
 submissions/
+/formplayer_build
 /export/
 /bower_components
 bad/
@@ -36,6 +37,7 @@ dump.rdb
 .transifexrc
 python_env
 services
+KEEP_UNTIL__*
 
 submodules/formdesigner
 submodules/vellum/Vellum

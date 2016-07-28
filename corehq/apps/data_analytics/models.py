@@ -77,9 +77,10 @@ class GIRRow(models.Model):
     exp_and_active_ever = models.PositiveIntegerField()
     active_in_span = models.PositiveIntegerField()
 
-    @property
-    def export_row(self):
-        past_months = GIRRow.objects.filter(domain_name=self.domain_name, month__lt=self.month).order_by('-month')
+    class Meta:
+        unique_together = ('month', 'domain_name')
+
+    def export_row(self, past_months):
         last_month = past_months[0] if past_months else None
         two_months_ago = past_months[1] if len(past_months) > 1 else None
         wams_current = self.wams_current if self.wam else 0

@@ -60,6 +60,11 @@ def get_domain_db_kafka_pillow(pillow_id):
     return get_change_feed_pillow_for_db(pillow_id, couch_config.get_db_for_class(Domain))
 
 
+def get_application_db_kafka_pillow(pillow_id):
+    from corehq.apps.app_manager.models import Application
+    return get_change_feed_pillow_for_db(pillow_id, couch_config.get_db_for_class(Application))
+
+
 def get_change_feed_pillow_for_db(pillow_id, couch_db):
     kafka_client = get_kafka_client_or_none()
     processor = KafkaProcessor(
