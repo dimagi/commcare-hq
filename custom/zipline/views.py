@@ -49,6 +49,7 @@ class ZiplineOrderStatusView(View, DomainViewMixin):
             EmergencyOrderStatusUpdate.STATUS_APPROVED: ApprovedStatusUpdateView,
             EmergencyOrderStatusUpdate.STATUS_CANCELLED: CancelledStatusUpdateView,
             EmergencyOrderStatusUpdate.STATUS_DISPATCHED: DispatchedStatusUpdateView,
+            EmergencyOrderStatusUpdate.STATUS_DELIVERED: DeliveredStatusUpdateView,
         }.get(status)
 
         if view is None:
@@ -174,6 +175,45 @@ class BaseZiplineStatusUpdateView(View, DomainViewMixin):
         """
         raise NotImplementedError()
 
+    def all_flights_cancelled(self, order):
+        """
+        :param order: the EmergencyOrder to check
+        :return: True if all of the packages for this order have been cancelled
+        in flight.
+        """
+        packages_cancelled = EmergencyOrderStatusUpdate.objects.filter(
+            order_id=order.pk,
+            status=EmergencyOrderStatusUpdate.STATUS_CANCELLED_IN_FLIGHT,
+        ).values_list('package_number').distinct().count()
+
+        return packages_cancelled == order.total_packages
+
+    def all_flights_done(self, order):
+        """
+        :param order: the EmergencyOrder to check
+        :return: True if all of the packages for this order have either been delivered
+        or cancelled in flight and at least one of them has been delivered.
+        """
+        packages_delivered_or_cancelled = EmergencyOrderStatusUpdate.objects.filter(
+            order_id=order.pk,
+            status__in=(
+                EmergencyOrderStatusUpdate.STATUS_DELIVERED,
+                EmergencyOrderStatusUpdate.STATUS_CANCELLED_IN_FLIGHT,
+            )
+        )
+
+        package_numbers = set()
+        statuses = set()
+
+        for status_update in packages_delivered_or_cancelled:
+            package_numbers.add(status_update.package_number)
+            statuses.add(status_update.status)
+
+        return (
+            len(package_numbers) == order.total_packages and
+            EmergencyOrderStatusUpdate.STATUS_DELIVERED in statuses
+        )
+
     def post(self, request, *args, **kwargs):
         # request.body already confirmed to be a valid json dict in ZiplineOrderStatusView
         data = json.loads(request.body)
@@ -284,6 +324,30 @@ class DispatchedStatusUpdateView(BaseZiplineStatusUpdateView):
         if not order.dispatched_status:
             order.status = EmergencyOrderStatusUpdate.STATUS_DISPATCHED
             order.dispatched_status = dispatched_status
+            order.save()
+
+        return True, {'status': 'success'}
+
+    def send_sms_for_status_update(self, order, data):
+        pass
+
+
+class DeliveredStatusUpdateView(BaseZiplineStatusUpdateView):
+
+    def validate_and_clean_payload(self, order, data):
+        self.validate_and_clean_int(data, 'packageNumber')
+
+    def process_status_update(self, order, data):
+        delivered_status = EmergencyOrderStatusUpdate.create_for_order(
+            order.pk,
+            EmergencyOrderStatusUpdate.STATUS_DELIVERED,
+            zipline_timestamp=data['timestamp'],
+            package_number=data['packageNumber']
+        )
+
+        if not order.delivered_status and self.all_flights_done(order):
+            order.status = EmergencyOrderStatusUpdate.STATUS_DELIVERED
+            order.delivered_status = delivered_status
             order.save()
 
         return True, {'status': 'success'}
