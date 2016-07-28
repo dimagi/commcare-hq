@@ -159,12 +159,25 @@ def warn_subscriptions_not_active(based_on_date=None):
         log_accounting_error("%s is not active" % subscription)
 
 
+def warn_active_subscriptions_per_domain_not_one():
+    for domain_name in Domain.get_all_names():
+        active_subscription_count = Subscription.objects.filter(
+            subscriber__domain=domain_name,
+            is_active=True,
+        ).count()
+        if active_subscription_count > 1:
+            log_accounting_error("Multiple active subscriptions found for domain %s" % domain_name)
+        elif active_subscription_count == 0:
+            log_accounting_error("There is no active subscription for domain %s" % domain_name)
+
+
 @periodic_task(run_every=crontab(minute=0, hour=5))
 def update_subscriptions():
     deactivate_subscriptions()
     activate_subscriptions()
     warn_subscriptions_still_active()
     warn_subscriptions_not_active()
+    warn_active_subscriptions_per_domain_not_one()
 
 
 @periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'))

@@ -69,6 +69,20 @@ def check_headers(user_specs):
         raise UserUploadError('\n'.join(messages))
 
 
+def check_duplicate_usernames(user_specs):
+    usernames = set()
+    duplicated_usernames = set()
+
+    for row in user_specs:
+        username = row.get('username')
+        if username and username in usernames:
+            duplicated_usernames.add(username)
+        usernames.add(username)
+
+    raise UserUploadError(_("The following usernames have duplicate entries in "
+        "your file: " + ', '.join(duplicated_usernames)))
+
+
 class GroupMemoizer(object):
     """
 
