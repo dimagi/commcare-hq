@@ -592,7 +592,7 @@ class MultipleSelectionForm(forms.Form):
             return super(MyView, self).dispatch(request, *args, **kwargs)
 
         # html
-        <script type="text/javascript">
+        <script>
             // Multiselect widget
             $(function () {
                 var multiselect_utils = hqImport('style/js/components/multiselect_utils');

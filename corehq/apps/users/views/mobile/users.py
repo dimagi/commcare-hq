@@ -62,7 +62,13 @@ from corehq.apps.style.decorators import (
     use_multiselect,
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
-from corehq.apps.users.bulkupload import check_headers, dump_users_and_groups, GroupNameError, UserUploadError
+from corehq.apps.users.bulkupload import (
+    check_duplicate_usernames,
+    check_headers,
+    dump_users_and_groups,
+    GroupNameError,
+    UserUploadError,
+)
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.forms import (
     CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm,
@@ -902,6 +908,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
 
         try:
             check_headers(self.user_specs)
+            check_duplicate_usernames(self.user_specs)
         except UserUploadError as e:
             messages.error(request, _(e.message))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
