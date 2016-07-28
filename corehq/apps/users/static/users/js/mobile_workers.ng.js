@@ -103,9 +103,6 @@
             $http.get(reqStr).then(
                 function (response) {
                     $scope.availableLocations = response.data;
-                },
-                function () {
-                    console.log('Error retrieving locations');
                 }
             );
         };
