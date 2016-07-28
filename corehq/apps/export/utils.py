@@ -1,6 +1,11 @@
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.modules import to_function
 
+from corehq.util.log import with_progress_bar
+from corehq.apps.reports.dbaccessors import (
+    stale_get_exports_json,
+    stale_get_export_count,
+)
 from corehq.apps.reports.models import (
     FormExportSchema,
     CaseExportSchema,
@@ -245,3 +250,16 @@ def revert_new_exports(new_exports):
         new_export.doc_type += DELETED_SUFFIX
         new_export.save()
     return reverted_exports
+
+
+def migrate_domain(domain):
+    export_count = stale_get_export_count(domain)
+    if export_count:
+        for old_export in with_progress_bar(
+                stale_get_exports_json(domain),
+                length=export_count,
+                prefix=domain):
+            try:
+                convert_saved_export_to_export_instance(domain, old_export)
+            except Exception, e:
+                print 'Failed parsing {}: {}'.format(old_export._id, e)
