@@ -15,6 +15,7 @@ from corehq.apps.es.groups import GroupES
 from corehq.apps.es.users import UserES
 from itertools import chain
 from corehq.apps.locations.models import SQLLocation
+from django.db.models import Sum
 
 
 def get_performance_threshold(domain_name):
@@ -67,14 +68,16 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             base_queryset = base_queryset.filter(
                 user_id__in=users,
             )
-        self._distinct_user_ids = base_queryset.distinct('user_id')
 
-        num_performing_users = (base_queryset
-                                .filter(num_of_forms__gte=performance_threshold)
-                                .distinct('user_id')
+        self._user_stat_from_malt = (base_queryset
+                                     .values('user_id', 'username')
+                                     .annotate(total_num_forms=Sum('num_of_forms')))
+
+        num_performing_users = (self._user_stat_from_malt
+                                .filter(total_num_forms__gte=performance_threshold)
                                 .count())
 
-        num_active_users = self._distinct_user_ids.count()
+        num_active_users = self._user_stat_from_malt.count()
         num_low_performing_user = num_active_users - num_performing_users
 
         if self._previous_summary:
@@ -179,14 +182,14 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     @memoized
     def get_all_user_stubs(self):
         return {
-            row.user_id: UserActivityStub(
-                user_id=row.user_id,
-                username=raw_username(row.username),
-                num_forms_submitted=row.num_of_forms,
-                is_performing=row.num_of_forms >= self.performance_threshold,
+            row['user_id']: UserActivityStub(
+                user_id=row['user_id'],
+                username=raw_username(row['username']),
+                num_forms_submitted=row['total_num_forms'],
+                is_performing=row['total_num_forms'] >= self.performance_threshold,
                 previous_stub=None,
                 next_stub=None,
-            ) for row in self._distinct_user_ids
+            ) for row in self._user_stat_from_malt
         }
 
     @memoized

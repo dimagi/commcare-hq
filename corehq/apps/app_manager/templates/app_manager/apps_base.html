@@ -55,7 +55,7 @@
             window.location = "{% url "corehq.apps.app_manager.views.view_app" domain %}";
         });
     });
-    $(function () {
+    $(window).load(function () {
        $('.app-manager-content').removeClass('hide');
     });
     </script>
