@@ -6,6 +6,7 @@ from dimagi.ext.couchdbkit import *
 from corehq.apps.builds.fixtures import commcare_build_config
 from corehq.apps.builds.jadjar import JadJar
 from corehq.util.quickcache import quickcache
+from itertools import groupby
 
 
 class SemanticVersionProperty(StringProperty):
@@ -148,7 +149,13 @@ class CommCareBuild(Document):
     @classmethod
     @quickcache([], timeout=5 * 60)
     def j2me_enabled_builds(cls):
-        return [build for build in cls.all_builds() if build.j2me_enabled]
+        j2me_enabled_builds = []
+        for version_number, group in groupby(cls.all_builds(), lambda x: x['version']):
+            latest_version_build = list(group)[-1]
+            if latest_version_build['j2me_enabled']:
+                j2me_enabled_builds.append(latest_version_build)
+
+        return j2me_enabled_builds
 
     @classmethod
     def j2me_enabled_build_versions(cls):
