@@ -68,16 +68,10 @@ FormplayerFrontend.reqres.setHandler('clearMenu', function () {
 });
 
 $(document).bind("ajaxStart", function(){
-    var requestElements = $(".formplayer-request");
-    for (var i = 0; i < requestElements.length; i++ ) {
-        requestElements.css('pointer-events', 'none');
-    }
+    $(".formplayer-request").addClass('formplayer-requester-disabled');
     tfLoading();
 }).bind("ajaxStop", function() {
-    var requestElements = $(".formplayer-request");
-    for (var i = 0; i < requestElements.length; i++) {
-        requestElements.css('pointer-events', 'auto');
-    }
+    $(".formplayer-request").removeClass('formplayer-requester-disabled');
     tfLoadingComplete();
 });
 
