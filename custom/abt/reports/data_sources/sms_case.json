@@ -648,11 +648,10 @@
             "Madagascar": {
               "default": 0,
               "cases": {
-                "Brickaville": 50560,
-                "Fenerive Est": 80604,
-                "Tamatave II": 57801,
-                "Farafangana": 81941,
-                "Vohipeno": 41018
+                "Atsinanana": 108361,
+                "Analanjirofo": 80604,
+                "Vatovavy Fitovinany": 41018,
+                "Atsimo Atsinanana": 81941
               },
               "type": "switch",
               "switch_on": {
