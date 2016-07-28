@@ -67,6 +67,14 @@ FormplayerFrontend.reqres.setHandler('clearMenu', function () {
     $('#menu-region').html("");
 });
 
+$(document).bind("ajaxStart", function(){
+    $(".formplayer-request").addClass('formplayer-requester-disabled');
+    tfLoading();
+}).bind("ajaxStop", function() {
+    $(".formplayer-request").removeClass('formplayer-requester-disabled');
+    tfLoadingComplete();
+});
+
 FormplayerFrontend.reqres.setHandler('error', function(errorMessage) {
     showError(errorMessage, $("#cloudcare-notifications"), 10000);
 });
@@ -86,7 +94,7 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
             FormplayerFrontend.request("clearForm");
-            FormplayerFrontend.trigger("apps:list");
+            FormplayerFrontend.trigger("apps:currentApp");
             showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
         } else {
             showError(resp.output, $("#cloudcare-notifications"));

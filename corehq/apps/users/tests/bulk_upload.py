@@ -1,8 +1,13 @@
 from copy import deepcopy
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc
-from corehq.apps.users.bulkupload import UserLocMapping, SiteCodeToSupplyPointCache
+from corehq.apps.users.bulkupload import (
+    check_duplicate_usernames,
+    SiteCodeToSupplyPointCache,
+    UserLocMapping,
+    UserUploadError,
+)
 from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
@@ -192,3 +197,20 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             list([])
         )
         self.assertEqual(self.user.email, updated_user_spec['email'].lower())
+
+
+class TestUserBulkUploadUtils(SimpleTestCase):
+
+    def test_check_duplicate_usernames(self):
+        user_specs = [
+            {
+                u'username': u'hello',
+                u'user_id': u'should not update',
+            },
+            {
+                u'username': u'hello',
+                u'user_id': u'other id',
+            },
+        ]
+
+        self.assertRaises(UserUploadError, check_duplicate_usernames, user_specs)
