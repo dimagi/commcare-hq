@@ -2,7 +2,8 @@ import json
 import re
 from corehq.apps.domain.views import DomainViewMixin
 from custom.zipline.api import get_order_update_critical_section_key, ProductQuantity
-from custom.zipline.models import EmergencyOrder, EmergencyOrderStatusUpdate
+from custom.zipline.models import (EmergencyOrder, EmergencyOrderStatusUpdate,
+    update_product_quantity_json_field)
 from dateutil.parser import parse as parse_timestamp
 from decimal import Decimal
 from dimagi.utils.couch import CriticalSection
@@ -367,13 +368,16 @@ class DeliveredStatusUpdateView(BaseZiplineStatusUpdateView):
         self.validate_and_clean_int(data, 'packageNumber')
 
     def process_status_update(self, order, data):
+        dispatched_data = self.carry_forward_dispatched_data(order, data['packageNumber'])
         delivered_status = EmergencyOrderStatusUpdate.create_for_order(
             order.pk,
             EmergencyOrderStatusUpdate.STATUS_DELIVERED,
             zipline_timestamp=data['timestamp'],
             package_number=data['packageNumber'],
-            **self.carry_forward_dispatched_data(order, data['packageNumber'])
+            **dispatched_data
         )
+
+        update_product_quantity_json_field(order.products_delivered, dispatched_data['products'])
 
         if not order.delivered_status and self.all_flights_done(order):
             order.status = EmergencyOrderStatusUpdate.STATUS_DELIVERED

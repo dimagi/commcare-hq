@@ -89,11 +89,6 @@ def get_order_update_critical_section_key(order_id):
     return 'zipline-updating-order-id-{}'.format(order_id)
 
 
-def update_order_products_delivered(order, products):
-    update_product_quantity_json_field(order.products_delivered, products)
-    order.save()
-
-
 def update_order_products_confirmed(order, products):
     update_product_quantity_json_field(order.products_confirmed, products)
     confirmed_status = EmergencyOrderStatusUpdate.create_for_order(
