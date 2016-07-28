@@ -1,7 +1,7 @@
 from corehq.util.elastic import es_index
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
-DOMAIN_INDEX = es_index("hqdomains_20160627_1351")
+DOMAIN_INDEX = es_index("hqdomains_20160728_1916")
 DOMAIN_MAPPING = {'_meta': {'comment': '',
                             'created': None},
  'date_detection': False,
