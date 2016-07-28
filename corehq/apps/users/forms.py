@@ -485,7 +485,7 @@ class NewMobileWorkerForm(forms.Form):
         required=False,
         label=ugettext_noop("Last Name")
     )
-    location_id = forms.ChoiceField(
+    location_id = forms.CharField(
         label=ugettext_noop("Location"),
         required=False,
     )
@@ -502,8 +502,7 @@ class NewMobileWorkerForm(forms.Form):
         max_chars_username = 80 - len(email_string)
 
         if project.uses_locations:
-            locations = SQLLocation.by_domain(project.name)
-            self.fields['location_id'].choices = [(l.location_id, l.name) for l in locations]
+            self.fields['location_id'].widget = AngularLocationSelectWidget()
             location_field = crispy.Field(
                 'location_id',
                 ng_model='mobileWorker.location_id',
@@ -633,6 +632,28 @@ class MultipleSelectionForm(forms.Form):
                 )
             )
         )
+
+
+class AngularLocationSelectWidget(forms.Widget):
+    """
+    Assumptions:
+        mobileWorker.location_id is model
+        scope has searchLocations function to search
+        scope uses availableLocations to search in
+    """
+
+    def __init__(self, attrs=None):
+        super(AngularLocationSelectWidget, self).__init__(attrs)
+
+    def render(self, name, value, attrs=None):
+        return """
+          <ui-select  ng-model="mobileWorker.location_id" theme="select2" style="width: 300px;">
+            <ui-select-match placeholder="Select location...">{{$select.selected.name}}</ui-select-match>
+            <ui-select-choices refresh="searchLocations($select.search)" refresh-delay="0" repeat="location.id as location in availableLocations | filter:$select.search">
+              <div ng-bind-html="location.name | highlight: $select.search"></div>
+            </ui-select-choices>
+          </ui-select>
+        """
 
 
 class SupplyPointSelectWidget(forms.Widget):

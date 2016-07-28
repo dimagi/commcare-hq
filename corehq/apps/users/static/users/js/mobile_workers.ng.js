@@ -53,6 +53,7 @@
 
     mobileWorkers.constant('customFields', []);
     mobileWorkers.constant('customFieldNames', []);
+    mobileWorkers.constant('location_url', '');
 
     var MobileWorker = function (data) {
         var self = this;
@@ -85,7 +86,7 @@
 
     mobileWorkerControllers.MobileWorkerCreationController = function (
             $scope, workerCreationFactory, djangoRMI, customFields,
-            customFieldNames
+            customFieldNames, location_url, $http
     ) {
         $scope._ = _;  // make underscore available
         $scope.mobileWorker = {};
@@ -94,6 +95,20 @@
         $scope.workers = [];
         $scope.customFormFields = customFields;
         $scope.customFormFieldNames = customFieldNames;
+
+        $scope.availableLocations = [];
+
+        $scope.searchLocations = function (query) {
+            var reqStr = location_url + "?name=" + query;
+            $http.get(reqStr).then(
+                function (response) {
+                    $scope.availableLocations = response.data;
+                },
+                function () {
+                    console.log('Error retrieving locations');
+                }
+            );
+        };
 
         $scope.initializeMobileWorker = function (mobileWorker) {
             visualFormCtrl.usernameClear();

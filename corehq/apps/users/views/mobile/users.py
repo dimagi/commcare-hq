@@ -571,7 +571,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'can_add_extra_users': self.can_add_extra_users,
             'pagination_limit_cookie_name': (
                 'hq.pagination.limit.mobile_workers_list.%s' % self.domain),
-            'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain)
+            'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain),
+            'location_url': reverse('corehq.apps.locations.views.child_locations_for_select2', args=[self.domain]),
         }
 
     @property
