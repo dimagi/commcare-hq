@@ -5,33 +5,33 @@ import datetime
 import hashlib
 import logging
 import time
-from corehq.util.couch_helpers import CouchAttachmentsBuilder
-from jsonobject.base import DefaultProperty
-from lxml import etree
 
-from django.utils.datastructures import SortedDict
+from django.db import models
+
+from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import PreconditionFailed
 from dimagi.ext.couchdbkit import *
-from couchdbkit import ResourceNotFound
-from lxml.etree import XMLSyntaxError
-from couchforms.jsonobject_extensions import GeoPointProperty
 from dimagi.utils.couch import CouchDocLockableMixIn
-from dimagi.utils.decorators.memoized import memoized
-
-from dimagi.utils.indicators import ComputedDocumentMixin
-from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.database import get_safe_read_kwargs
+from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.mixins import UnicodeMixIn
+from jsonobject.base import DefaultProperty
 from jsonobject.exceptions import WrappingAttributeError
+from lxml import etree
+from lxml.etree import XMLSyntaxError
+
+from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from corehq.util.soft_assert import soft_assert
 from corehq.form_processor.abstract_models import AbstractXFormInstance
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.utils import clean_metadata
 
-from couchforms.signals import xform_archived, xform_unarchived
-from couchforms.const import ATTACHMENT_NAME
 from couchforms import const
+from couchforms.const import ATTACHMENT_NAME
+from couchforms.jsonobject_extensions import GeoPointProperty
+from couchforms.signals import xform_archived, xform_unarchived
 
 
 def doc_types():
@@ -63,7 +63,7 @@ class Metadata(DocumentSchema):
             <instanceID />
             <userID />
             <deviceID />
-            <deprecatedID /> 
+            <deprecatedID />
             <username />
 
             <!-- CommCare extension -->
@@ -146,7 +146,7 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
             return db.get(docid, rev=rev, wrapper=cls.wrap, **extras)
         except ResourceNotFound:
             raise XFormNotFound
-        
+
     @property
     def form_id(self):
         return self._id
@@ -220,7 +220,7 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
                 return super(XFormInstance, self).save(**kwargs)
             except PreconditionFailed:
                 if tries == 0:
-                    logging.error('doc %s got a precondition failed' % self._id)
+                    logging.error('doc %s got a precondition failed', self._id)
                 if tries < RETRIES:
                     tries += 1
                     time.sleep(SLEEP)
@@ -296,10 +296,10 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         the form itself
         """
         return dict((item, val) for item, val in self._attachments.items() if item != ATTACHMENT_NAME)
-    
+
     def xml_md5(self):
         return hashlib.md5(self.get_xml().encode('utf-8')).hexdigest()
-    
+
     def archive(self, user_id=None):
         if self.is_archived:
             return
@@ -321,10 +321,6 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         ))
         XFormInstance.save(self)  # subclasses explicitly set the doc type so force regular save
         xform_unarchived.send(sender="couchforms", xform=self)
-
-    @property
-    def is_archived(self):
-        return self.doc_type == "XFormArchived"
 
 
 class XFormError(XFormInstance):
@@ -351,25 +347,25 @@ class XFormError(XFormInstance):
         return instance
 
     def save(self, *args, **kwargs):
-        # we put this here, in case the doc hasn't been modified from an original 
-        # XFormInstance we'll force the doc_type to change. 
-        self["doc_type"] = "XFormError" 
+        # we put this here, in case the doc hasn't been modified from an original
+        # XFormInstance we'll force the doc_type to change.
+        self["doc_type"] = "XFormError"
         super(XFormError, self).save(*args, **kwargs)
 
     @property
     def is_error(self):
         return True
 
-        
+
 class XFormDuplicate(XFormError):
     """
     Duplicates of instances go here.
     """
-    
+
     def save(self, *args, **kwargs):
-        # we put this here, in case the doc hasn't been modified from an original 
-        # XFormInstance we'll force the doc_type to change. 
-        self["doc_type"] = "XFormDuplicate" 
+        # we put this here, in case the doc hasn't been modified from an original
+        # XFormInstance we'll force the doc_type to change.
+        self["doc_type"] = "XFormDuplicate"
         # we can't use super because XFormError also sets the doc type
         XFormInstance.save(self, *args, **kwargs)
 
@@ -386,9 +382,9 @@ class XFormDeprecated(XFormError):
     orig_id = StringProperty()
 
     def save(self, *args, **kwargs):
-        # we put this here, in case the doc hasn't been modified from an original 
-        # XFormInstance we'll force the doc_type to change. 
-        self["doc_type"] = "XFormDeprecated" 
+        # we put this here, in case the doc hasn't been modified from an original
+        # XFormInstance we'll force the doc_type to change.
+        self["doc_type"] = "XFormDeprecated"
         # we can't use super because XFormError also sets the doc type
         XFormInstance.save(self, *args, **kwargs)
         # should raise a signal saying that this thing got deprecated
@@ -415,21 +411,21 @@ class XFormArchived(XFormError):
 
 class SubmissionErrorLog(XFormError):
     """
-    When a hard submission error (typically bad XML) is received we save it 
-    here. 
+    When a hard submission error (typically bad XML) is received we save it
+    here.
     """
     md5 = StringProperty()
-        
+
     def __unicode__(self):
-        return "Doc id: %s, Error %s" % (self.get_id, self.problem) 
+        return "Doc id: %s, Error %s" % (self.get_id, self.problem)
 
     def get_xml(self):
         return self.fetch_attachment(ATTACHMENT_NAME)
-        
+
     def save(self, *args, **kwargs):
-        # we have to override this because XFormError does too 
-        self["doc_type"] = "SubmissionErrorLog" 
-        # and we can't use super for the same reasons XFormError 
+        # we have to override this because XFormError does too
+        self["doc_type"] = "SubmissionErrorLog"
+        # and we can't use super for the same reasons XFormError
         XFormInstance.save(self, *args, **kwargs)
 
     @property
@@ -459,8 +455,6 @@ class DefaultAuthContext(DocumentSchema):
 
     def is_valid(self):
         return True
-
-from django.db import models
 
 
 class UnfinishedSubmissionStub(models.Model):
