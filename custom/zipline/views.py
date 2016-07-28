@@ -217,6 +217,31 @@ class BaseZiplineStatusUpdateView(View, DomainViewMixin):
             EmergencyOrderStatusUpdate.STATUS_DELIVERED in statuses
         )
 
+    def get_dispatched_status_or_none(self, order, package_number):
+        result = EmergencyOrderStatusUpdate.objects.filter(
+            order_id=order.pk,
+            package_number=package_number,
+            status=EmergencyOrderStatusUpdate.STATUS_DISPATCHED
+        ).order_by('-zipline_timestamp')[:1]
+
+        result = list(result)
+
+        if len(result) > 0:
+            return result[0]
+
+        return None
+
+    def carry_forward_dispatched_data(self, order, package_number):
+        dispatched_status = self.get_dispatched_status_or_none(order, package_number)
+        if dispatched_status:
+            return {
+                'package_id': dispatched_status.package_id,
+                'vehicle_id': dispatched_status.vehicle_id,
+                'products': dispatched_status.products,
+            }
+        else:
+            return {}
+
     def post(self, request, *args, **kwargs):
         # request.body already confirmed to be a valid json dict in ZiplineOrderStatusView
         data = json.loads(request.body)
@@ -346,7 +371,8 @@ class DeliveredStatusUpdateView(BaseZiplineStatusUpdateView):
             order.pk,
             EmergencyOrderStatusUpdate.STATUS_DELIVERED,
             zipline_timestamp=data['timestamp'],
-            package_number=data['packageNumber']
+            package_number=data['packageNumber'],
+            **self.carry_forward_dispatched_data(order, data['packageNumber'])
         )
 
         if not order.delivered_status and self.all_flights_done(order):
@@ -370,7 +396,8 @@ class CancelledInFlightStatusUpdateView(BaseZiplineStatusUpdateView):
             order.pk,
             EmergencyOrderStatusUpdate.STATUS_CANCELLED_IN_FLIGHT,
             zipline_timestamp=data['timestamp'],
-            package_number=data['packageNumber']
+            package_number=data['packageNumber'],
+            **self.carry_forward_dispatched_data(order, data['packageNumber'])
         )
 
         if not order.delivered_status and self.all_flights_done(order):
@@ -403,7 +430,8 @@ class ApproachingEtaStatusUpdateView(BaseZiplineStatusUpdateView):
             EmergencyOrderStatusUpdate.STATUS_APPROACHING_ETA,
             zipline_timestamp=data['timestamp'],
             package_number=data['packageNumber'],
-            eta_minutes_remaining=data['minutesRemaining']
+            eta_minutes_remaining=data['minutesRemaining'],
+            **self.carry_forward_dispatched_data(order, data['packageNumber'])
         )
 
         return True, {'status': 'success'}
@@ -424,7 +452,8 @@ class EtaDelayedStatusUpdateView(BaseZiplineStatusUpdateView):
             EmergencyOrderStatusUpdate.STATUS_ETA_DELAYED,
             zipline_timestamp=data['timestamp'],
             package_number=data['packageNumber'],
-            eta=data['newEta']
+            eta=data['newEta'],
+            **self.carry_forward_dispatched_data(order, data['packageNumber'])
         )
 
         return True, {'status': 'success'}
