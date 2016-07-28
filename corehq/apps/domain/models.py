@@ -321,6 +321,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     attribution_notes = StringProperty()
     publisher = StringProperty(choices=["organization", "user"], default="user")
     yt_id = StringProperty()
+    snapshot_head = BooleanProperty(default=False)
 
     deployment = SchemaProperty(Deployment)
 
