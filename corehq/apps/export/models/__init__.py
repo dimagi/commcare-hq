@@ -28,6 +28,8 @@ from .new import (
     MultipleChoiceItem,
     MultiMediaItem,
     PathNode,
+    ExportMigrationMeta,
+    ConversionMeta,
     MAIN_TABLE,
     CASE_HISTORY_TABLE,
     PARENT_CASE_TABLE,

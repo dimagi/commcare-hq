@@ -1610,6 +1610,24 @@ class StockExportColumn(ExportColumn):
                 values[state_index] = state.stock_on_hand
         return values
 
+
+class ConversionMeta(DocumentSchema):
+    path = StringProperty()
+    failure_reason = StringProperty()
+    info = ListProperty()
+
+
+class ExportMigrationMeta(Document):
+    saved_export_id = StringProperty()
+    domain = StringProperty()
+
+    skipped_tables = SchemaListProperty(ConversionMeta)
+    skipped_columns = SchemaListProperty(ConversionMeta)
+
+    converted_tables = SchemaListProperty(ConversionMeta)
+    converted_columns = SchemaListProperty(ConversionMeta)
+
+
 # These must match the constants in corehq/apps/export/static/export/js/const.js
 MAIN_TABLE = []
 CASE_HISTORY_TABLE = [PathNode(name='actions', is_repeat=True)]
