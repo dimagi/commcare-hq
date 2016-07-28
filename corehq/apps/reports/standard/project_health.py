@@ -3,7 +3,6 @@ import datetime
 from django.utils.translation import ugettext_lazy
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CommCareUser
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.style.decorators import use_nvd3
 from corehq.apps.users.util import raw_username
@@ -54,15 +53,17 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     active = jsonobject.IntegerProperty()
     performing = jsonobject.IntegerProperty()
 
-    def __init__(self, domain, month, users, has_filter,
+    def __init__(self, domain, month, users, has_filter, active_not_deleted_users,
                  performance_threshold, previous_summary=None,
                  delta_high_performers=0, delta_low_performers=0):
         self._previous_summary = previous_summary
         self._next_summary = None
+
         base_queryset = MALTRow.objects.filter(
             domain_name=domain,
             month=month,
             user_type__in=['CommCareUser', 'CommCareUser-Deleted'],
+            user_id__in=active_not_deleted_users,
         )
         if has_filter:
             base_queryset = base_queryset.filter(
@@ -179,8 +180,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                 return self.delta_inactive * 100.
             return float(self.delta_inactive / float(self._previous_summary.number_of_inactive_users)) * 100.
 
-    @memoized
-    def get_all_user_stubs(self):
+    def _get_all_user_stubs(self):
         return {
             row['user_id']: UserActivityStub(
                 user_id=row['user_id'],
@@ -195,9 +195,9 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     @memoized
     def get_all_user_stubs_with_extra_data(self):
         if self._previous_summary:
-            previous_stubs = self._previous_summary.get_all_user_stubs()
-            next_stubs = self._next_summary.get_all_user_stubs() if self._next_summary else {}
-            user_stubs = self.get_all_user_stubs()
+            previous_stubs = self._previous_summary._get_all_user_stubs()
+            next_stubs = self._next_summary._get_all_user_stubs() if self._next_summary else {}
+            user_stubs = self._get_all_user_stubs()
             ret = []
             for user_stub in user_stubs.values():
                 ret.append(UserActivityStub(
@@ -227,8 +227,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         """
         if self._previous_summary:
             unhealthy_users = filter(
-                lambda stub: stub.is_active and not stub.is_performing and not
-                CommCareUser.get(stub.user_id).is_deleted(),
+                lambda stub: stub.is_active and not stub.is_performing,
                 self.get_all_user_stubs_with_extra_data()
             )
             return sorted(unhealthy_users, key=lambda stub: stub.delta_forms)
@@ -240,8 +239,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         """
         if self._previous_summary:
             dropouts = filter(
-                lambda stub: not stub.is_active and not
-                CommCareUser.get(stub.user_id).is_deleted(),
+                lambda stub: not stub.is_active,
                 self.get_all_user_stubs_with_extra_data()
             )
             return sorted(dropouts, key=lambda stub: stub.delta_forms)
@@ -253,8 +251,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         """
         if self._previous_summary:
             dropouts = filter(
-                lambda stub: stub.is_newly_performing and not
-                CommCareUser.get(stub.user_id).is_deleted(),
+                lambda stub: stub.is_newly_performing,
                 self.get_all_user_stubs_with_extra_data()
             )
             return sorted(dropouts, key=lambda stub: -stub.delta_forms)
@@ -349,6 +346,7 @@ class ProjectHealthDashboard(ProjectReport):
         last_month_summary = None
         performance_threshold = get_performance_threshold(self.domain)
         filtered_users = self.get_users_by_filter()
+        active_not_deleted_users = UserES().domain(self.domain).values_list("_id", flat=True)
         for i in range(-6, 1):
             year, month = add_months(now.year, now.month, i)
             month_as_date = datetime.date(year, month, 1)
@@ -359,6 +357,7 @@ class ProjectHealthDashboard(ProjectReport):
                 previous_summary=last_month_summary,
                 users=filtered_users,
                 has_filter=bool(self.get_group_location_ids()),
+                active_not_deleted_users=active_not_deleted_users,
             )
             six_month_summary.append(this_month_summary)
             if last_month_summary is not None:
