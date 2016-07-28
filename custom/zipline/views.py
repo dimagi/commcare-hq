@@ -50,6 +50,7 @@ class ZiplineOrderStatusView(View, DomainViewMixin):
             EmergencyOrderStatusUpdate.STATUS_CANCELLED: CancelledStatusUpdateView,
             EmergencyOrderStatusUpdate.STATUS_DISPATCHED: DispatchedStatusUpdateView,
             EmergencyOrderStatusUpdate.STATUS_DELIVERED: DeliveredStatusUpdateView,
+            EmergencyOrderStatusUpdate.STATUS_CANCELLED_IN_FLIGHT: CancelledInFlightStatusUpdateView,
         }.get(status)
 
         if view is None:
@@ -348,6 +349,37 @@ class DeliveredStatusUpdateView(BaseZiplineStatusUpdateView):
         if not order.delivered_status and self.all_flights_done(order):
             order.status = EmergencyOrderStatusUpdate.STATUS_DELIVERED
             order.delivered_status = delivered_status
+            order.save()
+
+        return True, {'status': 'success'}
+
+    def send_sms_for_status_update(self, order, data):
+        pass
+
+
+class CancelledInFlightStatusUpdateView(BaseZiplineStatusUpdateView):
+
+    def validate_and_clean_payload(self, order, data):
+        self.validate_and_clean_int(data, 'packageNumber')
+
+    def process_status_update(self, order, data):
+        cancelled_in_flight_status = EmergencyOrderStatusUpdate.create_for_order(
+            order.pk,
+            EmergencyOrderStatusUpdate.STATUS_CANCELLED_IN_FLIGHT,
+            zipline_timestamp=data['timestamp'],
+            package_number=data['packageNumber']
+        )
+
+        if not order.delivered_status and self.all_flights_done(order):
+            order.status = EmergencyOrderStatusUpdate.STATUS_DELIVERED
+            order.delivered_status = EmergencyOrderStatusUpdate.objects.filter(
+                order_id=order.pk,
+                status=EmergencyOrderStatusUpdate.STATUS_DELIVERED
+            ).order_by('-zipline_timestamp')[0]
+            order.save()
+        elif not order.cancelled_status and self.all_flights_cancelled(order):
+            order.status = EmergencyOrderStatusUpdate.STATUS_CANCELLED
+            order.cancelled_status = cancelled_in_flight_status
             order.save()
 
         return True, {'status': 'success'}

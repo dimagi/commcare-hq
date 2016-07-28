@@ -147,6 +147,8 @@ class EmergencyOrder(models.Model):
         related_name='+', null=True)
 
     # A pointer to the EmergencyOrderStatusUpdate record representing the cancelled status update
+    # This might also point to a cancelled in flight status update in the event that the order was
+    # dispatched and then all filghts were cancelled.
     cancelled_status = models.ForeignKey('EmergencyOrderStatusUpdate', on_delete=models.PROTECT,
         related_name='+', null=True)
 
