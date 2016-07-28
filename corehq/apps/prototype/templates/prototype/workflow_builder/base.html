@@ -1,0 +1,130 @@
+{% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE }}">
+    <head>
+        {% captureas title_block %}{% block title %}{% endblock title %}{% endcaptureas %}
+        <title>
+            {% if title_block %}{{ title_block }} - {% endif %}AppBuilder
+        </title>
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
+
+        {# link tags #}
+        <link rel="shortcut icon" href="{% static 'style/img/favicon.png' %}" />
+
+        {% if less_debug %}
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'style/less/bootstrap.debug.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'font-awesome/less/font-awesome.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'style/less/font-commcare.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'style/less/style.debug.less' %}" />
+        {% else %}
+        {% compress css %}
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'style/less/bootstrap.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'font-awesome/less/font-awesome.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'style/less/font-commcare.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'style/less/style.less' %}" />
+        {% endcompress %}
+        {% endif %}
+
+        {% block stylesheets %}{% endblock stylesheets %}
+
+        {% compress css %}
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="screen"
+                  href="{% static "jquery-ui/themes/redmond/jquery-ui.min.css" %}" />
+        {% endcompress %}
+
+        {# Core Libraries #}
+        {% compress js %}
+        {% include "style/includes/core_libraries.html" %}
+        {% endcompress %}
+
+        {% compress js %}
+            <!-- UI libraries needed for all other widgets and interactions -->
+            <script src="{% static 'jquery-ui/ui/core.js' %}"></script>
+            <script src="{% static 'jquery-ui/ui/widget.js' %}"></script>
+            <script src="{% static 'jquery-ui/ui/mouse.js' %}"></script>
+            <script src="{% static 'jquery-ui/ui/position.js' %}"></script>
+
+            <!-- Individual widgets and interactions -->
+            <script src="{% static 'jquery-ui/ui/menu.js' %}"></script>
+            <script src="{% static 'jquery-ui/ui/autocomplete.js' %}"></script>
+            <script src="{% static 'jquery-ui/ui/button.js' %}"></script>
+            <script src="{% static 'jquery-ui/ui/datepicker.js' %}"></script>
+            <script src="{% static 'jquery-ui/ui/draggable.js' %}"></script>
+            <script src="{% static 'jquery-ui/ui/resizable.js' %}"></script>
+            <script src="{% static 'jquery-ui/ui/droppable.js' %}"></script>
+            <script src="{% static 'jquery-ui/ui/sortable.js' %}"></script>
+        {% endcompress %}
+
+        <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+
+        {% block head %}
+        {% endblock %}
+
+        {% if less_debug %}
+            <script>
+                less = {
+                    env: "development",
+                    useFileCache: true,
+                    logLevel: 2,
+                    errorReporting: 'console',
+                    async: false,
+                    fileAsync: false,
+                    poll: 1000,
+                    functions: {},
+                    dumpLineNumbers: "comments",
+                    relativeUrls: false
+                };
+            </script>
+            <script src="{% static 'less/dist/less-1.7.3.min.js' %}"></script>
+            {% if less_watch %}<script>less.watch();</script>{% endif %}
+        {% endif %}
+    </head>
+    <body>
+        {% block navigation %}{% endblock %}
+        {% block content %}{% endblock content %}
+        {% block modals %}{% endblock modals %}
+
+        {# javascript below this line #}
+
+        {% compress js %}
+        <script src="{% static 'style/js/hq.helpers.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
+        {% endcompress %}
+
+        {% include "style/includes/ko.html" %}
+
+        {% block js %}{% endblock js %}
+
+        {% block js-inline %}{% endblock js-inline %}
+
+    </body>
+</html>
