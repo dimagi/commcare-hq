@@ -259,27 +259,22 @@ URL_ROOT = 'http://localhost:8000/a/{{DOMAIN}}'
 Running CommCare HQ
 -------------------
 
-If your installation didn't set up the helper processes required by CommCare HQ
-to automatically run on system startup, you need to run them manually:
-
-    $ redis-server /path/to/redis.conf
-    $ /path/to/unzipped/elasticsearch/bin/elasticsearch &
-    $ /path/to/couchdb/bin/couchdb &
+Make sure the required services are running (PostgreSQL, Redis, Elasticsearch, CouchDB).
 
 Then run the following separately:
-
-    # Setting up the asynchronous task scheduler
-    # For Mac / Linux
-    $ ./manage.py celeryd --verbosity=2 --beat --statedb=celery.db --events
-    # Windows
-    > manage.py celeryd --settings=settings
-
-    # Keeps elasticsearch index in sync
-    $ ./manage.py run_ptop --all
 
     # run the Django server
     $ ./manage.py runserver 0.0.0.0:8000
 
+    # Keeps elasticsearch index in sync
+    $ ./manage.py run_ptop --all
+    
+    # Setting up the asynchronous task scheduler (only required if you have CELERY_ALWAYS_EAGER=False in settings)
+    # For Mac / Linux
+    $ ./manage.py celeryd --verbosity=2 --beat --statedb=celery.db --events
+    # Windows
+    > manage.py celeryd --settings=settings
+  
 If you want to use CloudCare you will also need to run the Touchforms server.
 
     # run Touchforms server
