@@ -316,6 +316,14 @@ To run a particular test or subset of tests
 If database tests are failing because of a `permission denied` error, give your postgres user permissions to create a database.
 In the postgres shell, run the following as a superuser: `ALTER USER commcarehq CREATEDB;`
 
+To avoid having to run the databse setup for each test run you can specify the `REUSE_DB` environment variable
+ which will use an existing test database if one exists:
+ 
+    $ REUSE_DB=1 ./manage.py test corehq.apps.app_manager
+    $ REUSE_DB=reset ./manage.py test corehq.apps.app_manager  # drop the current test DB and create a fresh one
+    
+See `corehq.tests.nose.HqdbContext` for full description of `REUSE_DB`.
+
 ## Javascript tests
 
 ### Setup
