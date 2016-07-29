@@ -1244,7 +1244,9 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     objects = RestrictedManager()
 
     domain = models.CharField(max_length=255, null=False, default=None)
-    case_id = models.CharField(max_length=255, default=None)  # remove foreign key until we're sharding this
+    case = models.ForeignKey(
+        'CommCareCaseSQL', to_field='case_id', db_index=False
+    )
     # can't be a foreign key to products because of sharding.
     # also still unclear whether we plan to support ledgers to non-products
     entry_id = models.CharField(max_length=100, default=None)
@@ -1285,7 +1287,7 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     class Meta:
         app_label = "form_processor"
         db_table = LedgerValue_DB_TABLE
-        unique_together = ("case_id", "section_id", "entry_id")
+        unique_together = ("case", "section_id", "entry_id")
 
 
 class LedgerTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
@@ -1300,7 +1302,9 @@ class LedgerTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
     server_date = models.DateTimeField()
     report_date = models.DateTimeField()
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
-    case_id = models.CharField(max_length=255, default=None)
+    case = models.ForeignKey(
+        'CommCareCaseSQL', to_field='case_id', db_index=False
+    )
     entry_id = models.CharField(max_length=100, default=None)
     section_id = models.CharField(max_length=100, default=None)
 
@@ -1378,7 +1382,7 @@ class LedgerTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
         db_table = LedgerTransaction_DB_TABLE
         app_label = "form_processor"
         index_together = [
-            ["case_id", "section_id", "entry_id"],
+            ["case", "section_id", "entry_id"],
         ]
 
 
