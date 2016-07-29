@@ -1,9 +1,8 @@
+import threading
+
 from django.conf import settings
 
-from corehq.toggles import NAMESPACE_DOMAIN, NEW_EXPORTS, TF_USES_SQLITE_BACKEND
-from dimagi.utils.logging import notify_exception
-
-import threading
+from corehq.toggles import NEW_EXPORTS, TF_USES_SQLITE_BACKEND
 
 _thread_local = threading.local()
 
