@@ -35,7 +35,6 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
         FormExportInstance,
         CaseExportDataSchema,
         CaseExportInstance,
-        PathNode,
         ExportMigrationMeta,
         ConversionMeta,
     )
@@ -102,20 +101,8 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
 
             try:
                 if column.doc_type == 'StockExportColumn':
-                    # Handle stock export column separately because it's a messy edge since
-                    # it doesn't have a unique index (_id).
                     info.append('Column is a stock column')
-
-                    index, new_column = new_table.get_column(
-                        [PathNode(name='stock')],
-                        'ExportItem',
-                        None,
-                    )
-                    if new_column:
-                        new_column.selected = True
-                        new_column.label = column.display
-                    else:
-                        raise SkipConversion('StockExportColumn not found in new export')
+                    _convert_stock_column(new_table, column)
                     continue
 
                 if column.transform:
@@ -149,29 +136,13 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
                         transform,
                     ))
 
-                guess_types = [
-                    'ScalarItem',
-                    'MultipleChoiceItem',
-                    'GeopointItem',
-                    'MultiMediaItem',
-                    'ExportItem',
-                ]
-                # Since old exports had no concept of item type, we just guess all
-                # the types and see if there are any matches.
-                for guess_type in guess_types:
-                    index, new_column = new_table.get_column(
-                        column_path,
-                        guess_type,
-                        _strip_deid_transform(transform),
-                    )
-                    if new_column:
-                        info.append('Column is guessed to be of type: {}'.format(
-                            guess_type,
-                        ))
-                        break
-
+                new_column = _convert_normal_column(new_table, column_path, transform)
                 if not new_column:
                     raise SkipConversion('Column not found in new schema')
+                else:
+                    info.append('Column is guessed to be of type: {}'.format(
+                        new_column.item.doc_type,
+                    ))
 
                 new_column.label = column.display
                 new_column.selected = True
@@ -286,6 +257,45 @@ def _convert_index_to_path_nodes(index):
         return path
     else:
         return [PathNode(name=n) for n in index.split('.')]
+
+
+def _convert_stock_column(new_table, old_column):
+    from .models import PathNode
+    # Handle stock export column separately because it's a messy edge since
+    # it doesn't have a unique index (_id).
+
+    index, new_column = new_table.get_column(
+        [PathNode(name='stock')],
+        'ExportItem',
+        None,
+    )
+    if new_column:
+        new_column.selected = True
+        new_column.label = old_column.display
+    else:
+        raise SkipConversion('StockExportColumn not found in new export')
+
+
+def _convert_normal_column(new_table, column_path, transform):
+    guess_types = [
+        'ScalarItem',
+        'MultipleChoiceItem',
+        'GeopointItem',
+        'MultiMediaItem',
+        'ExportItem',
+    ]
+    # Since old exports had no concept of item type, we just guess all
+    # the types and see if there are any matches.
+    for guess_type in guess_types:
+        index, new_column = new_table.get_column(
+            column_path,
+            guess_type,
+            _strip_deid_transform(transform),
+        )
+        if new_column:
+            break
+    return new_column
+
 
 
 def revert_new_exports(new_exports):
