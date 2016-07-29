@@ -20,9 +20,15 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
 
     def setUp(self):
         super(KafkaPublishingTest, self).setUp()
-        FormProcessorTestUtils.delete_all_sql_forms()
+        FormProcessorTestUtils.delete_all_v2_ledgers()
         FormProcessorTestUtils.delete_all_sql_cases()
+        FormProcessorTestUtils.delete_all_sql_forms()
         self.form_accessors = FormAccessors(domain=self.domain)
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_v2_ledgers()
+        FormProcessorTestUtils.delete_all_sql_cases()
+        FormProcessorTestUtils.delete_all_sql_forms()
 
     def test_form_is_published(self):
         kafka_consumer = get_test_kafka_consumer(topics.FORM_SQL)
