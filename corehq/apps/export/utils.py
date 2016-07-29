@@ -11,6 +11,10 @@ from corehq.apps.reports.models import (
     FormExportSchema,
     CaseExportSchema,
 )
+from corehq.apps.app_manager.dbaccessors import (
+    get_app,
+    get_brief_apps_in_domain,
+)
 from .exceptions import SkipConversion
 from .const import (
     CASE_EXPORT,
@@ -39,14 +43,21 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
         ConversionMeta,
     )
 
-    # Build a new schema and instance
-    migration_meta = ExportMigrationMeta(
-        saved_export_id=saved_export._id,
-        domain=domain,
-    )
     schema = None
     instance_cls = None
     export_type = saved_export.type
+
+    is_remote_app_migration = _is_remote_app_conversion(
+        domain,
+        getattr(saved_export, 'app_id', None),
+        export_type,
+    )
+    migration_meta = ExportMigrationMeta(
+        saved_export_id=saved_export._id,
+        domain=domain,
+        is_remote_app_migration=is_remote_app_migration
+    )
+    # Build a new schema and instance
     if export_type == FORM_EXPORT:
         instance_cls = FormExportInstance
         schema = FormExportDataSchema.generate_schema_from_builds(
@@ -296,6 +307,14 @@ def _convert_normal_column(new_table, column_path, transform):
             break
     return new_column
 
+
+def _is_remote_app_conversion(domain, app_id, export_type):
+    if app_id and export_type == FORM_EXPORT:
+        app = get_app(domain, app_id)
+        return app.is_remote_app()
+    elif export_type == CASE_EXPORT:
+        apps = get_brief_apps_in_domain(domain, include_remote=True)
+        return any(map(lambda app: app.is_remote_app(), apps))
 
 
 def revert_new_exports(new_exports):

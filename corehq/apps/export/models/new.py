@@ -1652,6 +1652,8 @@ class ExportMigrationMeta(Document):
     converted_tables = SchemaListProperty(ConversionMeta)
     converted_columns = SchemaListProperty(ConversionMeta)
 
+    is_remote_app_migration = BooleanProperty(default=False)
+
     class Meta:
         app_label = 'export'
 

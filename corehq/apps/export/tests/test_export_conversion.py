@@ -17,15 +17,19 @@ from corehq.apps.export.models import (
     FormExportInstance,
     CaseExportInstance,
 )
+from corehq.apps.app_manager.models import Domain, Application, RemoteApp, Module
 from corehq.apps.export.utils import (
     convert_saved_export_to_export_instance,
     _convert_index_to_path_nodes,
     revert_new_exports,
+    _is_remote_app_conversion,
 )
 from corehq.apps.export.const import (
     DEID_ID_TRANSFORM,
     DEID_DATE_TRANSFORM,
     CASE_NAME_TRANSFORM,
+    FORM_EXPORT,
+    CASE_EXPORT,
 )
 from corehq.apps.export.models import (
     MAIN_TABLE,
@@ -38,6 +42,45 @@ from corehq.apps.export.dbaccessors import (
 )
 
 MockRequest = namedtuple('MockRequest', 'domain')
+
+
+class TestIsRemoteAppConversion(TestCase):
+    domain = 'test-is-remote-app'
+
+    @classmethod
+    def setUpClass(cls):
+        cls.project = Domain(name=cls.domain)
+        cls.project.save()
+
+        cls.apps = [
+            # .wrap adds lots of stuff in, but is hard to call directly
+            # this workaround seems to work
+            Application.wrap(
+                Application(
+                    domain=cls.domain,
+                    name='foo',
+                    version=1,
+                    modules=[Module()]
+                ).to_json()
+            ),
+            RemoteApp.wrap(RemoteApp(domain=cls.domain, version=1, name='bar').to_json()),
+        ]
+        for app in cls.apps:
+            app.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        for app in cls.apps:
+            app.delete()
+        cls.project.delete()
+
+    def test_form_remote_app_conversion(self):
+        self.assertFalse(_is_remote_app_conversion(self.domain, self.apps[0]._id, FORM_EXPORT))
+        self.assertTrue(_is_remote_app_conversion(self.domain, self.apps[1]._id, FORM_EXPORT))
+
+    def test_case_remote_app_conversion(self):
+        self.assertTrue(_is_remote_app_conversion(self.domain, None, CASE_EXPORT))
+        self.assertFalse(_is_remote_app_conversion('wrong-domain', None, CASE_EXPORT))
 
 
 @mock.patch(
