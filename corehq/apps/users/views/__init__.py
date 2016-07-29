@@ -1010,7 +1010,7 @@ def location_restriction_for_users(request, domain):
 @csrf_exempt
 @require_POST
 @require_superuser
-def register_fcm_device_token(request, couch_user_id, device_token):
+def register_fcm_device_token(request, domain, couch_user_id, device_token):
     user = WebUser.get_by_user_id(couch_user_id)
     user.fcm_device_token = device_token
     user.save()
