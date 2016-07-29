@@ -23,6 +23,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.dbaccessors.all_commcare_users import get_all_commcare_users_by_domain
+from corehq.apps.users.models import UserRole
 
 from .forms import get_mobile_worker_max_username_length
 from .models import CommCareUser, CouchUser
@@ -36,7 +37,7 @@ class UserUploadError(Exception):
 required_headers = set(['username'])
 allowed_headers = set([
     'data', 'email', 'group', 'language', 'name', 'password', 'phone-number',
-    'uncategorized_data', 'user_id', 'is_active', 'location_code',
+    'uncategorized_data', 'user_id', 'is_active', 'location_code', 'role',
 ]) | required_headers
 old_headers = {
     # 'old_header_name': 'new_header_name'
@@ -389,6 +390,8 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
     user_ids = set()
     allowed_groups = set(group_memoizer.groups)
     allowed_group_names = [group.name for group in allowed_groups]
+    allowed_roles = UserRole.by_domain(domain)
+    roles_by_name = {role.name: role for role in allowed_roles}
     can_access_locations = domain_has_privilege(domain, privileges.LOCATIONS)
     if can_access_locations:
         location_cache = SiteCodeToLocationCache(domain)
@@ -408,6 +411,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
             user_id = row.get('user_id')
             username = row.get('username')
             location_code = row.get('location_code', '')
+            role = row.get('role', '')
 
             if password:
                 password = unicode(password)
@@ -519,6 +523,14 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                         else:
                             loc = None
 
+                    if role:
+                        if role in roles_by_name:
+                            user.set_role(domain, roles_by_name[role].get_qualified_id())
+                        else:
+                            raise UserUploadError(_(
+                                "Role '%s' does not exist"
+                            ) % role)
+
                     user.save()
                     if can_access_locations and loc:
                         if user.location_id != loc.location_id:
@@ -622,6 +634,7 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
         model_data, uncategorized_data = (
             user_data_model.get_model_and_uncategorized(user.user_data)
         )
+        role = user.get_role(domain)
         return {
             'data': model_data,
             'uncategorized_data': uncategorized_data,
@@ -635,6 +648,7 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
             'user_id': user._id,
             'is_active': str(user.is_active),
             'location_code': location_cache.get(user.location_id),
+            'role': role.name if role else '',
         }
 
     unrecognized_user_data_keys = set()
@@ -649,7 +663,7 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
 
     user_headers = [
         'username', 'password', 'name', 'phone-number', 'email',
-        'language', 'user_id', 'is_active',
+        'language', 'role', 'user_id', 'is_active',
     ]
     if domain_has_privilege(domain, privileges.LOCATIONS):
         user_headers.append('location_code')
