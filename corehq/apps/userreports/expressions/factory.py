@@ -8,11 +8,12 @@ from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, Pr
     ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec, \
     IdentityExpressionSpec, IteratorExpressionSpec, SwitchExpressionSpec, ArrayIndexExpressionSpec, \
     NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec, EvalExpressionSpec, FormsExpressionSpec, \
-    IterationNumberExpressionSpec, SubcasesExpressionSpec
+    IterationNumberExpressionSpec, SubcasesExpressionSpec, SplitStringExpressionSpec
 from corehq.apps.userreports.expressions.date_specs import AddDaysExpressionSpec, AddMonthsExpressionSpec, \
     MonthStartDateExpressionSpec, MonthEndDateExpressionSpec, DiffDaysExpressionSpec
 from corehq.apps.userreports.expressions.list_specs import FilterItemsExpressionSpec, \
-    MapItemsExpressionSpec, ReduceItemsExpressionSpec, FlattenExpressionSpec, SortItemsExpressionSpec
+    MapItemsExpressionSpec, ReduceItemsExpressionSpec, FlattenExpressionSpec, SortItemsExpressionSpec, \
+    DedupItemsExpressionSpec
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dimagi.utils.web import json_handler
 
@@ -108,6 +109,14 @@ def _dict_expression(spec, context):
     compiled_properties = {key: ExpressionFactory.from_spec(value) for key, value in wrapped.properties.items()}
     wrapped.configure(
         compiled_properties=compiled_properties,
+    )
+    return wrapped
+
+
+def _split_string_expression(spec, context):
+    wrapped = SplitStringExpressionSpec.wrap(spec)
+    wrapped.configure(
+        delim=ExpressionFactory.from_spec(wrapped.delim, context),
     )
     return wrapped
 
@@ -223,6 +232,14 @@ def _sort_items_expression(spec, context):
     return wrapped
 
 
+def _dedup_items_expression(spec, context):
+    wrapped = DedupItemsExpressionSpec.wrap(spec)
+    wrapped.configure(
+        items_expression=ExpressionFactory.from_spec(wrapped.items_expression, context)
+    )
+    return wrapped
+
+
 class ExpressionFactory(object):
     spec_map = {
         'identity': _identity_expression,
@@ -239,6 +256,7 @@ class ExpressionFactory(object):
         'switch': _switch_expression,
         'nested': _nested_expression,
         'dict': _dict_expression,
+        'split_string': _split_string_expression,
         'add_days': _add_days_expression,
         'add_months': _add_months_expression,
         'month_start_date': _month_start_date_expression,
@@ -252,6 +270,7 @@ class ExpressionFactory(object):
         'reduce_items': _reduce_items_expression,
         'flatten': _flatten_expression,
         'sort_items': _sort_items_expression,
+        'dedup_items': _dedup_items_expression,
     }
     # Additional items are added to the spec_map by use of the `register` method.
 

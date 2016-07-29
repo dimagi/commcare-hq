@@ -331,3 +331,14 @@ class SubcasesExpressionSpec(JsonObject):
         subcases = [c.to_json() for c in CaseAccessors(domain).get_reverse_indexed_cases([case_id])]
         context.set_cache_value(cache_key, subcases)
         return subcases
+
+
+class SplitStringExpressionSpec(JsonObject):
+    type = TypeProperty('split_string')
+    delim = StringProperty(default=' ')
+
+    def configure(self, delim=' '):
+        self._delim = delim
+
+    def __call__(self, item, context=None):
+        return item.split(self._delim)
