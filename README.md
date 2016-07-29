@@ -292,15 +292,6 @@ VELLUM_DEBUG = "dev"
     # simlink your Vellum code to submodules/formdesigner
     $ ln -s absolute/path/to/Vellum absolute/path/to/submodules/formdesigner/
 
-Building CommCare Mobile Apps
------------------------------
-
-In order to build, download, and sync a CommCare mobile app from your instance of
-CommCare HQ, you need to follow our [instructions][builds] for how to download
-and load CommCare binaries from the Dimagi build server.
-
- [builds]: https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/builds/README.md
-
 Running Tests
 -------------
 
