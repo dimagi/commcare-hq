@@ -67,11 +67,11 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
     instance.name = saved_export.name
     instance.is_deidentified = saved_export.is_safe
     instance.export_format = saved_export.default_format
-    instance.transform_dates = saved_export.transform_dates
+    instance.transform_dates = getattr(saved_export, 'transform_dates', False)
     instance.legacy_saved_export_schema_id = saved_export._id
     if saved_export.type == FORM_EXPORT:
-        instance.split_multiselects = saved_export.split_multiselects
-        instance.include_errors = saved_export.include_errors
+        instance.split_multiselects = getattr(saved_export, 'split_multiselects', False)
+        instance.include_errors = getattr(saved_export, 'include_errors', False)
 
     # With new export instance, copy over preferences from previous export
     for old_table in saved_export.tables:
