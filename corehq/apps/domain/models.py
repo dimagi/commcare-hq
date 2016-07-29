@@ -823,7 +823,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
             except NameUnavailableException:
                 return None
             copy.is_snapshot = True
-            for snapshot in self.snapshots():
+            for snapshot in self.snapshots(limit=1):
                 if snapshot.snapshot_head:
                     snapshot.snapshot_head = False
                     snapshot.save()
@@ -833,13 +833,14 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
             copy.save()
             return copy
 
-    def snapshots(self):
+    def snapshots(self, **view_kwargs):
         return Domain.view('domain/snapshots',
             startkey=[self._id, {}],
             endkey=[self._id],
             include_docs=True,
             reduce=False,
-            descending=True
+            descending=True,
+            **view_kwargs
         )
 
     @memoized

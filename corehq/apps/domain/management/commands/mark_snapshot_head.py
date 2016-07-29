@@ -10,15 +10,15 @@ class Command(BaseCommand):
         print "Migrating snapshot documents to have a marked head"
 
         for domain in Domain.get_all(include_docs=False):
-            head = Domain.get_db().view(
+            head = Domain.view(
                 'domain/snapshots',
                 startkey=[domain['id'], {}],
                 endkey=[domain['id'], None],
                 reduce=False,
                 include_docs=True,
-                descending=True
+                descending=True,
+                limit = 1
             ).first()
             if head:
-                domain_object = Domain.wrap(head['doc'])
-                domain_object.snapshot_head = True
-                domain_object.save()
+                head.snapshot_head = True
+                head.save()
