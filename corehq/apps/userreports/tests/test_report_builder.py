@@ -144,7 +144,7 @@ class ReportBuilderTest(TestCase):
             "some_case_type",
             existing_report=report,
             data={
-                'group_by': 'closed',
+                'group_by': 'user_id',
                 'filters': '[]',
                 # Note that a "Sum" calculation on the closed case property isn't very sensical, but doing it so
                 # that I can have a numeric calculation without having to create real case properties for this case
