@@ -130,16 +130,16 @@ class NumericFilterValue(FilterValue):
 
 class PreFilterValue(FilterValue):
 
-    def is_null(self):
+    def _is_null(self):
         return self.value is None
 
-    def is_list(self):
+    def _is_list(self):
         return isinstance(self.value, list)
 
     def to_sql_filter(self):
-        if self.is_null():
+        if self._is_null():
             return ISNULLFilter(self.filter.field)
-        elif self.is_list():
+        elif self._is_list():
             return INFilter(
                 self.filter.field,
                 get_INFilter_bindparams(self.filter.slug, self.value)
@@ -148,9 +148,9 @@ class PreFilterValue(FilterValue):
             return EQFilter(self.filter.field, self.filter.slug)
 
     def to_sql_values(self):
-        if self.is_null():
+        if self._is_null():
             return {}
-        elif self.is_list():
+        elif self._is_list():
             return {
                 get_INFilter_element_bindparam(self.filter.slug, i): v
                 for i, v in enumerate(self.value)
