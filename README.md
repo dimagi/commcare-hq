@@ -17,10 +17,10 @@ More in depth docs are available on [ReadTheDocs](http://commcare-hq.readthedocs
 ### Key Components
 
 + CommCare application builder
-+ OpenRosa compliant xForms designer
++ OpenRosa compliant XForms designer
 + SMS integration
-+ Domain/user/CHW management
-+ Xforms data collection
++ Domain/user/mobile worker management
++ XForms data collection
 + Case management
 + Over-the-air (ota) restore of user and cases
 + Integrated web and email reporting
