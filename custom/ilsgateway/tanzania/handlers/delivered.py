@@ -28,7 +28,7 @@ class DeliveredHandler(GenericStockReportHandler):
     formatter = DeliveryFormatter
 
     def _send_delivery_alert_to_facilities(self, location):
-        locs = [c.get_id for c in location.children]
+        locs = [c.get_id for c in location.get_children()]
         users = []
         for location_id in locs:
             users.extend(get_users_by_location_id(self.domain, location_id))

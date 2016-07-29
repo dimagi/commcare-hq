@@ -25,12 +25,13 @@ class TestReportRunner(TestCase):
         StockTransaction.objects.all().delete()
         StockReport.objects.all().delete()
         generator.delete_all_subscriptions()
+        cls.domain.delete()
         super(TestReportRunner, cls).tearDownClass()
 
     @classmethod
     def setUpClass(cls):
         super(TestReportRunner, cls).setUpClass()
-        prepare_domain(TEST_DOMAIN)
+        cls.domain = prepare_domain(TEST_DOMAIN)
 
         cls.mohsw = make_loc(code='mohsw', name='mohsw', domain=TEST_DOMAIN, type='MOHSW')
 
