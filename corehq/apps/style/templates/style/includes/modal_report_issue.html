@@ -1,5 +1,4 @@
 {% load i18n %}
-{% load hq_shared_tags %}
 {% if request.user.is_authenticated %}
     <div class="modal fade" id="modalReportIssue">
         <div class="modal-dialog">
@@ -116,11 +115,9 @@
             </form>
         </div>
     </div>
-    {% addtoblock js-inline %}
     <script>
         $(window).load(function(){
             $('#modalTrial30Day').modal('show');
         });
     </script>
-    {% endaddtoblock %}
 {% endif %}
