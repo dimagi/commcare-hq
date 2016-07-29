@@ -349,6 +349,9 @@ def _extract_case_blocks(data, path=None):
 
     data must be json representing a node in an xform submission
     """
+    from corehq.form_processor.utils import extract_meta_instance_id
+    form_id = extract_meta_instance_id(data)
+
     path = path or []
     if isinstance(data, list):
         for item in data:
@@ -367,7 +370,8 @@ def _extract_case_blocks(data, path=None):
                 for case_block in case_blocks:
                     if has_case_id(case_block):
                         validate_phone_datetime(
-                            case_block.get('@date_modified'), none_ok=True)
+                            case_block.get('@date_modified'), none_ok=True, form_id=form_id
+                        )
                         yield CaseBlockWithPath(caseblock=case_block, path=path)
             else:
                 for case_block in _extract_case_blocks(value, path=new_path):
