@@ -1654,6 +1654,8 @@ class ExportMigrationMeta(Document):
 
     is_remote_app_migration = BooleanProperty(default=False)
 
+    migration_date = DateTimeProperty()
+
     class Meta:
         app_label = 'export'
 

@@ -1,3 +1,4 @@
+from datetime import datetime
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.modules import to_function
@@ -55,7 +56,8 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
     migration_meta = ExportMigrationMeta(
         saved_export_id=saved_export._id,
         domain=domain,
-        is_remote_app_migration=is_remote_app_migration
+        is_remote_app_migration=is_remote_app_migration,
+        migration_date=datetime.utcnow(),
     )
     # Build a new schema and instance
     if export_type == FORM_EXPORT:
