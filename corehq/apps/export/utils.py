@@ -356,11 +356,16 @@ def migrate_domain(domain, dryrun=False):
                     dryrun=dryrun
                 )
             except Exception, e:
+                raise e
                 print 'Failed parsing {}: {}'.format(old_export['_id'], e)
             else:
                 metas.append(migration_meta)
     for meta in metas:
-        print 'Export information for export: {}'.format(meta.saved_export_id)
+        print ''
+        print '***' * 15
+        print '* Export information for export: {}'.format(meta.saved_export_id)
+        print '***' * 15
+        print ''
 
         if meta.skipped_tables:
             print '## Skipped tables: ##'
