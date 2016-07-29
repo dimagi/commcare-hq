@@ -14,6 +14,7 @@ from django.contrib.auth.models import User
 from restkit import Resource
 import requests
 from soil import heartbeat
+from dimagi.utils.web import get_url_base
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
@@ -157,8 +158,12 @@ def check_couch():
 
 
 def check_formplayer():
+    formplayer_url = '/formplayer' or settings.FORMPLAYER_URL
+    if not formplayer_url.startswith('http'):
+        formplayer_url = '{}{}'.format(get_url_base(), formplayer_url)
+
     try:
-        res = requests.get('{}/serverup'.format(settings.FORMPLAYER_URL), timeout=5)
+        res = requests.get('{}/serverup'.format(formplayer_url), timeout=5)
     except requests.exceptions.ConnectTimeout:
         return ServiceStatus(False, "Could not establish a connection in time")
     except requests.ConnectionError:
