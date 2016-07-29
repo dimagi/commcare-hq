@@ -21,6 +21,18 @@
                 "field": "opened_on",
                 "type": "date",
                 "slug": "opened_on"
+            },
+            {
+                "compare_as_string": false,
+                "datatype": "string",
+                "type": "dynamic_choice_list",
+                "slug": "village",
+                "field": "person_owner_id",
+                "choice_provider": {
+                  "include_descendants": true,
+                  "type": "location"
+                },
+                "display": "Location"
             }
         ],
         "columns": [
