@@ -233,7 +233,7 @@ class ExportColumn(DocumentSchema):
                 help_text=_(u'The ID of the associated {} case type').format(item.case_type),
                 **constructor_args
             )
-        elif feature_previews.SPLIT_MULTISELECT_CASE_EXPORT.enabled(get_request().domain):
+        elif get_request() and feature_previews.SPLIT_MULTISELECT_CASE_EXPORT.enabled(get_request().domain):
             column = SplitUserDefinedExportColumn(**constructor_args)
         else:
             column = ExportColumn(**constructor_args)
@@ -291,6 +291,8 @@ class ExportColumn(DocumentSchema):
                 return CaseIndexExportColumn.wrap(data)
             elif doc_type == 'SplitUserDefinedExportColumn':
                 return SplitUserDefinedExportColumn.wrap(data)
+            elif doc_type == 'UserDefinedExportColumn':
+                return UserDefinedExportColumn.wrap(data)
             elif doc_type == 'SplitGPSExportColumn':
                 return SplitGPSExportColumn.wrap(data)
             elif doc_type == 'MultiMediaExportColumn':
@@ -324,6 +326,7 @@ class TableConfiguration(DocumentSchema):
     columns = ListProperty(ExportColumn)
     selected = BooleanProperty(default=False)
     is_deleted = BooleanProperty(default=False)
+    is_user_defined = BooleanProperty(default=False)
 
     def __hash__(self):
         return hash(tuple(self.path))
@@ -1344,6 +1347,22 @@ def _merge_dicts(one, two, resolvefn):
     return merged
 
 
+class UserDefinedExportColumn(ExportColumn):
+    """
+    This model represents a column that a user has defined the path to the
+    data within the form. It should only be needed for RemoteApps
+    """
+
+    # On normal columns, the path is defined on an ExportItem.
+    # Since a UserDefinedExportColumn is not associated with the
+    # export schema, the path is defined on the column.
+    custom_path = SchemaListProperty(PathNode)
+
+    def get_value(self, domain, doc_id, doc, base_path, **kwargs):
+        path = [x.name for x in self.custom_path[len(base_path):]]
+        return NestedDictGetter(path)(doc)
+
+
 class SplitUserDefinedExportColumn(ExportColumn):
     split_type = StringProperty(
         choices=USER_DEFINED_SPLIT_TYPES,
@@ -1609,6 +1628,33 @@ class StockExportColumn(ExportColumn):
                 state_index = self._column_tuples.index(column_tuple)
                 values[state_index] = state.stock_on_hand
         return values
+
+
+class ConversionMeta(DocumentSchema):
+    path = StringProperty()
+    failure_reason = StringProperty()
+    info = ListProperty()
+
+    def pretty_print(self):
+        print '---' * 15
+        print '{:<20}| {}'.format('Original Path', self.path)
+        print '{:<20}| {}'.format('Failure Reason', self.failure_reason)
+        print '{:<20}| {}'.format('Info', self.info)
+
+
+class ExportMigrationMeta(Document):
+    saved_export_id = StringProperty()
+    domain = StringProperty()
+
+    skipped_tables = SchemaListProperty(ConversionMeta)
+    skipped_columns = SchemaListProperty(ConversionMeta)
+
+    converted_tables = SchemaListProperty(ConversionMeta)
+    converted_columns = SchemaListProperty(ConversionMeta)
+
+    class Meta:
+        app_label = 'export'
+
 
 # These must match the constants in corehq/apps/export/static/export/js/const.js
 MAIN_TABLE = []
