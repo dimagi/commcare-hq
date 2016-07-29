@@ -4,11 +4,18 @@
 {% load crispy_forms_tags %}
 {% load djangular_tags %}
 
+{% block stylesheets %}
+<link type="text/css"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'ui-select/dist/select.min.css' %}" />
+{% endblock %}
+
 {% block js %}
-<script
-        src="{% static 'style/js/pagination.ng.js' %}"></script>
-<script
-        src="{% static 'users/js/mobile_workers.ng.js' %}"></script>
+<script src="{% static 'style/js/pagination.ng.js' %}"></script>
+<script src="{% static 'users/js/mobile_workers.ng.js' %}"></script>
+<script src="{% static 'angular-sanitize/angular-sanitize.js' %}"></script>
+<script src="{% static 'ui-select/dist/select.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -21,7 +28,7 @@ $(function () {
 });
 (function (angular, undefined) {
     'use strict';
-    var mobileWorkerApp = angular.module('mobileWorkerApp', ['hq.pagination', 'hq.mobile_workers']);
+    var mobileWorkerApp = angular.module('mobileWorkerApp', ['hq.pagination', 'hq.mobile_workers', 'ngSanitize', 'ui.select']);
     mobileWorkerApp.config(['$httpProvider', function($httpProvider) {
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
@@ -72,6 +79,7 @@ $(function () {
                 });
         }
     });
+    mobileWorkerApp.constant('location_url', '{{ location_url }}');
     {% angularjs %}
     mobileWorkerApp.directive('workertableHeader', function () {
         return {

@@ -552,8 +552,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     @memoized
     def new_mobile_worker_form(self):
         if self.request.method == "POST":
-            return NewMobileWorkerForm(self.domain, self.request.POST)
-        return NewMobileWorkerForm(self.domain)
+            return NewMobileWorkerForm(self.request.project, self.request.POST)
+        return NewMobileWorkerForm(self.request.project)
 
     @property
     @memoized
@@ -577,7 +577,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'can_add_extra_users': self.can_add_extra_users,
             'pagination_limit_cookie_name': (
                 'hq.pagination.limit.mobile_workers_list.%s' % self.domain),
-            'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain)
+            'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain),
+            'location_url': reverse('corehq.apps.locations.views.child_locations_for_select2', args=[self.domain]),
         }
 
     @property
@@ -709,7 +710,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             form_data = {}
             for k, v in user_data.get('customFields', {}).items():
                 form_data["{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k)] = v
-            for f in ['username', 'password', 'first_name', 'last_name']:
+            for f in ['username', 'password', 'first_name', 'last_name', 'location_id']:
                 form_data[f] = user_data[f]
             form_data['domain'] = self.domain
             self.request.POST = form_data
@@ -724,6 +725,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             password = self.new_mobile_worker_form.cleaned_data['password']
             first_name = self.new_mobile_worker_form.cleaned_data['first_name']
             last_name = self.new_mobile_worker_form.cleaned_data['last_name']
+            location_id = self.new_mobile_worker_form.cleaned_data['location_id']
 
             couch_user = CommCareUser.create(
                 self.domain,
@@ -734,6 +736,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 last_name=last_name,
                 user_data=self.custom_data.get_data_to_save(),
             )
+            if location_id:
+                couch_user.set_location(Location.get(location_id))
 
             return {
                 'success': True,
