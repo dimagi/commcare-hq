@@ -77,12 +77,12 @@ related to Raven for the following three commands.
 
     $ ./manage.py bootstrap <project-name> <email> <password>
 
-To set up elasticsearch indexes, first run (and then kill once you see the "Starting pillow" lines):
+To set up elasticsearch indexes run the following:
 
-    $ ./manage.py run_ptop --pillow-key=core
+    $ ./manage.py ptop_preindex
 
-This will do an initial run of the elasticsearch indexing process, but this will run as a service later. This run
-at least creates the indices for the first time.
+This will create all of the elasticsearch indexes (that don't already exist) and populate them with any 
+data that's in the database.
 
 Next, set the aliases of the elastic indices. These can be set by a management command that sets the stored index
 names to the aliases.
