@@ -229,9 +229,15 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         label=ugettext_lazy("Opt out of emails about CommCare updates."),
     )
 
+    class MyAccountInfoFormException(Exception):
+        pass
+
     def __init__(self, *args, **kwargs):
-        self.username = kwargs.pop('username') if 'username' in kwargs else None
-        self.user = kwargs.pop('user') if 'user' in kwargs else None
+        self.user = kwargs.pop('user', None)
+        if not self.user:
+            raise UpdateMyAccountInfoForm.MyAccountInfoFormException("Expected to be passed a user kwarg")
+
+        self.username = self.user.username
         api_key = kwargs.pop('api_key') if 'api_key' in kwargs else None
 
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
@@ -265,16 +271,23 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         }
         self.new_helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
         self.new_helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+
+        basic_fields = [
+            cb3_layout.Div(*username_controls),
+            hqcrispy.Field('first_name'),
+            hqcrispy.Field('last_name'),
+            hqcrispy.Field('email'),
+        ]
+
+        if self.set_email_opt_out:
+            basic_fields.append(twbscrispy.PrependedText('email_opt_out', ''))
+
         self.new_helper.layout = cb3_layout.Layout(
             cb3_layout.Fieldset(
                 ugettext_lazy("Basic"),
-                cb3_layout.Div(*username_controls),
-                hqcrispy.Field('first_name'),
-                hqcrispy.Field('last_name'),
-                hqcrispy.Field('email'),
-                twbscrispy.PrependedText('email_opt_out', ''),
+                *basic_fields
             ),
-            cb3_layout.Fieldset(
+            (hqcrispy.FieldsetAccordionGroup if self.collapse_other_options else cb3_layout.Fieldset)(
                 ugettext_lazy("Other Options"),
                 hqcrispy.Field('language'),
                 cb3_layout.Div(*api_key_controls),
@@ -289,8 +302,19 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         )
 
     @property
+    def set_email_opt_out(self):
+        return self.user.is_web_user()
+
+    @property
+    def collapse_other_options(self):
+        return self.user.is_commcare_user()
+
+    @property
     def direct_properties(self):
-        return self.fields.keys()
+        result = self.fields.keys()
+        if not self.set_email_opt_out:
+            result.remove('email_opt_out')
+        return result
 
 
 class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
@@ -461,6 +485,10 @@ class NewMobileWorkerForm(forms.Form):
         required=False,
         label=ugettext_noop("Last Name")
     )
+    location_id = forms.CharField(
+        label=ugettext_noop("Location"),
+        required=False,
+    )
     password = forms.CharField(
         widget=PasswordInput(),
         required=True,
@@ -468,10 +496,24 @@ class NewMobileWorkerForm(forms.Form):
         label=ugettext_noop("Password")
     )
 
-    def __init__(self, domain, *args, **kwargs):
+    def __init__(self, project, *args, **kwargs):
         super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
-        email_string = u"@{}.commcarehq.org".format(domain)
+        email_string = u"@{}.commcarehq.org".format(project.name)
         max_chars_username = 80 - len(email_string)
+
+        if project.uses_locations:
+            self.fields['location_id'].widget = AngularLocationSelectWidget()
+            location_field = crispy.Field(
+                'location_id',
+                ng_model='mobileWorker.location_id',
+            )
+        else:
+            location_field = crispy.Hidden(
+                'location_id',
+                '',
+                ng_model='mobileWorker.location_id',
+            )
+
 
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -508,6 +550,7 @@ class NewMobileWorkerForm(forms.Form):
                     ng_model='mobileWorker.last_name',
                     ng_maxlength="50",
                 ),
+                location_field,
                 crispy.Field(
                     'password',
                     ng_required="true",
@@ -549,7 +592,7 @@ class MultipleSelectionForm(forms.Form):
             return super(MyView, self).dispatch(request, *args, **kwargs)
 
         # html
-        <script type="text/javascript">
+        <script>
             // Multiselect widget
             $(function () {
                 var multiselect_utils = hqImport('style/js/components/multiselect_utils');
@@ -591,6 +634,28 @@ class MultipleSelectionForm(forms.Form):
         )
 
 
+class AngularLocationSelectWidget(forms.Widget):
+    """
+    Assumptions:
+        mobileWorker.location_id is model
+        scope has searchLocations function to search
+        scope uses availableLocations to search in
+    """
+
+    def __init__(self, attrs=None):
+        super(AngularLocationSelectWidget, self).__init__(attrs)
+
+    def render(self, name, value, attrs=None):
+        return """
+          <ui-select  ng-model="mobileWorker.location_id" theme="select2" style="width: 300px;">
+            <ui-select-match placeholder="Select location...">{{$select.selected.name}}</ui-select-match>
+            <ui-select-choices refresh="searchLocations($select.search)" refresh-delay="0" repeat="location.id as location in availableLocations | filter:$select.search">
+              <div ng-bind-html="location.name | highlight: $select.search"></div>
+            </ui-select-choices>
+          </ui-select>
+        """
+
+
 class SupplyPointSelectWidget(forms.Widget):
 
     def __init__(self, attrs=None, domain=None, id='supply-point', multiselect=False):
@@ -610,8 +675,15 @@ class SupplyPointSelectWidget(forms.Widget):
 
 
 class CommtrackUserForm(forms.Form):
-    location = forms.CharField(label='Location:', required=False)
-    program_id = forms.ChoiceField(label="Program", choices=(), required=False)
+    location = forms.CharField(
+        label=ugettext_noop("Location"),
+        required=False
+    )
+    program_id = forms.ChoiceField(
+        label=ugettext_noop("Program"),
+        choices=(),
+        required=False
+    )
 
     def __init__(self, *args, **kwargs):
         domain = None
@@ -766,8 +838,12 @@ class SelfRegistrationForm(forms.Form):
         if 'domain' not in kwargs:
             raise Exception('Expected kwargs: domain')
         self.domain = kwargs.pop('domain')
+        require_email = kwargs.pop('require_email', False)
 
         super(SelfRegistrationForm, self).__init__(*args, **kwargs)
+
+        if require_email:
+            self.fields['email'].required = True
 
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
@@ -779,6 +855,7 @@ class SelfRegistrationForm(forms.Form):
                 crispy.Field('username'),
                 crispy.Field('password'),
                 crispy.Field('password2'),
+                crispy.Field('email'),
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -803,6 +880,10 @@ class SelfRegistrationForm(forms.Form):
         required=True,
         label=ugettext_lazy('Re-enter Password'),
         widget=PasswordInput(),
+    )
+    email = forms.EmailField(
+        required=False,
+        label=ugettext_lazy('Email address'),
     )
 
     def clean_username(self):

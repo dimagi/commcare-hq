@@ -3,12 +3,33 @@ from django.conf import settings
 from corehq.toggles import USE_SQL_BACKEND, NAMESPACE_DOMAIN, NEW_EXPORTS, TF_USES_SQLITE_BACKEND
 from dimagi.utils.logging import notify_exception
 
+import threading
+
+_thread_local = threading.local()
+
+
+def get_local_domain_sql_backend_override(domain):
+    try:
+        return _thread_local.use_sql_backend[domain]
+    except (AttributeError, KeyError):
+        return None
+
+
+def set_local_domain_sql_backend_override(domain):
+    use_sql_backend_dict = getattr(_thread_local, 'use_sql_backend', {})
+    use_sql_backend_dict[domain] = True
+    _thread_local.use_sql_backend = use_sql_backend_dict
+
 
 def should_use_sql_backend(domain_object_or_name):
-    from corehq.apps.domain.models import Domain
     if settings.UNIT_TESTING:
         return _should_use_sql_backend_in_tests(domain_object_or_name)
 
+    return _should_use_sql_backend_in_prod(domain_object_or_name)
+
+
+def _should_use_sql_backend_in_prod(domain_object_or_name):
+    from corehq.apps.domain.models import Domain
     # TODO: remove toggle once all domains have been migrated
     if isinstance(domain_object_or_name, Domain):
         domain_name = domain_object_or_name.name
@@ -19,6 +40,11 @@ def should_use_sql_backend(domain_object_or_name):
 
     if domain_object is None:
         return False
+
+    local_override = get_local_domain_sql_backend_override(domain_name)
+    if local_override is not None:
+        return local_override
+
     toggle_enabled = USE_SQL_BACKEND.enabled(domain_name)
     if toggle_enabled:
         try:

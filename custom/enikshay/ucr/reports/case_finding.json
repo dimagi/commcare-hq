@@ -1,6 +1,7 @@
 {
     "domains": [
-        "enikshay-test"
+        "enikshay-test",
+        "enikshay-test-test"
     ],
     "data_source_table": "episode",
     "report_id": "case_finding",

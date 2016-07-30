@@ -1,10 +1,17 @@
+
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.modules import to_function
 
+from corehq.util.log import with_progress_bar
+from corehq.apps.reports.dbaccessors import (
+    stale_get_exports_json,
+    stale_get_export_count,
+)
 from corehq.apps.reports.models import (
     FormExportSchema,
     CaseExportSchema,
 )
+from .exceptions import SkipConversion
 from .const import (
     CASE_EXPORT,
     FORM_EXPORT,
@@ -22,16 +29,22 @@ def is_occurrence_deleted(last_occurrences, app_ids_and_versions):
     return is_deleted
 
 
-def convert_saved_export_to_export_instance(domain, saved_export):
+def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
     from .models import (
         FormExportDataSchema,
         FormExportInstance,
         CaseExportDataSchema,
         CaseExportInstance,
         PathNode,
+        ExportMigrationMeta,
+        ConversionMeta,
     )
 
     # Build a new schema and instance
+    migration_meta = ExportMigrationMeta(
+        saved_export_id=saved_export._id,
+        domain=domain,
+    )
     schema = None
     instance_cls = None
     export_type = saved_export.type
@@ -46,6 +59,7 @@ def convert_saved_export_to_export_instance(domain, saved_export):
         instance_cls = CaseExportInstance
         schema = CaseExportDataSchema.generate_schema_from_builds(
             domain,
+            None,
             _extract_casetype_from_index(saved_export.index),
         )
 
@@ -53,11 +67,11 @@ def convert_saved_export_to_export_instance(domain, saved_export):
     instance.name = saved_export.name
     instance.is_deidentified = saved_export.is_safe
     instance.export_format = saved_export.default_format
-    instance.transform_dates = saved_export.transform_dates
+    instance.transform_dates = getattr(saved_export, 'transform_dates', False)
     instance.legacy_saved_export_schema_id = saved_export._id
     if saved_export.type == FORM_EXPORT:
-        instance.split_multiselects = saved_export.split_multiselects
-        instance.include_errors = saved_export.include_errors
+        instance.split_multiselects = getattr(saved_export, 'split_multiselects', False)
+        instance.include_errors = getattr(saved_export, 'include_errors', False)
 
     # With new export instance, copy over preferences from previous export
     for old_table in saved_export.tables:
@@ -66,7 +80,14 @@ def convert_saved_export_to_export_instance(domain, saved_export):
         if new_table:
             new_table.label = old_table.display
             new_table.selected = True
+            migration_meta.converted_tables.append(ConversionMeta(
+                path=old_table.index,
+            ))
         else:
+            migration_meta.skipped_tables.append(ConversionMeta(
+                path=old_table.index,
+                failure_reason='Not found in new export',
+            ))
             continue
 
         # The SavedExportSchema only saves selected columns so default all the selections to False
@@ -75,71 +96,112 @@ def convert_saved_export_to_export_instance(domain, saved_export):
             new_column.selected = False
 
         for column in old_table.columns:
+            info = []
             index = column.index
             transform = None  # can be either the deid_transform or the value transform on the ExportItem
 
-            if column.doc_type == 'StockExportColumn':
-                # Handle stock export column separately because it's a messy edge since
-                # it doesn't have a unique index (_id).
-                index, new_column = new_table.get_column(
-                    [PathNode(name='stock')],
+            try:
+                if column.doc_type == 'StockExportColumn':
+                    # Handle stock export column separately because it's a messy edge since
+                    # it doesn't have a unique index (_id).
+                    info.append('Column is a stock column')
+
+                    index, new_column = new_table.get_column(
+                        [PathNode(name='stock')],
+                        'ExportItem',
+                        None,
+                    )
+                    if new_column:
+                        new_column.selected = True
+                        new_column.label = column.display
+                    else:
+                        raise SkipConversion('StockExportColumn not found in new export')
+                    continue
+
+                if column.transform:
+                    transform = _convert_transform(column.transform)
+                    info.append('Column has a transform {} converted to {}'.format(
+                        column.transform,
+                        transform,
+                    ))
+
+                if _is_repeat(old_table.index):
+                    index = '{table_index}.{column_index}'.format(
+                        table_index=_strip_repeat_index(old_table.index),
+                        column_index=column.index,
+                    )
+                    info.append('Column is part of a repeat: {}'. format(old_table.index))
+                column_path = _convert_index_to_path_nodes(index)
+                # The old style column indexes always look like they contains no repeats,
+                # so replace that parts that could be repeats with the table path
+                column_path = table_path + column_path[len(table_path):]
+
+                system_property = _get_system_property(
+                    column.index,
+                    transform,
+                    export_type,
+                    new_table.path
+                )
+                if system_property:
+                    column_path, transform = system_property
+                    info.append('Column is a system property. Path: {}. Transform: {}'.format(
+                        column_path,
+                        transform,
+                    ))
+
+                guess_types = [
+                    'ScalarItem',
+                    'MultipleChoiceItem',
+                    'GeopointItem',
+                    'MultiMediaItem',
                     'ExportItem',
-                    None,
-                )
-                if new_column:
-                    new_column.selected = True
-                    new_column.label = column.display
+                ]
+                # Since old exports had no concept of item type, we just guess all
+                # the types and see if there are any matches.
+                for guess_type in guess_types:
+                    index, new_column = new_table.get_column(
+                        column_path,
+                        guess_type,
+                        _strip_deid_transform(transform),
+                    )
+                    if new_column:
+                        info.append('Column is guessed to be of type: {}'.format(
+                            guess_type,
+                        ))
+                        break
+
+                if not new_column:
+                    raise SkipConversion('Column not found in new schema')
+
+                new_column.label = column.display
+                new_column.selected = True
+                if transform and not _strip_deid_transform(transform):
+                    # Must be deid transform
+                    new_column.deid_transform = transform
+                    info.append('Column has deid_transform: {}'.format(transform))
+            except SkipConversion, e:
+                migration_meta.skipped_columns.append(ConversionMeta(
+                    path=column.index,
+                    failure_reason=str(e),
+                    info=info,
+                ))
                 continue
+            else:
+                migration_meta.converted_columns.append(ConversionMeta(
+                    path=column.index,
+                    failure_reason=None,
+                    info=info,
+                ))
 
-            if column.transform:
-                transform = _convert_transform(column.transform)
+    if not dryrun:
+        migration_meta.save()
+        instance.save()
 
-            if _is_repeat(old_table.index):
-                index = '{table_index}.{column_index}'.format(
-                    table_index=_strip_repeat_index(old_table.index),
-                    column_index=column.index,
-                )
-            column_path = _convert_index_to_path_nodes(index)
-            # The old style column indexes always look like they contains no repeats,
-            # so replace that parts that could be repeats with the table path
-            column_path = table_path + column_path[len(table_path):]
+        saved_export.doc_type += DELETED_SUFFIX
+        saved_export.converted_saved_export_id = instance._id
+        saved_export.save()
 
-            system_property = _get_system_property(
-                column.index,
-                transform,
-                export_type,
-                new_table.path
-            )
-            if system_property:
-                column_path, transform = system_property
-
-            guess_types = ['ScalarItem', 'MultipleChoiceItem', 'ExportItem']
-            # Since old exports had no concept of item type, we just guess all
-            # the types and see if there are any matches.
-            for guess_type in guess_types:
-                index, new_column = new_table.get_column(
-                    column_path,
-                    guess_type,
-                    _strip_deid_transform(transform),
-                )
-                if new_column:
-                    break
-
-            if not new_column:
-                continue
-            new_column.label = column.display
-            new_column.selected = True
-            if transform and not _strip_deid_transform(transform):
-                # Must be deid transform
-                new_column.deid_transform = transform
-
-    instance.save()
-
-    saved_export.doc_type += DELETED_SUFFIX
-    saved_export.converted_saved_export_id = instance._id
-    saved_export.save()
-
-    return instance
+    return instance, migration_meta
 
 
 def _extract_xmlns_from_index(index):
@@ -245,3 +307,36 @@ def revert_new_exports(new_exports):
         new_export.doc_type += DELETED_SUFFIX
         new_export.save()
     return reverted_exports
+
+
+def migrate_domain(domain, dryrun=False):
+    from couchexport.models import SavedExportSchema
+    export_count = stale_get_export_count(domain)
+    metas = []
+    if export_count:
+        for old_export in with_progress_bar(
+                stale_get_exports_json(domain),
+                length=export_count,
+                prefix=domain):
+            try:
+                _, migration_meta = convert_saved_export_to_export_instance(
+                    domain,
+                    SavedExportSchema.wrap(old_export),
+                    dryrun=dryrun
+                )
+            except Exception, e:
+                print 'Failed parsing {}: {}'.format(old_export['_id'], e)
+            else:
+                metas.append(migration_meta)
+    for meta in metas:
+        print 'Export information for export: {}'.format(meta.saved_export_id)
+
+        if meta.skipped_tables:
+            print '## Skipped tables: ##'
+            for table_meta in meta.skipped_tables:
+                table_meta.pretty_print()
+
+        if meta.skipped_columns:
+            print '## Skipped columns: ##'
+            for column_meta in meta.skipped_columns:
+                column_meta.pretty_print()

@@ -40,7 +40,7 @@
             <supply_point_id/>
             <location_data/>
         </location>
-        <location id="{massachusetts_id}" type="state">
+        <location id="{massachusetts_id}" type="state" county_id="" state_id="">
             <name>Massachusetts</name>
             <site_code>massachusetts</site_code>
             <external_id/>
@@ -50,7 +50,7 @@
             <supply_point_id/>
             <location_data/>
         </location>
-        <location id="{middlesex_id}" state_id="{massachusetts_id}" type="county">
+        <location county_id="" id="{middlesex_id}" state_id="{massachusetts_id}" type="county">
             <name>Middlesex</name>
             <site_code>middlesex</site_code>
             <external_id/>
@@ -60,7 +60,7 @@
             <supply_point_id/>
             <location_data/>
         </location>
-        <location id="{new_york_id}" type="state">
+        <location county_id="" id="{new_york_id}" state_id="" type="state">
             <name>New York</name>
             <site_code>new_york</site_code>
             <external_id/>
@@ -70,7 +70,7 @@
             <supply_point_id/>
             <location_data/>
         </location>
-        <location id="{new_york_city_id}" state_id="{new_york_id}" type="county">
+        <location county_id="" id="{new_york_city_id}" state_id="{new_york_id}" type="county">
             <name>New York City</name>
             <site_code>new_york_city</site_code>
             <external_id/>
@@ -110,7 +110,7 @@
             <supply_point_id/>
             <location_data/>
         </location>
-        <location id="{suffolk_id}" state_id="{massachusetts_id}" type="county">
+        <location county_id="" id="{suffolk_id}" state_id="{massachusetts_id}" type="county">
             <name>Suffolk</name>
             <site_code>suffolk</site_code>
             <external_id/>

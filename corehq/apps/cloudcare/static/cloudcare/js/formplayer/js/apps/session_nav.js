@@ -27,8 +27,8 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             var search = paramMap.search || "";
             SessionNavigate.MenuList.Controller.selectMenu(appId, steps, page, search);
         },
-        showDetail: function (model) {
-            SessionNavigate.MenuList.Controller.showDetail(model);
+        showDetail: function (model, index) {
+            SessionNavigate.MenuList.Controller.showDetail(model, index);
         },
         listSessions: function() {
             SessionNavigate.SessionList.Controller.listSessions();
@@ -38,6 +38,13 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             FormplayerFrontend.request("getIncompleteForm", sessionId);
         },
     };
+
+    FormplayerFrontend.on("apps:currentApp", function () {
+        var oldRoute = Backbone.history.getFragment();
+        var appId = Util.getAppId(oldRoute);
+        FormplayerFrontend.navigate("apps/" + appId);
+        API.selectApp(appId);
+    });
 
     FormplayerFrontend.on("apps:list", function () {
         FormplayerFrontend.navigate("apps");
@@ -88,8 +95,8 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     });
 
 
-    FormplayerFrontend.on("menu:show:detail", function (model) {
-        API.showDetail(model);
+    FormplayerFrontend.on("menu:show:detail", function (model, index) {
+        API.showDetail(model, index);
     });
 
     FormplayerFrontend.on("sessions", function () {

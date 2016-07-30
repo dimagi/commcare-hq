@@ -9,7 +9,7 @@ from elasticsearch.exceptions import ElasticsearchException, RequestError
 from corehq.apps.es.utils import flatten_field_dict
 from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
-from pillowtop.listener import send_to_elasticsearch as send_to_es
+from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
