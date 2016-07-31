@@ -1036,7 +1036,8 @@ class TestEvaluationContext(SimpleTestCase):
         context.set_cache_value(('k1', 'k2'), 'v1')
         self.assertEqual(context.get_cache_value(('k1', 'k2')), 'v1')
         self.assertEqual(context.get_cache_value(('k1',)), None)
-        
+
+
 class GpsValueExpressionTest(SimpleTestCase):
 
     def test_gps_value(self):
