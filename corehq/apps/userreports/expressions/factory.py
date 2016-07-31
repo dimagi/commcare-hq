@@ -221,7 +221,8 @@ def _sort_items_expression(spec, context):
         sort_expression=ExpressionFactory.from_spec(wrapped.sort_expression, context)
     )
     return wrapped
-    
+
+
 def _gps_value_expression(spec, context):
     wrapped = GpsValueExpressionSpec.wrap(spec)
     wrapped.configure(
