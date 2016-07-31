@@ -105,7 +105,7 @@ def test_diff_days_expression(self, source_doc, to_date_expression, expected_val
 @generate_cases([
     ({'from_time': date(2015, 1, 1), 'to_time': date(2015, 1, 1)}, 0.0),
     ({'from_time': datetime(2015, 1, 1, 10, 0, 0), 'to_time': datetime(2015, 1, 1, 10, 0, 1)}, 1.0),
-    ({'from_time': datetime(2015, 1, 1, 10, 1, 0), 'to_time': datetime(2015, 1, 1, 10, 0, 0)}, 60.0),
+    ({'from_time': datetime(2015, 1, 1, 10, 0, 0), 'to_time': datetime(2015, 1, 1, 10, 1, 0)}, 60.0),
     ({'from_time': "foo", 'to_time': "bar"}, None),
 ])
 def test_diff_seconds_expression(self, source_doc, expected_value):
