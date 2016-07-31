@@ -86,3 +86,20 @@ class DiffDaysExpressionSpec(JsonObject):
         if from_date_val is not None and to_date_val is not None:
             return (to_date_val - from_date_val).days
         return None
+
+
+class DiffSecondsExpressionSpec(JsonObject):
+    type = TypeProperty('diff_seconds')
+    from_expression = DefaultProperty(required=True)
+    to_expression = DefaultProperty(required=True)
+
+    def configure(self, from_expression, to_expression):
+        self.from_expression = from_expression
+        self.to_expression = to_expression
+
+    def __call__(self, item, context=None):
+        from_val = transform_datetime(self.from_expression(item, context))
+        to_val = transform_datetime(self.to_expression(item, context))
+        if from_val is not None and to_val is not None:
+            return (to_val - from_val).total_seconds()
+        return None
