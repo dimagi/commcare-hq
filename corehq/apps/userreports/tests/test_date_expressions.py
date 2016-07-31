@@ -108,17 +108,15 @@ def test_diff_days_expression(self, source_doc, to_date_expression, expected_val
     ({'from_time': datetime(2015, 1, 1, 10, 1, 0), 'to_time': datetime(2015, 1, 1, 10, 1, 0)}, 60.0),
 ])
 def test_diff_seconds_expression(self, source_doc, expected_value):
-    from_expression = {
-        'type': 'property_name',
-        'property_name': 'from_time',
-    },
-    to_expression = {
-        'type': 'property_name',
-        'property_name': 'to_time',
-    },
     expression = ExpressionFactory.from_spec({
         'type': 'diff_seconds',
-        'from_expression': from_expression,
-        'to_expression': to_expression
+        'from_expression': {
+            'type': 'property_name',
+            'property_name': 'from_time',
+        },
+        'to_expression': {
+            'type': 'property_name',
+            'property_name': 'to_time',
+        }
     })
     self.assertEqual(expected_value, expression(source_doc))
