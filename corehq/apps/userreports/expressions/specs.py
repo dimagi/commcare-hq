@@ -331,3 +331,44 @@ class SubcasesExpressionSpec(JsonObject):
         subcases = [c.to_json() for c in CaseAccessors(domain).get_reverse_indexed_cases([case_id])]
         context.set_cache_value(cache_key, subcases)
         return subcases
+
+class GpsValueExpressionSpec(JsonObject):
+    LATITUDE = 'latitude'
+    LONGITUDE = 'longitude'
+    ELEVATION = 'elevation'
+    ACCURACY = 'accuracy'
+    SUPPORTED_GPS_VALUES = [LATITUDE, LONGITUDE, ELEVATION, ACCURACY]
+    
+    type = TypeProperty('gps_get_value')
+    gps_expression = DefaultProperty(required=True)
+    gps_type = StringProperty(required=True)
+
+    def configure(self, gps_expression, gps_type):
+        self._gps_expression = gps_expression
+        if self.gps_type not in GpsValueExpressionSpec.SUPPORTED_GPS_VALUES:
+            raise BadSpecError(_("gps_type'{}' is not valid. Valid options are: {} ").format(
+                self.gps_type,
+                GpsValueExpressionSpec.SUPPORTED_GPS_VALUES
+            ))
+
+    def __call__(self, item, context=None):
+      gps_value = self._gps_expression(item, context)
+      return self._get_gps_element(gps_value, self.gps_type)
+      
+    def _get_gps_element(self, gps_value, gps_type):
+        gps_type_index = {
+            GpsValueExpressionSpec.LATITUDE: 0,
+            GpsValueExpressionSpec.LONGITUDE: 1,
+            GpsValueExpressionSpec.ELEVATION: 2,
+            GpsValueExpressionSpec.ACCURACY: 3,
+        }
+        assert gps_type in GpsValueExpressionSpec.SUPPORTED_GPS_VALUES
+        
+        if not isinstance(gps_value, basestring):
+            return None
+        
+        gps_elements = gps_value.split()
+        try:
+            return gps_elements[gps_type_index[gps_type]]
+        except IndexError:
+            return None
