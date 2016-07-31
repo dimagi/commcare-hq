@@ -1036,3 +1036,28 @@ class TestEvaluationContext(SimpleTestCase):
         context.set_cache_value(('k1', 'k2'), 'v1')
         self.assertEqual(context.get_cache_value(('k1', 'k2')), 'v1')
         self.assertEqual(context.get_cache_value(('k1',)), None)
+        
+class GpsValueExpressionTest(SimpleTestCase):
+
+    def test_gps_value(self):
+        for expected, gps_type, original in [
+            (None, "latitude", None),
+            (45, "latitude", None),
+            ("1.1 1.2 1.3 1.4", "latitude", "1.1"),
+            ("1.1 1.2 1.3 1.4", "longitude", "1.2"),
+            ("1.1 1.2 1.3 1.4", "elevation", "1.3"),
+            ("1.1 1.2 1.3 1.4", "accuracy", "1.4"),
+            ("1.1", "latitude", "1.1"),
+            ("1.1", "longitude", None),
+            ("1.1", "elevation", None),
+            ("1.4", "accuracy", None),
+        ]:
+            gps_expression = ExpressionFactory.from_spec({
+                "type": "gps_get_value",
+                "gps_expression": {
+                    "type": "property_name",
+                    "property_name": "gps_property"
+                },
+                "gps_type": gps_type
+            })
+            self.assertEqual(expected, gps_expression({'gps_property': original}))
