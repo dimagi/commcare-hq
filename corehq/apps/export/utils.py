@@ -45,6 +45,7 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
         CaseExportInstance,
         ExportMigrationMeta,
         ConversionMeta,
+        TableConfiguration,
     )
 
     schema = None
@@ -92,18 +93,26 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
     for old_table in saved_export.tables:
         table_path = _convert_index_to_path_nodes(old_table.index)
         new_table = instance.get_table(_convert_index_to_path_nodes(old_table.index))
-        if new_table:
-            new_table.label = old_table.display
-            new_table.selected = True
-            migration_meta.converted_tables.append(ConversionMeta(
-                path=old_table.index,
-            ))
-        else:
-            migration_meta.skipped_tables.append(ConversionMeta(
-                path=old_table.index,
-                failure_reason='Not found in new export',
-            ))
-            continue
+        if not new_table:
+            if not is_remote_app_migration:
+                migration_meta.skipped_tables.append(ConversionMeta(
+                    path=old_table.index,
+                    failure_reason='Not found in new export',
+                ))
+                continue
+
+            # Create a user defined TableConfiguration
+            new_table = TableConfiguration(
+                is_user_defined=True,
+                path=_convert_index_to_path_nodes(old_table.index),
+            )
+            instance.tables.append(new_table)
+
+        new_table.label = old_table.display
+        new_table.selected = True
+        migration_meta.converted_tables.append(ConversionMeta(
+            path=old_table.index,
+        ))
 
         # The SavedExportSchema only saves selected columns so default all the selections to False
         # unless found in the SavedExportSchema (legacy)
