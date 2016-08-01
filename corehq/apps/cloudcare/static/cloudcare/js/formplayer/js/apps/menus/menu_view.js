@@ -1,4 +1,4 @@
-/*global FormplayerFrontend, Handlebars */
+/*global FormplayerFrontend */
 
 FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette) {
     MenuList.MenuView = Marionette.ItemView.extend({
@@ -122,7 +122,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         // need to remove this attribute so the grid style is re-evaluated
         $("#case-tiles-style").html(tileStyle).removeAttr("data-css-polyfilled");
     };
-    
+
     MenuList.CaseListView = Marionette.CompositeView.extend({
         tagName: "div",
         template: "#case-view-list-template",
