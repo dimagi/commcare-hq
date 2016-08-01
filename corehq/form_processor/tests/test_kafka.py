@@ -1,16 +1,19 @@
 import uuid
 from django.test import TestCase, override_settings
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
+from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message, KafkaChangeFeed
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.form_processor.utils import get_simple_form_xml
 from corehq.util.test_utils import OverridableSettingsTestMixin, create_and_save_a_case, create_and_save_a_form
+from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.processors.sample import TestProcessor
+from testapps.test_pillowtop.utils import process_kafka_changes, process_couch_changes
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -23,12 +26,22 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
         FormProcessorTestUtils.delete_all_sql_forms()
         FormProcessorTestUtils.delete_all_sql_cases()
         self.form_accessors = FormAccessors(domain=self.domain)
+        self.processor = TestProcessor()
+        self.pillow = ConstructedPillow(
+            name='test-kafka-form-feed',
+            checkpoint=None,
+            change_feed=KafkaChangeFeed(topics=[topics.FORM, topics.FORM_SQL], group_id='test-kafka-form-feed'),
+            processor=self.processor
+        )
 
+    @run_with_all_backends
     def test_form_is_published(self):
-        kafka_consumer = get_test_kafka_consumer(topics.FORM_SQL)
-        form = create_and_save_a_form(self.domain)
-        message = kafka_consumer.next()
-        change_meta = change_meta_from_kafka_message(message.value)
+        with process_kafka_changes(self.pillow):
+            with process_couch_changes('DefaultChangeFeedPillow'):
+                form = create_and_save_a_form(self.domain)
+
+        self.assertEqual(1, len(self.processor.changes_seen))
+        change_meta = self.processor.changes_seen[0].metadata
         self.assertEqual(form.form_id, change_meta.document_id)
         self.assertEqual(self.domain, change_meta.domain)
 
