@@ -228,3 +228,20 @@ class TestUserBulkUploadUtils(SimpleTestCase):
         ]
 
         self.assertRaises(UserUploadError, check_duplicate_usernames, user_specs)
+
+    def test_no_duplicate_usernames(self):
+        user_specs = [
+            {
+                u'username': u'hello',
+                u'user_id': u'should not update',
+            },
+            {
+                u'username': u'goodbye',
+                u'user_id': u'other id',
+            },
+        ]
+
+        try:
+            check_duplicate_usernames(user_specs)
+        except UserUploadError:
+            self.fail('UserUploadError incorrectly raised')
