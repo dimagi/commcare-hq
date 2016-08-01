@@ -1,8 +1,7 @@
 import uuid
 from django.test import TestCase, override_settings
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message, KafkaChangeFeed
-from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -36,6 +35,12 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
             name='test-kafka-case-feed',
             checkpoint=None,
             change_feed=KafkaChangeFeed(topics=[topics.CASE, topics.CASE_SQL], group_id='test-kafka-case-feed'),
+            processor=self.processor
+        )
+        self.ledger_pillow = ConstructedPillow(
+            name='test-kafka-ledger-feed',
+            checkpoint=None,
+            change_feed=KafkaChangeFeed(topics=[topics.LEDGER], group_id='test-kafka-ledger-feed'),
             processor=self.processor
         )
 
@@ -111,6 +116,7 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
         self.assertEqual(self.domain, case_meta.domain)
 
     def test_duplicate_ledger_published(self):
+        # this test also only runs on the sql backend for reasons described in test_duplicate_case_published
         # setup products and case
         product_a = make_product(self.domain, 'A Product', 'prodcode_a')
         product_b = make_product(self.domain, 'B Product', 'prodcode_b')
@@ -130,13 +136,15 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
         form = submit_case_blocks(ledger_blocks, self.domain)
 
         # submit duplicate
-        ledger_consumer = get_test_kafka_consumer(topics.LEDGER)
-        dupe_form = submit_form_locally(form.get_xml(), domain=self.domain)[1]
-        self.assertTrue(dupe_form.is_duplicate)
+        with process_kafka_changes(self.ledger_pillow):
+            with process_couch_changes('DefaultChangeFeedPillow'):
+                dupe_form = submit_form_locally(form.get_xml(), domain=self.domain)[1]
+                self.assertTrue(dupe_form.is_duplicate)
+
 
         # confirm republished
-        ledger_meta_a = change_meta_from_kafka_message(ledger_consumer.next().value)
-        ledger_meta_b = change_meta_from_kafka_message(ledger_consumer.next().value)
+        ledger_meta_a = self.processor.changes_seen[0].metadata
+        ledger_meta_b = self.processor.changes_seen[1].metadata
         format_id = lambda product_id: '{}/{}/{}'.format(case_id, 'stock', product_id)
         expected_ids = {format_id(product_a._id), format_id(product_b._id)}
         for meta in [ledger_meta_a, ledger_meta_b]:
