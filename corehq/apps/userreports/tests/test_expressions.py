@@ -1061,7 +1061,10 @@ class SplitStringExpressionTest(SimpleTestCase):
                     "property_name": "index_property"
                 }
             })
-            self.assertEqual(expected, split_string_expression({"string_property": string_value, "index_property": index}))
+            self.assertEqual(expected, split_string_expression({
+                "string_property": string_value, 
+                "index_property": index
+            }))
 
     def test_split_string_index_constant(self):
         for expected, string_value, index in [
