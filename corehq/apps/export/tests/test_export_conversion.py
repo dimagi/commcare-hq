@@ -233,6 +233,26 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestCase, TestFileMixin):
         index, column = table.get_column(path, 'ExportItem', None)
         self.assertTrue(column.selected)
 
+    @mock.patch(
+        'corehq.apps.export.utils._is_remote_app_conversion',
+        return_value=True,
+    )
+    def test_remote_app_conversion(self, _, __):
+        saved_export_schema = SavedExportSchema.wrap(self.get_json('remote_app'))
+        with mock.patch(
+                'corehq.apps.export.models.new.CaseExportDataSchema.generate_schema_from_builds',
+                return_value=self.schema):
+            instance, meta = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
+        table = instance.get_table(MAIN_TABLE)
+        index, column = table.get_column(
+            [PathNode(name='age')],
+            None,
+            None,
+        )
+        self.assertIsNotNone(column)
+        self.assertEqual(column.label, 'age')
+        self.assertTrue(meta.is_remote_app_migration)
+
 
 @mock.patch(
     'corehq.apps.export.models.new.get_request',

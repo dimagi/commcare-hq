@@ -4,7 +4,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.modules import to_function
 from toggle.shortcuts import set_toggle
 
-from corehq.toggles import NEW_EXPORTS, NAMESPACE_DOMAIN
+from corehq.toggles import NEW_EXPORTS, NAMESPACE_DOMAIN, ALLOW_USER_DEFINED_EXPORT_COLUMNS
 from corehq.util.log import with_progress_bar
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 from corehq.apps.reports.dbaccessors import (
@@ -167,12 +167,17 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
                     new_column.deid_transform = transform
                     info.append('Column has deid_transform: {}'.format(transform))
             except SkipConversion, e:
-                migration_meta.skipped_columns.append(ConversionMeta(
-                    path=column.index,
-                    failure_reason=str(e),
-                    info=info,
-                ))
-                continue
+                if is_remote_app_migration:
+                    # In the event that we skip a column and it's a remote application,
+                    # just add a user defined column
+                    new_column = _create_user_defined_column(column, column_path, transform)
+                    new_table.columns.append(new_column)
+                else:
+                    migration_meta.skipped_columns.append(ConversionMeta(
+                        path=column.index,
+                        failure_reason=str(e),
+                        info=info,
+                    ))
             else:
                 migration_meta.converted_columns.append(ConversionMeta(
                     path=column.index,
@@ -201,6 +206,18 @@ def _extract_casetype_from_index(index):
 
 def _is_repeat(index):
     return index.startswith('#') and index.endswith('#') and index != '#'
+
+
+def _create_user_defined_column(old_column, column_path, transform):
+    from .models import UserDefinedExportColumn
+
+    column = UserDefinedExportColumn(
+        label=old_column.display,
+        selected=True,
+        deid_transform=transform,
+        custom_path=column_path,
+    )
+    return column
 
 
 def _strip_repeat_index(index):
