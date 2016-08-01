@@ -823,10 +823,10 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
             except NameUnavailableException:
                 return None
             copy.is_snapshot = True
-            for snapshot in self.snapshots(limit=1):
-                if snapshot.snapshot_head:
-                    snapshot.snapshot_head = False
-                    snapshot.save()
+            head = self.snapshots(limit=1).first()
+            if head.snapshot_head:
+                head.snapshot_head = False
+                head.save()
             copy.snapshot_head = True
             copy.snapshot_time = datetime.utcnow()
             del copy.deployment

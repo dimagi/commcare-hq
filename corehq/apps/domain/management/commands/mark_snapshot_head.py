@@ -17,7 +17,7 @@ class Command(BaseCommand):
                 reduce=False,
                 include_docs=True,
                 descending=True,
-                limit = 1
+                limit=1
             ).first()
             if head:
                 head.snapshot_head = True
