@@ -89,11 +89,15 @@ hqDefine('prototype.workflow_builder.workflows', function () {
         });
 
         self.handleFormDrop = function (event, ui) {
-            console.log('handle form drop');
             var $form = $(ui.draggable);
             $form.css("top", 0);
             $form.css("left", 0);
             $(this).find('.workflow-new-form').before($form);
+            var formUuid =_ .last($form.attr('id').split('_'));
+            var matchingForm = _.first(_.filter(self.workflow.app.forms(), function (f) {
+                return f.uuid() === formUuid;
+            }));
+            matchingForm.container = self;
         };
     };
 
