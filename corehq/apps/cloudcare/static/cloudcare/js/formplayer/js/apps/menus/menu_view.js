@@ -76,19 +76,20 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
 
         initialize: function (options) {
+            var tile, fontSize, fontString, styleString, tileId, formattedString;
             this.tiles = options.tiles;
             this.styles = options.styles;
             if(!_.isNull(this.tiles)) {
                 for (var i = 0; i < this.tiles.length; i++) {
-                    var tile = this.tiles[i];
+                    tile = this.tiles[i];
                     if (tile === null) {
                         continue;
                     }
-                    var fontSize = this.tiles[i].fontSize;
-                    var fontString = "font-size: " + fontSize + ";";
-                    var styleString = getGridAttributes(tile);
-                    var tileId = "grid-style-" + i;
-                    var formattedString = "." + tileId + " { " + styleString + " " + fontString + " } ";
+                    fontSize = this.tiles[i].fontSize;
+                    fontString = "font-size: " + fontSize + ";";
+                    styleString = getGridAttributes(tile);
+                    tileId = "grid-style-" + i;
+                    formattedString = "." + tileId + " { " + styleString + " " + fontString + " } ";
                     addStyleString(formattedString);
                 }
             }
