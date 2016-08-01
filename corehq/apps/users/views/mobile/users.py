@@ -908,7 +908,6 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
 
         try:
             check_headers(self.user_specs)
-            check_duplicate_usernames(self.user_specs)
         except UserUploadError as e:
             messages.error(request, _(e.message))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
