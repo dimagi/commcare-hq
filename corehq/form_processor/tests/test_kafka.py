@@ -33,6 +33,12 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
             change_feed=KafkaChangeFeed(topics=[topics.FORM, topics.FORM_SQL], group_id='test-kafka-form-feed'),
             processor=self.processor
         )
+        self.case_pillow = ConstructedPillow(
+            name='test-kafka-case-feed',
+            checkpoint=None,
+            change_feed=KafkaChangeFeed(topics=[topics.CASE, topics.CASE_SQL], group_id='test-kafka-case-feed'),
+            processor=self.processor
+        )
 
     @run_with_all_backends
     def test_form_is_published(self):
@@ -70,10 +76,14 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
         self.assertEqual(orig_form.form_id, orig_form_meta.document_id)
         self.assertEqual(self.domain, orig_form_meta.domain)
 
+    @run_with_all_backends
     def test_case_is_published(self):
-        kafka_consumer = get_test_kafka_consumer(topics.CASE_SQL)
-        case = create_and_save_a_case(self.domain, case_id=uuid.uuid4().hex, case_name='test case')
-        change_meta = change_meta_from_kafka_message(kafka_consumer.next().value)
+        with process_kafka_changes(self.case_pillow):
+            with process_couch_changes('DefaultChangeFeedPillow'):
+                case = create_and_save_a_case(self.domain, case_id=uuid.uuid4().hex, case_name='test case')
+
+        self.assertEqual(1, len(self.processor.changes_seen))
+        change_meta = self.processor.changes_seen[0].metadata
         self.assertEqual(case.case_id, change_meta.document_id)
         self.assertEqual(self.domain, change_meta.domain)
 
