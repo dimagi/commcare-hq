@@ -143,7 +143,7 @@ class NumericFilterTestCase(SimpleTestCase):
 
 class PreFilterTestCase(SimpleTestCase):
 
-    def test_auto_filter(self):
+    def test_pre_filter(self):
         filter_ = ReportFilterFactory.from_spec({
             'type': 'pre',
             'field': 'at_risk_field',
@@ -155,7 +155,7 @@ class PreFilterTestCase(SimpleTestCase):
         self.assertEqual(filter_.name, 'at_risk_slug')
         self.assertEqual(filter_.default_value(), 'true')
 
-    def test_auto_filter_value(self):
+    def test_pre_filter_value(self):
         pre_value = 'yes'
         filter_ = ReportFilter.wrap({
             'type': 'pre',
@@ -167,7 +167,7 @@ class PreFilterTestCase(SimpleTestCase):
         value = PreFilterValue(filter_, pre_value)
         self.assertEqual(value.to_sql_values(), {'at_risk_slug': 'yes'})
 
-    def test_auto_filter_value_null(self):
+    def test_pre_filter_value_null(self):
         column = Mock()
         column.name = 'at_risk_field'
         column.is_.return_value = 'foo'
@@ -186,7 +186,7 @@ class PreFilterTestCase(SimpleTestCase):
         self.assertEqual(value.to_sql_values(), {})
         self.assertEqual(value.to_sql_filter().build_expression(table), 'foo')
 
-    def test_auto_filter_value_array(self):
+    def test_pre_filter_value_array(self):
         column = Mock()
         column.name = 'at_risk_field'
         column.in_.return_value = 'foo'
@@ -204,6 +204,18 @@ class PreFilterTestCase(SimpleTestCase):
         value = PreFilterValue(filter_, pre_value)
         self.assertEqual(value.to_sql_values(), {'at_risk_slug_0': 'yes', 'at_risk_slug_1': 'maybe'})
         self.assertEqual(value.to_sql_filter().build_expression(table), 'foo')
+
+    def test_pre_filter_operator(self):
+        filter_ = ReportFilterFactory.from_spec({
+            'type': 'pre',
+            'field': 'risk_indicator_field',
+            'slug': 'risk_indicator_slug',
+            'datatype': 'integer',
+            'pre_value': 99,
+            'operator': '<=',
+        })
+        self.assertEqual(type(filter_), PreFilter)
+        self.assertEqual(filter_.default_value(), 99)
 
 
 class ChoiceListFilterTestCase(SimpleTestCase):
