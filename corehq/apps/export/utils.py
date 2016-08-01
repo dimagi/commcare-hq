@@ -2,8 +2,11 @@ from datetime import datetime
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.modules import to_function
+from toggle.shortcuts import set_toggle
 
+from corehq.toggles import NEW_EXPORTS, NAMESPACE_DOMAIN
 from corehq.util.log import with_progress_bar
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 from corehq.apps.reports.dbaccessors import (
     stale_get_exports_json,
     stale_get_export_count,
@@ -359,6 +362,11 @@ def migrate_domain(domain, dryrun=False):
                 print 'Failed parsing {}: {}'.format(old_export['_id'], e)
             else:
                 metas.append(migration_meta)
+
+    if not dryrun:
+        set_toggle(NEW_EXPORTS.slug, domain, True, namespace=NAMESPACE_DOMAIN)
+        toggle_js_domain_cachebuster.clear(domain)
+
     for meta in metas:
         print ''
         print '***' * 15
