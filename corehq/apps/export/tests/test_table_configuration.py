@@ -304,3 +304,35 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
                 ["0.1.1", 0, 1, 1, 'boop']
             ]
         )
+
+    def test_empty_group(self):
+        table_configuration = TableConfiguration(
+            path=[
+                PathNode(name="form", is_repeat=False),
+                PathNode(name="group", is_repeat=False),
+                PathNode(name="repeat1", is_repeat=True)
+            ],
+            columns=[
+                ExportColumn(
+                    item=ScalarItem(
+                        path=[
+                            PathNode(name="form"),
+                            PathNode(name="group"),
+                            PathNode(name="repeat1", is_repeat=True),
+                            PathNode(name="q1")
+                        ],
+                    ),
+                    selected=True,
+                ),
+            ]
+        )
+        submission = {
+            'domain': 'my-domain',
+            '_id': '1234',
+            'form': {
+                'group': ''
+            }
+        }
+        self.assertEqual(
+            [row.data for row in table_configuration.get_rows(submission, 0)], []
+        )
