@@ -973,13 +973,13 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
         raise Http404()
     django_user = commcare_user.get_django_user()
     if request.method == "POST":
-        form = SetUserPasswordForm(domain, login_id, user=django_user, data=request.POST)
+        form = SetUserPasswordForm(request.project, login_id, user=django_user, data=request.POST)
         if form.is_valid():
             form.save()
             json_dump['status'] = 'OK'
-            form = SetUserPasswordForm(domain, login_id, user='')
+            form = SetUserPasswordForm(request.project, login_id, user='')
     else:
-        form = SetUserPasswordForm(domain, login_id, user=django_user)
+        form = SetUserPasswordForm(request.project, login_id, user=django_user)
     context = _users_context(request, domain)
     context.update({
         'reset_password_form': form,

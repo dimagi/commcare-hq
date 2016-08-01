@@ -1,9 +1,8 @@
+import threading
+
 from django.conf import settings
 
-from corehq.toggles import USE_SQL_BACKEND, NAMESPACE_DOMAIN, NEW_EXPORTS, TF_USES_SQLITE_BACKEND
-from dimagi.utils.logging import notify_exception
-
-import threading
+from corehq.toggles import NEW_EXPORTS, TF_USES_SQLITE_BACKEND
 
 _thread_local = threading.local()
 
@@ -45,21 +44,7 @@ def _should_use_sql_backend_in_prod(domain_object_or_name):
     if local_override is not None:
         return local_override
 
-    toggle_enabled = USE_SQL_BACKEND.enabled(domain_name)
-    if toggle_enabled:
-        try:
-            # migrate domains in toggle
-            if not domain_object.use_sql_backend:
-                domain_object.use_sql_backend = True
-                domain_object.save()
-                USE_SQL_BACKEND.set(domain_name, enabled=False, namespace=NAMESPACE_DOMAIN)
-        except Exception:
-            notify_exception(None, "Error migrating SQL BACKEND toggle", {
-                'domain': domain_name
-            })
-        return True
-    else:
-        return domain_object.use_sql_backend
+    return domain_object.use_sql_backend
 
 
 def _should_use_sql_backend_in_tests(domain_object_or_name):

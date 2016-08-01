@@ -741,15 +741,6 @@ VIEW_BUILD_SOURCE = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-USE_SQL_BACKEND = StaticToggle(
-    'sql_backend',
-    'Uses a sql backend instead of a couch backend for form processing',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-    description="This flag is deprecated. All new domains now use the sql backend."
-)
-
-
 EWS_WEB_USER_EXTENSION = StaticToggle(
     'ews_web_user_extension',
     'Enable EWSGhana web user extension',
