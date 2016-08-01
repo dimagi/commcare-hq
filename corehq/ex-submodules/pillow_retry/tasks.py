@@ -39,12 +39,12 @@ def process_pillow_retry(error_doc_id):
         try:
             pillow = get_pillow_by_name(pillow_name_or_class)
         except PillowNotFoundError:
-            if not settings.UNIT_TESTING:
+            pillow = _try_legacy_import(pillow_name_or_class)
+            if pillow and not settings.UNIT_TESTING:
                 _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']))
                 _assert(False, 'Pillow retry {} is still using legacy class {}'.format(
                     error_doc.pk, pillow_name_or_class
                 ))
-            pillow = _try_legacy_import(pillow_name_or_class)
 
         if not pillow:
             notify_error((
