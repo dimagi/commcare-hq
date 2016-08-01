@@ -85,6 +85,18 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
             self.assertEqual(dupe_form.domain, dupe_form.domain)
 
     @run_with_all_backends
+    def test_form_soft_deletions(self):
+        form = create_and_save_a_form(self.domain)
+        with process_kafka_changes(self.form_pillow):
+            with process_couch_changes('DefaultChangeFeedPillow'):
+                form.soft_delete()
+
+        self.assertEqual(1, len(self.processor.changes_seen))
+        change_meta = self.processor.changes_seen[0].metadata
+        self.assertEqual(form.form_id, change_meta.document_id)
+        self.assertTrue(change_meta.is_deletion)
+
+    @run_with_all_backends
     def test_case_is_published(self):
         with process_kafka_changes(self.case_pillow):
             with process_couch_changes('DefaultChangeFeedPillow'):
