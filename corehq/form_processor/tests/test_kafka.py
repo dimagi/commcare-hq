@@ -27,7 +27,7 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
         FormProcessorTestUtils.delete_all_cases()
         self.form_accessors = FormAccessors(domain=self.domain)
         self.processor = TestProcessor()
-        self.pillow = ConstructedPillow(
+        self.form_pillow = ConstructedPillow(
             name='test-kafka-form-feed',
             checkpoint=None,
             change_feed=KafkaChangeFeed(topics=[topics.FORM, topics.FORM_SQL], group_id='test-kafka-form-feed'),
@@ -36,7 +36,7 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
 
     @run_with_all_backends
     def test_form_is_published(self):
-        with process_kafka_changes(self.pillow):
+        with process_kafka_changes(self.form_pillow):
             with process_couch_changes('DefaultChangeFeedPillow'):
                 form = create_and_save_a_form(self.domain)
 
@@ -53,7 +53,7 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
         self.assertEqual(form_id, orig_form.form_id)
         self.assertEqual(1, len(self.form_accessors.get_all_form_ids_in_domain()))
 
-        with process_kafka_changes(self.pillow):
+        with process_kafka_changes(self.form_pillow):
             with process_couch_changes('DefaultChangeFeedPillow'):
                 # post an exact duplicate
                 dupe_form = submit_form_locally(form_xml, domain=self.domain)[1]
