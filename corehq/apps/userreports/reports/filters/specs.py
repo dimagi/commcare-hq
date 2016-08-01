@@ -92,6 +92,7 @@ class DynamicChoiceListFilterSpec(FilterSpec):
 class PreFilterSpec(FilterSpec):
     type = TypeProperty('pre')
     pre_value = StringProperty(required=True)
+    pre_operator = StringProperty(default=None, required=False)
 
 
 class NumericFilterSpec(FilterSpec):
