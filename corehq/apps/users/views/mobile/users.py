@@ -908,6 +908,15 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
 
         try:
             check_headers(self.user_specs)
+        except UserUploadError as e:
+            messages.error(request, _(e.message))
+            return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
+
+        # convert to list here because iterator destroys the row once it has
+        # been read the first time
+        self.user_specs = list(self.user_specs)
+
+        try:
             check_duplicate_usernames(self.user_specs)
         except UserUploadError as e:
             messages.error(request, _(e.message))
@@ -916,7 +925,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         task_ref = expose_cached_download(payload=None, expiry=1*60*60, file_extension=None)
         task = bulk_upload_async.delay(
             self.domain,
-            list(self.user_specs),
+            self.user_specs,
             list(self.group_specs),
             list(self.location_specs)
         )
