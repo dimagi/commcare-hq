@@ -216,6 +216,76 @@ class EmergencyOrderPackage(models.Model):
     cancelled_status = models.ForeignKey('EmergencyOrderStatusUpdate', on_delete=models.PROTECT,
         related_name='+', null=True)
 
+    # The total cost of all products in this package, using info from OrderableProduct
+    cost = models.DecimalField(max_digits=11, decimal_places=2)
+
+    # The total weight of this package in grams, using info from OrderableProduct
+    weight = models.DecimalField(max_digits=11, decimal_places=2)
+
+
+class OrderableProduct(models.Model):
+    """
+    Each entry in this table represents a product that is currently orderable
+    through Zipline for the given domain. If a product is no longer currently
+    orderable, it should be removed from this table.
+
+    To see what products were available at what time, the OrderableProductHistory
+    model can be used.
+    """
+
+    # The domain that this product applies to
+    domain = models.CharField(max_length=126)
+
+    # The product code that is used in the order requests
+    code = models.CharField(max_length=126, unique=True)
+
+    # The name of the product
+    name = models.CharField(max_length=126)
+
+    # A short description of the product, small enough to fit in an SMS but descriptive enough
+    # to understand what it is
+    description = models.CharField(max_length=126)
+
+    # The cost of 1 unit of this product (for now always in TZS)
+    cost = models.DecimalField(max_digits=11, decimal_places=2)
+
+    # A description of the size of 1 unit of this product
+    unit_description = models.CharField(max_length=126)
+
+    # The weight, in grams, of 1 unit of this product
+    weight = models.DecimalField(max_digits=11, decimal_places=2)
+
+    # The maximum number of units allowed to be ordered in a single order
+    max_units_allowed = models.IntegerField()
+
+
+class OrderableProductHistory(OrderableProduct):
+    """
+    This models keeps track of changes to the OrderableProduct table by showing
+    what products were available at a given point in time.
+
+    It's expected that each code should not have more than one record in this table
+    with overlapping effective start and end timestamps.
+
+    The effective start and end timestamps are used to:
+
+    1) Keep track of which products were available for ordering at what point in history.
+       When a product is made unavailable for ordering, it's effective end timestamp should
+       be updated to be the current date and time.
+
+    2) Keep track of the information associated with the product over the given time
+       period. So for example, if the price of a unit of a product changes, a new
+       record should be inserted for the product with an effective start timestamp of
+       the current date and time.
+    """
+
+    # The date and time that this product started being available for orders.
+    effective_start_timestamp = models.DateTimeField()
+
+    # The date and time that this product stopped being available for orders.
+    # This should not be null. For active products set it to 9999-12-31.
+    effective_end_timestamp = models.DateTimeField()
+
 
 def update_product_quantity_json_field(json_field, products):
     """
