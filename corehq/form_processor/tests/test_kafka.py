@@ -23,8 +23,8 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
 
     def setUp(self):
         super(KafkaPublishingTest, self).setUp()
-        FormProcessorTestUtils.delete_all_sql_forms()
-        FormProcessorTestUtils.delete_all_sql_cases()
+        FormProcessorTestUtils.delete_all_xforms()
+        FormProcessorTestUtils.delete_all_cases()
         self.form_accessors = FormAccessors(domain=self.domain)
         self.processor = TestProcessor()
         self.pillow = ConstructedPillow(
