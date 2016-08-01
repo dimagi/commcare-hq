@@ -46,26 +46,6 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
     });
 
-    var getGridAttributes = function (tile) {
-        if (!tile) {
-            return null;
-        }
-        var rowStart = tile.gridY + 1;
-        var colStart = tile.gridX + 1;
-        var rowEnd = rowStart + tile.gridHeight;
-        var colEnd = colStart + tile.gridWidth;
-
-        return rowStart + " / " + colStart + " / " +
-            rowEnd + " / " + colEnd;
-    };
-
-    function addStyleString(str) {
-        var node = document.createElement('style');
-        node.innerHTML = str;
-        debugger;
-        $("#case-tile-styles").body.appendChild(node);
-    }
-
     MenuList.CaseView = Marionette.ItemView.extend({
         tagName: "tr",
         getTemplate: function () {
@@ -99,6 +79,48 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
     });
 
+    var getGridAttributes = function (tile) {
+        if (!tile) {
+            return null;
+        }
+        var rowStart = tile.gridY + 1;
+        var colStart = tile.gridX + 1;
+        var rowEnd = rowStart + tile.gridHeight;
+        var colEnd = colStart + tile.gridWidth;
+
+        return rowStart + " / " + colStart + " / " +
+            rowEnd + " / " + colEnd;
+    };
+
+    var generateCaseTileStyles = function (tiles) {
+        var tile, fontSize, fontString, styleString, tileId;
+        if (!_.isNull(tiles)) {
+            var tilesModel = [];
+            for (var i = 0; i < tiles.length; i++) {
+                var obj = {};
+                tile = tiles[i];
+                if (tile === null) {
+                    continue;
+                }
+                fontSize = tiles[i].fontSize;
+                fontString = fontSize;
+                styleString = getGridAttributes(tile);
+                tileId = "grid-style-" + i;
+                obj.id = tileId;
+                obj.gridStyle = styleString;
+                obj.fontStyle = fontString;
+                tilesModel.push(obj);
+            }
+        }
+        var templateString = $("#case-tile-style-template").html();
+        var tileStyleTemplate = _.template(templateString);
+        var tileStyle = tileStyleTemplate({
+            models: tilesModel,
+        });
+        $("#case-tiles-style").html(tileStyle).removeAttr("data-css-polyfilled");
+    };
+
+
     MenuList.CaseListView = Marionette.CompositeView.extend({
         tagName: "div",
         template: "#case-view-list-template",
@@ -108,6 +130,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         initialize: function (options) {
             this.tiles = options.tiles;
             this.styles = options.styles;
+            generateCaseTileStyles(options.tiles);
         },
 
         childViewOptions: function () {
@@ -156,61 +179,6 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 tiles: this.options.tiles,
             };
         },
-
-
-        onShow: function (options) {
-            var tile, fontSize, fontString, styleString, tileId;
-            this.tiles = options.tiles;
-            this.styles = options.styles;
-            if (!_.isNull(this.tiles)) {
-                var tilesModel = [];
-                for (var i = 0; i < this.tiles.length; i++) {
-                    var obj = {};
-                    tile = this.tiles[i];
-                    if (tile === null) {
-                        continue;
-                    }
-                    fontSize = this.tiles[i].fontSize;
-                    fontString = fontSize;
-                    styleString = getGridAttributes(tile);
-                    tileId = "grid-style-" + i;
-                    obj.id = tileId;
-                    obj.gridStyle = styleString;
-                    obj.fontStyle = fontString;
-                    tilesModel.push(obj);
-                }
-            }
-
-            var StyleModel = Backbone.Model.extend({});
-
-            var StyleCollection = Backbone.Collection.extend({
-                model: StyleModel,
-            });
-
-            var mCollection = new StyleCollection(tilesModel);
-
-            var styleCollectionView = new MenuList.CaseTileCollectionView({
-                collection: mCollection,
-            });
-
-            var mHtml = styleCollectionView.render();
-
-            debugger;
-
-            $("case-tile-styles").html(styleCollectionView.render());
-        },
-    });
-
-    MenuList.CaseTileStyleItem = Backbone.View.extend({
-        template: _.template($("#case-tile-style-template").html()),
-        render: function () {
-            this.$el.html(this.template(this.model.attributes));
-            return this;
-        }
-    });
-
-    MenuList.CaseTileCollectionView = Marionette.CollectionView.extend({
-        childView: MenuList.CaseTileStyleItem,
     });
 
     MenuList.DetailView = Marionette.ItemView.extend({
@@ -253,4 +221,5 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             };
         },
     });
-});
+})
+;
