@@ -1,0 +1,107 @@
+
+<div class="modal fade" tabindex="-1" role="dialog" id="modal-app-settings">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title"><i class="fa fa-cogs"></i> Application Settings</h4>
+      </div>
+      <div class="modal-body">
+        <div class="form">
+          <div class="form-group">
+            <label class="control-label">
+              Name
+            </label>
+            <div class="controls">
+              <input type="text" class="form-control" data-bind="value: name, valueUpdate: 'keyup'" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<!-- ko foreach: workflows -->
+  <div class="modal fade"
+       tabindex="-1"
+       role="dialog"
+       data-bind="attr: {id: modalId}">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title"><i class="fa fa-cogs"></i> Workflow Settings</h4>
+        </div>
+        <div class="modal-body">
+          <label class="control-label">
+            Name
+          </label>
+          <div class="controls">
+            <input type="text" class="form-control" data-bind="value: name, valueUpdate: 'keyup'" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
+<!-- /ko -->
+
+
+<!-- ko foreach: forms -->
+  <div class="modal fade"
+       tabindex="-1"
+       role="dialog"
+       data-bind="attr: {id: modalId}">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title"><i class="fa fa-edit"></i> Edit Form</h4>
+        </div>
+        <div class="modal-body">
+          <div class="form">
+            <div class="form-group">
+              <label class="control-label">
+                Name
+              </label>
+              <div class="controls">
+                <input type="text"
+                       class="form-control"
+                       data-bind="value: name, valueUpdate: 'keyup'" />
+              </div>
+            </div>
+            <fieldset>
+              <legend>Questions</legend>
+              <!-- ko foreach: questions -->
+              <p class="form-settings-question">
+                <button type="button"
+                        class="form-settings-question-remove btn btn-sm btn-danger"
+                        data-bind="click: remove">
+                  <i class="fa fa-remove"></i>
+                </button>
+                <textarea cols="2" class="form-control" data-bind="value: text"></textarea>
+              </p>
+              <!-- /ko -->
+              <p>
+                <button type="button"
+                        class="btn btn-primary"
+                        data-bind="click: addQuestion">
+                  <i class="fa fa-plus"></i> Add Question
+                </button>
+              </p>
+            </fieldset>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
+<!-- /ko -->

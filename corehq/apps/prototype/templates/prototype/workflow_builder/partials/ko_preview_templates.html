@@ -1,0 +1,18 @@
+<script type="text/html" id="ko-template-screen-a">
+  <div class="phone-page">
+    <div class="phone-page-scrollable">
+      <ul class="phone-navlist">
+        <!-- ko foreach: orderedWorkflows -->
+        <li data-bind="css: {'selected': isSelected}">
+          <div class="phone-navlist-title noselect">
+            <a href="#" data-bind="text: name"></a>
+            <button type="button" class="phone-navlist-icon pull-right">
+              <i class="fa fa-chevron-right"></i>
+            </button>
+          </div>
+        </li>
+        <!-- /ko -->
+      </ul>
+    </div>
+  </div>
+</script>
