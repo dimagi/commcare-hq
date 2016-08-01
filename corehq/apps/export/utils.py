@@ -241,6 +241,10 @@ def _convert_transform(serializable_transform):
 
 
 def _get_system_property(index, transform, export_type, table_path):
+    """
+    Given an old style export index and a transform, returns new style list of PathNodes
+    and transform
+    """
     from .models import (
         MAIN_TABLE,
         CASE_HISTORY_TABLE,
