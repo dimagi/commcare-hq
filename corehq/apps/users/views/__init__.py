@@ -75,6 +75,7 @@ from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRe
 from corehq.elastic import ADD_TO_ES_FILTER, es_query
 from corehq.util.couch import get_document_or_404
 from corehq import toggles
+from django.views.decorators.csrf import csrf_exempt
 
 
 def _users_context(request, domain):
@@ -1006,9 +1007,10 @@ def location_restriction_for_users(request, domain):
     return HttpResponse()
 
 
+@csrf_exempt
 @require_POST
 @require_superuser
-def register_fcm_device_token(request, couch_user_id, device_token):
+def register_fcm_device_token(request, domain, couch_user_id, device_token):
     user = WebUser.get_by_user_id(couch_user_id)
     user.fcm_device_token = device_token
     user.save()
