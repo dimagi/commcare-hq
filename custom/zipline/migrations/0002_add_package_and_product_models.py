@@ -45,19 +45,29 @@ class Migration(migrations.Migration):
                 ('max_units_allowed', models.IntegerField()),
             ],
             options={
+                'abstract': False,
             },
             bases=(models.Model,),
         ),
         migrations.CreateModel(
             name='OrderableProductHistory',
             fields=[
-                ('orderableproduct_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='zipline.OrderableProduct')),
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('domain', models.CharField(max_length=126)),
+                ('code', models.CharField(unique=True, max_length=126)),
+                ('name', models.CharField(max_length=126)),
+                ('description', models.CharField(max_length=126)),
+                ('cost', models.DecimalField(max_digits=11, decimal_places=2)),
+                ('unit_description', models.CharField(max_length=126)),
+                ('weight', models.DecimalField(max_digits=11, decimal_places=2)),
+                ('max_units_allowed', models.IntegerField()),
                 ('effective_start_timestamp', models.DateTimeField()),
                 ('effective_end_timestamp', models.DateTimeField()),
             ],
             options={
+                'abstract': False,
             },
-            bases=('zipline.orderableproduct',),
+            bases=(models.Model,),
         ),
         migrations.AlterUniqueTogether(
             name='emergencyorderpackage',

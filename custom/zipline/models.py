@@ -223,15 +223,10 @@ class EmergencyOrderPackage(models.Model):
     weight = models.DecimalField(max_digits=11, decimal_places=2)
 
 
-class OrderableProduct(models.Model):
-    """
-    Each entry in this table represents a product that is currently orderable
-    through Zipline for the given domain. If a product is no longer currently
-    orderable, it should be removed from this table.
+class BaseOrderableProduct(models.Model):
 
-    To see what products were available at what time, the OrderableProductHistory
-    model can be used.
-    """
+    class Meta:
+        abstract = True
 
     # The domain that this product applies to
     domain = models.CharField(max_length=126)
@@ -259,7 +254,19 @@ class OrderableProduct(models.Model):
     max_units_allowed = models.IntegerField()
 
 
-class OrderableProductHistory(OrderableProduct):
+class OrderableProduct(BaseOrderableProduct):
+    """
+    Each entry in this table represents a product that is currently orderable
+    through Zipline for the given domain. If a product is no longer currently
+    orderable, it should be removed from this table.
+
+    To see what products were available at what time, the OrderableProductHistory
+    model can be used.
+    """
+    pass
+
+
+class OrderableProductHistory(BaseOrderableProduct):
     """
     This models keeps track of changes to the OrderableProduct table by showing
     what products were available at a given point in time.
