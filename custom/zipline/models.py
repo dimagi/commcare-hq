@@ -1,6 +1,6 @@
 import jsonfield
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from django.db import models
 
 
@@ -199,7 +199,7 @@ class EmergencyOrderPackage(models.Model):
     products = jsonfield.JSONField(default=dict)
 
     # Should either be STATUS_DISPATCHED, STATUS_DELIVERED, or STATUS_CANCELLED_IN_FLIGHT
-    status = models.CharField(max_length=126)
+    status = models.CharField(max_length=126, default=EmergencyOrderStatusUpdate.STATUS_DISPATCHED)
 
     # A pointer to the EmergencyOrderStatusUpdate representing the dispatched status update
     # for this package
@@ -217,22 +217,67 @@ class EmergencyOrderPackage(models.Model):
         related_name='+', null=True)
 
     # The total cost of all products in this package, using info from OrderableProduct
-    cost = models.DecimalField(max_digits=11, decimal_places=2)
+    cost = models.DecimalField(max_digits=11, decimal_places=2, null=True)
 
     # The total weight of this package in grams, using info from OrderableProduct
-    weight = models.DecimalField(max_digits=11, decimal_places=2)
+    weight = models.DecimalField(max_digits=11, decimal_places=2, null=True)
+
+    def update_calculated_fields(self):
+        """
+        Updates the cost and the weight of the package.
+        Note that this uses the active record for the product, so this method
+        should only be called in real-time (not on historical data).
+        """
+        from custom.zipline.api import log_zipline_exception
+
+        cost = Decimal(0)
+        weight = Decimal(0)
+
+        for code, data in self.products:
+            try:
+                product = OrderableProduct.objects.get(domain=self.order.domain, code=code)
+            except OrderableProduct.DoesNotExist:
+                log_zipline_exception(
+                    "Failed to update calculated fields - product not found",
+                    details={
+                        'EmergencyOrderPackage_pk': self.pk,
+                        'product_code': code,
+                    }
+                )
+                continue
+
+            try:
+                quantity = Decimal(data['quantity'])
+            except (KeyError, TypeError, InvalidOperation):
+                log_zipline_exception(
+                    "Failed to update calculated fields - invalid quantity",
+                    details={
+                        'EmergencyOrderPackage_pk': self.pk,
+                        'product_code': code,
+                    }
+                )
+                continue
+
+            cost += product.cost * quantity
+            weight += product.weight * quantity
+
+        self.cost = cost
+        self.weight = weight
 
 
 class BaseOrderableProduct(models.Model):
 
     class Meta:
         abstract = True
+        unique_together = [
+            ['domain', 'code'],
+        ]
 
     # The domain that this product applies to
     domain = models.CharField(max_length=126)
 
     # The product code that is used in the order requests
-    code = models.CharField(max_length=126, unique=True)
+    code = models.CharField(max_length=126)
 
     # The name of the product
     name = models.CharField(max_length=126)

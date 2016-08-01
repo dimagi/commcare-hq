@@ -2,6 +2,7 @@ from custom.zipline.models import (EmergencyOrder, EmergencyOrderStatusUpdate,
     update_product_quantity_json_field)
 from datetime import datetime
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.logging import notify_exception
 from django.db import transaction
 
 
@@ -99,3 +100,8 @@ def update_order_products_confirmed(order, products):
     if not order.confirmed_status:
         order.confirmed_status = confirmed_status
     order.save()
+
+
+def log_zipline_exception(message, details=None):
+    message = "[ZIPLINE] {}".format(message)
+    notify_exception(None, message=message, details=details)

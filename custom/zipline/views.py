@@ -3,7 +3,7 @@ import re
 from corehq.apps.domain.views import DomainViewMixin
 from custom.zipline.api import get_order_update_critical_section_key, ProductQuantity
 from custom.zipline.models import (EmergencyOrder, EmergencyOrderStatusUpdate,
-    update_product_quantity_json_field)
+    update_product_quantity_json_field, EmergencyOrderPackage)
 from dateutil.parser import parse as parse_timestamp
 from decimal import Decimal
 from dimagi.utils.couch import CriticalSection
@@ -243,6 +243,15 @@ class BaseZiplineStatusUpdateView(View, DomainViewMixin):
         else:
             return {}
 
+    def get_package_object(self, order, package_number):
+        # This always gets invoked from within a CriticalSection, so no need to
+        # add locking here
+        package, _ = EmergencyOrderPackage.objects.get_or_create(
+            order=order,
+            package_number=package_number,
+        )
+        return package
+
     def post(self, request, *args, **kwargs):
         # request.body already confirmed to be a valid json dict in ZiplineOrderStatusView
         data = json.loads(request.body)
@@ -356,6 +365,20 @@ class DispatchedStatusUpdateView(BaseZiplineStatusUpdateView):
             order.dispatched_status = dispatched_status
             order.save()
 
+        package = self.get_package_object(order, data['packageNumber'])
+        if package.status not in (
+            EmergencyOrderStatusUpdate.STATUS_DELIVERED,
+            EmergencyOrderStatusUpdate.STATUS_CANCELLED,
+        ):
+            package.status = EmergencyOrderStatusUpdate.STATUS_DISPATCHED
+
+        if not package.dispatched_status:
+            package.dispatched_status = dispatched_status
+            update_product_quantity_json_field(package.products, data['products'])
+            package.update_calculated_fields()
+
+        package.save()
+
         return True, {'status': 'success'}
 
     def send_sms_for_status_update(self, order, data):
@@ -383,6 +406,12 @@ class DeliveredStatusUpdateView(BaseZiplineStatusUpdateView):
             order.status = EmergencyOrderStatusUpdate.STATUS_DELIVERED
             order.delivered_status = delivered_status
             order.save()
+
+        package = self.get_package_object(order, data['packageNumber'])
+        if not package.delivered_status:
+            package.status = EmergencyOrderStatusUpdate.STATUS_DELIVERED
+            package.delivered_status = delivered_status
+            package.save()
 
         return True, {'status': 'success'}
 
@@ -415,6 +444,12 @@ class CancelledInFlightStatusUpdateView(BaseZiplineStatusUpdateView):
             order.status = EmergencyOrderStatusUpdate.STATUS_CANCELLED
             order.cancelled_status = cancelled_in_flight_status
             order.save()
+
+        package = self.get_package_object(order, data['packageNumber'])
+        if not package.cancelled_status:
+            package.status = EmergencyOrderStatusUpdate.STATUS_CANCELLED_IN_FLIGHT
+            package.cancelled_status = cancelled_in_flight_status
+            package.save()
 
         return True, {'status': 'success'}
 
