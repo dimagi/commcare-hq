@@ -353,6 +353,6 @@ class SplitStringExpressionSpec(JsonObject):
             return None
 
         try:
-            return string_value.split(delimiter)[index_value]
+            return string_value.split(self.delimiter)[index_value]
         except IndexError:
             return None
