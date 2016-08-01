@@ -1,4 +1,4 @@
-/*global FormplayerFrontend */
+/*global FormplayerFrontend, Handlebars */
 
 FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette) {
     MenuList.MenuView = Marionette.ItemView.extend({
@@ -55,14 +55,15 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         var rowEnd = rowStart + tile.gridHeight;
         var colEnd = colStart + tile.gridWidth;
 
-        return "grid-area: " + rowStart + " / " + colStart + " / " +
-            rowEnd + " / " + colEnd + ";";
+        return rowStart + " / " + colStart + " / " +
+            rowEnd + " / " + colEnd;
     };
 
     function addStyleString(str) {
         var node = document.createElement('style');
         node.innerHTML = str;
-        document.body.appendChild(node);
+        debugger;
+        $("#case-tile-styles").body.appendChild(node);
     }
 
     MenuList.CaseView = Marionette.ItemView.extend({
@@ -75,25 +76,6 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             }
         },
 
-        initialize: function (options) {
-            var tile, fontSize, fontString, styleString, tileId, formattedString;
-            this.tiles = options.tiles;
-            this.styles = options.styles;
-            if(!_.isNull(this.tiles)) {
-                for (var i = 0; i < this.tiles.length; i++) {
-                    tile = this.tiles[i];
-                    if (tile === null) {
-                        continue;
-                    }
-                    fontSize = this.tiles[i].fontSize;
-                    fontString = "font-size: " + fontSize + ";";
-                    styleString = getGridAttributes(tile);
-                    tileId = "grid-style-" + i;
-                    formattedString = "." + tileId + " { " + styleString + " " + fontString + " } ";
-                    addStyleString(formattedString);
-                }
-            }
-        },
         className: "formplayer-request",
         events: {
             "click": "rowClick",
@@ -174,6 +156,61 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 tiles: this.options.tiles,
             };
         },
+
+
+        onShow: function (options) {
+            var tile, fontSize, fontString, styleString, tileId;
+            this.tiles = options.tiles;
+            this.styles = options.styles;
+            if (!_.isNull(this.tiles)) {
+                var tilesModel = [];
+                for (var i = 0; i < this.tiles.length; i++) {
+                    var obj = {};
+                    tile = this.tiles[i];
+                    if (tile === null) {
+                        continue;
+                    }
+                    fontSize = this.tiles[i].fontSize;
+                    fontString = fontSize;
+                    styleString = getGridAttributes(tile);
+                    tileId = "grid-style-" + i;
+                    obj.id = tileId;
+                    obj.gridStyle = styleString;
+                    obj.fontStyle = fontString;
+                    tilesModel.push(obj);
+                }
+            }
+
+            var StyleModel = Backbone.Model.extend({});
+
+            var StyleCollection = Backbone.Collection.extend({
+                model: StyleModel,
+            });
+
+            var mCollection = new StyleCollection(tilesModel);
+
+            var styleCollectionView = new MenuList.CaseTileCollectionView({
+                collection: mCollection,
+            });
+
+            var mHtml = styleCollectionView.render();
+
+            debugger;
+
+            $("case-tile-styles").html(styleCollectionView.render());
+        },
+    });
+
+    MenuList.CaseTileStyleItem = Backbone.View.extend({
+        template: _.template($("#case-tile-style-template").html()),
+        render: function () {
+            this.$el.html(this.template(this.model.attributes));
+            return this;
+        }
+    });
+
+    MenuList.CaseTileCollectionView = Marionette.CollectionView.extend({
+        childView: MenuList.CaseTileStyleItem,
     });
 
     MenuList.DetailView = Marionette.ItemView.extend({
@@ -216,5 +253,4 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             };
         },
     });
-})
-;
+});
