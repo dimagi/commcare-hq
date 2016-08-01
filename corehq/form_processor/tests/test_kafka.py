@@ -107,6 +107,18 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
         self.assertEqual(case.case_id, change_meta.document_id)
         self.assertEqual(self.domain, change_meta.domain)
 
+    @run_with_all_backends
+    def test_case_deletions(self):
+        case = create_and_save_a_case(self.domain, case_id=uuid.uuid4().hex, case_name='test case')
+        with process_kafka_changes(self.case_pillow):
+            with process_couch_changes('DefaultChangeFeedPillow'):
+                case.soft_delete()
+
+        self.assertEqual(1, len(self.processor.changes_seen))
+        change_meta = self.processor.changes_seen[0].metadata
+        self.assertEqual(case.case_id, change_meta.document_id)
+        self.assertTrue(change_meta.is_deletion)
+
     def test_duplicate_case_published(self):
         # this test only runs on sql because it's handling a sql-specific edge case where duplicate
         # form submissions should cause cases to be resubmitted.
