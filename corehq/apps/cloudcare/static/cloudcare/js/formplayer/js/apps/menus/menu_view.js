@@ -79,6 +79,8 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
     });
 
+    // return the string grid-area attribute
+    // takes the form of  [x-coord] / [y-Coord] / [width] / [height]
     var getGridAttributes = function (tile) {
         if (!tile) {
             return null;
@@ -91,7 +93,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         return rowStart + " / " + colStart + " / " +
             rowEnd + " / " + colEnd;
     };
-
+    // generate the case tile's style block and insert
     var generateCaseTileStyles = function (tiles) {
         var tile, fontSize, fontString, styleString, tileId;
         if (!_.isNull(tiles)) {
@@ -117,10 +119,10 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         var tileStyle = tileStyleTemplate({
             models: tilesModel,
         });
+        // need to remove this attribute so the grid style is re-evaluated
         $("#case-tiles-style").html(tileStyle).removeAttr("data-css-polyfilled");
     };
-
-
+    
     MenuList.CaseListView = Marionette.CompositeView.extend({
         tagName: "div",
         template: "#case-view-list-template",
