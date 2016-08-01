@@ -8,7 +8,7 @@ from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, Pr
     ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec, \
     IdentityExpressionSpec, IteratorExpressionSpec, SwitchExpressionSpec, ArrayIndexExpressionSpec, \
     NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec, EvalExpressionSpec, FormsExpressionSpec, \
-    IterationNumberExpressionSpec, SubcasesExpressionSpec
+    IterationNumberExpressionSpec, SubcasesExpressionSpec, GpsValueExpressionSpec
 from corehq.apps.userreports.expressions.date_specs import AddDaysExpressionSpec, AddMonthsExpressionSpec, \
     MonthStartDateExpressionSpec, MonthEndDateExpressionSpec, DiffDaysExpressionSpec, \
     DiffSecondsExpressionSpec
@@ -233,6 +233,13 @@ def _sort_items_expression(spec, context):
     return wrapped
 
 
+def _gps_value_expression(spec, context):
+    wrapped = GpsValueExpressionSpec.wrap(spec)
+    wrapped.configure(
+        gps_expression=ExpressionFactory.from_spec(wrapped.gps_expression, context)
+    )
+    return wrapped
+
 class ExpressionFactory(object):
     spec_map = {
         'identity': _identity_expression,
@@ -263,6 +270,7 @@ class ExpressionFactory(object):
         'reduce_items': _reduce_items_expression,
         'flatten': _flatten_expression,
         'sort_items': _sort_items_expression,
+        'gps_get_value': _gps_value_expression,
     }
     # Additional items are added to the spec_map by use of the `register` method.
 

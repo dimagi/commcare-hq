@@ -90,3 +90,29 @@ def _last_item(items):
         return items[-1]
     except (IndexError, TypeError):
         return None
+
+
+LATITUDE = 'latitude'
+LONGITUDE = 'longitude'
+ELEVATION = 'elevation'
+ACCURACY = 'accuracy'
+SUPPORTED_GPS_VALUES = [LATITUDE, LONGITUDE, ELEVATION, ACCURACY]
+
+
+def get_gps_element(gps_string, gps_type):
+    gps_type_index = {
+        LATITUDE: 0,
+        LONGITUDE: 1,
+        ELEVATION: 2,
+        ACCURACY: 3,
+    }
+    assert gps_type in SUPPORTED_GPS_VALUES
+
+    if not isinstance(gps_string, basestring):
+        return None
+
+    gps_elements = gps_string.split()
+    try:
+        return gps_elements[gps_type_index[gps_type]]
+    except IndexError:
+        return None

@@ -15,7 +15,7 @@ from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from pillowtop.dao.exceptions import DocumentNotFoundError
-from .utils import eval_statements
+from .utils import eval_statements, SUPPORTED_GPS_VALUES, get_gps_element
 from corehq.util.quickcache import quickcache
 
 
@@ -331,3 +331,21 @@ class SubcasesExpressionSpec(JsonObject):
         subcases = [c.to_json() for c in CaseAccessors(domain).get_reverse_indexed_cases([case_id])]
         context.set_cache_value(cache_key, subcases)
         return subcases
+
+
+class GpsValueExpressionSpec(JsonObject):
+    type = TypeProperty('gps_get_value')
+    gps_expression = DefaultProperty(required=True)
+    gps_type = StringProperty(required=True)
+
+    def configure(self, gps_expression):
+        self._gps_expression = gps_expression
+        if self.gps_type not in SUPPORTED_GPS_VALUES:
+            raise BadSpecError(_("gps_type '{}' is not valid. Valid options are: {} ").format(
+                self.gps_type,
+                SUPPORTED_GPS_VALUES
+            ))
+
+    def __call__(self, item, context=None):
+        gps_string = self._gps_expression(item, context)
+        return get_gps_element(gps_string, self.gps_type)
