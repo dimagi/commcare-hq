@@ -1,0 +1,392 @@
+@import '../../../style/less/_hq/includes/variables.less';
+@import '../../../style/less/_hq/includes/mixins.less';
+
+@form-width: 120px;
+
+@z-index-from-dragged: 800;
+@z-index-workflow: 200;
+@z-index-form-container: 210;
+
+.noselect {
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none;   /* Chrome/Safari/Opera */
+  -khtml-user-select: none;    /* Konqueror */
+  -moz-user-select: none;      /* Firefox */
+  -ms-user-select: none;       /* Internet Explorer/Edge */
+  user-select: none;           /* Non-prefixed version, currently
+                                  not supported by any browser */
+}
+
+body {
+  background: @cc-bg;
+}
+
+.nabvbar-brand {
+  background-color: @cc-text;
+  min-height: 30px;
+  margin-bottom: 0;
+  border: none;
+
+  .navbar-text {
+    color: @cc-bg;
+    text-transform: uppercase;
+    margin-top: 8.5px;
+    margin-bottom: 7.5px;
+    font-size: 1rem;
+  }
+}
+
+.navbar-app-settings {
+  background-color: @cc-brand-mid;
+  margin-bottom: 0;
+  min-height: 50px;
+  border: none;
+
+  .navbar-text {
+    color: white;
+    font-size: 1.8rem;
+    margin-top: 12.5px;
+    margin-bottom: 12.5px;
+  }
+  .navbar-nav > li > a {
+    color: white;
+    font-size: 1.8rem;
+    padding-top: 16.5px;
+    padding-bottom: 15.5px;
+    .transition(all .8s);
+
+    &:link, &:focus, &:visited {
+      color: white;
+    }
+
+    &:hover,
+    &:focus {
+      outline: none;
+      color: white;
+      @shadow-bg: #000000;
+      text-shadow: 0 0 20px @shadow-bg, 0 0 30px @shadow-bg, 0 0 50px @shadow-bg, 0 0 50px @shadow-bg, 0 0 50px @shadow-bg;
+    }
+  }
+}
+
+.navbar-app-toolbar {
+  background-color: @cc-brand-low;
+  margin-bottom: 0;
+
+  .navbar-nav > li > a {
+    color: white;
+    font-size: 4rem;
+    .transition(background-color .8s);
+    padding-top: 6.5px;
+    padding-bottom: 12.5px;
+    .transition(all .8s);
+
+    &:link, &:focus, &:visited {
+      color: white;
+    }
+
+    &:hover,
+    &:focus {
+      outline: none;
+      color: white;
+      @shadow-bg: @cc-brand-mid;
+      text-shadow: 0 0 20px lighten(@shadow-bg, 30), 0 0 50px @shadow-bg, 0 0 50px @shadow-bg, 0 0 50px @shadow-bg;
+    }
+  }
+}
+
+.workflow {
+  background-color: @cc-dark-cool-accent-mid;
+  min-height: 200px;
+  min-width: 200px;
+  position: absolute;
+  cursor: move;
+  padding: 10px;
+  padding-bottom: 11px;
+  .border-top-radius(5px);
+  .border-bottom-radius(5px);
+  margin: 5px;
+  .box-shadow(0px 0px 3px 0px rgba(0,0,0,0.5));
+  .transition(box-shadow .5s);
+
+  &:hover {
+    .box-shadow(0px 0px 5px 1px rgba(0,0,0,0.75));
+  }
+  &.ui-draggable-dragging {
+    .box-shadow(0px 0px 10px 4px rgba(0,0,0,0.8));
+  }
+
+  .workflow-nav {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    > li {
+      padding-right: 5px;
+      display: inline-block;
+      a {
+        font-size: 1.5em;
+        color: white;
+        display: block;
+        padding: 0px 5px;
+        line-height: 1.2rem;
+        .transition(all .8s);
+
+        &:link, &:focus, &:visited {
+          color: white;
+        }
+
+        &:hover,
+        &:focus {
+          outline: none;
+          @shadow-bg: #000000;
+          text-shadow: 0 0 20px @shadow-bg, 0 0 20px @shadow-bg, 0 0 20px @shadow-bg;
+        }
+      }
+      h2 {
+        margin: 0;
+        font-size: 1.3em;
+        color: white;
+        font-weight: normal;
+        line-height: 1.2rem;
+      }
+    }
+  }
+
+  .workflow-close {
+    position: absolute;
+    right: 8px;
+    top: 3px;
+    color: white;
+    font-size: 1.5rem;
+    display: block;
+    padding: 5px;
+    .transition(all .8s);
+
+    &:link, &:focus, &:visited {
+      color: white;
+    }
+
+    &:hover,
+    &:focus {
+      outline: none;
+      @shadow-bg: #000000;
+      text-shadow: 0 0 20px @shadow-bg, 0 0 20px @shadow-bg, 0 0 20px @shadow-bg;
+    }
+  }
+
+}
+
+.btn-workflow,
+.btn-workflow-records {
+  .button-variant(white; @cc-dark-cool-accent-mid; @cc-dark-cool-accent-mid);
+}
+
+.btn-workflow {
+  text-transform: uppercase;
+  .box-shadow(0px 0px 5px 0px rgba(0,0,0,0.5));
+  padding: 3px 8px;
+  .transition(all 1s ease);
+
+  &:hover {
+    background-color: lighten(@cc-dark-cool-accent-mid, 5);
+    border-color: lighten(@cc-dark-cool-accent-mid, 5);
+    .box-shadow(0px 0px 15px 4px darken(@cc-dark-cool-accent-low, 30));
+  }
+}
+
+.btn-workflow-records {
+  @btn-records-size: 65px;
+  width: @btn-records-size;
+  height: @btn-records-size;
+  .border-top-radius(@btn-records-size/2);
+  .border-bottom-radius(@btn-records-size/2);
+  font-size: 3.3rem;
+  line-height: @btn-records-size;
+  padding: 0;
+  .box-shadow(0px 0px 5px 0px rgba(0,0,0,0.5));
+  .transition(all 1s ease);
+  &:hover,
+  &.glow {
+    background-color: lighten(@cc-dark-cool-accent-mid, 5);
+    border-color: lighten(@cc-dark-cool-accent-mid, 5);
+    .box-shadow(0px 0px 40px 10px darken(@cc-dark-cool-accent-low, 20));
+  }
+}
+
+.workflow-forms {
+  width: 100%;
+  white-space: nowrap;
+  box-sizing: border-box;
+  margin-top: 25px;
+  height: 155px;
+}
+
+.workflow-form-container {
+  background-color: @cc-dark-cool-accent-low;
+  height: 100%;
+  min-width: @form-width+20px;
+  padding: 0 10px 10px;
+  display: inline-block;
+  box-sizing: border-box;
+  position: relative;
+  vertical-align: top;
+  .transition(all 1s);
+
+  .workflow-category-title {
+    text-transform: uppercase;
+    color: @cc-dark-cool-accent-hi;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 5px;
+    text-align: center;
+    cursor: help;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .workflow-new-form {
+    width: @form-width;
+    height: @form-width;
+    text-align: center;
+    display: inline-block;
+    vertical-align: top;
+  }
+
+  .workflow-form-icon {
+    text-align: center;
+    box-sizing: border-box;
+    font-size: 3rem;
+    padding: 21px 0 5px;
+    color: fadeout(@cc-dark-cool-accent-mid, 15);
+  }
+
+  &.workflow-next {
+    &:before {
+      .transition(all 1s);
+      content: "\f006";
+      font-family: 'WorkflowFontRegular';
+      color: @cc-dark-cool-accent-low;
+      position: absolute;
+      right: -30px;
+      top: 50%;
+      font-size: 4.2rem;
+      line-height: 26px;
+      margin-top: -13px
+    }
+  }
+
+  &.ui-droppable-active,
+  &.glow {
+    .box-shadow(0 0 10px 2px fadeout(@cc-dark-cool-accent-hi, 20));
+  }
+
+  &.ui-droppable-hover {
+    background-color: lighten(@cc-dark-cool-accent-low, 10);
+    .box-shadow(0 0 25px 10px @cc-dark-cool-accent-hi);
+  }
+
+  &.ui-droppable-hover.workflow-next:before {
+      color: lighten(@cc-dark-cool-accent-low, 10);
+  }
+
+}
+
+.workflow-form {
+  width: @form-width;
+  height: @form-width;
+  background-color: @cc-bg;
+  .border-top-radius(10px);
+  .border-bottom-radius(10px);
+  display: inline-block;
+  vertical-align: top;
+  position: relative;
+  .box-shadow(0 0 5px 0 rgba(0,0,0,.5));
+  .transition(box-shadow 1s);
+
+  &:hover,
+  .glow {
+    .box-shadow(0 0 10px 3px @cc-dark-cool-accent-hi);
+  }
+
+  &.ui-draggable-dragging {
+    z-index: @z-index-from-dragged;
+    position: absolute;
+    .box-shadow(0px 0px 10px 4px rgba(0,0,0,0.8));
+  }
+
+  .workflow-form-close {
+    display: block;
+    padding: 5px;
+    position: absolute;
+    color: @cc-neutral-mid;
+    right: 5px;
+    top: 3px;
+    .transition(all 1s);
+    &:hover {
+      color: @cc-neutral-low;
+      text-shadow: 0 0 10px rgba(0,0,0,0.6), 0 0 30px rgba(0,0,0,0.6);
+    }
+  }
+
+  .workflow-form-title {
+    padding: 30px 10px 5px;
+    text-align: center;
+  }
+
+  .workflow-form-actions {
+    position: absolute;
+    bottom: 15px;
+    left: 0;
+    width: 100%;
+    padding: 5px 5px;
+    text-align: center;
+    font-size: 2.8rem;
+    line-height: 2.8rem;
+  }
+}
+
+.workflow-record-list {
+  height: @form-width;
+  width: 30px;
+  display: inline-block;
+  vertical-align: top;
+  position: relative;
+
+  .btn-workflow-records {
+    position: absolute;
+    top: 50%;
+    left: -42px;
+    margin-top: -37px;
+  }
+}
+
+.workflow-form-followup {
+  margin-left: 67px;
+}
+
+.workflow-form-completion {
+  margin-left: 30px;
+}
+
+#workspace {
+  box-sizing: border-box;
+  width: 100%;
+  overflow-y: scroll;
+  overflow-x: scroll;
+  position:relative;
+}
+
+.workspace-canvas {
+  position: absolute;
+  width: 3000px;
+  height: 5000px;
+}
+
+
+.ui-no-drag {
+  cursor: default;
+}
