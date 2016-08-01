@@ -2,8 +2,7 @@ from datetime import datetime
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.modules import to_function
-from toggle.models import Toggle
-from toggle.shortcuts import clear_toggle_cache, set_toggle
+from toggle.shortcuts import set_toggle
 
 from corehq.toggles import NEW_EXPORTS, NAMESPACE_DOMAIN
 from corehq.util.log import with_progress_bar
