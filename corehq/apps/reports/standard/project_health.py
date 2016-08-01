@@ -305,7 +305,6 @@ class ProjectHealthDashboard(ProjectReport):
         groupids_param = []
 
         if param_ids:
-            param_ids = param_ids[0].split(',')
             for id in param_ids:
                 if id.startswith("g__"):
                     groupids_param.append(id[3:])
@@ -333,7 +332,6 @@ class ProjectHealthDashboard(ProjectReport):
 
     def get_users_by_filter(self):
         locationids_param, groupids_param = self.parse_params(self.get_group_location_ids())
-
         users_list_by_location = self.get_users_by_location_filter(locationids_param)
         users_list_by_group = self.get_users_by_group_filter(groupids_param)
 
