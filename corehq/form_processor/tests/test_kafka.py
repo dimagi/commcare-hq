@@ -9,7 +9,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
-from corehq.form_processor.utils import get_simple_form_xml
+from corehq.form_processor.utils import get_simple_form_xml, should_use_sql_backend
 from corehq.util.test_utils import OverridableSettingsTestMixin, create_and_save_a_case, create_and_save_a_form
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.sample import TestProcessor
@@ -65,16 +65,20 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
                 dupe_form = submit_form_locally(form_xml, domain=self.domain)[1]
                 self.assertTrue(dupe_form.is_duplicate)
                 self.assertNotEqual(form_id, dupe_form.form_id)
-                self.assertEqual(form_id, dupe_form.orig_id)
+                if should_use_sql_backend(self.domain):
+                    self.assertEqual(form_id, dupe_form.orig_id)
 
         # make sure changes made it to kafka
-        self.assertEqual(2, len(self.processor.changes_seen))
         dupe_form_meta = self.processor.changes_seen[0].metadata
         self.assertEqual(dupe_form.form_id, dupe_form_meta.document_id)
-        # then the original form
-        orig_form_meta = self.processor.changes_seen[1].metadata
-        self.assertEqual(orig_form.form_id, orig_form_meta.document_id)
-        self.assertEqual(self.domain, orig_form_meta.domain)
+        self.assertEqual(dupe_form.domain, dupe_form.domain)
+        if should_use_sql_backend(self.domain):
+            # sql domains also republish the original form to ensure that if the server crashed
+            # in the processing of the form the first time that it is still sent to kafka
+            orig_form_meta = self.processor.changes_seen[1].metadata
+            self.assertEqual(orig_form.form_id, orig_form_meta.document_id)
+            self.assertEqual(self.domain, orig_form_meta.domain)
+            self.assertEqual(dupe_form.domain, dupe_form.domain)
 
     @run_with_all_backends
     def test_case_is_published(self):
