@@ -343,19 +343,20 @@ def extract_case_blocks(doc, include_path=False):
     return [struct if include_path else struct.caseblock for struct in _extract_case_blocks(form)]
 
 
-def _extract_case_blocks(data, path=None):
+def _extract_case_blocks(data, path=None, form_id=Ellipsis):
     """
     helper for extract_case_blocks
 
     data must be json representing a node in an xform submission
     """
     from corehq.form_processor.utils import extract_meta_instance_id
-    form_id = extract_meta_instance_id(data)
+    if form_id is Ellipsis:
+        form_id = extract_meta_instance_id(data)
 
     path = path or []
     if isinstance(data, list):
         for item in data:
-            for case_block in _extract_case_blocks(item, path=path):
+            for case_block in _extract_case_blocks(item, path=path, form_id=form_id):
                 yield case_block
     elif isinstance(data, dict) and not is_device_report(data):
         for key, value in data.items():
@@ -374,7 +375,7 @@ def _extract_case_blocks(data, path=None):
                         )
                         yield CaseBlockWithPath(caseblock=case_block, path=path)
             else:
-                for case_block in _extract_case_blocks(value, path=new_path):
+                for case_block in _extract_case_blocks(value, path=new_path, form_id=form_id):
                     yield case_block
 
 
