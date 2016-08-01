@@ -58,7 +58,7 @@ def _migrate_form_and_associated_models(domain, couch_form):
     # todo: this should hopefully not be necessary once all attachments are in blobDB
     sql_form.get_xml = MagicMock(return_value=couch_form.get_xml())
     case_stock_result = _get_case_and_ledger_updates(domain, sql_form)
-    _save_migrated_models(sql_form, case_stock_result)
+    _save_migrated_models(domain, sql_form, case_stock_result)
 
 
 def _migrate_form_and_attachments(domain, couch_form):
@@ -142,12 +142,19 @@ def _get_case_and_ledger_updates(domain, sql_form):
     )
 
 
-def _save_migrated_models(sql_form, case_stock_result):
+def _save_migrated_models(domain, sql_form, case_stock_result):
     """
     See SubmissionPost.save_processed_models for ~what this should do.
     However, note that that function does some things that this one shouldn't,
     e.g. process ownership cleanliness flags.
     """
+    interface = FormProcessorInterface(domain)
+    interface.save_processed_models(
+        [sql_form],
+        case_stock_result.case_models,
+        case_stock_result.stock_result
+    )
+    case_stock_result.case_result.close_extensions()
 
 
 def _copy_unprocessed_forms(domain):
