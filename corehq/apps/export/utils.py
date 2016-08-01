@@ -384,6 +384,16 @@ def migrate_domain(domain, dryrun=False):
         set_toggle(NEW_EXPORTS.slug, domain, True, namespace=NAMESPACE_DOMAIN)
         toggle_js_domain_cachebuster.clear(domain)
 
+    # Remote app migrations must have access to UserDefined columns and tables
+    if any(map(lambda meta: meta.is_remote_app_migration, metas)):
+        set_toggle(
+            ALLOW_USER_DEFINED_EXPORT_COLUMNS.slug,
+            domain,
+            True,
+            namespace=NAMESPACE_DOMAIN
+        )
+        toggle_js_domain_cachebuster.clear(domain)
+
     for meta in metas:
         print ''
         print '***' * 15
