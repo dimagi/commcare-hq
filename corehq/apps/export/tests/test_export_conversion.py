@@ -6,7 +6,9 @@ from django.test import TestCase, SimpleTestCase
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from couchexport.models import SavedExportSchema
+from toggle.shortcuts import toggle_enabled, clear_toggle_cache
 
+from corehq.toggles import NEW_EXPORTS, NAMESPACE_DOMAIN
 from corehq.util.test_utils import TestFileMixin, generate_cases
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.export.models import (
@@ -23,6 +25,7 @@ from corehq.apps.export.utils import (
     _convert_index_to_path_nodes,
     revert_new_exports,
     _is_remote_app_conversion,
+    migrate_domain,
 )
 from corehq.apps.export.const import (
     DEID_ID_TRANSFORM,
@@ -42,6 +45,31 @@ from corehq.apps.export.dbaccessors import (
 )
 
 MockRequest = namedtuple('MockRequest', 'domain')
+
+
+@mock.patch(
+    'corehq.apps.export.utils.stale_get_export_count',
+    return_value=0,
+)
+class TestMigrateDomain(TestCase):
+    """
+    This tests some specifics of migrate_domain that do not have to do with
+    the actual conversion process. That is tested in another test class
+    """
+    domain = 'test-migrate-domain'
+
+    def setUp(self):
+        self.project = Domain(name=self.domain)
+        self.project.save()
+        clear_toggle_cache(NEW_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN)
+
+    def tearDown(self):
+        self.project.delete()
+
+    def test_toggle_turned_on(self, _):
+        self.assertFalse(toggle_enabled(NEW_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN))
+        migrate_domain(self.domain)
+        self.assertTrue(toggle_enabled(NEW_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN))
 
 
 class TestIsRemoteAppConversion(TestCase):
