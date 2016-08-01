@@ -114,13 +114,19 @@
   }
 
   .workflow-form-title {
-    padding: 30px 10px 5px;
+    padding: 26px 10px 5px;
     text-align: center;
+    white-space: normal;
+    text-overflow: ellipsis;
+    height: 76px;
+    width: 100%;
+    overflow: hidden;
+    line-height: 1.5rem;
   }
 
   .workflow-form-actions {
     position: absolute;
-    bottom: 15px;
+    bottom: 10px;
     left: 0;
     width: 100%;
     padding: 5px 5px;
@@ -139,4 +145,17 @@
 
 .workflow-form-completion {
   margin-left: 30px;
+}
+
+.form-settings-question-remove {
+  float: right;
+}
+
+.form-settings-question .form-control {
+  width: 92%;
+}
+
+.workflow-form-survey {
+  min-width: 300px;
+  text-align: center;
 }

@@ -10,6 +10,22 @@
   z-index: @z-index-live-preview;
   .box-shadow(0 0 15px 5px rgba(0,0,0,0.55));
   padding-bottoM: 40px;
+  .transition(width 1s);
+  overflow-x: hidden;
+
+  .live-preview-container {
+    position: relative;
+    width: 100%;
+    right: 0;
+    .transition(all 1s);
+  }
+
+  &.live-preview-closed {
+    width: 70px;
+    .live-preview-container {
+      right: -1000px;
+    }
+  }
 
   h2 {
     text-align: center;
@@ -25,12 +41,10 @@
   box-sizing: border-box;
   position: absolute;
   display: block;
-  top: 50%;
-  margin-top: -@lp-toggle-width/2;
-  left: -@lp-toggle-width/2 + 10px;
+  top: 15px;
+  left: 15px;
   width: @lp-toggle-width;
   height: @lp-toggle-width;
-  padding-left: 5px;
   line-height: @lp-toggle-width;
   font-size: 3rem;
   font-weight: bold;
@@ -41,6 +55,16 @@
   .border-bottom-radius(10px);
   .box-shadow(0 0 15px 5px rgba(0,0,0,0.5));
   .transition(all 1s);
+
+  >.fa-angle-double-right {
+    padding-left: 5px;
+  }
+
+  &:link, &:focus, &:visited {
+    color: darken(@cc-bg, 5);
+  }
+
+  &:focus { outline: none; }
 
   &:hover {
     color: white;
@@ -151,6 +175,10 @@
 
   > li {
     line-height: @navbar-height;
+    .transition(all 1s);
+    &.selected {
+      .box-shadow(0px 0px 10px 2px @cc-dark-cool-accent-low inset);
+    }
   }
 
   .phone-navlist-title {
