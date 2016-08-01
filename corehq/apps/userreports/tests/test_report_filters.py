@@ -252,6 +252,33 @@ class PreFilterTestCase(SimpleTestCase):
         self.assertEqual(filter_value.to_sql_values(), {'dob_slug_0': '2017-03-13', 'dob_slug_1': '2017-04-11'})
         self.assertEqual(filter_value.to_sql_filter().build_expression(table), 'foo')
 
+    def test_pre_filter_dyn_operator(self):
+        from corehq.apps.reports.daterange import get_daterange_start_end_dates
+
+        column = Mock()
+        column.name = 'dob_field'
+        column.between.return_value = 'foo'
+        table = Mock()
+        table.c = [column]
+
+        start_date, end_date = get_daterange_start_end_dates('lastmonth')
+
+        value = {'operator': 'lastmonth', 'operand': [None]}
+        filter_ = ReportFilter.wrap({
+            'type': 'pre',
+            'field': 'dob_field',
+            'slug': 'dob_slug',
+            'datatype': 'array',
+            'pre_value': value['operand'],
+            'pre_operator': value['operator'],
+        })
+        filter_value = PreFilterValue(filter_, value)
+        self.assertEqual(filter_value.to_sql_values(), {
+            'dob_slug_0': str(start_date),
+            'dob_slug_1': str(end_date),
+        })
+        self.assertEqual(filter_value.to_sql_filter().build_expression(table), 'foo')
+
 
 class ChoiceListFilterTestCase(SimpleTestCase):
     CHOICES = [

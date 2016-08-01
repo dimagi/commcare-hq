@@ -17,6 +17,7 @@ from sqlagg.filters import (
     get_column,
 )
 
+from corehq.apps.reports.daterange import get_all_daterange_choices, get_daterange_start_end_dates
 from corehq.apps.reports.util import (
     get_INFilter_bindparams,
     get_INFilter_element_bindparam,
@@ -132,6 +133,21 @@ class NumericFilterValue(FilterValue):
         }
 
 
+def get_dyn_range_filter(slug):
+
+    class DynRangeFilter(BasicFilter):
+        operator = slug
+
+        def build_expression(self, table):
+            from sqlalchemy import bindparam
+            start_date, end_date = get_daterange_start_end_dates(self.operator, *self.parameter)
+            return get_column(table, self.column_name).between(
+                bindparam(start_date), bindparam(end_date)
+            )
+
+    return DynRangeFilter
+
+
 class PreFilterValue(FilterValue):
 
     class BasicBetweenFilter(BasicFilter):
@@ -143,6 +159,9 @@ class PreFilterValue(FilterValue):
                 bindparam(self.parameter[0]), bindparam(self.parameter[1])
             )
 
+    dyn_operator_filters = {
+        c.slug: get_dyn_range_filter(c.slug) for c in get_all_daterange_choices()
+    }
     null_operator_filters = {
         '=': ISNULLFilter,
         '!=': NOTNULLFilter,
@@ -162,6 +181,9 @@ class PreFilterValue(FilterValue):
         '<': LTFilter,
     }
 
+    def _is_dyn(self):
+        return self.value.get('operator') in self.dyn_operator_filters
+
     def _is_null(self):
         return self.value['operand'] is None
 
@@ -171,6 +193,11 @@ class PreFilterValue(FilterValue):
         the query.
         """
         return isinstance(self.value['operand'], list)
+
+    @property
+    def _dyn_filter(self):
+        operator = self.value['operator']  # Only called if operator has value, and is dynamic
+        return self.dyn_operator_filters[operator]
 
     @property
     def _null_filter(self):
@@ -197,7 +224,12 @@ class PreFilterValue(FilterValue):
             raise TypeError('Scalar value does not support "{}" operator'.format(operator))
 
     def to_sql_filter(self):
-        if self._is_null():
+        if self._is_dyn():
+            return self.BasicBetweenFilter(
+                self.filter.field,
+                get_INFilter_bindparams(self.filter.slug, ['start_date', 'end_date'])
+            )
+        elif self._is_null():
             return self._null_filter(self.filter.field)
         elif self._is_list():
             return self._array_filter(
@@ -208,7 +240,13 @@ class PreFilterValue(FilterValue):
             return self._scalar_filter(self.filter.field, self.filter.slug)
 
     def to_sql_values(self):
-        if self._is_null():
+        if self._is_dyn():
+            start_date, end_date = get_daterange_start_end_dates(self.value['operator'], *self.value['operand'])
+            return {
+                get_INFilter_element_bindparam(self.filter.slug, i): str(v)
+                for i, v in enumerate([start_date, end_date])
+            }
+        elif self._is_null():
             return {}
         elif self._is_list():
             # Array params work like IN bind params
