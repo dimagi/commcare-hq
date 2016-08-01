@@ -824,7 +824,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
                 return None
             copy.is_snapshot = True
             head = self.snapshots(limit=1).first()
-            if head.snapshot_head:
+            if head and head.snapshot_head:
                 head.snapshot_head = False
                 head.save()
             copy.snapshot_head = True
