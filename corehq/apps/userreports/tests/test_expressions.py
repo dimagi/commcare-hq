@@ -1041,7 +1041,7 @@ class TestEvaluationContext(SimpleTestCase):
 class SplitStringExpressionTest(SimpleTestCase):
 
     def test_split_string_index_expression(self):
-        for expected, string, index in [
+        for expected, string_value, index in [
             ("a", "a b c", 0),
             ("b", "a b c", 1),
             (None, "a b c", 4),
@@ -1061,10 +1061,10 @@ class SplitStringExpressionTest(SimpleTestCase):
                     "property_name": "index_property"
                 }
             })
-            self.assertEqual(expected, split_string_expression({"string_property": original, "index_property": index}))
+            self.assertEqual(expected, split_string_expression({"string_property": string_value, "index_property": index}))
 
     def test_split_string_index_constant(self):
-        for expected, string, index in [
+        for expected, string_value, index in [
             ("a", "a b c", 0),
             ("b", "a b c", 1),
             (None, "a b c", 4),
@@ -1081,10 +1081,10 @@ class SplitStringExpressionTest(SimpleTestCase):
                 },
                 "index_expression": index
             })
-            self.assertEqual(expected, split_string_expression({"string_property": original}))
+            self.assertEqual(expected, split_string_expression({"string_property": string_value}))
 
     def test_split_string_delimiter(self):
-        for expected, string, index in [
+        for expected, string_value, index in [
             ("a", "a,b,c", 0),
             ("b", "a,b,c", 1),
             (None, "a,b,c", 4),
@@ -1102,4 +1102,4 @@ class SplitStringExpressionTest(SimpleTestCase):
                 "delimiter": ",",
                 "index_expression": index
             })
-            self.assertEqual(expected, split_string_expression({"string_property": original}))
+            self.assertEqual(expected, split_string_expression({"string_property": string_value}))
