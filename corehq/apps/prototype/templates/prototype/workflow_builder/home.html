@@ -1,14 +1,215 @@
 {% extends 'prototype/workflow_builder/base.html' %}
+{% load compress %}
+{% load hq_shared_tags %}
+
+{% block stylesheets %}
+  {% if less_debug %}
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'prototype/less/workflow_builder/workflow_builder.debug.less' %}" />
+  {% else %}
+    {% compress css %}
+      <link type="text/less"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'prototype/less/workflow_builder/workflow_builder.main.less' %}" />
+    {% endcompress %}
+  {% endif %}
+{% endblock %}
 
 {% block js %}
 {% endblock %}
 
 {% block js-inline %}
+  <script>
+  $(function () {
+    var resizeWorkspace = function () {
+      var navHeight = $('#navigation').outerHeight();
+      console.log(navHeight);
+      var curHeight = $(window).height() - navHeight;
+      $('#workspace').height(curHeight);
+    };
+    resizeWorkspace();
+    $(window).resize(resizeWorkspace);
+  });
+  $(function () {
+    $(".workflow").draggable({
+      containment: "#workspace",
+      scroll: true,
+      scrollSensitivity: 100,
+      stack: '.workflow',
+      drag: function (event, ui) {
+        $(this).css('width', 'auto');
+      }
+    });
+    $(".workflow-form").draggable({
+      revert: 'invalid',
+      helper: function (event) {
+        return $(this).clone().appendTo('#workspace');
+      },
+      opacity: 0.7
+    });
+
+    $('.workflow-form-container').droppable({
+      accept: ".workflow-form",
+      activeClass: 'ui-droppable-active',
+      hoverClass: 'ui-droppable-hover',
+      tolerance: 'touch',
+      drop: function(event, ui) {
+        var $form = $(ui.draggable);
+        $form.css("top", 0);
+        $form.css("left", 0);
+        $(this).find('.workflow-new-form').before($form);
+      }
+    })
+  });
+  </script>
 {% endblock %}
 
 {% block navigation %}
+  <div id="navigation">
+    <div class="navbar navbar-default navbar-static-top nabvbar-brand">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <p class="navbar-text">
+            AppBuilder
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="navbar navbar-default navbar-static-top navbar-app-settings">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <ul class="nav navbar-nav">
+            <li><a href="#modal-app-settings" data-toggle="modal"><i class="fa fa-cogs"></i></a></li>
+            <li>
+              <p class="navbar-text">
+                My New App
+              </p>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <nav class="navbar navbar-default navbar-static-top navbar-app-toolbar">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <ul class="nav navbar-nav">
+            <li><a href="#"><i class="wf wf-workflow-a"></i></a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  </div>
+{% endblock %}
+
+{% block modals %}
+  <div class="modal fade" tabindex="-1" role="dialog" id="modal-app-settings">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title">App settings</h4>
+        </div>
+        <div class="modal-body">
+          <p>todo</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary">Save changes</button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
+
+  <div class="modal fade" tabindex="-1" role="dialog" id="modal-workflow-settings-1">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title">workflow settings</h4>
+        </div>
+        <div class="modal-body">
+          <p>todo</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary">Save changes</button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
 {% endblock %}
 
 {% block content %}
-  foo
+  <div id="workspace">
+      <div class="workspace-canvas"></div>
+
+
+      <div class="workflow workflow-followup-complete" id="workflow-1">
+        <ul class="workflow-nav">
+          <li><a href="#modal-workflow-settings-1" data-toggle="modal"><i class="fa fa-cogs"></i></a></li>
+          <li><h2 class="workflow-name">Workflow 1</h2></li>
+        </ul>
+
+        <a href="#" class="workflow-close">
+          <i class="fa fa-remove"></i>
+        </a>
+
+
+        <div class="workflow-forms">
+
+          <div class="workflow-form-container workflow-form-registration workflow-next clearfix">
+            <div class="workflow-category-title">Registration Form</div>
+            <div class="workflow-new-form">
+              <div class="workflow-form-icon"><i class="wf wf-register"></i></div>
+              <button type="button"
+                      class="btn btn-workflow btn-sm">
+                <i class="fa fa-plus"></i>
+                Form
+              </button>
+            </div>
+          </div>
+
+          <div class="workflow-form-container workflow-form-followup workflow-next clearfix">
+            <div class="workflow-category-title">Follow-Up Forms</div>
+            <div class="workflow-record-list">
+              <button type="button" class="btn btn-workflow-records"><i class="fa fa-bars"></i></button>
+            </div>
+
+            <div class="workflow-form">
+              <a href="#" class="workflow-form-close"><i class="fa fa-remove"></i></a>
+              <div class="workflow-form-title">Form 1</div>
+              <div class="workflow-form-actions"><a href=""><i class="fa fa-edit"></i></a></div>
+            </div>
+
+            <div class="workflow-new-form">
+              <div class="workflow-form-icon"><i class="wf wf-update"></i></div>
+              <button type="button"
+                      class="btn btn-workflow btn-sm">
+                <i class="fa fa-plus"></i>
+                Form
+              </button>
+            </div>
+          </div>
+
+          <div class="workflow-form-container workflow-form-completion clearfix">
+            <div class="workflow-category-title">Completion Form</div>
+            <div class="workflow-new-form">
+              <div class="workflow-form-icon"><i class="wf wf-complete"></i></div>
+              <button type="button"
+                      class="btn btn-workflow btn-sm">
+                <i class="fa fa-plus"></i>
+                Form
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+
+  </div>
 {% endblock %}
