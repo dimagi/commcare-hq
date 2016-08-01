@@ -39,12 +39,14 @@
       scroll: true,
       scrollSensitivity: 100,
       stack: '.workflow',
+      cancel: '.ui-no-drag',
       drag: function (event, ui) {
         $(this).css('width', 'auto');
       }
     });
     $(".workflow-form").draggable({
       revert: 'invalid',
+      cancel: '.ui-no-drag',
       helper: function (event) {
         return $(this).clone().appendTo('#workspace');
       },
@@ -64,6 +66,27 @@
       }
     })
   });
+  $(function(){
+    var curDown = false,
+        curYPos = 0,
+        curXPos = 0;
+    $('.phone-page-scrollable').mousemove(function(m){
+      if(curDown === true){
+       $('.phone-page-scrollable').scrollTop($('.phone-page-scrollable').scrollTop() + (curYPos - m.pageY));
+       $('.phone-page-scrollable').scrollLeft($('.phone-page-scrollable').scrollLeft() + (curXPos - m.pageX));
+      }
+    });
+
+    $('.phone-page-scrollable').mousedown(function(m){
+      curDown = true;
+      curYPos = m.pageY;
+      curXPos = m.pageX;
+    });
+
+    $('.phone-page-scrollable').mouseup(function(){
+      curDown = false;
+    });
+  });
   </script>
 {% endblock %}
 
@@ -82,7 +105,12 @@
       <div class="container-fluid">
         <div class="navbar-header">
           <ul class="nav navbar-nav">
-            <li><a href="#modal-app-settings" data-toggle="modal"><i class="fa fa-cogs"></i></a></li>
+            <li>
+              <a href="#modal-app-settings"
+                 data-toggle="modal">
+                <i class="fa fa-cogs"></i>
+              </a>
+            </li>
             <li>
               <p class="navbar-text">
                 My New App
@@ -97,6 +125,8 @@
         <div class="navbar-header">
           <ul class="nav navbar-nav">
             <li><a href="#"><i class="wf wf-workflow-a"></i></a></li>
+            <li><a href="#"><i class="wf wf-workflow-b"></i></a></li>
+            <li><a href="#"><i class="wf wf-workflow-c"></i></a></li>
           </ul>
         </div>
       </div>
@@ -110,32 +140,86 @@
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          <h4 class="modal-title">App settings</h4>
+          <h4 class="modal-title"><i class="fa fa-cogs"></i> Application Settings</h4>
         </div>
         <div class="modal-body">
-          <p>todo</p>
+          <div class="form">
+            <div class="form-group">
+              <label class="control-label">
+                Name
+              </label>
+              <div class="controls">
+                <input type="text" class="form-control" />
+              </div>
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary">Save changes</button>
         </div>
       </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
   </div><!-- /.modal -->
 
-  <div class="modal fade" tabindex="-1" role="dialog" id="modal-workflow-settings-1">
+  <div class="modal fade" tabindex="-1" role="dialog" id="modal-workflow-settings">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          <h4 class="modal-title">workflow settings</h4>
+          <h4 class="modal-title"><i class="fa fa-cogs"></i> Workflow Settings</h4>
         </div>
         <div class="modal-body">
-          <p>todo</p>
+          <label class="control-label">
+            Name
+          </label>
+          <div class="controls">
+            <input type="text" class="form-control" />
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary">Save changes</button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
+
+  <div class="modal fade" tabindex="-1" role="dialog" id="form-settings">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title"><i class="fa fa-edit"></i> Edit Form</h4>
+        </div>
+        <div class="modal-body">
+          <div class="form">
+            <div class="form-group">
+              <label class="control-label">
+                Name
+              </label>
+              <div class="controls">
+                <input type="text" class="form-control" />
+              </div>
+            </div>
+            <fieldset>
+              <legend>Questions</legend>
+              <p class="form-settings-question">
+                <button type="button"
+                        class="form-settings-question-remove btn btn-sm btn-danger">
+                  <i class="fa fa-remove"></i>
+                </button>
+                <textarea cols="2" class="form-control"></textarea>
+              </p>
+              <p>
+                <button type="button"
+                        class="btn btn-primary">
+                  <i class="fa fa-plus"></i> Add Question
+                </button>
+              </p>
+            </fieldset>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
         </div>
       </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
@@ -149,14 +233,19 @@
 
       <div class="workflow workflow-followup-complete" id="workflow-1">
         <ul class="workflow-nav">
-          <li><a href="#modal-workflow-settings-1" data-toggle="modal"><i class="fa fa-cogs"></i></a></li>
+          <li>
+            <a href="#modal-workflow-settings"
+               data-toggle="modal"
+               class="ui-no-drag">
+              <i class="fa fa-cogs"></i>
+            </a>
+          </li>
           <li><h2 class="workflow-name">Workflow 1</h2></li>
         </ul>
 
-        <a href="#" class="workflow-close">
+        <a href="#" class="workflow-close ui-no-drag">
           <i class="fa fa-remove"></i>
         </a>
-
 
         <div class="workflow-forms">
 
@@ -165,7 +254,7 @@
             <div class="workflow-new-form">
               <div class="workflow-form-icon"><i class="wf wf-register"></i></div>
               <button type="button"
-                      class="btn btn-workflow btn-sm">
+                      class="btn btn-workflow btn-sm ui-no-drag">
                 <i class="fa fa-plus"></i>
                 Form
               </button>
@@ -179,15 +268,19 @@
             </div>
 
             <div class="workflow-form">
-              <a href="#" class="workflow-form-close"><i class="fa fa-remove"></i></a>
+              <a href="#" class="workflow-form-close ui-no-drag"><i class="fa fa-remove"></i></a>
               <div class="workflow-form-title">Form 1</div>
-              <div class="workflow-form-actions"><a href=""><i class="fa fa-edit"></i></a></div>
+              <div class="workflow-form-actions">
+                <a href="#form-settings"
+                   class="ui-no-drag"
+                   data-toggle="modal"><i class="fa fa-edit"></i></a>
+              </div>
             </div>
 
             <div class="workflow-new-form">
               <div class="workflow-form-icon"><i class="wf wf-update"></i></div>
               <button type="button"
-                      class="btn btn-workflow btn-sm">
+                      class="btn btn-workflow btn-sm ui-no-drag">
                 <i class="fa fa-plus"></i>
                 Form
               </button>
@@ -199,7 +292,7 @@
             <div class="workflow-new-form">
               <div class="workflow-form-icon"><i class="wf wf-complete"></i></div>
               <button type="button"
-                      class="btn btn-workflow btn-sm">
+                      class="btn btn-workflow btn-sm ui-no-drag">
                 <i class="fa fa-plus"></i>
                 Form
               </button>
@@ -211,5 +304,56 @@
       </div>
 
 
+  </div>
+
+  <div id="preview" class="live-preview live-preview-open">
+    <a href="#" class="live-preview-toggle">
+      <i class="fa fa-angle-double-right"></i>
+    </a>
+    <div class="live-preview-container">
+      <h2>App Preview</h2>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-appbar">
+            <ul class="phone-appbar-nav">
+              <li><a href="#" class="phone-app-back"><i class="fa fa-chevron-left"></i></a></li>
+              <li><h3 class="phone-app-title">My New App</h3></li>
+            </ul>
+          </div>
+          <div class="phone-page">
+            <div class="phone-page-scrollable">
+              <ul class="phone-questionlist">
+                <li>
+                  <p class="phone-questionlist-question">
+                    This is a question
+                  </p>
+                  <div class="phone-questionlist-answer">
+                    <textarea cols="2" class="form-control"></textarea>
+                  </div>
+                </li>
+                <li>
+                  <button type="button" class="btn btn-default">Cancel</button>
+                  <button type="button" class="btn btn-primary">Submit Test Form</button>
+                </li>
+              </ul>
+            </div>
+          </div>
+{#          <div class="phone-page">#}
+{#            <div class="phone-page-scrollable">#}
+{#              <ul class="phone-navlist">#}
+{#                <li>#}
+{#                  <div class="phone-navlist-title noselect">#}
+{#                    <a href="#">Workflow 1</a>#}
+{#                    <button type="button" class="phone-navlist-icon pull-right">#}
+{#                      <i class="fa fa-chevron-right"></i>#}
+{#                    </button>#}
+{#                  </div>#}
+{#                </li>#}
+{#              </ul>#}
+{#            </div>#}
+{#          </div>#}
+        </div>
+      </div>
+    </div>
   </div>
 {% endblock %}

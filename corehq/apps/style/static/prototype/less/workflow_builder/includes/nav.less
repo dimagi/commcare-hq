@@ -1,0 +1,72 @@
+.nabvbar-brand {
+  background-color: @cc-text;
+  min-height: 30px;
+  margin-bottom: 0;
+  border: none;
+
+  .navbar-text {
+    color: @cc-bg;
+    text-transform: uppercase;
+    margin-top: 8.5px;
+    margin-bottom: 7.5px;
+    font-size: 1rem;
+  }
+}
+
+.navbar-app-settings {
+  background-color: @cc-brand-mid;
+  margin-bottom: 0;
+  min-height: 50px;
+  border: none;
+
+  .navbar-text {
+    color: white;
+    font-size: 1.8rem;
+    margin-top: 12.5px;
+    margin-bottom: 12.5px;
+  }
+  .navbar-nav > li > a {
+    color: white;
+    font-size: 1.8rem;
+    padding-top: 16.5px;
+    padding-bottom: 15.5px;
+    .transition(all .8s);
+
+    &:link, &:focus, &:visited {
+      color: white;
+    }
+    &:focus { outline: none; }
+
+    &:hover {
+      color: white;
+      @shadow-bg: #000000;
+      text-shadow: 0 0 20px @shadow-bg, 0 0 30px @shadow-bg, 0 0 50px @shadow-bg, 0 0 50px @shadow-bg, 0 0 50px @shadow-bg;
+    }
+  }
+}
+
+.navbar-app-toolbar {
+  background-color: @cc-brand-low;
+  margin-bottom: 0;
+
+  .navbar-nav > li > a {
+    color: white;
+    font-size: 4rem;
+    .transition(background-color .8s);
+    padding-top: 6.5px;
+    padding-bottom: 12.5px;
+    .transition(all .8s);
+
+    &:link, &:focus, &:visited {
+      color: white;
+    }
+
+    &:hover,
+    &:focus {
+      outline: none;
+      color: white;
+      @shadow-bg: @cc-brand-mid;
+      text-shadow: 0 0 20px lighten(@shadow-bg, 30), 0 0 50px @shadow-bg, 0 0 50px @shadow-bg, 0 0 50px @shadow-bg;
+    }
+  }
+}
