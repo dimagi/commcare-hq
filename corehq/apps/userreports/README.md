@@ -1079,6 +1079,44 @@ filter to be compared against an indicator of data type `string`. You shouldn't
 ever need to use this option (make your column a `date` or `datetime` type
 instead), but it exists because the report builder needs it. 
 
+### Pre-Filters
+
+Pre-filters offer the kind of functionality you get from
+[data source filters](#data-source-filtering). This makes it easier to use one
+data source for many reports, especially if some of those reports just need
+the data source to be filtered slightly differently. Pre-filters do not need
+to be configured by app builders in report modules; fields with pre-filters
+will not be listed in the report module among the other fields that can be
+filtered.
+
+A pre-filter's `type` is set to "pre":
+```
+{
+  "type": "pre",
+  "field": "at_risk_field",
+  "slug": "at_risk_slug",
+  "datatype": "string",
+  "pre_value": "yes"
+}
+```
+
+If `pre_value` is scalar (i.e. `datatype` is "string", "integer", etc.), the
+filter will use the "equals" operator. If `pre_value` is null, the filter will
+use "is null". If `pre_value` is an array, the filter will use the "in"
+operator. e.g.
+```
+{
+  "type": "pre",
+  "field": "at_risk_field",
+  "slug": "at_risk_slug",
+  "datatype": "array",
+  "pre_value": ["yes", "maybe"]
+}
+```
+
+(If `pre_value` is an array and `datatype` is not "array", it is assumed that
+`datatype` refers to the data type of the items in the array.)
+
 ### Dynamic choice lists
 
 Dynamic choice lists provide a select widget that will generate a list of options dynamically.
