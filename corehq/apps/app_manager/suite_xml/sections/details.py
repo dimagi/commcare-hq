@@ -34,7 +34,8 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Xpath,
 )
 from corehq.apps.app_manager.suite_xml.features.scheduler import schedule_detail_variables
-from corehq.apps.app_manager.util import create_temp_sort_column, module_offers_search, get_sort_and_sort_only_columns
+from corehq.apps.app_manager.util import create_temp_sort_column, module_offers_search,\
+    get_sort_and_sort_only_columns
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
 from corehq.apps.app_manager.xpath import session_var, XPath
