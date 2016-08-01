@@ -1062,7 +1062,7 @@ class SplitStringExpressionTest(SimpleTestCase):
                 }
             })
             self.assertEqual(expected, split_string_expression({
-                "string_property": string_value, 
+                "string_property": string_value,
                 "index_property": index
             }))
 
