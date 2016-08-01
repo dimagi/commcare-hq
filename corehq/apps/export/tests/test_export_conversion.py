@@ -210,6 +210,10 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestCase, TestFileMixin):
     'corehq.apps.export.models.new.get_request',
     return_value=MockRequest(domain='my-domain'),
 )
+@mock.patch(
+    'corehq.apps.export.utils._is_remote_app_conversion',
+    return_value=False,
+)
 class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
     file_path = ('data', 'saved_export_schemas')
     root = os.path.dirname(__file__)
@@ -284,7 +288,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
     def setUp(self):
         delete_all_export_instances()
 
-    def test_basic_conversion(self, _):
+    def test_basic_conversion(self, _, __):
 
         saved_export_schema = SavedExportSchema.wrap(self.get_json('basic'))
         with mock.patch(
@@ -310,7 +314,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         self.assertEqual(column.label, 'Question One')
         self.assertEqual(column.selected, True)
 
-    def test_repeat_conversion(self, _):
+    def test_repeat_conversion(self, _, __):
         saved_export_schema = SavedExportSchema.wrap(self.get_json('repeat'))
         with mock.patch(
                 'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
@@ -339,7 +343,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         )
         self.assertEqual(column.selected, True)
 
-    def test_nested_repeat_conversion(self, _):
+    def test_nested_repeat_conversion(self, _, __):
         saved_export_schema = SavedExportSchema.wrap(self.get_json('repeat_nested'))
         with mock.patch(
                 'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
@@ -383,7 +387,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         self.assertEqual(column.label, 'Modified Nested')
         self.assertEqual(column.selected, True)
 
-    def test_transform_conversion(self, _):
+    def test_transform_conversion(self, _, __):
         saved_export_schema = SavedExportSchema.wrap(self.get_json('deid_transforms'))
         with mock.patch(
                 'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
@@ -402,7 +406,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         )
         self.assertEqual(column.deid_transform, DEID_DATE_TRANSFORM)
 
-    def test_system_property_conversion(self, _):
+    def test_system_property_conversion(self, _, __):
         saved_export_schema = SavedExportSchema.wrap(self.get_json('system_properties'))
         with mock.patch(
                 'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
