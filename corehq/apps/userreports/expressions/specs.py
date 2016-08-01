@@ -15,7 +15,7 @@ from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from pillowtop.dao.exceptions import DocumentNotFoundError
-from .utils import eval_statements
+from .utils import eval_statements, SUPPORTED_GPS_VALUES, get_gps_element
 from corehq.util.quickcache import quickcache
 
 
@@ -334,42 +334,18 @@ class SubcasesExpressionSpec(JsonObject):
 
 
 class GpsValueExpressionSpec(JsonObject):
-    LATITUDE = 'latitude'
-    LONGITUDE = 'longitude'
-    ELEVATION = 'elevation'
-    ACCURACY = 'accuracy'
-    SUPPORTED_GPS_VALUES = [LATITUDE, LONGITUDE, ELEVATION, ACCURACY]
-
     type = TypeProperty('gps_get_value')
     gps_expression = DefaultProperty(required=True)
     gps_type = StringProperty(required=True)
 
     def configure(self, gps_expression):
         self._gps_expression = gps_expression
-        if self.gps_type not in GpsValueExpressionSpec.SUPPORTED_GPS_VALUES:
-            raise BadSpecError(_("gps_type'{}' is not valid. Valid options are: {} ").format(
+        if self.gps_type not in SUPPORTED_GPS_VALUES:
+            raise BadSpecError(_("gps_type '{}' is not valid. Valid options are: {} ").format(
                 self.gps_type,
-                GpsValueExpressionSpec.SUPPORTED_GPS_VALUES
+                SUPPORTED_GPS_VALUES
             ))
 
     def __call__(self, item, context=None):
-        gps_value = self._gps_expression(item, context)
-        return self._get_gps_element(gps_value, self.gps_type)
-
-    def _get_gps_element(self, gps_value, gps_type):
-        gps_type_index = {
-            GpsValueExpressionSpec.LATITUDE: 0,
-            GpsValueExpressionSpec.LONGITUDE: 1,
-            GpsValueExpressionSpec.ELEVATION: 2,
-            GpsValueExpressionSpec.ACCURACY: 3,
-        }
-        assert gps_type in GpsValueExpressionSpec.SUPPORTED_GPS_VALUES
-
-        if not isinstance(gps_value, basestring):
-            return None
-
-        gps_elements = gps_value.split()
-        try:
-            return gps_elements[gps_type_index[gps_type]]
-        except IndexError:
-            return None
+        gps_string = self._gps_expression(item, context)
+        return get_gps_element(gps_string, self.gps_type)
