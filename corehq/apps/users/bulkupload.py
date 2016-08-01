@@ -79,8 +79,9 @@ def check_duplicate_usernames(user_specs):
             duplicated_usernames.add(username)
         usernames.add(username)
 
-    raise UserUploadError(_("The following usernames have duplicate entries in "
-        "your file: " + ', '.join(duplicated_usernames)))
+    if duplicated_usernames:
+        raise UserUploadError(_("The following usernames have duplicate entries in "
+            "your file: " + ', '.join(duplicated_usernames)))
 
 
 class GroupMemoizer(object):
