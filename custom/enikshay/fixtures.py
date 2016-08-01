@@ -23,7 +23,10 @@ class CalendarFixtureProvider(object):
                 current_year_element = Element('year', {'number': str(current_day.year)})
                 calendar_node.append(current_year_element)
             if current_day.month != last_day.month:
-                current_month_element = Element('month', {'number': str(current_day.month), 'name': _(current_day.strftime('%B'))})
+                current_month_element = Element('month', {
+                    'number': str(current_day.month),
+                    'name': _(current_day.strftime('%B'))
+                })
                 current_year_element.append(current_month_element)
 
             current_day_element = Element('day', {
