@@ -217,10 +217,10 @@ class EmergencyOrderPackage(models.Model):
         related_name='+', null=True)
 
     # The total cost of all products in this package, using info from OrderableProduct
-    cost = models.DecimalField(max_digits=11, decimal_places=2, null=True)
+    cost = models.DecimalField(max_digits=12, decimal_places=3, null=True)
 
     # The total weight of this package in grams, using info from OrderableProduct
-    weight = models.DecimalField(max_digits=11, decimal_places=2, null=True)
+    weight = models.DecimalField(max_digits=12, decimal_places=3, null=True)
 
     def update_calculated_fields(self):
         """
@@ -287,13 +287,13 @@ class BaseOrderableProduct(models.Model):
     description = models.CharField(max_length=126)
 
     # The cost of 1 unit of this product (for now always in TZS)
-    cost = models.DecimalField(max_digits=11, decimal_places=2)
+    cost = models.DecimalField(max_digits=12, decimal_places=3)
 
     # A description of the size of 1 unit of this product
     unit_description = models.CharField(max_length=126)
 
     # The weight, in grams, of 1 unit of this product
-    weight = models.DecimalField(max_digits=11, decimal_places=2)
+    weight = models.DecimalField(max_digits=12, decimal_places=3)
 
     # The maximum number of units allowed to be ordered in a single order
     max_units_allowed = models.IntegerField()
