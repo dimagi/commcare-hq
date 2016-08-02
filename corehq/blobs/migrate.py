@@ -89,6 +89,7 @@ from couchdbkit import ResourceConflict
 
 # models to be migrated
 import corehq.apps.hqmedia.models as hqmedia
+import couchforms.models as xform
 from corehq.apps.app_manager.models import Application, RemoteApp
 from couchexport.models import SavedBasicExport
 
@@ -312,6 +313,16 @@ MIGRATIONS = {m.slug: m for m in [
         hqmedia.CommCareImage,
         hqmedia.CommCareVideo,
         hqmedia.CommCareMultimedia,
+    ], CouchAttachmentMigrator),
+    Migrator("xforms", [
+        xform.XFormInstance,
+        ("XFormInstance-Deleted", xform.XFormInstance),
+        xform.XFormArchived,
+        xform.XFormDeprecated,
+        xform.XFormDuplicate,
+        xform.XFormError,
+        xform.SubmissionErrorLog,
+        ("HQSubmission", xform.XFormInstance),
     ], CouchAttachmentMigrator),
 ]}
 
