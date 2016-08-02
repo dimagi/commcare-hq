@@ -100,6 +100,8 @@ class V1CaseXMLGenerator(CaseXMLGeneratorBase):
         if self.case.modified_on:
             root.append(safe_element("date_modified",
                                      json_format_datetime(self.case.modified_on)))
+        if self.case.opened_on:
+            root.append(safe_element("date_opened", json_format_date(self.case.opened_on)))
         return root
 
     def get_case_type_element(self):
@@ -139,6 +141,8 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
         }
         if self.case.modified_on:
             root.attrib["date_modified"] = json_format_datetime(self.case.modified_on)
+        if self.case.opened_on:
+            root.attrib["date_opened"] = json_format_date(self.case.opened_on)
         return root
 
     def get_case_type_element(self):
