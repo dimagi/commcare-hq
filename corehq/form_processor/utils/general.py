@@ -45,7 +45,9 @@ def _should_use_sql_backend_in_tests(domain_object):
 
 def _get_domain_name_and_object(domain_object_or_name):
     from corehq.apps.domain.models import Domain
-    if isinstance(domain_object_or_name, Domain):
+    if domain_object_or_name is None:
+        return None, None
+    elif isinstance(domain_object_or_name, Domain):
         return domain_object_or_name.name, domain_object_or_name
     elif getattr(settings, 'DB_ENABLED', True):
         return domain_object_or_name, Domain.get_by_name(domain_object_or_name)
