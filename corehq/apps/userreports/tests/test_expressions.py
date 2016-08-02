@@ -1072,7 +1072,6 @@ class SplitStringExpressionTest(SimpleTestCase):
             ("b", "a b c", 1),
             (None, "a b c", 4),
             (None, "a b c", "foo"),
-            (None, "a b c", None),
             (None, None, 0),
             (None, 36, 0),
         ]:
@@ -1092,7 +1091,6 @@ class SplitStringExpressionTest(SimpleTestCase):
             ("b", "a,b,c", 1),
             (None, "a,b,c", 4),
             (None, "a,b,c", "foo"),
-            (None, "a,b,c", None),
             (None, None, 0),
             (None, 36, 0),
         ]:
