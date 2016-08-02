@@ -209,33 +209,19 @@
                                         <a id="view_form_{{ module.id }}_{{ form.id }}_sidebar" href="{% url "view_form" domain app.id module.id form.id %}">
                                             <i class="drag_handle"></i>
                                             {% if request|toggle_enabled:"SUPPORT" %}
+                                            <i
                                             {% if form.get_action_type == 'open' %}
-                                            <i
                                                 class="fa fa-external-link"
-                                                data-toggle="tooltip"
-                                                data-placement="top"
-                                                title="{{ form.get_icon_help_text }}"
-                                                >
-                                            </i>
                                             {% elif form.get_action_type == 'close' %}
-                                            <i
                                                 class="fa fa-ban"
-                                                data-toggle="tooltip"
-                                                data-placement="top"
-                                                title="{{ form.get_icon_help_text }}"
-                                                >
-                                            </i>
                                             {% elif form.get_action_type == 'update' %}
-                                            <i
                                                 class="fa fa-undo"
+                                            {% endif %}
+                                                title="{{ form.get_icon_help_text }}"
                                                 data-toggle="tooltip"
                                                 data-placement="top"
-                                                title="{{ form.get_icon_help_text }}"
                                                 >
                                             </i>
-                                            {% else %}
-                                            <i class="fa fa-file-o"></i>
-                                            {% endif %}
                                             {% endif %}
                                             <span {% if form == selected_form %}class="variable-form_name"{% endif %}>
                                             {{ form.name|html_trans:langs }}
