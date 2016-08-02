@@ -9,7 +9,7 @@ class CalendarFixtureProvider(object):
 
     def __call__(self, restore_user, version, last_sync=None, app=None):
         if not CUSTOM_CALENDAR_FIXTURE.enabled(restore_user.domain):
-            []
+            return []
 
         # todo: for now just send down the current year. eventually this should be configurable and what not
         root_node = Element('fixture', {'id': self.id, 'user_id': restore_user.user_id})
