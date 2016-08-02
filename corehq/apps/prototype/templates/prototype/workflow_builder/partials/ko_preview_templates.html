@@ -55,7 +55,7 @@
         <!-- ko foreach: registerForms -->
         <ul class="phone-navlist">
           <!-- ko foreach: records-->
-          <li>
+          <li data-bind="highlightRecordList: $parents[1].selectedWorkflow">
             <div class="phone-navlist-title noselect">
               <a href="#" data-bind="text: $data, click: $parents[1].selectRecord"></a>
               <button type="button"
