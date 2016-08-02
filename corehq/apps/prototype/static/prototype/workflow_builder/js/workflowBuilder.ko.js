@@ -24,6 +24,9 @@ hqDefine('prototype.workflow_builder.workflowBuilder', function () {
                 if (!$(event.target).hasClass('workflow-name')) {
                     $('.workflow-name').trigger('workflowBuilder.workflow.deselect');
                 }
+                if (!$(event.target).hasClass('workflow-form-title')) {
+                    $('.workflow-form-title').trigger('workflowBuilder.form.deselect');
+                }
             });
 
         };

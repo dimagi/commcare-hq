@@ -11,7 +11,7 @@
           <i class="fa fa-cogs"></i>
         </a>
       </li>
-      <li><h2 class="workflow-name ui-no-drag"
+      <li><h2 class="workflow-name"
               data-bind="text: name, selectWorkflow: isSelected"></h2></li>
     </ul>
 
@@ -28,7 +28,7 @@
 
 <script type="text/html" id="ko-template-container-survey">
   <div class="workflow-form-container workflow-form-survey clearfix noselect"
-       data-bind="initFormContainer: handleFormDrop">
+       data-bind="initFormContainer: handleFormDrop, css: {glow: isSelected}">
     <div class="workflow-category-title">Forms</div>
 
     <div class="workflow-new-form">
@@ -45,7 +45,7 @@
 
 <script type="text/html" id="ko-template-container-registration">
   <div class="workflow-form-container workflow-form-registration workflow-next clearfix noselect"
-       data-bind="initFormContainer: handleFormDrop">
+       data-bind="initFormContainer: handleFormDrop, css: {glow: isSelected}">
     <div class="workflow-category-title">Registration Form</div>
 
     <div class="workflow-new-form">
@@ -62,7 +62,7 @@
 
 <script type="text/html" id="ko-template-container-followup">
   <div class="workflow-form-container workflow-form-followup workflow-next clearfix noselect"
-       data-bind="initFormContainer: handleFormDrop">
+       data-bind="initFormContainer: handleFormDrop, css: {glow: isSelected}">
     <div class="workflow-category-title">Follow-Up Forms</div>
     <div class="workflow-record-list">
       <button type="button" class="btn btn-workflow-records"><i class="fa fa-bars"></i></button>
@@ -82,7 +82,7 @@
 
 <script type="text/html" id="ko-template-container-followup-only">
   <div class="workflow-form-container workflow-form-followup clearfix noselect"
-       data-bind="initFormContainer: handleFormDrop">
+       data-bind="initFormContainer: handleFormDrop, css: {glow: isSelected}">
     <div class="workflow-category-title">Follow-Up Forms</div>
     <div class="workflow-record-list">
       <button type="button" class="btn btn-workflow-records"><i class="fa fa-bars"></i></button>
@@ -102,7 +102,7 @@
 
 <script type="text/html" id="ko-template-container-completion">
   <div class="workflow-form-container workflow-form-completion clearfix noselect"
-       data-bind="initFormContainer: handleFormDrop">
+       data-bind="initFormContainer: handleFormDrop, css: {glow: isSelected}">
     <div class="workflow-category-title">Completion Form</div>
     <div class="workflow-new-form">
       <div class="workflow-form-icon"><i class="wf wf-complete"></i></div>
@@ -119,13 +119,15 @@
 <script type="text/html" id="ko-template-workflow-form">
   <div class="workflow-form"
        data-bind="attr: {id: draggableId},
-                  initForm: container">
+                  initForm: container,
+                  css: { glow: isSelected }">
     <a href="#"
        class="workflow-form-close ui-no-drag"
        data-bind="click: removeForm">
       <i class="fa fa-remove"></i>
     </a>
-    <div class="workflow-form-title" data-bind="text: name"></div>
+    <div class="workflow-form-title"
+         data-bind="text: name, selectForm: isSelected"></div>
     <div class="workflow-form-actions">
       <a data-bind="attr: {href: '#' + modalId()}"
          class="ui-no-drag"

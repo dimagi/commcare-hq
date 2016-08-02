@@ -76,6 +76,10 @@
 
 }
 
+.btn-workflow:focus {
+  outline: none;
+}
+
 .workflow-form {
   width: @form-width;
   height: @form-width;
@@ -87,9 +91,10 @@
   position: relative;
   .box-shadow(0 0 5px 0 rgba(0,0,0,.5));
   .transition(box-shadow 1s);
+  margin-right: 10px;
 
   &:hover,
-  .glow {
+  &.glow {
     .box-shadow(0 0 10px 3px @cc-dark-cool-accent-hi);
   }
 
