@@ -102,7 +102,7 @@ class UpdatableSchema():
 
 
 class Deployment(DocumentSchema, UpdatableSchema):
-    date = DateTimeProperty()
+    date = DateTimeProperty()  # deprecated
     city = StringProperty()
     countries = StringListProperty()
     region = StringProperty()  # e.g. US, LAC, SA, Sub-saharn Africa, East Africa, West Africa, Southeast Asia)
@@ -146,7 +146,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
         choices=['', "plus", "community", "standard", "pro", "advanced", "enterprise"],
         default="community"
     )
-    services = StringProperty(choices=["", "basic", "plus", "full", "custom"], default="")
+    services = StringProperty(choices=["", "basic", "plus", "full", "custom"], default="")  # deprecated
     initiative = StringListProperty()
     workshop_region = StringProperty()
     project_state = StringProperty(choices=["", "POC", "transition", "at-scale"], default="")

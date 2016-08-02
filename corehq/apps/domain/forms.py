@@ -819,8 +819,6 @@ class PrivacySecurityForm(forms.Form):
 class DomainInternalForm(forms.Form, SubAreaMixin):
     sf_contract_id = CharField(label=ugettext_noop("Salesforce Contract ID"), required=False)
     sf_account_id = CharField(label=ugettext_noop("Salesforce Account ID"), required=False)
-    services = ChoiceField(label=ugettext_noop("Services"), required=False,
-                           choices=tuple_of_copies(["basic", "plus", "full", "custom"]))
     initiative = forms.MultipleChoiceField(label=ugettext_noop("Initiative"),
                                            widget=forms.CheckboxSelectMultiple(),
                                            choices=tuple_of_copies(DATA_DICT["initiatives"], blank=False),
@@ -860,11 +858,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         label=ugettext_noop("Device Model"),
         help_text=ugettext_lazy("Add CloudCare, if this project is using CloudCare as well"),
         required=False,
-    )
-    deployment_date = CharField(
-        label=ugettext_noop("Deployment date"),
-        required=False,
-        help_text=ugettext_lazy("Date that the project went live (usually right after training).")
     )
     business_unit = forms.ChoiceField(
         label=ugettext_noop('Business Unit'),
@@ -953,7 +946,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'organization_name',
                 'notes',
                 'phone_model',
-                'deployment_date',
                 'business_unit',
                 'countries',
                 'commtrack_domain',
@@ -967,7 +959,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 _("Salesforce Details"),
                 'sf_contract_id',
                 'sf_account_id',
-                'services',
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -992,7 +983,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         domain.update_internal(
             sf_contract_id=self.cleaned_data['sf_contract_id'],
             sf_account_id=self.cleaned_data['sf_account_id'],
-            services=self.cleaned_data['services'],
             initiative=self.cleaned_data['initiative'],
             self_started=self.cleaned_data['self_started'] == 'true',
             area=self.cleaned_data['area'],
