@@ -340,21 +340,16 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     template_name = 'app_manager/app_diff.html'
 
     @use_angular_js
-    @login_and_domain_required
     def dispatch(self, request, *args, **kwargs):
-        try:
-            self.first_app_id = self.kwargs["first_app_id"]
-            self.second_app_id = self.kwargs["second_app_id"]
-            self.first_app = Application.get(self.first_app_id)
-            self.second_app = Application.get(self.second_app_id)
-            if not (request.couch_user.is_member_of(self.first_app.domain)
-                    and request.couch_user.is_member_of(self.second_app.domain)):
-                raise PermissionDenied()
-
-        except (ResourceNotFound, KeyError):
-            raise Http404()
-
         return super(AppDiffView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def first_app_id(self):
+        return self.kwargs["first_app_id"]
+
+    @property
+    def second_app_id(self):
+        return self.kwargs["second_app_id"]
 
     @property
     def app_diffs(self):
@@ -370,6 +365,12 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
 
     @property
     def page_context(self):
+        try:
+            self.first_app = Application.get(self.first_app_id)
+            self.second_app = Application.get(self.second_app_id)
+        except (ResourceNotFound, KeyError):
+            raise Http404()
+
         return {
             "app": self.first_app,
             "other_app": self.second_app,
