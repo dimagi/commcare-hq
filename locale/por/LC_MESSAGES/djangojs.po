@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-07-26 18:18+0000\n"
+"POT-Creation-Date: 2016-08-02 19:22+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -60,7 +60,7 @@ msgstr ""
 msgid "(Default)"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:90
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:99
 msgid "Form successfully saved"
 msgstr ""
 
@@ -68,40 +68,44 @@ msgstr ""
 msgid "Download Requested"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:27
+#: corehq/apps/export/static/export/js/models.js:45
 msgid "Web Page (Excel Dashboards)"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:29
+#: corehq/apps/export/static/export/js/models.js:47
 msgid "CSV (Zip file)"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:31
+#: corehq/apps/export/static/export/js/models.js:49
 msgid "Excel (older versions)"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:33
+#: corehq/apps/export/static/export/js/models.js:51
 msgid "Excel 2007"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:42
+#: corehq/apps/export/static/export/js/models.js:67
 msgid "Create"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:42
+#: corehq/apps/export/static/export/js/models.js:67
 #: corehq/apps/style/static/style/js/main.js:224
 msgid "Save"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:215
+#: corehq/apps/export/static/export/js/models.js:344
+msgid "The table path should end with []"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/models.js:453
 msgid "Sensitive ID"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:217
+#: corehq/apps/export/static/export/js/models.js:455
 msgid "Sensitive Date"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:219
+#: corehq/apps/export/static/export/js/models.js:457
 msgid "None"
 msgstr ""
 
@@ -235,11 +239,11 @@ msgstr ""
 msgid "value"
 msgstr ""
 
-#: corehq/apps/style/static/style/ko/components/inline_edit.js:53
+#: corehq/apps/style/static/style/ko/components/inline_edit.js:55
 msgid "Error saving, please try again."
 msgstr ""
 
-#: corehq/apps/style/static/style/ko/components/inline_edit.js:66
+#: corehq/apps/style/static/style/ko/components/inline_edit.js:68
 msgid "You have unsaved changes."
 msgstr ""
 
