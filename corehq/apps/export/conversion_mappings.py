@@ -35,7 +35,7 @@ FORM_PROPERTY_MAPPING = {
     ("received_on", None): ([PathNode(name="received_on")], None),
     ("submit_ip", None): ([PathNode(name="submit_ip")], None),
     ("xmlns", None): ([PathNode(name="xmlns")], None),
-    ("form.@name", None): ("form.@name", None),
+    ("form.@name", None): ([PathNode(name='form'), PathNode(name='@name')], None),
     ("form.@xmlns", None): ([PathNode(name="xmlns")], None),
     ("id", None): ([PathNode(name="number")], None),
 }
