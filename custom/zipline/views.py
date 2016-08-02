@@ -137,7 +137,8 @@ class BaseZiplineStatusUpdateView(View, DomainViewMixin):
     def validate_and_clean_products(self, data, field_name):
         value = data.get(field_name)
         result = []
-        data_type_error = "Field {} is required and expected to be a non-empty list of JSON objects".format(field_name)
+        data_type_error = ("Field {} is required and expected to be a non-empty list "
+            "of JSON objects".format(field_name))
 
         if not isinstance(value, list):
             raise OrderStatusValidationError(data_type_error)
