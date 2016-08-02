@@ -221,7 +221,12 @@ hqDefine('prototype.workflow_builder.preview', function () {
         });
 
         self.cleanup = function () {
-            // none
+            if (self.selectedWorkflow()) {
+                _.each(self.selectedWorkflow().containers(), function (c) {
+                    c.isSelected(false);
+                });
+                _.first(self.selectedWorkflow().containers()).isSelected(true);
+            }
         };
 
         self.selectForm = function (form) {
@@ -285,6 +290,9 @@ hqDefine('prototype.workflow_builder.preview', function () {
             } else if (self.forms().length > 0 && _.first(self.forms()).container.formType() === utils.FormType.COMPLETION) {
                 _.each(self.preview.recordListScreen.registerForms(), function (f) {
                     f.records.remove(self.recordName());
+                });
+                _.each(_.first(self.preview.recordListScreen.registerForms()).container.workflow.containers(), function (c) {
+                    c.isSelected(false);
                 });
                 self.recordName(null);
                 self.preview.goBack();

@@ -94,3 +94,15 @@ ko.bindingHandlers.selectForm = {
         });
     }
 };
+
+ko.bindingHandlers.highlightRecordList = {
+    init: function(element, valueAccessor) {
+        $(element).mouseenter(function () {
+            $('#' + valueAccessor()().draggableId()).find('.btn-workflow-records').addClass('glow');
+        });
+
+        $(element).mouseleave(function () {
+            $('#' + valueAccessor()().draggableId()).find('.btn-workflow-records').removeClass('glow');
+        });
+    }
+};
