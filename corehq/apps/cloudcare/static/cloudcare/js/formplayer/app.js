@@ -1,4 +1,4 @@
-/*global Marionette, Backbone, WebFormSession, Util */
+/*global Marionette, Backbone, WebFormSession, Util, Entities */
 
 /**
  * The primary Marionette application managing menu navigation and launching form entry
@@ -94,8 +94,13 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
             FormplayerFrontend.request("clearForm");
-            FormplayerFrontend.trigger("apps:currentApp");
             showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
+
+            if(resp.nextScreen !== null && resp.nextScreen !== undefined) {
+                FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
+            } else {
+                FormplayerFrontend.trigger("apps:currentApp");
+            }
         } else {
             showError(resp.output, $("#cloudcare-notifications"));
         }

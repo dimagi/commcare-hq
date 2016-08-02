@@ -12,26 +12,32 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
              a list of entities (cases) and their details
              */
             $.when(fetchingNextMenu).done(function (menuResponse) {
-                var menuListView;
-                var menuData = {
-                    collection: menuResponse,
-                    title: menuResponse.title,
-                    headers: menuResponse.headers,
-                    widthHints: menuResponse.widthHints,
-                    action: menuResponse.action,
-                    pageCount: menuResponse.pageCount,
-                    currentPage: menuResponse.currentPage,
-                    styles: menuResponse.styles,
-                };
-                if (menuResponse.type === "commands") {
-                    menuListView = new MenuList.MenuListView(menuData);
-                    FormplayerFrontend.regions.main.show(menuListView.render());
-                }
-                else if (menuResponse.type === "entities") {
-                    menuListView = new MenuList.CaseListView(menuData);
-                    FormplayerFrontend.regions.main.show(menuListView.render());
-                }
+                MenuList.Controller.showMenu(menuResponse);
             });
+        },
+
+        showMenu: function (menuResponse) {
+            debugger;
+            var menuListView;
+            var menuData = {
+                collection: menuResponse,
+                title: menuResponse.title,
+                headers: menuResponse.headers,
+                widthHints: menuResponse.widthHints,
+                action: menuResponse.action,
+                pageCount: menuResponse.pageCount,
+                currentPage: menuResponse.currentPage,
+                styles: menuResponse.styles,
+                type: menuResponse.type,
+            };
+            if (menuResponse.type === "commands") {
+                menuListView = new MenuList.MenuListView(menuData);
+                FormplayerFrontend.regions.main.show(menuListView.render());
+            }
+            else if (menuResponse.type === "entities") {
+                menuListView = new MenuList.CaseListView(menuData);
+                FormplayerFrontend.regions.main.show(menuListView.render());
+            }
         },
 
         showDetail: function (model, index) {
@@ -55,12 +61,14 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 collection: detailCollection,
             });
 
-            var tabModels = _.map(detailObjects, function(detail, index) { return { title: detail.title, id: index }; });
+            var tabModels = _.map(detailObjects, function (detail, index) {
+                return {title: detail.title, id: index};
+            });
             var tabCollection = new Backbone.Collection();
             tabCollection.reset(tabModels);
             var tabListView = new MenuList.DetailTabListView({
                 collection: tabCollection,
-                showDetail: function(index) {
+                showDetail: function (index) {
                     self.showDetail(model, index);
                 },
             });

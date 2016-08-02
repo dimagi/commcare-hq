@@ -33,9 +33,21 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         listSessions: function() {
             SessionNavigate.SessionList.Controller.listSessions();
         },
-
         getIncompleteForm: function(sessionId) {
             FormplayerFrontend.request("getIncompleteForm", sessionId);
+        },
+        renderResponse: function(menuResponse) {
+            var NextScreenCollection = Backbone.Collection.extend({});
+            var nextScreenCollection;
+            //TODO: clean up this hackiness
+            if(menuResponse.commands){
+                nextScreenCollection = new NextScreenCollection(menuResponse.commands);
+                nextScreenCollection.type = "commands";
+            } else{
+                nextScreenCollection = new NextScreenCollection(menuResponse.entities);
+                nextScreenCollection.type = "entities";
+            }
+            SessionNavigate.MenuList.Controller.showMenu(nextScreenCollection);
         },
     };
 
@@ -105,6 +117,10 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
 
     FormplayerFrontend.on("getIncompleteForm", function (sessionId) {
         API.getIncompleteForm(sessionId);
+    });
+
+    FormplayerFrontend.on("renderResponse", function(menuResponse) {
+        API.renderResponse(menuResponse);
     });
 
     SessionNavigate.on("start", function () {

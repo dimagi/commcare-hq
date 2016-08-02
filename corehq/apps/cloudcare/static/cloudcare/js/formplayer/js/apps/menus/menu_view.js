@@ -9,7 +9,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
 
         getTemplate: function () {
-            if (this.model.attributes.audioUri) {
+            if (this.model.get('audioUri')) {
                 return "#menu-view-item-audio-template";
             } else {
                 return "#menu-view-item-template";
