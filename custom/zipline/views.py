@@ -243,7 +243,8 @@ class BaseZiplineStatusUpdateView(View, DomainViewMixin):
             return {
                 'package_id': dispatched_status.package_id,
                 'vehicle_id': dispatched_status.vehicle_id,
-                'products': dispatched_status.products,
+                'products': [ProductQuantity(code, data.get('quantity'))
+                             for code, data in dispatched_status.products.iteritems()],
             }
         else:
             return {}
@@ -410,7 +411,8 @@ class DeliveredStatusUpdateView(BaseZiplineStatusUpdateView):
         if not order.delivered_status and self.all_flights_done(order):
             order.status = EmergencyOrderStatusUpdate.STATUS_DELIVERED
             order.delivered_status = delivered_status
-            order.save()
+
+        order.save()
 
         package = self.get_package_object(order, data['packageNumber'])
         if not package.delivered_status:

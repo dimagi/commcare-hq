@@ -233,7 +233,7 @@ class EmergencyOrderPackage(models.Model):
         cost = Decimal(0)
         weight = Decimal(0)
 
-        for code, data in self.products:
+        for code, data in self.products.iteritems():
             try:
                 product = OrderableProduct.objects.get(domain=self.order.domain, code=code)
             except OrderableProduct.DoesNotExist:
