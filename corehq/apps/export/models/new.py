@@ -432,7 +432,7 @@ class TableConfiguration(DocumentSchema):
                     DocRow(row=row_index + (new_doc_index,), doc=new_doc)
                     for new_doc_index, new_doc in enumerate(next_doc)
                 ])
-            else:
+            elif next_doc:
                 new_docs.append(DocRow(row=row_index, doc=next_doc))
         return TableConfiguration._get_sub_documents_helper(path[1:], new_docs)
 
