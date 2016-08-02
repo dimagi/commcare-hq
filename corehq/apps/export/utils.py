@@ -1,3 +1,4 @@
+from datetime import datetime
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.modules import to_function
@@ -10,6 +11,10 @@ from corehq.apps.reports.dbaccessors import (
 from corehq.apps.reports.models import (
     FormExportSchema,
     CaseExportSchema,
+)
+from corehq.apps.app_manager.dbaccessors import (
+    get_app,
+    get_brief_apps_in_domain,
 )
 from .exceptions import SkipConversion
 from .const import (
@@ -35,19 +40,26 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
         FormExportInstance,
         CaseExportDataSchema,
         CaseExportInstance,
-        PathNode,
         ExportMigrationMeta,
         ConversionMeta,
     )
 
-    # Build a new schema and instance
-    migration_meta = ExportMigrationMeta(
-        saved_export_id=saved_export._id,
-        domain=domain,
-    )
     schema = None
     instance_cls = None
     export_type = saved_export.type
+
+    is_remote_app_migration = _is_remote_app_conversion(
+        domain,
+        getattr(saved_export, 'app_id', None),
+        export_type,
+    )
+    migration_meta = ExportMigrationMeta(
+        saved_export_id=saved_export._id,
+        domain=domain,
+        is_remote_app_migration=is_remote_app_migration,
+        migration_date=datetime.utcnow(),
+    )
+    # Build a new schema and instance
     if export_type == FORM_EXPORT:
         instance_cls = FormExportInstance
         schema = FormExportDataSchema.generate_schema_from_builds(
@@ -102,20 +114,8 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
 
             try:
                 if column.doc_type == 'StockExportColumn':
-                    # Handle stock export column separately because it's a messy edge since
-                    # it doesn't have a unique index (_id).
                     info.append('Column is a stock column')
-
-                    index, new_column = new_table.get_column(
-                        [PathNode(name='stock')],
-                        'ExportItem',
-                        None,
-                    )
-                    if new_column:
-                        new_column.selected = True
-                        new_column.label = column.display
-                    else:
-                        raise SkipConversion('StockExportColumn not found in new export')
+                    _convert_stock_column(new_table, column)
                     continue
 
                 if column.transform:
@@ -149,29 +149,13 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
                         transform,
                     ))
 
-                guess_types = [
-                    'ScalarItem',
-                    'MultipleChoiceItem',
-                    'GeopointItem',
-                    'MultiMediaItem',
-                    'ExportItem',
-                ]
-                # Since old exports had no concept of item type, we just guess all
-                # the types and see if there are any matches.
-                for guess_type in guess_types:
-                    index, new_column = new_table.get_column(
-                        column_path,
-                        guess_type,
-                        _strip_deid_transform(transform),
-                    )
-                    if new_column:
-                        info.append('Column is guessed to be of type: {}'.format(
-                            guess_type,
-                        ))
-                        break
-
+                new_column = _convert_normal_column(new_table, column_path, transform)
                 if not new_column:
                     raise SkipConversion('Column not found in new schema')
+                else:
+                    info.append('Column is guessed to be of type: {}'.format(
+                        new_column.item.doc_type,
+                    ))
 
                 new_column.label = column.display
                 new_column.selected = True
@@ -288,6 +272,53 @@ def _convert_index_to_path_nodes(index):
         return [PathNode(name=n) for n in index.split('.')]
 
 
+def _convert_stock_column(new_table, old_column):
+    from .models import PathNode
+    # Handle stock export column separately because it's a messy edge since
+    # it doesn't have a unique index (_id).
+
+    index, new_column = new_table.get_column(
+        [PathNode(name='stock')],
+        'ExportItem',
+        None,
+    )
+    if new_column:
+        new_column.selected = True
+        new_column.label = old_column.display
+    else:
+        raise SkipConversion('StockExportColumn not found in new export')
+
+
+def _convert_normal_column(new_table, column_path, transform):
+    guess_types = [
+        'ScalarItem',
+        'MultipleChoiceItem',
+        'GeopointItem',
+        'MultiMediaItem',
+        'ExportItem',
+    ]
+    # Since old exports had no concept of item type, we just guess all
+    # the types and see if there are any matches.
+    for guess_type in guess_types:
+        index, new_column = new_table.get_column(
+            column_path,
+            guess_type,
+            _strip_deid_transform(transform),
+        )
+        if new_column:
+            break
+    return new_column
+
+
+def _is_remote_app_conversion(domain, app_id, export_type):
+    if app_id and export_type == FORM_EXPORT:
+        app = get_app(domain, app_id)
+        return app.is_remote_app()
+    elif export_type == CASE_EXPORT:
+        apps = get_brief_apps_in_domain(domain, include_remote=True)
+        return any(map(lambda app: app.is_remote_app(), apps))
+
+
 def revert_new_exports(new_exports):
     """
     Takes a list of new style ExportInstance and marks them as deleted as well as restoring
@@ -329,7 +360,11 @@ def migrate_domain(domain, dryrun=False):
             else:
                 metas.append(migration_meta)
     for meta in metas:
-        print 'Export information for export: {}'.format(meta.saved_export_id)
+        print ''
+        print '***' * 15
+        print '* Export information for export: {}'.format(meta.saved_export_id)
+        print '***' * 15
+        print ''
 
         if meta.skipped_tables:
             print '## Skipped tables: ##'
