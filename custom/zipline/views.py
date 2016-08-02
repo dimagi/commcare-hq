@@ -1,5 +1,6 @@
 import json
 import re
+from corehq.apps.api.decorators import api_user_basic_auth
 from corehq.apps.domain.views import DomainViewMixin
 from custom.zipline.api import get_order_update_critical_section_key, ProductQuantity
 from custom.zipline.models import (EmergencyOrder, EmergencyOrderStatusUpdate,
@@ -12,6 +13,9 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 from django.utils.decorators import method_decorator
+
+
+ZIPLINE_PERMISSION = 'ZIPLINE'
 
 
 def get_error_response(description):
@@ -31,6 +35,7 @@ class OrderStatusValidationError(Exception):
 class ZiplineOrderStatusView(View, DomainViewMixin):
     urlname = 'zipline_order_status'
 
+    @method_decorator(api_user_basic_auth(ZIPLINE_PERMISSION))
     @method_decorator(csrf_exempt)
     def dispatch(self, *args, **kwargs):
         return super(ZiplineOrderStatusView, self).dispatch(*args, **kwargs)
