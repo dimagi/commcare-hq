@@ -60,10 +60,9 @@
     &:link, &:focus, &:visited {
       color: white;
     }
+    &:focus { outline: none; }
 
-    &:hover,
-    &:focus {
-      outline: none;
+    &:hover {
       color: white;
       @shadow-bg: @cc-brand-mid;
       text-shadow: 0 0 20px lighten(@shadow-bg, 30), 0 0 50px @shadow-bg, 0 0 50px @shadow-bg, 0 0 50px @shadow-bg;

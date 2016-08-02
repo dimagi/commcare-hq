@@ -1,5 +1,5 @@
 <script type="text/html" id="ko-template-screen-workflows">
-  <div class="phone-page" data-bind="css: {hide: isHidden}">
+  <div class="phone-page" data-bind="animateScreen: isHidden">
     <div class="phone-page-scrollable">
       <ul class="phone-navlist">
         <!-- ko foreach: orderedWorkflows -->
@@ -21,7 +21,7 @@
 
 
 <script type="text/html" id="ko-template-screen-survey">
-  <div class="phone-page" data-bind="css: {hide: isHidden}">
+  <div class="phone-page" data-bind="animateScreen: isHidden">
     <div class="phone-page-scrollable">
       <ul class="phone-navlist">
         <li class="phone-navlist-header">
@@ -45,7 +45,7 @@
 </script>
 
 <script type="text/html" id="ko-template-screen-recordlist">
-  <div class="phone-page" data-bind="css: {hide: isHidden}">
+  <div class="phone-page"  data-bind="animateScreen: isHidden">
     <div class="phone-page-scrollable">
       <ul class="phone-navlist">
         <li class="phone-navlist-header">
@@ -83,7 +83,7 @@
 </script>
 
 <script type="text/html" id="ko-template-screen-editrecord">
-  <div class="phone-page" data-bind="css: {hide: isHidden}">
+  <div class="phone-page" data-bind="animateScreen: isHidden">
     <div class="phone-page-scrollable">
       <ul class="phone-navlist">
         <li class="phone-navlist-header">
@@ -125,7 +125,7 @@
 
 
 <script type="text/html" id="ko-template-screen-questions">
-  <div class="phone-page" data-bind="css: {hide: isHidden}">
+  <div class="phone-page"  data-bind="animateScreen: isHidden">
     <div class="phone-page-scrollable">
       <!-- ko foreach: forms -->
       <ul class="phone-navlist">

@@ -43,6 +43,31 @@ ko.bindingHandlers.initFormContainer = {
             tolerance: 'touch',
             drop: valueAccessor(),
         });
+        var $title = $(element).find('.workflow-category-title');
+        var helpId = $title.attr('data-helptemp');
+        $title.popover({
+            content: function () {
+                return $(helpId).text();
+            },
+            html: true,
+            trigger: 'hover',
+            placement: 'bottom',
+            container: 'body'
+        });
+        var $recordList = $(element).find('.btn-workflow-records');
+        if ($recordList) {
+            $recordList.popover({
+                title: "Record List",
+                content: function () {
+                    return $('#help-template-recordlist').text();
+                },
+                html: true,
+                trigger: 'hover',
+                placement: 'bottom',
+                container: 'body'
+            })
+        }
+
     }
 };
 
@@ -104,5 +129,22 @@ ko.bindingHandlers.highlightRecordList = {
         $(element).mouseleave(function () {
             $('#' + valueAccessor()().draggableId()).find('.btn-workflow-records').removeClass('glow');
         });
+    }
+};
+
+
+ko.bindingHandlers.animateScreen = {
+    init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+        console.log(valueAccessor()());
+        if (valueAccessor()()) {
+            $(element).css('display', 'none');
+        }
+    },
+    update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+        if (valueAccessor()()) {
+            $(element).hide("fade", {}, 200, function () {});
+        } else {
+            $(element).show("fade", {}, 200, function () {});
+        }
     }
 };

@@ -19,6 +19,9 @@
 {% endblock %}
 
 {% block js %}
+  <script src="{% static 'jquery-ui/ui/effect.js' %}"></script>
+  <script src="{% static 'jquery-ui/ui/effect-slide.js' %}"></script>
+  <script src="{% static 'jquery-ui/ui/effect-fade.js' %}"></script>
   <script src="{% static 'prototype/workflow_builder/js/workflowBindings.ko.js' %}"></script>
   <script src="{% static 'prototype/workflow_builder/js/utils.ko.js' %}"></script>
   <script src="{% static 'prototype/workflow_builder/js/workflows.ko.js' %}"></script>
@@ -48,13 +51,35 @@
     });
 
   $(function () {
-    $(".workflow-form").draggable({
-      revert: 'invalid',
-      cancel: '.ui-no-drag',
-      helper: function (event) {
-        return $(this).clone().appendTo('#workspace');
+    $('#add-workflow-a').popover({
+      title: "Surveys",
+      container: 'body',
+      content: function () {
+        return $('#help-template-workflow-a').text();
       },
-      opacity: 0.7
+      html: true,
+      trigger: 'hover',
+      placement: 'bottom'
+    });
+    $('#add-workflow-b').popover({
+      title: "Follow-Up",
+      container: 'body',
+      content: function () {
+        return $('#help-template-workflow-b').text();
+      },
+      html: true,
+      trigger: 'hover',
+      placement: 'bottom'
+    });
+    $('#add-workflow-c').popover({
+      title: "Follow-Up and Complete",
+      container: 'body',
+      content: function () {
+        return $('#help-template-workflow-c').text();
+      },
+      html: true,
+      trigger: 'hover',
+      placement: 'bottom'
     });
 
   });
@@ -62,20 +87,21 @@
     var curDown = false,
         curYPos = 0,
         curXPos = 0;
-    $('.phone-page-scrollable').mousemove(function(m){
+    var $phoneScroll = $('.phone-page-scrollable');
+    $phoneScroll.mousemove(function(m){
       if(curDown === true){
-       $('.phone-page-scrollable').scrollTop($('.phone-page-scrollable').scrollTop() + (curYPos - m.pageY));
-       $('.phone-page-scrollable').scrollLeft($('.phone-page-scrollable').scrollLeft() + (curXPos - m.pageX));
+       $phoneScroll.scrollTop($phoneScroll.scrollTop() + (curYPos - m.pageY));
+       $phoneScroll.scrollLeft($phoneScroll.scrollLeft() + (curXPos - m.pageX));
       }
     });
 
-    $('.phone-page-scrollable').mousedown(function(m){
+    $phoneScroll.mousedown(function(m){
       curDown = true;
       curYPos = m.pageY;
       curXPos = m.pageX;
     });
 
-    $('.phone-page-scrollable').mouseup(function(){
+    $phoneScroll.mouseup(function(){
       curDown = false;
     });
   });
@@ -114,9 +140,9 @@
       <div class="container-fluid">
         <div class="navbar-header">
           <ul class="nav navbar-nav">
-            <li><a href="#" data-bind="click: addWorkflowA"><i class="wf wf-workflow-a"></i></a></li>
-            <li><a href="#" data-bind="click: addWorkflowB"><i class="wf wf-workflow-b"></i></a></li>
-            <li><a href="#" data-bind="click: addWorkflowC"><i class="wf wf-workflow-c"></i></a></li>
+            <li><a href="#" data-bind="click: addWorkflowA" id="add-workflow-a"><i class="wf wf-workflow-a"></i></a></li>
+            <li><a href="#" data-bind="click: addWorkflowB" id="add-workflow-b"><i class="wf wf-workflow-b"></i></a></li>
+            <li><a href="#" data-bind="click: addWorkflowC" id="add-workflow-c"><i class="wf wf-workflow-c"></i></a></li>
           </ul>
         </div>
       </div>
@@ -131,6 +157,9 @@
 {% block content %}
   <div id="workspace">
       <div class="workspace-canvas"></div>
+      <div data-bind="visible: hasNoWorkflows" class="initial-help">
+        <i class="fa fa-hand-o-up"></i> Add a <strong>Workflow</strong> above!
+      </div>
       <!-- ko template: { name: 'ko-template-workflow',
                           foreach: workflows } -->
       <!-- /ko -->
@@ -172,4 +201,5 @@
 
   {% include 'prototype/workflow_builder/partials/ko_workflow_templates.html' %}
   {% include 'prototype/workflow_builder/partials/ko_preview_templates.html' %}
+  {% include 'prototype/workflow_builder/partials/help_text_templates.html' %}
 {% endblock %}

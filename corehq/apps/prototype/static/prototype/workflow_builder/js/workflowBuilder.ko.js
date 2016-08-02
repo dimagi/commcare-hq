@@ -37,6 +37,9 @@ hqDefine('prototype.workflow_builder.workflowBuilder', function () {
 
         self.workflows = ko.observableArray();
         self.workflowCounter = ko.observable(1);
+        self.hasNoWorkflows = ko.computed(function () {
+            return self.workflows().length === 0;
+        });
 
         var _addWorkflow = function (wf) {
             self.workflows.push(wf);
