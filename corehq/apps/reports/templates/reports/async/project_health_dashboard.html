@@ -5,6 +5,7 @@
 {% load i18n %}
 
 {% block reportcontent %}
+<div class="row">
     {% include "reports/project_health/partials/last_month_stats.html" %}
     {% if request.user.is_superuser %}
     <p>
@@ -18,14 +19,14 @@
             <p class="lead">
                 {% trans "Proportion of users that are active (submitting at least one form) over time." %}
             </p>
-        <div id="active_linechart"><svg></svg></div>
+        <div id="active_linechart"><svg height="300px"></svg></div>
     </div>
     <div class="col-md-6">
         <h2>{% trans "High / Low Performing User Trends" %}</h2>
             <p class="lead">
                 {% trans "How the counts of high / low performing users have changed in the last six months." %}
             </p>
-        <div id="perform_chart"><svg></svg></div>
+        <div id="perform_chart"><svg height="300px"></svg></div>
     </div>
     {% include "reports/project_health/partials/users_tables.html"%}
 </div>
