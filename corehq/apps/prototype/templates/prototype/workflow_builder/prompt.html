@@ -1,0 +1,32 @@
+{% extends 'prototype/workflow_builder/base.html' %}
+
+{% block content %}
+    <div class="container">
+
+    <h1>Prompt</h1>
+
+    <p>You’ve recently decided to try your hand at growing pumpkins – right in time for the fall harvest!</p>
+
+    <p>You want to keep track of how well your pumpkins grow this summer. You’ve decided to keep detailed paper logs of the pumpkins’ growth.</p>
+
+    <ul>
+      <li>Your pumpkin’s ID number (you love your pumpkins, so you tagged them all!)</li>
+      <li>The pumpkin’s weight that day (measured in pounds)</li>
+      <li>The amount of water you gave it that day (measured in liters)</li>
+      <li>Is it ripe enough to be sold? (Note that in order to sell your pumpkin to the local farmers’ market, it has to be at least 20 pounds).</li>
+    </ul>
+
+    <p>Just as you’re about to get started, your friend Amy sends you an email:</p>
+
+    <div class="email-text panel panel-default">
+      <div class="panel-body">
+        <p>Hey! I learned about this website in my mobile app building course called AppBuilder, and it made me think about your growing pumpkin patch.</p>
+        <p>Apparently you can use the AppBuilder website to make mobile apps that you can download onto your phone, even if you don’t have a tech background.</p>
+        <p>Instead of using paper, I thought it would be cool to try to build a mobile app to track your pumpkins. Here’s a link to get started on AppBuilder:</p>
+
+        <p class="text-center"><a href="{% url 'workflow_builder_home' %}" class="btn btn-primary" target="_blank">Click to Open App Builder</a></p>
+        <p class="text-center">Have fun!</p>
+      </div>
+    </div>
+   </div>
+{% endblock %}

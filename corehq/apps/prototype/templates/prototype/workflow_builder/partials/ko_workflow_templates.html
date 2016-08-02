@@ -29,7 +29,7 @@
 <script type="text/html" id="ko-template-container-survey">
   <div class="workflow-form-container workflow-form-survey clearfix noselect"
        data-bind="initFormContainer: handleFormDrop, css: {glow: isSelected}">
-    <div class="workflow-category-title">Forms</div>
+    <div class="workflow-category-title" data-title="Forms" data-helptemp="#help-template-forms">Forms</div>
 
     <div class="workflow-new-form">
       <div class="workflow-form-icon"><i class="wf wf-register"></i></div>
@@ -46,7 +46,7 @@
 <script type="text/html" id="ko-template-container-registration">
   <div class="workflow-form-container workflow-form-registration workflow-next clearfix noselect"
        data-bind="initFormContainer: handleFormDrop, css: {glow: isSelected}">
-    <div class="workflow-category-title">Registration Form</div>
+    <div class="workflow-category-title" data-title="Registration" data-helptemp="#help-template-registration">Registration Form</div>
 
     <div class="workflow-new-form">
       <div class="workflow-form-icon"><i class="wf wf-register"></i></div>
@@ -63,7 +63,7 @@
 <script type="text/html" id="ko-template-container-followup">
   <div class="workflow-form-container workflow-form-followup workflow-next clearfix noselect"
        data-bind="initFormContainer: handleFormDrop, css: {glow: isSelected}">
-    <div class="workflow-category-title">Follow-Up Forms</div>
+    <div class="workflow-category-title" data-title="Follow-Up" data-helptemp="#help-template-followup">Follow-Up Forms</div>
     <div class="workflow-record-list">
       <button type="button" class="btn btn-workflow-records"><i class="fa fa-bars"></i></button>
     </div>
@@ -83,7 +83,7 @@
 <script type="text/html" id="ko-template-container-followup-only">
   <div class="workflow-form-container workflow-form-followup clearfix noselect"
        data-bind="initFormContainer: handleFormDrop, css: {glow: isSelected}">
-    <div class="workflow-category-title">Follow-Up Forms</div>
+    <div class="workflow-category-title" data-title="Follow-Up" data-helptemp="#help-template-followup">Follow-Up Forms</div>
     <div class="workflow-record-list">
       <button type="button" class="btn btn-workflow-records"><i class="fa fa-bars"></i></button>
     </div>
@@ -103,7 +103,7 @@
 <script type="text/html" id="ko-template-container-completion">
   <div class="workflow-form-container workflow-form-completion clearfix noselect"
        data-bind="initFormContainer: handleFormDrop, css: {glow: isSelected}">
-    <div class="workflow-category-title">Completion Form</div>
+    <div class="workflow-category-title" data-title="Completion" data-helptemp="#help-template-completion">Completion Form</div>
     <div class="workflow-new-form">
       <div class="workflow-form-icon"><i class="wf wf-complete"></i></div>
       <button type="button"
