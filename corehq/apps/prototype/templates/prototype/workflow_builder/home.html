@@ -149,45 +149,13 @@
         <div class="phone-screen">
           <div class="phone-appbar">
             <ul class="phone-appbar-nav">
-              <li><a href="#" class="phone-app-back"><i class="fa fa-chevron-left"></i></a></li>
+              <li><a href="#" class="phone-app-back" data-bind="css: {'disabled': !isBackVisible()}, click: goBack"><i class="fa fa-chevron-left"></i></a></li>
               <li><h3 class="phone-app-title" data-bind="text: $root.name">My New App</h3></li>
             </ul>
           </div>
           <!-- ko template: { name: screenTemplate,
                               foreach: screens } -->
           <!-- /ko -->
-{#          <div class="phone-page">#}
-{#            <div class="phone-page-scrollable">#}
-{#              <ul class="phone-questionlist">#}
-{#                <li>#}
-{#                  <p class="phone-questionlist-question">#}
-{#                    This is a question#}
-{#                  </p>#}
-{#                  <div class="phone-questionlist-answer">#}
-{#                    <textarea cols="2" class="form-control"></textarea>#}
-{#                  </div>#}
-{#                </li>#}
-{#                <li>#}
-{#                  <button type="button" class="btn btn-default">Cancel</button>#}
-{#                  <button type="button" class="btn btn-primary">Submit Test Form</button>#}
-{#                </li>#}
-{#              </ul>#}
-{#            </div>#}
-{#          </div>#}
-{#          <div class="phone-page">#}
-{#            <div class="phone-page-scrollable">#}
-{#              <ul class="phone-navlist">#}
-{#                <li>#}
-{#                  <div class="phone-navlist-title noselect">#}
-{#                    <a href="#">Workflow 1</a>#}
-{#                    <button type="button" class="phone-navlist-icon pull-right">#}
-{#                      <i class="fa fa-chevron-right"></i>#}
-{#                    </button>#}
-{#                  </div>#}
-{#                </li>#}
-{#              </ul>#}
-{#            </div>#}
-{#          </div>#}
         </div>
       </div>
     </div>

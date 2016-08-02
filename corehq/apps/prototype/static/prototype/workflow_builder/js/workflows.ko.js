@@ -7,20 +7,20 @@ hqDefine('prototype.workflow_builder.workflows', function () {
     var module = {};
     var utils = hqImport('prototype.workflow_builder.utils');
 
-    var BaseWorkflow = function (app) {
+    var BaseWorkflow = function (app, workflowType) {
         var self = this;
         utils.BaseAppObj.call(self);
 
         self.name('Untitled Workflow');
         self.distance = ko.observable(0);
         self.isSelected = ko.observable(false);
+        self.workflowType = ko.observable(workflowType);
 
         self.app = app;
 
         self.containers = ko.observableArray();
 
         self.containerTemplate = function (container) {
-            console.log('container template');
             return container.templateId();
         };
 
@@ -39,7 +39,7 @@ hqDefine('prototype.workflow_builder.workflows', function () {
 
     module.WorkflowA = function (app) {
         var self = this;
-        BaseWorkflow.call(self, app);
+        BaseWorkflow.call(self, app, utils.WorkflowType.SURVEY);
         self.containers.push(new FormContainer(
             self, utils.FormType.SURVEY, utils.FormContainerTemplate.SURVEY
         ));
@@ -48,7 +48,7 @@ hqDefine('prototype.workflow_builder.workflows', function () {
 
     module.WorkflowB = function (app) {
         var self = this;
-        BaseWorkflow.call(self, app);
+        BaseWorkflow.call(self, app, utils.WorkflowType.FOLLOWUP);
         self.containers.push(new FormContainer(
             self, utils.FormType.REGISTRATION, utils.FormContainerTemplate.REGISTRATION
         ));
@@ -60,7 +60,7 @@ hqDefine('prototype.workflow_builder.workflows', function () {
 
     module.WorkflowC = function (app) {
         var self = this;
-        BaseWorkflow.call(self, app);
+        BaseWorkflow.call(self, app, utils.WorkflowType.COMPLETE);
         self.containers.push(new FormContainer(
             self, utils.FormType.REGISTRATION, utils.FormContainerTemplate.REGISTRATION
         ));
@@ -78,6 +78,7 @@ hqDefine('prototype.workflow_builder.workflows', function () {
         self.workflow = workflow;
         self.formType = ko.observable(formType);
         self.templateId = ko.observable(templateId);
+        self.isSelected = ko.observable(false);
 
         self.addForm = function () {
             self.workflow.app.addForm(self);
@@ -98,6 +99,8 @@ hqDefine('prototype.workflow_builder.workflows', function () {
                 return f.uuid() === formUuid;
             }));
             matchingForm.container = self;
+            matchingForm.isRegForm(self.formType() === utils.FormType.REGISTRATION);
+            matchingForm.updateOrder();
         };
     };
 

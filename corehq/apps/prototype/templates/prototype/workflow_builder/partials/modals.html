@@ -68,12 +68,23 @@
           <div class="form">
             <div class="form-group">
               <label class="control-label">
-                Name
+                Form Name
               </label>
               <div class="controls">
                 <input type="text"
                        class="form-control"
                        data-bind="value: name, valueUpdate: 'keyup'" />
+              </div>
+            </div>
+            <div class="form-group" data-bind="visible: isRegForm">
+              <label class="control-label">
+                Question to Collect Record Name
+              </label>
+              <div class="help-text">
+                This is required because...
+              </div>
+              <div class="controls">
+                <textarea cols="2" class="form-control" data-bind="value: recordNameText"></textarea>
               </div>
             </div>
             <fieldset>
@@ -85,7 +96,7 @@
                         data-bind="click: remove">
                   <i class="fa fa-remove"></i>
                 </button>
-                <textarea cols="2" class="form-control" data-bind="value: text"></textarea>
+                <textarea cols="2" class="form-control" data-bind="value: text, valueUpdate: 'keyup'"></textarea>
               </p>
               <!-- /ko -->
               <p>

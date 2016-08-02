@@ -137,12 +137,18 @@
     font-size: 1.9rem;
     line-height: @phone-appbar-height;
     .transition(all 1s);
+    &:focus, &:link, &:visited {
+      color: @cc-brand-hi;
+    }
     &:focus {
       outline: none;
     }
     &:hover {
       color: white;
       text-shadow: 0 0 10px rgba(0,0,0,.8), 0 0 20px @cc-brand-low, 0 0 40px @cc-brand-low;
+    }
+    &.disabled {
+      color: fadeout(@cc-brand-hi, 80);
     }
   }
 }
@@ -220,4 +226,14 @@
     padding: 15px 31px 20px 15px;
     border-bottom: 1px solid darken(@cc-bg, 5);
   }
+}
+
+.phone-navlist-header {
+  h4 {
+    line-height: @navbar-height *.6;
+    font-size: 1.3rem;
+    padding-left: 20px;
+    margin: 0;
+  }
+  border: 1px solid @cc-bg;
 }

@@ -47,7 +47,7 @@ ko.bindingHandlers.initFormContainer = {
 };
 
 ko.bindingHandlers.initForm = {
-    init: function(element, valueAccessor) {
+    init: function(element, valueAccessor, allBindings, viewModel) {
         var $form = $(element);
         $form.detach();
 
@@ -66,46 +66,10 @@ ko.bindingHandlers.initForm = {
             },
             opacity: 0.7
         });
+
+        viewModel.updateOrder();
     }
 };
-
-ko.bindingHandlers.clickRemoveForm = {
-    init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
-
-        $(element).click(function () {
-            console.log('remove form');
-            console.log(element);
-            console.log(valueAccessor);
-            console.log(viewModel);
-            console.log(bindingContext);
-        });
-    },
-    update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
-        // This will be called once when the binding is first applied to an element,
-        // and again whenever any observables/computeds that are accessed change
-        // Update the DOM element based on the supplied values here.
-    }
-};
-
-ko.bindingHandlers.updateFormContext = {
-    init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
-
-        $(element).on('workflowBuilder.form.update', function (form) {
-            console.log('update form');
-            console.log(element);
-            console.log(valueAccessor);
-            console.log(viewModel);
-            console.log(bindingContext);
-        });
-    },
-    update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
-        // This will be called once when the binding is first applied to an element,
-        // and again whenever any observables/computeds that are accessed change
-        // Update the DOM element based on the supplied values here.
-    }
-};
-
-
 
 ko.bindingHandlers.selectWorkflow = {
     init: function(element, valueAccessor) {
@@ -114,6 +78,18 @@ ko.bindingHandlers.selectWorkflow = {
         });
         $(element).click(function () {
             $('.workflow-name').trigger('workflowBuilder.workflow.deselect');
+            valueAccessor()(true);
+        });
+    }
+};
+
+ko.bindingHandlers.selectForm = {
+    init: function(element, valueAccessor) {
+        $(element).on('workflowBuilder.form.deselect', function () {
+            valueAccessor()(false);
+        });
+        $(element).click(function () {
+            $('.workflow-form-title').trigger('workflowBuilder.form.deselect');
             valueAccessor()(true);
         });
     }
