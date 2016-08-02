@@ -540,6 +540,7 @@ FIXTURE_GENERATORS = {
         "custom.bihar.reports.indicators.fixtures.generator",
         "custom.m4change.fixtures.report_fixtures.generator",
         "custom.m4change.fixtures.location_fixtures.generator",
+        "custom.enikshay.fixtures.calendar_fixture_generator",
     ],
     # fixtures that must be sent along with the phones cases
     'case': [
