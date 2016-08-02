@@ -27,6 +27,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 this.widthHints = response.widthHints;
                 this.currentPage = response.currentPage;
                 this.pageCount = response.pageCount;
+                this.tiles = response.tiles;
                 return response.entities;
             }
             else if(response.tree){

@@ -541,8 +541,8 @@ class VCMMigrationView(BaseAdminSectionView):
                         'domain': domain,
                         'migration_date': self.migration_date,
                     }
-                    text_content = render_to_string(self.email_template_html, email_context)
-                    html_content = render_to_string(self.email_template_txt, email_context)
+                    html_content = render_to_string(self.email_template_html, email_context)
+                    text_content = render_to_string(self.email_template_txt, email_context)
                     send_html_email_async.delay(
                         self.email_subject,
                         migration.admins,

@@ -327,11 +327,10 @@ class ReportRunDeleteView(DeleteView, DomainViewMixin):
 class DashboardPageRedirect(RedirectView):
 
     @method_decorator(login_and_domain_required)
-    def dispatch(self, request, *args, **kwargs):
-        return super(DashboardPageRedirect, self).dispatch(request, *args, **kwargs)
+    def dispatch(self, request, domain, *args, **kwargs):
+        return super(DashboardPageRedirect, self).dispatch(request, domain, *args, **kwargs)
 
-    def get_redirect_url(self, *args, **kwargs):
-        domain = kwargs['domain']
+    def get_redirect_url(self, domain, *args, **kwargs):
         user = self.request.couch_user
         dm = user.get_domain_membership(domain)
         url = DashboardReport.get_url(domain)
