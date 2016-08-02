@@ -205,6 +205,7 @@ def get_customer_cards(username, domain):
     from corehq.apps.accounting.models import (
         StripePaymentMethod, PaymentMethodType,
     )
+    import stripe
     try:
         payment_method = StripePaymentMethod.objects.get(
             web_user=username,
@@ -213,6 +214,8 @@ def get_customer_cards(username, domain):
         stripe_customer = payment_method.customer
         return stripe_customer.cards
     except StripePaymentMethod.DoesNotExist:
+        pass
+    except stripe.error.AuthenticationError:
         pass
     return None
 
