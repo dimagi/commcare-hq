@@ -113,10 +113,15 @@ class ApplicationStatusReport(DeploymentsReport):
     @memoized
     def users(self):
         mobile_user_and_group_slugs = self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+
+        if self.selected_app_id:
+            limit_user_ids = get_all_user_ids_submitted(self.domain, self.selected_app_id)
+
         users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
             self.domain,
             mobile_user_and_group_slugs,
-            include_inactive=False
+            include_inactive=False,
+            limit_user_ids=limit_user_ids,
         )
         return users_data.combined_users
 
