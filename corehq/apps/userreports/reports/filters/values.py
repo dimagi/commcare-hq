@@ -133,14 +133,14 @@ class NumericFilterValue(FilterValue):
         }
 
 
-def get_dyn_range_filter(slug):
+def get_dyn_range_filter(date_range_slug):
 
     class DynRangeFilter(BasicFilter):
-        operator = slug
+        date_range = date_range_slug
 
         def build_expression(self, table):
             from sqlalchemy import bindparam
-            start_date, end_date = get_daterange_start_end_dates(self.operator, *self.parameter)
+            start_date, end_date = get_daterange_start_end_dates(self.date_range, *self.parameter)
             return get_column(table, self.column_name).between(
                 bindparam(start_date), bindparam(end_date)
             )
