@@ -180,7 +180,7 @@ def update_subscriptions():
     warn_active_subscriptions_per_domain_not_one()
 
 
-@periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'))
+@periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
 def generate_invoices(based_on_date=None):
     """
     Generates all invoices for the past month.
