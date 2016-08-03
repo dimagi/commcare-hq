@@ -106,6 +106,11 @@ class ApplicationStatusReport(DeploymentsReport):
 
     @property
     @memoized
+    def selected_app_id(self):
+        return self.request_params.get(SelectApplicationFilter.slug, None)
+
+    @property
+    @memoized
     def users(self):
         mobile_user_and_group_slugs = self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
         users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
@@ -118,10 +123,9 @@ class ApplicationStatusReport(DeploymentsReport):
     @property
     def rows(self):
         rows = []
-        selected_app = self.request_params.get(SelectApplicationFilter.slug, None)
 
         user_ids = map(lambda user: user.user_id, self.users)
-        user_xform_dicts_map = get_last_form_submissions_by_user(self.domain, user_ids, selected_app)
+        user_xform_dicts_map = get_last_form_submissions_by_user(self.domain, user_ids, self.selected_app_id)
 
         for user in self.users:
             xform_dict = last_seen = last_sync = app_name = None
@@ -162,7 +166,7 @@ class ApplicationStatusReport(DeploymentsReport):
                     u'{} {} {}', app_name, mark_safe(build_html), commcare_version_html
                 )
 
-            if app_name is None and selected_app:
+            if app_name is None and self.selected_app_id:
                 continue
 
             last_sync_log = SyncLog.last_for_user(user.user_id)
