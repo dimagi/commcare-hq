@@ -177,6 +177,7 @@ def register_user(request):
     else:
         ab = ab_tests.ABTest(ab_tests.NEW_USER_SIGNUP, request)
         if ab.version != ab_tests.NEW_USER_SIGNUP_OPTION_OLD:
+            # TODO: deal with this, if this test is still going on when PR is merged
             response = HttpResponseRedirect(
                 _get_url_with_email(reverse(NewUserRegistrationView.urlname), prefilled_email)
             )
