@@ -808,6 +808,9 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
         }
 
     def _get_cards(self):
+        if not settings.STRIPE_PRIVATE_KEY:
+            return []
+
         user = self.request.user.username
         payment_method, new_payment_method = StripePaymentMethod.objects.get_or_create(
             web_user=user,
