@@ -100,8 +100,6 @@ class V1CaseXMLGenerator(CaseXMLGeneratorBase):
         if self.case.modified_on:
             root.append(safe_element("date_modified",
                                      json_format_datetime(self.case.modified_on)))
-        if self.case.opened_on:
-            root.append(safe_element("date_opened", json_format_date(self.case.opened_on)))
         return root
 
     def get_case_type_element(self):
@@ -118,6 +116,8 @@ class V1CaseXMLGenerator(CaseXMLGeneratorBase):
     def add_custom_properties(self, element):
         if self.case.owner_id:
             element.append(safe_element('owner_id', self.case.owner_id))
+        if self.case.opened_on:
+            element.append(safe_element('date_opened', json_format_date(self.case.opened_on)))
         super(V1CaseXMLGenerator, self).add_custom_properties(element)
 
     def add_indices(self, element):
@@ -141,8 +141,6 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
         }
         if self.case.modified_on:
             root.attrib["date_modified"] = json_format_datetime(self.case.modified_on)
-        if self.case.opened_on:
-            root.attrib["date_opened"] = json_format_date(self.case.opened_on)
         return root
 
     def get_case_type_element(self):
@@ -158,7 +156,7 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
         if self.case.external_id:
             element.append(safe_element('external_id', self.case.external_id))
         if self.case.opened_on:
-            element.append(safe_element("date_opened", json_format_datetime(self.case.opened_on)))
+            element.append(safe_element("date_opened", json_format_date(self.case.opened_on)))
         super(V2CaseXMLGenerator, self).add_custom_properties(element)
 
     def add_indices(self, element):
