@@ -4,7 +4,7 @@ from cStringIO import StringIO
 from itertools import chain
 from os.path import join
 from collections import defaultdict
-from contextlib import contextmanager
+from contextlib import contextmanager, nested
 
 from corehq.blobs import BlobInfo, get_blob_db
 from corehq.blobs.exceptions import AmbiguousBlobStorageError, NotFound
@@ -418,6 +418,30 @@ class DeferredBlobMixin(BlobMixin):
                 assert not self._deferred_blobs, self._deferred_blobs
         else:
             super(DeferredBlobMixin, self).save()
+
+
+@contextmanager
+def bulk_atomic_blobs(docs):
+    """Atomic blobs persistence to be used with ``db.bulk_save(docs)``
+
+    Blobs may be added to or deleted from objects within the context
+    body. Blobs previously added with
+    ``DeferredBlobMixin.deferred_put_attachment`` will be persisted
+    automatically. NOTE this method will persist attachments, but it
+    does not save the documents to couch. Call `db.bulk_save(docs)`
+    within the context to do that.
+
+    :param docs: A list of model objects.
+    """
+    save = lambda: None
+    contexts = [d.atomic_blobs(save) for d in docs if hasattr(d, "atomic_blobs")]
+    with nested(*contexts):
+        for doc in docs:
+            if isinstance(doc, DeferredBlobMixin) and doc._deferred_blobs:
+                for name, info in list(doc._deferred_blobs.iteritems()):
+                    doc.put_attachment(name=name, **info)
+                assert not doc._deferred_blobs, doc._deferred_blobs
+        yield
 
 
 @memoized

@@ -71,16 +71,15 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
     attachments = fields.DictField(readonly=True, null=True)
 
     def dehydrate_attachments(self, bundle):
-        attachments_dict = getattr(bundle.obj, '_attachments', None)
+        attachments_dict = getattr(bundle.obj, 'blobs', None)
         if not attachments_dict:
             return {}
 
         def _normalize_meta(meta):
-            noramlized = {}
-            for atrib in ('length', 'content_type'):
-                if atrib in meta:
-                    noramlized[atrib] = meta[atrib]
-            return noramlized
+            return {
+                'content_type': meta.content_type,
+                'length': meta.content_length,
+            }
 
         return {
             name: _normalize_meta(meta) for name, meta in attachments_dict.items()
