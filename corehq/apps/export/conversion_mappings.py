@@ -42,7 +42,7 @@ FORM_PROPERTY_MAPPING = {
 
 CASE_PROPERTY_MAPPING = {
     ("id", None): ([PathNode(name="number")], None),
-    ("_id", None): ([PathNode(name='caseid')], None),
+    ("_id", None): ([PathNode(name='_id')], None),
     ('type', None): ([PathNode(name='type')], None),
     ('closed', None): ([PathNode(name='closed')], None),
     ('closed_by', None): ([PathNode(name='closed_by')], None),
