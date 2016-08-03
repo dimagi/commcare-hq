@@ -70,7 +70,7 @@ submodules:
     branches: []
   submodules/django-prbac-src:
     branches: []
-  submodules/prelogin:
+  submodules/commcarehq-prelogin:
     branches:
       - welcome-to-vellum
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
