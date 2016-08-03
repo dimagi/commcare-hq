@@ -6,14 +6,16 @@
 
 {% block reportcontent %}
 <div class="row">
-    {% include "reports/project_health/partials/last_month_stats.html" %}
-    {% if request.user.is_superuser %}
-    <p>
-        <a href="{% url 'domain_internal_settings' domain %}">
-        {% trans "Set Performance Threshold" %}
-        </a>
-    </p>
-    {% endif %}
+    <div class="col-md-12">
+        {% include "reports/project_health/partials/last_month_stats.html" %}
+        {% if request.user.is_superuser %}
+        <p>
+            <a href="{% url 'domain_internal_settings' domain %}">
+            {% trans "Set Performance Threshold" %}
+            </a>
+        </p>
+        {% endif %}
+    </div>
     <div class="col-md-6">
         <h2>{% trans "Active Users Trend" %}</h2>
             <p class="lead">
