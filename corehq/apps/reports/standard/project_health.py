@@ -270,7 +270,9 @@ def build_worksheet(title, headers, rows):
 class ProjectHealthDashboard(ProjectReport):
     slug = 'project_health'
     name = ugettext_lazy("Project Performance")
-    report_template_path = "reports/project_health/project_health_dashboard.html"
+    report_template_path = "reports/async/project_health_dashboard.html"
+    description = ugettext_lazy("A summary of the overall health of your project"
+                                " based on how your users are doing over time.")
 
     fields = [
         'corehq.apps.reports.filters.location.LocationGroupFilter',
@@ -279,7 +281,6 @@ class ProjectHealthDashboard(ProjectReport):
 
     exportable = True
     emailable = True
-    asynchronous = False
 
     @property
     @memoized
@@ -305,7 +306,6 @@ class ProjectHealthDashboard(ProjectReport):
         groupids_param = []
 
         if param_ids:
-            param_ids = param_ids[0].split(',')
             for id in param_ids:
                 if id.startswith("g__"):
                     groupids_param.append(id[3:])
@@ -333,7 +333,6 @@ class ProjectHealthDashboard(ProjectReport):
 
     def get_users_by_filter(self):
         locationids_param, groupids_param = self.parse_params(self.get_group_location_ids())
-
         users_list_by_location = self.get_users_by_location_filter(locationids_param)
         users_list_by_group = self.get_users_by_group_filter(groupids_param)
 

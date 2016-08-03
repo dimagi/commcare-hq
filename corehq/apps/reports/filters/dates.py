@@ -18,6 +18,7 @@ class DatespanFilter(BaseReportFilter):
     slug = "datespan"
     inclusive = True
     default_days = 30
+    is_viewable = True
 
     @property
     def datespan(self):
@@ -54,6 +55,7 @@ class HiddenLastMonthDateFilter(DatespanFilter):
     label = ugettext_lazy("Date Range")
     slug = "datespan"
     inclusive = True
+    is_viewable = False
 
     @property
     def datespan(self):
