@@ -245,7 +245,8 @@ def es_snapshot_query(params, facets=None, terms=None, sort_by="snapshot_time", 
          "query": {"bool": {"must": [
              {"match": {'doc_type': "Domain"}},
              {"term": {"published": True}},
-             {"term": {"is_snapshot": True}}
+             {"term": {"is_snapshot": True}},
+             {"term": {"snapshot_head": True}}
          ]}},
          "filter": {"and": [{"term": {"is_approved": params.get('is_approved', None) or True}}]}}
 
