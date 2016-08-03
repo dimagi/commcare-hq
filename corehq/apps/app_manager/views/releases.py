@@ -190,9 +190,10 @@ def save_copy(request, domain, app_id):
         get_timezone_for_user(request.couch_user, domain)
     )
     lang, langs = get_langs(request, app)
-    # Set if build is supported for Java Phones
-    j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
-    copy['j2me_enabled'] = copy['menu_item_label'] in j2me_enabled_configs
+    if copy:
+        # Set if build is supported for Java Phones
+        j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
+        copy['j2me_enabled'] = copy['menu_item_label'] in j2me_enabled_configs
     return json_response({
         "saved_app": copy,
         "error_html": render_to_string('app_manager/partials/build_errors.html', {
