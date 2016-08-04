@@ -18,7 +18,7 @@ var projectMapInit = function(mapboxAccessToken) {
         // { countryName : { projectName : { propertyName: propertyValue } } }
         var projectsByCountryThenName = {};
         var maxNumProjects = 0;
-        
+
         that.refreshProjectData = function (filter, callback) {
             $.ajax({
                 url: '/hq/admin/json/project_map/' + window.location.search,
@@ -146,11 +146,14 @@ var projectMapInit = function(mapboxAccessToken) {
     // A lot of the styling work here is modeled after http://leafletjs.com/examples/choropleth.html
     var map = L.map('map').setView([0, 0], 3);
     var mapId = 'mapbox.dark';
+
     // copied from dimagisphere
     L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
-        maxZoom: 10,
+        maxZoom: 5,
+        minZoom: 3,
         id: mapId,
-        accessToken: mapboxAccessToken
+        accessToken: mapboxAccessToken,
+        noWrap: true,
     }).addTo(map);
 
     function getColor(featureId) {
@@ -264,7 +267,7 @@ var projectMapInit = function(mapboxAccessToken) {
             return indicesToRemove.indexOf(index) <= -1;
         });
 
-        div.innerHTML += '<i style="background:' + 'black' + '"></i> ' + '0' + '<br>'; 
+        div.innerHTML += '<i style="background:' + 'black' + '"></i> ' + '0' + '<br>';
 
         // loop through our form count intervals and generate a label with a colored square for each interval
         for (var i = 0; i < countValues.length; i++) {
