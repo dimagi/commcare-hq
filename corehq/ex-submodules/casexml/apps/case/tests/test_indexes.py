@@ -101,7 +101,7 @@ class IndexTest(TestCase):
             user_id=self.user.user_id,
             index={'mom': ('mother-case', ''), 'dad': ('father-case', self.FATHER_CASE_ID)},
             date_modified=now,
-            date_opened=now,
+            date_opened=now.date()
         ).as_xml()
 
         update_index_expected = CaseBlock(
@@ -111,7 +111,7 @@ class IndexTest(TestCase):
             create=True,
             index={'dad': ('father-case', self.FATHER_CASE_ID)},
             date_modified=now,
-            date_opened=now,
+            date_opened=now.date()
         ).as_xml()
 
         post_case_blocks([update_index], domain=self.project.name)
@@ -125,7 +125,7 @@ class IndexTest(TestCase):
             user_id=self.user.user_id,
             index={'mom': ('mother-case', self.MOTHER_CASE_ID)},
             date_modified=now,
-            date_opened=now,
+            date_opened=now.date()
         ).as_xml()
 
         update_index_expected = CaseBlock(
@@ -136,7 +136,7 @@ class IndexTest(TestCase):
             index={'mom': ('mother-case', self.MOTHER_CASE_ID),
                    'dad': ('father-case', self.FATHER_CASE_ID)},
             date_modified=now,
-            date_opened=now,
+            date_opened=now.date()
         ).as_xml()
 
         post_case_blocks([update_index], domain=self.project.name)

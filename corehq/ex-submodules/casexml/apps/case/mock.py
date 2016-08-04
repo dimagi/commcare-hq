@@ -101,7 +101,8 @@ class CaseBlock(dict):
         self._id = case_id
         now = datetime.utcnow()
         date_modified = date_modified or now
-        date_opened = date_opened or date_modified.date()
+        date_opened = date_opened or date_modified.date()\
+            if isinstance(date_modified, datetime) else date_modified
         update = copy.copy(update) if update else {}
         index = copy.copy(index) if index else {}
 

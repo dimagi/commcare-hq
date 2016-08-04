@@ -29,16 +29,7 @@ class RestoreCaseBlock(object):
         self.version = version
 
     def to_string(self):
-        restore_element_copy = ElementTree.fromstring(ElementTree.tostring(self.xml_element))
-        # hack need to explicitly convert date_opened from datetimes to dates in restores
-        # because the mobile can't handle datetimes.
-        # see: http://manage.dimagi.com/default.asp?230043 for more info
-        date_opened_element = restore_element_copy.find(
-            '{http://commcarehq.org/case/transaction/v2}update/{http://commcarehq.org/case/transaction/v2}date_opened'
-        )
-        if date_opened_element is not None and date_opened_element.text:
-            date_opened_element.text = date_opened_element.text[:10]
-        return ElementTree.tostring(restore_element_copy)
+        return ElementTree.tostring(self.xml_element)
 
     def get_case_id(self):
         if self.version == V1:
