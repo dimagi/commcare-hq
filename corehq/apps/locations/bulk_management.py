@@ -5,6 +5,8 @@ This includes support for changing location types, changing locations' parents,
 deleting things, and so on.  See the spec doc for specifics:
 https://docs.google.com/document/d/1gZFPP8yXjPazaJDP9EmFORi88R-jSytH6TTgMxTGQSk/
 """
+import copy
+import itertools
 from collections import Counter, defaultdict
 
 from dimagi.utils.decorators.memoized import memoized
@@ -70,29 +72,35 @@ class LocationTypeStub(object):
             return True
 
         old_version = old_collection.types_by_code[self.code]
-        for attr in ['name', 'code', 'parent_code', 'shares_cases'
+        if (old_version.parent_type and old_version.parent_type.code != self.parent_code):
+            return True
+
+        for attr in ['name', 'code', 'shares_cases'
                      'view_descendants', 'expand_from', 'sync_to']:
             if getattr(old_version, attr, None) != getattr(self, attr, None):
                 return True
         # Todo: does it need save if parent_code hasn't changed but parent has been resaved
         return False
 
-    def _as_db_object(self, old_collection, parent_type):
+    def _as_db_object(self, old_collection, parent_type, domain):
         # returns a SQLLocation version of the stub
-        if self.is_new:
-            obj = LocationType()
+        if self.is_new(old_collection):
+            obj = LocationType(domain=domain)
         else:
             obj = old_collection.types_by_code[self.code]
-
-        for attr in ['name', 'code', 'parent_code', 'shares_cases'
-                     'view_descendants', 'expand_from', 'sync_to']:
-            setattr(obj, getattr(self, attr, None))
-
-        obj.parent = parent_type
         return obj
 
-    def save_if_needed(self, parent_type, old_collection):
-        db_object = self._as_db_object(old_collection, parent_type)
+    def save_if_needed(self, old_collection, parent_type, domain):
+        db_object = self._as_db_object(old_collection, parent_type, domain)
+        if self.do_delete:
+            db_object.delete()
+            return None
+
+        db_object.parent_type = parent_type
+        # todo, expand_from and sync_to
+        for attr in ['name', 'code', 'shares_cases'
+                     'view_descendants']:
+            setattr(db_object, attr, getattr(self, attr, None))
 
         if self._needs_save(old_collection):
             db_object.save()
@@ -109,9 +117,9 @@ class LocationStub(object):
         self.site_code = site_code
         self.location_type = location_type
         self.location_id = location_id
-        self.parent_code = parent_code
-        self.latitude = latitude
-        self.longitude = longitude
+        self.parent_code = parent_code or 'TOP'
+        self.latitude = latitude or None
+        self.longitude = longitude or None
         self.do_delete = do_delete
         self.external_id = external_id
         self.index = index
@@ -170,30 +178,41 @@ class LocationStub(object):
             return True
 
         old_version = old_collection.locations_by_id[self.location_id]
-        for attr in ['name', 'site_code', 'location_type', 'parent_code',
-                     'latitude', 'longitude', 'external_id']:
+
+        if (self.location_type != old_version.location_type.code or
+           (old_version.parent and self.parent_code != old_version.parent.site_code)):
+            return True
+
+        for attr in ['name', 'site_code', 'latitude', 'longitude', 'external_id']:
             if getattr(old_version, attr, None) != getattr(self, attr, None):
                 return True
         # Todo: does it need save if parent_code hasn't changed but parent has been resaved
         return False
 
-    def _as_db_object(self, old_collection, parent_location):
+    def _as_db_object(self, old_collection, domain):
         # returns a SQLLocation version of the stub
         if self.is_new:
-            obj = SQLLocation()
+            obj = SQLLocation(domain=domain)
         else:
-            obj = old_collection.locations_by_id[self.location_id]
+            obj = copy.copy(old_collection.locations_by_id[self.location_id])
 
-        for attr in ['name', 'site_code', 'location_type', 'parent_code',
-                     'latitude', 'longitude', 'external_id']:
-            setattr(obj, getattr(self, attr, None))
-
-        obj.parent = parent_location
         return obj
 
-    def save_if_needed(self, parent_location, old_collection):
-        db_object = self._as_db_object(old_collection, parent_location)
+    def save_if_needed(self, old_collection, parent_location, domain, location_type):
 
+        db_object = self._as_db_object(old_collection, domain)
+
+        if self.do_delete:
+            db_object.delete()
+            return None
+
+        db_object.parent = parent_location
+        db_object.location_type = location_type
+        for attr in ['name', 'site_code',
+                     'latitude', 'longitude', 'external_id']:
+            setattr(db_object, attr, getattr(self, attr, None))
+
+        db_object.parent = parent_location
         if self._needs_save(old_collection):
             db_object.save()
 
@@ -203,36 +222,36 @@ class LocationStub(object):
 class LocationCollection(object):
     def __init__(self, domain_obj):
         self.types = domain_obj.location_types
-        self.locations = [
-            Location.filter_by_type(self.domain, loc_type.name)
+        locations = [
+            [l.sql_location for l in Location.filter_by_type(domain_obj.name, loc_type.name)]
             for loc_type in self.types
         ]
+        self.locations = list(itertools.chain(*locations))
 
     @property
+    @memoized
     def locations_by_id(self):
         return {l.location_id: l for l in self.locations}
 
     @property
+    @memoized
     def locations_by_site_code(self):
         return {l.site_code: l for l in self.locations}
 
     @property
+    @memoized
     def types_by_code(self):
         return {lt.code: lt for lt in self.types}
 
 
-class NewLocationImporter(object):
+class LocationExcelValidator(object):
 
     types_sheet_title = "types"
     locations_sheet_title = "locations"
 
-    def __init__(self, domain, excel_importer, location_rows=None):
-        self.domain = domain
-        self.domain_obj = Domain.get_by_name(domain)
+    def __init__(self, excel_importer):
         self.excel_importer = excel_importer
         self.sheets_by_title = self._validate_and_index_sheets()
-        self.result = LocationUploadResult()
-        self.old_collection = LocationCollection(self.domain_obj)
 
     def _validate_and_index_sheets(self):
         # validate excel format/headers
@@ -244,42 +263,55 @@ class NewLocationImporter(object):
             raise LocationExcelSheetError("'locations' sheet is required")
         return sheets_by_title
 
-    def run(self):
-        type_rows, location_rows = self.prepare_rows()
-        if self.result.errors:
-            return self.result
-
-        tree_validator = LocationTreeValidator(type_rows, location_rows, self.old_collection)
-        self.result.errors = tree_validator.errors
-        if self.result.errors:
-            return self.result
-
-        self.commit_changes(type_rows, location_rows)
-
-        return self.result
-
-    def prepare_rows(self):
+    def get_stubs_from_excel_rows(self):
+        location_rows = []
         for sheet_name, rows in self.sheets_by_title.items():
             if sheet_name == self.types_sheet_title:
-                type_rows = self.prepare_types(rows)
+                type_rows = self._get_types(rows)
             else:
                 # must be locations sheet of type 'sheet_name'
-                location_rows = self.prepare_locations(rows, sheet_name)
+                location_rows.extend(self._get_locations(rows, sheet_name))
         return type_rows, location_rows
 
-    def _prepare_types(self, rows):
+    def _get_types(self, rows):
         # takes raw excel row dicts and converts them to list of LocationTypeStub objects
         return [
             LocationTypeStub.from_excel_row(row, index)
             for index, row in enumerate(rows)
         ]
 
-    def _prepare_locations(self, rows, location_type):
+    def _get_locations(self, rows, location_type):
         # takes raw excel row dicts and converts them to list of LocationStub objects
         return [
             LocationStub.from_excel_row(row, index, location_type)
             for index, row in enumerate(rows)
         ]
+
+
+class NewLocationImporter(object):
+
+    def __init__(self, domain, type_rows, location_rows):
+        self.domain = domain
+        self.domain_obj = Domain.get_by_name(domain)
+        self.type_rows = type_rows
+        self.location_rows = location_rows
+        self.result = LocationUploadResult()
+        self.old_collection = LocationCollection(self.domain_obj)
+
+    @classmethod
+    def from_excel_importer(cls, domain, excel_importer):
+        type_rows, location_rows = LocationExcelValidator(excel_importer).get_stubs_from_excel_rows()
+        return cls(domain, type_rows, location_rows)
+
+    def run(self):
+        tree_validator = LocationTreeValidator(self.type_rows, self.location_rows, self.old_collection)
+        self.result.errors = tree_validator.errors
+        if self.result.errors:
+            return self.result
+
+        self.commit_changes(self.type_rows, self.location_rows)
+
+        return self.result
 
     def commit_changes(self, type_stubs, location_stubs):
         # assumes all valdiations are done, just saves them
@@ -291,31 +323,50 @@ class NewLocationImporter(object):
         for lt in type_stubs:
             type_stubs_by_parent_code[lt.parent_code].append(lt)
 
+        types_by_code = {}
+
         def create_child_types(parent_type):
             if parent_type == 'TOP':
                 parent_code = 'TOP'
+                parent_type = None
             else:
                 parent_code = parent_type.code
             child_stubs = type_stubs_by_parent_code[parent_code]
 
             for type_stub in child_stubs:
-                type_object = type_stub.save_if_needed(self.old_collection, parent_type)
-                create_child_types(type_object)
+                type_object = type_stub.save_if_needed(self.old_collection, parent_type, self.domain)
+                types_by_code[type_object.code] = type_object
+                if type_object:
+                    # check if type_stub was deleted, in which case type_object would be None
+                    create_child_types(type_object)
 
         create_child_types('TOP')
 
         location_stubs_by_parent_code = defaultdict(list)
         for l in location_stubs:
+            if l.do_delete:
+                l._as_db_object(self.old_collection, self.domain)
             location_stubs_by_parent_code[l.parent_code].append(l)
 
         def create_child_locations(parent_location):
-            parent_code = parent_location.site_code
+            if parent_location == 'TOP':
+                parent_code = 'TOP'
+                parent_location = None
+            else:
+                parent_code = parent_location.site_code
             child_stubs = location_stubs_by_parent_code[parent_code]
 
             for child in child_stubs:
-                child_object = child.save_if_needed(self.old_collection, parent_location)
-                create_child_locations(child_object)
-
+                lt = types_by_code.get(child.location_type)
+                child_object = child.save_if_needed(
+                    self.old_collection,
+                    parent_location,
+                    self.domain,
+                    lt
+                )
+                if child_object:
+                    # check if child was deleted, in which case child_object would be None
+                    create_child_locations(child_object)
         create_child_locations('TOP')
 
 
@@ -334,6 +385,9 @@ class LocationTreeValidator(object):
         self.locations_to_be_deleted = _to_be_deleted(location_rows)
 
         self.old_collection = old_collection
+        for loc in self.all_listed_locations:
+            loc.autoset_location_id_or_site_code(self.old_collection)
+
         self.types_by_code = {lt.code: lt for lt in self.location_types}
         self.locations_by_code = {l.site_code: l for l in self.locations}
 
@@ -358,10 +412,6 @@ class LocationTreeValidator(object):
         location_row_errors = (self._site_code_and_location_id_missing() +
                                self._check_unknown_location_ids())
 
-        if not location_row_errors:
-            for loc in self.all_listed_locations:
-                loc.autoset_location_id_or_site_code(self.old_collection)
-
         unknown_or_missing_errors = []
         if self.old_collection:
             # all old types/locations should be listed in excel
@@ -372,7 +422,7 @@ class LocationTreeValidator(object):
                              self._check_unique_location_codes() +
                              self._check_unique_location_ids())
 
-        basic_errors = uniqueness_errors + unknown_or_missing_errors
+        basic_errors = uniqueness_errors + unknown_or_missing_errors + location_row_errors
 
         if basic_errors:
             # it doesn't make sense to try to validate a tree when you can't
@@ -394,9 +444,11 @@ class LocationTreeValidator(object):
     @memoized
     def _site_code_and_location_id_missing(self):
         return [
-            "Location in sheet '{type}', index {index} has no site_code and location_id"
+            "Location in sheet '{type}' at index {index} has no site_code and location_id - "
+            "at least one of them should be listed"
             .format(type=l.location_type, index=l.index)
             for l in self.all_listed_locations
+            if not l.site_code and not l.location_id
         ]
 
     @memoized
@@ -419,7 +471,7 @@ class LocationTreeValidator(object):
 
     @memoized
     def _check_unique_location_ids(self):
-        counts = Counter(l.location_id for l in self.all_listed_locations).items()
+        counts = Counter(l.location_id for l in self.all_listed_locations if l.location_id).items()
         return [
             "Location location_id '{}' is listed {} times - they should be listed once"
             .format(location_id, count)
@@ -455,6 +507,8 @@ class LocationTreeValidator(object):
     @memoized
     def _check_unknown_location_ids(self):
         # count location_ids listed in the excel that are not found in the domain
+        if not self.old_collection:
+            return []
         old = self.old_collection.locations_by_id
         listed = {l.location_id: l for l in self.all_listed_locations if l.location_id}
         unknown = set(listed.keys()) - set(old.keys())
@@ -497,7 +551,10 @@ class LocationTreeValidator(object):
                            location.site_code, location.location_type)
                 else:
                     return
-
+            else:
+                if not parent:
+                    return "Location '{}' does not have a parent set or its parent is being deleted".format(
+                           location.site_code)
             correct_parent_type = loc_type.parent_code
             if parent == ROOT_LOCATION_TYPE or parent.location_type != correct_parent_type:
                 return "Location '{}' is a '{}', so it should have a parent that is a '{}'".format(
@@ -536,4 +593,6 @@ def bulk_update_organization(domain, location_types, locations):
     as adding a new location type), which are challenging or impossible to do
     piecemeal.
     """
-    pass
+    importer = NewLocationImporter(domain, location_types, locations)
+    result = importer.run()
+    return result
