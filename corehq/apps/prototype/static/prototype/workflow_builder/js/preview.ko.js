@@ -280,11 +280,17 @@ hqDefine('prototype.workflow_builder.preview', function () {
         BaseScreen.call(self, 'ko-template-screen-questions', false, preview);
         self.forms = ko.observableArray();
         self.recordName = ko.observable();
+        self.hasName = ko.computed(function () {
+           return !_.isEmpty(self.recordName());
+        });
+        self.disableSave = ko.computed(function () {
+            return self.forms().length > 0 && _.first(self.forms()).container.formType() === utils.FormType.REGISTRATION && !self.hasName();
+        });
 
         self.saveForm = function () {
             if (self.forms().length > 0 && _.first(self.forms()).container.formType() === utils.FormType.REGISTRATION) {
                 _.each(self.preview.recordListScreen.registerForms(), function (f) {
-                    f.records.push(self.recordName());
+                    f.records.push(self.recordName() || "Untitled Record");
                 });
                 self.recordName(null);
             } else if (self.forms().length > 0 && _.first(self.forms()).container.formType() === utils.FormType.COMPLETION) {
