@@ -11,7 +11,7 @@ from casexml.apps.phone.tests.utils import create_restore_user
 from django.test import TestCase, SimpleTestCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 
 
 class IndexSimpleTest(SimpleTestCase):
@@ -163,6 +163,7 @@ class IndexTest(TestCase):
         self.assertIn('IllegalCaseId', xform.problem)
         self.assertIn('Bad case id', xform.problem)
 
+    @run_with_all_backends
     def testRelationshipGetsSet(self):
         create_index = CaseBlock(
             create=True,
