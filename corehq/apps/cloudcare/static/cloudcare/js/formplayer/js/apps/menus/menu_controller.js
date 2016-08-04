@@ -2,9 +2,9 @@
 
 FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette, $) {
     MenuList.Controller = {
-        selectMenu: function (appId, stepList, page, search) {
+        selectMenu: function (appId, sessionId, stepList, page, search) {
 
-            var fetchingNextMenu = FormplayerFrontend.request("app:select:menus", appId, stepList, page, search);
+            var fetchingNextMenu = FormplayerFrontend.request("app:select:menus", appId, sessionId, stepList, page, search);
 
             /*
              Determine the next screen to display.  Could be
@@ -17,7 +17,6 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
 
         showMenu: function (menuResponse) {
-            debugger;
             var menuListView;
             var menuData = {
                 collection: menuResponse,
@@ -29,6 +28,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 currentPage: menuResponse.currentPage,
                 styles: menuResponse.styles,
                 type: menuResponse.type,
+                sessionId: menuResponse.sessionId,
             };
             if (menuResponse.type === "commands") {
                 menuListView = new MenuList.MenuListView(menuData);
@@ -74,7 +74,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             });
 
             $('#select-case').click(function () {
-                FormplayerFrontend.trigger("menu:select", model._index, model.options.model.collection.appId);
+                FormplayerFrontend.trigger("menu:select", model._index);
             });
             $('#case-detail-modal').find('.detail-tabs').html(tabListView.render().el);
             $('#case-detail-modal').find('.modal-body').html(menuListView.render().el);

@@ -1,51 +1,95 @@
-function Util() {}
+/*global Backbone, FormplayerFrontend */
 
-// from http://stackoverflow.com/questions/439463/how-to-get-get-and-post-variables-with-jquery
-Util.getQueryParams = function (qs) {
-    qs = qs.split("+").join(" ");
+function Util() {
+}
 
-    var params = [], tokens,
-        re = /[?&]?([^=]+)=([^&]*)/g;
-
-    while (tokens = re.exec(qs)) {
-        params.push({k: decodeURIComponent(tokens[1]), v: decodeURIComponent(tokens[2])});
-    }
-
-    return params;
+Util.encodedUrlToObject = function (encodedUrl) {
+    return decodeURIComponent(encodedUrl);
 };
 
-/** Given a URL, return the parameters (can be 'step' or 'page) in a map:
- * @param queryString - the URL
- * @returns {{steps: [1, 2, 3], page: [int], search: [string]}}
- */
-Util.getSteps = function (queryString) {
-    var urlParams = Util.getQueryParams(queryString);
-    var paramMap = {};
-    var steps = [];
-    for (var i = 0; i < urlParams.length; i++) {
-        if (urlParams[i].k.indexOf('step') > -1) {
-            steps.push(urlParams[i].v);
-        } else if(urlParams[i].k.indexOf('page') > -1) {
-            paramMap.page = (urlParams[i].v);
-        } else if(urlParams[i].k.indexOf('search') > -1) {
-            paramMap.search = (urlParams[i].v);
-        }
-    }
-    paramMap.steps = steps;
-    return paramMap;
+Util.objectToEncodedUrl = function (object) {
+    return encodeURIComponent(object);
 };
 
-Util.getAppId = function (queryString) {
-    var startIndex = queryString.indexOf('/');
-    var startTrimmed = queryString.substring(startIndex + 1);
-    var endIndex = startTrimmed.indexOf('/');
-    return startTrimmed.substring(0, endIndex);
+Util.currentUrlToObject = function () {
+    var url = Backbone.history.getFragment();
+    return Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(url));
 };
 
-Util.setCrossDomainAjaxOptions = function(options) {
+Util.setUrlToObject = function (urlObject) {
+    var encodedUrl = Util.objectToEncodedUrl(urlObject.toJson());
+    FormplayerFrontend.navigate(encodedUrl);
+};
+
+Util.doUrlAction = function(actionCallback) {
+    var currentObject = Util.CurrentUrlToObject();
+    actionCallback(currentObject);
+    Util.setUrlToObject(currentObject);
+};
+
+Util.setCrossDomainAjaxOptions = function (options) {
     options.type = 'POST';
     options.dataType = "json";
-    options.crossDomain = { crossDomain: true};
-    options.xhrFields = { withCredentials: true};
+    options.crossDomain = {crossDomain: true};
+    options.xhrFields = {withCredentials: true};
     options.contentType = "application/json";
+};
+
+Util.CloudcareUrl = function (appId, sessionId, steps, page, search) {
+    this.appId = appId;
+    this.sessionId = sessionId;
+    this.steps = steps;
+    this.page = page;
+    this.search = search;
+
+    this.addStep = function (step) {
+        if (!this.steps) {
+            this.steps = [];
+        }
+        this.steps.push(step);
+        //clear out pagination and search when we take a step
+        delete this.page;
+        delete this.search;
+    };
+
+    this.setPage = function (page) {
+        this.page = page;
+    };
+
+    this.setSearch = function (search) {
+        this.search = search;
+        //clear out pagination on search
+        this.page = null;
+    };
+
+    this.setSessionId = function (sessionId) {
+        this.sessionId = sessionId;
+        delete this.steps;
+        delete this.page;
+        delete this.search;
+    };
+
+    this.clearExceptApp = function () {
+        delete this.sessionId;
+        delete this.steps;
+        delete this.page;
+        delete this.search;
+    };
+};
+
+Util.CloudcareUrl.prototype.toJson = function () {
+    var self = this;
+    var dict = {
+        appId: self.appId,
+        sessionId: self.sessionId,
+        steps: self.steps,
+        page: self.page,
+        search: self.search,
+    };
+    return JSON.stringify(dict);
+};
+
+Util.CloudcareUrl.fromJson = function (json) {
+    var data = JSON.parse(json);
+    return new Util.CloudcareUrl(data.appId, data.sessionId, data.steps, data.page, data.search);
 };
