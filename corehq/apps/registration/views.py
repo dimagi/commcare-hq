@@ -202,7 +202,8 @@ def register_user(request):
                             request, form, is_new_user=True)
                         if form.cleaned_data['xform']:
                             lang = 'en'
-                            app = Application.new_app(requested_domain, "Untitled Application", application_version=APP_V2)
+                            app = Application.new_app(requested_domain, "Untitled Application",
+                                                      application_version=APP_V2)
                             module = Module.new_module(_("Untitled Module"), lang)
                             app.add_module(module)
                             save_xform(app, app.new_form(0, "Untitled Form", lang), form.cleaned_data['xform'])
