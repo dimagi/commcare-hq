@@ -62,13 +62,13 @@ class IndexTest(TestCase):
 
     def setUp(self):
         super(IndexTest, self).setUp()
+        delete_all_users()
         self.project = Domain(name='index-test')
         self.project.save()
         self.user = create_restore_user(domain=self.project.name)
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
-        delete_all_users()
         super(IndexTest, self).tearDown()
 
     def testIndexes(self):
