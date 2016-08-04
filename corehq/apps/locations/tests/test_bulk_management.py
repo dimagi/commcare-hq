@@ -463,7 +463,7 @@ class TestBulkManagement(TestCase):
         ]))
 
     def test_invalid_tree(self):
-        # an invalid location upload shouldn't affect existing location structure
+        # Invalid location upload should not pass or affect existing location structure
         lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
         locations_by_code = self.create_locations(self.basic_tree, lt_by_code)
 
@@ -493,6 +493,7 @@ class TestBulkManagement(TestCase):
         ]))
 
     def test_edit_by_sitecode(self):
+        # Locations can be referred by site_code and empty location_id
         lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
         locations_by_code = self.create_locations(self.basic_tree, lt_by_code)
 
@@ -520,6 +521,7 @@ class TestBulkManagement(TestCase):
         ]))
 
     def test_edit_by_location_id(self):
+        # Locations can be referred by location_id and empty site_code
         lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
         self.create_locations(self.basic_tree, lt_by_code)
 
@@ -547,6 +549,7 @@ class TestBulkManagement(TestCase):
         ]))
 
     def test_delete_city_type_valid(self):
+        # delete a location type and locations of that type
         lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
         self.create_locations(self.basic_tree, lt_by_code)
 
@@ -578,6 +581,8 @@ class TestBulkManagement(TestCase):
         ]))
 
     def test_delete_city_type_invalid(self):
+        # delete a location type but don't delete locations of that type.
+        # this is invalid upload and should not go through
         lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
         self.create_locations(self.basic_tree, lt_by_code)
 
