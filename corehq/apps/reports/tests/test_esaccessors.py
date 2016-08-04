@@ -57,6 +57,7 @@ class BaseESAccessorsTest(SimpleTestCase):
     es_index_info = None
 
     def setUp(self):
+        super(BaseESAccessorsTest, self).setUp()
         with trap_extra_setup(ConnectionError):
             self.es = get_es_new()
             ensure_index_deleted(self.es_index_info.index)
@@ -65,6 +66,7 @@ class BaseESAccessorsTest(SimpleTestCase):
 
     def tearDown(self):
         ensure_index_deleted(self.es_index_info.index)
+        super(BaseESAccessorsTest, self).tearDown()
 
 
 class TestFormESAccessors(BaseESAccessorsTest):

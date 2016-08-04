@@ -1,7 +1,7 @@
 {% extends "reminders/reminders_base.html" %}
 g{% load i18n %}
 {% block js-inline %}{{ block.super }}
-    <script type="text/javascript">
+    <script>
         $(function () {
             $('.send-message').click(function (event) {
                 var configId = $(this).data('config');
@@ -34,7 +34,7 @@ g{% load i18n %}
                 <td>{{ performance_config.schedule.interval }}</td>
                 <td>{{ performance_config.template }}</td>
                 <td class="btn-group">
-                    <a class="btn btn-success" href="{% url "performance_sms.edit_performance_config" domain performance_config.get_id %}">
+                    <a class="btn btn-success" href="{% if performance_config.is_advanced %}{% url "performance_sms.edit_performance_config_advanced" domain performance_config.get_id %}{% else %}{% url "performance_sms.edit_performance_config" domain performance_config.get_id %}{% endif %}">
                         <i class="fa fa-edit"></i> {% trans 'Edit' %}
                     </a>
                     <a type="button" class="btn btn-info" href="{% url "performance_sms.sample_performance_messages" domain performance_config.get_id %}">

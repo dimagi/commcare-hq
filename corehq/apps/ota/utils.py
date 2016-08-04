@@ -101,8 +101,9 @@ def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privel
         message = u"{} was not in the domain {}".format(couch_user.username, domain)
     elif couch_user.is_web_user() and domain not in couch_user.domains and not couch_user.is_superuser:
         message = u"{} was not in the domain {}".format(couch_user.username, domain)
-    elif ((couch_user.is_web_user() and domain in couch_user.domains and as_user is not None) or
-            (couch_user.is_superuser and as_user is not None)):
+    elif (couch_user.is_web_user() and
+            couch_user.is_member_of(domain) and
+            as_user is not None):
         if not has_data_cleanup_privelege and not couch_user.is_superuser:
             message = u"{} does not have permissions to restore as {}".format(
                 couch_user.username,
@@ -119,7 +120,7 @@ def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privel
             if user_domain != domain:
                 # In this case we may be dealing with a WebUser
                 user = WebUser.get_by_username(as_user)
-                if user and domain in user.domains:
+                if user and user.is_member_of(domain):
                     message = None
                 else:
                     message = u"{} was not in the domain {}".format(username, domain)
@@ -156,7 +157,7 @@ def get_restore_user(domain, couch_user, as_user):
             user = WebUser.get_by_username(as_user)
             if not user:
                 return None
-            elif domain not in user.domains:
+            elif not user.is_member_of(domain):
                 return None
             restore_user = user.to_ota_restore_user(domain)
 

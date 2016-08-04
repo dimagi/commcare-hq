@@ -747,6 +747,11 @@ class PrivacySecurityForm(forms.Form):
         required=False,
         help_text=ugettext_lazy("All web users on this project will be required to enable two factor authentication")
     )
+    strong_mobile_passwords = BooleanField(
+        label=ugettext_lazy("Require Strong Passwords for Mobile Workers"),
+        required=False,
+        help_text=ugettext_lazy("All mobile workers in this project will be required to have a strong password")
+    )
 
     def __init__(self, *args, **kwargs):
         user_name = kwargs.pop('user_name')
@@ -762,7 +767,9 @@ class PrivacySecurityForm(forms.Form):
         self.helper[3] = twbscrispy.PrependedText('allow_domain_requests', '')
         self.helper[4] = twbscrispy.PrependedText('hipaa_compliant', '')
         self.helper[5] = twbscrispy.PrependedText('two_factor_auth', '')
+        self.helper[6] = twbscrispy.PrependedText('strong_mobile_passwords', '')
         if not domain_has_privilege(domain, privileges.ADVANCED_DOMAIN_SECURITY):
+            self.helper.layout.pop(6)
             self.helper.layout.pop(5)
         if not HIPAA_COMPLIANCE_CHECKBOX.enabled(user_name):
             self.helper.layout.pop(4)
@@ -784,6 +791,7 @@ class PrivacySecurityForm(forms.Form):
         domain.allow_domain_requests = self.cleaned_data.get('allow_domain_requests', False)
         domain.secure_sessions = self.cleaned_data.get('secure_sessions', False)
         domain.two_factor_auth = self.cleaned_data.get('two_factor_auth', False)
+        domain.strong_mobile_passwords = self.cleaned_data.get('strong_mobile_passwords', False)
         secure_submissions = self.cleaned_data.get(
             'secure_submissions', False)
         apps_to_save = []
@@ -811,8 +819,6 @@ class PrivacySecurityForm(forms.Form):
 class DomainInternalForm(forms.Form, SubAreaMixin):
     sf_contract_id = CharField(label=ugettext_noop("Salesforce Contract ID"), required=False)
     sf_account_id = CharField(label=ugettext_noop("Salesforce Account ID"), required=False)
-    services = ChoiceField(label=ugettext_noop("Services"), required=False,
-                           choices=tuple_of_copies(["basic", "plus", "full", "custom"]))
     initiative = forms.MultipleChoiceField(label=ugettext_noop("Initiative"),
                                            widget=forms.CheckboxSelectMultiple(),
                                            choices=tuple_of_copies(DATA_DICT["initiatives"], blank=False),
@@ -852,11 +858,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         label=ugettext_noop("Device Model"),
         help_text=ugettext_lazy("Add CloudCare, if this project is using CloudCare as well"),
         required=False,
-    )
-    deployment_date = CharField(
-        label=ugettext_noop("Deployment date"),
-        required=False,
-        help_text=ugettext_lazy("Date that the project went live (usually right after training).")
     )
     business_unit = forms.ChoiceField(
         label=ugettext_noop('Business Unit'),
@@ -945,7 +946,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'organization_name',
                 'notes',
                 'phone_model',
-                'deployment_date',
                 'business_unit',
                 'countries',
                 'commtrack_domain',
@@ -959,7 +959,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 _("Salesforce Details"),
                 'sf_contract_id',
                 'sf_account_id',
-                'services',
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -984,7 +983,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         domain.update_internal(
             sf_contract_id=self.cleaned_data['sf_contract_id'],
             sf_account_id=self.cleaned_data['sf_account_id'],
-            services=self.cleaned_data['services'],
             initiative=self.cleaned_data['initiative'],
             self_started=self.cleaned_data['self_started'] == 'true',
             area=self.cleaned_data['area'],

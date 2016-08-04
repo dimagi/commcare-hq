@@ -192,6 +192,7 @@ add_months      | A way to add months to a date | `my_date + relativedelta(month
 month_start_date| First day in the month of a date | `2015-01-20` -> `2015-01-01`
 month_end_date  | Last day in the month of a date | `2015-01-20` -> `2015-01-31`
 diff_days       | A way to get duration in days between two dates | `(to_date - from-date).days`
+diff_seconds    | A way to get duration in seconds between two datetimes | `(to_datetime - from_datetime).totalseconds()`
 evaluator       | A way to do arithmetic operations | `a + b*c / d`
 base_iteration_number | Used with [`base_item_expression`](#saving-multiple-rows-per-caseform) - a way to get the current iteration number (starting from 0). | `loop.index`
 
@@ -456,7 +457,7 @@ The date_expression and count_expression can be any valid expressions, or simply
 `add_months` offsets given date by given number of calendar months.
 If offset results in an invalid day (for e.g. Feb 30, April 31), the day of resulting date will be adjusted to last day of the resulting calendar month.
 
-The date_expression and months_expression can be any valid expressions, or simply constants, including nagative numbers.
+The date_expression and months_expression can be any valid expressions, or simply constants, including negative numbers.
 
 ```json
 {
@@ -468,7 +469,6 @@ The date_expression and months_expression can be any valid expressions, or simpl
     "months_expression": 28
 }
 ```
-
 
 #### "Diff Days" expressions
 
@@ -483,6 +483,25 @@ The from_date_expression and to_date_expression can be any valid expressions, or
         "property_name": "dob",
     },
     "to_date_expression": "2016-02-01"
+}
+```
+
+#### "Diff Seconds" expressions
+
+`diff_seconds` returns number of seconds between datetimes specified by `from_expression` and `to_expression`.
+The from_expression and to_expression can be any valid expressions, or simply constants.
+
+```json
+{
+    "type": "diff_seconds",
+    "from_expression": {
+        "type": "property_path",
+        "property_path": ["form","meta","timeStart"]
+    },
+    "to_expression": {
+        "type": "property_path",
+        "property_path": ["form","meta","timeEnd"]
+    }
 }
 ```
 
@@ -514,7 +533,7 @@ Variables can be any valid numbers (Python datatypes `int`, `float` and `long` a
 Only the following functions are permitted:
 
 * `rand()`: generate a random number between 0 and 1
-* `randint(max)`: generate a random integer beween 0 and `max`
+* `randint(max)`: generate a random integer between 0 and `max`
 * `int(value)`: convert `value` to an int. Value can be a number or a string representation of a number
 * `float(value)`: convert `value` to a floating point number
 * `str(value)`: convert `value` to a string
@@ -596,7 +615,7 @@ Above returns list of ages. Note that the `property_path` in `map_expression` is
 
 ##### sort_items Expression
 
-`sort_items` returns a sorted list of items based on sort value of each item.The sort value of an item is speicifed by `sort_expression`. By default, list will be in ascending order. Order can be changed by adding optional `order` expression with one of `DESC` (for descending) or `ASC` (for ascending) If a sort-value of an item is `None`, the item will appear in the start of list. If sort-values of any two items can't be compared, an empty list is returned.
+`sort_items` returns a sorted list of items based on sort value of each item.The sort value of an item is specified by `sort_expression`. By default, list will be in ascending order. Order can be changed by adding optional `order` expression with one of `DESC` (for descending) or `ASC` (for ascending) If a sort-value of an item is `None`, the item will appear in the start of list. If sort-values of any two items can't be compared, an empty list is returned.
 
 `items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned.
 
@@ -663,7 +682,7 @@ Last, but certainly not least, are named expressions.
 These are special expressions that can be defined once in a data source and then used throughout other filters and indicators in that data source.
 This allows you to write out a very complicated expression a single time, but still use it in multiple places with a simple syntax.
 
-Named expressions are defined in a special section of the data source. To reference a named expression, you just specify the type of `"named"` and the name as folllows:
+Named expressions are defined in a special section of the data source. To reference a named expression, you just specify the type of `"named"` and the name as follows:
 
 ```json
 {
@@ -1078,6 +1097,44 @@ Date filters have an optional `compare_as_string` option that allows the date
 filter to be compared against an indicator of data type `string`. You shouldn't
 ever need to use this option (make your column a `date` or `datetime` type
 instead), but it exists because the report builder needs it. 
+
+### Pre-Filters
+
+Pre-filters offer the kind of functionality you get from
+[data source filters](#data-source-filtering). This makes it easier to use one
+data source for many reports, especially if some of those reports just need
+the data source to be filtered slightly differently. Pre-filters do not need
+to be configured by app builders in report modules; fields with pre-filters
+will not be listed in the report module among the other fields that can be
+filtered.
+
+A pre-filter's `type` is set to "pre":
+```
+{
+  "type": "pre",
+  "field": "at_risk_field",
+  "slug": "at_risk_slug",
+  "datatype": "string",
+  "pre_value": "yes"
+}
+```
+
+If `pre_value` is scalar (i.e. `datatype` is "string", "integer", etc.), the
+filter will use the "equals" operator. If `pre_value` is null, the filter will
+use "is null". If `pre_value` is an array, the filter will use the "in"
+operator. e.g.
+```
+{
+  "type": "pre",
+  "field": "at_risk_field",
+  "slug": "at_risk_slug",
+  "datatype": "array",
+  "pre_value": ["yes", "maybe"]
+}
+```
+
+(If `pre_value` is an array and `datatype` is not "array", it is assumed that
+`datatype` refers to the data type of the items in the array.)
 
 ### Dynamic choice lists
 

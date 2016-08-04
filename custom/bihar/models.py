@@ -46,7 +46,6 @@ class CareBiharFluff(fluff.IndicatorDocument):
     domains = BIHAR_DOMAINS
     group_by = ['domain', 'owner_id']
 
-    kafka_topic = topics.CASE
     save_direct_to_sql = False
 
     # home visit

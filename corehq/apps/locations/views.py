@@ -32,7 +32,6 @@ from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.util import reverse, get_document_or_404
-from custom.openlmis.tasks import bootstrap_domain_task
 
 from .analytics import users_have_locations
 from .dbaccessors import get_users_assigned_to_locations
@@ -295,7 +294,7 @@ class NewLocationView(BaseLocationView):
 
     @property
     def parent_pages(self):
-        selected = self.location.location_id or self.location.parent_id
+        selected = self.location.location_id or self.location.parent_location_id
         breadcrumbs = [{
             'title': LocationsListView.page_title,
             'url': reverse(
@@ -345,7 +344,7 @@ class NewLocationView(BaseLocationView):
             'form': self.location_form,
             'location': self.location,
             'consumption': self.consumption,
-            'locations': load_locs_json(self.domain, self.location.parent_id,
+            'locations': load_locs_json(self.domain, self.location.parent_location_id,
                                         user=self.request.couch_user),
             'form_tab': self.form_tab,
         }
@@ -620,18 +619,6 @@ class BaseSyncView(BaseLocationView):
         return reverse('settings_default', args=(self.domain,))
 
 
-class FacilitySyncView(BaseSyncView):
-    urlname = 'sync_facilities'
-    sync_urlname = 'sync_openlmis'
-    page_title = ugettext_noop("OpenLMIS")
-    template_name = 'locations/facility_sync.html'
-    source = 'openlmis'
-
-    @use_jquery_ui
-    def dispatch(self, request, *args, **kwargs):
-        return super(FacilitySyncView, self).dispatch(request, *args, **kwargs)
-
-
 class LocationImportStatusView(BaseLocationView):
     urlname = 'location_import_status'
     page_title = ugettext_noop('Organization Structure Import Status')
@@ -743,14 +730,6 @@ def location_export(request, domain):
     dump_locations(response, domain, include_consumption=include_consumption,
                    include_ids=include_ids)
     return response
-
-
-@is_locations_admin
-@require_POST
-def sync_openlmis(request, domain):
-    # todo: error handling, if we care.
-    bootstrap_domain_task.delay(domain)
-    return HttpResponse('OK')
 
 
 @locations_access_required

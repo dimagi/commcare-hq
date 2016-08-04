@@ -34,10 +34,10 @@ from corehq.apps.userreports.exceptions import (
     UserReportsFilterError,
     DataSourceConfigurationNotFoundError)
 from corehq.apps.userreports.models import (
-    STATIC_PREFIX,
     CUSTOM_REPORT_PREFIX,
     StaticReportConfiguration,
     ReportConfiguration,
+    report_config_id_is_static,
 )
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.reports.util import (
@@ -61,6 +61,38 @@ from no_exceptions.exceptions import Http403
 from corehq.apps.reports.datatables import DataTablesHeader
 
 UCR_EXPORT_TO_EXCEL_ROW_LIMIT = 1000
+
+
+def get_filter_values(filters, request_dict):
+    """
+    Return a dictionary mapping filter ids to specified values
+    :param filters: A list of corehq.apps.reports_core.filters.BaseFilter
+        objects (or subclasses)
+    :param request_dict: key word arguments from the request
+    :return:
+    """
+    try:
+        return {
+            filter.css_id: filter.get_value(request_dict)
+            for filter in filters
+        }
+    except FilterException, e:
+        raise UserReportsFilterError(unicode(e))
+
+
+def query_dict_to_dict(query_dict, domain):
+    """
+    Transform the given QueryDict to a normal dict where each value has been
+    converted from a string to a dict (if the value is JSON).
+    Also add the domain to the dict.
+
+    :param query_dict: a QueryDict
+    :param domain:
+    :return: a dict
+    """
+    request_dict = json_request(query_dict)
+    request_dict['domain'] = domain
+    return request_dict
 
 
 class ConfigurableReport(JSONResponseMixin, BaseDomainView):
@@ -96,10 +128,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
     @property
     def is_static(self):
-        return any(
-            self.report_config_id.startswith(prefix)
-            for prefix in [STATIC_PREFIX, CUSTOM_REPORT_PREFIX]
-        )
+        return report_config_id_is_static(self.report_config_id)
 
     @property
     def is_custom_rendered(self):
@@ -138,27 +167,19 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def data_source(self):
-        report = ReportFactory.from_spec(self.spec)
+        report = ReportFactory.from_spec(self.spec, include_prefilters=True)
         report.lang = self.lang
         return report
 
     @property
     @memoized
     def request_dict(self):
-        request_dict = json_request(self.request.GET)
-        request_dict['domain'] = self.domain
-        return request_dict
+        return query_dict_to_dict(self.request.GET, self.domain)
 
     @property
     @memoized
     def filter_values(self):
-        try:
-            return {
-                filter.css_id: filter.get_value(self.request_dict)
-                for filter in self.filters
-            }
-        except FilterException, e:
-            raise UserReportsFilterError(unicode(e))
+        return get_filter_values(self.filters, self.request_dict)
 
     @property
     @memoized

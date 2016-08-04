@@ -29,7 +29,6 @@ from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION
 from corehq.form_processor.utils import use_new_exports
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
-from corehq.toggles import OPENLMIS
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
 
@@ -291,7 +290,6 @@ class SetupTab(UITab):
             EditProductView,
             ProductFieldsView,
         )
-        from corehq.apps.locations.views import FacilitySyncView
 
         if self.project.commtrack_enabled:
             commcare_supply_setup = [
@@ -350,13 +348,6 @@ class SetupTab(UITab):
                     'url': reverse(StockLevelsView.urlname, args=[self.domain]),
                 },
             ]
-            if OPENLMIS.enabled(self.domain):
-                commcare_supply_setup.append(
-                    # external sync
-                    {
-                        'title': FacilitySyncView.page_title,
-                        'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
-                    })
             return [[_('CommCare Supply Setup'), commcare_supply_setup]]
 
 
@@ -1128,13 +1119,6 @@ class ProjectSettingsTab(UITab):
             'url': reverse(EditMyProjectSettingsView.urlname, args=[self.domain])
         })
 
-        if toggles.DHIS2_DOMAIN.enabled(self.domain):
-            from corehq.apps.domain.views import EditDhis2SettingsView
-            project_info.append({
-                'title': _(EditDhis2SettingsView.page_title),
-                'url': reverse(EditDhis2SettingsView.urlname, args=[self.domain])
-            })
-
         if toggles.OPENCLINICA.enabled(self.domain):
             from corehq.apps.domain.views import EditOpenClinicaSettingsView
             project_info.append({
@@ -1306,32 +1290,36 @@ class MySettingsTab(UITab):
             MyProjectsList,
             TwoFactorProfileView,
         )
-        items = [
-            [_("Manage My Settings"), [
-                {
-                    'title': _(MyAccountSettingsView.page_title),
-                    'url': reverse(MyAccountSettingsView.urlname),
-                },
-                {
-                    'title': _(MyProjectsList.page_title),
-                    'url': reverse(MyProjectsList.urlname),
-                },
-                {
-                    'title': _(ChangeMyPasswordView.page_title),
-                    'url': reverse(ChangeMyPasswordView.urlname),
-                },
-                {
-                    'title': _(TwoFactorProfileView.page_title),
-                    'url': reverse(TwoFactorProfileView.urlname),
-                }
-            ]]
+        menu_items = [
+            {
+                'title': MyAccountSettingsView.page_title,
+                'url': reverse(MyAccountSettingsView.urlname),
+            },
         ]
+
+        if self.couch_user and self.couch_user.is_web_user():
+            menu_items.append({
+                'title': MyProjectsList.page_title,
+                'url': reverse(MyProjectsList.urlname),
+            })
+
+        menu_items.extend([
+            {
+                'title': ChangeMyPasswordView.page_title,
+                'url': reverse(ChangeMyPasswordView.urlname),
+            },
+            {
+                'title': TwoFactorProfileView.page_title,
+                'url': reverse(TwoFactorProfileView.urlname),
+            }
+        ])
+
         if self.couch_user and self.couch_user.is_dimagi:
-            items[0][1].append({
-                'title': _(EnableSuperuserView.page_title),
+            menu_items.append({
+                'title': EnableSuperuserView.page_title,
                 'url': reverse(EnableSuperuserView.urlname),
             })
-        return items
+        return [[_("Manage My Settings"), menu_items]]
 
 
 class AccountingTab(UITab):
@@ -1476,7 +1464,7 @@ class AdminTab(UITab):
         admin_operations = []
 
         if self.couch_user and self.couch_user.is_staff:
-            from corehq.apps.hqadmin.views import AuthenticateAs
+            from corehq.apps.hqadmin.views import AuthenticateAs, VCMMigrationView
             admin_operations.extend([
                 {'title': _('PillowTop Errors'),
                  'url': reverse('admin_report_dispatcher',
@@ -1489,6 +1477,8 @@ class AdminTab(UITab):
                  'url': reverse('raw_couch')},
                 {'title': _('Check Call Center UCR tables'),
                  'url': reverse('callcenter_ucr_check')},
+                {'title': _('Manage VCM Migration'),
+                 'url': reverse(VCMMigrationView.urlname)},
             ])
         return [
             (_('Administrative Reports'), [

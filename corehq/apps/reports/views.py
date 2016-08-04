@@ -1746,7 +1746,10 @@ class EditFormInstance(View):
         if not instance.app_id or not instance.build_id:
             return _error(_('Could not detect the application/form for this submission.'))
 
-        user = get_document_or_404(CommCareUser, domain, instance.metadata.userID)
+        user = CouchUser.get_by_user_id(instance.metadata.userID, domain)
+        if not user:
+            return _error(_('Could not find user for this submission.'))
+
         edit_session_data = get_user_contributions_to_touchforms_session(user)
 
         # add usercase to session

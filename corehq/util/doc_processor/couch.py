@@ -1,34 +1,8 @@
 from couchdbkit import ResourceNotFound
 
-from corehq.util.couch_helpers import PaginatedViewArgsProvider
+from corehq.util.couch_helpers import MultiKeyViewArgsProvider
 from corehq.util.doc_processor.interface import DocumentProvider, ProcessorProgressLogger
 from corehq.util.pagination import ResumableFunctionIterator
-
-
-class ResumableDocsByTypeArgsProvider(PaginatedViewArgsProvider):
-    def __init__(self, initial_view_kwargs, doc_types):
-        super(ResumableDocsByTypeArgsProvider, self).__init__(initial_view_kwargs)
-        self.doc_types = list(doc_types)
-
-    def get_next_args(self, result, *last_args, **last_view_kwargs):
-        try:
-            return super(ResumableDocsByTypeArgsProvider, self).get_next_args(
-                result, *last_args, **last_view_kwargs
-            )
-        except StopIteration:
-            last_doc_type = last_view_kwargs["startkey"][0]
-            # skip doc types already processed
-            index = self.doc_types.index(last_doc_type) + 1
-            self.doc_types = self.doc_types[index:]
-            try:
-                next_doc_type = self.doc_types[0]
-            except IndexError:
-                raise StopIteration
-            last_view_kwargs.pop('skip', None)
-            last_view_kwargs.pop("startkey_docid", None)
-            last_view_kwargs['startkey'] = [next_doc_type]
-            last_view_kwargs['endkey'] = [next_doc_type, {}]
-        return last_args, last_view_kwargs
 
 
 def resumable_docs_by_type_iterator(db, doc_types, iteration_key, chunk_size=100, view_event_handler=None):
@@ -51,17 +25,12 @@ def resumable_docs_by_type_iterator(db, doc_types, iteration_key, chunk_size=100
     """
 
     def data_function(**view_kwargs):
+        view_kwargs["limit"] = chunk_size
         return db.view('all_docs/by_doc_type', **view_kwargs)
 
-    view_kwargs = {
-        'limit': chunk_size,
-        'include_docs': True,
-        'reduce': False,
-        'startkey': [doc_types[0]],
-        'endkey': [doc_types[0], {}]
-    }
-
-    args_provider = ResumableDocsByTypeArgsProvider(view_kwargs, doc_types)
+    keys = [[doc_type] for doc_type in doc_types]
+    args_provider = MultiKeyViewArgsProvider(keys, include_docs=True)
+    args_provider.initial_view_kwargs.pop("limit")
 
     class ResumableDocsIterator(ResumableFunctionIterator):
         def __iter__(self):
@@ -99,7 +68,7 @@ class CouchDocumentProvider(DocumentProvider):
 
     :param iteration_key: unique key to identify the document iterator. Must be unique
     across all document iterators.
-    :param doc_types: An ordered sequence. Each item in the sequence should be
+    :param doc_type_tuples: An ordered sequence where each item in the sequence should be
     either a doc type class or a tuple ``(doc_type_name_string, doc_type_class)``
     if the doc type name is different from the model class name.
     Note that the order of the sequence should never change while the iteration is

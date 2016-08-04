@@ -171,6 +171,28 @@ REMINDER_MONTHLY_DELIVERY_SUMMARY = _(
 )
 
 
+EMG_ERROR = _(
+    "Your request was not formatted properly."
+    " Please try the request again, in the format: emg <product> <quantity> ..."
+)
+
+EMG_HELP = _(
+    "Please send your emergency request in the format: emg <product> <quantity> ..."
+)
+
+REC_CONFIRMATION = _(
+    "Thank you, we have received your receipt confirmation."
+)
+
+REC_HELP = _(
+    "Please send your receipt in the format: rec <product> <quantity> ..."
+)
+
+REC_ERROR = _(
+    "Your request was not formatted properly."
+    " Please try the request again, in the format: rec <product> <quantity> ..."
+)
+
 HSA = "hsa"
 
 

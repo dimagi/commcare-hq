@@ -120,3 +120,9 @@ class ChangeFeed(object):
         to show progress / changes remaining to process
         """
         pass
+
+    @abstractmethod
+    def get_current_offsets(self):
+        """
+        :return: A dictionary of ``(topic/db_name, offset integer)`` pairs
+        """

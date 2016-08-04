@@ -90,7 +90,7 @@ class LocationForm(forms.Form):
         kwargs['initial'] = dict(self.location._doc)
         if not self.is_new_location:
             kwargs['initial']['location_type'] = self.location.location_type
-        kwargs['initial']['parent_id'] = self.location.parent_id
+        kwargs['initial']['parent_id'] = self.location.parent_location_id
         lat, lon = (getattr(self.location, k, None)
                     for k in ('latitude', 'longitude'))
         kwargs['initial']['coordinates'] = ('%s, %s' % (lat, lon)
@@ -119,8 +119,8 @@ class LocationForm(forms.Form):
 
     def get_fields(self, is_new):
         if is_new:
-            parent = (Location.get(self.location.parent_id)
-                      if self.location.parent_id else None)
+            parent = (Location.get(self.location.parent_location_id)
+                      if self.location.parent_location_id else None)
             child_types = allowed_child_types(self.location.domain, parent)
             return filter(None, [
                 _("Location Information"),
@@ -170,13 +170,13 @@ class LocationForm(forms.Form):
 
     def clean_parent_id(self):
         if self.is_new_location:
-            parent_id = self.location.parent_id
+            parent_id = self.location.parent_location_id
         else:
             parent_id = self.cleaned_data['parent_id'] or None
         parent = Location.get(parent_id) if parent_id else None
         self.cleaned_data['parent'] = parent
 
-        if self.location.location_id is not None and self.location.parent_id != parent_id:
+        if self.location.location_id is not None and self.location.parent_location_id != parent_id:
             # location is being re-parented
 
             if parent and self.location.location_id in parent.path:
@@ -188,16 +188,26 @@ class LocationForm(forms.Form):
                     'moved to a different parent'
                 )
 
-            self.cleaned_data['orig_parent_id'] = self.location.parent_id
+            self.cleaned_data['orig_parent_id'] = self.location.parent_location_id
 
         return parent_id
 
     def clean_name(self):
+        def has_siblings_with_name(location, name, parent_location_id):
+            qs = SQLLocation.objects.filter(domain=location.domain,
+                                            name=name)
+            if parent_location_id:
+                qs.filter(parent__location_id=parent_location_id)
+            else:  # Top level
+                qs.filter(parent=None)
+            return (qs.exclude(location_id=self.location.location_id)
+                      .exists())
+
         name = self.cleaned_data['name']
+        parent_location_id = self.cleaned_data.get('parent_id', None)
 
         if self.strict:
-            siblings = self.location.siblings(self.cleaned_data.get('parent'))
-            if name in [loc.name for loc in siblings]:
+            if has_siblings_with_name(self.location, name, parent_location_id):
                 raise forms.ValidationError(
                     'name conflicts with another location with this parent'
                 )
@@ -276,18 +286,14 @@ class LocationForm(forms.Form):
                 prop_name = k[len('prop:'):]
                 setattr(location, prop_name, v)
 
-        orig_parent_id = self.cleaned_data.get('orig_parent_id')
-        reparented = orig_parent_id is not None
-        if reparented:
-            # todo: this property isn't used. could be deleted if we aren't expecting
-            # to do anything more with the data
-            location.flag_post_move = True
-            location.previous_parents.append(orig_parent_id)
         if commit:
             location.save()
 
         if not is_new:
-            location_edited.send(sender='loc_mgmt', loc=location, moved=reparented)
+            orig_parent_id = self.cleaned_data.get('orig_parent_id')
+            reparented = orig_parent_id is not None
+            location_edited.send(sender='loc_mgmt', loc=location,
+                                 moved=reparented, previous_parent=orig_parent_id)
 
         return location
 

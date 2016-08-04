@@ -47,3 +47,7 @@ class PerformanceConfiguration(Document):
         group = Group.get(self.recipient_id)
         assert group.domain == self.domain
         return group
+
+    @property
+    def is_advanced(self):
+        return len(self.template_variables) > 1

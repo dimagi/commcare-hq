@@ -19,7 +19,7 @@ from corehq.apps.userreports.expressions.specs import eval_statements
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.util.test_utils import generate_cases, create_and_save_a_form, create_and_save_a_case
 
 
@@ -884,7 +884,12 @@ def test_invalid_eval_expression(self, source_doc, statement, context):
     ("a*b", {"a": 2, "b": 23}, 2 * 23),
     ("a*b if a > b else b -a", {"a": 2, "b": 23}, 23 - 2),
     ("'text1' if a < 5 else `text2`", {"a": 4}, 'text1'),
+    ("a if a else b", {"a": 0, "b": 1}, 1),
+    ("a if a else b", {"a": False, "b": 1}, 1),
+    ("a if a else b", {"a": None, "b": 1}, 1),
     ("range(1, a)", {"a": 5}, [1, 2, 3, 4]),
+    ("a or b", {"a": 0, "b": 1}, True),
+    ("a and b", {"a": 0, "b": 1}, False),
     # ranges > 100 items aren't supported
     ("range(200)", {}, None),
 ])
@@ -897,6 +902,7 @@ def test_supported_evaluator_statements(self, eq, context, expected_value):
     ("a + b", {"a": 2, "b": 'text'}),
     # missing context
     ("a + (a*b)", {"a": 2}),
+    # power function not supported
     ("a**b", {"a": 2, "b": 23}),
     ("lambda x: x*x", {"a": 2}),
     ("int(10 in range(1,20))", {"a": 2}),

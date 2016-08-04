@@ -27,11 +27,15 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 this.widthHints = response.widthHints;
                 this.currentPage = response.currentPage;
                 this.pageCount = response.pageCount;
+                this.tiles = response.tiles;
                 return response.entities;
             }
             else if(response.tree){
                 // form entry time, doggy
                 FormplayerFrontend.request('startForm', response, this.app_id);
+            }
+            else if(response.exception){
+                FormplayerFrontend.request('error', response.exception);
             }
         },
 

@@ -18,8 +18,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
     var API = {
         getAppEntities: function () {
             var appsJson = FormplayerFrontend.request('currentUser').apps;
-            var apps = new Entities.AppCollection(appsJson);
-            return apps;
+            return new Entities.AppCollection(appsJson);
         },
         getAppEntity: function (app_id) {
             var apps = API.getAppEntities();

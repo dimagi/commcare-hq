@@ -170,7 +170,7 @@ class Command(BaseCommand):
                     domain=self.new_domain,
                     name=old_type_name,
                 )
-            children = location.children
+            children = location.get_children()
             old_id, new_id = self.save_couch_copy(location, self.new_domain)
             id_map[old_id] = new_id
             for child in children:

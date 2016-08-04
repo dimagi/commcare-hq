@@ -6,6 +6,25 @@
     max-height: 100px;
 }
 
+body {
+    margin: 4px;
+}
+
+.grid-wrapper {
+    display: grid;
+    grid-template-columns: repeat(12, 60px) min-content 60px;
+    grid-template-rows: repeat(6, 60px) min-content 60px;
+    background-color: #fff;
+    color: #685c53;
+    border-color: #685c53;
+}
+
+.box {
+    border-color: #685c53;
+    color: #685c53;
+    font-size: 100%;
+}
+
 /* Need to override this http://stackoverflow.com/questions/27638228/bootstrap-glyphicons-not-showing */
 #case-list-search-button {
     font-size: 4px;
@@ -15,4 +34,15 @@
     color: #ff8400;
     text-shadow: 1px 1px 1px #000;
     font-size: 150px;
+}
+
+.sync-icon {
+    color: #47b700;
+    text-shadow: 1px 1px 1px #000;
+    font-size: 150px;
+}
+
+.formplayer-requester-disabled {
+    pointer-events: none;
+    opacity: .5;
 }

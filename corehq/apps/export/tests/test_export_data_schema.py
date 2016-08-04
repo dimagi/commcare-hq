@@ -144,6 +144,18 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
             ]
         )
 
+    def test_allow_non_data_nodes(self):
+        """
+        Ensure that we allow non data nodes
+        """
+        self.assertEqual(
+            _question_path_to_path_nodes("/nodata/question", []),
+            [
+                PathNode(name='form', is_repeat=False),
+                PathNode(name='question', is_repeat=False),
+            ]
+        )
+
 
 class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
     app_id = '1234'
@@ -558,6 +570,7 @@ class TestBuildingParentCaseSchemaFromApplication(TestCase, TestXmlMixin):
     @classmethod
     def setUpClass(cls):
         cls.current_app = Application.wrap(cls.get_json('parent_child_case_application'))
+        cls.current_app.copy_of = None
 
         cls.apps = [
             cls.current_app,

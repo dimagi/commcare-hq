@@ -12,6 +12,7 @@ class TestAppId(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestAppId, cls).setUpClass()
         cls.domain = 'alskdjfablasdkffsdlkfjabas'
         cls.project = create_domain(name=cls.domain)
 
@@ -29,6 +30,7 @@ class TestAppId(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.project.delete()
+        super(TestAppId, cls).tearDownClass()
 
     @run_with_all_backends
     def test(self):

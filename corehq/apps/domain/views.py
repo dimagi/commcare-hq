@@ -40,8 +40,6 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_ca
 
 from corehq.const import USER_DATE_FORMAT
 from corehq.tabs.tabclasses import ProjectSettingsTab
-from custom.dhis2.forms import Dhis2SettingsForm
-from custom.dhis2.models import Dhis2Settings
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.hqwebapp.tasks import send_mail_async
@@ -499,35 +497,6 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
-class EditDhis2SettingsView(BaseProjectSettingsView):
-    template_name = 'domain/admin/dhis2_settings.html'
-    urlname = 'dhis2_settings'
-    page_title = ugettext_lazy("DHIS2 API settings")
-
-    @property
-    @memoized
-    def dhis2_settings_form(self):
-        settings_ = Dhis2Settings.for_domain(self.domain_object.name)
-        initial = settings_.dhis2 if settings_ else {'enabled': False}
-        if self.request.method == 'POST':
-            return Dhis2SettingsForm(self.request.POST, initial=initial)
-        return Dhis2SettingsForm(initial=initial)
-
-    @property
-    def page_context(self):
-        return {
-            'dhis2_settings_form': self.dhis2_settings_form,
-        }
-
-    def post(self, request, *args, **kwargs):
-        if self.dhis2_settings_form.is_valid():
-            if self.dhis2_settings_form.save(self.domain_object):
-                messages.success(request, _('DHIS2 API settings successfully updated'))
-            else:
-                messages.error(request, _('There seems to have been an error. Please try again.'))
-        return self.get(request, *args, **kwargs)
-
-
 class EditOpenClinicaSettingsView(BaseProjectSettingsView):
     template_name = 'domain/admin/openclinica_settings.html'
     urlname = 'oc_settings'
@@ -663,7 +632,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
         }
         cards = None
         if subscription:
-            cards = get_customer_cards(self.account, self.request.user.username, self.domain)
+            cards = get_customer_cards(self.request.user.username, self.domain)
             date_end = (subscription.date_end.strftime(USER_DATE_FORMAT)
                         if subscription.date_end is not None else "--")
 
@@ -839,6 +808,9 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
         }
 
     def _get_cards(self):
+        if not settings.STRIPE_PRIVATE_KEY:
+            return []
+
         user = self.request.user.username
         payment_method, new_payment_method = StripePaymentMethod.objects.get_or_create(
             web_user=user,
@@ -879,7 +851,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
 
     @property
     def stripe_cards(self):
-        return get_customer_cards(self.account, self.request.user.username, self.domain)
+        return get_customer_cards(self.request.user.username, self.domain)
 
     @property
     def show_hidden(self):
@@ -1401,6 +1373,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
             "hipaa_compliant": self.domain_object.hipaa_compliant,
             "secure_sessions": self.domain_object.secure_sessions,
             "two_factor_auth": self.domain_object.two_factor_auth,
+            "strong_mobile_passwords": self.domain_object.strong_mobile_passwords,
         }
         if self.request.method == 'POST':
             return PrivacySecurityForm(self.request.POST, initial=initial,
@@ -2754,6 +2727,7 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
     def page_context(self):
         return {
             'flags': self.enabled_flags(),
+            'use_sql_backend': self.domain_object.use_sql_backend
         }
 
 

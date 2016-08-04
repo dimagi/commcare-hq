@@ -136,7 +136,7 @@ from .exceptions import (
     CaseXPathValidationError,
     UserCaseXPathValidationError,
 )
-from corehq.apps.reports.daterange import get_daterange_start_end_dates
+from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_simple_dateranges
 from jsonpath_rw import jsonpath, parse
 
 WORKFLOW_DEFAULT = 'default'  # go to the app main screen
@@ -1103,8 +1103,8 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
     def check_paths(self, paths):
         errors = []
         try:
-            valid_paths = {question['value']: question['tag']
-                           for question in self.get_questions(langs=[], include_triggers=True)}
+            questions = self.get_questions(langs=[], include_triggers=True, include_groups=True)
+            valid_paths = {question['value']: question['tag'] for question in questions}
         except XFormException as e:
             errors.append({'type': 'invalid xml', 'message': unicode(e)})
         else:
@@ -1315,6 +1315,37 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             elif a.is_active():
                 actions[action_type] = a
         return actions
+
+    @memoized
+    def get_action_type(self):
+
+        if self.actions.close_case.condition.is_active():
+            return 'close'
+        elif (self.actions.open_case.condition.is_active() or
+                self.actions.subcases):
+            return 'open'
+        elif self.actions.update_case.condition.is_active():
+            return 'update'
+        else:
+            return 'none'
+
+    @memoized
+    def get_icon_help_text(self):
+        messages = []
+
+        if self.actions.open_case.condition.is_active():
+            messages.append(_('This form opens a {}').format(self.get_module().case_type))
+
+        if self.actions.subcases:
+            messages.append(_('This form opens a subcase {}').format(', '.join(self.get_subcase_types())))
+
+        if self.actions.close_case.condition.is_active():
+            messages.append(_('This form closes a {}').format(self.get_module().case_type))
+
+        elif self.requires_case():
+            messages.append(_('This form updates a {}').format(self.get_module().case_type))
+
+        return '. '.join(messages)
 
     def active_actions(self):
         if self.get_app().application_version == APP_V1:
@@ -1764,6 +1795,7 @@ class CaseListLookupMixin(DocumentSchema):
 
     """
     lookup_enabled = BooleanProperty(default=False)
+    lookup_autolaunch = BooleanProperty(default=False)
     lookup_action = StringProperty()
     lookup_name = StringProperty()
     lookup_image = JRResourceProperty(required=False)
@@ -1852,6 +1884,7 @@ class CaseSearch(DocumentSchema):
     """
     command_label = DictProperty(default={'en': 'Search All Cases'})
     properties = SchemaListProperty(CaseSearchProperty)
+    relevant = StringProperty(default=CLAIM_DEFAULT_RELEVANT_CONDITION)
 
 
 class ParentSelect(DocumentSchema):
@@ -3489,13 +3522,7 @@ class StaticChoiceListFilter(ReportAppFilter):
 
 class StaticDatespanFilter(ReportAppFilter):
     date_range = StringProperty(
-        choices=[
-            'last7',
-            'last30',
-            'thismonth',
-            'lastmonth',
-            'lastyear',
-        ],
+        choices=[choice.slug for choice in get_simple_dateranges()],
         required=True,
     )
 
@@ -3524,7 +3551,7 @@ class CustomDatespanFilter(ReportAppFilter):
             "CustomDatespanFilter.get_filter_value must be called "
             "with an OTARestoreUser object, not None")
 
-        timezone = get_timezone_for_domain(user.user_id, user.domain)
+        timezone = get_timezone_for_domain(user.domain)
         today = ServerTime(datetime.datetime.utcnow()).user_time(timezone).done().date()
         start_date = end_date = None
         days = int(self.date_number)

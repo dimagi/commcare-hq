@@ -169,7 +169,7 @@ def rebuild_export_async(config, schema):
 
 @periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
 def update_calculated_properties():
-    results = DomainES().is_snapshot(False).fields(["name", "_id"]).run().hits
+    results = DomainES().fields(["name", "_id"]).run().hits
     all_stats = _all_domain_stats()
     for r in results:
         dom = r["name"]
