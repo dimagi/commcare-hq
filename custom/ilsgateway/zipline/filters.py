@@ -22,3 +22,15 @@ class EmergencyOrderStatusChoiceFilter(BaseMultipleOptionFilter):
              EmergencyOrderStatusUpdate.STATUS_CANCELLED_BY_USER),
 
         ]
+
+
+class EmergencyPackageStatusChoiceFilter(EmergencyOrderStatusChoiceFilter):
+    @property
+    def options(self):
+        return [
+            (EmergencyOrderStatusUpdate.STATUS_DISPATCHED, EmergencyOrderStatusUpdate.STATUS_DISPATCHED),
+            (EmergencyOrderStatusUpdate.STATUS_DELIVERED, EmergencyOrderStatusUpdate.STATUS_DELIVERED),
+            (EmergencyOrderStatusUpdate.STATUS_CANCELLED_IN_FLIGHT,
+             EmergencyOrderStatusUpdate.STATUS_CANCELLED_IN_FLIGHT),
+
+        ]
