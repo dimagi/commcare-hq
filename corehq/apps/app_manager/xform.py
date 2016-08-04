@@ -936,7 +936,7 @@ class XForm(WrappedNode):
                 bind = self.get_bind(path)
                 try:
                     matching_repeat_context = [
-                        rc for rc in repeat_contexts if path.startswith(rc)
+                        rc for rc in repeat_contexts if path.startswith(rc + '/')
                     ][0]
                 except IndexError:
                     matching_repeat_context = None
