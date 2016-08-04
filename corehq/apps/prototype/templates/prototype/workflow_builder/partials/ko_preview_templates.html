@@ -60,7 +60,7 @@
               <a href="#" data-bind="text: $data, click: $parents[1].selectRecord"></a>
               <button type="button"
                       class="phone-navlist-icon pull-right"
-                      data-bind="click: $parent.selectForm">
+                      data-bind="click: $parents[1].selectRecord">
                 <i class="fa fa-chevron-right"></i>
               </button>
             </div>
@@ -137,7 +137,7 @@
         <li data-bind="visible: isRegForm">
           <p class="phone-questionlist-question" data-bind="text: recordNameText"></p>
           <div class="phone-questionlist-answer">
-            <textarea cols="2" class="form-control" data-bind="value: $parent.recordName"></textarea>
+            <textarea cols="2" class="form-control" data-bind="value: $parent.recordName, valueUpdate: 'keyup'"></textarea>
           </div>
         </li>
         <!-- ko foreach: questions -->
@@ -159,8 +159,12 @@
           <p class="help-text" data-bind="visible: isCompleteForm">
             Note: Submitting this form will remove <strong data-bind="text: $parent.recordName"></strong> from the record list.
           </p>
+          <p class="help-text" data-bind="visible: $parent.disableSave">
+            Please specify a Name (or ID) before continuing.
+          </p>
           <button type="button" class="btn btn-default" data-bind="click: $parent.cancel">Cancel</button>
-          <button type="button" class="btn btn-primary" data-bind="click: $parent.saveForm">Submit Test Form</button>
+          <button type="button" class="btn btn-primary" data-bind="click: $parent.saveForm, visible: !$parent.disableSave()">Submit Test Form</button>
+          <button type="button" class="btn btn-primary disabled" disabled="disabled" data-bind="visible: $parent.disableSave">Submit Test Form</button>
         </li>
       </ul>
       <!-- /ko -->
