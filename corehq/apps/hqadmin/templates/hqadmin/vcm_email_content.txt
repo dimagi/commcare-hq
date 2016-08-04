@@ -15,7 +15,7 @@ http://www.dimagi.com/blog/simplify-app-building-in-commcare-with-easy-reference
 {% endblocktrans %}
 
 {% blocktrans %}
-Please do not hesitate to reach out to support@dimagi.com with any questions you might have about this migration.
+Please do not hesitate to reach out to {{ email }} with any questions you might have about this migration.
 {% endblocktrans %}
 
 {% blocktrans %}

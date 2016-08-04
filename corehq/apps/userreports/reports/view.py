@@ -167,7 +167,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def data_source(self):
-        report = ReportFactory.from_spec(self.spec)
+        report = ReportFactory.from_spec(self.spec, include_prefilters=True)
         report.lang = self.lang
         return report
 

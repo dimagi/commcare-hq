@@ -388,7 +388,8 @@ class TableConfiguration(DocumentSchema):
         return None, None
 
         :param item_path: A list of path nodes that identify a column
-        :param item_doc_type: The doc type of the item (often just ExportItem)
+        :param item_doc_type: The doc type of the item (often just ExportItem). If getting
+                UserDefinedExportColumn, set this to None
         :param column_transform: A transform that is applied on the column
         :returns index, column: The index of the column in the list and an ExportColumn
         """
@@ -396,6 +397,11 @@ class TableConfiguration(DocumentSchema):
             if (column.item.path == item_path and
                     column.item.transform == column_transform and
                     column.item.doc_type == item_doc_type):
+                return index, column
+            # No item doc type searches for a UserDefinedExportColumn
+            elif (isinstance(column, UserDefinedExportColumn) and
+                    column.custom_path == item_path and
+                    item_doc_type is None):
                 return index, column
         return None, None
 
@@ -432,7 +438,7 @@ class TableConfiguration(DocumentSchema):
                     DocRow(row=row_index + (new_doc_index,), doc=new_doc)
                     for new_doc_index, new_doc in enumerate(next_doc)
                 ])
-            else:
+            elif next_doc:
                 new_docs.append(DocRow(row=row_index, doc=next_doc))
         return TableConfiguration._get_sub_documents_helper(path[1:], new_docs)
 
@@ -1651,6 +1657,10 @@ class ExportMigrationMeta(Document):
 
     converted_tables = SchemaListProperty(ConversionMeta)
     converted_columns = SchemaListProperty(ConversionMeta)
+
+    is_remote_app_migration = BooleanProperty(default=False)
+
+    migration_date = DateTimeProperty()
 
     class Meta:
         app_label = 'export'

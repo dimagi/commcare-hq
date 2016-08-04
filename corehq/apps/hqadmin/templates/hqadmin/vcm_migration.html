@@ -130,7 +130,6 @@
             <th></th>
             <th></th>
             <th>Domain</th>
-            <th>Admins</th>
             <th class="text-center">
                 Emailed?
                 <br /><a href='javascript:void(0)' id='email-popover'>view email</a>
@@ -148,11 +147,6 @@
                 <td class="text-center"><input type="checkbox" data-domain="{{ a.domain }}" /></td>
                 <td class="text-center">{{ forloop.counter }}</td>
                 <td>{{ a.domain }}</td>
-                <td>
-                    {% for email in a.admins %}
-                        <div>{{ email }}</div>
-                    {% endfor %}
-                </td>
                 <td class="text-center">
                     {% if a.emailed %}
                         {{ a.emailed|date }}
