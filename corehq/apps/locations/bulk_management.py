@@ -9,6 +9,8 @@ import copy
 import itertools
 from collections import Counter, defaultdict
 
+from django.db import transaction
+
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.domain.models import Domain
@@ -87,7 +89,7 @@ class LocationTypeStub(object):
         if self.is_new(old_collection):
             obj = LocationType(domain=domain)
         else:
-            obj = old_collection.types_by_code[self.code]
+            obj = copy.copy(old_collection.types_by_code[self.code])
         return obj
 
     def save_if_needed(self, old_collection, parent_type, domain):
@@ -309,7 +311,8 @@ class NewLocationImporter(object):
         if self.result.errors:
             return self.result
 
-        self.commit_changes(self.type_rows, self.location_rows)
+        with transaction.atomic():
+            self.commit_changes(self.type_rows, self.location_rows)
 
         return self.result
 
@@ -335,9 +338,9 @@ class NewLocationImporter(object):
 
             for type_stub in child_stubs:
                 type_object = type_stub.save_if_needed(self.old_collection, parent_type, self.domain)
-                types_by_code[type_object.code] = type_object
                 if type_object:
                     # check if type_stub was deleted, in which case type_object would be None
+                    types_by_code[type_object.code] = type_object
                     create_child_types(type_object)
 
         create_child_types('TOP')
