@@ -25,7 +25,7 @@
     (function () {
 
         var reportType = {{ report_type|JSON }};
-        var initialFilters = {{ initial_filters|JSON }};
+        var initialUserFilters = {{ initial_user_filters|JSON }};
         var initialColumns = {{ initial_columns|JSON }};
         var sourceType = {{ form.source_type|JSON }};
         var dataSourceIndicators = {{ data_source_indicators|JSON }};
@@ -33,7 +33,7 @@
 
         var ConfigForm = hqImport('userreports/js/builder_view_models.js').ConfigForm;
         $("#report-config-form").koApplyBindings(
-            new ConfigForm(reportType, sourceType, initialColumns, initialFilters, dataSourceIndicators, reportColumnOptions)
+            new ConfigForm(reportType, sourceType, initialColumns, initialUserFilters, dataSourceIndicators, reportColumnOptions)
         );
 
 

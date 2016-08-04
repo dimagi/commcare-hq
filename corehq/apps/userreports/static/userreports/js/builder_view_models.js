@@ -301,7 +301,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
     };
 
 
-    var ConfigForm = function(reportType, sourceType, columns, filters, dataSourceIndicators, reportColumnOptions){
+    var ConfigForm = function(reportType, sourceType, columns, userFilters, dataSourceIndicators, reportColumnOptions){
         this.optionsContainQuestions = _.any(dataSourceIndicators, function (o) {
             return o.type === 'question';
         });
@@ -327,12 +327,12 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             ));
         }
 
-        this.filtersList = new PropertyList({
+        this.userFiltersList = new PropertyList({
             hasFormatCol: sourceType === "case",
             hasCalculationCol: false,
-            initialCols: filters,
-            buttonText: 'Add Filter',
-            analyticsAction: 'Add Filter',
+            initialCols: userFilters,
+            buttonText: 'Add User Filter',
+            analyticsAction: 'Add User Filter',  // Or should this remain "Add Filter"?
             propertyHelpText: django.gettext('Choose the property you would like to add as a filter to this report.'),
             displayHelpText: django.gettext('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
             formatHelpText: django.gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: select this if the property is a date.<br/><strong>Choice</strong>: select this if the property is text or multiple choice.'),
@@ -363,7 +363,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
     };
     ConfigForm.prototype.submitHandler = function (formElement) {
         var isValid = true;
-        isValid = this.filtersList.validate() && isValid;
+        isValid = this.userFiltersList.validate() && isValid;
         isValid = this.columnsList.validate() && isValid;
         if (!isValid){
             alert('Invalid report configuration. Please fix the issues and try again.');
