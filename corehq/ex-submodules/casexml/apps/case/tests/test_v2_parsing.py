@@ -164,7 +164,7 @@ class Version2CaseParsingTest(TestCase):
                     <owner_id>bar-user-id</owner_id>
                 </create>
                 <update>
-                    <date_opened>2011-12-06T13:42:50.000000Z</date_opened>
+                    <date_opened>2011-12-06</date_opened>
                 </update>
                 <index>
                     <baz_ref case_type="bop">some_other_referenced_id</baz_ref>

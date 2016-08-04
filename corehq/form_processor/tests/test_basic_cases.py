@@ -48,7 +48,7 @@ class FundamentalCaseTests(TestCase):
         self.assertEqual(case.owner_id, 'owner1')
         self.assertEqual(case.type, 'demo')
         self.assertEqual(case.name, 'create_case')
-        self.assertEqual(case.opened_on, modified_on)
+        self.assertEqual(case.opened_on.date(), modified_on.date())
         self.assertEqual(case.opened_by, 'user1')
         self.assertEqual(case.modified_on, modified_on)
         self.assertEqual(case.modified_by, 'user1')
