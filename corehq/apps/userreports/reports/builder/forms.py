@@ -570,6 +570,7 @@ ColumnViewModel = namedtuple("ColumnViewModel", _shared_properties + ['calculati
 
 class ConfigureNewReportBase(forms.Form):
     user_filters = FilterField(required=False)
+    default_filters = FilterField(required=False)
     button_text = ugettext_noop('Done')
 
     def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
@@ -720,6 +721,25 @@ class ConfigureNewReportBase(forms.Form):
             crispy.Hidden('user_filters', None, data_bind="value: userFiltersList.serializedProperties")
         )
 
+    @property
+    def default_filter_fieldset(self):
+        """
+        Return a fieldset representing the markup used for configuring the
+        default filters.
+        """
+        return crispy.Fieldset(
+            _legend(
+                _("Default Filters"),
+                _("These filters are not displayed to report viewers and are always applied to the data.")
+            ),
+            crispy.Div(
+                crispy.HTML(self.column_config_template),
+                id="default-filters-table",
+                data_bind='with: defaultFiltersList'
+            ),
+            crispy.Hidden('default_filters', None, data_bind="value: defaultFiltersList.serializedProperties")
+        )
+
     def _get_data_source_configuration_kwargs(self):
         if self._is_multiselect_chart_report:
             base_item_expression = self.ds_builder.base_item_expression(True, self.aggregation_field)
@@ -798,6 +818,11 @@ class ConfigureNewReportBase(forms.Form):
         report.validate()
         report.save()
         return report
+
+    @property
+    @memoized
+    def initial_default_filters(self):
+        return [self._get_view_model(f) for f in self.existing_report.prefilters] if self.existing_report else []
 
     @property
     @memoized
@@ -983,7 +1008,8 @@ class ConfigureNewReportBase(forms.Form):
             return ret
 
         user_filter_configs = self.cleaned_data['user_filters']
-        filters = [_make_report_filter(f, i) for i, f in enumerate(user_filter_configs)]
+        default_filter_configs = self.cleaned_data['default_filters']
+        filters = [_make_report_filter(f, i) for i, f in enumerate(user_filter_configs + default_filter_configs)]
         if self.source_type == 'case':
             # The UI doesn't support specifying "choice_list" filters, only "dynamic_choice_list" filters.
             # But, we want to make the open/closed filter a cleaner "choice_list" filter, so we do that here.
@@ -1038,7 +1064,8 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
                 ),
                 placeholder=_("Select Property..."),
             ),
-            self.user_filter_fieldset
+            self.user_filter_fieldset,
+            self.default_filter_fieldset
         )
 
     @property
@@ -1113,7 +1140,8 @@ class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
                     "Select Property..."
                 ),
             ),
-            self.user_filter_fieldset
+            self.user_filter_fieldset,
+            self.default_filter_fieldset
         )
 
     @property
@@ -1155,7 +1183,8 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 )
             ),
             self.column_fieldset,
-            self.user_filter_fieldset
+            self.user_filter_fieldset,
+            self.default_filter_fieldset
         )
 
     @property
@@ -1245,7 +1274,8 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
                 ),
                 'group_by',
             ),
-            self.user_filter_fieldset
+            self.user_filter_fieldset,
+            self.default_filter_fieldset
         )
 
     @property
@@ -1369,7 +1399,8 @@ class ConfigureWorkerReportForm(ConfigureTableReportForm):
                 )
             ),
             self.column_fieldset,
-            self.user_filter_fieldset
+            self.user_filter_fieldset,
+            self.default_filter_fieldset
         )
 
 
@@ -1408,7 +1439,8 @@ class ConfigureMapReportForm(ConfigureListReportForm):
                 ),
                 'location',
             ),
-            self.user_filter_fieldset
+            self.user_filter_fieldset,
+            self.default_filter_fieldset
         )
 
     @property
