@@ -1,6 +1,7 @@
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
+from corehq.toggles import EMG_AND_REC_SMS_HANDLERS
 
 
 class ZiplineReport(CustomProjectReport, GenericTabularReport, DatespanMixin):
@@ -36,3 +37,7 @@ class ZiplineReport(CustomProjectReport, GenericTabularReport, DatespanMixin):
     @property
     def total_records(self):
         return self.data_source.total_count
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return domain and EMG_AND_REC_SMS_HANDLERS.enabled(domain)
