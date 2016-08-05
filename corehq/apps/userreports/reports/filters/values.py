@@ -153,7 +153,7 @@ class BasicBetweenFilter(BasicFilter):
 class PreFilterValue(FilterValue):
 
     # All dynamic date operators use BasicBetweenFilter
-    dyn_operator_filters = [c.slug for c in get_all_daterange_choices()]
+    dyn_date_operators = [c.slug for c in get_all_daterange_choices()]
     null_operator_filters = {
         '=': ISNULLFilter,
         '!=': NOTNULLFilter,
@@ -166,8 +166,8 @@ class PreFilterValue(FilterValue):
     }
     scalar_operator_filters = NumericFilterValue.operators_to_filters
 
-    def _is_dyn(self):
-        return self.value.get('operator') in self.dyn_operator_filters
+    def _is_dyn_date(self):
+        return self.value.get('operator') in self.dyn_date_operators
 
     def _is_null(self):
         return self.value['operand'] is None
@@ -204,7 +204,7 @@ class PreFilterValue(FilterValue):
             raise TypeError('Scalar value does not support "{}" operator'.format(operator))
 
     def to_sql_filter(self):
-        if self._is_dyn():
+        if self._is_dyn_date():
             return BasicBetweenFilter(
                 self.filter.field,
                 get_INFilter_bindparams(self.filter.slug, ['start_date', 'end_date'])
@@ -220,7 +220,7 @@ class PreFilterValue(FilterValue):
             return self._scalar_filter(self.filter.field, self.filter.slug)
 
     def to_sql_values(self):
-        if self._is_dyn():
+        if self._is_dyn_date():
             start_date, end_date = get_daterange_start_end_dates(self.value['operator'], *self.value['operand'])
             return {
                 get_INFilter_element_bindparam(self.filter.slug, i): str(v)
