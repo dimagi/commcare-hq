@@ -45,7 +45,6 @@
 trunk: master
 name: autostaging
 branches:
-  - reduce-all_forms-view  # Danny 7/20
   - mk-231812-j2me-config # Manish 7/15
   - hqDefine-users  # danny 6/7
   - vellum-staging # J$ 11/13
