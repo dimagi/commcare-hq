@@ -2,21 +2,21 @@
 ROOT_LOCATION_TYPE = "TOP"
 
 LOCATION_SHEET_HEADERS = {
-    'location_id': 'Location ID',
-    'site_code': 'Location Code',
-    'name': 'Name',
-    'parent_code': 'Parent',
-    'external_id': 'External ID',
-    'latitude': 'GPS - Lat',
-    'longitude': 'GPS - Lang',
-    'do_delete': 'Delete Y/N'
+    'location_id': 'location_id',
+    'site_code': 'site_code',
+    'name': 'name',
+    'parent_code': 'parent_site_code',
+    'external_id': 'external_id',
+    'latitude': 'latitude',
+    'longitude': 'longitude',
+    'do_delete': 'Delete(Y/N)'
 }
 
 LOCATION_TYPE_SHEET_HEADERS = {
-    'code': 'Level Code',
-    'name': 'Name',
-    'parent_code': 'Parent',
-    'do_delete': 'Delete Y/N',
+    'code': 'code',
+    'name': 'name',
+    'parent_code': 'parent_code',
+    'do_delete': 'Delete(Y/N)',
     'shares_cases': 'Shares Cases Y/N',
     'view_descendants': 'View Child Cases (Y/N)',
     'expand_from': 'Expand From',

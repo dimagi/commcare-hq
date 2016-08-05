@@ -128,13 +128,18 @@ class LocationStub(object):
         self.is_new = False
         self.hardfail_reason = None
         self.warnings = []
+        if not self.location_id and not self.site_code:
+            raise LocationExcelSheetError(
+                "Location in sheet '{}', at row '{}' doesn't contain both location_id and site_code"
+                .format(self.location_type, self.index)
+            )
 
     @classmethod
     def from_excel_row(cls, row, index, location_type):
         name = row.get(cls.titles['name'])
         site_code = row.get(cls.titles['site_code'])
         location_type = location_type
-        location_id = row.get(cls.titles['id'])
+        location_id = row.get(cls.titles['location_id'])
         parent_code = row.get(cls.titles['parent_code'])
         latitude = row.get(cls.titles['latitude'])
         longitude = row.get(cls.titles['longitude'])
@@ -153,8 +158,11 @@ class LocationStub(object):
             return
 
         if not self.location_id and not self.site_code:
-            # Both can't be empty, this should have already been caught
-            raise Exception
+            # Both can't be empty, this should have already been caught in initialization
+            raise Exception(
+                "Location in sheet '{}', at row '{}' doesn't contain both location_id and site_code"
+                .format(self.location_type, self.index)
+            )
 
         old_locations_by_id = old_collection.locations_by_id
         old_locations_by_site_code = old_collection.locations_by_site_code
@@ -249,31 +257,48 @@ class LocationCollection(object):
 class LocationExcelValidator(object):
 
     types_sheet_title = "types"
-    locations_sheet_title = "locations"
 
     def __init__(self, excel_importer):
         self.excel_importer = excel_importer
-        self.sheets_by_title = self._validate_and_index_sheets()
 
-    def _validate_and_index_sheets(self):
-        # validate excel format/headers
+    def validate_and_parse_stubs_from_excel(self):
         sheets_by_title = {ws.title: ws for ws in self.excel_importer.worksheets}
-        # Todo handle multiple sheets with same name
-        if self.types_sheet_title not in self.sheets_by_title:
-            raise LocationExcelSheetError("'types' sheet is required")
-        if self.locations_sheet_title not in self.sheets_by_title:
-            raise LocationExcelSheetError("'locations' sheet is required")
-        return sheets_by_title
 
-    def get_stubs_from_excel_rows(self):
-        location_rows = []
-        for sheet_name, rows in self.sheets_by_title.items():
-            if sheet_name == self.types_sheet_title:
-                type_rows = self._get_types(rows)
-            else:
-                # must be locations sheet of type 'sheet_name'
-                location_rows.extend(self._get_locations(rows, sheet_name))
-        return type_rows, location_rows
+        # excel file should contain 'types' sheet
+        if self.types_sheet_title not in sheets_by_title:
+            raise LocationExcelSheetError("'types' sheet is required")
+
+        # 'types' sheet should have correct headers
+        type_sheet_reader = sheets_by_title[self.types_sheet_title]
+        if set(type_sheet_reader.headers) != set(LOCATION_TYPE_SHEET_HEADERS.values()):
+            raise LocationExcelSheetError(
+                "'types' sheet should contain exactly '{}' as the sheet headers"
+                .format(", ".join(LOCATION_TYPE_SHEET_HEADERS.values()))
+            )
+
+        # all listed types should have a corresponding locations sheet
+        type_stubs = self._get_types(type_sheet_reader)
+        expected_sheet_names = [lt.code for lt in type_stubs] + ['types']
+        actual_sheet_names = sheets_by_title.keys()
+        missing_sheet_names = set(expected_sheet_names) - set(actual_sheet_names)
+        if missing_sheet_names:
+            raise LocationExcelSheetError(
+                "Location sheets do not exist for the location types '{}' - "
+                "All types listed in 'types' sheet should have a location sheet"
+                .format(", ".join(missing_sheet_names))
+            )
+
+        # all locations sheets should have correct headers
+        location_stubs = []
+        for sheet_name, sheet_reader in sheets_by_title.items():
+            if sheet_name != self.types_sheet_title:
+                if set(sheet_reader.headers) != set(LOCATION_SHEET_HEADERS.values()):
+                    raise LocationExcelSheetError(
+                        "Locations sheet with title '{}' should contain exactly '{}' as the sheet headers"
+                        .format(sheet_name, ", ".join(LOCATION_SHEET_HEADERS.values()))
+                    )
+                location_stubs.extend(self._get_locations(sheet_reader, sheet_name))
+        return type_stubs, location_stubs
 
     def _get_types(self, rows):
         # takes raw excel row dicts and converts them to list of LocationTypeStub objects
@@ -302,7 +327,7 @@ class NewLocationImporter(object):
 
     @classmethod
     def from_excel_importer(cls, domain, excel_importer):
-        type_rows, location_rows = LocationExcelValidator(excel_importer).get_stubs_from_excel_rows()
+        type_rows, location_rows = LocationExcelValidator(excel_importer).validate_and_parse_stubs_from_excel()
         return cls(domain, type_rows, location_rows)
 
     def run(self):
@@ -545,7 +570,8 @@ class LocationTreeValidator(object):
         def _validate_location(location):
             loc_type = self.types_by_code.get(location.location_type)
             if not loc_type:
-                return "Location '{}' has an invalid type".format(location.site_code)
+                return "Location '{}' in sheet points to a to be deleted location-type '{}'".format(
+                       location.site_code, location.location_type)
 
             parent = self.locations_by_code.get(location.parent_code)
             if loc_type.parent_code == ROOT_LOCATION_TYPE:
@@ -597,5 +623,17 @@ def bulk_update_organization(domain, location_types, locations):
     piecemeal.
     """
     importer = NewLocationImporter(domain, location_types, locations)
+    result = importer.run()
+    return result
+
+
+def new_locations_import(domain, excel_importer):
+    try:
+        importer = NewLocationImporter.from_excel_importer(domain, excel_importer)
+    except LocationExcelSheetError, e:
+        result = LocationUploadResult()
+        result.errors = [str(e)]
+        return result
+
     result = importer.run()
     return result
