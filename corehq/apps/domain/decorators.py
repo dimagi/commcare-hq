@@ -395,21 +395,16 @@ def ensure_active_user(default=BASIC):
             if mobile_user_email:
                 ccu = CommCareUser.get_by_username('{}.commcarehq.org'.format(mobile_user_email))
                 valid, message = True, None
-                if ccu:
-                    if not ccu.is_active:
-                        valid, message, error_code = False, 'User deactivated', 'mobile.app.translation.user.is.deactivated'
-                    # using get_by_username never returns a deleted record since it relies on base_doc to
-                    # be CouchUser
-                    elif ccu.base_doc == 'CouchUser-Deleted':
-                        valid, message, error_code = False, 'User deleted', 'mobile.app.translation.user.is.deleted'
+                if ccu and not ccu.is_active:
+                    valid, message, error_code = False, 'User deactivated', 'mobile.app.translation.user.is.deactivated'
+                elif CommCareUser.get_deleted_by_username('{}.commcarehq.org'.format(mobile_user_email)):
+                    valid, message, error_code = False, 'User deleted', 'mobile.app.translation.user.is.deleted'
 
-                    if not valid:
-                        return json_response({
-                            "error": error_code,
-                            "default_response": message
-                        }, status_code=401)
-                    else:
-                        return fn(request, *args, **kwargs)
+                if not valid:
+                    return json_response({
+                        "error": error_code,
+                        "default_response": message
+                    }, status_code=401)
                 else:
                     return fn(request, *args, **kwargs)
             else:
