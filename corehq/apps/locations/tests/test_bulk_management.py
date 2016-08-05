@@ -1,4 +1,3 @@
-import itertools
 from collections import namedtuple
 
 from django.test import SimpleTestCase, TestCase
@@ -7,10 +6,11 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import Location, LocationType
 from corehq.apps.locations.tree_utils import TreeError, assert_no_cycles, expansion_validators
 from corehq.apps.locations.bulk_management import (
-    bulk_update_organization,
+    NewLocationImporter,
     LocationTypeStub,
     LocationStub,
     LocationTreeValidator,
+    LocationCollection,
 )
 
 
@@ -402,11 +402,13 @@ class TestBulkManagement(TestCase):
         return locations_by_code
 
     def bulk_update_locations(self, types, locations):
-        return bulk_update_organization(
+        importer = NewLocationImporter(
             self.domain.name,
             [LocationTypeStub(*loc_type) for loc_type in types],
             [LocationStub(*loc) for loc in locations],
         )
+        result = importer.run()
+        return result
 
     def assertLocationTypesMatch(self, expected_types):
         # Makes sure that the set of all location types in the domain matches
@@ -428,12 +430,8 @@ class TestBulkManagement(TestCase):
         self.assertEqual(set(actual), set(expected))
 
     def assertLocationsMatch(self, expected_locations):
-        types = self.domain.location_types
-        actual = [
-            [l.sql_location for l in Location.filter_by_type(self.domain, loc_type.name)]
-            for loc_type in types
-        ]
-        actual = list(itertools.chain(*actual))
+        collection = LocationCollection(self.domain)
+        actual = collection.locations
         actual = [
             (l.site_code, l.parent.site_code) if l.parent else (l.site_code, None)
             for l in actual

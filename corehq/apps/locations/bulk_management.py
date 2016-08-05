@@ -35,6 +35,9 @@ class LocationUploadResult(object):
 
 
 class LocationTypeStub(object):
+    """
+    A representation of location type excel row
+    """
     titles = LOCATION_TYPE_SHEET_HEADERS
 
     def __init__(self, name, code, parent_code, do_delete, shares_cases,
@@ -69,7 +72,6 @@ class LocationTypeStub(object):
 
     def _needs_save(self, old_collection):
         # returns True if this should be saved
-        # assumes self.autoset_location_id_or_site_code is already called
         if self.is_new(old_collection) or self.do_delete:
             return True
 
@@ -81,7 +83,6 @@ class LocationTypeStub(object):
                      'view_descendants', 'expand_from', 'sync_to']:
             if getattr(old_version, attr, None) != getattr(self, attr, None):
                 return True
-        # Todo: does it need save if parent_code hasn't changed but parent has been resaved
         return False
 
     def _as_db_object(self, old_collection, parent_type, domain):
@@ -111,6 +112,9 @@ class LocationTypeStub(object):
 
 
 class LocationStub(object):
+    """
+    A representation of location excel row
+    """
     titles = LOCATION_SHEET_HEADERS
 
     def __init__(self, name, site_code, location_type, parent_code, location_id,
@@ -126,8 +130,6 @@ class LocationStub(object):
         self.external_id = external_id
         self.index = index
         self.is_new = False
-        self.hardfail_reason = None
-        self.warnings = []
         if not self.location_id and not self.site_code:
             raise LocationExcelSheetError(
                 "Location in sheet '{}', at row '{}' doesn't contain both location_id and site_code"
@@ -196,7 +198,6 @@ class LocationStub(object):
         for attr in ['name', 'site_code', 'latitude', 'longitude', 'external_id']:
             if getattr(old_version, attr, None) != getattr(self, attr, None):
                 return True
-        # Todo: does it need save if parent_code hasn't changed but parent has been resaved
         return False
 
     def _as_db_object(self, old_collection, domain):
@@ -230,6 +231,9 @@ class LocationStub(object):
 
 
 class LocationCollection(object):
+    """
+    Simple wrapper to lookup types and locations in a domain
+    """
     def __init__(self, domain_obj):
         self.types = domain_obj.location_types
         locations = [
@@ -255,13 +259,13 @@ class LocationCollection(object):
 
 
 class LocationExcelValidator(object):
-
     types_sheet_title = "types"
 
     def __init__(self, excel_importer):
         self.excel_importer = excel_importer
 
     def validate_and_parse_stubs_from_excel(self):
+        # This validates format of the uploaded excel file and coverts excel rows into stubs
         sheets_by_title = {ws.title: ws for ws in self.excel_importer.worksheets}
 
         # excel file should contain 'types' sheet
@@ -316,6 +320,10 @@ class LocationExcelValidator(object):
 
 
 class NewLocationImporter(object):
+    """
+    This takes location type and location stubs, validates data and the tree
+    and saves the changes in a transaction.
+    """
 
     def __init__(self, domain, type_rows, location_rows):
         self.domain = domain
@@ -333,6 +341,7 @@ class NewLocationImporter(object):
     def run(self):
         tree_validator = LocationTreeValidator(self.type_rows, self.location_rows, self.old_collection)
         self.result.errors = tree_validator.errors
+        self.result.warnings = tree_validator.warnings
         if self.result.errors:
             return self.result
 
@@ -343,10 +352,7 @@ class NewLocationImporter(object):
 
     def commit_changes(self, type_stubs, location_stubs):
         # assumes all valdiations are done, just saves them
-        # ToDos
-        # 1. Transaction
-        # 2. Combine calls in same level into one DB call
-        # 3. tests
+        # ToDo Combine calls in same level into one DB call
         type_stubs_by_parent_code = defaultdict(list)
         for lt in type_stubs:
             type_stubs_by_parent_code[lt.parent_code].append(lt)
@@ -399,6 +405,9 @@ class NewLocationImporter(object):
 
 
 class LocationTreeValidator(object):
+    """
+    Validates the given type and location stubs
+    """
     def __init__(self, type_rows, location_rows, old_collection=None):
 
         _to_be_deleted = lambda items: filter(lambda i: i.do_delete, items)
@@ -419,6 +428,7 @@ class LocationTreeValidator(object):
         self.types_by_code = {lt.code: lt for lt in self.location_types}
         self.locations_by_code = {l.site_code: l for l in self.locations}
 
+    @property
     def warnings(self):
         # should be called after errors are found
         def bad_deletes():
@@ -427,7 +437,7 @@ class LocationTreeValidator(object):
                 "as the location does not exist"
                 .format(type=loc.location_type, i=loc.index)
                 for loc in self.all_listed_locations
-                if not loc.is_new and loc.do_delete
+                if loc.is_new and loc.do_delete
             ]
         return bad_deletes()
 
@@ -628,20 +638,6 @@ class LocationTreeValidator(object):
                          .format(count, name, parent))
                     )
         return errors
-
-
-def bulk_update_organization(domain, location_types, locations):
-    """
-    Takes the existing location types and locations on the domain and modifies
-    them to produce the location_types and locations passed in.
-
-    This is used for operations that affect a large number of locations (such
-    as adding a new location type), which are challenging or impossible to do
-    piecemeal.
-    """
-    importer = NewLocationImporter(domain, location_types, locations)
-    result = importer.run()
-    return result
 
 
 def new_locations_import(domain, excel_importer):
