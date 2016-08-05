@@ -60,25 +60,6 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 return "#case-tile-view-item-template";
             }
         },
-        
-        initialize: function (options) {
-            this.tiles = options.tiles;
-            this.styles = options.styles;
-            if(!_.isNull(this.tiles) && this.tiles) {
-                for (var i = 0; i < this.tiles.length; i++) {
-                    var tile = this.tiles[i];
-                    if (tile === null) {
-                        continue;
-                    }
-                    var fontSize = this.tiles[i].fontSize;
-                    var fontString = "font-size: " + fontSize + ";";
-                    var styleString = getGridAttributes(tile);
-                    var tileId = "grid-style-" + i;
-                    var formattedString = "." + tileId + " { " + styleString + " " + fontString + " } ";
-                    addStyleString(formattedString);
-                }
-            }
-        },
 
         className: "formplayer-request",
         events: {
