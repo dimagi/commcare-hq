@@ -502,7 +502,9 @@ class DataSourceForm(forms.Form):
         return cleaned_data
 
 _shared_properties = ['exists_in_current_version', 'display_text', 'property', 'data_source_field']
-FilterViewModel = namedtuple("FilterViewModel", _shared_properties + ['format'])
+UserFilterViewModel = namedtuple("UserFilterViewModel", _shared_properties + ['format'])
+DefaultFilterViewModel = namedtuple("DefaultFilterViewModel",
+                                    _shared_properties + ['format', 'pre_value', 'pre_operator'])
 ColumnViewModel = namedtuple("ColumnViewModel", _shared_properties + ['calculation'])
 
 
@@ -767,14 +769,14 @@ class ConfigureNewReportBase(forms.Form):
     @memoized
     def _default_case_report_filters(self):
         return [
-            FilterViewModel(
+            UserFilterViewModel(
                 exists_in_current_version=True,
                 property='closed',
                 data_source_field=None,
                 display_text=_('Closed'),
                 format='Choice',
             ),
-            FilterViewModel(
+            UserFilterViewModel(
                 exists_in_current_version=True,
                 property='computed/owner_name',
                 data_source_field=None,
@@ -787,7 +789,7 @@ class ConfigureNewReportBase(forms.Form):
     @memoized
     def _default_form_report_filters(self):
         return [
-            FilterViewModel(
+            UserFilterViewModel(
                 exists_in_current_version=True,
                 property='timeEnd',
                 data_source_field=None,
@@ -802,21 +804,32 @@ class ConfigureNewReportBase(forms.Form):
         the knockout view model representing this filter in the report builder.
 
         """
-        filter_type_map = {
-            'dynamic_choice_list': 'Choice',
-            # This exists to handle the `closed` filter that might exist
-            'choice_list': 'Choice',
-            'date': 'Date',
-            'numeric': 'Numeric'
-        }
         exists = self._data_source_prop_exists(filter['field'])
-        return FilterViewModel(
-            exists_in_current_version=exists,
-            display_text=filter['display'],
-            format=filter_type_map[filter['type']],
-            property=self._get_property_id_by_indicator_id(filter['field']) if exists else None,
-            data_source_field=filter['field'] if not exists else None
-        )
+        if filter['type'] == 'pre':
+            return DefaultFilterViewModel(
+                exists_in_current_version=exists,
+                display_text='',
+                format='Value' if filter['pre_value'] else 'Date',
+                property=self._get_property_id_by_indicator_id(filter['field']) if exists else None,
+                data_source_field=filter['field'] if not exists else None,
+                pre_value=filter['pre_value'],
+                pre_operator=filter['pre_operator'],
+            )
+        else:
+            filter_type_map = {
+                'dynamic_choice_list': 'Choice',
+                # This exists to handle the `closed` filter that might exist
+                'choice_list': 'Choice',
+                'date': 'Date',
+                'numeric': 'Numeric'
+            }
+            return UserFilterViewModel(
+                exists_in_current_version=exists,
+                display_text=filter['display'],
+                format=filter_type_map[filter['type']],
+                property=self._get_property_id_by_indicator_id(filter['field']) if exists else None,
+                data_source_field=filter['field'] if not exists else None
+            )
 
     def _get_column_option_by_indicator_id(self, indicator_column_id):
         """
@@ -887,7 +900,8 @@ class ConfigureNewReportBase(forms.Form):
         filter_type_map = {
             'Choice': 'dynamic_choice_list',
             'Date': 'date',
-            'Numeric': 'numeric'
+            'Numeric': 'numeric',
+            'Value': 'pre',
         }
 
         def _make_report_filter(conf, index):
@@ -916,6 +930,12 @@ class ConfigureNewReportBase(forms.Form):
             }
             if conf['format'] == 'Date':
                 ret.update({'compare_as_string': True})
+            if conf.get('pre_value') or conf.get('pre_operator'):
+                ret.update({
+                    'type': 'pre',  # type could have been "date"
+                    'pre_operator': conf.get('pre_operator', None),
+                    'pre_value': conf.get('pre_value', []),
+                })
             return ret
 
         user_filter_configs = self.cleaned_data['user_filters']
@@ -1248,14 +1268,14 @@ class ConfigureWorkerReportForm(ConfigureTableReportForm):
     @memoized
     def _default_case_report_filters(self):
         return [
-            FilterViewModel(
+            UserFilterViewModel(
                 exists_in_current_version=True,
                 property='closed',
                 data_source_field=None,
                 display_text='closed',
                 format='Choice',
             ),
-            FilterViewModel(
+            UserFilterViewModel(
                 exists_in_current_version=True,
                 property='computed/user_name',
                 data_source_field=None,
