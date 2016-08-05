@@ -11,7 +11,7 @@ from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
 from corehq import toggles, privileges
-from corehq.const import OPENROSA_VERSION_2
+from corehq.const import OPENROSA_VERSION_MAP
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.case_search.models import CaseSearchConfig
@@ -153,7 +153,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
 
     project = Domain.get_by_name(domain)
     app = get_app(domain, app_id) if app_id else None
-    async_restore = toggles.ASYNC_RESTORE.enabled(domain) and openrosa_version == OPENROSA_VERSION_2
+    async_restore = toggles.ASYNC_RESTORE.enabled(domain) and float(openrosa_version) >= OPENROSA_VERSION_MAP['ASYNC_RESTORE']
     restore_config = RestoreConfig(
         project=project,
         restore_user=restore_user,
