@@ -148,15 +148,23 @@ def get_dyn_range_filter(date_range_slug):
     return DynRangeFilter
 
 
-class PreFilterValue(FilterValue):
+class BasicBetweenFilter(BasicFilter):
+    """
+    BasicBetweenFilter implements a BetweenFilter that accepts the
+    same constructor arguments as INFilter.
 
-    class BasicBetweenFilter(BasicFilter):
-        # We want a BetweenFilter with the same __init__ params as INFilter
-        def build_expression(self, table):
-            assert len(self.parameter) == 2
-            return get_column(table, self.column_name).between(
-                bindparam(self.parameter[0]), bindparam(self.parameter[1])
-            )
+    PreFilterValue uses this to select the filter using
+    PreFilterValue.value['operator'] and instantiate either filter the
+    same way.
+    """
+    def build_expression(self, table):
+        assert len(self.parameter) == 2
+        return get_column(table, self.column_name).between(
+            bindparam(self.parameter[0]), bindparam(self.parameter[1])
+        )
+
+
+class PreFilterValue(FilterValue):
 
     dyn_operator_filters = {
         c.slug: get_dyn_range_filter(c.slug) for c in get_all_daterange_choices()
@@ -224,7 +232,7 @@ class PreFilterValue(FilterValue):
 
     def to_sql_filter(self):
         if self._is_dyn():
-            return self.BasicBetweenFilter(
+            return BasicBetweenFilter(
                 self.filter.field,
                 get_INFilter_bindparams(self.filter.slug, ['start_date', 'end_date'])
             )
