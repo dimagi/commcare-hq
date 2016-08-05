@@ -2,9 +2,10 @@
 
 FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette, $) {
     MenuList.Controller = {
-        selectMenu: function (appId, sessionId, stepList, page, search) {
+        selectMenu: function (appId, sessionId, stepList, page, search, queryDict) {
 
-            var fetchingNextMenu = FormplayerFrontend.request("app:select:menus", appId, sessionId, stepList, page, search);
+            var fetchingNextMenu = FormplayerFrontend.request("app:select:menus",
+                appId, sessionId, stepList, page, search, queryDict);
 
             /*
              Determine the next screen to display.  Could be
@@ -37,6 +38,9 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             }
             else if (menuResponse.type === "entities") {
                 menuListView = new MenuList.CaseListView(menuData);
+                FormplayerFrontend.regions.main.show(menuListView.render());
+            } else if (menuResponse.type === "query") {
+                menuListView = new MenuList.QueryListView(menuData);
                 FormplayerFrontend.regions.main.show(menuListView.render());
             }
         },

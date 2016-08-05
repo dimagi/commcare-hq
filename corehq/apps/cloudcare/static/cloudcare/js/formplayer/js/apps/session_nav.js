@@ -25,7 +25,8 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             var steps = urlObject.steps;
             var page = urlObject.page;
             var search = urlObject.search;
-            SessionNavigate.MenuList.Controller.selectMenu(appId, sessionId, steps, page, search);
+            var queryDict = urlObject.queryDict;
+            SessionNavigate.MenuList.Controller.selectMenu(appId, sessionId, steps, page, search, queryDict);
         },
         showDetail: function (model, index) {
             SessionNavigate.MenuList.Controller.showDetail(model, index);
@@ -98,6 +99,12 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         API.listMenus();
     });
 
+    FormplayerFrontend.on("menu:query", function (queryDict) {
+        var urlObject = Util.currentUrlToObject();
+        urlObject.setQuery(queryDict);
+        Util.setUrlToObject(urlObject);
+        API.listMenus();
+    });
 
     FormplayerFrontend.on("menu:show:detail", function (model, index) {
         API.showDetail(model, index);

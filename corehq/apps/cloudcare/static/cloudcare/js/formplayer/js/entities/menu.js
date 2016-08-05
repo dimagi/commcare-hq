@@ -14,13 +14,12 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
         parse: function (response) {
             this.title = response.title;
+            this.type = response.type;
 
             if (response.commands) {
-                this.type = "commands";
                 return response.commands;
             }
             else if (response.entities) {
-                this.type = "entities";
                 this.action = response.action;
                 this.styles = response.styles;
                 this.headers = response.headers;
@@ -29,6 +28,9 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 this.pageCount = response.pageCount;
                 this.tiles = response.tiles;
                 return response.entities;
+            }
+            else if(response.type === "query") {
+                return response.displays;
             }
             else if(response.tree){
                 // form entry time, doggy
@@ -49,7 +51,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
     var API = {
 
-        getMenus: function (appId, sessionId, stepList, page, search) {
+        getMenus: function (appId, sessionId, stepList, page, search, queryDict) {
 
             var user = FormplayerFrontend.request('currentUser');
             var username = user.username;
@@ -74,6 +76,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                         "offset": page * 10,
                         "search_text": search,
                         "menu_session_id": sessionId,
+                        "query_dictionary": queryDict,
                     });
 
                     if (stepList) {
@@ -102,7 +105,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
         },
     };
 
-    FormplayerFrontend.reqres.setHandler("app:select:menus", function (appId, sessionId, stepList, page, search) {
-        return API.getMenus(appId, sessionId, stepList, page, search);
+    FormplayerFrontend.reqres.setHandler("app:select:menus", function (appId, sessionId, stepList, page, search, queryDict) {
+        return API.getMenus(appId, sessionId, stepList, page, search, queryDict);
     });
 });
