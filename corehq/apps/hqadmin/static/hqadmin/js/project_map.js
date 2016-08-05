@@ -163,7 +163,7 @@ var projectMapInit = function(mapboxAccessToken) {
     map.setMaxBounds(bounds);
     map.on('drag', function(){
         map.panInsideBounds(bounds, {animate:false});
-    })
+    });
 
     function getColor(featureId) {
         var count = dataController.getNumProjects(featureId);
