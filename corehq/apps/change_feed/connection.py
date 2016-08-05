@@ -1,12 +1,12 @@
 from django.conf import settings
-from kafka import KafkaClient
+from kafka.client import SimpleClient
 from kafka.common import KafkaUnavailableError
 import logging
 
 
 def get_kafka_client():
     # todo: we may want to make this more configurable
-    return KafkaClient(settings.KAFKA_URL)
+    return SimpleClient(settings.KAFKA_URL)
 
 
 def get_kafka_client_or_none():

@@ -3,7 +3,7 @@ from copy import copy
 
 from django.conf import settings
 from kafka import KafkaConsumer
-from kafka.common import ConsumerTimeout
+from kafka.structs import TopicPartition
 
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
@@ -12,7 +12,7 @@ from dimagi.utils.logging import notify_error
 from pillowtop.checkpoints.manager import PillowCheckpointEventHandler, DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
 from pillowtop.feed.interface import ChangeFeed, Change, ChangeMeta
 
-MIN_TIMEOUT = 100
+MIN_TIMEOUT = 200
 
 
 class KafkaChangeFeed(ChangeFeed):
@@ -54,43 +54,54 @@ class KafkaChangeFeed(ChangeFeed):
         timeout = -1 if forever else MIN_TIMEOUT
 
         start_from_latest = since is None
-        reset = 'smallest' if not start_from_latest else 'largest'
+        reset = 'earliest' if not start_from_latest else 'latest'
         consumer = self._get_consumer(timeout, auto_offset_reset=reset)
         if not start_from_latest:
-            if isinstance(since, dict):
-                if not since:
-                    since = {topic: 0 for topic in self._topics}
-                self._processed_topic_offsets = copy(since)
-            else:
-                # single topic
-                single_topic = self._get_single_topic_or_fail()
-                try:
-                    offset = int(since)  # coerce sequence IDs to ints
-                except ValueError:
-                    notify_error("kafka pillow {} couldn't parse sequence ID {}. rewinding...".format(
-                        self._group_id, since
-                    ))
-                    # since kafka only keeps 7 days of data this isn't a big deal. Hopefully we will only see
-                    # these once when each pillow moves over.
-                    offset = 0
-                self._processed_topic_offsets = {single_topic: offset}
+            self.initialize_consumer(consumer, since)
 
-            def _make_offset_tuple(topic):
-                if topic in self._processed_topic_offsets:
-                    return (topic, self._partition, self._processed_topic_offsets[topic])
-                else:
-                    return (topic, self._partition)
-
-            offsets = [_make_offset_tuple(topic) for topic in self._topics]
-            # this is how you tell the consumer to start from a certain point in the sequence
-            consumer.set_topic_partitions(*offsets)
         try:
             for message in consumer:
                 self._processed_topic_offsets[message.topic] = message.offset
                 yield change_from_kafka_message(message)
-        except ConsumerTimeout:
+        except StopIteration:
             assert not forever, 'Kafka pillow should not timeout when waiting forever!'
             # no need to do anything since this is just telling us we've reached the end of the feed
+
+    def initialize_consumer(self, consumer, since):
+        self._processed_topic_offsets = self._get_topic_offsets(since)
+
+        def _make_offset_tuple(topic):
+            if topic in self._processed_topic_offsets:
+                return TopicPartition(topic, self._partition), self._processed_topic_offsets[topic]
+            else:
+                return TopicPartition(topic, self._partition), 0
+
+        # this is how you tell the consumer to start from a certain point in the sequence
+        for topic in self._topics:
+            topic_partition, offset = _make_offset_tuple(topic)
+            if offset:
+                consumer.seek(topic_partition, offset)
+            else:
+                consumer.seek_to_beginning(topic_partition)
+
+    def _get_topic_offsets(self, since):
+        if isinstance(since, dict):
+            if not since:
+                since = {topic: 0 for topic in self._topics}
+            return copy(since)
+        else:
+            # single topic
+            single_topic = self._get_single_topic_or_fail()
+            try:
+                offset = int(since)  # coerce sequence IDs to ints
+            except ValueError:
+                notify_error("kafka pillow {} couldn't parse sequence ID {}. rewinding...".format(
+                    self._group_id, since
+                ))
+                # since kafka only keeps 7 days of data this isn't a big deal. Hopefully we will only see
+                # these once when each pillow moves over.
+                offset = 0
+            return {single_topic: offset}
 
     def get_current_checkpoint_offsets(self):
         # the way kafka works, the checkpoint should increment by 1 because
@@ -106,17 +117,24 @@ class KafkaChangeFeed(ChangeFeed):
         topic = self._get_single_topic_or_fail()
         return get_topic_offset(topic)
 
-    def _get_consumer(self, timeout, auto_offset_reset='smallest'):
+    def _get_consumer(self, timeout, auto_offset_reset='earliest'):
         config = {
-            'group_id': self._group_id,
+            # 'group_id': self._group_id,
             'bootstrap_servers': [settings.KAFKA_URL],
             'consumer_timeout_ms': timeout,
             'auto_offset_reset': auto_offset_reset,
+            'enable_auto_commit': False
         }
-        return KafkaConsumer(
-            *self._topics,
+        consumer = KafkaConsumer(
             **config
         )
+        # Manual topic assignment through this method does not use the
+        # consumer's group management functionality. As such, there will be
+        # no rebalance operation triggered when group membership or cluster
+        # and topic metadata change.
+        consumer.assign([TopicPartition(topic, 0) for topic in self._topics])
+
+        return consumer
 
 
 class MultiTopicCheckpointEventHandler(PillowCheckpointEventHandler):

@@ -61,7 +61,6 @@ class FormPillowTest(TestCase):
     def test_form_pillow_non_existant_build_id(self):
         consumer = get_test_kafka_consumer(topics.FORM, topics.FORM_SQL)
         kafka_seq = self._get_kafka_seq()
-
         form = self._make_form(build_id='not-here')
 
         # confirm change made it to kafka

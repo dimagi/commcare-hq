@@ -1,4 +1,5 @@
-from kafka.common import OffsetRequest
+from kafka.protocol.offset import OffsetResetStrategy
+from kafka.structs import OffsetRequestPayload
 
 from corehq.apps.change_feed.connection import get_kafka_client
 from .document_types import CASE, FORM, DOMAIN, META, APP
@@ -51,7 +52,7 @@ def get_multi_topic_offset(topics):
     :returns: A dict of offsets keyed by topic"""
     assert set(topics) <= set(ALL)
     client = get_kafka_client()
-    offset_requests = [OffsetRequest(topic, 0, -1, 1) for topic in topics]
+    offset_requests = [OffsetRequestPayload(topic, 0, OffsetResetStrategy.LATEST, 1) for topic in topics]
     responses = client.send_offset_request(offset_requests)
     return {
         r.topic: r.offsets[0] for r in responses
