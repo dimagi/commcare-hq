@@ -11,8 +11,10 @@
 
     $.fn.inlineTouchform = function (options) {
         var $target = $($(this).get(0));
-        options.onerror = options.onerror || function () {};
-        options.onload = options.onload || function () {};
+        options.onerror = options.onerror || function () {
+            };
+        options.onload = options.onload || function () {
+            };
         options.lang = options.lang || 'en';
 
         $.ajax({
@@ -32,16 +34,21 @@
 
                 data = $.extend(data, {
                     onsubmit: function (xml) {
-                        // post to receiver
-                        $.ajax({
-                            type: 'POST',
-                            url: options.submitUrl,
-                            data: xml.output,
-                            success: function () {
-                                $target.html(alertHtml('Form successfully submitted!', 'alert-success'));
-                                options.onsubmit();
-                            }
-                        });
+                        if (options.formplayerEnabled) {
+                            $target.html(alertHtml('Form successfully submitted!', 'alert-success'));
+                            options.onsubmit();
+                        } else {
+                            // post to receiver
+                            $.ajax({
+                                type: 'POST',
+                                url: options.submitUrl,
+                                data: xml.output,
+                                success: function () {
+                                    $target.html(alertHtml('Form successfully submitted!', 'alert-success'));
+                                    options.onsubmit();
+                                }
+                            });
+                        }
                     },
                     onerror: function (resp) {
                         $target.html(alertHtml(
