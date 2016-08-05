@@ -49,5 +49,6 @@ class SupervisorReport(ZiplineReport):
             dict(name='startdate', value=self.datespan.startdate_display),
             dict(name='enddate', value=self.datespan.enddate_display),
             dict(name='location_id', value=self.location_id),
-            dict(name='statuses', value=self.statuses)
+            dict(name='statuses', value=self.statuses),
+            dict(name='orders_id', value=self.orders_id)
         ]
