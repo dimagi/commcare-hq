@@ -149,12 +149,21 @@ var projectMapInit = function(mapboxAccessToken) {
 
     // copied from dimagisphere
     L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
-        maxZoom: 5,
+        maxZoom: 6,
         minZoom: 3,
         id: mapId,
         accessToken: mapboxAccessToken,
         noWrap: true,
     }).addTo(map);
+
+    var southWest = L.latLng(-85.0, -180.0),
+        northEast = L.latLng(85.0, 180.0),
+        bounds = L.latLngBounds(southWest, northEast);
+
+    map.setMaxBounds(bounds);
+    map.on('drag', function(){
+        map.panInsideBounds(bounds, {animate:false});
+    })
 
     function getColor(featureId) {
         var count = dataController.getNumProjects(featureId);
