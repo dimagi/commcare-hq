@@ -179,14 +179,7 @@ class PreFilterValue(FilterValue):
         'in': INFilter,
         'between': BasicBetweenFilter,
     }
-    scalar_operator_filters = {
-        '=': EQFilter,
-        '!=': NOTEQFilter,
-        '>=': GTEFilter,
-        '>': GTFilter,
-        '<=': LTEFilter,
-        '<': LTFilter,
-    }
+    scalar_operator_filters = NumericFilterValue.operators_to_filters
 
     def _is_dyn(self):
         return self.value.get('operator') in self.dyn_operator_filters
