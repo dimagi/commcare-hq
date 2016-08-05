@@ -1143,7 +1143,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     @skippable_quickcache(['username'], skip_arg='strict')
     def get_deleted_by_username(cls, username, strict=True):
         def get(stale, raise_if_none):
-            result = cls.get_db().view('users/deleted_by_username',
+            result = cls.get_db().view('deleted_users/by_username',
                                        key=username,
                                        include_docs=True,
                                        reduce=False,
