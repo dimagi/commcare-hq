@@ -192,6 +192,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     MenuList.BreadcrumbView = Marionette.ItemView.extend({
         tagName: "li",
         template: "#breadcrumb-item-template",
+        className: "breadcrumb-text",
         events: {
             "click": "crumbClick",
         },
