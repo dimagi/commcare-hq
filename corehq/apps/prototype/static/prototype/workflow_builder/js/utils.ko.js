@@ -24,14 +24,16 @@ hqDefine('prototype.workflow_builder.utils', function () {
         FOLLOWUP: 'FOLLOWUP',
     };
 
-    module.BaseAppObj = function (name, parent, navTemplate, editTemplate, modalTemplate) {
+    module.BaseAppObj = function (name, app, navTemplate, editTemplate, modalTemplate) {
         var self = this;
         self.uuid = ko.observable(_private.generateUUID());
         self.name = ko.observable(name);
-        self.parent = parent;
+        self.app = app;
 
         self.isFocusedInPreview = ko.observable(false);
-        self.isInEditMode = ko.observable(false);
+        self.isInEditMode = ko.computed(function () {
+            return self.app.editItem().uuid() === self.uuid();
+        });
 
         self.navTemplate = ko.observable(navTemplate);
         self.editTemplate = ko.observable(editTemplate);
@@ -46,10 +48,6 @@ hqDefine('prototype.workflow_builder.utils', function () {
         self.deleteModalId = ko.computed(function () {
             return 'delete_' + self.uuid();
         });
-
-        self.remove = function () {
-            console.log('todo remove');
-        };
     };
 
 

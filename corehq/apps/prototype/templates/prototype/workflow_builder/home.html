@@ -141,7 +141,7 @@
     <div class="navbar-app-settings">
       <a href="#"
          class="navbar-edit"
-         data-bind="text:name"></a>
+         data-bind="text:name, click: editAppSettings, css: { active: isEditingSettings }"></a>
     </div>
   </div>
 {% endblock %}
@@ -170,22 +170,8 @@
   </div>
 
   <div id="appedit">
-{#  todo use knockout template to edit #}
-    <div class="appedit-title">
-      <h2>The thing we're editing</h2>
-    </div>
-    <div class="appedit-content">
-      <div class="row">
-        <div class="col-xs-12">
-          <label class="control-label">
-            Name
-          </label>
-          <div class="controls">
-            <input type="text" class="form-control" />
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- ko template: { name: editItemTemplate, data: editItem } -->
+    <!-- /ko -->
   </div>
 
   <!-- ko with: appPreview -->
@@ -222,5 +208,6 @@
   {% include 'prototype/workflow_builder/partials/popover_templates.html' %}
   {% include 'prototype/workflow_builder/partials/ko_preview_templates.html' %}
   {% include 'prototype/workflow_builder/partials/ko_nav_templates.html' %}
+  {% include 'prototype/workflow_builder/partials/ko_edit_templates.html' %}
   {% include 'prototype/workflow_builder/partials/ko_modal_templates.html' %}
 {% endblock %}

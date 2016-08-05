@@ -7,18 +7,19 @@ hqDefine('prototype.workflow_builder.forms', function () {
     var module = {};
     var utils = hqImport('prototype.workflow_builder.utils');
 
-    module.Form = function (name, workflow, navTemplate, editTemplate, modalTemplate) {
+    module.Form = function (name, workflow, navTemplate, editTemplate, modalTemplate, previewTemplate) {
         var self = this;
         utils.BaseAppObj.call(
             self,
             name,
-            workflow,
+            workflow.app,
             navTemplate || 'ko-template-nav-form',
             editTemplate || 'ko-template-edit-form',
             modalTemplate || 'ko-template-modal-form'
         );
 
         self.questions = ko.observableArray();
+        self.workflow = workflow;
 
         self.addQuestion = function () {
             self.questions.push(new Question(self));
@@ -29,8 +30,9 @@ hqDefine('prototype.workflow_builder.forms', function () {
         });
 
         self.remove = function () {
-            self.parent.remove();
+            self.workflow.remove();
         };
+        self.previewTemplate = ko.observable(previewTemplate || 'ko-template-preview-form');
 
     };
     module.Form.prototype = Object.create(utils.BaseAppObj.prototype);
@@ -43,7 +45,8 @@ hqDefine('prototype.workflow_builder.forms', function () {
             workflow,
             'ko-template-nav-regform',
             'ko-template-edit-regform',
-            'ko-template-modal-regform'
+            'ko-template-modal-regform',
+            'ko-template-preview-regform'
         );
 
         self.recordNameQuestion = ko.observable("What is the name?");
@@ -59,7 +62,8 @@ hqDefine('prototype.workflow_builder.forms', function () {
             workflow,
             'ko-template-nav-followup',
             'ko-template-edit-followup',
-            'ko-template-modal-followup'
+            'ko-template-modal-followup',
+            'ko-template-preview-followup'
         );
 
         self.isCompletionForm = ko.observable(false);
@@ -68,7 +72,7 @@ hqDefine('prototype.workflow_builder.forms', function () {
         });
 
         self.remove = function () {
-            self.parent.removeForm(self);
+            self.workflow.removeForm(self);
         };
     };
     module.RegistrationForm.prototype = Object.create(module.Form.prototype);

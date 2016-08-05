@@ -16,7 +16,7 @@ hqDefine('prototype.workflow_builder.workflows', function () {
 
         self.workflowType = ko.observable(workflowType);
         self.remove = function () {
-            self.parent.removeWorkflow(self);
+            self.app.removeWorkflow(self);
         };
     };
     BaseWorkflow.prototype = Object.create(utils.BaseAppObj.prototype);
@@ -34,6 +34,12 @@ hqDefine('prototype.workflow_builder.workflows', function () {
         );
 
         self.form = ko.observable(new forms.Form(name, self));
+        self.name = ko.computed(function () {
+            return self.form().name();
+        });
+        self.isInEditMode = ko.computed(function () {
+            return self.form().uuid() === self.app.editItem().uuid();
+        });
     };
     module.Survey.prototype = Object.create(BaseWorkflow.prototype);
 
@@ -50,10 +56,10 @@ hqDefine('prototype.workflow_builder.workflows', function () {
         );
 
         // for this prototype we're only allowing one registration form
-        self.registrationForm = ko.observable(new forms.RegistrationForm("Create Record", self));
+        self.registrationForm = ko.observable(new forms.RegistrationForm("Registration Questions", self));
 
         self.followupForms = ko.observableArray();
-        self.followupForms.push(new forms.FollowupForm("Update Record", self));
+        self.followupForms.push(new forms.FollowupForm("Followup Questions", self));
         self.followupFormNavTemplate = function (form) {
             return form.navTemplate();
         };
@@ -64,7 +70,7 @@ hqDefine('prototype.workflow_builder.workflows', function () {
         self.followupCounter = ko.observable(2);
 
         self.addForm = function () {
-            self.followupForms.push(new forms.FollowupForm("Update Record " + self.followupCounter(), self));
+            self.followupForms.push(new forms.FollowupForm("Followup Questions " + self.followupCounter(), self));
             self.followupCounter(self.followupCounter() + 1);
         };
 

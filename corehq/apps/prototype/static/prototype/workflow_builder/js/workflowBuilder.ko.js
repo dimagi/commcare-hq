@@ -14,6 +14,10 @@ hqDefine('prototype.workflow_builder.workflowBuilder', function () {
     module.AppViewModel = function () {
         var self = this;
         self.name = ko.observable('My New App');
+        self.appSettings = new EditAppSettings(self);
+        self.isEditingSettings = ko.computed(function () {
+            return self.appSettings.isInEditMode();
+        });
 
         self.init = function () {
             self.appPreview = ko.observable(new preview.AppPreview(self));
@@ -31,12 +35,17 @@ hqDefine('prototype.workflow_builder.workflowBuilder', function () {
             return item.modalTemplate();
         };
 
-        self.editItem = ko.observable();
+        self.editItem = ko.observable(self.appSettings);
         self.setEditItem = function (item) {
+            self.appSettings.isInEditMode(false);
             self.editItem(item);
         };
         self.editItemTemplate = function (item) {
-            return item.editTemplate();
+            return ko.utils.unwrapObservable(item).editTemplate();
+        };
+        self.editAppSettings = function () {
+            self.appSettings.isInEditMode(true);
+            self.editItem(self.appSettings);
         };
 
         self.surveyCounter = ko.observable(1);
@@ -47,13 +56,17 @@ hqDefine('prototype.workflow_builder.workflowBuilder', function () {
         });
 
         self.createSurvey = function () {
-            self.workflows.push(new workflows.Survey(utils.getNameFromCounter("Survey", self.surveyCounter()), self));
+            var wf = new workflows.Survey(utils.getNameFromCounter("Survey Questions", self.surveyCounter()), self);
+            self.workflows.push(wf);
+            self.setEditItem(wf.form());
             self.surveyCounter(self.surveyCounter() + 1);
             self.appPreview().resetApp();
         };
 
         self.createRecordList = function () {
-            self.workflows.push(new workflows.RecordList(utils.getNameFromCounter("Record List", self.recordListCounter()), self));
+            var wf = new workflows.RecordList(utils.getNameFromCounter("Record List", self.recordListCounter()), self);
+            self.workflows.push(wf);
+            self.setEditItem(wf);
             self.surveyCounter(self.recordListCounter() + 1);
             self.appPreview().resetApp();
         };
@@ -64,6 +77,14 @@ hqDefine('prototype.workflow_builder.workflowBuilder', function () {
             });
         };
 
+    };
+
+    var EditAppSettings = function (app) {
+        var self = this;
+        self.app = app;
+        self.editTemplate = ko.observable('ko-template-edit-appsettings');
+        self.isInEditMode = ko.observable(true);
+        self.uuid = ko.observable('appsettings');
     };
 
     return module;
