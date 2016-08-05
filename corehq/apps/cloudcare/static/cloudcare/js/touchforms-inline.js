@@ -64,6 +64,7 @@
                 data.onLoadingComplete = onLoadingComplete;
                 data.uses_sql_backend = options.uses_sql_backend;
                 data.formplayerEnabled = options.formplayerEnabled;
+                data.post_url = options.submitUrl;
                 data.domain = options.domain;
                 var sess = new WebFormSession(data);
                 sess.load($target, options.lang);
