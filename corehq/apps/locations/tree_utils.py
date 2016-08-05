@@ -1,3 +1,6 @@
+from collections import defaultdict
+
+
 class TreeError(Exception):
     def __init__(self, msg, affected_nodes):
         self.affected_nodes = affected_nodes
@@ -48,3 +51,35 @@ def assert_no_cycles(nodes, root='TOP'):
 
     if has_a_cycle:
         raise CycleError("Node parentage has a cycle", has_a_cycle)
+
+
+def expansion_validators(nodes, root='TOP'):
+    """
+    Given a tree as a list of (uid, parent_uid), returns tuple of functions that return
+    valid expand_from and expand_to options respectively.
+    This assumes that tree validation is already done.
+    """
+
+    parent_of_child = dict(nodes)
+
+    def valid_expand_from(uid):
+        if uid == root:
+            return [root]
+        else:
+            return [uid] + valid_expand_from(parent_of_child[uid])
+
+    children_of_parent = defaultdict(list)
+    for uid, parent_uid in nodes:
+        children_of_parent[parent_uid].append(uid)
+
+    def valid_expand_to(uid):
+        children = children_of_parent[uid]
+        if not children:
+            return [uid]
+        else:
+            options = [uid]
+            for child in children:
+                options.extend(valid_expand_to(child))
+            return options
+
+    return valid_expand_from, valid_expand_to

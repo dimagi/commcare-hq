@@ -5,7 +5,7 @@ from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import Location, LocationType
-from corehq.apps.locations.tree_utils import TreeError, assert_no_cycles
+from corehq.apps.locations.tree_utils import TreeError, assert_no_cycles, expansion_validators
 from corehq.apps.locations.bulk_management import (
     bulk_update_organization,
     LocationTypeStub,
@@ -162,6 +162,21 @@ class TestTreeUtils(SimpleTestCase):
             ["Region", "District", "Village"]
         )
 
+    def test_expansion_validators(self):
+        from_validator, to_validator = expansion_validators(
+            [('a', 'TOP'), ('b', 'TOP'), ('c', 'a'), ('d', 'a'), ('e', 'b')]
+        )
+        self.assertEqual(from_validator('a'), ['a', 'TOP'])
+        self.assertEqual(from_validator('b'), ['b', 'TOP'])
+        self.assertEqual(from_validator('c'), ['c', 'a', 'TOP'])
+        self.assertEqual(from_validator('d'), ['d', 'a', 'TOP'])
+        self.assertEqual(from_validator('e'), ['e', 'b', 'TOP'])
+        self.assertEqual(to_validator('a'), ['a', 'c', 'd'])
+        self.assertEqual(to_validator('b'), ['b', 'e'])
+        self.assertEqual(to_validator('c'), ['c'])
+        self.assertEqual(to_validator('d'), ['d'])
+        self.assertEqual(to_validator('e'), ['e'])
+
 
 def get_validator(location_types, locations, old_collection=None):
     validator = LocationTreeValidator(
@@ -219,6 +234,43 @@ class TestTreeValidator(SimpleTestCase):
         self.assertEqual(len(errors), 1)
         self.assertEqual(len(type_errors), 1)
         self.assertIn("county", errors[0])
+
+    def test_valid_expansions(self):
+        validator = get_validator(
+            [
+                # name, code, parent_code, do_delete, shares_cases, view_descendants, expand_from, sync_to, index
+                # empty from, descendant as to
+                ('A', 'a', '', False, False, False, '', 'd', 0),
+                # itself as from, descendant as to
+                ('B', 'b', '', False, False, False, 'b', 'e', 0),
+                # empty to, parentage as from
+                ('C', 'c', 'a', False, False, False, 'a', '', 0),
+                # itself as to, parentage as from
+                ('D', 'd', 'a', False, False, False, 'a', 'd', 0),
+                # parentage as from, empty to
+                ('E', 'e', 'b', False, False, False, 'b', '', 0),
+            ],
+            []
+        )
+        errors = validator.errors
+        self.assertEqual(errors, [])
+
+    def test_invalid_expansions(self):
+        validator = get_validator(
+            [
+                # name, code, parent_code, do_delete, shares_cases, view_descendants, expand_from, sync_to, index
+                ('A', 'a', '', False, False, False, '', 'd', 0),
+                # 'a' is not a descendant of 'b'
+                ('B', 'b', '', False, False, False, 'b', 'a', 0),
+                ('C', 'c', 'a', False, False, False, 'a', '', 0),
+                # 'b' doesn't occur in its parentage
+                ('D', 'd', 'a', False, False, False, 'b', 'd', 0),
+                ('E', 'e', 'b', False, False, False, 'b', '', 0),
+            ],
+            []
+        )
+        errors = validator.errors
+        self.assertEqual(len(errors), 2)
 
     def test_duplicate_location(self):
         validator = get_validator(FLAT_LOCATION_TYPES, DUPLICATE_SITE_CODES)

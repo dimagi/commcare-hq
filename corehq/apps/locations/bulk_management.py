@@ -15,7 +15,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location, SQLLocation, LocationType
-from .tree_utils import BadParentError, CycleError, assert_no_cycles
+from .tree_utils import BadParentError, CycleError, assert_no_cycles, expansion_validators
 from .const import LOCATION_SHEET_HEADERS, LOCATION_TYPE_SHEET_HEADERS, ROOT_LOCATION_TYPE
 
 
@@ -549,8 +549,9 @@ class LocationTreeValidator(object):
 
     @memoized
     def _validate_types_tree(self):
+        type_pairs = [(lt.code, lt.parent_code) for lt in self.location_types]
         try:
-            assert_no_cycles([(lt.code, lt.parent_code) for lt in self.location_types])
+            assert_no_cycles(type_pairs)
         except BadParentError as e:
             return [
                 "Location Type '{}' refers to a parent which doesn't exist".format(code)
@@ -561,7 +562,23 @@ class LocationTreeValidator(object):
                 "Location Type '{}' has a parentage that loops".format(code)
                 for code in e.affected_nodes
             ]
-        return []
+
+        allowed_from_codes, allowed_to_codes = expansion_validators(type_pairs)
+        errors = []
+        for lt in self.location_types:
+            if lt.expand_from and lt.expand_from not in allowed_from_codes(lt.code):
+                errors.append(
+                    "'{}' can't have '{}' as 'Expand From', valid options are '{}'"
+                    .format(lt.code, lt.expand_from, allowed_from_codes)
+                )
+
+            if lt.sync_to and lt.sync_to not in allowed_to_codes(lt.code):
+                errors.append(
+                    "'{}' can't have '{}' as 'Sync To', valid options are '{}'"
+                    .format(lt.code, lt.sync_to, allowed_to_codes)
+                )
+
+        return errors
 
     @memoized
     def _validate_location_tree(self):
