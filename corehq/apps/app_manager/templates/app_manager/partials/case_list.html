@@ -55,7 +55,13 @@
         <div class="checkbox">
             <label>
                 <input type="checkbox" data-bind="checked: persistCaseContext">
-                {% trans "Show the case name at the top of the screen when filling out forms" %}
+                {% trans "Show some information about the case at the top of the screen when filling out forms" %}
+            </label>
+        </div>
+        <div class="" data-bind="visible: persistCaseContext">
+            <label>
+                {% trans "Case property to show:" %}
+                <input type="text" data-bind="value: persistentCaseContextXML" placeholder="e.g. case_name" />
             </label>
         </div>
     </div>

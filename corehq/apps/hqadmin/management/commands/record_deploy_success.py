@@ -39,10 +39,17 @@ class Command(BaseCommand):
         make_option('--environment', help='Environment {production|staging etc...}', default=settings.SERVER_ENVIRONMENT),
         make_option('--mail_admins', help='Mail Admins', default=False, action='store_true'),
         make_option('--url', help='A link to a URL for the deploy', default=False),
+        make_option(
+            '--minutes',
+            help='The number of minutes it took to deploy',
+            type='int',
+            default=None,
+        ),
     )
 
     def handle(self, *args, **options):
         compare_url = options.get('url', None)
+        minutes = options.get('minutes', None)
 
         deploy = HqDeploy(
             date=datetime.utcnow(),
@@ -59,10 +66,12 @@ class Command(BaseCommand):
                   "{} pillow errors queued for retry\n".format(rows_updated)
 
         deploy_notification_text = (
-            "CommCareHQ has been successfully deployed to *{}* by *{}*. Monitor the {{dashboard_link}}. "
+            "CommCareHQ has been successfully deployed to *{}* by *{}* in *{}* minutes. "
+            "Monitor the {{dashboard_link}}. "
             "Find the diff {{diff_link}}".format(
                 options['environment'],
                 options['user'],
+                minutes or '?',
             )
         )
         if hasattr(settings, 'MIA_THE_DEPLOY_BOT_API'):
