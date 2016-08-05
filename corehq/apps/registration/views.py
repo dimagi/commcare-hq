@@ -22,6 +22,9 @@ from corehq.apps.analytics.tasks import (
 )
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.analytics import ab_tests
+from corehq.apps.app_manager.const import APP_V2
+from corehq.apps.app_manager.models import Application, Module
+from corehq.apps.app_manager.util import save_xform
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.exceptions import NameUnavailableException
@@ -161,7 +164,7 @@ class NewUserRegistrationView(BasePageView):
 
 @transaction.atomic
 def register_user(request):
-    prefilled_email = request.GET.get('e', '')
+    prefilled_email = request.POST.get('e', '')
     context = get_domain_context()
 
     if request.user.is_authenticated():
@@ -172,16 +175,16 @@ def register_user(request):
         else:
             return redirect("homepage")
     else:
-
         ab = ab_tests.ABTest(ab_tests.NEW_USER_SIGNUP, request)
         if ab.version != ab_tests.NEW_USER_SIGNUP_OPTION_OLD:
+            # TODO: deal with this, if this test is still going on when PR is merged
             response = HttpResponseRedirect(
                 _get_url_with_email(reverse(NewUserRegistrationView.urlname), prefilled_email)
             )
             ab.update_response(response)
             return response
 
-        if request.method == 'POST':
+        if request.method == 'POST' and request.POST.get('prelogin_redirect', '') != '1':
             form = NewWebUserRegistrationForm(request.POST)
             if form.is_valid():
                 activate_new_user(form, ip=get_ip(request))
@@ -197,6 +200,14 @@ def register_user(request):
                     try:
                         requested_domain = request_new_domain(
                             request, form, is_new_user=True)
+                        if form.cleaned_data['xform']:
+                            lang = 'en'
+                            app = Application.new_app(requested_domain, "Untitled Application",
+                                                      application_version=APP_V2)
+                            module = Module.new_module(_("Untitled Module"), lang)
+                            app.add_module(module)
+                            save_xform(app, app.new_form(0, "Untitled Form", lang), form.cleaned_data['xform'])
+                            app.save()
                     except NameUnavailableException:
                         context.update({
                             'current_page': {'page_name': _('Oops!')},
@@ -214,7 +225,7 @@ def register_user(request):
             context.update({'create_domain': form.cleaned_data['create_domain']})
         else:
             form = NewWebUserRegistrationForm(
-                initial={'email': prefilled_email, 'create_domain': True})
+                initial={'email': prefilled_email, 'create_domain': True, 'xform': request.POST.get('xform', '')})
             context.update({'create_domain': True})
             meta = get_meta(request)
             track_clicked_signup_on_hubspot(prefilled_email, request.COOKIES, meta)
