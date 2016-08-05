@@ -153,7 +153,8 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
 
     project = Domain.get_by_name(domain)
     app = get_app(domain, app_id) if app_id else None
-    async_restore = toggles.ASYNC_RESTORE.enabled(domain) and float(openrosa_version) >= OPENROSA_VERSION_MAP['ASYNC_RESTORE']
+    async_restore = (toggles.ASYNC_RESTORE.enabled(domain) and
+                     float(openrosa_version) >= OPENROSA_VERSION_MAP['ASYNC_RESTORE'])
     restore_config = RestoreConfig(
         project=project,
         restore_user=restore_user,
