@@ -16,12 +16,6 @@ function (doc) {
             case "CommCareUser":
             case "WebUser":
                 return doc.created_on;
-            case "MessageLog":
-            case "CallLog":
-            case "SMSLog":
-                return doc.date;
-            case "EventLog":
-                return doc.date;
             case "Application":
             case "Application-Deleted":
             case "RemoteApp":
