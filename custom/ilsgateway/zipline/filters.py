@@ -1,7 +1,8 @@
-from django.core.urlresolvers import reverse_lazy
+from django.core.urlresolvers import reverse
 
 from corehq.apps.reports.filters.base import BaseMultipleOptionFilter
-from custom.zipline.models import EmergencyOrderStatusUpdate, EmergencyOrder
+from custom.zipline.models import EmergencyOrderStatusUpdate
+from dimagi.utils.decorators.memoized import memoized
 
 
 class EmergencyOrderStatusChoiceFilter(BaseMultipleOptionFilter):
@@ -43,15 +44,25 @@ class OrderIdChoiceFilter(BaseMultipleOptionFilter):
     slug = 'orders_id'
     label = 'Orders id'
 
-    is_paginated = True
+    @property
+    def filter_context(self):
+        context = super(OrderIdChoiceFilter, self).filter_context
+        context['endpoint'] = reverse('zipline_orders_view', kwargs={'domain': self.domain})
+        return context
 
     @property
     def pagination_source(self):
-        return reverse_lazy('zipline_orders_view', kwargs={'domain': self.domain})
+        return reverse('zipline_orders_view', kwargs={'domain': self.domain})
+
+    @property
+    @memoized
+    def selected(self):
+        return [
+            {'id': pk, 'text': pk}
+            for pk in self.request.GET.getlist(self.slug)
+            if pk
+        ]
 
     @property
     def options(self):
-        return [
-            {'id': pk, 'text': pk}
-            for pk in EmergencyOrder.objects.filter(domain=self.domain).values_list('pk', flat=True)
-        ]
+        return []
