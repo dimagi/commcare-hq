@@ -134,20 +134,6 @@ class NumericFilterValue(FilterValue):
         }
 
 
-def get_dyn_range_filter(date_range_slug):
-
-    class DynRangeFilter(BasicFilter):
-        date_range = date_range_slug
-
-        def build_expression(self, table):
-            start_date, end_date = get_daterange_start_end_dates(self.date_range, *self.parameter)
-            return get_column(table, self.column_name).between(
-                bindparam(start_date), bindparam(end_date)
-            )
-
-    return DynRangeFilter
-
-
 class BasicBetweenFilter(BasicFilter):
     """
     BasicBetweenFilter implements a BetweenFilter that accepts the
@@ -166,9 +152,8 @@ class BasicBetweenFilter(BasicFilter):
 
 class PreFilterValue(FilterValue):
 
-    dyn_operator_filters = {
-        c.slug: get_dyn_range_filter(c.slug) for c in get_all_daterange_choices()
-    }
+    # All dynamic date operators use BasicBetweenFilter
+    dyn_operator_filters = [c.slug for c in get_all_daterange_choices()]
     null_operator_filters = {
         '=': ISNULLFilter,
         '!=': NOTNULLFilter,
@@ -193,11 +178,6 @@ class PreFilterValue(FilterValue):
         the query.
         """
         return isinstance(self.value['operand'], list)
-
-    @property
-    def _dyn_filter(self):
-        operator = self.value['operator']  # Only called if operator has value, and is dynamic
-        return self.dyn_operator_filters[operator]
 
     @property
     def _null_filter(self):
