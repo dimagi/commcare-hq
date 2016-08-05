@@ -16,6 +16,7 @@ from sqlagg.filters import (
     NOTNULLFilter,
     get_column,
 )
+from sqlalchemy import bindparam
 
 from corehq.apps.reports.daterange import get_all_daterange_choices, get_daterange_start_end_dates
 from corehq.apps.reports.util import (
@@ -139,7 +140,6 @@ def get_dyn_range_filter(date_range_slug):
         date_range = date_range_slug
 
         def build_expression(self, table):
-            from sqlalchemy import bindparam
             start_date, end_date = get_daterange_start_end_dates(self.date_range, *self.parameter)
             return get_column(table, self.column_name).between(
                 bindparam(start_date), bindparam(end_date)
@@ -154,7 +154,6 @@ class PreFilterValue(FilterValue):
         # We want a BetweenFilter with the same __init__ params as INFilter
         def build_expression(self, table):
             assert len(self.parameter) == 2
-            from sqlalchemy import bindparam
             return get_column(table, self.column_name).between(
                 bindparam(self.parameter[0]), bindparam(self.parameter[1])
             )
