@@ -63,7 +63,18 @@ def search(request, domain):
                  .case_type(case_type)
                  .is_closed(False)
                  .size(CASE_SEARCH_MAX_RESULTS))
-    config, _ = CaseSearchConfig.objects.get_or_create(domain=domain)
+
+    try:
+        config = CaseSearchConfig.objects.get(domain=domain)
+    except CaseSearchConfig.DoesNotExist as e:
+        from corehq.util.soft_assert import soft_assert
+        _soft_assert = soft_assert(
+            to="{}@{}.com".format('frener', 'dimagi'),
+            notify_admins=False, send_to_ops=False
+        )
+        _soft_assert(False, "Someone in domain: {} tried accessing case search without a config".format(domain), e)
+        config = CaseSearchConfig(domain=domain)
+
     fuzzies = config.config.get_fuzzy_properties_for_case_type(case_type)
     for key, value in criteria.items():
         search_es = search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
