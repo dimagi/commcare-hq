@@ -1,0 +1,49 @@
+.popover-additem {
+  background-color: @cc-light-cool-accent-low;
+  width: 295px;
+  height: 180px;
+  .border-top-radius(0);
+  .border-bottom-radius(0);
+  color: @cc-light-cool-accent-hi;
+  border: 0;
+
+  .popover-title {
+    background-color: transparent;
+    text-transform: uppercase;
+    font-size: 1.2rem;
+    border-bottom: 1px solid darken(@cc-light-cool-accent-low, 2);
+  }
+  &.right > .arrow:after {
+    border-right-color: @cc-light-cool-accent-low;
+  }
+}
+
+.popover-additem-option {
+  width: 116px;
+  height: 116px;
+  box-sizing: border-box;
+  color: @cc-light-cool-accent-hi;
+  text-transform: uppercase;
+  display: block;
+  padding-top: 25px;
+  text-align: center;
+  .transition(background .5s);
+  font-size: 1.2rem;
+  &:focus {
+    color: @cc-light-cool-accent-hi;
+  }
+
+  &:hover {
+    text-decoration: none;
+    color: @cc-light-cool-accent-hi;
+    background-color: darken(@cc-light-cool-accent-low, 10);
+  }
+
+  .fa {
+    font-size: 4.5rem;
+    display: block;
+    text-align: center;
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}

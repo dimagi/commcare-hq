@@ -1,0 +1,51 @@
+<script type="text/html" id="ko-template-modal-survey">
+  <!-- ko template: {name: 'ko-template-confirm-delete'} --><!-- /ko -->
+</script>
+
+<script type="text/html" id="ko-template-modal-recordlist">
+
+  <!-- ko template: {name: 'ko-template-confirm-delete'} --><!-- /ko -->
+
+  <!-- ko template: { name: registrationForm().modalTemplate,
+                      data: registrationForm } -->
+  <!-- /ko -->
+  <!-- ko template: { name: followupFormModalTemplate,
+                      foreach: followupForms } -->
+  <!-- /ko -->
+</script>
+
+<script type="text/html" id="ko-template-modal-regform">
+ <!-- ko template: {name: 'ko-template-confirm-delete'} --><!-- /ko -->
+</script>
+
+<script type="text/html" id="ko-template-modal-followup">
+ <!-- ko template: {name: 'ko-template-confirm-delete'} --><!-- /ko -->
+</script>
+
+
+<script type="text/html" id="ko-template-confirm-delete">
+<div class="modal fade"
+     tabindex="-1"
+     role="dialog"
+     data-bind="attr: {id: deleteModalId}">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Confirm delete</h4>
+      </div>
+      <div class="modal-body">
+        <p>
+          Are you sure you want to delete <strong data-bind="text: name"></strong>?
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button"
+                class="btn btn-danger"
+                data-dismiss="modal"
+                data-bind="click: remove">Delete</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+</script>

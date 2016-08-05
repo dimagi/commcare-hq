@@ -18,75 +18,50 @@ hqDefine('prototype.workflow_builder.workflowBuilder', function () {
         self.init = function () {
             self.appPreview = ko.observable(new preview.AppPreview(self));
             self.appPreview().init();
-
-            // todo cleanup alert
-            $('#workspace').click(function (event) {
-                if (!$(event.target).hasClass('workflow-name')) {
-                    $('.workflow-name').trigger('workflowBuilder.workflow.deselect');
-                }
-                if (!$(event.target).hasClass('workflow-form-title')) {
-                    $('.workflow-form-title').trigger('workflowBuilder.form.deselect');
-                }
-            });
-
+            $('#js-add-new-item')
+                .on('workflowBuilder.add.survey', self.createSurvey)
+                .on('workflowBuilder.add.recordlist', self.createRecordList);
         };
 
-        // ------------------
-        // WORKFLOWS
-        // ------------------
-
         self.workflows = ko.observableArray();
-        self.workflowCounter = ko.observable(1);
+        self.workflowNavTemplate = function (item) {
+            return item.navTemplate();
+        };
+        self.workflowModalTemplate = function (item) {
+            return item.modalTemplate();
+        };
+
+        self.editItem = ko.observable();
+        self.setEditItem = function (item) {
+            self.editItem(item);
+        };
+        self.editItemTemplate = function (item) {
+            return item.editTemplate();
+        };
+
+        self.surveyCounter = ko.observable(1);
+        self.recordListCounter = ko.observable(1);
+
         self.hasNoWorkflows = ko.computed(function () {
             return self.workflows().length === 0;
         });
 
-        var _addWorkflow = function (wf) {
-            self.workflows.push(wf);
-            wf.name('Workflow ' + self.workflowCounter());
-            self.workflowCounter(self.workflowCounter() + 1);
+        self.createSurvey = function () {
+            self.workflows.push(new workflows.Survey(utils.getNameFromCounter("Survey", self.surveyCounter()), self));
+            self.surveyCounter(self.surveyCounter() + 1);
+            self.appPreview().resetApp();
         };
 
-        self.addWorkflowA = function () {
-            _addWorkflow(new workflows.WorkflowA(self));
-        };
-
-        self.addWorkflowB = function () {
-            _addWorkflow(new workflows.WorkflowB(self));
-        };
-
-        self.addWorkflowC= function () {
-            _addWorkflow(new workflows.WorkflowC(self));
+        self.createRecordList = function () {
+            self.workflows.push(new workflows.RecordList(utils.getNameFromCounter("Record List", self.recordListCounter()), self));
+            self.surveyCounter(self.recordListCounter() + 1);
+            self.appPreview().resetApp();
         };
 
         self.removeWorkflow = function (workflow) {
-            self.workflows.remove(workflow);
-        };
-
-        // ------------------
-        // Forms
-        // ------------------
-
-        self.formCounter = ko.observable(1);
-        self.forms = ko.observableArray();
-
-        self.removeForm = function (form) {
-            $('#' + form.draggableId()).remove();
-            var matchingFormData = _.first(_.filter(self.forms(), function (f) {
-                return f.uuid() === form.uuid();
-            }));
-            self.forms.remove(matchingFormData);
-        };
-        
-        self.addForm = function (container) {
-            var form = new forms.Form(container);
-            form.name("Form " + self.formCounter());
-            self.forms.push(form);
-            self.formCounter(self.formCounter() + 1);
-        };
-
-        self.printForms = function () {
-            console.log(self.forms());
+            $('#' + workflow.deleteModalId()).one('hidden.bs.modal', function () {
+                self.workflows.remove(workflow);
+            });
         };
 
     };

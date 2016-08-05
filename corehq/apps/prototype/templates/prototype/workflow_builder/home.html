@@ -24,8 +24,8 @@
   <script src="{% static 'jquery-ui/ui/effect-fade.js' %}"></script>
   <script src="{% static 'prototype/workflow_builder/js/workflowBindings.ko.js' %}"></script>
   <script src="{% static 'prototype/workflow_builder/js/utils.ko.js' %}"></script>
-  <script src="{% static 'prototype/workflow_builder/js/workflows.ko.js' %}"></script>
   <script src="{% static 'prototype/workflow_builder/js/forms.ko.js' %}"></script>
+  <script src="{% static 'prototype/workflow_builder/js/workflows.ko.js' %}"></script>
   <script src="{% static 'prototype/workflow_builder/js/preview.ko.js' %}"></script>
   <script src="{% static 'prototype/workflow_builder/js/workflowBuilder.ko.js' %}"></script>
 {% endblock %}
@@ -40,46 +40,65 @@
     });
 
     $(function () {
-      // Resizes Workspace
-      var resizeWorkspace = function () {
+      // Resizes Appnav
+      var resizeAppnav = function () {
         var navHeight = $('#navigation').outerHeight();
         var curHeight = $(window).height() - navHeight;
-        $('#workspace').height(curHeight);
+        $('#appnav').css('min-height', curHeight + 'px');
       };
-      resizeWorkspace();
-      $(window).resize(resizeWorkspace);
+      resizeAppnav();
+      $(window).resize(resizeAppnav);
+    });
+    $(function () {
+      // Resizes Appedit
+      var defaultPreviewWidth = $('#preview').outerWidth();
+      var resizeAppedit = function (event, isPreviewOpen) {
+        var $preview = $('#preview');
+        var previewWidth = 0;
+        if (isPreviewOpen === undefined) {
+          previewWidth = $preview.outerWidth()
+        } else {
+          previewWidth = (isPreviewOpen) ? defaultPreviewWidth : 70;
+        }
+        var navHeight = $('#navigation').outerHeight();
+        var appnavWidth = $('#appnav').outerWidth();
+        var maxVisibleHeight = Math.max($(window).height(), $preview.outerHeight());
+        var curHeight = maxVisibleHeight - navHeight + 40;
+        var curWidth = $(window).width() - appnavWidth - previewWidth;
+        $('#appedit')
+                .css('min-height', curHeight + 'px')
+                .css('width', curWidth + 'px');
+      };
+      resizeAppedit();
+      $(window).resize(resizeAppedit);
+      $(window).on('preview.resize', resizeAppedit);
     });
 
   $(function () {
-    $('#add-workflow-a').popover({
-      title: "Surveys",
+    $('#js-add-new-item').popover({
+      title: "Add",
       container: 'body',
       content: function () {
-        return $('#help-template-workflow-a').text();
+        return $('#popover-template-add-item-content').text();
       },
       html: true,
-      trigger: 'hover',
-      placement: 'bottom'
+      trigger: 'manual',
+      placement: 'right',
+      template: $('#popover-template-add-item').text()
+    }).one('shown.bs.popover', function () {
+      var pop = this;
+      $('.popover-additem').on('click', function (e) {
+        $(pop).popover('hide');
+        $('#js-add-new-item').trigger('workflowBuilder.add.' + $(e.target).closest('a').attr('data-createtype'));
+      });
+    }).on('click', function () {
+      $(this).popover('show');
     });
-    $('#add-workflow-b').popover({
-      title: "Follow-Up",
-      container: 'body',
-      content: function () {
-        return $('#help-template-workflow-b').text();
-      },
-      html: true,
-      trigger: 'hover',
-      placement: 'bottom'
-    });
-    $('#add-workflow-c').popover({
-      title: "Follow-Up and Complete",
-      container: 'body',
-      content: function () {
-        return $('#help-template-workflow-c').text();
-      },
-      html: true,
-      trigger: 'hover',
-      placement: 'bottom'
+
+    $('body').click(function (event) {
+      if (!($(event.target).hasClass('appnav-add') || $(event.target).hasClass('popover-additem-option') || $(event.target).hasClass('fa'))) {
+        $('#js-add-new-item').popover('hide');
+      }
     });
 
   });
@@ -119,55 +138,55 @@
         </div>
       </div>
     </div>
-    <div class="navbar navbar-default navbar-static-top navbar-app-settings">
-      <div class="container-fluid">
-        <div class="navbar-header">
-          <ul class="nav navbar-nav">
-            <li>
-              <a href="#modal-app-settings"
-                 data-toggle="modal">
-                <i class="fa fa-cogs"></i>
-              </a>
-            </li>
-            <li data-bind="click: printForms">
-              <p class="navbar-text" data-bind="text:name"></p>
-            </li>
-          </ul>
-        </div>
-      </div>
+    <div class="navbar-app-settings">
+      <a href="#"
+         class="navbar-edit"
+         data-bind="text:name"></a>
     </div>
-    <nav class="navbar navbar-default navbar-static-top navbar-app-toolbar">
-      <div class="container-fluid">
-        <div class="navbar-header">
-          <ul class="nav navbar-nav">
-            <li><a href="#" data-bind="click: addWorkflowA" id="add-workflow-a"><i class="wf wf-workflow-a"></i></a></li>
-            <li><a href="#" data-bind="click: addWorkflowB" id="add-workflow-b"><i class="wf wf-workflow-b"></i></a></li>
-            <li><a href="#" data-bind="click: addWorkflowC" id="add-workflow-c"><i class="wf wf-workflow-c"></i></a></li>
-          </ul>
-        </div>
-      </div>
-    </nav>
   </div>
 {% endblock %}
 
 {% block modals %}
-  {% include 'prototype/workflow_builder/partials/modals.html' %}
+  <!-- ko template: { name: workflowModalTemplate,
+                      foreach: workflows } -->
+  <!-- /ko -->
 {% endblock %}
 
 {% block content %}
-  <div id="workspace">
-      <div class="workspace-canvas"></div>
-      <div data-bind="visible: hasNoWorkflows" class="initial-help">
-        <i class="fa fa-hand-o-up"></i> Add a <strong>Workflow</strong> above!
-      </div>
-      <!-- ko template: { name: 'ko-template-workflow',
-                          foreach: workflows } -->
-      <!-- /ko -->
-      <!-- ko template: { name: 'ko-template-workflow-form',
-                          foreach: forms } -->
-      <!-- /ko -->
 
+  <div id="appnav">
+    <nav>
+      <ul class="appnav-menu appnav-menu-main">
+        <!-- ko template: { name: workflowNavTemplate,
+                            foreach: workflows } -->
+        <!-- /ko -->
+        <li>
+          <div class="appnav-item">
+            <a href="#" class="appnav-add" id="js-add-new-item"><i class="fa fa-plus"></i> Add&hellip;</a>
+          </div>
+        </li>
+      </ul>
+    </nav>
   </div>
+
+  <div id="appedit">
+    <div class="appedit-title">
+      <h2>The thing we're editing</h2>
+    </div>
+    <div class="appedit-content">
+      <div class="row">
+        <div class="col-xs-12">
+          <label class="control-label">
+            Name
+          </label>
+          <div class="controls">
+            <input type="text" class="form-control" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ko with: appPreview -->
   <div id="preview"
        class="live-preview live-preview-open"
@@ -199,7 +218,8 @@
   </div>
   <!-- /ko -->
 
-  {% include 'prototype/workflow_builder/partials/ko_workflow_templates.html' %}
+  {% include 'prototype/workflow_builder/partials/popover_templates.html' %}
   {% include 'prototype/workflow_builder/partials/ko_preview_templates.html' %}
-  {% include 'prototype/workflow_builder/partials/help_text_templates.html' %}
+  {% include 'prototype/workflow_builder/partials/ko_nav_templates.html' %}
+  {% include 'prototype/workflow_builder/partials/ko_modal_templates.html' %}
 {% endblock %}

@@ -2,8 +2,8 @@
   <div class="phone-page" data-bind="animateScreen: isHidden">
     <div class="phone-page-scrollable">
       <ul class="phone-navlist">
-        <!-- ko foreach: orderedWorkflows -->
-        <li data-bind="css: {'selected': isSelected}">
+        <!-- ko foreach: workflows -->
+        <li data-bind="css: {'selected': isFocusedInPreview}">
           <div class="phone-navlist-title noselect">
             <a href="#" data-bind="text: name, click: $parent.selectWorkflow"></a>
             <button type="button"
@@ -28,7 +28,7 @@
           <h4 data-bind="text: workflowName"></h4>
         </li>
         <!-- ko foreach: forms -->
-        <li data-bind="css: {'selected': isSelected}">
+        <li data-bind="css: {'selected': isFocusedInPreview}">
           <div class="phone-navlist-title noselect">
             <a href="#" data-bind="text: name, click: $parent.selectForm"></a>
             <button type="button"
@@ -66,7 +66,7 @@
             </div>
           </li>
           <!-- /ko -->
-          <li data-bind="css: {'selected': isSelected}">
+          <li data-bind="css: {'selected': isFocusedInPreview}">
             <div class="phone-navlist-title noselect">
               <a href="#" data-bind="text: name, click: $parent.selectForm"></a>
               <button type="button"
@@ -90,7 +90,7 @@
           <h4>Follow-Up <span data-bind="text: workflowName"></span> for <span data-bind="text: selectedRecord"></span></h4>
         </li>
         <!-- ko foreach: followupForms -->
-        <li data-bind="css: {'selected': isSelected}">
+        <li data-bind="css: {'selected': isFocusedInPreview}">
           <div class="phone-navlist-title noselect">
             <a href="#" data-bind="text: name, click: $parent.selectForm"></a>
             <button type="button"
@@ -107,7 +107,7 @@
           <h4>Complete <span data-bind="text: workflowName"></span> for <span data-bind="text: selectedRecord"></span></h4>
         </li>
         <!-- ko foreach: completeForms -->
-        <li data-bind="css: {'selected': isSelected}">
+        <li data-bind="css: {'selected': isFocusedInPreview}">
           <div class="phone-navlist-title noselect">
             <a href="#" data-bind="text: name, click: $parent.selectForm"></a>
             <button type="button"

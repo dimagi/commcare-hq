@@ -125,7 +125,7 @@
     margin: 0;
     line-height: @phone-appbar-height;
     font-weight: 400;
-    font-size: 2rem;
+    font-size: 1.4rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -148,7 +148,9 @@
       text-shadow: 0 0 10px rgba(0,0,0,.8), 0 0 20px @cc-brand-low, 0 0 40px @cc-brand-low;
     }
     &.disabled {
-      color: fadeout(@cc-brand-hi, 80);
+      color: fadeout(@cc-brand-hi, 90);
+      text-shadow: none;
+      cursor: default;
     }
   }
 }
@@ -181,6 +183,9 @@
 
   > li {
     line-height: @navbar-height;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     .transition(all 1s);
     &.selected {
       .box-shadow(0px 0px 10px 2px @cc-dark-cool-accent-low inset);
@@ -191,6 +196,9 @@
     width: @phone-screen-width;
     padding-left: 20px;
     font-size: 1.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     a {
       color: @cc-text;
       .transition(color 1s);
@@ -234,6 +242,9 @@
     font-size: 1.3rem;
     padding-left: 20px;
     margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   border: 1px solid @cc-bg;
 }
