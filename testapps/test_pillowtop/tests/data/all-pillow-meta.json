@@ -161,35 +161,17 @@
         "name": "LivraisonFluffPillow"
     },
     "MVPCaseIndicatorPillow": {
-        "advertised_name": "mvp_docs.pillows.MVPCaseIndicatorPillow.testhq",
+        "advertised_name": "MVPCaseIndicatorPillow",
         "change_feed_type": "CouchChangeFeed",
         "checkpoint_id": "mvp_docs.pillows.MVPCaseIndicatorPillow.testhq",
-        "couch_filter": "hqadmin/domains_and_doc_types",
-        "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "CommCareCase",
-        "extra_args": {
-            "doc_types": "CommCareCase CommCareCase-Deleted",
-            "domains": ""
-        },
-        "full_class_name": "mvp_docs.pillows.MVPCaseIndicatorPillow",
-        "include_docs": true,
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "MVPCaseIndicatorPillow"
     },
     "MVPFormIndicatorPillow": {
-        "advertised_name": "mvp_docs.pillows.MVPFormIndicatorPillow.testhq",
+        "advertised_name": "MVPFormIndicatorPillow",
         "change_feed_type": "CouchChangeFeed",
         "checkpoint_id": "mvp_docs.pillows.MVPFormIndicatorPillow.testhq",
-        "couch_filter": "hqadmin/domains_and_doc_types",
-        "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "XFormInstance",
-        "extra_args": {
-            "doc_types": "XFormInstance XFormInstance-Deleted XFormArchived",
-            "domains": ""
-        },
-        "full_class_name": "mvp_docs.pillows.MVPFormIndicatorPillow",
-        "include_docs": true,
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "MVPFormIndicatorPillow"
     },
     "McctMonthlyAggregateFormFluffPillow": {

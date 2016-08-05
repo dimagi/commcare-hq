@@ -3,13 +3,13 @@
 FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette) {
     MenuList.MenuView = Marionette.ItemView.extend({
         tagName: "tr",
-
+        className: "formplayer-request",
         events: {
             "click": "rowClick",
         },
 
         getTemplate: function () {
-            if (this.model.attributes.audioUri) {
+            if (this.model.get('audioUri')) {
                 return "#menu-view-item-audio-template";
             } else {
                 return "#menu-view-item-template";
@@ -19,7 +19,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         rowClick: function (e) {
             e.preventDefault();
             var model = this.model;
-            FormplayerFrontend.trigger("menu:select", model.get('index'), model.collection.appId);
+            FormplayerFrontend.trigger("menu:select", model.get('index'));
         },
         templateHelpers: function () {
             var imageUri = this.options.model.get('imageUri');
@@ -41,33 +41,18 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         childViewContainer: "tbody",
         templateHelpers: function () {
             return {
-                title: this.options.collection.title,
+                title: this.options.title,
+            };
+        },
+        childViewOptions: function () {
+            return {
+                sessionId: this.options.sessionId,
             };
         },
     });
 
-    var getGridAttributes = function (tile) {
-        if (!tile) {
-            return null;
-        }
-        var rowStart = tile.gridY + 1;
-        var colStart = tile.gridX + 1;
-        var rowEnd = rowStart + tile.gridHeight;
-        var colEnd = colStart + tile.gridWidth;
-
-        return "grid-area: " + rowStart + " / " + colStart + " / " +
-            rowEnd + " / " + colEnd + ";";
-    };
-
-    function addStyleString(str) {
-        var node = document.createElement('style');
-        node.innerHTML = str;
-        document.body.appendChild(node);
-    }
-
     MenuList.CaseView = Marionette.ItemView.extend({
         tagName: "tr",
-
         getTemplate: function () {
             if (_.isNull(this.options.tiles) || !this.tiles) {
                 return "#case-view-item-template";
@@ -75,7 +60,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 return "#case-tile-view-item-template";
             }
         },
-
+        
         initialize: function (options) {
             this.tiles = options.tiles;
             this.styles = options.styles;
@@ -95,14 +80,14 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             }
         },
 
-
+        className: "formplayer-request",
         events: {
             "click": "rowClick",
         },
 
         rowClick: function (e) {
             e.preventDefault();
-            FormplayerFrontend.trigger("menu:show:detail", this);
+            FormplayerFrontend.trigger("menu:show:detail", this, 0);
         },
 
         templateHelpers: function () {
@@ -118,6 +103,50 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
     });
 
+    // return the string grid-area attribute
+    // takes the form of  [x-coord] / [y-Coord] / [width] / [height]
+    var getGridAttributes = function (tile) {
+        if (!tile) {
+            return null;
+        }
+        var rowStart = tile.gridY + 1;
+        var colStart = tile.gridX + 1;
+        var rowEnd = rowStart + tile.gridHeight;
+        var colEnd = colStart + tile.gridWidth;
+
+        return rowStart + " / " + colStart + " / " +
+            rowEnd + " / " + colEnd;
+    };
+    // generate the case tile's style block and insert
+    var generateCaseTileStyles = function (tiles) {
+        var tile, fontSize, fontString, styleString, tileId;
+        if (!_.isNull(tiles)) {
+            var tilesModel = [];
+            for (var i = 0; i < tiles.length; i++) {
+                var obj = {};
+                tile = tiles[i];
+                if (tile === null) {
+                    continue;
+                }
+                fontSize = tiles[i].fontSize;
+                fontString = fontSize;
+                styleString = getGridAttributes(tile);
+                tileId = "grid-style-" + i;
+                obj.id = tileId;
+                obj.gridStyle = styleString;
+                obj.fontStyle = fontString;
+                tilesModel.push(obj);
+            }
+        }
+        var templateString = $("#case-tile-style-template").html();
+        var tileStyleTemplate = _.template(templateString);
+        var tileStyle = tileStyleTemplate({
+            models: tilesModel,
+        });
+        // need to remove this attribute so the grid style is re-evaluated
+        $("#case-tiles-style").html(tileStyle).removeAttr("data-css-polyfilled");
+    };
+
     MenuList.CaseListView = Marionette.CompositeView.extend({
         tagName: "div",
         template: "#case-view-list-template",
@@ -127,6 +156,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         initialize: function (options) {
             this.tiles = options.tiles;
             this.styles = options.styles;
+            generateCaseTileStyles(options.tiles);
         },
 
         childViewOptions: function () {
@@ -149,18 +179,18 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
 
         caseListAction: function () {
-            FormplayerFrontend.trigger("menu:select", "action 0", this.options.collection.appId);
+            FormplayerFrontend.trigger("menu:select", "action 0");
         },
 
         caseListSearch: function (e) {
             e.preventDefault();
             var searchText = $('#searchText').val();
-            FormplayerFrontend.trigger("menu:search", searchText, this.options.collection.appId);
+            FormplayerFrontend.trigger("menu:search", searchText);
         },
 
         paginateAction: function (e) {
             var pageSelection = $(e.currentTarget).data("id");
-            FormplayerFrontend.trigger("menu:paginate", pageSelection, this.options.collection.appId);
+            FormplayerFrontend.trigger("menu:paginate", pageSelection);
         },
 
         templateHelpers: function () {
@@ -211,4 +241,33 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         childView: MenuList.DetailView,
         childViewContainer: "tbody",
     });
-});
+
+    MenuList.DetailTabView = Marionette.ItemView.extend({
+        tagName: "li",
+        template: "#detail-view-tab-item-template",
+        events: {
+            "click": "tabClick",
+        },
+        initialize: function (options) {
+            this.index = options.model.get('id');
+            this.showDetail = options.showDetail;
+        },
+        tabClick: function (e) {
+            e.preventDefault();
+            this.options.showDetail(this.index);
+        },
+    });
+
+    MenuList.DetailTabListView = Marionette.CompositeView.extend({
+        tagName: "div",
+        template: "#detail-view-tab-list-template",
+        childView: MenuList.DetailTabView,
+        childViewContainer: "ul",
+        childViewOptions: function () {
+            return {
+                showDetail: this.options.showDetail,
+            };
+        },
+    });
+})
+;

@@ -102,7 +102,7 @@ class UpdatableSchema():
 
 
 class Deployment(DocumentSchema, UpdatableSchema):
-    date = DateTimeProperty()
+    date = DateTimeProperty()  # deprecated
     city = StringProperty()
     countries = StringListProperty()
     region = StringProperty()  # e.g. US, LAC, SA, Sub-saharn Africa, East Africa, West Africa, Southeast Asia)
@@ -146,7 +146,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
         choices=['', "plus", "community", "standard", "pro", "advanced", "enterprise"],
         default="community"
     )
-    services = StringProperty(choices=["", "basic", "plus", "full", "custom"], default="")
+    services = StringProperty(choices=["", "basic", "plus", "full", "custom"], default="")  # deprecated
     initiative = StringListProperty()
     workshop_region = StringProperty()
     project_state = StringProperty(choices=["", "POC", "transition", "at-scale"], default="")
@@ -321,6 +321,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     attribution_notes = StringProperty()
     publisher = StringProperty(choices=["organization", "user"], default="user")
     yt_id = StringProperty()
+    snapshot_head = BooleanProperty(default=False)
 
     deployment = SchemaProperty(Deployment)
 
@@ -349,6 +350,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     secure_sessions = BooleanProperty(default=False)
 
     two_factor_auth = BooleanProperty(default=False)
+    strong_mobile_passwords = BooleanProperty(default=False)
 
     requested_report_builder_trial = StringListProperty()
     requested_report_builder_subscription = StringListProperty()
@@ -822,18 +824,24 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
             except NameUnavailableException:
                 return None
             copy.is_snapshot = True
+            head = self.snapshots(limit=1).first()
+            if head and head.snapshot_head:
+                head.snapshot_head = False
+                head.save()
+            copy.snapshot_head = True
             copy.snapshot_time = datetime.utcnow()
             del copy.deployment
             copy.save()
             return copy
 
-    def snapshots(self):
+    def snapshots(self, **view_kwargs):
         return Domain.view('domain/snapshots',
             startkey=[self._id, {}],
             endkey=[self._id],
             include_docs=True,
             reduce=False,
-            descending=True
+            descending=True,
+            **view_kwargs
         )
 
     @memoized

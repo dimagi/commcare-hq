@@ -182,6 +182,7 @@ property_path   | A nested reference to a property in a document | `doc["child"]
 conditional     | An if/else expression | `"legal" if doc["age"] > 21 else "underage"`
 switch          | A switch statement | `if doc["age"] == 21: "legal"` `elif doc["age"] == 60: ...` `else: ...`
 array_index     | An index into an array | `doc[1]`
+split_string    | Splitting a string and grabbing a specific element from it by index | `doc["foo bar"].split(' ')[0]`
 iterator        | Combine multiple expressions into a list | `[doc.name, doc.age, doc.gender]`
 related_doc     | A way to reference something in another document | `form.case.owner_id`
 root_doc        | A way to reference the root document explicitly (only needed when making a data source from repeat/child data) | `repeat.parent.name`
@@ -192,6 +193,7 @@ add_months      | A way to add months to a date | `my_date + relativedelta(month
 month_start_date| First day in the month of a date | `2015-01-20` -> `2015-01-01`
 month_end_date  | Last day in the month of a date | `2015-01-20` -> `2015-01-31`
 diff_days       | A way to get duration in days between two dates | `(to_date - from-date).days`
+diff_seconds    | A way to get duration in seconds between two datetimes | `(to_datetime - from_datetime).totalseconds()`
 evaluator       | A way to do arithmetic operations | `a + b*c / d`
 base_iteration_number | Used with [`base_item_expression`](#saving-multiple-rows-per-caseform) - a way to get the current iteration number (starting from 0). | `loop.index`
 
@@ -331,6 +333,25 @@ This expression returns `doc["siblings"][0]`:
 ```
 It will return nothing if the siblings property is not a list, the index isn't a number, or the indexed item doesn't exist.
 
+##### Split String Expression
+
+This expression returns `(doc["foo bar"]).split(' ')[0]`:
+```json
+{
+    "type": "split_string",
+    "string_expression": {
+        "type": "property_name",
+        "property_name": "multiple_value_string"
+    },
+    "index_expression": {
+        "type": "constant",
+        "constant": 0
+    },
+    "delimiter": ","
+}
+```
+The delimiter is optional and is defaulted to a space.  It will return nothing if the string_expression is not a string, or if the index isn't a number or the indexed item doesn't exist.
+
 ##### Iterator Expression
 
 ```json
@@ -469,7 +490,6 @@ The date_expression and months_expression can be any valid expressions, or simpl
 }
 ```
 
-
 #### "Diff Days" expressions
 
 `diff_days` returns number of days between dates specified by `from_date_expression` and `to_date_expression`.
@@ -483,6 +503,25 @@ The from_date_expression and to_date_expression can be any valid expressions, or
         "property_name": "dob",
     },
     "to_date_expression": "2016-02-01"
+}
+```
+
+#### "Diff Seconds" expressions
+
+`diff_seconds` returns number of seconds between datetimes specified by `from_expression` and `to_expression`.
+The from_expression and to_expression can be any valid expressions, or simply constants.
+
+```json
+{
+    "type": "diff_seconds",
+    "from_expression": {
+        "type": "property_path",
+        "property_path": ["form","meta","timeStart"]
+    },
+    "to_expression": {
+        "type": "property_path",
+        "property_path": ["form","meta","timeEnd"]
+    }
 }
 ```
 
@@ -1078,6 +1117,44 @@ Date filters have an optional `compare_as_string` option that allows the date
 filter to be compared against an indicator of data type `string`. You shouldn't
 ever need to use this option (make your column a `date` or `datetime` type
 instead), but it exists because the report builder needs it. 
+
+### Pre-Filters
+
+Pre-filters offer the kind of functionality you get from
+[data source filters](#data-source-filtering). This makes it easier to use one
+data source for many reports, especially if some of those reports just need
+the data source to be filtered slightly differently. Pre-filters do not need
+to be configured by app builders in report modules; fields with pre-filters
+will not be listed in the report module among the other fields that can be
+filtered.
+
+A pre-filter's `type` is set to "pre":
+```
+{
+  "type": "pre",
+  "field": "at_risk_field",
+  "slug": "at_risk_slug",
+  "datatype": "string",
+  "pre_value": "yes"
+}
+```
+
+If `pre_value` is scalar (i.e. `datatype` is "string", "integer", etc.), the
+filter will use the "equals" operator. If `pre_value` is null, the filter will
+use "is null". If `pre_value` is an array, the filter will use the "in"
+operator. e.g.
+```
+{
+  "type": "pre",
+  "field": "at_risk_field",
+  "slug": "at_risk_slug",
+  "datatype": "array",
+  "pre_value": ["yes", "maybe"]
+}
+```
+
+(If `pre_value` is an array and `datatype` is not "array", it is assumed that
+`datatype` refers to the data type of the items in the array.)
 
 ### Dynamic choice lists
 

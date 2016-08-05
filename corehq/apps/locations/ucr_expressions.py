@@ -41,7 +41,7 @@ class LocationParentIdSpec(JsonObject):
 def location_type_name(spec, context):
     wrapped = LocationTypeSpec.wrap(spec)
     wrapped.configure(
-        location_id_expression=ExpressionFactory.from_spec(wrapped.location_id_expression)
+        location_id_expression=ExpressionFactory.from_spec(wrapped.location_id_expression, context)
     )
     return wrapped
 
@@ -61,4 +61,4 @@ def location_parent_id(spec, context):
             'index_expression': 0,
         }
     }
-    return ExpressionFactory.from_spec(spec)
+    return ExpressionFactory.from_spec(spec, context)

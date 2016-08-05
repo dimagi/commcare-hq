@@ -113,6 +113,19 @@
         <fieldset data-bind="
             template: { foreach: tables, as: 'table', name: 'ko-table-configuration-template' }"
         ></fieldset>
+
+        {% if request|toggle_enabled:"ALLOW_USER_DEFINED_EXPORT_COLUMNS" %}
+        <fieldset>
+            <div class="col-sm-10">
+                <button class="btn btn-default" data-bind="
+                    click: addUserDefinedTableConfiguration
+                ">
+                {% trans "Add custom table configuration " %}
+                </button>
+            </div>
+        </fieldset>
+        {% endif %}
+
         {% if allow_deid %}
         <fieldset>
             <legend>{% trans "Privacy Settings" %}</legend>

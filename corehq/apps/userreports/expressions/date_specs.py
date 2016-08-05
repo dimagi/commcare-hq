@@ -4,7 +4,8 @@ import calendar
 from dateutil.relativedelta import relativedelta
 from dimagi.ext.jsonobject import JsonObject
 from jsonobject.base_properties import DefaultProperty
-from corehq.apps.userreports.expressions.getters import transform_date, transform_int
+from corehq.apps.userreports.expressions.getters import transform_date, transform_int, \
+    transform_datetime
 from corehq.apps.userreports.specs import TypeProperty
 
 
@@ -85,4 +86,21 @@ class DiffDaysExpressionSpec(JsonObject):
         to_date_val = transform_date(self._to_date_expression(item, context))
         if from_date_val is not None and to_date_val is not None:
             return (to_date_val - from_date_val).days
+        return None
+
+
+class DiffSecondsExpressionSpec(JsonObject):
+    type = TypeProperty('diff_seconds')
+    from_expression = DefaultProperty(required=True)
+    to_expression = DefaultProperty(required=True)
+
+    def configure(self, from_expression, to_expression):
+        self._from_expression = from_expression
+        self._to_expression = to_expression
+
+    def __call__(self, item, context=None):
+        from_val = transform_datetime(self._from_expression(item, context))
+        to_val = transform_datetime(self._to_expression(item, context))
+        if from_val is not None and to_val is not None:
+            return (to_val - from_val).total_seconds()
         return None

@@ -28,7 +28,7 @@
         <tbody class="case-container">
         </tbody>
         <% } else { %>
-        <div class="wrapper case-container"></div>
+            <tbody class="wrapper case-container"></tbody>
         <% } %>
     </table>
     <% if (action) { %>
@@ -85,4 +85,13 @@
         </div>
         <% }); %>
     </div>
+</script>
+
+<script type="text/template" id="case-tile-style-template">
+    <% _.each(models, function(model){ %>
+        .<%= model.id %> {
+            grid-area: <%= model.gridStyle %>;
+            font-size: <%= model.fontStyle %>;
+        }
+    <% }); %>
 </script>

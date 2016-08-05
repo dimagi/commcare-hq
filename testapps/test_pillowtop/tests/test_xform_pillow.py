@@ -55,7 +55,7 @@ class XFormPillowTest(TestCase):
         results = FormES().run()
         self.assertEqual(1, results.total)
 
-        # soft delete the case
+        # soft delete the form
         with process_kafka_changes('XFormToElasticsearchPillow'):
             with process_couch_changes('DefaultChangeFeedPillow'):
                 FormAccessors(self.domain).soft_delete_forms([form.form_id])

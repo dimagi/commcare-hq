@@ -346,6 +346,31 @@
                 }
               }
             },
+            "Madagascar": {
+              "default": 0,
+              "cases": {
+                "Atsinanana": 108361,
+                "Analanjirofo": 80604,
+                "Vatovavy Fitovinany": 41018,
+                "Atsimo Atsinanana": 81941
+              },
+              "type": "switch",
+              "switch_on": {
+                "value_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "user_data",
+                    "level_1_data"
+                  ]
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareUser",
+                "doc_id_expression": {
+                  "type": "property_name",
+                  "property_name": "owner_id"
+                }
+              }
+            },
             "Ethiopia": {
               "default": 0,
               "cases": {

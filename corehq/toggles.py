@@ -741,15 +741,6 @@ VIEW_BUILD_SOURCE = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-USE_SQL_BACKEND = StaticToggle(
-    'sql_backend',
-    'Uses a sql backend instead of a couch backend for form processing',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-    description="This flag is deprecated. All new domains now use the sql backend."
-)
-
-
 EWS_WEB_USER_EXTENSION = StaticToggle(
     'ews_web_user_extension',
     'Enable EWSGhana web user extension',
@@ -854,4 +845,19 @@ EMG_AND_REC_SMS_HANDLERS = StaticToggle(
     'Enable emergency and receipt sms handlers used in ILSGateway',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
+)
+
+ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
+    'allow_user_defined_export_columns',
+    'Allows users to specify their own export columns',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
+
+CUSTOM_CALENDAR_FIXTURE = StaticToggle(
+    'custom_calendar_fixture',
+    'Send a calendar fixture down to all users (UATBC/eNikshay one off)',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
 )

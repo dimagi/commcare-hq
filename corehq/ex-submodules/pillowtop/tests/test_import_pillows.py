@@ -4,7 +4,6 @@ from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.feed.mock import RandomChangeFeed
 from pillowtop.feed.interface import Change
-from pillowtop.listener import BasicPillow
 from inspect import isclass
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import LoggingProcessor

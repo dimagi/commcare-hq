@@ -159,15 +159,28 @@ def warn_subscriptions_not_active(based_on_date=None):
         log_accounting_error("%s is not active" % subscription)
 
 
+def warn_active_subscriptions_per_domain_not_one():
+    for domain_name in Domain.get_all_names():
+        active_subscription_count = Subscription.objects.filter(
+            subscriber__domain=domain_name,
+            is_active=True,
+        ).count()
+        if active_subscription_count > 1:
+            log_accounting_error("Multiple active subscriptions found for domain %s" % domain_name)
+        elif active_subscription_count == 0:
+            log_accounting_error("There is no active subscription for domain %s" % domain_name)
+
+
 @periodic_task(run_every=crontab(minute=0, hour=5))
 def update_subscriptions():
     deactivate_subscriptions()
     activate_subscriptions()
     warn_subscriptions_still_active()
     warn_subscriptions_not_active()
+    warn_active_subscriptions_per_domain_not_one()
 
 
-@periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'))
+@periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
 def generate_invoices(based_on_date=None):
     """
     Generates all invoices for the past month.
@@ -281,7 +294,7 @@ def remind_subscription_ending():
     send_subscription_reminder_emails(1)
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0))
+@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
 def remind_dimagi_contact_subscription_ending_60_days():
     """
     Sends reminder emails to Dimagi contacts that subscriptions are ending in 60 days
@@ -355,7 +368,7 @@ def create_wire_credits_invoice(domain_name,
         record.save()
 
 
-@task(ignore_result=True)
+@task(ignore_result=True, acks_late=True)
 def send_purchase_receipt(payment_record, domain,
                           template_html, template_plaintext,
                           additional_context):
@@ -391,7 +404,7 @@ def send_purchase_receipt(payment_record, domain,
     )
 
 
-@task(queue='background_queue', ignore_result=True)
+@task(queue='background_queue', ignore_result=True, acks_late=True)
 def send_autopay_failed(invoice, payment_method):
     subscription = invoice.subscription
     auto_payer = subscription.account.auto_pay_user
@@ -427,7 +440,7 @@ def send_autopay_failed(invoice, payment_method):
 
 
 # Email this out every Monday morning.
-@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week=1))
+@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week=1), acks_late=True)
 def weekly_digest():
     today = datetime.date.today()
     in_forty_days = today + datetime.timedelta(days=40)
@@ -529,7 +542,7 @@ def pay_autopay_invoices():
     AutoPayInvoicePaymentHandler().pay_autopayable_invoices(datetime.datetime.today())
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue')
+@periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue', acks_late=True)
 def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
     try:
         log_accounting_info("Updating exchange rates...")

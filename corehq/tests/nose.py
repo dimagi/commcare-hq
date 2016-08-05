@@ -143,7 +143,7 @@ class ErrorOnDbAccessContext(object):
         couchlog.signals.got_request_exception.disconnect(
             couchlog.signals.log_request_exception)
 
-        self.db_patch = patch('django.db.backends.util.CursorWrapper')
+        self.db_patch = patch('django.db.backends.utils.CursorWrapper')
         db_mock = self.db_patch.start()
         error = RuntimeError(
             "Attempt to access database in a 'no database' test suite. "

@@ -4,7 +4,7 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
     AppList.GridItem = Marionette.ItemView.extend({
         template: "#row-template",
         tagName: "div",
-        className: "grid-item col-sm-4 text-center",
+        className: "grid-item col-sm-4 text-center formplayer-request",
         events: {
             "click": "rowClick",
         },

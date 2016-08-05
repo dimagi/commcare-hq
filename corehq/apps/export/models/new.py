@@ -61,8 +61,28 @@ DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
 
 class PathNode(DocumentSchema):
+    """
+    A PathNode represents a portion of a path to value in a document.
+
+    For example, if a document looked like:
+
+    {
+        'form': {
+            'question': 'one'
+        }
+
+    }
+
+    A path to the data 'one' would be ['form']['question']. A PathNode represents
+    one step in that path. In this example, a list of PathNodes would represent
+    fetching the 'one':
+
+    [PathNode(name='form'), PathNode(name='question')]
+    """
 
     name = StringProperty(required=True)
+
+    # This is true if this step in the path corresponds with an array (such as a repeat group)
     is_repeat = BooleanProperty(default=False)
 
     def __eq__(self, other):
@@ -130,6 +150,11 @@ class ExportItem(DocumentSchema):
 
 
 class ExportColumn(DocumentSchema):
+    """
+    The model that represents a column in an export. Each column has a one-to-one
+    mapping with an ExportItem. The column controls the presentation of that item.
+    """
+
     item = SchemaProperty(ExportItem)
     label = StringProperty()
     # Determines whether or not to show the column in the UI Config without clicking advanced
@@ -208,7 +233,7 @@ class ExportColumn(DocumentSchema):
                 help_text=_(u'The ID of the associated {} case type').format(item.case_type),
                 **constructor_args
             )
-        elif feature_previews.SPLIT_MULTISELECT_CASE_EXPORT.enabled(get_request().domain):
+        elif get_request() and feature_previews.SPLIT_MULTISELECT_CASE_EXPORT.enabled(get_request().domain):
             column = SplitUserDefinedExportColumn(**constructor_args)
         else:
             column = ExportColumn(**constructor_args)
@@ -266,6 +291,8 @@ class ExportColumn(DocumentSchema):
                 return CaseIndexExportColumn.wrap(data)
             elif doc_type == 'SplitUserDefinedExportColumn':
                 return SplitUserDefinedExportColumn.wrap(data)
+            elif doc_type == 'UserDefinedExportColumn':
+                return UserDefinedExportColumn.wrap(data)
             elif doc_type == 'SplitGPSExportColumn':
                 return SplitGPSExportColumn.wrap(data)
             elif doc_type == 'MultiMediaExportColumn':
@@ -289,12 +316,17 @@ class DocRow(namedtuple("DocRow", ["doc", "row"])):
 
 
 class TableConfiguration(DocumentSchema):
+    """
+    The TableConfiguration represents one excel sheet in an export.
+    It contains a list of columns and other presentation properties
+    """
     # label saves the user's decision for the table name
     label = StringProperty()
     path = ListProperty(PathNode)
     columns = ListProperty(ExportColumn)
     selected = BooleanProperty(default=False)
     is_deleted = BooleanProperty(default=False)
+    is_user_defined = BooleanProperty(default=False)
 
     def __hash__(self):
         return hash(tuple(self.path))
@@ -356,7 +388,8 @@ class TableConfiguration(DocumentSchema):
         return None, None
 
         :param item_path: A list of path nodes that identify a column
-        :param item_doc_type: The doc type of the item (often just ExportItem)
+        :param item_doc_type: The doc type of the item (often just ExportItem). If getting
+                UserDefinedExportColumn, set this to None
         :param column_transform: A transform that is applied on the column
         :returns index, column: The index of the column in the list and an ExportColumn
         """
@@ -364,6 +397,11 @@ class TableConfiguration(DocumentSchema):
             if (column.item.path == item_path and
                     column.item.transform == column_transform and
                     column.item.doc_type == item_doc_type):
+                return index, column
+            # No item doc type searches for a UserDefinedExportColumn
+            elif (isinstance(column, UserDefinedExportColumn) and
+                    column.custom_path == item_path and
+                    item_doc_type is None):
                 return index, column
         return None, None
 
@@ -400,12 +438,17 @@ class TableConfiguration(DocumentSchema):
                     DocRow(row=row_index + (new_doc_index,), doc=new_doc)
                     for new_doc_index, new_doc in enumerate(next_doc)
                 ])
-            else:
+            elif next_doc:
                 new_docs.append(DocRow(row=row_index, doc=next_doc))
         return TableConfiguration._get_sub_documents_helper(path[1:], new_docs)
 
 
 class ExportInstance(BlobMixin, Document):
+    """
+    This is an instance of an export. It contains the tables to export and
+    other presentation properties.
+    """
+
     name = StringProperty()
     domain = StringProperty()
     tables = ListProperty(TableConfiguration)
@@ -712,7 +755,14 @@ class FormExportInstanceDefaults(ExportInstanceDefaults):
         if table_path == MAIN_TABLE:
             return _('Forms')
         else:
-            return _('Repeat: {}').format((table_path[-1].name if len(table_path) else None) or "")
+            if not len(table_path):
+                return _('Repeat')
+
+            default_table_name = table_path[-1].name
+            # We are probably exporting a model iteration question
+            if default_table_name == 'item' and len(table_path) > 1:
+                default_table_name = '{}.{}'.format(table_path[-2].name, default_table_name)
+            return _('Repeat: {}').format(default_table_name)
 
 
 class CaseExportInstanceDefaults(ExportInstanceDefaults):
@@ -1234,7 +1284,6 @@ def _question_path_to_path_nodes(string_path, repeats):
         repeat_test_string += "/" + part
         path.append(PathNode(name=part, is_repeat=repeat_test_string in repeats))
 
-    assert path[0] == PathNode(name="data"), 'First node should be "data"'
     path[0].name = "form"
     return path
 
@@ -1309,6 +1358,22 @@ def _merge_dicts(one, two, resolvefn):
         for key in one.viewkeys() & two.viewkeys()
     })
     return merged
+
+
+class UserDefinedExportColumn(ExportColumn):
+    """
+    This model represents a column that a user has defined the path to the
+    data within the form. It should only be needed for RemoteApps
+    """
+
+    # On normal columns, the path is defined on an ExportItem.
+    # Since a UserDefinedExportColumn is not associated with the
+    # export schema, the path is defined on the column.
+    custom_path = SchemaListProperty(PathNode)
+
+    def get_value(self, domain, doc_id, doc, base_path, **kwargs):
+        path = [x.name for x in self.custom_path[len(base_path):]]
+        return NestedDictGetter(path)(doc)
 
 
 class SplitUserDefinedExportColumn(ExportColumn):
@@ -1492,6 +1557,9 @@ class SplitExportColumn(ExportColumn):
 
 
 class RowNumberColumn(ExportColumn):
+    """
+    This column represents the `number` column.
+    """
     repeat = IntegerProperty(default=0)
 
     def get_headers(self, **kwargs):
@@ -1512,6 +1580,9 @@ class RowNumberColumn(ExportColumn):
 
 
 class CaseIndexExportColumn(ExportColumn):
+    """
+    A column that exports a case index's referenced ids
+    """
 
     def get_value(self, domain, doc_id, doc, base_path, **kwargs):
         path = [self.item.path[0].name]  # Index columns always are just a reference to 'indices'
@@ -1570,6 +1641,37 @@ class StockExportColumn(ExportColumn):
                 state_index = self._column_tuples.index(column_tuple)
                 values[state_index] = state.stock_on_hand
         return values
+
+
+class ConversionMeta(DocumentSchema):
+    path = StringProperty()
+    failure_reason = StringProperty()
+    info = ListProperty()
+
+    def pretty_print(self):
+        print '---' * 15
+        print '{:<20}| {}'.format('Original Path', self.path)
+        print '{:<20}| {}'.format('Failure Reason', self.failure_reason)
+        print '{:<20}| {}'.format('Info', self.info)
+
+
+class ExportMigrationMeta(Document):
+    saved_export_id = StringProperty()
+    domain = StringProperty()
+
+    skipped_tables = SchemaListProperty(ConversionMeta)
+    skipped_columns = SchemaListProperty(ConversionMeta)
+
+    converted_tables = SchemaListProperty(ConversionMeta)
+    converted_columns = SchemaListProperty(ConversionMeta)
+
+    is_remote_app_migration = BooleanProperty(default=False)
+
+    migration_date = DateTimeProperty()
+
+    class Meta:
+        app_label = 'export'
+
 
 # These must match the constants in corehq/apps/export/static/export/js/const.js
 MAIN_TABLE = []
