@@ -26,14 +26,25 @@
 
         var reportType = {{ report_type|JSON }};
         var initialUserFilters = {{ initial_user_filters|JSON }};
+        var initialDefaultFilters = {{ initial_default_filters|JSON }};
         var initialColumns = {{ initial_columns|JSON }};
         var sourceType = {{ form.source_type|JSON }};
         var dataSourceIndicators = {{ data_source_indicators|JSON }};
         var reportColumnOptions = {{ report_column_options|JSON }};
+        var dateRangeOptions = {{ date_range_options|JSON }};
 
         var ConfigForm = hqImport('userreports/js/builder_view_models.js').ConfigForm;
         $("#report-config-form").koApplyBindings(
-            new ConfigForm(reportType, sourceType, initialColumns, initialUserFilters, dataSourceIndicators, reportColumnOptions)
+            new ConfigForm(
+                reportType,
+                sourceType,
+                initialColumns,
+                initialUserFilters,
+                initialDefaultFilters,
+                dataSourceIndicators,
+                reportColumnOptions,
+                dateRangeOptions
+            )
         );
 
 
