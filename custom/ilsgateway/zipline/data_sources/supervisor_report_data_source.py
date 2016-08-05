@@ -1,5 +1,7 @@
 from django.db.models.aggregates import Sum
+from django.utils.translation import ugettext_lazy as _
 
+from corehq.apps.reports.datatables import DataTablesColumn
 from custom.ilsgateway.zipline.data_sources.zipline_data_source import ZiplineDataSource
 from custom.zipline.models import EmergencyOrder, EmergencyOrderPackage, EmergencyOrderStatusUpdate
 from custom.ilsgateway.zipline import helpers
@@ -17,20 +19,20 @@ class SupervisorReportDataSource(ZiplineDataSource):
         if self.sql_location.location_type_object.administrative:
             descendants = self.sql_location.get_descendants() \
                 .exclude(is_archived=True).values_list('site_code', flat=True)
-            additional_filters['order__location_code__in'] = descendants
+            additional_filters['location_code__in'] = descendants
         else:
-            additional_filters['order__location_code'] = self.sql_location.site_code
+            additional_filters['location_code'] = self.sql_location.site_code
 
         if self.statuses:
             additional_filters['status__in'] = self.statuses
 
         orders_id = filter(lambda x: bool(x), self.orders_id)
         if orders_id:
-            additional_filters['order_id__in'] = orders_id
+            additional_filters['pk__in'] = orders_id
 
         return dict(
-            order__domain=self.domain,
-            order__timestamp__range=[self.start_date, self.end_date],
+            domain=self.domain,
+            timestamp__range=[self.start_date, self.end_date],
             **additional_filters
         )
 
@@ -41,6 +43,27 @@ class SupervisorReportDataSource(ZiplineDataSource):
     @property
     def total_count(self):
         return EmergencyOrder.objects.filter(**self.filters).count()
+
+    @property
+    def columns(self):
+        return [
+            DataTablesColumn('date', help_text=_('timestamp for receipt of incoming emg request, automatic')),
+            DataTablesColumn('location code', help_text=_('the location that corresponds to the health facility')),
+            DataTablesColumn('status', help_text=_('current status of the transaction (rejected, cancelled, '
+                                                   'cancelled by user, received, approved, dispatched, delivered, '
+                                                   'confirmed)')),
+            DataTablesColumn('total delivery time', help_text=_('time between emg status and rec status, '
+                                                                'total time to resupply  in minutes')),
+            DataTablesColumn('confirmation timestamp', help_text=_('timestamp for receipt of rec confirmation')),
+            DataTablesColumn('emergency order request', help_text=_('structured string with product long codes'
+                                                                    ' (for example, 10010203MD) and quantities'
+                                                                    ' for products requested in emg request ')),
+            DataTablesColumn('delivered products cost', help_text=_('value of products dropped to the'
+                                                                    ' health facility, tanzanian shillings')),
+            DataTablesColumn('products requested and not confirmed',
+                             help_text=_('structured string with products '
+                                         'that were not confirmed based on the request'))
+        ]
 
     def get_data(self, start, limit):
         emergency_orders = self.get_emergency_orders(start, limit)

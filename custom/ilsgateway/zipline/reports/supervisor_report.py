@@ -1,8 +1,5 @@
 from collections import namedtuple
 
-from django.utils.translation import ugettext as _
-
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from custom.ilsgateway.zipline.data_sources.supervisor_report_data_source import SupervisorReportDataSource
@@ -30,27 +27,6 @@ class SupervisorReport(ZiplineReport):
     @property
     def orders_id(self):
         return self.request.GET.getlist('orders_id')
-
-    @property
-    def headers(self):
-        return DataTablesHeader(
-            DataTablesColumn('date', help_text=_('timestamp for receipt of incoming emg request, automatic')),
-            DataTablesColumn('location code', help_text=_('the location that corresponds to the health facility')),
-            DataTablesColumn('status', help_text=_('current status of the transaction (rejected, cancelled, '
-                                                   'cancelled by user, received, approved, dispatched, delivered, '
-                                                   'confirmed)')),
-            DataTablesColumn('total delivery time', help_text=_('time between emg status and rec status, '
-                                                                'total time to resupply  in minutes')),
-            DataTablesColumn('confirmation timestamp', help_text=_('timestamp for receipt of rec confirmation')),
-            DataTablesColumn('emergency order request', help_text=_('structured string with product long codes'
-                                                                    ' (for example, 10010203MD) and quantities'
-                                                                    ' for products requested in emg request ')),
-            DataTablesColumn('delivered products cost', help_text=_('value of products dropped to the'
-                                                                    ' health facility, tanzanian shillings')),
-            DataTablesColumn('products requested and not confirmed',
-                             help_text=_('structured string with products '
-                                         'that were not confirmed based on the request'))
-        )
 
     @property
     def report_config(self):

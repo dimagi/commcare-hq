@@ -2,7 +2,6 @@ from django.core.urlresolvers import reverse_lazy
 
 from corehq.apps.reports.filters.base import BaseMultipleOptionFilter
 from custom.zipline.models import EmergencyOrderStatusUpdate, EmergencyOrder
-from dimagi.utils.decorators.memoized import memoized
 
 
 class EmergencyOrderStatusChoiceFilter(BaseMultipleOptionFilter):

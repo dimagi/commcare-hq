@@ -38,6 +38,10 @@ class ZiplineDataSource(object):
         else:
             return get_object_or_404(SQLLocation, domain=self.domain, location_id=self.location_id)
 
+    @property
+    def columns(self):
+        raise NotImplementedError('Not implemented yet')
+
     def get_data(self, start, limit):
         raise NotImplementedError('Not implemented yet')
 

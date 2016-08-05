@@ -1,3 +1,6 @@
+from django.utils.translation import ugettext as _
+
+from corehq.apps.reports.datatables import DataTablesColumn
 from custom.ilsgateway.zipline.data_sources.zipline_data_source import ZiplineDataSource
 from custom.zipline.models import EmergencyOrderPackage
 
@@ -36,6 +39,27 @@ class ZiplineWarehousePackageDataSource(ZiplineDataSource):
     def get_emergency_order_packages(self, start, limit):
         offset = start + limit
         return EmergencyOrderPackage.objects.filter(**self.filters)[start:offset]
+
+    @property
+    def columns(self):
+        return [
+            DataTablesColumn('Order id', help_text=_('unique id assigned to the order by ILSGateway')),
+            DataTablesColumn('Location code', help_text=_('the location that corresponds to the health facility')),
+            DataTablesColumn('Status',
+                             help_text=_('"current status of the transaction (dispatched cancelled delivered)"')),
+            DataTablesColumn('Status dispatched', help_text=_('time that uav is launched to delivery site')),
+            DataTablesColumn('Status delivered', help_text=_('time that vehicle dropped package')),
+            DataTablesColumn('Delivery leadtime', help_text=_('difference between dispatched and delivered')),
+            DataTablesColumn('Package number', help_text=_('a sequential number assigned '
+                                                           'to each package within an order')),
+            DataTablesColumn('Vehicle id', help_text=_('the unique id for the vehicle that is set to be delivered,'
+                                                       ' will be repeated based on vehciles at warehouse')),
+            DataTablesColumn('Package id', help_text=_('the unique id for the package '
+                                                       'that is set to be delivered')),
+            DataTablesColumn('Package weight (grams)', help_text=_('calculated weight of'
+                                                                   ' the products in the vehicle')),
+            DataTablesColumn('Products in package')
+        ]
 
     def get_data(self, start, limit):
         emergency_order_packages = self.get_emergency_order_packages(start, limit)

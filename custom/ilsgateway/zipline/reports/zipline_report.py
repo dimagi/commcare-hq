@@ -1,3 +1,4 @@
+from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 
@@ -16,6 +17,13 @@ class ZiplineReport(CustomProjectReport, GenericTabularReport, DatespanMixin):
     @property
     def report_config(self):
         raise NotImplementedError('Not implemented yet')
+
+    @property
+    def headers(self):
+        columns = self.data_source.columns
+        for column in columns:
+            column.sortable = False
+        return DataTablesHeader(*columns)
 
     @property
     def data_source(self):
