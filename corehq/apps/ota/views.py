@@ -12,7 +12,7 @@ from casexml.apps.case.xml import V2
 from corehq import toggles, privileges
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.case_search.models import CaseSearchConfig
-from corehq.apps.domain.decorators import domain_admin_required, login_or_digest_or_basic_or_apikey
+from corehq.apps.domain.decorators import domain_admin_required, login_or_digest_or_basic_or_apikey, ensure_active_user
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
@@ -34,6 +34,7 @@ from .utils import demo_user_restore_response, get_restore_user, is_permitted_to
 
 @json_error
 @login_or_digest_or_basic_or_apikey()
+@ensure_active_user()
 def restore(request, domain, app_id=None):
     """
     We override restore because we have to supply our own

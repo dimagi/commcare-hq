@@ -33,6 +33,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.users.models import CouchUser
 from corehq.apps.hqwebapp.signals import clear_login_attempts
+from corehq.apps.users.models import CommCareUser
 
 ########################################################################################################
 from corehq.toggles import IS_DEVELOPER
@@ -385,3 +386,33 @@ def require_previewer(view_func):
     return shim
 
 cls_require_previewer = cls_to_view(additional_decorator=require_previewer)
+
+def ensure_active_user(default=BASIC):
+    def decorator(fn):
+        @wraps(fn)
+        def _inner(request, *args, **kwargs):
+            mobile_user_email = request.GET.get('as')
+            if mobile_user_email:
+                ccu = CommCareUser.get_by_username('{}.commcarehq.org'.format(mobile_user_email))
+                valid, message = True, None
+                if ccu:
+                    if not ccu.is_active:
+                        valid, message, error_code = False, 'User deactivated', 'mobile.app.translation.user.is.deactivated'
+                    # using get_by_username never returns a deleted record since it relies on base_doc to
+                    # be CouchUser
+                    elif ccu.base_doc == 'CouchUser-Deleted':
+                        valid, message, error_code = False, 'User deleted', 'mobile.app.translation.user.is.deleted'
+
+                    if not valid:
+                        return json_response({
+                            "error": error_code,
+                            "default_response": message
+                        }, status_code=401)
+                    else:
+                        return fn(request, *args, **kwargs)
+                else:
+                    return fn(request, *args, **kwargs)
+            else:
+                return fn(request, *args, **kwargs)
+        return _inner
+    return decorator
