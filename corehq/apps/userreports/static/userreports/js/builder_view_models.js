@@ -91,6 +91,10 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             }
             return hqImport('userreports/js/constants.js').DEFAULT_CALCULATION_OPTIONS;
         });
+        // for default filters, the value to filter by
+        this.filterValue = ko.observable("");
+        // for default filters, the dynamic date operator to filter by
+        this.filterOperator = ko.observable("");
         // If this PropertyListItem represents a property that no longer
         // exists in the app, then dataSourceField will be the name of the
         // property that no longer exists
@@ -115,6 +119,8 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             display_text: this.displayText(),
             format: this.format(),
             calculation: this.calculation(),
+            pre_value: this.filterValue(),
+            pre_operator: this.filterOperator(),
         };
     };
     /**
@@ -145,6 +151,8 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             i.displayText(item.display_text);
             i.calculation(item.calculation);
             i.format(item.format);
+            i.filterValue(item.pre_value);
+            i.filterOperator(item.pre_operator);
             return i;
         };
 
@@ -168,11 +176,14 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         this.displayHelpText = getOrDefault(options, 'displayHelpText', null);
         this.formatHelpText = getOrDefault(options, 'formatHelpText', null);
         this.calcHelpText = getOrDefault(options, 'calcHelpText', null);
+        this.filterValueHelpText = getOrDefault(options, 'filterValueHelpText', null);
         this.analyticsAction = getOrDefault(options, 'analyticsAction', null);
         this.analyticsLabel = getOrDefault(options, 'analyticsLabel', this.reportType);
 
+        this.hasDisplayCol = getOrDefault(options, 'hasDisplayCol', true);
         this.hasFormatCol = getOrDefault(options, 'hasFormatCol', true);
         this.hasCalculationCol = getOrDefault(options, 'hasCalculationCol', false);
+        this.hasFilterValueCol = getOrDefault(options, 'hasFilterValueCol', false);
 
         this.columns = ko.observableArray(_.map(getOrDefault(options, 'initialCols', []), function(i) {
             return wrapListItem(i);
@@ -301,7 +312,16 @@ hqDefine('userreports/js/builder_view_models.js', function () {
     };
 
 
-    var ConfigForm = function(reportType, sourceType, columns, userFilters, dataSourceIndicators, reportColumnOptions){
+    var ConfigForm = function (
+            reportType,
+            sourceType,
+            columns,
+            userFilters,
+            defaultFilters,
+            dataSourceIndicators,
+            reportColumnOptions,
+            dateRangeOptions
+    ) {
         this.optionsContainQuestions = _.any(dataSourceIndicators, function (o) {
             return o.type === 'question';
         });
@@ -326,6 +346,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
                 this.reportColumnOptions, convertReportColumnOptionToSelect2Format
             ));
         }
+        this.dateRangeOptions = dateRangeOptions;
 
         this.userFiltersList = new PropertyList({
             hasFormatCol: sourceType === "case",
@@ -335,7 +356,20 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             analyticsAction: 'Add User Filter',  // Or should this remain "Add Filter"?
             propertyHelpText: django.gettext('Choose the property you would like to add as a filter to this report.'),
             displayHelpText: django.gettext('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
-            formatHelpText: django.gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: select this if the property is a date.<br/><strong>Choice</strong>: select this if the property is text or multiple choice.'),
+            formatHelpText: django.gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: Select this if the property is a date.<br/><strong>Choice</strong>: Select this if the property is text or multiple choice.'),
+            reportType: reportType,
+        });
+        this.defaultFiltersList = new PropertyList({
+            hasFormatCol: true,
+            hasCalculationCol: false,
+            hasDisplayCol: false,
+            hasFilterValueCol: true,
+            initialCols: defaultFilters,
+            buttonText: 'Add Default Filter',
+            analyticsAction: 'Add Default Filter',
+            propertyHelpText: django.gettext('Choose the property you would like to add as a filter to this report.'),
+            formatHelpText: django.gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: Select this to filter the property by a date range.<br/><strong>Value</strong>: Select this to filter the property by a single value.'),
+            filterValueHelpText: django.gettext('What value or date range must the property be equal to?'),
             reportType: reportType,
             propertyOptions: this.dataSourceIndicators,
             selectablePropertyOptions: this.selectableDataSourceIndicators,
@@ -364,6 +398,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
     ConfigForm.prototype.submitHandler = function (formElement) {
         var isValid = true;
         isValid = this.userFiltersList.validate() && isValid;
+        isValid = this.defaultFiltersList.validate() && isValid;
         isValid = this.columnsList.validate() && isValid;
         if (!isValid){
             alert('Invalid report configuration. Please fix the issues and try again.');
