@@ -32,6 +32,7 @@ hqDefine('prototype.workflow_builder.preview', function () {
 
         self.toggleShown = function () {
             self.isShown(!self.isShown());
+            $(window).trigger('preview.resize', self.isShown());
         };
 
         self.screenTemplate = function (screen) {
@@ -57,6 +58,13 @@ hqDefine('prototype.workflow_builder.preview', function () {
             }
         };
 
+        self.resetApp = function () {
+            self.hideAllScreens();
+            self.history.removeAll();
+            self.history.push(self.workflowScreen);
+            self.workflowScreen.isSelected(true);
+        };
+
         self.selectWorkflow = function (workflow) {
             if (workflow.workflowType() === utils.WorkflowType.SURVEY) {
                 self.hideAllScreens();
@@ -70,7 +78,6 @@ hqDefine('prototype.workflow_builder.preview', function () {
                 self.recordListScreen.isSelected(true);
 
                 self.history.push(self.recordListScreen);
-                _.first(workflow.containers()).isSelected(true);
             }
         };
 
@@ -81,8 +88,6 @@ hqDefine('prototype.workflow_builder.preview', function () {
             self.editRecordScreen.isSelected(true);
 
             self.history.push(self.editRecordScreen);
-            workflow.containers()[1].isSelected(true);
-            _.last(workflow.containers()).isSelected(true);
         };
 
         self.selectForm = function (form) {
@@ -96,8 +101,6 @@ hqDefine('prototype.workflow_builder.preview', function () {
         };
 
         self.selectEditForm = function (form, record) {
-            console.log('edit form');
-            console.log(record);
             self.selectForm(form);
             self.formScreen.recordName(record);
         };
@@ -117,10 +120,8 @@ hqDefine('prototype.workflow_builder.preview', function () {
     var SelectWorkflowScreen = function (preview) {
         var self = this;
         BaseScreen.call(self, 'ko-template-screen-workflows', true, preview);
-        self.orderedWorkflows = ko.computed(function () {
-            return _.sortBy(self.preview.app.workflows(), function (wf) {
-                return wf.distance();
-            });
+        self.workflows = ko.computed(function () {
+            return self.preview.app.workflows();
         });
 
         self.selectWorkflow = function (workflow) {
@@ -149,26 +150,18 @@ hqDefine('prototype.workflow_builder.preview', function () {
         self.registerForms = ko.computed(function () {
             var relevantForms = [];
             if (self.selectedWorkflow()) {
-                relevantForms = _.filter(self.preview.app.forms(), function (f) {
-                    return f.container.formType() === utils.FormType.REGISTRATION && f.container.workflow.uuid() === self.selectedWorkflow().uuid();
-                });
-                relevantForms = _.sortBy(relevantForms, function (f) {
-                    return f.order();
-                });
+                relevantForms.push(self.selectedWorkflow().registrationForm());
             }
             return relevantForms;
         });
 
         self.cleanup = function () {
-            if (self.selectedWorkflow()) {
-                self.selectedWorkflow().isSelected(false);
-                _.first(self.selectedWorkflow().containers()).isSelected(false);
-            }
+            // todo
         };
 
         self.selectForm = function (form) {
             self.preview.selectForm(form);
-            form.isSelected(true);
+            // todo
         };
 
         self.selectRecord = function (record) {
@@ -190,14 +183,19 @@ hqDefine('prototype.workflow_builder.preview', function () {
             return "Untitled Workflow";
         });
 
+        self.registrationForms = ko.computed(function () {
+            var relevantForms = [];
+            if (self.selectedWorkflow()) {
+                relevantForms.push(self.selectedWorkflow().registrationForm());
+            }
+            return null;
+        });
+
         self.followupForms = ko.computed(function () {
             var relevantForms = [];
             if (self.selectedWorkflow()) {
-                relevantForms = _.filter(self.preview.app.forms(), function (f) {
-                    return f.container.formType() === utils.FormType.FOLLOWUP && f.container.workflow.uuid() === self.selectedWorkflow().uuid();
-                });
-                relevantForms = _.sortBy(relevantForms, function (f) {
-                    return f.order();
+                relevantForms = _.filter(self.selectedWorkflow().followupForms(), function (f) {
+                    return f.isFollowupForm();
                 });
             }
             return relevantForms;
@@ -206,11 +204,8 @@ hqDefine('prototype.workflow_builder.preview', function () {
         self.completeForms = ko.computed(function () {
             var relevantForms = [];
             if (self.selectedWorkflow()) {
-                relevantForms = _.filter(self.preview.app.forms(), function (f) {
-                    return f.container.formType() === utils.FormType.COMPLETION && f.container.workflow.uuid() === self.selectedWorkflow().uuid();
-                });
-                relevantForms = _.sortBy(relevantForms, function (f) {
-                    return f.order();
+                relevantForms = _.filter(self.selectedWorkflow().followupForms(), function (f) {
+                    return f.isCompletionForm();
                 });
             }
             return relevantForms;
@@ -221,17 +216,12 @@ hqDefine('prototype.workflow_builder.preview', function () {
         });
 
         self.cleanup = function () {
-            if (self.selectedWorkflow()) {
-                _.each(self.selectedWorkflow().containers(), function (c) {
-                    c.isSelected(false);
-                });
-                _.first(self.selectedWorkflow().containers()).isSelected(true);
-            }
+            // todo handle side nav highlight
         };
 
         self.selectForm = function (form) {
             self.preview.selectEditForm(form, self.selectedRecord());
-            form.isSelected(true);
+            // todo handle side nav highlight
         };
     };
     EditRecordScreen.prototype = Object.create(BaseScreen.prototype);
@@ -252,25 +242,18 @@ hqDefine('prototype.workflow_builder.preview', function () {
         self.forms = ko.computed(function () {
             var relevantForms = [];
             if (self.selectedWorkflow()) {
-                relevantForms = _.filter(self.preview.app.forms(), function (f) {
-                    return f.container.workflow.uuid() === self.selectedWorkflow().uuid();
-                });
-                relevantForms = _.sortBy(relevantForms, function (f) {
-                    return f.order();
-                });
+                relevantForms.push(self.selectedWorkflow().form());
             }
             return relevantForms;
         });
 
         self.cleanup = function () {
-            if (self.selectedWorkflow()) {
-                self.selectedWorkflow().isSelected(false);
-            }
+            // todo handle side nav highlight
         };
 
         self.selectForm = function (form) {
             self.preview.selectForm(form);
-            form.isSelected(true);
+            // todo handle side nav highlight
         };
     };
     SelectSurveyScreen.prototype = Object.create(BaseScreen.prototype);
@@ -284,26 +267,27 @@ hqDefine('prototype.workflow_builder.preview', function () {
            return !_.isEmpty(self.recordName());
         });
         self.disableSave = ko.computed(function () {
-            return self.forms().length > 0 && _.first(self.forms()).container.formType() === utils.FormType.REGISTRATION && !self.hasName();
+            // todo
         });
 
         self.saveForm = function () {
-            if (self.forms().length > 0 && _.first(self.forms()).container.formType() === utils.FormType.REGISTRATION) {
-                _.each(self.preview.recordListScreen.registerForms(), function (f) {
-                    f.records.push(self.recordName() || "Untitled Record");
-                });
-                self.recordName(null);
-            } else if (self.forms().length > 0 && _.first(self.forms()).container.formType() === utils.FormType.COMPLETION) {
-                _.each(self.preview.recordListScreen.registerForms(), function (f) {
-                    f.records.remove(self.recordName());
-                });
-                _.each(_.first(self.preview.recordListScreen.registerForms()).container.workflow.containers(), function (c) {
-                    c.isSelected(false);
-                });
-                self.recordName(null);
-                self.preview.goBack();
-                self.preview.goBack();
-            }
+            //todo
+            // if (self.forms().length > 0 && _.first(self.forms()).container.formType() === utils.FormType.REGISTRATION) {
+            //     _.each(self.preview.recordListScreen.registerForms(), function (f) {
+            //         f.records.push(self.recordName() || "Untitled Record");
+            //     });
+            //     self.recordName(null);
+            // } else if (self.forms().length > 0 && _.first(self.forms()).container.formType() === utils.FormType.COMPLETION) {
+            //     _.each(self.preview.recordListScreen.registerForms(), function (f) {
+            //         f.records.remove(self.recordName());
+            //     });
+            //     _.each(_.first(self.preview.recordListScreen.registerForms()).container.workflow.containers(), function (c) {
+            //         c.isSelected(false);
+            //     });
+            //     self.recordName(null);
+            //     self.preview.goBack();
+            //     self.preview.goBack();
+            // }
             self.cancel();
         };
 
@@ -312,9 +296,7 @@ hqDefine('prototype.workflow_builder.preview', function () {
         };
 
         self.cleanup = function () {
-            _.each(self.forms(), function (f) {
-                f.isSelected(false);
-            });
+            // todo handle side nav highlight
         };
     };
     FormScreen.prototype = Object.create(BaseScreen.prototype);

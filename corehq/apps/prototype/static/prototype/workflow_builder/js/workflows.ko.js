@@ -6,103 +6,75 @@ hqDefine('prototype.workflow_builder.workflows', function () {
    'use strict';
     var module = {};
     var utils = hqImport('prototype.workflow_builder.utils');
+    var forms = hqImport('prototype.workflow_builder.forms');
 
-    var BaseWorkflow = function (app, workflowType) {
+    var BaseWorkflow = function (
+        name, app, navTemplate, editTemplate, modalTemplate, workflowType
+    ) {
         var self = this;
-        utils.BaseAppObj.call(self);
+        utils.BaseAppObj.call(self, name, app, navTemplate, editTemplate, modalTemplate);
 
-        self.name('Untitled Workflow');
-        self.distance = ko.observable(0);
-        self.isSelected = ko.observable(false);
         self.workflowType = ko.observable(workflowType);
-
-        self.app = app;
-
-        self.containers = ko.observableArray();
-
-        self.containerTemplate = function (container) {
-            return container.templateId();
+        self.remove = function () {
+            self.parent.removeWorkflow(self);
         };
-
-        self.updateDistance = function () {
-            var $W = $("#workspace"),
-                $UI = $('#' + self.draggableId());
-            var dist = Math.abs(Math.round(Math.sqrt(
-                ($W.scrollLeft() + $UI.position().left)^2 +
-                ($W.scrollTop() + $UI.position().top)^2
-            )));
-            self.distance(dist);
-        };
-
     };
     BaseWorkflow.prototype = Object.create(utils.BaseAppObj.prototype);
 
-    module.WorkflowA = function (app) {
+    module.Survey = function (name, app) {
         var self = this;
-        BaseWorkflow.call(self, app, utils.WorkflowType.SURVEY);
-        self.containers.push(new FormContainer(
-            self, utils.FormType.SURVEY, utils.FormContainerTemplate.SURVEY
-        ));
-    };
-    module.WorkflowA.prototype = Object.create(BaseWorkflow.prototype);
+        BaseWorkflow.call(
+            self,
+            name,
+            app,
+            'ko-template-nav-survey',
+            'ko-template-edit-survey',
+            'ko-template-modal-survey',
+            utils.WorkflowType.SURVEY
+        );
 
-    module.WorkflowB = function (app) {
-        var self = this;
-        BaseWorkflow.call(self, app, utils.WorkflowType.FOLLOWUP);
-        self.containers.push(new FormContainer(
-            self, utils.FormType.REGISTRATION, utils.FormContainerTemplate.REGISTRATION
-        ));
-        self.containers.push(new FormContainer(
-            self, utils.FormType.FOLLOWUP, utils.FormContainerTemplate.FOLLOWUP_ONLY
-        ));
+        self.form = ko.observable(new forms.Form(name, self));
     };
-    module.WorkflowB.prototype = Object.create(BaseWorkflow.prototype);
+    module.Survey.prototype = Object.create(BaseWorkflow.prototype);
 
-    module.WorkflowC = function (app) {
+    module.RecordList = function (name, app) {
         var self = this;
-        BaseWorkflow.call(self, app, utils.WorkflowType.COMPLETE);
-        self.containers.push(new FormContainer(
-            self, utils.FormType.REGISTRATION, utils.FormContainerTemplate.REGISTRATION
-        ));
-        self.containers.push(new FormContainer(
-            self, utils.FormType.FOLLOWUP, utils.FormContainerTemplate.FOLLOWUP
-        ));
-        self.containers.push(new FormContainer(
-            self, utils.FormType.COMPLETION, utils.FormContainerTemplate.COMPLETION
-        ));
-    };
-    module.WorkflowC.prototype = Object.create(BaseWorkflow.prototype);
+        BaseWorkflow.call(
+            self,
+            name,
+            app,
+            'ko-template-nav-recordlist',
+            'ko-template-edit-recordlist',
+            'ko-template-modal-recordlist',
+            utils.WorkflowType.RECORD_LIST
+        );
 
-    var FormContainer = function (workflow, formType, templateId) {
-        var self = this;
-        self.workflow = workflow;
-        self.formType = ko.observable(formType);
-        self.templateId = ko.observable(templateId);
-        self.isSelected = ko.observable(false);
+        // for this prototype we're only allowing one registration form
+        self.registrationForm = ko.observable(new forms.RegistrationForm("Create Record", self));
+
+        self.followupForms = ko.observableArray();
+        self.followupForms.push(new forms.FollowupForm("Update Record", self));
+        self.followupFormNavTemplate = function (form) {
+            return form.navTemplate();
+        };
+        self.followupFormModalTemplate = function (form) {
+            return form.modalTemplate();
+        };
+
+        self.followupCounter = ko.observable(2);
 
         self.addForm = function () {
-            self.workflow.app.addForm(self);
+            self.followupForms.push(new forms.FollowupForm("Update Record " + self.followupCounter(), self));
+            self.followupCounter(self.followupCounter() + 1);
         };
-        
-        self.selector = ko.computed(function (){
-            return '#' + self.workflow.draggableId()
-                + ' .' + utils.FormContainerClass[self.formType()];
-        });
 
-        self.handleFormDrop = function (event, ui) {
-            var $form = $(ui.draggable);
-            $form.css("top", 0);
-            $form.css("left", 0);
-            $(this).find('.workflow-new-form').before($form);
-            var formUuid =_ .last($form.attr('id').split('_'));
-            var matchingForm = _.first(_.filter(self.workflow.app.forms(), function (f) {
-                return f.uuid() === formUuid;
-            }));
-            matchingForm.container = self;
-            matchingForm.isRegForm(self.formType() === utils.FormType.REGISTRATION);
-            matchingForm.updateOrder();
+        self.removeForm = function (form) {
+            $('#' + form.deleteModalId()).one('hidden.bs.modal', function () {
+                self.followupForms.remove(form);
+            });
         };
     };
+    module.RecordList.prototype = Object.create(BaseWorkflow.prototype);
 
     return module;
 });

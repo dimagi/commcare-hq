@@ -8,6 +8,13 @@
 @z-index-form-container: 210;
 @z-index-live-preview: 1000;
 
+@z-index-trash: 20;
+
+@appnav-width: 225px;
+@appnav-trash-width: 32px;
+@appnav-item-height: 48px;
+@appnav-secondary-width: 35px;
+
 .noselect {
   -webkit-touch-callout: none; /* iOS Safari */
   -webkit-user-select: none;   /* Chrome/Safari/Opera */
@@ -20,11 +27,13 @@
 
 body {
   background: @cc-bg;
+  overflow-x: hidden;
 }
 
-@import 'includes/nav';
-@import 'includes/workflow';
-@import 'includes/forms';
+@import 'includes/navbar';
+@import 'includes/appnav';
+@import 'includes/appedit';
+@import 'includes/popover';
 @import 'includes/preview';
 
 #workspace {
@@ -49,3 +58,7 @@ body {
   color: darken(@cc-bg, 50);
 }
 
+a:focus {
+  outline: none;
+  text-decoration: none;
+}

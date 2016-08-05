@@ -1,0 +1,148 @@
+#appnav {
+  width : @appnav-width;
+  display: inline-block;
+  min-height: 100%;
+  vertical-align: top;
+}
+
+.appnav-menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  > li > .appnav-item {
+    width: @appnav-width;
+    .clearfix();
+    a {
+      float: left;
+      line-height: @appnav-item-height;
+      .transition(all .5s);
+      color: @cc-text;
+      box-sizing: border-box;
+      padding-right: @appnav-trash-width;
+
+      &.appnav-delete {
+        width: @appnav-trash-width;
+        .transition(all .2s);
+        position: relative;
+        z-index: @z-index-trash;
+
+        i {
+          display: block;
+          text-align: center;
+          cursor: pointer;
+          width: @appnav-trash-width;
+          height: @appnav-item-height;
+          line-height: @appnav-item-height;
+          .transition(margin .5s);
+          position: relative;
+          margin-left: -50px;
+        }
+        &:hover {
+          color: @cc-att-neg-mid;
+        }
+      }
+      &.appnav-title {
+        width: @appnav-width - @appnav-trash-width;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        > .wf {
+          font-size: 2rem;
+          margin-left: 13px;
+          margin-right: 5px;
+          top: 1px;
+          position: relative;
+          color: lighten(@cc-text, 20);
+        }
+        > .fa {
+          font-size: 1.7rem;
+          margin-right: 5px;
+          top: 1px;
+          position: relative;
+          color: lighten(@cc-text, 20);
+        }
+      }
+      &.appnav-title-no-delete {
+        padding-left: @appnav-trash-width;
+        width: @appnav-width;
+      }
+      &.appnav-title-secondary {
+        width: @appnav-width - @appnav-trash-width - @appnav-secondary-width;
+      }
+      &.appnav-secondary {
+        width: @appnav-secondary-width;
+        &:hover {
+          color: @cc-att-pos-mid;
+        }
+      }
+      &.appnav-add {
+        width: @appnav-width;
+        padding-left: @appnav-trash-width;
+        > .fa {
+          .transition(all .2s);
+          margin-right: 8px;
+          margin-left: 5px;
+          position: relative;
+        }
+        &:hover {
+          text-decoration: none;
+
+          > .fa {
+            color: @cc-att-pos-mid;
+          }
+        }
+      }
+    }
+    &:hover {
+      a {
+        text-decoration: none;
+        background-color: rgba(255,255,255,0.6);
+        &.appnav-delete {
+          i {
+            margin-left: 0;
+          }
+        }
+      }
+    }
+    &.active a {
+      background-color: white;
+    }
+  }
+}
+
+
+.appnav-menu-recordlist {
+  > li > .appnav-item > a.appnav-title {
+    position: relative;
+    &:before {
+      font-family: "WorkflowFontRegular";
+      content: '\f00a';
+      position: absolute;
+      left: -13px;
+      top: -5px;
+      font-size: 4.6rem;
+      color: lighten(@cc-text, 60);
+    }
+  }
+  > li:last-child > .appnav-item > a.appnav-title:before {
+    content: '\f00b';
+  }
+  > li > .appnav-item > a.appnav-title-no-delete {
+    &:before {
+      left: -13px + @appnav-trash-width;
+    }
+  }
+}
+
+.appnav-menu-recordlist-followup {
+  > li > .appnav-item > a.appnav-title {
+    padding-left: 10px;
+    > .wf {
+      margin-left: 14px;
+    }
+    &:before {
+      left: -1px;
+    }
+  }
+}

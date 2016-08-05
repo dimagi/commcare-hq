@@ -14,44 +14,52 @@ hqDefine('prototype.workflow_builder.utils', function () {
     };
 
     module.WorkflowType = {
-        SURVEY: 'SURVEY',
-        FOLLOWUP: 'FOLLOWUP',
-        COMPLETE: 'COMPLETE',
+        SURVEY: 'Survey',
+        RECORD_LIST: 'Record List',
     };
 
     module.FormType = {
         SURVEY: 'SURVEY',
         REGISTRATION: 'REGISTRATION',
         FOLLOWUP: 'FOLLOWUP',
-        COMPLETION: 'COMPLETION',
     };
 
-    module.FormContainerClass = {
-        SURVEY: 'workflow-form-survey',
-        REGISTRATION: 'workflow-form-registration',
-        FOLLOWUP: 'workflow-form-followup',
-        COMPLETION: 'workflow-form-completion',
-    };
-
-    module.FormContainerTemplate = {
-        SURVEY: 'ko-template-container-survey',
-        REGISTRATION: 'ko-template-container-registration',
-        FOLLOWUP: 'ko-template-container-followup',
-        FOLLOWUP_ONLY: 'ko-template-container-followup-only',
-        COMPLETION: 'ko-template-container-completion',
-    };
-
-    module.BaseAppObj = function () {
+    module.BaseAppObj = function (name, parent, navTemplate, editTemplate, modalTemplate) {
         var self = this;
         self.uuid = ko.observable(_private.generateUUID());
-        self.name = ko.observable();
-        self.modalId = ko.computed(function () {
-            return 'modal-settings-' + self.uuid();
+        self.name = ko.observable(name);
+        self.parent = parent;
+
+        self.isFocusedInPreview = ko.observable(false);
+        self.isInEditMode = ko.observable(false);
+
+        self.navTemplate = ko.observable(navTemplate);
+        self.editTemplate = ko.observable(editTemplate);
+        self.modalTemplate = ko.observable(modalTemplate);
+
+        self.settingsId = ko.computed(function () {
+            return 'settings_' + self.uuid();
         });
-        self.draggableId = ko.computed(function () {
-            return 'draggable_obj_' + self.uuid();
+        self.menuId = ko.computed(function () {
+            return 'menu_' + self.uuid();
         });
+        self.deleteModalId = ko.computed(function () {
+            return 'delete_' + self.uuid();
+        });
+
+        self.remove = function () {
+            console.log('todo remove');
+        };
     };
+
+
+    module.getNameFromCounter = function (name, count) {
+        if (count > 1) {
+            name = name + ' ' + count;
+        }
+        return name;
+    };
+
 
     return module;
 });

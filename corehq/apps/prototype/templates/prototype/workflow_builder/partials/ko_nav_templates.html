@@ -1,0 +1,89 @@
+<script type="text/html" id="ko-template-nav-survey">
+  <li class="js-form-survey">
+    <div class="appnav-item"
+         data-bind="css: { active: isInEditMode, focused: isFocusedInPreview }">
+      <a href="#"
+         class="appnav-delete"
+         data-toggle="modal"
+         data-bind="attr: { href: '#' + deleteModalId() }">
+        <i class="fa fa-trash-o"></i>
+      </a>
+      <!-- ko template: { name: form().navTemplate,
+                          data: form } -->
+      <!-- /ko -->
+    </div>
+  </li>
+</script>
+
+<script type="text/html" id="ko-template-nav-recordlist">
+  <li class="js-form-recordlist">
+    <div class="appnav-item"
+         data-bind="css: { active: isInEditMode, focused: isFocusedInPreview }">
+      <a href="#"
+         class="appnav-delete"
+         data-toggle="modal"
+         data-bind="attr: { href: '#' + deleteModalId() }">
+        <i class="fa fa-trash-o"></i>
+      </a>
+      <a href="#" class="appnav-title appnav-title-secondary">
+        <i class="fa fa-bars"></i>
+        <span data-bind="text: name"></span>
+      </a>
+      <a href="#"
+         class="appnav-secondary"
+         data-bind="click: addForm">
+        <i class="fa fa-plus"></i>
+      </a>
+    </div>
+    <ul class="appnav-menu appnav-menu-recordlist">
+      <li>
+        <!-- ko template: { name: registrationForm().navTemplate,
+                            data: registrationForm } -->
+        <!-- /ko -->
+
+        <ul class="appnav-menu appnav-menu-recordlist appnav-menu-recordlist-followup">
+          <!-- ko template: { name: followupFormNavTemplate,
+                              foreach: followupForms } -->
+          <!-- /ko -->
+        </ul>
+      </li>
+    </ul>
+  </li>
+</script>
+
+<script type="text/html" id="ko-template-nav-form">
+  <a href="#" class="appnav-title">
+    <i class="fa fa-file-o"></i>
+    <span data-bind="text: name"></span>
+  </a>
+</script>
+
+<script type="text/html" id="ko-template-nav-regform">
+  <div class="appnav-item js-form-registration">
+    <a href="#" class="appnav-title appnav-title-no-delete">
+      <i class="wf wf-recordlist-create"></i>
+      <span data-bind="text: name"></span>
+    </a>
+  </div>
+</script>
+
+<script type="text/html" id="ko-template-nav-followup">
+  <li class="js-form-followup">
+    <div class="appnav-item">
+      <a href="#"
+         class="appnav-delete"
+         data-toggle="modal"
+         data-bind="attr: { href: '#' + deleteModalId() }">
+        <i class="fa fa-trash-o"></i>
+      </a>
+      <a href="#" class="appnav-title">
+        <i class="wf wf-recordlist-update"
+           data-bind="css: {
+              'wf-recordlist-update': isFollowupForm,
+              'wf-recordlist-complete': isCompletionForm
+           }"></i>
+        <span data-bind="text: name"></span>
+      </a>
+    </div>
+  </li>
+</script>
