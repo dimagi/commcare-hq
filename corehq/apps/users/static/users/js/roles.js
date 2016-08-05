@@ -15,7 +15,7 @@ hqDefine('users/js/roles.js', function () {
                         return {
                             path: report.path,
                             name: report.name,
-                            value: data.permissions.view_report_list.indexOf(report.path) !== -1,
+                            value: data.permissions.view_report_list.indexOf(report.path) !== -1
                         };
                     }),
                 };
@@ -121,9 +121,15 @@ hqDefine('users/js/roles.js', function () {
                     success: function (data) {
                         self.addOrReplaceRole(data);
                         self.unsetRoleBeingEdited();
+<<<<<<< HEAD
                     },
                 };
             },
+=======
+                    }
+                };
+            }
+>>>>>>> use hqDefine for users/js/roles.js
         };
         self.modalDeleteButton = {
             state: ko.observable(),
@@ -136,9 +142,15 @@ hqDefine('users/js/roles.js', function () {
                     success: function (data) {
                         self.removeRole(data);
                         self.unsetRoleBeingDeleted();
+<<<<<<< HEAD
                     },
                 };
             },
+=======
+                    }
+                };
+            }
+>>>>>>> use hqDefine for users/js/roles.js
         };
     };
 
