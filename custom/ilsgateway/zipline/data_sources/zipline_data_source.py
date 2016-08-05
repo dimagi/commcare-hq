@@ -40,3 +40,7 @@ class ZiplineDataSource(object):
 
     def get_data(self, start, limit):
         raise NotImplementedError('Not implemented yet')
+
+    @property
+    def total_count(self):
+        raise NotImplementedError('Not implemented yet')

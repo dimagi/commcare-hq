@@ -1,5 +1,8 @@
+from django.core.urlresolvers import reverse_lazy
+
 from corehq.apps.reports.filters.base import BaseMultipleOptionFilter
-from custom.zipline.models import EmergencyOrderStatusUpdate
+from custom.zipline.models import EmergencyOrderStatusUpdate, EmergencyOrder
+from dimagi.utils.decorators.memoized import memoized
 
 
 class EmergencyOrderStatusChoiceFilter(BaseMultipleOptionFilter):
@@ -33,4 +36,23 @@ class EmergencyPackageStatusChoiceFilter(EmergencyOrderStatusChoiceFilter):
             (EmergencyOrderStatusUpdate.STATUS_CANCELLED_IN_FLIGHT,
              EmergencyOrderStatusUpdate.STATUS_CANCELLED_IN_FLIGHT),
 
+        ]
+
+
+class OrderIdChoiceFilter(BaseMultipleOptionFilter):
+
+    slug = 'orders_id'
+    label = 'Orders id'
+
+    is_paginated = True
+
+    @property
+    def pagination_source(self):
+        return reverse_lazy('zipline_orders_view', kwargs={'domain': self.domain})
+
+    @property
+    def options(self):
+        return [
+            {'id': pk, 'text': pk}
+            for pk in EmergencyOrder.objects.filter(domain=self.domain).values_list('pk', flat=True)
         ]

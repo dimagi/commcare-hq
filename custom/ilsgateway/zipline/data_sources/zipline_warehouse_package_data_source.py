@@ -3,14 +3,15 @@ from custom.zipline.models import EmergencyOrderPackage
 
 from custom.ilsgateway.zipline import helpers
 
+
 class ZiplineWarehousePackageDataSource(ZiplineDataSource):
 
     @property
-    def order_id(self):
-        return self.config.order_id
+    def orders_id(self):
+        return self.config.orders_id
 
-    def get_emergency_order_packages(self, start, limit):
-        offset = start + limit
+    @property
+    def filters(self):
         additional_filters = {}
         if self.sql_location.location_type_object.administrative:
             descendants = self.sql_location.get_descendants() \
@@ -22,14 +23,19 @@ class ZiplineWarehousePackageDataSource(ZiplineDataSource):
         if self.statuses:
             additional_filters['status__in'] = self.statuses
 
-        if self.order_id:
-            additional_filters['order_id'] = self.order_id
+        orders_id = filter(lambda x: bool(x), self.orders_id)
+        if orders_id:
+            additional_filters['order_id__in'] = orders_id
 
-        return EmergencyOrderPackage.objects.filter(
+        return dict(
             order__domain=self.domain,
             order__timestamp__range=[self.start_date, self.end_date],
             **additional_filters
-        )[start:offset]
+        )
+
+    def get_emergency_order_packages(self, start, limit):
+        offset = start + limit
+        return EmergencyOrderPackage.objects.filter(**self.filters)[start:offset]
 
     def get_data(self, start, limit):
         emergency_order_packages = self.get_emergency_order_packages(start, limit)
@@ -56,3 +62,7 @@ class ZiplineWarehousePackageDataSource(ZiplineDataSource):
                 helpers.convert_products_dict_to_list(emergency_order_package.products)
             ])
         return rows
+
+    @property
+    def total_count(self):
+        return EmergencyOrderPackage.objects.filter(**self.filters).count()

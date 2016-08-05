@@ -24,3 +24,7 @@ class ZiplineReport(CustomProjectReport, GenericTabularReport, DatespanMixin):
     @property
     def rows(self):
         return self.data_source.get_data(self.pagination.start, self.pagination.count)
+
+    @property
+    def total_records(self):
+        return self.data_source.total_count

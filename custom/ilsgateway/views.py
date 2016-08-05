@@ -4,10 +4,10 @@ from datetime import datetime
 import json
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.db.models import Count
-from django.http.response import HttpResponseRedirect, Http404
+from django.http.response import HttpResponseRedirect, Http404, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
-from django.views.generic.base import TemplateView, RedirectView
+from django.views.generic.base import TemplateView, RedirectView, View
 from django.views.generic.edit import DeleteView
 from django.views.generic.list import ListView
 from corehq.apps.commtrack.models import StockState
@@ -35,6 +35,7 @@ from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupervisionDoc
     PendingReportingDataRecalculation, OneOffTaskProgress
 from custom.ilsgateway.tasks import report_run
 from custom.logistics.views import BaseConfigView
+from custom.zipline.models import EmergencyOrder
 
 
 class GlobalStats(BaseDomainView):
@@ -343,6 +344,31 @@ class DashboardPageRedirect(RedirectView):
             )
 
         return url
+
+
+class ZiplineOrdersView(View):
+
+    @method_decorator(login_and_domain_required)
+    def dispatch(self, request, domain, *args, **kwargs):
+        return super(ZiplineOrdersView, self).dispatch(request, domain, *args, **kwargs)
+
+    def get(self, request, domain, **kwargs):
+        filters = {}
+        q = request.GET.get('q')
+        page = int(request.GET.get('page', 1))
+        page_limit = int(request.GET.get('page_limit', 10))
+
+        if q:
+            filters['pk__contains'] = q
+
+        start = (page - 1) * page_limit
+        end = start + page_limit
+        orders_id = EmergencyOrder.objects.filter(domain=domain, **filters).values_list('pk', flat=True)[start:end]
+
+        return JsonResponse(data={
+            'results': [{'id': str(pk), 'text': str(pk)} for pk in orders_id],
+            'total': EmergencyOrder.objects.filter(domain=domain, **filters).count()
+        })
 
 
 @domain_admin_required
