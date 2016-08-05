@@ -38,7 +38,7 @@
 
 {% block js %} {{ block.super }}
     {% compress js %}
-    {% include "formplayer/dependencies.html" %}
+        {% include "formplayer/dependencies.html" %}
     {% endcompress %}
 {% endblock %}
 
@@ -67,6 +67,12 @@
 {% block page_content %}
 
     <!-- For now we won't touch this since the form entry code is coupled with it  -->
+
+    <div id="menu-container">
+        <div id="breadcrumb-region" class="container"></div>
+        <div id="menu-region" class="container"></div>
+    </div>
+
     <div id="cloudcare-main">
         <section id="cloudcare-notifications"></section>
         <section id="case-crumbs" style="width: 800px"></section>
@@ -80,11 +86,6 @@
             }
         "></section>
         {% endif %}
-    </div>
-
-    <div id="menu-container">
-        <div id="breadcrumb-region" class="container"></div>
-        <div id="menu-region" class="container"></div>
     </div>
 
     {% include 'formplayer/fullform-ui/templates.html' %}

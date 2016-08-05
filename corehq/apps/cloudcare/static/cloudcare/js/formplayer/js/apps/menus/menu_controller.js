@@ -40,10 +40,16 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 FormplayerFrontend.regions.main.show(menuListView.render());
             }
 
+            if (menuResponse.breadcrumbs) {
+                MenuList.Controller.showBreadcrumbs(menuResponse.breadcrumbs);
+            }
+        },
+
+        showBreadcrumbs: function (breadcrumbs) {
             var breadcrumbsModel = [];
-            for (var i = 0; i < menuResponse.breadcrumbs.length; i++) {
+            for (var i = 0; i < breadcrumbs.length; i++) {
                 var obj = {};
-                obj.data = menuResponse.breadcrumbs[i];
+                obj.data = breadcrumbs[i];
                 obj.id = i;
                 breadcrumbsModel.push(obj);
             }
