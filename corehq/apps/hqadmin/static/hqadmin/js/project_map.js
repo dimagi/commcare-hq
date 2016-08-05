@@ -150,7 +150,7 @@ var projectMapInit = function(mapboxAccessToken) {
     // copied from dimagisphere
     L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
         maxZoom: 6,
-        minZoom: 3,
+        minZoom: 2,
         id: mapId,
         accessToken: mapboxAccessToken,
         noWrap: true,
