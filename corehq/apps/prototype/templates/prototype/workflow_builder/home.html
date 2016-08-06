@@ -107,6 +107,7 @@
         curYPos = 0,
         curXPos = 0;
     var $phoneScroll = $('.phone-page-scrollable');
+
     $phoneScroll.mousemove(function(m){
       if(curDown === true){
        $phoneScroll.scrollTop($phoneScroll.scrollTop() + (curYPos - m.pageY));
@@ -118,10 +119,12 @@
       curDown = true;
       curYPos = m.pageY;
       curXPos = m.pageX;
+      $phoneScroll.css('cursor', 'grabbing');
     });
 
     $phoneScroll.mouseup(function(){
       curDown = false;
+      $phoneScroll.css('cursor', 'default');
     });
   });
   </script>
@@ -176,7 +179,7 @@
 
   <!-- ko with: appPreview -->
   <div id="preview"
-       class="live-preview live-preview-open"
+       class="live-preview live-preview-open noselect"
        data-bind="css: {'live-preview-closed': !isShown(), 'live-preview-open': isShown}">
     <div class="live-preview-container">
       <h2>App Preview</h2>

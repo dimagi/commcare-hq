@@ -30,7 +30,12 @@ hqDefine('prototype.workflow_builder.utils', function () {
         self.name = ko.observable(name);
         self.app = app;
 
-        self.isFocusedInPreview = ko.observable(false);
+        self.isFocusedInPreview = ko.computed(function () {
+            if (self.app.appPreview().focusedItem()) {
+                return self.app.appPreview().focusedItem().uuid() === self.uuid();
+            }
+            return false;
+        });
         self.isInEditMode = ko.computed(function () {
             return self.app.editItem().uuid() === self.uuid();
         });

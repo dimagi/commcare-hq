@@ -55,6 +55,16 @@ hqDefine('prototype.workflow_builder.workflows', function () {
             utils.WorkflowType.RECORD_LIST
         );
 
+        var _defaultName = name;
+
+        self.thingName = ko.observable('Record');
+        self.name = ko.computed(function () {
+            if (self.thingName() === 'Record') {
+                return _defaultName;
+            }
+            return self.thingName() + ' List';
+        });
+
         // for this prototype we're only allowing one registration form
         self.registrationForm = ko.observable(new forms.RegistrationForm("Registration Questions", self));
 

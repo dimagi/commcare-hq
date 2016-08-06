@@ -5,7 +5,7 @@
         <!-- ko foreach: workflows -->
         <li data-bind="css: {'selected': isFocusedInPreview}">
           <div class="phone-navlist-title noselect">
-            <a href="#" data-bind="text: name, click: $parent.selectWorkflow"></a>
+            <a href="#" data-bind="text: name, click: $parent.selectNextScreen"></a>
             <button type="button"
                     class="phone-navlist-icon pull-right"
                     data-bind="click: $parent.selectWorkflow">
@@ -49,47 +49,32 @@
     <div class="phone-page-scrollable">
       <ul class="phone-navlist">
         <li class="phone-navlist-header">
-          <h4 data-bind="text: workflowName"></h4>
+          <h4 data-bind="text: title"></h4>
         </li>
       </ul>
-        <!-- ko foreach: registerForms -->
-        <ul class="phone-navlist">
-          <!-- ko foreach: records-->
-          <li data-bind="highlightRecordList: $parents[1].selectedWorkflow">
-            <div class="phone-navlist-title noselect">
-              <a href="#" data-bind="text: $data, click: $parents[1].selectRecord"></a>
-              <button type="button"
-                      class="phone-navlist-icon pull-right"
-                      data-bind="click: $parents[1].selectRecord">
-                <i class="fa fa-chevron-right"></i>
-              </button>
-            </div>
-          </li>
-          <!-- /ko -->
-          <li data-bind="css: {'selected': isFocusedInPreview}">
-            <div class="phone-navlist-title noselect">
-              <a href="#" data-bind="text: name, click: $parent.selectForm"></a>
-              <button type="button"
-                      class="phone-navlist-icon pull-right"
-                      data-bind="click: $parent.selectForm">
-                <i class="fa fa-chevron-right"></i>
-              </button>
-            </div>
-          </li>
-        </ul>
-        <!-- /ko -->
-    </div>
-  </div>
-</script>
-
-<script type="text/html" id="ko-template-screen-editrecord">
-  <div class="phone-page" data-bind="animateScreen: isHidden">
-    <div class="phone-page-scrollable">
       <ul class="phone-navlist">
-        <li class="phone-navlist-header">
-          <h4>Follow-Up <span data-bind="text: workflowName"></span> for <span data-bind="text: selectedRecord"></span></h4>
+        <!-- ko foreach: records-->
+        <li>
+          <div class="phone-navlist-title noselect">
+            <a href="#" data-bind="text: $data, click: $parent.selectRecord"></a>
+            <button type="button"
+                    class="phone-navlist-icon pull-right"
+                    data-bind="click: $parent.selectRecord">
+              <i class="fa fa-chevron-right"></i>
+            </button>
+          </div>
         </li>
-        <!-- ko foreach: followupForms -->
+        <!-- /ko -->
+      </ul>
+      <ul class="phone-questionlist" data-bind="visible: records().length < 1">
+        <li>
+          There are no <strong data-bind="text: thingName"></strong><strong>s</strong> yet! Add a
+          <strong data-bind="text: thingName"></strong> through the menu below
+          <i class="fa fa-arrow-down"></i>
+        </li>
+      </ul>
+      <!-- ko if: hasRegistrationForm -->
+      <ul class="phone-navlist" style="margin-top: 10px;" data-bind="with: registrationForm">
         <li data-bind="css: {'selected': isFocusedInPreview}">
           <div class="phone-navlist-title noselect">
             <a href="#" data-bind="text: name, click: $parent.selectForm"></a>
@@ -100,13 +85,20 @@
             </button>
           </div>
         </li>
-        <!-- /ko -->
       </ul>
-      <ul class="phone-navlist" data-bind="visible: hasCompleteForms">
+      <!-- /ko -->
+    </div>
+  </div>
+</script>
+
+<script type="text/html" id="ko-template-screen-editrecord">
+  <div class="phone-page" data-bind="animateScreen: isHidden">
+    <div class="phone-page-scrollable">
+      <ul class="phone-navlist">
         <li class="phone-navlist-header">
-          <h4>Complete <span data-bind="text: workflowName"></span> for <span data-bind="text: selectedRecord"></span></h4>
+          <h4 data-bind="text: title"></h4>
         </li>
-        <!-- ko foreach: completeForms -->
+        <!-- ko foreach: forms -->
         <li data-bind="css: {'selected': isFocusedInPreview}">
           <div class="phone-navlist-title noselect">
             <a href="#" data-bind="text: name, click: $parent.selectForm"></a>
@@ -127,47 +119,92 @@
 <script type="text/html" id="ko-template-screen-questions">
   <div class="phone-page"  data-bind="animateScreen: isHidden">
     <div class="phone-page-scrollable">
-      <!-- ko foreach: forms -->
       <ul class="phone-navlist">
         <li class="phone-navlist-header">
-          <h4 data-bind="text: name"></h4>
+          <h4 data-bind="text: title"></h4>
         </li>
       </ul>
-      <ul class="phone-questionlist">
-        <li data-bind="visible: isRegForm">
-          <p class="phone-questionlist-question" data-bind="text: recordNameText"></p>
-          <div class="phone-questionlist-answer">
-            <textarea cols="2" class="form-control" data-bind="value: $parent.recordName, valueUpdate: 'keyup'"></textarea>
-          </div>
-        </li>
-        <!-- ko foreach: questions -->
-        <li>
-          <p class="phone-questionlist-question" data-bind="text: text">
-            This is a question
-          </p>
-          <div class="phone-questionlist-answer">
-            <textarea cols="2" class="form-control"></textarea>
-          </div>
-        </li>
-        <!-- /ko -->
-        <li data-bind="visible: hasNoQuestions() && !isRegForm()">
-          <p class="phone-questionlist-question">
-            No questions yet! Please add a question or two to <span data-bind="text: name"></span>.
-          </p>
-        </li>
-        <li>
-          <p class="help-text" data-bind="visible: isCompleteForm">
-            Note: Submitting this form will remove <strong data-bind="text: $parent.recordName"></strong> from the record list.
-          </p>
-          <p class="help-text" data-bind="visible: $parent.disableSave">
-            Please specify a Name (or ID) before continuing.
-          </p>
-          <button type="button" class="btn btn-default" data-bind="click: $parent.cancel">Cancel</button>
-          <button type="button" class="btn btn-primary" data-bind="click: $parent.saveForm, visible: !$parent.disableSave()">Submit Test Form</button>
-          <button type="button" class="btn btn-primary disabled" disabled="disabled" data-bind="visible: $parent.disableSave">Submit Test Form</button>
-        </li>
-      </ul>
+      <!-- ko if: hasForm -->
+        <!-- ko template: { name: formPreviewTemplate, data: form } --> <!-- /ko -->
       <!-- /ko -->
     </div>
+  </div>
+</script>
+
+<script type="text/html" id="ko-template-preview-regform">
+  <ul class="phone-questionlist">
+    <li>
+      <p class="phone-questionlist-question" data-bind="text: recordNameQuestion"></p>
+      <div class="phone-questionlist-answer">
+        <textarea cols="2"
+                  class="form-control"
+                  data-bind="value: $parent.recordName, valueUpdate: 'keyup'"></textarea>
+      </div>
+    </li>
+    <!-- ko foreach: questions -->
+      <li>
+        <p class="phone-questionlist-question" data-bind="text: text"></p>
+        <div class="phone-questionlist-answer">
+          <textarea cols="2" class="form-control"></textarea>
+        </div>
+      </li>
+    <!-- /ko -->
+    <li>
+      <p class="help-text"
+         data-bind="visible: $parent.disableSave">
+        Please specify a Name (or ID) before continuing.
+      </p>
+      <button type="button" class="btn btn-default" data-bind="click: $parent.cancel">Cancel</button>
+      <button type="button" class="btn btn-primary" data-bind="click: $parent.saveForm, visible: !$parent.disableSave()">Submit</button>
+      <button type="button" class="btn btn-primary disabled" disabled="disabled" data-bind="visible: $parent.disableSave">Submit</button>
+    </li>
+  </ul>
+</script>
+
+<script type="text/html" id="ko-template-preview-form">
+  <ul class="phone-questionlist">
+    <!-- ko foreach: questions -->
+      <li>
+        <p class="phone-questionlist-question" data-bind="text: text"></p>
+        <div class="phone-questionlist-answer">
+          <textarea cols="2" class="form-control"></textarea>
+        </div>
+      </li>
+    <!-- /ko -->
+    <li data-bind="visible: hasNoQuestions()">
+      <p class="phone-questionlist-question">
+        <i class="fa fa-arrow-left"></i> No questions yet! Please add a question or two to <strong data-bind="text: name"></strong>.
+      </p>
+    </li>
+    <li>
+      <button type="button" class="btn btn-default" data-bind="click: $parent.cancel">Cancel</button>
+      <button type="button" class="btn btn-primary" data-bind="click: $parent.saveForm">Submit</button>
+    </li>
+  </ul>
+</script>
+
+
+<script type="text/html" id="ko-template-screen-confirmform">
+  <div class="phone-page"  data-bind="animateScreen: isHidden">
+    <ul class="phone-questionlist">
+      <li>
+        <p class="lead">
+          Thanks! Questions submitted!
+        </p>
+        <p>
+          Since this is a <strong>preview</strong>, no data was actually saved.
+        </p>
+        <p>
+          In practice data would be sent from a phone to this server and later
+          used for downloading or viewing reports.
+        </p>
+        <hr />
+        <p>
+          <button type="button"
+                  class="btn btn-success"
+                  data-bind="click: confirm"><i class="fa fa-check"></i> OK</button>
+        </p>
+      </li>
+    </ul>
   </div>
 </script>

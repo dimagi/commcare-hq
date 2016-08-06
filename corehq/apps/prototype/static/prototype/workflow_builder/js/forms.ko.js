@@ -62,8 +62,7 @@ hqDefine('prototype.workflow_builder.forms', function () {
             workflow,
             'ko-template-nav-followup',
             'ko-template-edit-followup',
-            'ko-template-modal-followup',
-            'ko-template-preview-followup'
+            'ko-template-modal-followup'
         );
 
         self.isCompletionForm = ko.observable(false);

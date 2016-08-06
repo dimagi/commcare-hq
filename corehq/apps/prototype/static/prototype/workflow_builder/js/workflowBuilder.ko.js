@@ -67,7 +67,7 @@ hqDefine('prototype.workflow_builder.workflowBuilder', function () {
             var wf = new workflows.RecordList(utils.getNameFromCounter("Record List", self.recordListCounter()), self);
             self.workflows.push(wf);
             self.setEditItem(wf);
-            self.surveyCounter(self.recordListCounter() + 1);
+            self.recordListCounter(self.recordListCounter() + 1);
             self.appPreview().resetApp();
         };
 
@@ -75,6 +75,8 @@ hqDefine('prototype.workflow_builder.workflowBuilder', function () {
             $('#' + workflow.deleteModalId()).one('hidden.bs.modal', function () {
                 self.workflows.remove(workflow);
             });
+            self.editAppSettings();
+            self.appPreview().resetApp();
         };
 
     };

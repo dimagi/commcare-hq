@@ -55,17 +55,18 @@
       <div class="col-xs-12">
 
         <div class="form">
-          <div class="form-group">
-            <label class="control-label">
-              Name
-            </label>
-            <div class="controls">
-              <input type="text"
-                     class="form-control"
-                     data-bind="value: name, valueUpdate: 'keyup'" />
-            </div>
-          </div>
-
+          <p class="lead">
+            A <strong>record list</strong> helps you track things over time.
+          </p>
+          <p>
+            What are you tracking?
+          </p>
+          <p>
+            <input type="text"
+                   class="form-control"
+                   style="width: 150px; display: inline-block;"
+                   data-bind="value: thingName, valueUpdate: 'keyup'" /> <strong>List</strong>
+          </p>
         </div>
       </div>
     </div>
@@ -104,7 +105,7 @@
                 <i class="fa fa-info-circle"></i> Every Registration form has a <strong>Name</strong> question. The response to the name question will be the name of the new record in the Record List.
               </div>
               <div class="controls">
-                <textarea cols="2" class="form-control" data-bind="value: recordNameQuestion"></textarea>
+                <textarea cols="2" class="form-control" data-bind="value: recordNameQuestion, valueUpdate: 'keyup'"></textarea>
               </div>
             </div>
             <!-- ko foreach: questions -->
