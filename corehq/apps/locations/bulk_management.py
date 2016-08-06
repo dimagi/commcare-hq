@@ -86,8 +86,8 @@ class LocationTypeStub(object):
                 return True
         return False
 
-    def _as_db_object(self, old_collection, parent_type, domain):
-        # returns a SQLLocation version of the stub
+    def _as_db_object(self, old_collection, domain):
+        # returns a LocationType version of the stub
         if self.is_new(old_collection):
             obj = LocationType(domain=domain)
         else:
@@ -95,7 +95,7 @@ class LocationTypeStub(object):
         return obj
 
     def save_if_needed(self, old_collection, parent_type, domain):
-        db_object = self._as_db_object(old_collection, parent_type, domain)
+        db_object = self._as_db_object(old_collection, domain)
         if self.do_delete:
             db_object.delete()
             return None
@@ -133,7 +133,7 @@ class LocationStub(object):
         self.is_new = False
         if not self.location_id and not self.site_code:
             raise LocationExcelSheetError(
-                _(u"Location in sheet '{}', at row '{}' doesn't contain both location_id and site_code")
+                _(u"Location in sheet '{}', at row '{}' doesn't contain either location_id or site_code")
                 .format(self.location_type, self.index)
             )
 
@@ -160,12 +160,8 @@ class LocationStub(object):
         if self.location_id and self.site_code:
             return
 
-        if not self.location_id and not self.site_code:
-            # Both can't be empty, this should have already been caught in initialization
-            raise Exception(
-                _(u"Location in sheet '{}', at row '{}' doesn't contain both location_id and site_code")
-                .format(self.location_type, self.index)
-            )
+        # Both can't be empty, this should have already been caught in initialization
+        assert self.location_id or self.site_code
 
         old_locations_by_id = old_collection.locations_by_id
         old_locations_by_site_code = old_collection.locations_by_site_code
@@ -598,8 +594,9 @@ class LocationTreeValidator(object):
         def _validate_location(location):
             loc_type = self.types_by_code.get(location.location_type)
             if not loc_type:
-                return _(u"Location '{}' in sheet points to a to be deleted location-type '{}'").format(
-                    location.site_code, location.location_type)
+                return (_(
+                    u"Location '{}' in sheet points to a nonexistent or to be deleted location-type '{}'")
+                    .format(location.site_code, location.location_type))
 
             parent = self.locations_by_code.get(location.parent_code)
             if loc_type.parent_code == ROOT_LOCATION_TYPE:

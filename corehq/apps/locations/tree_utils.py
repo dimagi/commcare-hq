@@ -56,9 +56,24 @@ def assert_no_cycles(nodes):
 
 def expansion_validators(nodes):
     """
-    Given a tree as a list of (uid, parent_uid), returns tuple of functions that return
-    valid expand_from and expand_to options respectively.
-    This assumes that tree validation is already done.
+    Given a location type tree, this returns a tuple of functions that
+    specify what a valid expand_from and sync_to are for a given node in the tree
+
+    This assumes that tree validation is already done, passing in an unvalidated tree
+    might result in unexpected behaviour.
+
+    args:
+        nodes: A list of tuples (uid, parent_uid) representing a location type tree structure
+
+    returns:
+        tuple: A tuple of two functions called valid_expand_from and valid_expand_to
+
+        1st element of the tuple is a function called 'valid_expand_from'. It takes uid of a
+        node in the tree and returns a list of valid 'expand_from' nodes for the given node
+
+        2nd element of the tuple is a function called 'valid_expand_to', takes uid of a node
+        in the tree and returns a list of valid 'sync_to' nodes for the given node
+
     """
 
     parent_of_child = dict(nodes)
