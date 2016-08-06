@@ -18,6 +18,10 @@ hqDefine('prototype.workflow_builder.workflows', function () {
         self.remove = function () {
             self.app.removeWorkflow(self);
         };
+
+        self.isSurvey = ko.computed(function () {
+            return self.workflowType() === utils.WorkflowType.SURVEY;
+        });
     };
     BaseWorkflow.prototype = Object.create(utils.BaseAppObj.prototype);
 

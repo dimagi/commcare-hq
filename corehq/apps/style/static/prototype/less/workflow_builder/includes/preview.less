@@ -182,10 +182,10 @@
   border-bottom: 1px solid darken(@cc-bg, 5);
 
   > li {
-    line-height: @navbar-height;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    box-sizing: border-box;
     .transition(all 1s);
     &.selected {
       .box-shadow(0px 0px 10px 2px @cc-dark-cool-accent-low inset);
@@ -195,12 +195,32 @@
   .phone-navlist-title {
     width: @phone-screen-width;
     padding-left: 20px;
-    font-size: 1.5rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 1.2rem;
     a {
+      line-height: @navbar-height;
       color: @cc-text;
+      display: inline-block;
+      max-width: 245px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      height: @navbar-height;
+      vertical-align: top;
+
+      .fa {
+        font-size: 2rem;
+        position: relative;
+        top: 2px;
+        color: fadeout(@cc-text, 50);
+        margin-right: 5px;
+      }
+      .wf {
+        font-size: 2.5rem;
+        position: relative;
+        top: 2px;
+        color: fadeout(@cc-text, 50);
+        margin-right: 5px;
+      }
       .transition(color 1s);
       &:hover {
         text-decoration: none;
@@ -231,7 +251,7 @@
   padding: 0;
   > li {
     background-color: white;
-    padding: 15px 31px 20px 15px;
+    padding: 15px 37px 20px 20px;
     border-bottom: 1px solid darken(@cc-bg, 5);
   }
 }
@@ -241,6 +261,7 @@
     line-height: @navbar-height *.6;
     font-size: 1.3rem;
     padding-left: 20px;
+    padding-right: 20px;
     margin: 0;
     white-space: nowrap;
     overflow: hidden;

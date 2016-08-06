@@ -5,35 +5,13 @@
         <!-- ko foreach: workflows -->
         <li data-bind="css: {'selected': isFocusedInPreview}">
           <div class="phone-navlist-title noselect">
-            <a href="#" data-bind="text: name, click: $parent.selectNextScreen"></a>
+            <a href="#" data-bind="click: $parent.selectNextScreen">
+              <i class="fa" data-bind="css: {'fa-file-o': isSurvey, 'fa-bars': !isSurvey()}"></i>
+              <span data-bind="text: name"></span>
+            </a>
             <button type="button"
                     class="phone-navlist-icon pull-right"
                     data-bind="click: $parent.selectWorkflow">
-              <i class="fa fa-chevron-right"></i>
-            </button>
-          </div>
-        </li>
-        <!-- /ko -->
-      </ul>
-    </div>
-  </div>
-</script>
-
-
-<script type="text/html" id="ko-template-screen-survey">
-  <div class="phone-page" data-bind="animateScreen: isHidden">
-    <div class="phone-page-scrollable">
-      <ul class="phone-navlist">
-        <li class="phone-navlist-header">
-          <h4 data-bind="text: workflowName"></h4>
-        </li>
-        <!-- ko foreach: forms -->
-        <li data-bind="css: {'selected': isFocusedInPreview}">
-          <div class="phone-navlist-title noselect">
-            <a href="#" data-bind="text: name, click: $parent.selectForm"></a>
-            <button type="button"
-                    class="phone-navlist-icon pull-right"
-                    data-bind="click: $parent.selectForm">
               <i class="fa fa-chevron-right"></i>
             </button>
           </div>
@@ -49,7 +27,10 @@
     <div class="phone-page-scrollable">
       <ul class="phone-navlist">
         <li class="phone-navlist-header">
-          <h4 data-bind="text: title"></h4>
+          <h4>
+            <i class="fa fa-bars"></i>
+            <span data-bind="text: title"></span>
+          </h4>
         </li>
       </ul>
       <ul class="phone-navlist">
@@ -77,7 +58,10 @@
       <ul class="phone-navlist" style="margin-top: 10px;" data-bind="with: registrationForm">
         <li data-bind="css: {'selected': isFocusedInPreview}">
           <div class="phone-navlist-title noselect">
-            <a href="#" data-bind="text: name, click: $parent.selectForm"></a>
+            <a href="#" data-bind="click: $parent.selectForm">
+              <i class="wf wf-recordlist-create"></i>
+              <span data-bind="text: name"></span>
+            </a>
             <button type="button"
                     class="phone-navlist-icon pull-right"
                     data-bind="click: $parent.selectForm">
@@ -101,7 +85,10 @@
         <!-- ko foreach: forms -->
         <li data-bind="css: {'selected': isFocusedInPreview}">
           <div class="phone-navlist-title noselect">
-            <a href="#" data-bind="text: name, click: $parent.selectForm"></a>
+            <a href="#" data-bind="click: $parent.selectForm">
+              <i class="wf wf-recordlist-create"></i>
+              <span data-bind="text: name"></span>
+            </a>
             <button type="button"
                     class="phone-navlist-icon pull-right"
                     data-bind="click: $parent.selectForm">
