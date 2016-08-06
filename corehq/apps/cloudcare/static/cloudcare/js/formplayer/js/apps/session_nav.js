@@ -4,9 +4,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     SessionNavigate.Router = Marionette.AppRouter.extend({
         appRoutes: {
             "apps": "listApps", // list all apps available to this user
-            "apps/:id": "selectApp", // select the app under :id and list root commands
-            "apps/:id/menu": "listMenus", // select the app under :id, make session steps in params, display screen
-            "apps/sessions": "listSessions", //list all this user's current sessions (incomplete forms)
+            ":session": "listMenus",
         },
     });
 
@@ -18,80 +16,86 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         selectApp: function (appId) {
             SessionNavigate.MenuList.Controller.selectMenu(appId);
         },
-        listMenus: function (appId) {
+        listMenus: function () {
             FormplayerFrontend.request("clearForm");
             var currentFragment = Backbone.history.getFragment();
-            var paramMap = Util.getSteps(currentFragment);
-            var steps = paramMap.steps;
-            var page = paramMap.page || 0;
-            var search = paramMap.search || "";
-            SessionNavigate.MenuList.Controller.selectMenu(appId, steps, page, search);
+            var urlObject = Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(currentFragment));
+            var appId = urlObject.appId;
+            var sessionId = urlObject.sessionId;
+            var steps = urlObject.steps;
+            var page = urlObject.page;
+            var search = urlObject.search;
+            SessionNavigate.MenuList.Controller.selectMenu(appId, sessionId, steps, page, search);
         },
         showDetail: function (model, index) {
             SessionNavigate.MenuList.Controller.showDetail(model, index);
         },
-        listSessions: function() {
+        listSessions: function () {
             SessionNavigate.SessionList.Controller.listSessions();
         },
-
-        getIncompleteForm: function(sessionId) {
+        getIncompleteForm: function (sessionId) {
             FormplayerFrontend.request("getIncompleteForm", sessionId);
+        },
+        renderResponse: function (menuResponse) {
+            var NextScreenCollection = Backbone.Collection.extend({});
+            var nextScreenCollection;
+            //TODO: clean up this hackiness
+            if (menuResponse.commands) {
+                nextScreenCollection = new NextScreenCollection(menuResponse.commands);
+                nextScreenCollection.type = "commands";
+            } else {
+                nextScreenCollection = new NextScreenCollection(menuResponse.entities);
+                nextScreenCollection.type = "entities";
+            }
+            nextScreenCollection.title = menuResponse.title;
+            nextScreenCollection.locales = menuResponse.locales;
+            nextScreenCollection.sessionId = menuResponse.menuSessionId;
+            var currentFragment = Backbone.history.getFragment();
+            var urlObject = Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(currentFragment));
+            urlObject.setSessionId(nextScreenCollection.sessionId);
+            var encodedUrl = Util.objectToEncodedUrl(urlObject.toJson());
+            FormplayerFrontend.navigate(encodedUrl);
+            SessionNavigate.MenuList.Controller.showMenu(nextScreenCollection);
         },
     };
 
     FormplayerFrontend.on("apps:currentApp", function () {
-        var oldRoute = Backbone.history.getFragment();
-        var appId = Util.getAppId(oldRoute);
-        FormplayerFrontend.navigate("apps/" + appId);
-        API.selectApp(appId);
+        var urlObject = Util.currentUrlToObject();
+        urlObject.clearExceptApp();
+        Util.setUrlToObject(urlObject);
+        API.selectApp(urlObject.appId);
     });
 
     FormplayerFrontend.on("apps:list", function () {
-        FormplayerFrontend.navigate("apps");
+        FormplayerFrontend.navigate("/");
         API.listApps();
     });
 
     FormplayerFrontend.on("app:select", function (appId) {
-        FormplayerFrontend.navigate("apps/" + appId);
+        var urlObject = new Util.CloudcareUrl(appId);
+        Util.setUrlToObject(urlObject);
         API.selectApp(appId);
     });
 
-    FormplayerFrontend.on("menu:select", function (index, appId) {
-        var newAddition;
-        var oldRoute = Backbone.history.getFragment();
-        if (oldRoute.indexOf("menu") < 0) {
-            newAddition = "/menu?step=" + index;
-        } else {
-            newAddition = "&step=" + index;
-        }
-        FormplayerFrontend.navigate(oldRoute + newAddition);
-        API.listMenus(appId);
+    FormplayerFrontend.on("menu:select", function (index) {
+        var urlObject = Util.currentUrlToObject();
+        urlObject.addStep(index);
+        Util.setUrlToObject(urlObject);
+        API.listMenus();
     });
 
-    FormplayerFrontend.on("menu:paginate", function (index, appId) {
-        var newAddition = "&page=" + index;
-        var oldRoute = Backbone.history.getFragment();
-        // "page" param should always be at the end of the URL
-        if (oldRoute.indexOf('page') > 0) {
-            oldRoute = oldRoute.substring(0, oldRoute.indexOf('&page'));
-        }
-        FormplayerFrontend.navigate(oldRoute + newAddition);
-        API.listMenus(appId);
+    FormplayerFrontend.on("menu:paginate", function (page) {
+        var urlObject = Util.currentUrlToObject();
+        urlObject.setPage(page);
+        Util.setUrlToObject(urlObject);
+        API.listMenus();
     });
 
-    FormplayerFrontend.on("menu:search", function (searchText, appId) {
-        var newAddition = "&search=" + searchText;
-        var oldRoute = Backbone.history.getFragment();
-        // If we have a "oage" param, wipe it out (pagination is reset on search)
-        if (oldRoute.indexOf('page') > 0) {
-            oldRoute = oldRoute.substring(0, oldRoute.indexOf('&page'));
-        }
-        // If we have a previous "search" param wipe it out
-        if (oldRoute.indexOf('search') > 0) {
-            oldRoute = oldRoute.substring(0, oldRoute.indexOf('&search'));
-        }
-        FormplayerFrontend.navigate(oldRoute + newAddition);
-        API.listMenus(appId);
+    FormplayerFrontend.on("menu:search", function (search) {
+        var urlObject = Util.currentUrlToObject();
+        urlObject.setSearch(search);
+        Util.setUrlToObject(urlObject);
+        API.listMenus();
     });
 
 
@@ -105,6 +109,10 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
 
     FormplayerFrontend.on("getIncompleteForm", function (sessionId) {
         API.getIncompleteForm(sessionId);
+    });
+
+    FormplayerFrontend.on("renderResponse", function (menuResponse) {
+        API.renderResponse(menuResponse);
     });
 
     SessionNavigate.on("start", function () {
