@@ -10,6 +10,7 @@ import itertools
 from collections import Counter, defaultdict
 
 from django.db import transaction
+from django.utils.translation import ugettext as _
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -123,7 +124,7 @@ class LocationStub(object):
         self.site_code = site_code
         self.location_type = location_type
         self.location_id = location_id
-        self.parent_code = parent_code or 'TOP'
+        self.parent_code = parent_code or ROOT_LOCATION_TYPE
         self.latitude = latitude or None
         self.longitude = longitude or None
         self.do_delete = do_delete
@@ -132,7 +133,7 @@ class LocationStub(object):
         self.is_new = False
         if not self.location_id and not self.site_code:
             raise LocationExcelSheetError(
-                "Location in sheet '{}', at row '{}' doesn't contain both location_id and site_code"
+                _(u"Location in sheet '{}', at row '{}' doesn't contain both location_id and site_code")
                 .format(self.location_type, self.index)
             )
 
@@ -162,7 +163,7 @@ class LocationStub(object):
         if not self.location_id and not self.site_code:
             # Both can't be empty, this should have already been caught in initialization
             raise Exception(
-                "Location in sheet '{}', at row '{}' doesn't contain both location_id and site_code"
+                _(u"Location in sheet '{}', at row '{}' doesn't contain both location_id and site_code")
                 .format(self.location_type, self.index)
             )
 
@@ -276,7 +277,7 @@ class LocationExcelValidator(object):
         type_sheet_reader = sheets_by_title[self.types_sheet_title]
         if set(type_sheet_reader.headers) != set(LOCATION_TYPE_SHEET_HEADERS.values()):
             raise LocationExcelSheetError(
-                "'types' sheet should contain exactly '{}' as the sheet headers"
+                _(u"'types' sheet should contain exactly '{}' as the sheet headers")
                 .format(", ".join(LOCATION_TYPE_SHEET_HEADERS.values()))
             )
 
@@ -287,8 +288,8 @@ class LocationExcelValidator(object):
         missing_sheet_names = set(expected_sheet_names) - set(actual_sheet_names)
         if missing_sheet_names:
             raise LocationExcelSheetError(
-                "Location sheets do not exist for the location types '{}' - "
-                "All types listed in 'types' sheet should have a location sheet"
+                _(u"Location sheets do not exist for the location types '{}' - "
+                  "All types listed in 'types' sheet should have a location sheet")
                 .format(", ".join(missing_sheet_names))
             )
 
@@ -298,7 +299,7 @@ class LocationExcelValidator(object):
             if sheet_name != self.types_sheet_title:
                 if set(sheet_reader.headers) != set(LOCATION_SHEET_HEADERS.values()):
                     raise LocationExcelSheetError(
-                        "Locations sheet with title '{}' should contain exactly '{}' as the sheet headers"
+                        _(u"Locations sheet with title '{}' should contain exactly '{}' as the sheet headers")
                         .format(sheet_name, ", ".join(LOCATION_SHEET_HEADERS.values()))
                     )
                 location_stubs.extend(self._get_locations(sheet_reader, sheet_name))
@@ -360,8 +361,8 @@ class NewLocationImporter(object):
         types_by_code = {}
 
         def create_child_types(parent_type):
-            if parent_type == 'TOP':
-                parent_code = 'TOP'
+            if parent_type == ROOT_LOCATION_TYPE:
+                parent_code = ROOT_LOCATION_TYPE
                 parent_type = None
             else:
                 parent_code = parent_type.code
@@ -374,7 +375,7 @@ class NewLocationImporter(object):
                     types_by_code[type_object.code] = type_object
                     create_child_types(type_object)
 
-        create_child_types('TOP')
+        create_child_types(ROOT_LOCATION_TYPE)
 
         location_stubs_by_parent_code = defaultdict(list)
         for l in location_stubs:
@@ -383,8 +384,8 @@ class NewLocationImporter(object):
             location_stubs_by_parent_code[l.parent_code].append(l)
 
         def create_child_locations(parent_location):
-            if parent_location == 'TOP':
-                parent_code = 'TOP'
+            if parent_location == ROOT_LOCATION_TYPE:
+                parent_code = ROOT_LOCATION_TYPE
                 parent_location = None
             else:
                 parent_code = parent_location.site_code
@@ -401,7 +402,7 @@ class NewLocationImporter(object):
                 if child_object:
                     # check if child was deleted, in which case child_object would be None
                     create_child_locations(child_object)
-        create_child_locations('TOP')
+        create_child_locations(ROOT_LOCATION_TYPE)
 
 
 class LocationTreeValidator(object):
@@ -433,8 +434,8 @@ class LocationTreeValidator(object):
         # should be called after errors are found
         def bad_deletes():
             return [
-                "Location deletion in sheet '{type}', row '{i}' is ignored, "
-                "as the location does not exist"
+                _(u"Location deletion in sheet '{type}', row '{i}' is ignored, "
+                  "as the location does not exist")
                 .format(type=loc.location_type, i=loc.index)
                 for loc in self.all_listed_locations
                 if loc.is_new and loc.do_delete
@@ -482,8 +483,8 @@ class LocationTreeValidator(object):
     @memoized
     def _site_code_and_location_id_missing(self):
         return [
-            "Location in sheet '{type}' at index {index} has no site_code and location_id - "
-            "at least one of them should be listed"
+            _(u"Location in sheet '{type}' at index {index} has no site_code and location_id - "
+              "at least one of them should be listed")
             .format(type=l.location_type, index=l.index)
             for l in self.all_listed_locations
             if not l.site_code and not l.location_id
@@ -493,7 +494,7 @@ class LocationTreeValidator(object):
     def _check_unique_type_codes(self):
         counts = Counter(lt.code for lt in self.all_listed_types).items()
         return [
-            "Location type code '{}' is used {} times - they should be unique"
+            _(u"Location type code '{}' is used {} times - they should be unique")
             .format(code, count)
             for code, count in counts if count > 1
         ]
@@ -502,7 +503,7 @@ class LocationTreeValidator(object):
     def _check_unique_location_codes(self):
         counts = Counter(l.site_code for l in self.all_listed_locations).items()
         return [
-            "Location site_code '{}' is used {} times - they should be unique"
+            _(u"Location site_code '{}' is used {} times - they should be unique")
             .format(code, count)
             for code, count in counts if count > 1
         ]
@@ -511,7 +512,7 @@ class LocationTreeValidator(object):
     def _check_unique_location_ids(self):
         counts = Counter(l.location_id for l in self.all_listed_locations if l.location_id).items()
         return [
-            "Location location_id '{}' is listed {} times - they should be listed once"
+            _(u"Location location_id '{}' is listed {} times - they should be listed once")
             .format(location_id, count)
             for location_id, count in counts if count > 1
         ]
@@ -524,7 +525,7 @@ class LocationTreeValidator(object):
         unlisted_codes = set(old_codes) - set(listed_codes)
 
         return [
-            "Location type code '{}' is not listed in the excel. All types should be listed"
+            _(u"Location type code '{}' is not listed in the excel. All types should be listed")
             .format(code)
             for code in unlisted_codes
         ]
@@ -537,7 +538,7 @@ class LocationTreeValidator(object):
         unlisted = set(old.keys()) - set(listed)
 
         return [
-            "Location '{name} (id {id})' is not listed in the excel. All locations should be listed"
+            _(u"Location '{name} (id {id})' is not listed in the excel. All locations should be listed")
             .format(name=old[location_id].name, id=location_id)
             for location_id in unlisted
         ]
@@ -552,7 +553,7 @@ class LocationTreeValidator(object):
         unknown = set(listed.keys()) - set(old.keys())
 
         return [
-            "Location 'id: {id}' is not found in your domain. It's listed in the sheet {type} at row {index}"
+            _(u"Location 'id: {id}' is not found in your domain. It's listed in the sheet {type} at row {index}")
             .format(id=l_id, type=listed[l_id].location_type, index=listed[l_id].index)
             for l_id in unknown
         ]
@@ -564,12 +565,12 @@ class LocationTreeValidator(object):
             assert_no_cycles(type_pairs)
         except BadParentError as e:
             return [
-                "Location Type '{}' refers to a parent which doesn't exist".format(code)
+                _(u"Location Type '{}' refers to a parent which doesn't exist").format(code)
                 for code in e.affected_nodes
             ]
         except CycleError as e:
             return [
-                "Location Type '{}' has a parentage that loops".format(code)
+                _(u"Location Type '{}' has a parentage that loops").format(code)
                 for code in e.affected_nodes
             ]
 
@@ -578,13 +579,13 @@ class LocationTreeValidator(object):
         for lt in self.location_types:
             if lt.expand_from and lt.expand_from not in allowed_from_codes(lt.code):
                 errors.append(
-                    "'{}' can't have '{}' as 'Expand From', valid options are '{}'"
+                    _(u"'{}' can't have '{}' as 'Expand From', valid options are '{}'")
                     .format(lt.code, lt.expand_from, allowed_from_codes)
                 )
 
             if lt.sync_to and lt.sync_to not in allowed_to_codes(lt.code):
                 errors.append(
-                    "'{}' can't have '{}' as 'Sync To', valid options are '{}'"
+                    _(u"'{}' can't have '{}' as 'Sync To', valid options are '{}'")
                     .format(lt.code, lt.sync_to, allowed_to_codes)
                 )
 
@@ -597,24 +598,24 @@ class LocationTreeValidator(object):
         def _validate_location(location):
             loc_type = self.types_by_code.get(location.location_type)
             if not loc_type:
-                return "Location '{}' in sheet points to a to be deleted location-type '{}'".format(
-                       location.site_code, location.location_type)
+                return _(u"Location '{}' in sheet points to a to be deleted location-type '{}'").format(
+                    location.site_code, location.location_type)
 
             parent = self.locations_by_code.get(location.parent_code)
             if loc_type.parent_code == ROOT_LOCATION_TYPE:
                 if parent:
-                    return "Location '{}' is a '{}' and should not have a parent".format(
-                           location.site_code, location.location_type)
+                    return _(u"Location '{}' is a '{}' and should not have a parent").format(
+                        location.site_code, location.location_type)
                 else:
                     return
             else:
                 if not parent:
-                    return "Location '{}' does not have a parent set or its parent is being deleted".format(
-                           location.site_code)
+                    return _(u"Location '{}' does not have a parent set or its parent is being deleted").format(
+                        location.site_code)
             correct_parent_type = loc_type.parent_code
             if parent == ROOT_LOCATION_TYPE or parent.location_type != correct_parent_type:
-                return "Location '{}' is a '{}', so it should have a parent that is a '{}'".format(
-                       location.site_code, location.location_type, correct_parent_type)
+                return _(u"Location '{}' is a '{}', so it should have a parent that is a '{}'").format(
+                    location.site_code, location.location_type, correct_parent_type)
 
         for location in self.locations:
             error = _validate_location(location)
@@ -634,7 +635,7 @@ class LocationTreeValidator(object):
             for name, count in counts:
                 if count > 1:
                     errors.append(
-                        ("There are {} locations with the name '{}' under the parent '{}'"
+                        (_(u"There are {} locations with the name '{}' under the parent '{}'")
                          .format(count, name, parent))
                     )
         return errors
