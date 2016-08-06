@@ -1,4 +1,5 @@
 import time
+import json
 from python_digest import build_authorization_request, calculate_nonce
 from django.test import TestCase, Client
 from django.conf import settings
@@ -8,6 +9,7 @@ from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, WebUser
 
+from mock import patch
 
 class DigestOtaRestoreTest(TestCase):
     """
@@ -31,43 +33,55 @@ class DigestOtaRestoreTest(TestCase):
         delete_all_domains()
 
     def test_commcare_user_restore(self):
-        uri = reverse('ota_restore', args=[self.domain])
-        client = Client(HTTP_AUTHORIZATION=_get_http_auth_header(
-            self.commcare_user.username,
-            self.password,
-            uri,
-        ))
-
+        uri, client = self._set_restore_client(self.domain, self.commcare_user.username)
         resp = client.get(uri, follow=True)
         self.assertEqual(resp.status_code, 200)
         content = list(resp.streaming_content)[0]
         self.assertTrue("Successfully restored account {}!".format(self.username) in content)
 
     def test_web_user_restore(self):
-        uri = reverse('ota_restore', args=[self.domain])
-        client = Client(HTTP_AUTHORIZATION=_get_http_auth_header(
-            self.web_user.username,
-            self.password,
-            uri,
-        ))
-
+        uri, client = self._set_restore_client(self.domain, self.web_user.username)
         resp = client.get(uri, follow=True)
         self.assertEqual(resp.status_code, 200)
         content = list(resp.streaming_content)[0]
         self.assertTrue("Successfully restored account {}!".format(self.web_username) in content)
 
     def test_wrong_domain_web_user(self):
-        uri = reverse('ota_restore', args=[self.wrong_domain])
-        client = Client(HTTP_AUTHORIZATION=_get_http_auth_header(
-            self.web_user.username,
-            self.password,
-            uri,
-        ))
-
+        uri, client = self._set_restore_client(self.wrong_domain, self.web_user.username)
         resp = client.get(uri, follow=True)
         self.assertEqual(resp.status_code, 401)
 
+    def test_inactive_commcare_user_restore(self):
+        uri, client = self._set_restore_client(self.domain, self.web_user.username)
+        with patch.object(CommCareUser, 'get_by_username') as user_mock:
+            self.commcare_user.is_active = False
+            self.commcare_user.save()
+            user_mock.return_value = self.commcare_user
+            resp = client.get(uri, {'as': self.commcare_user.username}, follow=True)
 
+            json_response = json.loads(resp.content)
+            self.assertEqual(json_response['default_response'], "User deactivated")
+            self.assertEqual(json_response['error'], "mobile.app.translation.user.is.deactivated")
+            self.assertEqual(resp.status_code, 406)
+
+    def test_deleted_commcare_user_restore(self):
+        uri, client = self._set_restore_client(self.domain, self.web_user.username)
+        with patch.object(CommCareUser, 'get_deleted_by_username') as user_mock:
+            user_mock.return_value = self.commcare_user
+            resp = client.get(uri, {'as': self.commcare_user.username}, follow=True)
+            json_response = json.loads(resp.content)
+            self.assertEqual(json_response['default_response'], "User deleted")
+            self.assertEqual(json_response['error'], "mobile.app.translation.user.is.deleted")
+            self.assertEqual(resp.status_code, 406)
+
+    def _set_restore_client(self, with_domain, auth_username):
+        uri = reverse('ota_restore', args=[with_domain])
+        client = Client(HTTP_AUTHORIZATION=_get_http_auth_header(
+            auth_username,
+            self.password,
+            uri,
+        ))
+        return uri, client
 def _get_http_auth_header(username, password, uri):
     return build_authorization_request(
         username,

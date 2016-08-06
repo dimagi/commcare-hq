@@ -401,10 +401,11 @@ def ensure_active_user(default=BASIC):
                     valid, message, error_code = False, 'User deleted', 'mobile.app.translation.user.is.deleted'
 
                 if not valid:
+                    # respond with apt error message and status code 406(unacceptable)
                     return json_response({
                         "error": error_code,
                         "default_response": message
-                    }, status_code=401)
+                    }, status_code=406)
                 else:
                     return fn(request, *args, **kwargs)
             else:
