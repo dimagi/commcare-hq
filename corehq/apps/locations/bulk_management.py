@@ -375,8 +375,6 @@ class NewLocationImporter(object):
 
         location_stubs_by_parent_code = defaultdict(list)
         for l in location_stubs:
-            if l.do_delete:
-                l._as_db_object(self.old_collection, self.domain)
             location_stubs_by_parent_code[l.parent_code].append(l)
 
         def create_child_locations(parent_location):
