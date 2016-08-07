@@ -78,7 +78,7 @@ Util.CloudcareUrl = function (appId, sessionId, steps, page, search) {
 
     this.spliceSteps = function(index) {
         this.steps = this.steps.splice(0, index);
-    }
+    };
 };
 
 Util.CloudcareUrl.prototype.toJson = function () {
