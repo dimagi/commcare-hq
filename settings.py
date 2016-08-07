@@ -893,6 +893,8 @@ ZIPLINE_API_PASSWORD = ''
 
 KAFKA_URL = 'localhost:9092'
 
+MOBILE_INTEGRATION_TEST_TOKEN = None
+
 
 try:
     # try to see if there's an environmental variable set for local_settings

@@ -48,8 +48,8 @@ Util.CloudcareUrl = function (appId, sessionId, steps, page, search) {
         }
         this.steps.push(step);
         //clear out pagination and search when we take a step
-        delete this.page;
-        delete this.search;
+        this.page = null;
+        this.search= null;
     };
 
     this.setPage = function (page) {
@@ -64,16 +64,16 @@ Util.CloudcareUrl = function (appId, sessionId, steps, page, search) {
 
     this.setSessionId = function (sessionId) {
         this.sessionId = sessionId;
-        delete this.steps;
-        delete this.page;
-        delete this.search;
+        this.steps = null;
+        this.page = null;
+        this.search= null;
     };
 
     this.clearExceptApp = function () {
-        delete this.sessionId;
-        delete this.steps;
-        delete this.page;
-        delete this.search;
+        this.sessionId = null;
+        this.steps = null;
+        this.page = null;
+        this.search= null;
     };
 
     this.spliceSteps = function(index) {
