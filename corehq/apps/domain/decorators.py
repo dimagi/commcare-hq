@@ -386,29 +386,3 @@ def require_previewer(view_func):
     return shim
 
 cls_require_previewer = cls_to_view(additional_decorator=require_previewer)
-
-def ensure_active_user(default=BASIC):
-    def decorator(fn):
-        @wraps(fn)
-        def _inner(request, *args, **kwargs):
-            mobile_user_email = request.GET.get('as')
-            if mobile_user_email:
-                ccu = CommCareUser.get_by_username('{}.commcarehq.org'.format(mobile_user_email))
-                valid, message = True, None
-                if ccu and not ccu.is_active:
-                    valid, message, error_code = False, 'User deactivated', 'mobile.app.translation.user.is.deactivated'
-                elif CommCareUser.get_deleted_by_username('{}.commcarehq.org'.format(mobile_user_email)):
-                    valid, message, error_code = False, 'User deleted', 'mobile.app.translation.user.is.deleted'
-
-                if not valid:
-                    # respond with apt error message and status code 406(unacceptable)
-                    return json_response({
-                        "error": error_code,
-                        "default_response": message
-                    }, status_code=406)
-                else:
-                    return fn(request, *args, **kwargs)
-            else:
-                return fn(request, *args, **kwargs)
-        return _inner
-    return decorator

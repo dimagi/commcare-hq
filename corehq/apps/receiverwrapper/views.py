@@ -7,6 +7,7 @@ from django.http import (
 )
 from casexml.apps.case.xform import get_case_updates, is_device_report
 from corehq.apps.domain.decorators import login_or_digest_ex, login_or_basic_ex
+from corehq.apps.users.decorators import ensure_active_user
 from corehq.apps.receiverwrapper.auth import (
     AuthContext,
     WaivedAuthContext,
@@ -33,6 +34,7 @@ from dimagi.utils.logging import notify_exception
 
 
 @count_by_response_code('commcare.xform_submissions')
+@ensure_active_user()
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
     if should_ignore_submission(request):

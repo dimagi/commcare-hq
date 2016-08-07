@@ -12,7 +12,8 @@ from casexml.apps.case.xml import V2
 from corehq import toggles, privileges
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.case_search.models import CaseSearchConfig
-from corehq.apps.domain.decorators import domain_admin_required, login_or_digest_or_basic_or_apikey, ensure_active_user
+from corehq.apps.domain.decorators import domain_admin_required, login_or_digest_or_basic_or_apikey
+from corehq.apps.users.decorators import ensure_active_user
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
 from corehq.apps.es.case_search import CaseSearchES, flatten_result

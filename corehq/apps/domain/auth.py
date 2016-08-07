@@ -68,7 +68,7 @@ def basicauth(realm=''):
                     if auth[0].lower() == BASIC:
                         uname, passwd = base64.b64decode(auth[1]).split(':', 1)
                         user = authenticate(username=uname, password=passwd)
-                        if user is not None and user.is_active:
+                        if user is not None:
                             request.user = user
                             return view(request, *args, **kwargs)
 
