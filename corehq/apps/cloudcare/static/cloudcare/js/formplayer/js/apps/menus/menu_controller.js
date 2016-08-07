@@ -34,15 +34,12 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             };
             if (menuResponse.type === "commands") {
                 menuListView = new MenuList.MenuListView(menuData);
-                FormplayerFrontend.regions.main.show(menuListView.render());
-            }
-            else if (menuResponse.type === "entities") {
+            } else if (menuResponse.type === "entities") {
                 menuListView = new MenuList.CaseListView(menuData);
-                FormplayerFrontend.regions.main.show(menuListView.render());
             } else if (menuResponse.type === "query") {
                 menuListView = new MenuList.QueryListView(menuData);
-                FormplayerFrontend.regions.main.show(menuListView.render());
             }
+            FormplayerFrontend.regions.main.show(menuListView.render());
         },
 
         showDetail: function (model, index) {

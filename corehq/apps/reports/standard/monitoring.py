@@ -44,6 +44,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
+from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
@@ -1241,7 +1242,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
             else:
                 all_times.append(
                     PhoneTime(
-                        string_to_utc_datetime(form['received_on']),
+                        string_to_utc_datetime(safe_index(form, ['form', 'meta', 'timeEnd'])),
                         self.timezone,
                     )
                     .user_time(self.timezone)

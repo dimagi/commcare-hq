@@ -755,7 +755,14 @@ class FormExportInstanceDefaults(ExportInstanceDefaults):
         if table_path == MAIN_TABLE:
             return _('Forms')
         else:
-            return _('Repeat: {}').format((table_path[-1].name if len(table_path) else None) or "")
+            if not len(table_path):
+                return _('Repeat')
+
+            default_table_name = table_path[-1].name
+            # We are probably exporting a model iteration question
+            if default_table_name == 'item' and len(table_path) > 1:
+                default_table_name = '{}.{}'.format(table_path[-2].name, default_table_name)
+            return _('Repeat: {}').format(default_table_name)
 
 
 class CaseExportInstanceDefaults(ExportInstanceDefaults):
