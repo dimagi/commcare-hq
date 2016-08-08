@@ -202,7 +202,7 @@ hqDefine('prototype.workflow_builder.preview', function () {
         self.recordName = ko.observable();
 
         self.disableSave = ko.computed(function() {
-            return self.recordName() === null || self.recordName() === undefined;
+            return !self.recordName();
         });
 
         self.saveForm = function () {
