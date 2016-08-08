@@ -85,7 +85,7 @@ class DetailContributor(SectionContributor):
                                     if d:
                                         r.append(d)
                         if detail.persist_case_context and not detail.persist_tile_on_forms:
-                            d = self._get_persistent_case_context_detail(module)
+                            d = self._get_persistent_case_context_detail(module, detail.persistent_case_context_xml)
                             r.append(d)
                 if module.fixture_select.active:
                     d = self._get_fixture_detail(module)
@@ -258,7 +258,7 @@ class DetailContributor(SectionContributor):
         return action
 
     @staticmethod
-    def _get_persistent_case_context_detail(module):
+    def _get_persistent_case_context_detail(module, xml):
         return Detail(
             id=id_strings.persistent_case_context_detail(module),
             title=Text(),
@@ -272,7 +272,7 @@ class DetailContributor(SectionContributor):
                     grid_y=0,
                 ),
                 header=Header(text=Text()),
-                template=Template(text=Text(xpath_function="case_name")),
+                template=Template(text=Text(xpath_function=xml)),
             )]
         )
 

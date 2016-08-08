@@ -105,8 +105,7 @@ class MonthlyPerformanceSummaryTests(SetupProjectPerformanceMixin, TestCase):
             performance_threshold=15,
             month=cls.prev_month_as_date,
             previous_summary=None,
-            users=users_in_group,
-            has_filter=False,
+            selected_users=users_in_group,
             active_not_deleted_users=active_not_deleted_users,
         )
         cls.month = MonthlyPerformanceSummary(
@@ -114,8 +113,7 @@ class MonthlyPerformanceSummaryTests(SetupProjectPerformanceMixin, TestCase):
             performance_threshold=15,
             month=cls.month_as_date,
             previous_summary=cls.prev_month,
-            users=users_in_group,
-            has_filter=False,
+            selected_users=users_in_group,
             active_not_deleted_users=active_not_deleted_users,
         )
 
