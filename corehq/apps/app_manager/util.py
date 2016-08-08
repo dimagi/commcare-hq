@@ -752,7 +752,7 @@ def get_sort_and_sort_only_columns(detail, sort_elements):
             sort_columns[column.field] = (sort_element, order)
 
     sort_only_elements = [
-        SortOnlyElement(field, element, order)
-        for field, (element, order) in sort_elements.items()
+        SortOnlyElement(field, element, element_order)
+        for field, (element, element_order) in sort_elements.items()
     ]
     return sort_only_elements, sort_columns
