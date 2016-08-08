@@ -6,6 +6,7 @@ hqDefine('prototype.workflow_builder.preview', function () {
    'use strict';
     var module = {};
     var utils = hqImport('prototype.workflow_builder.utils');
+    var direction = "forward";
 
     module.AppPreview = function (app) {
         var self = this;
@@ -42,8 +43,9 @@ hqDefine('prototype.workflow_builder.preview', function () {
             return screen.templateId();
         };
 
-        self.hideAllScreens = function () {
+        self.hideAllScreens = function (direction) {
             _.each(self.screens(), function (s) {
+                s.direction = direction || "forward";
                 s.isSelected(false);
             });
         };
@@ -52,9 +54,9 @@ hqDefine('prototype.workflow_builder.preview', function () {
             return self.history().length > 1;
         });
 
-        self.goBack = function () {
+        self.goBack = function (direction) {
             if (self.isBackVisible()) {
-                self.hideAllScreens();
+                self.hideAllScreens(direction || "back");
                 self.history.pop();
                 self.focusedItem(null);
                 _.last(self.history()).isSelected(true);
@@ -74,6 +76,7 @@ hqDefine('prototype.workflow_builder.preview', function () {
                 self.hideAllScreens();
                 self.formScreen.form(workflow.form());
                 self.focusedItem(workflow.form());
+                self.formScreen.direction = "forward";
                 self.formScreen.isSelected(true);
 
                 self.history.push(self.formScreen);
@@ -81,6 +84,7 @@ hqDefine('prototype.workflow_builder.preview', function () {
                 self.hideAllScreens();
                 self.recordListScreen.selectedWorkflow(workflow);
                 self.focusedItem(workflow);
+                self.recordListScreen.direction = "forward";
                 self.recordListScreen.isSelected(true);
 
                 self.history.push(self.recordListScreen);
@@ -91,6 +95,7 @@ hqDefine('prototype.workflow_builder.preview', function () {
             self.hideAllScreens();
             self.editRecordScreen.selectedWorkflow(workflow);
             self.editRecordScreen.selectedRecord(record);
+            self.editRecordScreen.direction = "forward";
             self.editRecordScreen.isSelected(true);
             self.focusedItem(workflow);
 
@@ -110,6 +115,7 @@ hqDefine('prototype.workflow_builder.preview', function () {
             self.hideAllScreens();
             self.regFromScreen.form(form);
             self.focusedItem(form);
+            self.regFromScreen.direction = "forward";
             self.regFromScreen.isSelected(true);
             self.regFromScreen.recordName(null);
 
@@ -119,6 +125,7 @@ hqDefine('prototype.workflow_builder.preview', function () {
         self.confirmSubmission = function () {
             self.hideAllScreens();
             self.focusedItem(null);
+            self.confirmFormScreen.direction = "forward";
             self.confirmFormScreen.isSelected(true);
 
             self.history.push(self.confirmFormScreen);
@@ -131,6 +138,7 @@ hqDefine('prototype.workflow_builder.preview', function () {
         self.preview = preview;
         self.templateId = ko.observable(templateId);
         self.isSelected = ko.observable(isSelected);
+        self.direction = "forward";
         self.isHidden = ko.computed(function () {
             return !self.isSelected();
         });
@@ -178,8 +186,8 @@ hqDefine('prototype.workflow_builder.preview', function () {
             self.preview.confirmSubmission();
         };
 
-        self.cancel = function () {
-            self.preview.goBack();
+        self.cancel = function (direction) {
+            self.preview.goBack(direction || "back");
         };
     };
     FormScreen.prototype = Object.create(BaseScreen.prototype);
@@ -200,7 +208,7 @@ hqDefine('prototype.workflow_builder.preview', function () {
         self.saveForm = function () {
             self.form().testRecords.push(self.recordName());
             self.recordName(null);
-            self.cancel();
+            self.cancel("forward");
         };
 
     };

@@ -135,16 +135,27 @@ ko.bindingHandlers.highlightRecordList = {
 
 ko.bindingHandlers.animateScreen = {
     init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
-        console.log(valueAccessor()());
         if (valueAccessor()()) {
             $(element).css('display', 'none');
         }
     },
     update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+        var $element = $(element),
+            width = $element.width(),
+            direction = viewModel.direction,
+            duration = 300;
         if (valueAccessor()()) {
-            $(element).hide("fade", {}, 200, function () {});
+            var start = 0,
+                end = direction === "forward" ? -width : width;
+            $element.css("left", start)
+                    .css("display", "block")
+                    .animate({ left: end, }, duration);
         } else {
-            $(element).show("fade", {}, 200, function () {});
+            var start = direction === "forward" ? width : -width,
+                end = 0;
+            $element.css("left", start)
+                    .css("display", "block")
+                    .animate({ left: end, }, duration);
         }
     }
 };
