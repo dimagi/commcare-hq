@@ -82,6 +82,7 @@ class Permissions(DocumentSchema):
     edit_commcare_users = BooleanProperty(default=False)
     edit_data = BooleanProperty(default=False)
     edit_apps = BooleanProperty(default=False)
+    access_all_locations = BooleanProperty(default=True)
 
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
