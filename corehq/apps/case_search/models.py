@@ -4,8 +4,6 @@ from jsonfield.fields import JSONField
 
 
 CLAIM_CASE_TYPE = 'commcare-case-claim'
-CALCULATED_DATA = 'calculated_data'  # Datum ID to mark a case as claimed
-MARK_AS_CLAIMED = 'claimed'  # Datum value to mark a case as claimed
 FUZZY_PROPERTIES = "fuzzy_properties"
 
 

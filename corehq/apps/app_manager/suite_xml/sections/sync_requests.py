@@ -19,7 +19,6 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
 )
 from corehq.apps.app_manager.util import module_offers_search
 from corehq.apps.app_manager.xpath import XPath, CaseTypeXpath, InstanceXpath, CaseIDXPath
-from corehq.apps.case_search.models import CALCULATED_DATA, MARK_AS_CLAIMED
 from corehq.util.view_utils import absolute_reverse
 
 
