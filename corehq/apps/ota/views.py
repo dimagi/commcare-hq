@@ -1,9 +1,12 @@
+from functools import wraps
 from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from corehq.apps.domain.auth import determine_authtype_from_request, \
+    get_username_and_password_from_basic_auth_request
 from django_prbac.utils import has_privilege
 from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.fixtures import CaseDBFixture
@@ -32,7 +35,35 @@ from soil import MultipleTaskDownload
 from .utils import demo_user_restore_response, get_restore_user, is_permitted_to_restore
 
 
+def guess_username_from_authtype(auth_type, request):
+    username = None
+    if auth_type == 'basic':
+        username, password = get_username_and_password_from_basic_auth_request(request)
+    if auth_type == 'digest':
+        # todo: implement this
+        pass
+    return username
+
+
+def handle_401_better(f):
+    @wraps(f)
+    def inner(request, domain, *args, **kwargs):
+        response = f(request, domain, *args, **kwargs)
+        if response.status_code == 401:
+            auth_type = determine_authtype_from_request(request)
+            username = guess_username_from_authtype(auth_type, request)
+
+            print 'unauthorized, guessed type was {}, guessed username: {}'.format(auth_type, username)
+            # username = get_user()
+            # reason = get_reason(username)
+
+
+        return response
+    return inner
+
+
 @json_error
+@handle_401_better
 @login_or_digest_or_basic_or_apikey()
 def restore(request, domain, app_id=None):
     """
