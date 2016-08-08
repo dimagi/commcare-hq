@@ -678,17 +678,21 @@ def new_locations_import(domain, excel_importer):
 
 def bulk_delete(objects):
     # Given a list of existing SQL objects, bulk delete them
-    for obj in objects:
-        obj.delete()
+    if not objects:
+        return
+    sql_class = type(objects[0])
+    ids = [o.id for o in objects]
+    sql_class.objects.filter(id__in=ids).delete()
 
 
 def bulk_create(objects):
     # Given a list of new SQL objects, bulk create them
-    sql_class = None
-    if objects:
-        sql_class = type(objects[0])
-        # ToDo: this results in an IntegrityError related to mptt
-        sql_class.objects.bulk_create(objects)
+    if not objects:
+        return []
+
+    sql_class = type(objects[0])
+    # ToDo: this results in an IntegrityError related to mptt
+    sql_class.objects.bulk_create(objects)
     return objects
 
 
