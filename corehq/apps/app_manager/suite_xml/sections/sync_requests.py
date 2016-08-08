@@ -5,7 +5,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Command,
     Display,
     Instance,
-    PushFrame,
+    CreateFrame,
     QueryData,
     QueryPrompt,
     SessionDatum,
@@ -121,10 +121,10 @@ class SyncRequestContributor(SuiteContributorByModule):
                 stack=Stack(),
             )
 
-            frame = PushFrame()
+            frame = CreateFrame()
             # Open first form in module
             frame.add_command(XPath.string(id_strings.menu_id(module)))
-            frame.add_datum(StackDatum(id=CALCULATED_DATA, value=XPath.string(MARK_AS_CLAIMED)))
+            frame.add_datum(StackDatum(id='case_id', value=QuerySessionXPath('case_id').instance()))
             sync_request.stack.add_frame(frame)
 
             return [sync_request]
