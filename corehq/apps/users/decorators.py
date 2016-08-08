@@ -81,32 +81,6 @@ def require_permission_to_edit_user(view_func):
     return _inner
 
 
-def ensure_active_user():
-    def decorator(fn):
-        @wraps(fn)
-        def _inner(request, *args, **kwargs):
-            """
-            ensures active user for sync and form receive requests
-            returns the error code which should be present in app_string for translation and also shares
-            the default response which can be used in case the translation is missing
-            """
-            valid = True
-            couch_user = CouchUser.from_django_user(request.user)
-            if couch_user:
-                valid, message, error_code = ensure_active_user_by_username(couch_user.username)
-
-            if not valid:
-                # respond with apt error message and status code 406(unacceptable)
-                return json_response({
-                    "error": error_code,
-                    "default_response": message
-                }, status_code=406)
-            else:
-                return fn(request, *args, **kwargs)
-        return _inner
-    return decorator
-
-
 def ensure_active_user_by_username(username):
     ccu = CommCareUser.get_by_username(username)
     valid, message, error_code = True, None, None

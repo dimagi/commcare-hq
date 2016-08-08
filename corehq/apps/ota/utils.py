@@ -8,6 +8,9 @@ from corehq.apps.users.models import CommCareUser, WebUser
 
 from .models import DemoUserRestore
 
+from dimagi.utils.web import json_response
+from corehq.apps.domain.auth import get_username_and_password_from_request, determine_authtype_from_request
+from corehq.apps.users.decorators import ensure_active_user_by_username
 
 def turn_off_demo_mode(commcare_user):
     """
@@ -165,3 +168,23 @@ def get_restore_user(domain, couch_user, as_user):
         restore_user = couch_user.to_ota_restore_user(domain)
 
     return restore_user
+
+
+def handle_401_response(f):
+    def _inner(request, domain, *args, **kwargs):
+        auth_type = determine_authtype_from_request(request)
+        response = f(request, domain, *args, **kwargs)
+        if auth_type and auth_type == 'basic' and response.status_code == 401:
+            uname, passwd = get_username_and_password_from_request(request)
+            if uname:
+                valid, message, error_code = ensure_active_user_by_username(uname)
+                if not valid:
+                    print error_code
+                    print message
+                    return json_response({
+                        "error": error_code,
+                        "default_response": message
+                    }, status_code=406)
+
+        return response
+    return _inner

@@ -7,7 +7,6 @@ from django.http import (
 )
 from casexml.apps.case.xform import get_case_updates, is_device_report
 from corehq.apps.domain.decorators import login_or_digest_ex, login_or_basic_ex
-from corehq.apps.users.decorators import ensure_active_user
 from corehq.apps.receiverwrapper.auth import (
     AuthContext,
     WaivedAuthContext,
@@ -31,10 +30,10 @@ from django.views.decorators.csrf import csrf_exempt
 from couchforms.const import MAGIC_PROPERTY
 from couchforms.getters import MultimediaBug
 from dimagi.utils.logging import notify_exception
+from corehq.apps.ota.utils import handle_401_response
 
 
 @count_by_response_code('commcare.xform_submissions')
-@ensure_active_user()
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
     if should_ignore_submission(request):
@@ -194,6 +193,7 @@ def _secure_post_digest(request, domain, app_id=None):
     )
 
 
+@handle_401_response
 @login_or_basic_ex(allow_cc_users=True)
 def _secure_post_basic(request, domain, app_id=None):
     """only ever called from secure post"""
