@@ -119,13 +119,6 @@
                             "doc_type": "SortElement",
                             "field": "top_of_tech_support_list",
                             "type": "plain"
-                        },
-                        {
-                            "direction": "descending",
-                            "doc_type": "SortElement",
-                            "field": "phone_number",
-                            "type": "integer",
-                            "display": { "en": "PhoneNumber" }
                         }
                     ],
                     "type": "case_short"
