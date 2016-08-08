@@ -8,7 +8,6 @@ from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, WebUser
 
-from mock import patch
 
 class DigestOtaRestoreTest(TestCase):
     """
@@ -33,23 +32,17 @@ class DigestOtaRestoreTest(TestCase):
 
     def test_commcare_user_restore(self):
         uri, client = self._set_restore_client(self.domain, self.commcare_user.username)
-        # Hack inserted for now to avoid NoResultFound at get_deleted_by_username
-        with patch.object(CommCareUser, 'get_deleted_by_username') as user_mock:
-            user_mock.return_value = None
-            resp = client.get(uri, follow=True)
-            self.assertEqual(resp.status_code, 200)
-            content = list(resp.streaming_content)[0]
-            self.assertTrue("Successfully restored account {}!".format(self.username) in content)
+        resp = client.get(uri, follow=True)
+        self.assertEqual(resp.status_code, 200)
+        content = list(resp.streaming_content)[0]
+        self.assertTrue("Successfully restored account {}!".format(self.username) in content)
 
     def test_web_user_restore(self):
         uri, client = self._set_restore_client(self.domain, self.web_user.username)
-        # Hack inserted for now to avoid NoResultFound at get_deleted_by_username
-        with patch.object(CommCareUser, 'get_deleted_by_username') as user_mock:
-            user_mock.return_value = None
-            resp = client.get(uri, follow=True)
-            self.assertEqual(resp.status_code, 200)
-            content = list(resp.streaming_content)[0]
-            self.assertTrue("Successfully restored account {}!".format(self.web_username) in content)
+        resp = client.get(uri, follow=True)
+        self.assertEqual(resp.status_code, 200)
+        content = list(resp.streaming_content)[0]
+        self.assertTrue("Successfully restored account {}!".format(self.web_username) in content)
 
     def test_wrong_domain_web_user(self):
         uri, client = self._set_restore_client(self.wrong_domain, self.web_user.username)
