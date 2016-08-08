@@ -41,7 +41,6 @@ FormplayerFrontend.getCurrentRoute = function () {
  * The actual mapping is contained in the app Couch document
  */
 FormplayerFrontend.reqres.setHandler('resourceMap', function (resource_path, app_id) {
-    debugger;
     var currentApp = FormplayerFrontend.request("appselect:getApp", app_id);
     if (resource_path.substring(0, 7) === 'http://') {
         return resource_path;
