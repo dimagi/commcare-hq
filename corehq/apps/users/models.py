@@ -1999,16 +1999,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         elif self.is_domain_admin(domain):
             return True
 
-        dm_list = list()
-
         dm = self.get_domain_membership(domain)
         if dm:
-            dm_list.append([dm, ''])
-
-        # now find out which dm has the highest permissions
-        if dm_list:
-            role = self.total_domain_membership(dm_list, domain)
-            dm = CustomDomainMembership(domain=domain, custom_role=role)
             return dm.has_permission(permission, data)
         else:
             return False
@@ -2017,7 +2009,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def get_role(self, domain=None, include_teams=True, checking_global_admin=True):
         """
         Get the role object for this user
-
         """
         if domain is None:
             # default to current_domain for django templates
@@ -2029,30 +2020,11 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         if not include_teams:
             return super(WebUser, self).get_role(domain)
 
-        dm_list = list()
-
         dm = self.get_domain_membership(domain)
-        if dm:
-            dm_list.append([dm, ''])
-
-        # now find out which dm has the highest permissions
-        if dm_list:
-            return self.total_domain_membership(dm_list, domain)
-        else:
+        if not dm:
             raise DomainMembershipError()
 
-    def total_domain_membership(self, domain_memberships, domain):
-        #sort out the permissions
-        total_permission = Permissions()
-        if domain_memberships:
-            for domain_membership, membership_source in domain_memberships:
-                permission = domain_membership.permissions
-                total_permission |= permission
-
-            #set up a user role
-            return UserRole(domain=domain, permissions=total_permission,
-                            name=', '.join(["%s %s" % (dm.role.name, ms) for dm, ms in domain_memberships if dm.role]))
-            #set up a domain_membership
+        return dm.role
 
     @classmethod
     def get_admins_by_domain(cls, domain):
