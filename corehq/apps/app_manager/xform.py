@@ -948,6 +948,17 @@ class XForm(WrappedNode):
                     "type": "DataBindOnly",
                     "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
                 }
+
+                # Include meta information about the stock entry
+                if data_node.tag_name == 'entry':
+                    parent = next(data_node.xml.iterancestors())
+                    if parent:
+                        question.update({
+                            "type": "Stock",
+                            "stock_entry_attributes": data_node.xml.attrib,
+                            "stock_type_attributes": parent.attrib,
+                        })
+
                 if use_hashtags:
                     hashtag_path = self.hashtag_path(path)
                     question.update({

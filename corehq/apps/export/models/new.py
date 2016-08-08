@@ -125,6 +125,8 @@ class ExportItem(DocumentSchema):
                 return CaseIndexItem.wrap(data)
             elif doc_type == 'MultiMediaItem':
                 return MultiMediaItem.wrap(data)
+            elif doc_type == 'StockItem':
+                return StockItem.wrap(data)
             else:
                 raise ValueError('Unexpected doc_type for export item', doc_type)
         else:
@@ -817,6 +819,24 @@ class MultiMediaItem(ExportItem):
     """
 
 
+class StockItem(ExportItem):
+    """
+    An item that references a stock question (balance, transfer, dispense, receive)
+    """
+
+    @classmethod
+    def create_from_question(cls, question, path, app_id, app_version, repeats):
+        """
+        Overrides ExportItem's create_from_question, by allowing an explicit path
+        that may not match the question's value key
+        """
+        return cls(
+            path=_question_path_to_path_nodes(path, repeats),
+            label=question['label'],
+            last_occurrences={app_id: app_version},
+        )
+
+
 class Option(DocumentSchema):
     """
     This object represents a multiple choice question option.
@@ -1032,6 +1052,7 @@ class FormExportDataSchema(ExportDataSchema):
         'Image': MultiMediaItem,
         'Audio': MultiMediaItem,
         'Video': MultiMediaItem,
+        'Stock': StockItem,
     })
 
     @property
@@ -1096,13 +1117,22 @@ class FormExportDataSchema(ExportDataSchema):
             )
             for question in group_questions:
                 # Create ExportItem based on the question type
-                item = FormExportDataSchema.datatype_mapping[question['type']].create_from_question(
-                    question,
-                    app_id,
-                    app_version,
-                    repeats,
-                )
-                group_schema.items.append(item)
+                if question['type'] == 'Stock':
+                    items = FormExportDataSchema._get_stock_items_from_question(
+                        question,
+                        app_id,
+                        app_version,
+                        repeats,
+                    )
+                    group_schema.items.extend(items)
+                else:
+                    item = FormExportDataSchema.datatype_mapping[question['type']].create_from_question(
+                        question,
+                        app_id,
+                        app_version,
+                        repeats,
+                    )
+                    group_schema.items.append(item)
 
             if group_path is None:
                 for case_update_field in case_updates:
@@ -1123,6 +1153,36 @@ class FormExportDataSchema(ExportDataSchema):
             schema.group_schemas.append(group_schema)
 
         return schema
+
+    @staticmethod
+    def _get_stock_items_from_question(question, app_id, app_version, repeats):
+        """
+        Creates a list of items from a stock type question
+        """
+        items = []
+
+        # Strips the last value in the path
+        # E.G. /data/balance/entry --> /data/balance
+        parent_path = question['value'][:question['value'].rfind('/')]
+        for attribute in question['stock_type_attributes']:
+            items.append(StockItem.create_from_question(
+                question,
+                '{}/@{}'.format(parent_path, attribute),
+                app_id,
+                app_version,
+                repeats,
+            ))
+
+        for attribute in question['stock_entry_attributes']:
+            items.append(StockItem.create_from_question(
+                question,
+                '{}/@{}'.format(question['value'], attribute),
+                app_id,
+                app_version,
+                repeats,
+            ))
+
+        return items
 
 
 class CaseExportDataSchema(ExportDataSchema):
