@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - nh/rb_filters_ui  # Norman 8/8
   - mk-231812-j2me-config # Manish 7/15
   - hqDefine-users  # danny 6/7
   - vellum-staging # J$ 11/13
