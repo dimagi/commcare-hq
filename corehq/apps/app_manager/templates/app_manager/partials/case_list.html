@@ -113,7 +113,22 @@
                     </th>
                     <th>{% trans "Direction" %}</th>
                     <th>{% trans "Format" %}</th>
-                    <th>{% trans "Display Text" %}</th>
+                    <th>
+                        {% trans "Display Text" %}
+                        <span style="font-size: 13px">
+                            <span class="hq-help-template"
+                                  data-title="{% trans "Display Text" %}"
+                                  data-content=
+                                      "{% blocktrans %}
+                                          The 'Display Text' is used for properties that are only listed as
+                                          Sort Properties and not as Display Properties above. The text appears
+                                          in the 'Sort By' menu on the mobile to allow the user to change the
+                                          sort ordering. If the display text is left blank for such a field then
+                                          it will not appear under 'Sort By'.
+                                      {% endblocktrans %}" >
+                            </span>
+                        </span>
+                    </th>
                     <th></th>
                 </tr>
             </thead>
