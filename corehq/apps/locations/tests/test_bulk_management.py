@@ -163,19 +163,31 @@ class TestTreeUtils(SimpleTestCase):
         )
 
     def test_expansion_validators(self):
+        # a, b are TOP. a has c,d as children, b has e as child
         from_validator, to_validator = expansion_validators(
             [('a', 'TOP'), ('b', 'TOP'), ('c', 'a'), ('d', 'a'), ('e', 'b')]
         )
-        self.assertEqual(from_validator('a'), ['a', 'TOP'])
-        self.assertEqual(from_validator('b'), ['b', 'TOP'])
-        self.assertEqual(from_validator('c'), ['c', 'a', 'TOP'])
-        self.assertEqual(from_validator('d'), ['d', 'a', 'TOP'])
-        self.assertEqual(from_validator('e'), ['e', 'b', 'TOP'])
-        self.assertEqual(to_validator('a'), ['a', 'c', 'd'])
-        self.assertEqual(to_validator('b'), ['b', 'e'])
-        self.assertEqual(to_validator('c'), ['c'])
-        self.assertEqual(to_validator('d'), ['d'])
-        self.assertEqual(to_validator('e'), ['e'])
+        self.assertEqual(set(from_validator('a')), set(['a', 'TOP']))
+        self.assertEqual(set(from_validator('b')), set(['b', 'TOP']))
+        self.assertEqual(set(from_validator('c')), set(['c', 'a', 'TOP']))
+        self.assertEqual(set(from_validator('d')), set(['d', 'a', 'TOP']))
+        self.assertEqual(set(from_validator('e')), set(['e', 'b', 'TOP']))
+        self.assertEqual(set(to_validator('a')), set(['a', 'c', 'd']))
+        self.assertEqual(set(to_validator('b')), set(['b', 'e']))
+        self.assertEqual(set(to_validator('c')), set(['c']))
+        self.assertEqual(set(to_validator('d')), set(['d']))
+        self.assertEqual(set(to_validator('e')), set(['e']))
+
+        # a is TOP. a has b as child, b has c as child
+        from_validator, to_validator = expansion_validators(
+            [('a', 'TOP'), ('b', 'a'), ('c', 'b')]
+        )
+        self.assertEqual(set(from_validator('a')), set(['a', 'TOP']))
+        self.assertEqual(set(from_validator('b')), set(['a', 'b', 'TOP']))
+        self.assertEqual(set(from_validator('c')), set(['a', 'b', 'c', 'TOP']))
+        self.assertEqual(set(to_validator('a')), set(['a', 'b', 'c']))
+        self.assertEqual(set(to_validator('b')), set(['b', 'c']))
+        self.assertEqual(set(to_validator('c')), set(['c']))
 
 
 def get_validator(location_types, locations, old_collection=None):
@@ -414,28 +426,34 @@ class TestBulkManagement(TestCase):
         # Makes sure that the set of all location types in the domain matches
         # the passed-in location types
         actual_types = self.domain.location_types
+        # covert it to the format of passed-in tuples
         actual = [
-            (lt.code, lt.parent_type.code) if lt.parent_type else (lt.code, None)
+            (lt.name, lt.code,
+             lt.parent_type.code if lt.parent_type else '', False, lt.shares_cases or False,
+             lt.view_descendants, lt.expand_from.code if lt.expand_from else '',
+             lt.expand_to.code if lt.expand_to else '')
             for lt in actual_types
         ]
-
         expected = []
         for lt in expected_types:
-            code = lt[1]
-            parent_code = lt[2] or None
             do_delete = lt[3]
             if not do_delete:
-                expected.append((code, parent_code))
+                # drop index
+                expected.append(tuple(lt[0:-1]))
 
         self.assertEqual(set(actual), set(expected))
 
-    def assertLocationsMatch(self, expected_locations):
+    def assertLocationsMatch(self, expected_locations, check_attr='site_code'):
         collection = LocationCollection(self.domain)
-        actual = collection.locations
-        actual = [
-            (l.site_code, l.parent.site_code) if l.parent else (l.site_code, None)
-            for l in actual
-        ]
+
+        actual = []
+        for l in collection.locations:
+            attr = getattr(l, check_attr)
+            if l.parent:
+                parent = l.parent.site_code
+            else:
+                parent = None
+            actual.append((attr, parent))
 
         self.assertEqual(set(actual), expected_locations)
 
@@ -650,3 +668,101 @@ class TestBulkManagement(TestCase):
         self.assertNotEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
+
+    def test_edit_names(self):
+        # metadata attributes like 'name' can be updated
+        lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
+        locations_by_code = self.create_locations(self.basic_tree, lt_by_code)
+        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
+
+        _loc_id = lambda x: locations_by_code[x].location_id
+        change_names = [
+            # (name, site_code, location_type, parent_code, location_id,
+            # do_delete, external_id, latitude, longitude, index)
+            # changing names
+            ('State 1', 's1', 'state', '', _loc_id('s1'), False, '', '', '', 0),
+            ('State 2', 's2', 'state', '', _loc_id('s2'), False, '', '', '', 0),
+            ('County 11', 'county11', 'county', 's1', _loc_id('county11'), False, '', '', '', 0),
+            ('County 21', 'county21', 'county', 's2', _loc_id('county21'), False, '', '', '', 0),
+            ('City 111', 'city111', 'city', 'county11', _loc_id('city111'), False, '', '', '', 0),
+            ('City 112', 'city112', 'city', 'county11', _loc_id('city112'), False, '', '', '', 0),
+            ('City 211', 'city211', 'city', 'county21', _loc_id('city211'), False, '', '', '', 0),
+        ]
+
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            change_names,
+        )
+
+        self.assertEqual(result.errors, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(set([
+            ('s1', None), ('s2', None), ('county11', 's1'), ('county21', 's2'),
+            ('city111', 'county11'), ('city112', 'county11'), ('city211', 'county21')
+        ]))
+
+        self.assertLocationsMatch(set([
+            ('State 1', None), ('State 2', None), ('County 11', 's1'), ('County 21', 's2'),
+            ('City 111', 'county11'), ('City 112', 'county11'), ('City 211', 'county21')
+        ]), check_attr='name')
+
+    def test_edit_expansions(self):
+        # 'expand_from', 'expand_to' can be updated
+        lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
+        self.create_locations(self.basic_tree, lt_by_code)
+        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
+
+        edit_expansions = [
+            ('State', 'state', '', False, False, False, '', 'city', 0),
+            ('County', 'county', 'state', False, False, False, '', '', 0),
+            ('City', 'city', 'county', False, False, False, 'county', '', 0),
+        ]
+
+        result = self.bulk_update_locations(
+            edit_expansions,
+            self.basic_tree,
+        )
+
+        self.assertEqual(result.errors, [])
+        self.assertLocationTypesMatch(edit_expansions)
+
+        self.assertLocationsMatch(set([
+            ('s1', None), ('s2', None), ('county11', 's1'), ('county21', 's2'),
+            ('city111', 'county11'), ('city112', 'county11'), ('city211', 'county21')
+        ]))
+
+    def test_rearrange_locations(self):
+        # a total rearrangement like reversing the tree can be done
+        lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
+        self.create_locations(self.basic_tree, lt_by_code)
+
+        reverse_order = [
+            ('State', 'state', 'county', False, False, False, '', '', 0),
+            ('County', 'county', 'city', False, False, False, '', '', 0),
+            ('City', 'city', '', False, False, False, '', '', 0),
+        ]
+        edit_types_of_locations = [
+            # change parent from TOP to county
+            ('S1', 's1', 'state', 'county11', '', False, '', '', '', 0),
+            ('S2', 's2', 'state', 'county11', '', False, '', '', '', 0),
+            # change parent from state to city
+            ('County11', 'county11', 'county', 'city111', '', False, '', '', '', 0),
+            ('County21', 'county21', 'county', 'city111', '', False, '', '', '', 0),
+            # make these two TOP locations
+            ('City111', 'city111', 'city', '', '', False, '', '', '', 0),
+            ('City112', 'city112', 'city', '', '', False, '', '', '', 0),
+            # delete this
+            ('City211', 'city211', 'city', 'county21', '', True, '', '', '', 0),
+        ]
+
+        result = self.bulk_update_locations(
+            reverse_order,  # No change to types
+            edit_types_of_locations,  # This is the desired end result
+        )
+
+        self.assertEqual(result.errors, [])
+        self.assertLocationTypesMatch(reverse_order)
+        self.assertLocationsMatch(set([
+            ('s1', 'county11'), ('s2', 'county11'), ('county11', 'city111'),
+            ('county21', 'city111'), ('city111', None), ('city112', None)
+        ]))

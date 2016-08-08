@@ -40,9 +40,10 @@ class LocationTypeStub(object):
     A representation of location type excel row
     """
     titles = LOCATION_TYPE_SHEET_HEADERS
+    meta_data_attrs = ['name', 'code', 'shares_cases', 'view_descendants']
 
     def __init__(self, name, code, parent_code, do_delete, shares_cases,
-                 view_descendants, expand_from, sync_to, index):
+                 view_descendants, expand_from, expand_to, index):
         self.name = name
         self.code = code
         # if parent_code is '', it must be top location type
@@ -51,8 +52,17 @@ class LocationTypeStub(object):
         self.shares_cases = shares_cases
         self.view_descendants = view_descendants
         self.expand_from = expand_from
-        self.sync_to = sync_to
+        self.expand_to = expand_to
         self.index = index
+        # These can be set by passing information of existing location data latter.
+        # Whether the type already exists in domain or is new
+        self.is_new = None
+        # The SQL LocationType object, either an unsaved or the actual database object
+        #   depending on whether 'is_new' is True or not
+        self.db_object = None
+        # Whether the db_object needs a SQL save, either because it's new or because some attributes
+        #   are changed
+        self.needs_save = None
 
     @classmethod
     def from_excel_row(cls, row, index):
@@ -63,53 +73,51 @@ class LocationTypeStub(object):
         shares_cases = row.get(cls.titles['shares_cases'], 'N').lower() in ['y', 'yes']
         view_descendants = row.get(cls.titles['view_descendants'], 'N').lower() in ['y', 'yes']
         expand_from = row.get(cls.titles['expand_from'])
-        sync_to = row.get(cls.titles['sync_to'])
+        expand_to = row.get(cls.titles['expand_to'])
         index = index
         return cls(name, code, parent_code, do_delete, shares_cases,
-                   view_descendants, expand_from, sync_to, index)
+                   view_descendants, expand_from, expand_to, index)
 
-    def is_new(self, old_collection):
+    def _is_new(self, old_collection):
         return self.code not in old_collection.types_by_code
 
-    def _needs_save(self, old_collection):
+    def lookup_old_collection_data(self, old_collection):
+        # Lookup whether the type already exists in old_collection or is new. Depending on that
+        # set attributes like 'is_new', 'needs_save', 'db_obect'
+        self.is_new = self._is_new(old_collection)
+
+        if self.is_new:
+            self.db_object = LocationType(domain=old_collection.domain_name)
+        else:
+            self.db_object = copy.copy(old_collection.types_by_code[self.code])
+
+        self.needs_save = self._needs_save()
+
+        # todo, expand_from and expand_to
+        for attr in self.meta_data_attrs:
+            setattr(self.db_object, attr, getattr(self, attr, None))
+
+    def _needs_save(self):
         # returns True if this should be saved
-        if self.is_new(old_collection) or self.do_delete:
+        if self.is_new or self.do_delete:
             return True
 
-        old_version = old_collection.types_by_code[self.code]
-        if (old_version.parent_type and old_version.parent_type.code != self.parent_code):
-            return True
-
-        for attr in ['name', 'code', 'shares_cases'
-                     'view_descendants', 'expand_from', 'sync_to']:
+        old_version = self.db_object
+        # check if any attributes are being updated
+        for attr in self.meta_data_attrs:
             if getattr(old_version, attr, None) != getattr(self, attr, None):
                 return True
+
+        # check if any of foreign-key refs are being updated
+        foreign_attrs = ['parent_type', 'expand_from', 'sync_to']
+        for attr in foreign_attrs:
+            old_ref = getattr(old_version, attr, None)
+            old_value = old_ref.code if old_ref else None
+            new_value = getattr(self, 'parent_code' if attr is 'parent_type' else attr)
+            if old_value != new_value:
+                return True
+
         return False
-
-    def _as_db_object(self, old_collection, domain):
-        # returns a LocationType version of the stub
-        if self.is_new(old_collection):
-            obj = LocationType(domain=domain)
-        else:
-            obj = copy.copy(old_collection.types_by_code[self.code])
-        return obj
-
-    def save_if_needed(self, old_collection, parent_type, domain):
-        db_object = self._as_db_object(old_collection, domain)
-        if self.do_delete:
-            db_object.delete()
-            return None
-
-        db_object.parent_type = parent_type
-        # todo, expand_from and sync_to
-        for attr in ['name', 'code', 'shares_cases'
-                     'view_descendants']:
-            setattr(db_object, attr, getattr(self, attr, None))
-
-        if self._needs_save(old_collection):
-            db_object.save()
-
-        return db_object
 
 
 class LocationStub(object):
@@ -117,6 +125,7 @@ class LocationStub(object):
     A representation of location excel row
     """
     titles = LOCATION_SHEET_HEADERS
+    meta_data_attrs = ['name', 'site_code', 'latitude', 'longitude', 'external_id']
 
     def __init__(self, name, site_code, location_type, parent_code, location_id,
                  do_delete, external_id, latitude, longitude, index):
@@ -130,12 +139,19 @@ class LocationStub(object):
         self.do_delete = do_delete
         self.external_id = external_id
         self.index = index
-        self.is_new = False
         if not self.location_id and not self.site_code:
             raise LocationExcelSheetError(
                 _(u"Location in sheet '{}', at row '{}' doesn't contain either location_id or site_code")
                 .format(self.location_type, self.index)
             )
+        # Whether the location already exists in domain or is new
+        self.is_new = None
+        # The SQLLocation object, either an unsaved or the actual database object
+        #   depending on whether 'is_new' is True or not
+        self.db_object = None
+        # Whether the db_object needs a SQL save, either because it's new or because some attributes
+        #   are changed
+        self.needs_save = None
 
     @classmethod
     def from_excel_row(cls, row, index, location_type):
@@ -151,6 +167,21 @@ class LocationStub(object):
         index = index
         return cls(name, site_code, location_type, parent_code, location_id,
                    do_delete, external_id, latitude, longitude, index)
+
+    def lookup_old_collection_data(self, old_collection):
+        # Lookup whether the location already exists in old_collection or is new.
+        #   Depending on that set attributes like 'is_new', 'needs_save', 'db_obect'
+        self.autoset_location_id_or_site_code(old_collection)
+
+        if self.is_new:
+            self.db_object = SQLLocation(domain=old_collection.domain_name)
+        else:
+            self.db_object = copy.copy(old_collection.locations_by_id[self.location_id])
+
+        self.needs_save = self._needs_save()
+
+        for attr in self.meta_data_attrs:
+            setattr(self.db_object, attr, getattr(self, attr, None))
 
     def autoset_location_id_or_site_code(self, old_collection):
         # if one of location_id/site_code are missing, lookup for the other in
@@ -180,51 +211,26 @@ class LocationStub(object):
                 # must be a new location
                 self.is_new = True
 
-    def _needs_save(self, old_collection):
-        # returns True if this should be saved
-        # assumes self.autoset_location_id_or_site_code is already called
+    def _needs_save(self):
         if self.is_new or self.do_delete:
             return True
 
-        old_version = old_collection.locations_by_id[self.location_id]
-
-        if (self.location_type != old_version.location_type.code or
-           (old_version.parent and self.parent_code != old_version.parent.site_code)):
-            return True
-
-        for attr in ['name', 'site_code', 'latitude', 'longitude', 'external_id']:
+        old_version = self.db_object
+        # check if any attributes are being updated
+        for attr in self.meta_data_attrs:
             if getattr(old_version, attr, None) != getattr(self, attr, None):
                 return True
+
+        # check if any foreign-key refs are being updated
+        if (self.location_type != old_version.location_type.code):
+            return True
+
+        old_parent = old_version.parent.site_code if old_version.parent else None
+        new_parent = None if self.parent_code is ROOT_LOCATION_TYPE else self.parent_code
+        if old_parent != new_parent:
+            return True
+
         return False
-
-    def _as_db_object(self, old_collection, domain):
-        # returns a SQLLocation version of the stub
-        if self.is_new:
-            obj = SQLLocation(domain=domain)
-        else:
-            obj = copy.copy(old_collection.locations_by_id[self.location_id])
-
-        return obj
-
-    def save_if_needed(self, old_collection, parent_location, domain, location_type):
-
-        db_object = self._as_db_object(old_collection, domain)
-
-        if self.do_delete:
-            db_object.delete()
-            return None
-
-        db_object.parent = parent_location
-        db_object.location_type = location_type
-        for attr in ['name', 'site_code',
-                     'latitude', 'longitude', 'external_id']:
-            setattr(db_object, attr, getattr(self, attr, None))
-
-        db_object.parent = parent_location
-        if self._needs_save(old_collection):
-            db_object.save()
-
-        return db_object
 
 
 class LocationCollection(object):
@@ -232,6 +238,7 @@ class LocationCollection(object):
     Simple wrapper to lookup types and locations in a domain
     """
     def __init__(self, domain_obj):
+        self.domain_name = domain_obj.name
         self.types = domain_obj.location_types
         locations = [
             [l.sql_location for l in Location.filter_by_type(domain_obj.name, loc_type.name)]
@@ -343,9 +350,24 @@ class NewLocationImporter(object):
             return self.result
 
         with transaction.atomic():
-            self.commit_changes(self.type_rows, self.location_rows)
+            self.bulk_commit(self.type_rows, self.location_rows)
 
         return self.result
+
+    def bulk_commit(self, type_stubs, location_stubs):
+        for lt in type_stubs:
+            lt.lookup_old_collection_data(self.old_collection)
+
+        for loc in location_stubs:
+            loc.lookup_old_collection_data(self.old_collection)
+
+        save_types(type_stubs)
+        type_objects = {
+            lt.code: lt.db_object
+            for lt in type_stubs
+            if not lt.do_delete
+        }
+        save_locations(location_stubs, type_objects)
 
     def commit_changes(self, type_stubs, location_stubs):
         # assumes all valdiations are done, just saves them
@@ -396,6 +418,10 @@ class NewLocationImporter(object):
                 if child_object:
                     # check if child was deleted, in which case child_object would be None
                     create_child_locations(child_object)
+        # to be deleted stubs. bulk delete
+        # is_new stubs. bulk create without setting parent
+        # update. bulk update and set parents
+
         create_child_locations(ROOT_LOCATION_TYPE)
 
 
@@ -568,19 +594,20 @@ class LocationTreeValidator(object):
                 for code in e.affected_nodes
             ]
 
-        allowed_from_codes, allowed_to_codes = expansion_validators(type_pairs)
+        from_validator, to_validator = expansion_validators(type_pairs)
         errors = []
         for lt in self.location_types:
-            if lt.expand_from and lt.expand_from not in allowed_from_codes(lt.code):
+            allowed_from_codes = from_validator(lt.code)
+            if lt.expand_from and lt.expand_from not in allowed_from_codes:
                 errors.append(
                     _(u"'{}' can't have '{}' as 'Expand From', valid options are '{}'")
                     .format(lt.code, lt.expand_from, allowed_from_codes)
                 )
-
-            if lt.sync_to and lt.sync_to not in allowed_to_codes(lt.code):
+            allowed_to_codes = to_validator(lt.code)
+            if lt.expand_to and lt.expand_to not in allowed_to_codes:
                 errors.append(
-                    _(u"'{}' can't have '{}' as 'Sync To', valid options are '{}'")
-                    .format(lt.code, lt.sync_to, allowed_to_codes)
+                    _(u"'{}' can't have '{}' as 'Expand To', valid options are '{}'")
+                    .format(lt.code, lt.expand_to, allowed_to_codes)
                 )
 
         return errors
@@ -646,3 +673,123 @@ def new_locations_import(domain, excel_importer):
 
     result = importer.run()
     return result
+
+
+def bulk_delete(objects):
+    # Given a list of existing SQL objects, bulk delete them
+    for obj in objects:
+        obj.delete()
+
+
+def bulk_create(objects):
+    # Given a list of new SQL objects, bulk create them
+    for obj in objects:
+        obj.save()
+    return objects
+
+
+def bulk_update(objects):
+    # Given a list of existing SQL objects, bulk update them
+    for obj in objects:
+        obj.save()
+
+
+def save_types(type_stubs):
+    # Given a list of LocationTypeStub objects, saves them to SQL as LocationType objects
+    #
+    # args:
+    #   type_stubs (list): list of LocationType objects with meta-data attributes and
+    #       `needs_save`, 'is_new', 'db_object' set correctly
+    #
+    # returns:
+    #   dict: a dict of {object.code: object for all type objects}
+    # This proceeds in 3 steps
+    # 1. Lookup all to be deleted types and 'bulk_delete' them
+    # 2. Lookup all new types and 'bulk_create' the SQL objects, but don't set ForeignKey attrs like
+    #    'parent', 'expand_from', 'expand_to' yet
+    # 3. Lookup all to be updated types. Set foreign key attrs on these and new objects, and
+    #    'bulk_update' the objects
+
+    # step 1
+    to_be_deleted_types = [lt.db_object for lt in type_stubs if lt.do_delete]
+    bulk_delete(to_be_deleted_types)
+    # step 2
+    new_type_objects = bulk_create([lt.db_object for lt in type_stubs if lt.is_new])
+    # step 3
+    type_objects_by_code = {lt.code: lt for lt in new_type_objects}
+    type_objects_by_code.update({ROOT_LOCATION_TYPE: None})
+    type_objects_by_code.update({
+        lt.code: lt.db_object
+        for lt in type_stubs
+        if not lt.is_new and not lt.do_delete and lt.needs_save
+    })
+    to_bulk_update = []
+    for lt in type_stubs:
+        if (lt.needs_save or lt.is_new) and not lt.do_delete:
+            type_object = type_objects_by_code[lt.code]
+            type_object.parent_type = type_objects_by_code[lt.parent_code]
+            if lt.expand_from:
+                type_object.expand_from = type_objects_by_code[lt.expand_from]
+            if lt.expand_to:
+                type_object.expand_to = type_objects_by_code[lt.expand_to]
+            to_bulk_update.append(type_object)
+
+    bulk_update(to_bulk_update)
+
+
+def save_locations(location_stubs, type_objects):
+    # Given list of LocationStub items and LocationType objects, uupdates/saves the list
+    # of locationsas SQLLocation objects
+    #
+    # args:
+    #   location_stubs (list): List of LocationStub items with meta data attributes and
+    #        `needs_save`, 'is_new', 'db_object' set correctly.
+    #   type_objects (dict): A dict of LocationType.code: LocationType object mapping.
+    #       This is used to set loc.location_type
+    #
+    # This proceeds in four steps
+    # 1. Lookup all to be deleted locations and `bulk_delete` them
+    # 2. Lookup all new locations and `bulk_create` them, but don't set loc.parent yet (ForeignKey attr)
+    # 3. Lookup all objects to be updated, set loc.parent to None for all these and `bulk_update`
+    # 4. For new and to-be-updated objects, set correct loc.parent and do another `bulk_update`
+    # Doing 3 and 4 seperately lets us avoid mptt.InvalidMove errors
+
+    to_be_deleted_locations = [l.db_object for l in location_stubs if l.do_delete]
+    bulk_delete(to_be_deleted_locations)
+
+    new_objects = []
+    to_be_updated_objects = []
+    # find locations that are new and that are updated
+    for loc in location_stubs:
+        if not loc.do_delete:
+            obj = loc.db_object
+            obj.location_type = type_objects[loc.location_type]
+            if loc.is_new:
+                new_objects.append(obj)
+            if not loc.is_new and loc.needs_save:
+                # Reset parents to None to avoid "InvalidMove" error.
+                #   Explanation: Consider reversing the tree a->b->c to c->b->a.
+                #   In the initial state a has b as parent. When updating a.parent to b, it will throw
+                #   an InvalidMove error, because b's parent is still a, resulting in a midway
+                #   cycle error. The cycle is detected since SQLLocation.parent is a mptt.TreeForeignKey
+                #   To get around this we do two updates. In 1st update we set all parents to None,
+                #   in the 2nd update set correct parents.
+                obj.parent = None
+                to_be_updated_objects.append(obj)
+
+    # create new_objects without parent refs
+    bulk_create(new_objects)
+    # update objects with parents set to None
+    bulk_update(to_be_updated_objects)
+
+    location_objects_by_site_code = {l.site_code: l for l in new_objects + to_be_updated_objects}
+    to_bulk_update = []
+    for loc in location_stubs:
+        if (loc.needs_save or loc.is_new) and not loc.do_delete:
+            obj = location_objects_by_site_code[loc.site_code]
+            if loc.parent_code != ROOT_LOCATION_TYPE:
+                obj.parent = location_objects_by_site_code[loc.parent_code]
+            to_bulk_update.append(obj)
+
+    # set parent refs to all new-objects and to-be-updated objects
+    bulk_update(to_bulk_update)

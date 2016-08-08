@@ -20,5 +20,5 @@ LOCATION_TYPE_SHEET_HEADERS = {
     'shares_cases': 'Shares Cases Y/N',
     'view_descendants': 'View Child Cases (Y/N)',
     'expand_from': 'Expand From',
-    'sync_to': 'Sync To',
+    'expand_to': 'Expand To',
 }
