@@ -179,8 +179,6 @@ def handle_401_response(f):
             if uname:
                 valid, message, error_code = ensure_active_user_by_username(uname)
                 if not valid:
-                    print error_code
-                    print message
                     return json_response({
                         "error": error_code,
                         "default_response": message
