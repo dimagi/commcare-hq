@@ -33,7 +33,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.users.models import CouchUser
 from corehq.apps.hqwebapp.signals import clear_login_attempts
-from corehq.apps.users.models import CommCareUser
 
 ########################################################################################################
 from corehq.toggles import IS_DEVELOPER

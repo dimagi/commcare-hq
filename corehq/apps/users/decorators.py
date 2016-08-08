@@ -80,6 +80,7 @@ def require_permission_to_edit_user(view_func):
             return domain_specific_login_redirect(request, domain)
     return _inner
 
+
 def ensure_active_user():
     def decorator(fn):
         @wraps(fn)
@@ -89,6 +90,7 @@ def ensure_active_user():
             returns the error code which should be present in app_string for translation and also shares
             the default response which can be used in case the translation is missing
             """
+            valid = True
             couch_user = CouchUser.from_django_user(request.user)
             if couch_user:
                 valid, message, error_code = ensure_active_user_by_username(couch_user.username)
@@ -103,6 +105,7 @@ def ensure_active_user():
                 return fn(request, *args, **kwargs)
         return _inner
     return decorator
+
 
 def ensure_active_user_by_username(username):
     ccu = CommCareUser.get_by_username(username)
