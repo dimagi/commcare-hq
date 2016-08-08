@@ -11,10 +11,8 @@
 
     $.fn.inlineTouchform = function (options) {
         var $target = $($(this).get(0));
-        options.onerror = options.onerror || function () {
-            };
-        options.onload = options.onload || function () {
-            };
+        options.onerror = options.onerror || function () {};
+        options.onload = options.onload || function () {};
         options.lang = options.lang || 'en';
 
         $.ajax({
@@ -46,7 +44,7 @@
                                 success: function () {
                                     $target.html(alertHtml('Form successfully submitted!', 'alert-success'));
                                     options.onsubmit();
-                                }
+                                },
                             });
                         }
                     },
@@ -58,7 +56,7 @@
                     },
                     onload: function (adapter, resp) {
                         options.onload();
-                    }
+                    },
                 });
                 data.onLoading = onLoading;
                 data.onLoadingComplete = onLoadingComplete;
