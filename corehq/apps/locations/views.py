@@ -31,6 +31,7 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.users.forms import MultipleSelectionForm
+from corehq.toggles import NEW_BULK_LOCATION_MANAGEMENT
 from corehq.util import reverse, get_document_or_404
 
 from .analytics import users_have_locations
@@ -703,7 +704,9 @@ class LocationImportView(BaseLocationView):
 
 @locations_access_required
 def location_importer_job_poll(request, domain, download_id,
-                               template="locations/manage/partials/locations_upload_status.html"):
+                               template="style/partials/download_status.html"):
+    if NEW_BULK_LOCATION_MANAGEMENT.enabled(domain):
+        template = "locations/manage/partials/locations_upload_status.html"
     try:
         context = get_download_context(download_id, check_state=True)
     except TaskFailedError:
