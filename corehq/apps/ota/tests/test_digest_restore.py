@@ -1,5 +1,4 @@
 import time
-import json
 from python_digest import build_authorization_request, calculate_nonce
 from django.test import TestCase, Client
 from django.conf import settings

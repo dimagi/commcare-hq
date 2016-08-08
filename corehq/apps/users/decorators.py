@@ -4,7 +4,7 @@ from corehq.apps.domain.decorators import login_and_domain_required, domain_spec
 from functools import wraps
 from corehq.apps.users.models import CouchUser, CommCareUser
 from django.utils.translation import ugettext as _
-from dimagi.utils.web import json_response
+
 
 def require_permission_raw(permission_check, login_decorator=login_and_domain_required):
     """
