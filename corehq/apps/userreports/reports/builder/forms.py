@@ -1182,7 +1182,9 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 if mselect_indicator_id:
                     if mselect_indicator_id not in added_multiselect_columns:
                         added_multiselect_columns.add(mselect_indicator_id)
-                        display = " - ".join(display.split(" - ")[:-1])
+                        display = MultiselectQuestionColumnOption.LABEL_DIVIDER.join(
+                            display.split(MultiselectQuestionColumnOption.LABEL_DIVIDER)[:-1]
+                        )
                     else:
                         continue
 
