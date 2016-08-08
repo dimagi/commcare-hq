@@ -156,6 +156,7 @@ MIDDLEWARE_CLASSES = [
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
     'auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
+    'corehq.apps.users.location_access_restrictions.LocationAccessMiddleware',
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
