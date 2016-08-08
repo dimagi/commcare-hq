@@ -31,7 +31,7 @@ class ColumnOption(object):
             return ("Count per Choice",)
         return ("Count per Choice", "Sum", "Average")
 
-    def to_column_dicts(self, index, display_text, aggregation):
+    def to_column_dicts(self, index, display_text, aggregation, is_aggregated_on=False):
         return [{
             "format": "default",
             "aggregation": self.aggregation_map[aggregation],
@@ -54,7 +54,12 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
         super(QuestionColumnOption, self).__init__(id, display, indicator_id, False)
         self.question_source = question_source
 
-    def to_column_dicts(self, index, display_text, aggregation):
+    def to_column_dicts(self, index, display_text, aggregation, is_aggregated_on=False):
+
+        if is_aggregated_on:
+            return super(MultiselectQuestionColumnOption, self).to_column_dicts(
+                index, display_text, aggregation, is_aggregated_on=False
+            )
 
         columns = []
         for choice_index, choice in enumerate(self.question_source['options']):
@@ -83,7 +88,7 @@ class CountColumn(ColumnOption):
         # be more accurate.
         return ("Count",)
 
-    def to_column_dicts(self, index, display_text, aggregation):
+    def to_column_dicts(self, index, display_text, aggregation, is_aggregated_on=False):
         # aggregation is only an arg so that we match the the parent's method signature.
         column_dicts = super(CountColumn, self).to_column_dicts(index, display_text, "Sum")
         del column_dicts[0]['transform']

@@ -271,10 +271,8 @@ class DataSourceBuilder(object):
                 ))
             elif prop.type == "question":
                 if prop.source['type'] == "MSelect":
-                    if is_multiselect_chart_report:
-                        ret.append(make_form_question_indicator(prop.source, prop.column_id))
-                    else:
-                        ret.append(make_multiselect_question_indicator(prop.source, prop.column_id))
+                    ret.append(make_form_question_indicator(prop.source, prop.column_id))  # For filters and aggregation
+                    ret.append(make_multiselect_question_indicator(prop.source, prop.column_id))  # For column display
                 else:
                     indicator = make_form_question_indicator(prop.source, prop.column_id, root_doc=is_multiselect_chart_report)
                     if prop.source['type'] == "DataBindOnly" and number_columns:
@@ -1264,15 +1262,15 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
         for i, conf in enumerate(self.cleaned_data['columns']):
             columns.extend(
                 self.report_column_options[conf['property']].to_column_dicts(
-                    i, conf['display_text'], conf['calculation']
+                    i, conf['display_text'], conf['calculation'], is_aggregated_on=conf["property"] == self.aggregation_field
                 )
             )
 
         # Add the aggregation indicator to the columns if it's not already present.
-        displaying_agg_column = bool([c for c in columns if c['field'] == agg_field_id])
+        displaying_agg_column = bool([c for c in self.cleaned_data['columns'] if c['property'] == self.aggregation_field])
         if not displaying_agg_column:
             new_columns = self._get_column_option_by_indicator_id(agg_field_id).to_column_dicts(
-                "agg", agg_field_text, 'simple'
+                "agg", agg_field_text, 'simple', is_aggregated_on=True
             )
             new_columns.extend(columns)
             columns = new_columns
