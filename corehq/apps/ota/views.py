@@ -11,7 +11,7 @@ from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
 from corehq import toggles, privileges
-from corehq.const import OPENROSA_VERSION_MAP
+from corehq.const import OPENROSA_VERSION_MAP, OPENROSA_DEFAULT_VERSION
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.case_search.models import CaseSearchConfig
@@ -112,7 +112,7 @@ def get_restore_params(request):
         openrosa_headers = getattr(request, 'openrosa_headers', {})
         openrosa_version = openrosa_headers[OPENROSA_VERSION_HEADER]
     except KeyError:
-        openrosa_version = request.GET.get('openrosa_version', settings.OPENROSA_VERSION)
+        openrosa_version = request.GET.get('openrosa_version', OPENROSA_DEFAULT_VERSION)
 
     return {
         'since': request.GET.get('since'),
@@ -132,7 +132,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          force_restore_mode=None,
                          as_user=None,
                          has_data_cleanup_privelege=False,
-                         openrosa_version=settings.OPENROSA_VERSION):
+                         openrosa_version=OPENROSA_DEFAULT_VERSION):
     # not a view just a view util
     is_permitted, message = is_permitted_to_restore(
         domain,
