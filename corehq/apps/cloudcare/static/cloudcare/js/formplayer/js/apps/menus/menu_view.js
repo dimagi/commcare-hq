@@ -213,12 +213,13 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
 
     MenuList.DetailView = Marionette.ItemView.extend({
         tagName: "tr",
+        className: "row",
         template: "#detail-view-item-template",
     });
 
     MenuList.DetailListView = Marionette.CompositeView.extend({
         tagName: "table",
-        className: "table table-hover",
+        className: "table table-hover table-striped table-bordered",
         template: "#detail-view-list-template",
         childView: MenuList.DetailView,
         childViewContainer: "tbody",
