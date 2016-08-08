@@ -4,6 +4,10 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     SessionNavigate.Router = Marionette.AppRouter.extend({
         appRoutes: {
             "apps": "listApps", // list all apps available to this user
+            "apps/:id": "selectApp", // select the app under :id and list root commands
+            "apps/:id/menu": "listMenus", // select the app under :id, make session steps in params, display screen
+            "sessions": "listSessions", //list all this user's current sessions (incomplete forms)
+            "sessions/:id": "getSession",
             ":session": "listMenus",
         },
     });
@@ -30,11 +34,13 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         showDetail: function (model, index) {
             SessionNavigate.MenuList.Controller.showDetail(model, index);
         },
-        listSessions: function () {
+        listSessions: function() {
+            FormplayerFrontend.request("clearForm");
             SessionNavigate.SessionList.Controller.listSessions();
         },
-        getIncompleteForm: function (sessionId) {
-            FormplayerFrontend.request("getIncompleteForm", sessionId);
+
+        getSession: function(sessionId) {
+            FormplayerFrontend.request("getSession", sessionId);
         },
         renderResponse: function (menuResponse) {
             var NextScreenCollection = Backbone.Collection.extend({});
@@ -104,11 +110,13 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     });
 
     FormplayerFrontend.on("sessions", function () {
+        FormplayerFrontend.navigate("/sessions");
         API.listSessions();
     });
 
-    FormplayerFrontend.on("getIncompleteForm", function (sessionId) {
-        API.getIncompleteForm(sessionId);
+    FormplayerFrontend.on("getSession", function (sessionId) {
+        FormplayerFrontend.navigate("/sessions/" + sessionId);
+        API.getSession(sessionId);
     });
 
     FormplayerFrontend.on("renderResponse", function (menuResponse) {

@@ -13,7 +13,7 @@ FormplayerFrontend.module("SessionNavigate.SessionList", function (SessionList, 
         rowClick: function (e) {
             e.preventDefault();
             var model = this.model;
-            FormplayerFrontend.trigger("getIncompleteForm", model.get('sessionId'));
+            FormplayerFrontend.trigger("getSession", model.get('sessionId'));
         },
     });
 
