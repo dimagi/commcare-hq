@@ -435,10 +435,11 @@ class GenericReportView(object):
         current_config_id = self.request.GET.get('config_id', '')
         default_config = ReportConfig.default()
 
-        def is_datespan(field):
+        def is_editable_datespan(field):
             field_fn = to_function(field) if isinstance(field, basestring) else field
-            return issubclass(field_fn, DatespanFilter) and field_fn.is_viewable
-        has_datespan = any([is_datespan(field) for field in self.fields])
+            return issubclass(field_fn, DatespanFilter) and field_fn.is_editable
+
+        has_datespan = any([is_editable_datespan(field) for field in self.fields])
 
         self.context.update(
             report=dict(

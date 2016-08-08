@@ -18,6 +18,7 @@ FormplayerFrontend.on("before:start", function () {
 
         regions: {
             main: "#menu-region",
+            breadcrumb: "#breadcrumb-region",
             caseTileStyle: "#case-tile-style",
         },
     });
@@ -68,15 +69,15 @@ FormplayerFrontend.reqres.setHandler('clearMenu', function () {
     $('#menu-region').html("");
 });
 
-$(document).bind("ajaxStart", function(){
+$(document).bind("ajaxStart", function () {
     $(".formplayer-request").addClass('formplayer-requester-disabled');
     tfLoading();
-}).bind("ajaxStop", function() {
+}).bind("ajaxStop", function () {
     $(".formplayer-request").removeClass('formplayer-requester-disabled');
     tfLoadingComplete();
 });
 
-FormplayerFrontend.reqres.setHandler('error', function(errorMessage) {
+FormplayerFrontend.reqres.setHandler('error', function (errorMessage) {
     showError(errorMessage, $("#cloudcare-notifications"), 10000);
 });
 
@@ -95,14 +96,24 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
             FormplayerFrontend.request("clearForm");
-            FormplayerFrontend.trigger("apps:currentApp");
             showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
+
+            if(resp.nextScreen !== null && resp.nextScreen !== undefined) {
+                FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
+            } else {
+                FormplayerFrontend.trigger("apps:currentApp");
+            }
         } else {
             showError(resp.output, $("#cloudcare-notifications"));
         }
         // TODO form linking
     };
     data.formplayerEnabled = true;
+    data.resourceMap = function(resource_path) {
+        var oldRoute = Backbone.history.getFragment();
+        var appId = Util.getAppId(oldRoute);
+        return FormplayerFrontend.request('resourceMap', resource_path, appId);
+    };
     var sess = new WebFormSession(data);
     sess.renderFormXml(data, $('#webforms'));
 });

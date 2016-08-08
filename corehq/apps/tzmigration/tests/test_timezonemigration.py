@@ -60,6 +60,8 @@ class TimeZoneMigrationTest(TestCase, TestFileMixin):
             '#export_tag': actual_json['#export_tag'],
             'auth_context': actual_json['auth_context'],
         })
+        for name, meta in actual_json.get("external_blobs", {}).iteritems():
+            expected_json["external_blobs"][name]["id"] = meta["id"]
         expected_json = XFormInstance.wrap(expected_json).to_json()
         self.assertDictEqual(actual_json, expected_json, msg)
 

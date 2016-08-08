@@ -61,7 +61,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             return defer.promise();
         },
 
-        getIncompleteForm: function (sessionId) {
+        getSession: function (sessionId) {
 
             var user = FormplayerFrontend.request('currentUser');
             var formplayerUrl = user.formplayer_url;
@@ -95,8 +95,8 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
         },
     };
 
-    FormplayerFrontend.reqres.setHandler("getIncompleteForm", function (sessionId) {
-        return API.getIncompleteForm(sessionId);
+    FormplayerFrontend.reqres.setHandler("getSession", function (sessionId) {
+        return API.getSession(sessionId);
     });
 
     FormplayerFrontend.reqres.setHandler("sessions", function () {
