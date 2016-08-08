@@ -25,6 +25,7 @@ from .new import (
     ScalarItem,
     GeopointItem,
     CaseIndexItem,
+    StockItem,
     Option,
     MultipleChoiceItem,
     MultiMediaItem,
