@@ -391,7 +391,12 @@ class LateFlag(HideShortHeaderColumn):
 class Invisible(HideShortColumn):
     @property
     def header(self):
-        if self.sort_element and self.sort_element.got_display_values():
+        """
+        header given for an invisible column to enable its display as a sort field in sort menu even
+        when missing amongst display properties for case list headers
+        refer: http://manage.dimagi.com/default.asp?232411
+        """
+        if self.sort_element and self.sort_element.has_display_values():
             header = sx.Header(
                 text=sx.Text(locale_id=self.locale_id),
                 width=self.template_width
@@ -402,7 +407,7 @@ class Invisible(HideShortColumn):
 
     @property
     def locale_id(self):
-        return self.id_strings.invisible_column_header_locale(
+        return self.id_strings.detail_column_header_locale(
             self.module, self.detail_type, self.column
         )
 
