@@ -41,6 +41,7 @@ FormplayerFrontend.getCurrentRoute = function () {
  * The actual mapping is contained in the app Couch document
  */
 FormplayerFrontend.reqres.setHandler('resourceMap', function (resource_path, app_id) {
+    debugger;
     var currentApp = FormplayerFrontend.request("appselect:getApp", app_id);
     if (resource_path.substring(0, 7) === 'http://') {
         return resource_path;
@@ -110,8 +111,8 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
     };
     data.formplayerEnabled = true;
     data.resourceMap = function(resource_path) {
-        var oldRoute = Backbone.history.getFragment();
-        var appId = Util.getAppId(oldRoute);
+        var urlObject = Util.currentUrlToObject();
+        var appId = urlObject.appId;
         return FormplayerFrontend.request('resourceMap', resource_path, appId);
     };
     var sess = new WebFormSession(data);
