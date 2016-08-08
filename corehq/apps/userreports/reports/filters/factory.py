@@ -39,6 +39,7 @@ def _build_pre_filter(spec, report):
         name=wrapped.slug,
         datatype=wrapped.datatype,
         pre_value=wrapped.pre_value,
+        pre_operator=wrapped.pre_operator,
     )
 
 

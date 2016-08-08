@@ -17,6 +17,8 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             this.type = response.type;
 
             if (response.commands) {
+                this.type = "commands";
+                this.breadcrumbs = response.breadcrumbs;
                 return response.commands;
             }
             else if (response.entities) {
@@ -27,6 +29,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 this.currentPage = response.currentPage;
                 this.pageCount = response.pageCount;
                 this.tiles = response.tiles;
+                this.breadcrumbs = response.breadcrumbs;
                 return response.entities;
             }
             else if(response.type === "query") {

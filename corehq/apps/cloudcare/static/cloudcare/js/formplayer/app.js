@@ -1,4 +1,4 @@
-/*global Marionette, Backbone, WebFormSession, Util, Entities */
+/*global Marionette, Backbone, WebFormSession, Util */
 
 /**
  * The primary Marionette application managing menu navigation and launching form entry
@@ -18,6 +18,7 @@ FormplayerFrontend.on("before:start", function () {
 
         regions: {
             main: "#menu-region",
+            breadcrumb: "#breadcrumb-region",
             caseTileStyle: "#case-tile-style",
         },
     });

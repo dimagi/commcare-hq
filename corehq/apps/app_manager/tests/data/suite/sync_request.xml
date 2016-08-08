@@ -39,10 +39,10 @@
              detail-select="m0_case_short"/>
     </session>
     <stack>
-      <push>
+      <create>
         <command value="'m0'"/>
-        <datum id="calculated_data" value="'claimed'"/>
-      </push>
+        <datum id="case_id" value="instance('querysession')/session/data/case_id"/>
+      </create>
     </stack>
   </sync-request>
 </partial>

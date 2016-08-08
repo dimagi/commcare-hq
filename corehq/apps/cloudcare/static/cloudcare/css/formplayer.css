@@ -34,15 +34,25 @@ body {
     color: #ff8400;
     text-shadow: 1px 1px 1px #000;
     font-size: 150px;
+    cursor: pointer;
 }
 
 .sync-icon {
     color: #47b700;
     text-shadow: 1px 1px 1px #000;
     font-size: 150px;
+    cursor: pointer;
 }
 
 .formplayer-requester-disabled {
     pointer-events: none;
     opacity: .5;
+}
+
+.breadcrumb-text {
+    cursor: pointer;
+}
+
+.formplayer-request {
+    cursor: pointer;
 }

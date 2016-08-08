@@ -114,6 +114,7 @@ class ApplicationStatusReport(DeploymentsReport):
     def users(self):
         mobile_user_and_group_slugs = self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
 
+        limit_user_ids = []
         if self.selected_app_id:
             limit_user_ids = get_all_user_ids_submitted(self.domain, self.selected_app_id)
 

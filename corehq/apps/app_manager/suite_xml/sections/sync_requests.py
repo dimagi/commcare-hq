@@ -5,7 +5,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Command,
     Display,
     Instance,
-    PushFrame,
+    CreateFrame,
     QueryData,
     QueryPrompt,
     SessionDatum,
@@ -19,7 +19,6 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
 )
 from corehq.apps.app_manager.util import module_offers_search
 from corehq.apps.app_manager.xpath import XPath, CaseTypeXpath, InstanceXpath, CaseIDXPath
-from corehq.apps.case_search.models import CALCULATED_DATA, MARK_AS_CLAIMED
 from corehq.util.view_utils import absolute_reverse
 
 
@@ -121,10 +120,10 @@ class SyncRequestContributor(SuiteContributorByModule):
                 stack=Stack(),
             )
 
-            frame = PushFrame()
+            frame = CreateFrame()
             # Open first form in module
             frame.add_command(XPath.string(id_strings.menu_id(module)))
-            frame.add_datum(StackDatum(id=CALCULATED_DATA, value=XPath.string(MARK_AS_CLAIMED)))
+            frame.add_datum(StackDatum(id='case_id', value=QuerySessionXPath('case_id').instance()))
             sync_request.stack.add_frame(frame)
 
             return [sync_request]

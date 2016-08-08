@@ -40,6 +40,26 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 menuListView = new MenuList.QueryListView(menuData);
             }
             FormplayerFrontend.regions.main.show(menuListView.render());
+
+            if (menuResponse.breadcrumbs) {
+                MenuList.Controller.showBreadcrumbs(menuResponse.breadcrumbs);
+            }
+        },
+
+        showBreadcrumbs: function (breadcrumbs) {
+            var breadcrumbsModel = [];
+            for (var i = 0; i < breadcrumbs.length; i++) {
+                var obj = {};
+                obj.data = breadcrumbs[i];
+                obj.id = i;
+                breadcrumbsModel.push(obj);
+            }
+            var detailCollection = new Backbone.Collection();
+            detailCollection.reset(breadcrumbsModel);
+            var breadcrumbView = new MenuList.BreadcrumbListView({
+                collection: detailCollection,
+            });
+            FormplayerFrontend.regions.breadcrumb.show(breadcrumbView.render());
         },
 
         showDetail: function (model, index) {

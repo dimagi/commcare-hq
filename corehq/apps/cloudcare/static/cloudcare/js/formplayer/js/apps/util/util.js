@@ -80,6 +80,10 @@ Util.CloudcareUrl = function (appId, sessionId, steps, page, search, queryDict) 
         this.page = null;
         this.search= null;
     };
+
+    this.spliceSteps = function(index) {
+        this.steps = this.steps.splice(0, index);
+    };
 };
 
 Util.CloudcareUrl.prototype.toJson = function () {
