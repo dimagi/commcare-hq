@@ -54,7 +54,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     MenuList.CaseView = Marionette.ItemView.extend({
         tagName: "tr",
         getTemplate: function () {
-            if (_.isNull(this.options.tiles)) {
+            if (_.isNull(this.options.tiles) || !this.tiles) {
                 return "#case-view-item-template";
             } else {
                 return "#case-tile-view-item-template";
@@ -184,8 +184,31 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 pageCount: this.options.pageCount,
                 styles: this.options.styles,
                 tiles: this.options.tiles,
+                breadcrumbs: this.options.breadcrumbs,
             };
         },
+    });
+
+    MenuList.BreadcrumbView = Marionette.ItemView.extend({
+        tagName: "li",
+        template: "#breadcrumb-item-template",
+        className: "breadcrumb-text",
+        events: {
+            "click": "crumbClick",
+        },
+
+        crumbClick: function (e) {
+            e.preventDefault();
+            var crumbId = this.options.model.get('id');
+            FormplayerFrontend.trigger("breadcrumbSelect", crumbId);
+        },
+    });
+
+    MenuList.BreadcrumbListView = Marionette.CompositeView.extend({
+        tagName: "div",
+        template: "#breadcrumb-list-template",
+        childView: MenuList.BreadcrumbView,
+        childViewContainer: "ol",
     });
 
     MenuList.DetailView = Marionette.ItemView.extend({

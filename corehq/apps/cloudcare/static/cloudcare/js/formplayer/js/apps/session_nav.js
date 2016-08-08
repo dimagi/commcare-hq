@@ -43,6 +43,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             FormplayerFrontend.request("getSession", sessionId);
         },
         renderResponse: function (menuResponse) {
+            FormplayerFrontend.request("clearForm");
             var NextScreenCollection = Backbone.Collection.extend({});
             var nextScreenCollection;
             //TODO: clean up this hackiness
@@ -128,5 +129,13 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             controller: API,
         });
     });
+
+    FormplayerFrontend.on("breadcrumbSelect", function (index) {
+        var urlObject = Util.currentUrlToObject();
+        urlObject.spliceSteps(index);
+        Util.setUrlToObject(urlObject);
+        SessionNavigate.MenuList.Controller.selectMenu(urlObject.appId, null, urlObject.steps);
+    });
+
 
 });

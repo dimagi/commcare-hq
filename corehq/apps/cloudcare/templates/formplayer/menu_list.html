@@ -45,5 +45,14 @@
         <% } %>
     </td>
     <td class="col-sm-10">
-        <h3><%- displayText ? displayText : "" %></h3></td>
+        <h3><%- displayText ? displayText : "" %></h3>
+    </td>
+</script>
+
+<script type="text/template" id="breadcrumb-item-template">
+    <%= data %>
+</script>
+
+<script type="text/template" id="breadcrumb-list-template">
+    <ol class="breadcrumb"></ol>
 </script>
