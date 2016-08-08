@@ -11,6 +11,7 @@ from collections import Counter, defaultdict
 
 from django.db import transaction
 from django.utils.translation import ugettext as _
+from bulk_update.helper import bulk_update as bulk_update_helper
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -683,15 +684,17 @@ def bulk_delete(objects):
 
 def bulk_create(objects):
     # Given a list of new SQL objects, bulk create them
-    for obj in objects:
-        obj.save()
+    sql_class = None
+    if objects:
+        sql_class = type(objects[0])
+        # ToDo: this results in an IntegrityError related to mptt
+        sql_class.objects.bulk_create(objects)
     return objects
 
 
 def bulk_update(objects):
     # Given a list of existing SQL objects, bulk update them
-    for obj in objects:
-        obj.save()
+    bulk_update_helper(objects)
 
 
 def save_types(type_stubs):
