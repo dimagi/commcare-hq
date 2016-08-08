@@ -1,4 +1,4 @@
-from django.conf import settings
+from distutils.version import LooseVersion
 from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
@@ -153,8 +153,10 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
 
     project = Domain.get_by_name(domain)
     app = get_app(domain, app_id) if app_id else None
-    async_restore = (toggles.ASYNC_RESTORE.enabled(domain) and
-                     float(openrosa_version) >= OPENROSA_VERSION_MAP['ASYNC_RESTORE'])
+    async_restore_enabled = (
+        toggles.ASYNC_RESTORE.enabled(domain) and
+        LooseVersion(openrosa_version) >= LooseVersion(OPENROSA_VERSION_MAP['ASYNC_RESTORE'])
+    )
     restore_config = RestoreConfig(
         project=project,
         restore_user=restore_user,
@@ -166,11 +168,11 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
             app=app,
         ),
         cache_settings=RestoreCacheSettings(
-            force_cache=force_cache or async_restore,
+            force_cache=force_cache or async_restore_enabled,
             cache_timeout=cache_timeout,
             overwrite_cache=overwrite_cache
         ),
-        async=async_restore
+        async=async_restore_enabled
     )
     return restore_config.get_response(), restore_config.timing_context
 
