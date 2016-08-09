@@ -57,6 +57,7 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
         self.question_source = question_source
 
     def to_column_dicts(self, index, display_text, aggregation, is_aggregated_on=False):
+        assert aggregation in ["Count per Choice", "simple"]
 
         if is_aggregated_on:
             return super(MultiselectQuestionColumnOption, self).to_column_dicts(
@@ -69,12 +70,17 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
                 "type": "field",
                 "column_id": "column_{}_{}".format(index, choice_index),
                 "format": "default",
-                "aggregation": self.aggregation_map[aggregation],
+                "aggregation": "sum",
                 "field": "{}_{}".format(self.indicator_id, choice['value']),
                 "display": display_text + self.LABEL_DIVIDER + choice['label']
             })
 
         return columns
+
+    @property
+    @memoized
+    def aggregation_options(self):
+        return ("Count per Choice",)
 
 
 class CountColumn(ColumnOption):
