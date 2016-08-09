@@ -4,8 +4,8 @@ from corehq.util.celery_utils import print_tasks, InvalidTaskTypeError
 
 class Command(BaseCommand):
     """
-    Prints celery tasks from the given worker. Note that there's a limit to the number
-    of tasks returned from a call to app.control.inspect.<task state>
+    Prints celery tasks that have been received by the given worker that are in the
+    given state.
 
     Task state can be: active, reserved, scheduled, or revoked.
 

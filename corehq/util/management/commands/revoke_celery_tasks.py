@@ -4,11 +4,12 @@ from corehq.util.celery_utils import revoke_tasks
 
 class Command(BaseCommand):
     """
-    Revokes celery tasks from the given worker. Note that there's a limit to the number
-    of tasks returned from a call to app.control.inspect.<task state>, so if you want
-    to revoke all of them, it's best to leave this command running for a little bit as it
-    will continue to poll for new tasks that need to be revoked. You can stop this process
-    at any time with Ctrl+C.
+    Revokes celery tasks matching the given task names. It's best to leave this command
+    running for a bit in order to get them all, as it will keep polling for tasks
+    to revoke, and there might be tasks in the message queue which haven't been
+    received by the worker yet.
+
+    You can stop this process at any time with Ctrl+C.
 
     Example:
     python manage.py revoke_celery_tasks couchexport.tasks.export_async

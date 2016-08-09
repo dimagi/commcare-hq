@@ -111,8 +111,8 @@ def revoke_tasks(task_names, interval=5):
 
 def print_tasks(worker, task_state):
     """
-    Prints celery tasks from the given worker. Note that there's a limit to the number
-    of tasks returned from a call to app.control.inspect.<task state>
+    Prints celery tasks that have been received by the given worker that are in the
+    given state.
 
     Examples:
     print_tasks('celery@hqcelery0.internal-va.commcarehq.org_main', 'active')
