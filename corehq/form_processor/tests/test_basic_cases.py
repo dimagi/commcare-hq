@@ -8,6 +8,7 @@ from casexml.apps.case.util import post_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.backends.couch.update_strategy import _coerce_to_datetime
 
 DOMAIN = 'fundamentals'
 
@@ -105,7 +106,7 @@ class FundamentalCaseTests(TestCase):
         case = self.casedb.get_case(case_id)
         self.assertEqual(case.owner_id, 'owner2')
         self.assertEqual(case.name, 'update_case')
-        self.assertEqual(case.opened_on, opened_on)
+        self.assertEqual(case.opened_on, _coerce_to_datetime(opened_on))
         self.assertEqual(case.opened_by, 'user1')
         self.assertEqual(case.modified_on, modified_on)
         self.assertEqual(case.modified_by, 'user2')

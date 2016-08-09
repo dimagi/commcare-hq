@@ -79,7 +79,7 @@ class CaseFromXFormTest(TestCase):
         # we also changed everything originally in the case
         self.assertEqual("a_new_type", case.type)
         self.assertEqual("a new name", case.name)
-        self.assertEqual(_coerce_to_datetime(UPDATE_DATE), case.opened_on)
+        self.assertEqual(_coerce_to_datetime(UPDATE_DATE), _coerce_to_datetime(case.opened_on))
 
         # case should have a new modified date
         self.assertEqual(MODIFY_DATE, case.modified_on)
