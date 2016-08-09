@@ -218,7 +218,8 @@ class MultiselectQuestionTest(ReportBuilderDBTest):
 
     def testReportColumnOptions(self):
         """
-        Confirm that form.report_column_options contains MultiselectQuestionColumnOption objects for mselect questions.
+        Confirm that form.report_column_options contains MultiselectQuestionColumnOption objects for mselect
+        questions.
         """
 
         builder_form = ConfigureListReportForm(

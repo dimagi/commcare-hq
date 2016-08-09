@@ -271,10 +271,14 @@ class DataSourceBuilder(object):
                 ))
             elif prop.type == "question":
                 if prop.source['type'] == "MSelect":
-                    ret.append(make_form_question_indicator(prop.source, prop.column_id))  # For filters and aggregation
-                    ret.append(make_multiselect_question_indicator(prop.source, prop.column_id))  # For column display
+                    # For filters and aggregation:
+                    ret.append(make_form_question_indicator(prop.source, prop.column_id))
+                    # For column display:
+                    ret.append(make_multiselect_question_indicator(prop.source, prop.column_id))
                 else:
-                    indicator = make_form_question_indicator(prop.source, prop.column_id, root_doc=is_multiselect_chart_report)
+                    indicator = make_form_question_indicator(
+                        prop.source, prop.column_id, root_doc=is_multiselect_chart_report
+                    )
                     if prop.source['type'] == "DataBindOnly" and number_columns:
                         if indicator['column_id'] in number_columns:
                             indicator['datatype'] = 'decimal'
@@ -722,7 +726,9 @@ class ConfigureNewReportBase(forms.Form):
             display_name=self.ds_builder.data_source_name,
             referenced_doc_type=self.ds_builder.source_doc_type,
             configured_filter=self.ds_builder.filter,
-            configured_indicators=self.ds_builder.indicators(self._number_columns, self._is_multiselect_chart_report),
+            configured_indicators=self.ds_builder.indicators(
+                self._number_columns, self._is_multiselect_chart_report
+            ),
             base_item_expression=base_item_expression,
             meta=DataSourceMeta(build=DataSourceBuildInformation(
                 source_id=self.report_source_id,
@@ -1210,7 +1216,9 @@ class ConfigureListReportForm(ConfigureNewReportBase):
     def _report_columns(self):
         columns = []
         for i, conf in enumerate(self.cleaned_data['columns']):
-            columns.extend(self.report_column_options[conf['property']].to_column_dicts(i, conf['display_text'], "simple"))
+            columns.extend(
+                self.report_column_options[conf['property']].to_column_dicts(i, conf['display_text'], "simple")
+            )
         return columns
 
     @property
@@ -1264,12 +1272,17 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
         for i, conf in enumerate(self.cleaned_data['columns']):
             columns.extend(
                 self.report_column_options[conf['property']].to_column_dicts(
-                    i, conf['display_text'], conf['calculation'], is_aggregated_on=conf["property"] == self.aggregation_field
+                    i,
+                    conf['display_text'],
+                    conf['calculation'],
+                    is_aggregated_on=conf["property"] == self.aggregation_field
                 )
             )
 
         # Add the aggregation indicator to the columns if it's not already present.
-        displaying_agg_column = bool([c for c in self.cleaned_data['columns'] if c['property'] == self.aggregation_field])
+        displaying_agg_column = bool(
+            [c for c in self.cleaned_data['columns'] if c['property'] == self.aggregation_field]
+        )
         if not displaying_agg_column:
             new_columns = self._get_column_option_by_indicator_id(agg_field_id).to_column_dicts(
                 "agg", agg_field_text, 'simple', is_aggregated_on=True
