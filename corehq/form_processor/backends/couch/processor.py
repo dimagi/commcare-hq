@@ -77,6 +77,21 @@ class FormProcessorCouch(object):
         deprecated = XFormDeprecated.wrap(existing_xform.to_json())
         if existing_xform._deferred_blobs:
             deprecated._deferred_blobs = existing_xform._deferred_blobs.copy()
+        else:
+            # in the case we are migrating, we need to populate the deferred blobs
+            # with the existing attachments in couch
+            def _couch_attachments_to_deferred_dict(form, name, attachment_info):
+                content = form.get_db().fetch_attachment(form.orig_id, name)
+                return {
+                    "content": content,
+                    "content_type": attachment_info['content_type'],
+                    "content_length": len(content),
+                }
+            deprecated._deferred_blobs = {
+                name: _couch_attachments_to_deferred_dict(existing_xform, name, attachment_meta)
+                for name, attachment_meta in existing_xform._attachments.items()
+            }
+
         return deprecated, new_xform
 
     @classmethod
