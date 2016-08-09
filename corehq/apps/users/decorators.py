@@ -92,7 +92,9 @@ def ensure_active_user_by_username(username):
     ccu = CommCareUser.get_by_username(username)
     valid, message, error_code = True, None, None
     if ccu and not ccu.is_active:
-        valid, message, error_code = False, 'User deactivated', 'mobile.app.translation.user.is.deactivated'
+        valid, message, error_code = False, 'Your account has been deactivated, please contact your domain admin '\
+                                            'to reactivate', 'user.deactivated'
     elif get_deleted_by_username(CommCareUser, username):
-        valid, message, error_code = False, 'User deleted', 'mobile.app.translation.user.is.deleted'
+        valid, message, error_code = False, 'Your account has been deleted, please contact your domain admin to '\
+                                            'request for restore', 'user.deleted'
     return valid, message, error_code
