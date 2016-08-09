@@ -13,13 +13,20 @@ class LocationAccessMiddleware(object):
     def process_view(self, request, view_fn, view_args, view_kwargs):
         user = getattr(request, 'couch_user', None)
         domain = getattr(request, 'domain', None)
-
         if (
             user and domain
             and not user.has_permission(domain, 'access_all_locations')
-            and view_fn not in LOCATION_SAFE_VIEWS
+            and not is_location_safe(view_fn)
         ):
             raise PermissionDenied()
+
+
+def is_location_safe(view_fn):
+    def get_path(fn):
+        return fn.__module__ + fn.__name__
+    return get_path(view_fn) in [
+        get_path(view) for view in LOCATION_SAFE_VIEWS
+    ]
 
 
 # This is a list of views which will safely restrict access based on the web
