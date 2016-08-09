@@ -68,15 +68,15 @@
 
     <!-- For now we won't touch this since the form entry code is coupled with it  -->
 
-    <div id="menu-container">
-        <div id="breadcrumb-region" class="container"></div>
-        <div id="menu-region" class="container"></div>
-    </div>
 
     <div id="cloudcare-main">
         <section id="cloudcare-notifications"></section>
         <section id="case-crumbs" style="width: 800px"></section>
         <section id="cases"></section>
+        <div id="menu-container">
+            <div id="breadcrumb-region" class="container"></div>
+            <div id="menu-region" class="container"></div>
+        </div>
         <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
         {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
             <section id="cloudcare-debugger" data-bind="
