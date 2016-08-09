@@ -106,7 +106,7 @@ class FundamentalCaseTests(TestCase):
         case = self.casedb.get_case(case_id)
         self.assertEqual(case.owner_id, 'owner2')
         self.assertEqual(case.name, 'update_case')
-        self.assertEqual(case.opened_on, _coerce_to_datetime(opened_on))
+        self.assertEqual(_coerce_to_datetime(case.opened_on), _coerce_to_datetime(opened_on))
         self.assertEqual(case.opened_by, 'user1')
         self.assertEqual(case.modified_on, modified_on)
         self.assertEqual(case.modified_by, 'user2')
