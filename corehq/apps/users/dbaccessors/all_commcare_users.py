@@ -2,9 +2,6 @@ from itertools import imap
 from corehq.apps.users.models import CommCareUser
 from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.couch.database import iter_docs, iter_bulk_delete
-from corehq.util.quickcache import skippable_quickcache
-from couchdbkit.exceptions import NoResultFound
-from django.conf import settings
 
 
 def get_all_commcare_users_by_domain(domain):
@@ -56,25 +53,11 @@ def delete_all_users():
     User.objects.all().delete()
 
 
-@skippable_quickcache(['username'])
 def get_deleted_by_username(cls, username):
-    def get(stale, raise_if_none):
-        result = cls.get_db().view('deleted_users_by_username/view',
-                                   key=username,
-                                   include_docs=True,
-                                   reduce=False,
-                                   stale=stale,
-                                   )
-        return result.one(except_all=raise_if_none)
+    result = cls.get_db().view('deleted_users_by_username/view',
+                               key=username,
+                               include_docs=True,
+                               reduce=False
+                               ).one()
+    return cls.wrap_correctly(result['doc']) if result else None
 
-    try:
-        result = get(stale=settings.COUCH_STALE_QUERY, raise_if_none=True)
-        if result['doc'] is None or result['doc']['username'] != username:
-            raise NoResultFound
-    except NoResultFound:
-        result = get(stale=None, raise_if_none=False)
-
-    if result:
-        return cls.wrap_correctly(result['doc'])
-    else:
-        return None
