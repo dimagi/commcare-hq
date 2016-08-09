@@ -29,10 +29,12 @@ class BaseTestCase(TestCase):
     def tearDownClass(cls):
         cls.db.close()
 
-    def make_doc(self, type_=None):
+    def make_doc(self, type_=None, id=None):
         if type_ is None:
             type_ = FakeCouchDocument
-        return type_({"_id": uuid.uuid4().hex})
+        if id is None:
+            id = uuid.uuid4().hex
+        return type_({"_id": id})
 
     def setUp(self):
         self.obj = self.make_doc()
@@ -61,6 +63,13 @@ class TestBlobMixin(BaseTestCase):
     def test_put_attachment_without_name(self):
         with self.assertRaises(mod.InvalidAttachment):
             self.obj.put_attachment("content")
+
+    def test_put_attachment_for_doc_with_bad_path_id(self):
+        obj = self.make_doc(id="uuid:some-random-value")
+        name = "test.0"
+        data = "\u4500 content"
+        obj.put_attachment(data, name)
+        self.assertEqual(obj.fetch_attachment(name), data)
 
     def test_put_attachment_unicode(self):
         name = "test.1"
@@ -508,7 +517,8 @@ class TestBlobHelper(BaseTestCase):
     def make_doc(self, type_=mod.BlobHelper, doc=None):
         if doc is None:
             doc = {}
-        doc["_id"] = uuid.uuid4().hex
+        if "_id" not in doc:
+            doc["_id"] = uuid.uuid4().hex
         if doc.get("_attachments"):
             for name, attach in doc["_attachments"].iteritems():
                 self.couch.put_attachment(doc, name=name, **attach)
@@ -519,6 +529,16 @@ class TestBlobHelper(BaseTestCase):
                 obj.put_attachment(name=name, **attach)
             self.couch.save_log = save_log
         return obj
+
+    def test_put_attachment_for_doc_with_bad_path_id(self):
+        obj = self.make_doc(doc={
+            "_id": "uuid:some-random-value",
+            "external_blobs": {},
+        })
+        name = "test.0"
+        data = "\u4500 content"
+        obj.put_attachment(data, name)
+        self.assertEqual(obj.fetch_attachment(name), data)
 
     def test_put_and_fetch_attachment_from_couch(self):
         obj = self.make_doc(doc={"_attachments": {}})

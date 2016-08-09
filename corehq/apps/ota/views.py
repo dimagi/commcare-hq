@@ -1,3 +1,4 @@
+from distutils.version import LooseVersion
 from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
@@ -10,6 +11,8 @@ from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
 from corehq import toggles, privileges
+from corehq.const import OPENROSA_VERSION_MAP, OPENROSA_DEFAULT_VERSION
+from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.domain.decorators import domain_admin_required, login_or_digest_or_basic_or_apikey
@@ -116,6 +119,12 @@ def get_restore_params(request):
     Given a request, get the relevant restore parameters out with sensible defaults
     """
     # not a view just a view util
+    try:
+        openrosa_headers = getattr(request, 'openrosa_headers', {})
+        openrosa_version = openrosa_headers[OPENROSA_VERSION_HEADER]
+    except KeyError:
+        openrosa_version = request.GET.get('openrosa_version', OPENROSA_DEFAULT_VERSION)
+
     return {
         'since': request.GET.get('since'),
         'version': request.GET.get('version', "1.0"),
@@ -124,13 +133,17 @@ def get_restore_params(request):
         'as_user': request.GET.get('as'),
         'has_data_cleanup_privelege': has_privilege(request, privileges.DATA_CLEANUP),
         'overwrite_cache': request.GET.get('overwrite_cache') == 'true',
+        'openrosa_version': openrosa_version,
     }
 
 
 def get_restore_response(domain, couch_user, app_id=None, since=None, version='1.0',
                          state=None, items=False, force_cache=False,
                          cache_timeout=None, overwrite_cache=False,
-                         force_restore_mode=None, as_user=None, has_data_cleanup_privelege=False):
+                         force_restore_mode=None,
+                         as_user=None,
+                         has_data_cleanup_privelege=False,
+                         openrosa_version=OPENROSA_DEFAULT_VERSION):
     # not a view just a view util
     is_permitted, message = is_permitted_to_restore(
         domain,
@@ -151,7 +164,10 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
 
     project = Domain.get_by_name(domain)
     app = get_app(domain, app_id) if app_id else None
-    async_restore = toggles.ASYNC_RESTORE.enabled(domain)
+    async_restore_enabled = (
+        toggles.ASYNC_RESTORE.enabled(domain) and
+        LooseVersion(openrosa_version) >= LooseVersion(OPENROSA_VERSION_MAP['ASYNC_RESTORE'])
+    )
     restore_config = RestoreConfig(
         project=project,
         restore_user=restore_user,
@@ -163,11 +179,11 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
             app=app,
         ),
         cache_settings=RestoreCacheSettings(
-            force_cache=force_cache or async_restore,
+            force_cache=force_cache or async_restore_enabled,
             cache_timeout=cache_timeout,
             overwrite_cache=overwrite_cache
         ),
-        async=async_restore
+        async=async_restore_enabled
     )
     return restore_config.get_response(), restore_config.timing_context
 

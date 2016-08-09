@@ -522,9 +522,6 @@ CLOUDCARE_BASE_URL = None
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
 
-# OpenRosa Standards
-OPENROSA_VERSION = "1.0"
-
 # OTA restore fixture generators
 FIXTURE_GENERATORS = {
     # fixtures that may be sent to the phone independent of cases
