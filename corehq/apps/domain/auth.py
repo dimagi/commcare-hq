@@ -59,13 +59,13 @@ def guess_phone_type_from_user_agent(user_agent):
 
 
 def get_username_and_password_from_request(request):
-    uname, passwd = None, None
+    username, password = None, None
     if 'HTTP_AUTHORIZATION' in request.META:
         auth = request.META['HTTP_AUTHORIZATION'].split()
         if len(auth) == 2:
             if auth[0].lower() == BASIC:
-                uname, passwd = base64.b64decode(auth[1]).split(':', 1)
-    return uname, passwd
+                username, password = base64.b64decode(auth[1]).split(':', 1)
+    return username, password
 
 
 def basicauth(realm=''):

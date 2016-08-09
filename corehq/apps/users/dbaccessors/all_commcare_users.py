@@ -4,6 +4,7 @@ from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.couch.database import iter_docs, iter_bulk_delete
 from corehq.util.quickcache import skippable_quickcache
 from couchdbkit.exceptions import NoResultFound
+from django.conf import settings
 
 
 def get_all_commcare_users_by_domain(domain):
@@ -58,7 +59,7 @@ def delete_all_users():
 @skippable_quickcache(['username'])
 def get_deleted_by_username(cls, username):
     def get(stale, raise_if_none):
-        result = cls.get_db().view('deleted_users/by_username',
+        result = cls.get_db().view('deleted_users_by_username/view',
                                    key=username,
                                    include_docs=True,
                                    reduce=False,
