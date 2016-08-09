@@ -775,6 +775,8 @@ class TestBulkAtomicBlobs(BaseTestCase):
 
 
 _abc_digest = mod.sha1("abc").hexdigest()
+
+
 @generate_cases([
     ("abc-def", "abc-def"),
     ("{abc-def}", "{abc-def}"),
