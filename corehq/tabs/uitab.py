@@ -1,11 +1,23 @@
 from django.core.cache import cache
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, resolve, Resolver404
 from django.utils.translation import get_language
 from corehq.tabs.exceptions import UrlPrefixFormatError, UrlPrefixFormatsSuggestion
 from corehq.tabs.utils import sidebar_to_dropdown
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cache import make_template_fragment_key
 from django.conf import settings
+
+
+def url_is_location_safe(url):
+    from corehq.apps.users.location_access_restrictions import is_location_safe
+    try:
+        view_fn = resolve(url).func
+    except Resolver404:
+        return False
+    else:
+        if is_location_safe(view_fn):
+            return True
+        return False
 
 
 class UITab(object):
@@ -57,9 +69,28 @@ class UITab(object):
         return self._request.get_full_path()
 
     @property
+    def restrict_access_by_location(self):
+        """Is this a web user who can't access project-wide data?"""
+        return (
+            self.couch_user and self.domain
+            and not self.couch_user.has_permission(self.domain, 'access_all_locations')
+        )
+
+    @property
     def dropdown_items(self):
         return sidebar_to_dropdown(sidebar_items=self.sidebar_items,
                                    domain=self.domain, current_url=self.url)
+
+    @property
+    def filtered_dropdown_items(self):
+        if not self.restrict_access_by_location:
+            return self.dropdown_items
+
+        filtered = []
+        for item in self.dropdown_items:
+            if url_is_location_safe(item['url']):
+                filtered.append(item)
+        return filtered
 
     @property
     @memoized
@@ -68,6 +99,19 @@ class UITab(object):
             return self.dispatcher.navigation_sections(request=self._request, domain=self.domain)
         else:
             return []
+
+    @property
+    @memoized
+    def filtered_sidebar_items(self):
+        if not self.restrict_access_by_location:
+            return self.sidebar_items
+
+        filtered = []
+        for heading, pages in self.sidebar_items:
+            safe_pages = [p for p in pages if url_is_location_safe(p['url'])]
+            if safe_pages:
+                filtered.append((heading, safe_pages))
+        return filtered
 
     @property
     def _is_viewable(self):
@@ -84,6 +128,9 @@ class UITab(object):
     @memoized
     def should_show(self):
         if not self.show_by_default and not self.is_active_tab:
+            return False
+
+        if self.restrict_access_by_location and not self.filtered_dropdown_items:
             return False
 
         try:
