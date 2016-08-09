@@ -60,4 +60,3 @@ def get_deleted_by_username(cls, username):
                                reduce=False
                                ).one()
     return cls.wrap_correctly(result['doc']) if result else None
-
