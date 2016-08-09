@@ -448,7 +448,7 @@ class DomainAdminRestoreView(AdminRestoreView):
     urlname = 'domain_admin_restore'
 
     def dispatch(self, request, *args, **kwargs):
-        TemplateView.dispatch(self, request, *args, **kwargs)
+        return TemplateView.dispatch(self, request, *args, **kwargs)
 
     @method_decorator(login_or_basic)
     @method_decorator(domain_admin_required)
