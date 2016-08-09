@@ -52,10 +52,7 @@ class BlobMixin(Document):
         if self._id is None:
             raise ResourceNotFound(
                 "cannot manipulate attachment on unidentified document")
-        identifier = self._id
-        if not SAFENAME.match(identifier):
-            identifier = u'unsafe-' + sha1(identifier.encode('utf-8')).hexdigest()
-        return join(_get_couchdb_name(type(self)), identifier)
+        return join(_get_couchdb_name(type(self)), safe_id(self._id))
 
     @property
     def blobs(self):
@@ -266,7 +263,7 @@ class BlobHelper(object):
         return BlobMixin.blobs.fget(self)
 
     def _blobdb_bucket(self):
-        return join(self.database.dbname, self._id)
+        return join(self.database.dbname, safe_id(self._id))
 
     def put_attachment(self, content, name=None, *args, **kw):
         if self._attachments is None and self.couch_only:
@@ -452,3 +449,9 @@ def bulk_atomic_blobs(docs):
 @memoized
 def _get_couchdb_name(doc_class):
     return doc_class.get_db().dbname
+
+
+def safe_id(identifier):
+    if not SAFENAME.match(identifier):
+        identifier = u'sha1-' + sha1(identifier.encode('utf-8')).hexdigest()
+    return identifier
