@@ -1139,32 +1139,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         else:
             return None
 
-    @classmethod
-    @skippable_quickcache(['username'], skip_arg='strict')
-    def get_deleted_by_username(cls, username, strict=True):
-        def get(stale, raise_if_none):
-            result = cls.get_db().view('deleted_users/by_username',
-                                       key=username,
-                                       include_docs=True,
-                                       reduce=False,
-                                       stale=stale if not strict else None,
-                                       )
-            return result.one(except_all=raise_if_none)
-
-        try:
-            result = get(stale=settings.COUCH_STALE_QUERY, raise_if_none=True)
-            if result['doc'] is None or result['doc']['username'] != username:
-                raise NoResultFound
-        except NoMoreData:
-            logging.exception('called get_by_username(%r) and it failed pretty bad' % username)
-            raise
-        except NoResultFound:
-            result = get(stale=None, raise_if_none=False)
-
-        if result:
-            return cls.wrap_correctly(result['doc'])
-        else:
-            return None
 
     def clear_quickcache_for_user(self):
         from corehq.apps.hqwebapp.templatetags.hq_shared_tags import _get_domain_list

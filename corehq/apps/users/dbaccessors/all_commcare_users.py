@@ -2,6 +2,8 @@ from itertools import imap
 from corehq.apps.users.models import CommCareUser
 from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.couch.database import iter_docs, iter_bulk_delete
+from corehq.util.quickcache import skippable_quickcache
+from couchdbkit.exceptions import NoResultFound
 
 
 def get_all_commcare_users_by_domain(domain):
@@ -51,3 +53,27 @@ def delete_all_users():
         user.clear_quickcache_for_user()
     iter_bulk_delete(CommCareUser.get_db(), get_all_user_ids(), doc_callback=_clear_cache)
     User.objects.all().delete()
+
+
+@skippable_quickcache(['username'])
+def get_deleted_by_username(cls, username):
+    def get(stale, raise_if_none):
+        result = cls.get_db().view('deleted_users/by_username',
+                                   key=username,
+                                   include_docs=True,
+                                   reduce=False,
+                                   stale=stale,
+                                   )
+        return result.one(except_all=raise_if_none)
+
+    try:
+        result = get(stale=settings.COUCH_STALE_QUERY, raise_if_none=True)
+        if result['doc'] is None or result['doc']['username'] != username:
+            raise NoResultFound
+    except NoResultFound:
+        result = get(stale=None, raise_if_none=False)
+
+    if result:
+        return cls.wrap_correctly(result['doc'])
+    else:
+        return None

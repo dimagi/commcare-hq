@@ -4,7 +4,7 @@ from corehq.apps.domain.decorators import login_and_domain_required, domain_spec
 from functools import wraps
 from corehq.apps.users.models import CouchUser, CommCareUser
 from django.utils.translation import ugettext as _
-
+from corehq.apps.users.dbaccessors.all_commcare_users import get_deleted_by_username
 
 def require_permission_raw(permission_check, login_decorator=login_and_domain_required):
     """
@@ -82,10 +82,17 @@ def require_permission_to_edit_user(view_func):
 
 
 def ensure_active_user_by_username(username):
+    """
+    :param username: ex: jordan@testapp-9.commcarehq.org
+    :return
+        valid: is True by default but is set to False for inactive/deleted user
+        error_code: mapping in app_string for the user
+        default_response: english description of the error to be used in case error_code missing
+    """
     ccu = CommCareUser.get_by_username(username)
     valid, message, error_code = True, None, None
     if ccu and not ccu.is_active:
         valid, message, error_code = False, 'User deactivated', 'mobile.app.translation.user.is.deactivated'
-    elif CommCareUser.get_deleted_by_username(username):
+    elif get_deleted_by_username(CommCareUser, username):
         valid, message, error_code = False, 'User deleted', 'mobile.app.translation.user.is.deleted'
     return valid, message, error_code

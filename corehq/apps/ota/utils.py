@@ -171,18 +171,25 @@ def get_restore_user(domain, couch_user, as_user):
 
 
 def handle_401_response(f):
+    """
+    Generic decorator to return better notice/message about why the authentication failed. Currently taking care of
+    only basic auth for inactive or deleted mobile user but should/can be extended for other auth methods and cases
+    :return json response with apt error_code in app_string and default response in english for missing
+    translations and status_code as 406(unacceptable), similar code needed different from 401
+    """
     def _inner(request, domain, *args, **kwargs):
-        auth_type = determine_authtype_from_request(request)
         response = f(request, domain, *args, **kwargs)
-        if auth_type and auth_type == 'basic' and response.status_code == 401:
-            uname, passwd = get_username_and_password_from_request(request)
-            if uname:
-                valid, message, error_code = ensure_active_user_by_username(uname)
-                if not valid:
-                    return json_response({
-                        "error": error_code,
-                        "default_response": message
-                    }, status_code=406)
+        if response.status_code == 401:
+            auth_type = determine_authtype_from_request(request)
+            if auth_type and auth_type == 'basic':
+                uname, passwd = get_username_and_password_from_request(request)
+                if uname:
+                    valid, message, error_code = ensure_active_user_by_username(uname)
+                    if not valid:
+                        return json_response({
+                            "error": error_code,
+                            "default_response": message
+                        }, status_code=406)
 
         return response
     return _inner
