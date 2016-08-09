@@ -1,5 +1,4 @@
 import kombu.five
-import numbers
 from celery import Celery
 from django.conf import settings
 from datetime import datetime
