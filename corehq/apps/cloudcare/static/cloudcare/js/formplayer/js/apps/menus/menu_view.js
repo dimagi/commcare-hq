@@ -102,6 +102,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     var generateCaseTileStyles = function (tiles) {
         var templateString,
             tileStyle,
+            tileStyleTemplate,
             tileModels;
 
         tileModels = _.chain(tiles || [])
