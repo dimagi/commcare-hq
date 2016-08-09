@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import re
 import sys
 from collections import defaultdict
 from contextlib import contextmanager, nested
@@ -454,4 +455,10 @@ def _get_couchdb_name(doc_class):
 def safe_id(identifier):
     if not SAFENAME.match(identifier):
         identifier = u'sha1-' + sha1(identifier.encode('utf-8')).hexdigest()
+    elif SHA1_ID.match(identifier):
+        # could collide with "safe" id and should never happen anyway
+        raise ValueError("illegal doc id: {!r}".format(identifier))
     return identifier
+
+
+SHA1_ID = re.compile("sha1-[0-9a-f]{40}$")
