@@ -198,7 +198,7 @@ def apply_deprecation(existing_xform, new_xform, interface=None):
     if existing_xform.persistent_blobs:
         for name, meta in existing_xform.persistent_blobs.items():
             with existing_xform.fetch_attachment(name, stream=True) as content:
-                new_xform.deferred_put_attachment(
+                existing_xform.deferred_put_attachment(
                     content,
                     name=name,
                     content_type=meta.content_type,
