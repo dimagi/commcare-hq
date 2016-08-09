@@ -193,7 +193,6 @@ add_months      | A way to add months to a date | `my_date + relativedelta(month
 month_start_date| First day in the month of a date | `2015-01-20` -> `2015-01-01`
 month_end_date  | Last day in the month of a date | `2015-01-20` -> `2015-01-31`
 diff_days       | A way to get duration in days between two dates | `(to_date - from-date).days`
-diff_seconds    | A way to get duration in seconds between two datetimes | `(to_datetime - from_datetime).totalseconds()`
 evaluator       | A way to do arithmetic operations | `a + b*c / d`
 base_iteration_number | Used with [`base_item_expression`](#saving-multiple-rows-per-caseform) - a way to get the current iteration number (starting from 0). | `loop.index`
 
@@ -503,25 +502,6 @@ The from_date_expression and to_date_expression can be any valid expressions, or
         "property_name": "dob",
     },
     "to_date_expression": "2016-02-01"
-}
-```
-
-#### "Diff Seconds" expressions
-
-`diff_seconds` returns number of seconds between datetimes specified by `from_expression` and `to_expression`.
-The from_expression and to_expression can be any valid expressions, or simply constants.
-
-```json
-{
-    "type": "diff_seconds",
-    "from_expression": {
-        "type": "property_path",
-        "property_path": ["form","meta","timeStart"]
-    },
-    "to_expression": {
-        "type": "property_path",
-        "property_path": ["form","meta","timeEnd"]
-    }
 }
 ```
 
