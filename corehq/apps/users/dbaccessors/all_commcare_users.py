@@ -58,5 +58,5 @@ def get_deleted_by_username(cls, username):
                                key=username,
                                include_docs=True,
                                reduce=False
-                               ).one()
+                               ).first()
     return cls.wrap_correctly(result['doc']) if result else None

@@ -5,6 +5,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_user_docs_by_username,
     delete_all_users,
     get_all_user_ids,
+    get_deleted_by_username,
 )
 from corehq.apps.users.dbaccessors.couch_users import (
     get_user_id_by_username,
@@ -91,3 +92,9 @@ class AllCommCareUsersTest(TestCase):
     def test_get_id_by_username(self):
         user_id = get_user_id_by_username(self.ccuser_1.username)
         self.assertEqual(user_id, self.ccuser_1._id)
+
+    def test_get_deleted_by_username(self):
+        self.ccuser_1.retire()
+        self.assertEqual(self.ccuser_1.username, get_deleted_by_username(CommCareUser,
+                                                                         self.ccuser_1.username).username)
+        self.assertEqual(None, get_deleted_by_username(CommCareUser, self.ccuser_2.username))
