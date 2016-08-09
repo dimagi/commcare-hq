@@ -12,7 +12,7 @@ from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from couchforms.models import (
     UnfinishedSubmissionStub,
-)
+    XFormInstance)
 
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends, post_xform
@@ -286,5 +286,9 @@ class EditFormTest(TestCase, TestFileMixin):
         form_xml = xform.get_xml()
         xform.delete_attachment('form.xml')
         xform.get_db().put_attachment(xform.to_json(), form_xml, 'form.xml')
+        # make sure that worked
+        updated_form_xml = XFormInstance.get(xform._id).get_xml()
+        self.assertEqual(form_xml, updated_form_xml)
         # this call was previously failing
-        submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
+        updated_form = submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
+        self.assertEqual(form_xml, XFormInstance.get(updated_form.deprecated_form_id).get_xml())
