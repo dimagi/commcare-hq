@@ -58,7 +58,6 @@
         <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}"/>
 
 
-
         {% if less_debug %}
         <script>
             less = {
@@ -78,11 +77,9 @@
         {% if less_watch %}<script>less.watch();</script>{% endif %}
         {% endif %}
         <script type="text/javascript" src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-        <script src="{% static 'underscore-1.8.3/underscore.js' %}"></script>
         <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
         <script type="text/javascript" src="{% static 'style/js/hq.helpers.js' %}"></script>
-        {% include "style/includes/ko.html" %}
         <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
         {% compress js %}
@@ -103,42 +100,18 @@
         <script src="{% static 'jquery-ui/ui/sortable.js' %}"></script>
         {% endcompress %}
 
+        <style id="case-tiles-style"></style>
         <!-- For Formplayer's app preview -->
-        <script src="{% static 'backbone-1.3.2/backbone.js' %}"></script>
-        <script src="{% static 'backbone.marionette/lib/backbone.marionette.js' %}"></script>
-        <script src="{% static 'nprogress/nprogress.js' %}"></script>
-        <script src="{% static 'moment/min/moment.min.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
-        <script src="{% static 'cloudcare/js/util.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/js/apps/util/util.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/app.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/js/entities/cc_app.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/js/entities/menu.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/js/entities/globals.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/js/entities/sessions.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/js/apps/list/list_controller.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/js/apps/list/list_view.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/js/apps/menus/menu_view.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/js/apps/menus/menu_controller.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/js/apps/sessions/session_view.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/js/apps/sessions/session_controller.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/js/apps/session_nav.js' %}"></script>
-        <script src="{% static 'style/js/ui-element.js' %}"></script>
-        <script src="{% static 'formplayer/script/vendor/markdown-it-4.2.0.min.js' %}"></script>
-        <script src="{% static 'formplayer/script/vendor/purify.js' %}"></script>
-        <script src="{% static 'formplayer/script/vendor/ba-tiny-pubsub.min.js' %}"></script>
-        <script src="{% static 'formplayer/script/vendor/shortcut.js' %}"></script>
-        <script src="{% static 'formplayer/script/webformsession.js' %}"></script>
-        <script src="{% static 'formplayer/script/formnav-all.js' %}"></script>
-        <script src="{% static 'formplayer/script/entrycontrols_full.js' %}"></script>
-        <script src="{% static 'formplayer/script/fullform-ui.js' %}"></script>
-        <script src="{% static 'preview_app/js/preview_app.js' %}"></script>
+
     </head>
     <body>
         <div class="container">
             <section id="cloudcare-notifications"></section>
             <section id="case-crumbs" style="width: 800px"></section>
             <section id="cases"></section>
+            <div id="menu-container">
+                <div id="menu-region" class="container"></div>
+            </div>
             <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
             {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
                 <section id="cloudcare-debugger" data-bind="
@@ -149,11 +122,6 @@
             "></section>
             {% endif %}
         </div>
-
-        <div id="menu-container">
-            <div id="menu-region" class="container"></div>
-        </div>
-
 
         <script>
         $(function () {
@@ -172,5 +140,9 @@
         {% include 'formplayer/case_list.html' %}
         {% include 'formplayer/menu_list.html' %}
         {% include 'formplayer/session_list.html' %}
+
+        {% include 'formplayer/dependencies.html' %}
+        {% include "style/includes/ko.html" %}
+        <script src="{% static 'preview_app/js/preview_app.js' %}"></script>
     </body>
 </html>
