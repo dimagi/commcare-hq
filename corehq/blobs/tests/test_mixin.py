@@ -155,6 +155,22 @@ class TestBlobMixin(BaseTestCase):
         with self.assertRaises(mod.ResourceNotFound):
             self.obj.fetch_attachment(name)
 
+    def test_persistent_blobs(self):
+        content = b"<xml />"
+        couch_digest = "md5-" + b64encode(md5(content).digest())
+        obj = self.make_doc(DeferredPutBlobDocument)
+        obj.migrating_blobs_from_couch = True
+        obj._attachments = {"couch": {
+            "content_type": None,
+            "digest": couch_digest,
+            "length": 13,
+        }}
+        obj.put_attachment(content, "blobdb", content_type="text/plain")
+        obj.put_attachment(content, "blobdb-deferred", content_type="text/plain")
+        obj.deferred_put_attachment(content, "deferred", content_type="text/plain")
+        obj.deferred_put_attachment(content, "blobdb-deferred", content_type="text/plain")
+        self.assertEqual(set(obj.persistent_blobs), {"blobdb", "couch"})
+
     def test_save_persists_unsaved_blob(self):
         obj = self.make_doc(DeferredPutBlobDocument)
         name = "test.1"

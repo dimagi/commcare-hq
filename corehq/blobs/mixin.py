@@ -356,6 +356,16 @@ class DeferredBlobMixin(BlobMixin):
             )) for name, info in self._deferred_blobs.iteritems())
         return value
 
+    @property
+    def persistent_blobs(self):
+        """Get a dict like `blobs` containing only non-deferred items"""
+        value = super(DeferredBlobMixin, self).blobs
+        if self._deferred_blobs:
+            value = value.copy()
+            for name in self._deferred_blobs:
+                value.pop(name, None)
+        return value
+
     def put_attachment(self, content, name=None, *args, **kw):
         if self._deferred_blobs:
             self._deferred_blobs.pop(name, None)

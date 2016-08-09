@@ -75,23 +75,9 @@ class FormProcessorCouch(object):
         new_xform._rev, existing_xform._rev = existing_xform._rev, new_xform._rev
         existing_xform.doc_type = XFormDeprecated.__name__
         deprecated = XFormDeprecated.wrap(existing_xform.to_json())
+        assert not existing_xform.persistent_blobs, "some blobs would be lost"
         if existing_xform._deferred_blobs:
             deprecated._deferred_blobs = existing_xform._deferred_blobs.copy()
-        else:
-            # in the case we are migrating, we need to populate the deferred blobs
-            # with the existing attachments in couch
-            def _couch_attachments_to_deferred_dict(form, name, attachment_info):
-                content = form.get_db().fetch_attachment(form.orig_id, name)
-                return {
-                    "content": content,
-                    "content_type": attachment_info['content_type'],
-                    "content_length": len(content),
-                }
-            deprecated._deferred_blobs = {
-                name: _couch_attachments_to_deferred_dict(existing_xform, name, attachment_meta)
-                for name, attachment_meta in existing_xform._attachments.items()
-            }
-
         return deprecated, new_xform
 
     @classmethod
@@ -100,6 +86,7 @@ class FormProcessorCouch(object):
         # but a new doc_id, and a doc_type of XFormDuplicate
         xform.doc_type = XFormDuplicate.__name__
         dupe = XFormDuplicate.wrap(xform.to_json())
+        assert not xform.persistent_blobs, "some blobs would be lost"
         if xform._deferred_blobs:
             dupe._deferred_blobs = xform._deferred_blobs.copy()
         dupe.problem = "Form is a duplicate of another! (%s)" % xform._id
@@ -107,9 +94,7 @@ class FormProcessorCouch(object):
 
     @classmethod
     def assign_new_id(cls, xform):
-        if xform.external_blobs:
-            assert set(xform.external_blobs).issubset(xform._deferred_blobs), \
-                "some blobs would be lost"
+        assert not xform.persistent_blobs, "some blobs would be lost"
         new_id = XFormInstance.get_db().server.next_uuid()
         xform._id = new_id
         return xform
