@@ -10,8 +10,7 @@ from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, Pr
     NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec, EvalExpressionSpec, FormsExpressionSpec, \
     IterationNumberExpressionSpec, SubcasesExpressionSpec, SplitStringExpressionSpec
 from corehq.apps.userreports.expressions.date_specs import AddDaysExpressionSpec, AddMonthsExpressionSpec, \
-    MonthStartDateExpressionSpec, MonthEndDateExpressionSpec, DiffDaysExpressionSpec, \
-    DiffSecondsExpressionSpec
+    MonthStartDateExpressionSpec, MonthEndDateExpressionSpec, DiffDaysExpressionSpec
 from corehq.apps.userreports.expressions.list_specs import FilterItemsExpressionSpec, \
     MapItemsExpressionSpec, ReduceItemsExpressionSpec, FlattenExpressionSpec, SortItemsExpressionSpec
 from dimagi.utils.parsing import json_format_datetime, json_format_date
@@ -156,15 +155,6 @@ def _diff_days_expression(spec, context):
     return wrapped
 
 
-def _diff_seconds_expression(spec, context):
-    wrapped = DiffSecondsExpressionSpec.wrap(spec)
-    wrapped.configure(
-        from_expression=ExpressionFactory.from_spec(wrapped.from_expression, context),
-        to_expression=ExpressionFactory.from_spec(wrapped.to_expression, context),
-    )
-    return wrapped
-
-
 def _evaluator_expression(spec, context):
     wrapped = EvalExpressionSpec.wrap(spec)
     wrapped.configure(
@@ -263,7 +253,6 @@ class ExpressionFactory(object):
         'month_start_date': _month_start_date_expression,
         'month_end_date': _month_end_date_expression,
         'diff_days': _diff_days_expression,
-        'diff_seconds': _diff_seconds_expression,
         'evaluator': _evaluator_expression,
         'get_case_forms': _get_forms_expression,
         'get_subcases': _get_subcases_expression,
