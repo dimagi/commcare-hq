@@ -7,11 +7,11 @@ from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
-from corehq.apps.userreports.reports.builder.columns import CountColumn
+from corehq.apps.userreports.reports.builder.columns import CountColumn, MultiselectQuestionColumnOption
 from corehq.apps.userreports.reports.builder.forms import (
     ConfigureListReportForm,
     ConfigureTableReportForm,
-)
+    ConfigurePieChartReportForm)
 
 
 def read(rel_path):
@@ -58,7 +58,7 @@ class ConfigureReportFormsTest(SimpleTestCase):
         self.assertEqual(get_count_column_columns(table_report_form), 1)
 
 
-class ReportBuilderTest(TestCase):
+class ReportBuilderDBTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -73,6 +73,9 @@ class ReportBuilderTest(TestCase):
         for config in DataSourceConfiguration.all():
             config.delete()
         delete_all_report_configs()
+
+
+class ReportBuilderTest(ReportBuilderDBTest):
 
     def test_data_source_exclusivity(self):
         """
@@ -206,3 +209,79 @@ class ReportBuilderTest(TestCase):
         report = builder_form.update_report()
 
         self.assertNotEqual(report.config_id, report_two.config_id)
+
+
+class MultiselectQuestionTest(ReportBuilderDBTest):
+    """
+    Test class for report builder interactions with MultiSelect questions.
+    """
+
+    def testReportColumnOptions(self):
+        """
+        Confirm that form.report_column_options contains MultiselectQuestionColumnOption objects for mselect questions.
+        """
+
+        builder_form = ConfigureListReportForm(
+            "My Report",
+            self.app._id,
+            "form",
+            self.form.unique_id,
+        )
+        self.assertEqual(
+            type(builder_form.report_column_options["/data/state"]),
+            MultiselectQuestionColumnOption
+        )
+
+    def testDataSource(self):
+        """
+        Confirm that data sources for reports with multiselects use "choice_list" indicators for mselect questions.
+        """
+        builder_form = ConfigureListReportForm(
+            "My Report",
+            self.app._id,
+            "form",
+            self.form.unique_id,
+            data={
+                'filters': '[]',
+                'columns': '[{"property": "/data/first_name", "display_text": "first name"}]',
+            }
+        )
+        self.assertTrue(builder_form.is_valid())
+        report = builder_form.create_report()
+        data_source = report.config
+        mselect_indicators = [i for i in data_source.configured_indicators if i["type"] == "choice_list"]
+        self.assertEqual(len(mselect_indicators), 1)
+        mselect_indicator = mselect_indicators[0]
+        self.assertEqual(set(mselect_indicator['choices']), {'MA', 'MN', 'VT'})
+
+    def testGraphDataSource(self):
+        """
+        Confirm that data sources for chart reports aggregated by a multiselect question use a base_item_expression
+        and that the columns use root_doc expressions
+        """
+        builder_form = ConfigurePieChartReportForm(
+            "My Report",
+            self.app._id,
+            "form",
+            self.form.unique_id,
+            data={
+                'filters': '[]',
+                'group_by': '/data/state'
+            }
+        )
+        self.assertTrue(builder_form.is_valid())
+        report = builder_form.create_report()
+        data_source = report.config
+        mselect_indicators = [i for i in data_source.configured_indicators if i["type"] == "choice_list"]
+        self.assertEqual(len(mselect_indicators), 1)
+        mselect_indicator = mselect_indicators[0]
+
+        self.assertTrue(data_source.base_item_expression)
+        for indicator in data_source.configured_indicators:
+            if (
+                indicator.get('expression', {}).get('property_path', None) != mselect_indicator['property_path']
+                and indicator != mselect_indicator
+                and indicator['type'] != "count"
+            ):
+                self.assertTrue(indicator['type'] == 'expression')
+                self.assertTrue(indicator['expression']['type'] == 'root_doc')
