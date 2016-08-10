@@ -59,7 +59,10 @@ from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
 from corehq.apps.data_analytics.models import MALTRow, GIRRow
 from corehq.apps.data_analytics.const import GIR_FIELDS
 from corehq.apps.data_analytics.admin import MALTRowAdmin
-from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer, login_or_basic, domain_admin_required
+from corehq.apps.domain.decorators import (
+    require_superuser, require_superuser_or_developer,
+    login_or_basic, domain_admin_required
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
