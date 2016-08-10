@@ -1057,7 +1057,6 @@ class FormExportDataSchema(ExportDataSchema):
         'Image': MultiMediaItem,
         'Audio': MultiMediaItem,
         'Video': MultiMediaItem,
-        'Stock': StockItem,
     })
 
     @property
@@ -1122,7 +1121,7 @@ class FormExportDataSchema(ExportDataSchema):
             )
             for question in group_questions:
                 # Create ExportItem based on the question type
-                if question['type'] == 'Stock':
+                if 'stock_type_attributes' in question:
                     items = FormExportDataSchema._get_stock_items_from_question(
                         question,
                         app_id,

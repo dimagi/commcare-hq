@@ -954,7 +954,6 @@ class XForm(WrappedNode):
                     parent = next(data_node.xml.iterancestors())
                     if parent and WrappedNode(parent).tag_name in STOCK_QUESTION_TAG_NAMES:
                         question.update({
-                            "type": "Stock",
                             "stock_entry_attributes": data_node.xml.attrib,
                             "stock_type_attributes": parent.attrib,
                         })
