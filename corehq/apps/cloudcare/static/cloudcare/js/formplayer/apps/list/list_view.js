@@ -40,6 +40,13 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
         syncClick: _.extend(AppList.BaseAppView.syncClick),
     });
 
+    /**
+     * SingleAppView
+     *
+     * This provides a view for when previewing an application of a known id.
+     * The user doesn't need to select the application because we already have
+     * that information. Used for phone previewing in the app manager
+     */
     AppList.SingleAppView = Marionette.ItemView.extend({
         template: "#single-app-template",
         className: 'single-app-view',
