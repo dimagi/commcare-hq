@@ -1096,7 +1096,7 @@ class ChangingOwnershipTest(SyncBaseTest):
         def _get_incremental_synclog_for_user(user, since):
             incremental_restore_config = RestoreConfig(
                 self.project,
-                restore_user=self.user,
+                restore_user=user,
                 params=RestoreParams(version=V2, sync_log_id=since),
             )
             return synclog_from_restore_payload(incremental_restore_config.get_payload().as_string())
