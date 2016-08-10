@@ -923,6 +923,7 @@ class ExportDataSchema(Document):
 
         original_id, original_rev = None, None
         current_schema = cls.get_latest_export_schema(domain, app_id, identifier)
+        force_rebuild = True
         if (current_schema
                 and not force_rebuild
                 and current_schema.version == DATA_SCHEMA_VERSION):
@@ -1164,10 +1165,11 @@ class FormExportDataSchema(ExportDataSchema):
         # Strips the last value in the path
         # E.G. /data/balance/entry --> /data/balance
         parent_path = question['value'][:question['value'].rfind('/')]
+        question_id = question['stock_type_attributes']['type']
         for attribute in question['stock_type_attributes']:
             items.append(StockItem.create_from_question(
                 question,
-                '{}/@{}'.format(parent_path, attribute),
+                '{}:{}/@{}'.format(parent_path, question_id, attribute),
                 app_id,
                 app_version,
                 repeats,
@@ -1176,7 +1178,7 @@ class FormExportDataSchema(ExportDataSchema):
         for attribute in question['stock_entry_attributes']:
             items.append(StockItem.create_from_question(
                 question,
-                '{}/@{}'.format(question['value'], attribute),
+                '{}:{}/@{}'.format(question['value'], question_id, attribute),
                 app_id,
                 app_version,
                 repeats,
