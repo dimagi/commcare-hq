@@ -4,7 +4,7 @@ from corehq.apps.domain.decorators import login_and_domain_required, domain_spec
 from functools import wraps
 from corehq.apps.users.models import CouchUser, CommCareUser
 from django.utils.translation import ugettext as _
-from corehq.apps.users.dbaccessors.all_commcare_users import get_deleted_by_username
+from corehq.apps.users.dbaccessors.all_commcare_users import get_deleted_user_by_username
 
 def require_permission_raw(permission_check, login_decorator=login_and_domain_required):
     """
@@ -94,7 +94,7 @@ def ensure_active_user_by_username(username):
     if ccu and not ccu.is_active:
         valid, message, error_code = False, 'Your account has been deactivated, please contact your domain admin '\
                                             'to reactivate', 'user.deactivated'
-    elif get_deleted_by_username(CommCareUser, username):
+    elif get_deleted_user_by_username(CommCareUser, username):
         valid, message, error_code = False, 'Your account has been deleted, please contact your domain admin to '\
                                             'request for restore', 'user.deleted'
     return valid, message, error_code

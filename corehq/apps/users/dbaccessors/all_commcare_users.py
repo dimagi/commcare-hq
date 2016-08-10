@@ -53,7 +53,15 @@ def delete_all_users():
     User.objects.all().delete()
 
 
-def get_deleted_by_username(cls, username):
+@unit_testing_only
+def hard_delete_deleted_users():
+    # Hard deleted the deleted users to truncate the view
+    db_view = CommCareUser.get_db().view('deleted_users_by_username/view', reduce=False)
+    deleted_user_ids = [row['id'] for row in db_view]
+    iter_bulk_delete(CommCareUser.get_db(), deleted_user_ids)
+
+
+def get_deleted_user_by_username(cls, username):
     result = cls.get_db().view('deleted_users_by_username/view',
                                key=username,
                                include_docs=True,
