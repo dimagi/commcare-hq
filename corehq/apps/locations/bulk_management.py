@@ -726,7 +726,7 @@ def save_types(type_stubs):
                 type_object.expand_to = type_objects_by_code[lt.expand_to]
             to_bulk_update.append(type_object)
 
-    bulk_update(to_bulk_update)
+    LocationType.bulk_update(to_bulk_update)
     return {lt.code: lt for lt in to_bulk_update}
 
 
