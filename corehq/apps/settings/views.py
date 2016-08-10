@@ -434,9 +434,9 @@ def get_qrcode(data):
     return png_data
 
 
-class EnableSuperuserView(BaseMyAccountView):
-    urlname = 'enable_superuser'
-    page_title = ugettext_lazy("Enable Superuser on Mobile")
+class EnableMobilePrivilegesView(BaseMyAccountView):
+    urlname = 'enable_mobile_privs'
+    page_title = ugettext_lazy("Enable Privileges on Mobile")
     template_name = 'settings/enable_superuser.html'
 
     @method_decorator(login_required)
