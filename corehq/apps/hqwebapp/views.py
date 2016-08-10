@@ -253,15 +253,16 @@ def server_up(req):
         return HttpResponse("success")
 
 
-def no_permissions(request, redirect_to=None, template_name="403.html"):
+def no_permissions(request, redirect_to=None, template_name="403.html", message=None):
     """
     403 error handler.
     """
     t = loader.get_template(template_name)
-    return HttpResponseForbidden(t.render(RequestContext(request,
-        {'MEDIA_URL': settings.MEDIA_URL,
-         'STATIC_URL': settings.STATIC_URL
-        })))
+    return HttpResponseForbidden(t.render(RequestContext(request, {
+        'MEDIA_URL': settings.MEDIA_URL,
+        'STATIC_URL': settings.STATIC_URL,
+        'message': message,
+    })))
 
 
 def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
