@@ -1074,7 +1074,7 @@ class ChangingOwnershipTest(SyncBaseTest):
     def test_remove_user_from_group(self):
         group = Group(
             domain=self.project.name,
-            name='shared_group',
+            name='remove_user',
             case_sharing=True,
             users=[self.user.user_id]
         )
@@ -1086,9 +1086,9 @@ class ChangingOwnershipTest(SyncBaseTest):
 
         # since we got a new sync log, have to update the factory as well
         self.factory.form_extras = {'last_sync_token': initial_sync_log._id}
-        # create a case with the extra owner
-        case_id = self.factory.create_case(owner_id=group._id).case_id
 
+        # create a case owned by the group
+        case_id = self.factory.create_case(owner_id=group._id).case_id
         # make sure it's there
         sync_log = get_properly_wrapped_sync_log(initial_sync_log._id)
         self.assertTrue(sync_log.phone_is_holding_case(case_id))
