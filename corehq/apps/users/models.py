@@ -574,7 +574,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
     @memoized
     def has_permission(self, domain, permission, data=None):
         # is_admin is the same as having all the permissions set
-        if self.is_global_admin():
+        if (self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain))):
             return True
         elif self.is_domain_admin(domain):
             return True
@@ -589,7 +589,6 @@ class _AuthorizableMixin(IsMemberOfMixin):
     def get_role(self, domain=None, checking_global_admin=True):
         """
         Get the role object for this user
-
         """
         if domain is None:
             # default to current_domain for django templates
@@ -600,7 +599,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
 
         if checking_global_admin and self.is_global_admin():
             return AdminUserRole(domain=domain)
-        if self.is_member_of(domain): #need to have a way of seeing is_member_of
+        if self.is_member_of(domain):
             return self.get_domain_membership(domain).role
         else:
             raise DomainMembershipError()
@@ -1990,41 +1989,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     def get_domains(self):
         return [dm.domain for dm in self.domain_memberships]
-
-    @memoized
-    def has_permission(self, domain, permission, data=None):
-        # is_admin is the same as having all the permissions set
-        if (self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain))):
-            return True
-        elif self.is_domain_admin(domain):
-            return True
-
-        dm = self.get_domain_membership(domain)
-        if dm:
-            return dm.has_permission(permission, data)
-        else:
-            return False
-
-    @memoized
-    def get_role(self, domain=None, include_teams=True, checking_global_admin=True):
-        """
-        Get the role object for this user
-        """
-        if domain is None:
-            # default to current_domain for django templates
-            domain = self.current_domain
-
-        if checking_global_admin and self.is_global_admin():
-            return AdminUserRole(domain=domain)
-
-        if not include_teams:
-            return super(WebUser, self).get_role(domain)
-
-        dm = self.get_domain_membership(domain)
-        if not dm:
-            raise DomainMembershipError()
-
-        return dm.role
 
     @classmethod
     def get_admins_by_domain(cls, domain):
