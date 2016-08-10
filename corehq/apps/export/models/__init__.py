@@ -11,6 +11,7 @@ from .new import (
     StockExportColumn,
     MultiMediaExportColumn,
     UserDefinedExportColumn,
+    StockFormExportColumn,
     ExportRow,
     ExportInstance,
     FormExportInstance,

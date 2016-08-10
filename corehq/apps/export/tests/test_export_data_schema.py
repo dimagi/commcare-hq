@@ -117,7 +117,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
             self.assertTrue(any(map(
                 lambda item: item.path == [
                     PathNode(name='form'),
-                    PathNode(name='balance'),
+                    PathNode(name='balance:balance_one'),
                     PathNode(name=parent_attr),
                 ],
                 group_schema.items,
@@ -127,7 +127,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
             self.assertTrue(any(map(
                 lambda item: item.path == [
                     PathNode(name='form'),
-                    PathNode(name='balance'),
+                    PathNode(name='balance:balance_one'),
                     PathNode(name='entry'),
                     PathNode(name=entry_attr),
                 ],

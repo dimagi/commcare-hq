@@ -14,6 +14,7 @@ from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, Dict
 
 from corehq import feature_previews
 from corehq.apps.userreports.expressions.getters import NestedDictGetter
+from corehq.apps.app_manager.const import STOCK_QUESTION_TAG_NAMES
 from corehq.apps.app_manager.dbaccessors import (
     get_built_app_ids_with_submissions_for_app_id,
     get_all_built_app_ids_and_versions,
@@ -228,6 +229,8 @@ class ExportColumn(DocumentSchema):
             column = SplitGPSExportColumn(**constructor_args)
         elif isinstance(item, MultiMediaItem):
             column = MultiMediaExportColumn(**constructor_args)
+        elif isinstance(item, StockItem):
+            column = StockFormExportColumn(**constructor_args)
         elif isinstance(item, MultipleChoiceItem):
             column = SplitExportColumn(**constructor_args)
         elif isinstance(item, CaseIndexItem):
@@ -299,6 +302,8 @@ class ExportColumn(DocumentSchema):
                 return SplitGPSExportColumn.wrap(data)
             elif doc_type == 'MultiMediaExportColumn':
                 return MultiMediaExportColumn.wrap(data)
+            elif doc_type == 'StockFormExportColumn':
+                return StockFormExportColumn.wrap(data)
             else:
                 raise ValueError('Unexpected doc_type for export column', doc_type)
         else:
@@ -923,7 +928,6 @@ class ExportDataSchema(Document):
 
         original_id, original_rev = None, None
         current_schema = cls.get_latest_export_schema(domain, app_id, identifier)
-        force_rebuild = True
         if (current_schema
                 and not force_rebuild
                 and current_schema.version == DATA_SCHEMA_VERSION):
@@ -1166,10 +1170,13 @@ class FormExportDataSchema(ExportDataSchema):
         # E.G. /data/balance/entry --> /data/balance
         parent_path = question['value'][:question['value'].rfind('/')]
         question_id = question['stock_type_attributes']['type']
+
+        parent_path_and_question_id = '{}:{}'.format(parent_path, question_id)
+
         for attribute in question['stock_type_attributes']:
             items.append(StockItem.create_from_question(
                 question,
-                '{}:{}/@{}'.format(parent_path, question_id, attribute),
+                '{}/@{}'.format(parent_path_and_question_id, attribute),
                 app_id,
                 app_version,
                 repeats,
@@ -1178,7 +1185,7 @@ class FormExportDataSchema(ExportDataSchema):
         for attribute in question['stock_entry_attributes']:
             items.append(StockItem.create_from_question(
                 question,
-                '{}:{}/@{}'.format(question['value'], question_id, attribute),
+                '{}/{}/@{}'.format(parent_path_and_question_id, 'entry', attribute),
                 app_id,
                 app_version,
                 repeats,
@@ -1656,6 +1663,70 @@ class CaseIndexExportColumn(ExportColumn):
             filter(lambda index: index.get('referenced_type') == case_type, indices)
         )
         return ' '.join(case_ids)
+
+
+class StockFormExportColumn(ExportColumn):
+    """
+    A column type for stock question types in form exports. This will export a column
+    for a StockItem
+    """
+
+    def get_value(self, domain, doc_id, doc, base_path, transform_dates=False, **kwargs):
+
+        stock_type_path_index = -1
+        path = [path_node.name for path_node in self.item.path[len(base_path):]]
+        # Hacky, but the question_id is encoded in the path of the StockItem.
+        # Normally, stock questions (balance, transfer, receive, dispense) do
+        # not include the question id in the form xml path. For example the defintion
+        # of a stock question can look like this:
+        #
+        # <transfer date="2016-08-08" dest="xxxx" section-id="xxxx" type="question-id">
+        #     <n0:entry id="xxxx" quantity="1"/>
+        # </transfer>
+        #
+        # Notice that the question id is stored in the type attribute. If multiple
+        # stock questions are defined at the same level in the tree, the form processing
+        # code will interpret this as a "repeat" leading to confusion for the user in the
+        # export code.
+        #
+        # In order to mitigate this, we encode the question id into the path so we do not
+        # have to create a new TableConfiguration for the edge case mentioned above.
+        for idx, path_name in enumerate(path):
+            is_stock_question_element = any(map(
+                lambda tag_name: path_name.startswith('{}:'.format(tag_name)),
+                STOCK_QUESTION_TAG_NAMES
+            ))
+            if is_stock_question_element:
+                question_path, question_id = path_name.split(':')
+                path[idx] = question_path
+                stock_type_path_index = idx
+                break
+
+        value = NestedDictGetter(path[:stock_type_path_index + 1])(doc)
+        if not value:
+            return None
+
+        new_doc = None
+        if isinstance(value, list):
+            try:
+                new_doc = filter(
+                    lambda node: node.get('@type') == question_id,
+                    value,
+                )[0]
+            except IndexError:
+                new_doc = None
+        else:
+            if value.get('@type') == question_id:
+                new_doc = value
+
+        if not new_doc:
+            return None
+
+        return self._transform(
+            NestedDictGetter(path[stock_type_path_index + 1:])(new_doc),
+            new_doc,
+            transform_dates
+        )
 
 
 class StockExportColumn(ExportColumn):
