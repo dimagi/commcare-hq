@@ -16,9 +16,9 @@ FormplayerFrontend.module("SessionNavigate.AppList", function(AppList, Formplaye
         },
         previewApp: function(appId) {
             var singleAppView = new AppList.SingleAppView({
-                appId: appId
+                appId: appId,
             });
             FormplayerFrontend.regions.main.show(singleAppView);
-        }
+        },
     };
 });

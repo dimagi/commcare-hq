@@ -64,7 +64,7 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
         startApp: function(e) {
             e.preventDefault();
             FormplayerFrontend.trigger("app:select", this.appId);
-        }
-    })
+        },
+    });
 })
 ;
