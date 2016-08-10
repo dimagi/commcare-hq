@@ -274,7 +274,7 @@ class EditFormTest(TestCase, TestFileMixin):
 
         if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
             self.assertEqual(
-                [create_form_id, edit_form_id, second_edit_form_id],
+                [create_form_id, create_form_id, edit_form_id, second_edit_form_id],
                 [a.xform_id for a in case.actions]
             )
 
