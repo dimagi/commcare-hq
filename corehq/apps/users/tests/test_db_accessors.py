@@ -20,6 +20,7 @@ class AllCommCareUsersTest(TestCase):
     def setUpClass(cls):
         super(AllCommCareUsersTest, cls).setUpClass()
         delete_all_users()
+        hard_delete_deleted_users()
         cls.ccdomain = Domain(name='cc_user_domain')
         cls.ccdomain.save()
         cls.other_domain = Domain(name='other_domain')
@@ -49,6 +50,13 @@ class AllCommCareUsersTest(TestCase):
             password='secret',
             email='email_other_domain@example.com',
         )
+        cls.retired_user = CommCareUser.create(
+            domain=cls.ccdomain.name,
+            username='retired_user',
+            password='secret',
+            email='retired_user_email@example.com',
+        )
+        cls.retired_user.retire()
 
     @classmethod
     def tearDownClass(cls):
@@ -95,8 +103,6 @@ class AllCommCareUsersTest(TestCase):
         self.assertEqual(user_id, self.ccuser_1._id)
 
     def test_get_deleted_user_by_username(self):
-        hard_delete_deleted_users()
-        self.ccuser_1.retire()
-        self.assertEqual(self.ccuser_1['_id'],
-                         get_deleted_user_by_username(CommCareUser, self.ccuser_1.username)['_id'])
+        self.assertEqual(self.retired_user['_id'],
+                         get_deleted_user_by_username(CommCareUser, self.retired_user.username)['_id'])
         self.assertEqual(None, get_deleted_user_by_username(CommCareUser, self.ccuser_2.username))
