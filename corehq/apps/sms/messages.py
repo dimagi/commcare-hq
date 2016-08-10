@@ -52,7 +52,7 @@ _MESSAGES = {
     MSG_INVALID_INT: ugettext_noop("Invalid integer entered."),
     MSG_INVALID_FLOAT: ugettext_noop("Invalid decimal number entered."),
     MSG_INVALID_LONG: ugettext_noop("Invalid long integer entered."),
-    MSG_INVALID_DATE: ugettext_noop("Invalid date format: expected YYYYMMDD."),
+    MSG_INVALID_DATE: ugettext_noop("Invalid date format: expected {0}."),
     MSG_INVALID_TIME: ugettext_noop("Invalid time format: expected HHMM (24-hour)."),
     MSG_KEYWORD_NOT_FOUND: ugettext_noop("Keyword not found: '{0}'"),
     MSG_START_KEYWORD_USAGE: ugettext_noop("Usage: {0} <keyword>"),
