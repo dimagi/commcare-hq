@@ -878,9 +878,14 @@ class AdminDomainMapReport(AdminDomainStatsReport):
                                         terms=[AggregationTerm('countries', 'deployment.countries')],
                                         bottom_level_aggregation=SumAggregation('users', 'cp_n_active_cc_users')
                                     ).get_data())
+        return active_users_per_country
 
 
-
+    @property
+    def json_dict(self):
+        json = super(AdminDomainMapReport, self).json_dict
+        json['users_per_country'] = dict(self._calc_num_active_users_per_country())
+        return json
 
 class AdminUserReport(AdminFacetedReport):
     slug = "user_list"
