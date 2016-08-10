@@ -54,7 +54,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     MenuList.CaseView = Marionette.ItemView.extend({
         tagName: "tr",
         getTemplate: function () {
-            if (_.isNull(this.options.tiles) || !this.tiles) {
+            if (_.isNull(this.options.tiles)) {
                 return "#case-view-item-template";
             } else {
                 return "#case-tile-view-item-template";
