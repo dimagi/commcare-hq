@@ -327,6 +327,11 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
 
     @property
     @memoized
+    def prefilters(self):
+        return [f for f in self.filters if f['type'] == 'pre']
+
+    @property
+    @memoized
     def config(self):
         return get_datasource_config(self.config_id, self.domain)[0]
 
