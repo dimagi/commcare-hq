@@ -469,7 +469,7 @@ class EntriesHelper(object):
                     target = module.get_app().get_module_by_unique_id(module_id)
                     if target.case_type != case_type:
                         raise ParentModuleReferenceError(
-                            "Module with ID %s has incorrect case type" % module_id
+                            "Module '%s' with ID %s has incorrect case type" % (module.default_name(), module_id)
                         )
                     if with_product_details and not hasattr(target, 'product_details'):
                         raise ParentModuleReferenceError(
