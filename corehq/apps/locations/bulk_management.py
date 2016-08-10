@@ -6,7 +6,6 @@ deleting things, and so on.  See the spec doc for specifics:
 https://docs.google.com/document/d/1gZFPP8yXjPazaJDP9EmFORi88R-jSytH6TTgMxTGQSk/
 """
 import copy
-import itertools
 from collections import Counter, defaultdict
 
 from django.db import transaction
@@ -16,7 +15,7 @@ from bulk_update.helper import bulk_update as bulk_update_helper
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.models import Location, SQLLocation, LocationType
+from corehq.apps.locations.models import SQLLocation, LocationType
 from .tree_utils import BadParentError, CycleError, assert_no_cycles, expansion_validators
 from .const import LOCATION_SHEET_HEADERS, LOCATION_TYPE_SHEET_HEADERS, ROOT_LOCATION_TYPE
 
@@ -241,11 +240,7 @@ class LocationCollection(object):
     def __init__(self, domain_obj):
         self.domain_name = domain_obj.name
         self.types = domain_obj.location_types
-        locations = [
-            [l.sql_location for l in Location.filter_by_type(domain_obj.name, loc_type.name)]
-            for loc_type in self.types
-        ]
-        self.locations = list(itertools.chain(*locations))
+        self.locations = list(SQLLocation.objects.filter(domain=self.domain_name))
 
     @property
     @memoized
@@ -362,12 +357,7 @@ class NewLocationImporter(object):
         for loc in location_stubs:
             loc.lookup_old_collection_data(self.old_collection)
 
-        save_types(type_stubs)
-        type_objects = {
-            lt.code: lt.db_object
-            for lt in type_stubs
-            if not lt.do_delete
-        }
+        type_objects = save_types(type_stubs)
         save_locations(location_stubs, type_objects)
 
     def commit_changes(self, type_stubs, location_stubs):
@@ -685,17 +675,6 @@ def bulk_delete(objects):
     sql_class.objects.filter(id__in=ids).delete()
 
 
-def bulk_create(objects):
-    # Given a list of new SQL objects, bulk create them
-    if not objects:
-        return []
-
-    sql_class = type(objects[0])
-    # ToDo: this results in an IntegrityError related to mptt
-    sql_class.objects.bulk_create(objects)
-    return objects
-
-
 def bulk_update(objects):
     # Given a list of existing SQL objects, bulk update them
     bulk_update_helper(objects)
@@ -710,6 +689,7 @@ def save_types(type_stubs):
     #
     # returns:
     #   dict: a dict of {object.code: object for all type objects}
+    #
     # This proceeds in 3 steps
     # 1. Lookup all to be deleted types and 'bulk_delete' them
     # 2. Lookup all new types and 'bulk_create' the SQL objects, but don't set ForeignKey attrs like
@@ -721,7 +701,7 @@ def save_types(type_stubs):
     to_be_deleted_types = [lt.db_object for lt in type_stubs if lt.do_delete]
     bulk_delete(to_be_deleted_types)
     # step 2
-    new_type_objects = bulk_create([lt.db_object for lt in type_stubs if lt.is_new])
+    new_type_objects = LocationType.bulk_create([lt.db_object for lt in type_stubs if lt.is_new])
     # step 3
     type_objects_by_code = {lt.code: lt for lt in new_type_objects}
     type_objects_by_code.update({ROOT_LOCATION_TYPE: None})
@@ -733,6 +713,7 @@ def save_types(type_stubs):
     to_bulk_update = []
     for lt in type_stubs:
         if (lt.needs_save or lt.is_new) and not lt.do_delete:
+            # lookup foreign key attributes from stub and set them on objects
             type_object = type_objects_by_code[lt.code]
             type_object.parent_type = type_objects_by_code[lt.parent_code]
             if lt.expand_from:
@@ -742,6 +723,7 @@ def save_types(type_stubs):
             to_bulk_update.append(type_object)
 
     bulk_update(to_bulk_update)
+    return {lt.code: lt for lt in to_bulk_update}
 
 
 def save_locations(location_stubs, type_objects):
@@ -785,7 +767,7 @@ def save_locations(location_stubs, type_objects):
                 to_be_updated_objects.append(obj)
 
     # create new_objects without parent refs
-    bulk_create(new_objects)
+    new_objects = SQLLocation.bulk_create(new_objects)
     # update objects with parents set to None
     bulk_update(to_be_updated_objects)
 

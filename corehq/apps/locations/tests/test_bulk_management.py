@@ -488,6 +488,8 @@ class TestBulkManagement(TestCase):
             ('City111', 'city111', 'city', 'county11', _loc_id('city111'), False, '', '', '', 0),
             ('City112', 'city112', 'city', 'county11', _loc_id('city112'), False, '', '', '', 0),
             ('City211', 'city211', 'city', 'county21', _loc_id('city211'), False, '', '', '', 0),
+            # create new city
+            ('City311', 'city311', 'city', 'county11', '', False, '', '', '', 0),
         ]
 
         result = self.bulk_update_locations(
@@ -497,10 +499,7 @@ class TestBulkManagement(TestCase):
 
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
-        self.assertLocationsMatch(set([
-            ('s1', None), ('s2', None), ('county11', 's1'), ('county21', 's1'),
-            ('city111', 'county11'), ('city112', 'county11'), ('city211', 'county21')
-        ]))
+        self.assertLocationsMatch(self.as_pairs(move_county21_to_state1))
 
     def test_delete_city112(self):
         lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)

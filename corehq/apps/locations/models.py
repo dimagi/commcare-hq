@@ -1,3 +1,4 @@
+import uuid
 import warnings
 from functools import partial
 from couchdbkit import ResourceNotFound
@@ -182,6 +183,18 @@ class LocationType(models.Model):
     def can_have_children(self):
         return LocationType.objects.filter(parent_type=self).exists()
 
+    @classmethod
+    def bulk_create(cls, objects):
+        if not objects:
+            return []
+
+        domain = objects[0].domain
+        names = [o.name for o in objects]
+        cls.objects.bulk_create(objects)
+        # we can return 'objects' directly without the below extra DB call after django 1.10,
+        # which autosets 'id' attribute of all objects that are bulk created
+        return list(cls.objects.filter(domain=domain, name__in=names))
+
 
 class LocationQueriesMixin(object):
 
@@ -305,6 +318,30 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         couch_obj.latitude = float(self.latitude) if self.latitude else None
         couch_obj.longitude = float(self.longitude) if self.longitude else None
         self._migration_sync_to_couch(couch_obj)
+
+    @classmethod
+    def bulk_create(cls, objects):
+        if not objects:
+            return []
+
+        location_ids = []
+        for i, obj in enumerate(objects):
+            # SQLLocation is an mptt model, which doesn't support bulk creation
+            # following workaround is a hack to do bulk creation.
+            # This can be removed once https://github.com/django-mptt/django-mptt/pull/444 gets in
+            obj.lft = 1
+            obj.rght = 2
+            obj.tree_id = 0
+            obj.level = i + 1
+            # set location_id
+            obj.location_id = uuid.uuid4().hex
+            location_ids.append(obj.location_id)
+
+        domain = objects[0].domain
+        cls.objects.bulk_create(objects)
+        # we can return 'objects' directly without the below extra DB call after django 1.10,
+        # which autosets 'id' attribute of all objects that are bulk created
+        return list(cls.objects.filter(domain=domain, location_id__in=location_ids))
 
     @transaction.atomic()
     def save(self, *args, **kwargs):
