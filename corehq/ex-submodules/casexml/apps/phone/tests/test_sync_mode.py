@@ -1093,24 +1093,24 @@ class ChangingOwnershipTest(SyncBaseTest):
         sync_log = get_properly_wrapped_sync_log(initial_sync_log._id)
         self.assertTrue(sync_log.phone_is_holding_case(case_id))
 
-        def _get_incremental_synclog_for_user(user, since):
-            incremental_restore_config = RestoreConfig(
-                self.project,
-                restore_user=user,
-                params=RestoreParams(version=V2, sync_log_id=since),
-            )
-            return synclog_from_restore_payload(incremental_restore_config.get_payload().as_string())
-
         # make sure it's there on new sync
-        incremental_sync_log = _get_incremental_synclog_for_user(self.user, since=initial_sync_log._id)
+        incremental_sync_log = self._get_incremental_synclog_for_user(self.user, since=initial_sync_log._id)
         self.assertTrue(group._id in incremental_sync_log.owner_ids_on_phone)
         self.assertTrue(incremental_sync_log.phone_is_holding_case(case_id))
 
         # remove the owner id and confirm that owner and case are removed on next sync
         group.remove_user(self.user.user_id)
-        incremental_sync_log = _get_incremental_synclog_for_user(self.user, since=incremental_sync_log._id)
+        incremental_sync_log = self._get_incremental_synclog_for_user(self.user, since=incremental_sync_log._id)
         self.assertFalse(group._id in incremental_sync_log.owner_ids_on_phone)
         self.assertFalse(incremental_sync_log.phone_is_holding_case(case_id))
+
+    def _get_incremental_synclog_for_user(self, user, since):
+        incremental_restore_config = RestoreConfig(
+            self.project,
+            restore_user=user,
+            params=RestoreParams(version=V2, sync_log_id=since),
+        )
+        return synclog_from_restore_payload(incremental_restore_config.get_payload().as_string())
 
 
 class SyncTokenCachingTest(SyncBaseTest):
