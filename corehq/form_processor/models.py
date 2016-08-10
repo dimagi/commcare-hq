@@ -219,6 +219,9 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     deleted_on = models.DateTimeField(null=True)
     deletion_id = models.CharField(max_length=255, null=True)
 
+    # for compatability with corehq.blobs.mixin.DeferredBlobMixin interface
+    persistent_blobs = None
+
     @classmethod
     def get_obj_id(cls, obj):
         return obj.form_id
