@@ -323,27 +323,23 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
     def _apply_attachments_action(self, attachment_action, xform=None):
         """
 
-        if xform is provided, attachments will be looked for
-        in the xform's _attachments.
-        They should be base64 encoded under _attachments[name]['data']
-
+        if xform is provided it will be used to fetch attachments
         """
-        # the actions and _attachment must be added before the first saves can happen
+        # the actions and attachment must be added before the first saves can happen
         # todo attach cached attachment info
         def fetch_attachment(name):
-            if xform and 'data' in xform._attachments[name]:
-                assert xform.form_id == attachment_action.xform_id
-                return base64.b64decode(xform._attachments[name]['data'])
-            else:
-                return XFormInstance.get_db().fetch_attachment(attachment_action.xform_id, name)
+            if fetch_attachment.form is None:
+                fetch_attachment.form = XFormInstance.get(attachment_action.xform_id)
+            return fetch_attachment.form.fetch_attachment(name)
+        fetch_attachment.form = xform
 
-        stream_dict = {}
+        attach_dict = {}
         # cache all attachment streams from xform
         for k, v in attachment_action.attachments.items():
             if v.is_present:
                 # fetch attachment, update metadata, get the stream
                 attach_data = fetch_attachment(v.attachment_src)
-                stream_dict[k] = attach_data
+                attach_dict[k] = attach_data
                 v.attachment_size = len(attach_data)
 
                 if v.is_image:
@@ -370,7 +366,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
             if v.is_present:
                 #fetch attachment from xform
                 identifier = v.identifier
-                attach = stream_dict[identifier]
+                attach = attach_dict[identifier]
                 attachment_builder.add(name=k, content=attach,
                                        content_type=v.server_mime)
             else:

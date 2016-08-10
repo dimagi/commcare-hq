@@ -2,6 +2,8 @@ from custom.zipline.models import (EmergencyOrder, EmergencyOrderStatusUpdate,
     update_product_quantity_json_field)
 from datetime import datetime
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.logging import notify_exception
+from django.db import transaction
 
 
 class ProductQuantity(object):
@@ -53,7 +55,10 @@ def process_receipt_confirmation(domain, user, location, products):
     """
     order = find_order_to_apply_confirmation(domain, location)
     if order:
-        update_order_products_confirmed(order.pk, products)
+        with CriticalSection([get_order_update_critical_section_key(order.pk)]), transaction.atomic():
+            # refresh the object now that we're in the CriticalSection
+            order = EmergencyOrder.objects.get(pk=order.pk)
+            update_order_products_confirmed(order, products)
 
 
 def find_order_to_apply_confirmation(domain, location):
@@ -85,22 +90,18 @@ def get_order_update_critical_section_key(order_id):
     return 'zipline-updating-order-id-{}'.format(order_id)
 
 
-def update_order_products_delivered(order_id, products):
-    with CriticalSection(get_order_update_critical_section_key(order_id)):
-        order = EmergencyOrder.objects.get(pk=order_id)
-        update_product_quantity_json_field(order.products_delivered, products)
-        order.save()
+def update_order_products_confirmed(order, products):
+    update_product_quantity_json_field(order.products_confirmed, products)
+    confirmed_status = EmergencyOrderStatusUpdate.create_for_order(
+        order.pk,
+        EmergencyOrderStatusUpdate.STATUS_CONFIRMED,
+        products=products
+    )
+    if not order.confirmed_status:
+        order.confirmed_status = confirmed_status
+    order.save()
 
 
-def update_order_products_confirmed(order_id, products):
-    with CriticalSection(get_order_update_critical_section_key(order_id)):
-        order = EmergencyOrder.objects.get(pk=order_id)
-        update_product_quantity_json_field(order.products_confirmed, products)
-        confirmed_status = EmergencyOrderStatusUpdate.create_for_order(
-            order.pk,
-            EmergencyOrderStatusUpdate.STATUS_CONFIRMED,
-            products=products
-        )
-        if not order.confirmed_status:
-            order.confirmed_status = confirmed_status
-        order.save()
+def log_zipline_exception(message, details=None):
+    message = "[ZIPLINE] {}".format(message)
+    notify_exception(None, message=message, details=details)

@@ -360,7 +360,7 @@
                   "type": "property_path",
                   "property_path": [
                     "user_data",
-                    "level_1_data"
+                    "level_1_name"
                   ]
                 },
                 "type": "related_doc",

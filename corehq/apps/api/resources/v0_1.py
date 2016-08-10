@@ -256,6 +256,13 @@ class CommCareUserResource(UserResource):
             bundle.data['extras'] = extras
         return super(UserResource, self).dehydrate(bundle)
 
+    def dehydrate_user_data(self, bundle):
+        user_data = bundle.obj.user_data
+        if self.determine_format(bundle.request) == 'application/xml':
+            # attribute names can't start with digits in xml
+            user_data = {k: v for k, v in user_data.iteritems() if not k[0].isdigit()}
+        return user_data
+
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
         show_archived = _safe_bool(bundle, 'archived')

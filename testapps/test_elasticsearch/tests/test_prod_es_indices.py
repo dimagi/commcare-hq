@@ -45,7 +45,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "hqdomains",
-        "index": "test_hqdomains_20160627_1351",
+        "index": "test_hqdomains_2016-08-08",
         "type": "hqdomain"
     },
     {
@@ -70,7 +70,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "report_xforms",
-        "index": "test_report_xforms_20150406_1136",
+        "index": "test_report_xforms_20160707_2322",
         "type": "report_xform"
     },
     {
@@ -80,7 +80,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "xforms",
-        "index": "test_xforms_2016-06-09",
+        "index": "test_xforms_2016-07-07",
         "type": "xform"
     }
 ]

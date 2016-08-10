@@ -1103,8 +1103,8 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
     def check_paths(self, paths):
         errors = []
         try:
-            valid_paths = {question['value']: question['tag']
-                           for question in self.get_questions(langs=[], include_triggers=True)}
+            questions = self.get_questions(langs=[], include_triggers=True, include_groups=True)
+            valid_paths = {question['value']: question['tag'] for question in questions}
         except XFormException as e:
             errors.append({'type': 'invalid xml', 'message': unicode(e)})
         else:
@@ -1315,6 +1315,37 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             elif a.is_active():
                 actions[action_type] = a
         return actions
+
+    @memoized
+    def get_action_type(self):
+
+        if self.actions.close_case.condition.is_active():
+            return 'close'
+        elif (self.actions.open_case.condition.is_active() or
+                self.actions.subcases):
+            return 'open'
+        elif self.actions.update_case.condition.is_active():
+            return 'update'
+        else:
+            return 'none'
+
+    @memoized
+    def get_icon_help_text(self):
+        messages = []
+
+        if self.actions.open_case.condition.is_active():
+            messages.append(_('This form opens a {}').format(self.get_module().case_type))
+
+        if self.actions.subcases:
+            messages.append(_('This form opens a subcase {}').format(', '.join(self.get_subcase_types())))
+
+        if self.actions.close_case.condition.is_active():
+            messages.append(_('This form closes a {}').format(self.get_module().case_type))
+
+        elif self.requires_case():
+            messages.append(_('This form updates a {}').format(self.get_module().case_type))
+
+        return '. '.join(messages)
 
     def active_actions(self):
         if self.get_app().application_version == APP_V1:
@@ -1734,20 +1765,10 @@ class SortElement(IndexedSchema):
     field = StringProperty()
     type = StringProperty()
     direction = StringProperty()
+    display = DictProperty()
 
-
-class SortOnlyDetailColumn(DetailColumn):
-    """This is a mock type, not intended to be part of a document"""
-
-    @property
-    def _i(self):
-        """
-        assert that SortOnlyDetailColumn never has ._i or .id called
-        since it should never be in an app document
-
-        """
-        raise NotImplementedError()
-
+    def has_display_values(self):
+        return any(s.strip() != '' for s in self.display.values())
 
 class CaseListLookupMixin(DocumentSchema):
     """
@@ -1795,6 +1816,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
 
     # If True, a small tile will display the case name after selection.
     persist_case_context = BooleanProperty()
+    persistent_case_context_xml = StringProperty(default='case_name')
 
     # If True, use case tiles in the case list
     use_case_tiles = BooleanProperty()

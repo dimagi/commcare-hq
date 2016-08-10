@@ -388,7 +388,8 @@ class TableConfiguration(DocumentSchema):
         return None, None
 
         :param item_path: A list of path nodes that identify a column
-        :param item_doc_type: The doc type of the item (often just ExportItem)
+        :param item_doc_type: The doc type of the item (often just ExportItem). If getting
+                UserDefinedExportColumn, set this to None
         :param column_transform: A transform that is applied on the column
         :returns index, column: The index of the column in the list and an ExportColumn
         """
@@ -396,6 +397,11 @@ class TableConfiguration(DocumentSchema):
             if (column.item.path == item_path and
                     column.item.transform == column_transform and
                     column.item.doc_type == item_doc_type):
+                return index, column
+            # No item doc type searches for a UserDefinedExportColumn
+            elif (isinstance(column, UserDefinedExportColumn) and
+                    column.custom_path == item_path and
+                    item_doc_type is None):
                 return index, column
         return None, None
 
@@ -749,7 +755,14 @@ class FormExportInstanceDefaults(ExportInstanceDefaults):
         if table_path == MAIN_TABLE:
             return _('Forms')
         else:
-            return _('Repeat: {}').format((table_path[-1].name if len(table_path) else None) or "")
+            if not len(table_path):
+                return _('Repeat')
+
+            default_table_name = table_path[-1].name
+            # We are probably exporting a model iteration question
+            if default_table_name == 'item' and len(table_path) > 1:
+                default_table_name = '{}.{}'.format(table_path[-2].name, default_table_name)
+            return _('Repeat: {}').format(default_table_name)
 
 
 class CaseExportInstanceDefaults(ExportInstanceDefaults):
@@ -1651,6 +1664,10 @@ class ExportMigrationMeta(Document):
 
     converted_tables = SchemaListProperty(ConversionMeta)
     converted_columns = SchemaListProperty(ConversionMeta)
+
+    is_remote_app_migration = BooleanProperty(default=False)
+
+    migration_date = DateTimeProperty()
 
     class Meta:
         app_label = 'export'
