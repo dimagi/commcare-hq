@@ -5,7 +5,7 @@ from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 from corehq.util.doc_processor.couch import CouchDocumentProvider
-from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
+from pillowtop.checkpoints.manager import PillowCheckpointEventHandler, get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
 from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
@@ -18,9 +18,7 @@ def transform_app_for_es(doc_dict):
 
 
 def get_app_to_elasticsearch_pillow(pillow_id='ApplicationToElasticsearchPillow'):
-    checkpoint = PillowCheckpoint(
-        'applications-to-elasticsearch',
-    )
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, APP_INDEX_INFO)
     app_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=APP_INDEX_INFO,

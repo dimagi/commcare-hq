@@ -4,7 +4,8 @@ from corehq.apps.groups.models import Group
 from corehq.elastic import get_es_new
 
 from .mappings.group_mapping import GROUP_INDEX_INFO
-from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
+from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler, \
+    get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
@@ -15,9 +16,7 @@ def get_group_pillow(pillow_id='group-pillow'):
     """
     This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
     """
-    checkpoint = PillowCheckpoint(
-        pillow_id,
-    )
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, GROUP_INDEX_INFO)
     processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=GROUP_INDEX_INFO,

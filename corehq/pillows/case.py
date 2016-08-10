@@ -11,7 +11,7 @@ from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.utils import get_user_type
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 from corehq.util.doc_processor.sql import SqlDocumentProvider
-from pillowtop.checkpoints.manager import PillowCheckpoint
+from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
@@ -33,9 +33,7 @@ def transform_case_for_elasticsearch(doc_dict):
 
 
 def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow'):
-    checkpoint = PillowCheckpoint(
-        'all-cases-to-elasticsearch',
-    )
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_INDEX_INFO)
     case_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_INDEX_INFO,
