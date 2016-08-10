@@ -72,7 +72,9 @@
 {% endblock %}
 
 {% block page_content %}
+{% if request|toggle_enabled:"PREVIEW_APP" %}
 {% include 'app_manager/partials/preview_app.html'%}
+{% endif %}
 <div class="app-manager-content hide">
     {% if app %}
         {% if error %}
