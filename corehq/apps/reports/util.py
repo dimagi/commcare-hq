@@ -84,7 +84,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
             return temp_user
         return None
 
-    user_ids = user_ids if user_ids and user_ids[0] else None
+    user_ids = user_ids if bool(user_ids) else None
     if not CommCareUser:
         from corehq.apps.users.models import CommCareUser
 
