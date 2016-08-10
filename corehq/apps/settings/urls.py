@@ -21,7 +21,7 @@ urlpatterns = patterns(
     url(r'^settings/$', MyAccountSettingsView.as_view(), name=MyAccountSettingsView.urlname),
     url(r'^projects/$', MyProjectsList.as_view(), name=MyProjectsList.urlname),
     url(r'^password/$', ChangeMyPasswordView.as_view(), name=ChangeMyPasswordView.urlname),
-    url(r'^mobile_privs/$', EnableMobilePrivilegesView.as_view(), name=EnableMobilePrivilegesView.urlname),
+    url(r'^mobile_privileges/$', EnableMobilePrivilegesView.as_view(), name=EnableMobilePrivilegesView.urlname),
     url(r'new_api_key/$', 'new_api_key', name='new_api_key'),
 )
 
