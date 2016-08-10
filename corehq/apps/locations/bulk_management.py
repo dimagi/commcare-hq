@@ -7,6 +7,7 @@ https://docs.google.com/document/d/1gZFPP8yXjPazaJDP9EmFORi88R-jSytH6TTgMxTGQSk/
 """
 import copy
 from collections import Counter, defaultdict
+from datetime import datetime
 
 from django.db import transaction
 from django.utils.translation import ugettext as _
@@ -677,6 +678,9 @@ def bulk_delete(objects):
 
 def bulk_update(objects):
     # Given a list of existing SQL objects, bulk update them
+    now = datetime.utcnow()
+    for o in objects:
+        o.last_modified = now
     bulk_update_helper(objects)
 
 
