@@ -100,7 +100,7 @@ function updateViz(marks) {
 
             _.each(pairs, function(pair){
                 debugHtml.push("<li><b>" + pair.fieldName + "</b>: "+ pair.formattedValue + "</li>");
-                newSheet = extractSheetName(pair, currentSheet);
+                newSheet = extractSheetName(pair, newSheet);
                 var newParam = extractParam(pair, currentParams);
                 $.extend(newParams, newParam);
             });
