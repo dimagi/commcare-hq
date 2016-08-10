@@ -275,10 +275,12 @@ class WebUserResource(UserResource):
     permissions = fields.DictField()
 
     def dehydrate_role(self, bundle):
-        return bundle.obj.get_role(bundle.request.domain).name
+        role = bundle.obj.get_role(bundle.request.domain)
+        return role.name if role else ''
 
     def dehydrate_permissions(self, bundle):
-        return bundle.obj.get_role(bundle.request.domain).permissions._doc
+        role = bundle.obj.get_role(bundle.request.domain)
+        return role.permissions._doc if role else {}
 
     def dehydrate_is_admin(self, bundle):
         return bundle.obj.is_domain_admin(bundle.request.domain)
