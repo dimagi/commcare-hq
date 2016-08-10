@@ -61,7 +61,8 @@ def get_couch_case_reindexer():
         doc_provider,
         elasticsearch=get_es_new(),
         index_info=CASE_INDEX_INFO,
-        doc_transform=transform_case_for_elasticsearch
+        doc_transform=transform_case_for_elasticsearch,
+        pillow=get_case_to_elasticsearch_pillow()
     )
 
 

@@ -153,7 +153,8 @@ def get_couch_form_reindexer():
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
         doc_filter=xform_pillow_filter,
-        doc_transform=transform_xform_for_elasticsearch
+        doc_transform=transform_xform_for_elasticsearch,
+        pillow=get_xform_to_elasticsearch_pillow(),
     )
 
 
