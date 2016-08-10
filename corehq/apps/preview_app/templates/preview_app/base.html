@@ -110,7 +110,8 @@
             <section id="case-crumbs" style="width: 800px"></section>
             <section id="cases"></section>
             <div id="menu-container">
-                <div id="menu-region" class="container"></div>
+                <div id="breadcrumb-region"></div>
+                <div id="menu-region"></div>
             </div>
             <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
             {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
@@ -130,7 +131,8 @@
                 language: "{{ request.user.language|default:'en' }}",
                 username: "{{ request.user.username  }}",
                 domain: "{{ request.domain }}",
-                formplayer_url: "http://localhost:8080",
+                formplayer_url: "{{ formplayer_url }}",
+                previewMode: true,
             })
         })
         </script>

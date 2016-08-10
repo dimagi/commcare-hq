@@ -14,5 +14,11 @@ FormplayerFrontend.module("SessionNavigate.AppList", function(AppList, Formplaye
                 FormplayerFrontend.regions.main.show(appGridView);
             });
         },
+        previewApp: function(appId) {
+            var singleAppView = new AppList.SingleAppView({
+                appId: appId
+            });
+            FormplayerFrontend.regions.main.show(singleAppView);
+        }
     };
 });

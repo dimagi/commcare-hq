@@ -15,15 +15,10 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
         },
     });
 
-    AppList.GridView = Marionette.CompositeView.extend({
-        tagName: "div",
-        template: "#grid-template",
-        childView: AppList.GridItem,
-        childViewContainer: ".application-container",
-
+    AppList.BaseAppView = {
         events: {
-            'click #incompleteSessionsItem': 'incompleteSessionsClick',
-            'click #syncItem': 'syncClick',
+            'click .incomplete-sessions-item': 'incompleteSessionsClick',
+            'click .sync-item': 'syncClick',
         },
         incompleteSessionsClick: function (e) {
             e.preventDefault();
@@ -33,6 +28,36 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
             e.preventDefault();
             FormplayerFrontend.trigger("sync");
         },
+    };
+
+    AppList.GridView = Marionette.CompositeView.extend({
+        template: "#grid-template",
+        childView: AppList.GridItem,
+        childViewContainer: ".application-container",
+
+        events: _.extend(AppList.BaseAppView.events),
+        incompleteSessionsClick: _.extend(AppList.BaseAppView.incompleteSessionsClick),
+        syncClick: _.extend(AppList.BaseAppView.syncClick),
     });
+
+    AppList.SingleAppView = Marionette.ItemView.extend({
+        template: "#single-app-template",
+        className: 'single-app-view',
+
+        events: _.extend({
+            'click .start-app': 'startApp',
+        }, AppList.BaseAppView.events),
+        incompleteSessionsClick: _.extend(AppList.BaseAppView.incompleteSessionsClick),
+        syncClick: _.extend(AppList.BaseAppView.syncClick),
+
+        initialize: function(options) {
+            this.appId = options.appId;
+        },
+
+        startApp: function(e) {
+            e.preventDefault();
+            FormplayerFrontend.trigger("app:select", this.appId);
+        }
+    })
 })
 ;
