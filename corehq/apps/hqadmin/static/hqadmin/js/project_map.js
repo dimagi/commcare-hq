@@ -337,10 +337,10 @@ var projectMapInit = function(mapboxAccessToken) {
     });
 
     $('.btn-toggle').click(function() {
-          dataController.toggleMap();
-          dataController.refreshProjectData();
-          $(this).find('.btn').toggleClass('btn-primary');
-          $(this).find('.btn').toggleClass('btn-default');
+        dataController.toggleMap();
+        dataController.refreshProjectData();
+        $(this).find('.btn').toggleClass('btn-primary');
+        $(this).find('.btn').toggleClass('btn-default');
     });
 
 
