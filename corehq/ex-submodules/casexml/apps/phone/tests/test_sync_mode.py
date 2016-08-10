@@ -1104,6 +1104,29 @@ class ChangingOwnershipTest(SyncBaseTest):
         self.assertFalse(group._id in incremental_sync_log.owner_ids_on_phone)
         self.assertFalse(incremental_sync_log.phone_is_holding_case(case_id))
 
+    @run_with_all_backends
+    def test_add_user_to_group(self):
+        group = Group(
+            domain=self.project.name,
+            name='add_user',
+            case_sharing=True,
+            users=[]
+        )
+        group.save()
+        # create a case owned by the group
+        case_id = self.factory.create_case(owner_id=group._id).case_id
+        # shouldn't be there
+        initial_sync_log = synclog_from_restore_payload(
+            generate_restore_payload(self.project, self.user)
+        )
+        self.assertFalse(initial_sync_log.phone_is_holding_case(case_id))
+
+        group.add_user(self.user.user_id)
+        # make sure it's there on new sync
+        incremental_sync_log = self._get_incremental_synclog_for_user(self.user, since=initial_sync_log._id)
+        self.assertTrue(group._id in incremental_sync_log.owner_ids_on_phone)
+        self.assertTrue(incremental_sync_log.phone_is_holding_case(case_id))
+
     def _get_incremental_synclog_for_user(self, user, since):
         incremental_restore_config = RestoreConfig(
             self.project,
