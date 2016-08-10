@@ -109,7 +109,7 @@ class CaseRebuildTest(TestCase):
         self.assertEqual(case.p3, 'p3-2') # new
         self.assertEqual(4, len(case.actions)) # create + update (2 actions) + 2 updates
         a0 = case.actions[1]
-        self.assertEqual(a0.updated_known_properties['opened_on'], case.opened_on)
+        self.assertEqual(a0.updated_known_properties['opened_on'], case.opened_on.date())
         a1 = case.actions[2]
         self.assertEqual(a1.updated_unknown_properties['p1'], 'p1-1')
         self.assertEqual(a1.updated_unknown_properties['p2'], 'p2-1')
