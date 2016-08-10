@@ -15,7 +15,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.http import Http404
 from django.views.decorators.http import require_POST
-from corehq.mobile_flags import SUPERUSER
+from corehq.mobile_flags import MULTIPLE_APPS_UNLIMITED
 from corehq.tabs.tabclasses import MySettingsTab
 import langcodes
 
@@ -434,20 +434,20 @@ def get_qrcode(data):
     return png_data
 
 
-class EnableSuperuserView(BaseMyAccountView):
-    urlname = 'enable_superuser'
-    page_title = ugettext_lazy("Enable Superuser on Mobile")
+class EnableMobilePrivilegesView(BaseMyAccountView):
+    urlname = 'enable_mobile_privs'
+    page_title = ugettext_lazy("Enable Privileges on Mobile")
     template_name = 'settings/enable_superuser.html'
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         message = json.dumps([
             {'username': request.user.username},
-            {'flag': SUPERUSER.slug}
+            {'flag': MULTIPLE_APPS_UNLIMITED.slug}
         ]).replace(' ', '')
         qrcode_data = json.dumps({
             'username': request.user.username,
-            'flag': SUPERUSER.slug,
+            'flag': MULTIPLE_APPS_UNLIMITED.slug,
             'signature': b64encode(sign(message))
         })
         qrcode = get_qrcode(qrcode_data)

@@ -89,11 +89,17 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         self.hasValidPropertyName = function(){
             return module.DetailScreenConfig.field_val_re.test(self.textField.val());
         };
+        self.display = ko.observable(typeof params.display !== 'undefined' ? params.display : "");
+        self.display.subscribe(function () {
+            self.notifyButton();
+        });
+        self.toTitleCase = module.CC_DETAIL_SCREEN.toTitleCase;
         this.textField.on('change', function(){
             if (!self.hasValidPropertyName()){
                 self.showWarning(true);
             } else {
                 self.showWarning(false);
+                self.display(self.toTitleCase(this.val()));
                 self.notifyButton();
             }
         });
@@ -150,11 +156,12 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         var self = this;
         self.sortRows = ko.observableArray([]);
 
-        self.addSortRow = function (field, type, direction, notify) {
+        self.addSortRow = function (field, type, direction, display, notify) {
             self.sortRows.push(new SortRow({
                 field: field,
                 type: type,
                 direction: direction,
+                display: display,
                 saveButton: saveButton,
                 properties: properties
             }));
@@ -1077,7 +1084,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                             return {
                                 field: row.textField.val(),
                                 type: row.type(),
-                                direction: row.direction()
+                                direction: row.direction(),
+                                display: row.display(),
                             };
                         }));
                     }
@@ -1213,6 +1221,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                                 spec.sortRows[j].field,
                                 spec.sortRows[j].type,
                                 spec.sortRows[j].direction,
+                                spec.sortRows[j].display[this.lang],
                                 false
                             );
                         }

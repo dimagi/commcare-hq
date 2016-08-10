@@ -38,7 +38,9 @@
     </field>
     <field>
       <header width="0">
-        <text/>
+        <text>
+            <locale id="m0.case_short.case_name_2.header"/>
+        </text>
       </header>
       <template width="0">
         <text>

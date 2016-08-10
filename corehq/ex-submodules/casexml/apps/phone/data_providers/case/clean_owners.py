@@ -246,6 +246,12 @@ class CleanOwnerCaseSyncOperation(object):
     def is_clean(self, owner_id):
         return self.cleanliness_flags.get(owner_id, False)
 
+    def is_new_owner(self, owner_id):
+        return (
+            self.restore_state.is_initial or
+            owner_id not in self.restore_state.last_sync_log.owner_ids_on_phone
+        )
+
     def get_payload(self):
         self.restore_state.mark_as_new_format()
         with self.timing_context('get_case_ids_to_sync'):
@@ -279,7 +285,7 @@ class CleanOwnerCaseSyncOperation(object):
 
     def _get_case_ids_for_owners_without_extensions(self, owner_id):
         if self.is_clean(owner_id):
-            if self.restore_state.is_initial:
+            if self.is_new_owner(owner_id):
                 # for a clean owner's initial sync the base set is just the open ids
                 return set(self.case_accessor.get_open_case_ids_for_owner(owner_id))
             else:
@@ -301,7 +307,7 @@ class CleanOwnerCaseSyncOperation(object):
             # extension parameters get set correctly
             return get_case_footprint_info(self.restore_state.domain, owner_id).all_ids
         else:
-            if self.restore_state.is_initial:
+            if self.is_new_owner(owner_id):
                 # for a clean owner's initial sync the base set is just the open ids and their extensions
                 all_case_ids = set(self.case_accessor.get_open_case_ids_for_owner(owner_id))
                 new_case_ids = set(all_case_ids)
