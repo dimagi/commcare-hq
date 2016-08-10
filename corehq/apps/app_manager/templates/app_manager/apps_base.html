@@ -43,6 +43,7 @@
     <script src="{% static 'style/js/ui-element.js' %}"></script>
     <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
+    <script src="{% static 'app_manager/js/preview_app.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -55,6 +56,7 @@
         }).on('hide.bs.modal', function () {
             window.location = "{% url "corehq.apps.app_manager.views.view_app" domain %}";
         });
+        hqImport('app_manager/js/preview_app.js').initializePreviewButton();
     });
     $(window).load(function () {
        $('.app-manager-content').removeClass('hide');
