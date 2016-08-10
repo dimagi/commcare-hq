@@ -466,11 +466,6 @@ class TestBulkManagement(TestCase):
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
 
-        self.assertLocationsMatch(set([
-            ('s1', None), ('s2', None), ('county11', 's1'), ('county21', 's2'),
-            ('city111', 'county11'), ('city112', 'county11'), ('city211', 'county21')
-        ]))
-
     def test_move_county21_to_state1(self):
         lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
         locations_by_code = self.create_locations(self.basic_tree, lt_by_code)
@@ -524,10 +519,7 @@ class TestBulkManagement(TestCase):
 
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
-        self.assertLocationsMatch(set([
-            ('s1', None), ('s2', None), ('county11', 's1'), ('county21', 's2'),
-            ('city111', 'county11'), ('city211', 'county21')
-        ]))
+        self.assertLocationsMatch(self.as_pairs(delete_city112))
 
     def test_invalid_tree(self):
         # Invalid location upload should not pass or affect existing location structure
@@ -554,10 +546,7 @@ class TestBulkManagement(TestCase):
         self.assertNotEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         # Since there were errors, the location tree should be as it was
-        self.assertLocationsMatch(set([
-            ('s1', None), ('s2', None), ('county11', 's1'), ('county21', 's2'),
-            ('city111', 'county11'), ('city112', 'county11'), ('city211', 'county21')
-        ]))
+        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
 
     def test_edit_by_sitecode(self):
         # Locations can be referred by site_code and empty location_id
@@ -610,10 +599,7 @@ class TestBulkManagement(TestCase):
 
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
-        self.assertLocationsMatch(set([
-            ('s1', None), ('s2', None), ('county11', 's1'), ('county21', 's1'),
-            ('city111', 'county11'), ('city112', 'county11'), ('city211', 'county21')
-        ]))
+        self.assertLocationsMatch(self.as_pairs(move_county21_to_state1))
 
     def test_delete_city_type_valid(self):
         # delete a location type and locations of that type
@@ -643,9 +629,7 @@ class TestBulkManagement(TestCase):
 
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(delete_city_types)
-        self.assertLocationsMatch(set([
-            ('s1', None), ('s2', None), ('county11', 's1'), ('county21', 's2'),
-        ]))
+        self.assertLocationsMatch(self.as_pairs(delete_cities_locations))
 
     def test_delete_city_type_invalid(self):
         # delete a location type but don't delete locations of that type.
@@ -695,11 +679,7 @@ class TestBulkManagement(TestCase):
 
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
-        self.assertLocationsMatch(set([
-            ('s1', None), ('s2', None), ('county11', 's1'), ('county21', 's2'),
-            ('city111', 'county11'), ('city112', 'county11'), ('city211', 'county21')
-        ]))
-
+        self.assertLocationsMatch(self.as_pairs(change_names))
         self.assertLocationsMatch(set([
             ('State 1', None), ('State 2', None), ('County 11', 's1'), ('County 21', 's2'),
             ('City 111', 'county11'), ('City 112', 'county11'), ('City 211', 'county21')
@@ -724,11 +704,7 @@ class TestBulkManagement(TestCase):
 
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(edit_expansions)
-
-        self.assertLocationsMatch(set([
-            ('s1', None), ('s2', None), ('county11', 's1'), ('county21', 's2'),
-            ('city111', 'county11'), ('city112', 'county11'), ('city211', 'county21')
-        ]))
+        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
 
     def test_rearrange_locations(self):
         # a total rearrangement like reversing the tree can be done
@@ -761,7 +737,4 @@ class TestBulkManagement(TestCase):
 
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(reverse_order)
-        self.assertLocationsMatch(set([
-            ('s1', 'county11'), ('s2', 'county11'), ('county11', 'city111'),
-            ('county21', 'city111'), ('city111', None), ('city112', None)
-        ]))
+        self.assertLocationsMatch(self.as_pairs(edit_types_of_locations))
