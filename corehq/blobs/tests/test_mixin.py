@@ -15,7 +15,7 @@ from corehq.blobs import DEFAULT_BUCKET
 from corehq.blobs.s3db import ClosingContextProxy, maybe_not_found
 from corehq.blobs.tests.util import (TemporaryFilesystemBlobDB,
     TemporaryMigratingBlobDB, TemporaryS3BlobDB)
-from corehq.util.test_utils import trap_extra_setup
+from corehq.util.test_utils import generate_cases, trap_extra_setup
 from dimagi.ext.couchdbkit import Document
 
 
@@ -788,6 +788,25 @@ class TestBulkAtomicBlobs(BaseTestCase):
         ident = deferred.blobs["att"].id
         with self.get_blob(ident, deferred._blobdb_bucket()).open() as fh:
             self.assertEqual(fh.read(), "deferred")
+
+
+_abc_digest = mod.sha1("abc").hexdigest()
+
+
+@generate_cases([
+    ("abc-def", "abc-def"),
+    ("{abc-def}", "{abc-def}"),
+    ("uuid:def", "sha1-d7ceb3d1678b9986f89e88780094a571a226c8b5"),
+    ("sha1-def", "sha1-def"),
+    ("sha1-" + _abc_digest + "0", "sha1-" + _abc_digest + "0"),
+    ("sha1-" + _abc_digest, ValueError),
+])
+def test_safe_id(self, value, result):
+    if isinstance(result, type):
+        with self.assertRaises(result):
+            mod.safe_id(value)
+    else:
+        self.assertEqual(mod.safe_id(value), result)
 
 
 class FakeCouchDatabase(object):
