@@ -31,7 +31,7 @@ from couchexport.export import SCALAR_NEVER_WAS
 # Don't allow users to change the case type by accident using a custom field. But do allow users to change
 # owner_id, external_id, etc. (See also custom_data_fields.models.RESERVED_WORDS)
 RESERVED_FIELDS = ('type',)
-
+EXTERNAL_ID = 'external_id'
 
 class ImporterConfig(object):
     """
@@ -235,8 +235,12 @@ def convert_custom_fields_to_struct(config):
             if case_fields[i]:
                 field_map[field]['field_name'] = case_fields[i]
             elif custom_fields[i]:
-                field_map[field]['field_name'] = custom_fields[i]
-
+                # if we have configured this field for external_id populate external_id instead
+                # of the default property name from the column
+                if config.search_field == EXTERNAL_ID and field == config.search_column:
+                    field_map[field]['field_name'] = EXTERNAL_ID
+                else:
+                    field_map[field]['field_name'] = custom_fields[i]
     return field_map
 
 
@@ -377,7 +381,7 @@ def lookup_case(search_field, search_id, domain, case_type):
                 found = True
         except CaseNotFound:
             pass
-    elif search_field == 'external_id':
+    elif search_field == EXTERNAL_ID:
         cases_by_type = case_accessors.get_cases_by_external_id(search_id, case_type=case_type)
         if not cases_by_type:
             return (None, LookupErrors.NotFound)
