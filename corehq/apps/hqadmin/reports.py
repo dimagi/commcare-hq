@@ -874,12 +874,11 @@ class AdminDomainMapReport(AdminDomainStatsReport):
 
     def _calc_num_active_users_per_country(self):
         active_users_per_country = (NestedTermAggregationsHelper(
-                                        base_query=DomainES(),
-                                        terms=[AggregationTerm('countries', 'deployment.countries')],
-                                        bottom_level_aggregation=SumAggregation('users', 'cp_n_active_cc_users')
+                                    base_query=DomainES(),
+                                    terms=[AggregationTerm('countries', 'deployment.countries')],
+                                    bottom_level_aggregation=SumAggregation('users', 'cp_n_active_cc_users')
                                     ).get_data())
         return active_users_per_country
-
 
     @property
     def json_dict(self):
