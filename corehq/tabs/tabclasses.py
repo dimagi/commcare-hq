@@ -382,7 +382,7 @@ class ProjectDataTab(UITab):
     @memoized
     def can_export_data(self):
         return (self.project and not self.project.is_snapshot
-                and self.couch_user.can_export_data())
+                and self.couch_user.can_access_any_exports(self.domain))
 
     @property
     @memoized

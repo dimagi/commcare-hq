@@ -1313,8 +1313,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         export_reports = set(DataInterfaceDispatcher().get_reports_dict(domain).keys())
         return list(export_reports.intersection(viewable_reports))
 
-    def can_export_data(self, domain=None):
-        return self.can_view_reports() or bool(self.get_exportable_reports(domain))
+    def can_access_any_exports(self, domain=None):
+        return self.can_view_reports(domain) or bool(self.get_exportable_reports(domain))
 
     def is_current_web_user(self, request):
         return self.user_id == request.couch_user.user_id
