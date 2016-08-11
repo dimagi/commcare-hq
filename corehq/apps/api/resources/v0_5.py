@@ -35,7 +35,6 @@ from corehq.apps.users.models import CommCareUser, WebUser, Permissions, CouchUs
 from corehq.util import get_document_or_404
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
 from corehq.toggles import ZAPIER_INTEGRATION
-from corehq.apps.api.resources.meta import CustomResourceMeta
 
 from . import v0_1, v0_4, CouchResourceMixin
 from . import HqBaseResource, DomainSpecificResourceMixin

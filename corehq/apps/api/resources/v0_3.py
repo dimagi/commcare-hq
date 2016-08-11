@@ -1,19 +1,15 @@
-from casexml.apps.case.models import CommCareCase
-from corehq.apps.api.resources.auth import RequirePermissionAuthentication
-from corehq.apps.api.resources.meta import CustomResourceMeta
-from corehq.apps.api.serializers import XFormInstanceSerializer
-from corehq.apps.cloudcare.api import es_filter_cases
 from tastypie import fields
 
-
-from corehq.apps.api.resources import v0_1, HqBaseResource
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.resources import DomainSpecificResourceMixin
+from corehq.apps.api.resources import HqBaseResource
+from corehq.apps.api.resources.auth import RequirePermissionAuthentication
+from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import object_does_not_exist, get_obj
+from corehq.apps.cloudcare.api import es_filter_cases
 from corehq.apps.users.models import Permissions
-from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, \
-    FormAccessors
-from couchforms.models import XFormInstance
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
 class CaseListFilters(object):
