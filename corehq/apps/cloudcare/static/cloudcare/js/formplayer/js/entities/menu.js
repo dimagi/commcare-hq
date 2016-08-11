@@ -15,10 +15,12 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
         parse: function (response) {
             this.title = response.title;
             this.type = response.type;
+            this.clearSession = response.clearSession;
+            this.notification = response.notification;
+            this.breadcrumbs = response.breadcrumbs;
 
             if (response.commands) {
                 this.type = "commands";
-                this.breadcrumbs = response.breadcrumbs;
                 return response.commands;
             }
             else if (response.entities) {
@@ -29,7 +31,6 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 this.currentPage = response.currentPage;
                 this.pageCount = response.pageCount;
                 this.tiles = response.tiles;
-                this.breadcrumbs = response.breadcrumbs;
                 return response.entities;
             }
             else if(response.type === "query") {
@@ -40,7 +41,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 FormplayerFrontend.request('startForm', response, this.app_id);
             }
             else if(response.exception){
-                FormplayerFrontend.request('error', response.exception);
+                FormplayerFrontend.request('showError', response.exception);
             }
         },
 
