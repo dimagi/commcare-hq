@@ -413,7 +413,7 @@ def populate_updated_fields(config, columns, row, datemode):
                 update_value = row[value_column_index]
             else:
                 update_value = row[columns.index(key)]
-        except:
+        except Exception:
             continue
 
         if 'field_name' in field_map[key]:
