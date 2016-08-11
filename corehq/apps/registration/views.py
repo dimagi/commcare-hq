@@ -18,7 +18,8 @@ from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 from corehq.apps.analytics.tasks import (
     track_workflow,
     track_confirmed_account_on_hubspot,
-    track_clicked_signup_on_hubspot
+    track_clicked_signup_on_hubspot,
+    update_hubspot_properties
 )
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.analytics import ab_tests
@@ -209,6 +210,11 @@ def register_user(request):
                             app.add_module(module)
                             save_xform(app, app.new_form(0, "Untitled Form", lang), form.cleaned_data['xform'])
                             app.save()
+                            web_user = WebUser.get_by_username(new_user.email)
+                            if web_user:
+                                update_hubspot_properties(web_user, {
+                                    'signup_via_demo': 'yes',
+                                })
                     except NameUnavailableException:
                         context.update({
                             'current_page': {'page_name': _('Oops!')},
