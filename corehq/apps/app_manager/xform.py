@@ -3,11 +3,12 @@ from functools import wraps
 import logging
 from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.xml import V2_NAMESPACE
+from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq import toggles
 from corehq.apps.app_manager.const import (
     APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
     CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER,
-    SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE, STOCK_QUESTION_TAG_NAMES
+    SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE
 )
 from lxml import etree as ET
 from corehq.util.view_utils import get_request
@@ -952,11 +953,16 @@ class XForm(WrappedNode):
                 # Include meta information about the stock entry
                 if data_node.tag_name == 'entry':
                     parent = next(data_node.xml.iterancestors())
-                    if parent and WrappedNode(parent).tag_name in STOCK_QUESTION_TAG_NAMES:
-                        question.update({
-                            "stock_entry_attributes": data_node.xml.attrib,
-                            "stock_type_attributes": parent.attrib,
-                        })
+                    if parent:
+                        is_stock_element = any(map(
+                            lambda namespace: namespace == COMMTRACK_REPORT_XMLNS,
+                            parent.nsmap.values()
+                        ))
+                        if is_stock_element:
+                            question.update({
+                                "stock_entry_attributes": data_node.xml.attrib,
+                                "stock_type_attributes": parent.attrib,
+                            })
 
                 if use_hashtags:
                     hashtag_path = self.hashtag_path(path)
