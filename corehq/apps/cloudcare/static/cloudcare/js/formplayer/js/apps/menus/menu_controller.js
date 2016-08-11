@@ -1,4 +1,4 @@
-/*global FormplayerFrontend */
+/*global FormplayerFrontend, Util */
 
 FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette, $) {
     MenuList.Controller = {
@@ -18,6 +18,17 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
              a list of entities (cases) and their details
              */
             $.when(fetchingNextMenu).done(function (menuResponse) {
+
+                // show any notifications from Formplayer
+                if(menuResponse.notification && !_.isNull(menuResponse.notification.message)){
+                    FormplayerFrontend.request("handleNotification", menuResponse.notification);
+                }
+
+                // If redirect was set, clear and go home.
+                if (menuResponse.clearSession) {
+                    FormplayerFrontend.trigger("apps:currentApp");
+                    return;
+                }
                 MenuList.Controller.showMenu(menuResponse);
             });
         },
