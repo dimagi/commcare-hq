@@ -47,10 +47,7 @@ class AdherenceCaseFactory(object):
     @property
     @memoized
     def _episode_case(self):
-        try:
-            return get_open_episode_case(self.domain, self._person_case.case_id)
-        except CaseNotFound:
-            raise AdherenceException(message="No patient exists with this beneficiary ID")
+        return get_open_episode_case(self.domain, self._person_case.case_id)
 
     def create_adherence_cases(self):
         return self.case_factory.create_or_update_cases([
@@ -100,7 +97,9 @@ def get_open_episode_case(domain, person_case_id):
     open_occurrence_cases = [case for case in occurrence_cases
                              if not case.closed and case.type == "occurrence"]
     if not open_occurrence_cases:
-        raise CaseNotFound
+        raise AdherenceException(
+            message="Person with id: {} exists but has no open occurence cases".format(person_case_id)
+        )
     occurence_case = open_occurrence_cases[0]
     episode_cases = case_accessor.get_reverse_indexed_cases([occurence_case.case_id])
     open_episode_cases = [case for case in episode_cases
@@ -109,4 +108,6 @@ def get_open_episode_case(domain, person_case_id):
     if open_episode_cases:
         return open_episode_cases[0]
     else:
-        raise CaseNotFound
+        raise AdherenceException(
+            message="Person with id: {} exists but has no open episode cases".format(person_case_id)
+        )
