@@ -1,7 +1,3 @@
-body {
-    margin: 4px;
-}
-
 .grid-wrapper {
     display: grid;
     grid-template-columns: repeat(12, 60px) min-content 60px;
@@ -58,6 +54,7 @@ body {
 .formplayer-request {
     cursor: pointer;
 }
+<<<<<<< HEAD
 
 
 /* Small screens will have these styles, mainly used written for preview mode */
@@ -81,3 +78,5 @@ body {
         font-size: 30px;
     }
 }
+=======
+>>>>>>> master
