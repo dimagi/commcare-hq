@@ -15,12 +15,7 @@ from tastypie.api import Api
 
 API_LIST = (
     ((0, 3), (
-        v0_1.CommCareUserResource,
-        v0_1.WebUserResource,
         v0_3.CommCareCaseResource,
-        FixtureResource,
-        DomainMetadataResource,
-        locations.v0_1.LocationResource,
         ProductResource,
     )),
     ((0, 4), (
