@@ -1,6 +1,6 @@
 /*global FormplayerFrontend */
 
-FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette) {
+FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette, $) {
     MenuList.MenuView = Marionette.ItemView.extend({
         tagName: "tr",
         className: "formplayer-request",
@@ -54,7 +54,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     MenuList.CaseView = Marionette.ItemView.extend({
         tagName: "tr",
         getTemplate: function () {
-            if (_.isNull(this.options.tiles) || !this.tiles) {
+            if (_.isNull(this.options.tiles)) {
                 return "#case-view-item-template";
             } else {
                 return "#case-tile-view-item-template";
@@ -134,7 +134,11 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         initialize: function (options) {
             this.tiles = options.tiles;
             this.styles = options.styles;
-            generateCaseTileStyles(options.tiles);
+            if (!_.isNull(this.options.tiles)) {
+                $.getScript("../../../../static/css-grid-polyfill-binaries/css-polyfills.js", function() {
+                    generateCaseTileStyles(options.tiles);
+                });
+            }
         },
 
         childViewOptions: function () {
