@@ -1,6 +1,7 @@
 from django.core.exceptions import PermissionDenied
 from django.utils.translation import ugettext as _
 
+from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.locations import views as location_views
 
@@ -35,16 +36,33 @@ class LocationAccessMiddleware(object):
                 return no_permissions(request, message=LOCATION_ACCESS_MSG)
 
 
+class ViewSafetyChecker(object):
+    @property
+    @memoized
+    def _location_safe_views(self):
+        """
+        This is a set of views which will safely restrict access based on the web
+        user's assigned location where appropriate. It's implemented as a
+        classmethod so it can be lazily initialized (to minimize
+        import loops) and memoized.
+        """
+        from corehq.apps.locations import views as location_views
+        return {self._get_view_path(view_fn) for view_fn in (
+            location_views.LocationsListView,
+        )}
+
+    @memoized
+    def _is_location_safe_path(self, view_path):
+        return view_path in self._location_safe_views
+
+    def _get_view_path(self, view_fn):
+        return '.'.join([view_fn.__module__, view_fn.__name__])
+
+    def is_location_safe(self, view_fn):
+        return self._is_location_safe_path(self._get_view_path(view_fn))
+
+
+view_safety_checker = ViewSafetyChecker()
+
 def is_location_safe(view_fn):
-    def get_path(fn):
-        return fn.__module__ + fn.__name__
-    return get_path(view_fn) in [
-        get_path(view) for view in LOCATION_SAFE_VIEWS
-    ]
-
-
-# This is a list of views which will safely restrict access based on the web
-# user's assigned location where appropriate.
-LOCATION_SAFE_VIEWS = (
-    location_views.LocationsListView,
-)
+    return view_safety_checker.is_location_safe(view_fn)
