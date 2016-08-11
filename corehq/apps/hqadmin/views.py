@@ -83,7 +83,7 @@ from .models import HqDeploy, VCMMigration
 from .reporting.reports import get_project_spaces, get_stats_data
 from .utils import get_celery_stats
 from corehq.apps.es.domains import DomainES
-
+from corehq.apps.es import filters
 
 @require_superuser
 def default(request):
