@@ -1,19 +1,20 @@
 {% load hq_shared_tags %}
+{% load i18n %}
 
 <script id="grid-template" type="text/template">
 
     <div>
-        <h1>Applications</h1>
+        <h1>{% trans "Applications" %}</h1>
     </div>
 
     <div class="row">
         <div class="incomplete-sessions-item grid-item col-sm-4 text-center formplayer-request">
-            <h3>Incomplete Forms</h3>
+            <h3>{% trans "Incomplete Forms" %}</h3>
             <i class="fa fa-list app-icon incomplete-icon" aria-hidden="true"></i>
         </div>
 
         <div class="sync-item grid-item col-sm-4 text-center formplayer-request">
-            <h3>Sync</h3>
+            <h3>{% trans "Sync" %}</h3>
             <i class="fa fa-refresh app-icon sync-icon" aria-hidden="true"></i>
         </div>
 
@@ -28,15 +29,15 @@
 
     <div class="row">
         <div class="start-app grid-item col-xs-6 col-sm-4 text-center formplayer-request">
-            <h3>Start</h3>
+            <h3>{% trans "Start" %}</h3>
             <i class="fa fa-pencil app-icon start-app-icon" aria-hidden="true"></i>
         </div>
         <div class="incomplete-sessions-item grid-item col-xs-6 col-sm-4 text-center formplayer-request">
-            <h3>Incomplete Forms</h3>
+            <h3>{% trans "Incomplete Forms" %}</h3>
             <i class="fa fa-list app-icon incomplete-icon" aria-hidden="true"></i>
         </div>
         <div class="sync-item grid-item col-xs-6 col-sm-4 text-center formplayer-request">
-            <h3>Sync</h3>
+            <h3>{% trans "Sync" %}</h3>
             <i class="fa fa-refresh app-icon sync-icon" aria-hidden="true"></i>
         </div>
     </div>
