@@ -15,18 +15,6 @@ from corehq.apps.api.es import XFormES
 
 
 API_LIST = (
-    ((0, 1), (
-        v0_1.CommCareUserResource,
-        v0_1.WebUserResource,
-        FixtureResource,
-        DomainMetadataResource,
-    )),
-    ((0, 2), (
-        v0_1.CommCareUserResource,
-        v0_1.WebUserResource,
-        FixtureResource,
-        DomainMetadataResource,
-    )),
     ((0, 3), (
         v0_1.CommCareUserResource,
         v0_1.WebUserResource,
@@ -89,7 +77,6 @@ def api_url_patterns():
         for R in resources:
             api.register(R())
         yield (r'^', include(api.urls))
-    yield url(r'^v0.1/xform_es/$', XFormES.as_domain_specific_view())
     # HACK: fix circular import here, to fix later
     try:
         from pact.api import PactAPI
