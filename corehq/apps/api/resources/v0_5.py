@@ -668,6 +668,7 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
         return [{
             "column_id": c['column_id'],
             "display": c['display'],
+            "type": c["type"],
         } for c in obj_columns]
 
     def obj_get(self, bundle, **kwargs):
