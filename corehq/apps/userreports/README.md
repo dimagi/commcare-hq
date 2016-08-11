@@ -440,7 +440,7 @@ Here is a simple example that demonstrates the structure. The keys of `propertie
 
 ```json
 {
-    "type": "named",
+    "type": "dict",
     "properties": {
         "name": "a constant name",
         "value": {
