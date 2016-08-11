@@ -1,6 +1,7 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
+from corehq.apps.api.serializers import XFormInstanceSerializer
 from corehq.apps.cloudcare.api import es_filter_cases
 from tastypie import fields
 
@@ -12,6 +13,7 @@ from corehq.apps.users.models import Permissions
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, \
     FormAccessors
+from couchforms.models import XFormInstance
 
 
 class CaseListFilters(object):
@@ -88,16 +90,38 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
         detail_allowed_methods = ['get']
 
 
-    
-class XFormInstanceResource(v0_1.XFormInstanceResource, DomainSpecificResourceMixin):
+class XFormInstanceResource(HqBaseResource, DomainSpecificResourceMixin):
+    id = fields.CharField(attribute='form_id', readonly=True, unique=True)
+
+    form = fields.DictField(attribute='form_data')
+    type = fields.CharField(attribute='type')
+    version = fields.CharField(attribute='version')
+    uiversion = fields.CharField(attribute='uiversion')
+    metadata = fields.DictField(attribute='metadata', null=True)
+    received_on = fields.DateTimeField(attribute="received_on")
+    md5 = fields.CharField(attribute='xml_md5')
     archived = fields.CharField(readonly=True)
 
     def dehydrate_archived(self, bundle):
         return bundle.obj.is_archived
-    
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'pk': get_obj(bundle_or_obj).form_id
+        }
+
     def obj_get(self, bundle, **kwargs):
         instance_id = kwargs['pk']
         try:
             return FormAccessors(kwargs['domain']).get_form(instance_id)
         except XFormNotFound:
             raise object_does_not_exist("XFormInstance", instance_id)
+
+    class Meta(CustomResourceMeta):
+        authentication = RequirePermissionAuthentication(Permissions.edit_data)
+        object_class = XFormInstance
+        list_allowed_methods = []
+        detail_allowed_methods = ['get']
+        resource_name = 'form'
+        ordering = ['received_on']
+        serializer = XFormInstanceSerializer(formats=['json'])

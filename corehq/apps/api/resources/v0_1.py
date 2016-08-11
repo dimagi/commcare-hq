@@ -1,12 +1,9 @@
 # Standard library imports
 import datetime
-from itertools import imap
 
 from tastypie import fields
 from tastypie.exceptions import BadRequest
 
-from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.couch import UserQuerySetAdapter
 from corehq.apps.api.resources import (
     CouchResourceMixin,
@@ -15,14 +12,9 @@ from corehq.apps.api.resources import (
 )
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
-from corehq.apps.api.serializers import XFormInstanceSerializer
-from corehq.apps.api.util import get_object_or_not_exist, get_obj
 from corehq.apps.es import FormES
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
-from couchforms.models import XFormInstance
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import string_to_boolean
 
 TASTYPIE_RESERVED_GET_PARAMS = ['api_key', 'username']
@@ -142,36 +134,6 @@ class WebUserResource(UserResource):
             user = WebUser.get_by_username(username)
             return [user] if user else []
         return list(WebUser.by_domain(domain))
-
-
-class XFormInstanceResource(HqBaseResource, DomainSpecificResourceMixin):
-    type = "form"
-    id = fields.CharField(attribute='form_id', readonly=True, unique=True)
-
-    form = fields.DictField(attribute='form_data')
-    type = fields.CharField(attribute='type')
-    version = fields.CharField(attribute='version')
-    uiversion = fields.CharField(attribute='uiversion')
-    metadata = fields.DictField(attribute='metadata', null=True)
-    received_on = fields.DateTimeField(attribute="received_on")
-    md5 = fields.CharField(attribute='xml_md5')
-
-    def detail_uri_kwargs(self, bundle_or_obj):
-        return {
-            'pk': get_obj(bundle_or_obj).form_id
-        }
-
-    def obj_get(self, bundle, **kwargs):
-        return get_object_or_not_exist(XFormInstance, kwargs['pk'], kwargs['domain'])
-
-    class Meta(CustomResourceMeta):
-        authentication = RequirePermissionAuthentication(Permissions.edit_data)
-        object_class = XFormInstance        
-        list_allowed_methods = []
-        detail_allowed_methods = ['get']
-        resource_name = 'form'
-        ordering = ['received_on']
-        serializer = XFormInstanceSerializer(formats=['json'])
 
 
 def _safe_bool(bundle, param, default=False):

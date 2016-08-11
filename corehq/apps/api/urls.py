@@ -18,14 +18,12 @@ API_LIST = (
     ((0, 1), (
         v0_1.CommCareUserResource,
         v0_1.WebUserResource,
-        v0_1.XFormInstanceResource,
         FixtureResource,
         DomainMetadataResource,
     )),
     ((0, 2), (
         v0_1.CommCareUserResource,
         v0_1.WebUserResource,
-        v0_1.XFormInstanceResource,
         FixtureResource,
         DomainMetadataResource,
     )),
