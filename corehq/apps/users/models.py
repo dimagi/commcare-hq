@@ -1274,21 +1274,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return self.base_doc.endswith(DELETED_SUFFIX)
 
     def get_viewable_reports(self, domain=None, name=False, slug=False):
-        try:
-            domain = domain or self.current_domain
-        except AttributeError:
-            domain = None
-
-        if self.is_commcare_user():
-            role = self.get_role(domain)
-            if role is None:
-                models = []
-            else:
-                models = role.permissions.view_report_list
-        else:
-            dm = self.get_domain_membership(domain)
-            models = dm.viewable_reports() if dm else []
-
         def slug_name(model):
             try:
                 if slug:
@@ -1299,10 +1284,27 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                 logging.warning("Unable to load report model: %s", model)
                 return None
 
+        models = self._get_viewable_report_slugs(domain)
         if slug or name:
             return filter(None, [slug_name(m) for m in models])
 
         return models
+
+    def _get_viewable_report_slugs(self, domain):
+        try:
+            domain = domain or self.current_domain
+        except AttributeError:
+            domain = None
+
+        if self.is_commcare_user():
+            role = self.get_role(domain)
+            if role is None:
+                return []
+            else:
+                return role.permissions.view_report_list
+        else:
+            dm = self.get_domain_membership(domain)
+            return dm.viewable_reports() if dm else []
 
     def can_view_any_reports(self, domain):
         return self.can_view_reports(domain) or bool(self.get_viewable_reports(domain))
