@@ -70,7 +70,7 @@ def get_group(group='', **kwargs):
     return group
 
 
-def get_all_users_by_domain(domain=None, group=None, user_ids=None,
+def get_all_users_by_domain(domain=None, group=None, user_ids=[],
                             user_filter=None, simplified=False, CommCareUser=None, include_inactive=False):
     """
         WHEN THERE ARE A LOT OF USERS, THIS IS AN EXPENSIVE OPERATION.
@@ -84,7 +84,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
             return temp_user
         return None
 
-    user_ids = user_ids if bool(user_ids) else None
+    user_ids = filter(None, user_ids)  # remove empty values
     if not CommCareUser:
         from corehq.apps.users.models import CommCareUser
 
@@ -93,7 +93,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         if not isinstance(group, Group):
             group = Group.get(group)
         users = group.get_users(is_active=(not include_inactive), only_commcare=True)
-    elif user_ids is not None:
+    elif user_ids:
         try:
             users = []
             for id in user_ids:
