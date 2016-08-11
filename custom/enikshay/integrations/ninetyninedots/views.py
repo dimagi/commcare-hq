@@ -1,6 +1,7 @@
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
-from django.http.response import Http404
+
+from corehq import toggles
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
 from dimagi.utils.web import json_response
 
@@ -8,13 +9,11 @@ from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceExce
 from custom.enikshay.integrations.ninetyninedots.utils import create_adherence_cases
 
 
+@toggles.ENIKSHAY_INTEGRATIONS.required_decorator()
 @login_or_digest_or_basic_or_apikey()
 @require_POST
 @csrf_exempt
 def update_patient_adherence(request, domain):
-    if domain != 'enikshay-test':
-        return Http404()
-
     beneficiary_id = request.POST.get('beneficiary_id')
     adherence_values = request.POST.get('adherences')
 
