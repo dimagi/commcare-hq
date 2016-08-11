@@ -936,7 +936,6 @@ class ConfigureNewReportBase(forms.Form):
         return [col["field"] for col in self._report_columns if col.get("aggregation", None) in ["avg", "sum"]]
 
     @property
-    @memoized
     def _is_multiselect_chart_report(self):
         return False
 
@@ -1280,15 +1279,13 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
             )
 
         # Add the aggregation indicator to the columns if it's not already present.
-        displaying_agg_column = bool(
-            [c for c in self.cleaned_data['columns'] if c['property'] == self.aggregation_field]
+        displaying_agg_column = any(
+            c for c in self.cleaned_data['columns'] if c['property'] == self.aggregation_field
         )
         if not displaying_agg_column:
-            new_columns = self._get_column_option_by_indicator_id(agg_field_id).to_column_dicts(
+            columns = self._get_column_option_by_indicator_id(agg_field_id).to_column_dicts(
                 "agg", agg_field_text, 'simple', is_aggregated_on=True
-            )
-            new_columns.extend(columns)
-            columns = new_columns
+            ) + columns
         else:
             # Don't expand the aggregation column
             for c in columns:
