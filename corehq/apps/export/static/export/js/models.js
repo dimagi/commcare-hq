@@ -25,8 +25,18 @@ hqDefine('export/js/models.js', function () {
         // of the Save button.
         self.saveState = ko.observable(constants.SAVE_STATES.READY);
 
+        // True if the form has no errors
+        self.isValid = ko.pureComputed(function() {
+            if (!self.hasDailySavedAccess && self.is_daily_saved_export()) {
+                return false;
+            }
+            return true;
+        });
+
         // The url to save the export to.
         self.saveUrl = options.saveUrl;
+        self.hasExcelDashboardAccess = Boolean(options.hasExcelDashboardAccess);
+        self.hasDailySavedAccess = Boolean(options.hasDailySavedAccess);
 
         // If any column has a deid transform, show deid column
         self.isDeidColumnVisible = ko.observable(self.is_deidentified() || _.any(self.tables(), function(table) {
@@ -34,6 +44,24 @@ hqDefine('export/js/models.js', function () {
                 return column.selected() && column.deid_transform();
             });
         }));
+
+        self.hasHtmlFormat = ko.pureComputed(function() {
+            return this.export_format() === constants.EXPORT_FORMATS.HTML;
+        }, self);
+        self.hasDisallowedHtmlFormat = ko.pureComputed(function() {
+            return this.hasHtmlFormat() && !this.hasExcelDashboardAccess;
+        }, self);
+
+        self.export_format.subscribe(function (newFormat){
+            // Selecting Excel Dashboard format automatically checks the daily saved export box
+            if (newFormat === constants.EXPORT_FORMATS.HTML) {
+                self.is_daily_saved_export(true);
+            } else {
+                if (!self.hasExcelDashboardAccess){
+                    self.is_daily_saved_export(false);
+                }
+            }
+        });
     };
 
     ExportInstance.prototype.getFormatOptionValues = function() {

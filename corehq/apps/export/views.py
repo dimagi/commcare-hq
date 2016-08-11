@@ -1449,7 +1449,9 @@ class BaseNewExportView(BaseExportView):
             'export_instance': self.export_instance,
             'export_home_url': self.export_home_url,
             'allow_deid': has_privilege(self.request, privileges.DEIDENTIFIED_DATA),
-            'use_new_exports': use_new_exports(self.domain)
+            'use_new_exports': use_new_exports(self.domain),
+            'has_excel_dashboard_access': domain_has_privilege(self.domain, EXCEL_DASHBOARD),
+            'has_daily_saved_export_access': domain_has_privilege(self.domain, DAILY_SAVED_EXPORT),
         }
 
     def commit(self, request):
