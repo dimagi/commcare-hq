@@ -241,6 +241,13 @@ def convert_custom_fields_to_struct(config):
                     field_map[field]['field_name'] = EXTERNAL_ID
                 else:
                     field_map[field]['field_name'] = custom_fields[i]
+    # hack: make sure the external_id column ends up in the field_map if the user
+    # didn't explicitly put it there
+    if config.search_column not in field_map and config.search_field == EXTERNAL_ID:
+        field_map[config.search_column] = {
+            'type_field': 'plain',
+            'field_name': EXTERNAL_ID
+        }
     return field_map
 
 
