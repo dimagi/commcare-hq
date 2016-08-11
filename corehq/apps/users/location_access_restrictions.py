@@ -2,6 +2,7 @@ from django.core.exceptions import PermissionDenied
 from django.utils.translation import ugettext as _
 
 from corehq.apps.hqwebapp.views import no_permissions
+from corehq.apps.locations import views as location_views
 
 LOCATION_ACCESS_MSG = (
     "This project has restricted data access rules.  Please contact your "
@@ -43,4 +44,5 @@ def is_location_safe(view_fn):
 # This is a list of views which will safely restrict access based on the web
 # user's assigned location where appropriate.
 LOCATION_SAFE_VIEWS = (
+    location_views.LocationsListView,
 )
