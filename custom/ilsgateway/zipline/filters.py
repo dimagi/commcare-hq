@@ -11,18 +11,19 @@ class EmergencyOrderStatusChoiceFilter(BaseMultipleOptionFilter):
 
     @property
     def options(self):
+        statuses = dict(EmergencyOrderStatusUpdate.STATUS_CHOICES)
         return [
-            (EmergencyOrderStatusUpdate.STATUS_PENDING, EmergencyOrderStatusUpdate.STATUS_PENDING),
-            (EmergencyOrderStatusUpdate.STATUS_ERROR, EmergencyOrderStatusUpdate.STATUS_ERROR),
-            (EmergencyOrderStatusUpdate.STATUS_RECEIVED, EmergencyOrderStatusUpdate.STATUS_RECEIVED),
-            (EmergencyOrderStatusUpdate.STATUS_REJECTED, EmergencyOrderStatusUpdate.STATUS_REJECTED),
-            (EmergencyOrderStatusUpdate.STATUS_APPROVED, EmergencyOrderStatusUpdate.STATUS_APPROVED),
-            (EmergencyOrderStatusUpdate.STATUS_CANCELLED, EmergencyOrderStatusUpdate.STATUS_CANCELLED),
-            (EmergencyOrderStatusUpdate.STATUS_DISPATCHED, EmergencyOrderStatusUpdate.STATUS_DISPATCHED),
-            (EmergencyOrderStatusUpdate.STATUS_DELIVERED, EmergencyOrderStatusUpdate.STATUS_DELIVERED),
-            (EmergencyOrderStatusUpdate.STATUS_CONFIRMED, EmergencyOrderStatusUpdate.STATUS_CONFIRMED),
+            (EmergencyOrderStatusUpdate.STATUS_PENDING, statuses[EmergencyOrderStatusUpdate.STATUS_PENDING]),
+            (EmergencyOrderStatusUpdate.STATUS_ERROR, statuses[EmergencyOrderStatusUpdate.STATUS_ERROR]),
+            (EmergencyOrderStatusUpdate.STATUS_RECEIVED, statuses[EmergencyOrderStatusUpdate.STATUS_RECEIVED]),
+            (EmergencyOrderStatusUpdate.STATUS_REJECTED, statuses[EmergencyOrderStatusUpdate.STATUS_REJECTED]),
+            (EmergencyOrderStatusUpdate.STATUS_APPROVED, statuses[EmergencyOrderStatusUpdate.STATUS_APPROVED]),
+            (EmergencyOrderStatusUpdate.STATUS_CANCELLED, statuses[EmergencyOrderStatusUpdate.STATUS_CANCELLED]),
+            (EmergencyOrderStatusUpdate.STATUS_DISPATCHED, statuses[EmergencyOrderStatusUpdate.STATUS_DISPATCHED]),
+            (EmergencyOrderStatusUpdate.STATUS_DELIVERED, statuses[EmergencyOrderStatusUpdate.STATUS_DELIVERED]),
+            (EmergencyOrderStatusUpdate.STATUS_CONFIRMED, statuses[EmergencyOrderStatusUpdate.STATUS_CONFIRMED]),
             (EmergencyOrderStatusUpdate.STATUS_CANCELLED_BY_USER,
-             EmergencyOrderStatusUpdate.STATUS_CANCELLED_BY_USER),
+             statuses[EmergencyOrderStatusUpdate.STATUS_CANCELLED_BY_USER]),
 
         ]
 
@@ -30,11 +31,12 @@ class EmergencyOrderStatusChoiceFilter(BaseMultipleOptionFilter):
 class EmergencyPackageStatusChoiceFilter(EmergencyOrderStatusChoiceFilter):
     @property
     def options(self):
+        statuses = dict(EmergencyOrderStatusUpdate.STATUS_CHOICES)
         return [
-            (EmergencyOrderStatusUpdate.STATUS_DISPATCHED, EmergencyOrderStatusUpdate.STATUS_DISPATCHED),
-            (EmergencyOrderStatusUpdate.STATUS_DELIVERED, EmergencyOrderStatusUpdate.STATUS_DELIVERED),
+            (EmergencyOrderStatusUpdate.STATUS_DISPATCHED, statuses[EmergencyOrderStatusUpdate.STATUS_DISPATCHED]),
+            (EmergencyOrderStatusUpdate.STATUS_DELIVERED, statuses[EmergencyOrderStatusUpdate.STATUS_DELIVERED]),
             (EmergencyOrderStatusUpdate.STATUS_CANCELLED_IN_FLIGHT,
-             EmergencyOrderStatusUpdate.STATUS_CANCELLED_IN_FLIGHT),
+             statuses[EmergencyOrderStatusUpdate.STATUS_CANCELLED_IN_FLIGHT]),
 
         ]
 

@@ -1,5 +1,7 @@
 from collections import namedtuple
 
+from django.utils.translation import ugettext_lazy as _
+
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from custom.ilsgateway.zipline.data_sources.zipline_warehouse_package_data_source import \
@@ -14,8 +16,8 @@ ReportConfig = namedtuple(
 
 
 class ZiplineWarehousePackageReport(ZiplineReport):
-    report_title = 'Zipline Warehouse - Package'
-    name = 'Zipline Warehouse - Package'
+    report_title = _('Zipline Warehouse - Package')
+    name = _('Zipline Warehouse - Package')
     slug = 'zipline_warehouse_package'
 
     fields = [

@@ -1,8 +1,15 @@
 from pytz import timezone
 
+from corehq.util.timezones.conversions import ServerTime
+from custom.zipline.models import EmergencyOrderStatusUpdate
+
 
 def format_date(datetime):
-    return timezone('Africa/Dar_es_Salaam').localize(datetime).strftime('%Y-%m-%d %H:%M:%S')
+    return ServerTime(datetime).user_time(timezone('Africa/Dar_es_Salaam')).done().strftime('%Y-%m-%d %H:%M:%S')
+
+
+def format_status(status):
+    return dict(EmergencyOrderStatusUpdate.STATUS_CHOICES).get(status, '')
 
 
 def status_date_or_empty_string(status):
@@ -12,18 +19,18 @@ def status_date_or_empty_string(status):
         return ''
 
 
+def zipline_status_date_or_empty_string(status):
+    if status:
+        return format_date(status.zipline_timestamp)
+    else:
+        return ''
+
+
 def convert_products_dict_to_list(products_dict):
     return [
         '{} {}'.format(product_code, d['quantity'])
         for product_code, d in products_dict.iteritems()
     ]
-
-
-def delivery_lead_time(start_status, end_status):
-    if start_status and end_status:
-        return '%.2f' % ((end_status.timestamp - start_status.timestamp).seconds / 60.0)
-    else:
-        return ''
 
 
 def products_requested(emergency_order):

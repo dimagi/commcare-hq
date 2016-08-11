@@ -10,13 +10,13 @@ class ZiplineWarehouseOrderDataSource(ZiplineDataSource):
 
     @property
     def filters(self):
-        additional_filters = {}
-        if self.sql_location.location_type_object.administrative:
-            descendants = self.sql_location.get_descendants() \
-                .exclude(is_archived=True).values_list('site_code', flat=True)
-            additional_filters['location_code__in'] = descendants
-        else:
-            additional_filters['location_code'] = self.sql_location.site_code
+        descendants = self.sql_location.get_descendants(include_self=True) \
+            .filter(location_type__administrative=False) \
+            .exclude(is_archived=True) \
+            .values_list('location_id', flat=True)
+        additional_filters = {
+            'location__location_id__in': descendants
+        }
 
         if self.statuses:
             additional_filters['status__in'] = self.statuses
@@ -36,7 +36,7 @@ class ZiplineWarehouseOrderDataSource(ZiplineDataSource):
             'approved_status',
             'dispatched_status',
             'delivered_status'
-        )[start:offset]
+        ).order_by('timestamp')[start:offset]
 
     @property
     def total_count(self):
@@ -80,21 +80,30 @@ class ZiplineWarehouseOrderDataSource(ZiplineDataSource):
     def get_data(self, start, limit):
         emergency_orders = self.get_emergency_orders(start, limit)
         rows = []
+
         for emergency_order in emergency_orders:
+            delivery_lead_time = ''
+            delivered_status = emergency_order.delivered_status
+            received_status = emergency_order.received_status
+            if delivered_status and received_status:
+                delivery_lead_time = '%.2f' % (
+                    (delivered_status.zipline_timestamp - received_status.timestamp).seconds / 60.0
+                )
+
             rows.append([
                 emergency_order.pk,
                 emergency_order.requesting_phone_number,
                 helpers.format_date(emergency_order.timestamp),
                 emergency_order.location_code,
-                emergency_order.status,
-                helpers.delivery_lead_time(emergency_order.received_status, emergency_order.delivered_status),
+                helpers.format_status(emergency_order.status),
+                delivery_lead_time,
                 emergency_order.zipline_request_attempts,
                 helpers.status_date_or_empty_string(emergency_order.received_status),
                 helpers.status_date_or_empty_string(emergency_order.rejected_status),
-                helpers.status_date_or_empty_string(emergency_order.cancelled_status),
-                helpers.status_date_or_empty_string(emergency_order.approved_status),
-                helpers.status_date_or_empty_string(emergency_order.dispatched_status),
-                helpers.status_date_or_empty_string(emergency_order.delivered_status),
+                helpers.zipline_status_date_or_empty_string(emergency_order.cancelled_status),
+                helpers.zipline_status_date_or_empty_string(emergency_order.approved_status),
+                helpers.zipline_status_date_or_empty_string(emergency_order.dispatched_status),
+                helpers.zipline_status_date_or_empty_string(emergency_order.delivered_status),
                 helpers.products_requested(emergency_order),
                 helpers.products_delivered(emergency_order),
                 helpers.products_requested_not_confirmed(emergency_order)

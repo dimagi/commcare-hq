@@ -15,13 +15,13 @@ class ZiplineWarehousePackageDataSource(ZiplineDataSource):
 
     @property
     def filters(self):
-        additional_filters = {}
-        if self.sql_location.location_type_object.administrative:
-            descendants = self.sql_location.get_descendants() \
-                .exclude(is_archived=True).values_list('site_code', flat=True)
-            additional_filters['order__location_code__in'] = descendants
-        else:
-            additional_filters['order__location_code'] = self.sql_location.site_code
+        descendants = self.sql_location.get_descendants(include_self=True)\
+            .filter(location_type__administrative=False)\
+            .exclude(is_archived=True)\
+            .values_list('location_id', flat=True)
+        additional_filters = {
+            'order__location__location_id__in': descendants
+        }
 
         if self.statuses:
             additional_filters['status__in'] = self.statuses
@@ -38,7 +38,13 @@ class ZiplineWarehousePackageDataSource(ZiplineDataSource):
 
     def get_emergency_order_packages(self, start, limit):
         offset = start + limit
-        return EmergencyOrderPackage.objects.filter(**self.filters)[start:offset]
+        return EmergencyOrderPackage.objects.filter(
+            **self.filters
+        ).select_related(
+            'order',
+            'dispatched_status',
+            'delivered_status'
+        ).order_by('order__timestamp', 'package_number')[start:offset]
 
     @property
     def columns(self):
@@ -71,14 +77,21 @@ class ZiplineWarehousePackageDataSource(ZiplineDataSource):
                 vehicle_id = emergency_order_package.dispatched_status.vehicle_id or ''
                 package_id = emergency_order_package.dispatched_status.package_id or ''
 
+            delivery_lead_time = ''
+            delivered_status = emergency_order_package.delivered_status
+            dispatched_status = emergency_order_package.dispatched_status
+            if delivered_status and dispatched_status:
+                delivery_lead_time = '%.2f' % (
+                    (delivered_status.zipline_timestamp - dispatched_status.zipline_timestamp).seconds / 60.0
+                )
+
             rows.append([
                 emergency_order_package.order_id,
                 emergency_order_package.order.location_code,
-                emergency_order_package.status,
-                helpers.status_date_or_empty_string(emergency_order_package.dispatched_status),
-                helpers.status_date_or_empty_string(emergency_order_package.delivered_status),
-                helpers.delivery_lead_time(emergency_order_package.dispatched_status,
-                                           emergency_order_package.delivered_status),
+                helpers.format_status(emergency_order_package.status),
+                helpers.zipline_status_date_or_empty_string(emergency_order_package.dispatched_status),
+                helpers.zipline_status_date_or_empty_string(emergency_order_package.delivered_status),
+                delivery_lead_time,
                 emergency_order_package.package_number,
                 vehicle_id,
                 package_id,

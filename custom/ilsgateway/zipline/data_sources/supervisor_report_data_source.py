@@ -15,13 +15,13 @@ class SupervisorReportDataSource(ZiplineDataSource):
 
     @property
     def filters(self):
-        additional_filters = {}
-        if self.sql_location.location_type_object.administrative:
-            descendants = self.sql_location.get_descendants() \
-                .exclude(is_archived=True).values_list('site_code', flat=True)
-            additional_filters['location_code__in'] = descendants
-        else:
-            additional_filters['location_code'] = self.sql_location.site_code
+        descendants = self.sql_location.get_descendants(include_self=True) \
+            .filter(location_type__administrative=False) \
+            .exclude(is_archived=True) \
+            .values_list('location_id', flat=True)
+        additional_filters = {
+            'location__location_id__in': descendants
+        }
 
         if self.statuses:
             additional_filters['status__in'] = self.statuses
@@ -38,7 +38,9 @@ class SupervisorReportDataSource(ZiplineDataSource):
 
     def get_emergency_orders(self, start, limit):
         offset = start + limit
-        return EmergencyOrder.objects.filter(**self.filters).select_related('confirmed_status')[start:offset]
+        return EmergencyOrder.objects.filter(
+            **self.filters
+        ).select_related('confirmed_status').order_by('timestamp')[start:offset]
 
     @property
     def total_count(self):
@@ -74,11 +76,19 @@ class SupervisorReportDataSource(ZiplineDataSource):
                 order_id=emergency_order.pk,
                 status=EmergencyOrderStatusUpdate.STATUS_DELIVERED
             ).aggregate(sum_cost=Sum('cost'))['sum_cost']
+
+            delivery_lead_time = ''
+            confirmed_status = emergency_order.confirmed_status
+            if confirmed_status:
+                delivery_lead_time = '%.2f' % (
+                    (confirmed_status.zipline_timestamp - emergency_order.timestamp).seconds / 60.0
+                )
+
             rows.append([
                 helpers.format_date(emergency_order.timestamp),
                 emergency_order.location_code,
-                emergency_order.status,
-                helpers.delivery_lead_time(emergency_order, emergency_order.confirmed_status),
+                helpers.format_status(emergency_order.status),
+                delivery_lead_time,
                 helpers.status_date_or_empty_string(emergency_order.confirmed_status),
                 helpers.convert_products_dict_to_list(emergency_order.products_requested),
                 delivered_products_cost,
