@@ -375,12 +375,12 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         Returns a list of this location's children.
         """
         children = self.get_children()
-        return _filter_for_archived(children, include_archive_ancestors)
+        return filter_for_archived(children, include_archive_ancestors)
 
     @classmethod
     def root_locations(cls, domain, include_archive_ancestors=False):
         roots = cls.objects.root_nodes().filter(domain=domain)
-        return _filter_for_archived(roots, include_archive_ancestors)
+        return filter_for_archived(roots, include_archive_ancestors)
 
     def get_path_display(self):
         return '/'.join(self.get_ancestors(include_self=True)
@@ -503,7 +503,7 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         return self.location_type.name
 
 
-def _filter_for_archived(locations, include_archive_ancestors):
+def filter_for_archived(locations, include_archive_ancestors):
     """
     Perform filtering on a location queryset.
 

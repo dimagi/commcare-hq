@@ -43,7 +43,7 @@ from .permissions import (
     user_can_edit_any_location,
     can_edit_any_location,
 )
-from .models import Location, LocationType, SQLLocation
+from .models import Location, LocationType, SQLLocation, filter_for_archived
 from .forms import LocationForm, UsersAtLocationForm
 from .util import load_locs_json, location_hierarchy_config, dump_locations
 
@@ -94,13 +94,34 @@ class LocationsListView(BaseLocationView):
         has_location_types = len(self.domain_object.location_types) > 0
         loc_restricted = self.request.project.location_restriction_for_users
         return {
-            'locations': load_locs_json(self.domain, selected_id, self.show_inactive, self.request.couch_user),
+            'locations': self.get_visible_locations(),
             'show_inactive': self.show_inactive,
             'has_location_types': has_location_types,
             'can_edit_root': (
                 not loc_restricted or (loc_restricted and not self.request.couch_user.get_location(self.domain))),
             'can_edit_any_location': user_can_edit_any_location(self.request.couch_user, self.request.project),
         }
+
+    def get_visible_locations(self):
+        def to_json(loc, can_edit):
+            return {
+                'name': loc.name,
+                'location_type': loc.location_type.name,
+                'uuid': loc.location_id,
+                'is_archived': loc.is_archived,
+                'can_edit': can_edit,
+            }
+
+        user = self.request.couch_user
+        if user.has_permission(self.domain, 'access_all_locations'):
+            root_location = None
+        else:
+            root_location = user.get_location_id(self.domain)
+        locs = filter_for_archived(
+            SQLLocation.objects.filter(domain=self.domain, parent__location_id=root_location),
+            self.show_inactive,
+        )
+        return [to_json(loc, True) for loc in locs]
 
 
 class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
