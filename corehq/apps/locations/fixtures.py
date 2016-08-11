@@ -102,7 +102,7 @@ class FlatLocationSerializer(object):
             return []
 
         all_types = LocationType.objects.filter(domain=restore_user.domain).values_list(
-            'parent_type__code', flat=True
+            'code', flat=True
         )
         base_attrs = {'{}_id'.format(t): '' for t in all_types if t is not None}
         root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id})
@@ -114,6 +114,7 @@ class FlatLocationSerializer(object):
                 'id': location.location_id,
             }
             attrs.update(base_attrs)
+            attrs['{}_id'.format(location.location_type.code)] = location.location_id
             tmp_location = location
             while tmp_location.parent:
                 tmp_location = tmp_location.parent
