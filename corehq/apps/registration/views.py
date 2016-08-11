@@ -128,6 +128,12 @@ class NewUserRegistrationView(BasePageView):
         response = super(NewUserRegistrationView, self).dispatch(request, *args, **kwargs)
         return response
 
+    def get(self, request, *args, **kwargs):
+        if self.prefilled_email:
+            meta = get_meta(request)
+            track_clicked_signup_on_hubspot.delay(self.prefilled_email, request.COOKIES, meta)
+        return super(NewUserRegistrationView, self).get(request, *args, **kwargs)
+
     @property
     def prefilled_email(self):
         return self.request.GET.get('e', '')
