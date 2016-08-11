@@ -104,13 +104,6 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
             and bundle.obj.openrosa_headers.get('HTTP_X_OPENROSA_VERSION')
         )
 
-    # Prevent hitting Couch to md5 the attachment. However, there is no way to
-    # eliminate a tastypie field defined in a parent class.
-    md5 = fields.CharField(attribute='uiversion', blank=True, null=True)
-
-    def dehydrate_md5(self, bundle):
-        return 'OBSOLETED'
-
     def obj_get(self, bundle, **kwargs):
         instance_id = kwargs['pk']
         try:
