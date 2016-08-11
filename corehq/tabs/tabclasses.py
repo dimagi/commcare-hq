@@ -560,18 +560,18 @@ class ProjectDataTab(UITab):
             FormExportListView,
             CaseExportListView,
         )
-        return [
+        return filter(None, [
             dropdown_dict(
                 FormExportListView.page_title,
                 url=reverse(FormExportListView.urlname, args=(self.domain,))
-            ),
+            ) if self.can_view_form_exports else None,
             dropdown_dict(
                 CaseExportListView.page_title,
                 url=reverse(CaseExportListView.urlname, args=(self.domain,))
-            ),
+            ) if self.can_view_case_exports else None,
             dropdown_dict(None, is_divider=True),
             dropdown_dict(_("View All"), url=self.url),
-        ]
+        ])
 
 
 class ApplicationsTab(UITab):
