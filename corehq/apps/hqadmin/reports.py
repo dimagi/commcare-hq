@@ -883,7 +883,7 @@ class AdminDomainMapReport(AdminDomainStatsReport):
     def _calc_num_projs_per_countries(self):
         num_projects_by_country = (DomainES()
                                    .terms_aggregation('deployment.countries', 'countries')
-                                   .run().aggregations.countries.counts_by_bucket())
+                                   .size(0).run().aggregations.countries.counts_by_bucket())
         return num_projects_by_country
 
     @property
