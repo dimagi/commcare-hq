@@ -4,7 +4,7 @@ import json
 
 from corehq.apps.builds.utils import get_all_versions
 from corehq.apps.es import FormES
-from corehq.apps.es.aggregations import NestedTermAggregationsHelper, AggregationTerm
+from corehq.apps.es.aggregations import NestedTermAggregationsHelper, AggregationTerm, SumAggregation
 from corehq.apps.style.decorators import (
     use_nvd3,
 )
@@ -22,6 +22,7 @@ from corehq.apps.app_manager.commcare_settings import get_custom_commcare_settin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from phonelog.reports import BaseDeviceLogReport
 from phonelog.models import DeviceReportEntry
+from corehq.apps.es.domains import DomainES
 
 INDICATOR_DATA = {
     "active_domain_count": {
@@ -871,6 +872,19 @@ class AdminDomainMapReport(AdminDomainStatsReport):
                     dom.get('internal', {}).get('sub_area') or _('No info')
                 ]
 
+    def _calc_num_active_users_per_country(self):
+        active_users_per_country = (NestedTermAggregationsHelper(
+                                    base_query=DomainES(),
+                                    terms=[AggregationTerm('countries', 'deployment.countries')],
+                                    bottom_level_aggregation=SumAggregation('users', 'cp_n_active_cc_users')
+                                    ).get_data())
+        return active_users_per_country
+
+    @property
+    def json_dict(self):
+        json = super(AdminDomainMapReport, self).json_dict
+        json['users_per_country'] = dict(self._calc_num_active_users_per_country())
+        return json
 
 class AdminUserReport(AdminFacetedReport):
     slug = "user_list"
