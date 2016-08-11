@@ -271,7 +271,7 @@
                 </div>
             {% endif %}
 
-            {% if not no_header %}
+            {% if not no_header or messages %}
                 <!--[if IE]>
                     <div id="unsupported-browser" class="alert alert-error alert-block alert-full">
                         <p><i class="fa fa-warning-sign"></i><strong>{% trans 'CommCare HQ does not work well with Internet Explorer.'%}</strong></p>
