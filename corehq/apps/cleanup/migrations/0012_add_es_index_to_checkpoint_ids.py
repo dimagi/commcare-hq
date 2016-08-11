@@ -47,7 +47,7 @@ def delete_checkpoints(apps, schema_editor):
     DjangoPillowCheckpoint = apps.get_model('pillowtop', 'DjangoPillowCheckpoint')
     for _, new_id in RENAMES:
         try:
-            checkpoint = DjangoPillowCheckpoint.objects.get(checkpoint_id='DefaultChangeFeedPillow')
+            checkpoint = DjangoPillowCheckpoint.objects.get(checkpoint_id=new_id)
             checkpoint.delete()
         except DjangoPillowCheckpoint.DoesNotExist:
             pass
