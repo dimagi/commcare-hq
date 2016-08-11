@@ -1314,10 +1314,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return list(export_reports.intersection(viewable_reports))
 
     def can_export_data(self, domain=None):
-        can_see_exports = self.can_view_reports()
-        if not can_see_exports:
-            can_see_exports = bool(self.get_exportable_reports(domain))
-        return can_see_exports
+        return self.can_view_reports() or bool(self.get_exportable_reports(domain))
 
     def is_current_web_user(self, request):
         return self.user_id == request.couch_user.user_id
