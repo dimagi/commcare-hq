@@ -456,66 +456,69 @@ class ProjectDataTab(UITab):
                 edit_form_cls = EditCustomFormExportView
                 edit_case_cls = EditCustomCaseExportView
 
-            export_data_views.extend([
-                {
-                    'title': FormExportListView.page_title,
-                    'url': reverse(FormExportListView.urlname,
-                                   args=(self.domain,)),
-                    'show_in_dropdown': True,
-                    'icon': 'icon icon-list-alt fa fa-list-alt',
-                    'subpages': filter(None, [
-                        {
-                            'title': create_form_cls.page_title,
-                            'urlname': create_form_cls.urlname,
-                        } if self.can_edit_commcare_data else None,
-                        {
-                            'title': BulkDownloadFormExportView.page_title,
-                            'urlname': BulkDownloadFormExportView.urlname,
-                        },
-                        {
-                            'title': BulkDownloadNewFormExportView.page_title,
-                            'urlname': BulkDownloadNewFormExportView.urlname,
-                        },
-                        {
-                            'title': DownloadFormExportView.page_title,
-                            'urlname': DownloadFormExportView.urlname,
-                        },
-                        {
-                            'title': DownloadNewFormExportView.page_title,
-                            'urlname': DownloadNewFormExportView.urlname,
-                        },
-                        {
-                            'title': edit_form_cls.page_title,
-                            'urlname': edit_form_cls.urlname,
-                        } if self.can_edit_commcare_data else None,
-                    ])
-                },
-                {
-                    'title': CaseExportListView.page_title,
-                    'url': reverse(CaseExportListView.urlname,
-                                   args=(self.domain,)),
-                    'show_in_dropdown': True,
-                    'icon': 'icon icon-share fa fa-share-square-o',
-                    'subpages': filter(None, [
-                        {
-                            'title': create_case_cls.page_title,
-                            'urlname': create_case_cls.urlname,
-                        } if self.can_edit_commcare_data else None,
-                        {
-                            'title': DownloadCaseExportView.page_title,
-                            'urlname': DownloadCaseExportView.urlname,
-                        },
-                        {
-                            'title': DownloadNewCaseExportView.page_title,
-                            'urlname': DownloadNewCaseExportView.urlname,
-                        },
-                        {
-                            'title': edit_case_cls.page_title,
-                            'urlname': edit_case_cls.urlname,
-                        } if self.can_edit_commcare_data else None,
-                    ])
-                },
-            ])
+            if self.can_view_form_exports:
+                export_data_views.append(
+                    {
+                        'title': FormExportListView.page_title,
+                        'url': reverse(FormExportListView.urlname,
+                                       args=(self.domain,)),
+                        'show_in_dropdown': True,
+                        'icon': 'icon icon-list-alt fa fa-list-alt',
+                        'subpages': filter(None, [
+                            {
+                                'title': create_form_cls.page_title,
+                                'urlname': create_form_cls.urlname,
+                            } if self.can_edit_commcare_data else None,
+                            {
+                                'title': BulkDownloadFormExportView.page_title,
+                                'urlname': BulkDownloadFormExportView.urlname,
+                            },
+                            {
+                                'title': BulkDownloadNewFormExportView.page_title,
+                                'urlname': BulkDownloadNewFormExportView.urlname,
+                            },
+                            {
+                                'title': DownloadFormExportView.page_title,
+                                'urlname': DownloadFormExportView.urlname,
+                            },
+                            {
+                                'title': DownloadNewFormExportView.page_title,
+                                'urlname': DownloadNewFormExportView.urlname,
+                            },
+                            {
+                                'title': edit_form_cls.page_title,
+                                'urlname': edit_form_cls.urlname,
+                            } if self.can_edit_commcare_data else None,
+                        ])
+                    }
+                )
+            if self.can_view_case_exports:
+                export_data_views.append(
+                    {
+                        'title': CaseExportListView.page_title,
+                        'url': reverse(CaseExportListView.urlname,
+                                       args=(self.domain,)),
+                        'show_in_dropdown': True,
+                        'icon': 'icon icon-share fa fa-share-square-o',
+                        'subpages': filter(None, [
+                            {
+                                'title': create_case_cls.page_title,
+                                'urlname': create_case_cls.urlname,
+                            } if self.can_edit_commcare_data else None,
+                            {
+                                'title': DownloadCaseExportView.page_title,
+                                'urlname': DownloadCaseExportView.urlname,
+                            },
+                            {
+                                'title': DownloadNewCaseExportView.page_title,
+                                'urlname': DownloadNewCaseExportView.urlname,
+                            },
+                            {
+                                'title': edit_case_cls.page_title,
+                                'urlname': edit_case_cls.urlname,
+                            } if self.can_edit_commcare_data else None,
+                        ])
+                    })
 
         if export_data_views:
             items.append([_("Export Data"), export_data_views])
