@@ -59,7 +59,10 @@ from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
 from corehq.apps.data_analytics.models import MALTRow, GIRRow
 from corehq.apps.data_analytics.const import GIR_FIELDS
 from corehq.apps.data_analytics.admin import MALTRowAdmin
-from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
+from corehq.apps.domain.decorators import (
+    require_superuser, require_superuser_or_developer,
+    login_or_basic, domain_admin_required
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
@@ -395,6 +398,10 @@ class AdminRestoreView(TemplateView):
     template_name = 'hqadmin/admin_restore.html'
 
     @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        super(AdminRestoreView, self).dispatch(*args, **kwargs)
+
+
     def get(self, request, *args, **kwargs):
         full_username = request.GET.get('as', '')
         if not full_username or '@' not in full_username:
@@ -438,6 +445,18 @@ class AdminRestoreView(TemplateView):
             'timing_data': timing_context.to_list()
         })
         return context
+
+
+class DomainAdminRestoreView(AdminRestoreView):
+    urlname = 'domain_admin_restore'
+
+    def dispatch(self, request, *args, **kwargs):
+        return TemplateView.dispatch(self, request, *args, **kwargs)
+
+    @method_decorator(login_or_basic)
+    @method_decorator(domain_admin_required)
+    def get(self, request, *args, **kwargs):
+        return super(DomainAdminRestoreView, self).get(request, *args, **kwargs)
 
 
 class ManagementCommandsView(BaseAdminSectionView):
