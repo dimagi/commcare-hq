@@ -71,7 +71,7 @@ class BaseLocationView(BaseDomainView):
             'hierarchy': location_hierarchy_config(self.domain),
             'api_root': reverse('api_dispatch_list', kwargs={'domain': self.domain,
                                                              'resource_name': 'location_internal',
-                                                             'api_name': 'v0.3'}),
+                                                             'api_name': 'v0.5'}),
         })
         return context
 

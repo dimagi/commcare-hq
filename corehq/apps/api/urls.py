@@ -23,7 +23,6 @@ API_LIST = (
         FixtureResource,
         DomainMetadataResource,
         locations.v0_1.LocationResource,
-        locations.v0_1.InternalLocationResource,
         ProductResource,
     )),
     ((0, 4), (
@@ -61,6 +60,7 @@ API_LIST = (
         v0_5.ConfigurableReportDataResource,
         DomainForms,
         sms_v0_5.UserSelfRegistrationResource,
+        locations.v0_1.InternalLocationResource,
     )),
 )
 
