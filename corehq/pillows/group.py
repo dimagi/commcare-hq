@@ -4,8 +4,7 @@ from corehq.apps.groups.models import Group
 from corehq.elastic import get_es_new
 
 from .mappings.group_mapping import GROUP_INDEX_INFO
-from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler, \
-    get_checkpoint_for_elasticsearch_pillow
+from pillowtop.checkpoints.manager import PillowCheckpointEventHandler, get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
