@@ -17,6 +17,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
+from .tasks import sync_supply_points
 from .tree_utils import BadParentError, CycleError, assert_no_cycles, expansion_validators
 from .const import LOCATION_SHEET_HEADERS, LOCATION_TYPE_SHEET_HEADERS, ROOT_LOCATION_TYPE
 
@@ -57,13 +58,13 @@ class LocationTypeStub(object):
         self.index = index
         # These can be set by passing information of existing location data latter.
         # Whether the type already exists in domain or is new
-        self.is_new = None
+        self.is_new = False
         # The SQL LocationType object, either an unsaved or the actual database object
         #   depending on whether 'is_new' is True or not
         self.db_object = None
         # Whether the db_object needs a SQL save, either because it's new or because some attributes
         #   are changed
-        self.needs_save = None
+        self.needs_save = False
 
     @classmethod
     def from_excel_row(cls, row, index):
@@ -110,12 +111,15 @@ class LocationTypeStub(object):
                 return True
 
         # check if any of foreign-key refs are being updated
-        foreign_attrs = ['parent_type', 'expand_from', 'sync_to']
+        old_parent_code = old_version.parent_type.code if old_version.parent_type else ROOT_LOCATION_TYPE
+        if old_parent_code != self.parent_code:
+            return True
+        foreign_attrs = ['expand_from', 'expand_to']
         for attr in foreign_attrs:
-            old_ref = getattr(old_version, attr, None)
+            old_ref = getattr(old_version, attr, '')
             old_value = old_ref.code if old_ref else None
-            new_value = getattr(self, 'parent_code' if attr is 'parent_type' else attr)
-            if old_value != new_value:
+            new_value = getattr(self, attr, '')
+            if (old_value or new_value) and old_value != new_value:
                 return True
 
         return False
@@ -146,13 +150,13 @@ class LocationStub(object):
                 .format(self.location_type, self.index)
             )
         # Whether the location already exists in domain or is new
-        self.is_new = None
+        self.is_new = False
         # The SQLLocation object, either an unsaved or the actual database object
         #   depending on whether 'is_new' is True or not
         self.db_object = None
         # Whether the db_object needs a SQL save, either because it's new or because some attributes
         #   are changed
-        self.needs_save = None
+        self.needs_save = False
 
     @classmethod
     def from_excel_row(cls, row, index, location_type):
@@ -219,16 +223,17 @@ class LocationStub(object):
         old_version = self.db_object
         # check if any attributes are being updated
         for attr in self.meta_data_attrs:
-            if getattr(old_version, attr, None) != getattr(self, attr, None):
+            old_value = getattr(old_version, attr, None)
+            new_value = getattr(self, attr, None)
+            if (old_value or new_value) and old_value != new_value:
                 return True
 
         # check if any foreign-key refs are being updated
         if (self.location_type != old_version.location_type.code):
             return True
 
-        old_parent = old_version.parent.site_code if old_version.parent else None
-        new_parent = None if self.parent_code is ROOT_LOCATION_TYPE else self.parent_code
-        if old_parent != new_parent:
+        old_parent = old_version.parent.site_code if old_version.parent else ROOT_LOCATION_TYPE
+        if old_parent != self.parent_code:
             return True
 
         return False
@@ -241,7 +246,7 @@ class LocationCollection(object):
     def __init__(self, domain_obj):
         self.domain_name = domain_obj.name
         self.types = domain_obj.location_types
-        self.locations = list(SQLLocation.objects.filter(domain=self.domain_name))
+        self.locations = list(SQLLocation.objects.filter(domain=self.domain_name, is_archived=False))
 
     @property
     @memoized
@@ -275,10 +280,15 @@ class LocationExcelValidator(object):
 
         # 'types' sheet should have correct headers
         type_sheet_reader = sheets_by_title[self.types_sheet_title]
-        if set(type_sheet_reader.headers) != set(LOCATION_TYPE_SHEET_HEADERS.values()):
+        actual = set(type_sheet_reader.headers)
+        expected = set(LOCATION_TYPE_SHEET_HEADERS.values())
+        if actual != expected:
             raise LocationExcelSheetError(
-                _(u"'types' sheet should contain exactly '{}' as the sheet headers")
-                .format(", ".join(LOCATION_TYPE_SHEET_HEADERS.values()))
+                _(u"'types' sheet should contain exactly '{expected}' as the sheet headers. "
+                  "'{missing}' are missing")
+                .format(
+                    expected=", ".join(expected),
+                    missing=", ".join(expected - actual))
             )
 
         # all listed types should have a corresponding locations sheet
@@ -297,10 +307,16 @@ class LocationExcelValidator(object):
         location_stubs = []
         for sheet_name, sheet_reader in sheets_by_title.items():
             if sheet_name != self.types_sheet_title:
-                if set(sheet_reader.headers) != set(LOCATION_SHEET_HEADERS.values()):
+                actual = set(sheet_reader.headers)
+                expected = set(LOCATION_SHEET_HEADERS.values())
+                if actual != expected:
                     raise LocationExcelSheetError(
-                        _(u"Locations sheet with title '{}' should contain exactly '{}' as the sheet headers")
-                        .format(sheet_name, ", ".join(LOCATION_SHEET_HEADERS.values()))
+                        _(u"Locations sheet with title '{name}' should contain exactly '{expected}' "
+                          "as the sheet headers. '{missing}' are missing")
+                        .format(
+                            name=sheet_name,
+                            expected=", ".join(expected),
+                            missing=", ".join(expected - actual))
                     )
                 location_stubs.extend(self._get_locations(sheet_reader, sheet_name))
         return type_stubs, location_stubs
@@ -346,8 +362,7 @@ class NewLocationImporter(object):
         if self.result.errors:
             return self.result
 
-        with transaction.atomic():
-            self.bulk_commit(self.type_rows, self.location_rows)
+        self.bulk_commit(self.type_rows, self.location_rows)
 
         return self.result
 
@@ -358,8 +373,32 @@ class NewLocationImporter(object):
         for loc in location_stubs:
             loc.lookup_old_collection_data(self.old_collection)
 
-        type_objects = save_types(type_stubs)
-        save_locations(location_stubs, type_objects)
+        with transaction.atomic():
+            type_objects = save_types(type_stubs)
+            save_locations(location_stubs, type_objects)
+
+        # Since we updated locations in bulk, some of the post-save logic
+        #   that occurs inside LocationType.save and SQLLocation.save
+        #   needs to be explicitly called here
+        for lt in type_stubs:
+            if (not lt.do_delete and lt.needs_save):
+                obj = type_objects[lt.code]
+                if not lt.is_new:
+                    obj.sync_administrative_status(sync_to_couch=False)
+                else:
+                    sync_supply_points.delay(obj)
+
+        update_count = lambda items: sum(l.needs_save and not l.do_delete and not l.is_new for l in items)
+        delete_count = lambda items: sum(l.do_delete for l in items)
+        new_count = lambda items: sum(l.is_new for l in items)
+        self.result.messages.extend([
+            _(u"Created {} new location types").format(new_count(type_stubs)),
+            _(u"Updated {} existing location types").format(update_count(type_stubs)),
+            _(u"Deleted {} existing location types").format(delete_count(type_stubs)),
+            _(u"Created {} new locations").format(new_count(location_stubs)),
+            _(u"Updated {} existing locations").format(update_count(location_stubs)),
+            _(u"Deleted {} existing locations").format(delete_count(location_stubs)),
+        ])
 
     def commit_changes(self, type_stubs, location_stubs):
         # assumes all valdiations are done, just saves them
@@ -727,7 +766,13 @@ def save_types(type_stubs):
             to_bulk_update.append(type_object)
 
     LocationType.bulk_update(to_bulk_update)
-    return {lt.code: lt for lt in to_bulk_update}
+    all_objs_by_code = {lt.code: lt for lt in to_bulk_update}
+    all_objs_by_code.update({
+        lt.code: lt.db_object
+        for lt in type_stubs
+        if not lt.needs_save
+    })
+    return all_objs_by_code
 
 
 def save_locations(location_stubs, type_objects):
@@ -776,6 +821,11 @@ def save_locations(location_stubs, type_objects):
     bulk_update(to_be_updated_objects)
 
     location_objects_by_site_code = {l.site_code: l for l in new_objects + to_be_updated_objects}
+    location_objects_by_site_code.update({
+        l.site_code: l.db_object
+        for l in location_stubs
+        if not l.needs_save
+    })
     to_bulk_update = []
     for loc in location_stubs:
         if (loc.needs_save or loc.is_new) and not loc.do_delete:

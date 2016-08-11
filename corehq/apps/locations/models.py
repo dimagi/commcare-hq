@@ -160,7 +160,6 @@ class LocationType(models.Model):
         self.overstock_threshold = config.overstock_threshold
 
     def save(self, *args, **kwargs):
-        from .tasks import sync_administrative_status
         if not self.code:
             from corehq.apps.commtrack.util import unicode_slug
             self.code = unicode_slug(self.name)
@@ -174,11 +173,16 @@ class LocationType(models.Model):
         is_not_first_save = self.pk is not None
         saved = super(LocationType, self).save(*args, **kwargs)
 
-        if is_not_first_save and self._administrative_old != self.administrative:
-            sync_administrative_status.delay(self)
-            self._administrative_old = self.administrative
+        if is_not_first_save:
+            self.sync_administrative_status()
 
         return saved
+
+    def sync_administrative_status(self, sync_to_couch=True):
+        from .tasks import sync_administrative_status
+        if self._administrative_old != self.administrative:
+            sync_administrative_status.delay(self, sync_to_couch)
+            self._administrative_old = self.administrative
 
     def __unicode__(self):
         return self.name

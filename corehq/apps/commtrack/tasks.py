@@ -10,10 +10,8 @@ from corehq.util.spreadsheets.excel_importer import MultiExcelImporter
 def import_locations_async(domain, file_ref_id):
     importer = MultiExcelImporter(import_locations_async, file_ref_id)
     if NEW_BULK_LOCATION_MANAGEMENT.enabled(domain):
-        print "new dude"
         results = new_locations_import(domain, importer)
     else:
-        print "old dude"
         results = list(import_locations(domain, importer))
 
     importer.mark_complete()
