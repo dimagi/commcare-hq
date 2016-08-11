@@ -118,6 +118,7 @@ class CommCareCaseSQLSerializer(DeletableModelSerializer):
     indices = CommCareCaseIndexSQLSerializer(many=True, read_only=True)
     actions = CaseTransactionActionSerializer(many=True, read_only=True, source='non_revoked_transactions')
     case_json = serializers.JSONField()
+    xform_ids = serializers.ListField()
 
     class Meta:
         model = CommCareCaseSQL
