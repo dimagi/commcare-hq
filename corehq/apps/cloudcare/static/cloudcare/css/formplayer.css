@@ -6,10 +6,6 @@
     max-height: 100px;
 }
 
-body {
-    margin: 4px;
-}
-
 .grid-wrapper {
     display: grid;
     grid-template-columns: repeat(12, 60px) min-content 60px;
