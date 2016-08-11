@@ -223,6 +223,8 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
                 report.visible = False
                 report.save()
 
+            # remove UCRs from scheduled reports
+
         return True
 
 

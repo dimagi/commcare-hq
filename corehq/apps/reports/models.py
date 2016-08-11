@@ -211,6 +211,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     end_date = DateProperty(default=None)
     datespan_slug = StringProperty(default=None)
 
+    # add is_disabled flag
+
     def delete(self, *args, **kwargs):
         notifications = self.view('reportconfig/notifications_by_config',
             reduce=False, include_docs=True, key=self._id).all()
@@ -602,7 +604,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 DEFAULT_REPORT_NOTIF_SUBJECT = "Scheduled report from CommCare HQ"
 
 
-class ReportNotification(CachedCouchDocumentMixin, Document):
+class ReportNotification(CachedCouchDocumentMixin, Document): #
     domain = StringProperty()
     owner_id = StringProperty()
 
