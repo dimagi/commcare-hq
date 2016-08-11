@@ -1644,7 +1644,7 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
                 "display": "expand display",
                 "type": "expanded",
                 "field": "my_field",
-                "max_expansion": 10, 
+                "max_expansion": 10,
             }
         ]
         cls.report_filters = [
@@ -1698,7 +1698,11 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
         )
 
         self.assertEqual(
-            [{"column_id": c['column_id'], "display": c['display'], "type": c['type']} for c in self.report_columns],
+            [{
+                "column_id": c['column_id'],
+                "display": c['display'],
+                "type": c['type']
+            } for c in self.report_columns],
             columns
         )
         self.assertEqual(
