@@ -81,7 +81,7 @@ def _prepare_index_for_usage(es, index_info):
     es.indices.refresh(index_info.index)
 
 
-def _set_checkpoint_id(pillow):
+def _set_checkpoint(pillow):
     checkpoint_value = pillow.get_change_feed().get_checkpoint_value()
     pillow_logging.info('setting checkpoint to {}'.format(checkpoint_value))
     pillow.checkpoint.update_to(checkpoint_value)
@@ -105,7 +105,7 @@ class ElasticPillowReindexer(PillowChangeProviderReindexer):
     def reindex(self):
         if not self.in_place and not self.start_from:
             _prepare_index_for_reindex(self.es, self.index_info)
-            _set_checkpoint_id(self.pillow)
+            _set_checkpoint(self.pillow)
 
         super(ElasticPillowReindexer, self).reindex()
 
@@ -220,7 +220,7 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
         if not self.in_place and (self.reset or not processor.has_started()):
             _prepare_index_for_reindex(self.es, self.index_info)
             if self.pillow:
-                _set_checkpoint_id(self.pillow)
+                _set_checkpoint(self.pillow)
 
         processor.run()
 
