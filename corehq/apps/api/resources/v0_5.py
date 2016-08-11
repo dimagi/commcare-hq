@@ -17,7 +17,7 @@ from tastypie import fields
 from tastypie.bundle import Bundle
 
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication, AdminAuthentication
-from corehq.apps.api.resources.v0_1 import CustomResourceMeta
+from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
@@ -35,6 +35,7 @@ from corehq.apps.users.models import CommCareUser, WebUser, Permissions, CouchUs
 from corehq.util import get_document_or_404
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
 from corehq.toggles import ZAPIER_INTEGRATION
+from corehq.apps.api.resources.meta import CustomResourceMeta
 
 from . import v0_1, v0_4, CouchResourceMixin
 from . import HqBaseResource, DomainSpecificResourceMixin
@@ -77,7 +78,7 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
             user['id'] = user.pop('_id')
         return namedtuple('user', user.keys())(**user)
 
-    class Meta(v0_1.CustomResourceMeta):
+    class Meta(CustomResourceMeta):
         authentication = RequirePermissionAuthentication(Permissions.edit_commcare_users)
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']

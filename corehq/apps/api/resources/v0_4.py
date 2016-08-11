@@ -9,7 +9,8 @@ from tastypie.exceptions import BadRequest
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.resources.auth import DomainAdminAuthentication, RequirePermissionAuthentication
-from corehq.apps.api.resources.v0_1 import CustomResourceMeta, _safe_bool
+from corehq.apps.api.resources.v0_1 import _safe_bool
+from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from couchforms.models import doc_types
 from casexml.apps.case import xform as casexml_xform

@@ -8,7 +8,7 @@ from corehq.apps.api.resources import (
     HqBaseResource,
 )
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication
-from corehq.apps.api.resources.v0_1 import CustomResourceMeta
+from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_object_or_not_exist, get_obj
 from corehq.apps.cloudcare.api import (
     api_closed_to_status,

@@ -2,11 +2,8 @@
 import datetime
 from itertools import imap
 
-from django.conf import settings
 from tastypie import fields
-from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.exceptions import BadRequest
-from tastypie.throttle import CacheThrottle
 
 from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from casexml.apps.case.models import CommCareCase
@@ -16,40 +13,19 @@ from corehq.apps.api.resources import (
     DomainSpecificResourceMixin,
     HqBaseResource,
 )
-from corehq.apps.api.resources.auth import LoginAndDomainAuthentication, RequirePermissionAuthentication
-from corehq.apps.api.serializers import CustomXMLSerializer, XFormInstanceSerializer
+from corehq.apps.api.resources.auth import RequirePermissionAuthentication
+from corehq.apps.api.resources.meta import CustomResourceMeta
+from corehq.apps.api.serializers import XFormInstanceSerializer
 from corehq.apps.api.util import get_object_or_not_exist, get_obj
 from corehq.apps.es import FormES
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
-from corehq.toggles import API_THROTTLE_WHITELIST
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import string_to_boolean
 
-
 TASTYPIE_RESERVED_GET_PARAMS = ['api_key', 'username']
-
-
-
-
-class HQThrottle(CacheThrottle):
-
-    def should_be_throttled(self, identifier, **kwargs):
-        if API_THROTTLE_WHITELIST.enabled(identifier):
-            return False
-
-        return super(HQThrottle, self).should_be_throttled(identifier, **kwargs)
-
-
-class CustomResourceMeta(object):
-    authorization = ReadOnlyAuthorization()
-    authentication = LoginAndDomainAuthentication()
-    serializer = CustomXMLSerializer()
-    default_format='application/json'
-    throttle = HQThrottle(throttle_at=getattr(settings, 'CCHQ_API_THROTTLE_REQUESTS', 25),
-                             timeframe=getattr(settings, 'CCHQ_API_THROTTLE_TIMEFRAME', 15))
 
 
 class UserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
