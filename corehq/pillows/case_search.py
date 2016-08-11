@@ -17,7 +17,7 @@ from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.pillows.mappings.case_mapping import CASE_ES_TYPE
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX, \
     CASE_SEARCH_MAPPING, CASE_SEARCH_INDEX_INFO
-from pillowtop.checkpoints.manager import PillowCheckpoint
+from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
@@ -70,9 +70,8 @@ class CaseSearchPillowProcessor(ElasticProcessor):
 
 
 def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearchPillow'):
-    checkpoint = PillowCheckpoint(
-        'case-search-to-elasticsearch',
-    )
+    assert pillow_id == 'CaseSearchToElasticsearchPillow', 'Pillow ID is not allowed to change'
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_SEARCH_INDEX_INFO)
     case_processor = CaseSearchPillowProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_SEARCH_INDEX_INFO,
