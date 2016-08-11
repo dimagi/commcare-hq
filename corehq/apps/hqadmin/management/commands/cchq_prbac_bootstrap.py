@@ -161,7 +161,11 @@ class Command(BaseCommand):
         Role(slug=privileges.ADVANCED_DOMAIN_SECURITY, name='Advanced Domain Security',
              description='Allows domains to set security policies for all web users'),
         Role(slug=privileges.BUILD_PROFILES, name='Application Profiles',
-             description='Allows domains to create application profiles to customize app deploys')
+             description='Allows domains to create application profiles to customize app deploys'),
+        Role(slug=privileges.EXCEL_DASHBOARD, name="Excel Dashbord",
+             description="Allows domains to create Excel dashboard html exports"),
+        Role(slug=privileges.DAILY_SAVED_EXPORT, name='DAILY_SAVED_EXPORT',
+             description="Allows domains to create Daily Saved Exports"),
     ]
 
     BOOTSTRAP_PLANS = [
@@ -187,6 +191,8 @@ class Command(BaseCommand):
         privileges.ALLOW_EXCESS_USERS,
         privileges.LOCATIONS,
         privileges.USER_CASE,
+        privileges.EXCEL_DASHBOARD,
+        privileges.DAILY_SAVED_EXPORT,
     ]
 
     pro_plan_features = standard_plan_features + [
