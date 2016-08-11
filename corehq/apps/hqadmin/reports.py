@@ -880,10 +880,17 @@ class AdminDomainMapReport(AdminDomainStatsReport):
                                     ).get_data())
         return active_users_per_country
 
+    def _calc_num_projs_per_countries(self):
+        num_projects_by_country = (DomainES()
+                                   .terms_aggregation('deployment.countries', 'countries')
+                                   .run().aggregations.countries.counts_by_bucket())
+        return num_projects_by_country
+
     @property
     def json_dict(self):
         json = super(AdminDomainMapReport, self).json_dict
         json['users_per_country'] = dict(self._calc_num_active_users_per_country())
+        json['country_projs_count'] = self._calc_num_projs_per_countries()
         return json
 
 class AdminUserReport(AdminFacetedReport):
