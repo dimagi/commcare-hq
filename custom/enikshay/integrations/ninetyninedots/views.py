@@ -1,3 +1,4 @@
+import json
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 
@@ -14,8 +15,9 @@ from custom.enikshay.integrations.ninetyninedots.utils import create_adherence_c
 @require_POST
 @csrf_exempt
 def update_patient_adherence(request, domain):
-    beneficiary_id = request.POST.get('beneficiary_id')
-    adherence_values = request.POST.get('adherences')
+    request_json = json.loads(request.body)
+    beneficiary_id = request_json.get('beneficiary_id')
+    adherence_values = request_json.get('adherences')
 
     try:
         validate_patient_adherence_data(beneficiary_id, adherence_values)
@@ -29,6 +31,8 @@ def update_patient_adherence(request, domain):
 def validate_patient_adherence_data(beneficiary_id, adherence_values):
     if beneficiary_id is None:
         raise AdherenceException(message="Beneficiary ID is null")
+    if not isinstance(beneficiary_id, basestring):
+        raise AdherenceException(message="Beneficiary ID should be a string")
 
     if adherence_values is None or not isinstance(adherence_values, list):
         raise AdherenceException(message="Adherences invalid")
