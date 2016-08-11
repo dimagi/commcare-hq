@@ -1327,16 +1327,21 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         if item.startswith('can_'):
             perm = item[len('can_'):]
             if perm:
-                def fn(domain=None, data=None):
-                    try:
-                        domain = domain or self.current_domain
-                    except AttributeError:
-                        domain = None
-                    return self.has_permission(domain, perm, data)
+                fn = self._get_perm_check_fn(perm)
                 fn.__name__ = item
                 return fn
+
         raise AttributeError("'{}' object has no attribute '{}'".format(
             self.__class__.__name__, item))
+
+    def _get_perm_check_fn(self, perm):
+        def fn(domain=None, data=None):
+            try:
+                domain = domain or self.current_domain
+            except AttributeError:
+                domain = None
+            return self.has_permission(domain, perm, data)
+        return fn
 
 
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):
