@@ -23,8 +23,8 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
             ('unfortunate <xml expression', '<value>unfortunate &lt;xml expression</value>'),
             (u'क्लिक', '<value>&#2325;&#2381;&#2354;&#2367;&#2325;</value>'),
             ('&#39', '<value>&amp;#39</value>'),
-            ('Here is a ref <output value="/data/no_media" /> with some trailing text & bad < xml.',
-             '<value>Here is a ref <output value="/data/no_media"/> with some trailing text &amp; bad &lt; xml.</value>')
+            ('Here is a ref <output value="/data/no_media" /> with some "trailing" text & that\'s some bad < xml.',
+             '<value>Here is a ref <output value="/data/no_media"/> with some "trailing" text &amp; that\'s some bad &lt; xml.</value>')
 
         ]
         for input, expected_output in test_cases:
