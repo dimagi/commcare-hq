@@ -3,12 +3,15 @@ from django.utils.translation import ugettext as _
 
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.hqwebapp.views import no_permissions
-from corehq.apps.locations import views as location_views
 
 LOCATION_ACCESS_MSG = (
     "This project has restricted data access rules.  Please contact your "
     "project administrator to access specific data in the project"
 )
+
+
+def location_restricted_response(request):
+    return no_permissions(request, message=LOCATION_ACCESS_MSG)
 
 
 class LocationAccessMiddleware(object):
@@ -33,7 +36,7 @@ class LocationAccessMiddleware(object):
                 not is_location_safe(view_fn)
                 or not user.get_sql_location(domain)
             ):
-                return no_permissions(request, message=LOCATION_ACCESS_MSG)
+                return location_restricted_response(request)
 
 
 class ViewSafetyChecker(object):
@@ -49,6 +52,12 @@ class ViewSafetyChecker(object):
         from corehq.apps.locations import views as location_views
         return {self._get_view_path(view_fn) for view_fn in (
             location_views.LocationsListView,
+            location_views.archive_location,
+            location_views.unarchive_location,
+            location_views.delete_location,
+            # TODO still need to control reparenting in these two:
+            # location_views.NewLocationView,
+            # location_views.EditLocationView,
         )}
 
     @memoized
