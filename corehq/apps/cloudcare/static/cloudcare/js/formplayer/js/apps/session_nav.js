@@ -131,6 +131,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     });
 
     FormplayerFrontend.on("breadcrumbSelect", function (index) {
+        FormplayerFrontend.request("clearForm");
         var urlObject = Util.currentUrlToObject();
         urlObject.spliceSteps(index);
         Util.setUrlToObject(urlObject);
