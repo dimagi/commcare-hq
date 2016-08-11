@@ -77,8 +77,20 @@ $(document).bind("ajaxStart", function () {
     tfLoadingComplete();
 });
 
-FormplayerFrontend.reqres.setHandler('error', function (errorMessage) {
+FormplayerFrontend.reqres.setHandler('showError', function (errorMessage) {
     showError(errorMessage, $("#cloudcare-notifications"), 10000);
+});
+
+FormplayerFrontend.reqres.setHandler('showSuccess', function(successMessage) {
+    showSuccess(successMessage, $("#cloudcare-notifications"), 10000);
+});
+
+FormplayerFrontend.reqres.setHandler('handleNotification', function(notification) {
+    if(notification.error){
+        FormplayerFrontend.request('showError', notification.message);
+    } else{
+        FormplayerFrontend.request('showSuccess', notification.message);
+    }
 });
 
 FormplayerFrontend.reqres.setHandler('startForm', function (data) {
