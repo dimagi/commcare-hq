@@ -188,7 +188,7 @@
     </div>
 </header>
 
-{% if not show_inactive %}
+{% if not show_inactive and request.can_access_all_locations %}
 <div class="row">
     <div class="col-sm-12">
         <div class="btn-toolbar">
