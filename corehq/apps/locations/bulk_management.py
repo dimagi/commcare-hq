@@ -400,61 +400,6 @@ class NewLocationImporter(object):
             _(u"Deleted {} existing locations").format(delete_count(location_stubs)),
         ])
 
-    def commit_changes(self, type_stubs, location_stubs):
-        # assumes all valdiations are done, just saves them
-        # ToDo Combine calls in same level into one DB call
-        type_stubs_by_parent_code = defaultdict(list)
-        for lt in type_stubs:
-            type_stubs_by_parent_code[lt.parent_code].append(lt)
-
-        types_by_code = {}
-
-        def create_child_types(parent_type):
-            if parent_type == ROOT_LOCATION_TYPE:
-                parent_code = ROOT_LOCATION_TYPE
-                parent_type = None
-            else:
-                parent_code = parent_type.code
-            child_stubs = type_stubs_by_parent_code[parent_code]
-
-            for type_stub in child_stubs:
-                type_object = type_stub.save_if_needed(self.old_collection, parent_type, self.domain)
-                if type_object:
-                    # check if type_stub was deleted, in which case type_object would be None
-                    types_by_code[type_object.code] = type_object
-                    create_child_types(type_object)
-
-        create_child_types(ROOT_LOCATION_TYPE)
-
-        location_stubs_by_parent_code = defaultdict(list)
-        for l in location_stubs:
-            location_stubs_by_parent_code[l.parent_code].append(l)
-
-        def create_child_locations(parent_location):
-            if parent_location == ROOT_LOCATION_TYPE:
-                parent_code = ROOT_LOCATION_TYPE
-                parent_location = None
-            else:
-                parent_code = parent_location.site_code
-            child_stubs = location_stubs_by_parent_code[parent_code]
-
-            for child in child_stubs:
-                lt = types_by_code.get(child.location_type)
-                child_object = child.save_if_needed(
-                    self.old_collection,
-                    parent_location,
-                    self.domain,
-                    lt
-                )
-                if child_object:
-                    # check if child was deleted, in which case child_object would be None
-                    create_child_locations(child_object)
-        # to be deleted stubs. bulk delete
-        # is_new stubs. bulk create without setting parent
-        # update. bulk update and set parents
-
-        create_child_locations(ROOT_LOCATION_TYPE)
-
 
 class LocationTreeValidator(object):
     """
