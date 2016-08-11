@@ -72,7 +72,7 @@ class LoginAndDomainAuthentication(Authentication):
         for wrapper in wrappers:
             wrapped_dummy = wrapper(wrapped_dummy)
 
-        if not kwargs.has_key('domain'):
+        if 'domain' not in kwargs:
             kwargs['domain'] = request.domain
 
         try:

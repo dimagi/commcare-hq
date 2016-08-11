@@ -20,6 +20,8 @@ class CustomResourceMeta(object):
     authorization = ReadOnlyAuthorization()
     authentication = LoginAndDomainAuthentication()
     serializer = CustomXMLSerializer()
-    default_format='application/json'
-    throttle = HQThrottle(throttle_at=getattr(settings, 'CCHQ_API_THROTTLE_REQUESTS', 25),
-                             timeframe=getattr(settings, 'CCHQ_API_THROTTLE_TIMEFRAME', 15))
+    default_format = 'application/json'
+    throttle = HQThrottle(
+        throttle_at=getattr(settings, 'CCHQ_API_THROTTLE_REQUESTS', 25),
+        timeframe=getattr(settings, 'CCHQ_API_THROTTLE_TIMEFRAME', 15)
+    )
