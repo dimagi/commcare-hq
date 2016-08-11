@@ -23,9 +23,7 @@ from corehq.apps.reports.dispatcher import ProjectReportDispatcher, \
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.userreports.util import has_report_builder_access
-from corehq.apps.users.decorators import get_permission_name
-from corehq.apps.users.models import Permissions
-from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION
+from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports
 from corehq.form_processor.utils import use_new_exports
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
@@ -386,14 +384,19 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
+    def can_view_form_exports(self):
+        return can_view_form_exports(self.couch_user, self.domain)
+
+    @property
+    @memoized
+    def can_view_case_exports(self):
+        return can_view_case_exports(self.couch_user, self.domain)
+
+    @property
+    @memoized
     def can_only_see_deid_exports(self):
         from corehq.apps.export.views import user_can_view_deid_exports
-        return (not self.couch_user.can_view_reports()
-                and not self.couch_user.has_permission(
-                    self.domain,
-                    get_permission_name(Permissions.view_report),
-                    data=FORM_EXPORT_PERMISSION
-                )
+        return (not self.can_view_form_exports
                 and user_can_view_deid_exports(self.domain, self.couch_user))
 
     @property
