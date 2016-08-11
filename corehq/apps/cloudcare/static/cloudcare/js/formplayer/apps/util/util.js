@@ -35,13 +35,14 @@ Util.setCrossDomainAjaxOptions = function (options) {
     options.contentType = "application/json";
 };
 
-Util.CloudcareUrl = function (appId, sessionId, steps, page, search, queryDict) {
+Util.CloudcareUrl = function (appId, sessionId, steps, page, search, queryDict, singleApp) {
     this.appId = appId;
     this.sessionId = sessionId;
     this.steps = steps;
     this.page = page;
     this.search = search;
     this.queryDict = queryDict;
+    this.singleApp = singleApp;
 
     this.addStep = function (step) {
         if (!this.steps) {
@@ -102,5 +103,20 @@ Util.CloudcareUrl.prototype.toJson = function () {
 
 Util.CloudcareUrl.fromJson = function (json) {
     var data = JSON.parse(json);
-    return new Util.CloudcareUrl(data.appId, data.sessionId, data.steps, data.page, data.search, data.queryDict);
+    return new Util.CloudcareUrl(
+        data.appId,
+        data.sessionId,
+        data.steps,
+        data.page,
+        data.search,
+        data.queryDict,
+        data.singleApp
+    );
 };
+
+if (!String.prototype.startsWith) {
+    String.prototype.startsWith = function(searchString, position){
+      position = position || 0;
+      return this.substr(position, searchString.length) === searchString;
+  };
+}

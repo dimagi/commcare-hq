@@ -4,7 +4,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     SessionNavigate.Router = Marionette.AppRouter.extend({
         appRoutes: {
             "apps": "listApps", // list all apps available to this user
-            "preview/:id": "previewApp", // Show app in preview mode (SingleAppView)
+            "single_app/:id": "singleApp", // Show app in phone mode (SingleAppView)
             "sessions": "listSessions", //list all this user's current sessions (incomplete forms)
             "sessions/:id": "getSession",
             ":session": "listMenus",  // Default route
@@ -16,8 +16,8 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             FormplayerFrontend.request("clearForm");
             SessionNavigate.AppList.Controller.listApps();
         },
-        previewApp: function(appId) {
-            SessionNavigate.AppList.Controller.previewApp(appId);
+        singleApp: function(appId) {
+            SessionNavigate.AppList.Controller.singleApp(appId);
         },
         selectApp: function (appId) {
             SessionNavigate.MenuList.Controller.selectMenu(appId);
@@ -34,6 +34,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             var search = urlObject.search;
             var queryDict = urlObject.queryDict;
             var previewMode = urlObject.previewMode;
+            var singleApp = urlObject.singleApp;
             SessionNavigate.MenuList.Controller.selectMenu(
                 appId,
                 sessionId,
@@ -41,7 +42,8 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
                 page,
                 search,
                 queryDict,
-                previewMode
+                previewMode,
+                singleApp
             );
         },
         showDetail: function (model, index) {
@@ -97,9 +99,9 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         API.selectApp(appId);
     });
 
-    FormplayerFrontend.on('app:preview', function(appId) {
-        FormplayerFrontend.navigate("/preview/" + appId);
-        API.previewApp(appId);
+    FormplayerFrontend.on('app:singleApp', function(appId) {
+        FormplayerFrontend.navigate("/phone_mode/" + appId);
+        API.singleApp(appId);
     });
 
     FormplayerFrontend.on("menu:select", function (index) {
