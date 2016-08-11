@@ -11,7 +11,6 @@ from corehq.apps.sms.resources import v0_5 as sms_v0_5
 from django.conf.urls import *
 from django.http import HttpResponseNotFound
 from tastypie.api import Api
-from corehq.apps.api.es import XFormES
 
 
 API_LIST = (
@@ -19,7 +18,6 @@ API_LIST = (
         v0_1.CommCareUserResource,
         v0_1.WebUserResource,
         v0_3.CommCareCaseResource,
-        v0_3.XFormInstanceResource,
         FixtureResource,
         DomainMetadataResource,
         locations.v0_1.LocationResource,
