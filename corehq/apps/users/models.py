@@ -1304,6 +1304,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
         return models
 
+    def can_view_any_reports(self, domain):
+        return self.can_view_reports(domain) or bool(self.get_viewable_reports(domain))
+
     def get_exportable_reports(self, domain=None):
         viewable_reports = self.get_viewable_reports(domain=domain, slug=True)
         from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
