@@ -87,7 +87,7 @@ from corehq.apps.style.utils import format_angular_error, format_angular_success
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
-    DEID_EXPORT_PERMISSION
+    DEID_EXPORT_PERMISSION, has_permission_to_view_report
 from corehq.util.couch import get_document_or_404_lite
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.soft_assert import soft_assert
@@ -135,15 +135,8 @@ class ExportsPermissionsMixin(object):
 
     @property
     def has_view_permissions(self):
-        if self.form_or_case == 'form':
-            report_to_check = FORM_EXPORT_PERMISSION
-        elif self.form_or_case == 'case':
-            report_to_check = CASE_EXPORT_PERMISSION
-        return (self.request.couch_user.can_view_reports()
-                or self.request.couch_user.has_permission(
-                    self.domain,
-                    get_permission_name(Permissions.view_report),
-                    data=report_to_check))
+        report_to_check = FORM_EXPORT_PERMISSION if self.form_or_case == 'form' else CASE_EXPORT_PERMISSION
+        return has_permission_to_view_report(self.request.couch_user, self.domain, report_to_check)
 
     @property
     def has_deid_view_permissions(self):
