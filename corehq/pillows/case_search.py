@@ -70,6 +70,7 @@ class CaseSearchPillowProcessor(ElasticProcessor):
 
 
 def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearchPillow'):
+    assert pillow_id == 'CaseSearchToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_SEARCH_INDEX_INFO)
     case_processor = CaseSearchPillowProcessor(
         elasticsearch=get_es_new(),

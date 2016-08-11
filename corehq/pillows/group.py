@@ -16,6 +16,7 @@ def get_group_pillow(pillow_id='GroupPillow'):
     """
     This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
     """
+    assert pillow_id == 'GroupPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, GROUP_INDEX_INFO)
     processor = ElasticProcessor(
         elasticsearch=get_es_new(),

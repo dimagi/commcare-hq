@@ -99,6 +99,7 @@ def add_demo_user_to_user_index():
 
 
 def get_user_pillow(pillow_id='UserPillow'):
+    assert pillow_id == 'UserPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO)
     user_processor = ElasticProcessor(
         elasticsearch=get_es_new(),

@@ -56,6 +56,7 @@ def _get_daily_consumption_for_ledger(ledger):
 
 
 def get_ledger_to_elasticsearch_pillow(pillow_id='LedgerToElasticsearchPillow'):
+    assert pillow_id == 'LedgerToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, LEDGER_INDEX_INFO)
     processor = ElasticProcessor(
         elasticsearch=get_es_new(),

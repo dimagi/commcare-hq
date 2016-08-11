@@ -24,6 +24,7 @@ class GroupsToUsersProcessor(PillowProcessor):
 
 
 def get_group_to_user_pillow(pillow_id='GroupToUserPillow'):
+    assert pillow_id == 'GroupToUserPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO)
     processor = GroupsToUsersProcessor()
     return ConstructedPillow(
