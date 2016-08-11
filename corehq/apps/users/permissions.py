@@ -6,6 +6,7 @@ FORM_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.ExcelExportReport'
 DEID_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.DeidExportReport'
 CASE_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.CaseExportReport'
 
+EXPORT_PERMISSIONS = {FORM_EXPORT_PERMISSION, DEID_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION}
 
 ReportPermission = namedtuple('ReportPermission', ['slug', 'title', 'is_visible'])
 

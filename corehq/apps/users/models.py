@@ -14,6 +14,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
+from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.soft_assert import soft_assert
@@ -1309,14 +1310,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def can_view_any_reports(self, domain):
         return self.can_view_reports(domain) or bool(self.get_viewable_reports(domain))
 
-    def get_exportable_reports(self, domain=None):
-        viewable_reports = self.get_viewable_reports(domain=domain, slug=True)
-        from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
-        export_reports = set(DataInterfaceDispatcher().get_reports_dict(domain).keys())
-        return list(export_reports.intersection(viewable_reports))
-
     def can_access_any_exports(self, domain=None):
-        return self.can_view_reports(domain) or bool(self.get_exportable_reports(domain))
+        return self.can_view_reports(domain) or any([
+            permission_slug for permission_slug in self._get_viewable_report_slugs(domain)
+            if permission_slug in EXPORT_PERMISSIONS
+        ])
 
     def is_current_web_user(self, request):
         return self.user_id == request.couch_user.user_id
