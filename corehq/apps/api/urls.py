@@ -2,7 +2,7 @@ from corehq.apps.api.accounting import *
 from corehq.apps.api.domain_metadata import DomainMetadataResource
 from corehq.apps.api.object_fetch_api import CaseAttachmentAPI, FormAttachmentAPI
 from corehq.apps.api.domainapi import DomainAPI
-from corehq.apps.api.resources import v0_1, v0_2, v0_3, v0_4, v0_5
+from corehq.apps.api.resources import v0_1, v0_3, v0_4, v0_5
 from corehq.apps.api.resources.v0_5 import UserDomainsResource, DomainForms
 from corehq.apps.commtrack.resources.v0_1 import ProductResource
 from corehq.apps.fixtures.resources.v0_1 import FixtureResource, InternalFixtureResource
@@ -18,7 +18,6 @@ API_LIST = (
     ((0, 1), (
         v0_1.CommCareUserResource,
         v0_1.WebUserResource,
-        v0_1.CommCareCaseResource,
         v0_1.XFormInstanceResource,
         FixtureResource,
         DomainMetadataResource,
@@ -26,7 +25,6 @@ API_LIST = (
     ((0, 2), (
         v0_1.CommCareUserResource,
         v0_1.WebUserResource,
-        v0_2.CommCareCaseResource,
         v0_1.XFormInstanceResource,
         FixtureResource,
         DomainMetadataResource,

@@ -144,60 +144,6 @@ class WebUserResource(UserResource):
         return list(WebUser.by_domain(domain))
 
 
-class CommCareCaseResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
-    type = "case"
-    id = fields.CharField(attribute='get_id', readonly=True, unique=True)
-    user_id = fields.CharField(attribute='user_id')
-    date_modified = fields.CharField(attribute='modified_on', null=True)
-    closed = fields.BooleanField(attribute='closed')
-    date_closed = fields.CharField(attribute='closed_on', null=True)
-
-    xforms = fields.ListField(attribute='xform_ids')
-
-    properties = fields.ListField()
-
-    indices = fields.ListField(null=True)
-
-    def dehydrate_properties(self, bundle):
-        return bundle.obj.to_api_json()['properties']
-
-    def dehydrate_indices(self, bundle):
-        return bundle.obj.to_api_json()['indices']
-
-    def obj_get(self, bundle, **kwargs):
-        return get_object_or_not_exist(CommCareCase, kwargs['pk'],
-                                       kwargs['domain'])
-
-    def obj_get_list(self, bundle, **kwargs):
-        domain = kwargs['domain']
-        include_closed = {
-            'true': True,
-            'false': False,
-            'any': True
-        }[bundle.request.GET.get('closed', 'false')]
-        case_type = bundle.request.GET.get('case_type')
-
-        key = [domain]
-        if case_type:
-            key.append(case_type)
-
-        if include_closed:
-            case_ids = get_case_ids_in_domain(domain, type=case_type)
-        else:
-            case_ids = get_open_case_ids_in_domain(domain, type=case_type)
-
-        cases = imap(CommCareCase.wrap,
-                     iter_docs(CommCareCase.get_db(), case_ids))
-        return list(cases)
-
-    class Meta(CustomResourceMeta):
-        authentication = RequirePermissionAuthentication(Permissions.edit_data)
-        object_class = CommCareCase
-        list_allowed_methods = ['get']
-        detail_allowed_methods = ['get']
-        resource_name = 'case'
-
-
 class XFormInstanceResource(HqBaseResource, DomainSpecificResourceMixin):
     type = "form"
     id = fields.CharField(attribute='form_id', readonly=True, unique=True)
