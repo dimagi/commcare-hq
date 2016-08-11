@@ -6,12 +6,12 @@ from tastypie import fields
 from tastypie.bundle import Bundle
 from tastypie.authentication import Authentication
 from tastypie.exceptions import BadRequest
-from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication, \
-    _safe_bool
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
-from couchforms.models import doc_types
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.api.resources.auth import DomainAdminAuthentication, RequirePermissionAuthentication
+from corehq.apps.api.resources.v0_1 import CustomResourceMeta, _safe_bool
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from couchforms.models import doc_types
 from casexml.apps.case import xform as casexml_xform
 from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
 
@@ -186,7 +186,7 @@ class RepeaterResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourc
         return bundle
 
     class Meta(CustomResourceMeta):
-        authentication = v0_1.DomainAdminAuthentication()
+        authentication = DomainAdminAuthentication()
         object_class = Repeater
         resource_name = 'data-forwarding'
         detail_allowed_methods = ['get', 'put', 'delete']
