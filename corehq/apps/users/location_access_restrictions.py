@@ -22,15 +22,17 @@ class LocationAccessMiddleware(object):
     def process_view(self, request, view_fn, view_args, view_kwargs):
         user = getattr(request, 'couch_user', None)
         domain = getattr(request, 'domain', None)
-        if (
-            user and domain
-            and not user.has_permission(domain, 'access_all_locations')
-            and (
+        if not user or not domain:
+            request.can_access_all_locations = True
+        elif user.has_permission(domain, 'access_all_locations'):
+            request.can_access_all_locations = True
+        else:
+            request.can_access_all_locations = False
+            if (
                 not is_location_safe(view_fn)
                 or not user.get_sql_location(domain)
-            )
-        ):
-            return no_permissions(request, message=LOCATION_ACCESS_MSG)
+            ):
+                return no_permissions(request, message=LOCATION_ACCESS_MSG)
 
 
 def is_location_safe(view_fn):
