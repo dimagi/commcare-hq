@@ -89,7 +89,7 @@
                         <option value="csv">{% trans "CSV (Zip file)" %}</option>
                         <option value="xlsx">{% trans "Excel 2007" %}</option>
                         <option value="xls">{% trans "Excel (older versions)" %}</option>
-                        <option value="html">{% trans "Web Page (Excel Dashboards)" %}</option>
+                        <option value="html">{% trans "Excel Dashboard Integration" %}</option>
                     </select>
                     <span class="help-block" data-bind="visible: custom_export.default_format() === 'html' && !{{ has_excel_dashboard_access|JSON }}">
                         {% url "domain_subscription_view" domain as software_plan_url %}
