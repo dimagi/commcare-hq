@@ -6,7 +6,6 @@ import tinys3
 from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
-from corehq.apps.registration.views import ProcessRegistrationView
 from corehq.util.dates import unix_time
 from datetime import datetime, date, timedelta
 import time
@@ -180,6 +179,7 @@ def update_hubspot_properties(webuser, properties):
 
 @analytics_task()
 def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
+    from corehq.apps.registration.views import ProcessRegistrationView
     if path.startswith(reverse(ProcessRegistrationView.urlname)):
         tracking_dict = {
             'created_account_in_hq': True,
