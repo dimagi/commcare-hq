@@ -73,3 +73,8 @@ class ExportPermissionsTest(SimpleTestCase):
         )
 
         self.assertTrue(user_can_view_deid_exports(self.domain, self.web_user))
+
+    def test_view_reports(self):
+        self.assertFalse(self.web_user.can_view_reports(self.domain))
+        self.permissions = Permissions(view_reports=True)
+        self.assertTrue(self.web_user.can_view_reports(self.domain))
