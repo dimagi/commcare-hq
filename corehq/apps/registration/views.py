@@ -175,6 +175,8 @@ def register_user(request):
 
         ab = ab_tests.ABTest(ab_tests.NEW_USER_SIGNUP, request)
         if ab.version != ab_tests.NEW_USER_SIGNUP_OPTION_OLD:
+            meta = get_meta(request)
+            track_clicked_signup_on_hubspot(prefilled_email, request.COOKIES, meta)
             response = HttpResponseRedirect(
                 _get_url_with_email(reverse(NewUserRegistrationView.urlname), prefilled_email)
             )
