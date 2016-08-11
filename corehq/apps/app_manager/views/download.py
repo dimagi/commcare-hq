@@ -10,6 +10,7 @@ from django.http import HttpResponse, Http404, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
+import yaml
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import safe_download
@@ -421,9 +422,30 @@ def source_files(app):
     if not app.copy_of:
         app.set_media_versions(None)
     files = download_index_files(app)
+    # files.append(
+    #     ("app.json", json.dumps(
+    #         app.to_json(), sort_keys=True, indent=4, separators=(',', ': ')
+    #     ))
+    # )
+    app_json = app.to_json()
+    for attr in ('_id', '_rev', '_attachments', 'external_blobs'):
+        app_json.pop(attr, None)
+
+    def flatten(o, path=()):
+        if isinstance(o, dict):
+            for key, value in sorted(o.items()):
+                for yield_value in flatten(value, path + (key,)):
+                    yield yield_value
+        elif isinstance(o, list):
+            for i, value in enumerate(o):
+                for yield_value in flatten(value, path + (i,)):
+                    yield yield_value
+        else:
+            yield path, o
+
+    text = ''.join('{}\n\t{}\n'.format(' > '.join('{}'.format(p) for p in path), value) for path, value in flatten(app_json))
+
     files.append(
-        ("app.json", json.dumps(
-            app.to_json(), sort_keys=True, indent=4, separators=(',', ': ')
-        ))
+        ("app.json", text)
     )
     return sorted(files)

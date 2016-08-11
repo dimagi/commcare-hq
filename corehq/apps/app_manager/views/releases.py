@@ -327,8 +327,8 @@ def _get_app_diffs(first_app, second_app):
     """
     file_pairs = _get_file_pairs(first_app, second_app)
     diffs = []
-    for name, files in file_pairs.iteritems():
-        diff_html = ghdiff.diff(files[0], files[1], n=4, css=False)
+    for name, (file1, file2) in file_pairs.iteritems():
+        diff_html = ghdiff.diff(file1, file2, n=4, css=False)
         additions, deletions = _get_change_counts(diff_html)
         if additions == 0 and deletions == 0:
             diff_html = ""
