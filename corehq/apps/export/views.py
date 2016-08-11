@@ -194,7 +194,11 @@ class BaseExportView(BaseProjectDataView):
         # interaction data. This should probably be rewritten as it's not exactly
         # clear what this view specifically needs to render.
         context = self.export_helper.get_context()
-        context.update({'export_home_url': self.export_home_url})
+        context.update({
+            'export_home_url': self.export_home_url,
+            'has_excel_dashboard_access': domain_has_privilege(self.domain, EXCEL_DASHBOARD),
+            'has_daily_saved_export_access': domain_has_privilege(self.domain, DAILY_SAVED_EXPORT),
+        })
         return context
 
     def commit(self, request):
@@ -1450,7 +1454,9 @@ class BaseNewExportView(BaseExportView):
 
     def commit(self, request):
         export = self.export_instance_cls.wrap(json.loads(request.body))
-        if self.domain != export.domain:
+        if (self.domain != export.domain
+                or (export.export_format == "html" and not domain_has_privilege(self.domain, EXCEL_DASHBOARD))
+                or (export.is_daily_saved_export and not domain_has_privilege(self.domain, DAILY_SAVED_EXPORT))):
             raise BadExportConfiguration()
 
         export.save()
