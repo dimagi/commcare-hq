@@ -5,7 +5,12 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         selectMenu: function (appId, sessionId, stepList, page, search, queryDict) {
 
             var fetchingNextMenu = FormplayerFrontend.request("app:select:menus",
-                appId, sessionId, stepList, page, search, queryDict);
+                appId,
+                sessionId,
+                stepList,
+                page,
+                search,
+                queryDict);
 
             /*
              Determine the next screen to display.  Could be

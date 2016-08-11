@@ -109,6 +109,11 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
     };
 
     FormplayerFrontend.reqres.setHandler("app:select:menus", function (appId, sessionId, stepList, page, search, queryDict) {
-        return API.getMenus(appId, sessionId, stepList, page, search, queryDict);
+        return API.getMenus(appId,
+            sessionId,
+            stepList,
+            page,
+            search,
+            queryDict);
     });
 });
