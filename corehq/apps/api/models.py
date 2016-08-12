@@ -7,7 +7,7 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import check_password
 from django.http import HttpResponse
 
-from corehq.apps.api.resources import dict_object
+from corehq.apps.api.resources import DictObject
 from couchforms import const
 from dimagi.ext.couchdbkit import *
 
@@ -95,7 +95,7 @@ require_api_user = _require_api_user()
 require_api_user_permission = _require_api_user
 
 
-class ESXFormInstance(dict_object):
+class ESXFormInstance(DictObject):
     """This wrapper around form data returned from ES which
     provides attribute access and helper functions for
     the Form API.
