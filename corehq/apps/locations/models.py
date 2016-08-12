@@ -1,4 +1,3 @@
-import uuid
 import warnings
 from functools import partial
 
@@ -372,54 +371,22 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
 
     @classmethod
     def bulk_create(cls, objects):
-        if not objects:
-            return []
-
-        location_ids = []
-        for i, obj in enumerate(objects):
-            # SQLLocation is an mptt model, which doesn't support bulk creation
-            # following workaround is a hack to do bulk creation.
-            # This can be removed once https://github.com/django-mptt/django-mptt/pull/444 gets in
-            obj.lft = 1
-            obj.rght = 2
-            obj.tree_id = 0
-            obj.level = i + 1
-            # set location_id
-            obj.location_id = uuid.uuid4().hex
-            location_ids.append(obj.location_id)
-
-        domain = objects[0].domain
-        # we can return 'objects' directly without the below extra DB call after django 1.10,
-        # which autosets 'id' attribute of all objects that are bulk created
-        cls.objects.bulk_create(objects)
-        saved_objects = list(cls.objects.filter(domain=domain, location_id__in=location_ids))
-
-        return saved_objects
+        # we can't do real bulk saves, beucase mptt doesn't support that yet
+        for o in objects:
+            o.save()
+        return objects
 
     @classmethod
     def bulk_update(cls, objects):
         now = datetime.utcnow()
         for o in objects:
             o.last_modified = now
-        bulk_update_helper(objects)
+            o.save()
 
     @classmethod
     def bulk_delete(cls, objects):
-        if not objects:
-            return
-
-        ids = [o.id for o in objects]
-        sql_to_delete = cls.objects.filter(id__in=ids)
-
-        couch_locations_queryset = sql_to_delete.couch_locations()
-        couch_to_delete = []
-        with transaction.atomic():
-            for couch_loc in couch_locations_queryset:
-                # Make this a real 'bulk' way. ToDo in future
-                couch_loc._close_case_and_remove_users()
-                couch_to_delete.append(couch_loc)
-            sql_to_delete.delete()
-            Location.get_db().bulk_delete(couch_to_delete)
+        for o in objects:
+            o.delete()
 
     @transaction.atomic()
     def save(self, *args, **kwargs):
