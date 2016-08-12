@@ -7,11 +7,9 @@ https://docs.google.com/document/d/1gZFPP8yXjPazaJDP9EmFORi88R-jSytH6TTgMxTGQSk/
 """
 import copy
 from collections import Counter, defaultdict
-from datetime import datetime
 
 from django.db import transaction
 from django.utils.translation import ugettext as _
-from bulk_update.helper import bulk_update as bulk_update_helper
 
 from dimagi.utils.decorators.memoized import memoized
 
