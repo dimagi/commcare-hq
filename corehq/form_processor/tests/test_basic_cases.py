@@ -38,7 +38,7 @@ class FundamentalCaseTests(TestCase):
         modified_on = datetime.utcnow()
         _submit_case_block(
             True, case_id, user_id='user1', owner_id='owner1', case_type='demo',
-            case_name='create_case', date_modified=modified_on, update={
+            case_name='create_case', date_modified=modified_on, date_opened=modified_on, update={
                 'dynamic': '123'
             }
         )
@@ -49,7 +49,7 @@ class FundamentalCaseTests(TestCase):
         self.assertEqual(case.owner_id, 'owner1')
         self.assertEqual(case.type, 'demo')
         self.assertEqual(case.name, 'create_case')
-        self.assertEqual(case.opened_on.date(), modified_on.date())
+        self.assertEqual(case.opened_on, modified_on)
         self.assertEqual(case.opened_by, 'user1')
         self.assertEqual(case.modified_on, modified_on)
         self.assertEqual(case.modified_by, 'user1')

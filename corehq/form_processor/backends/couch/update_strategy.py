@@ -22,7 +22,7 @@ from dimagi.ext.couchdbkit import StringProperty
 
 
 def _coerce_to_datetime(v):
-    if isinstance(v, date):
+    if isinstance(v, date) and not isinstance(v, datetime):
         return datetime.combine(v, datetime.min.time())
     else:
         return v
