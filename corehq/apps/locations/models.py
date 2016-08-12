@@ -321,9 +321,10 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     def lineage(self):
         return list(self.get_ancestors(ascending=True).location_ids())
 
-    @property
-    def get_id(self):
-        return self.location_id
+    # # A few aliases for location_id to be compatible with couch locs
+    _id = property(lambda self: self.location_id)
+    get_id = property(lambda self: self.location_id)
+    group_id = property(lambda self: self.location_id)
 
     @property
     def products(self):
@@ -829,12 +830,6 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         parent_id = self.parent_location_id
         return Location.get(parent_id) if parent_id else None
 
-    def siblings(self, parent=None):
-        if not parent:
-            parent = self.parent
-        locs = (parent.children if parent else self.root_locations(self.domain))
-        return [loc for loc in locs if loc.location_id != self._id]
-
     @property
     def path(self):
         _path = list(reversed(self.lineage))
@@ -846,11 +841,9 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         """return list of all locations that have this location as an ancestor"""
         return list(self.sql_location.get_descendants().couch_locations())
 
-    @property
-    def children(self):
+    def get_children(self):
         """return list of immediate children of this location"""
-        return list(SQLLocation.objects.filter(parent=self.sql_location)
-                                       .couch_locations())
+        return self.sql_location.get_children().couch_locations()
 
     def linked_supply_point(self):
         return self.sql_location.linked_supply_point()
@@ -861,7 +854,7 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         This just returns the location's id. It used to add
         a prefix.
         """
-        return self._id
+        return self.location_id
 
     @property
     def location_type_object(self):

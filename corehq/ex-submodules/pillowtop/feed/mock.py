@@ -24,6 +24,9 @@ class MockChangeFeed(ChangeFeed):
     def get_current_offsets(self):
         return {'test': self.get_latest_change_id()}
 
+    def get_checkpoint_value(self):
+        return str(self.get_latest_change_id())
+
 
 class RandomChangeFeed(ChangeFeed):
     """
@@ -49,6 +52,9 @@ class RandomChangeFeed(ChangeFeed):
 
     def get_current_offsets(self):
         return {'test': self.get_latest_change_id()}
+
+    def get_checkpoint_value(self):
+        return str(self.get_latest_change_id())
 
 
 def random_change(sequence_id):

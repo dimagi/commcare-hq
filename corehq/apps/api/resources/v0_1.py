@@ -256,6 +256,13 @@ class CommCareUserResource(UserResource):
             bundle.data['extras'] = extras
         return super(UserResource, self).dehydrate(bundle)
 
+    def dehydrate_user_data(self, bundle):
+        user_data = bundle.obj.user_data
+        if self.determine_format(bundle.request) == 'application/xml':
+            # attribute names can't start with digits in xml
+            user_data = {k: v for k, v in user_data.iteritems() if not k[0].isdigit()}
+        return user_data
+
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
         show_archived = _safe_bool(bundle, 'archived')
@@ -275,10 +282,12 @@ class WebUserResource(UserResource):
     permissions = fields.DictField()
 
     def dehydrate_role(self, bundle):
-        return bundle.obj.get_role(bundle.request.domain).name
+        role = bundle.obj.get_role(bundle.request.domain)
+        return role.name if role else ''
 
     def dehydrate_permissions(self, bundle):
-        return bundle.obj.get_role(bundle.request.domain).permissions._doc
+        role = bundle.obj.get_role(bundle.request.domain)
+        return role.permissions._doc if role else {}
 
     def dehydrate_is_admin(self, bundle):
         return bundle.obj.is_domain_admin(bundle.request.domain)

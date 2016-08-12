@@ -808,6 +808,9 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
         }
 
     def _get_cards(self):
+        if not settings.STRIPE_PRIVATE_KEY:
+            return []
+
         user = self.request.user.username
         payment_method, new_payment_method = StripePaymentMethod.objects.get_or_create(
             web_user=user,
@@ -1370,6 +1373,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
             "hipaa_compliant": self.domain_object.hipaa_compliant,
             "secure_sessions": self.domain_object.secure_sessions,
             "two_factor_auth": self.domain_object.two_factor_auth,
+            "strong_mobile_passwords": self.domain_object.strong_mobile_passwords,
         }
         if self.request.method == 'POST':
             return PrivacySecurityForm(self.request.POST, initial=initial,

@@ -33,7 +33,7 @@ def _construct_status_dict(status_type, status_values, locations, datespan):
 
 
 def construct_summary(location, status_type, values, cutoff):
-    locations = location.children
+    locations = list(location.get_children())
     statuses = SupplyPointStatus.objects.filter(
         status_date__gte=cutoff,
         status_date__lte=datetime.utcnow(),

@@ -503,7 +503,7 @@ INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
 INVOICING_CONTACT_EMAIL = 'billing-support@dimagi.com'
 MASTER_LIST_EMAIL = 'master-list@dimagi.com'
-REPORT_BUILDER_ADD_ON_EMAIL = 'updates@dimagi.com'
+REPORT_BUILDER_ADD_ON_EMAIL = 'rhartford' + '@' + 'dimagi.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@dimagi.com'
 CONTACT_EMAIL = 'info@dimagi.com'
 BOOKKEEPER_CONTACT_EMAILS = []
@@ -522,9 +522,6 @@ CLOUDCARE_BASE_URL = None
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
 
-# OpenRosa Standards
-OPENROSA_VERSION = "1.0"
-
 # OTA restore fixture generators
 FIXTURE_GENERATORS = {
     # fixtures that may be sent to the phone independent of cases
@@ -540,6 +537,7 @@ FIXTURE_GENERATORS = {
         "custom.bihar.reports.indicators.fixtures.generator",
         "custom.m4change.fixtures.report_fixtures.generator",
         "custom.m4change.fixtures.location_fixtures.generator",
+        "custom.enikshay.fixtures.calendar_fixture_generator",
     ],
     # fixtures that must be sent along with the phones cases
     'case': [
@@ -748,7 +746,7 @@ ANALYTICS_CONFIG = {
     "HQ_INSTANCE": '',  # e.g. "www" or "staging"
 }
 
-MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiY3p1ZSIsImEiOiJjaWgwa3U5OXIwMGk3a3JrcjF4cjYwdGd2In0.8Tys94ISZlY-h5Y4W160RA'
+MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiZGltYWdpIiwiYSI6ImpZWWQ4dkUifQ.3FNy5rVvLolWLycXPxKVEA'
 
 OPEN_EXCHANGE_RATES_API_ID = ''
 
@@ -891,6 +889,8 @@ ZIPLINE_API_USER = ''
 ZIPLINE_API_PASSWORD = ''
 
 KAFKA_URL = 'localhost:9092'
+
+MOBILE_INTEGRATION_TEST_TOKEN = None
 
 
 try:

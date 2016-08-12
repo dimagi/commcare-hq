@@ -16,7 +16,7 @@ from django.template import Context
 from django_countries.data import COUNTRIES
 
 from corehq import toggles
-from corehq.apps.domain.forms import EditBillingAccountInfoForm
+from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
 from corehq.apps.users.models import CouchUser
@@ -83,6 +83,20 @@ def wrapped_language_validation(value):
     except ValueError:
         raise forms.ValidationError("%s is not a valid language code! Please "
                                     "enter a valid two or three digit code." % value)
+
+
+def _generate_strong_password():
+    import string
+    import random
+    possible = string.punctuation + string.ascii_lowercase + string.ascii_uppercase + string.digits
+    password = ''
+    password += random.choice(string.punctuation)
+    password += random.choice(string.ascii_lowercase)
+    password += random.choice(string.ascii_uppercase)
+    password += random.choice(string.digits)
+    password += ''.join(random.choice(possible) for i in range(random.randrange(6, 11)))
+
+    return ''.join(random.sample(password, len(password)))
 
 
 class LanguageField(forms.CharField):
@@ -357,8 +371,23 @@ class RoleForm(forms.Form):
 
 class SetUserPasswordForm(SetPasswordForm):
 
-    def __init__(self, domain, user_id, **kwargs):
+    new_password1 = forms.CharField(
+        label=ugettext_lazy("New password"),
+        widget=forms.PasswordInput(),
+    )
+
+    def __init__(self, project, user_id, **kwargs):
         super(SetUserPasswordForm, self).__init__(**kwargs)
+        self.project = project
+        initial_password = ''
+
+        if self.project.strong_mobile_passwords:
+            self.fields['new_password1'].widget = forms.TextInput()
+            self.fields['new_password1'].help_text = mark_safe("""
+                <i class="fa fa-warning"></i> This password will not be shown again. <br />
+                <span data-bind="text: passwordHelp, css: color">
+            """)
+            initial_password = _generate_strong_password()
 
         self.helper = FormHelper()
 
@@ -367,19 +396,32 @@ class SetUserPasswordForm(SetPasswordForm):
 
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.form_action = reverse("change_password", args=[domain, user_id])
+        self.helper.form_action = reverse("change_password", args=[project.name, user_id])
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Reset Password for Mobile Worker"),
-                'new_password1',
-                'new_password2',
+                crispy.Field(
+                    'new_password1',
+                    data_bind="initializeValue: password, value: password, valueUpdate: 'input'",
+                    value=initial_password,
+                ),
+                crispy.Field(
+                    'new_password2',
+                    value=initial_password,
+                ),
                 hqcrispy.FormActions(
                     crispy.ButtonHolder(
                         Submit('submit', _('Reset Password'))
                     )
                 ),
+                css_class="check-password",
             ),
         )
+
+    def clean_new_password1(self):
+        if self.project.strong_mobile_passwords:
+            return clean_password(self.cleaned_data.get('new_password1'))
+        return self.cleaned_data.get('new_password1')
 
 
 class CommCareAccountForm(forms.Form):
@@ -490,16 +532,24 @@ class NewMobileWorkerForm(forms.Form):
         required=False,
     )
     password = forms.CharField(
-        widget=PasswordInput(),
+        widget=forms.PasswordInput(),
         required=True,
         min_length=1,
-        label=ugettext_noop("Password")
+        label=ugettext_noop("Password"),
     )
 
     def __init__(self, project, *args, **kwargs):
         super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
         email_string = u"@{}.commcarehq.org".format(project.name)
         max_chars_username = 80 - len(email_string)
+        self.project = project
+
+        if self.project.strong_mobile_passwords:
+            self.fields['password'].widget = forms.TextInput()
+            self.fields['password'].help_text = mark_safe("""
+                <i class="fa fa-warning"></i> This password will not be shown again. <br />
+                <span data-bind="text: passwordHelp, css: color">
+            """)
 
         if project.uses_locations:
             self.fields['location_id'].widget = AngularLocationSelectWidget()
@@ -513,7 +563,6 @@ class NewMobileWorkerForm(forms.Form):
                 '',
                 ng_model='mobileWorker.location_id',
             )
-
 
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -554,8 +603,10 @@ class NewMobileWorkerForm(forms.Form):
                 crispy.Field(
                     'password',
                     ng_required="true",
-                    ng_model='mobileWorker.password'
+                    ng_model='mobileWorker.password',
+                    data_bind="value: password, valueUpdate: 'input'",
                 ),
+                css_class="check-password",
             )
         )
 
@@ -564,6 +615,11 @@ class NewMobileWorkerForm(forms.Form):
         if username == 'admin' or username == 'demo_user':
             raise forms.ValidationError("The username %s is reserved for CommCare." % username)
         return username
+
+    def clean_password(self):
+        if self.project.strong_mobile_passwords:
+            return clean_password(self.cleaned_data.get('password'))
+        return self.cleaned_data.get('password')
 
 
 class MultipleSelectionForm(forms.Form):

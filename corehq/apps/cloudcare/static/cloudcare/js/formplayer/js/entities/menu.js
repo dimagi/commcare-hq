@@ -17,6 +17,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
             if (response.commands) {
                 this.type = "commands";
+                this.breadcrumbs = response.breadcrumbs;
                 return response.commands;
             }
             else if (response.entities) {
@@ -27,6 +28,8 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 this.widthHints = response.widthHints;
                 this.currentPage = response.currentPage;
                 this.pageCount = response.pageCount;
+                this.tiles = response.tiles;
+                this.breadcrumbs = response.breadcrumbs;
                 return response.entities;
             }
             else if(response.tree){
@@ -48,7 +51,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
     var API = {
 
-        getMenus: function (appId, stepList, page, search) {
+        getMenus: function (appId, sessionId, stepList, page, search) {
 
             var user = FormplayerFrontend.request('currentUser');
             var username = user.username;
@@ -72,6 +75,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                         "selections": stepList,
                         "offset": page * 10,
                         "search_text": search,
+                        "menu_session_id": sessionId,
                     });
 
                     if (stepList) {
@@ -95,12 +99,19 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 success: function (request) {
                     defer.resolve(request);
                 },
+                error: function (request) {
+                    FormplayerFrontend.request(
+                        'error',
+                        gettext('Unable to connect to form playing service')
+                    );
+                    defer.resolve(request);
+                },
             });
             return defer.promise();
         },
     };
 
-    FormplayerFrontend.reqres.setHandler("app:select:menus", function (appId, stepList, page, search) {
-        return API.getMenus(appId, stepList, page, search);
+    FormplayerFrontend.reqres.setHandler("app:select:menus", function (appId, sessionId, stepList, page, search) {
+        return API.getMenus(appId, sessionId, stepList, page, search);
     });
 });

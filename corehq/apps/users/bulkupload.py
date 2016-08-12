@@ -1,5 +1,7 @@
 from StringIO import StringIO
 import logging
+from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
@@ -20,6 +22,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.commtrack.util import submit_mapping_case_block, get_supply_point_and_location
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.groups.models import Group
+from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.dbaccessors.all_commcare_users import get_all_commcare_users_by_domain
@@ -79,8 +82,9 @@ def check_duplicate_usernames(user_specs):
             duplicated_usernames.add(username)
         usernames.add(username)
 
-    raise UserUploadError(_("The following usernames have duplicate entries in "
-        "your file: " + ', '.join(duplicated_usernames)))
+    if duplicated_usernames:
+        raise UserUploadError(_("The following usernames have duplicate entries in "
+            "your file: " + ', '.join(duplicated_usernames)))
 
 
 class GroupMemoizer(object):
@@ -373,6 +377,38 @@ def get_location_from_site_code(site_code, location_cache):
         )
 
 
+def is_password(password):
+    if not password:
+        return False
+    for c in password:
+        if c != "*":
+            return True
+    return False
+
+
+def users_with_duplicate_passwords(rows):
+    password_dict = dict()
+
+    for row in rows:
+        username = row.get('username')
+        password = unicode(row.get('password'))
+        if not is_password(password):
+            continue
+
+        if password_dict.get(password):
+            password_dict[password].add(username)
+        else:
+            password_dict[password] = {username}
+
+    ret = set()
+
+    for usernames in password_dict.values():
+        if len(usernames) > 1:
+            ret = ret.union(usernames)
+
+    return ret
+
+
 def create_or_update_users_and_groups(domain, user_specs, group_specs, location_specs, task=None):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
     custom_data_validator = UserFieldsView.get_validator(domain)
@@ -395,6 +431,9 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
     can_access_locations = domain_has_privilege(domain, privileges.LOCATIONS)
     if can_access_locations:
         location_cache = SiteCodeToLocationCache(domain)
+    project = Domain.get_by_name(domain)
+    usernames_with_dupe_passwords = users_with_duplicate_passwords(user_specs)
+
     try:
         for row in user_specs:
             _set_progress(current)
@@ -458,13 +497,20 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                     else:
                         user = CommCareUser.get_by_username(username)
 
-                    def is_password(password):
-                        if not password:
-                            return False
-                        for c in password:
-                            if c != "*":
-                                return True
-                        return False
+                    if project.strong_mobile_passwords and is_password(password):
+                        if raw_username(username) in usernames_with_dupe_passwords:
+                            raise UserUploadError(_("Provide a unique password for each mobile worker"))
+
+                        try:
+                            clean_password(password)
+                        except forms.ValidationError:
+                            if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
+                                msg = _("Mobile Worker passwords must be 8 "
+                                    "characters long with at least 1 capital "
+                                    "letter, 1 special character and 1 number")
+                            else:
+                                msg = _("Please provide a stronger password")
+                            raise UserUploadError(msg)
 
                     if user:
                         if user.domain != domain:

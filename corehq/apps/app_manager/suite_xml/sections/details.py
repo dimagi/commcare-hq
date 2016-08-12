@@ -34,7 +34,8 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Xpath,
 )
 from corehq.apps.app_manager.suite_xml.features.scheduler import schedule_detail_variables
-from corehq.apps.app_manager.util import create_temp_sort_column, module_offers_search
+from corehq.apps.app_manager.util import create_temp_sort_column, module_offers_search,\
+    get_sort_and_sort_only_columns
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
 from corehq.apps.app_manager.xpath import session_var, XPath
@@ -85,7 +86,7 @@ class DetailContributor(SectionContributor):
                                     if d:
                                         r.append(d)
                         if detail.persist_case_context and not detail.persist_tile_on_forms:
-                            d = self._get_persistent_case_context_detail(module)
+                            d = self._get_persistent_case_context_detail(module, detail.persistent_case_context_xml)
                             r.append(d)
                 if module.fixture_select.active:
                     d = self._get_fixture_detail(module)
@@ -258,7 +259,7 @@ class DetailContributor(SectionContributor):
         return action
 
     @staticmethod
-    def _get_persistent_case_context_detail(module):
+    def _get_persistent_case_context_detail(module, xml):
         return Detail(
             id=id_strings.persistent_case_context_detail(module),
             title=Text(),
@@ -272,7 +273,7 @@ class DetailContributor(SectionContributor):
                     grid_y=0,
                 ),
                 header=Header(text=Text()),
-                template=Template(text=Text(xpath_function="case_name")),
+                template=Template(text=Text(xpath_function=xml)),
             )]
         )
 
@@ -366,21 +367,15 @@ def get_detail_column_infos(detail, include_sort):
     else:
         sort_elements = get_default_sort_elements(detail)
 
-    # order is 1-indexed
-    sort_elements = {s.field: (s, i + 1)
-                     for i, s in enumerate(sort_elements)}
+    sort_only, sort_columns = get_sort_and_sort_only_columns(detail, sort_elements)
+
     columns = []
     for column in detail.get_columns():
-        sort_element, order = sort_elements.pop(column.field, (None, None))
+        sort_element, order = sort_columns.pop(column.field, (None, None))
         columns.append(DetailColumnInfo(column, sort_element, order))
 
-    # sort elements is now populated with only what's not in any column
-    # add invisible columns for these
-    sort_only = sorted(sort_elements.items(),
-                       key=lambda (field, (sort_element, order)): order)
-
-    for field, (sort_element, order) in sort_only:
-        column = create_temp_sort_column(field)
+    for field, sort_element, order in sort_only:
+        column = create_temp_sort_column(sort_element, order)
         columns.append(DetailColumnInfo(column, sort_element, order))
     return columns
 

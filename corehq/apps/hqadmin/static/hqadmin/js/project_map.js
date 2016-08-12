@@ -18,7 +18,7 @@ var projectMapInit = function(mapboxAccessToken) {
         // { countryName : { projectName : { propertyName: propertyValue } } }
         var projectsByCountryThenName = {};
         var maxNumProjects = 0;
-        
+
         that.refreshProjectData = function (filter, callback) {
             $.ajax({
                 url: '/hq/admin/json/project_map/' + window.location.search,
@@ -145,13 +145,25 @@ var projectMapInit = function(mapboxAccessToken) {
     var countriesGeo;
     // A lot of the styling work here is modeled after http://leafletjs.com/examples/choropleth.html
     var map = L.map('map').setView([0, 0], 3);
-    var mapId = 'mapbox.dark';
+    var mapId = 'dimagi/cirqobc2w0000g4ksj9dochrm';
+
     // copied from dimagisphere
-    L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
-        maxZoom: 10,
+    L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/256/{z}/{x}/{y}?access_token={accessToken}', {
+        maxZoom: 6,
+        minZoom: 2,
         id: mapId,
-        accessToken: mapboxAccessToken
+        accessToken: mapboxAccessToken,
+        noWrap: true,
     }).addTo(map);
+
+    var southWest = L.latLng(-85.0, -180.0),
+        northEast = L.latLng(85.0, 180.0),
+        bounds = L.latLngBounds(southWest, northEast);
+
+    map.setMaxBounds(bounds);
+    map.on('drag', function(){
+        map.panInsideBounds(bounds, {animate:false});
+    });
 
     function getColor(featureId) {
         var count = dataController.getNumProjects(featureId);
@@ -264,7 +276,7 @@ var projectMapInit = function(mapboxAccessToken) {
             return indicesToRemove.indexOf(index) <= -1;
         });
 
-        div.innerHTML += '<i style="background:' + 'black' + '"></i> ' + '0' + '<br>'; 
+        div.innerHTML += '<i style="background:' + 'black' + '"></i> ' + '0' + '<br>';
 
         // loop through our form count intervals and generate a label with a colored square for each interval
         for (var i = 0; i < countValues.length; i++) {

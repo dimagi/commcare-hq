@@ -552,7 +552,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
             value_node.xml.append(n)
 
     def _looks_like_markdown(str):
-        return re.search(r'^\d+[\.\)] |^\*|~~.+~~|# |\*{1,3}\S+\*{1,3}|\[.+\]\(\S+\)', str)
+        return re.search(r'^\d+[\.\)] |^\*|~~.+~~|# |\*{1,3}\S+\*{1,3}|\[.+\]\(\S+\)', str, re.M)
 
     def get_markdown_node(text_node_):
         return text_node_.find("./{f}value[@form='markdown']")

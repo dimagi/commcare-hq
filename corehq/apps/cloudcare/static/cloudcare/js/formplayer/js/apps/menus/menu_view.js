@@ -9,7 +9,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
 
         getTemplate: function () {
-            if (this.model.attributes.audioUri) {
+            if (this.model.get('audioUri')) {
                 return "#menu-view-item-audio-template";
             } else {
                 return "#menu-view-item-template";
@@ -19,7 +19,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         rowClick: function (e) {
             e.preventDefault();
             var model = this.model;
-            FormplayerFrontend.trigger("menu:select", model.get('index'), model.collection.appId);
+            FormplayerFrontend.trigger("menu:select", model.get('index'));
         },
         templateHelpers: function () {
             var imageUri = this.options.model.get('imageUri');
@@ -41,14 +41,26 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         childViewContainer: "tbody",
         templateHelpers: function () {
             return {
-                title: this.options.collection.title,
+                title: this.options.title,
+            };
+        },
+        childViewOptions: function () {
+            return {
+                sessionId: this.options.sessionId,
             };
         },
     });
 
     MenuList.CaseView = Marionette.ItemView.extend({
         tagName: "tr",
-        template: "#case-view-item-template",
+        getTemplate: function () {
+            if (_.isNull(this.options.tiles)) {
+                return "#case-view-item-template";
+            } else {
+                return "#case-tile-view-item-template";
+            }
+        },
+
         className: "formplayer-request",
         events: {
             "click": "rowClick",
@@ -64,6 +76,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
+                tiles: this.options.tiles,
                 resolveUri: function (uri) {
                     return FormplayerFrontend.request('resourceMap', uri, appId);
                 },
@@ -71,19 +84,63 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
     });
 
+    // return the string grid-area attribute
+    // takes the form of  [x-coord] / [y-Coord] / [width] / [height]
+    var getGridAttributes = function (tile) {
+        if (!tile) {
+            return null;
+        }
+        var rowStart = tile.gridY + 1;
+        var colStart = tile.gridX + 1;
+        var rowEnd = rowStart + tile.gridHeight;
+        var colEnd = colStart + tile.gridWidth;
+
+        return rowStart + " / " + colStart + " / " +
+            rowEnd + " / " + colEnd;
+    };
+    // generate the case tile's style block and insert
+    var generateCaseTileStyles = function (tiles) {
+        var templateString,
+            tileStyle,
+            tileStyleTemplate,
+            tileModels;
+
+        tileModels = _.chain(tiles || [])
+            .filter(function(tile) { return tile !== null; })
+            .map(function(tile, idx) {
+                return {
+                    id: 'grid-style-' + idx,
+                    gridStyle: getGridAttributes(tile),
+                    fontStyle: tile.fontSize,
+                };
+            }).value();
+
+        templateString = $("#case-tile-style-template").html();
+        tileStyleTemplate = _.template(templateString);
+        tileStyle = tileStyleTemplate({
+            models: tileModels,
+        });
+
+        // need to remove this attribute so the grid style is re-evaluated
+        $("#case-tiles-style").html(tileStyle).removeAttr("data-css-polyfilled");
+    };
+
     MenuList.CaseListView = Marionette.CompositeView.extend({
         tagName: "div",
         template: "#case-view-list-template",
         childView: MenuList.CaseView,
-        childViewContainer: "tbody",
+        childViewContainer: ".case-container",
 
         initialize: function (options) {
+            this.tiles = options.tiles;
             this.styles = options.styles;
+            generateCaseTileStyles(options.tiles);
         },
 
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
+                tiles: this.options.tiles,
             };
         },
 
@@ -100,18 +157,18 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
 
         caseListAction: function () {
-            FormplayerFrontend.trigger("menu:select", "action 0", this.options.collection.appId);
+            FormplayerFrontend.trigger("menu:select", "action 0");
         },
 
         caseListSearch: function (e) {
             e.preventDefault();
             var searchText = $('#searchText').val();
-            FormplayerFrontend.trigger("menu:search", searchText, this.options.collection.appId);
+            FormplayerFrontend.trigger("menu:search", searchText);
         },
 
         paginateAction: function (e) {
             var pageSelection = $(e.currentTarget).data("id");
-            FormplayerFrontend.trigger("menu:paginate", pageSelection, this.options.collection.appId);
+            FormplayerFrontend.trigger("menu:paginate", pageSelection);
         },
 
         templateHelpers: function () {
@@ -123,18 +180,43 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 currentPage: this.options.currentPage,
                 pageCount: this.options.pageCount,
                 styles: this.options.styles,
+                tiles: this.options.tiles,
+                breadcrumbs: this.options.breadcrumbs,
             };
         },
     });
 
+    MenuList.BreadcrumbView = Marionette.ItemView.extend({
+        tagName: "li",
+        template: "#breadcrumb-item-template",
+        className: "breadcrumb-text",
+        events: {
+            "click": "crumbClick",
+        },
+
+        crumbClick: function (e) {
+            e.preventDefault();
+            var crumbId = this.options.model.get('id');
+            FormplayerFrontend.trigger("breadcrumbSelect", crumbId);
+        },
+    });
+
+    MenuList.BreadcrumbListView = Marionette.CompositeView.extend({
+        tagName: "div",
+        template: "#breadcrumb-list-template",
+        childView: MenuList.BreadcrumbView,
+        childViewContainer: "ol",
+    });
+
     MenuList.DetailView = Marionette.ItemView.extend({
         tagName: "tr",
+        className: "row",
         template: "#detail-view-item-template",
     });
 
     MenuList.DetailListView = Marionette.CompositeView.extend({
         tagName: "table",
-        className: "table table-hover",
+        className: "table table-hover table-striped table-bordered",
         template: "#detail-view-list-template",
         childView: MenuList.DetailView,
         childViewContainer: "tbody",

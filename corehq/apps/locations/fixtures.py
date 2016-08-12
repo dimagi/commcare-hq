@@ -2,7 +2,7 @@ from itertools import groupby
 from collections import defaultdict
 from xml.etree.ElementTree import Element
 from casexml.apps.phone.models import OTARestoreUser
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq import toggles
 
 
@@ -101,6 +101,10 @@ class FlatLocationSerializer(object):
         if not toggles.FLAT_LOCATION_FIXTURE.enabled(restore_user.domain):
             return []
 
+        all_types = LocationType.objects.filter(domain=restore_user.domain).values_list(
+            'code', flat=True
+        )
+        base_attrs = {'{}_id'.format(t): '' for t in all_types if t is not None}
         root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id})
         outer_node = Element('locations')
         root_node.append(outer_node)
@@ -109,6 +113,8 @@ class FlatLocationSerializer(object):
                 'type': location.location_type.code,
                 'id': location.location_id,
             }
+            attrs.update(base_attrs)
+            attrs['{}_id'.format(location.location_type.code)] = location.location_id
             tmp_location = location
             while tmp_location.parent:
                 tmp_location = tmp_location.parent

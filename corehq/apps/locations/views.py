@@ -687,6 +687,9 @@ class LocationImportView(BaseLocationView):
         if not args:
             messages.error(request, _('no domain specified'))
             return self.get(request, *args, **kwargs)
+        if upload.content_type != 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+            messages.error(request, _("Invalid file-format. Please upload a valid xlsx file."))
+            return self.get(request, *args, **kwargs)
 
         domain = args[0]
 

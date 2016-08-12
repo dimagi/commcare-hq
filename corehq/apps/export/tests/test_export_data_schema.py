@@ -99,6 +99,41 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(form_items[1].options[0].value, 'choice1')
         self.assertEqual(form_items[1].options[1].value, 'choice2')
 
+    def test_xform_parsing_with_stock_questions(self):
+        form_xml = self.get_xml('stock_form')
+        schema = FormExportDataSchema._generate_schema_from_xform(
+            XForm(form_xml),
+            [],
+            ['en'],
+            self.app_id,
+            1
+        )
+        self.assertEqual(len(schema.group_schemas), 1)
+        group_schema = schema.group_schemas[0]
+
+        self.assertEqual(len(group_schema.items), 6)
+        self.assertTrue(all(map(lambda item: item.doc_type == 'StockItem', group_schema.items)))
+        for parent_attr in ['@type', '@entity-id', '@date', '@section-id']:
+            self.assertTrue(any(map(
+                lambda item: item.path == [
+                    PathNode(name='form'),
+                    PathNode(name='balance:balance_one'),
+                    PathNode(name=parent_attr),
+                ],
+                group_schema.items,
+            )))
+
+        for entry_attr in ['@id', '@quantity']:
+            self.assertTrue(any(map(
+                lambda item: item.path == [
+                    PathNode(name='form'),
+                    PathNode(name='balance:balance_one'),
+                    PathNode(name='entry'),
+                    PathNode(name=entry_attr),
+                ],
+                group_schema.items,
+            )))
+
     def test_question_path_to_path_nodes(self):
         """
         Confirm that _question_path_to_path_nodes() works as expected

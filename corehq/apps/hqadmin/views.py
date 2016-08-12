@@ -468,6 +468,7 @@ class VCMMigrationView(BaseAdminSectionView):
     email_template_txt = 'hqadmin/vcm_email_content.txt'
 
     email_subject = _("CommCare Easy References Upgrade")
+    email_from = settings.REPORT_BUILDER_ADD_ON_EMAIL
 
     @property
     def migration_date(self):
@@ -481,6 +482,7 @@ class VCMMigrationView(BaseAdminSectionView):
             'email_body': render_to_string(self.email_template_html, {
                 'domain': 'DOMAIN',
                 'migration_date': self.migration_date,
+                'email': self.email_from,
             }),
             'email_subject': self.email_subject,
             'url': reverse(self.urlname),
@@ -540,15 +542,16 @@ class VCMMigrationView(BaseAdminSectionView):
                     email_context = {
                         'domain': domain,
                         'migration_date': self.migration_date,
+                        'email': self.email_from,
                     }
-                    text_content = render_to_string(self.email_template_html, email_context)
-                    html_content = render_to_string(self.email_template_txt, email_context)
+                    html_content = render_to_string(self.email_template_html, email_context)
+                    text_content = render_to_string(self.email_template_txt, email_context)
                     send_html_email_async.delay(
                         self.email_subject,
                         migration.admins,
                         html_content,
                         text_content=text_content,
-                        email_from=settings.SUPPORT_EMAIL)
+                        email_from=self.email_from)
                     migration.emailed = datetime.now()
                     migration.save()
                     successes.add(domain)

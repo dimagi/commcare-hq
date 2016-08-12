@@ -1036,3 +1036,71 @@ class TestEvaluationContext(SimpleTestCase):
         context.set_cache_value(('k1', 'k2'), 'v1')
         self.assertEqual(context.get_cache_value(('k1', 'k2')), 'v1')
         self.assertEqual(context.get_cache_value(('k1',)), None)
+
+
+class SplitStringExpressionTest(SimpleTestCase):
+
+    def test_split_string_index_expression(self):
+        for expected, string_value, index in [
+            ("a", "a b c", 0),
+            ("b", "a b c", 1),
+            (None, "a b c", 4),
+            (None, "a b c", "foo"),
+            (None, "a b c", None),
+            (None, None, 0),
+            (None, 36, 0),
+        ]:
+            split_string_expression = ExpressionFactory.from_spec({
+                "type": "split_string",
+                "string_expression": {
+                    "type": "property_name",
+                    "property_name": "string_property"
+                },
+                "index_expression": {
+                    "type": "property_name",
+                    "property_name": "index_property"
+                }
+            })
+            self.assertEqual(expected, split_string_expression({
+                "string_property": string_value,
+                "index_property": index
+            }))
+
+    def test_split_string_index_constant(self):
+        for expected, string_value, index in [
+            ("a", "a b c", 0),
+            ("b", "a b c", 1),
+            (None, "a b c", 4),
+            (None, "a b c", "foo"),
+            (None, None, 0),
+            (None, 36, 0),
+        ]:
+            split_string_expression = ExpressionFactory.from_spec({
+                "type": "split_string",
+                "string_expression": {
+                    "type": "property_name",
+                    "property_name": "string_property"
+                },
+                "index_expression": index
+            })
+            self.assertEqual(expected, split_string_expression({"string_property": string_value}))
+
+    def test_split_string_delimiter(self):
+        for expected, string_value, index in [
+            ("a", "a,b,c", 0),
+            ("b", "a,b,c", 1),
+            (None, "a,b,c", 4),
+            (None, "a,b,c", "foo"),
+            (None, None, 0),
+            (None, 36, 0),
+        ]:
+            split_string_expression = ExpressionFactory.from_spec({
+                "type": "split_string",
+                "string_expression": {
+                    "type": "property_name",
+                    "property_name": "string_property"
+                },
+                "delimiter": ",",
+                "index_expression": index
+            })
+            self.assertEqual(expected, split_string_expression({"string_property": string_value}))

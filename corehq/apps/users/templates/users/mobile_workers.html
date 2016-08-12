@@ -16,6 +16,10 @@
 <script src="{% static 'users/js/mobile_workers.ng.js' %}"></script>
 <script src="{% static 'angular-sanitize/angular-sanitize.js' %}"></script>
 <script src="{% static 'ui-select/dist/select.js' %}"></script>
+{% if strong_mobile_passwords %}
+    <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
+    <script src="{% static 'registration/js/password.js' %}"></script>
+{% endif %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -79,6 +83,7 @@ $(function () {
                 });
         }
     });
+    mobileWorkerApp.constant('generateStrongPasswords', {{ strong_mobile_passwords|JSON }});
     mobileWorkerApp.constant('location_url', '{{ location_url }}');
     {% angularjs %}
     mobileWorkerApp.directive('workertableHeader', function () {

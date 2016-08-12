@@ -184,6 +184,9 @@ hqDefine('app_manager/js/releases.js', function () {
             analytics.workflow('Initiate Installation Method');
         };
 
+        self.reveal_java_download = function(){
+            return this.j2me_enabled();
+        };
         return self;
     }
 

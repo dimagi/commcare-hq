@@ -35,8 +35,8 @@ class IndicatorDocument(object):
         like wrap, but also:
         - sets _rev to whatever it needs to be in order to be saved
           to the indicator db without an update conflict
-        - strips _attachments, because we don't care about them
-          and having the stub in JSON without the attachment will fail
+        - strips _attachments and external_blobs because we don't care about
+          them and having the stub in JSON without the attachment will fail
 
         """
         try:
@@ -46,8 +46,8 @@ class IndicatorDocument(object):
         else:
             doc_dict['_rev'] = current_rev
 
-        if '_attachments' in doc_dict:
-            del doc_dict['_attachments']
+        doc_dict.pop('_attachments', None)
+        doc_dict.pop('external_blobs', None)
 
         return cls.wrap(doc_dict)
 

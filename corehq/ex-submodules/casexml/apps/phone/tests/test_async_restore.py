@@ -26,6 +26,7 @@ from casexml.apps.phone.const import ASYNC_RESTORE_CACHE_KEY_PREFIX
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
 from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.receiverwrapper.auth import AuthContext
+from couchforms.models import DefaultAuthContext
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.util.test_utils import flag_enabled
 
@@ -204,21 +205,17 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
             revoke.assert_called_with(fake_task_id)
             self.assertIsNone(restore_config.cache.get(cache_id))
 
-
-class AsyncRestoreIntegrationParameters(BaseAsyncRestoreTest):
-    """When overwrite_cache is set, the async restore should always first return an
-    AsyncRestoreResponse as its first response
-
-    """
-    @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
-    def test_always_returns_async_restore_response(self, task):
-        delay = mock.MagicMock()
-        delay.id = 'random_task_id'
-        task.delay.return_value = delay
-
-        payload = self._restore_config(async=True, overwrite_cache=True).get_payload()
-        self.assertTrue(task.delay.called)
-        self.assertIsInstance(payload, AsyncRestoreResponse)
+    @flag_enabled('ASYNC_RESTORE')
+    def test_submit_system_form(self):
+        system_user_factory = CaseFactory(
+            domain=self.domain,
+            form_extras={
+                'auth_context': DefaultAuthContext()
+            }
+        )
+        # This would fail hard if there was no AuthContext:
+        # http://manage.dimagi.com/default.asp?234245
+        system_user_factory.create_case()
 
     @mock.patch.object(CachedPayload, 'finalize')  # fake that a cached payload exists
     @mock.patch.object(RestoreConfig, 'cache')

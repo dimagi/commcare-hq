@@ -13,7 +13,11 @@ from pillow_retry.models import PillowError
 STYLE_MARKDOWN = 'markdown'
 STYLE_SLACK = 'slack'
 DASHBOARD_URL = 'https://p.datadoghq.com/sb/5c4af2ac8-1f739e93ef'
+INTEGRATION_TEST_URL = 'https://jenkins.dimagi.com/job/integration-tests/'
 
+
+def integration_tests_link(style, url):
+    return make_link(style, 'tests', url)
 
 def diff_link(style, url):
     return make_link(style, 'here', url)
@@ -39,10 +43,17 @@ class Command(BaseCommand):
         make_option('--environment', help='Environment {production|staging etc...}', default=settings.SERVER_ENVIRONMENT),
         make_option('--mail_admins', help='Mail Admins', default=False, action='store_true'),
         make_option('--url', help='A link to a URL for the deploy', default=False),
+        make_option(
+            '--minutes',
+            help='The number of minutes it took to deploy',
+            type='int',
+            default=None,
+        ),
     )
 
     def handle(self, *args, **options):
         compare_url = options.get('url', None)
+        minutes = options.get('minutes', None)
 
         deploy = HqDeploy(
             date=datetime.utcnow(),
@@ -59,12 +70,22 @@ class Command(BaseCommand):
                   "{} pillow errors queued for retry\n".format(rows_updated)
 
         deploy_notification_text = (
-            "CommCareHQ has been successfully deployed to *{}* by *{}*. Monitor the {{dashboard_link}}. "
+            "CommCareHQ has been successfully deployed to *{}* by *{}* in *{}* minutes. "
+            "Monitor the {{dashboard_link}}. "
+            "Check the integration {{integration_tests_link}}. "
             "Find the diff {{diff_link}}".format(
                 options['environment'],
                 options['user'],
+                minutes or '?',
             )
         )
+
+        if settings.MOBILE_INTEGRATION_TEST_TOKEN:
+            requests.get(
+                'https://jenkins.dimagi.com/job/integration-tests/build',
+                params={'token': settings.MOBILE_INTEGRATION_TEST_TOKEN},
+            )
+
         if hasattr(settings, 'MIA_THE_DEPLOY_BOT_API'):
             link = diff_link(STYLE_SLACK, compare_url)
             requests.post(settings.MIA_THE_DEPLOY_BOT_API, data=json.dumps({
@@ -72,6 +93,7 @@ class Command(BaseCommand):
                 "text": deploy_notification_text.format(
                     dashboard_link=dashboard_link(STYLE_SLACK, DASHBOARD_URL),
                     diff_link=link,
+                    integration_tests_link=integration_tests_link(STYLE_SLACK, INTEGRATION_TEST_URL)
                 ),
             }))
 
@@ -83,6 +105,7 @@ class Command(BaseCommand):
                 text=deploy_notification_text.format(
                     dashboard_link=dashboard_link(STYLE_MARKDOWN, DASHBOARD_URL),
                     diff_link=link,
+                    integration_tests_link=integration_tests_link(STYLE_MARKDOWN, INTEGRATION_TEST_URL)
                 ),
                 tags=tags,
                 alert_type="success"
