@@ -92,7 +92,6 @@ var projectMapInit = function(mapboxAccessToken) {
             return maxNumProjects;
         };
 
-
         var SelectionModel = function () {
             var self = this;
             self.selectedCountry = ko.observable('country name');
