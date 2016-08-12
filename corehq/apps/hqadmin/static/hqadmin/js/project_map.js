@@ -145,10 +145,10 @@ var projectMapInit = function(mapboxAccessToken) {
     var countriesGeo;
     // A lot of the styling work here is modeled after http://leafletjs.com/examples/choropleth.html
     var map = L.map('map').setView([0, 0], 3);
-    var mapId = 'mapbox.dark';
+    var mapId = 'dimagi/cirqobc2w0000g4ksj9dochrm';
 
     // copied from dimagisphere
-    L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+    L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/256/{z}/{x}/{y}?access_token={accessToken}', {
         maxZoom: 6,
         minZoom: 2,
         id: mapId,
