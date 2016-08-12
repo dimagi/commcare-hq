@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+	<h:head>
+		<h:title>More Stock!</h:title>
+		<model>
+			<instance>
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/B7C62A88-4DE6-4AAF-930B-2DA6F83BCB7B" uiVersion="1" version="1" name="More Stock!">
+					<balance entity-id="" date="" xmlns="http://commcarehq.org/ledger/v1" type="balance_one" section-id="">
+						<entry id="" quantity="" />
+					</balance>
+				</data>
+			</instance>
+			<instance src="jr://instance/ledgerdb" id="ledger" />
+			<bind nodeset="/data/balance[@type='balance_one']" />
+			<bind nodeset="/data/balance[@type='balance_one']/entry/@quantity" />
+			<setvalue event="xforms-ready" ref="/data/balance[@type='balance_one']/@date" value="now()" />
+			<itext>
+				<translation lang="en" default="" />
+				<translation lang="fra" />
+				<translation lang="es" />
+			</itext>
+		</model>
+	</h:head>
+	<h:body />
+</h:html>
