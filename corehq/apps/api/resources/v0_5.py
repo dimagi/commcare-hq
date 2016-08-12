@@ -253,6 +253,7 @@ class WebUserResource(v0_1.WebUserResource):
                 username=bundle.data['username'].lower(),
                 password=bundle.data['password'],
                 email=bundle.data.get('email', '').lower(),
+                is_admin=bundle.data.get('is_admin', False)
             )
             del bundle.data['password']
             self._update(bundle)
@@ -682,7 +683,6 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-        print domain
         return ReportConfiguration.by_domain(domain)
 
     def detail_uri_kwargs(self, bundle_or_obj):

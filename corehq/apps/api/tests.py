@@ -727,6 +727,7 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(user_back.first_name, "Joe")
         self.assertEqual(user_back.last_name, "Admin")
         self.assertEqual(user_back.email, "admin@example.com")
+        self.assertTrue(user_back.is_domain_admin(self.domain.name))
         user_back.delete()
 
     def test_update(self):
