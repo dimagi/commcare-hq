@@ -110,14 +110,6 @@ class AbstractXFormInstance(object):
         raise NotImplementedError()
 
     @property
-    def version(self):
-        return self.form_data.get(const.TAG_VERSION, "")
-
-    @property
-    def uiversion(self):
-        return self.form_data.get(const.TAG_UIVERSION, "")
-
-    @property
     def type(self):
         return self.form_data.get(const.TAG_TYPE, "")
 
