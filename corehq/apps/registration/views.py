@@ -45,7 +45,7 @@ def get_domain_context():
 
 
 def registration_default(request):
-    return redirect(NewUserRegistrationView.urlname)
+    return redirect(UserRegistrationView.urlname)
 
 
 def _get_url_with_email(url, email):
@@ -109,7 +109,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
         }
 
 
-class NewUserRegistrationView(BasePageView):
+class UserRegistrationView(BasePageView):
     urlname = 'register_user'
     template_name = 'registration/register_new_user.html'
 
@@ -125,14 +125,14 @@ class NewUserRegistrationView(BasePageView):
                 return redirect("registration_domain")
             else:
                 return redirect("homepage")
-        response = super(NewUserRegistrationView, self).dispatch(request, *args, **kwargs)
+        response = super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
         return response
 
     def get(self, request, *args, **kwargs):
         if self.prefilled_email:
             meta = get_meta(request)
             track_clicked_signup_on_hubspot.delay(self.prefilled_email, request.COOKIES, meta)
-        return super(NewUserRegistrationView, self).get(request, *args, **kwargs)
+        return super(UserRegistrationView, self).get(request, *args, **kwargs)
 
     @property
     def prefilled_email(self):
