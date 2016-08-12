@@ -2,7 +2,8 @@
   "domains": [
     "icds-test",
     "icds-sql",
-    "icds-cas"
+    "icds-cas",
+    "icds-cas-sandbox"
   ],
   "report_id": "mpr_9_vhnd_forms",
   "data_source_table": "static-vhnd_form",
