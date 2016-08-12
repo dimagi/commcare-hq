@@ -235,6 +235,7 @@ class LocationType(models.Model):
         now = datetime.utcnow()
         for o in objects:
             o.last_modified = now
+        # the caller should call 'sync_administrative_status' for individual objects
         bulk_update_helper(objects)
 
     @classmethod
