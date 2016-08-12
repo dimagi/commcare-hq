@@ -4,11 +4,10 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     SessionNavigate.Router = Marionette.AppRouter.extend({
         appRoutes: {
             "apps": "listApps", // list all apps available to this user
-            "apps/:id": "selectApp", // select the app under :id and list root commands
-            "apps/:id/menu": "listMenus", // select the app under :id, make session steps in params, display screen
+            "preview/:id": "previewApp", // Show app in preview mode (SingleAppView)
             "sessions": "listSessions", //list all this user's current sessions (incomplete forms)
             "sessions/:id": "getSession",
-            ":session": "listMenus",
+            ":session": "listMenus",  // Default route
         },
     });
 
@@ -17,19 +16,31 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             FormplayerFrontend.request("clearForm");
             SessionNavigate.AppList.Controller.listApps();
         },
+        previewApp: function(appId) {
+            SessionNavigate.AppList.Controller.previewApp(appId);
+        },
         selectApp: function (appId) {
             SessionNavigate.MenuList.Controller.selectMenu(appId);
         },
-        listMenus: function () {
+        listMenus: function (sessionObject) {
             FormplayerFrontend.request("clearForm");
-            var currentFragment = Backbone.history.getFragment();
-            var urlObject = Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(currentFragment));
+            var urlObject = Util.CloudcareUrl.fromJson(
+                Util.encodedUrlToObject(sessionObject || Backbone.history.getFragment())
+            );
             var appId = urlObject.appId;
             var sessionId = urlObject.sessionId;
             var steps = urlObject.steps;
             var page = urlObject.page;
             var search = urlObject.search;
-            SessionNavigate.MenuList.Controller.selectMenu(appId, sessionId, steps, page, search);
+            var previewMode = urlObject.previewMode;
+            SessionNavigate.MenuList.Controller.selectMenu(
+                appId,
+                sessionId,
+                steps,
+                page,
+                search,
+                previewMode
+            );
         },
         showDetail: function (model, index) {
             SessionNavigate.MenuList.Controller.showDetail(model, index);
@@ -82,6 +93,11 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         var urlObject = new Util.CloudcareUrl(appId);
         Util.setUrlToObject(urlObject);
         API.selectApp(appId);
+    });
+
+    FormplayerFrontend.on('app:preview', function(appId) {
+        FormplayerFrontend.navigate("/preview/" + appId);
+        API.previewApp(appId);
     });
 
     FormplayerFrontend.on("menu:select", function (index) {
