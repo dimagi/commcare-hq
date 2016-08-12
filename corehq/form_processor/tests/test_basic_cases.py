@@ -4,11 +4,15 @@ import uuid
 from django.conf import settings
 from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.tests.util import check_user_has_case
 from casexml.apps.case.util import post_case_blocks
+from casexml.apps.phone.tests.utils import create_restore_user
+from corehq.apps.domain.models import Domain
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
-from corehq.form_processor.backends.couch.update_strategy import _coerce_to_datetime
+from corehq.form_processor.backends.couch.update_strategy import coerce_to_datetime
 
 DOMAIN = 'fundamentals'
 
@@ -106,7 +110,7 @@ class FundamentalCaseTests(TestCase):
         case = self.casedb.get_case(case_id)
         self.assertEqual(case.owner_id, 'owner2')
         self.assertEqual(case.name, 'update_case')
-        self.assertEqual(_coerce_to_datetime(case.opened_on), _coerce_to_datetime(opened_on))
+        self.assertEqual(coerce_to_datetime(case.opened_on), coerce_to_datetime(opened_on))
         self.assertEqual(case.opened_by, 'user1')
         self.assertEqual(case.modified_on, modified_on)
         self.assertEqual(case.modified_by, 'user2')
@@ -240,6 +244,28 @@ class FundamentalCaseTests(TestCase):
     def test_case_with_attachment(self):
         # same as update, attachments
         pass
+
+    @run_with_all_backends
+    def test_date_opened_coercion(self):
+        delete_all_users()
+        self.project = Domain(name='some-domain')
+        self.project.save()
+        user = create_restore_user(self.project.name)
+        case_id = uuid.uuid4().hex
+        modified_on = datetime.utcnow()
+        case = CaseBlock(
+            create=True,
+            case_id=case_id,
+            user_id=user.user_id, owner_id=user.user_id, case_type='demo',
+            case_name='create_case', date_modified=modified_on, date_opened=modified_on, update={
+                'dynamic': '123'
+            }
+        )
+
+        post_case_blocks([case.as_xml()], domain='some-domain')
+        # update the date_opened to date type to check for value on restore
+        case['update']['date_opened'] = case['update']['date_opened'].date()
+        check_user_has_case(self, user, case.as_xml())
 
 
 def _submit_case_block(create, case_id, **kwargs):

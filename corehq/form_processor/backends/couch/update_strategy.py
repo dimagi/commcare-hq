@@ -21,7 +21,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.ext.couchdbkit import StringProperty
 
 
-def _coerce_to_datetime(v):
+def coerce_to_datetime(v):
     if isinstance(v, date) and not isinstance(v, datetime):
         return datetime.combine(v, datetime.min.time())
     else:
@@ -29,7 +29,7 @@ def _coerce_to_datetime(v):
 
 
 PROPERTY_TYPE_MAPPING = {
-    'opened_on': _coerce_to_datetime
+    'opened_on': coerce_to_datetime
 }
 
 
