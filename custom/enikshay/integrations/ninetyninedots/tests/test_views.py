@@ -8,11 +8,13 @@ from corehq.form_processor.tests.utils import run_with_all_backends, FormProcess
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.integrations.ninetyninedots.views import (
-    validate_patient_adherence_data,
+    validate_adherence_values,
+    validate_beneficiary_id
 )
 from custom.enikshay.integrations.ninetyninedots.utils import (
     create_adherence_cases,
     get_open_episode_case,
+    get_adherence_cases_between_dates,
 )
 from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceException
 
@@ -20,15 +22,11 @@ from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceExce
 class Receiver99DotsTests(SimpleTestCase):
     def test_validate_patient_adherence_data(self):
         with self.assertRaises(AdherenceException) as e:
-            validate_patient_adherence_data(None, None)
+            validate_beneficiary_id(None)
             self.assertEqual(e.message, "Beneficiary ID is null")
 
         with self.assertRaises(AdherenceException) as e:
-            validate_patient_adherence_data(u'123', None)
-            self.assertEqual(e.message, "Adherences invalid")
-
-        with self.assertRaises(AdherenceException) as e:
-            validate_patient_adherence_data(u'123', u'123')
+            validate_adherence_values(u'123')
             self.assertEqual(e.message, "Adherences invalid")
 
 
@@ -39,30 +37,31 @@ class NinetyNineDotsCaseTests(TestCase):
         FormProcessorTestUtils.delete_all_cases()
         cls.domain = 'enikshay-test'
         cls.factory = CaseFactory(domain=cls.domain)
+        cls.person_id = "person"
+        cls.occurrence_id = "occurrence"
+        cls.episode_id = "episode"
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
 
     def _create_case_structure(self):
         person = CaseStructure(
-            case_id='person',
+            case_id=self.person_id,
             attrs={
                 "case_type": "person",
                 "create": True,
                 "update": dict(
-                    dob="1987-08-15",
-                    sex="m",
                     default_adherence_confidence="high"
                 )
             },
         )
         occurrence = CaseStructure(
-            case_id='occurrence',
+            case_id=self.occurrence_id,
             attrs={
                 'create': True,
                 'case_type': 'occurrence',
                 "update": dict(
-                    person_name="Ramsey Bolton",
+                    person_id=self.person_id
                 )
             },
             indices=[CaseIndex(
@@ -73,13 +72,13 @@ class NinetyNineDotsCaseTests(TestCase):
             )],
         )
         episode = CaseStructure(
-            case_id='episode',
+            case_id=self.episode_id,
             attrs={
                 'create': True,
                 'case_type': 'episode',
                 "update": dict(
                     person_name="Ramsey Bolton",
-                    person_id="person",
+                    person_id=self.person_id,
                     opened_on=datetime(1989, 6, 11, 0, 0),
                     patient_type="new",
                     hiv_status="reactive",
@@ -130,6 +129,6 @@ class NinetyNineDotsCaseTests(TestCase):
 
         for adherence_case in adherence_cases:
             self.assertEqual(
-                adherence_case.dynamic_case_properties().get('dots99_adherence_confidence'),
+                adherence_case.dynamic_case_properties().get('adherence_confidence'),
                 'high'
              )
