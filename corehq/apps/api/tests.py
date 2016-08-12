@@ -1,6 +1,7 @@
 import base64
 import json
 import uuid
+from copy import deepcopy
 from datetime import datetime
 import dateutil.parser
 
@@ -46,7 +47,7 @@ from corehq.apps.locations.resources.v0_1 import InternalLocationResource
 from custom.ilsgateway.resources.v0_1 import ILSLocationResource
 from custom.ewsghana.resources.v0_1 import EWSLocationResource
 from corehq.apps.users.analytics import update_analytics_indexes
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, UserRole, Permissions
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.reportxform import transform_xform_for_report_forms_index
 from corehq.pillows.xform import transform_xform_for_elasticsearch
@@ -649,6 +650,24 @@ class TestWebUserResource(APIResourceTest):
     """
     resource = v0_5.WebUserResource
     api_name = 'v0.5'
+    default_user_json = {
+        "username":"test_1234",
+        "password":"qwer1234",
+        "email":"admin@example.com",
+        "first_name":"Joe",
+        "is_admin": True,
+        "last_name":"Admin",
+        "permissions":{
+            "edit_apps":True,
+            "edit_commcare_users":True,
+            "edit_data":True,
+            "edit_web_users":True,
+            "view_reports":True
+        },
+        "phone_numbers":[
+        ],
+        "role":"Admin"
+    }
 
     def _check_user_data(self, user, json_user):
         self.assertEqual(user._id, json_user['id'])
@@ -699,25 +718,7 @@ class TestWebUserResource(APIResourceTest):
         self._check_user_data(self.user, api_user)
 
     def test_create(self):
-
-        user_json = {
-            "username":"test_1234",
-            "password":"qwer1234",
-            "email":"admin@example.com",
-            "first_name":"Joe",
-            "is_admin": True,
-            "last_name":"Admin",
-            "permissions":{
-                "edit_apps":True,
-                "edit_commcare_users":True,
-                "edit_data":True,
-                "edit_web_users":True,
-                "view_reports":True
-            },
-            "phone_numbers":[
-            ],
-            "role":"admin"
-        }
+        user_json = deepcopy(self.default_user_json)
         response = self._assert_auth_post_resource(self.list_endpoint,
                                                    json.dumps(user_json),
                                                    content_type='application/json')
@@ -730,27 +731,46 @@ class TestWebUserResource(APIResourceTest):
         self.assertTrue(user_back.is_domain_admin(self.domain.name))
         user_back.delete()
 
+    def test_create_with_preset_role(self):
+        user_json = deepcopy(self.default_user_json)
+        user_json["role"] = "field-implementer"
+        user_json["is_admin"] = False
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        user_back = WebUser.get_by_username("test_1234")
+        self.assertEqual(user_back.role, 'field-implementer')
+        user_back.delete()
+
+    def test_create_with_custom_role(self):
+        new_user_role = UserRole.get_or_create_with_permissions(
+            self.domain.name, Permissions(edit_apps=True, view_reports=True), 'awesomeness')
+        user_json = deepcopy(self.default_user_json)
+        user_json["role"] = new_user_role.name
+        user_json["is_admin"] = False
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        user_back = WebUser.get_by_username("test_1234")
+        self.assertEqual(user_back.role, new_user_role.name)
+        user_back.delete()
+
+    def test_create_with_invalid_admin_role(self):
+        user_json = deepcopy(self.default_user_json)
+        user_json["role"] = 'Jack of all trades'
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   failure_code=400)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content, '{"error": "An admin can have only one role : Admin"}')
+
     def test_update(self):
-
         user = WebUser.create(domain=self.domain.name, username="test", password="qwer1234")
-
-        user_json = {
-            "email":"admin@example.com",
-            "first_name":"Joe",
-            "is_admin": True,
-            "last_name":"Admin",
-            "permissions":{
-                "edit_apps":True,
-                "edit_commcare_users":True,
-                "edit_data":True,
-                "edit_web_users":True,
-                "view_reports":True
-            },
-            "phone_numbers":[
-            ],
-            "role":"admin"
-        }
-
+        user_json = deepcopy(self.default_user_json)
+        user_json.pop('username')
         backend_id = user._id
         response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
                                                    json.dumps(user_json),

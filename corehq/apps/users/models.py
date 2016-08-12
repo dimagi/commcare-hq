@@ -329,11 +329,16 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
         return assigned_user_ids
 
+    @classmethod
+    def get_preset_permission_by_name(cls, name):
+        matches = {k for k, v in PERMISSIONS_PRESETS.iteritems() if v['name'] == name}
+        matches.pop() if matches else None
+
 PERMISSIONS_PRESETS = {
     'edit-apps': {'name': 'App Editor', 'permissions': Permissions(edit_apps=True, view_reports=True)},
     'field-implementer': {'name': 'Field Implementer', 'permissions': Permissions(edit_commcare_users=True, view_reports=True)},
     'read-only': {'name': 'Read Only', 'permissions': Permissions(view_reports=True)},
-    'no-permissions': {'name': 'Read Only', 'permissions': Permissions(view_reports=True)},
+    'no-permissions': {'name': 'Read Only(No Permissions)', 'permissions': Permissions(view_reports=True)},
 }
 
 

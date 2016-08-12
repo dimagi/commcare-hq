@@ -33,7 +33,7 @@ from corehq.apps.userreports.models import ReportConfiguration, \
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.reports.view import query_dict_to_dict, \
     get_filter_values
-from corehq.apps.users.models import CommCareUser, WebUser, Permissions, CouchUser
+from corehq.apps.users.models import CommCareUser, WebUser, Permissions, CouchUser, UserRole
 from corehq.util import get_document_or_404
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
 from corehq.toggles import ZAPIER_INTEGRATION
@@ -56,6 +56,18 @@ def user_es_call(domain, q, fields, size, start_at):
         query.set_query({"query_string": {"query": q}})
     return query.run().hits
 
+
+def _set_role_for_bundle(kwargs, bundle):
+    # check for roles associated with the domain
+    domain_roles = UserRole.by_domain_and_name(kwargs['domain'], bundle.data.get('role'))
+    if domain_roles:
+        qualified_role_id = domain_roles[0].get_qualified_id()
+        bundle.obj.set_role(kwargs['domain'], qualified_role_id)
+    else:
+        # check for preset roles and now create them for the domain
+        permission_preset_name = UserRole.get_preset_permission_by_name(bundle.data.get('role'))
+        if permission_preset_name:
+            bundle.obj.set_role(kwargs['domain'], permission_preset_name)
 
 class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
     """
@@ -214,6 +226,19 @@ class WebUserResource(v0_1.WebUserResource):
             data = {'id': data.obj._id}
         return self._meta.serializer.serialize(data, format, options)
 
+    def dispatch(self, request_type, request, **kwargs):
+        """
+        Override dispatch to check for proper params for user create
+        """
+        if request.method == 'POST':
+            details = self._meta.serializer.deserialize(request.body)
+            # BadRequest if asked to create a role admin w/is_admin false.
+            # is_admin takes priority over role
+            if details.get('is_admin', False) and details.get('role', None) and details.get('role') != 'Admin':
+                raise BadRequest("An admin can have only one role : Admin")
+
+        return super(WebUserResource, self).dispatch(request_type, request, **kwargs)
+
     def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_detail'):
         if isinstance(bundle_or_obj, Bundle):
             domain = bundle_or_obj.request.domain
@@ -257,6 +282,9 @@ class WebUserResource(v0_1.WebUserResource):
             )
             del bundle.data['password']
             self._update(bundle)
+            # is_admin takes priority over role
+            if not bundle.obj.is_admin and bundle.data.get('role'):
+                _set_role_for_bundle(kwargs, bundle)
             bundle.obj.save()
         except Exception:
             bundle.obj.delete()
