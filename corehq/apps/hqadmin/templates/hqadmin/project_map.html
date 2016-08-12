@@ -99,7 +99,11 @@
     </div>
     <div class="filter-wrapper wrapper">
       <h4 class="text-hq-nav-header">{{ facet_report.facet_title }}</h4>
-      {% include 'appstore/partials/sidebar.html' with search_name="es_search" search_for=facet_report.search_for %}
+      <div class="btn-group btn-toggle text-hq-nav-header">
+        <button class="btn btn-default" id="users">Users</button>
+        <button class="btn btn-primary active" id="projects">Projects</button>
+      </div>
+        {% include 'appstore/partials/sidebar.html' with search_name="es_search" search_for=facet_report.search_for %}
     </div>
   </div>
   <script type="application/javascript">

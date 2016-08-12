@@ -247,6 +247,7 @@ HQ_APPS = (
     'corehq.apps.smsbillables',
     'corehq.apps.accounting',
     'corehq.apps.appstore',
+    'corehq.apps.preview_app',
     'corehq.apps.data_analytics',
     'corehq.apps.domain',
     'corehq.apps.domainsync',
@@ -746,7 +747,7 @@ ANALYTICS_CONFIG = {
     "HQ_INSTANCE": '',  # e.g. "www" or "staging"
 }
 
-MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiY3p1ZSIsImEiOiJjaWgwa3U5OXIwMGk3a3JrcjF4cjYwdGd2In0.8Tys94ISZlY-h5Y4W160RA'
+MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiZGltYWdpIiwiYSI6ImpZWWQ4dkUifQ.3FNy5rVvLolWLycXPxKVEA'
 
 OPEN_EXCHANGE_RATES_API_ID = ''
 

@@ -18,6 +18,9 @@ var projectMapInit = function(mapboxAccessToken) {
         // { countryName : { projectName : { propertyName: propertyValue } } }
         var projectsByCountryThenName = {};
         var maxNumProjects = 0;
+        var projects_per_country = {};
+        var users_per_country = {};
+        var is_project_count_map = true;
 
         that.refreshProjectData = function (filter, callback) {
             $.ajax({
@@ -54,6 +57,8 @@ var projectMapInit = function(mapboxAccessToken) {
                 });
 
                 projectsByCountryThenName = tempProjects;
+                projects_per_country = data.country_projs_count;
+                users_per_country = data.users_per_country;
 
                 maxNumProjects = Object.keys(projectsByCountryThenName).reduce(function(prev, countryName) {
                     return Math.max(prev, Object.keys(projectsByCountryThenName[countryName]).length);
@@ -65,9 +70,22 @@ var projectMapInit = function(mapboxAccessToken) {
             });
         };
 
-        that.getNumProjects = function (countryName) {
-            countryName = countryName.toLowerCase();
-            return Object.keys(projectsByCountryThenName[countryName] || {}).length;
+        that.getCount = function (countryName) {
+            countryName = countryName.toUpperCase();
+            if (is_project_count_map) {
+                return projects_per_country[countryName] || 0;
+            } else {
+                return users_per_country[countryName] || 0;
+            }
+        };
+
+        that.getNumUsers = function (countryName) {
+            countryName = countryName.toUpperCase();
+            return users_per_country[countryName] || 0;
+        };
+
+        that.toggleMap = function () {
+            is_project_count_map = !is_project_count_map;
         };
 
         that.getMaxNumProjects = function () {
@@ -145,10 +163,10 @@ var projectMapInit = function(mapboxAccessToken) {
     var countriesGeo;
     // A lot of the styling work here is modeled after http://leafletjs.com/examples/choropleth.html
     var map = L.map('map').setView([0, 0], 3);
-    var mapId = 'mapbox.dark';
+    var mapId = 'dimagi/cirqobc2w0000g4ksj9dochrm';
 
     // copied from dimagisphere
-    L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+    L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/256/{z}/{x}/{y}?access_token={accessToken}', {
         maxZoom: 6,
         minZoom: 2,
         id: mapId,
@@ -166,7 +184,7 @@ var projectMapInit = function(mapboxAccessToken) {
     });
 
     function getColor(featureId) {
-        var count = dataController.getNumProjects(featureId);
+        var count = dataController.getCount(featureId);
         if (!count) {
             return COUNTRY_COLORS[0];
         }
@@ -177,7 +195,7 @@ var projectMapInit = function(mapboxAccessToken) {
     }
 
     function getOpacity(featureId) {
-        if (dataController.getNumProjects(featureId)) {
+        if (dataController.getCount(featureId)) {
             return 0.9;
         } else {
             return 0;
@@ -239,7 +257,7 @@ var projectMapInit = function(mapboxAccessToken) {
     // method that we will use to update the control based on feature properties passed in
     info.update = function (props) {
         function _getInfoContent(countryName) {
-            var projectCount = dataController.getNumProjects(countryName);
+            var projectCount = dataController.getCount(countryName);
             var message = projectCount ? projectCount + ' projects' : 'no projects';
             return '<b>' + countryName + '</b>: ' + message;
         }
@@ -317,4 +335,13 @@ var projectMapInit = function(mapboxAccessToken) {
             }
         });
     });
+
+    $('.btn-toggle').click(function() {
+        dataController.toggleMap();
+        dataController.refreshProjectData();
+        $(this).find('.btn').toggleClass('btn-primary');
+        $(this).find('.btn').toggleClass('btn-default');
+    });
+
+
 };

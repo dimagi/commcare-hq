@@ -869,3 +869,10 @@ CUSTOM_CALENDAR_FIXTURE = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
 )
+
+PREVIEW_APP = StaticToggle(
+    'preview_app',
+    'Preview an application in the app builder',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)

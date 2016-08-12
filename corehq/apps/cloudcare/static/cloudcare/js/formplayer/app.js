@@ -80,8 +80,20 @@ $(document).bind("ajaxStart", function () {
     tfLoadingComplete();
 });
 
-FormplayerFrontend.reqres.setHandler('error', function (errorMessage) {
+FormplayerFrontend.reqres.setHandler('showError', function (errorMessage) {
     showError(errorMessage, $("#cloudcare-notifications"), 10000);
+});
+
+FormplayerFrontend.reqres.setHandler('showSuccess', function(successMessage) {
+    showSuccess(successMessage, $("#cloudcare-notifications"), 10000);
+});
+
+FormplayerFrontend.reqres.setHandler('handleNotification', function(notification) {
+    if(notification.error){
+        FormplayerFrontend.request('showError', notification.message);
+    } else{
+        FormplayerFrontend.request('showSuccess', notification.message);
+    }
 });
 
 FormplayerFrontend.reqres.setHandler('startForm', function (data) {
@@ -132,7 +144,11 @@ FormplayerFrontend.on("start", function (options) {
         Backbone.history.start();
         // will be the same for every domain. TODO: get domain/username/pass from django
         if (this.getCurrentRoute() === "") {
-            FormplayerFrontend.trigger("apps:list", options.apps);
+            if (options.previewMode) {
+                FormplayerFrontend.trigger("app:preview", options.apps[0]['_id']);
+            } else {
+                FormplayerFrontend.trigger("apps:list", options.apps);
+            }
         }
     }
 });

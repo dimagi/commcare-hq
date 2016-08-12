@@ -13,7 +13,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 
 from corehq.apps.userreports.reports.builder.columns import \
-    QuestionColumnOption, ColumnOption, CountColumn
+    QuestionColumnOption, ColumnOption, CountColumn, MultiselectQuestionColumnOption
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
@@ -46,7 +46,7 @@ from corehq.apps.userreports.reports.builder import (
     make_form_question_indicator,
     make_owner_name_indicator,
     get_filter_format_from_question_type,
-    make_user_name_indicator)
+    make_user_name_indicator, make_multiselect_question_indicator)
 from corehq.apps.userreports.exceptions import BadBuilderConfigError
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
@@ -201,7 +201,64 @@ class DataSourceBuilder(object):
         if self.source_type == "form":
             return make_form_data_source_filter(self.source_xform.data_node.tag_xmlns)
 
-    def indicators(self, number_columns=None):
+    def base_item_expression(self, is_multiselect_chart_report, multiselect_field=None):
+        """
+        Return the base_item_expression for the DataSourceConfiguration.
+        Normally this is {}, but if this is a data source for a chart report that is aggregated by a multiselect
+        question, then we want one row per multiselect answer.
+        :param is_multiselect_chart_report: True if the data source will be used for a chart report aggregated by
+            a multiselect question.
+        :param multiselect_field: The field that the multiselect aggregated report is aggregated by.
+        :return: A base item expression.
+        """
+        if not is_multiselect_chart_report:
+            return {}
+        else:
+            assert multiselect_field, "multiselect_field is required if is_multiselect_chart_report is True"
+
+            property = self.data_source_properties[multiselect_field]
+            path = ['form'] + property.source['value'].split('/')[2:]
+            choices = [c['value'] for c in property.source['options']]
+
+            def sub_doc(path):
+                if not path:
+                    return {"type": "property_name", "property_name": "choice"}
+                else:
+                    return {
+                        "type": "dict",
+                        "properties": {
+                            path[0]: sub_doc(path[1:])
+                        }
+                    }
+
+            return {
+                "type": "map_items",
+                "items_expression": {
+                    "type": "iterator",
+                    "expressions": [
+                        {
+                            "type": "dict",
+                            "properties": {
+                                "choice": c,
+                                "doc": {"type": "identity"}
+                            }
+                        }
+                        for c in choices
+                    ],
+                    "test": {
+                        "type": "boolean_expression",
+                        "expression": {
+                            "type": "property_path",
+                            "property_path": ["doc"] + path
+                        },
+                        "operator": "in_multi",
+                        "property_value": {"type": "property_name", "property_name": "choice"}
+                    }
+                },
+                "map_expression": sub_doc(path)
+            }
+
+    def indicators(self, number_columns=None, is_multiselect_chart_report=False):
         """
         Return all the dict data source indicator configurations that could be
         used by a report that uses the same case type/form as this DataSourceConfiguration.
@@ -210,16 +267,22 @@ class DataSourceBuilder(object):
         for prop in self.data_source_properties.values():
             if prop.type == 'meta':
                 ret.append(make_form_meta_block_indicator(
-                    prop.source, prop.column_id
+                    prop.source, prop.column_id, root_doc=is_multiselect_chart_report
                 ))
             elif prop.type == "question":
-                indicator = make_form_question_indicator(
-                    prop.source, prop.column_id
-                )
-                if prop.source['type'] == "DataBindOnly" and number_columns:
-                    if indicator['column_id'] in number_columns:
-                        indicator['datatype'] = 'decimal'
-                ret.append(indicator)
+                if prop.source['type'] == "MSelect":
+                    # For filters and aggregation:
+                    ret.append(make_form_question_indicator(prop.source, prop.column_id))
+                    # For column display:
+                    ret.append(make_multiselect_question_indicator(prop.source, prop.column_id))
+                else:
+                    indicator = make_form_question_indicator(
+                        prop.source, prop.column_id, root_doc=is_multiselect_chart_report
+                    )
+                    if prop.source['type'] == "DataBindOnly" and number_columns:
+                        if indicator['column_id'] in number_columns:
+                            indicator['datatype'] = 'decimal'
+                    ret.append(indicator)
             elif prop.type == 'case_property' and prop.source == 'computed/owner_name':
                 ret.append(make_owner_name_indicator(prop.column_id))
             elif prop.type == 'case_property' and prop.source == 'computed/user_name':
@@ -388,7 +451,6 @@ class DataSourceBuilder(object):
             return u"{} (v{})".format(self.source_form.default_name(), self.app.version)
         if self.source_type == 'case':
             return u"{} (v{})".format(self.source_id, self.app.version)
-
 
 
 def _legend(title, subtext):
@@ -614,7 +676,10 @@ class ConfigureNewReportBase(forms.Form):
         options = OrderedDict()
         for id_, prop in self.data_source_properties.iteritems():
             if prop.type == "question":
-                option = QuestionColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric, prop.source)
+                if prop.source['type'] == "MSelect":
+                    option = MultiselectQuestionColumnOption(id_, prop.text, prop.column_id, prop.source)
+                else:
+                    option = QuestionColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric, prop.source)
             else:
                 # meta properties
                 option = ColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric)
@@ -653,11 +718,18 @@ class ConfigureNewReportBase(forms.Form):
         )
 
     def _get_data_source_configuration_kwargs(self):
+        if self._is_multiselect_chart_report:
+            base_item_expression = self.ds_builder.base_item_expression(True, self.aggregation_field)
+        else:
+            base_item_expression = self.ds_builder.base_item_expression(False)
         return dict(
             display_name=self.ds_builder.data_source_name,
             referenced_doc_type=self.ds_builder.source_doc_type,
             configured_filter=self.ds_builder.filter,
-            configured_indicators=self.ds_builder.indicators(self._number_columns),
+            configured_indicators=self.ds_builder.indicators(
+                self._number_columns, self._is_multiselect_chart_report
+            ),
+            base_item_expression=base_item_expression,
             meta=DataSourceMeta(build=DataSourceBuildInformation(
                 source_id=self.report_source_id,
                 app_id=self.app._id,
@@ -837,6 +909,19 @@ class ConfigureNewReportBase(forms.Form):
         """
         return indicator_id in self._properties_by_column
 
+    def _get_multiselect_indicator_id(self, column_field, indicators):
+        """
+        If this column_field corresponds to a multiselect data source indicator, then return the id of the
+        indicator. Otherwise return None.
+        :param column_field: The "field" property of a report column
+        :return: a data source indicator id
+        """
+        indicator_id = "_".join(column_field.split("_")[:-1])
+        for indicator in indicators:
+            if indicator['column_id'] == indicator_id and indicator['type'] == 'choice_list':
+                return indicator_id
+        return None
+
     @property
     def _report_aggregation_cols(self):
         return ['doc_id']
@@ -849,6 +934,10 @@ class ConfigureNewReportBase(forms.Form):
     @memoized
     def _number_columns(self):
         return [col["field"] for col in self._report_columns if col.get("aggregation", None) in ["avg", "sum"]]
+
+    @property
+    def _is_multiselect_chart_report(self):
+        return False
 
     @property
     def _report_filters(self):
@@ -993,6 +1082,16 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
     def _group_by_choices(self):
         return [(p.id, p.text) for p in self.data_source_properties.values()]
 
+    @property
+    @memoized
+    def _is_multiselect_chart_report(self):
+        """
+        Return True if this is a chart report aggregated by a multiselect question.
+        The data sources for these sorts of reports are handled differently than other reports.
+        """
+        agg_property = self.data_source_properties[self.aggregation_field]
+        return agg_property.type == "question" and agg_property.source['type'] == "MSelect"
+
 
 class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
     group_by = forms.ChoiceField(label=_("Pie Chart Segments"))
@@ -1075,16 +1174,32 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 'sum': 'Sum',
                 'expand': 'Count per Choice'
             }
+            added_multiselect_columns = set()
             cols = []
             for c in self.existing_report.columns:
-                exists = self._column_exists(c['field'])
+                mselect_indicator_id = self._get_multiselect_indicator_id(
+                    c['field'], self.existing_report.config.configured_indicators
+                )
+                indicator_id = mselect_indicator_id or c['field']
+                display = c['display']
+                exists = self._column_exists(indicator_id)
+
+                if mselect_indicator_id:
+                    if mselect_indicator_id not in added_multiselect_columns:
+                        added_multiselect_columns.add(mselect_indicator_id)
+                        display = MultiselectQuestionColumnOption.LABEL_DIVIDER.join(
+                            display.split(MultiselectQuestionColumnOption.LABEL_DIVIDER)[:-1]
+                        )
+                    else:
+                        continue
+
                 cols.append(
                     ColumnViewModel(
-                        display_text=c['display'],
+                        display_text=display,
                         exists_in_current_version=exists,
-                        property=self._get_column_option_by_indicator_id(c['field']).id if exists else None,
-                        data_source_field=c['field'] if not exists else None,
-                        calculation=reverse_agg_map.get(c.get('aggregation'), _('Count per Choice'))
+                        property=self._get_column_option_by_indicator_id(indicator_id).id if exists else None,
+                        data_source_field=indicator_id if not exists else None,
+                        calculation=reverse_agg_map.get(c.get('aggregation'), 'Count per Choice')
                     )
                 )
             return cols
@@ -1098,11 +1213,12 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 
     @property
     def _report_columns(self):
-        return [
-            self.report_column_options[conf['property']].to_column_dict(
-                i, conf['display_text'], "simple"
-            ) for i, conf in enumerate(self.cleaned_data['columns'])
-        ]
+        columns = []
+        for i, conf in enumerate(self.cleaned_data['columns']):
+            columns.extend(
+                self.report_column_options[conf['property']].to_column_dicts(i, conf['display_text'], "simple")
+            )
+        return columns
 
     @property
     def _report_aggregation_cols(self):
@@ -1135,6 +1251,10 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
         return []
 
     @property
+    def _is_multiselect_chart_report(self):
+        return False
+
+    @property
     @memoized
     def report_column_options(self):
         options = super(ConfigureTableReportForm, self).report_column_options
@@ -1147,21 +1267,25 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
         agg_field_id = self.data_source_properties[self.aggregation_field].column_id
         agg_field_text = self.data_source_properties[self.aggregation_field].text
 
-        columns = [
-            self.report_column_options[conf['property']].to_column_dict(
-                i, conf['display_text'], conf['calculation']
+        columns = []
+        for i, conf in enumerate(self.cleaned_data['columns']):
+            columns.extend(
+                self.report_column_options[conf['property']].to_column_dicts(
+                    i,
+                    conf['display_text'],
+                    conf['calculation'],
+                    is_aggregated_on=conf["property"] == self.aggregation_field
+                )
             )
-            for i, conf in enumerate(self.cleaned_data['columns'])
-        ]
 
         # Add the aggregation indicator to the columns if it's not already present.
-        displaying_agg_column = bool([c for c in columns if c['field'] == agg_field_id])
+        displaying_agg_column = any(
+            c for c in self.cleaned_data['columns'] if c['property'] == self.aggregation_field
+        )
         if not displaying_agg_column:
-            columns = [
-                self._get_column_option_by_indicator_id(agg_field_id).to_column_dict(
-                    "agg", agg_field_text, 'simple'
-                )
-            ] + columns
+            columns = self._get_column_option_by_indicator_id(agg_field_id).to_column_dicts(
+                "agg", agg_field_text, 'simple', is_aggregated_on=True
+            ) + columns
         else:
             # Don't expand the aggregation column
             for c in columns:

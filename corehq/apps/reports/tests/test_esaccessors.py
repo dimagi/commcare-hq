@@ -1036,6 +1036,8 @@ class TestCaseESAccessorsSQL(TestCaseESAccessors):
         )
 
         case.track_create(CaseTransaction(
+            type=CaseTransaction.TYPE_FORM,
+            form_id=uuid.uuid4().hex,
             case=case,
             server_date=opened_on,
         ))

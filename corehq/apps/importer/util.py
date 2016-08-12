@@ -241,6 +241,13 @@ def convert_custom_fields_to_struct(config):
                     field_map[field]['field_name'] = EXTERNAL_ID
                 else:
                     field_map[field]['field_name'] = custom_fields[i]
+    # hack: make sure the external_id column ends up in the field_map if the user
+    # didn't explicitly put it there
+    if config.search_column not in field_map and config.search_field == EXTERNAL_ID:
+        field_map[config.search_column] = {
+            'type_field': 'plain',
+            'field_name': EXTERNAL_ID
+        }
     return field_map
 
 
@@ -413,7 +420,7 @@ def populate_updated_fields(config, columns, row, datemode):
                 update_value = row[value_column_index]
             else:
                 update_value = row[columns.index(key)]
-        except:
+        except Exception:
             continue
 
         if 'field_name' in field_map[key]:

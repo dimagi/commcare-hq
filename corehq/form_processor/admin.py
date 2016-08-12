@@ -22,6 +22,6 @@ class CommCareCaseSQLAdmin(admin.ModelAdmin):
 @admin.register(LedgerValue)
 class LedgerValueAdmin(admin.ModelAdmin):
     date_hierarchy = 'last_modified'
-    list_display = ('domain', 'section_id', 'case_id', 'entry_id', 'balance', 'last_modified')
+    list_display = ('domain', 'section_id', 'case', 'entry_id', 'balance', 'last_modified')
     list_filter = ('domain', 'section_id', 'last_modified')
     ordering = ('last_modified',)
