@@ -32,6 +32,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             var steps = urlObject.steps;
             var page = urlObject.page;
             var search = urlObject.search;
+            var queryDict = urlObject.queryDict;
             var previewMode = urlObject.previewMode;
             SessionNavigate.MenuList.Controller.selectMenu(
                 appId,
@@ -39,6 +40,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
                 steps,
                 page,
                 search,
+                queryDict,
                 previewMode
             );
         },
@@ -121,6 +123,12 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         API.listMenus();
     });
 
+    FormplayerFrontend.on("menu:query", function (queryDict) {
+        var urlObject = Util.currentUrlToObject();
+        urlObject.setQuery(queryDict);
+        Util.setUrlToObject(urlObject);
+        API.listMenus();
+    });
 
     FormplayerFrontend.on("menu:show:detail", function (model, index) {
         API.showDetail(model, index);
