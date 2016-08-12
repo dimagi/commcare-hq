@@ -15,11 +15,9 @@ from django.core.urlresolvers import reverse
 
 from tastypie import fields
 from tastypie.bundle import Bundle
-from corehq.apps.api.resources.v0_1 import (
-    RequirePermissionAuthentication,
-    AdminAuthentication,
-    CustomResourceMeta,
-)
+
+from corehq.apps.api.resources.auth import RequirePermissionAuthentication, AdminAuthentication
+from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
@@ -79,7 +77,7 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
             user['id'] = user.pop('_id')
         return namedtuple('user', user.keys())(**user)
 
-    class Meta(v0_1.CustomResourceMeta):
+    class Meta(CustomResourceMeta):
         authentication = RequirePermissionAuthentication(Permissions.edit_commcare_users)
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
