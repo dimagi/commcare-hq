@@ -24,6 +24,8 @@ from dimagi.ext.couchdbkit import StringProperty
 def _coerce_to_datetime(v):
     if isinstance(v, date):
         return datetime.combine(v, datetime.min.time())
+    else:
+        return v
 
 
 PROPERTY_TYPE_MAPPING = {
@@ -292,7 +294,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
         Note that all unexpected attributes are ignored (thrown away)
         """
         for k, v in create_action.updated_known_properties.items():
-            setattr(self.case, k, v)
+            setattr(self.case, k, _convert_type(k, v))
 
         if not self.case.opened_on:
             self.case.opened_on = create_action.date
