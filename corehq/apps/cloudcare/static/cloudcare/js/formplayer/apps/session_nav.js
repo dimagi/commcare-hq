@@ -85,7 +85,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     });
 
     FormplayerFrontend.on("apps:list", function () {
-        FormplayerFrontend.navigate("/");
+        FormplayerFrontend.navigate("apps");
         API.listApps();
     });
 
