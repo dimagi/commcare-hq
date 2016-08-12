@@ -223,7 +223,7 @@ class ESCase(DictObject, CaseToXMLMixin):
         return {
             index.identifier: case_to_es_case(accessor.get_case(index.case_id))
             for index in self._reverse_indices
-            }
+        }
 
     @property
     def parent_cases(self):
@@ -232,7 +232,7 @@ class ESCase(DictObject, CaseToXMLMixin):
         return {
             index['identifier']: case_to_es_case(accessor.get_case(index['referenced_id']))
             for index in self.indices
-            }
+        }
 
     @property
     def xforms_by_name(self):
