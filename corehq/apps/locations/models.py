@@ -231,6 +231,8 @@ class LocationType(models.Model):
     @classmethod
     def bulk_update(cls, objects):
         # 'objects' is a list of existing LocationType objects to be updated
+        # Note: this is tightly coupled with .bulk_management.NewLocationImporter.bulk_commit()
+        #       so it can't be used on its own
         cls._pre_bulk_save(objects)
         now = datetime.utcnow()
         for o in objects:
@@ -369,25 +371,6 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         couch_obj.latitude = float(self.latitude) if self.latitude else None
         couch_obj.longitude = float(self.longitude) if self.longitude else None
         self._migration_sync_to_couch(couch_obj)
-
-    @classmethod
-    def bulk_create(cls, objects):
-        # we can't do real bulk saves, beucase mptt doesn't support that yet
-        for o in objects:
-            o.save()
-        return objects
-
-    @classmethod
-    def bulk_update(cls, objects):
-        now = datetime.utcnow()
-        for o in objects:
-            o.last_modified = now
-            o.save()
-
-    @classmethod
-    def bulk_delete(cls, objects):
-        for o in objects:
-            o.delete()
 
     @transaction.atomic()
     def save(self, *args, **kwargs):

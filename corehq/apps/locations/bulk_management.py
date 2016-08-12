@@ -15,7 +15,6 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
-from .tasks import sync_supply_points
 from .tree_utils import BadParentError, CycleError, assert_no_cycles, expansion_validators
 from .const import LOCATION_SHEET_HEADERS, LOCATION_TYPE_SHEET_HEADERS, ROOT_LOCATION_TYPE
 
@@ -698,64 +697,39 @@ def save_types(type_stubs):
     return all_objs_by_code
 
 
-def save_locations(location_stubs, type_objects):
-    # Given list of LocationStub items and LocationType objects, uupdates/saves the list
-    # of locationsas SQLLocation objects
-    #
-    # args:
-    #   location_stubs (list): List of LocationStub items with meta data attributes and
-    #        `needs_save`, 'is_new', 'db_object' set correctly.
-    #   type_objects (dict): A dict of LocationType.code: LocationType object mapping.
-    #       This is used to set loc.location_type
-    #
-    # This proceeds in four steps
-    # 1. Lookup all to be deleted locations and `bulk_delete` them
-    # 2. Lookup all new locations and `bulk_create` them, but don't set loc.parent yet (ForeignKey attr)
-    # 3. Lookup all objects to be updated, set loc.parent to None for all these and `bulk_update`
-    # 4. For new and to-be-updated objects, set correct loc.parent and do another `bulk_update`
-    # Doing 3 and 4 seperately lets us avoid mptt.InvalidMove errors
+def save_locations(location_stubs, types_by_code):
+    """
+    args:
+        location_stubs (list): List of LocationStub objects with attributes like
+            'db_object', 'needs_save', 'do_delete' set
+        types_by_code (dict): Mapping of 'code' to LocationType SQL objects
 
-    to_be_deleted_locations = [l.db_object for l in location_stubs if l.do_delete]
-    SQLLocation.bulk_delete(to_be_deleted_locations)
+    This recursively saves tree top to bottom. Note that the bulk updates are not possible
+    as the mptt.Model (inherited by SQLLocation) doesn't support bulk creation
+    """
+    location_stubs_by_parent_code = defaultdict(list)
+    for l in location_stubs:
+        location_stubs_by_parent_code[l.parent_code].append(l)
 
-    new_objects = []
-    to_be_updated_objects = []
-    # find locations that are new and that are updated
-    for loc in location_stubs:
-        if not loc.do_delete:
-            obj = loc.db_object
-            obj.location_type = type_objects[loc.location_type]
-            if loc.is_new:
-                new_objects.append(obj)
-            if not loc.is_new and loc.needs_save:
-                # Reset parents to None to avoid "InvalidMove" error.
-                #   Explanation: Consider reversing the tree a->b->c to c->b->a.
-                #   In the initial state a has b as parent. When updating a.parent to b, it will throw
-                #   an InvalidMove error, because b's parent is still a, resulting in a midway
-                #   cycle error. The cycle is detected since SQLLocation.parent is a mptt.TreeForeignKey
-                #   To get around this we do two updates. In 1st update we set all parents to None,
-                #   in the 2nd update set correct parents.
-                obj.parent = None
-                to_be_updated_objects.append(obj)
+    def update_children(parent_stub):
+        if parent_stub == ROOT_LOCATION_TYPE:
+            parent_code = ROOT_LOCATION_TYPE
+            parent_location = None
+        else:
+            parent_code = parent_stub.site_code
+            parent_location = parent_stub.db_object
 
-    # create new_objects without parent refs
-    new_objects = SQLLocation.bulk_create(new_objects)
-    # update objects with parents set to None
-    SQLLocation.bulk_update(to_be_updated_objects)
+        child_stubs = location_stubs_by_parent_code[parent_code]
 
-    location_objects_by_site_code = {l.site_code: l for l in new_objects + to_be_updated_objects}
-    location_objects_by_site_code.update({
-        l.site_code: l.db_object
-        for l in location_stubs
-        if not l.needs_save
-    })
-    to_bulk_update = []
-    for loc in location_stubs:
-        if (loc.needs_save or loc.is_new) and not loc.do_delete:
-            obj = location_objects_by_site_code[loc.site_code]
-            if loc.parent_code != ROOT_LOCATION_TYPE:
-                obj.parent = location_objects_by_site_code[loc.parent_code]
-            to_bulk_update.append(obj)
+        for child_stub in child_stubs:
+            lt = types_by_code.get(child_stub.location_type)
+            child = child_stub.db_object
+            child.parent = parent_location
+            if child_stub.do_delete:
+                child.delete()
+            elif child_stub.needs_save:
+                child.location_type = lt
+                child.save()
+            update_children(child_stub)
 
-    # set parent refs to all new-objects and to-be-updated objects
-    SQLLocation.bulk_update(to_bulk_update)
+    update_children(ROOT_LOCATION_TYPE)

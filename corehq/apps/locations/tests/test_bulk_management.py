@@ -3,7 +3,7 @@ from collections import namedtuple
 from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.locations.models import Location, LocationType
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.locations.tree_utils import TreeError, assert_no_cycles, expansion_validators
 from corehq.apps.locations.bulk_management import (
     NewLocationImporter,
@@ -397,7 +397,7 @@ class TestBulkManagement(TestCase):
         def _make_loc(name, site_code, location_type, _parent_code, _,
                       _delete, external_id, latitude, longitude, _i, parent=None):
             _type = lt_by_code.get(location_type)
-            loc = Location(
+            loc = SQLLocation(
                 site_code=site_code, name=name, domain=self.domain.name, location_type=_type,
                 parent=parent,
             )
@@ -457,6 +457,23 @@ class TestBulkManagement(TestCase):
 
         self.assertEqual(set(actual), expected_locations)
 
+    def assertCouchSync(self):
+        def assertLocationsEqual(loc1, loc2):
+            fields = ["domain", "name", "location_id", "location_type_name",
+                      "site_code", "external_id", "metadata", "is_archived"]
+            for field in fields:
+                msg = "The locations have different values for '{}'".format(field)
+                self.assertEqual(getattr(loc1, field), getattr(loc2, field), msg)
+
+            def get_parent(loc):
+                print loc, loc.parent, "the parents are"
+                return loc.parent.location_id if loc.parent else None
+            self.assertEqual(get_parent(loc1), get_parent(loc2))
+
+        collection = LocationCollection(self.domain)
+        for loc in collection.locations:
+            assertLocationsEqual(loc, loc.couch_location)
+
     def test_location_creation(self):
         result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
@@ -465,6 +482,7 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
+        self.assertCouchSync()
 
     def test_move_county21_to_state1(self):
         lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
@@ -495,6 +513,7 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(move_county21_to_state1))
+        self.assertCouchSync()
 
     def test_delete_city112(self):
         lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
@@ -520,6 +539,7 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(delete_city112))
+        self.assertCouchSync()
 
     def test_invalid_tree(self):
         # Invalid location upload should not pass or affect existing location structure
@@ -547,6 +567,7 @@ class TestBulkManagement(TestCase):
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         # Since there were errors, the location tree should be as it was
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
+        self.assertCouchSync()
 
     def test_edit_by_location_id(self):
         # Locations can be referred by location_id and empty site_code
@@ -575,6 +596,7 @@ class TestBulkManagement(TestCase):
             ('s1', None), ('s2', None), ('county11', 's1'), ('county21', 's1'),
             ('city111', 'county11'), ('city112', 'county11'), ('city211', 'county21')
         ]))
+        self.assertCouchSync()
 
     def test_edit_by_sitecode(self):
         # Locations can be referred by site_code and empty location_id
@@ -600,6 +622,7 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(move_county21_to_state1))
+        self.assertCouchSync()
 
     def test_delete_city_type_valid(self):
         # delete a location type and locations of that type
@@ -630,6 +653,7 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(delete_city_types)
         self.assertLocationsMatch(self.as_pairs(delete_cities_locations))
+        self.assertCouchSync()
 
     def test_delete_city_type_invalid(self):
         # delete a location type but don't delete locations of that type.
@@ -651,13 +675,14 @@ class TestBulkManagement(TestCase):
         self.assertNotEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
+        self.assertCouchSync()
 
     def test_edit_names(self):
         # metadata attributes like 'name' can be updated
         lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
         locations_by_code = self.create_locations(self.basic_tree, lt_by_code)
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
-
+        self.assertCouchSync()
         _loc_id = lambda x: locations_by_code[x].location_id
         change_names = [
             # (name, site_code, location_type, parent_code, location_id,
@@ -684,6 +709,7 @@ class TestBulkManagement(TestCase):
             ('State 1', None), ('State 2', None), ('County 11', 's1'), ('County 21', 's2'),
             ('City 111', 'county11'), ('City 112', 'county11'), ('City 211', 'county21')
         ]), check_attr='name')
+        self.assertCouchSync()
 
     def test_edit_expansions(self):
         # 'expand_from', 'expand_to' can be updated
@@ -705,6 +731,7 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(edit_expansions)
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
+        self.assertCouchSync()
 
     def test_rearrange_locations(self):
         # a total rearrangement like reversing the tree can be done
@@ -738,23 +765,4 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(reverse_order)
         self.assertLocationsMatch(self.as_pairs(edit_types_of_locations))
-
-    def test_couch_sync(self):
-        def assertLocationsEqual(loc1, loc2):
-            fields = ["domain", "name", "location_id", "location_type_name",
-                      "site_code", "external_id", "metadata", "is_archived"]
-            for field in fields:
-                msg = "The locations have different values for '{}'".format(field)
-                self.assertEqual(getattr(loc1, field), getattr(loc2, field), msg)
-
-            def get_parent(loc):
-                return loc.parent.location_id if loc.parent else None
-            self.assertEqual(get_parent(loc1), get_parent(loc2))
-
-        self.bulk_update_locations(
-            FLAT_LOCATION_TYPES,
-            self.basic_tree
-        )
-        collection = LocationCollection(self.domain)
-        for loc in collection.locations:
-            assertLocationsEqual(loc, loc.couch_location)
+        self.assertCouchSync()
