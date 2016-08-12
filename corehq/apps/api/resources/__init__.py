@@ -14,13 +14,13 @@ from corehq.apps.api.util import get_obj
 class dict_object(object):
 
     def __init__(self, dict):
-        self.dict = dict
+        self._data = dict
 
     def __getattr__(self, item):
-        return self.dict[item]
+        return self._data[item]
 
     def __repr__(self):
-        return 'dict_object(%r)' % self.dict
+        return 'dict_object(%r)' % self._data
 
 
 def build_content_type(format, encoding='utf-8'):
