@@ -21,7 +21,11 @@ from custom.enikshay.integrations.ninetyninedots.utils import (
 @require_POST
 @csrf_exempt
 def update_patient_adherence(request, domain):
-    request_json = json.loads(request.body)
+    try:
+        request_json = json.loads(request.body)
+    except ValueError:
+        return json_response({"error": "Malformed JSON"}, status_code=400)
+
     beneficiary_id = request_json.get('beneficiary_id')
     adherence_values = request_json.get('adherences')
 
@@ -40,7 +44,10 @@ def update_patient_adherence(request, domain):
 @require_POST
 @csrf_exempt
 def update_adherence_confidence(request, domain):
-    request_json = json.loads(request.body)
+    try:
+        request_json = json.loads(request.body)
+    except ValueError:
+        return json_response({"error": "Malformed JSON"}, status_code=400)
     beneficiary_id = request_json.get('beneficiary_id')
     start_date = request_json.get('start_date')
     end_date = request_json.get('end_date')
@@ -68,9 +75,14 @@ def update_adherence_confidence(request, domain):
 @require_POST
 @csrf_exempt
 def update_default_confidence(request, domain):
-    request_json = json.loads(request.body)
+    try:
+        request_json = json.loads(request.body)
+    except ValueError:
+        return json_response({"error": "Malformed JSON"}, status_code=400)
+
     beneficiary_id = request_json.get('beneficiary_id')
     confidence_level = request_json.get('confidence_level')
+
     try:
         validate_beneficiary_id(beneficiary_id)
         validate_confidence_level(confidence_level)
