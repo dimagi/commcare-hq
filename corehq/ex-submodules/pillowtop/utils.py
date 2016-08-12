@@ -161,31 +161,33 @@ class ErrorCollector(object):
 
 def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=None):
     doc_transform = doc_transform or (lambda x: x)
+    payload = []
     for change in changes:
         if change.deleted and change.id:
-            yield {
+            payload.append({
                 "delete": {
                     "_index": index_info.index,
                     "_type": index_info.type,
                     "_id": change.id
                 }
-            }
+            })
         elif not change.deleted:
             try:
                 doc = change.get_document()
                 doc = doc_transform(doc)
-                yield {
+                payload.append({
                     "index": {
                         "_index": index_info.index,
                         "_type": index_info.type,
                         "_id": doc['_id']
                     }
-                }
-                yield doc
+                })
+                payload.append(doc)
             except Exception as e:
                 if not error_collector:
                     raise
                 error_collector.add_error(ChangeError(change, e))
+    return payload
 
 
 def prepare_bulk_payloads(bulk_changes, max_size, chunk_size=100):

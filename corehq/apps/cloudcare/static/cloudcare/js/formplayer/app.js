@@ -44,9 +44,12 @@ FormplayerFrontend.reqres.setHandler('resourceMap', function (resource_path, app
     var currentApp = FormplayerFrontend.request("appselect:getApp", app_id);
     if (resource_path.substring(0, 7) === 'http://') {
         return resource_path;
-    } else if (currentApp.attributes.hasOwnProperty("multimedia_map") &&
-        currentApp.attributes.multimedia_map.hasOwnProperty(resource_path)) {
-        var resource = currentApp.attributes.multimedia_map[resource_path];
+    } else if (!_.isEmpty(currentApp.get("multimedia_map"))) {
+        var resource = currentApp.get('multimedia_map')[resource_path];
+        if (!resource) {
+            console.warn('Unable to find resource ' + resource_path + 'in multimedia map');
+            return;
+        }
         var id = resource.multimedia_id;
         var media_type = resource.media_type;
         var name = _.last(resource_path.split('/'));

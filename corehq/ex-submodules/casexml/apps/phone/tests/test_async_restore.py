@@ -217,22 +217,6 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
         # http://manage.dimagi.com/default.asp?234245
         system_user_factory.create_case()
 
-
-class AsyncRestoreIntegrationParameters(BaseAsyncRestoreTest):
-    """When overwrite_cache is set, the async restore should always first return an
-    AsyncRestoreResponse as its first response
-
-    """
-    @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
-    def test_always_returns_async_restore_response(self, task):
-        delay = mock.MagicMock()
-        delay.id = 'random_task_id'
-        task.delay.return_value = delay
-
-        payload = self._restore_config(async=True, overwrite_cache=True).get_payload()
-        self.assertTrue(task.delay.called)
-        self.assertIsInstance(payload, AsyncRestoreResponse)
-
     @mock.patch.object(CachedPayload, 'finalize')  # fake that a cached payload exists
     @mock.patch.object(RestoreConfig, 'cache')
     @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')

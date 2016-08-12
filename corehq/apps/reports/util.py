@@ -84,7 +84,8 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
             return temp_user
         return None
 
-    user_ids = user_ids if user_ids and user_ids[0] else None
+    user_ids = user_ids or []
+    user_ids = filter(None, user_ids)  # remove empty strings if any
     if not CommCareUser:
         from corehq.apps.users.models import CommCareUser
 
@@ -93,7 +94,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         if not isinstance(group, Group):
             group = Group.get(group)
         users = group.get_users(is_active=(not include_inactive), only_commcare=True)
-    elif user_ids is not None:
+    elif user_ids:
         try:
             users = []
             for id in user_ids:

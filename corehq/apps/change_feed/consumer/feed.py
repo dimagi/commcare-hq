@@ -106,6 +106,12 @@ class KafkaChangeFeed(ChangeFeed):
         topic = self._get_single_topic_or_fail()
         return get_topic_offset(topic)
 
+    def get_checkpoint_value(self):
+        try:
+            return self.get_latest_change_id()
+        except ValueError:
+            return json.dumps(self.get_current_offsets())
+
     def _get_consumer(self, timeout, auto_offset_reset='smallest'):
         config = {
             'group_id': self._group_id,

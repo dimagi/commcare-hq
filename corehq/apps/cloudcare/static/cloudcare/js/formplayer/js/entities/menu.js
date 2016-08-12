@@ -104,6 +104,13 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 success: function (request) {
                     defer.resolve(request);
                 },
+                error: function (request) {
+                    FormplayerFrontend.request(
+                        'error',
+                        gettext('Unable to connect to form playing service')
+                    );
+                    defer.resolve(request);
+                },
             });
             return defer.promise();
         },

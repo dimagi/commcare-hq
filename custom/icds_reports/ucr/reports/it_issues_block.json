@@ -1,0 +1,138 @@
+{
+  "domains": [
+    "icds-test",
+    "icds-sql",
+    "icds-cas"
+  ],
+  "report_id": "static-it_issues_block",
+  "data_source_table": "static-tech_issue_cases",
+  "config": {
+    "title": "Issue Tracker - Issues (Block)",
+    "description": "",
+    "visible": false,
+    "aggregation_columns": [
+      "state_id",
+      "district_id",
+      "block_id"
+    ],
+    "filters": [
+      {
+        "compare_as_string": false,
+        "datatype": "date",
+        "required": false,
+        "display": "Date Opened",
+        "field": "opened_on",
+        "type": "date",
+        "slug": "opened_on"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "state_id",
+        "field": "state_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "display": "Filter by State"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "district_id",
+        "field": "district_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "display": "Filter by District"
+      }
+    ],
+    "columns": [
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "state_id",
+        "field": "state_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "State",
+          "hin": "State"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "district_id",
+        "field": "district_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "District",
+          "hin": "District"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "block_id",
+        "field": "block_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "Block",
+          "hin": "Block"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "open_count",
+        "field": "open_count",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "Open"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "resolved_count",
+        "field": "resolved_count",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "Resolved"
+      }
+    ],
+    "sort_expression": [],
+    "configured_charts": []
+  }
+}
