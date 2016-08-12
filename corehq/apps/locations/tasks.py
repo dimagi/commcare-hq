@@ -5,13 +5,13 @@ from corehq.apps.locations.models import SQLLocation
 
 @serial_task("{location_type.domain}-{location_type.pk}",
              default_retry_delay=30, max_retries=3)
-def sync_administrative_status(location_type, sync_to_couch=True):
+def sync_administrative_status(location_type):
     """Updates supply points of locations of this type"""
     for location in SQLLocation.objects.filter(location_type=location_type):
         # Saving the location should be sufficient for it to pick up the
         # new supply point.  We'll need to save it anyways to store the new
         # supply_point_id.
-        location.save(sync_to_couch=sync_to_couch)
+        location.save()
     if location_type.administrative:
         _hide_stock_states(location_type)
     else:
@@ -35,4 +35,4 @@ def _unhide_stock_states(location_type):
 def sync_supply_points(location_type):
     for location in SQLLocation.objects.filter(location_type=location_type):
         sync_supply_point(location)
-        location.save(sync_to_couch=False)
+        location.save()

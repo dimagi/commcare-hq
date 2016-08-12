@@ -382,7 +382,7 @@ class NewLocationImporter(object):
             if (not lt.do_delete and lt.needs_save):
                 obj = type_objects[lt.code]
                 if not lt.is_new:
-                    obj.sync_administrative_status(sync_to_couch=False)
+                    obj.sync_administrative_status()
                 else:
                     sync_supply_points.delay(obj)
 

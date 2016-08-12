@@ -177,10 +177,10 @@ class LocationType(models.Model):
 
         return saved
 
-    def sync_administrative_status(self, sync_to_couch=True):
+    def sync_administrative_status(self):
         from .tasks import sync_administrative_status
         if self._administrative_old != self.administrative:
-            sync_administrative_status.delay(self, sync_to_couch)
+            sync_administrative_status.delay(self)
             self._administrative_old = self.administrative
 
     def __unicode__(self):
