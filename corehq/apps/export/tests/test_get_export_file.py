@@ -27,7 +27,9 @@ from corehq.apps.export.models import (
     CaseExportInstance,
     PathNode,
     Option,
-    MAIN_TABLE
+    MAIN_TABLE,
+    StockItem,
+    StockFormExportColumn,
 )
 from corehq.apps.export.tests.util import (
     new_case,
@@ -160,6 +162,107 @@ class WriterTest(SimpleTestCase):
                         u'headers': [u'MC | one', u'MC | two', 'MC | extra'],
                         u'rows': [[None, 1, 'extra'], [1, 1, '']],
 
+                    }
+                }
+            )
+
+    def test_form_stock_columns(self):
+        """Ensure that we can export stock properties in a form export"""
+        docs = [{
+            '_id': 'simone-biles',
+            'domain': DOMAIN,
+            'form': {
+                'balance': [
+                    {
+                        '@type': 'question-id',
+                        'entry': {
+                            '@quantity': '2',
+                        }
+                    }, {
+                        '@type': 'other-question-id',
+                        'entry': {
+                            '@quantity': '3',
+                        }
+                    }]
+            },
+        }, {
+            '_id': 'sam-mikulak',
+            'domain': DOMAIN,
+            'form': {
+                'balance': {
+                    '@type': 'question-id',
+                    'entry': {
+                        '@quantity': '2',
+                    }
+                },
+            },
+        }, {
+            '_id': 'kerri-walsh',
+            'domain': DOMAIN,
+            'form': {
+                'balance': {
+                    '@type': 'other-question-id',
+                    'entry': {
+                        '@quantity': '2',
+                    }
+                },
+            },
+        }, {
+            '_id': 'april-ross',
+            'domain': DOMAIN,
+            'form': {},
+        }]
+        export_instance = FormExportInstance(
+            export_format=Format.JSON,
+            domain=DOMAIN,
+            tables=[TableConfiguration(
+                label="My table",
+                selected=True,
+                path=[],
+                columns=[
+                    StockFormExportColumn(
+                        label="StockItem @type",
+                        item=StockItem(
+                            path=[
+                                PathNode(name='form'),
+                                PathNode(name='balance:question-id'),
+                                PathNode(name='@type'),
+                            ],
+                        ),
+                        selected=True,
+                    ),
+                    StockFormExportColumn(
+                        label="StockItem @quantity",
+                        item=StockItem(
+                            path=[
+                                PathNode(name='form'),
+                                PathNode(name='balance:question-id'),
+                                PathNode(name='entry'),
+                                PathNode(name='@quantity'),
+                            ],
+                        ),
+                        selected=True,
+                    ),
+                ]
+            )]
+        )
+        writer = _get_writer([export_instance])
+
+        with writer.open([export_instance]):
+            _write_export_instance(writer, export_instance, docs)
+
+        with ExportFile(writer.path, writer.format) as export:
+            self.assertEqual(
+                json.loads(export),
+                {
+                    u'My table': {
+                        u'headers': [u'StockItem @type', u'StockItem @quantity'],
+                        u'rows': [
+                            ['question-id', '2'],
+                            ['question-id', '2'],
+                            [None, None],
+                            [None, None],
+                        ],
                     }
                 }
             )

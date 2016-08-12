@@ -14,6 +14,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
+from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.soft_assert import soft_assert
@@ -1273,21 +1274,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return self.base_doc.endswith(DELETED_SUFFIX)
 
     def get_viewable_reports(self, domain=None, name=False, slug=False):
-        try:
-            domain = domain or self.current_domain
-        except AttributeError:
-            domain = None
-
-        if self.is_commcare_user():
-            role = self.get_role(domain)
-            if role is None:
-                models = []
-            else:
-                models = role.permissions.view_report_list
-        else:
-            dm = self.get_domain_membership(domain)
-            models = dm.viewable_reports() if dm else []
-
         def slug_name(model):
             try:
                 if slug:
@@ -1298,22 +1284,36 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                 logging.warning("Unable to load report model: %s", model)
                 return None
 
+        models = self._get_viewable_report_slugs(domain)
         if slug or name:
             return filter(None, [slug_name(m) for m in models])
 
         return models
 
-    def get_exportable_reports(self, domain=None):
-        viewable_reports = self.get_viewable_reports(domain=domain, slug=True)
-        from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
-        export_reports = set(DataInterfaceDispatcher().get_reports_dict(domain).keys())
-        return list(export_reports.intersection(viewable_reports))
+    def _get_viewable_report_slugs(self, domain):
+        try:
+            domain = domain or self.current_domain
+        except AttributeError:
+            domain = None
 
-    def can_export_data(self, domain=None):
-        can_see_exports = self.can_view_reports()
-        if not can_see_exports:
-            can_see_exports = bool(self.get_exportable_reports(domain))
-        return can_see_exports
+        if self.is_commcare_user():
+            role = self.get_role(domain)
+            if role is None:
+                return []
+            else:
+                return role.permissions.view_report_list
+        else:
+            dm = self.get_domain_membership(domain)
+            return dm.viewable_reports() if dm else []
+
+    def can_view_any_reports(self, domain):
+        return self.can_view_reports(domain) or bool(self.get_viewable_reports(domain))
+
+    def can_access_any_exports(self, domain=None):
+        return self.can_view_reports(domain) or any([
+            permission_slug for permission_slug in self._get_viewable_report_slugs(domain)
+            if permission_slug in EXPORT_PERMISSIONS
+        ])
 
     def is_current_web_user(self, request):
         return self.user_id == request.couch_user.user_id
@@ -1323,16 +1323,21 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         if item.startswith('can_'):
             perm = item[len('can_'):]
             if perm:
-                def fn(domain=None, data=None):
-                    try:
-                        domain = domain or self.current_domain
-                    except AttributeError:
-                        domain = None
-                    return self.has_permission(domain, perm, data)
+                fn = self._get_perm_check_fn(perm)
                 fn.__name__ = item
                 return fn
+
         raise AttributeError("'{}' object has no attribute '{}'".format(
             self.__class__.__name__, item))
+
+    def _get_perm_check_fn(self, perm):
+        def fn(domain=None, data=None):
+            try:
+                domain = domain or self.current_domain
+            except AttributeError:
+                domain = None
+            return self.has_permission(domain, perm, data)
+        return fn
 
 
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):

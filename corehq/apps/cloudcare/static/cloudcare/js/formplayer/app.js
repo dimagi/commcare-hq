@@ -144,7 +144,11 @@ FormplayerFrontend.on("start", function (options) {
         Backbone.history.start();
         // will be the same for every domain. TODO: get domain/username/pass from django
         if (this.getCurrentRoute() === "") {
-            FormplayerFrontend.trigger("apps:list", options.apps);
+            if (options.previewMode) {
+                FormplayerFrontend.trigger("app:preview", options.apps[0]['_id']);
+            } else {
+                FormplayerFrontend.trigger("apps:list", options.apps);
+            }
         }
     }
 });

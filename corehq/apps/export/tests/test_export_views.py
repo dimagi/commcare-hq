@@ -34,6 +34,7 @@ class ExportViewTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.user.delete()
+        cls.domain.delete()
 
     def setUp(self):
         self.client.login(username=self.username, password=self.password)
