@@ -1,13 +1,15 @@
+import os
 from functools import wraps
-from couchdbkit.exceptions import ResourceNotFound
-from dimagi.ext.couchdbkit import *
 
+from couchdbkit.exceptions import ResourceNotFound
+from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import check_password
 from django.http import HttpResponse
-from django.conf import settings
 
-import os
+from corehq.apps.api.resources import dict_object
+from couchforms import const
+from dimagi.ext.couchdbkit import *
 
 PERMISSION_POST_SMS = "POST_SMS"
 PERMISSION_POST_WISEPILL = "POST_WISEPILL"
@@ -42,7 +44,7 @@ class ApiUser(Document):
 
         $ from corehq.apps.api.models import *
         $ ApiUser.create('buildserver', 'RANDOM').save()
-        
+
         """
         self = cls()
         self['_id'] = "ApiUser-%s" % username
@@ -83,9 +85,72 @@ def _require_api_user(permission=None):
             else:
                 response = HttpResponse(status=401)
             return response
+
         return _outer
+
     return _outer2
+
 
 require_api_user = _require_api_user()
 require_api_user_permission = _require_api_user
 
+
+class ESXFormInstance(dict_object):
+    """This wrapper around form data returned from ES which
+    provides attribute access and helper functions for
+    the Form API.
+    """
+
+    @property
+    def form_data(self):
+        return self._data[const.TAG_FORM]
+
+    @property
+    def metadata(self):
+        from corehq.form_processor.utils import clean_metadata
+        from couchforms.models import Metadata
+        if const.TAG_META in self.form_data:
+            return Metadata.wrap(clean_metadata(self.form_data[const.TAG_META]))
+
+        return None
+
+    @property
+    def is_archived(self):
+        return self.doc_type == 'XFormArchived'
+
+    @property
+    def blobs(self):
+        from corehq.blobs.mixin import BlobMeta
+        blobs = {}
+        if self._attachments:
+            blobs.update({
+                name: BlobMeta(
+                    id=None,
+                    content_length=info.get("length", None),
+                    content_type=info.get("content_type", None),
+                    digest=info.get("digest", None),
+                ) for name, info in self._attachments.iteritems()
+            })
+        if self.external_blobs:
+            blobs.update({
+                name: BlobMeta.wrap(info)
+                for name, info in self.external_blobs.iteritems()
+            })
+
+        return blobs
+
+    @property
+    def version(self):
+        return self.form_data.get(const.TAG_VERSION, "")
+
+    @property
+    def uiversion(self):
+        return self.form_data.get(const.TAG_UIVERSION, "")
+
+    @property
+    def type(self):
+        return self.form_data.get(const.TAG_TYPE, "")
+
+    @property
+    def name(self):
+        return self.form_data.get(const.TAG_NAME, "")

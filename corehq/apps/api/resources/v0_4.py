@@ -8,6 +8,7 @@ from tastypie.authentication import Authentication
 from tastypie.exceptions import BadRequest
 
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.api.models import ESXFormInstance
 from corehq.apps.api.resources.auth import DomainAdminAuthentication, RequirePermissionAuthentication
 from corehq.apps.api.resources.v0_1 import _safe_bool
 from corehq.apps.api.resources.meta import CustomResourceMeta
@@ -17,7 +18,7 @@ from couchforms.models import doc_types, XFormInstance
 from casexml.apps.case import xform as casexml_xform
 from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
 
-from corehq.apps.api.util import get_object_or_not_exist, object_does_not_exist, get_obj
+from corehq.apps.api.util import get_object_or_not_exist, object_does_not_exist, get_obj, form_to_es_form
 from corehq.apps.app_manager import util as app_manager_util
 from corehq.apps.app_manager.models import Application, RemoteApp
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
@@ -51,7 +52,13 @@ xform_doc_types = doc_types()
 
 
 class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
-    id = fields.CharField(attribute='form_id', readonly=True, unique=True)
+    """This version of the form resource is built of Elasticsearch data
+    which gets wrapped by ``ESXFormInstance``.
+    No type conversion is done e.g. dates and some fields are named differently than in the
+    Python models.
+    """
+
+    id = fields.CharField(attribute='_id', readonly=True, unique=True)
 
     domain = fields.CharField(attribute='domain')
     form = fields.DictField(attribute='form_data')
@@ -59,7 +66,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
     version = fields.CharField(attribute='version')
     uiversion = fields.CharField(attribute='uiversion', blank=True, null=True)
     metadata = fields.DictField(attribute='metadata', blank=True, null=True)
-    received_on = fields.DateTimeField(attribute="received_on")
+    received_on = fields.CharField(attribute="received_on")
 
     app_id = fields.CharField(attribute='app_id', null=True)
     build_id = fields.CharField(attribute='build_id', null=True)
@@ -75,7 +82,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
     cases = UseIfRequested(
         ToManyDocumentsField(
             'corehq.apps.api.resources.v0_4.CommCareCaseResource',
-            attribute=lambda xform: casexml_xform.cases_referenced_by_xform(xform)
+            attribute=lambda xform: casexml_xform.cases_referenced_by_xform(xform.form_data)
         )
     )
 
@@ -107,7 +114,12 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
     def obj_get(self, bundle, **kwargs):
         instance_id = kwargs['pk']
         try:
-            return FormAccessors(kwargs['domain']).get_form(instance_id)
+            form = FormAccessors(kwargs['domain']).get_form(instance_id)
+            es_form = form_to_es_form(form)
+            if es_form:
+                return es_form
+            else:
+                raise XFormNotFound
         except XFormNotFound:
             raise object_does_not_exist("XFormInstance", instance_id)
 
@@ -128,17 +140,10 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
         else:
             es_query['filter']['and'].append({'term': {'doc_type': 'xforminstance'}})
 
-        def wrapper(doc):
-            if doc['doc_type'] in xform_doc_types:
-                doc.pop('user_id', None)  # needed when xform is stored in sql
-                return xform_doc_types[doc['doc_type']].wrap(doc)
-            else:
-                return doc
-
         # Note that XFormES is used only as an ES client, for `run_query` against the proper index
         return ElasticAPIQuerySet(
             payload=es_query,
-            model=wrapper,
+            model=ESXFormInstance,
             es_client=self.xform_es(domain)
         ).order_by('-received_on')
 
@@ -149,7 +154,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
 
     class Meta(CustomResourceMeta):
         authentication = RequirePermissionAuthentication(Permissions.edit_data)
-        object_class = XFormInstance
+        object_class = ESXFormInstance
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         resource_name = 'form'
