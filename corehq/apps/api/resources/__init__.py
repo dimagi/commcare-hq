@@ -17,7 +17,7 @@ class dict_object(object):
         self._data = dict
 
     def __getattr__(self, item):
-        return self._data[item]
+        return self._data.get(item, None)
 
     def __repr__(self):
         return 'dict_object(%r)' % self._data
