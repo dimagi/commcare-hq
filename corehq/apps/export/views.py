@@ -60,6 +60,7 @@ from corehq.apps.export.const import (
     CASE_EXPORT,
     MAX_EXPORTABLE_ROWS,
 )
+from corehq.apps.export.tasks import async_convert_saved_export_to_export_instance
 from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
     get_case_export_instances,
@@ -186,6 +187,13 @@ class BaseExportView(BaseProjectDataView):
         # clear what this view specifically needs to render.
         context = self.export_helper.get_context()
         context.update({'export_home_url': self.export_home_url})
+
+        async_convert_saved_export_to_export_instance.delay(
+            self.domain,
+            self.export_helper.custom_export,
+            dryrun=True
+        )
+
         return context
 
     def commit(self, request):
