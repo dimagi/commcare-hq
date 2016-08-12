@@ -15,6 +15,7 @@ from corehq.apps.reports.models import (
     FormExportSchema,
     CaseExportSchema,
 )
+from corehq.apps.app_manager.const import STOCK_QUESTION_TAG_NAMES
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_brief_apps_in_domain,
@@ -260,7 +261,6 @@ def _convert_transform(serializable_transform):
             return slug
     return None
 
-
 def _get_for_single_node_repeat(tables, column_path, transform):
     """
     This function takes a column path and looks for it in all the other tables
@@ -280,6 +280,33 @@ def _get_for_single_node_repeat(tables, column_path, transform):
         new_column = _get_normal_column(new_table, new_column_path, transform)
         if new_column:
             return new_column
+
+
+def _is_form_stock_question(index):
+    parts = index.split('.')
+    parent_stock_attributes = ['@date', '@type', '@entity-id', '@section-id']
+    entry_stock_attributes = ['@id', '@quantity']
+
+    # <balance|transfer>.<@date|@type...>
+    try:
+        parent_tag_name, attribute = parts[-2:]
+        if (parent_tag_name in STOCK_QUESTION_TAG_NAMES and
+                attribute in parent_stock_attributes):
+            return True
+    except ValueError:
+        return False
+
+    # <balance|transfer>.entry.<@id|@quantity>
+    try:
+        parent_tag_name, tag_name, attribute = parts[-3:]
+        if (parent_tag_name in STOCK_QUESTION_TAG_NAMES and
+                tag_name == 'entry' and
+                attribute in entry_stock_attributes):
+            return True
+    except ValueError:
+        return False
+
+    return False
 
 
 def _get_system_property(index, transform, export_type, table_path):
@@ -361,6 +388,7 @@ def _get_normal_column(new_table, column_path, transform):
         'MultipleChoiceItem',
         'GeopointItem',
         'MultiMediaItem',
+        'StockItem',
         'ExportItem',
     ]
     # Since old exports had no concept of item type, we just guess all

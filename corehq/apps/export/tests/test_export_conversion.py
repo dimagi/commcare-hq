@@ -25,6 +25,7 @@ from corehq.apps.export.utils import (
     _convert_index_to_path_nodes,
     revert_new_exports,
     _is_remote_app_conversion,
+    _is_form_stock_question,
     migrate_domain,
 )
 from corehq.apps.export.const import (
@@ -70,6 +71,30 @@ class TestMigrateDomain(TestCase):
         self.assertFalse(toggle_enabled(NEW_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN))
         migrate_domain(self.domain)
         self.assertTrue(toggle_enabled(NEW_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN))
+
+
+class TestIsFormStockExportQuestion(SimpleTestCase):
+    """Ensures that we can guess that a column is a stock question"""
+
+
+@generate_cases([
+    ('form.balance.entry.@id', True),
+    ('form.balance.entry.@notme', False),
+    ('form.balance.@date', True),
+    ('form.balance.@notme', False),
+
+    ('form.transfer.entry.@id', True),
+    ('form.transfer.entry.@notme', False),
+    ('form.transfer.@date', True),
+    ('form.transfer.@notme', False),
+
+    ('form.notme.@quantity', False),
+    ('tooshort', False),
+    ('tooshort.tooshort', False),
+    ('', False),
+], TestIsFormStockExportQuestion)
+def test_is_form_stock_question(self, index, expected):
+    self.assertEqual(_is_form_stock_question(index), expected)
 
 
 class TestIsRemoteAppConversion(TestCase):
