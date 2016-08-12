@@ -60,9 +60,9 @@ var projectMapInit = function(mapboxAccessToken) {
                 projects_per_country = data.country_projs_count;
                 users_per_country = data.users_per_country;
 
-                Object.keys(country_projects_count).map(function(country) {
-                    if (country_projects_count[country] > maxNumProjects) {
-                        maxNumProjects = country_projects_count[country];
+                Object.keys(projects_per_country).map(function(country) {
+                    if (projects_per_country[country] > maxNumProjects) {
+                        maxNumProjects = projects_per_country[country];
                     }
                 });
 
