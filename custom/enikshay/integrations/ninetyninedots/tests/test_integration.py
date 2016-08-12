@@ -163,7 +163,7 @@ class NinetyNineDotsCaseTests(TestCase):
             self.assertEqual(
                 adherence_case.dynamic_case_properties().get('adherence_confidence'),
                 'high'
-             )
+            )
 
     @run_with_all_backends
     def test_get_adherence_cases_between_dates(self):
