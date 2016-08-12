@@ -26,7 +26,6 @@ from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.tour import tours
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.util import reverse
