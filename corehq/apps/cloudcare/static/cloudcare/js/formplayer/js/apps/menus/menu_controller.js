@@ -1,4 +1,4 @@
-/*global FormplayerFrontend, Util */
+/*global FormplayerFrontend */
 
 FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette, $) {
     MenuList.Controller = {
