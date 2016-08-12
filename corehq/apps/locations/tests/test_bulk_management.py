@@ -548,8 +548,8 @@ class TestBulkManagement(TestCase):
         # Since there were errors, the location tree should be as it was
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
 
-    def test_edit_by_sitecode(self):
-        # Locations can be referred by site_code and empty location_id
+    def test_edit_by_location_id(self):
+        # Locations can be referred by location_id and empty site_code
         lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
         locations_by_code = self.create_locations(self.basic_tree, lt_by_code)
 
@@ -576,8 +576,8 @@ class TestBulkManagement(TestCase):
             ('city111', 'county11'), ('city112', 'county11'), ('city211', 'county21')
         ]))
 
-    def test_edit_by_location_id(self):
-        # Locations can be referred by location_id and empty site_code
+    def test_edit_by_sitecode(self):
+        # Locations can be referred by site_code and empty location_id
         lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
         self.create_locations(self.basic_tree, lt_by_code)
 
@@ -663,13 +663,13 @@ class TestBulkManagement(TestCase):
             # (name, site_code, location_type, parent_code, location_id,
             # do_delete, external_id, latitude, longitude, index)
             # changing names
-            ('State 1', 's1', 'state', '', _loc_id('s1'), False, '', '', '', 0),
-            ('State 2', 's2', 'state', '', _loc_id('s2'), False, '', '', '', 0),
-            ('County 11', 'county11', 'county', 's1', _loc_id('county11'), False, '', '', '', 0),
-            ('County 21', 'county21', 'county', 's2', _loc_id('county21'), False, '', '', '', 0),
-            ('City 111', 'city111', 'city', 'county11', _loc_id('city111'), False, '', '', '', 0),
-            ('City 112', 'city112', 'city', 'county11', _loc_id('city112'), False, '', '', '', 0),
-            ('City 211', 'city211', 'city', 'county21', _loc_id('city211'), False, '', '', '', 0),
+            ('State 1', '', 'state', '', _loc_id('s1'), False, '', '', '', 0),
+            ('State 2', '', 'state', '', _loc_id('s2'), False, '', '', '', 0),
+            ('County 11', '', 'county', 's1', _loc_id('county11'), False, '', '', '', 0),
+            ('County 21', '', 'county', 's2', _loc_id('county21'), False, '', '', '', 0),
+            ('City 111', '', 'city', 'county11', _loc_id('city111'), False, '', '', '', 0),
+            ('City 112', '', 'city', 'county11', _loc_id('city112'), False, '', '', '', 0),
+            ('City 211', '', 'city', 'county21', _loc_id('city211'), False, '', '', '', 0),
         ]
 
         result = self.bulk_update_locations(
@@ -679,7 +679,7 @@ class TestBulkManagement(TestCase):
 
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
-        self.assertLocationsMatch(self.as_pairs(change_names))
+        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
         self.assertLocationsMatch(set([
             ('State 1', None), ('State 2', None), ('County 11', 's1'), ('County 21', 's2'),
             ('City 111', 'county11'), ('City 112', 'county11'), ('City 211', 'county21')

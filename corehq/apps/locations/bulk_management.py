@@ -651,23 +651,6 @@ def new_locations_import(domain, excel_importer):
     return result
 
 
-def bulk_delete(objects):
-    # Given a list of existing SQL objects, bulk delete them
-    if not objects:
-        return
-    sql_class = type(objects[0])
-    ids = [o.id for o in objects]
-    sql_class.objects.filter(id__in=ids).delete()
-
-
-def bulk_update(objects):
-    # Given a list of existing SQL objects, bulk update them
-    now = datetime.utcnow()
-    for o in objects:
-        o.last_modified = now
-    bulk_update_helper(objects)
-
-
 def save_types(type_stubs):
     # Given a list of LocationTypeStub objects, saves them to SQL as LocationType objects
     #
@@ -687,7 +670,7 @@ def save_types(type_stubs):
 
     # step 1
     to_be_deleted_types = [lt.db_object for lt in type_stubs if lt.do_delete]
-    bulk_delete(to_be_deleted_types)
+    LocationType.bulk_delete(to_be_deleted_types)
     # step 2
     new_type_objects = LocationType.bulk_create([lt.db_object for lt in type_stubs if lt.is_new])
     # step 3
@@ -738,7 +721,7 @@ def save_locations(location_stubs, type_objects):
     # Doing 3 and 4 seperately lets us avoid mptt.InvalidMove errors
 
     to_be_deleted_locations = [l.db_object for l in location_stubs if l.do_delete]
-    bulk_delete(to_be_deleted_locations)
+    SQLLocation.bulk_delete(to_be_deleted_locations)
 
     new_objects = []
     to_be_updated_objects = []
@@ -763,7 +746,7 @@ def save_locations(location_stubs, type_objects):
     # create new_objects without parent refs
     new_objects = SQLLocation.bulk_create(new_objects)
     # update objects with parents set to None
-    bulk_update(to_be_updated_objects)
+    SQLLocation.bulk_update(to_be_updated_objects)
 
     location_objects_by_site_code = {l.site_code: l for l in new_objects + to_be_updated_objects}
     location_objects_by_site_code.update({
@@ -780,4 +763,4 @@ def save_locations(location_stubs, type_objects):
             to_bulk_update.append(obj)
 
     # set parent refs to all new-objects and to-be-updated objects
-    bulk_update(to_bulk_update)
+    SQLLocation.bulk_update(to_bulk_update)
