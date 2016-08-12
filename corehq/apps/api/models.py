@@ -9,6 +9,7 @@ from django.contrib.auth.models import check_password
 from django.http import HttpResponse
 
 from corehq.apps.api.resources import DictObject
+from corehq.form_processor.abstract_models import CaseToXMLMixin
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from couchforms import const
 from dimagi.ext.couchdbkit import *
@@ -158,7 +159,7 @@ class ESXFormInstance(DictObject):
         return self.form_data.get(const.TAG_NAME, "")
 
 
-class ESCase(DictObject):
+class ESCase(DictObject, CaseToXMLMixin):
     """This wrapper around case data returned from ES which
     provides attribute access and helper functions for
     the Case API.

@@ -141,7 +141,21 @@ def get_index_map(indices):
     ])
 
 
-class AbstractCommCareCase(object):
+class CaseToXMLMixin(object):
+    def to_xml(self, version, include_case_on_closed=False):
+        from xml.etree import ElementTree
+        from casexml.apps.phone.xml import get_case_element
+        if self.closed:
+            if include_case_on_closed:
+                elem = get_case_element(self, ('create', 'update', 'close'), version)
+            else:
+                elem = get_case_element(self, ('close'), version)
+        else:
+            elem = get_case_element(self, ('create', 'update'), version)
+        return ElementTree.tostring(elem)
+
+
+class AbstractCommCareCase(CaseToXMLMixin):
 
     # @property
     # def case_id(self):
