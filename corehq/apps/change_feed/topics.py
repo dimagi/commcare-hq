@@ -55,9 +55,21 @@ def get_all_offsets():
 def get_multi_topic_offset(topics):
     """
     :returns: A dict of offsets keyed by topic"""
+    return _get_topic_offsets(topics, latest=True)
+
+
+def get_multi_topic_first_available_offsets(topics):
+    """
+    :returns: A dict of offsets keyed by topic"""
+    return _get_topic_offsets(topics, latest=False)
+
+
+def _get_topic_offsets(topics, latest):
+    # https://cwiki.apache.org/confluence/display/KAFKA/A+Guide+To+The+Kafka+Protocol#AGuideToTheKafkaProtocol-OffsetRequest
+    time_value = -1 if latest else -2
     assert set(topics) <= set(ALL)
     client = get_kafka_client()
-    offset_requests = [OffsetRequest(topic, 0, -1, 1) for topic in topics]
+    offset_requests = [OffsetRequest(topic, 0, time_value, 1) for topic in topics]
     responses = client.send_offset_request(offset_requests)
     return {
         r.topic: r.offsets[0] for r in responses
