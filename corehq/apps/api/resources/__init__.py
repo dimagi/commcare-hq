@@ -13,8 +13,8 @@ from corehq.apps.api.util import get_obj
 
 class dict_object(object):
 
-    def __init__(self, dict):
-        self._data = dict
+    def __init__(self, dict=None):
+        self._data = dict or {}
 
     def __getattr__(self, item):
         return self._data.get(item, None)
