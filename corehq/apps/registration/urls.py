@@ -8,7 +8,7 @@ from corehq.apps.registration.views import (
 
 urlpatterns = patterns('corehq.apps.registration.views',
                        url(r'^$', 'registration_default', name='registration_default'),
-                       url(r'^user/new/?$', UserRegistrationView.as_view(), name=UserRegistrationView.urlname),
+                       url(r'^user/?$', UserRegistrationView.as_view(), name=UserRegistrationView.urlname),
                        url(r'^process/?$', ProcessRegistrationView.as_view(), name=ProcessRegistrationView.urlname),
                        url(r'^domain/$', RegisterDomainView.as_view(), name='registration_domain'),
                        url(r'^domain/confirm(?:/(?P<guid>\w+))?/$', 'confirm_domain', name='registration_confirm_domain'),
