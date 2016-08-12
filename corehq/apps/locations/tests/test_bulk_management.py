@@ -466,7 +466,6 @@ class TestBulkManagement(TestCase):
                 self.assertEqual(getattr(loc1, field), getattr(loc2, field), msg)
 
             def get_parent(loc):
-                print loc, loc.parent, "the parents are"
                 return loc.parent.location_id if loc.parent else None
             self.assertEqual(get_parent(loc1), get_parent(loc2))
 
