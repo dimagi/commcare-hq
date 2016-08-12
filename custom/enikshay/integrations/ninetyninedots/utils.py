@@ -75,8 +75,8 @@ class AdherenceCaseFactory(object):
             "adherence_source": self.adherence_source,
             "adherence_date": adherence_point["timestamp"],
             "person_name": self._person_case.name,
-            "dots99_adherence_confidence": self._default_adherence_confidence,
-            "dots99_shared_number": adherence_point["sharedNumber"],
+            "adherence_confidence": self._default_adherence_confidence,
+            "shared_number_99_dots": adherence_point["sharedNumber"],
         }
 
 
