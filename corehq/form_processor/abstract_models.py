@@ -131,6 +131,16 @@ class AbstractXFormInstance(object):
         return None
 
 
+def get_index_map(indices):
+    return dict([
+        (index.identifier, {
+            "case_type": index.referenced_type,
+            "case_id": index.referenced_id,
+            "relationship": index.relationship,
+        }) for index in indices
+    ])
+
+
 class AbstractCommCareCase(object):
 
     # @property
@@ -224,13 +234,8 @@ class AbstractCommCareCase(object):
 
     @memoized
     def get_index_map(self, reversed=False):
-        return dict([
-            (index.identifier, {
-                "case_type": index.referenced_type,
-                "case_id": index.referenced_id,
-                "relationship": index.relationship,
-            }) for index in (self.indices if not reversed else self.reverse_indices)
-        ])
+        indices = self.indices if not reversed else self.reverse_indices
+        return get_index_map(indices)
 
     def get_properties_in_api_format(self):
         return dict(self.dynamic_case_properties().items() + {

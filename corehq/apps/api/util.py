@@ -56,3 +56,8 @@ def form_to_es_form(xform_instance):
         es_form = transform_xform_for_elasticsearch(json_form)
         return ESXFormInstance(es_form)
 
+
+def case_to_es_case(case):
+    from corehq.pillows.case import transform_case_for_elasticsearch
+    from corehq.apps.api.models import ESCase
+    return ESCase(transform_case_for_elasticsearch(case.to_json()))

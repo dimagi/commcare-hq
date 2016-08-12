@@ -8,17 +8,18 @@ from tastypie.authentication import Authentication
 from tastypie.exceptions import BadRequest
 
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.api.models import ESXFormInstance
+from corehq.apps.api.models import ESXFormInstance, ESCase
 from corehq.apps.api.resources.auth import DomainAdminAuthentication, RequirePermissionAuthentication
 from corehq.apps.api.resources.v0_1 import _safe_bool
 from corehq.apps.api.resources.meta import CustomResourceMeta
-from corehq.form_processor.exceptions import XFormNotFound
+from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from couchforms.models import doc_types, XFormInstance
 from casexml.apps.case import xform as casexml_xform
 from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
 
-from corehq.apps.api.util import get_object_or_not_exist, object_does_not_exist, get_obj, form_to_es_form
+from corehq.apps.api.util import get_object_or_not_exist, object_does_not_exist, get_obj, form_to_es_form, \
+    case_to_es_case
 from corehq.apps.app_manager import util as app_manager_util
 from corehq.apps.app_manager.models import Application, RemoteApp
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
@@ -219,57 +220,28 @@ class RepeaterResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourc
         list_allowed_methods = ['get', 'post']
 
 
-def group_by_dict(objs, fn):
-    """
-    Itertools.groupby returns a transient iterator with alien
-    data types in it. This returns a dictionary of lists.
-    Less efficient but clients can write naturally and used
-    only for things that have to fit in memory easily anyhow.
-    """
-    result = defaultdict(list)
-    for obj in objs:
-
-        key = fn(obj)
-        result[key].append(obj)
-    return result
-
-
-def _child_cases_attribute(case):
-    return {
-        index.identifier: CaseAccessors(case.domain).get_case(index.referenced_id)
-        for index in case.reverse_indices
-    }
-
-
-def _parent_cases_attribute(case):
-    return {
-        index.identifier: CaseAccessors(case.domain).get_case(index.referenced_id)
-        for index in case.indices
-    }
-
-
 class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResource, DomainSpecificResourceMixin):
     xforms_by_name = UseIfRequested(ToManyListDictField(
         'corehq.apps.api.resources.v0_4.XFormInstanceResource',
-        attribute=lambda case: group_by_dict(case.get_forms(), lambda form: form.name)
+        attribute='xforms_by_name'
     ))
 
     xforms_by_xmlns = UseIfRequested(ToManyListDictField(
         'corehq.apps.api.resources.v0_4.XFormInstanceResource',
-        attribute=lambda case: group_by_dict(case.get_forms(), lambda form: form.xmlns)
+        attribute='xforms_by_xmlns'
     ))
 
     child_cases = UseIfRequested(
         ToManyDictField(
             'corehq.apps.api.resources.v0_4.CommCareCaseResource',
-            attribute=_child_cases_attribute
+            attribute='child_cases'
         )
     )
 
     parent_cases = UseIfRequested(
         ToManyDictField(
             'corehq.apps.api.resources.v0_4.CommCareCaseResource',
-            attribute=_parent_cases_attribute
+            attribute='parent_cases'
         )
     )
 
@@ -279,6 +251,14 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
     date_modified = fields.CharField(attribute='modified_on', default="1900-01-01")
     server_date_modified = fields.CharField(attribute='server_modified_on', default="1900-01-01")
     server_date_opened = fields.CharField(attribute='server_opened_on', default="1900-01-01")
+
+    def obj_get(self, bundle, **kwargs):
+        case_id = kwargs['pk']
+        try:
+            case = CaseAccessors(kwargs['domain']).get_case(case_id)
+            return case_to_es_case(case)
+        except CaseNotFound:
+            raise object_does_not_exist("CommCareCase", case_id)
 
     def case_es(self, domain):
         return MOCK_CASE_ES or CaseES(domain)
@@ -298,7 +278,7 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
         # Note that CaseES is used only as an ES client, for `run_query` against the proper index
         return ElasticAPIQuerySet(
             payload=query,
-            model=CommCareCase,
+            model=ESCase,
             es_client=self.case_es(domain)
         ).order_by('server_modified_on')
 
@@ -306,6 +286,7 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
         max_limit = 100 # Today, takes ~25 seconds for some domains
         serializer = CommCareCaseSerializer()
         ordering = ['server_date_modified', 'date_modified']
+        object_class = ESCase
 
 
 class GroupResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
