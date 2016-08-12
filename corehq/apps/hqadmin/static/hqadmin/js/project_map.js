@@ -94,11 +94,11 @@ var projectMapInit = function(mapboxAccessToken) {
 
         that.getUnit = function (count) {
             if (is_project_count_map) {
-                return count > 1 ? 'projects' : 'project'
+                return count > 1 ? 'projects' : 'project';
             } else {
-                return count > 1 ? 'users' : 'user'
+                return count > 1 ? 'users' : 'user';
             }
-        }
+        };
 
         that.getMax = function () {
             if (is_project_count_map) {
