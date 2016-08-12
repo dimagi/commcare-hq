@@ -374,15 +374,14 @@ class NewLocationImporter(object):
         with transaction.atomic():
             type_objects = save_types(type_stubs)
             save_locations(location_stubs, type_objects)
-            # Since we updated locations in bulk, some of the post-save logic
+            # Since we updated LocationType objects in bulk, some of the post-save logic
             #   that occurs inside LocationType.save needs to be explicitly called here
             for lt in type_stubs:
                 if (not lt.do_delete and lt.needs_save):
                     obj = type_objects[lt.code]
                     if not lt.is_new:
-                        obj.sync_administrative_status()
-                    else:
-                        sync_supply_points.delay(obj)
+                        # supply_points would have been synced while SQLLocation.save() already
+                        obj.sync_administrative_status(sync_supply_points=False)
 
         update_count = lambda items: sum(l.needs_save and not l.do_delete and not l.is_new for l in items)
         delete_count = lambda items: sum(l.do_delete for l in items)
