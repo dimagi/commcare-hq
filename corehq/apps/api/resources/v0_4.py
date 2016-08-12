@@ -6,16 +6,18 @@ from tastypie import fields
 from tastypie.bundle import Bundle
 from tastypie.authentication import Authentication
 from tastypie.exceptions import BadRequest
-from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication, \
-    _safe_bool
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
-from couchforms.models import doc_types
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.api.resources.auth import DomainAdminAuthentication, RequirePermissionAuthentication
+from corehq.apps.api.resources.v0_1 import _safe_bool
+from corehq.apps.api.resources.meta import CustomResourceMeta
+from corehq.form_processor.exceptions import XFormNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from couchforms.models import doc_types, XFormInstance
 from casexml.apps.case import xform as casexml_xform
 from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
 
-from corehq.apps.api.util import get_object_or_not_exist
+from corehq.apps.api.util import get_object_or_not_exist, object_does_not_exist, get_obj
 from corehq.apps.app_manager import util as app_manager_util
 from corehq.apps.app_manager.models import Application, RemoteApp
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
@@ -35,7 +37,7 @@ from corehq.apps.api.resources import (
 )
 from corehq.apps.api.es import XFormES, CaseES, ElasticAPIQuerySet, es_search
 from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField
-from corehq.apps.api.serializers import CommCareCaseSerializer
+from corehq.apps.api.serializers import CommCareCaseSerializer, XFormInstanceSerializer
 
 from no_exceptions.exceptions import Http400
 
@@ -48,18 +50,27 @@ MOCK_CASE_ES = None
 xform_doc_types = doc_types()
 
 
-class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResource, DomainSpecificResourceMixin):
+class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
+    id = fields.CharField(attribute='form_id', readonly=True, unique=True)
 
-    # Some fields that were present when just fetching individual docs are
-    # not present for e.g. devicelogs and must be allowed blank
+    domain = fields.CharField(attribute='domain')
+    form = fields.DictField(attribute='form_data')
+    type = fields.CharField(attribute='type')
+    version = fields.CharField(attribute='version')
     uiversion = fields.CharField(attribute='uiversion', blank=True, null=True)
     metadata = fields.DictField(attribute='metadata', blank=True, null=True)
-    domain = fields.CharField(attribute='domain')
+    received_on = fields.DateTimeField(attribute="received_on")
+
     app_id = fields.CharField(attribute='app_id', null=True)
     build_id = fields.CharField(attribute='build_id', null=True)
     initial_processing_complete = fields.BooleanField(
         attribute='initial_processing_complete', null=True)
     problem = fields.CharField(attribute='problem', null=True)
+
+    archived = fields.CharField(readonly=True)
+
+    def dehydrate_archived(self, bundle):
+        return bundle.obj.is_archived
 
     cases = UseIfRequested(
         ToManyDocumentsField(
@@ -93,12 +104,12 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
             and bundle.obj.openrosa_headers.get('HTTP_X_OPENROSA_VERSION')
         )
 
-    # Prevent hitting Couch to md5 the attachment. However, there is no way to
-    # eliminate a tastypie field defined in a parent class.
-    md5 = fields.CharField(attribute='uiversion', blank=True, null=True)
-
-    def dehydrate_md5(self, bundle):
-        return 'OBSOLETED'
+    def obj_get(self, bundle, **kwargs):
+        instance_id = kwargs['pk']
+        try:
+            return FormAccessors(kwargs['domain']).get_form(instance_id)
+        except XFormNotFound:
+            raise object_does_not_exist("XFormInstance", instance_id)
 
     def xform_es(self, domain):
         return MOCK_XFORM_ES or XFormES(domain)
@@ -131,9 +142,19 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
             es_client=self.xform_es(domain)
         ).order_by('-received_on')
 
-    class Meta(v0_3.XFormInstanceResource.Meta):
-        ordering = ['received_on']
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'pk': get_obj(bundle_or_obj).form_id
+        }
+
+    class Meta(CustomResourceMeta):
+        authentication = RequirePermissionAuthentication(Permissions.edit_data)
+        object_class = XFormInstance
         list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
+        resource_name = 'form'
+        ordering = ['received_on']
+        serializer = XFormInstanceSerializer(formats=['json'])
 
 
 class RepeaterResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
@@ -186,7 +207,7 @@ class RepeaterResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourc
         return bundle
 
     class Meta(CustomResourceMeta):
-        authentication = v0_1.DomainAdminAuthentication()
+        authentication = DomainAdminAuthentication()
         object_class = Repeater
         resource_name = 'data-forwarding'
         detail_allowed_methods = ['get', 'put', 'delete']

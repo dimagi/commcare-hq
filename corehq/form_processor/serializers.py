@@ -118,6 +118,7 @@ class CommCareCaseSQLSerializer(DeletableModelSerializer):
     indices = CommCareCaseIndexSQLSerializer(many=True, read_only=True)
     actions = CaseTransactionActionSerializer(many=True, read_only=True, source='non_revoked_transactions')
     case_json = serializers.JSONField()
+    xform_ids = serializers.ListField()
 
     class Meta:
         model = CommCareCaseSQL
@@ -163,10 +164,11 @@ class CommCareCaseSQLAPISerializer(serializers.ModelSerializer):
 
 class LedgerValueSerializer(serializers.ModelSerializer):
     _id = serializers.CharField(source='ledger_id')
+    case_id = serializers.CharField()
 
     class Meta:
         model = LedgerValue
-        exclude = ('id',)
+        exclude = ('id', 'case')
 
 
 class StockStateSerializer(serializers.ModelSerializer):

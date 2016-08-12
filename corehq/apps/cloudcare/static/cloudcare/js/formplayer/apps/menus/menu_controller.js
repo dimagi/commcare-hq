@@ -2,9 +2,15 @@
 
 FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette, $) {
     MenuList.Controller = {
-        selectMenu: function (appId, sessionId, stepList, page, search) {
+        selectMenu: function (appId, sessionId, stepList, page, search, queryDict) {
 
-            var fetchingNextMenu = FormplayerFrontend.request("app:select:menus", appId, sessionId, stepList, page, search);
+            var fetchingNextMenu = FormplayerFrontend.request("app:select:menus",
+                appId,
+                sessionId,
+                stepList,
+                page,
+                search,
+                queryDict);
 
             /*
              Determine the next screen to display.  Could be
@@ -12,6 +18,17 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
              a list of entities (cases) and their details
              */
             $.when(fetchingNextMenu).done(function (menuResponse) {
+
+                // show any notifications from Formplayer
+                if(menuResponse.notification && !_.isNull(menuResponse.notification.message)){
+                    FormplayerFrontend.request("handleNotification", menuResponse.notification);
+                }
+
+                // If redirect was set, clear and go home.
+                if (menuResponse.clearSession) {
+                    FormplayerFrontend.trigger("apps:currentApp");
+                    return;
+                }
                 MenuList.Controller.showMenu(menuResponse);
             });
         },
@@ -33,6 +50,9 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             };
             if (menuResponse.type === "commands") {
                 menuListView = new MenuList.MenuListView(menuData);
+                FormplayerFrontend.regions.main.show(menuListView.render());
+            } else if (menuResponse.type === "query") {
+                menuListView = new MenuList.QueryListView(menuData);
                 FormplayerFrontend.regions.main.show(menuListView.render());
             }
             else if (menuResponse.type === "entities") {
