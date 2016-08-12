@@ -13,7 +13,7 @@ from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceExce
 
 class AdherenceCaseFactory(object):
     """
-    Creates new adherence cases for a given person
+    Creates and updates adherence cases for a given person
 
     Only for use by the 99DOTS integration with eNikshay
     """
