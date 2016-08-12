@@ -2,7 +2,8 @@
   "domains": [
     "icds-test",
     "icds-sql",
-    "icds-cas"
+    "icds-cas",
+    "icds-cas-sandbox"
   ],
   "report_id": "static-ls_ebf",
   "data_source_table": "static-child_health_cases",
