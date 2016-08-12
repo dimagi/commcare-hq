@@ -738,3 +738,23 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(reverse_order)
         self.assertLocationsMatch(self.as_pairs(edit_types_of_locations))
+
+    def test_couch_sync(self):
+        def assertLocationsEqual(loc1, loc2):
+            fields = ["domain", "name", "location_id", "location_type_name",
+                      "site_code", "external_id", "metadata", "is_archived"]
+            for field in fields:
+                msg = "The locations have different values for '{}'".format(field)
+                self.assertEqual(getattr(loc1, field), getattr(loc2, field), msg)
+
+            def get_parent(loc):
+                return loc.parent.location_id if loc.parent else None
+            self.assertEqual(get_parent(loc1), get_parent(loc2))
+
+        self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            self.basic_tree
+        )
+        collection = LocationCollection(self.domain)
+        for loc in collection.locations:
+            assertLocationsEqual(loc, loc.couch_location)
