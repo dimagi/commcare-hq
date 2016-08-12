@@ -92,6 +92,14 @@ var projectMapInit = function(mapboxAccessToken) {
             is_project_count_map = !is_project_count_map;
         };
 
+        that.getUnit = function (count) {
+            if (is_project_count_map) {
+                return count > 1 ? 'projects' : 'project'
+            } else {
+                return count > 1 ? 'users' : 'user'
+            }
+        }
+
         that.getMax = function () {
             if (is_project_count_map) {
                 return maxNumProjects;
@@ -264,8 +272,9 @@ var projectMapInit = function(mapboxAccessToken) {
     // method that we will use to update the control based on feature properties passed in
     info.update = function (props) {
         function _getInfoContent(countryName) {
-            var projectCount = dataController.getCount(countryName);
-            var message = projectCount ? projectCount + ' projects' : 'no projects';
+            var count = dataController.getCount(countryName);
+            var unit = dataController.getUnit(count);
+            var message = count ? count + ' ' + unit : 'no ' + unit;
             return '<b>' + countryName + '</b>: ' + message;
         }
         this._div.innerHTML = (props ? _getInfoContent(props.name) : 'Hover over a country');
