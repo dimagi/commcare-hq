@@ -40,6 +40,3 @@ class ABTest(object):
             'version': self.version,
         }
 
-
-
-)
