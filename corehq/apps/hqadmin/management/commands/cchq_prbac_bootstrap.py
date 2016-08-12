@@ -170,16 +170,22 @@ class Command(BaseCommand):
 
     BOOTSTRAP_PLANS = [
         Role(slug='community_plan_v0', name='Community Plan', description=''),
+        Role(slug='community_plan_v1', name='Community Plan', description=''),
         Role(slug='standard_plan_v0', name='Standard Plan', description=''),
         Role(slug='pro_plan_v0', name='Pro Plan', description=''),
         Role(slug='advanced_plan_v0', name='Advanced Plan', description=''),
         Role(slug='enterprise_plan_v0', name='Enterprise Plan', description=''),
     ]
 
-    community_plan_features = [
+    community_plan_v0_features = [
+        privileges.EXCEL_DASHBOARD,
+        privileges.DAILY_SAVED_EXPORT,
     ]
 
-    standard_plan_features = community_plan_features + [
+    community_plan_v1_features = [
+    ]
+
+    standard_plan_features = community_plan_v1_features + [
         privileges.API_ACCESS,
         privileges.LOOKUP_TABLES,
         privileges.OUTBOUND_SMS,
@@ -223,7 +229,8 @@ class Command(BaseCommand):
     ]
 
     BOOTSTRAP_GRANTS = {
-        'community_plan_v0': community_plan_features,
+        'community_plan_v0': community_plan_v0_features,
+        'community_plan_v1': community_plan_v1_features,
         'standard_plan_v0': standard_plan_features,
         'pro_plan_v0': pro_plan_features,
         'advanced_plan_v0': advanced_plan_features,
