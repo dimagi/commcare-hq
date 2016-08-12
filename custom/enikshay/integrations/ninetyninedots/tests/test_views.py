@@ -1,4 +1,5 @@
 from datetime import datetime
+import pytz
 from django.test import SimpleTestCase, TestCase
 from django.utils.dateparse import parse_datetime
 
@@ -15,6 +16,7 @@ from custom.enikshay.integrations.ninetyninedots.utils import (
     create_adherence_cases,
     get_open_episode_case,
     get_adherence_cases_between_dates,
+    update_adherence_confidence_level,
 )
 from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceException
 
@@ -92,7 +94,35 @@ class NinetyNineDotsCaseTests(TestCase):
                 related_type=occurrence.attrs['case_type'],
             )],
         )
-        self.factory.create_or_update_cases([episode])
+        return self.factory.create_or_update_cases([episode])
+
+    def _create_adherence_cases(self, adherence_dates):
+        return self.factory.create_or_update_cases([
+            CaseStructure(
+                case_id=adherence_date.strftime('%Y-%m-%d'),
+                attrs={
+                    "case_type": "adherence",
+                    "create": True,
+                    "update": {
+                        "name": adherence_date,
+                        "adherence_value": "unobserved_dose",
+                        "adherence_source": "99DOTS",
+                        "adherence_date": adherence_date,
+                        "person_name": "Samwise Gamgee",
+                        "adherence_confidence": "medium",
+                        "shared_number_99_dots": False,
+                    },
+                },
+                indices=[CaseIndex(
+                    CaseStructure(case_id=self.episode_id, attrs={"create": False}),
+                    identifier='host',
+                    relationship=CASE_INDEX_EXTENSION,
+                    related_type='episode',
+                )],
+                walk_related=False,
+            )
+            for adherence_date in adherence_dates
+        ])
 
     @run_with_all_backends
     def test_get_episode(self):
@@ -132,3 +162,82 @@ class NinetyNineDotsCaseTests(TestCase):
                 adherence_case.dynamic_case_properties().get('adherence_confidence'),
                 'high'
              )
+
+    @run_with_all_backends
+    def test_get_adherence_cases_between_dates(self):
+        self._create_case_structure()
+        adherence_dates = [
+            datetime(2005, 7, 10),
+            datetime(2016, 8, 10),
+            datetime(2016, 8, 11),
+            datetime(2016, 8, 12),
+            datetime(2017, 9, 10),
+        ]
+        self._create_adherence_cases(adherence_dates)
+        fetched_cases = get_adherence_cases_between_dates(
+            self.domain,
+            self.person_id,
+            start_date=datetime(2016, 7, 1, tzinfo=pytz.UTC),
+            end_date=datetime(2016, 8, 13, tzinfo=pytz.UTC),
+        )
+        self.assertEqual(len(fetched_cases), 3)
+        self.assertItemsEqual(
+            ["2016-08-10", "2016-08-11", "2016-08-12"],
+            [case.case_id for case in fetched_cases]
+        )
+
+        fetched_cases = get_adherence_cases_between_dates(
+            self.domain,
+            self.person_id,
+            start_date=datetime(2010, 7, 1, tzinfo=pytz.UTC),
+            end_date=datetime(2010, 8, 13, tzinfo=pytz.UTC),
+        )
+        self.assertEqual(len(fetched_cases), 0)
+
+        fetched_cases = get_adherence_cases_between_dates(
+            self.domain,
+            self.person_id,
+            start_date=datetime(2016, 8, 10, tzinfo=pytz.UTC),
+            end_date=datetime(2016, 8, 10, tzinfo=pytz.UTC),
+        )
+        self.assertEqual(len(fetched_cases), 1)
+        self.assertEqual(
+            "2016-08-10",
+            fetched_cases[0].case_id,
+        )
+
+    @run_with_all_backends
+    def test_update_adherence_confidence(self):
+        self._create_case_structure()
+        case_accessor = CaseAccessors(self.domain)
+        adherence_cases = self._create_adherence_cases([
+            datetime(2005, 7, 10),
+            datetime(2016, 8, 10),
+            datetime(2016, 8, 11),
+        ])
+
+        update_adherence_confidence_level(
+            self.domain,
+            self.person_id,
+            datetime(2016, 8, 10, tzinfo=pytz.UTC),
+            datetime(2016, 8, 11, tzinfo=pytz.UTC),
+            "new_confidence_level",
+        )
+
+        adherence_cases = case_accessor.get_cases([
+            datetime(2005, 7, 10).strftime("%Y-%m-%d"),
+            datetime(2016, 8, 10).strftime("%Y-%m-%d"),
+            datetime(2016, 8, 11).strftime("%Y-%m-%d"),
+        ])
+        self.assertEqual(
+            adherence_cases[0].dynamic_case_properties()['adherence_confidence'],
+            'medium',
+        )
+        self.assertEqual(
+            adherence_cases[1].dynamic_case_properties()['adherence_confidence'],
+            'new_confidence_level',
+        )
+        self.assertEqual(
+            adherence_cases[2].dynamic_case_properties()['adherence_confidence'],
+            'new_confidence_level',
+        )
