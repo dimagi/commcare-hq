@@ -46,6 +46,12 @@ def get_topic_offset(topic):
     return get_multi_topic_offset([topic])[topic]
 
 
+def get_all_offsets():
+    """
+    :returns: A dict of offsets keyed by topic"""
+    return get_multi_topic_offset(ALL)
+
+
 def get_multi_topic_offset(topics):
     """
     :returns: A dict of offsets keyed by topic"""
@@ -56,9 +62,3 @@ def get_multi_topic_offset(topics):
     return {
         r.topic: r.offsets[0] for r in responses
     }
-
-
-def get_all_offsets():
-    """
-    :returns: A dict of offsets keyed by topic"""
-    return get_multi_topic_offset(ALL)
