@@ -4,7 +4,6 @@ import logging
 from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.xml import V2_NAMESPACE
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
-from corehq import toggles
 from corehq.apps.app_manager.const import (
     APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
     CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER,
@@ -960,8 +959,8 @@ class XForm(WrappedNode):
                         ))
                         if is_stock_element:
                             question.update({
-                                "stock_entry_attributes": data_node.xml.attrib,
-                                "stock_type_attributes": parent.attrib,
+                                "stock_entry_attributes": dict(data_node.xml.attrib),
+                                "stock_type_attributes": dict(parent.attrib),
                             })
 
                 if use_hashtags:
