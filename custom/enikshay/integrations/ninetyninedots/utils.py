@@ -39,7 +39,7 @@ class AdherenceCaseFactory(object):
     @property
     @memoized
     def _default_adherence_confidence(self):
-        return self._person_case.dynamic_case_properties().get(
+        return self._episode_case.dynamic_case_properties().get(
             'default_adherence_confidence', self.DEFAULT_ADHERENCE_CONFIDENCE
         )
 
@@ -69,6 +69,17 @@ class AdherenceCaseFactory(object):
             for adherence_point in adherence_points
         ])
 
+    def _get_adherence_case_properties(self, adherence_point, adherence_source):
+        return {
+            "name": adherence_point["timestamp"],
+            "adherence_value": self.DEFAULT_ADHERENCE_VALUE,
+            "adherence_source": adherence_source,
+            "adherence_date": adherence_point["timestamp"],
+            "person_name": self._person_case.name,
+            "adherence_confidence": self._default_adherence_confidence,
+            "shared_number_99_dots": adherence_point["sharedNumber"],
+        }
+
     def update_adherence_cases(self, start_date, end_date, confidence_level):
         adherence_cases = get_adherence_cases_between_dates(self.domain, self.person_id, start_date, end_date)
         adherence_case_ids = [case.case_id for case in adherence_cases]
@@ -85,16 +96,19 @@ class AdherenceCaseFactory(object):
             ) for adherence_case_id in adherence_case_ids
         ])
 
-    def _get_adherence_case_properties(self, adherence_point, adherence_source):
-        return {
-            "name": adherence_point["timestamp"],
-            "adherence_value": self.DEFAULT_ADHERENCE_VALUE,
-            "adherence_source": adherence_source,
-            "adherence_date": adherence_point["timestamp"],
-            "person_name": self._person_case.name,
-            "adherence_confidence": self._default_adherence_confidence,
-            "shared_number_99_dots": adherence_point["sharedNumber"],
-        }
+    def update_default_confidence_level(self, confidence_level):
+        return self.case_factory.create_or_update_cases([
+            CaseStructure(
+                case_id=self._episode_case.case_id,
+                attrs={
+                    "create": False,
+                    "update": {
+                        "default_adherence_confidence": confidence_level
+                    },
+                },
+                walk_related=False
+            )
+        ])
 
 
 def get_open_episode_case(domain, person_case_id):
@@ -147,3 +161,7 @@ def create_adherence_cases(domain, person_id, adherence_points, adherence_source
 
 def update_adherence_confidence_level(domain, person_id, start_date, end_date, new_confidence):
     return AdherenceCaseFactory(domain, person_id).update_adherence_cases(start_date, end_date, new_confidence)
+
+
+def update_default_confidence_level(domain, person_id, new_confidence):
+    return AdherenceCaseFactory(domain, person_id).update_default_confidence_level(new_confidence)

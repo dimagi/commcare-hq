@@ -17,6 +17,7 @@ from custom.enikshay.integrations.ninetyninedots.utils import (
     get_open_episode_case,
     get_adherence_cases_between_dates,
     update_adherence_confidence_level,
+    update_default_confidence_level,
 )
 from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceException
 
@@ -53,7 +54,7 @@ class NinetyNineDotsCaseTests(TestCase):
                 "case_type": "person",
                 "create": True,
                 "update": dict(
-                    default_adherence_confidence="high"
+                    name="Pippin",
                 )
             },
         )
@@ -79,12 +80,13 @@ class NinetyNineDotsCaseTests(TestCase):
                 'create': True,
                 'case_type': 'episode',
                 "update": dict(
-                    person_name="Ramsey Bolton",
+                    person_name="Pippin",
                     person_id=self.person_id,
                     opened_on=datetime(1989, 6, 11, 0, 0),
                     patient_type="new",
                     hiv_status="reactive",
                     episode_type="confirmed_tb",
+                    default_adherence_confidence="high",
                 )
             },
             indices=[CaseIndex(
@@ -108,7 +110,7 @@ class NinetyNineDotsCaseTests(TestCase):
                         "adherence_value": "unobserved_dose",
                         "adherence_source": "99DOTS",
                         "adherence_date": adherence_date,
-                        "person_name": "Samwise Gamgee",
+                        "person_name": "Pippin",
                         "adherence_confidence": "medium",
                         "shared_number_99_dots": False,
                     },
@@ -241,3 +243,11 @@ class NinetyNineDotsCaseTests(TestCase):
             adherence_cases[2].dynamic_case_properties()['adherence_confidence'],
             'new_confidence_level',
         )
+
+    @run_with_all_backends
+    def test_update_default_confidence_level(self):
+        self._create_case_structure()
+        confidence_level = "new_confidence_level"
+        update_default_confidence_level(self.domain, self.person_id, confidence_level)
+        episode = get_open_episode_case(self.domain, self.person_id)
+        self.assertEqual(episode.dynamic_case_properties().get('default_adherence_confidence'), confidence_level)
