@@ -272,7 +272,7 @@ class ImporterTest(TestCase):
     def test_external_id_matching_on_create_with_custom_column_name(self):
         headers = ['id_column', 'age', 'sex', 'location']
         external_id = 'external-id-test'
-        config = self._config(headers, search_field='external_id')
+        config = self._config(headers[1:], search_column='id_column', search_field='external_id')
         file = MockExcelFile(
             header_columns=headers,
             num_rows=2,
