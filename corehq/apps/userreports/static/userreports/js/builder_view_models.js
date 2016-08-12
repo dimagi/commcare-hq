@@ -358,6 +358,8 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             displayHelpText: django.gettext('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
             formatHelpText: django.gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: Select this if the property is a date.<br/><strong>Choice</strong>: Select this if the property is text or multiple choice.'),
             reportType: reportType,
+            propertyOptions: this.dataSourceIndicators,
+            selectablePropertyOptions: this.selectableDataSourceIndicators,
         });
         this.defaultFiltersList = new PropertyList({
             hasFormatCol: true,
