@@ -44,6 +44,9 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
             processor=self.processor
         )
 
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+
     @run_with_all_backends
     def test_form_is_published(self):
         with process_kafka_changes(self.form_pillow):
