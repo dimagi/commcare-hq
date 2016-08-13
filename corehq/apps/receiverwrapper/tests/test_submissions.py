@@ -6,7 +6,7 @@ from django.test.utils import override_settings
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.util.test_utils import TestFileMixin, softer_assert
+from corehq.util.test_utils import TestFileMixin
 from django.test.client import Client
 from django.core.urlresolvers import reverse
 import os
@@ -92,7 +92,6 @@ class SubmissionTest(TestCase):
         )
 
     @run_with_all_backends
-    @softer_assert
     def test_submit_user_registration(self):
         self._test(
             form='user_registration.xml',
