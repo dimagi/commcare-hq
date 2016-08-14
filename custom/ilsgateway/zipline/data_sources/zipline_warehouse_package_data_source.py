@@ -10,8 +10,8 @@ from custom.ilsgateway.zipline import helpers
 class ZiplineWarehousePackageDataSource(ZiplineDataSource):
 
     @property
-    def orders_id(self):
-        return self.config.orders_id
+    def order_id(self):
+        return self.config.order_id
 
     @property
     def filters(self):
@@ -26,9 +26,9 @@ class ZiplineWarehousePackageDataSource(ZiplineDataSource):
         if self.statuses:
             additional_filters['status__in'] = self.statuses
 
-        orders_id = filter(lambda x: bool(x), self.orders_id)
-        if orders_id:
-            additional_filters['order_id__in'] = orders_id
+        order_id = self.order_id
+        if order_id:
+            additional_filters['order_id'] = order_id
 
         return dict(
             order__domain=self.domain,

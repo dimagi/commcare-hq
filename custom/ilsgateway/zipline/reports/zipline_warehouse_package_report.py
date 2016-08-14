@@ -11,7 +11,7 @@ from custom.ilsgateway.zipline.reports.zipline_report import ZiplineReport
 
 
 ReportConfig = namedtuple(
-    'ReportConfig', ['domain', 'start_date', 'end_date', 'location_id', 'statuses', 'orders_id']
+    'ReportConfig', ['domain', 'start_date', 'end_date', 'location_id', 'statuses', 'order_id']
 )
 
 
@@ -28,8 +28,16 @@ class ZiplineWarehousePackageReport(ZiplineReport):
     ]
 
     @property
-    def orders_id(self):
-        return self.request.GET.getlist('orders_id')
+    def order_id(self):
+        value = self.request.GET.get('order_id')
+        print value
+        if not value:
+            return None
+
+        try:
+            return int(value)
+        except ValueError:
+            return None
 
     @property
     def report_config(self):
@@ -39,7 +47,7 @@ class ZiplineWarehousePackageReport(ZiplineReport):
             end_date=self.datespan.end_of_end_day,
             location_id=self.location_id,
             statuses=self.statuses,
-            orders_id=self.orders_id
+            order_id=self.order_id
         )
 
     @property
@@ -53,5 +61,5 @@ class ZiplineWarehousePackageReport(ZiplineReport):
             dict(name='enddate', value=self.datespan.enddate_display),
             dict(name='location_id', value=self.location_id),
             dict(name='statuses', value=self.statuses),
-            dict(name='orders_id', value=self.orders_id)
+            dict(name='order_id', value=self.order_id)
         ]

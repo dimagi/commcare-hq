@@ -1,8 +1,5 @@
-from django.core.urlresolvers import reverse
-
-from corehq.apps.reports.filters.base import BaseMultipleOptionFilter
+from corehq.apps.reports.filters.base import BaseMultipleOptionFilter, BaseReportFilter
 from custom.zipline.models import EmergencyOrderStatusUpdate
-from dimagi.utils.decorators.memoized import memoized
 
 
 class EmergencyOrderStatusChoiceFilter(BaseMultipleOptionFilter):
@@ -41,30 +38,17 @@ class EmergencyPackageStatusChoiceFilter(EmergencyOrderStatusChoiceFilter):
         ]
 
 
-class OrderIdChoiceFilter(BaseMultipleOptionFilter):
+class OrderIdChoiceFilter(BaseReportFilter):
 
-    slug = 'orders_id'
-    label = 'Orders id'
+    slug = 'order_id'
+    label = 'Order id'
+
+    template = 'ilsgateway/filters/order_id_filter.html'
 
     @property
     def filter_context(self):
-        context = super(OrderIdChoiceFilter, self).filter_context
-        context['endpoint'] = reverse('zipline_orders_view', kwargs={'domain': self.domain})
-        return context
-
-    @property
-    def pagination_source(self):
-        return reverse('zipline_orders_view', kwargs={'domain': self.domain})
-
-    @property
-    @memoized
-    def selected(self):
-        return [
-            {'id': pk, 'text': pk}
-            for pk in self.request.GET.getlist(self.slug)
-            if pk
-        ]
-
-    @property
-    def options(self):
-        return []
+        return {
+            'value': self.get_value(self.request, self.domain),
+            'slug': self.slug,
+            'input_css_class': self.css_class
+        }

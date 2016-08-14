@@ -10,8 +10,8 @@ from custom.ilsgateway.zipline import helpers
 class SupervisorReportDataSource(ZiplineDataSource):
 
     @property
-    def orders_id(self):
-        return self.config.orders_id
+    def order_id(self):
+        return self.config.order_id
 
     @property
     def filters(self):
@@ -26,9 +26,9 @@ class SupervisorReportDataSource(ZiplineDataSource):
         if self.statuses:
             additional_filters['status__in'] = self.statuses
 
-        orders_id = filter(lambda x: bool(x), self.orders_id)
-        if orders_id:
-            additional_filters['pk__in'] = orders_id
+        order_id = self.order_id
+        if order_id:
+            additional_filters['pk'] = order_id
 
         return dict(
             domain=self.domain,
@@ -81,7 +81,7 @@ class SupervisorReportDataSource(ZiplineDataSource):
             confirmed_status = emergency_order.confirmed_status
             if confirmed_status:
                 delivery_lead_time = '%.2f' % (
-                    (confirmed_status.zipline_timestamp - emergency_order.timestamp).seconds / 60.0
+                    (confirmed_status.timestamp - emergency_order.timestamp).seconds / 60.0
                 )
 
             rows.append([

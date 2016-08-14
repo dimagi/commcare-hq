@@ -5,7 +5,7 @@ from custom.ilsgateway.resources.v0_1 import ILSLocationResource
 from custom.ilsgateway.slab.views import SLABConfigurationView, SLABEditLocationView
 from custom.ilsgateway.views import SupervisionDocumentListView, SupervisionDocumentDeleteView, \
     SupervisionDocumentView, ReportRunListView, ReportRunDeleteView, DashboardPageRedirect, GlobalStats, \
-    PendingRecalculationsListView, ZiplineOrdersView
+    PendingRecalculationsListView
 from custom.ilsgateway.views import ILSConfigView
 
 hq_api = CommCareHqApi(api_name='v0.3')
@@ -30,8 +30,6 @@ urlpatterns = patterns('custom.ilsgateway.views',
     # one-off
     url(r'^recalculate_moshi/$', 'recalculate_moshi_rural', name='recalculate_moshi_rural'),
     url(r'^recalculate_non_facilities/$', 'recalculate_non_facilities', name='recalculate_non_facilities'),
-    # zipline
-    url(r'^zipline_orders', ZiplineOrdersView.as_view(), name='zipline_orders_view'),
     # api
     url(r'^', include(hq_api.urls)),
 )
