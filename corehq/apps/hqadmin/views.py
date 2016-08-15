@@ -399,7 +399,7 @@ class AdminRestoreView(TemplateView):
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
-        super(AdminRestoreView, self).dispatch(*args, **kwargs)
+        return super(AdminRestoreView, self).dispatch(request, *args, **kwargs)
 
 
     def get(self, request, *args, **kwargs):
