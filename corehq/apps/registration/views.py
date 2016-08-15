@@ -69,7 +69,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
         )
         if 'phone_number' in reg_form.cleaned_data:
             track_workflow(new_user.email, "Requested new account", properties={
-                'PhoneNumber':  reg_form.cleaned_data['phone_number']
+                'PhoneNumber': reg_form.cleaned_data['phone_number'],
             })
         else:
             track_workflow(new_user.email, "Requested new account")
