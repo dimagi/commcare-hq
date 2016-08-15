@@ -353,7 +353,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             hasCalculationCol: false,
             initialCols: userFilters,
             buttonText: 'Add User Filter',
-            analyticsAction: 'Add User Filter',  // Or should this remain "Add Filter"?
+            analyticsAction: 'Add User Filter',
             propertyHelpText: django.gettext('Choose the property you would like to add as a filter to this report.'),
             displayHelpText: django.gettext('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
             formatHelpText: django.gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: Select this if the property is a date.<br/><strong>Choice</strong>: Select this if the property is text or multiple choice.'),
