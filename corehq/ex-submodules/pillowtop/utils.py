@@ -1,7 +1,6 @@
 from __future__ import division
 from collections import namedtuple
 from datetime import datetime
-import importlib
 
 import sys
 
@@ -10,12 +9,11 @@ from django.conf import settings
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.modules import to_function
-from dimagi.utils.parsing import string_to_utc_datetime
 
 from pillowtop.exceptions import PillowNotFoundError
 
 
-def get_pillow_instance(full_class_str):
+def _get_pillow_instance(full_class_str):
     pillow_class = _import_class_or_function(full_class_str)
     if pillow_class is None:
         raise ValueError('No pillow class found for {}'.format(full_class_str))
@@ -60,7 +58,7 @@ class PillowConfig(namedtuple('PillowConfig', ['section', 'name', 'class_name', 
             instance_generator_fn = _import_class_or_function(self.instance_generator)
             return instance_generator_fn(self.name)
         else:
-            return get_pillow_instance(self.class_name)
+            return _get_pillow_instance(self.class_name)
 
 
 def get_pillow_config_from_setting(section, pillow_config_string_or_dict):
