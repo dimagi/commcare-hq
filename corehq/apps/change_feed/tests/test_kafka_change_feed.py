@@ -1,7 +1,7 @@
 import uuid
 from django.test import SimpleTestCase, TestCase
 from kafka import KeyedProducer
-from kafka.common import KafkaUnavailableError, OffsetOutOfRangeError
+from kafka.common import KafkaUnavailableError
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
