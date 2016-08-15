@@ -83,7 +83,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
     cases = UseIfRequested(
         ToManyDocumentsField(
             'corehq.apps.api.resources.v0_4.CommCareCaseResource',
-            attribute=lambda xform: casexml_xform.cases_referenced_by_xform(xform.form_data)
+            attribute=lambda xform: casexml_xform.cases_referenced_by_xform(xform)
         )
     )
 
