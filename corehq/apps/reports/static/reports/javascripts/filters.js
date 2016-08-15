@@ -1,7 +1,7 @@
 /* global define, jQuery */
 (function (factory) {
     if (typeof define === 'function' && define.amd) {
-        define(['jquery', 'knockout', 'underscore', 'select2'], factory);
+        define('reports/javascripts/filters', ['jquery', 'knockout', 'underscore', 'select2'], factory);
     } else {
         hqDefine('reports/javascripts/filters.js', function() {
             return factory(jQuery, ko, _);

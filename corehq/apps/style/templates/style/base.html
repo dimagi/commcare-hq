@@ -377,7 +377,7 @@
             <script src="{% static 'hqwebapp/js/lib/require.js' %}"></script>
             <script type="text/javascript">
                 requirejs.config({
-                    baseUrl: "{% block requirejs_url %}{% endblock %}",
+                    baseUrl: "{% static '' %}",
                     paths: {
                         {% include "style/includes/core_libraries.html" %}
                         "bootstrap": "{% static 'bootstrap/dist/js/bootstrap.min' %}",

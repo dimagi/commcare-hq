@@ -1,7 +1,7 @@
 /* global define, jQuery */
 (function (factory) {
     if (typeof define === 'function' && define.amd) {
-        define(['jquery', 'datatables.bootstrap'], factory);
+        define('reports/javascripts/config.dataTables.bootstrap', ['jquery', 'datatables.bootstrap'], factory);
     } else {
         hqDefine('reports/javascripts/config.dataTables.bootstrap.js', function() {
             return factory(jQuery);

@@ -3,13 +3,13 @@
  *  Handles fixtures' "View Table" page.
  */
 define([
-    "filters",
     "jquery",
-    "config.datatables.bootstrap",
+    "reports/javascripts/filters",
+    "reports/javascripts/config.dataTables.bootstrap",
     "hq.helpers",
 ], function(
-    filters,
     $,
+    filters,
     datatablesConfig
 ) {
     "use strict";
