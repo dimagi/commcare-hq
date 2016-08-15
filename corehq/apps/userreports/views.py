@@ -23,10 +23,10 @@ from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.accounting.models import Subscription
+from corehq.apps.analytics.tasks import update_hubspot_properties
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.tour import tours
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.util import reverse
@@ -93,7 +93,6 @@ from corehq.apps.userreports.util import has_report_builder_access, \
     allowed_report_builder_reports, number_of_report_builder_reports
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.toggles import REPORT_BUILDER_MAP_REPORTS
 from corehq.util.couch import get_document_or_404
 
 
@@ -237,11 +236,7 @@ class ReportBuilderView(BaseDomainView):
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
         if has_report_builder_access(request):
-            report_type = kwargs.get('report_type', None)
-            if report_type != 'map' or toggle_enabled(request, REPORT_BUILDER_MAP_REPORTS):
-                return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
-            else:
-                raise Http404
+            return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
         else:
             raise Http404
 
@@ -331,6 +326,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
             settings.DEFAULT_FROM_EMAIL,
             [settings.REPORT_BUILDER_ADD_ON_EMAIL],
         )
+        update_hubspot_properties.delay(request.couch_user, {'report_builder_subscription_request': 'yes'})
         return self.get(request, domain, *args, **kwargs)
 
 
@@ -442,9 +438,7 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 help_text=_('A table of aggregated data from form submissions or case properties.'
                             ' You choose the columns and rows.'),
             ),
-        ]
-        if REPORT_BUILDER_MAP_REPORTS.enabled(self.domain):
-            tiles.append(TileConfiguration(
+            TileConfiguration(
                 title=_('Map'),
                 slug='map',
                 analytics_usage_label="Map",
@@ -454,7 +448,8 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 url=reverse('report_builder_select_source', args=[self.domain, 'map']),
                 help_text=_('A map to show data from your cases or forms.'
                             ' You choose the property to map.'),
-            ))
+            )
+        ]
         return tiles
 
 

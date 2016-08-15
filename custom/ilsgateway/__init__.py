@@ -7,7 +7,9 @@ from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsR
 from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport
 from custom.ilsgateway.tanzania.reports.supervision import SupervisionReport
 from custom.ilsgateway.tanzania.reports.unrecognized_sms import UnrecognizedSMSReport
-
+from custom.ilsgateway.zipline.reports.supervisor_report import SupervisorReport
+from custom.ilsgateway.zipline.reports.zipline_warehouse_order_report import ZiplineWarehouseOrderReport
+from custom.ilsgateway.zipline.reports.zipline_warehouse_package_report import ZiplineWarehousePackageReport
 
 CUSTOM_REPORTS = (
     ('Custom reports', (
@@ -23,7 +25,12 @@ CUSTOM_REPORTS = (
     )),
     ('Slab', (
         SLABConfigurationReport,
-    ))
+    )),
+    ('Zipline', (
+        ZiplineWarehouseOrderReport,
+        ZiplineWarehousePackageReport,
+        SupervisorReport
+    ),)
 )
 
 LOCATION_TYPES = ["MOHSW", "MSDZONE", "REGION", "DISTRICT", "FACILITY"]

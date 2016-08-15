@@ -14,14 +14,16 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
         parse: function (response) {
             this.title = response.title;
+            this.type = response.type;
+            this.clearSession = response.clearSession;
+            this.notification = response.notification;
+            this.breadcrumbs = response.breadcrumbs;
 
             if (response.commands) {
                 this.type = "commands";
-                this.breadcrumbs = response.breadcrumbs;
                 return response.commands;
             }
             else if (response.entities) {
-                this.type = "entities";
                 this.action = response.action;
                 this.styles = response.styles;
                 this.headers = response.headers;
@@ -29,15 +31,17 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 this.currentPage = response.currentPage;
                 this.pageCount = response.pageCount;
                 this.tiles = response.tiles;
-                this.breadcrumbs = response.breadcrumbs;
                 return response.entities;
+            }
+            else if(response.type === "query") {
+                return response.displays;
             }
             else if(response.tree){
                 // form entry time, doggy
                 FormplayerFrontend.request('startForm', response, this.app_id);
             }
             else if(response.exception){
-                FormplayerFrontend.request('error', response.exception);
+                FormplayerFrontend.request('showError', response.exception);
             }
         },
 
@@ -51,7 +55,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
     var API = {
 
-        getMenus: function (appId, sessionId, stepList, page, search) {
+        getMenus: function (appId, sessionId, stepList, page, search, queryDict) {
 
             var user = FormplayerFrontend.request('currentUser');
             var username = user.username;
@@ -76,6 +80,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                         "offset": page * 10,
                         "search_text": search,
                         "menu_session_id": sessionId,
+                        "query_dictionary": queryDict,
                     });
 
                     if (stepList) {
@@ -99,12 +104,24 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 success: function (request) {
                     defer.resolve(request);
                 },
+                error: function (request) {
+                    FormplayerFrontend.request(
+                        'error',
+                        gettext('Unable to connect to form playing service')
+                    );
+                    defer.resolve(request);
+                },
             });
             return defer.promise();
         },
     };
 
-    FormplayerFrontend.reqres.setHandler("app:select:menus", function (appId, sessionId, stepList, page, search) {
-        return API.getMenus(appId, sessionId, stepList, page, search);
+    FormplayerFrontend.reqres.setHandler("app:select:menus", function (appId, sessionId, stepList, page, search, queryDict) {
+        return API.getMenus(appId,
+            sessionId,
+            stepList,
+            page,
+            search,
+            queryDict);
     });
 });

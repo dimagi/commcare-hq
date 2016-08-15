@@ -45,14 +45,12 @@
 trunk: master
 name: autostaging
 branches:
-  - fake-bulk-location # sravan 8/8
+  - loc-tests # sravan 8/8
   - nh/rb_filters_ui  # Norman 8/8
-  - mk-231812-j2me-config # Manish 7/15
-  - hqDefine-users  # danny 6/7
   - vellum-staging # J$ 11/13
-  - dm/xform-blobs  # daniel 5/23
   - nc/report-builder # Noah 6/29
   - welcome-to-vellum # Jenny 8/3
+  - ce/admin-api # Cal 8/11
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

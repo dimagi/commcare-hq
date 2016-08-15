@@ -60,6 +60,7 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
     migration_meta = ExportMigrationMeta(
         saved_export_id=saved_export._id,
         domain=domain,
+        export_type=export_type,
         is_remote_app_migration=is_remote_app_migration,
         migration_date=datetime.utcnow(),
     )
