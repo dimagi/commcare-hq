@@ -4,7 +4,7 @@ import json
 
 from corehq.apps.builds.utils import get_all_versions
 from corehq.apps.es import FormES
-from corehq.apps.es.aggregations import NestedTermAggregationsHelper, AggregationTerm
+from corehq.apps.es.aggregations import NestedTermAggregationsHelper, AggregationTerm, SumAggregation
 from corehq.apps.style.decorators import (
     use_nvd3,
 )
@@ -22,6 +22,7 @@ from corehq.apps.app_manager.commcare_settings import get_custom_commcare_settin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from phonelog.reports import BaseDeviceLogReport
 from phonelog.models import DeviceReportEntry
+from corehq.apps.es.domains import DomainES
 
 INDICATOR_DATA = {
     "active_domain_count": {
@@ -460,7 +461,6 @@ DOMAIN_FACETS = [
     "customer_type",
     "deployment.city.exact",
     "deployment.countries.exact",
-    "deployment.date",
     "deployment.public",
     "deployment.region.exact",
     "hr_name",
@@ -471,7 +471,6 @@ DOMAIN_FACETS = [
     "internal.workshop_region.exact",
     "internal.project_state",
     "internal.self_started",
-    "internal.services",
     "internal.sf_account_id",
     "internal.sf_contract_id",
     "internal.sub_area.exact",
@@ -536,7 +535,6 @@ FACET_MAPPING = [
         {"facet": "project_type", "name": "Project Type", "expanded": False},
         {"facet": "customer_type", "name": "Customer Type", "expanded": False},
         {"facet": "internal.initiative.exact", "name": "Initiative", "expanded": False},
-        {"facet": "internal.services", "name": "Services", "expanded": False},
         {"facet": "is_sms_billable", "name": "SMS Billable", "expanded": False},
     ]),
     ("Eula", False, [
@@ -667,7 +665,6 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
 
         ctxt["domain_datefields"] = [
             {"value": "date_created", "name": _("Date Created")},
-            {"value": "deployment.date", "name": _("Deployment Date")},
             {"value": "cp_first_form", "name": _("First Form Submitted")},
             {"value": "cp_last_form", "name": _("Last Form Submitted")},
         ]
@@ -684,7 +681,6 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             DataTablesColumn(_("Project"), prop_name="name.exact"),
             DataTablesColumn(_("Date Created"), prop_name="date_created"),
             DataTablesColumn(_("Organization"), prop_name="internal.organization_name.exact"),
-            DataTablesColumn(_("Deployment Date"), prop_name="deployment.date"),
             DataTablesColumn(_("Deployment Country"), prop_name="deployment.countries.exact"),
             DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC,
                 prop_name="cp_n_active_cc_users",
@@ -713,7 +709,6 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                              prop_name="cp_n_web_users",
                              help_text=_("Does not include deactivated users.")),
             DataTablesColumn(_("Notes"), prop_name="internal.notes"),
-            DataTablesColumn(_("Services"), prop_name="internal.services"),
             DataTablesColumn(_("Project State"), prop_name="internal.project_state"),
             DataTablesColumn(_("Using ADM?"), prop_name="internal.using_adm"),
             DataTablesColumn(_("Using Call Center?"), prop_name="internal.using_call_center"),
@@ -750,22 +745,22 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             return self.es_results.get('facets', {}).get('%s-STATS' % prop, {}).get(what_to_get)
 
         CALCS_ROW_INDEX = {
-            5: "cp_n_active_cc_users",
-            6: "cp_n_cc_users",
-            7: "cp_n_users_submitted_form",
-            8: "cp_n_60_day_cases",
-            9: "cp_n_active_cases",
-            10: "cp_n_inactive_cases",
-            11: "cp_n_cases",
-            12: "cp_n_forms",
-            13: "cp_n_forms_30_d",
-            17: "cp_n_web_users",
-            30: "cp_n_out_sms",
-            31: "cp_n_in_sms",
-            32: "cp_n_sms_ever",
-            33: "cp_n_sms_in_30_d",
-            34: "cp_n_sms_out_30_d",
-            35: "cp_j2me_90_d_bool",
+            4: "cp_n_active_cc_users",
+            5: "cp_n_cc_users",
+            6: "cp_n_users_submitted_form",
+            7: "cp_n_60_day_cases",
+            8: "cp_n_active_cases",
+            9: "cp_n_inactive_cases",
+            10: "cp_n_cases",
+            11: "cp_n_forms",
+            12: "cp_n_forms_30_d",
+            16: "cp_n_web_users",
+            28: "cp_n_out_sms",
+            29: "cp_n_in_sms",
+            30: "cp_n_sms_ever",
+            31: "cp_n_sms_in_30_d",
+            32: "cp_n_sms_out_30_d",
+            33: "cp_j2me_90_d_bool",
         }
 
         def stat_row(name, what_to_get, type='float'):
@@ -803,7 +798,6 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     self.get_name_or_link(dom, internal_settings=True),
                     format_date((dom.get("date_created")), _('No date')),
                     dom.get("internal", {}).get('organization_name') or _('No org'),
-                    format_date((dom.get('deployment') or {}).get('date'), _('No date')),
                     (dom.get("deployment") or {}).get('countries') or _('No countries'),
                     dom.get("cp_n_active_cc_users", _("Not yet calculated")),
                     dom.get("cp_n_cc_users", _("Not yet calculated")),
@@ -819,7 +813,6 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     format_date(dom.get("cp_last_form"), _("No forms")),
                     dom.get("cp_n_web_users", _("Not yet calculated")),
                     dom.get('internal', {}).get('notes') or _('No notes'),
-                    dom.get('internal', {}).get('services') or _('No info'),
                     dom.get('internal', {}).get('project_state') or _('No info'),
                     format_bool(dom.get('internal', {}).get('using_adm')),
                     format_bool(dom.get('internal', {}).get('using_call_center')),
@@ -879,6 +872,26 @@ class AdminDomainMapReport(AdminDomainStatsReport):
                     dom.get('internal', {}).get('sub_area') or _('No info')
                 ]
 
+    def _calc_num_active_users_per_country(self):
+        active_users_per_country = (NestedTermAggregationsHelper(
+                                    base_query=DomainES(),
+                                    terms=[AggregationTerm('countries', 'deployment.countries')],
+                                    bottom_level_aggregation=SumAggregation('users', 'cp_n_active_cc_users')
+                                    ).get_data())
+        return active_users_per_country
+
+    def _calc_num_projs_per_countries(self):
+        num_projects_by_country = (DomainES()
+                                   .terms_aggregation('deployment.countries', 'countries')
+                                   .size(0).run().aggregations.countries.counts_by_bucket())
+        return num_projects_by_country
+
+    @property
+    def json_dict(self):
+        json = super(AdminDomainMapReport, self).json_dict
+        json['users_per_country'] = dict(self._calc_num_active_users_per_country())
+        json['country_projs_count'] = self._calc_num_projs_per_countries()
+        return json
 
 class AdminUserReport(AdminFacetedReport):
     slug = "user_list"
@@ -956,7 +969,8 @@ class AdminAppReport(AdminFacetedReport):
     default_sort = {'name.exact': 'asc'}
     es_index = 'apps'
 
-    excluded_properties = ["_id", "_rev", "_attachments", "admin_password_charset", "short_odk_url", "version",
+    excluded_properties = ["_id", "_rev", "_attachments", "external_blobs",
+                           "admin_password_charset", "short_odk_url", "version",
                            "admin_password", "built_on", ]
 
     @property

@@ -4,6 +4,7 @@ from corehq.util.dates import iso_string_to_date
 from dimagi.utils.dates import DateSpan
 from corehq.apps.reports.filters.base import BaseReportFilter
 import datetime
+from dimagi.utils.dates import add_months
 
 
 class DatespanFilter(BaseReportFilter):
@@ -17,6 +18,7 @@ class DatespanFilter(BaseReportFilter):
     slug = "datespan"
     inclusive = True
     default_days = 30
+    is_editable = True
 
     @property
     def datespan(self):
@@ -42,6 +44,27 @@ class DatespanFilter(BaseReportFilter):
             'last_month': _('Last Month'),
             'last_30_days': _('Last 30 Days')
         })
+
+
+class HiddenLastMonthDateFilter(DatespanFilter):
+    """
+    A filter that returns last month as datespan
+    but is hidden since datespan should be fixed to last month
+    """
+    template = "reports/filters/month_datespan.html"
+    label = ugettext_lazy("Date Range")
+    slug = "datespan"
+    inclusive = True
+    is_editable = False
+
+    @property
+    def datespan(self):
+        now = datetime.datetime.utcnow()
+        year, month = add_months(now.year, now.month, -1)
+        last_month = DateSpan.from_month(month, year)
+        self.request.datespan = last_month
+        self.context.update(dict(datespan=last_month))
+        return last_month
 
 
 class SingleDateFilter(BaseReportFilter):

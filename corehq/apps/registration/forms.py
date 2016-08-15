@@ -97,7 +97,8 @@ class RegisterNewWebUserForm(forms.Form):
                         ugettext("Next"),
                         css_class="btn btn-success btn-lg",
                         data_bind="click: nextStep, disable: disableNextStepOne"
-                    )
+                    ),
+                    css_class="check-password",
                 ),
                 css_class="form-step step-1",
                 style="display: none;"

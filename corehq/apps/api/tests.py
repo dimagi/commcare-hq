@@ -1,3 +1,4 @@
+import base64
 import json
 import uuid
 from datetime import datetime
@@ -5,6 +6,7 @@ import dateutil.parser
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.http import QueryDict
 from django.test import TestCase
 from django.utils.http import urlencode
 
@@ -14,8 +16,10 @@ from tastypie.resources import Resource
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.util import post_case_blocks
 from corehq.apps.userreports.models import ReportConfiguration, \
     DataSourceConfiguration
+from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.pillows.case import transform_case_for_elasticsearch
 from couchforms.models import XFormInstance
 
@@ -43,7 +47,7 @@ from custom.ilsgateway.resources.v0_1 import ILSLocationResource
 from custom.ewsghana.resources.v0_1 import EWSLocationResource
 from corehq.apps.users.analytics import update_analytics_indexes
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.form_processor.tests import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.reportxform import transform_xform_for_report_forms_index
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from custom.hope.models import CC_BIHAR_PREGNANCY
@@ -98,10 +102,7 @@ class APIResourceTest(TestCase):
         Role.get_cache().clear()
         generator.instantiate_accounting()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
-        cls.list_endpoint = reverse('api_dispatch_list',
-                kwargs=dict(domain=cls.domain.name,
-                            api_name=cls.api_name,
-                            resource_name=cls.resource._meta.resource_name))
+        cls.list_endpoint = cls._get_list_endpoint()
         cls.username = 'rudolph@qwerty.commcarehq.org'
         cls.password = '***'
         cls.user = WebUser.create(cls.domain.name, cls.username, cls.password)
@@ -110,6 +111,13 @@ class APIResourceTest(TestCase):
         set_up_subscription(cls)
         cls.domain = Domain.get(cls.domain._id)
         cls.api_key, _ = ApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.user))
+
+    @classmethod
+    def _get_list_endpoint(cls):
+        return reverse('api_dispatch_list',
+                kwargs=dict(domain=cls.domain.name,
+                            api_name=cls.api_name,
+                            resource_name=cls.resource._meta.resource_name))
 
     @classmethod
     def tearDownClass(cls):
@@ -1586,7 +1594,7 @@ class InternalFixtureResourceTest(APIResourceTest, InternalTestMixin):
 
 class InternalLocationResourceTest(APIResourceTest, InternalTestMixin):
     resource = InternalLocationResource
-    api_name = 'v0_3'
+    api_name = 'v0_5'
 
     def test_basic(self):
         self.assert_accessible_via_sessions(self.list_endpoint)
@@ -1619,15 +1627,24 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
         cls.report_columns = [
             {
                 "column_id": 'foo',
+                "display": "foo display",
                 "type": "field",
                 "field": "my_field",
                 "aggregation": "simple",
             },
             {
                 "column_id": 'bar',
+                "display": "bar display",
                 "type": "field",
                 "field": "my_field",
                 "aggregation": "simple",
+            },
+            {
+                "column_id": 'expand',
+                "display": "expand display",
+                "type": "expanded",
+                "field": "my_field",
+                "max_expansion": 10,
             }
         ]
         cls.report_filters = [
@@ -1644,6 +1661,7 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
                 'slug': 'my_other_field_filter',
             }
         ]
+        cls.report_title = "test report"
 
         cls.data_source = DataSourceConfiguration(
             domain=cls.domain.name,
@@ -1653,12 +1671,18 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
         cls.data_source.save()
 
         cls.report_configuration = ReportConfiguration(
+            title=cls.report_title,
             domain=cls.domain.name,
             config_id=cls.data_source._id,
             columns=cls.report_columns,
             filters=cls.report_filters
         )
         cls.report_configuration.save()
+
+        another_report_configuration = ReportConfiguration(
+            domain=cls.domain.name, config_id=cls.data_source._id, columns=[], filters=[]
+        )
+        another_report_configuration.save()
 
     def test_get_detail(self):
         response = self._assert_auth_get_resource(
@@ -1670,17 +1694,33 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
 
         self.assertEqual(
             set(response_dict.keys()),
-            {'resource_uri', 'filters', 'columns', 'id'}
+            {'resource_uri', 'filters', 'columns', 'id', 'title'}
         )
 
         self.assertEqual(
-            [c['column_id'] for c in self.report_columns],
+            [{
+                "column_id": c['column_id'],
+                "display": c['display'],
+                "type": c['type']
+            } for c in self.report_columns],
             columns
         )
         self.assertEqual(
-            [{'datatype': x['datatype'], 'field': x['field']} for x in self.report_filters],
+            [{'datatype': x['datatype'], 'slug': x['slug'], 'type': x['type']} for x in self.report_filters],
             filters
         )
+        self.assertEqual(response_dict['title'], self.report_title)
+
+    def test_get_list(self):
+        response = self._assert_auth_get_resource(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+        response_dict = json.loads(response.content)
+
+        self.assertEqual(set(response_dict.keys()), {'meta', 'objects'})
+        self.assertEqual(set(response_dict['meta'].keys()), {'total_count'})
+
+        self.assertEqual(response_dict['meta']['total_count'], 2)
+        self.assertEqual(len(response_dict['objects']), 2)
 
     def test_disallowed_methods(self):
         response = self._assert_auth_post_resource(
@@ -1688,9 +1728,6 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
             {},
             failure_code=405
         )
-        self.assertEqual(response.status_code, 405)
-
-        response = self._assert_auth_get_resource(self.list_endpoint, failure_code=405)
         self.assertEqual(response.status_code, 405)
 
     def test_auth(self):
@@ -1705,3 +1742,175 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
 
         wrong_domain.delete()
         new_user.delete()
+
+
+class TestConfigurableReportDataResource(APIResourceTest):
+    resource = v0_5.ConfigurableReportDataResource
+    api_name = "v0.5"
+
+    @classmethod
+    def _get_list_endpoint(cls):
+        return None
+
+    def single_endpoint(self, id, get_params=None):
+        endpoint = reverse('api_dispatch_detail', kwargs=dict(
+            domain=self.domain.name,
+            api_name=self.api_name,
+            resource_name=self.resource._meta.resource_name,
+            pk=id,
+        ))
+        if endpoint:
+            endpoint += "?" + urlencode(get_params or {})
+        return endpoint
+
+    def setUp(self):
+        credentials = base64.b64encode("{}:{}".format(self.username, self.password))
+        self.client.defaults['HTTP_AUTHORIZATION'] = 'Basic ' + credentials
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestConfigurableReportDataResource, cls).setUpClass()
+
+        case_type = "my_case_type"
+        field_name = "my_field"
+
+        cls.cases = []
+        for val in ["foo", "foo", "bar", "baz"]:
+            id = uuid.uuid4().hex
+            case_block = CaseBlock(
+                create=True,
+                case_id=id,
+                case_type=case_type,
+                update={field_name: val},
+            ).as_xml()
+            post_case_blocks([case_block], {'domain': cls.domain.name})
+            cls.cases.append(CommCareCase.get(id))
+
+        cls.report_columns = [
+            {
+                "column_id": field_name,
+                "type": "field",
+                "field": field_name,
+                "aggregation": "simple",
+            }
+        ]
+        cls.report_filters = [
+            {
+                'datatype': 'string',
+                'field': field_name,
+                'type': 'dynamic_choice_list',
+                'slug': 'my_field_filter',
+            }
+        ]
+
+        cls.data_source = DataSourceConfiguration(
+            domain=cls.domain.name,
+            referenced_doc_type="CommCareCase",
+            table_id=uuid.uuid4().hex,
+            configured_filter={
+                "type": "boolean_expression",
+                "operator": "eq",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "type"
+                },
+                "property_value": case_type,
+            },
+            configured_indicators=[{
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": field_name
+                },
+                "column_id": field_name,
+                "display_name": field_name,
+                "datatype": "string"
+            }],
+        )
+        cls.data_source.validate()
+        cls.data_source.save()
+        rebuild_indicators(cls.data_source._id)
+
+        cls.report_configuration = ReportConfiguration(
+            domain=cls.domain.name,
+            config_id=cls.data_source._id,
+            aggregation_columns=["doc_id"],
+            columns=cls.report_columns,
+            filters=cls.report_filters,
+        )
+        cls.report_configuration.save()
+
+    def test_fetching_data(self):
+        response = self.client.get(
+            self.single_endpoint(self.report_configuration._id))
+
+        self.assertEqual(response.status_code, 200)
+        response_dict = json.loads(response.content)
+
+        self.assertEqual(response_dict["total_records"], len(self.cases))
+        self.assertEqual(len(response_dict["data"]), len(self.cases))
+
+    def test_page_size(self):
+        response = self.client.get(
+            self.single_endpoint(self.report_configuration._id, {"limit": 1}))
+        response_dict = json.loads(response.content)
+        self.assertEqual(response_dict["total_records"], len(self.cases))
+        self.assertEqual(len(response_dict["data"]), 1)
+
+        response = self.client.get(
+            self.single_endpoint(self.report_configuration._id, {"limit": 10000}))
+        self.assertEqual(response.status_code, 400)
+
+    def test_page_offset(self):
+        response = self.client.get(
+            self.single_endpoint(self.report_configuration._id, {"offset": 2}))
+        response_dict = json.loads(response.content)
+        self.assertEqual(response_dict["total_records"], len(self.cases))
+        self.assertEqual(len(response_dict["data"]), len(self.cases) - 2)
+
+    def test_filtering(self):
+        response = self.client.get(self.single_endpoint(
+            self.report_configuration._id, {"my_field_filter": "foo"})
+        )
+        response_dict = json.loads(response.content)
+
+        self.assertEqual(response_dict["total_records"], 2)
+
+        response = self.client.get(self.single_endpoint(
+            self.report_configuration._id, {"my_field_filter": "bar"})
+        )
+        response_dict = json.loads(response.content)
+
+        self.assertEqual(response_dict["total_records"], 1)
+
+    def test_next_page_url(self):
+        # It's not the last page
+        query_dict = QueryDict("", mutable=True)
+        query_dict.update({"some_filter": "bar"})
+        next = v0_5.ConfigurableReportDataResource(api_name=self.api_name)._get_next_page(
+            self.domain.name, "123", 100, 50, 3450, query_dict)
+        self.assertEqual(next, self.single_endpoint("123", {"offset": 150, "limit": 50, "some_filter": "bar"}))
+
+        # It's the last page
+        next = v0_5.ConfigurableReportDataResource(api_name=self.api_name)._get_next_page(
+            self.domain.name, "123", 100, 50, 120, query_dict)
+        self.assertEqual(next, "")
+
+    def test_auth(self):
+        user_in_wrong_domain_name = 'Mallory'
+        user_in_wrong_domain_password = '1337haxor'
+        wrong_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
+        self.addCleanup(wrong_domain.delete)
+        user_in_wrong_domain = WebUser.create(
+            wrong_domain.name, user_in_wrong_domain_name, user_in_wrong_domain_password
+        )
+        self.addCleanup(user_in_wrong_domain.delete)
+        user_in_wrong_domain.save()
+        credentials = base64.b64encode("{}:{}".format(
+            user_in_wrong_domain_name, user_in_wrong_domain_password)
+        )
+        response = self.client.get(
+            self.single_endpoint(self.report_configuration._id),
+            HTTP_AUTHORIZATION='Basic ' + credentials
+        )
+        self.assertEqual(response.status_code, 401)  # 401 is "Unauthorized"

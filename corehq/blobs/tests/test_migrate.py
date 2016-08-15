@@ -6,9 +6,10 @@ import corehq.blobs.migrate as mod
 from corehq.blobs import get_blob_db
 from corehq.blobs.mixin import BlobMixin
 from corehq.blobs.s3db import maybe_not_found
-from corehq.blobs.tests.util import (TemporaryFilesystemBlobDB,
-    TemporaryMigratingBlobDB, TemporaryS3BlobDB)
-from corehq.util.couch_doc_processor import ResumableDocsByTypeIterator
+from corehq.blobs.tests.util import (
+    TemporaryFilesystemBlobDB, TemporaryMigratingBlobDB, TemporaryS3BlobDB
+)
+from corehq.util.doc_processor.couch import CouchDocumentProvider, doc_type_tuples_to_dict
 from corehq.util.test_utils import trap_extra_setup
 
 from django.conf import settings
@@ -16,12 +17,6 @@ from django.test import TestCase
 from testil import replattr, tempdir
 
 from corehq.apps.app_manager.models import Application, RemoteApp
-from corehq.apps.hqmedia.models import (
-    CommCareAudio,
-    CommCareImage,
-    CommCareMultimedia,
-    CommCareVideo,
-)
 from couchexport.models import SavedBasicExport, ExportConfiguration
 
 NOT_SET = object()
@@ -34,7 +29,8 @@ class BaseMigrationTest(TestCase):
         self.discard_migration_state(self.slug)
         self._old_flags = {}
         self.docs_to_delete = []
-        for model in mod.MIGRATIONS[self.slug].doc_type_map.values():
+
+        for model in doc_type_tuples_to_dict(mod.MIGRATIONS[self.slug].doc_types).values():
             self._old_flags[model] = model.migrating_blobs_from_couch
             model.migrating_blobs_from_couch = True
 
@@ -51,12 +47,11 @@ class BaseMigrationTest(TestCase):
 
     @staticmethod
     def discard_migration_state(slug):
-        doc_types = mod.MIGRATIONS[slug].doc_type_map
-        ResumableDocsByTypeIterator(
-            list(doc_types.values())[0].get_db(),
-            doc_types,
-            slug + "-blob-migration",
-        ).discard_state()
+        migrator = mod.MIGRATIONS[slug]
+        iterator = CouchDocumentProvider(
+            migrator.iteration_key, migrator.doc_types
+        ).get_document_iterator(1)
+        iterator.discard_state()
         mod.BlobMigrationState.objects.filter(slug=slug).delete()
 
     # abstract property, must be overridden in base class
@@ -64,7 +59,7 @@ class BaseMigrationTest(TestCase):
 
     @property
     def doc_types(self):
-        return set(mod.MIGRATIONS[self.slug].doc_type_map)
+        return set(doc_type_tuples_to_dict(mod.MIGRATIONS[self.slug].doc_types))
 
     def do_migration(self, docs, num_attachments=1):
         self.docs_to_delete.extend(docs)
@@ -125,12 +120,12 @@ class BaseMigrationTest(TestCase):
         migrator = mod.MIGRATIONS[self.slug]
 
         class ConcurrentModify(migrator.doc_migrator_class):
-            def _do_migration(self, doc, couchdb):
+            def _do_migration(self, doc):
                 if doc["_id"] not in modified and doc["_id"] in docs_by_id:
                     # do concurrent modification
                     modify_doc(docs_by_id[doc["_id"]])
                     modified.add(doc["_id"])
-                return super(ConcurrentModify, self)._do_migration(doc, couchdb)
+                return super(ConcurrentModify, self)._do_migration(doc)
 
         with replattr(migrator, "doc_migrator_class", ConcurrentModify):
             # do migration
@@ -259,10 +254,10 @@ class TestMultimediaMigrations(BaseMigrationTest):
 
     slug = "multimedia"
     test_items = [
-        (CommCareAudio, "audio.mp3"),
-        (CommCareImage, "image.jpg"),
-        (CommCareVideo, "video.3gp"),
-        (CommCareMultimedia, "file.bin"),
+        (mod.hqmedia.CommCareAudio, "audio.mp3"),
+        (mod.hqmedia.CommCareImage, "image.jpg"),
+        (mod.hqmedia.CommCareVideo, "video.3gp"),
+        (mod.hqmedia.CommCareMultimedia, "file.bin"),
     ]
 
     @staticmethod
@@ -316,6 +311,68 @@ class TestMultimediaMigrations(BaseMigrationTest):
             exp = type(item).get(item._id)
             self.assertEqual(exp.fetch_attachment(exp.attachment_id), name + old_data)
             self.assertEqual(exp.fetch_attachment("other"), new_data)
+
+
+class TestXFormInstanceMigrations(BaseMigrationTest):
+
+    slug = "xforms"
+    doc_type_map = {
+        "XFormInstance": mod.xform.XFormInstance,
+        "XFormInstance-Deleted": mod.xform.XFormInstance,
+        "XFormArchived": mod.xform.XFormArchived,
+        "XFormDeprecated": mod.xform.XFormDeprecated,
+        "XFormDuplicate": mod.xform.XFormDuplicate,
+        "XFormError": mod.xform.XFormError,
+        "SubmissionErrorLog": mod.xform.SubmissionErrorLog,
+        "HQSubmission": mod.xform.XFormInstance,
+    }
+
+    def test_migrate_happy_path(self):
+        items = {}
+        form_name = mod.xform.ATTACHMENT_NAME
+        form = u'<fake xform submission>\u2713</fake>'
+        data = b'binary data not valid utf-8 \xe4\x94'
+        for doc_type, model_class in self.doc_type_map.items():
+            item = model_class()
+            item.save()
+            super(BlobMixin, item).put_attachment(form, form_name)
+            super(BlobMixin, item).put_attachment(data, "data.bin")
+            item.doc_type = doc_type
+            item.save()
+            items[doc_type] = item
+
+        self.do_migration(items.values(), num_attachments=2)
+
+        for item in items.values():
+            exp = type(item).get(item._id)
+            self.assertEqual(exp.fetch_attachment(form_name), form)
+            self.assertEqual(exp.fetch_attachment("data.bin"), data)
+
+    def test_migrate_with_concurrent_modification(self):
+        items = {}
+        form_name = mod.xform.ATTACHMENT_NAME
+        new_form = 'something new'
+        old_form = 'something old'
+        for doc_type, model_class in self.doc_type_map.items():
+            item = model_class()
+            item.save()
+            super(BlobMixin, item).put_attachment(old_form, form_name)
+            super(BlobMixin, item).put_attachment(old_form, "other.xml")
+            item.doc_type = doc_type
+            item.save()
+            self.assertEqual(len(item._attachments), 2)
+            items[item] = (1, 1)
+
+        def modify(item):
+            # put_attachment() calls .save()
+            type(item).get(item._id).put_attachment(new_form, form_name)
+
+        self.do_failed_migration(items, modify)
+
+        for item in items:
+            exp = type(item).get(item._id)
+            self.assertEqual(exp.fetch_attachment(form_name), new_form)
+            self.assertEqual(exp.fetch_attachment("other.xml"), old_form)
 
 
 class TestMigrateBackend(TestCase):

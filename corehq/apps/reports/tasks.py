@@ -169,7 +169,7 @@ def rebuild_export_async(config, schema):
 
 @periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
 def update_calculated_properties():
-    results = DomainES().is_snapshot(False).fields(["name", "_id"]).run().hits
+    results = DomainES().fields(["name", "_id"]).run().hits
     all_stats = _all_domain_stats()
     for r in results:
         dom = r["name"]
@@ -436,10 +436,13 @@ def _extract_form_attachment_info(form, properties):
         'id': form.form_id,
     }
 
+    # TODO make form.attachments always return objects that conform to a
+    # uniform interface. XFormInstance attachment values are dicts, and
+    # XFormInstanceSQL attachment values are XFormAttachmentSQL objects.
     for attachment_name, attachment in form.attachments.iteritems():
-        try:
+        if hasattr(attachment, 'content_type'):
             content_type = attachment.content_type
-        except AttributeError:
+        else:
             content_type = attachment['content_type']
         if content_type == 'text/xml':
             continue
@@ -452,9 +455,14 @@ def _extract_form_attachment_info(form, properties):
 
         if not properties or question_id in properties:
             extension = unicode(os.path.splitext(attachment_name)[1])
-            try:
+            if hasattr(attachment, 'content_length'):
+                # FormAttachmentSQL or BlobMeta
                 size = attachment.content_length
-            except AttributeError:
+            elif 'content_length' in attachment:
+                # dict from BlobMeta.to_json() or possibly FormAttachmentSQL
+                size = attachment['content_length']
+            else:
+                # couch attachment dict
                 size = attachment['length']
             form_info['attachments'].append({
                 'size': size,

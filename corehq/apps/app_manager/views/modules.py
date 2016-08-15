@@ -22,7 +22,9 @@ from corehq.apps.app_manager.const import (
     CAREPLAN_GOAL,
     CAREPLAN_TASK,
     USERCASE_TYPE,
-    APP_V1)
+    APP_V1,
+    CLAIM_DEFAULT_RELEVANT_CONDITION,
+)
 from corehq.apps.app_manager.util import (
     is_valid_case_type,
     is_usercase_in_use,
@@ -208,7 +210,7 @@ def _get_report_module_context(app, module):
             'description': report.description,
             'charts': [chart for chart in report.charts if
                        chart.type == 'multibar'],
-            'filter_structure': report.filters,
+            'filter_structure': report.filters_without_prefilters,
         }
 
     all_reports = ReportConfiguration.by_domain(app.domain) + \
@@ -639,6 +641,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     fixture_select = params.get('fixture_select', None)
     sort_elements = params.get('sort_elements', None)
     persist_case_context = params.get('persistCaseContext', None)
+    persistent_case_context_xml = params.get('persistentCaseContextXML', None)
     use_case_tiles = params.get('useCaseTiles', None)
     persist_tile_on_forms = params.get("persistTileOnForms", None)
     pull_down_tile = params.get("enableTilePullDown", None)
@@ -665,6 +668,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
         detail.short.columns = map(DetailColumn.from_json, short)
         if persist_case_context is not None:
             detail.short.persist_case_context = persist_case_context
+            detail.short.persistent_case_context_xml = persistent_case_context_xml
         if use_case_tiles is not None:
             detail.short.use_case_tiles = use_case_tiles
         if persist_tile_on_forms is not None:
@@ -691,16 +695,28 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
             item.field = sort_element['field']
             item.type = sort_element['type']
             item.direction = sort_element['direction']
+            item.display[lang] = sort_element['display']
             detail.short.sort_elements.append(item)
     if parent_select is not None:
         module.parent_select = ParentSelect.wrap(parent_select)
     if fixture_select is not None:
         module.fixture_select = FixtureSelect.wrap(fixture_select)
     if search_properties is not None:
-        module.search_config = CaseSearch(properties=[
-            CaseSearchProperty.wrap(p) for p in _update_search_properties(module, search_properties, lang)
-        ])
-        # TODO: Add UI and controller support for CaseSearch.command_label
+        if search_properties.get('properties') is not None:
+            module.search_config = CaseSearch(
+                properties=[
+                    CaseSearchProperty.wrap(p)
+                    for p in _update_search_properties(
+                        module,
+                        search_properties.get('properties'), lang
+                    )
+                ],
+                relevant=(
+                    search_properties.get('relevant')
+                    if search_properties.get('relevant') is not None
+                    else CLAIM_DEFAULT_RELEVANT_CONDITION
+                )
+            )
 
     resp = {}
     app.save(resp)
@@ -820,6 +836,7 @@ def _new_careplan_module(request, domain, app, name, lang):
 
 def _save_case_list_lookup_params(short, case_list_lookup, lang):
     short.lookup_enabled = case_list_lookup.get("lookup_enabled", short.lookup_enabled)
+    short.lookup_autolaunch = case_list_lookup.get("lookup_autolaunch", short.lookup_autolaunch)
     short.lookup_action = case_list_lookup.get("lookup_action", short.lookup_action)
     short.lookup_name = case_list_lookup.get("lookup_name", short.lookup_name)
     short.lookup_extras = case_list_lookup.get("lookup_extras", short.lookup_extras)

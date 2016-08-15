@@ -106,6 +106,7 @@ if os.path.exists(_formdesigner_path):
     STATICFILES_DIRS += (('formdesigner', _formdesigner_path),)
 del _formdesigner_path
 
+LOG_HOME = FILEPATH
 COUCH_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
@@ -246,6 +247,7 @@ HQ_APPS = (
     'corehq.apps.smsbillables',
     'corehq.apps.accounting',
     'corehq.apps.appstore',
+    'corehq.apps.preview_app',
     'corehq.apps.data_analytics',
     'corehq.apps.domain',
     'corehq.apps.domainsync',
@@ -347,6 +349,7 @@ HQ_APPS = (
     'corehq.doctypemigrations',
     'corehq.blobs',
     'corehq.apps.case_search',
+    'corehq.apps.zapier.apps.ZapierConfig',
 
     # custom reports
     'a5288',
@@ -365,7 +368,6 @@ HQ_APPS = (
     'custom.reports.mc',
     'custom.apps.crs_reports',
     'custom.hope',
-    'custom.openlmis',
     'custom.logistics',
     'custom.ilsgateway',
     'custom.zipline',
@@ -383,7 +385,6 @@ HQ_APPS = (
     'custom.care_pathways',
     'custom.common',
 
-    'custom.dhis2',
     'custom.icds_reports',
 )
 
@@ -503,7 +504,7 @@ INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
 INVOICING_CONTACT_EMAIL = 'billing-support@dimagi.com'
 MASTER_LIST_EMAIL = 'master-list@dimagi.com'
-REPORT_BUILDER_ADD_ON_EMAIL = 'updates@dimagi.com'
+REPORT_BUILDER_ADD_ON_EMAIL = 'rhartford' + '@' + 'dimagi.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@dimagi.com'
 CONTACT_EMAIL = 'info@dimagi.com'
 BOOKKEEPER_CONTACT_EMAILS = []
@@ -522,9 +523,6 @@ CLOUDCARE_BASE_URL = None
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
 
-# OpenRosa Standards
-OPENROSA_VERSION = "1.0"
-
 # OTA restore fixture generators
 FIXTURE_GENERATORS = {
     # fixtures that may be sent to the phone independent of cases
@@ -540,10 +538,12 @@ FIXTURE_GENERATORS = {
         "custom.bihar.reports.indicators.fixtures.generator",
         "custom.m4change.fixtures.report_fixtures.generator",
         "custom.m4change.fixtures.location_fixtures.generator",
+        "custom.enikshay.fixtures.calendar_fixture_generator",
     ],
     # fixtures that must be sent along with the phones cases
     'case': [
         "corehq.apps.locations.fixtures.location_fixture_generator",
+        "corehq.apps.locations.fixtures.flat_location_fixture_generator",
     ]
 }
 
@@ -602,7 +602,7 @@ TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 HQ_ACCOUNT_ROOT = "commcarehq.org"
 
 XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
-FORMPLAYER_URL = 'http://localhost:8090'
+FORMPLAYER_URL = 'http://localhost:8080'
 
 ####### Couchlog config #######
 
@@ -747,7 +747,7 @@ ANALYTICS_CONFIG = {
     "HQ_INSTANCE": '',  # e.g. "www" or "staging"
 }
 
-MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiY3p1ZSIsImEiOiJjaWgwa3U5OXIwMGk3a3JrcjF4cjYwdGd2In0.8Tys94ISZlY-h5Y4W160RA'
+MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiZGltYWdpIiwiYSI6ImpZWWQ4dkUifQ.3FNy5rVvLolWLycXPxKVEA'
 
 OPEN_EXCHANGE_RATES_API_ID = ''
 
@@ -769,12 +769,6 @@ ENABLE_PRELOGIN_SITE = False
 PRELOGIN_APPS = (
     'corehq.apps.prelogin',
 )
-
-# If there are existing doc_ids and case_ids you want to check directly,
-# they are referenced in your localsettings for more accurate direct checks,
-# otherwise use view-based which can be inaccurate.
-ES_CASE_CHECK_DIRECT_DOC_ID = None
-ES_XFORM_CHECK_DIRECT_DOC_ID = None
 
 # our production logstash aggregation
 LOGSTASH_DEVICELOG_PORT = 10777
@@ -896,6 +890,8 @@ ZIPLINE_API_USER = ''
 ZIPLINE_API_PASSWORD = ''
 
 KAFKA_URL = 'localhost:9092'
+
+MOBILE_INTEGRATION_TEST_TOKEN = None
 
 
 try:
@@ -1230,7 +1226,6 @@ COUCHDB_APPS = [
     'crs_reports',
     'grapevine',
     'uth',
-    'dhis2',
     'openclinica',
 
     # custom reports
@@ -1406,14 +1401,26 @@ CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
 
 PILLOWTOPS = {
     'core': [
-        'corehq.pillows.case.CasePillow',
-        'corehq.pillows.xform.XFormPillow',
+        {
+            'name': 'CaseToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.case.get_case_to_elasticsearch_pillow',
+        },
+        {
+            'name': 'XFormToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.xform.get_xform_to_elasticsearch_pillow',
+        },
         {
             'name': 'UserPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_user_pillow',
         },
-        'corehq.pillows.application.AppPillow',
+        {
+            'name': 'ApplicationToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.application.get_app_to_elasticsearch_pillow',
+        },
         {
             'name': 'GroupPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
@@ -1442,21 +1449,14 @@ PILLOWTOPS = {
         {
             'name': 'AppFormSubmissionTrackerPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.xform.get_app_form_submission_tracker_pillow',
+            'instance': 'corehq.pillows.app_submission_tracker.get_app_form_submission_tracker_pillow',
         },
     ],
     'core_ext': [
-        'corehq.pillows.reportcase.ReportCasePillow',
-        'corehq.pillows.reportxform.ReportXFormPillow',
         {
             'name': 'AppDbChangeFeedPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.pillow.get_application_db_kafka_pillow',
-        },
-        {
-            'name': 'ApplicationToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.application.get_app_to_elasticsearch_pillow',
         },
         {
             'name': 'DefaultChangeFeedPillow',
@@ -1489,26 +1489,6 @@ PILLOWTOPS = {
             'instance': 'corehq.pillows.reportxform.get_report_xform_to_elasticsearch_pillow',
         },
         {
-            'name': 'SqlXFormToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.xform.get_sql_xform_to_elasticsearch_pillow',
-        },
-        {
-            'name': 'CouchXFormToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.xform.get_couch_xform_to_elasticsearch_pillow',
-        },
-        {
-            'name': 'SqlCaseToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.case.get_sql_case_to_elasticsearch_pillow',
-        },
-        {
-            'name': 'CouchCaseToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.case.get_couch_case_to_elasticsearch_pillow',
-        },
-        {
             'name': 'UnknownUsersPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_unknown_users_pillow',
@@ -1517,12 +1497,12 @@ PILLOWTOPS = {
     'cache': [
         {
             'name': 'CacheInvalidatePillow',
-            'class': 'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.cacheinvalidate.get_main_cache_invalidation_pillow',
         },
         {
             'name': 'UserCacheInvalidatePillow',
-            'class': 'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.cacheinvalidate.get_user_groups_cache_invalidation_pillow',
         },
     ],
@@ -1550,8 +1530,16 @@ PILLOWTOPS = {
         'custom.succeed.models.UCLAPatientFluffPillow',
     ],
     'mvp_indicators': [
-        'mvp_docs.pillows.MVPFormIndicatorPillow',
-        'mvp_docs.pillows.MVPCaseIndicatorPillow',
+        {
+            'name': 'MVPCaseIndicatorPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'mvp_docs.pillows.get_mvp_case_indicator_pillow',
+        },
+        {
+            'name': 'MVPFormIndicatorPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'mvp_docs.pillows.get_mvp_form_indicator_pillow',
+        },
     ],
     'experimental': [
         {
@@ -1634,6 +1622,8 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_thr_30_days.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_thr_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_timely_home_visits.json'),
+
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding.json')
 ]
 
 
@@ -1669,6 +1659,8 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'thr_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
+
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json'),
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
@@ -1791,6 +1783,7 @@ DOMAIN_MODULE_MAP = {
     'pathways-tanzania': 'custom.care_pathways',
     'care-macf-malawi': 'custom.care_pathways',
     'care-macf-bangladesh': 'custom.care_pathways',
+    'care-macf-ghana': 'custom.care_pathways'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

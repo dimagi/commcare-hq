@@ -14,10 +14,10 @@ from casexml.apps.case.xml import V2
 from dimagi.utils.parsing import json_format_datetime
 
 
-def _get_test_form():
+def _get_test_form(domain):
     from corehq.form_processor.utils import TestFormMetadata
     from corehq.form_processor.utils import get_simple_wrapped_form
-    metadata = TestFormMetadata(domain='demo-domain', xmlns=uuid4().hex, form_name='Demo Form')
+    metadata = TestFormMetadata(domain=domain, xmlns=uuid4().hex, form_name='Demo Form')
     return get_simple_wrapped_form('test-form-' + uuid4().hex, metadata=metadata, save=False)
 
 
@@ -40,7 +40,7 @@ class BasePayloadGenerator(object):
     def get_headers(self):
         return {'Content-type': self.content_type}
 
-    def get_test_payload(self):
+    def get_test_payload(self, domain):
         return (
             "<?xml version='1.0' ?>"
             "<data id='test'>"
@@ -55,8 +55,8 @@ class FormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record, payload_doc):
         return payload_doc.get_xml()
 
-    def get_test_payload(self):
-        return self.get_payload(None, _get_test_form())
+    def get_test_payload(self, domain):
+        return self.get_payload(None, _get_test_form(domain))
 
 
 @RegisterGenerator(CaseRepeater, 'case_xml', 'XML', is_default=True)
@@ -65,7 +65,7 @@ class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record, payload_doc):
         return payload_doc.to_xml(self.repeater.version or V2, include_case_on_closed=True)
 
-    def get_test_payload(self):
+    def get_test_payload(self, domain):
         from casexml.apps.case.mock import CaseBlock
         return CaseBlock(
             case_id='test-case-%s' % uuid4().hex,
@@ -79,7 +79,6 @@ class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
 class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):
 
     def get_payload(self, repeat_record, payload_doc):
-        del payload_doc['actions']
         data = payload_doc.to_api_json(lite=True)
         return json.dumps(data, cls=DjangoJSONEncoder)
 
@@ -87,12 +86,12 @@ class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):
     def content_type(self):
         return 'application/json'
 
-    def get_test_payload(self):
+    def get_test_payload(self, domain):
         from casexml.apps.case.models import CommCareCase
         return self.get_payload(
             None,
             CommCareCase(
-                domain='demo-domain', type='case_type', name='Demo',
+                domain=domain, type='case_type', name='Demo',
                 user_id='user1', prop_a=True, prop_b='value'
             )
         )
@@ -119,7 +118,7 @@ class ShortFormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
     def content_type(self):
         return 'application/json'
 
-    def get_test_payload(self):
+    def get_test_payload(self, domain):
         return json.dumps({
             'form_id': 'test-form-' + uuid4().hex,
             'received_on': json_format_datetime(datetime.utcnow()),
@@ -140,5 +139,5 @@ class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
     def content_type(self):
         return 'application/json'
 
-    def get_test_payload(self):
-        return self.get_payload(None, _get_test_form())
+    def get_test_payload(self, domain):
+        return self.get_payload(None, _get_test_form(domain))

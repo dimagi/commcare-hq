@@ -8,13 +8,13 @@ from casexml.apps.case.cleanup import rebuild_case_from_actions
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.case.xform import get_case_updates
+from corehq.blobs.mixin import bulk_atomic_blobs
 from corehq.form_processor.exceptions import CaseNotFound
 from couchforms.util import fetch_and_wrap_form
 from couchforms.models import (
     XFormInstance, XFormDeprecated, XFormDuplicate,
     doc_types, XFormError, SubmissionErrorLog
 )
-from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from corehq.form_processor.utils import extract_meta_instance_id
 
 
@@ -22,15 +22,12 @@ class FormProcessorCouch(object):
 
     @classmethod
     def store_attachments(cls, xform, attachments):
-        builder = CouchAttachmentsBuilder()
         for attachment in attachments:
-            builder.add(
-                content=attachment.content,
-                name=attachment.name,
+            xform.deferred_put_attachment(
+                attachment.content,
+                attachment.name,
                 content_type=attachment.content_type,
             )
-
-        xform._attachments = builder.to_json()
 
     @classmethod
     def new_xform(cls, form_data):
@@ -67,7 +64,8 @@ class FormProcessorCouch(object):
         docs = list(processed_forms) + (cases or [])
         docs = filter(None, docs)
         assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
-        XFormInstance.get_db().bulk_save(docs)
+        with bulk_atomic_blobs(docs):
+            XFormInstance.get_db().bulk_save(docs)
         if stock_result:
             stock_result.commit()
 
@@ -76,7 +74,11 @@ class FormProcessorCouch(object):
         # swap the revs
         new_xform._rev, existing_xform._rev = existing_xform._rev, new_xform._rev
         existing_xform.doc_type = XFormDeprecated.__name__
-        return XFormDeprecated.wrap(existing_xform.to_json()), new_xform
+        deprecated = XFormDeprecated.wrap(existing_xform.to_json())
+        assert not existing_xform.persistent_blobs, "some blobs would be lost"
+        if existing_xform._deferred_blobs:
+            deprecated._deferred_blobs = existing_xform._deferred_blobs.copy()
+        return deprecated, new_xform
 
     @classmethod
     def deduplicate_xform(cls, xform):
@@ -84,11 +86,15 @@ class FormProcessorCouch(object):
         # but a new doc_id, and a doc_type of XFormDuplicate
         xform.doc_type = XFormDuplicate.__name__
         dupe = XFormDuplicate.wrap(xform.to_json())
+        assert not xform.persistent_blobs, "some blobs would be lost"
+        if xform._deferred_blobs:
+            dupe._deferred_blobs = xform._deferred_blobs.copy()
         dupe.problem = "Form is a duplicate of another! (%s)" % xform._id
         return cls.assign_new_id(dupe)
 
     @classmethod
     def assign_new_id(cls, xform):
+        assert not xform.persistent_blobs, "some blobs would be lost"
         new_id = XFormInstance.get_db().server.next_uuid()
         xform._id = new_id
         return xform

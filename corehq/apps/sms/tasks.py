@@ -7,7 +7,7 @@ from corehq.apps.sms.models import (OUTGOING, INCOMING, SMS,
     PhoneLoadBalancingMixin, QueuedSMS, PhoneNumber)
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
     log_sms_exception, create_billable_for_sms, get_utcnow)
-from django.db import transaction
+from django.db import transaction, DataError
 from django.conf import settings
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -15,6 +15,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.sms.change_publishers import publish_sms_saved
+from corehq.apps.sms.util import is_contact_active
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch import release_lock, CriticalSection
@@ -219,7 +220,16 @@ def process_sms(queued_sms_pk):
                 recipient_lock.acquire(blocking=True)
 
             if msg.direction == OUTGOING:
-                requeue = handle_outgoing(msg)
+                if (
+                    msg.domain and
+                    msg.couch_recipient_doc_type and
+                    msg.couch_recipient and
+                    not is_contact_active(msg.domain, msg.couch_recipient_doc_type, msg.couch_recipient)
+                ):
+                    msg.set_system_error(SMS.ERROR_CONTACT_IS_INACTIVE)
+                    remove_from_queue(msg)
+                else:
+                    requeue = handle_outgoing(msg)
             elif msg.direction == INCOMING:
                 handle_incoming(msg)
             else:
@@ -254,6 +264,11 @@ def store_billable(self, msg):
             )
         except RetryBillableTaskException as e:
             self.retry(exc=e)
+        except DataError:
+            from corehq.util.soft_assert import soft_assert
+            _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
+            _soft_assert(msg.domain < 25, "Domain name too long: " + msg.domain)
+            raise
 
 
 @task(queue='background_queue', ignore_result=True, acks_late=True)
@@ -263,10 +278,16 @@ def delete_phone_numbers_for_owners(owner_ids):
         p.delete()
 
 
+def clear_case_caches(case):
+    from corehq.apps.sms.util import is_case_contact_active
+    is_case_contact_active.clear(case.domain, case.case_id)
+
+
 @task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True,
       default_retry_delay=5 * 60, max_retries=10, bind=True)
 def sync_case_phone_number(self, case):
     try:
+        clear_case_caches(case)
         _sync_case_phone_number(case)
     except Exception as e:
         self.retry(exc=e)

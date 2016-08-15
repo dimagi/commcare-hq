@@ -1,7 +1,6 @@
 import uuid
-from datetime import datetime
 from collections import namedtuple
-import time
+from datetime import datetime
 
 from django.test import TestCase
 from django.test.utils import override_settings
@@ -13,7 +12,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseIndexInfo, CaseAcce
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, \
     CaseTransaction, CommCareCaseIndexSQL, CaseAttachmentSQL, SupplyPointCaseMixin
-from corehq.form_processor.tests import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.form_processor.tests.test_basic_cases import _submit_case_block
 from corehq.sql_db.routers import db_for_read_write
 
@@ -587,28 +586,6 @@ class CaseAccessorTestsSQL(TestCase):
         self.assertFalse(
             CaseAccessorSQL.case_has_transactions_since_sync(case1.case_id, "foo", datetime.utcnow())
         )
-
-    def test_get_all_cases_modified_since(self):
-        FormProcessorTestUtils.delete_all_cases()
-
-        first_batch = [_create_case(user_id="user1").case_id for i in range(4)]
-        middle = datetime.utcnow()
-        time.sleep(.02)
-        second_batch = [_create_case(user_id="user1").case_id for i in range(4)]
-        time.sleep(.02)
-        end = datetime.utcnow()
-
-        cases_back = list(CaseAccessorSQL.get_all_cases_modified_since(chunk_size=2))
-        self.assertEqual(8, len(cases_back))
-        self.assertEqual(set(case.case_id for case in cases_back),
-                         set(first_batch + second_batch))
-
-        cases_back = list(CaseAccessorSQL.get_all_cases_modified_since(middle, chunk_size=2))
-        self.assertEqual(4, len(cases_back))
-        self.assertEqual(set(case.case_id for case in cases_back),
-                         set(second_batch))
-
-        self.assertEqual(0, len(list(CaseAccessorSQL.get_all_cases_modified_since(end))))
 
     def test_get_case_by_external_id(self):
         case1 = _create_case(domain=DOMAIN)

@@ -119,7 +119,7 @@ def _expand_column(report_column, distinct_values, lang):
         alias = u"{}-{}".format(report_column.column_id, index)
         if val is None:
             sql_agg_col = SumWhen(
-                whens={"{} is NULL".format(report_column.field): 1}, else_=0, alias=alias
+                whens={'"{}" is NULL'.format(report_column.field): 1}, else_=0, alias=alias
             )
         else:
             sql_agg_col = SumWhen(report_column.field, whens={val: 1}, else_=0, alias=alias)

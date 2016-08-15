@@ -1,0 +1,124 @@
+<fixture id="locations" user_id="{user_id}">
+    <locations>
+        <location city_id="{boston_id}" county_id="{suffolk_id}" id="{boston_id}" state_id="{massachusetts_id}" type="city">
+            <name>Boston</name>
+            <site_code>boston</site_code>
+            <external_id/>
+            <latitude/>
+            <longitude/>
+            <location_type>city</location_type>
+            <supply_point_id/>
+            <location_data/>
+        </location>
+        <location city_id="{brooklyn_id}" county_id="{new_york_city_id}" id="{brooklyn_id}" state_id="{new_york_id}" type="city">
+            <name>Brooklyn</name>
+            <site_code>brooklyn</site_code>
+            <external_id/>
+            <latitude/>
+            <longitude/>
+            <location_type>city</location_type>
+            <supply_point_id/>
+            <location_data/>
+        </location>
+        <location city_id="{cambridge_id}" county_id="{middlesex_id}" id="{cambridge_id}" state_id="{massachusetts_id}" type="city">
+            <name>Cambridge</name>
+            <site_code>cambridge</site_code>
+            <external_id/>
+            <latitude/>
+            <longitude/>
+            <location_type>city</location_type>
+            <supply_point_id/>
+            <location_data/>
+        </location>
+        <location city_id="{manhattan_id}" county_id="{new_york_city_id}" id="{manhattan_id}" state_id="{new_york_id}" type="city">
+            <name>Manhattan</name>
+            <site_code>manhattan</site_code>
+            <external_id/>
+            <latitude/>
+            <longitude/>
+            <location_type>city</location_type>
+            <supply_point_id/>
+            <location_data/>
+        </location>
+        <location city_id="" id="{massachusetts_id}" type="state" county_id="" state_id="{massachusetts_id}">
+            <name>Massachusetts</name>
+            <site_code>massachusetts</site_code>
+            <external_id/>
+            <latitude/>
+            <longitude/>
+            <location_type>state</location_type>
+            <supply_point_id/>
+            <location_data/>
+        </location>
+        <location city_id="" county_id="{middlesex_id}" id="{middlesex_id}" state_id="{massachusetts_id}" type="county">
+            <name>Middlesex</name>
+            <site_code>middlesex</site_code>
+            <external_id/>
+            <latitude/>
+            <longitude/>
+            <location_type>county</location_type>
+            <supply_point_id/>
+            <location_data/>
+        </location>
+        <location city_id="" county_id="" id="{new_york_id}" state_id="{new_york_id}" type="state">
+            <name>New York</name>
+            <site_code>new_york</site_code>
+            <external_id/>
+            <latitude/>
+            <longitude/>
+            <location_type>state</location_type>
+            <supply_point_id/>
+            <location_data/>
+        </location>
+        <location city_id="" county_id="{new_york_city_id}" id="{new_york_city_id}" state_id="{new_york_id}" type="county">
+            <name>New York City</name>
+            <site_code>new_york_city</site_code>
+            <external_id/>
+            <latitude/>
+            <longitude/>
+            <location_type>county</location_type>
+            <supply_point_id/>
+            <location_data/>
+        </location>
+        <location city_id="{queens_id}" county_id="{new_york_city_id}" id="{queens_id}" state_id="{new_york_id}" type="city">
+            <name>Queens</name>
+            <site_code>queens</site_code>
+            <external_id/>
+            <latitude/>
+            <longitude/>
+            <location_type>city</location_type>
+            <supply_point_id/>
+            <location_data/>
+        </location>
+        <location city_id="{revere_id}" county_id="{suffolk_id}" id="{revere_id}" state_id="{massachusetts_id}" type="city">
+            <name>Revere</name>
+            <site_code>revere</site_code>
+            <external_id/>
+            <latitude/>
+            <longitude/>
+            <location_type>city</location_type>
+            <supply_point_id/>
+            <location_data/>
+        </location>
+        <location city_id="{somerville_id}" county_id="{middlesex_id}" id="{somerville_id}" state_id="{massachusetts_id}" type="city">
+            <name>Somerville</name>
+            <site_code>somerville</site_code>
+            <external_id/>
+            <latitude/>
+            <longitude/>
+            <location_type>city</location_type>
+            <supply_point_id/>
+            <location_data/>
+        </location>
+        <location city_id="" county_id="{suffolk_id}" id="{suffolk_id}" state_id="{massachusetts_id}" type="county">
+            <name>Suffolk</name>
+            <site_code>suffolk</site_code>
+            <external_id/>
+            <latitude/>
+            <longitude/>
+            <location_type>county</location_type>
+            <supply_point_id/>
+            <location_data/>
+        </location>
+    </locations>
+</fixture>

@@ -4,33 +4,13 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.elastic import get_es_new
 from corehq.pillows.base import convert_property_dict
-from corehq.pillows.xform import transform_xform_for_elasticsearch
-from couchforms.models import XFormInstance
-from pillowtop.checkpoints.manager import PillowCheckpoint
+from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
+from corehq.pillows.xform import transform_xform_for_elasticsearch, xform_pillow_filter
+from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
-from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
-from .mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
-from .xform import XFormPillow
-
-COMPUTED_CASEBLOCKS_KEY = '_case_blocks'
-
-
-class ReportXFormPillow(XFormPillow):
-    """
-    an extension to XFormPillow that provides for indexing of arbitrary data fields
-    within the xform
-    """
-    es_alias = "report_xforms"
-    es_type = "report_xform"
-    es_index = REPORT_XFORM_INDEX_INFO.index
-
-    #type level mapping
-    default_mapping = REPORT_XFORM_INDEX_INFO.mapping
-
-    def change_transform(self, doc_dict):
-        if not report_xform_filter(doc_dict):
-            return transform_xform_for_report_forms_index(doc_dict)
+from pillowtop.reindexer.change_providers.form import get_domain_form_change_provider
+from pillowtop.reindexer.reindexer import ElasticPillowReindexer
 
 
 def report_xform_filter(doc_dict):
@@ -38,13 +18,12 @@ def report_xform_filter(doc_dict):
     :return: True to filter out doc
     """
     domain = doc_dict.get('domain', None)
-    if not domain or domain not in getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', []):
-        # full indexing is only enabled for select domains on an opt-in basis
-        return True
+    # full indexing is only enabled for select domains on an opt-in basis
+    return xform_pillow_filter(doc_dict) or domain not in getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', [])
 
 
 def transform_xform_for_report_forms_index(doc_dict):
-    doc_ret = transform_xform_for_elasticsearch(doc_dict, include_props=False)
+    doc_ret = transform_xform_for_elasticsearch(doc_dict)
     convert_property_dict(
         doc_ret['form'],
         REPORT_XFORM_INDEX_INFO.mapping['properties']['form'],
@@ -57,9 +36,8 @@ def transform_xform_for_report_forms_index(doc_dict):
 
 
 def get_report_xform_to_elasticsearch_pillow(pillow_id='ReportXFormToElasticsearchPillow'):
-    checkpoint = PillowCheckpoint(
-        'report-xforms-to-elasticsearch',
-    )
+    assert pillow_id == 'ReportXFormToElasticsearchPillow', 'Pillow ID is not allowed to change'
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, REPORT_XFORM_INDEX_INFO)
     form_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=REPORT_XFORM_INDEX_INFO,
@@ -78,12 +56,14 @@ def get_report_xform_to_elasticsearch_pillow(pillow_id='ReportXFormToElasticsear
     )
 
 
-def get_report_xform_couch_reindexer():
-    return ResumableBulkElasticPillowReindexer(
-        name='ReportXFormToElasticsearchPillow',
-        doc_types=[XFormInstance],
+def get_report_xforms_reindexer():
+    """Returns a reindexer that will only reindex data from enabled domains
+    """
+    domains = getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', [])
+    change_provider = get_domain_form_change_provider(domains=domains)
+    return ElasticPillowReindexer(
+        pillow=get_report_xform_to_elasticsearch_pillow(),
+        change_provider=change_provider,
         elasticsearch=get_es_new(),
-        index_info=REPORT_XFORM_INDEX_INFO,
-        doc_filter=report_xform_filter,
-        doc_transform=transform_xform_for_report_forms_index,
+        index_info=REPORT_XFORM_INDEX_INFO
     )

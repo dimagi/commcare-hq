@@ -161,6 +161,7 @@ class SMSBase(UUIDGeneratorMixin, Log):
     ERROR_PHONE_NUMBER_OPTED_OUT = 'PHONE_NUMBER_OPTED_OUT'
     ERROR_INVALID_DESTINATION_NUMBER = 'INVALID_DESTINATION_NUMBER'
     ERROR_MESSAGE_TOO_LONG = 'MESSAGE_TOO_LONG'
+    ERROR_CONTACT_IS_INACTIVE = 'CONTACT_IS_INACTIVE'
 
     ERROR_MESSAGES = {
         ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS:
@@ -175,6 +176,8 @@ class SMSBase(UUIDGeneratorMixin, Log):
             ugettext_noop("The gateway can't reach the destination number."),
         ERROR_MESSAGE_TOO_LONG:
             ugettext_noop("The gateway could not process the message because it was too long."),
+        ERROR_CONTACT_IS_INACTIVE:
+            ugettext_noop("The recipient has been deactivated."),
     }
 
     UUIDS_TO_GENERATE = ['couch_id']
@@ -1230,6 +1233,16 @@ class SelfRegistrationInvitation(models.Model):
     phone_type = models.CharField(max_length=20, null=True, choices=PHONE_TYPE_CHOICES)
     registered_date = models.DateTimeField(null=True)
 
+    # True if we are assuming that the recipient has an Android phone
+    android_only = models.BooleanField(default=False)
+
+    # True to make email address a required field on the self-registration page
+    require_email = models.BooleanField(default=False)
+
+    # custom user data that will be set to the CommCareUser's user_data property
+    # when it is created
+    custom_user_data = jsonfield.JSONField(default=dict)
+
     class Meta:
         app_label = 'sms'
 
@@ -1257,13 +1270,18 @@ class SelfRegistrationInvitation(models.Model):
         self.registered_date = datetime.utcnow()
         self.save()
 
-    def send_step1_sms(self):
+    def send_step1_sms(self, custom_message=None):
         from corehq.apps.sms.api import send_sms
+
+        if self.android_only:
+            self.send_step2_android_sms(custom_message)
+            return
+
         send_sms(
             self.domain,
             None,
             self.phone_number,
-            get_message(MSG_MOBILE_WORKER_INVITATION_START, domain=self.domain)
+            custom_message or get_message(MSG_MOBILE_WORKER_INVITATION_START, domain=self.domain)
         )
 
     def send_step2_java_sms(self):
@@ -1275,24 +1293,40 @@ class SelfRegistrationInvitation(models.Model):
             get_message(MSG_MOBILE_WORKER_JAVA_INVITATION, context=(self.domain,), domain=self.domain)
         )
 
-    def send_step2_android_sms(self):
-        from corehq.apps.sms.api import send_sms
+    def get_user_registration_url(self):
         from corehq.apps.users.views.mobile.users import CommCareUserSelfRegistrationView
+        return absolute_reverse(
+            CommCareUserSelfRegistrationView.urlname,
+            args=[self.domain, self.token]
+        )
 
-        registration_url = absolute_reverse(CommCareUserSelfRegistrationView.urlname,
-            args=[self.domain, self.token])
+    def get_app_info_url(self):
+        from corehq.apps.sms.views import InvitationAppInfoView
+        return absolute_reverse(
+            InvitationAppInfoView.urlname,
+            args=[self.domain, self.token]
+        )
+
+    def send_step2_android_sms(self, custom_message=None):
+        from corehq.apps.sms.api import send_sms
+
+        registration_url = self.get_user_registration_url()
+
+        if custom_message:
+            message = custom_message.format(registration_url)
+        else:
+            message = get_message(MSG_MOBILE_WORKER_ANDROID_INVITATION, context=(registration_url,),
+                domain=self.domain)
+
         send_sms(
             self.domain,
             None,
             self.phone_number,
-            get_message(MSG_MOBILE_WORKER_ANDROID_INVITATION, context=(registration_url,), domain=self.domain)
+            message
         )
 
-        """
-        # Until odk 2.24 gets released to the Google Play store, this part won't work
         if self.odk_url:
-            app_info_url = absolute_reverse(InvitationAppInfoView.urlname,
-                args=[self.domain, self.token])
+            app_info_url = self.get_app_info_url()
             message = '[commcare app - do not delete] %s' % app_info_url
             send_sms(
                 self.domain,
@@ -1300,7 +1334,6 @@ class SelfRegistrationInvitation(models.Model):
                 self.phone_number,
                 message,
             )
-        """
 
     def expire(self):
         self.expiration_date = datetime.utcnow().date() - timedelta(days=1)
@@ -1373,8 +1406,9 @@ class SelfRegistrationInvitation(models.Model):
         return app.get_short_odk_url(with_media=True)
 
     @classmethod
-    def initiate_workflow(cls, domain, phone_numbers, app_id=None,
-            days_until_expiration=30):
+    def initiate_workflow(cls, domain, users, app_id=None,
+            days_until_expiration=30, custom_first_message=None,
+            android_only=False, require_email=False):
         """
         If app_id is passed in, then an additional SMS will be sent to Android
         phones containing a link to the latest starred build (or latest
@@ -1392,8 +1426,8 @@ class SelfRegistrationInvitation(models.Model):
         if app_id:
             odk_url = cls.get_app_odk_url(domain, app_id)
 
-        for phone_number in phone_numbers:
-            phone_number = apply_leniency(phone_number)
+        for user_info in users:
+            phone_number = apply_leniency(user_info.phone_number)
             try:
                 CommCareMobileContactMixin.validate_number_format(phone_number)
             except InvalidFormatException:
@@ -1409,7 +1443,7 @@ class SelfRegistrationInvitation(models.Model):
             expiration_date = (datetime.utcnow().date() +
                 timedelta(days=days_until_expiration))
 
-            invitation = cls.objects.create(
+            invitation = cls(
                 domain=domain,
                 phone_number=phone_number,
                 token=uuid.uuid4().hex,
@@ -1417,9 +1451,16 @@ class SelfRegistrationInvitation(models.Model):
                 expiration_date=expiration_date,
                 created_date=datetime.utcnow(),
                 odk_url=odk_url,
+                android_only=android_only,
+                require_email=require_email,
+                custom_user_data=user_info.custom_user_data or {},
             )
 
-            invitation.send_step1_sms()
+            if android_only:
+                invitation.phone_type = cls.PHONE_TYPE_ANDROID
+
+            invitation.save()
+            invitation.send_step1_sms(custom_first_message)
             success_numbers.append(phone_number)
 
         return (success_numbers, invalid_format_numbers, numbers_in_use)

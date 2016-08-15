@@ -128,6 +128,7 @@ corehq.apps.app_manager:
   - corehq.apps.hqmedia
   - corehq.apps.hqwebapp
   - corehq.apps.locations
+  - corehq.apps.notifications
   - corehq.apps.products
   - corehq.apps.repeaters
   - corehq.apps.reports
@@ -144,6 +145,7 @@ corehq.apps.app_manager:
   - custom.logistics
   - custom.ilsgateway
   - custom.ewsghana
+  - custom.zipline
   - corehq.apps.smsforms
   - corehq.apps.commtrack
 corehq.apps.change_feed:
@@ -430,6 +432,7 @@ corehq.apps.users:
   - corehq.apps.groups
   - corehq.apps.hqcase
   - corehq.apps.locations
+  - corehq.apps.notifications
   - corehq.apps.products
   - corehq.apps.reminders
   - corehq.apps.sms

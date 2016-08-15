@@ -1,9 +1,16 @@
-from django.test import TestCase
+from copy import deepcopy
+from django.test import SimpleTestCase, TestCase
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc
-from corehq.apps.users.bulkupload import UserLocMapping, SiteCodeToSupplyPointCache
+from corehq.apps.users.bulkupload import (
+    check_duplicate_usernames,
+    SiteCodeToSupplyPointCache,
+    UserLocMapping,
+    UserUploadError,
+)
 from corehq.apps.users.tasks import bulk_upload_async
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, UserRole, Permissions
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.domain.models import Domain
 from corehq.toggles import MULTIPLE_LOCATIONS_PER_USER, NAMESPACE_DOMAIN
 from mock import patch
@@ -85,24 +92,27 @@ class UserLocMapTest(CommTrackTest):
 
 
 class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
-
     def setUp(self):
         super(TestUserBulkUpload, self).setUp()
+        delete_all_users()
         self.domain_name = 'mydomain'
         self.domain = Domain(name=self.domain_name)
         self.domain.save()
         self.user_specs = [{
             u'username': u'hello',
             u'user_id': u'should not update',
-            u'name': u'Another One',
-            u'language': None,
+            u'name': u'Another One', u'language': None,
             u'is_active': u'True',
             u'phone-number': u'23424123',
             u'password': 123,
             u'email': None
         }]
 
+        permissions = Permissions(edit_apps=True, view_reports=True)
+        self.role = UserRole.get_or_create_with_permissions(self.domain.name, permissions, 'edit-apps')
+
     def tearDown(self):
+        self.role.delete()
         self.domain.delete()
         super(TestUserBulkUpload, self).tearDown()
 
@@ -148,7 +158,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         """
         Test that bulk upload doesn't choke if the user's name is a number
         """
-        from copy import deepcopy
         updated_user_spec = deepcopy(self.user_specs[0])
         updated_user_spec["name"] = 1234
 
@@ -165,7 +174,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         This test confirms that a name of None doesn't set the users name to
         "None" or anything like that.
         """
-        from copy import deepcopy
         updated_user_spec = deepcopy(self.user_specs[0])
         updated_user_spec["name"] = None
 
@@ -176,3 +184,120 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             list([])
         )
         self.assertEqual(self.user.full_name, "")
+
+    def test_upper_case_email(self):
+        """
+        Ensure that bulk upload throws a proper error when the email has caps in it
+        """
+        updated_user_spec = deepcopy(self.user_specs[0])
+        updated_user_spec["email"] = 'IlOvECaPs@gmaiL.Com'
+
+        bulk_upload_async(
+            self.domain.name,
+            list([updated_user_spec]),
+            list([]),
+            list([])
+        )
+        self.assertEqual(self.user.email, updated_user_spec['email'].lower())
+
+    def test_set_role(self):
+        updated_user_spec = deepcopy(self.user_specs[0])
+        updated_user_spec["role"] = self.role.name
+
+        bulk_upload_async(
+            self.domain.name,
+            list([updated_user_spec]),
+            list([]),
+            list([])
+        )
+        self.assertEqual(self.user.get_role(self.domain_name).name, updated_user_spec['role'])
+
+
+class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
+    def setUp(self):
+        super(TestUserBulkUploadStrongPassword, self).setUp()
+        delete_all_users()
+        self.domain_name = 'mydomain'
+        self.domain = Domain(name=self.domain_name)
+        self.domain.strong_mobile_passwords = True
+        self.domain.save()
+        self.user_specs = [{
+            u'username': u'tswift',
+            u'user_id': u'1989',
+            u'name': u'Taylor Swift',
+            u'language': None,
+            u'is_active': u'True',
+            u'phone-number': u'8675309',
+            u'password': 'TaylorSwift89!',
+            u'email': None
+        }]
+
+    def tearDown(self):
+        self.domain.delete()
+        super(TestUserBulkUploadStrongPassword, self).tearDown()
+
+    def test_duplicate_password(self):
+        user_spec = [{
+            u'username': u'thiddleston',
+            u'user_id': u'1990',
+            u'name': u'Tom Hiddleston',
+            u'language': None,
+            u'is_active': u'True',
+            u'phone-number': u'8675309',
+            u'password': 'TaylorSwift89!',
+            u'email': None
+        }]
+
+        rows = bulk_upload_async(
+            self.domain.name,
+            list(user_spec + self.user_specs),
+            list([]),
+            list([])
+        )['messages']['rows']
+        self.assertEqual(rows[0]['flag'], 'Provide a unique password for each mobile worker')
+
+    def test_weak_password(self):
+        updated_user_spec = deepcopy(self.user_specs[0])
+        updated_user_spec["password"] = '123'
+
+        rows = bulk_upload_async(
+            self.domain.name,
+            list([updated_user_spec]),
+            list([]),
+            list([])
+        )['messages']['rows']
+        self.assertEqual(rows[0]['flag'], 'Please provide a stronger password')
+
+
+class TestUserBulkUploadUtils(SimpleTestCase):
+
+    def test_check_duplicate_usernames(self):
+        user_specs = [
+            {
+                u'username': u'hello',
+                u'user_id': u'should not update',
+            },
+            {
+                u'username': u'hello',
+                u'user_id': u'other id',
+            },
+        ]
+
+        self.assertRaises(UserUploadError, check_duplicate_usernames, user_specs)
+
+    def test_no_duplicate_usernames(self):
+        user_specs = [
+            {
+                u'username': u'hello',
+                u'user_id': u'should not update',
+            },
+            {
+                u'username': u'goodbye',
+                u'user_id': u'other id',
+            },
+        ]
+
+        try:
+            check_duplicate_usernames(user_specs)
+        except UserUploadError:
+            self.fail('UserUploadError incorrectly raised')

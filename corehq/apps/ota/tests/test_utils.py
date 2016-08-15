@@ -117,6 +117,16 @@ class RestorePermissionsTest(TestCase):
         self.assertFalse(is_permitted)
         self.assertIsNotNone(message)
 
+    def test_web_user_as_other_web_user(self):
+        is_permitted, message = is_permitted_to_restore(
+            self.domain,
+            self.web_user,
+            self.web_user.username,
+            True,
+        )
+        self.assertTrue(is_permitted)
+        self.assertIsNone(message)
+
     def test_super_user_as_user_other_domain(self):
         """
         Superusers should be able to restore as other mobile users even if it's the wrong domain
@@ -135,12 +145,16 @@ class RestorePermissionsTest(TestCase):
 class GetRestoreUserTest(TestCase):
 
     domain = 'goats'
+    other_domain = 'sheep'
 
     @classmethod
     def setUpClass(cls):
         super(GetRestoreUserTest, cls).setUpClass()
         cls.project = Domain(name=cls.domain)
         cls.project.save()
+
+        cls.other_project = Domain(name=cls.other_domain)
+        cls.other_project.save()
 
         cls.web_user = WebUser.create(
             username='billy@goats.com',
@@ -152,12 +166,21 @@ class GetRestoreUserTest(TestCase):
             domain=cls.domain,
             password='***',
         )
+        cls.super_user = WebUser.create(
+            username='super@woman.com',
+            domain=cls.other_domain,
+            password='***',
+        )
+        cls.super_user.is_superuser = True
+        cls.super_user.save()
 
     @classmethod
     def tearDownClass(cls):
         super(GetRestoreUserTest, cls).tearDownClass()
         cls.web_user.delete()
         cls.commcare_user.delete()
+        cls.super_user.delete()
+        cls.other_project.delete()
         cls.project.delete()
 
     def test_get_restore_user_web_user(self):
@@ -172,6 +195,24 @@ class GetRestoreUserTest(TestCase):
                 self.domain,
                 self.web_user,
                 '{}@{}'.format(self.commcare_user.raw_username, self.domain)
+            )
+        )
+
+    def test_get_restore_user_as_web_user(self):
+        self.assertIsNotNone(
+            get_restore_user(
+                self.domain,
+                self.web_user,
+                self.web_user.username,
+            )
+        )
+
+    def test_get_restore_user_as_super_user(self):
+        self.assertIsNotNone(
+            get_restore_user(
+                self.domain,
+                self.web_user,
+                self.super_user.username,
             )
         )
 

@@ -2,42 +2,20 @@ from corehq.apps.api.accounting import *
 from corehq.apps.api.domain_metadata import DomainMetadataResource
 from corehq.apps.api.object_fetch_api import CaseAttachmentAPI, FormAttachmentAPI
 from corehq.apps.api.domainapi import DomainAPI
-from corehq.apps.api.resources import v0_1, v0_2, v0_3, v0_4, v0_5
+from corehq.apps.api.resources import v0_1, v0_3, v0_4, v0_5
+from corehq.apps.api.resources.v0_5 import UserDomainsResource, DomainForms
 from corehq.apps.commtrack.resources.v0_1 import ProductResource
 from corehq.apps.fixtures.resources.v0_1 import FixtureResource, InternalFixtureResource
 from corehq.apps.locations import resources as locations
+from corehq.apps.sms.resources import v0_5 as sms_v0_5
 from django.conf.urls import *
 from django.http import HttpResponseNotFound
 from tastypie.api import Api
-from corehq.apps.api.es import XFormES
 
 
 API_LIST = (
-    ((0, 1), (
-        v0_1.CommCareUserResource,
-        v0_1.WebUserResource,
-        v0_1.CommCareCaseResource,
-        v0_1.XFormInstanceResource,
-        FixtureResource,
-        DomainMetadataResource,
-    )),
-    ((0, 2), (
-        v0_1.CommCareUserResource,
-        v0_1.WebUserResource,
-        v0_2.CommCareCaseResource,
-        v0_1.XFormInstanceResource,
-        FixtureResource,
-        DomainMetadataResource,
-    )),
     ((0, 3), (
-        v0_1.CommCareUserResource,
-        v0_1.WebUserResource,
         v0_3.CommCareCaseResource,
-        v0_3.XFormInstanceResource,
-        FixtureResource,
-        DomainMetadataResource,
-        locations.v0_1.LocationResource,
-        locations.v0_1.InternalLocationResource,
         ProductResource,
     )),
     ((0, 4), (
@@ -72,6 +50,10 @@ API_LIST = (
         locations.v0_5.LocationResource,
         locations.v0_5.LocationTypeResource,
         v0_5.SimpleReportConfigurationResource,
+        v0_5.ConfigurableReportDataResource,
+        DomainForms,
+        sms_v0_5.UserSelfRegistrationResource,
+        locations.v0_1.InternalLocationResource,
     )),
 )
 
@@ -88,7 +70,6 @@ def api_url_patterns():
         for R in resources:
             api.register(R())
         yield (r'^', include(api.urls))
-    yield url(r'^v0.1/xform_es/$', XFormES.as_domain_specific_view())
     # HACK: fix circular import here, to fix later
     try:
         from pact.api import PactAPI
@@ -129,9 +110,14 @@ ADMIN_API_LIST = (
 )
 
 
+USER_API_LIST = (
+    UserDomainsResource,
+)
+
+
 def api_url_patterns():
     api = CommCareHqApi(api_name='global')
-    for resource in ADMIN_API_LIST:
+    for resource in ADMIN_API_LIST + USER_API_LIST:
         api.register(resource())
         yield (r'^', include(api.urls))
 

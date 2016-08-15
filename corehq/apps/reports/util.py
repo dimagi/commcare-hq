@@ -37,32 +37,20 @@ DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER = (
 )
 
 
-def make_form_couch_key(domain, by_submission_time=True,
-                   xmlns=None, user_id=Ellipsis, app_id=None):
+def make_form_couch_key(domain, user_id=Ellipsis):
     """
         This sets up the appropriate query for couch based on common report parameters.
 
         Note: Ellipsis is used as the default for user_id because
         None is actually emitted as a user_id on occasion in couch
     """
-    prefix = ["submission"] if by_submission_time else ["completion"]
+    prefix = ["submission"]
     key = [domain] if domain is not None else []
-    if xmlns == "":
-        prefix.append('xmlns')
-    elif app_id == "":
-        prefix.append('app')
-    elif user_id == "":
+    if user_id == "":
         prefix.append('user')
-    else:
-        if xmlns:
-            prefix.append('xmlns')
-            key.append(xmlns)
-        if app_id:
-            prefix.append('app')
-            key.append(app_id)
-        if user_id is not Ellipsis:
-            prefix.append('user')
-            key.append(user_id)
+    elif user_id is not Ellipsis:
+        prefix.append('user')
+        key.append(user_id)
     return [" ".join(prefix)] + key
 
 
@@ -96,7 +84,8 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
             return temp_user
         return None
 
-    user_ids = user_ids if user_ids and user_ids[0] else None
+    user_ids = user_ids or []
+    user_ids = filter(None, user_ids)  # remove empty strings if any
     if not CommCareUser:
         from corehq.apps.users.models import CommCareUser
 
@@ -105,7 +94,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         if not isinstance(group, Group):
             group = Group.get(group)
         users = group.get_users(is_active=(not include_inactive), only_commcare=True)
-    elif user_ids is not None:
+    elif user_ids:
         try:
             users = []
             for id in user_ids:

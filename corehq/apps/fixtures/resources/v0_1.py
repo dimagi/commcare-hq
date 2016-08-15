@@ -2,10 +2,8 @@ from couchdbkit import ResourceNotFound
 from tastypie import fields as tp_f
 from tastypie.resources import Resource
 from corehq.apps.api.resources import HqBaseResource, CouchResourceMixin
-from corehq.apps.api.resources.v0_1 import (
-    CustomResourceMeta,
-    RequirePermissionAuthentication,
-)
+from corehq.apps.api.resources.auth import RequirePermissionAuthentication
+from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.users.models import Permissions

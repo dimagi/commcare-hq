@@ -2,6 +2,7 @@ from couchdbkit import ChangesStream
 from django.conf import settings
 from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.feed.interface import ChangeFeed, Change
+from pillowtop.utils import force_seq_int
 
 
 class CouchChangeFeed(ChangeFeed):
@@ -29,6 +30,12 @@ class CouchChangeFeed(ChangeFeed):
 
     def get_latest_change_id(self):
         return get_current_seq(self._couch_db)
+
+    def get_current_offsets(self):
+        return {self._couch_db.dbname: force_seq_int(self.get_latest_change_id())}
+
+    def get_checkpoint_value(self):
+        return str(self.get_latest_change_id())
 
 
 def change_from_couch_row(couch_change, document_store=None):

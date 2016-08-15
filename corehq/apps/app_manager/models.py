@@ -136,7 +136,7 @@ from .exceptions import (
     CaseXPathValidationError,
     UserCaseXPathValidationError,
 )
-from corehq.apps.reports.daterange import get_daterange_start_end_dates
+from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_simple_dateranges
 from jsonpath_rw import jsonpath, parse
 
 WORKFLOW_DEFAULT = 'default'  # go to the app main screen
@@ -1103,8 +1103,8 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
     def check_paths(self, paths):
         errors = []
         try:
-            valid_paths = {question['value']: question['tag']
-                           for question in self.get_questions(langs=[], include_triggers=True)}
+            questions = self.get_questions(langs=[], include_triggers=True, include_groups=True)
+            valid_paths = {question['value']: question['tag'] for question in questions}
         except XFormException as e:
             errors.append({'type': 'invalid xml', 'message': unicode(e)})
         else:
@@ -1316,6 +1316,37 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                 actions[action_type] = a
         return actions
 
+    @memoized
+    def get_action_type(self):
+
+        if self.actions.close_case.condition.is_active():
+            return 'close'
+        elif (self.actions.open_case.condition.is_active() or
+                self.actions.subcases):
+            return 'open'
+        elif self.actions.update_case.condition.is_active():
+            return 'update'
+        else:
+            return 'none'
+
+    @memoized
+    def get_icon_help_text(self):
+        messages = []
+
+        if self.actions.open_case.condition.is_active():
+            messages.append(_('This form opens a {}').format(self.get_module().case_type))
+
+        if self.actions.subcases:
+            messages.append(_('This form opens a subcase {}').format(', '.join(self.get_subcase_types())))
+
+        if self.actions.close_case.condition.is_active():
+            messages.append(_('This form closes a {}').format(self.get_module().case_type))
+
+        elif self.requires_case():
+            messages.append(_('This form updates a {}').format(self.get_module().case_type))
+
+        return '. '.join(messages)
+
     def active_actions(self):
         if self.get_app().application_version == APP_V1:
             action_types = (
@@ -1469,7 +1500,8 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         Return a list of each case type for which this Form opens a new subcase.
         :return:
         '''
-        return {subcase.case_type for subcase in self.actions.subcases if subcase.close_condition.type == "never"}
+        return {subcase.case_type for subcase in self.actions.subcases
+                if subcase.close_condition.type == "never" and subcase.case_type}
 
     @memoized
     def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
@@ -1734,20 +1766,10 @@ class SortElement(IndexedSchema):
     field = StringProperty()
     type = StringProperty()
     direction = StringProperty()
+    display = DictProperty()
 
-
-class SortOnlyDetailColumn(DetailColumn):
-    """This is a mock type, not intended to be part of a document"""
-
-    @property
-    def _i(self):
-        """
-        assert that SortOnlyDetailColumn never has ._i or .id called
-        since it should never be in an app document
-
-        """
-        raise NotImplementedError()
-
+    def has_display_values(self):
+        return any(s.strip() != '' for s in self.display.values())
 
 class CaseListLookupMixin(DocumentSchema):
     """
@@ -1764,6 +1786,7 @@ class CaseListLookupMixin(DocumentSchema):
 
     """
     lookup_enabled = BooleanProperty(default=False)
+    lookup_autolaunch = BooleanProperty(default=False)
     lookup_action = StringProperty()
     lookup_name = StringProperty()
     lookup_image = JRResourceProperty(required=False)
@@ -1794,6 +1817,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
 
     # If True, a small tile will display the case name after selection.
     persist_case_context = BooleanProperty()
+    persistent_case_context_xml = StringProperty(default='case_name')
 
     # If True, use case tiles in the case list
     use_case_tiles = BooleanProperty()
@@ -1852,6 +1876,7 @@ class CaseSearch(DocumentSchema):
     """
     command_label = DictProperty(default={'en': 'Search All Cases'})
     properties = SchemaListProperty(CaseSearchProperty)
+    relevant = StringProperty(default=CLAIM_DEFAULT_RELEVANT_CONDITION)
 
 
 class ParentSelect(DocumentSchema):
@@ -3489,13 +3514,7 @@ class StaticChoiceListFilter(ReportAppFilter):
 
 class StaticDatespanFilter(ReportAppFilter):
     date_range = StringProperty(
-        choices=[
-            'last7',
-            'last30',
-            'thismonth',
-            'lastmonth',
-            'lastyear',
-        ],
+        choices=[choice.slug for choice in get_simple_dateranges()],
         required=True,
     )
 
@@ -3524,7 +3543,7 @@ class CustomDatespanFilter(ReportAppFilter):
             "CustomDatespanFilter.get_filter_value must be called "
             "with an OTARestoreUser object, not None")
 
-        timezone = get_timezone_for_domain(user.user_id, user.domain)
+        timezone = get_timezone_for_domain(user.domain)
         today = ServerTime(datetime.datetime.utcnow()).user_time(timezone).done().date()
         start_date = end_date = None
         days = int(self.date_number)
@@ -4294,7 +4313,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     # always false for RemoteApp
     case_sharing = BooleanProperty(default=False)
-    vellum_case_management = BooleanProperty(default=True)
+    vellum_case_management = BooleanProperty(default=False)
 
     build_profiles = SchemaDictProperty(BuildProfile)
 
@@ -5244,7 +5263,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @classmethod
     def new_app(cls, domain, name, application_version, lang="en"):
-        app = cls(domain=domain, modules=[], name=name, langs=[lang], application_version=application_version)
+        app = cls(domain=domain, modules=[], name=name, langs=[lang],
+                  application_version=application_version, vellum_case_management=True)
         return app
 
     def add_module(self, module):
@@ -5603,9 +5623,7 @@ class RemoteApp(ApplicationBase):
     manage_urls = BooleanProperty(default=False)
 
     questions_map = DictProperty(required=False)
-
-    vellum_case_management = False
-
+    
     def is_remote_app(self):
         return True
 

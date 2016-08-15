@@ -18,9 +18,11 @@ class ReportUtilTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(ReportUtilTests, cls).setUpClass()
         create_domain(DOMAIN)
 
     def setUp(self):
+        super(ReportUtilTests, self).setUp()
         self.user = CommCareUser.create(DOMAIN, 'user1', '***')
         self.request = Mock()
         self.request.method = 'POST'
@@ -35,6 +37,7 @@ class ReportUtilTests(TestCase):
     def tearDown(self):
         ensure_index_deleted(XFORM_INDEX_INFO.index)
         self.user.delete()
+        super(ReportUtilTests, self).tearDown()
 
     def test_create_export_form_filter(self):
         filter_ = create_export_filter(self.request, DOMAIN, export_type='form')

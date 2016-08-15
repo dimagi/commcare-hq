@@ -1,3 +1,4 @@
+/* globals: ga_track_event */
 hqDefine('app_manager/js/releases.js', function () {
     function SavedApp(app_data, releasesMain) {
         var self = ko.mapping.fromJS(app_data);
@@ -31,10 +32,19 @@ hqDefine('app_manager/js/releases.js', function () {
             return profiles;
         };
 
+        self.track_deploy_type = function(type) {
+            ga_track_event('App Manager', 'Deploy Type', type);
+        };
+
         self.changeAppCode = function () {
             self.app_code(null);
             self.failed_url_generation(false);
             self.generating_url(false);
+        };
+
+        self.onSMSPanelClick = function() {
+            self.track_deploy_type('Send to phone via SMS');
+            self.generate_short_url('short_url');
         };
 
         self.build_profile.subscribe(self.changeAppCode);
@@ -174,6 +184,9 @@ hqDefine('app_manager/js/releases.js', function () {
             analytics.workflow('Initiate Installation Method');
         };
 
+        self.reveal_java_download = function(){
+            return this.j2me_enabled();
+        };
         return self;
     }
 

@@ -9,9 +9,9 @@ from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
 from corehq.apps.app_manager.models import ReportAppConfig, Application, ReportModule, \
     ReportGraphConfig, MobileSelectFilter
-from corehq.apps.app_manager.tests import TestXmlMixin
 from corehq.apps.app_manager.tests.mocks.mobile_ucr import mock_report_configurations, \
     mock_report_configuration_get, mock_report_data
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import ReportConfiguration, ReportMeta
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceProvider

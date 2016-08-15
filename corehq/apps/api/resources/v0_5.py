@@ -1,8 +1,11 @@
+from django.http import Http404
 from tastypie import http
+from tastypie.authentication import ApiKeyAuthentication
 from tastypie.authorization import ReadOnlyAuthorization
-from tastypie.exceptions import BadRequest, ImmediateHttpResponse
+from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
+from tastypie.http import HttpForbidden
 from tastypie.paginator import Paginator
-from tastypie.resources import convert_post_to_patch, ModelResource
+from tastypie.resources import convert_post_to_patch, ModelResource, Resource
 from tastypie.utils import dict_strip_unicode_keys
 
 from collections import namedtuple
@@ -12,20 +15,26 @@ from django.core.urlresolvers import reverse
 
 from tastypie import fields
 from tastypie.bundle import Bundle
-from corehq.apps.api.resources.v0_1 import (
-    RequirePermissionAuthentication,
-    AdminAuthentication,
-    CustomResourceMeta,
-)
+
+from corehq.apps.api.resources.auth import RequirePermissionAuthentication, AdminAuthentication
+from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_obj
+from corehq.apps.app_manager.models import Application
+from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
 
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
-from corehq.apps.userreports.models import ReportConfiguration
-from corehq.apps.users.models import CommCareUser, WebUser, Permissions
+from corehq.apps.userreports.models import ReportConfiguration, \
+    StaticReportConfiguration, report_config_id_is_static
+from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.reports.view import query_dict_to_dict, \
+    get_filter_values
+from corehq.apps.users.models import CommCareUser, WebUser, Permissions, CouchUser
 from corehq.util import get_document_or_404
+from corehq.util.couch import get_document_or_not_found, DocumentNotFound
+from corehq.toggles import ZAPIER_INTEGRATION
 
 from . import v0_1, v0_4, CouchResourceMixin
 from . import HqBaseResource, DomainSpecificResourceMixin
@@ -68,7 +77,7 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
             user['id'] = user.pop('_id')
         return namedtuple('user', user.keys())(**user)
 
-    class Meta(v0_1.CustomResourceMeta):
+    class Meta(CustomResourceMeta):
         authentication = RequirePermissionAuthentication(Permissions.edit_commcare_users)
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
@@ -497,28 +506,260 @@ class StockTransactionResource(HqBaseResource, ModelResource):
         return bundle
 
 
+ConfigurableReportData = namedtuple("ConfigurableReportData", [
+    "data", "id", "domain", "total_records", "get_params", "next_page"
+])
+
+
+class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin):
+    """
+    A resource that replicates the behavior of the ajax part of the
+    ConfigurableReport view.
+    """
+    data = fields.ListField(attribute="data", readonly=True)
+    total_records = fields.IntegerField(attribute="total_records", readonly=True)
+    next_page = fields.CharField(attribute="next_page", readonly=True)
+
+    LIMIT_DEFAULT = 50
+    LIMIT_MAX = 50
+
+    def _get_start_param(self, bundle):
+        try:
+            start = int(bundle.request.GET.get('offset', 0))
+            if start < 0:
+                raise ValueError
+        except (ValueError, TypeError):
+            raise BadRequest("start must be a positive integer.")
+        return start
+
+    def _get_limit_param(self, bundle):
+        try:
+            limit = int(bundle.request.GET.get('limit', self.LIMIT_DEFAULT))
+            if limit < 0:
+                raise ValueError
+        except (ValueError, TypeError):
+            raise BadRequest("limit must be a positive integer.")
+
+        if limit > self.LIMIT_MAX:
+            raise BadRequest("Limit may not exceed {}.".format(self.LIMIT_MAX))
+        return limit
+
+    def _get_next_page(self, domain, id_, start, limit, total_records, get_query_dict):
+        if total_records > start + limit:
+            start += limit
+            new_get_params = get_query_dict.copy()
+            new_get_params["offset"] = start
+            # limit has not changed, but it may not have been present in get params before.
+            new_get_params["limit"] = limit
+            return reverse('api_dispatch_detail', kwargs=dict(
+                api_name=self._meta.api_name,
+                resource_name=self._meta.resource_name,
+                domain=domain,
+                pk=id_,
+            )) + "?" + new_get_params.urlencode()
+        else:
+            return ""
+
+    def _get_report_data(self, report_config, domain, start, limit, get_params):
+        report = ReportFactory.from_spec(report_config)
+
+        filter_values = get_filter_values(
+            report_config.ui_filters,
+            query_dict_to_dict(get_params, domain)
+        )
+        report.set_filter_values(filter_values)
+
+        page = list(report.get_data(start=start, limit=limit))
+        total_records = report.get_total_records()
+        return page, total_records
+
+    def obj_get(self, bundle, **kwargs):
+        domain = kwargs['domain']
+        pk = kwargs['pk']
+        start = self._get_start_param(bundle)
+        limit = self._get_limit_param(bundle)
+
+        report_config = self._get_report_configuration(pk, domain)
+        page, total_records = self._get_report_data(
+            report_config, domain, start, limit, bundle.request.GET)
+
+        return ConfigurableReportData(
+            data=page,
+            total_records=total_records,
+            id=report_config._id,
+            domain=domain,
+            get_params=bundle.request.GET,
+            next_page=self._get_next_page(
+                domain,
+                report_config._id,
+                start,
+                limit,
+                total_records,
+                bundle.request.GET,
+            )
+        )
+
+    def _get_report_configuration(self, id_, domain):
+        """
+        Fetch the required ReportConfiguration object
+        :param id_: The id of the ReportConfiguration
+        :param domain: The domain of the ReportConfiguration
+        :return: A ReportConfiguration
+        """
+        if report_config_id_is_static(id_):
+            report_config = StaticReportConfiguration.by_id(id_)
+            if report_config.domain != domain:
+                raise NotFound
+        else:
+            try:
+                report_config = get_document_or_not_found(ReportConfiguration, domain, id_)
+            except DocumentNotFound:
+                raise NotFound
+        return report_config
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'domain': get_obj(bundle_or_obj).domain,
+            'pk': get_obj(bundle_or_obj).id,
+        }
+
+    def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_list'):
+        uri = super(ConfigurableReportDataResource, self).get_resource_uri(bundle_or_obj, url_name)
+        if bundle_or_obj is not None and uri:
+            get_params = get_obj(bundle_or_obj).get_params.copy()
+            if "offset" not in get_params:
+                get_params["offset"] = 0
+            if "limit" not in get_params:
+                get_params["limit"] = self.LIMIT_DEFAULT
+            uri += "?{}".format(get_params.urlencode())
+        return uri
+
+    class Meta(CustomResourceMeta):
+        list_allowed_methods = []
+        detail_allowed_methods = ["get"]
+
+
+class DoesNothingPaginator(Paginator):
+    def page(self):
+        return {
+            self.collection_name: self.objects,
+            "meta": {'total_count': self.get_count()}
+        }
+
+
 class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
+    title = fields.CharField(readonly=True, attribute="title", null=True)
     filters = fields.ListField(readonly=True)
     columns = fields.ListField(readonly=True)
 
     def dehydrate_filters(self, bundle):
         obj_filters = bundle.obj.filters
         return [{
+            "type": f["type"],
             "datatype": f["datatype"],
-            "field": f["field"]
+            "slug": f["slug"]
         } for f in obj_filters]
 
     def dehydrate_columns(self, bundle):
         obj_columns = bundle.obj.columns
-        return [c['column_id'] for c in obj_columns]
+        return [{
+            "column_id": c['column_id'],
+            "display": c['display'],
+            "type": c["type"],
+        } for c in obj_columns]
 
     def obj_get(self, bundle, **kwargs):
         domain = kwargs['domain']
         pk = kwargs['pk']
-        report_configuration = get_document_or_404(ReportConfiguration, domain, pk)
+        try:
+            report_configuration = get_document_or_404(ReportConfiguration, domain, pk)
+        except Http404 as e:
+            raise NotFound(e.message)
         return report_configuration
 
+    def obj_get_list(self, bundle, **kwargs):
+        domain = kwargs['domain']
+        print domain
+        return ReportConfiguration.by_domain(domain)
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'domain': get_obj(bundle_or_obj).domain,
+            'pk': get_obj(bundle_or_obj)._id,
+        }
+
     class Meta(CustomResourceMeta):
-        list_allowed_methods = []
+        list_allowed_methods = ["get"]
         detail_allowed_methods = ["get"]
+        paginator_class = DoesNothingPaginator
+
+
+UserDomain = namedtuple('UserDomain', 'domain_name project_name')
+UserDomain.__new__.__defaults__ = ('', '')
+
+
+class UserDomainsResource(Resource):
+    domain_name = fields.CharField(attribute='domain_name')
+    project_name = fields.CharField(attribute='project_name')
+
+    class Meta:
+        resource_name = 'user_domains'
+        authentication = ApiKeyAuthentication()
+        object_class = UserDomain
+        include_resource_uri = False
+
+    def obj_get_list(self, bundle, **kwargs):
+        return self.get_object_list(bundle.request)
+
+    def get_object_list(self, request):
+        couch_user = CouchUser.from_django_user(request.user)
+        results = []
+        for domain in couch_user.get_domains():
+            if not ZAPIER_INTEGRATION.enabled(domain):
+                continue
+            domain_object = Domain.get_by_name(domain)
+            results.append(UserDomain(
+                domain_name=domain_object.name,
+                project_name=domain_object.hr_name or domain_object.name
+            ))
+        return results
+
+
+Form = namedtuple('Form', 'form_xmlns form_name')
+Form.__new__.__defaults__ = ('', '')
+
+
+class DomainForms(Resource):
+    form_xmlns = fields.CharField(attribute='form_xmlns')
+    form_name = fields.CharField(attribute='form_name')
+
+    class Meta:
+        resource_name = 'domain_forms'
+        authentication = ApiKeyAuthentication()
+        object_class = Form
+        include_resource_uri = False
+
+    def obj_get_list(self, bundle, **kwargs):
+        application_id = bundle.request.GET.get('application_id')
+        if not application_id:
+            raise NotFound('application_id parameter required')
+
+        domain = kwargs['domain']
+        couch_user = CouchUser.from_django_user(bundle.request.user)
+        if not ZAPIER_INTEGRATION.enabled(domain) or not couch_user.is_member_of(domain):
+            raise ImmediateHttpResponse(
+                HttpForbidden('You are not allowed to get list of forms for this domain')
+            )
+
+        results = []
+        application = Application.get(docid=application_id)
+        if not application:
+            return []
+        forms_objects = application.get_forms(bare=False)
+        for form_object in forms_objects:
+            form = form_object['form']
+            module = form_object['module']
+            form_name = '{} > {} > {}'.format(application.name, module.name['en'], form.name['en'])
+            results.append(Form(form_xmlns=form.xmlns, form_name=form_name))
+        return results

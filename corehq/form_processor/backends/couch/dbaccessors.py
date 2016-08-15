@@ -15,8 +15,10 @@ from corehq.apps.hqcase.dbaccessors import (
     get_case_ids_in_domain_by_owner,
     get_case_types_for_domain,
     get_cases_in_domain_by_external_id,
+    get_deleted_case_ids_by_owner,
 )
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+from corehq.blobs.mixin import BlobMixin
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
     get_case_ids_modified_with_owner_since
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_server_modified_on import \
@@ -68,7 +70,17 @@ class FormAccessorCouch(AbstractFormAccessor):
     @staticmethod
     def get_with_attachments(form_id):
         doc = XFormInstance.get_db().get(form_id, attachments=True)
-        return doc_types()[doc['doc_type']].wrap(doc)
+        doc = doc_types()[doc['doc_type']].wrap(doc)
+        if doc.external_blobs:
+            for name, meta in doc.external_blobs.iteritems():
+                with doc.fetch_attachment(name, stream=True) as content:
+                    doc.deferred_put_attachment(
+                        content,
+                        name,
+                        content_type=meta.content_type,
+                        content_length=meta.content_length,
+                    )
+        return doc
 
     @staticmethod
     def get_attachment_content(form_id, attachment_id):
@@ -93,6 +105,10 @@ class FormAccessorCouch(AbstractFormAccessor):
     @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         return _soft_delete(XFormInstance.get_db(), form_ids, deletion_date, deletion_id)
+
+    @staticmethod
+    def soft_undelete_forms(domain, form_ids):
+        return _soft_undelete(XFormInstance.get_db(), form_ids)
 
 
 class CaseAccessorCouch(AbstractCaseAccessor):
@@ -186,6 +202,14 @@ class CaseAccessorCouch(AbstractCaseAccessor):
     def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
         return _soft_delete(CommCareCase.get_db(), case_ids, deletion_date, deletion_id)
 
+    @staticmethod
+    def soft_undelete_cases(domain, case_ids):
+        return _soft_undelete(CommCareCase.get_db(), case_ids)
+
+    @staticmethod
+    def get_deleted_case_ids_by_owner(domain, owner_id):
+        return get_deleted_case_ids_by_owner(owner_id)
+
 
 class LedgerAccessorCouch(AbstractLedgerAccessor):
 
@@ -247,12 +271,17 @@ class LedgerAccessorCouch(AbstractLedgerAccessor):
 
 def _get_attachment_content(doc_class, doc_id, attachment_id):
     try:
-        resp = doc_class.get_db().fetch_attachment(doc_id, attachment_id, stream=True)
+        if issubclass(doc_class, BlobMixin):
+            doc = doc_class.get(doc_id)
+            resp = doc.fetch_attachment(attachment_id, stream=True)
+            content_type = doc.blobs[attachment_id].content_type
+        else:
+            resp = doc_class.get_db().fetch_attachment(doc_id, attachment_id, stream=True)
+            headers = resp.resp.headers
+            content_type = headers.get('Content-Type', None)
     except ResourceNotFound:
         raise AttachmentNotFound(attachment_id)
 
-    headers = resp.resp.headers
-    content_type = headers.get('Content-Type', None)
     return AttachmentContent(content_type, resp)
 
 

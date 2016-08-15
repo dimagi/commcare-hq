@@ -34,7 +34,8 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Xpath,
 )
 from corehq.apps.app_manager.suite_xml.features.scheduler import schedule_detail_variables
-from corehq.apps.app_manager.util import create_temp_sort_column, module_offers_search
+from corehq.apps.app_manager.util import create_temp_sort_column, module_offers_search,\
+    get_sort_and_sort_only_columns
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
 from corehq.apps.app_manager.xpath import session_var, XPath
@@ -85,7 +86,7 @@ class DetailContributor(SectionContributor):
                                     if d:
                                         r.append(d)
                         if detail.persist_case_context and not detail.persist_tile_on_forms:
-                            d = self._get_persistent_case_context_detail(module)
+                            d = self._get_persistent_case_context_detail(module, detail.persistent_case_context_xml)
                             r.append(d)
                 if module.fixture_select.active:
                     d = self._get_fixture_detail(module)
@@ -153,9 +154,9 @@ class DetailContributor(SectionContributor):
                     and not module.put_in_root:
                 target_form = self.app.get_form(module.case_list_form.form_id)
                 if target_form.is_registration_form(module.case_type):
-                    self._add_reg_form_action_to_detail(d, module)
+                    d.actions.append(self._get_reg_form_action(module))
             if module_offers_search(module) and detail_type.endswith('short') and not module.put_in_root:
-                self._add_case_search_action_to_detail(d, module)
+                d.actions.append(self._get_case_search_action(module))
 
             try:
                 if not self.app.enable_multi_sort:
@@ -181,6 +182,7 @@ class DetailContributor(SectionContributor):
             field = None
         return Lookup(
             name=detail.lookup_name or None,
+            auto_launch=detail.lookup_autolaunch or False,
             action=detail.lookup_action,
             image=detail.lookup_image or None,
             extras=[Extra(**e) for e in detail.lookup_extras],
@@ -188,13 +190,15 @@ class DetailContributor(SectionContributor):
             field=field,
         )
 
-    def _add_reg_form_action_to_detail(self, detail, module):
-        # add registration form action to detail
+    def _get_reg_form_action(self, module):
+        """
+        Returns registration form action
+        """
         form = self.app.get_form(module.case_list_form.form_id)
 
         if self.app.enable_localized_menu_media:
             case_list_form = module.case_list_form
-            detail.action = LocalizedAction(
+            action = LocalizedAction(
                 menu_locale_id=id_strings.case_list_form_locale(module),
                 media_image=bool(len(case_list_form.all_image_paths())),
                 media_audio=bool(len(case_list_form.all_audio_paths())),
@@ -204,7 +208,7 @@ class DetailContributor(SectionContributor):
                 for_action_menu=True,
             )
         else:
-            detail.action = Action(
+            action = Action(
                 display=Display(
                     text=Text(locale_id=id_strings.case_list_form_locale(module)),
                     media_image=module.case_list_form.default_media_image,
@@ -238,11 +242,12 @@ class DetailContributor(SectionContributor):
                 frame.add_datum(StackDatum(id=s_datum.id, value=s_datum.function))
 
         frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(id_strings.menu_id(module))))
-        detail.action.stack.add_frame(frame)
+        action.stack.add_frame(frame)
+        return action
 
     @staticmethod
-    def _add_case_search_action_to_detail(detail, module):
-        detail.action = Action(
+    def _get_case_search_action(module):
+        action = Action(
             display=Display(
                 text=Text(locale_id=id_strings.case_search_locale(module))
             ),
@@ -250,10 +255,11 @@ class DetailContributor(SectionContributor):
         )
         frame = PushFrame()
         frame.add_command(XPath.string(id_strings.search_command(module)))
-        detail.action.stack.add_frame(frame)
+        action.stack.add_frame(frame)
+        return action
 
     @staticmethod
-    def _get_persistent_case_context_detail(module):
+    def _get_persistent_case_context_detail(module, xml):
         return Detail(
             id=id_strings.persistent_case_context_detail(module),
             title=Text(),
@@ -267,7 +273,7 @@ class DetailContributor(SectionContributor):
                     grid_y=0,
                 ),
                 header=Header(text=Text()),
-                template=Template(text=Text(xpath_function="case_name")),
+                template=Template(text=Text(xpath_function=xml)),
             )]
         )
 
@@ -361,21 +367,15 @@ def get_detail_column_infos(detail, include_sort):
     else:
         sort_elements = get_default_sort_elements(detail)
 
-    # order is 1-indexed
-    sort_elements = {s.field: (s, i + 1)
-                     for i, s in enumerate(sort_elements)}
+    sort_only, sort_columns = get_sort_and_sort_only_columns(detail, sort_elements)
+
     columns = []
     for column in detail.get_columns():
-        sort_element, order = sort_elements.pop(column.field, (None, None))
+        sort_element, order = sort_columns.pop(column.field, (None, None))
         columns.append(DetailColumnInfo(column, sort_element, order))
 
-    # sort elements is now populated with only what's not in any column
-    # add invisible columns for these
-    sort_only = sorted(sort_elements.items(),
-                       key=lambda (field, (sort_element, order)): order)
-
-    for field, (sort_element, order) in sort_only:
-        column = create_temp_sort_column(field)
+    for field, sort_element, order in sort_only:
+        column = create_temp_sort_column(sort_element, order)
         columns.append(DetailColumnInfo(column, sort_element, order))
     return columns
 

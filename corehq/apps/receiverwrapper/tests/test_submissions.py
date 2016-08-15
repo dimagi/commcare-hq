@@ -52,10 +52,7 @@ class SubmissionTest(TestCase):
         with open(file_path, "rb") as f:
             expected = json.load(f)
 
-        if '_id' in expected:
-            expected['_id'] = form_id
-        else:
-            expected['form_id'] = unicode(form_id)
+        expected['_id'] = form_id
         expected['xmlns'] = unicode(xmlns)
 
         return expected
@@ -70,7 +67,8 @@ class SubmissionTest(TestCase):
             n_times_saved = int(foo['_rev'].split('-')[0])
             self.assertEqual(n_times_saved, 1)
 
-        for key in ['form', '_attachments', '_rev', 'received_on', 'user_id']:
+        for key in ['form', 'external_blobs', '_rev', 'received_on', 'user_id',
+                    'migrating_blobs_from_couch']:
             if key in foo:
                 del foo[key]
 
@@ -123,7 +121,9 @@ class SubmissionSQLTransactionsTest(TestCase, TestFileMixin):
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms(self.domain)
+        FormProcessorTestUtils.delete_all_ledgers(self.domain)
         FormProcessorTestUtils.delete_all_cases(self.domain)
+        super(SubmissionSQLTransactionsTest, self).tearDown()
 
     def test_case_ledger_form(self):
         form_xml = self.get_xml('case_ledger_form')

@@ -4,58 +4,20 @@ import logging
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.elastic import get_es_new
-from corehq.form_processor.change_providers import SqlCaseChangeProvider
+from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.utils import get_user_type
-from dimagi.utils.couch import LockManager
-from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
-from pillowtop.es_utils import doc_exists
-from pillowtop.listener import lock_manager
+from corehq.util.doc_processor.couch import CouchDocumentProvider
+from corehq.util.doc_processor.sql import SqlDocumentProvider
+from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
-from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ResumableBulkElasticPillowReindexer
-from .base import HQPillow
-
-UNKNOWN_DOMAIN = "__nodomain__"
-UNKNOWN_TYPE = "__notype__"
-
+from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
 
 pillow_logging = logging.getLogger("pillowtop")
 pillow_logging.setLevel(logging.INFO)
-
-
-class CasePillow(HQPillow):
-    """
-    Simple/Common Case properties Indexer
-    """
-    document_class = CommCareCase
-    couch_filter = "case/casedocs"
-    es_alias = CASE_INDEX_INFO.alias
-    es_type = CASE_INDEX_INFO.type
-
-    es_index = CASE_INDEX_INFO.index
-    default_mapping = CASE_INDEX_INFO.mapping
-
-    @classmethod
-    def get_unique_id(cls):
-        # TODO: remove this next time the index name changes
-        return '85e1a25ff57c5892b6fa95caf949ae4c'
-
-    def change_trigger(self, changes_dict):
-        doc_dict, lock = lock_manager(
-            super(CasePillow, self).change_trigger(changes_dict)
-        )
-        if doc_dict and doc_dict['doc_type'] == 'CommCareCase-Deleted':
-            if doc_exists(self, doc_dict):
-                self.get_es_new().delete(self.es_index, self.es_type, doc_dict['_id'])
-            return None
-        else:
-            return LockManager(doc_dict, lock)
-
-    def change_transform(self, doc_dict):
-        return transform_case_for_elasticsearch(doc_dict)
 
 
 def transform_case_for_elasticsearch(doc_dict):
@@ -70,63 +32,47 @@ def transform_case_for_elasticsearch(doc_dict):
     return doc_ret
 
 
-def get_sql_case_to_elasticsearch_pillow(pillow_id='SqlCaseToElasticsearchPillow'):
-    checkpoint = PillowCheckpoint(
-        'sql-cases-to-elasticsearch',
-    )
+def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow'):
+    assert pillow_id == 'CaseToElasticsearchPillow', 'Pillow ID is not allowed to change'
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_INDEX_INFO)
     case_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_INDEX_INFO,
         doc_prep_fn=transform_case_for_elasticsearch
     )
+    kafka_change_feed = KafkaChangeFeed(topics=[topics.CASE, topics.CASE_SQL], group_id='cases-to-es')
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topics=[topics.CASE_SQL], group_id='sql-cases-to-es'),
+        change_feed=kafka_change_feed,
         processor=case_processor,
-        change_processed_event_handler=PillowCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100,
-        ),
-    )
-
-
-def get_couch_case_to_elasticsearch_pillow(pillow_id='CouchCaseToElasticsearchPillow'):
-    checkpoint = PillowCheckpoint(
-        'couch-cases-to-elasticsearch',
-    )
-    case_processor = ElasticProcessor(
-        elasticsearch=get_es_new(),
-        index_info=CASE_INDEX_INFO,
-        doc_prep_fn=transform_case_for_elasticsearch
-    )
-    return ConstructedPillow(
-        name=pillow_id,
-        checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topics=[topics.CASE], group_id='couch-cases-to-es'),
-        processor=case_processor,
-        change_processed_event_handler=PillowCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100,
+        change_processed_event_handler=MultiTopicCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=kafka_change_feed
         ),
     )
 
 
 def get_couch_case_reindexer():
+    iteration_key = "CouchCaseToElasticsearchPillow_{}_reindexer".format(CASE_INDEX_INFO.index)
+    doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
+        CommCareCase,
+        ("CommCareCase-Deleted", CommCareCase)
+    ])
     return ResumableBulkElasticPillowReindexer(
-        name="CouchCaseToElasticsearchPillow",
-        doc_types=[
-            CommCareCase,
-            ('CommCareCase-Deleted', CommCareCase),
-        ],
+        doc_provider,
         elasticsearch=get_es_new(),
         index_info=CASE_INDEX_INFO,
-        doc_transform=transform_case_for_elasticsearch
+        doc_transform=transform_case_for_elasticsearch,
+        pillow=get_case_to_elasticsearch_pillow()
     )
 
 
 def get_sql_case_reindexer():
-    return ElasticPillowReindexer(
-        pillow=get_sql_case_to_elasticsearch_pillow(),
-        change_provider=SqlCaseChangeProvider(),
+    iteration_key = "SqlCaseToElasticsearchPillow_{}_reindexer".format(CASE_INDEX_INFO.index)
+    doc_provider = SqlDocumentProvider(iteration_key, CaseReindexAccessor())
+    return ResumableBulkElasticPillowReindexer(
+        doc_provider,
         elasticsearch=get_es_new(),
         index_info=CASE_INDEX_INFO,
+        doc_transform=transform_case_for_elasticsearch
     )

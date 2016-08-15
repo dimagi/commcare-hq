@@ -1,10 +1,9 @@
 from corehq.util.elastic import es_index
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
-USER_INDEX = es_index("hqusers_2016-02-16_1402")
+USER_INDEX = es_index("hqusers_2016-07-19")
 USER_MAPPING={'_all': {'analyzer': 'standard'},
- '_meta': {'comment': 'Simon modified on 2016-01-20',
-           'created': None},
+ '_meta': {'created': None},
  'date_detection': False,
  'date_formats': ['yyyy-MM-dd',
                   "yyyy-MM-dd'T'HH:mm:ssZZ",
@@ -86,6 +85,11 @@ USER_MAPPING={'_all': {'analyzer': 'standard'},
                 'registering_device_id': {'type': 'string'},
                 'status': {'type': 'string'},
                 'user_data': {'type': 'object', 'enabled': False},
+                'base_username': {'fields': {'base_username': {'index': 'analyzed',
+                                                               'type': 'string'},
+                                             'exact': {'index': 'not_analyzed',
+                                                       'type': 'string'}},
+                                 'type': 'multi_field'},
                 'username': {'fields': {'exact': {'include_in_all': False,
                                                   'index': 'not_analyzed',
                                                   'type': 'string'},

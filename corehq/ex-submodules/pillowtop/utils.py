@@ -1,7 +1,6 @@
 from __future__ import division
 from collections import namedtuple
 from datetime import datetime
-import importlib
 
 import sys
 
@@ -10,12 +9,11 @@ from django.conf import settings
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.modules import to_function
-from dimagi.utils.parsing import string_to_utc_datetime
 
 from pillowtop.exceptions import PillowNotFoundError
 
 
-def get_pillow_instance(full_class_str):
+def _get_pillow_instance(full_class_str):
     pillow_class = _import_class_or_function(full_class_str)
     if pillow_class is None:
         raise ValueError('No pillow class found for {}'.format(full_class_str))
@@ -60,7 +58,7 @@ class PillowConfig(namedtuple('PillowConfig', ['section', 'name', 'class_name', 
             instance_generator_fn = _import_class_or_function(self.instance_generator)
             return instance_generator_fn(self.name)
         else:
-            return get_pillow_instance(self.class_name)
+            return _get_pillow_instance(self.class_name)
 
 
 def get_pillow_config_from_setting(section, pillow_config_string_or_dict):
@@ -115,11 +113,8 @@ def get_all_pillows_json():
 
 def get_pillow_json(pillow_config):
     assert isinstance(pillow_config, PillowConfig)
-    from pillowtop.listener import AliasedElasticPillow
 
-    pillow_class = pillow_config.get_class()
-    pillow = (pillow_class(online=False) if issubclass(pillow_class, AliasedElasticPillow)
-              else pillow_config.get_instance())
+    pillow = pillow_config.get_instance()
 
     checkpoint = pillow.get_checkpoint()
     timestamp = checkpoint.timestamp
@@ -136,42 +131,61 @@ def get_pillow_json(pillow_config):
     else:
         time_since_last = ''
         hours_since_last = None
-    try:
-        db_seq = pillow.get_change_feed().get_latest_change_id()
-    except ValueError:
-        db_seq = None
+    offsets = pillow.get_change_feed().get_current_offsets()
+
+    def _couch_seq_to_int(checkpoint, seq):
+        return force_seq_int(seq) if checkpoint.sequence_format != 'json' else seq
+
     return {
         'name': pillow_config.name,
-        'seq': force_seq_int(checkpoint.wrapped_sequence),
-        'old_seq': force_seq_int(checkpoint.old_sequence) or 0,
-        'db_seq': force_seq_int(db_seq),
+        'seq_format': checkpoint.sequence_format,
+        'seq': _couch_seq_to_int(checkpoint, checkpoint.wrapped_sequence),
+        'old_seq': _couch_seq_to_int(checkpoint, checkpoint.old_sequence) or 0,
+        'offsets': offsets,
         'time_since_last': time_since_last,
         'hours_since_last': hours_since_last
     }
 
+ChangeError = namedtuple('ChangeError', 'change exception')
 
-def build_bulk_payload(index_info, changes, doc_transform=None):
+
+class ErrorCollector(object):
+    def __init__(self):
+        self.errors = []
+
+    def add_error(self, error):
+        self.errors.append(error)
+
+
+def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=None):
     doc_transform = doc_transform or (lambda x: x)
+    payload = []
     for change in changes:
         if change.deleted and change.id:
-            yield {
+            payload.append({
                 "delete": {
                     "_index": index_info.index,
                     "_type": index_info.type,
                     "_id": change.id
                 }
-            }
+            })
         elif not change.deleted:
-            doc = change.get_document()
-            doc = doc_transform(doc)
-            yield {
-                "index": {
-                    "_index": index_info.index,
-                    "_type": index_info.type,
-                    "_id": doc['_id']
-                }
-            }
-            yield doc
+            try:
+                doc = change.get_document()
+                doc = doc_transform(doc)
+                payload.append({
+                    "index": {
+                        "_index": index_info.index,
+                        "_type": index_info.type,
+                        "_id": doc['_id']
+                    }
+                })
+                payload.append(doc)
+            except Exception as e:
+                if not error_collector:
+                    raise
+                error_collector.add_error(ChangeError(change, e))
+    return payload
 
 
 def prepare_bulk_payloads(bulk_changes, max_size, chunk_size=100):

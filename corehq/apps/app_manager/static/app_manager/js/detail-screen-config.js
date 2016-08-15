@@ -89,11 +89,17 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         self.hasValidPropertyName = function(){
             return module.DetailScreenConfig.field_val_re.test(self.textField.val());
         };
+        self.display = ko.observable(typeof params.display !== 'undefined' ? params.display : "");
+        self.display.subscribe(function () {
+            self.notifyButton();
+        });
+        self.toTitleCase = module.CC_DETAIL_SCREEN.toTitleCase;
         this.textField.on('change', function(){
             if (!self.hasValidPropertyName()){
                 self.showWarning(true);
             } else {
                 self.showWarning(false);
+                self.display(self.toTitleCase(this.val()));
                 self.notifyButton();
             }
         });
@@ -150,11 +156,12 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         var self = this;
         self.sortRows = ko.observableArray([]);
 
-        self.addSortRow = function (field, type, direction, notify) {
+        self.addSortRow = function (field, type, direction, display, notify) {
             self.sortRows.push(new SortRow({
                 field: field,
                 type: type,
                 direction: direction,
+                display: display,
                 saveButton: saveButton,
                 properties: properties
             }));
@@ -197,7 +204,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
     };
 
     var searchViewModel = function (searchProperties, lang, saveButton) {
-        var self = this;
+        var self = this,
+            DEFAULT_CLAIM_RELEVANT= "count(instance('casedb')/casedb/case[@case_id=instance('querysession')/session/data/case_id]) = 0";
 
         var SearchProperty = function (name, label) {
             var self = this;
@@ -205,6 +213,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             self.label = ko.observable(label);
         };
 
+        self.relevant = ko.observable();
+        self.default_relevant = ko.observable(true);
         self.searchProperties = ko.observableArray();
         if (searchProperties.length > 0) {
             for (var i = 0; i < searchProperties.length; i++) {
@@ -244,8 +254,22 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             );
         };
 
+        self._getRelevant = function() {
+            if (self.default_relevant()) {
+                if (!self.relevant() || self.relevant().trim() === "") {
+                    return DEFAULT_CLAIM_RELEVANT;
+                } else {
+                    return "(" + DEFAULT_CLAIM_RELEVANT + ") and (" + self.relevant().trim() + ")";
+                }
+            }
+            return self.relevant().trim();
+        };
+
         self.serialize = function () {
-            return self._getProperties();
+            return {
+                properties: self._getProperties(),
+                relevant: self._getRelevant(),
+            };
         };
     };
 
@@ -311,6 +335,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
 
             var data = {
                 lookup_enabled: self.lookup_enabled(),
+                lookup_autolaunch: self.lookup_autolaunch(),
                 lookup_action: self.lookup_action(),
                 lookup_name: self.lookup_name(),
                 lookup_extras: _trimmed_extras(),
@@ -402,6 +427,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         self.$form = $el.find('form');
 
         self.lookup_enabled = ko.observable(state.lookup_enabled);
+        self.lookup_autolaunch = ko.observable(state.lookup_autolaunch);
         self.lookup_action = ko.observable(state.lookup_action);
         self.lookup_name = ko.observable(state.lookup_name);
         self.extras = ko.observableArray(ko.utils.arrayMap(state.lookup_extras, function(extra){
@@ -565,7 +591,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
 
                 var icon = (module.CC_DETAIL_SCREEN.isAttachmentProperty(this.original.field)
                    ? COMMCAREHQ.icons.PAPERCLIP : null);
-                this.field = uiElement.input().val(this.original.field).setIcon(icon);
+                this.field = uiElement.input(this.original.field).setIcon(icon);
 
                 // Make it possible to observe changes to this.field
                 // note that observableVal is read only!
@@ -839,6 +865,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 this.allowsTabs = options.allowsTabs;
                 this.useCaseTiles = ko.observable(spec[this.columnKey].use_case_tiles ? "yes" : "no");
                 this.persistCaseContext = ko.observable(spec[this.columnKey].persist_case_context || false);
+                this.persistentCaseContextXML = ko.observable(spec[this.columnKey].persistent_case_context_xml|| 'case_name');
                 this.persistTileOnForms = ko.observable(spec[this.columnKey].persist_tile_on_forms || false);
                 this.enableTilePullDown = ko.observable(spec[this.columnKey].pull_down_tile || false);
                 this.allowsEmptyColumns = options.allowsEmptyColumns;
@@ -918,6 +945,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     that.saveButton.fire('change');
                 });
                 this.persistCaseContext.subscribe(function(){
+                    that.saveButton.fire('change');
+                });
+                this.persistentCaseContextXML.subscribe(function(){
                     that.saveButton.fire('change');
                 });
                 this.persistTileOnForms.subscribe(function(){
@@ -1018,8 +1048,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         function(c){return c.serialize();}
                     ));
 
-                    data.useCaseTiles = this.useCaseTiles() == "yes" ? true : false;
+                    data.useCaseTiles = this.useCaseTiles() === "yes" ? true : false;
                     data.persistCaseContext = this.persistCaseContext();
+                    data.persistentCaseContextXML = this.persistentCaseContextXML();
                     data.persistTileOnForms = this.persistTileOnForms();
                     data.enableTilePullDown = this.persistTileOnForms() ? this.enableTilePullDown() : false;
 
@@ -1053,7 +1084,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                             return {
                                 field: row.textField.val(),
                                 type: row.type(),
-                                direction: row.direction()
+                                direction: row.direction(),
+                                display: row.display(),
                             };
                         }));
                     }
@@ -1189,6 +1221,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                                 spec.sortRows[j].field,
                                 spec.sortRows[j].type,
                                 spec.sortRows[j].direction,
+                                spec.sortRows[j].display[this.lang],
                                 false
                             );
                         }

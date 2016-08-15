@@ -19,17 +19,3 @@ def get_test_kafka_consumer(*topics):
             'consumer_timeout_ms': 100,
         }
         return KafkaConsumer(*topics, **configs)
-
-
-def get_current_kafka_seq(topic):
-    consumer = get_test_kafka_consumer(topic)
-    return consumer.offsets()['fetch'].get((topic, 0), 0)
-
-
-def get_current_multi_topic_seq(topics):
-    consumer = get_test_kafka_consumer(*topics)
-    offsets = consumer.offsets('fetch')
-    return {
-        topic_part[0]: offset
-        for topic_part, offset in offsets.items()
-    }

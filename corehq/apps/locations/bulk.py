@@ -151,7 +151,7 @@ class LocationImporter(object):
                     )
                 }
 
-            parent = parent_id or existing.parent_id
+            parent = parent_id or existing.parent_location_id
 
         form_data['site_code'] = provided_code
 
@@ -206,7 +206,10 @@ class LocationImporter(object):
         if not existing:
             return False
         for key, val in form_data.iteritems():
-            if getattr(existing, key, None) != val:
+            if key == 'parent_id':
+                if existing.parent_location_id != val:
+                    return False
+            elif getattr(existing, key, None) != val:
                 return False
 
         for product_code, val in consumption:

@@ -1,123 +1,79 @@
 from decimal import Decimal
-from django.test import TestCase, override_settings
-from django.test.testcases import SimpleTestCase
 
-from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
-from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
-from corehq.apps.es import FormES
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.utils import TestFormMetadata
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from corehq.pillows.xform import (
-    XFormPillow,
-    get_sql_xform_to_elasticsearch_pillow,
-    transform_xform_for_elasticsearch,
-    get_couch_xform_to_elasticsearch_pillow)
-from corehq.util.elastic import delete_es_index, ensure_index_deleted
-from corehq.util.test_utils import get_form_ready_to_save, trap_extra_setup
+from django.test import TestCase
+from django.test.testcases import SimpleTestCase
 from elasticsearch.exceptions import ConnectionError
 
-from dimagi.utils.couch.database import get_db
-from pillowtop.feed.couch import get_current_seq
+from corehq.apps.es import FormES
+from corehq.elastic import get_es_new
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.utils import TestFormMetadata
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
+from corehq.pillows.xform import (
+    transform_xform_for_elasticsearch)
+from corehq.util.elastic import delete_es_index, ensure_index_deleted
+from corehq.util.test_utils import get_form_ready_to_save, trap_extra_setup
+from pillowtop.es_utils import initialize_index_and_mapping
+from testapps.test_pillowtop.utils import process_kafka_changes, process_couch_changes
 
 
 class XFormPillowTest(TestCase):
-
     domain = 'xform-pillowtest-domain'
 
     def setUp(self):
         super(XFormPillowTest, self).setUp()
         FormProcessorTestUtils.delete_all_xforms()
         with trap_extra_setup(ConnectionError):
-            self.pillow = XFormPillow()
-        self.elasticsearch = self.pillow.get_es_new()
-        delete_es_index(self.pillow.es_index)
+            self.elasticsearch = get_es_new()
+            initialize_index_and_mapping(self.elasticsearch, XFORM_INDEX_INFO)
+        delete_es_index(XFORM_INDEX_INFO.index)
 
     def tearDown(self):
-        ensure_index_deleted(self.pillow.es_index)
+        ensure_index_deleted(XFORM_INDEX_INFO.index)
         super(XFormPillowTest, self).tearDown()
 
-    def test_xform_pillow_couch(self):
-        metadata = TestFormMetadata(domain=self.domain)
-        form = get_form_ready_to_save(metadata)
-        FormProcessorInterface(domain=self.domain).save_processed_models([form])
-        self.pillow.process_changes(since=0, forever=False)
-        self.elasticsearch.indices.refresh(self.pillow.es_index)
-        results = FormES().run()
-        self.assertEqual(1, results.total, results.hits)
-        form_doc = results.hits[0]
-        self.assertEqual(self.domain, form_doc['domain'])
-        self.assertEqual(metadata.xmlns, form_doc['xmlns'])
-        self.assertEqual('XFormInstance', form_doc['doc_type'])
-        form.delete()
-
-    def test_couch_xform_to_es_pillow(self):
-        consumer = get_test_kafka_consumer(topics.FORM)
-
-        # have to get the seq id before the change is processed
-        kafka_seq = consumer.offsets()['fetch'][(topics.FORM, 0)]
-        couch_seq = get_current_seq(get_db())
-
-        metadata = TestFormMetadata(domain=self.domain)
-        form = get_form_ready_to_save(metadata, is_db_test=True)
-        form_processor = FormProcessorInterface(domain=self.domain)
-        form_processor.save_processed_models([form])
-
-        from corehq.apps.change_feed.pillow import get_default_couch_db_change_feed_pillow
-        change_feed_pillow = get_default_couch_db_change_feed_pillow('test')
-        change_feed_pillow.process_changes(couch_seq, forever=False)
-
-        # confirm change made it to kafka
-        message = consumer.next()
-        change_meta = change_meta_from_kafka_message(message.value)
-        self.assertEqual(form.form_id, change_meta.document_id)
-        self.assertEqual(self.domain, change_meta.domain)
-
-        # send to elasticsearch
-        sql_pillow = get_couch_xform_to_elasticsearch_pillow()
-        sql_pillow.process_changes(since=kafka_seq, forever=False)
-        self.elasticsearch.indices.refresh(self.pillow.es_index)
+    @run_with_all_backends
+    def test_xform_pillow(self):
+        form, metadata = self._create_form_and_sync_to_es()
 
         # confirm change made it to elasticserach
         results = FormES().run()
         self.assertEqual(1, results.total)
         form_doc = results.hits[0]
+        self.assertEqual(form.form_id, form_doc['_id'])
         self.assertEqual(self.domain, form_doc['domain'])
         self.assertEqual(metadata.xmlns, form_doc['xmlns'])
         self.assertEqual('XFormInstance', form_doc['doc_type'])
 
+    @run_with_all_backends
+    def test_form_soft_deletion(self):
+        form, metadata = self._create_form_and_sync_to_es()
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-    def test_xform_pillow_sql(self):
-        consumer = get_test_kafka_consumer(topics.FORM_SQL)
-
-        # have to get the seq id before the change is processed
-        kafka_seq = consumer.offsets()['fetch'][(topics.FORM_SQL, 0)]
-
-        metadata = TestFormMetadata(domain=self.domain)
-        form = get_form_ready_to_save(metadata, is_db_test=True)
-        form_processor = FormProcessorInterface(domain=self.domain)
-        form_processor.save_processed_models([form])
-
-        # confirm change made it to kafka
-        message = consumer.next()
-        change_meta = change_meta_from_kafka_message(message.value)
-        self.assertEqual(form.form_id, change_meta.document_id)
-        self.assertEqual(self.domain, change_meta.domain)
-
-        # send to elasticsearch
-        sql_pillow = get_sql_xform_to_elasticsearch_pillow()
-        sql_pillow.process_changes(since=kafka_seq, forever=False)
-        self.elasticsearch.indices.refresh(self.pillow.es_index)
-
-        # confirm change made it to elasticserach
+        # verify there
         results = FormES().run()
         self.assertEqual(1, results.total)
-        form_doc = results.hits[0]
-        self.assertEqual(self.domain, form_doc['domain'])
-        self.assertEqual(metadata.xmlns, form_doc['xmlns'])
-        self.assertEqual('XFormInstance', form_doc['doc_type'])
+
+        # soft delete the form
+        with process_kafka_changes('XFormToElasticsearchPillow'):
+            with process_couch_changes('DefaultChangeFeedPillow'):
+                FormAccessors(self.domain).soft_delete_forms([form.form_id])
+        self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
+
+        # ensure not there anymore
+        results = FormES().run()
+        self.assertEqual(0, results.total)
+
+    def _create_form_and_sync_to_es(self):
+        with process_kafka_changes('XFormToElasticsearchPillow'):
+            with process_couch_changes('DefaultChangeFeedPillow'):
+                metadata = TestFormMetadata(domain=self.domain)
+                form = get_form_ready_to_save(metadata, is_db_test=True)
+                form_processor = FormProcessorInterface(domain=self.domain)
+                form_processor.save_processed_models([form])
+        self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
+        return form, metadata
 
 
 class TransformXformForESTest(SimpleTestCase):
@@ -131,7 +87,6 @@ class TransformXformForESTest(SimpleTestCase):
             }
         }
         doc_ret = transform_xform_for_elasticsearch(doc_dict)
-        print doc_ret
         self.assertEqual(doc_ret['form']['meta']['commcare_version'], '2.27.2')
         self.assertEqual(doc_ret['form']['meta']['app_build_version'], 56)
 

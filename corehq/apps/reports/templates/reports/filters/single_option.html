@@ -33,7 +33,7 @@
 {% endblock %}
 
 {% block filter_js %}
-<script type="text/javascript">
+<script>
     if (!USE_REQUIREJS) {
         $.when(
             $.getScript("{% static 'reports/javascripts/filters.js' %}")

@@ -1,7 +1,7 @@
 from corehq.util.elastic import es_index
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
-DOMAIN_INDEX = es_index("hqdomains_20160627_1351")
+DOMAIN_INDEX = es_index("hqdomains_2016-08-08")
 DOMAIN_MAPPING = {'_meta': {'comment': '',
                             'created': None},
  'date_detection': False,
@@ -117,8 +117,6 @@ DOMAIN_MAPPING = {'_meta': {'comment': '',
                                                                 'exact': {'index': 'not_analyzed',
                                                                           'type': 'string'}},
                                                             'type': 'multi_field'},
-                                              'date': {'format': "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",
-                                                       'type': 'date'},
                                               'description': {'fields': {'description': {'index': 'analyzed',
                                                                                          'type': 'string'},
                                                                          'exact': {'index': 'not_analyzed',
@@ -194,7 +192,6 @@ DOMAIN_MAPPING = {'_meta': {'comment': '',
                                             'project_manager': {'type': 'string'},
                                             'project_state': {'type': 'string'},
                                             'self_started': {'type': 'boolean'},
-                                            'services': {'type': 'string'},
                                             'sf_account_id': {'type': 'string'},
                                             'sf_contract_id': {'type': 'string'},
                                             'sub_area': {'fields': {'exact': {'index': 'not_analyzed',
@@ -246,6 +243,7 @@ DOMAIN_MAPPING = {'_meta': {'comment': '',
                 'sms_mobile_worker_registration_enabled': {'type': 'boolean'},
                 'snapshot_time': {'format': "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",
                                   'type': 'date'},
+                'snapshot_head': {'type': 'boolean'},
                 'sub_area': {'type': 'string'},
                 'subscription': {'type': 'string'},
                 'survey_management_enabled': {'type': 'boolean'},

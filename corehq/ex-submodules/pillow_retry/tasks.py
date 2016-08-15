@@ -1,14 +1,12 @@
 from celery.task import task
 import sys
-from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
-from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.logging import notify_error
 from pillow_retry.models import PillowError
 from pillowtop.exceptions import PillowNotFoundError
-from pillowtop.utils import get_pillow_by_name, get_pillow_instance
+from pillowtop.utils import get_pillow_by_name
 from celery.utils.log import get_task_logger
 
 logger = get_task_logger(__name__)
@@ -39,12 +37,7 @@ def process_pillow_retry(error_doc_id):
         try:
             pillow = get_pillow_by_name(pillow_name_or_class)
         except PillowNotFoundError:
-            if not settings.UNIT_TESTING:
-                _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']))
-                _assert(False, 'Pillow retry {} is still using legacy class {}'.format(
-                    error_doc.pk, pillow_name_or_class
-                ))
-            pillow = _try_legacy_import(pillow_name_or_class)
+            pillow = None
 
         if not pillow:
             notify_error((
@@ -60,11 +53,6 @@ def process_pillow_retry(error_doc_id):
                 return
 
         change = error_doc.change_object
-        if getattr(pillow, 'include_docs', False):
-            try:
-                change.set_document(pillow.get_couch_db().open_doc(change.id))
-            except ResourceNotFound:
-                change.deleted = True
 
         try:
             try:
@@ -73,7 +61,7 @@ def process_pillow_retry(error_doc_id):
                     raise Exception('this is temporarily not supported!')
             except ImportError:
                 pass
-            pillow.process_change(change, is_retry_attempt=True)
+            pillow.process_change(change)
         except Exception:
             ex_type, ex_value, ex_tb = sys.exc_info()
             error_doc.add_attempt(ex_value, ex_tb)
@@ -83,16 +71,3 @@ def process_pillow_retry(error_doc_id):
             error_doc.delete()
         finally:
             release_lock(lock, True)
-
-
-def _try_legacy_import(pillow_name_or_class):
-    try:
-        return get_pillow_instance(pillow_name_or_class)
-    except ValueError:
-        # all fluff pillows have module path of 'fluff' so can't be imported directly
-        if '.' in pillow_name_or_class:
-            _, pillow_name_or_class = pillow_name_or_class.rsplit('.', 1)
-        try:
-            return get_pillow_by_name(pillow_name_or_class)
-        except PillowNotFoundError:
-            return None

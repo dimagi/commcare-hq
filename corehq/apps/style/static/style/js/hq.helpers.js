@@ -141,7 +141,8 @@ $.fn.koApplyBindings = function (context) {
     if (this.length > 1) {
         throw new Error("Multiple elements passed to koApplyBindings");
     }
-    return ko.applyBindings(context, this.get(0));
+    ko.applyBindings(context, this.get(0));
+    this.removeClass('ko-template');
 };
 
 }));

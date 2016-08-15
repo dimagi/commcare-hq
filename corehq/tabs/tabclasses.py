@@ -23,13 +23,10 @@ from corehq.apps.reports.dispatcher import ProjectReportDispatcher, \
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.userreports.util import has_report_builder_access
-from corehq.apps.users.decorators import get_permission_name
-from corehq.apps.users.models import Permissions
-from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION
+from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports
 from corehq.form_processor.utils import use_new_exports
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
-from corehq.toggles import OPENLMIS
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
 
@@ -291,7 +288,6 @@ class SetupTab(UITab):
             EditProductView,
             ProductFieldsView,
         )
-        from corehq.apps.locations.views import FacilitySyncView
 
         if self.project.commtrack_enabled:
             commcare_supply_setup = [
@@ -350,13 +346,6 @@ class SetupTab(UITab):
                     'url': reverse(StockLevelsView.urlname, args=[self.domain]),
                 },
             ]
-            if OPENLMIS.enabled(self.domain):
-                commcare_supply_setup.append(
-                    # external sync
-                    {
-                        'title': FacilitySyncView.page_title,
-                        'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
-                    })
             return [[_('CommCare Supply Setup'), commcare_supply_setup]]
 
 
@@ -391,18 +380,23 @@ class ProjectDataTab(UITab):
     @memoized
     def can_export_data(self):
         return (self.project and not self.project.is_snapshot
-                and self.couch_user.can_export_data())
+                and self.couch_user.can_access_any_exports(self.domain))
+
+    @property
+    @memoized
+    def can_view_form_exports(self):
+        return can_view_form_exports(self.couch_user, self.domain)
+
+    @property
+    @memoized
+    def can_view_case_exports(self):
+        return can_view_case_exports(self.couch_user, self.domain)
 
     @property
     @memoized
     def can_only_see_deid_exports(self):
         from corehq.apps.export.views import user_can_view_deid_exports
-        return (not self.couch_user.can_view_reports()
-                and not self.couch_user.has_permission(
-                    self.domain,
-                    get_permission_name(Permissions.view_report),
-                    data=FORM_EXPORT_PERMISSION
-                )
+        return (not self.can_view_form_exports
                 and user_can_view_deid_exports(self.domain, self.couch_user))
 
     @property
@@ -462,66 +456,69 @@ class ProjectDataTab(UITab):
                 edit_form_cls = EditCustomFormExportView
                 edit_case_cls = EditCustomCaseExportView
 
-            export_data_views.extend([
-                {
-                    'title': FormExportListView.page_title,
-                    'url': reverse(FormExportListView.urlname,
-                                   args=(self.domain,)),
-                    'show_in_dropdown': True,
-                    'icon': 'icon icon-list-alt fa fa-list-alt',
-                    'subpages': filter(None, [
-                        {
-                            'title': create_form_cls.page_title,
-                            'urlname': create_form_cls.urlname,
-                        } if self.can_edit_commcare_data else None,
-                        {
-                            'title': BulkDownloadFormExportView.page_title,
-                            'urlname': BulkDownloadFormExportView.urlname,
-                        },
-                        {
-                            'title': BulkDownloadNewFormExportView.page_title,
-                            'urlname': BulkDownloadNewFormExportView.urlname,
-                        },
-                        {
-                            'title': DownloadFormExportView.page_title,
-                            'urlname': DownloadFormExportView.urlname,
-                        },
-                        {
-                            'title': DownloadNewFormExportView.page_title,
-                            'urlname': DownloadNewFormExportView.urlname,
-                        },
-                        {
-                            'title': edit_form_cls.page_title,
-                            'urlname': edit_form_cls.urlname,
-                        } if self.can_edit_commcare_data else None,
-                    ])
-                },
-                {
-                    'title': CaseExportListView.page_title,
-                    'url': reverse(CaseExportListView.urlname,
-                                   args=(self.domain,)),
-                    'show_in_dropdown': True,
-                    'icon': 'icon icon-share fa fa-share-square-o',
-                    'subpages': filter(None, [
-                        {
-                            'title': create_case_cls.page_title,
-                            'urlname': create_case_cls.urlname,
-                        } if self.can_edit_commcare_data else None,
-                        {
-                            'title': DownloadCaseExportView.page_title,
-                            'urlname': DownloadCaseExportView.urlname,
-                        },
-                        {
-                            'title': DownloadNewCaseExportView.page_title,
-                            'urlname': DownloadNewCaseExportView.urlname,
-                        },
-                        {
-                            'title': edit_case_cls.page_title,
-                            'urlname': edit_case_cls.urlname,
-                        } if self.can_edit_commcare_data else None,
-                    ])
-                },
-            ])
+            if self.can_view_form_exports:
+                export_data_views.append(
+                    {
+                        'title': FormExportListView.page_title,
+                        'url': reverse(FormExportListView.urlname,
+                                       args=(self.domain,)),
+                        'show_in_dropdown': True,
+                        'icon': 'icon icon-list-alt fa fa-list-alt',
+                        'subpages': filter(None, [
+                            {
+                                'title': create_form_cls.page_title,
+                                'urlname': create_form_cls.urlname,
+                            } if self.can_edit_commcare_data else None,
+                            {
+                                'title': BulkDownloadFormExportView.page_title,
+                                'urlname': BulkDownloadFormExportView.urlname,
+                            },
+                            {
+                                'title': BulkDownloadNewFormExportView.page_title,
+                                'urlname': BulkDownloadNewFormExportView.urlname,
+                            },
+                            {
+                                'title': DownloadFormExportView.page_title,
+                                'urlname': DownloadFormExportView.urlname,
+                            },
+                            {
+                                'title': DownloadNewFormExportView.page_title,
+                                'urlname': DownloadNewFormExportView.urlname,
+                            },
+                            {
+                                'title': edit_form_cls.page_title,
+                                'urlname': edit_form_cls.urlname,
+                            } if self.can_edit_commcare_data else None,
+                        ])
+                    }
+                )
+            if self.can_view_case_exports:
+                export_data_views.append(
+                    {
+                        'title': CaseExportListView.page_title,
+                        'url': reverse(CaseExportListView.urlname,
+                                       args=(self.domain,)),
+                        'show_in_dropdown': True,
+                        'icon': 'icon icon-share fa fa-share-square-o',
+                        'subpages': filter(None, [
+                            {
+                                'title': create_case_cls.page_title,
+                                'urlname': create_case_cls.urlname,
+                            } if self.can_edit_commcare_data else None,
+                            {
+                                'title': DownloadCaseExportView.page_title,
+                                'urlname': DownloadCaseExportView.urlname,
+                            },
+                            {
+                                'title': DownloadNewCaseExportView.page_title,
+                                'urlname': DownloadNewCaseExportView.urlname,
+                            },
+                            {
+                                'title': edit_case_cls.page_title,
+                                'urlname': edit_case_cls.urlname,
+                            } if self.can_edit_commcare_data else None,
+                        ])
+                    })
 
         if export_data_views:
             items.append([_("Export Data"), export_data_views])
@@ -563,18 +560,18 @@ class ProjectDataTab(UITab):
             FormExportListView,
             CaseExportListView,
         )
-        return [
+        return filter(None, [
             dropdown_dict(
                 FormExportListView.page_title,
                 url=reverse(FormExportListView.urlname, args=(self.domain,))
-            ),
+            ) if self.can_view_form_exports else None,
             dropdown_dict(
                 CaseExportListView.page_title,
                 url=reverse(CaseExportListView.urlname, args=(self.domain,))
-            ),
+            ) if self.can_view_case_exports else None,
             dropdown_dict(None, is_divider=True),
             dropdown_dict(_("View All"), url=self.url),
-        ]
+        ])
 
 
 class ApplicationsTab(UITab):
@@ -657,7 +654,6 @@ class MessagingTab(UITab):
     url_prefix_formats = (
         '/a/{domain}/sms/',
         '/a/{domain}/reminders/',
-        '/a/{domain}/reports/message_log/',
         '/a/{domain}/data/edit/case_groups/',
     )
 
@@ -791,16 +787,6 @@ class MessagingTab(UITab):
                             'urlname': CopyBroadcastView.urlname,
                         },
                     ],
-                    'show_in_dropdown': True,
-                },
-            ])
-
-        if self.can_use_outbound_sms:
-            from corehq.apps.reports.standard.sms import MessageLogReport
-            messages_urls.extend([
-                {
-                    'title': _('Message Log'),
-                    'url': MessageLogReport.get_url(domain=self.domain),
                     'show_in_dropdown': True,
                 },
             ])
@@ -1139,13 +1125,6 @@ class ProjectSettingsTab(UITab):
             'url': reverse(EditMyProjectSettingsView.urlname, args=[self.domain])
         })
 
-        if toggles.DHIS2_DOMAIN.enabled(self.domain):
-            from corehq.apps.domain.views import EditDhis2SettingsView
-            project_info.append({
-                'title': _(EditDhis2SettingsView.page_title),
-                'url': reverse(EditDhis2SettingsView.urlname, args=[self.domain])
-            })
-
         if toggles.OPENCLINICA.enabled(self.domain):
             from corehq.apps.domain.views import EditOpenClinicaSettingsView
             project_info.append({
@@ -1310,29 +1289,46 @@ class MySettingsTab(UITab):
 
     @property
     def sidebar_items(self):
-        from corehq.apps.settings.views import MyAccountSettingsView, \
-            MyProjectsList, ChangeMyPasswordView, TwoFactorProfileView
-        items = [
-            (_("Manage My Settings"), (
-                {
-                    'title': _(MyAccountSettingsView.page_title),
-                    'url': reverse(MyAccountSettingsView.urlname),
-                },
-                {
-                    'title': _(MyProjectsList.page_title),
-                    'url': reverse(MyProjectsList.urlname),
-                },
-                {
-                    'title': _(ChangeMyPasswordView.page_title),
-                    'url': reverse(ChangeMyPasswordView.urlname),
-                },
-                {
-                    'title': _(TwoFactorProfileView.page_title),
-                    'url': reverse(TwoFactorProfileView.urlname),
-                }
-            ))
+        from corehq.apps.settings.views import (
+            ChangeMyPasswordView,
+            EnableMobilePrivilegesView,
+            MyAccountSettingsView,
+            MyProjectsList,
+            TwoFactorProfileView,
+        )
+        menu_items = [
+            {
+                'title': MyAccountSettingsView.page_title,
+                'url': reverse(MyAccountSettingsView.urlname),
+            },
         ]
-        return items
+
+        if self.couch_user and self.couch_user.is_web_user():
+            menu_items.append({
+                'title': MyProjectsList.page_title,
+                'url': reverse(MyProjectsList.urlname),
+            })
+
+        menu_items.extend([
+            {
+                'title': ChangeMyPasswordView.page_title,
+                'url': reverse(ChangeMyPasswordView.urlname),
+            },
+            {
+                'title': TwoFactorProfileView.page_title,
+                'url': reverse(TwoFactorProfileView.urlname),
+            }
+        ])
+
+        if (
+            self.couch_user and self.couch_user.is_dimagi or
+            toggles.MOBILE_PRIVILEGES_FLAG.enabled(self.couch_user.username)
+        ):
+            menu_items.append({
+                'title': EnableMobilePrivilegesView.page_title,
+                'url': reverse(EnableMobilePrivilegesView.urlname),
+            })
+        return [[_("Manage My Settings"), menu_items]]
 
 
 class AccountingTab(UITab):
@@ -1477,7 +1473,7 @@ class AdminTab(UITab):
         admin_operations = []
 
         if self.couch_user and self.couch_user.is_staff:
-            from corehq.apps.hqadmin.views import AuthenticateAs
+            from corehq.apps.hqadmin.views import AuthenticateAs, VCMMigrationView
             admin_operations.extend([
                 {'title': _('PillowTop Errors'),
                  'url': reverse('admin_report_dispatcher',
@@ -1490,6 +1486,8 @@ class AdminTab(UITab):
                  'url': reverse('raw_couch')},
                 {'title': _('Check Call Center UCR tables'),
                  'url': reverse('callcenter_ucr_check')},
+                {'title': _('Manage VCM Migration'),
+                 'url': reverse(VCMMigrationView.urlname)},
             ])
         return [
             (_('Administrative Reports'), [

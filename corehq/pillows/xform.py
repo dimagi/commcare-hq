@@ -10,23 +10,19 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.elastic import get_es_new
-from corehq.form_processor.change_providers import SqlFormChangeProvider
-from corehq.form_processor.utils.xform import add_couch_properties_to_sql_form_json
+from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.utils import get_user_type
+from corehq.util.doc_processor.couch import CouchDocumentProvider
+from corehq.util.doc_processor.sql import SqlDocumentProvider
 from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDeprecated, \
     XFormDuplicate, SubmissionErrorLog
-from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
+from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
-from pillowtop.processors.form import AppFormSubmissionTrackerProcessor
-from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ResumableBulkElasticPillowReindexer
-from .base import HQPillow
-
-UNKNOWN_VERSION = 'XXX'
-UNKNOWN_UIVERSION = 'XXX'
+from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
 
 
 def is_valid_date(txt):
@@ -52,23 +48,6 @@ def flatten(d, parent_key='', delimiter='/'):
     return dict(items)
 
 
-class XFormPillow(HQPillow):
-    document_class = XFormInstance
-    couch_filter = "couchforms/xforms"
-    es_alias = "xforms"
-    es_type = XFORM_INDEX_INFO.type
-    es_index = XFORM_INDEX_INFO.index
-    include_docs = False
-
-    # for simplicity, the handlers are managed on the domain level
-    handler_domain_map = {}
-    default_mapping = XFORM_INDEX_INFO.mapping
-
-    def change_transform(self, doc_dict):
-        if not xform_pillow_filter(doc_dict):
-            return transform_xform_for_elasticsearch(doc_dict)
-
-
 def xform_pillow_filter(doc_dict):
     """
     :return: True to filter out doc
@@ -80,7 +59,7 @@ def xform_pillow_filter(doc_dict):
     )
 
 
-def transform_xform_for_elasticsearch(doc_dict, include_props=True):
+def transform_xform_for_elasticsearch(doc_dict):
     """
     Given an XFormInstance, return a copy that is ready to be sent to elasticsearch,
     or None, if the form should not be saved to elasticsearch
@@ -135,104 +114,57 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
                 case_dict[object_key] = None
 
     doc_ret["__retrieved_case_ids"] = list(get_case_ids_from_form(doc_dict))
-    if include_props:
-        form_props = ["%s:%s" % (k, v) for k, v in flatten(doc_ret['form']).iteritems()]
-        doc_ret["__props_for_querying"] = form_props
     return doc_ret
 
 
-def prepare_sql_form_json_for_elasticsearch(sql_form_json):
-    prepped_form = transform_xform_for_elasticsearch(sql_form_json)
-    if prepped_form:
-        add_couch_properties_to_sql_form_json(prepped_form)
-
-    return prepped_form
-
-
-def get_sql_xform_to_elasticsearch_pillow(pillow_id='SqlXFormToElasticsearchPillow'):
-    checkpoint = PillowCheckpoint(
-        'sql-xforms-to-elasticsearch',
-    )
-    form_processor = ElasticProcessor(
-        elasticsearch=get_es_new(),
-        index_info=XFORM_INDEX_INFO,
-        doc_prep_fn=prepare_sql_form_json_for_elasticsearch
-    )
-    return ConstructedPillow(
-        name=pillow_id,
-        checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topics=[topics.FORM_SQL], group_id='sql-forms-to-es'),
-        processor=form_processor,
-        change_processed_event_handler=PillowCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100,
-        ),
-    )
-
-
-def get_couch_xform_to_elasticsearch_pillow(pillow_id='CouchXFormToElasticsearchPillow'):
-    checkpoint = PillowCheckpoint(
-        'couch-xforms-to-elasticsearch',
-    )
+def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow'):
+    assert pillow_id == 'XFormToElasticsearchPillow', 'Pillow ID is not allowed to change'
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, XFORM_INDEX_INFO)
     form_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
         doc_prep_fn=transform_xform_for_elasticsearch
     )
+    kafka_change_feed = KafkaChangeFeed(topics=[topics.FORM, topics.FORM_SQL], group_id='forms-to-es')
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topics=[topics.FORM], group_id='couch-forms-to-es'),
+        change_feed=kafka_change_feed,
         processor=form_processor,
-        change_processed_event_handler=PillowCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100,
+        change_processed_event_handler=MultiTopicCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=kafka_change_feed
         ),
     )
 
 
 def get_couch_form_reindexer():
+    iteration_key = "CouchXFormToElasticsearchPillow_{}_reindexer".format(XFORM_INDEX_INFO.index)
+    doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
+        XFormInstance,
+        XFormArchived,
+        XFormError,
+        XFormDeprecated,
+        XFormDuplicate,
+        ('XFormInstance-Deleted', XFormInstance),
+        ('HQSubmission', XFormInstance),
+        SubmissionErrorLog,
+    ])
     return ResumableBulkElasticPillowReindexer(
-        name="CouchXFormToElasticsearchPillow",
-        doc_types=[
-            XFormInstance,
-            XFormArchived,
-            XFormError,
-            XFormDeprecated,
-            XFormDuplicate,
-            ('XFormInstance-Deleted', XFormInstance),
-            ('HQSubmission', XFormInstance),
-            SubmissionErrorLog,
-        ],
+        doc_provider,
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
         doc_filter=xform_pillow_filter,
-        doc_transform=transform_xform_for_elasticsearch
-    )
-
-
-def get_app_form_submission_tracker_pillow(pillow_id='AppFormSubmissionTrackerPillow'):
-    """
-    This gets a pillow which iterates through all forms and marks the corresponding app
-    as having submissions. This could be expanded to be more generic and include
-    other processing that needs to happen on each form
-    """
-    checkpoint = PillowCheckpoint('app-form-submission-tracker')
-    form_processor = AppFormSubmissionTrackerProcessor()
-    change_feed = KafkaChangeFeed(topics=[topics.FORM, topics.FORM_SQL], group_id='form-processsor')
-    return ConstructedPillow(
-        name=pillow_id,
-        checkpoint=checkpoint,
-        change_feed=change_feed,
-        processor=form_processor,
-        change_processed_event_handler=MultiTopicCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed,
-        ),
+        doc_transform=transform_xform_for_elasticsearch,
+        pillow=get_xform_to_elasticsearch_pillow(),
     )
 
 
 def get_sql_form_reindexer():
-    return ElasticPillowReindexer(
-        pillow=get_sql_xform_to_elasticsearch_pillow(),
-        change_provider=SqlFormChangeProvider(),
+    iteration_key = "SqlXFormToElasticsearchPillow_{}_reindexer".format(XFORM_INDEX_INFO.index)
+    doc_provider = SqlDocumentProvider(iteration_key, FormReindexAccessor())
+    return ResumableBulkElasticPillowReindexer(
+        doc_provider,
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
+        doc_transform=transform_xform_for_elasticsearch
     )
