@@ -175,6 +175,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
         default=AMPLIFIES_NOT_SET
     )
     business_unit = StringProperty(choices=BUSINESS_UNITS + [""], default="")
+    data_access_threshold = IntegerProperty()
 
 
 class CaseDisplaySettings(DocumentSchema):
