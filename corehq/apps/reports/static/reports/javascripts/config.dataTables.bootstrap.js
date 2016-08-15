@@ -1,4 +1,4 @@
-/* global define, jQuery */
+/* global hqDefine, jQuery */
 hqDefine("reports/javascripts/config.dataTables.bootstrap", ['jquery', 'datatables.bootstrap'], function($) {
 
 var HQReportDataTables = function(options) {

@@ -1,4 +1,4 @@
-/* global define, jQuery */
+/* global hqDefine, jQuery */
 hqDefine("reports/javascripts/filters", ['jquery', 'knockout', 'underscore', 'select2'], function($, ko, _) {
     "use strict";
     var initSingleOption = function() {

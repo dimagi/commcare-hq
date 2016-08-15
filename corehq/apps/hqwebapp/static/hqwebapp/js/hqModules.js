@@ -1,3 +1,4 @@
+/* global define, jQuery, ko */
 /*
  * hqModules provides a poor man's module system for js. It is not a module *loader*,
  * only a module *referencer*: "importing" a module doesn't automatically load it as
@@ -57,8 +58,8 @@ function hqDefine(path, dependencies, moduleAccessor) {
     }(moduleAccessor));
 }
 
-// For modules that are sometimes used by RequireJS and sometimes not, but which
-// have not yet been converted to hqDefine. When not on a RequireJS page,
+// Stopgap for modules that are sometimes used by RequireJS and sometimes not, but
+// which have not yet been converted to hqDefine. When not on a RequireJS page,
 // moduleAccessor gets passed jQuery, knockout, and underscore, in that order.
 function hqGlobal(path, dependencies, moduleAccessor) {
     (function(factory) {
