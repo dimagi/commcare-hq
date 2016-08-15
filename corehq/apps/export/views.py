@@ -188,12 +188,6 @@ class BaseExportView(BaseProjectDataView):
         context = self.export_helper.get_context()
         context.update({'export_home_url': self.export_home_url})
 
-        async_convert_saved_export_to_export_instance.delay(
-            self.domain,
-            self.export_helper.custom_export,
-            dryrun=True
-        )
-
         return context
 
     def commit(self, request):
@@ -324,6 +318,16 @@ class BaseModifyCustomExportView(BaseExportView):
     @property
     def export_id(self):
         return self.kwargs.get('export_id')
+
+    @property
+    def page_context(self):
+        if not use_new_exports(self.domain):
+            async_convert_saved_export_to_export_instance.delay(
+                self.domain,
+                self.export_helper.custom_export,
+                dryrun=True
+            )
+        return super(BaseModifyCustomExportView, self).page_context
 
     @property
     @memoized
