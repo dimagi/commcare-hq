@@ -34,6 +34,9 @@ class CouchChangeFeed(ChangeFeed):
     def get_current_offsets(self):
         return {self._couch_db.dbname: force_seq_int(self.get_latest_change_id())}
 
+    def get_checkpoint_value(self):
+        return str(self.get_latest_change_id())
+
 
 def change_from_couch_row(couch_change, document_store=None):
     return Change(

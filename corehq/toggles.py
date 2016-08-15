@@ -406,6 +406,14 @@ LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+# This toggle offers the "multiple_apps_unlimited" mobile flag to non-Dimagi users
+MOBILE_PRIVILEGES_FLAG = StaticToggle(
+    'mobile_privileges_flag',
+    'Offer "Enable Privileges on Mobile" flag.',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_USER]
+)
+
 MULTIPLE_LOCATIONS_PER_USER = StaticToggle(
     'multiple_locations',
     "Enable multiple locations per user on domain.",
@@ -859,5 +867,12 @@ CUSTOM_CALENDAR_FIXTURE = StaticToggle(
     'custom_calendar_fixture',
     'Send a calendar fixture down to all users (UATBC/eNikshay one off)',
     TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
+PREVIEW_APP = StaticToggle(
+    'preview_app',
+    'Preview an application in the app builder',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )

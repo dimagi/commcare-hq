@@ -54,7 +54,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     MenuList.CaseView = Marionette.ItemView.extend({
         tagName: "tr",
         getTemplate: function () {
-            if (_.isNull(this.options.tiles) || !this.tiles) {
+            if (_.isNull(this.options.tiles)) {
                 return "#case-view-item-template";
             } else {
                 return "#case-tile-view-item-template";
@@ -100,30 +100,27 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     };
     // generate the case tile's style block and insert
     var generateCaseTileStyles = function (tiles) {
-        var tile, fontSize, fontString, styleString, tileId;
-        if (!_.isNull(tiles)) {
-            var tilesModel = [];
-            for (var i = 0; i < tiles.length; i++) {
-                var obj = {};
-                tile = tiles[i];
-                if (tile === null) {
-                    continue;
-                }
-                fontSize = tiles[i].fontSize;
-                fontString = fontSize;
-                styleString = getGridAttributes(tile);
-                tileId = "grid-style-" + i;
-                obj.id = tileId;
-                obj.gridStyle = styleString;
-                obj.fontStyle = fontString;
-                tilesModel.push(obj);
-            }
-        }
-        var templateString = $("#case-tile-style-template").html();
-        var tileStyleTemplate = _.template(templateString);
-        var tileStyle = tileStyleTemplate({
-            models: tilesModel,
+        var templateString,
+            tileStyle,
+            tileStyleTemplate,
+            tileModels;
+
+        tileModels = _.chain(tiles || [])
+            .filter(function(tile) { return tile !== null; })
+            .map(function(tile, idx) {
+                return {
+                    id: 'grid-style-' + idx,
+                    gridStyle: getGridAttributes(tile),
+                    fontStyle: tile.fontSize,
+                };
+            }).value();
+
+        templateString = $("#case-tile-style-template").html();
+        tileStyleTemplate = _.template(templateString);
+        tileStyle = tileStyleTemplate({
+            models: tileModels,
         });
+
         // need to remove this attribute so the grid style is re-evaluated
         $("#case-tiles-style").html(tileStyle).removeAttr("data-css-polyfilled");
     };

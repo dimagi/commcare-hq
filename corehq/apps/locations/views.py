@@ -71,7 +71,7 @@ class BaseLocationView(BaseDomainView):
             'hierarchy': location_hierarchy_config(self.domain),
             'api_root': reverse('api_dispatch_list', kwargs={'domain': self.domain,
                                                              'resource_name': 'location_internal',
-                                                             'api_name': 'v0.3'}),
+                                                             'api_name': 'v0.5'}),
         })
         return context
 
@@ -686,6 +686,9 @@ class LocationImportView(BaseLocationView):
             return self.get(request, *args, **kwargs)
         if not args:
             messages.error(request, _('no domain specified'))
+            return self.get(request, *args, **kwargs)
+        if upload.content_type != 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+            messages.error(request, _("Invalid file-format. Please upload a valid xlsx file."))
             return self.get(request, *args, **kwargs)
 
         domain = args[0]

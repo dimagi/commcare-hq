@@ -4,17 +4,12 @@
 {% block page_content %}
     <form class="form-horizontal">
         <fieldset>
-            <legend>{% block title %}{% trans "Enable Superuser on Mobile" %}{% endblock %}</legend>
+            <legend>{% block title %}{% trans "Enable Privileges on Mobile" %}{% endblock %}</legend>
 
             <p>
-                {% blocktrans %}Scanning this QR code from CommCare will enable superuser privileges for your
-                device. {% endblocktrans %}
-            </p>
-
-            <p>
-                {% blocktrans %}This privilege will indicate to CommCare that the device is being used by an
-                <strong>internal Dimagi user</strong>, meaning that this QR code <strong>should not be shared with
-                partners or other external users for <em>any</em> reason</strong>.{% endblocktrans %}
+                {% blocktrans %}Scanning this QR code from CommCare will enable special privileges for your mobile
+                device, and should not be shared with partners or other external users for any reason.
+                {% endblocktrans %}
             </p>
 
             <p class="text-center">
@@ -22,8 +17,8 @@
             </p>
 
             <p>
-                {% blocktrans %}You can scan this QR code in CommCare by going to ‘App Manager Settings’ from the
-                app manager options menu, and then selecting ‘Authenticate as a Superuser’.{% endblocktrans %}
+                {% blocktrans %}You can scan this QR code in CommCare by going to the app manager options menu and
+                selecting 'Advanced', and then 'Enable Mobile Privileges'.{% endblocktrans %}
             </p>
 
         </fieldset>
