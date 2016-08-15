@@ -548,7 +548,6 @@ class NewMobileWorkerForm(forms.Form):
             self.fields['password'].widget = forms.TextInput()
             self.fields['password'].help_text = mark_safe("""
                 <i class="fa fa-warning"></i> This password will not be shown again. <br />
-                <span data-bind="text: passwordHelp, css: color">
             """)
 
         if project.uses_locations:
@@ -606,7 +605,6 @@ class NewMobileWorkerForm(forms.Form):
                     ng_model='mobileWorker.password',
                     data_bind="value: password, valueUpdate: 'input'",
                 ),
-                css_class="check-password",
             )
         )
 
