@@ -517,8 +517,7 @@ class TestHOPECaseResource(APIResourceTest):
         self.assertEqual(len(api_cases), 2)
 
         api_case = api_cases['mother_lists'][0]
-        self.assertEqual(dateutil.parser.parse(api_case['server_date_modified']), backend_case.server_modified_on)
-
+        self.assertEqual(api_case['id'], backend_case.case_id)
         backend_case.delete()
 
 
