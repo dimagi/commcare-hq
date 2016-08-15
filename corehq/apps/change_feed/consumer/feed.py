@@ -8,7 +8,7 @@ from kafka.common import ConsumerTimeout, OffsetOutOfRangeError
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore, UnavailableKafkaOffset
 from corehq.apps.change_feed.topics import get_multi_topic_offset, get_topic_offset, \
-    get_multi_topic_first_available_offsets
+    get_multi_topic_first_available_offsets, validate_offsets
 from dimagi.utils.logging import notify_error
 from pillowtop.checkpoints.manager import PillowCheckpointEventHandler, DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
 from pillowtop.feed.interface import ChangeFeed, Change, ChangeMeta
@@ -133,16 +133,7 @@ class KafkaChangeFeed(ChangeFeed):
 
     def _validate_offsets(self, offsets):
         expected_values = {offset[0]: offset[2] for offset in offsets if len(offset) > 2}
-        if expected_values:
-            available_offsets = get_multi_topic_first_available_offsets(expected_values.keys())
-            for topic in expected_values.keys():
-                if expected_values[topic] < available_offsets[topic]:
-                    messsage = (
-                        'Pillow {} failed to load checkpoint. '
-                        'First available topic offset for {} is {} but needed {}.'
-                    ).format(self._group_id, topic, available_offsets[topic], expected_values[topic])
-                    notify_error(messsage)
-                    raise UnavailableKafkaOffset(messsage)
+        validate_offsets(expected_values)
 
 
 class MultiTopicCheckpointEventHandler(PillowCheckpointEventHandler):

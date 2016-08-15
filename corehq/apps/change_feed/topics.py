@@ -1,6 +1,7 @@
 from kafka.common import OffsetRequest
 
 from corehq.apps.change_feed.connection import get_kafka_client
+from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
 from .document_types import CASE, FORM, DOMAIN, META, APP
 
 # this is redundant but helps avoid import warnings until nothing references these
@@ -74,3 +75,18 @@ def _get_topic_offsets(topics, latest):
     return {
         r.topic: r.offsets[0] for r in responses
     }
+
+
+def validate_offsets(expected_offsets):
+    """
+    Takes in a dictionary of offsets (topics to checkpoint numbers) and ensures they are all available
+    in the current kafka feed
+    """
+    if expected_offsets:
+        available_offsets = get_multi_topic_first_available_offsets(expected_offsets.keys())
+        for topic in expected_offsets.keys():
+            if expected_offsets[topic] < available_offsets[topic]:
+                messsage = (
+                    'First available topic offset for {} is {} but needed {}.'
+                ).format(topic, available_offsets[topic], expected_offsets[topic])
+                raise UnavailableKafkaOffset(messsage)
