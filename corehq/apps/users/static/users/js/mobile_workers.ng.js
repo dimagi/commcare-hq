@@ -49,6 +49,15 @@
                     .text('Good Job! Your password is strong!');
             }
         },
+        passwordAlmost: function () {
+            $formElements.password()
+                .removeClass('has-error has-success')
+                .addClass('has-pending');
+            if ($formElements.password().hasClass('non-default')) {
+                $formElements.passwordHint()
+                    .text('Your password is almost strong enough!');
+            }
+        },
         passwordError: function () {
             $formElements.password()
                 .removeClass('has-success has-pending')
@@ -316,10 +325,12 @@
                     var score = zxcvbn(password, ['dimagi', 'commcare', 'hq', 'commcarehq']).score,
                         goodEnough = score > 1;
 
-                    if (goodEnough) {
+                    if (score < 1) {
+                        visualFormCtrl.passwordError();
+                    } else if (score > 1){
                         visualFormCtrl.passwordSuccess();
                     } else {
-                        visualFormCtrl.passwordError();
+                        visualFormCtrl.passwordAlmost();
                     }
                     return goodEnough;
                 };
