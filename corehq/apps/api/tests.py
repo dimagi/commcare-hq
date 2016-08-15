@@ -2,7 +2,6 @@ import base64
 import json
 import uuid
 from datetime import datetime
-import dateutil.parser
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -22,6 +21,7 @@ from corehq.apps.userreports.models import ReportConfiguration, \
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.pillows.case import transform_case_for_elasticsearch
 from couchforms.models import XFormInstance
+from dimagi.utils.parsing import json_format_datetime
 
 from django_prbac.models import Role
 
@@ -265,8 +265,7 @@ class TestXFormInstanceResource(APIResourceTest):
 
         api_form = api_forms[0]
         self.assertEqual(api_form['form']['@xmlns'], backend_form.xmlns)
-        self.assertEqual(api_form['received_on'], backend_form.received_on.isoformat())
-
+        self.assertEqual(api_form['received_on'], json_format_datetime(backend_form.received_on))
         backend_form.delete()
 
     def test_get_list_xmlns(self):
@@ -397,8 +396,7 @@ class TestCommCareCaseResource(APIResourceTest):
         self.assertEqual(len(api_cases), 1)
 
         api_case = api_cases[0]
-        self.assertEqual(dateutil.parser.parse(api_case['server_date_modified']), backend_case.server_modified_on)
-
+        self.assertEqual(api_case['server_date_modified'], json_format_datetime(backend_case.server_modified_on))
         backend_case.delete()
 
     @run_with_all_backends
