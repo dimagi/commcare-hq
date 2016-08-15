@@ -115,7 +115,9 @@ GIR_FIELDS = [
     "D4 All Experienced + Active Users",
     "D5 All Active Users",
     "D6 All Active Users Current + Prior 2 Mos",
-    "Eligible Forms"
+    "Eligible Forms",
+    "Experienced Threshold",
+    "Performance Threshold",
 ]
 
 NO_BU = "MISSING BU"

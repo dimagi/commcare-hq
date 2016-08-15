@@ -13,7 +13,7 @@ from corehq.apps.data_analytics.esaccessors import (
 from corehq.apps.data_analytics.models import MALTRow, GIRRow
 from corehq.apps.data_analytics.const import (
     TEST_COUCH_TO_SQL_MAP, AMPLIFY_COUCH_TO_SQL_MAP, NOT_SET, BU_MAPPING, NO_BU,
-    DEFAULT_EXPERIENCED_THRESHOLD, DEFAULT_PERFORMANCE_THRESHOLD
+    DEFAULT_EXPERIENCED_THRESHOLD, DEFAULT_PERFORMANCE_THRESHOLD, DEFAULT_ACCESS_THRESHOLD
 )
 
 
@@ -138,5 +138,7 @@ class GIRTableGenerator(object):
             'exp_and_active_ever': len(user_tuple.active & user_tuple.experienced),
             'active_in_span': len(recently_active),
             'eligible_forms': user_tuple.eligible,
+            'experienced_threshold': domain.internal.experienced_threshold or DEFAULT_EXPERIENCED_THRESHOLD,
+            'performance_threshold': domain.internal.performance_threshold or DEFAULT_PERFORMANCE_THRESHOLD,
         }
         return gir_dict
