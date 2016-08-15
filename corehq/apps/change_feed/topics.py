@@ -83,7 +83,7 @@ def validate_offsets(expected_offsets):
     in the current kafka feed
     """
     if expected_offsets:
-        available_offsets = get_multi_topic_first_available_offsets(expected_offsets.keys())
+        available_offsets = get_multi_topic_first_available_offsets([str(x) for x in expected_offsets.keys()])
         for topic in expected_offsets.keys():
             if expected_offsets[topic] < available_offsets[topic]:
                 messsage = (
