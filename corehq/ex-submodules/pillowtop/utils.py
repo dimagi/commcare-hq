@@ -1,7 +1,6 @@
 from __future__ import division
 from collections import namedtuple
 from datetime import datetime
-import importlib
 
 import sys
 
@@ -10,7 +9,6 @@ from django.conf import settings
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.modules import to_function
-from dimagi.utils.parsing import string_to_utc_datetime
 
 from pillowtop.exceptions import PillowNotFoundError
 
