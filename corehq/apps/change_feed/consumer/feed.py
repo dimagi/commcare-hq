@@ -3,12 +3,12 @@ from copy import copy
 
 from django.conf import settings
 from kafka import KafkaConsumer
-from kafka.common import ConsumerTimeout, OffsetOutOfRangeError
+from kafka.common import ConsumerTimeout
 
 from corehq.apps.change_feed.data_sources import get_document_store
-from corehq.apps.change_feed.exceptions import UnknownDocumentStore, UnavailableKafkaOffset
+from corehq.apps.change_feed.exceptions import UnknownDocumentStore
 from corehq.apps.change_feed.topics import get_multi_topic_offset, get_topic_offset, \
-    get_multi_topic_first_available_offsets, validate_offsets
+    validate_offsets
 from dimagi.utils.logging import notify_error
 from pillowtop.checkpoints.manager import PillowCheckpointEventHandler, DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
 from pillowtop.feed.interface import ChangeFeed, Change, ChangeMeta
