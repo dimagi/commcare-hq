@@ -1,5 +1,3 @@
-from iso8601 import iso8601
-
 from casexml.apps.case.xml import V1, V2, V3, check_version, V2_NAMESPACE
 from xml.etree import ElementTree
 import logging
