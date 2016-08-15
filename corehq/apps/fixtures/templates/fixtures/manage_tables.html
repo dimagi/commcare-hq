@@ -186,12 +186,10 @@
     </div>
 </div>
 
-<div id="initial-page-data" class="hide">
-    {
-        "FixtureDownloadUrl": "{% url 'download_fixtures' domain%}?",
-        "TableViewUrl": "{% url 'fixture_interface_dispatcher' domain 'view_lookup_tables'%}",
-        "DataTypeUrl": "{% url 'fixture_data_types' domain %}",
-        "UpdateTableUrl": "{% url 'update_lookup_tables' domain %}"
-    }
-</div>
+{% addtoblock initial_page_json %}
+    "FixtureDownloadUrl": "{% url 'download_fixtures' domain%}?",
+    "TableViewUrl": "{% url 'fixture_interface_dispatcher' domain 'view_lookup_tables'%}",
+    "DataTypeUrl": "{% url 'fixture_data_types' domain %}",
+    "UpdateTableUrl": "{% url 'update_lookup_tables' domain %}"
+{% endaddtoblock %}
 {% endblock %}

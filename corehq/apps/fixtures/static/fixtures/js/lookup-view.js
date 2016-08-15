@@ -14,7 +14,7 @@ define([
 ) {
     "use strict";
     filters.init();
-    var initialPageData = $.parseJSON($("#initial-page-data").text());
+    var initialPageData = $.parseJSON($("#initial-page-json").text());
     if (initialPageData.renderReportTables) {
         var reportTables = new datatablesConfig.HQReportDataTables(initialPageData.reportTablesOptions);
         if (typeof standardHQReport !== 'undefined') {

@@ -322,6 +322,13 @@
             {% endif %}
             {% block content %}{% endblock content %}
         </div>
+
+        <div id="initial-page-json" class="hide">
+            {
+                {% block initial_page_json %}{% endblock initial_page_json %}
+            }
+        </div>
+
         <footer>
             <nav id="hq-footer"
                  role="navigation"

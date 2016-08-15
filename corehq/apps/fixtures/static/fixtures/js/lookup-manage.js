@@ -12,7 +12,7 @@ define([
 ) {
     "use strict";
     var somethingWentWrong = $("#FailText").text();
-    var initialPageData = $.parseJSON($("#initial-page-data").text()),
+    var initialPageData = $.parseJSON($("#initial-page-json").text()),
         FixtureDownloadUrl = initialPageData.FixtureDownloadUrl,
         TableViewUrl = initialPageData.TableViewUrl,
         DataTypeUrl = initialPageData.DataTypeUrl,
