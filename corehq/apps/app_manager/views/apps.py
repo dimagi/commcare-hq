@@ -258,6 +258,10 @@ def get_apps_base_context(request, domain, app):
                     or getattr(app, 'commtrack_enabled', False)
                 )
             ),
+            'show_report_modules': (
+                v2_app
+                and toggles.MOBILE_UCR.enabled(domain)
+            ),
             'show_shadow_modules': (
                 v2_app
                 and toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain)
