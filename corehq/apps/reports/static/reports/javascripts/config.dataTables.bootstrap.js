@@ -1,13 +1,5 @@
 /* global define, jQuery */
-(function (factory) {
-    if (typeof define === 'function' && define.amd) {
-        define('reports/javascripts/config.dataTables.bootstrap', ['jquery', 'datatables.bootstrap'], factory);
-    } else {
-        hqDefine('reports/javascripts/config.dataTables.bootstrap.js', function() {
-            return factory(jQuery);
-        });
-    }
-}(function ($) {
+hqDefine("reports/javascripts/config.dataTables.bootstrap", ['jquery', 'datatables.bootstrap'], function($) {
 
 var HQReportDataTables = function(options) {
     var self = this;
@@ -325,4 +317,4 @@ return {
     HQReportDataTables: function(options) { return new HQReportDataTables(options); },
 };
 
-}));
+});

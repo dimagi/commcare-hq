@@ -38,11 +38,24 @@
 
 var COMMCAREHQ_MODULES = {};
 
-function hqDefine(path, moduleAccessor) {
-    if (typeof COMMCAREHQ_MODULES[path] !== 'undefined') {
-        throw new Error("The module '" + path + "' has already been defined elsewhere.");
+function hqDefine(path, dependencies, moduleAccessor) {
+    if (arguments.length === 2) {
+        moduleAccessor = dependencies;
+        dependencies = [];
     }
-    COMMCAREHQ_MODULES[path] = moduleAccessor();
+    path = path.replace(/\.js$/, "");
+
+    (function(factory) {
+        if (typeof define === 'function' && define.amd) {
+            define(path, dependencies, factory);
+        } else {
+            path = path + ".js";
+            if (typeof COMMCAREHQ_MODULES[path] !== 'undefined') {
+                throw new Error("The module '" + path + "' has already been defined elsewhere.");
+            }
+            COMMCAREHQ_MODULES[path] = factory(jQuery, (typeof ko === 'undefined' ? undefined : ko), _);
+        }
+    }(moduleAccessor));
 }
 
 function hqImport(path) {

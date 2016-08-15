@@ -1,15 +1,6 @@
 /* global define, jQuery */
-(function (factory) {
-    if (typeof define === 'function' && define.amd) {
-        define('reports/javascripts/filters', ['jquery', 'knockout', 'underscore', 'select2'], factory);
-    } else {
-        hqDefine('reports/javascripts/filters.js', function() {
-            return factory(jQuery, ko, _);
-        });
-    }
-}(function ($, ko, _) {
+hqDefine("reports/javascripts/filters", ['jquery', 'knockout', 'underscore', 'select2'], function($, ko, _) {
     "use strict";
-
     var initSingleOption = function() {
         _.each($(".reports-filters-single-option"), function(el) {
             var initialData = $.parseJSON($(el).find(".initial-data").text());
@@ -67,4 +58,4 @@
             initSingleOption();
         },
     };
-}));
+});

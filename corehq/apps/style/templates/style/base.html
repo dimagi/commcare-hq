@@ -374,6 +374,7 @@
         {# javascript below this line #}
 
         {% if request.use_requirejs %}
+            <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
             <script src="{% static 'hqwebapp/js/lib/require.js' %}"></script>
             <script type="text/javascript">
                 requirejs.config({
