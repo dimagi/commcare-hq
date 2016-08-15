@@ -731,20 +731,19 @@ class TestWebUserResource(APIResourceTest):
         self.addCleanup(user.delete)
 
         user_json = {
-            "email":"admin@example.com",
-            "first_name":"Joe",
+            "email": "admin@example.com",
+            "first_name": "Joe",
             "is_admin": True,
-            "last_name":"Admin",
-            "permissions":{
-                "edit_apps":True,
-                "edit_commcare_users":True,
-                "edit_data":True,
-                "edit_web_users":True,
-                "view_reports":True
+            "last_name": "Admin",
+            "permissions": {
+                "edit_apps": True,
+                "edit_commcare_users": True,
+                "edit_data": True,
+                "edit_web_users": True,
+                "view_reports": True
             },
-            "phone_numbers":[
-            ],
-            "role":"admin"
+            "phone_numbers": [],
+            "role": "admin"
         }
 
         backend_id = user._id
@@ -815,8 +814,8 @@ class TestRepeaterResource(APIResourceTest):
 
         api_case_repeater = filter(lambda r: r['type'] == 'CaseRepeater', api_repeaters)[0]
         self.assertEqual(api_case_repeater['id'], case_repeater._id)
-        self.assertEqual(api_case_repeater['url'], case_repeater.url)    
-        self.assertEqual(api_case_repeater['domain'], case_repeater.domain)    
+        self.assertEqual(api_case_repeater['url'], case_repeater.url)
+        self.assertEqual(api_case_repeater['domain'], case_repeater.domain)
 
     def test_create(self):
 
