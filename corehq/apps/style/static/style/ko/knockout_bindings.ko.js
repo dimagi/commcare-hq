@@ -1,4 +1,4 @@
-/* global define */
+/* global hqGlobal */
 hqGlobal("style/ko/knockout_bindings.ko", ['jQuery', 'knockout'], function($, ko) {
 
 ko.bindingHandlers.staticChecked = {
