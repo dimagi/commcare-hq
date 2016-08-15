@@ -122,7 +122,7 @@ def ask_user(statement):
 def run_ask_runs(ask_runs):
     for ask_run in ask_runs:
         print ask_run.ask()
-    ask_user('The proceeding steps will be performed')
+    ask_user('The preceding steps will be performed')
     for ask_run in ask_runs:
         print ask_run.run()
 
