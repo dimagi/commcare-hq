@@ -384,7 +384,7 @@ class SetUserPasswordForm(SetPasswordForm):
         if self.project.strong_mobile_passwords:
             self.fields['new_password1'].widget = forms.TextInput()
             self.fields['new_password1'].help_text = mark_safe("""
-                <i class="fa fa-warning"></i> This password will not be shown again. <br />
+                <i class="fa fa-warning"></i>This password is automatically generated. Please copy it or create your own. It will not be shown again. <br />
                 <span data-bind="text: passwordHelp, css: color">
             """)
             initial_password = _generate_strong_password()
