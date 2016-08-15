@@ -5,7 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from custom.ilsgateway.zipline.data_sources.supervisor_report_data_source import SupervisorReportDataSource
-from custom.ilsgateway.zipline.filters import EmergencyOrderStatusChoiceFilter, OrderIdChoiceFilter
+from custom.ilsgateway.zipline.filters import EmergencyOrderStatusChoiceFilter, OrderIdFilter
 from custom.ilsgateway.zipline.reports.zipline_report import ZiplineReport
 
 ReportConfig = namedtuple(
@@ -23,7 +23,7 @@ class SupervisorReport(ZiplineReport):
         DatespanFilter,
         AsyncLocationFilter,
         EmergencyOrderStatusChoiceFilter,
-        OrderIdChoiceFilter
+        OrderIdFilter
     ]
 
     @property

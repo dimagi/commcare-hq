@@ -38,7 +38,7 @@ class EmergencyPackageStatusChoiceFilter(EmergencyOrderStatusChoiceFilter):
         ]
 
 
-class OrderIdChoiceFilter(BaseReportFilter):
+class OrderIdFilter(BaseReportFilter):
 
     slug = 'order_id'
     label = 'Order id'

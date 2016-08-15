@@ -6,7 +6,7 @@ from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from custom.ilsgateway.zipline.data_sources.zipline_warehouse_package_data_source import \
     ZiplineWarehousePackageDataSource
-from custom.ilsgateway.zipline.filters import EmergencyPackageStatusChoiceFilter, OrderIdChoiceFilter
+from custom.ilsgateway.zipline.filters import EmergencyPackageStatusChoiceFilter, OrderIdFilter
 from custom.ilsgateway.zipline.reports.zipline_report import ZiplineReport
 
 
@@ -24,13 +24,12 @@ class ZiplineWarehousePackageReport(ZiplineReport):
         DatespanFilter,
         AsyncLocationFilter,
         EmergencyPackageStatusChoiceFilter,
-        OrderIdChoiceFilter
+        OrderIdFilter
     ]
 
     @property
     def order_id(self):
         value = self.request.GET.get('order_id')
-        print value
         if not value:
             return None
 
