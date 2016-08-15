@@ -176,9 +176,10 @@ $(function () {
                                     </div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
+                                    <button type="button" class="btn btn-default" ng-click="markDefault()" data-dismiss="modal">{% trans 'Cancel' %}</button>
                                     <button type="submit"
                                             ng-disabled="mobileWorkerForm.$invalid || usernameAvailabilityStatus !== 'available'"
+                                            ng-click="markDefault()"
                                             class="btn btn-primary">
                                         {% trans "Create" %}
                                     </button>

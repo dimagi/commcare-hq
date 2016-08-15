@@ -545,9 +545,13 @@ class NewMobileWorkerForm(forms.Form):
         self.project = project
 
         if self.project.strong_mobile_passwords:
-            self.fields['password'].widget = forms.TextInput()
+            self.fields['password'].widget = forms.TextInput(attrs={
+                "validate_password": "",
+                "ng_keydown": "markNonDefault()",
+                "class": "default",
+            })
             self.fields['password'].help_text = mark_safe("""
-                <i class="fa fa-warning"></i> This password will not be shown again. <br />
+                <i class="fa fa-warning"></i>This password is automatically generated. Please copy it or create your own. It will not be shown again. <br />
             """)
 
         if project.uses_locations:
