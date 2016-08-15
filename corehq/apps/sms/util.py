@@ -14,16 +14,16 @@ from django.utils.translation import ugettext as _
 
 
 class DateFormat(object):
-    def __init__(self, human_readble_format, c_standard_format, validate_regex):
-        self.human_readble_format = human_readble_format
+    def __init__(self, human_readable_format, c_standard_format, validate_regex):
+        self.human_readable_format = human_readable_format
         self.c_standard_format = c_standard_format
         self.validate_regex = validate_regex
 
     def parse(self, value):
-        return datetime.strptime(value, self.c_standard_format)
+        return datetime.datetime.strptime(value, self.c_standard_format)
 
     def is_valid(self, value):
-        return re.match(value, self.validate_regex) is not None
+        return re.match(self.validate_regex, value) is not None
 
 
 # A project can specify the expected format of answers to date questions
@@ -34,7 +34,7 @@ ALLOWED_SURVEY_DATE_FORMATS = (
     DateFormat('DDMMYYYY', '%d%m%Y', '^\d{8}$'),
 )
 
-SURVEY_DATE_FORMAT_LOOKUP = {df.human_readble_format: df for df in ALLOWED_SURVEY_DATE_FORMATS}
+SURVEY_DATE_FORMAT_LOOKUP = {df.human_readable_format: df for df in ALLOWED_SURVEY_DATE_FORMATS}
 
 phone_number_plus_re = re.compile("^\+{0,1}\d+$")
 
