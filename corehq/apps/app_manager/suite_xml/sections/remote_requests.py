@@ -11,14 +11,14 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     SessionDatum,
     Stack,
     StackDatum,
-    SyncRequest,
-    SyncRequestPost,
-    SyncRequestQuery,
-    SyncRequestSession,
+    RemoteRequest,
+    RemoteRequestPost,
+    RemoteRequestQuery,
+    RemoteRequestSession,
     Text,
 )
 from corehq.apps.app_manager.util import module_offers_search
-from corehq.apps.app_manager.xpath import XPath, CaseTypeXpath, InstanceXpath, CaseIDXPath
+from corehq.apps.app_manager.xpath import XPath, CaseTypeXpath, InstanceXpath
 from corehq.util.view_utils import absolute_reverse
 
 
@@ -34,17 +34,17 @@ class QuerySessionXPath(InstanceXpath):
         return 'session/data/{}'.format(self)
 
 
-class SyncRequestContributor(SuiteContributorByModule):
+class RemoteRequestContributor(SuiteContributorByModule):
     """
-    Adds a sync-request node, which sets the URL and query details for
+    Adds a remote-request node, which sets the URL and query details for
     synchronous searching and case claiming.
 
     Search is available from the module's case list.
 
-    See "sync-request" in the `CommCare 2.0 Suite Definition`_ for details.
+    See "remote-request" in the `CommCare 2.0 Suite Definition`_ for details.
 
 
-    .. _CommCare 2.0 Suite Definition: https://github.com/dimagi/commcare/wiki/Suite20#sync-request
+    .. _CommCare 2.0 Suite Definition: https://github.com/dimagi/commcare/wiki/Suite20#remote-request
 
     """
 
@@ -54,8 +54,8 @@ class SyncRequestContributor(SuiteContributorByModule):
 
             details_helper = DetailsHelper(self.app)
 
-            sync_request = SyncRequest(
-                post=SyncRequestPost(
+            remote_request = RemoteRequest(
+                post=RemoteRequestPost(
                     url=absolute_reverse('claim_case', args=[domain]),
                     relevant=module.search_config.relevant,
                     data=[
@@ -85,10 +85,10 @@ class SyncRequestContributor(SuiteContributorByModule):
                     ),
                 ],
 
-                session=SyncRequestSession(
+                session=RemoteRequestSession(
                     queries=[
-                        SyncRequestQuery(
-                            url=absolute_reverse('sync_search', args=[domain]),
+                        RemoteRequestQuery(
+                            url=absolute_reverse('remote_search', args=[domain]),
                             storage_instance=RESULTS_INSTANCE,
                             data=[
                                 QueryData(
@@ -124,7 +124,7 @@ class SyncRequestContributor(SuiteContributorByModule):
             # Open first form in module
             frame.add_command(XPath.string(id_strings.menu_id(module)))
             frame.add_datum(StackDatum(id='case_id', value=QuerySessionXPath('case_id').instance()))
-            sync_request.stack.add_frame(frame)
+            remote_request.stack.add_frame(frame)
 
-            return [sync_request]
+            return [remote_request]
         return []
