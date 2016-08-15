@@ -40,8 +40,7 @@ var COMMCAREHQ_MODULES = {};
 
 function hqDefine(path, dependencies, moduleAccessor) {
     if (arguments.length === 2) {
-        moduleAccessor = dependencies;
-        dependencies = [];
+        return hqDefine(path, [], dependencies);
     }
     path = path.replace(/\.js$/, "");
 
@@ -54,6 +53,19 @@ function hqDefine(path, dependencies, moduleAccessor) {
                 throw new Error("The module '" + path + "' has already been defined elsewhere.");
             }
             COMMCAREHQ_MODULES[path] = factory(jQuery, (typeof ko === 'undefined' ? undefined : ko), _);
+        }
+    }(moduleAccessor));
+}
+
+// For modules that are sometimes used by RequireJS and sometimes not, but which
+// have not yet been converted to hqDefine. When not on a RequireJS page,
+// moduleAccessor gets passed jQuery, knockout, and underscore, in that order.
+function hqGlobal(path, dependencies, moduleAccessor) {
+    (function(factory) {
+        if (typeof define === 'function' && define.amd) {
+            define(path, dependencies, factory);
+        } else {
+            factory(jQuery, (typeof ko === 'undefined' ? undefined : ko), _);
         }
     }(moduleAccessor));
 }

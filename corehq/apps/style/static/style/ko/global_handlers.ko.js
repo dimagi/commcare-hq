@@ -1,11 +1,5 @@
 /* global define */
-(function (factory) {
-    if (typeof define === 'function' && define.amd) {
-        define(['knockout'], factory);
-    } else {
-        factory(ko);
-    }
-}(function (ko) {
+hqGlobal("style/ko/global_handlers.ko", ['jQuery', 'knockout'], function($, ko) {
 
 ko.bindingHandlers.hqbSubmitReady = {
     update: function(element, valueAccessor) {
@@ -41,4 +35,4 @@ ko.bindingHandlers.fadeVisibleInOnly = {
     }
 };
 
-}));
+});

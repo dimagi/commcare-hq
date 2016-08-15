@@ -382,7 +382,6 @@
                     paths: {
                         {% include "style/includes/core_libraries.html" %}
                         "bootstrap": "{% static 'bootstrap/dist/js/bootstrap.min' %}",
-                        "hq.helpers": "{% static 'style/js/hq.helpers' %}",
                         "knockout": "{% static 'knockout/dist/knockout.debug' %}",
                         "ko.mapping": "{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min' %}",
                         "ko.global_handlers": "{% static 'style/ko/global_handlers.ko' %}",
@@ -404,7 +403,7 @@
                     },
                     shim: {
                         "bootstrap": { deps: ['jquery'] },
-                        "hq.helpers": { deps: ['jquery', 'bootstrap', 'knockout'] },
+                        "style/js/hq.helpers": { deps: ['jquery', 'bootstrap', 'knockout'] },
                         "ko.mapping": { deps: ['knockout'] },
                         "ko.global_handlers": { deps: ['knockout'] },
                         "ko.knockout_bindings": { deps: ['knockout'] },

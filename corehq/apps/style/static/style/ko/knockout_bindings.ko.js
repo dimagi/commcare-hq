@@ -1,11 +1,5 @@
 /* global define */
-(function (factory) {
-    if (typeof define === 'function' && define.amd) {
-        define(['knockout'], factory);
-    } else {
-        factory(ko);
-    }
-}(function (ko) {
+hqGlobal("style/ko/knockout_bindings.ko", ['jQuery', 'knockout'], function($, ko) {
 
 ko.bindingHandlers.staticChecked = {
     init: function (element) {
@@ -707,4 +701,4 @@ ko.bindingHandlers.initializeValue = {
     },
 };
 
-}));
+});

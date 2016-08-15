@@ -6,7 +6,7 @@ define([
     "jquery",
     "reports/javascripts/filters",
     "reports/javascripts/config.dataTables.bootstrap",
-    "hq.helpers",
+    "style/js/hq.helpers",
 ], function(
     $,
     filters,

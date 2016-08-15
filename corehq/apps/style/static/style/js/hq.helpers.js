@@ -1,11 +1,5 @@
 /* global define, jQuery */
-(function (factory) {
-    if (typeof define === 'function' && define.amd) {
-        define(['jquery', 'knockout'], factory);
-    } else {
-        factory(jQuery, ko);
-    }
-}(function ($, ko) {
+hqGlobal("style/js/hq.helpers", ['jquery', 'knockout'], function($, ko) {
 
 var clearAnnouncement = function (announcementID) {
     $.ajax({
@@ -145,4 +139,4 @@ $.fn.koApplyBindings = function (context) {
     this.removeClass('ko-template');
 };
 
-}));
+});

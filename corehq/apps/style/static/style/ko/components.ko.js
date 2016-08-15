@@ -1,11 +1,5 @@
 /* global define, jQuery */
-(function (factory) {
-    if (typeof define === 'function' && define.amd) {
-        define(['jquery', 'knockout', 'underscore'], factory);
-    } else {
-        factory(jQuery, ko, _);
-    }
-}(function ($, ko, _) {
+hqGlobal("style/ko/components.ko", ['jquery', 'knockout', 'underscore'], function($, ko, _) {
 
 var components = {
     'inline-edit': 'style/ko/components/inline_edit.js'
@@ -21,4 +15,4 @@ $(document).ready(function() {
     });
 });
 
-}));
+});
