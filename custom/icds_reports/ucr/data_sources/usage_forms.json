@@ -1,0 +1,877 @@
+{
+  "domains": [
+    "icds-sql",
+    "icds-test",
+    "icds-cas",
+    "icds-cas-sandbox"
+  ],
+  "config": {
+    "table_id": "static-usage_forms",
+    "display_name": "Forms - Usage (Static)",
+    "referenced_doc_type": "XFormInstance",
+    "description": "",
+    "base_item_expression": {},
+    "configured_filter": {
+      "operator": "in",
+      "type": "boolean_expression",
+      "expression": {
+        "datatype": null,
+        "type": "property_name",
+        "property_name": "xmlns"
+      },
+      "property_value": [
+        "http://openrosa.org/formdesigner/66d52f84d606567ea29d5fae88f569d2763b8b62",
+        "http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75",
+        "http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A",
+        "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB",
+        "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2",
+        "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE",
+        "http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF0C5091D",
+        "http://openrosa.org/formdesigner/792DAF2B-E117-424A-A673-34E1513ABD88",
+        "http://openrosa.org/formdesigner/619B942A-362E-43DE-8650-ED37026D9AC4"
+      ]
+    },
+    "configured_indicators": [
+      {
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_nullable": true,
+        "is_primary_key": false,
+        "column_id": "awc_id",
+        "expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "user_data",
+              "commcare_location_id"
+            ]
+          },
+          "type": "related_doc",
+          "related_doc_type": "CommCareUser",
+          "doc_id_expression": {
+            "type": "root_doc",
+            "expression": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "meta",
+                "userID"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "display_name": null,
+        "transform": {},
+        "datatype": "date",
+        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "form_date",
+        "expression": {
+          "datatype": "date",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "timeEnd"
+          ]
+        }
+      },
+      {
+        "display_name": null,
+        "transform": {},
+        "datatype": "date",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "month",
+        "type": "expression",
+        "expression": {
+          "type": "month_start_date",
+          "date_expression": {
+            "type": "root_doc",
+            "expression": {
+              "datatype": "date",
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "meta",
+                "timeEnd"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "type": "boolean",
+        "column_id": "pse",
+        "filter": {
+          "operator": "eq",
+          "type": "boolean_expression",
+          "expression": {
+            "type": "property_name",
+            "property_name": "xmlns"
+          },
+          "property_value": "http://openrosa.org/formdesigner/66d52f84d606567ea29d5fae88f569d2763b8b62"
+        }
+      },
+      {
+        "type": "boolean",
+        "column_id": "gmp",
+        "filter": {
+          "operator": "eq",
+          "type": "boolean_expression",
+          "expression": {
+            "type": "property_name",
+            "property_name": "xmlns"
+          },
+          "property_value": "http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75"
+        }
+      },
+      {
+        "type": "boolean",
+        "column_id": "thr",
+        "filter": {
+          "operator": "eq",
+          "type": "boolean_expression",
+          "expression": {
+            "type": "property_name",
+            "property_name": "xmlns"
+          },
+          "property_value": "http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A"
+        }
+      },
+      {
+        "type": "boolean",
+        "column_id": "home_visit",
+        "filter": {
+          "operator": "in",
+          "type": "boolean_expression",
+          "expression": {
+            "type": "property_name",
+            "property_name": "xmlns"
+          },
+          "property_value": [
+            "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB",
+            "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2",
+            "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE",
+            "http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF0C5091D",
+            "http://openrosa.org/formdesigner/792DAF2B-E117-424A-A673-34E1513ABD88"
+          ]
+        }
+      },
+      {
+        "type": "boolean",
+        "column_id": "bp_tri1",
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "operator": "eq",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "property_name",
+                "property_name": "xmlns"
+              },
+              "property_value": "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "gte",
+              "expression": {
+                "type": "diff_days",
+                "from_date_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "form",
+                    "meta",
+                    "timeEnd"
+                  ]
+                },
+                "to_date_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "form",
+                    "new_edd"
+                  ]
+                }
+              },
+              "property_value": 182
+            }
+          ]
+        }
+      },
+      {
+        "type": "boolean",
+        "column_id": "bp_tri2",
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "operator": "eq",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "property_name",
+                "property_name": "xmlns"
+              },
+              "property_value": "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "lt",
+              "expression": {
+                "type": "diff_days",
+                "from_date_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "form",
+                    "meta",
+                    "timeEnd"
+                  ]
+                },
+                "to_date_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "form",
+                    "new_edd"
+                  ]
+                }
+              },
+              "property_value": 182
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "gte",
+              "expression": {
+                "type": "diff_days",
+                "from_date_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "form",
+                    "meta",
+                    "timeEnd"
+                  ]
+                },
+                "to_date_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "form",
+                    "new_edd"
+                  ]
+                }
+              },
+              "property_value": 91
+            }
+          ]
+        }
+      },
+      {
+        "type": "boolean",
+        "column_id": "bp_tri3",
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "operator": "eq",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "property_name",
+                "property_name": "xmlns"
+              },
+              "property_value": "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "lt",
+              "expression": {
+                "type": "diff_days",
+                "from_date_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "form",
+                    "meta",
+                    "timeEnd"
+                  ]
+                },
+                "to_date_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "form",
+                    "new_edd"
+                  ]
+                }
+              },
+              "property_value": 91
+            }
+          ]
+        }
+      },
+      {
+        "type": "boolean",
+        "column_id": "delivery",
+        "filter": {
+          "operator": "eq",
+          "type": "boolean_expression",
+          "expression": {
+            "type": "property_name",
+            "property_name": "xmlns"
+          },
+          "property_value": "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2"
+        }
+      },
+      {
+        "type": "boolean",
+        "column_id": "pnc",
+        "filter": {
+          "operator": "eq",
+          "type": "boolean_expression",
+          "expression": {
+            "type": "property_name",
+            "property_name": "xmlns"
+          },
+          "property_value": "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE"
+        }
+      },
+      {
+        "type": "boolean",
+        "column_id": "ebf",
+        "filter": {
+          "operator": "eq",
+          "type": "boolean_expression",
+          "expression": {
+            "type": "property_name",
+            "property_name": "xmlns"
+          },
+          "property_value": "http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF0C5091D"
+        }
+      },
+      {
+        "type": "boolean",
+        "column_id": "cf",
+        "filter": {
+          "operator": "eq",
+          "type": "boolean_expression",
+          "expression": {
+            "type": "property_name",
+            "property_name": "xmlns"
+          },
+          "property_value": "http://openrosa.org/formdesigner/792DAF2B-E117-424A-A673-34E1513ABD88"
+        }
+      },
+      {
+        "type": "boolean",
+        "column_id": "due_list_ccs",
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "operator": "eq",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "property_name",
+                "property_name": "xmlns"
+              },
+              "property_value": "http://openrosa.org/formdesigner/619B942A-362E-43DE-8650-ED37026D9AC4"
+            },
+            {
+              "operator": "eq",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "tasks_type_loaded"
+                ]
+              },
+              "property_value": "pregnancy"
+            }
+          ]
+        }
+      },
+      {
+        "type": "boolean",
+        "column_id": "due_list_child",
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "operator": "eq",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "property_name",
+                "property_name": "xmlns"
+              },
+              "property_value": "http://openrosa.org/formdesigner/619B942A-362E-43DE-8650-ED37026D9AC4"
+            },
+            {
+              "operator": "eq",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "tasks_type_loaded"
+                ]
+              },
+              "property_value": "child"
+            }
+          ]
+        }
+      },
+      {
+        "type": "expression",
+        "datatype": "decimal",
+        "column_id": "pse_time",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "operator": "eq",
+            "type": "boolean_expression",
+            "expression": {
+              "type": "property_name",
+              "property_name": "xmlns"
+            },
+            "property_value": "http://openrosa.org/formdesigner/66d52f84d606567ea29d5fae88f569d2763b8b62"
+          },
+          "expression_if_true": {
+            "type": "evaluator",
+            "statement": "timedelta_to_seconds(time_end - time_start)",
+            "context_variables": {
+              "time_start": {
+                "datatype": "datetime",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "meta",
+                  "timeStart"
+                ]
+              },
+              "time_end": {
+                "datatype": "datetime",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "meta",
+                  "timeEnd"
+                ]
+              }
+            }
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "does_not_exist"
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "datatype": "decimal",
+        "column_id": "gmp_time",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "operator": "eq",
+            "type": "boolean_expression",
+            "expression": {
+              "type": "property_name",
+              "property_name": "xmlns"
+            },
+            "property_value": "http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75"
+          },
+          "expression_if_true": {
+            "type": "evaluator",
+            "statement": "timedelta_to_seconds(time_end - time_start)",
+            "context_variables": {
+              "time_start": {
+                "datatype": "datetime",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "meta",
+                  "timeStart"
+                ]
+              },
+              "time_end": {
+                "datatype": "datetime",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "meta",
+                  "timeEnd"
+                ]
+              }
+            }
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "does_not_exist"
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "datatype": "decimal",
+        "column_id": "thr_time",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "operator": "eq",
+            "type": "boolean_expression",
+            "expression": {
+              "type": "property_name",
+              "property_name": "xmlns"
+            },
+            "property_value": "http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A"
+          },
+          "expression_if_true": {
+            "type": "evaluator",
+            "statement": "timedelta_to_seconds(time_end - time_start)",
+            "context_variables": {
+              "time_start": {
+                "datatype": "datetime",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "meta",
+                  "timeStart"
+                ]
+              },
+              "time_end": {
+                "datatype": "datetime",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "meta",
+                  "timeEnd"
+                ]
+              }
+            }
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "does_not_exist"
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "datatype": "decimal",
+        "column_id": "bp_time",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "operator": "eq",
+            "type": "boolean_expression",
+            "expression": {
+              "type": "property_name",
+              "property_name": "xmlns"
+            },
+            "property_value": "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
+          },
+          "expression_if_true": {
+            "type": "evaluator",
+            "statement": "timedelta_to_seconds(time_end - time_start)",
+            "context_variables": {
+              "time_start": {
+                "datatype": "datetime",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "meta",
+                  "timeStart"
+                ]
+              },
+              "time_end": {
+                "datatype": "datetime",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "meta",
+                  "timeEnd"
+                ]
+              }
+            }
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "does_not_exist"
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "datatype": "decimal",
+        "column_id": "delivery_time",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "operator": "eq",
+            "type": "boolean_expression",
+            "expression": {
+              "type": "property_name",
+              "property_name": "xmlns"
+            },
+            "property_value": "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2"
+          },
+          "expression_if_true": {
+            "type": "evaluator",
+            "statement": "timedelta_to_seconds(time_end - time_start)",
+            "context_variables": {
+              "time_start": {
+                "datatype": "datetime",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "meta",
+                  "timeStart"
+                ]
+              },
+              "time_end": {
+                "datatype": "datetime",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "meta",
+                  "timeEnd"
+                ]
+              }
+            }
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "does_not_exist"
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "datatype": "decimal",
+        "column_id": "pnc_time",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "operator": "eq",
+            "type": "boolean_expression",
+            "expression": {
+              "type": "property_name",
+              "property_name": "xmlns"
+            },
+            "property_value": "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE"
+          },
+          "expression_if_true": {
+            "type": "evaluator",
+            "statement": "timedelta_to_seconds(time_end - time_start)",
+            "context_variables": {
+              "time_start": {
+                "datatype": "datetime",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "meta",
+                  "timeStart"
+                ]
+              },
+              "time_end": {
+                "datatype": "datetime",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "meta",
+                  "timeEnd"
+                ]
+              }
+            }
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "does_not_exist"
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "datatype": "decimal",
+        "column_id": "ebf_time",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "operator": "eq",
+            "type": "boolean_expression",
+            "expression": {
+              "type": "property_name",
+              "property_name": "xmlns"
+            },
+            "property_value": "http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF0C5091D"
+          },
+          "expression_if_true": {
+            "type": "evaluator",
+            "statement": "timedelta_to_seconds(time_end - time_start)",
+            "context_variables": {
+              "time_start": {
+                "datatype": "datetime",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "meta",
+                  "timeStart"
+                ]
+              },
+              "time_end": {
+                "datatype": "datetime",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "meta",
+                  "timeEnd"
+                ]
+              }
+            }
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "does_not_exist"
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "datatype": "decimal",
+        "column_id": "cf_time",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "operator": "eq",
+            "type": "boolean_expression",
+            "expression": {
+              "type": "property_name",
+              "property_name": "xmlns"
+            },
+            "property_value": "http://openrosa.org/formdesigner/792DAF2B-E117-424A-A673-34E1513ABD88"
+          },
+          "expression_if_true": {
+            "type": "evaluator",
+            "statement": "timedelta_to_seconds(time_end - time_start)",
+            "context_variables": {
+              "time_start": {
+                "datatype": "datetime",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "meta",
+                  "timeStart"
+                ]
+              },
+              "time_end": {
+                "datatype": "datetime",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "meta",
+                  "timeEnd"
+                ]
+              }
+            }
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "does_not_exist"
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "datatype": "datetime",
+        "column_id": "pse_time_of_day",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "operator": "eq",
+            "type": "boolean_expression",
+            "expression": {
+              "type": "property_name",
+              "property_name": "xmlns"
+            },
+            "property_value": "http://openrosa.org/formdesigner/66d52f84d606567ea29d5fae88f569d2763b8b62"
+          },
+          "expression_if_true": {
+            "type": "property_path",
+            "datatype": "datetime",
+            "property_path": [
+              "form",
+              "meta",
+              "timeEnd"
+            ]
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "does_not_exist"
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "datatype": "datetime",
+        "column_id": "home_visit_time_of_day",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "operator": "in",
+            "type": "boolean_expression",
+            "expression": {
+              "type": "property_name",
+              "property_name": "xmlns"
+            },
+            "property_value": [
+              "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB",
+              "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2",
+              "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE",
+              "http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF0C5091D",
+              "http://openrosa.org/formdesigner/792DAF2B-E117-424A-A673-34E1513ABD88"
+            ]
+          },
+          "expression_if_true": {
+            "type": "property_path",
+            "datatype": "datetime",
+            "property_path": [
+              "form",
+              "meta",
+              "timeEnd"
+            ]
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "does_not_exist"
+          }
+        }
+      }
+    ],
+    "named_expressions": {},
+    "named_filters": {},
+    "engine_id": "ucr"
+  }
+}
