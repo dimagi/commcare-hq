@@ -9,7 +9,7 @@ GIRExportRow = namedtuple('GIRExportRow',
                           'domain country sector subsector bu self_service test start device active_users wam '
                           'pam wam_current wam_1_prior wam_2_prior active_current active_1_prior active_2_prior '
                           'using_and_performing not_performing inactive_experienced inactive_not_experienced '
-                          'not_experienced not_performing_not_experienced d1 d2 d3 d4 d5 d6')
+                          'not_experienced not_performing_not_experienced d1 d2 d3 d4 d5 d6 eligible')
 
 
 class MALTRow(models.Model):
@@ -76,6 +76,7 @@ class GIRRow(models.Model):
     ever_exp = models.PositiveIntegerField()
     exp_and_active_ever = models.PositiveIntegerField()
     active_in_span = models.PositiveIntegerField()
+    eligible_forms = models.PositiveIntegerField()
 
     class Meta:
         unique_together = ('month', 'domain_name')
@@ -115,4 +116,5 @@ class GIRRow(models.Model):
                             d3=self.ever_exp,
                             d4=self.exp_and_active_ever,
                             d5=self.active_users,
-                            d6=self.active_in_span)
+                            d6=self.active_in_span,
+                            eligible=self.eligible_forms)
