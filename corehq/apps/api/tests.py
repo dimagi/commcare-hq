@@ -656,22 +656,22 @@ class TestWebUserResource(APIResourceTest):
     resource = v0_5.WebUserResource
     api_name = 'v0.5'
     default_user_json = {
-        "username":"test_1234",
-        "password":"qwer1234",
-        "email":"admin@example.com",
-        "first_name":"Joe",
+        "username": "test_1234",
+        "password": "qwer1234",
+        "email": "admin@example.com",
+        "first_name": "Joe",
         "is_admin": True,
-        "last_name":"Admin",
-        "permissions":{
-            "edit_apps":True,
-            "edit_commcare_users":True,
-            "edit_data":True,
-            "edit_web_users":True,
-            "view_reports":True
+        "last_name": "Admin",
+        "permissions": {
+            "edit_apps": True,
+            "edit_commcare_users": True,
+            "edit_data": True,
+            "edit_web_users": True,
+            "view_reports": True
         },
-        "phone_numbers":[
+        "phone_numbers": [
         ],
-        "role":"Admin"
+        "role": "Admin"
     }
 
     def _check_user_data(self, user, json_user):
