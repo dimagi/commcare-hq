@@ -21,6 +21,7 @@ from casexml.apps.case.util import post_case_blocks
 from corehq.apps.userreports.models import ReportConfiguration, \
     DataSourceConfiguration
 from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.pillows.case import transform_case_for_elasticsearch
 from couchforms.models import XFormInstance
 
@@ -100,6 +101,10 @@ class APIResourceTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        delete_all_users()
+        SubscriptionAdjustment.objects.all().delete()
+        for domain in Domain.get_all():
+            domain.delete()
         Role.get_cache().clear()
         generator.instantiate_accounting()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
@@ -731,16 +736,31 @@ class TestWebUserResource(APIResourceTest):
         self.assertTrue(user_back.is_domain_admin(self.domain.name))
         user_back.delete()
 
+    def test_create_admin_without_role(self):
+        user_json = deepcopy(self.default_user_json)
+        user_json.pop('role')
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        user_back = WebUser.get_by_username("test_1234")
+        self.assertEqual(user_back.username, "test_1234")
+        self.assertEqual(user_back.first_name, "Joe")
+        self.assertEqual(user_back.last_name, "Admin")
+        self.assertEqual(user_back.email, "admin@example.com")
+        self.assertTrue(user_back.is_domain_admin(self.domain.name))
+        user_back.delete()
+
     def test_create_with_preset_role(self):
         user_json = deepcopy(self.default_user_json)
-        user_json["role"] = "field-implementer"
+        user_json["role"] = "Field Implementer"
         user_json["is_admin"] = False
         response = self._assert_auth_post_resource(self.list_endpoint,
                                                    json.dumps(user_json),
                                                    content_type='application/json')
         self.assertEqual(response.status_code, 201)
         user_back = WebUser.get_by_username("test_1234")
-        self.assertEqual(user_back.role, 'field-implementer')
+        self.assertEqual(user_back.role, 'Field Implementer')
         user_back.delete()
 
     def test_create_with_custom_role(self):
@@ -766,6 +786,28 @@ class TestWebUserResource(APIResourceTest):
                                                    failure_code=400)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.content, '{"error": "An admin can have only one role : Admin"}')
+
+    def test_create_with_invalid_non_admin_role(self):
+        user_json = deepcopy(self.default_user_json)
+        user_json['is_admin'] = False
+        user_json["role"] = 'Jack of all trades'
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   failure_code=400)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content, '{"error": "Invalid User Role Jack of all trades"}')
+
+    def test_create_with_missing_non_admin_role(self):
+        user_json = deepcopy(self.default_user_json)
+        user_json['is_admin'] = False
+        user_json.pop("role")
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   failure_code=400)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content, '{"error": "Please assign role for non admin user"}')
 
     def test_update(self):
         user = WebUser.create(domain=self.domain.name, username="test", password="qwer1234")

@@ -228,14 +228,18 @@ class WebUserResource(v0_1.WebUserResource):
 
     def dispatch(self, request_type, request, **kwargs):
         """
-        Override dispatch to check for proper params for user create
+        Override dispatch to check for proper params for user create : role and admin permissions
         """
         if request.method == 'POST':
             details = self._meta.serializer.deserialize(request.body)
-            # BadRequest if asked to create a role admin w/is_admin false.
-            # is_admin takes priority over role
-            if details.get('is_admin', False) and details.get('role', None) and details.get('role') != 'Admin':
-                raise BadRequest("An admin can have only one role : Admin")
+            if details.get('is_admin', False):
+                if self._admin_assigned_another_role(details):
+                    raise BadRequest("An admin can have only one role : Admin")
+            else:
+                if not details.get('role', None):
+                    raise BadRequest("Please assign role for non admin user")
+                elif self._invalid_user_role(request, details):
+                    raise BadRequest("Invalid User Role %s" % details.get('role', None))
 
         return super(WebUserResource, self).dispatch(request_type, request, **kwargs)
 
@@ -298,6 +302,12 @@ class WebUserResource(v0_1.WebUserResource):
             bundle.obj.save()
         return bundle
 
+    def _invalid_user_role(self, request, details):
+        return details.get('role') not in UserRole.preset_and_domain_role_names(request.domain)
+
+    def _admin_assigned_another_role(self, details):
+        # default value Admin since that will be assigned later anyway since is_admin is True
+        return details.get('role', 'Admin') != 'Admin'
 
 class AdminWebUserResource(v0_1.UserResource):
     domains = fields.ListField(attribute='domains')
