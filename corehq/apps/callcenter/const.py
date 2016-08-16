@@ -40,28 +40,29 @@ INFOMOVAL_PatientEducation = 'http://openrosa.org/formdesigner/58d56d542f35bd8d3
 INFOMOVAL_ActivistaEducation = 'http://openrosa.org/formdesigner/b8532594e7d38cdd6c632a8249814ce5c043c03c'
 INFOMOVAL_BuscaActicaVisit = 'http://openrosa.org/formdesigner/52ca9bc2d99d28a07bc60f3a353a80047a0950a8'
 
+CUSTOM_FORM = 'custom_form'
 
 TYPE_DURATION = 'duration'
 TYPE_SUM = 'sum'
 
 PER_DOMAIN_FORM_INDICATORS = {
-    'aarohi': [
-        {'slug': 'motherForms', 'type': TYPE_SUM, 'xmlns': AAROHI_MOTHER_FORM},
-        {'slug': 'childForms', 'type': TYPE_SUM, 'xmlns': AAROHI_CHILD_FORM},
-        {'slug': 'motherDuration', 'type': TYPE_DURATION, 'xmlns': AAROHI_MOTHER_FORM},
-    ],
-    'pci-india': [
-        {'slug': 'motherForms', 'type': TYPE_SUM, 'xmlns': PCI_MOTHER_FORM},
-        {'slug': 'childForms', 'type': TYPE_SUM, 'xmlns': PCI_CHILD_FORM},
-    ],
-    'infomovel': [
-        {'slug': 'FindPatientForms', 'type': TYPE_SUM, 'xmlns': INFOMOVAL_FindPatientForms},
-        {'slug': 'RegisterContactForms', 'type': TYPE_SUM, 'xmlns': INFOMOVAL_RegisterContactForms},
-        {'slug': 'NormalVisit', 'type': TYPE_SUM, 'xmlns': INFOMOVAL_NormalVisit},
-        {'slug': 'FirstVisit', 'type': TYPE_SUM, 'xmlns': INFOMOVAL_FirstVisit},
-        {'slug': 'ContactRegistration', 'type': TYPE_SUM, 'xmlns': INFOMOVAL_ContactRegistration},
-        {'slug': 'PatientEducation', 'type': TYPE_SUM, 'xmlns': INFOMOVAL_PatientEducation},
-        {'slug': 'ActivistaEducation', 'type': TYPE_SUM, 'xmlns': INFOMOVAL_ActivistaEducation},
-        {'slug': 'BuscaActicaVisit', 'type': TYPE_SUM, 'xmlns': INFOMOVAL_BuscaActicaVisit},
-    ]
+    'aarohi': {
+        'motherForms': {'type': TYPE_SUM, 'xmlns': AAROHI_MOTHER_FORM},
+        'childForms': {'type': TYPE_SUM, 'xmlns': AAROHI_CHILD_FORM},
+        'motherDuration': {'type': TYPE_DURATION, 'xmlns': AAROHI_MOTHER_FORM},
+    },
+    'pci-india': {
+        'motherForms': {'type': TYPE_SUM, 'xmlns': PCI_MOTHER_FORM},
+        'childForms': {'type': TYPE_SUM, 'xmlns': PCI_CHILD_FORM},
+    },
+    'infomovel': {
+        'FindPatientForms': {'type': TYPE_SUM, 'xmlns': INFOMOVAL_FindPatientForms},
+        'RegisterContactForms': {'type': TYPE_SUM, 'xmlns': INFOMOVAL_RegisterContactForms},
+        'NormalVisit': {'type': TYPE_SUM, 'xmlns': INFOMOVAL_NormalVisit},
+        'FirstVisit': {'type': TYPE_SUM, 'xmlns': INFOMOVAL_FirstVisit},
+        'ContactRegistration': {'type': TYPE_SUM, 'xmlns': INFOMOVAL_ContactRegistration},
+        'PatientEducation': {'type': TYPE_SUM, 'xmlns': INFOMOVAL_PatientEducation},
+        'ActivistaEducation': {'type': TYPE_SUM, 'xmlns': INFOMOVAL_ActivistaEducation},
+        'BuscaActicaVisit': {'type': TYPE_SUM, 'xmlns': INFOMOVAL_BuscaActicaVisit},
+    }
 }
