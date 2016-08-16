@@ -259,12 +259,6 @@ GRAPH_CREATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-OFFLINE_CLOUDCARE = StaticToggle(
-    'offline-cloudcare',
-    'Offline Cloudcare',
-    TAG_EXPERIMENTAL
-)
-
 IS_DEVELOPER = StaticToggle(
     'is_developer',
     'Is developer',
