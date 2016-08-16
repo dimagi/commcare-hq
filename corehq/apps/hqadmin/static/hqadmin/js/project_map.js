@@ -253,6 +253,7 @@ var projectMapInit = function(mapboxAccessToken) {
                     url: "/hq/admin/top_five_projects_by_country/?country=" + country,
                     datatype: "json",
                 }).done(function(data){
+                    selectionModel.topFiveProjects.removeAll();
                     data[country].forEach(function(project){
                         selectionModel.topFiveProjects.push({
                             name: project['name'],
