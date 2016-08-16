@@ -2419,8 +2419,6 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         if self.request.method == 'POST':
             return DomainInternalForm(can_edit_eula, self.request.POST)
         initial = {
-            'deployment_date': self.domain_object.deployment.date.date
-            if self.domain_object.deployment.date else '',
             'countries': self.domain_object.deployment.countries,
             'is_test': self.domain_object.is_test,
         }
