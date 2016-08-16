@@ -26,7 +26,6 @@
                     </small>
                 </h2>
                 <p>{{ dom.deployment.description }}</p>
-                <p>{% trans 'Date deployed' %}: {{ dom.deployment.date|date:"N j, Y" }}</p>
                 <a class="btn btn-default" href="{% url "deployment_info" dom.name %}">{% trans 'View' %} &raquo;</a>
             </div>
         </div>
