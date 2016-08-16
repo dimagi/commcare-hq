@@ -18,6 +18,10 @@ var projectMapInit = function(mapboxAccessToken) {
         // { countryName : { projectName : { propertyName: propertyValue } } }
         var projectsByCountryThenName = {};
         var maxNumProjects = 0;
+        var maxNumUsers = 0;
+        var projects_per_country = {};
+        var users_per_country = {};
+        var is_project_count_map = true;
 
         that.refreshProjectData = function (filter, callback) {
             $.ajax({
@@ -54,10 +58,20 @@ var projectMapInit = function(mapboxAccessToken) {
                 });
 
                 projectsByCountryThenName = tempProjects;
+                projects_per_country = data.country_projs_count;
+                users_per_country = data.users_per_country;
 
-                maxNumProjects = Object.keys(projectsByCountryThenName).reduce(function(prev, countryName) {
-                    return Math.max(prev, Object.keys(projectsByCountryThenName[countryName]).length);
-                }, 0);
+                Object.keys(projects_per_country).map(function(country) {
+                    if (projects_per_country[country] > maxNumProjects) {
+                        maxNumProjects = projects_per_country[country];
+                    }
+                });
+
+                Object.keys(users_per_country).map(function(country) {
+                    if (users_per_country[country] > maxNumUsers) {
+                        maxNumUsers = users_per_country[country];
+                    }
+                });
 
                 colorAll();
 
@@ -65,15 +79,34 @@ var projectMapInit = function(mapboxAccessToken) {
             });
         };
 
-        that.getNumProjects = function (countryName) {
-            countryName = countryName.toLowerCase();
-            return Object.keys(projectsByCountryThenName[countryName] || {}).length;
+        that.getCount = function (countryName) {
+            countryName = countryName.toUpperCase();
+            if (is_project_count_map) {
+                return projects_per_country[countryName] || 0;
+            } else {
+                return users_per_country[countryName] || 0;
+            }
         };
 
-        that.getMaxNumProjects = function () {
-            return maxNumProjects;
+        that.toggleMap = function () {
+            is_project_count_map = !is_project_count_map;
         };
 
+        that.getUnit = function (count) {
+            if (is_project_count_map) {
+                return count > 1 ? 'projects' : 'project';
+            } else {
+                return count > 1 ? 'users' : 'user';
+            }
+        };
+
+        that.getMax = function () {
+            if (is_project_count_map) {
+                return maxNumProjects;
+            } else {
+                return maxNumUsers;
+            }
+        };
 
         var SelectionModel = function () {
             var self = this;
@@ -166,18 +199,18 @@ var projectMapInit = function(mapboxAccessToken) {
     });
 
     function getColor(featureId) {
-        var count = dataController.getNumProjects(featureId);
+        var count = dataController.getCount(featureId);
         if (!count) {
             return COUNTRY_COLORS[0];
         }
-        var pct = count / dataController.getMaxNumProjects();
+        var pct = count / dataController.getMax();
         var index = Math.min(Math.floor(pct * COUNTRY_COLORS.length), COUNTRY_COLORS.length - 1);
 
         return COUNTRY_COLORS[index];
     }
 
     function getOpacity(featureId) {
-        if (dataController.getNumProjects(featureId)) {
+        if (dataController.getCount(featureId)) {
             return 0.9;
         } else {
             return 0;
@@ -239,8 +272,9 @@ var projectMapInit = function(mapboxAccessToken) {
     // method that we will use to update the control based on feature properties passed in
     info.update = function (props) {
         function _getInfoContent(countryName) {
-            var projectCount = dataController.getNumProjects(countryName);
-            var message = projectCount ? projectCount + ' projects' : 'no projects';
+            var count = dataController.getCount(countryName);
+            var unit = dataController.getUnit(count);
+            var message = count ? count + ' ' + unit : 'no ' + unit;
             return '<b>' + countryName + '</b>: ' + message;
         }
         this._div.innerHTML = (props ? _getInfoContent(props.name) : 'Hover over a country');
@@ -256,7 +290,7 @@ var projectMapInit = function(mapboxAccessToken) {
         // get the upper bounds for each bucket
         var countValues = COUNTRY_COLORS.map(function(e, i) {
             // tested this extensively
-            var bound = dataController.getMaxNumProjects() * (i+1) / COUNTRY_COLORS.length;
+            var bound = dataController.getMax() * (i+1) / COUNTRY_COLORS.length;
             return Math.max(0, (i < COUNTRY_COLORS.length - 1 && Math.floor(bound) === bound) ? bound - 1 : Math.floor(bound));
         });
 
@@ -317,4 +351,13 @@ var projectMapInit = function(mapboxAccessToken) {
             }
         });
     });
+
+    $('.btn-toggle').click(function() {
+        dataController.toggleMap();
+        dataController.refreshProjectData({}, function(){});
+        $(this).find('.btn').toggleClass('btn-primary');
+        $(this).find('.btn').toggleClass('btn-default');
+    });
+
+
 };

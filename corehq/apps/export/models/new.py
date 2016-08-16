@@ -1790,6 +1790,7 @@ class ConversionMeta(DocumentSchema):
 class ExportMigrationMeta(Document):
     saved_export_id = StringProperty()
     domain = StringProperty()
+    export_type = StringProperty(choices=[FORM_EXPORT, CASE_EXPORT])
 
     skipped_tables = SchemaListProperty(ConversionMeta)
     skipped_columns = SchemaListProperty(ConversionMeta)

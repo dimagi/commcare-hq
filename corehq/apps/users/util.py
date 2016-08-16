@@ -142,21 +142,6 @@ def doc_value_wrapper(doc_cls, value_cls):
     return wrapper
 
 
-def user_data_from_registration_form(xform):
-    """
-    Helper function for create_or_update_from_xform
-    """
-    user_data = {}
-    form_data = xform.form_data
-    if "user_data" in form_data and "data" in form_data["user_data"]:
-        items = form_data["user_data"]["data"]
-        if not isinstance(items, list):
-            items = [items]
-        for item in items:
-            user_data[item["@key"]] = item["#text"]
-    return user_data
-
-
 def can_add_extra_mobile_workers(request):
     from corehq.apps.users.models import CommCareUser
     from corehq.apps.accounting.models import BillingAccount

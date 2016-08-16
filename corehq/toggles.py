@@ -320,13 +320,6 @@ REPORT_BUILDER_BETA_GROUP = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-REPORT_BUILDER_MAP_REPORTS = StaticToggle(
-    'report_builder_map_reports',
-    'Report Builder map reports',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
 STOCK_TRANSACTION_EXPORT = StaticToggle(
     'ledger_export',
     'Show "export transactions" link on case details page',
@@ -867,5 +860,12 @@ CUSTOM_CALENDAR_FIXTURE = StaticToggle(
     'custom_calendar_fixture',
     'Send a calendar fixture down to all users (UATBC/eNikshay one off)',
     TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
+PREVIEW_APP = StaticToggle(
+    'preview_app',
+    'Preview an application in the app builder',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )

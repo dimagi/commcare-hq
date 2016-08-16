@@ -294,6 +294,30 @@
       },
       {
         "display_name": null,
+        "transform": {},
+        "datatype": "date",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "month",
+        "type": "expression",
+        "expression": {
+          "type": "month_start_date",
+          "date_expression": {
+            "type": "root_doc",
+            "expression": {
+              "datatype": "date",
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "meta",
+                "timeEnd"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "display_name": null,
         "property_path": [
           "form",
           "where_housed"
@@ -1111,6 +1135,225 @@
         "display_name": null,
         "type": "boolean",
         "column_id": "use_salt"
+      },
+      {
+        "type": "expression",
+        "column_id": "type_of_building",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "datatype": "string",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "awc_building"
+            ]
+          },
+          "cases": {
+            "1": {
+              "type": "constant",
+              "constant": "pucca"
+            },
+            "2": {
+              "type": "constant",
+              "constant": "semi_pucca"
+            },
+            "3": {
+              "type": "constant",
+              "constant": "kuccha"
+            },
+            "4": {
+              "type": "constant",
+              "constant": "partial_covered_space"
+            }
+          },
+          "default": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
+        }
+      },
+      {
+        "filter": {
+          "operator": "eq",
+          "type": "boolean_expression",
+          "expression": {
+            "datatype": "string",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "awc_building"
+            ]
+          },
+          "property_value": "1"
+        },
+        "display_name": null,
+        "type": "boolean",
+        "column_id": "type_of_building_pucca"
+      },
+      {
+        "filter": {
+          "operator": "eq",
+          "type": "boolean_expression",
+          "expression": {
+            "datatype": "string",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "awc_building"
+            ]
+          },
+          "property_value": "2"
+        },
+        "display_name": null,
+        "type": "boolean",
+        "column_id": "type_of_building_semi_pucca"
+      },
+      {
+        "filter": {
+          "operator": "eq",
+          "type": "boolean_expression",
+          "expression": {
+            "datatype": "string",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "awc_building"
+            ]
+          },
+          "property_value": "3"
+        },
+        "display_name": null,
+        "type": "boolean",
+        "column_id": "type_of_building_kuccha"
+      },
+      {
+        "filter": {
+          "operator": "eq",
+          "type": "boolean_expression",
+          "expression": {
+            "datatype": "string",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "awc_building"
+            ]
+          },
+          "property_value": "4"
+        },
+        "display_name": null,
+        "type": "boolean",
+        "column_id": "type_of_building_partial_covered_space"
+      },
+      {
+        "filter": {
+          "type": "or",
+          "filters": [
+            {
+              "operator": "eq",
+              "type": "boolean_expression",
+              "expression": {
+                "datatype": "string",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "source_drinking_water"
+                ]
+              },
+              "property_value": "1"
+            },
+            {
+              "operator": "eq",
+              "type": "boolean_expression",
+              "expression": {
+                "datatype": "string",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "source_drinking_water"
+                ]
+              },
+              "property_value": "2"
+            },
+            {
+              "operator": "eq",
+              "type": "boolean_expression",
+              "expression": {
+                "datatype": "string",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "source_drinking_water"
+                ]
+              },
+              "property_value": "3"
+            },
+            {
+              "operator": "eq",
+              "type": "boolean_expression",
+              "expression": {
+                "datatype": "string",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "source_drinking_water"
+                ]
+              },
+              "property_value": "5"
+            }
+          ]
+        },
+        "display_name": null,
+        "type": "boolean",
+        "column_id": "clean_water"
+      },
+      {
+        "filter": {
+          "type": "or",
+          "filters": [
+            {
+              "operator": "eq",
+              "type": "boolean_expression",
+              "expression": {
+                "datatype": "string",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "toilet_functional"
+                ]
+              },
+              "property_value": "yes"
+            }
+          ]
+        },
+        "display_name": null,
+        "type": "boolean",
+        "column_id": "functional_toilet"
+      },
+      {
+        "filter": {
+          "type": "or",
+          "filters": [
+            {
+              "operator": "eq",
+              "type": "boolean_expression",
+              "expression": {
+                "datatype": "string",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "adequate_space_pse"
+                ]
+              },
+              "property_value": "1"
+            }
+          ]
+        },
+        "display_name": null,
+        "type": "boolean",
+        "column_id": "has_adequate_space_pse"
       }
     ],
     "named_expressions": {},

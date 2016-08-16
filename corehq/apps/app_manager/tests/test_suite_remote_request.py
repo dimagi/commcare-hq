@@ -9,7 +9,7 @@ from corehq.apps.app_manager.tests.util import TestXmlMixin, SuiteMixin
 DOMAIN = 'test_domain'
 
 
-class SyncRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
 
     def setUp(self):
@@ -25,14 +25,14 @@ class SyncRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             ]
         )
 
-    def test_sync_request(self):
+    def test_remote_request(self):
         """
-        Suite should include sync-request if searching is configured
+        Suite should include remote-request if searching is configured
         """
         with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
             get_url_base_patch.return_value = 'https://www.example.com'
             suite = self.app.create_suite()
-        self.assertXmlPartialEqual(self.get_xml('sync_request'), suite, "./sync-request[1]")
+        self.assertXmlPartialEqual(self.get_xml('remote_request'), suite, "./remote-request[1]")
 
     def test_case_search_action(self):
         """

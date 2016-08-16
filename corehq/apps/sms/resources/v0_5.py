@@ -2,7 +2,7 @@ import json
 from collections import namedtuple
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.resources import HqBaseResource
-from corehq.apps.api.resources.v0_1 import RequirePermissionAuthentication
+from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.mixin import apply_leniency
