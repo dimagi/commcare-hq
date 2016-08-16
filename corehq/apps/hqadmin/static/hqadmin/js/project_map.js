@@ -115,13 +115,7 @@ var projectMapInit = function(mapboxAccessToken) {
 
             // for showing a country's projects table
             self.tableProperties = ['Name', 'Sector', 'Organization', 'Deployment Date'];
-            self.selectedCountryProjectNames = ko.computed(function() {
-                return Object.keys(projectsByCountryThenName[this.selectedCountry().toLowerCase()] || {});
-            }, this);
-            self.getProjectProperty = function(projectName, propertyName) {
-                return ((projectsByCountryThenName[this.selectedCountry().toLowerCase()] || {})[projectName] || {})[propertyName] || '';
-            };
-
+            self.topFiveProjects = ko.observableArray();
             // for showing info on a single project
             self.projectPropertiesLeft = ['Sector', 'Sub-Sector', 'Organization', 'Deployment Countries', 'Deployment Date',
                                           '# Active Mobile Workers', '# Forms Submitted'];
@@ -254,6 +248,20 @@ var projectMapInit = function(mapboxAccessToken) {
             click: function(e) {
                 selectionModel.selectedCountry(feature.properties.name);
                 modalController.showProjectsTable(selectionModel.selectedCountry());
+                var country = (feature.properties.name).toUpperCase();
+                $.ajax({
+                    url: "/hq/admin/top_five_projects_by_country/?country=" + country,
+                    datatype: "json",
+                }).done(function(data){
+                    data[country].forEach(function(project){
+                        selectionModel.topFiveProjects.push({
+                            name: project['name'],
+                            sector: project['internal']['area'],
+                            organization: project['internal']['organization_name'],
+                            deployment: project['deployment']['date'],
+                        })
+                    });
+                })
 
                 // launch the modal
                 $('#modal').modal();
