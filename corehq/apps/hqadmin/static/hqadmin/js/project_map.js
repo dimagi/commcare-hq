@@ -108,19 +108,6 @@ var projectMapInit = function(mapboxAccessToken) {
         return that;
     }();
 
-    $(document).on('click', '.project-row', function(evt) {
-        var projectName = $(this).attr('data-project-name');
-        selectionModel.selectedProject(projectName);
-    });
-
-    $(document).on('click', '.back', function(evt) {
-        modalController.showProjectsTable(selectionModel.selectedCountry());
-    });
-
-    $('#modal').on('hidden.bs.modal', function (e) {
-         window.location.hash = '';
-    });
-
     var countriesGeo;
     // A lot of the styling work here is modeled after http://leafletjs.com/examples/choropleth.html
     var map = L.map('map').setView([0, 0], 3);
@@ -212,12 +199,12 @@ var projectMapInit = function(mapboxAccessToken) {
                             sector: project['internal']['area'],
                             organization: project['internal']['organization_name'],
                             deployment: project['deployment']['date'].substring(0,10),
-                        })
+                        });
                     });
-                })
+                });
                 // launch the modal
                 $('#modal').modal();
-            }
+            },
         });
     }
 
@@ -258,7 +245,7 @@ var projectMapInit = function(mapboxAccessToken) {
         // when there is a low number of max projects (for example, under strict filters), they may not all be included
         var indicesToRemove = [];
         var colors = COUNTRY_COLORS.filter(function(elem, index) {
-            if (countValues[index] <= 0 || (index > 0 && countValues[index] == countValues[index-1])) {
+            if (countValues[index] <= 0 || (index > 0 && countValues[index] === countValues[index-1])) {
                 indicesToRemove.push(index);
                 return false;
             } else {
