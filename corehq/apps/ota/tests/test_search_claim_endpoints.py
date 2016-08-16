@@ -134,7 +134,7 @@ class CaseClaimEndpointTests(TestCase):
 
         client = Client()
         client.login(username=USERNAME, password=PASSWORD)
-        url = reverse('sync_search', kwargs={'domain': DOMAIN})
+        url = reverse('remote_search', kwargs={'domain': DOMAIN})
         response = client.get(url, {'name': 'Jamie Hand', 'case_type': CASE_TYPE})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(re.sub(PATTERN, TIMESTAMP, response.content), known_result)
