@@ -188,11 +188,11 @@ var projectMapInit = function(mapboxAccessToken) {
                 selectionModel.selectedCountry(feature.properties.name);
                 modalController.showProjectsTable(selectionModel.selectedCountry());
                 var country = (feature.properties.name).toUpperCase();
+                selectionModel.topFiveProjects.removeAll();
                 $.ajax({
                     url: "/hq/admin/top_five_projects_by_country/?country=" + country,
                     datatype: "json",
                 }).done(function(data){
-                    selectionModel.topFiveProjects.removeAll();
                     data[country].forEach(function(project){
                         selectionModel.topFiveProjects.push({
                             name: project['name'],
