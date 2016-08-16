@@ -179,7 +179,8 @@ def update_hubspot_properties(webuser, properties):
 
 @analytics_task()
 def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
-    if path.startswith(reverse("register_user")):
+    from corehq.apps.registration.views import ProcessRegistrationView
+    if path.startswith(reverse(ProcessRegistrationView.urlname)):
         tracking_dict = {
             'created_account_in_hq': True,
             'is_a_commcare_user': True,

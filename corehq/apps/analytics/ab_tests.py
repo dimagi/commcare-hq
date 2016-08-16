@@ -40,12 +40,3 @@ class ABTest(object):
             'version': self.version,
         }
 
-
-NEW_USER_SIGNUP_OPTION_NEW = 'new'
-NEW_USER_SIGNUP_OPTION_OLD = 'old'
-
-NEW_USER_SIGNUP = ABTestConfig(
-    'New User Signup Form',
-    'new_signup_jul2016',
-    (NEW_USER_SIGNUP_OPTION_NEW, NEW_USER_SIGNUP_OPTION_OLD)
-)
