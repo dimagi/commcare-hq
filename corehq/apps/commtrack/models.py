@@ -81,11 +81,8 @@ class CommtrackActionConfig(DocumentSchema):
     def is_stock(self):
         return self.action in STOCK_ACTION_ORDER
 
-    @property
-    def is_requisition(self):
-        return self.action in REQUISITION_ACTION_TYPES
 
-
+# todo: delete this?
 class CommtrackRequisitionConfig(DocumentSchema):
     # placeholder class for when this becomes fancier
     enabled = BooleanProperty(default=False)
@@ -160,6 +157,7 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
     multiaction_enabled = BooleanProperty()
     multiaction_keyword_ = StringProperty()
 
+    # todo: remove?
     requisition_config = SchemaProperty(CommtrackRequisitionConfig)
     openlmis_config = SchemaProperty(OpenLMISConfig)
 
