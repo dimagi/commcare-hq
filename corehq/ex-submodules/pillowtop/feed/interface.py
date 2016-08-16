@@ -126,3 +126,9 @@ class ChangeFeed(object):
         """
         :return: A dictionary of ``(topic/db_name, offset integer)`` pairs
         """
+
+    @abstractmethod
+    def get_checkpoint_value(self):
+        """
+        :return: The current string change ID, or a json string if multiple feeds are used
+        """

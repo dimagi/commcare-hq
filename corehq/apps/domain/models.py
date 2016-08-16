@@ -102,7 +102,6 @@ class UpdatableSchema():
 
 
 class Deployment(DocumentSchema, UpdatableSchema):
-    date = DateTimeProperty()  # deprecated
     city = StringProperty()
     countries = StringListProperty()
     region = StringProperty()  # e.g. US, LAC, SA, Sub-saharn Africa, East Africa, West Africa, Southeast Asia)
@@ -146,7 +145,6 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
         choices=['', "plus", "community", "standard", "pro", "advanced", "enterprise"],
         default="community"
     )
-    services = StringProperty(choices=["", "basic", "plus", "full", "custom"], default="")  # deprecated
     initiative = StringListProperty()
     workshop_region = StringProperty()
     project_state = StringProperty(choices=["", "POC", "transition", "at-scale"], default="")
@@ -304,6 +302,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     send_to_duplicated_case_numbers = BooleanProperty(default=True)
     enable_registration_welcome_sms_for_case = BooleanProperty(default=False)
     enable_registration_welcome_sms_for_mobile_worker = BooleanProperty(default=False)
+    sms_survey_date_format = StringProperty()
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
@@ -352,6 +351,8 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     two_factor_auth = BooleanProperty(default=False)
     strong_mobile_passwords = BooleanProperty(default=False)
 
+    # There is no longer a way to request a report builder trial, so this property should be removed in the near
+    # future. (Keeping it for now in case a user has requested a trial and but has not yet been granted it)
     requested_report_builder_trial = StringListProperty()
     requested_report_builder_subscription = StringListProperty()
 

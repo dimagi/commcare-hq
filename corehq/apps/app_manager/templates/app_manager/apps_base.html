@@ -15,6 +15,7 @@
     <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2-3.5.2-legacy/select2.css' %}" />
     <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2-3.5.2-legacy/select2-bootstrap.css' %}" />
     <link type="text/less" rel="stylesheet" media="all" href="{% static 'app_manager/less/app_manager.less' %}"/>
+    <link type="text/less" rel="stylesheet" media="all" href="{% static 'app_manager/less/preview_app.less' %}"/>
     {% endcompress %}
 {% endblock %}
 
@@ -71,6 +72,9 @@
 {% endblock %}
 
 {% block page_content %}
+{% if request|toggle_enabled:"PREVIEW_APP" %}
+{% include 'app_manager/partials/preview_app.html'%}
+{% endif %}
 <div class="app-manager-content hide">
     {% if app %}
         {% if error %}

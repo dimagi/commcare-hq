@@ -100,24 +100,3 @@ def test_diff_days_expression(self, source_doc, to_date_expression, expected_val
         'to_date_expression': to_date_expression
     }, context)
     self.assertEqual(expected_value, named_expression(source_doc))
-
-
-@generate_cases([
-    ({'from_time': date(2015, 1, 1), 'to_time': date(2015, 1, 1)}, 0.0),
-    ({'from_time': datetime(2015, 1, 1, 10, 0, 0), 'to_time': datetime(2015, 1, 1, 10, 0, 1)}, 1.0),
-    ({'from_time': datetime(2015, 1, 1, 10, 0, 0), 'to_time': datetime(2015, 1, 1, 10, 1, 0)}, 60.0),
-    ({'from_time': "foo", 'to_time': "bar"}, None),
-])
-def test_diff_seconds_expression(self, source_doc, expected_value):
-    expression = ExpressionFactory.from_spec({
-        'type': 'diff_seconds',
-        'from_expression': {
-            'type': 'property_name',
-            'property_name': 'from_time',
-        },
-        'to_expression': {
-            'type': 'property_name',
-            'property_name': 'to_time',
-        }
-    })
-    self.assertEqual(expected_value, expression(source_doc))

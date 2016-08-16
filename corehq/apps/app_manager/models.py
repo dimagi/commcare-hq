@@ -1500,7 +1500,8 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         Return a list of each case type for which this Form opens a new subcase.
         :return:
         '''
-        return {subcase.case_type for subcase in self.actions.subcases if subcase.close_condition.type == "never"}
+        return {subcase.case_type for subcase in self.actions.subcases
+                if subcase.close_condition.type == "never" and subcase.case_type}
 
     @memoized
     def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
@@ -1765,20 +1766,10 @@ class SortElement(IndexedSchema):
     field = StringProperty()
     type = StringProperty()
     direction = StringProperty()
+    display = DictProperty()
 
-
-class SortOnlyDetailColumn(DetailColumn):
-    """This is a mock type, not intended to be part of a document"""
-
-    @property
-    def _i(self):
-        """
-        assert that SortOnlyDetailColumn never has ._i or .id called
-        since it should never be in an app document
-
-        """
-        raise NotImplementedError()
-
+    def has_display_values(self):
+        return any(s.strip() != '' for s in self.display.values())
 
 class CaseListLookupMixin(DocumentSchema):
     """
@@ -1826,6 +1817,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
 
     # If True, a small tile will display the case name after selection.
     persist_case_context = BooleanProperty()
+    persistent_case_context_xml = StringProperty(default='case_name')
 
     # If True, use case tiles in the case list
     use_case_tiles = BooleanProperty()

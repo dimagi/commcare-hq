@@ -137,7 +137,9 @@ class SubmissionPost(object):
             return failure_result
 
         if ASYNC_RESTORE.enabled(self.domain):
-            self._invalidate_async_tasks(self.auth_context.user_id)
+            if not isinstance(self.auth_context, DefaultAuthContext):
+                # If this is a system form (with DefaultAuthContext) we don't invalidate restores
+                self._invalidate_async_tasks(self.auth_context.user_id)
 
         result = process_xform_xml(self.domain, self.instance, self.attachments)
         submitted_form = result.submitted_form

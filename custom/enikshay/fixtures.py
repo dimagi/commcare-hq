@@ -30,7 +30,7 @@ class CalendarFixtureProvider(object):
                 current_year_element.append(current_month_element)
 
             current_day_element = Element('day', {
-                'date': str(current_day.toordinal()),
+                'date': str(int(current_day.strftime('%s')) / (60 * 60 * 24)),  # mobile uses days since epoch
                 'number': str(current_day.day),
                 'name': _(current_day.strftime('%A')),
                 'week': str(current_day.isocalendar()[1]),

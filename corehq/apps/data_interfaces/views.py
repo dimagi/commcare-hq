@@ -13,6 +13,7 @@ from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain, \
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports
 from corehq.util.spreadsheets.excel import JSONReaderError, WorkbookJSONReader
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -58,11 +59,15 @@ def default(request, domain):
 
 
 def default_data_view_url(request, domain):
-    if request.couch_user.can_view_reports():
-        from corehq.apps.export.views import FormExportListView
+    from corehq.apps.export.views import (
+        FormExportListView, CaseExportListView,
+        DeIdFormExportListView, user_can_view_deid_exports
+    )
+    if can_view_form_exports(request.couch_user, domain):
         return reverse(FormExportListView.urlname, args=[domain])
+    elif can_view_case_exports(request.couch_user, domain):
+        return reverse(CaseExportListView.urlname, args=[domain])
 
-    from corehq.apps.export.views import DeIdFormExportListView, user_can_view_deid_exports
     if user_can_view_deid_exports(domain, request.couch_user):
         return reverse(DeIdFormExportListView.urlname, args=[domain])
 

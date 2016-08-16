@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, namedtuple, OrderedDict
 from copy import deepcopy
 import functools
 import json
@@ -458,24 +458,21 @@ def add_odk_profile_after_build(app_build):
     app_build.odk_profile_created_after_build = True
 
 
-def create_temp_sort_column(field):
+def create_temp_sort_column(sort_element, order):
     """
     Used to create a column for the sort only properties to
     add the field to the list of properties and app strings but
     not persist anything to the detail data.
     """
-    from corehq.apps.app_manager.models import SortOnlyDetailColumn
-    return SortOnlyDetailColumn(
+    from corehq.apps.app_manager.models import DetailColumn
+    col = DetailColumn(
         model='case',
-        field=field,
+        field=sort_element.field,
         format='invisible',
-        header=None,
+        header=sort_element.display,
     )
-
-
-def is_sort_only_column(column):
-    from corehq.apps.app_manager.models import SortOnlyDetailColumn
-    return isinstance(column, SortOnlyDetailColumn)
+    col._i = order
+    return col
 
 
 def get_correct_app_class(doc):
@@ -736,3 +733,25 @@ def purge_report_from_mobile_ucr(report_config):
             app.save()
             did_purge_something = True
     return did_purge_something
+
+
+SortOnlyElement = namedtuple("SortOnlyElement", "field, sort_element, order")
+
+
+def get_sort_and_sort_only_columns(detail, sort_elements):
+    """
+    extracts out info about columns that are added as only sort fields and columns added as both
+    sort and display fields
+    """
+    sort_elements = OrderedDict((s.field, (s, i + 1)) for i, s in enumerate(sort_elements))
+    sort_columns = {}
+    for column in detail.get_columns():
+        sort_element, order = sort_elements.pop(column.field, (None, None))
+        if sort_element:
+            sort_columns[column.field] = (sort_element, order)
+
+    sort_only_elements = [
+        SortOnlyElement(field, element, element_order)
+        for field, (element, element_order) in sort_elements.items()
+    ]
+    return sort_only_elements, sort_columns

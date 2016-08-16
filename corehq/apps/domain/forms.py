@@ -976,7 +976,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             kwargs['can_use_data'] = self.cleaned_data['can_use_data'] == 'true'
 
         domain.update_deployment(
-            date=dateutil.parser.parse(self.cleaned_data['deployment_date']),
             countries=self.cleaned_data['countries'],
         )
         domain.is_test = self.cleaned_data['is_test']

@@ -38,12 +38,13 @@
 
 {% block js %} {{ block.super }}
     {% compress js %}
-    {% include "formplayer/dependencies.html" %}
+        {% include "formplayer/dependencies.html" %}
     {% endcompress %}
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
     <script>
+        window.GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is loaded on-demand
         var translatedStrings = {
             synced: "{% trans "User Data Successfully Synced" %}",
             errSyncing: "{% trans "Could not sync user data. Please try again and report a bug if issue persists." %}"
@@ -67,10 +68,16 @@
 {% block page_content %}
 
     <!-- For now we won't touch this since the form entry code is coupled with it  -->
+
+
     <div id="cloudcare-main">
         <section id="cloudcare-notifications"></section>
         <section id="case-crumbs" style="width: 800px"></section>
         <section id="cases"></section>
+        <div id="menu-container">
+            <div id="breadcrumb-region" class="container"></div>
+            <div id="menu-region" class="container"></div>
+        </div>
         <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
         {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
             <section id="cloudcare-debugger" data-bind="
@@ -82,15 +89,12 @@
         {% endif %}
     </div>
 
-    <div id="menu-container">
-        <div id="menu-region" class="container"></div>
-    </div>
-
     {% include 'formplayer/fullform-ui/templates.html' %}
     {% include 'formplayer/grid_view.html' %}
     {% include 'formplayer/case_detail.html' %}
     {% include 'formplayer/case_list.html' %}
     {% include 'formplayer/menu_list.html' %}
     {% include 'formplayer/session_list.html' %}
+    {% include 'formplayer/query_view.html' %}
 
 {% endblock %}

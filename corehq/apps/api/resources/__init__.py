@@ -11,16 +11,16 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.util import get_obj
 
 
-class dict_object(object):
+class DictObject(object):
 
-    def __init__(self, dict):
-        self.dict = dict
+    def __init__(self, dict=None):
+        self._data = dict or {}
 
     def __getattr__(self, item):
-        return self.dict[item]
+        return self._data.get(item, None)
 
     def __repr__(self):
-        return 'dict_object(%r)' % self.dict
+        return 'DictObject(%r)' % self._data
 
 
 def build_content_type(format, encoding='utf-8'):
