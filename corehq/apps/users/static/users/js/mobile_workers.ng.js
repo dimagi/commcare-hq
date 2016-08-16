@@ -327,13 +327,14 @@
                     var score = zxcvbn(password, ['dimagi', 'commcare', 'hq', 'commcarehq']).score,
                         goodEnough = score > 1;
 
-                    if (score < 1) {
-                        visualFormCtrl.passwordError();
-                    } else if (score > 1){
+                    if (goodEnough) {
                         visualFormCtrl.passwordSuccess();
+                    } else if (score < 1) {
+                        visualFormCtrl.passwordError();
                     } else {
                         visualFormCtrl.passwordAlmost();
                     }
+
                     return goodEnough;
                 };
             }
@@ -343,5 +344,4 @@
     mobileWorkers.directive(mobileWorkerDirectives);
     mobileWorkers.factory(mobileWorkerFactories);
     mobileWorkers.controller(mobileWorkerControllers);
-    
 }(window.angular));
