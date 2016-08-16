@@ -18,7 +18,9 @@ Util.currentUrlToObject = function () {
 
 Util.setUrlToObject = function (urlObject) {
     var encodedUrl = Util.objectToEncodedUrl(urlObject.toJson());
-    FormplayerFrontend.navigate(encodedUrl);
+    FormplayerFrontend.navigate(encodedUrl, {
+        trigger: true,
+    });
 };
 
 Util.doUrlAction = function(actionCallback) {
