@@ -73,7 +73,7 @@ class CallCenterIndicatorConfig(JsonObject):
         )
 
     @classmethod
-    def default_config(cls, include_legacy=True):
+    def default_config(cls, domain_name=None, include_legacy=True):
         def default_basic():
             return BasicIndicator(enabled=True, date_ranges=set(const.DATE_RANGES))
 
@@ -91,6 +91,10 @@ class CallCenterIndicatorConfig(JsonObject):
         config.legacy_forms_submitted = include_legacy
         config.legacy_cases_total = include_legacy
         config.legacy_cases_active = include_legacy
+
+        for slug in const.PER_DOMAIN_FORM_INDICATORS.get(domain_name, {}):
+            for range in const.DATE_RANGES:
+                config.custom_form.append(TypedIndicator(type=slug, date_range=range))
 
         return config
 
