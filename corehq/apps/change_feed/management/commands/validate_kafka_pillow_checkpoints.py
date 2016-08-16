@@ -30,6 +30,8 @@ def validate_checkpoints(print_only):
             checkpoint_dict = _get_checkpoint_dict(pillow)
             try:
                 validate_offsets(checkpoint_dict)
+                # temp - just testing the failure workflow
+                raise UnavailableKafkaOffset('this is for testing only')
             except UnavailableKafkaOffset as e:
                 message = u'Problem with checkpoint for {}: {}'.format(
                     pillow.pillow_id, e
@@ -45,9 +47,15 @@ def _get_checkpoint_dict(pillow):
     if isinstance(sequence, dict):
         sequence_dict = sequence
     else:
-        sequence_dict = {
-            pillow.get_change_feed()._get_single_topic_or_fail(): int(sequence)
-        }
+        try:
+            sequence_int = int(sequence)
+        except ValueError:
+            # assume this is an old/legacy checkpoint
+            return {}
+        else:
+            sequence_dict = {
+                pillow.get_change_feed()._get_single_topic_or_fail(): sequence_int
+            }
     # filter out 0's since we don't want to check those as they are likely new pillows
     return {
         k: v for k, v in sequence_dict.items() if v > 0
