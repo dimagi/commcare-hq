@@ -320,6 +320,10 @@ class CreatePushBase(IdNode, BaseFrame):
     def add_datum(self, datum):
         self.node.append(datum.node)
 
+    def add_rewind(self, rewind_value):
+        node = etree.SubElement(self.node, 'rewind')
+        node.attrib['value'] = rewind_value
+
 
 class CreateFrame(CreatePushBase):
     ROOT_NAME = 'create'
