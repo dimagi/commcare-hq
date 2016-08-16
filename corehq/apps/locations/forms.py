@@ -80,7 +80,6 @@ class LocationForm(forms.Form):
     external_id.widget.attrs['readonly'] = True
 
     strict = True  # optimization hack: strict or loose validation
-    # TODO remove user from parameters once all these branches are merged
 
     def __init__(self, location, bound_data=None, is_new=False, user=None,
                  *args, **kwargs):
