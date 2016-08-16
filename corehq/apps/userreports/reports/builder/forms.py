@@ -564,12 +564,15 @@ class DataSourceForm(forms.Form):
         return cleaned_data
 
 _shared_properties = ['exists_in_current_version', 'display_text', 'property', 'data_source_field']
-FilterViewModel = namedtuple("FilterViewModel", _shared_properties + ['format'])
+UserFilterViewModel = namedtuple("UserFilterViewModel", _shared_properties + ['format'])
+DefaultFilterViewModel = namedtuple("DefaultFilterViewModel",
+                                    _shared_properties + ['format', 'pre_value', 'pre_operator'])
 ColumnViewModel = namedtuple("ColumnViewModel", _shared_properties + ['calculation'])
 
 
 class ConfigureNewReportBase(forms.Form):
-    filters = FilterField(required=False)
+    user_filters = FilterField(required=False)
+    default_filters = FilterField(required=False)
     button_text = ugettext_noop('Done')
 
     def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
@@ -697,24 +700,46 @@ class ConfigureNewReportBase(forms.Form):
         """
         return crispy.Fieldset(
             "",
-            self.filter_fieldset
+            self.user_filter_fieldset
         )
 
     @property
-    def filter_fieldset(self):
+    def user_filter_fieldset(self):
         """
         Return a fieldset representing the markup used for configuring the
-        report filters.
+        user filters.
         """
         return crispy.Fieldset(
             _legend(
-                _("Filters"),
-                _("Add filters to your report to allow viewers to select which data the report will display. These filters will be displayed at the top of your report.")
+                _("User Filters"),
+                _("Add filters to your report to allow viewers to select which data the report will display. "
+                  "These filters will be displayed at the top of your report.")
             ),
             crispy.Div(
-                crispy.HTML(self.column_config_template), id="filters-table", data_bind='with: filtersList'
+                crispy.HTML(self.column_config_template),
+                id="user-filters-table",
+                data_bind='with: userFiltersList'
             ),
-            crispy.Hidden('filters', None, data_bind="value: filtersList.serializedProperties")
+            crispy.Hidden('user_filters', None, data_bind="value: userFiltersList.serializedProperties")
+        )
+
+    @property
+    def default_filter_fieldset(self):
+        """
+        Return a fieldset representing the markup used for configuring the
+        default filters.
+        """
+        return crispy.Fieldset(
+            _legend(
+                _("Default Filters"),
+                _("These filters are not displayed to report viewers and are always applied to the data.")
+            ),
+            crispy.Div(
+                crispy.HTML(self.column_config_template),
+                id="default-filters-table",
+                data_bind='with: defaultFiltersList'
+            ),
+            crispy.Hidden('default_filters', None, data_bind="value: defaultFiltersList.serializedProperties")
         )
 
     def _get_data_source_configuration_kwargs(self):
@@ -798,9 +823,14 @@ class ConfigureNewReportBase(forms.Form):
 
     @property
     @memoized
-    def initial_filters(self):
+    def initial_default_filters(self):
+        return [self._get_view_model(f) for f in self.existing_report.prefilters] if self.existing_report else []
+
+    @property
+    @memoized
+    def initial_user_filters(self):
         if self.existing_report:
-            return [self._get_view_model(f) for f in self.existing_report.filters]
+            return [self._get_view_model(f) for f in self.existing_report.filters_without_prefilters]
         if self.source_type == 'case':
             return self._default_case_report_filters
         else:
@@ -811,14 +841,14 @@ class ConfigureNewReportBase(forms.Form):
     @memoized
     def _default_case_report_filters(self):
         return [
-            FilterViewModel(
+            UserFilterViewModel(
                 exists_in_current_version=True,
                 property='closed',
                 data_source_field=None,
                 display_text=_('Closed'),
                 format='Choice',
             ),
-            FilterViewModel(
+            UserFilterViewModel(
                 exists_in_current_version=True,
                 property='computed/owner_name',
                 data_source_field=None,
@@ -831,7 +861,7 @@ class ConfigureNewReportBase(forms.Form):
     @memoized
     def _default_form_report_filters(self):
         return [
-            FilterViewModel(
+            UserFilterViewModel(
                 exists_in_current_version=True,
                 property='timeEnd',
                 data_source_field=None,
@@ -846,21 +876,32 @@ class ConfigureNewReportBase(forms.Form):
         the knockout view model representing this filter in the report builder.
 
         """
-        filter_type_map = {
-            'dynamic_choice_list': 'Choice',
-            # This exists to handle the `closed` filter that might exist
-            'choice_list': 'Choice',
-            'date': 'Date',
-            'numeric': 'Numeric'
-        }
         exists = self._data_source_prop_exists(filter['field'])
-        return FilterViewModel(
-            exists_in_current_version=exists,
-            display_text=filter['display'],
-            format=filter_type_map[filter['type']],
-            property=self._get_property_id_by_indicator_id(filter['field']) if exists else None,
-            data_source_field=filter['field'] if not exists else None
-        )
+        if filter['type'] == 'pre':
+            return DefaultFilterViewModel(
+                exists_in_current_version=exists,
+                display_text='',
+                format='Value' if filter['pre_value'] else 'Date',
+                property=self._get_property_id_by_indicator_id(filter['field']) if exists else None,
+                data_source_field=filter['field'] if not exists else None,
+                pre_value=filter['pre_value'],
+                pre_operator=filter['pre_operator'],
+            )
+        else:
+            filter_type_map = {
+                'dynamic_choice_list': 'Choice',
+                # This exists to handle the `closed` filter that might exist
+                'choice_list': 'Choice',
+                'date': 'Date',
+                'numeric': 'Numeric'
+            }
+            return UserFilterViewModel(
+                exists_in_current_version=exists,
+                display_text=filter['display'],
+                format=filter_type_map[filter['type']],
+                property=self._get_property_id_by_indicator_id(filter['field']) if exists else None,
+                data_source_field=filter['field'] if not exists else None
+            )
 
     def _get_column_option_by_indicator_id(self, indicator_column_id):
         """
@@ -948,7 +989,8 @@ class ConfigureNewReportBase(forms.Form):
         filter_type_map = {
             'Choice': 'dynamic_choice_list',
             'Date': 'date',
-            'Numeric': 'numeric'
+            'Numeric': 'numeric',
+            'Value': 'pre',
         }
 
         def _make_report_filter(conf, index):
@@ -977,10 +1019,17 @@ class ConfigureNewReportBase(forms.Form):
             }
             if conf['format'] == 'Date':
                 ret.update({'compare_as_string': True})
+            if conf.get('pre_value') or conf.get('pre_operator'):
+                ret.update({
+                    'type': 'pre',  # type could have been "date"
+                    'pre_operator': conf.get('pre_operator', None),
+                    'pre_value': conf.get('pre_value', []),
+                })
             return ret
 
-        filter_configs = self.cleaned_data['filters']
-        filters = [_make_report_filter(f, i) for i, f in enumerate(filter_configs)]
+        user_filter_configs = self.cleaned_data['user_filters']
+        default_filter_configs = self.cleaned_data['default_filters']
+        filters = [_make_report_filter(f, i) for i, f in enumerate(user_filter_configs + default_filter_configs)]
         if self.source_type == 'case':
             # The UI doesn't support specifying "choice_list" filters, only "dynamic_choice_list" filters.
             # But, we want to make the open/closed filter a cleaner "choice_list" filter, so we do that here.
@@ -1035,7 +1084,8 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
                 ),
                 placeholder=_("Select Property..."),
             ),
-            self.filter_fieldset
+            self.user_filter_fieldset,
+            self.default_filter_fieldset
         )
 
     @property
@@ -1110,7 +1160,8 @@ class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
                     "Select Property..."
                 ),
             ),
-            self.filter_fieldset
+            self.user_filter_fieldset,
+            self.default_filter_fieldset
         )
 
     @property
@@ -1152,7 +1203,8 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 )
             ),
             self.column_fieldset,
-            self.filter_fieldset
+            self.user_filter_fieldset,
+            self.default_filter_fieldset
         )
 
     @property
@@ -1242,7 +1294,8 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
                 ),
                 'group_by',
             ),
-            self.filter_fieldset
+            self.user_filter_fieldset,
+            self.default_filter_fieldset
         )
 
     @property
@@ -1339,14 +1392,14 @@ class ConfigureWorkerReportForm(ConfigureTableReportForm):
     @memoized
     def _default_case_report_filters(self):
         return [
-            FilterViewModel(
+            UserFilterViewModel(
                 exists_in_current_version=True,
                 property='closed',
                 data_source_field=None,
                 display_text='closed',
                 format='Choice',
             ),
-            FilterViewModel(
+            UserFilterViewModel(
                 exists_in_current_version=True,
                 property='computed/user_name',
                 data_source_field=None,
@@ -1366,7 +1419,8 @@ class ConfigureWorkerReportForm(ConfigureTableReportForm):
                 )
             ),
             self.column_fieldset,
-            self.filter_fieldset
+            self.user_filter_fieldset,
+            self.default_filter_fieldset
         )
 
 
@@ -1405,7 +1459,8 @@ class ConfigureMapReportForm(ConfigureListReportForm):
                 ),
                 'location',
             ),
-            self.filter_fieldset
+            self.user_filter_fieldset,
+            self.default_filter_fieldset
         )
 
     @property

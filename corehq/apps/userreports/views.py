@@ -27,6 +27,7 @@ from corehq.apps.analytics.tasks import update_hubspot_properties
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.util import reverse
@@ -579,7 +580,10 @@ class ConfigureChartReport(ReportBuilderView):
             'editing_existing_report': bool(self.existing_report),
             'report_column_options': [p.to_dict() for p in report_form.report_column_options.values()],
             'data_source_indicators': [p._asdict() for p in report_form.data_source_properties.values()],
-            'initial_filters': [f._asdict() for f in report_form.initial_filters],
+            # For now only use date ranges that don't require additional parameters
+            'date_range_options': [r._asdict() for r in get_simple_dateranges()],
+            'initial_user_filters': [f._asdict() for f in report_form.initial_user_filters],
+            'initial_default_filters': [f._asdict() for f in report_form.initial_default_filters],
             'initial_columns': [
                 c._asdict() for c in getattr(report_form, 'initial_columns', [])
             ],
