@@ -51,6 +51,7 @@ branches:
   - nc/report-builder # Noah 6/29
   - welcome-to-vellum # Jenny 8/3
   - ce/admin-api # Cal 8/11
+  - cz/test-fail-checkpoints # Cal 8/11
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
