@@ -120,7 +120,6 @@ class RemoteRequestContributor(SuiteContributorByModule):
             )
 
             frame = PushFrame()
-            # Open first form in module
             frame.add_rewind(QuerySessionXPath('case_id').instance())
             remote_request.stack.add_frame(frame)
 
