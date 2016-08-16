@@ -20,7 +20,6 @@ from casexml.apps.case.util import post_case_blocks
 from corehq.apps.userreports.models import ReportConfiguration, \
     DataSourceConfiguration
 from corehq.apps.userreports.tasks import rebuild_indicators
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.pillows.case import transform_case_for_elasticsearch
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
@@ -101,10 +100,6 @@ class APIResourceTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        delete_all_users()
-        SubscriptionAdjustment.objects.all().delete()
-        for domain in Domain.get_all():
-            domain.delete()
         Role.get_cache().clear()
         generator.instantiate_accounting()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
