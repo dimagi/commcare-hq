@@ -1,0 +1,60 @@
+nav.app-manager-content {
+  margin: 20px 0;
+
+  // Menu indentation
+  // First level: whole menu ("Deploy", etc.)
+  > .nav-hq-sidebar {
+    padding-left: 0px;
+
+    // Second level: modules
+    .nav-hq-sidebar {
+      padding-left: 0px;
+
+      li a {
+        padding-left: 20px;
+      }
+
+      // Third level: forms
+      .nav-hq-sidebar {
+        padding-left: 20px;
+      }
+    }
+  }
+
+  // Container for language dropdown
+  #langs {
+    position: absolute;
+    right: 5px;
+    top: 2px;
+
+    select {
+      height: 20px;
+
+      // Chrome on Windows respects padding inherited from .form-control, which
+      // isn't desirable, as it doesn't play well with the explicit (short) height
+      padding: 0;
+    }
+  }
+
+  // Pencil icons for editing forms
+  .edit-form-pencil {
+    position: absolute;
+    right: -13px;
+    top: 3px;
+    opacity: 0.5;
+  }
+
+  .edit-form-li {
+    position: relative;
+
+    &.active .edit-form-pencil .fa {
+      color: white;
+    }
+  }
+
+}
+
+// Used to indicate sortable table rows (i.e., case list rows)
+.sortable-handle {
+  cursor: move;
+}
