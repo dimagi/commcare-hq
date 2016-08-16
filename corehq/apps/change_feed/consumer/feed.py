@@ -21,7 +21,7 @@ class KafkaChangeFeed(ChangeFeed):
     Kafka-based implementation of a ChangeFeed
     """
 
-    def __init__(self, topics, group_id, partition=0, strict=False):
+    def __init__(self, topics, group_id, partition=0, strict=True):
         """
         Create a change feed listener for a list of kafka topics, a group ID, and partition.
 
