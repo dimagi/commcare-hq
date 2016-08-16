@@ -30,6 +30,8 @@ def validate_checkpoints(print_only):
             checkpoint_dict = _get_checkpoint_dict(pillow)
             try:
                 validate_offsets(checkpoint_dict)
+                # temp - just testing the failure workflow
+                raise UnavailableKafkaOffset('this is for testing only')
             except UnavailableKafkaOffset as e:
                 message = u'Problem with checkpoint for {}: {}'.format(
                     pillow.pillow_id, e
