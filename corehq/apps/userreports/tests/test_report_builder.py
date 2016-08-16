@@ -249,7 +249,8 @@ class MultiselectQuestionTest(ReportBuilderDBTest):
             "form",
             self.form.unique_id,
             data={
-                'filters': '[]',
+                'user_filters': '[]',
+                'default_filters': '[]',
                 'columns': '[{"property": "/data/first_name", "display_text": "first name"}]',
             }
         )
@@ -272,7 +273,8 @@ class MultiselectQuestionTest(ReportBuilderDBTest):
             "form",
             self.form.unique_id,
             data={
-                'filters': '[]',
+                'user_filters': '[]',
+                'default_filters': '[]',
                 'group_by': '/data/state'
             }
         )
