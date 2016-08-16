@@ -18,10 +18,15 @@ from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 from corehq.apps.analytics.tasks import (
     track_workflow,
     track_confirmed_account_on_hubspot,
-    track_clicked_signup_on_hubspot
+    track_clicked_signup_on_hubspot,
+    update_hubspot_properties
 )
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.analytics import ab_tests
+from corehq.apps.app_manager.const import APP_V2
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.models import Application, Module
+from corehq.apps.app_manager.util import save_xform
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.exceptions import NameUnavailableException
@@ -161,7 +166,7 @@ class NewUserRegistrationView(BasePageView):
 
 @transaction.atomic
 def register_user(request):
-    prefilled_email = request.GET.get('e', '')
+    prefilled_email = request.POST.get('e', '')
     context = get_domain_context()
 
     if request.user.is_authenticated():
@@ -172,16 +177,16 @@ def register_user(request):
         else:
             return redirect("homepage")
     else:
-
         ab = ab_tests.ABTest(ab_tests.NEW_USER_SIGNUP, request)
         if ab.version != ab_tests.NEW_USER_SIGNUP_OPTION_OLD:
+            # TODO: deal with this, if this test is still going on when PR is merged
             response = HttpResponseRedirect(
                 _get_url_with_email(reverse(NewUserRegistrationView.urlname), prefilled_email)
             )
             ab.update_response(response)
             return response
 
-        if request.method == 'POST':
+        if request.method == 'POST' and request.POST.get('prelogin_redirect', '') != '1':
             form = NewWebUserRegistrationForm(request.POST)
             if form.is_valid():
                 activate_new_user(form, ip=get_ip(request))
@@ -197,6 +202,19 @@ def register_user(request):
                     try:
                         requested_domain = request_new_domain(
                             request, form, is_new_user=True)
+                        if form.cleaned_data['xform']:
+                            lang = 'en'
+                            app = Application.new_app(requested_domain, "Untitled Application",
+                                                      application_version=APP_V2)
+                            module = Module.new_module(_("Untitled Module"), lang)
+                            app.add_module(module)
+                            save_xform(app, app.new_form(0, "Untitled Form", lang), form.cleaned_data['xform'])
+                            app.save()
+                            web_user = WebUser.get_by_username(new_user.email)
+                            if web_user:
+                                update_hubspot_properties(web_user, {
+                                    'signup_via_demo': 'yes',
+                                })
                     except NameUnavailableException:
                         context.update({
                             'current_page': {'page_name': _('Oops!')},
@@ -214,7 +232,7 @@ def register_user(request):
             context.update({'create_domain': form.cleaned_data['create_domain']})
         else:
             form = NewWebUserRegistrationForm(
-                initial={'email': prefilled_email, 'create_domain': True})
+                initial={'email': prefilled_email, 'create_domain': True, 'xform': request.POST.get('xform', '')})
             context.update({'create_domain': True})
             meta = get_meta(request)
             track_clicked_signup_on_hubspot(prefilled_email, request.COOKIES, meta)
@@ -412,7 +430,16 @@ def confirm_domain(request, guid=None):
         % (requesting_user.username))
     track_workflow(requesting_user.email, "Confirmed new project")
     track_confirmed_account_on_hubspot.delay(requesting_user)
-    return HttpResponseRedirect(reverse("dashboard_default", args=[requested_domain]))
+    url = reverse("dashboard_default", args=[requested_domain])
+
+    # If user already created an app (via prelogin demo), send them there
+    apps = get_apps_in_domain(requested_domain.name, include_remote=False)
+    if len(apps) == 1:
+        app = apps[0]
+        if len(app.modules) == 1 and len(app.modules[0].forms) == 1:
+            url = reverse('form_source', args=[requested_domain.name, app.id, 0, 0])
+
+    return HttpResponseRedirect(url)
 
 
 @retry_resource(3)
