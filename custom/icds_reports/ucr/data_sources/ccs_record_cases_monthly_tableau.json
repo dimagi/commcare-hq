@@ -1,0 +1,5440 @@
+{
+  "domains": [
+    "icds-sql",
+    "icds-test",
+    "icds-cas",
+    "icds-cas-sandbox"
+  ],
+  "config": {
+    "table_id": "static-ccs_record_cases_monthly_tableau",
+    "display_name": "Cases - CCS Record for Tableau (Monthly) (Static)",
+    "referenced_doc_type": "CommCareCase",
+    "description": "",
+    "base_item_expression": {
+      "test": {},
+      "expressions": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "type": "iterator"
+    },
+    "configured_filter": {
+      "type": "and",
+      "filters": [
+        {
+          "operator": "eq",
+          "expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "type"
+          },
+          "type": "boolean_expression",
+          "property_value": "ccs_record"
+        }
+      ]
+    },
+    "configured_indicators": [
+      {
+        "column_id": "month",
+        "datatype": "date",
+        "display_name": null,
+        "expression": {
+          "name": "month_start",
+          "type": "named"
+        },
+        "is_nullable": false,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "case_id",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "expression": {
+            "datatype": null,
+            "property_name": "_id",
+            "type": "property_name"
+          },
+          "type": "root_doc"
+        },
+        "is_nullable": false,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "person_case_id",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "name": "parent_id",
+          "type": "named"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "household_case_id",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "name": "parent_parent_id",
+          "type": "named"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "state_id",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "location_id_expression": {
+            "location_id_expression": {
+              "location_id_expression": {
+                "location_id_expression": {
+                  "expression": {
+                    "datatype": null,
+                    "property_name": "owner_id",
+                    "type": "property_name"
+                  },
+                  "type": "root_doc"
+                },
+                "type": "location_parent_id"
+              },
+              "type": "location_parent_id"
+            },
+            "type": "location_parent_id"
+          },
+          "type": "location_parent_id"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "district_id",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "location_id_expression": {
+            "location_id_expression": {
+              "location_id_expression": {
+                "expression": {
+                  "datatype": null,
+                  "property_name": "owner_id",
+                  "type": "property_name"
+                },
+                "type": "root_doc"
+              },
+              "type": "location_parent_id"
+            },
+            "type": "location_parent_id"
+          },
+          "type": "location_parent_id"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "block_id",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "location_id_expression": {
+            "location_id_expression": {
+              "expression": {
+                "datatype": null,
+                "property_name": "owner_id",
+                "type": "property_name"
+              },
+              "type": "root_doc"
+            },
+            "type": "location_parent_id"
+          },
+          "type": "location_parent_id"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "supervisor_id",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "location_id_expression": {
+            "expression": {
+              "datatype": null,
+              "property_name": "owner_id",
+              "type": "property_name"
+            },
+            "type": "root_doc"
+          },
+          "type": "location_parent_id"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "awc_id",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "expression": {
+            "datatype": null,
+            "property_name": "owner_id",
+            "type": "property_name"
+          },
+          "type": "root_doc"
+        },
+        "is_nullable": false,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "age_in_months",
+        "datatype": "integer",
+        "display_name": null,
+        "expression": {
+          "context_variables": {
+            "age_in_days": {
+              "from_date_expression": {
+                "doc_id_expression": {
+                  "name": "parent_id",
+                  "type": "named"
+                },
+                "related_doc_type": "CommCareCase",
+                "type": "related_doc",
+                "value_expression": {
+                  "datatype": "date",
+                  "property_name": "dob",
+                  "type": "property_name"
+                }
+              },
+              "to_date_expression": {
+                "name": "month_end",
+                "type": "named"
+              },
+              "type": "diff_days"
+            }
+          },
+          "statement": "age_in_days / 30.4",
+          "type": "evaluator"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "age_in_years",
+        "datatype": "integer",
+        "display_name": null,
+        "expression": {
+          "context_variables": {
+            "age_in_days": {
+              "from_date_expression": {
+                "doc_id_expression": {
+                  "name": "parent_id",
+                  "type": "named"
+                },
+                "related_doc_type": "CommCareCase",
+                "type": "related_doc",
+                "value_expression": {
+                  "datatype": "date",
+                  "property_name": "dob",
+                  "type": "property_name"
+                }
+              },
+              "to_date_expression": {
+                "name": "month_end",
+                "type": "named"
+              },
+              "type": "diff_days"
+            }
+          },
+          "statement": "age_in_days / 365.25",
+          "type": "evaluator"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "disabled",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "name": "disabled",
+          "type": "named"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "caste",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "name": "caste",
+          "type": "named"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "minority",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "name": "minority",
+          "type": "named"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "resident",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "name": "resident",
+          "type": "named"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "ccs_status",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "expression_if_false": {
+            "expression_if_false": {
+              "constant": "other",
+              "type": "constant"
+            },
+            "expression_if_true": {
+              "constant": "lactating",
+              "type": "constant"
+            },
+            "test": {
+              "name": "lactating",
+              "type": "named"
+            },
+            "type": "conditional"
+          },
+          "expression_if_true": {
+            "constant": "pregnant",
+            "type": "constant"
+          },
+          "test": {
+            "name": "pregnant",
+            "type": "named"
+          },
+          "type": "conditional"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "open_in_month",
+        "display_name": null,
+        "filter": {
+          "name": "open_in_month",
+          "type": "named"
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "alive_in_month",
+        "display_name": null,
+        "filter": {
+          "name": "alive_in_month",
+          "type": "named"
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "valid_in_month",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "name": "alive_in_month",
+              "type": "named"
+            },
+            {
+              "name": "open_in_month",
+              "type": "named"
+            },
+            {
+              "type": "or",
+              "filters": [
+                {
+                  "name": "pregnant",
+                  "type": "named"
+                },
+                {
+                  "name": "lactating",
+                  "type": "named"
+                }
+              ]
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "trimester",
+        "type": "expression",
+        "datatype": "integer",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "display_name": null,
+        "expression": {
+          "type": "named",
+          "name": "trimester"
+        }
+      },
+      {
+        "column_id": "pregnant",
+        "display_name": null,
+        "filter": {
+          "name": "pregnant",
+          "type": "named"
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "lactating",
+        "display_name": null,
+        "filter": {
+          "name": "lactating",
+          "type": "named"
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "num_rations_distributed",
+        "datatype": "integer",
+        "display_name": null,
+        "expression": {
+          "name": "thr_rations",
+          "type": "named"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "rations_21_plus_distributed",
+        "display_name": null,
+        "filter": {
+          "expression": {
+            "name": "thr_rations",
+            "type": "named"
+          },
+          "operator": "gte",
+          "property_value": 21,
+          "type": "boolean_expression"
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "thr_eligible",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "name": "alive_in_month",
+              "type": "named"
+            },
+            {
+              "name": "open_in_month",
+              "type": "named"
+            },
+            {
+              "type": "or",
+              "filters": [
+                {
+                  "name": "pregnant",
+                  "type": "named"
+                },
+                {
+                  "name": "lactating",
+                  "type": "named"
+                }
+              ]
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "tetanus_complete",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "pregnant"
+            },
+            {
+              "type": "not",
+              "filter": {
+                "operator": "in",
+                "type": "boolean_expression",
+                "expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "datatype": "date",
+                    "type": "property_name",
+                    "property_name": "tt_complete_date"
+                  }
+                },
+                "property_value": [
+                  "",
+                  null
+                ]
+              }
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "gte",
+              "property_value": 0,
+              "expression": {
+                "type": "diff_days",
+                "from_date_expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "tt_complete_date ",
+                    "datatype": "date"
+                  }
+                },
+                "to_date_expression": {
+                  "type": "named",
+                  "name": "month_end"
+                }
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "delivered_in_month",
+        "display_name": null,
+        "filter": {
+          "type": "named",
+          "name": "delivered_in_month"
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "anc1_received_at_delivery",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "delivered_in_month"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "gte",
+              "property_value": 1,
+              "expression": {
+                "type": "root_doc",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "num_anc_complete",
+                  "datatype": "integer"
+                }
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "anc2_received_at_delivery",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "delivered_in_month"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "gte",
+              "property_value": 2,
+              "expression": {
+                "type": "root_doc",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "num_anc_complete",
+                  "datatype": "integer"
+                }
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "anc3_received_at_delivery",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "delivered_in_month"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "gte",
+              "property_value": 3,
+              "expression": {
+                "type": "root_doc",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "num_anc_complete",
+                  "datatype": "integer"
+                }
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "anc4_received_at_delivery",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "delivered_in_month"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "gte",
+              "property_value": 4,
+              "expression": {
+                "type": "root_doc",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "num_anc_complete",
+                  "datatype": "integer"
+                }
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "registration_trimester_at_delivery",
+        "datatype": "integer",
+        "display_name": null,
+        "expression": {
+          "type": "named",
+          "name": "registration_trimester_at_delivery"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "using_ifa",
+        "display_name": null,
+        "filter": {
+          "type": "named",
+          "name": "using_ifa"
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "ifa_consumed_last_seven_days",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "gte",
+              "property_value": 2,
+              "expression": {
+                "type": "named",
+                "name": "trimester"
+              }
+            },
+            {
+              "type": "named",
+              "name": "ifa_four_plus_consumed_last_seven_days"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "anemic_severe",
+        "display_name": null,
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "property_value": "severe",
+          "expression": {
+            "type": "named",
+            "name": "last_anemia_update"
+          }
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "anemic_moderate",
+        "display_name": null,
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "property_value": "moderate",
+          "expression": {
+            "type": "named",
+            "name": "last_anemia_update"
+          }
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "anemic_normal",
+        "display_name": null,
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "property_value": "normal",
+          "expression": {
+            "type": "named",
+            "name": "last_anemia_update"
+          }
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "anemic_unknown",
+        "display_name": null,
+        "filter": {
+          "type": "named",
+          "name": "no_anemia_update"
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "extra_meal",
+        "display_name": null,
+        "filter": {
+          "type": "named",
+          "name": "extra_meal_eaten_last_visit"
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "resting_during_pregnancy",
+        "display_name": null,
+        "filter": {
+          "type": "named",
+          "name": "resting_last_visit"
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "bp_visited_in_month",
+        "display_name": null,
+        "filter": {
+          "type": "named",
+          "name": "bp_form_in_month"
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "pnc_visited_in_month",
+        "display_name": null,
+        "filter": {
+          "type": "named",
+          "name": "pnc_form_in_month"
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "trimester_2",
+        "display_name": null,
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "property_value": 2,
+          "expression": {
+            "type": "named",
+            "name": "trimester"
+          }
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "trimester_3",
+        "display_name": null,
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "property_value": 3,
+          "expression": {
+            "type": "named",
+            "name": "trimester"
+          }
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "counsel_immediate_bf",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": 3,
+              "expression": {
+                "type": "named",
+                "name": "trimester"
+              }
+            },
+            {
+              "type": "named",
+              "name": "counsel_immediate_bf"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "counsel_bp_vid",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": 3,
+              "expression": {
+                "type": "named",
+                "name": "trimester"
+              }
+            },
+            {
+              "type": "named",
+              "name": "counsel_play_birth_preparedness_vid"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "counsel_preparation",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": 3,
+              "expression": {
+                "type": "named",
+                "name": "trimester"
+              }
+            },
+            {
+              "type": "named",
+              "name": "counsel_preparation"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "counsel_fp_vid",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": 3,
+              "expression": {
+                "type": "named",
+                "name": "trimester"
+              }
+            },
+            {
+              "type": "named",
+              "name": "counsel_play_fp_vid"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "counsel_immediate_conception",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": 3,
+              "expression": {
+                "type": "named",
+                "name": "trimester"
+              }
+            },
+            {
+              "type": "named",
+              "name": "counsel_immediate_conception"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "counsel_accessible_postpartum_fp",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": 3,
+              "expression": {
+                "type": "named",
+                "name": "trimester"
+              }
+            },
+            {
+              "type": "named",
+              "name": "counsel_accessible_postpartum_fp"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "bp1_complete",
+        "display_name": null,
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "gte",
+          "property_value": 0,
+          "expression": {
+            "type": "diff_days",
+            "from_date_expression": {
+              "type": "root_doc",
+              "expression": {
+                "datatype": "date",
+                "type": "property_name",
+                "property_name": "bp1_date"
+              }
+            },
+            "to_date_expression": {
+              "type": "named",
+              "name": "month_end"
+            }
+          }
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "bp2_complete",
+        "display_name": null,
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "gte",
+          "property_value": 0,
+          "expression": {
+            "type": "diff_days",
+            "from_date_expression": {
+              "type": "root_doc",
+              "expression": {
+                "datatype": "date",
+                "type": "property_name",
+                "property_name": "bp2_date"
+              }
+            },
+            "to_date_expression": {
+              "type": "named",
+              "name": "month_end"
+            }
+          }
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "bp3_complete",
+        "display_name": null,
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "gte",
+          "property_value": 0,
+          "expression": {
+            "type": "diff_days",
+            "from_date_expression": {
+              "type": "root_doc",
+              "expression": {
+                "datatype": "date",
+                "type": "property_name",
+                "property_name": "bp3_date"
+              }
+            },
+            "to_date_expression": {
+              "type": "named",
+              "name": "month_end"
+            }
+          }
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "pnc_complete",
+        "display_name": null,
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "gte",
+          "property_value": 0,
+          "expression": {
+            "type": "diff_days",
+            "from_date_expression": {
+              "type": "root_doc",
+              "expression": {
+                "datatype": "date",
+                "type": "property_name",
+                "property_name": "pnc1_date"
+              }
+            },
+            "to_date_expression": {
+              "type": "named",
+              "name": "month_end"
+            }
+          }
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "postnatal",
+        "display_name": null,
+        "filter": {
+          "type": "or",
+          "filters": [
+            {
+              "type": "and",
+              "filters": [
+                {
+                  "type": "not",
+                  "filter": {
+                    "operator": "in",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "type": "root_doc",
+                      "expression": {
+                        "datatype": "date",
+                        "type": "property_name",
+                        "property_name": "add"
+                      }
+                    },
+                    "property_value": [
+                      "",
+                      null
+                    ]
+                  }
+                },
+                {
+                  "type": "boolean_expression",
+                  "operator": "gte",
+                  "property_value": 0,
+                  "expression": {
+                    "type": "diff_days",
+                    "to_date_expression": {
+                      "type": "root_doc",
+                      "expression": {
+                        "datatype": "date",
+                        "type": "property_name",
+                        "property_name": "add"
+                      }
+                    },
+                    "from_date_expression": {
+                      "type": "named",
+                      "name": "month_start"
+                    }
+                  }
+                },
+                {
+                  "type": "boolean_expression",
+                  "operator": "gte",
+                  "property_value": 0,
+                  "expression": {
+                    "type": "diff_days",
+                    "from_date_expression": {
+                      "type": "root_doc",
+                      "expression": {
+                        "datatype": "date",
+                        "type": "property_name",
+                        "property_name": "add"
+                      }
+                    },
+                    "to_date_expression": {
+                      "type": "named",
+                      "name": "month_end"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "and",
+              "filters": [
+                {
+                  "type": "not",
+                  "filter": {
+                    "operator": "in",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "type": "root_doc",
+                      "expression": {
+                        "datatype": "date",
+                        "type": "property_name",
+                        "property_name": "add"
+                      }
+                    },
+                    "property_value": [
+                      "",
+                      null
+                    ]
+                  }
+                },
+                {
+                  "type": "boolean_expression",
+                  "operator": "lte",
+                  "property_value": 20,
+                  "expression": {
+                    "type": "diff_days",
+                    "from_date_expression": {
+                      "type": "root_doc",
+                      "expression": {
+                        "datatype": "date",
+                        "type": "property_name",
+                        "property_name": "add"
+                      }
+                    },
+                    "to_date_expression": {
+                      "type": "named",
+                      "name": "month_start"
+                    }
+                  }
+                },
+                {
+                  "type": "boolean_expression",
+                  "operator": "gte",
+                  "property_value": 20,
+                  "expression": {
+                    "type": "diff_days",
+                    "from_date_expression": {
+                      "type": "root_doc",
+                      "expression": {
+                        "datatype": "date",
+                        "type": "property_name",
+                        "property_name": "add"
+                      }
+                    },
+                    "to_date_expression": {
+                      "type": "named",
+                      "name": "month_end"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "type": "boolean"
+      }
+    ],
+    "named_expressions": {
+      "month_start": {
+        "date_expression": {
+          "date_expression": {
+            "type": "root_doc",
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "server_modified_on"
+            }
+          },
+          "type": "add_months",
+          "months_expression": {
+            "type": "evaluator",
+            "statement": "iteration - 3",
+            "context_variables": {
+              "iteration": {
+                "type": "base_iteration_number"
+              }
+            }
+          }
+        },
+        "type": "month_start_date"
+      },
+      "form_count": {
+        "aggregation_fn": "count",
+        "type": "reduce_items",
+        "items_expression": {
+          "type": "get_case_forms",
+          "case_id_expression": {
+            "type": "root_doc",
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "_id"
+            }
+          }
+        }
+      },
+      "thr_rations": {
+        "aggregation_fn": "sum",
+        "type": "reduce_items",
+        "items_expression": {
+          "map_expression": {
+            "datatype": "integer",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "mother_thr",
+              "days_ration_given_mother"
+            ]
+          },
+          "type": "map_items",
+          "items_expression": {
+            "filter_expression": {
+              "type": "and",
+              "filters": [
+                {
+                  "operator": "eq",
+                  "type": "boolean_expression",
+                  "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "xmlns"
+                  },
+                  "property_value": "http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A"
+                },
+                {
+                  "operator": "eq",
+                  "type": "boolean_expression",
+                  "expression": {
+                    "datatype": null,
+                    "type": "property_path",
+                    "property_path": [
+                      "form",
+                      "thr_given_mother"
+                    ]
+                  },
+                  "property_value": "1"
+                },
+                {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "gte",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "datatype": "integer",
+                        "type": "diff_days",
+                        "from_date_expression": {
+                          "date_expression": {
+                            "date_expression": {
+                              "type": "root_doc",
+                              "expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "server_modified_on"
+                              }
+                            },
+                            "type": "add_months",
+                            "months_expression": {
+                              "type": "evaluator",
+                              "statement": "iteration - 3",
+                              "context_variables": {
+                                "iteration": {
+                                  "type": "base_iteration_number"
+                                }
+                              }
+                            }
+                          },
+                          "type": "month_start_date"
+                        },
+                        "to_date_expression": {
+                          "datatype": "date",
+                          "type": "property_path",
+                          "property_path": [
+                            "form",
+                            "meta",
+                            "timeEnd"
+                          ]
+                        }
+                      },
+                      "property_value": 0
+                    },
+                    {
+                      "operator": "gte",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "datatype": "integer",
+                        "type": "diff_days",
+                        "from_date_expression": {
+                          "datatype": "date",
+                          "type": "property_path",
+                          "property_path": [
+                            "form",
+                            "meta",
+                            "timeEnd"
+                          ]
+                        },
+                        "to_date_expression": {
+                          "date_expression": {
+                            "date_expression": {
+                              "type": "root_doc",
+                              "expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "server_modified_on"
+                              }
+                            },
+                            "type": "add_months",
+                            "months_expression": {
+                              "type": "evaluator",
+                              "statement": "iteration - 3",
+                              "context_variables": {
+                                "iteration": {
+                                  "type": "base_iteration_number"
+                                }
+                              }
+                            }
+                          },
+                          "type": "month_end_date"
+                        }
+                      },
+                      "property_value": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            "type": "filter_items",
+            "items_expression": {
+              "type": "get_case_forms",
+              "case_id_expression": {
+                "type": "root_doc",
+                "expression": {
+                  "datatype": null,
+                  "type": "property_name",
+                  "property_name": "_id"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parent_id": {
+        "value_expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "referenced_id"
+        },
+        "type": "nested",
+        "argument_expression": {
+          "array_expression": {
+            "filter_expression": {
+              "operator": "eq",
+              "expression": {
+                "type": "property_name",
+                "property_name": "identifier"
+              },
+              "type": "boolean_expression",
+              "property_value": "parent"
+            },
+            "type": "filter_items",
+            "items_expression": {
+              "expression": {
+                "datatype": "array",
+                "type": "property_name",
+                "property_name": "indices"
+              },
+              "type": "root_doc"
+            }
+          },
+          "type": "array_index",
+          "index_expression": {
+            "constant": 0,
+            "type": "constant"
+          }
+        }
+      },
+      "parent_parent_id": {
+        "value_expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "referenced_id"
+          },
+          "type": "nested",
+          "argument_expression": {
+            "array_expression": {
+              "filter_expression": {
+                "operator": "eq",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "identifier"
+                },
+                "type": "boolean_expression",
+                "property_value": "parent"
+              },
+              "type": "filter_items",
+              "items_expression": {
+                "datatype": "array",
+                "type": "property_name",
+                "property_name": "indices"
+              }
+            },
+            "type": "array_index",
+            "index_expression": {
+              "constant": 0,
+              "type": "constant"
+            }
+          }
+        },
+        "type": "related_doc",
+        "related_doc_type": "CommCareCase",
+        "doc_id_expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "referenced_id"
+          },
+          "type": "nested",
+          "argument_expression": {
+            "array_expression": {
+              "filter_expression": {
+                "operator": "eq",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "identifier"
+                },
+                "type": "boolean_expression",
+                "property_value": "parent"
+              },
+              "type": "filter_items",
+              "items_expression": {
+                "expression": {
+                  "datatype": "array",
+                  "type": "property_name",
+                  "property_name": "indices"
+                },
+                "type": "root_doc"
+              }
+            },
+            "type": "array_index",
+            "index_expression": {
+              "constant": 0,
+              "type": "constant"
+            }
+          }
+        }
+      },
+      "month_end": {
+        "date_expression": {
+          "date_expression": {
+            "type": "root_doc",
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "server_modified_on"
+            }
+          },
+          "type": "add_months",
+          "months_expression": {
+            "type": "evaluator",
+            "statement": "iteration - 3",
+            "context_variables": {
+              "iteration": {
+                "type": "base_iteration_number"
+              }
+            }
+          }
+        },
+        "type": "month_end_date"
+      },
+      "caste": {
+        "value_expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "hh_caste"
+        },
+        "type": "related_doc",
+        "related_doc_type": "CommCareCase",
+        "doc_id_expression": {
+          "value_expression": {
+            "value_expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "referenced_id"
+            },
+            "type": "nested",
+            "argument_expression": {
+              "array_expression": {
+                "filter_expression": {
+                  "operator": "eq",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "identifier"
+                  },
+                  "type": "boolean_expression",
+                  "property_value": "parent"
+                },
+                "type": "filter_items",
+                "items_expression": {
+                  "datatype": "array",
+                  "type": "property_name",
+                  "property_name": "indices"
+                }
+              },
+              "type": "array_index",
+              "index_expression": {
+                "constant": 0,
+                "type": "constant"
+              }
+            }
+          },
+          "type": "related_doc",
+          "related_doc_type": "CommCareCase",
+          "doc_id_expression": {
+            "value_expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "referenced_id"
+            },
+            "type": "nested",
+            "argument_expression": {
+              "array_expression": {
+                "filter_expression": {
+                  "operator": "eq",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "identifier"
+                  },
+                  "type": "boolean_expression",
+                  "property_value": "parent"
+                },
+                "type": "filter_items",
+                "items_expression": {
+                  "expression": {
+                    "datatype": "array",
+                    "type": "property_name",
+                    "property_name": "indices"
+                  },
+                  "type": "root_doc"
+                }
+              },
+              "type": "array_index",
+              "index_expression": {
+                "constant": 0,
+                "type": "constant"
+              }
+            }
+          }
+        }
+      },
+      "disabled": {
+        "value_expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "disabled"
+        },
+        "type": "related_doc",
+        "related_doc_type": "CommCareCase",
+        "doc_id_expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "referenced_id"
+          },
+          "type": "nested",
+          "argument_expression": {
+            "array_expression": {
+              "filter_expression": {
+                "operator": "eq",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "identifier"
+                },
+                "type": "boolean_expression",
+                "property_value": "parent"
+              },
+              "type": "filter_items",
+              "items_expression": {
+                "expression": {
+                  "datatype": "array",
+                  "type": "property_name",
+                  "property_name": "indices"
+                },
+                "type": "root_doc"
+              }
+            },
+            "type": "array_index",
+            "index_expression": {
+              "constant": 0,
+              "type": "constant"
+            }
+          }
+        }
+      },
+      "minority": {
+        "value_expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "hh_minority"
+        },
+        "type": "related_doc",
+        "related_doc_type": "CommCareCase",
+        "doc_id_expression": {
+          "value_expression": {
+            "value_expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "referenced_id"
+            },
+            "type": "nested",
+            "argument_expression": {
+              "array_expression": {
+                "filter_expression": {
+                  "operator": "eq",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "identifier"
+                  },
+                  "type": "boolean_expression",
+                  "property_value": "parent"
+                },
+                "type": "filter_items",
+                "items_expression": {
+                  "datatype": "array",
+                  "type": "property_name",
+                  "property_name": "indices"
+                }
+              },
+              "type": "array_index",
+              "index_expression": {
+                "constant": 0,
+                "type": "constant"
+              }
+            }
+          },
+          "type": "related_doc",
+          "related_doc_type": "CommCareCase",
+          "doc_id_expression": {
+            "value_expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "referenced_id"
+            },
+            "type": "nested",
+            "argument_expression": {
+              "array_expression": {
+                "filter_expression": {
+                  "operator": "eq",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "identifier"
+                  },
+                  "type": "boolean_expression",
+                  "property_value": "parent"
+                },
+                "type": "filter_items",
+                "items_expression": {
+                  "expression": {
+                    "datatype": "array",
+                    "type": "property_name",
+                    "property_name": "indices"
+                  },
+                  "type": "root_doc"
+                }
+              },
+              "type": "array_index",
+              "index_expression": {
+                "constant": 0,
+                "type": "constant"
+              }
+            }
+          }
+        }
+      },
+      "resident": {
+        "value_expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "resident"
+        },
+        "type": "related_doc",
+        "related_doc_type": "CommCareCase",
+        "doc_id_expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "referenced_id"
+          },
+          "type": "nested",
+          "argument_expression": {
+            "array_expression": {
+              "filter_expression": {
+                "operator": "eq",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "identifier"
+                },
+                "type": "boolean_expression",
+                "property_value": "parent"
+              },
+              "type": "filter_items",
+              "items_expression": {
+                "expression": {
+                  "datatype": "array",
+                  "type": "property_name",
+                  "property_name": "indices"
+                },
+                "type": "root_doc"
+              }
+            },
+            "type": "array_index",
+            "index_expression": {
+              "constant": 0,
+              "type": "constant"
+            }
+          }
+        }
+      },
+      "trimester": {
+        "type": "conditional",
+        "test": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "and",
+              "filters": [
+                {
+                  "operator": "gte",
+                  "type": "boolean_expression",
+                  "expression": {
+                    "type": "diff_days",
+                    "from_date_expression": {
+                      "type": "root_doc",
+                      "expression": {
+                        "datatype": "date",
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                      }
+                    },
+                    "to_date_expression": {
+                      "date_expression": {
+                        "date_expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "server_modified_on"
+                          }
+                        },
+                        "type": "add_months",
+                        "months_expression": {
+                          "type": "evaluator",
+                          "statement": "iteration - 3",
+                          "context_variables": {
+                            "iteration": {
+                              "type": "base_iteration_number"
+                            }
+                          }
+                        }
+                      },
+                      "type": "month_end_date"
+                    }
+                  },
+                  "property_value": 0
+                },
+                {
+                  "type": "or",
+                  "filters": [
+                    {
+                      "operator": "eq",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "type": "root_doc",
+                        "expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "closed"
+                        }
+                      },
+                      "property_value": false
+                    },
+                    {
+                      "operator": "gte",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "type": "diff_days",
+                        "from_date_expression": {
+                          "date_expression": {
+                            "date_expression": {
+                              "type": "root_doc",
+                              "expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "server_modified_on"
+                              }
+                            },
+                            "type": "add_months",
+                            "months_expression": {
+                              "type": "evaluator",
+                              "statement": "iteration - 3",
+                              "context_variables": {
+                                "iteration": {
+                                  "type": "base_iteration_number"
+                                }
+                              }
+                            }
+                          },
+                          "type": "month_start_date"
+                        },
+                        "to_date_expression": {
+                          "datatype": "date",
+                          "type": "property_name",
+                          "property_name": "closed_on"
+                        }
+                      },
+                      "property_value": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "or",
+              "filters": [
+                {
+                  "operator": "in",
+                  "type": "boolean_expression",
+                  "expression": {
+                    "value_expression": {
+                      "datatype": "date",
+                      "type": "property_name",
+                      "property_name": "date_death"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                      "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "referenced_id"
+                      },
+                      "type": "nested",
+                      "argument_expression": {
+                        "array_expression": {
+                          "filter_expression": {
+                            "operator": "eq",
+                            "expression": {
+                              "type": "property_name",
+                              "property_name": "identifier"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "parent"
+                          },
+                          "type": "filter_items",
+                          "items_expression": {
+                            "expression": {
+                              "datatype": "array",
+                              "type": "property_name",
+                              "property_name": "indices"
+                            },
+                            "type": "root_doc"
+                          }
+                        },
+                        "type": "array_index",
+                        "index_expression": {
+                          "constant": 0,
+                          "type": "constant"
+                        }
+                      }
+                    }
+                  },
+                  "property_value": [
+                    "",
+                    null
+                  ]
+                },
+                {
+                  "operator": "gt",
+                  "type": "boolean_expression",
+                  "expression": {
+                    "type": "diff_days",
+                    "from_date_expression": {
+                      "date_expression": {
+                        "date_expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "server_modified_on"
+                          }
+                        },
+                        "type": "add_months",
+                        "months_expression": {
+                          "type": "evaluator",
+                          "statement": "iteration - 3",
+                          "context_variables": {
+                            "iteration": {
+                              "type": "base_iteration_number"
+                            }
+                          }
+                        }
+                      },
+                      "type": "month_end_date"
+                    },
+                    "to_date_expression": {
+                      "value_expression": {
+                        "datatype": "date",
+                        "type": "property_name",
+                        "property_name": "date_death"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "array_expression": {
+                            "filter_expression": {
+                              "operator": "eq",
+                              "expression": {
+                                "type": "property_name",
+                                "property_name": "identifier"
+                              },
+                              "type": "boolean_expression",
+                              "property_value": "parent"
+                            },
+                            "type": "filter_items",
+                            "items_expression": {
+                              "expression": {
+                                "datatype": "array",
+                                "type": "property_name",
+                                "property_name": "indices"
+                              },
+                              "type": "root_doc"
+                            }
+                          },
+                          "type": "array_index",
+                          "index_expression": {
+                            "constant": 0,
+                            "type": "constant"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "property_value": 0
+                }
+              ]
+            },
+            {
+              "type": "or",
+              "filters": [
+                {
+                  "operator": "in",
+                  "expression": {
+                    "expression": {
+                      "datatype": "date",
+                      "type": "property_name",
+                      "property_name": "add"
+                    },
+                    "type": "root_doc"
+                  },
+                  "type": "boolean_expression",
+                  "property_value": [
+                    "",
+                    null
+                  ]
+                },
+                {
+                  "operator": "gt",
+                  "expression": {
+                    "from_date_expression": {
+                      "date_expression": {
+                        "date_expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "server_modified_on"
+                          }
+                        },
+                        "type": "add_months",
+                        "months_expression": {
+                          "type": "evaluator",
+                          "statement": "iteration - 3",
+                          "context_variables": {
+                            "iteration": {
+                              "type": "base_iteration_number"
+                            }
+                          }
+                        }
+                      },
+                      "type": "month_end_date"
+                    },
+                    "type": "diff_days",
+                    "to_date_expression": {
+                      "expression": {
+                        "datatype": "date",
+                        "type": "property_name",
+                        "property_name": "add"
+                      },
+                      "type": "root_doc"
+                    }
+                  },
+                  "type": "boolean_expression",
+                  "property_value": 0
+                }
+              ]
+            }
+          ]
+        },
+        "expression_if_false": {
+          "type": "property_name",
+          "property_name": "no_exist"
+        },
+        "expression_if_true": {
+          "type": "conditional",
+          "test": {
+            "type": "boolean_expression",
+            "property_value": 183,
+            "operator": "gte",
+            "expression": {
+              "from_date_expression": {
+                "date_expression": {
+                  "date_expression": {
+                    "type": "root_doc",
+                    "expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "server_modified_on"
+                    }
+                  },
+                  "type": "add_months",
+                  "months_expression": {
+                    "type": "evaluator",
+                    "statement": "iteration - 3",
+                    "context_variables": {
+                      "iteration": {
+                        "type": "base_iteration_number"
+                      }
+                    }
+                  }
+                },
+                "type": "month_end_date"
+              },
+              "type": "diff_days",
+              "to_date_expression": {
+                "expression": {
+                  "datatype": "date",
+                  "type": "property_name",
+                  "property_name": "edd"
+                },
+                "type": "root_doc"
+              }
+            }
+          },
+          "expression_if_true": {
+            "type": "constant",
+            "constant": 1
+          },
+          "expression_if_false": {
+            "type": "conditional",
+            "test": {
+              "type": "boolean_expression",
+              "property_value": 91,
+              "operator": "lt",
+              "expression": {
+                "from_date_expression": {
+                  "date_expression": {
+                    "date_expression": {
+                      "type": "root_doc",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "server_modified_on"
+                      }
+                    },
+                    "type": "add_months",
+                    "months_expression": {
+                      "type": "evaluator",
+                      "statement": "iteration - 3",
+                      "context_variables": {
+                        "iteration": {
+                          "type": "base_iteration_number"
+                        }
+                      }
+                    }
+                  },
+                  "type": "month_end_date"
+                },
+                "type": "diff_days",
+                "to_date_expression": {
+                  "expression": {
+                    "datatype": "date",
+                    "type": "property_name",
+                    "property_name": "edd"
+                  },
+                  "type": "root_doc"
+                }
+              }
+            },
+            "expression_if_true": {
+              "type": "constant",
+              "constant": 3
+            },
+            "expression_if_false": {
+              "type": "constant",
+              "constant": 2
+            }
+          }
+        }
+      },
+      "registration_trimester_at_delivery": {
+        "type": "conditional",
+        "test": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "and",
+              "filters": [
+                {
+                  "operator": "gte",
+                  "expression": {
+                    "from_date_expression": {
+                      "expression": {
+                        "datatype": "date",
+                        "type": "property_name",
+                        "property_name": "add "
+                      },
+                      "type": "root_doc"
+                    },
+                    "type": "diff_days",
+                    "to_date_expression": {
+                      "date_expression": {
+                        "date_expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "server_modified_on"
+                          }
+                        },
+                        "type": "add_months",
+                        "months_expression": {
+                          "type": "evaluator",
+                          "statement": "iteration - 3",
+                          "context_variables": {
+                            "iteration": {
+                              "type": "base_iteration_number"
+                            }
+                          }
+                        }
+                      },
+                      "type": "month_end_date"
+                    }
+                  },
+                  "type": "boolean_expression",
+                  "property_value": 0
+                },
+                {
+                  "operator": "gte",
+                  "expression": {
+                    "from_date_expression": {
+                      "date_expression": {
+                        "date_expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "server_modified_on"
+                          }
+                        },
+                        "type": "add_months",
+                        "months_expression": {
+                          "type": "evaluator",
+                          "statement": "iteration - 3",
+                          "context_variables": {
+                            "iteration": {
+                              "type": "base_iteration_number"
+                            }
+                          }
+                        }
+                      },
+                      "type": "month_start_date"
+                    },
+                    "type": "diff_days",
+                    "to_date_expression": {
+                      "expression": {
+                        "datatype": "date",
+                        "type": "property_name",
+                        "property_name": "add "
+                      },
+                      "type": "root_doc"
+                    }
+                  },
+                  "type": "boolean_expression",
+                  "property_value": 0
+                }
+              ]
+            },
+            {
+              "type": "not",
+              "filter": {
+                "operator": "in",
+                "type": "boolean_expression",
+                "expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "datatype": "date",
+                    "type": "property_name",
+                    "property_name": "edd"
+                  }
+                },
+                "property_value": [
+                  "",
+                  null
+                ]
+              }
+            }
+          ]
+        },
+        "expression_if_false": {
+          "type": "property_name",
+          "property_name": "no_exist"
+        },
+        "expression_if_true": {
+          "type": "conditional",
+          "test": {
+            "type": "boolean_expression",
+            "property_value": 183,
+            "operator": "gte",
+            "expression": {
+              "from_date_expression": {
+                "expression": {
+                  "datatype": "date",
+                  "type": "property_name",
+                  "property_name": "opened_on"
+                },
+                "type": "root_doc"
+              },
+              "type": "diff_days",
+              "to_date_expression": {
+                "expression": {
+                  "datatype": "date",
+                  "type": "property_name",
+                  "property_name": "edd"
+                },
+                "type": "root_doc"
+              }
+            }
+          },
+          "expression_if_true": {
+            "type": "constant",
+            "constant": 1
+          },
+          "expression_if_false": {
+            "type": "conditional",
+            "test": {
+              "type": "boolean_expression",
+              "property_value": 91,
+              "operator": "lt",
+              "expression": {
+                "from_date_expression": {
+                  "expression": {
+                    "datatype": "date",
+                    "type": "property_name",
+                    "property_name": "opened_on"
+                  },
+                  "type": "root_doc"
+                },
+                "type": "diff_days",
+                "to_date_expression": {
+                  "expression": {
+                    "datatype": "date",
+                    "type": "property_name",
+                    "property_name": "edd"
+                  },
+                  "type": "root_doc"
+                }
+              }
+            },
+            "expression_if_true": {
+              "type": "constant",
+              "constant": 3
+            },
+            "expression_if_false": {
+              "type": "constant",
+              "constant": 2
+            }
+          }
+        }
+      },
+      "last_anemia_update": {
+        "type": "nested",
+        "argument_expression": {
+          "aggregation_fn": "last_item",
+          "type": "reduce_items",
+          "items_expression": {
+            "sort_expression": {
+              "datatype": "date",
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "meta",
+                "timeEnd"
+              ]
+            },
+            "type": "sort_items",
+            "items_expression": {
+              "filter_expression": {
+                "type": "and",
+                "filters": [
+                  {
+                    "type": "and",
+                    "filters": [
+                      {
+                        "operator": "gte",
+                        "type": "boolean_expression",
+                        "expression": {
+                          "datatype": "integer",
+                          "type": "diff_days",
+                          "from_date_expression": {
+                            "datatype": "date",
+                            "type": "property_path",
+                            "property_path": [
+                              "form",
+                              "meta",
+                              "timeEnd"
+                            ]
+                          },
+                          "to_date_expression": {
+                            "date_expression": {
+                              "date_expression": {
+                                "type": "root_doc",
+                                "expression": {
+                                  "datatype": null,
+                                  "type": "property_name",
+                                  "property_name": "server_modified_on"
+                                }
+                              },
+                              "type": "add_months",
+                              "months_expression": {
+                                "type": "evaluator",
+                                "statement": "iteration - 3",
+                                "context_variables": {
+                                  "iteration": {
+                                    "type": "base_iteration_number"
+                                  }
+                                }
+                              }
+                            },
+                            "type": "month_end_date"
+                          }
+                        },
+                        "property_value": 0
+                      }
+                    ]
+                  },
+                  {
+                    "filter": {
+                      "operator": "in",
+                      "expression": {
+                        "type": "property_path",
+                        "property_path": [
+                          "form",
+                          "bp1",
+                          "anemia"
+                        ]
+                      },
+                      "type": "boolean_expression",
+                      "property_value": [
+                        "",
+                        null
+                      ]
+                    },
+                    "type": "not"
+                  }
+                ]
+              },
+              "type": "filter_items",
+              "items_expression": {
+                "filter_expression": {
+                  "operator": "eq",
+                  "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "xmlns"
+                  },
+                  "type": "boolean_expression",
+                  "property_value": "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
+                },
+                "type": "filter_items",
+                "items_expression": {
+                  "type": "get_case_forms",
+                  "case_id_expression": {
+                    "expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "_id"
+                    },
+                    "type": "root_doc"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "value_expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "bp1",
+            "anemia"
+          ]
+        }
+      }
+    },
+    "named_filters": {
+      "open_in_month": {
+        "type": "and",
+        "filters": [
+          {
+            "operator": "gte",
+            "type": "boolean_expression",
+            "expression": {
+              "type": "diff_days",
+              "from_date_expression": {
+                "type": "root_doc",
+                "expression": {
+                  "datatype": "date",
+                  "type": "property_name",
+                  "property_name": "opened_on"
+                }
+              },
+              "to_date_expression": {
+                "date_expression": {
+                  "date_expression": {
+                    "type": "root_doc",
+                    "expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "server_modified_on"
+                    }
+                  },
+                  "type": "add_months",
+                  "months_expression": {
+                    "type": "evaluator",
+                    "statement": "iteration - 3",
+                    "context_variables": {
+                      "iteration": {
+                        "type": "base_iteration_number"
+                      }
+                    }
+                  }
+                },
+                "type": "month_end_date"
+              }
+            },
+            "property_value": 0
+          },
+          {
+            "type": "or",
+            "filters": [
+              {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "closed"
+                  }
+                },
+                "property_value": false
+              },
+              {
+                "operator": "gte",
+                "type": "boolean_expression",
+                "expression": {
+                  "type": "diff_days",
+                  "from_date_expression": {
+                    "date_expression": {
+                      "date_expression": {
+                        "type": "root_doc",
+                        "expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "server_modified_on"
+                        }
+                      },
+                      "type": "add_months",
+                      "months_expression": {
+                        "type": "evaluator",
+                        "statement": "iteration - 3",
+                        "context_variables": {
+                          "iteration": {
+                            "type": "base_iteration_number"
+                          }
+                        }
+                      }
+                    },
+                    "type": "month_start_date"
+                  },
+                  "to_date_expression": {
+                    "datatype": "date",
+                    "type": "property_name",
+                    "property_name": "closed_on"
+                  }
+                },
+                "property_value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "alive_in_month": {
+        "type": "or",
+        "filters": [
+          {
+            "operator": "in",
+            "type": "boolean_expression",
+            "expression": {
+              "value_expression": {
+                "datatype": "date",
+                "type": "property_name",
+                "property_name": "date_death"
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareCase",
+              "doc_id_expression": {
+                "value_expression": {
+                  "datatype": null,
+                  "type": "property_name",
+                  "property_name": "referenced_id"
+                },
+                "type": "nested",
+                "argument_expression": {
+                  "array_expression": {
+                    "filter_expression": {
+                      "operator": "eq",
+                      "expression": {
+                        "type": "property_name",
+                        "property_name": "identifier"
+                      },
+                      "type": "boolean_expression",
+                      "property_value": "parent"
+                    },
+                    "type": "filter_items",
+                    "items_expression": {
+                      "expression": {
+                        "datatype": "array",
+                        "type": "property_name",
+                        "property_name": "indices"
+                      },
+                      "type": "root_doc"
+                    }
+                  },
+                  "type": "array_index",
+                  "index_expression": {
+                    "constant": 0,
+                    "type": "constant"
+                  }
+                }
+              }
+            },
+            "property_value": [
+              "",
+              null
+            ]
+          },
+          {
+            "operator": "gt",
+            "type": "boolean_expression",
+            "expression": {
+              "type": "diff_days",
+              "from_date_expression": {
+                "date_expression": {
+                  "date_expression": {
+                    "type": "root_doc",
+                    "expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "server_modified_on"
+                    }
+                  },
+                  "type": "add_months",
+                  "months_expression": {
+                    "type": "evaluator",
+                    "statement": "iteration - 3",
+                    "context_variables": {
+                      "iteration": {
+                        "type": "base_iteration_number"
+                      }
+                    }
+                  }
+                },
+                "type": "month_end_date"
+              },
+              "to_date_expression": {
+                "value_expression": {
+                  "datatype": "date",
+                  "type": "property_name",
+                  "property_name": "date_death"
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                  "value_expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "referenced_id"
+                  },
+                  "type": "nested",
+                  "argument_expression": {
+                    "array_expression": {
+                      "filter_expression": {
+                        "operator": "eq",
+                        "expression": {
+                          "type": "property_name",
+                          "property_name": "identifier"
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "parent"
+                      },
+                      "type": "filter_items",
+                      "items_expression": {
+                        "expression": {
+                          "datatype": "array",
+                          "type": "property_name",
+                          "property_name": "indices"
+                        },
+                        "type": "root_doc"
+                      }
+                    },
+                    "type": "array_index",
+                    "index_expression": {
+                      "constant": 0,
+                      "type": "constant"
+                    }
+                  }
+                }
+              }
+            },
+            "property_value": 0
+          }
+        ]
+      },
+      "lactating": {
+        "type": "and",
+        "filters": [
+          {
+            "type": "and",
+            "filters": [
+              {
+                "operator": "gte",
+                "type": "boolean_expression",
+                "expression": {
+                  "type": "diff_days",
+                  "from_date_expression": {
+                    "type": "root_doc",
+                    "expression": {
+                      "datatype": "date",
+                      "type": "property_name",
+                      "property_name": "opened_on"
+                    }
+                  },
+                  "to_date_expression": {
+                    "date_expression": {
+                      "date_expression": {
+                        "type": "root_doc",
+                        "expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "server_modified_on"
+                        }
+                      },
+                      "type": "add_months",
+                      "months_expression": {
+                        "type": "evaluator",
+                        "statement": "iteration - 3",
+                        "context_variables": {
+                          "iteration": {
+                            "type": "base_iteration_number"
+                          }
+                        }
+                      }
+                    },
+                    "type": "month_end_date"
+                  }
+                },
+                "property_value": 0
+              },
+              {
+                "type": "or",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "type": "root_doc",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "closed"
+                      }
+                    },
+                    "property_value": false
+                  },
+                  {
+                    "operator": "gte",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "type": "diff_days",
+                      "from_date_expression": {
+                        "date_expression": {
+                          "date_expression": {
+                            "type": "root_doc",
+                            "expression": {
+                              "datatype": null,
+                              "type": "property_name",
+                              "property_name": "server_modified_on"
+                            }
+                          },
+                          "type": "add_months",
+                          "months_expression": {
+                            "type": "evaluator",
+                            "statement": "iteration - 3",
+                            "context_variables": {
+                              "iteration": {
+                                "type": "base_iteration_number"
+                              }
+                            }
+                          }
+                        },
+                        "type": "month_start_date"
+                      },
+                      "to_date_expression": {
+                        "datatype": "date",
+                        "type": "property_name",
+                        "property_name": "closed_on"
+                      }
+                    },
+                    "property_value": 0
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "or",
+            "filters": [
+              {
+                "operator": "in",
+                "type": "boolean_expression",
+                "expression": {
+                  "value_expression": {
+                    "datatype": "date",
+                    "type": "property_name",
+                    "property_name": "date_death"
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareCase",
+                  "doc_id_expression": {
+                    "value_expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "referenced_id"
+                    },
+                    "type": "nested",
+                    "argument_expression": {
+                      "array_expression": {
+                        "filter_expression": {
+                          "operator": "eq",
+                          "expression": {
+                            "type": "property_name",
+                            "property_name": "identifier"
+                          },
+                          "type": "boolean_expression",
+                          "property_value": "parent"
+                        },
+                        "type": "filter_items",
+                        "items_expression": {
+                          "expression": {
+                            "datatype": "array",
+                            "type": "property_name",
+                            "property_name": "indices"
+                          },
+                          "type": "root_doc"
+                        }
+                      },
+                      "type": "array_index",
+                      "index_expression": {
+                        "constant": 0,
+                        "type": "constant"
+                      }
+                    }
+                  }
+                },
+                "property_value": [
+                  "",
+                  null
+                ]
+              },
+              {
+                "operator": "gt",
+                "type": "boolean_expression",
+                "expression": {
+                  "type": "diff_days",
+                  "from_date_expression": {
+                    "date_expression": {
+                      "date_expression": {
+                        "type": "root_doc",
+                        "expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "server_modified_on"
+                        }
+                      },
+                      "type": "add_months",
+                      "months_expression": {
+                        "type": "evaluator",
+                        "statement": "iteration - 3",
+                        "context_variables": {
+                          "iteration": {
+                            "type": "base_iteration_number"
+                          }
+                        }
+                      }
+                    },
+                    "type": "month_end_date"
+                  },
+                  "to_date_expression": {
+                    "value_expression": {
+                      "datatype": "date",
+                      "type": "property_name",
+                      "property_name": "date_death"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                      "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "referenced_id"
+                      },
+                      "type": "nested",
+                      "argument_expression": {
+                        "array_expression": {
+                          "filter_expression": {
+                            "operator": "eq",
+                            "expression": {
+                              "type": "property_name",
+                              "property_name": "identifier"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "parent"
+                          },
+                          "type": "filter_items",
+                          "items_expression": {
+                            "expression": {
+                              "datatype": "array",
+                              "type": "property_name",
+                              "property_name": "indices"
+                            },
+                            "type": "root_doc"
+                          }
+                        },
+                        "type": "array_index",
+                        "index_expression": {
+                          "constant": 0,
+                          "type": "constant"
+                        }
+                      }
+                    }
+                  }
+                },
+                "property_value": 0
+              }
+            ]
+          },
+          {
+            "filter": {
+              "operator": "in",
+              "expression": {
+                "expression": {
+                  "datatype": "date",
+                  "type": "property_name",
+                  "property_name": "add"
+                },
+                "type": "root_doc"
+              },
+              "type": "boolean_expression",
+              "property_value": [
+                "",
+                null
+              ]
+            },
+            "type": "not"
+          },
+          {
+            "operator": "gte",
+            "expression": {
+              "from_date_expression": {
+                "expression": {
+                  "datatype": "date",
+                  "type": "property_name",
+                  "property_name": "add"
+                },
+                "type": "root_doc"
+              },
+              "type": "diff_days",
+              "to_date_expression": {
+                "date_expression": {
+                  "date_expression": {
+                    "type": "root_doc",
+                    "expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "server_modified_on"
+                    }
+                  },
+                  "type": "add_months",
+                  "months_expression": {
+                    "type": "evaluator",
+                    "statement": "iteration - 3",
+                    "context_variables": {
+                      "iteration": {
+                        "type": "base_iteration_number"
+                      }
+                    }
+                  }
+                },
+                "type": "month_end_date"
+              }
+            },
+            "type": "boolean_expression",
+            "property_value": 0
+          },
+          {
+            "operator": "lte",
+            "expression": {
+              "from_date_expression": {
+                "expression": {
+                  "datatype": "date",
+                  "type": "property_name",
+                  "property_name": "add"
+                },
+                "type": "root_doc"
+              },
+              "type": "diff_days",
+              "to_date_expression": {
+                "date_expression": {
+                  "date_expression": {
+                    "type": "root_doc",
+                    "expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "server_modified_on"
+                    }
+                  },
+                  "type": "add_months",
+                  "months_expression": {
+                    "type": "evaluator",
+                    "statement": "iteration - 3",
+                    "context_variables": {
+                      "iteration": {
+                        "type": "base_iteration_number"
+                      }
+                    }
+                  }
+                },
+                "type": "month_end_date"
+              }
+            },
+            "type": "boolean_expression",
+            "property_value": 183
+          }
+        ]
+      },
+      "pregnant": {
+        "type": "and",
+        "filters": [
+          {
+            "type": "and",
+            "filters": [
+              {
+                "operator": "gte",
+                "type": "boolean_expression",
+                "expression": {
+                  "type": "diff_days",
+                  "from_date_expression": {
+                    "type": "root_doc",
+                    "expression": {
+                      "datatype": "date",
+                      "type": "property_name",
+                      "property_name": "opened_on"
+                    }
+                  },
+                  "to_date_expression": {
+                    "date_expression": {
+                      "date_expression": {
+                        "type": "root_doc",
+                        "expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "server_modified_on"
+                        }
+                      },
+                      "type": "add_months",
+                      "months_expression": {
+                        "type": "evaluator",
+                        "statement": "iteration - 3",
+                        "context_variables": {
+                          "iteration": {
+                            "type": "base_iteration_number"
+                          }
+                        }
+                      }
+                    },
+                    "type": "month_end_date"
+                  }
+                },
+                "property_value": 0
+              },
+              {
+                "type": "or",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "type": "root_doc",
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "closed"
+                      }
+                    },
+                    "property_value": false
+                  },
+                  {
+                    "operator": "gte",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "type": "diff_days",
+                      "from_date_expression": {
+                        "date_expression": {
+                          "date_expression": {
+                            "type": "root_doc",
+                            "expression": {
+                              "datatype": null,
+                              "type": "property_name",
+                              "property_name": "server_modified_on"
+                            }
+                          },
+                          "type": "add_months",
+                          "months_expression": {
+                            "type": "evaluator",
+                            "statement": "iteration - 3",
+                            "context_variables": {
+                              "iteration": {
+                                "type": "base_iteration_number"
+                              }
+                            }
+                          }
+                        },
+                        "type": "month_start_date"
+                      },
+                      "to_date_expression": {
+                        "datatype": "date",
+                        "type": "property_name",
+                        "property_name": "closed_on"
+                      }
+                    },
+                    "property_value": 0
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "or",
+            "filters": [
+              {
+                "operator": "in",
+                "type": "boolean_expression",
+                "expression": {
+                  "value_expression": {
+                    "datatype": "date",
+                    "type": "property_name",
+                    "property_name": "date_death"
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareCase",
+                  "doc_id_expression": {
+                    "value_expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "referenced_id"
+                    },
+                    "type": "nested",
+                    "argument_expression": {
+                      "array_expression": {
+                        "filter_expression": {
+                          "operator": "eq",
+                          "expression": {
+                            "type": "property_name",
+                            "property_name": "identifier"
+                          },
+                          "type": "boolean_expression",
+                          "property_value": "parent"
+                        },
+                        "type": "filter_items",
+                        "items_expression": {
+                          "expression": {
+                            "datatype": "array",
+                            "type": "property_name",
+                            "property_name": "indices"
+                          },
+                          "type": "root_doc"
+                        }
+                      },
+                      "type": "array_index",
+                      "index_expression": {
+                        "constant": 0,
+                        "type": "constant"
+                      }
+                    }
+                  }
+                },
+                "property_value": [
+                  "",
+                  null
+                ]
+              },
+              {
+                "operator": "gt",
+                "type": "boolean_expression",
+                "expression": {
+                  "type": "diff_days",
+                  "from_date_expression": {
+                    "date_expression": {
+                      "date_expression": {
+                        "type": "root_doc",
+                        "expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "server_modified_on"
+                        }
+                      },
+                      "type": "add_months",
+                      "months_expression": {
+                        "type": "evaluator",
+                        "statement": "iteration - 3",
+                        "context_variables": {
+                          "iteration": {
+                            "type": "base_iteration_number"
+                          }
+                        }
+                      }
+                    },
+                    "type": "month_end_date"
+                  },
+                  "to_date_expression": {
+                    "value_expression": {
+                      "datatype": "date",
+                      "type": "property_name",
+                      "property_name": "date_death"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                      "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "referenced_id"
+                      },
+                      "type": "nested",
+                      "argument_expression": {
+                        "array_expression": {
+                          "filter_expression": {
+                            "operator": "eq",
+                            "expression": {
+                              "type": "property_name",
+                              "property_name": "identifier"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "parent"
+                          },
+                          "type": "filter_items",
+                          "items_expression": {
+                            "expression": {
+                              "datatype": "array",
+                              "type": "property_name",
+                              "property_name": "indices"
+                            },
+                            "type": "root_doc"
+                          }
+                        },
+                        "type": "array_index",
+                        "index_expression": {
+                          "constant": 0,
+                          "type": "constant"
+                        }
+                      }
+                    }
+                  }
+                },
+                "property_value": 0
+              }
+            ]
+          },
+          {
+            "type": "or",
+            "filters": [
+              {
+                "operator": "in",
+                "expression": {
+                  "expression": {
+                    "datatype": "date",
+                    "type": "property_name",
+                    "property_name": "add"
+                  },
+                  "type": "root_doc"
+                },
+                "type": "boolean_expression",
+                "property_value": [
+                  "",
+                  null
+                ]
+              },
+              {
+                "operator": "gt",
+                "expression": {
+                  "from_date_expression": {
+                    "date_expression": {
+                      "date_expression": {
+                        "type": "root_doc",
+                        "expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "server_modified_on"
+                        }
+                      },
+                      "type": "add_months",
+                      "months_expression": {
+                        "type": "evaluator",
+                        "statement": "iteration - 3",
+                        "context_variables": {
+                          "iteration": {
+                            "type": "base_iteration_number"
+                          }
+                        }
+                      }
+                    },
+                    "type": "month_end_date"
+                  },
+                  "type": "diff_days",
+                  "to_date_expression": {
+                    "expression": {
+                      "datatype": "date",
+                      "type": "property_name",
+                      "property_name": "add"
+                    },
+                    "type": "root_doc"
+                  }
+                },
+                "type": "boolean_expression",
+                "property_value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "is_disabled": {
+        "type": "boolean_expression",
+        "operator": "eq",
+        "property_value": "yes",
+        "expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "disabled"
+          },
+          "type": "related_doc",
+          "related_doc_type": "CommCareCase",
+          "doc_id_expression": {
+            "value_expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "referenced_id"
+            },
+            "type": "nested",
+            "argument_expression": {
+              "array_expression": {
+                "filter_expression": {
+                  "operator": "eq",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "identifier"
+                  },
+                  "type": "boolean_expression",
+                  "property_value": "parent"
+                },
+                "type": "filter_items",
+                "items_expression": {
+                  "expression": {
+                    "datatype": "array",
+                    "type": "property_name",
+                    "property_name": "indices"
+                  },
+                  "type": "root_doc"
+                }
+              },
+              "type": "array_index",
+              "index_expression": {
+                "constant": 0,
+                "type": "constant"
+              }
+            }
+          }
+        }
+      },
+      "is_minority": {
+        "type": "boolean_expression",
+        "operator": "eq",
+        "property_value": "yes",
+        "expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "hh_minority"
+          },
+          "type": "related_doc",
+          "related_doc_type": "CommCareCase",
+          "doc_id_expression": {
+            "value_expression": {
+              "value_expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "referenced_id"
+              },
+              "type": "nested",
+              "argument_expression": {
+                "array_expression": {
+                  "filter_expression": {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "property_name",
+                      "property_name": "identifier"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "parent"
+                  },
+                  "type": "filter_items",
+                  "items_expression": {
+                    "datatype": "array",
+                    "type": "property_name",
+                    "property_name": "indices"
+                  }
+                },
+                "type": "array_index",
+                "index_expression": {
+                  "constant": 0,
+                  "type": "constant"
+                }
+              }
+            },
+            "type": "related_doc",
+            "related_doc_type": "CommCareCase",
+            "doc_id_expression": {
+              "value_expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "referenced_id"
+              },
+              "type": "nested",
+              "argument_expression": {
+                "array_expression": {
+                  "filter_expression": {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "property_name",
+                      "property_name": "identifier"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "parent"
+                  },
+                  "type": "filter_items",
+                  "items_expression": {
+                    "expression": {
+                      "datatype": "array",
+                      "type": "property_name",
+                      "property_name": "indices"
+                    },
+                    "type": "root_doc"
+                  }
+                },
+                "type": "array_index",
+                "index_expression": {
+                  "constant": 0,
+                  "type": "constant"
+                }
+              }
+            }
+          }
+        }
+      },
+      "is_resident": {
+        "type": "boolean_expression",
+        "operator": "eq",
+        "property_value": "yes",
+        "expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "resident"
+          },
+          "type": "related_doc",
+          "related_doc_type": "CommCareCase",
+          "doc_id_expression": {
+            "value_expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "referenced_id"
+            },
+            "type": "nested",
+            "argument_expression": {
+              "array_expression": {
+                "filter_expression": {
+                  "operator": "eq",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "identifier"
+                  },
+                  "type": "boolean_expression",
+                  "property_value": "parent"
+                },
+                "type": "filter_items",
+                "items_expression": {
+                  "expression": {
+                    "datatype": "array",
+                    "type": "property_name",
+                    "property_name": "indices"
+                  },
+                  "type": "root_doc"
+                }
+              },
+              "type": "array_index",
+              "index_expression": {
+                "constant": 0,
+                "type": "constant"
+              }
+            }
+          }
+        }
+      },
+      "is_migrant": {
+        "type": "boolean_expression",
+        "operator": "eq",
+        "property_value": "no",
+        "expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "resident"
+          },
+          "type": "related_doc",
+          "related_doc_type": "CommCareCase",
+          "doc_id_expression": {
+            "value_expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "referenced_id"
+            },
+            "type": "nested",
+            "argument_expression": {
+              "array_expression": {
+                "filter_expression": {
+                  "operator": "eq",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "identifier"
+                  },
+                  "type": "boolean_expression",
+                  "property_value": "parent"
+                },
+                "type": "filter_items",
+                "items_expression": {
+                  "expression": {
+                    "datatype": "array",
+                    "type": "property_name",
+                    "property_name": "indices"
+                  },
+                  "type": "root_doc"
+                }
+              },
+              "type": "array_index",
+              "index_expression": {
+                "constant": 0,
+                "type": "constant"
+              }
+            }
+          }
+        }
+      },
+      "delivered_in_month": {
+        "type": "and",
+        "filters": [
+          {
+            "operator": "gte",
+            "expression": {
+              "from_date_expression": {
+                "expression": {
+                  "datatype": "date",
+                  "type": "property_name",
+                  "property_name": "add "
+                },
+                "type": "root_doc"
+              },
+              "type": "diff_days",
+              "to_date_expression": {
+                "date_expression": {
+                  "date_expression": {
+                    "type": "root_doc",
+                    "expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "server_modified_on"
+                    }
+                  },
+                  "type": "add_months",
+                  "months_expression": {
+                    "type": "evaluator",
+                    "statement": "iteration - 3",
+                    "context_variables": {
+                      "iteration": {
+                        "type": "base_iteration_number"
+                      }
+                    }
+                  }
+                },
+                "type": "month_end_date"
+              }
+            },
+            "type": "boolean_expression",
+            "property_value": 0
+          },
+          {
+            "operator": "gte",
+            "expression": {
+              "from_date_expression": {
+                "date_expression": {
+                  "date_expression": {
+                    "type": "root_doc",
+                    "expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "server_modified_on"
+                    }
+                  },
+                  "type": "add_months",
+                  "months_expression": {
+                    "type": "evaluator",
+                    "statement": "iteration - 3",
+                    "context_variables": {
+                      "iteration": {
+                        "type": "base_iteration_number"
+                      }
+                    }
+                  }
+                },
+                "type": "month_start_date"
+              },
+              "type": "diff_days",
+              "to_date_expression": {
+                "expression": {
+                  "datatype": "date",
+                  "type": "property_name",
+                  "property_name": "add "
+                },
+                "type": "root_doc"
+              }
+            },
+            "type": "boolean_expression",
+            "property_value": 0
+          }
+        ]
+      },
+      "using_ifa": {
+        "type": "and",
+        "filters": [
+          {
+            "type": "and",
+            "filters": [
+              {
+                "type": "and",
+                "filters": [
+                  {
+                    "operator": "gte",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "type": "diff_days",
+                      "from_date_expression": {
+                        "type": "root_doc",
+                        "expression": {
+                          "datatype": "date",
+                          "type": "property_name",
+                          "property_name": "opened_on"
+                        }
+                      },
+                      "to_date_expression": {
+                        "date_expression": {
+                          "date_expression": {
+                            "type": "root_doc",
+                            "expression": {
+                              "datatype": null,
+                              "type": "property_name",
+                              "property_name": "server_modified_on"
+                            }
+                          },
+                          "type": "add_months",
+                          "months_expression": {
+                            "type": "evaluator",
+                            "statement": "iteration - 3",
+                            "context_variables": {
+                              "iteration": {
+                                "type": "base_iteration_number"
+                              }
+                            }
+                          }
+                        },
+                        "type": "month_end_date"
+                      }
+                    },
+                    "property_value": 0
+                  },
+                  {
+                    "type": "or",
+                    "filters": [
+                      {
+                        "operator": "eq",
+                        "type": "boolean_expression",
+                        "expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "closed"
+                          }
+                        },
+                        "property_value": false
+                      },
+                      {
+                        "operator": "gte",
+                        "type": "boolean_expression",
+                        "expression": {
+                          "type": "diff_days",
+                          "from_date_expression": {
+                            "date_expression": {
+                              "date_expression": {
+                                "type": "root_doc",
+                                "expression": {
+                                  "datatype": null,
+                                  "type": "property_name",
+                                  "property_name": "server_modified_on"
+                                }
+                              },
+                              "type": "add_months",
+                              "months_expression": {
+                                "type": "evaluator",
+                                "statement": "iteration - 3",
+                                "context_variables": {
+                                  "iteration": {
+                                    "type": "base_iteration_number"
+                                  }
+                                }
+                              }
+                            },
+                            "type": "month_start_date"
+                          },
+                          "to_date_expression": {
+                            "datatype": "date",
+                            "type": "property_name",
+                            "property_name": "closed_on"
+                          }
+                        },
+                        "property_value": 0
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "or",
+                "filters": [
+                  {
+                    "operator": "in",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": "date",
+                        "type": "property_name",
+                        "property_name": "date_death"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                          "array_expression": {
+                            "filter_expression": {
+                              "operator": "eq",
+                              "expression": {
+                                "type": "property_name",
+                                "property_name": "identifier"
+                              },
+                              "type": "boolean_expression",
+                              "property_value": "parent"
+                            },
+                            "type": "filter_items",
+                            "items_expression": {
+                              "expression": {
+                                "datatype": "array",
+                                "type": "property_name",
+                                "property_name": "indices"
+                              },
+                              "type": "root_doc"
+                            }
+                          },
+                          "type": "array_index",
+                          "index_expression": {
+                            "constant": 0,
+                            "type": "constant"
+                          }
+                        }
+                      }
+                    },
+                    "property_value": [
+                      "",
+                      null
+                    ]
+                  },
+                  {
+                    "operator": "gt",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "type": "diff_days",
+                      "from_date_expression": {
+                        "date_expression": {
+                          "date_expression": {
+                            "type": "root_doc",
+                            "expression": {
+                              "datatype": null,
+                              "type": "property_name",
+                              "property_name": "server_modified_on"
+                            }
+                          },
+                          "type": "add_months",
+                          "months_expression": {
+                            "type": "evaluator",
+                            "statement": "iteration - 3",
+                            "context_variables": {
+                              "iteration": {
+                                "type": "base_iteration_number"
+                              }
+                            }
+                          }
+                        },
+                        "type": "month_end_date"
+                      },
+                      "to_date_expression": {
+                        "value_expression": {
+                          "datatype": "date",
+                          "type": "property_name",
+                          "property_name": "date_death"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                          },
+                          "type": "nested",
+                          "argument_expression": {
+                            "array_expression": {
+                              "filter_expression": {
+                                "operator": "eq",
+                                "expression": {
+                                  "type": "property_name",
+                                  "property_name": "identifier"
+                                },
+                                "type": "boolean_expression",
+                                "property_value": "parent"
+                              },
+                              "type": "filter_items",
+                              "items_expression": {
+                                "expression": {
+                                  "datatype": "array",
+                                  "type": "property_name",
+                                  "property_name": "indices"
+                                },
+                                "type": "root_doc"
+                              }
+                            },
+                            "type": "array_index",
+                            "index_expression": {
+                              "constant": 0,
+                              "type": "constant"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "property_value": 0
+                  }
+                ]
+              },
+              {
+                "type": "or",
+                "filters": [
+                  {
+                    "operator": "in",
+                    "expression": {
+                      "expression": {
+                        "datatype": "date",
+                        "type": "property_name",
+                        "property_name": "add"
+                      },
+                      "type": "root_doc"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": [
+                      "",
+                      null
+                    ]
+                  },
+                  {
+                    "operator": "gt",
+                    "expression": {
+                      "from_date_expression": {
+                        "date_expression": {
+                          "date_expression": {
+                            "type": "root_doc",
+                            "expression": {
+                              "datatype": null,
+                              "type": "property_name",
+                              "property_name": "server_modified_on"
+                            }
+                          },
+                          "type": "add_months",
+                          "months_expression": {
+                            "type": "evaluator",
+                            "statement": "iteration - 3",
+                            "context_variables": {
+                              "iteration": {
+                                "type": "base_iteration_number"
+                              }
+                            }
+                          }
+                        },
+                        "type": "month_end_date"
+                      },
+                      "type": "diff_days",
+                      "to_date_expression": {
+                        "expression": {
+                          "datatype": "date",
+                          "type": "property_name",
+                          "property_name": "add"
+                        },
+                        "type": "root_doc"
+                      }
+                    },
+                    "type": "boolean_expression",
+                    "property_value": 0
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "property_value": "yes",
+            "expression": {
+              "type": "nested",
+              "argument_expression": {
+                "aggregation_fn": "last_item",
+                "type": "reduce_items",
+                "items_expression": {
+                  "sort_expression": {
+                    "datatype": "date",
+                    "type": "property_path",
+                    "property_path": [
+                      "form",
+                      "meta",
+                      "timeEnd"
+                    ]
+                  },
+                  "type": "sort_items",
+                  "items_expression": {
+                    "filter_expression": {
+                      "type": "and",
+                      "filters": [
+                        {
+                          "operator": "gte",
+                          "type": "boolean_expression",
+                          "expression": {
+                            "datatype": "integer",
+                            "type": "diff_days",
+                            "from_date_expression": {
+                              "datatype": "date",
+                              "type": "property_path",
+                              "property_path": [
+                                "form",
+                                "meta",
+                                "timeEnd"
+                              ]
+                            },
+                            "to_date_expression": {
+                              "date_expression": {
+                                "date_expression": {
+                                  "type": "root_doc",
+                                  "expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "server_modified_on"
+                                  }
+                                },
+                                "type": "add_months",
+                                "months_expression": {
+                                  "type": "evaluator",
+                                  "statement": "iteration - 3",
+                                  "context_variables": {
+                                    "iteration": {
+                                      "type": "base_iteration_number"
+                                    }
+                                  }
+                                }
+                              },
+                              "type": "month_end_date"
+                            }
+                          },
+                          "property_value": 0
+                        }
+                      ]
+                    },
+                    "type": "filter_items",
+                    "items_expression": {
+                      "filter_expression": {
+                        "operator": "eq",
+                        "expression": {
+                          "datatype": "string",
+                          "type": "property_name",
+                          "property_name": "xmlns"
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
+                      },
+                      "type": "filter_items",
+                      "items_expression": {
+                        "type": "get_case_forms",
+                        "case_id_expression": {
+                          "expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "_id"
+                          },
+                          "type": "root_doc"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "value_expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "bp1",
+                  "using_ifa"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "ifa_four_plus_consumed_last_seven_days": {
+        "type": "boolean_expression",
+        "operator": "gte",
+        "property_value": 4,
+        "expression": {
+          "type": "nested",
+          "argument_expression": {
+            "aggregation_fn": "last_item",
+            "type": "reduce_items",
+            "items_expression": {
+              "sort_expression": {
+                "datatype": "date",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "meta",
+                  "timeEnd"
+                ]
+              },
+              "type": "sort_items",
+              "items_expression": {
+                "filter_expression": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "gte",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "datatype": "integer",
+                        "type": "diff_days",
+                        "from_date_expression": {
+                          "datatype": "date",
+                          "type": "property_path",
+                          "property_path": [
+                            "form",
+                            "meta",
+                            "timeEnd"
+                          ]
+                        },
+                        "to_date_expression": {
+                          "date_expression": {
+                            "date_expression": {
+                              "type": "root_doc",
+                              "expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "server_modified_on"
+                              }
+                            },
+                            "type": "add_months",
+                            "months_expression": {
+                              "type": "evaluator",
+                              "statement": "iteration - 3",
+                              "context_variables": {
+                                "iteration": {
+                                  "type": "base_iteration_number"
+                                }
+                              }
+                            }
+                          },
+                          "type": "month_end_date"
+                        }
+                      },
+                      "property_value": 0
+                    }
+                  ]
+                },
+                "type": "filter_items",
+                "items_expression": {
+                  "filter_expression": {
+                    "operator": "eq",
+                    "expression": {
+                      "datatype": "string",
+                      "type": "property_name",
+                      "property_name": "xmlns"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
+                  },
+                  "type": "filter_items",
+                  "items_expression": {
+                    "type": "get_case_forms",
+                    "case_id_expression": {
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "_id"
+                      },
+                      "type": "root_doc"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "value_expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "bp1",
+              "ifa_last_seven_days"
+            ],
+            "datatype": "integer"
+          }
+        }
+      },
+      "no_anemia_update": {
+        "type": "boolean_expression",
+        "operator": "eq",
+        "property_value": 0,
+        "expression": {
+          "aggregation_fn": "count",
+          "type": "reduce_items",
+          "items_expression": {
+            "filter_expression": {
+              "type": "and",
+              "filters": [
+                {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "gte",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "datatype": "integer",
+                        "type": "diff_days",
+                        "from_date_expression": {
+                          "datatype": "date",
+                          "type": "property_path",
+                          "property_path": [
+                            "form",
+                            "meta",
+                            "timeEnd"
+                          ]
+                        },
+                        "to_date_expression": {
+                          "date_expression": {
+                            "date_expression": {
+                              "type": "root_doc",
+                              "expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "server_modified_on"
+                              }
+                            },
+                            "type": "add_months",
+                            "months_expression": {
+                              "type": "evaluator",
+                              "statement": "iteration - 3",
+                              "context_variables": {
+                                "iteration": {
+                                  "type": "base_iteration_number"
+                                }
+                              }
+                            }
+                          },
+                          "type": "month_end_date"
+                        }
+                      },
+                      "property_value": 0
+                    }
+                  ]
+                },
+                {
+                  "type": "not",
+                  "filter": {
+                    "operator": "in",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "type": "property_path",
+                      "property_path": [
+                        "form",
+                        "bp1",
+                        "anemia"
+                      ]
+                    },
+                    "property_value": [
+                      "",
+                      null
+                    ]
+                  }
+                }
+              ]
+            },
+            "type": "filter_items",
+            "items_expression": {
+              "filter_expression": {
+                "operator": "eq",
+                "expression": {
+                  "datatype": "string",
+                  "type": "property_name",
+                  "property_name": "xmlns"
+                },
+                "type": "boolean_expression",
+                "property_value": "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
+              },
+              "type": "filter_items",
+              "items_expression": {
+                "type": "get_case_forms",
+                "case_id_expression": {
+                  "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "_id"
+                  },
+                  "type": "root_doc"
+                }
+              }
+            }
+          }
+        }
+      },
+      "extra_meal_eaten_last_visit": {
+        "type": "boolean_expression",
+        "operator": "eq",
+        "property_value": "yes",
+        "expression": {
+          "type": "nested",
+          "argument_expression": {
+            "aggregation_fn": "last_item",
+            "type": "reduce_items",
+            "items_expression": {
+              "sort_expression": {
+                "datatype": "date",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "meta",
+                  "timeEnd"
+                ]
+              },
+              "type": "sort_items",
+              "items_expression": {
+                "filter_expression": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "gte",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "datatype": "integer",
+                        "type": "diff_days",
+                        "from_date_expression": {
+                          "datatype": "date",
+                          "type": "property_path",
+                          "property_path": [
+                            "form",
+                            "meta",
+                            "timeEnd"
+                          ]
+                        },
+                        "to_date_expression": {
+                          "date_expression": {
+                            "date_expression": {
+                              "type": "root_doc",
+                              "expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "server_modified_on"
+                              }
+                            },
+                            "type": "add_months",
+                            "months_expression": {
+                              "type": "evaluator",
+                              "statement": "iteration - 3",
+                              "context_variables": {
+                                "iteration": {
+                                  "type": "base_iteration_number"
+                                }
+                              }
+                            }
+                          },
+                          "type": "month_end_date"
+                        }
+                      },
+                      "property_value": 0
+                    }
+                  ]
+                },
+                "type": "filter_items",
+                "items_expression": {
+                  "filter_expression": {
+                    "operator": "eq",
+                    "expression": {
+                      "datatype": "string",
+                      "type": "property_name",
+                      "property_name": "xmlns"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
+                  },
+                  "type": "filter_items",
+                  "items_expression": {
+                    "type": "get_case_forms",
+                    "case_id_expression": {
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "_id"
+                      },
+                      "type": "root_doc"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "value_expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "bp1",
+              "eating_extra"
+            ]
+          }
+        }
+      },
+      "resting_last_visit": {
+        "type": "boolean_expression",
+        "operator": "eq",
+        "property_value": "yes",
+        "expression": {
+          "type": "nested",
+          "argument_expression": {
+            "aggregation_fn": "last_item",
+            "type": "reduce_items",
+            "items_expression": {
+              "sort_expression": {
+                "datatype": "date",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "meta",
+                  "timeEnd"
+                ]
+              },
+              "type": "sort_items",
+              "items_expression": {
+                "filter_expression": {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "gte",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "datatype": "integer",
+                        "type": "diff_days",
+                        "from_date_expression": {
+                          "datatype": "date",
+                          "type": "property_path",
+                          "property_path": [
+                            "form",
+                            "meta",
+                            "timeEnd"
+                          ]
+                        },
+                        "to_date_expression": {
+                          "date_expression": {
+                            "date_expression": {
+                              "type": "root_doc",
+                              "expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "server_modified_on"
+                              }
+                            },
+                            "type": "add_months",
+                            "months_expression": {
+                              "type": "evaluator",
+                              "statement": "iteration - 3",
+                              "context_variables": {
+                                "iteration": {
+                                  "type": "base_iteration_number"
+                                }
+                              }
+                            }
+                          },
+                          "type": "month_end_date"
+                        }
+                      },
+                      "property_value": 0
+                    }
+                  ]
+                },
+                "type": "filter_items",
+                "items_expression": {
+                  "filter_expression": {
+                    "operator": "eq",
+                    "expression": {
+                      "datatype": "string",
+                      "type": "property_name",
+                      "property_name": "xmlns"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
+                  },
+                  "type": "filter_items",
+                  "items_expression": {
+                    "type": "get_case_forms",
+                    "case_id_expression": {
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "_id"
+                      },
+                      "type": "root_doc"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "value_expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "bp1",
+              "resting"
+            ]
+          }
+        }
+      },
+      "bp_form_in_month": {
+        "type": "boolean_expression",
+        "operator": "gt",
+        "property_value": 0,
+        "expression": {
+          "type": "reduce_items",
+          "aggregation_fn": "count",
+          "items_expression": {
+            "filter_expression": {
+              "type": "and",
+              "filters": [
+                {
+                  "operator": "gte",
+                  "type": "boolean_expression",
+                  "expression": {
+                    "datatype": "integer",
+                    "type": "diff_days",
+                    "from_date_expression": {
+                      "date_expression": {
+                        "date_expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "server_modified_on"
+                          }
+                        },
+                        "type": "add_months",
+                        "months_expression": {
+                          "type": "evaluator",
+                          "statement": "iteration - 3",
+                          "context_variables": {
+                            "iteration": {
+                              "type": "base_iteration_number"
+                            }
+                          }
+                        }
+                      },
+                      "type": "month_start_date"
+                    },
+                    "to_date_expression": {
+                      "datatype": "date",
+                      "type": "property_path",
+                      "property_path": [
+                        "form",
+                        "meta",
+                        "timeEnd"
+                      ]
+                    }
+                  },
+                  "property_value": 0
+                },
+                {
+                  "operator": "gte",
+                  "type": "boolean_expression",
+                  "expression": {
+                    "datatype": "integer",
+                    "type": "diff_days",
+                    "from_date_expression": {
+                      "datatype": "date",
+                      "type": "property_path",
+                      "property_path": [
+                        "form",
+                        "meta",
+                        "timeEnd"
+                      ]
+                    },
+                    "to_date_expression": {
+                      "date_expression": {
+                        "date_expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "server_modified_on"
+                          }
+                        },
+                        "type": "add_months",
+                        "months_expression": {
+                          "type": "evaluator",
+                          "statement": "iteration - 3",
+                          "context_variables": {
+                            "iteration": {
+                              "type": "base_iteration_number"
+                            }
+                          }
+                        }
+                      },
+                      "type": "month_end_date"
+                    }
+                  },
+                  "property_value": 0
+                }
+              ]
+            },
+            "type": "filter_items",
+            "items_expression": {
+              "filter_expression": {
+                "operator": "eq",
+                "expression": {
+                  "datatype": "string",
+                  "type": "property_name",
+                  "property_name": "xmlns"
+                },
+                "type": "boolean_expression",
+                "property_value": "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
+              },
+              "type": "filter_items",
+              "items_expression": {
+                "type": "get_case_forms",
+                "case_id_expression": {
+                  "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "_id"
+                  },
+                  "type": "root_doc"
+                }
+              }
+            }
+          }
+        }
+      },
+      "pnc_form_in_month": {
+        "type": "boolean_expression",
+        "operator": "gt",
+        "property_value": 0,
+        "expression": {
+          "type": "reduce_items",
+          "aggregation_fn": "count",
+          "items_expression": {
+            "filter_expression": {
+              "type": "and",
+              "filters": [
+                {
+                  "operator": "gte",
+                  "type": "boolean_expression",
+                  "expression": {
+                    "datatype": "integer",
+                    "type": "diff_days",
+                    "from_date_expression": {
+                      "date_expression": {
+                        "date_expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "server_modified_on"
+                          }
+                        },
+                        "type": "add_months",
+                        "months_expression": {
+                          "type": "evaluator",
+                          "statement": "iteration - 3",
+                          "context_variables": {
+                            "iteration": {
+                              "type": "base_iteration_number"
+                            }
+                          }
+                        }
+                      },
+                      "type": "month_start_date"
+                    },
+                    "to_date_expression": {
+                      "datatype": "date",
+                      "type": "property_path",
+                      "property_path": [
+                        "form",
+                        "meta",
+                        "timeEnd"
+                      ]
+                    }
+                  },
+                  "property_value": 0
+                },
+                {
+                  "operator": "gte",
+                  "type": "boolean_expression",
+                  "expression": {
+                    "datatype": "integer",
+                    "type": "diff_days",
+                    "from_date_expression": {
+                      "datatype": "date",
+                      "type": "property_path",
+                      "property_path": [
+                        "form",
+                        "meta",
+                        "timeEnd"
+                      ]
+                    },
+                    "to_date_expression": {
+                      "date_expression": {
+                        "date_expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "server_modified_on"
+                          }
+                        },
+                        "type": "add_months",
+                        "months_expression": {
+                          "type": "evaluator",
+                          "statement": "iteration - 3",
+                          "context_variables": {
+                            "iteration": {
+                              "type": "base_iteration_number"
+                            }
+                          }
+                        }
+                      },
+                      "type": "month_end_date"
+                    }
+                  },
+                  "property_value": 0
+                }
+              ]
+            },
+            "type": "filter_items",
+            "items_expression": {
+              "filter_expression": {
+                "operator": "eq",
+                "expression": {
+                  "datatype": "string",
+                  "type": "property_name",
+                  "property_name": "xmlns"
+                },
+                "type": "boolean_expression",
+                "property_value": "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE"
+              },
+              "type": "filter_items",
+              "items_expression": {
+                "type": "get_case_forms",
+                "case_id_expression": {
+                  "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "_id"
+                  },
+                  "type": "root_doc"
+                }
+              }
+            }
+          }
+        }
+      },
+      "counsel_immediate_bf": {
+        "type": "boolean_expression",
+        "operator": "gt",
+        "property_value": 0,
+        "expression": {
+          "type": "reduce_items",
+          "aggregation_fn": "count",
+          "items_expression": {
+            "filter_expression": {
+              "type": "and",
+              "filters": [
+                {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "gte",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "datatype": "integer",
+                        "type": "diff_days",
+                        "from_date_expression": {
+                          "datatype": "date",
+                          "type": "property_path",
+                          "property_path": [
+                            "form",
+                            "meta",
+                            "timeEnd"
+                          ]
+                        },
+                        "to_date_expression": {
+                          "date_expression": {
+                            "date_expression": {
+                              "type": "root_doc",
+                              "expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "server_modified_on"
+                              }
+                            },
+                            "type": "add_months",
+                            "months_expression": {
+                              "type": "evaluator",
+                              "statement": "iteration - 3",
+                              "context_variables": {
+                                "iteration": {
+                                  "type": "base_iteration_number"
+                                }
+                              }
+                            }
+                          },
+                          "type": "month_end_date"
+                        }
+                      },
+                      "property_value": 0
+                    }
+                  ]
+                },
+                {
+                  "operator": "eq",
+                  "type": "boolean_expression",
+                  "expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "form",
+                      "bp2",
+                      "immediate_breastfeeding"
+                    ]
+                  },
+                  "property_value": "yes"
+                }
+              ]
+            },
+            "type": "filter_items",
+            "items_expression": {
+              "filter_expression": {
+                "operator": "eq",
+                "expression": {
+                  "datatype": "string",
+                  "type": "property_name",
+                  "property_name": "xmlns"
+                },
+                "type": "boolean_expression",
+                "property_value": "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
+              },
+              "type": "filter_items",
+              "items_expression": {
+                "type": "get_case_forms",
+                "case_id_expression": {
+                  "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "_id"
+                  },
+                  "type": "root_doc"
+                }
+              }
+            }
+          }
+        }
+      },
+      "counsel_play_birth_preparedness_vid": {
+        "type": "boolean_expression",
+        "operator": "gt",
+        "property_value": 0,
+        "expression": {
+          "type": "reduce_items",
+          "aggregation_fn": "count",
+          "items_expression": {
+            "filter_expression": {
+              "type": "and",
+              "filters": [
+                {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "gte",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "datatype": "integer",
+                        "type": "diff_days",
+                        "from_date_expression": {
+                          "datatype": "date",
+                          "type": "property_path",
+                          "property_path": [
+                            "form",
+                            "meta",
+                            "timeEnd"
+                          ]
+                        },
+                        "to_date_expression": {
+                          "date_expression": {
+                            "date_expression": {
+                              "type": "root_doc",
+                              "expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "server_modified_on"
+                              }
+                            },
+                            "type": "add_months",
+                            "months_expression": {
+                              "type": "evaluator",
+                              "statement": "iteration - 3",
+                              "context_variables": {
+                                "iteration": {
+                                  "type": "base_iteration_number"
+                                }
+                              }
+                            }
+                          },
+                          "type": "month_end_date"
+                        }
+                      },
+                      "property_value": 0
+                    }
+                  ]
+                },
+                {
+                  "operator": "eq",
+                  "type": "boolean_expression",
+                  "expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "form",
+                      "bp2",
+                      "play_birth_preparedness_vid"
+                    ]
+                  },
+                  "property_value": "yes"
+                }
+              ]
+            },
+            "type": "filter_items",
+            "items_expression": {
+              "filter_expression": {
+                "operator": "eq",
+                "expression": {
+                  "datatype": "string",
+                  "type": "property_name",
+                  "property_name": "xmlns"
+                },
+                "type": "boolean_expression",
+                "property_value": "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
+              },
+              "type": "filter_items",
+              "items_expression": {
+                "type": "get_case_forms",
+                "case_id_expression": {
+                  "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "_id"
+                  },
+                  "type": "root_doc"
+                }
+              }
+            }
+          }
+        }
+      },
+      "counsel_preparation": {
+        "type": "boolean_expression",
+        "operator": "gt",
+        "property_value": 0,
+        "expression": {
+          "type": "reduce_items",
+          "aggregation_fn": "count",
+          "items_expression": {
+            "filter_expression": {
+              "type": "and",
+              "filters": [
+                {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "gte",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "datatype": "integer",
+                        "type": "diff_days",
+                        "from_date_expression": {
+                          "datatype": "date",
+                          "type": "property_path",
+                          "property_path": [
+                            "form",
+                            "meta",
+                            "timeEnd"
+                          ]
+                        },
+                        "to_date_expression": {
+                          "date_expression": {
+                            "date_expression": {
+                              "type": "root_doc",
+                              "expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "server_modified_on"
+                              }
+                            },
+                            "type": "add_months",
+                            "months_expression": {
+                              "type": "evaluator",
+                              "statement": "iteration - 3",
+                              "context_variables": {
+                                "iteration": {
+                                  "type": "base_iteration_number"
+                                }
+                              }
+                            }
+                          },
+                          "type": "month_end_date"
+                        }
+                      },
+                      "property_value": 0
+                    }
+                  ]
+                },
+                {
+                  "operator": "eq",
+                  "type": "boolean_expression",
+                  "expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "form",
+                      "bp2",
+                      "counsel_preparation"
+                    ]
+                  },
+                  "property_value": "yes"
+                }
+              ]
+            },
+            "type": "filter_items",
+            "items_expression": {
+              "filter_expression": {
+                "operator": "eq",
+                "expression": {
+                  "datatype": "string",
+                  "type": "property_name",
+                  "property_name": "xmlns"
+                },
+                "type": "boolean_expression",
+                "property_value": "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
+              },
+              "type": "filter_items",
+              "items_expression": {
+                "type": "get_case_forms",
+                "case_id_expression": {
+                  "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "_id"
+                  },
+                  "type": "root_doc"
+                }
+              }
+            }
+          }
+        }
+      },
+      "counsel_play_fp_vid": {
+        "type": "boolean_expression",
+        "operator": "gt",
+        "property_value": 0,
+        "expression": {
+          "type": "reduce_items",
+          "aggregation_fn": "count",
+          "items_expression": {
+            "filter_expression": {
+              "type": "and",
+              "filters": [
+                {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "gte",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "datatype": "integer",
+                        "type": "diff_days",
+                        "from_date_expression": {
+                          "datatype": "date",
+                          "type": "property_path",
+                          "property_path": [
+                            "form",
+                            "meta",
+                            "timeEnd"
+                          ]
+                        },
+                        "to_date_expression": {
+                          "date_expression": {
+                            "date_expression": {
+                              "type": "root_doc",
+                              "expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "server_modified_on"
+                              }
+                            },
+                            "type": "add_months",
+                            "months_expression": {
+                              "type": "evaluator",
+                              "statement": "iteration - 3",
+                              "context_variables": {
+                                "iteration": {
+                                  "type": "base_iteration_number"
+                                }
+                              }
+                            }
+                          },
+                          "type": "month_end_date"
+                        }
+                      },
+                      "property_value": 0
+                    }
+                  ]
+                },
+                {
+                  "operator": "eq",
+                  "type": "boolean_expression",
+                  "expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "form",
+                      "play_family_planning_vid"
+                    ]
+                  },
+                  "property_value": "yes"
+                }
+              ]
+            },
+            "type": "filter_items",
+            "items_expression": {
+              "filter_expression": {
+                "operator": "eq",
+                "expression": {
+                  "datatype": "string",
+                  "type": "property_name",
+                  "property_name": "xmlns"
+                },
+                "type": "boolean_expression",
+                "property_value": "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
+              },
+              "type": "filter_items",
+              "items_expression": {
+                "type": "get_case_forms",
+                "case_id_expression": {
+                  "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "_id"
+                  },
+                  "type": "root_doc"
+                }
+              }
+            }
+          }
+        }
+      },
+      "counsel_immediate_conception": {
+        "type": "boolean_expression",
+        "operator": "gt",
+        "property_value": 0,
+        "expression": {
+          "type": "reduce_items",
+          "aggregation_fn": "count",
+          "items_expression": {
+            "filter_expression": {
+              "type": "and",
+              "filters": [
+                {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "gte",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "datatype": "integer",
+                        "type": "diff_days",
+                        "from_date_expression": {
+                          "datatype": "date",
+                          "type": "property_path",
+                          "property_path": [
+                            "form",
+                            "meta",
+                            "timeEnd"
+                          ]
+                        },
+                        "to_date_expression": {
+                          "date_expression": {
+                            "date_expression": {
+                              "type": "root_doc",
+                              "expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "server_modified_on"
+                              }
+                            },
+                            "type": "add_months",
+                            "months_expression": {
+                              "type": "evaluator",
+                              "statement": "iteration - 3",
+                              "context_variables": {
+                                "iteration": {
+                                  "type": "base_iteration_number"
+                                }
+                              }
+                            }
+                          },
+                          "type": "month_end_date"
+                        }
+                      },
+                      "property_value": 0
+                    }
+                  ]
+                },
+                {
+                  "operator": "eq",
+                  "type": "boolean_expression",
+                  "expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "form",
+                      "conceive"
+                    ]
+                  },
+                  "property_value": "yes"
+                }
+              ]
+            },
+            "type": "filter_items",
+            "items_expression": {
+              "filter_expression": {
+                "operator": "eq",
+                "expression": {
+                  "datatype": "string",
+                  "type": "property_name",
+                  "property_name": "xmlns"
+                },
+                "type": "boolean_expression",
+                "property_value": "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
+              },
+              "type": "filter_items",
+              "items_expression": {
+                "type": "get_case_forms",
+                "case_id_expression": {
+                  "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "_id"
+                  },
+                  "type": "root_doc"
+                }
+              }
+            }
+          }
+        }
+      },
+      "counsel_accessible_postpartum_fp": {
+        "type": "boolean_expression",
+        "operator": "gt",
+        "property_value": 0,
+        "expression": {
+          "type": "reduce_items",
+          "aggregation_fn": "count",
+          "items_expression": {
+            "filter_expression": {
+              "type": "and",
+              "filters": [
+                {
+                  "type": "and",
+                  "filters": [
+                    {
+                      "operator": "gte",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "datatype": "integer",
+                        "type": "diff_days",
+                        "from_date_expression": {
+                          "datatype": "date",
+                          "type": "property_path",
+                          "property_path": [
+                            "form",
+                            "meta",
+                            "timeEnd"
+                          ]
+                        },
+                        "to_date_expression": {
+                          "date_expression": {
+                            "date_expression": {
+                              "type": "root_doc",
+                              "expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "server_modified_on"
+                              }
+                            },
+                            "type": "add_months",
+                            "months_expression": {
+                              "type": "evaluator",
+                              "statement": "iteration - 3",
+                              "context_variables": {
+                                "iteration": {
+                                  "type": "base_iteration_number"
+                                }
+                              }
+                            }
+                          },
+                          "type": "month_end_date"
+                        }
+                      },
+                      "property_value": 0
+                    }
+                  ]
+                },
+                {
+                  "operator": "eq",
+                  "type": "boolean_expression",
+                  "expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "form",
+                      "family_planning_group",
+                      "counsel_accessible_ppfp"
+                    ]
+                  },
+                  "property_value": "yes"
+                }
+              ]
+            },
+            "type": "filter_items",
+            "items_expression": {
+              "filter_expression": {
+                "operator": "eq",
+                "expression": {
+                  "datatype": "string",
+                  "type": "property_name",
+                  "property_name": "xmlns"
+                },
+                "type": "boolean_expression",
+                "property_value": "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
+              },
+              "type": "filter_items",
+              "items_expression": {
+                "type": "get_case_forms",
+                "case_id_expression": {
+                  "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "_id"
+                  },
+                  "type": "root_doc"
+                }
+              }
+            }
+          }
+        }
+      },
+      "counsel_fp_methods": {
+        "type": "boolean_expression",
+        "operator": "gt",
+        "property_value": 0,
+        "expression": {
+          "type": "reduce_items",
+          "aggregation_fn": "count",
+          "items_expression": {
+            "filter_expression": {
+              "operator": "eq",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "counsel_methods"
+                ]
+              },
+              "property_value": "yes"
+            },
+            "type": "filter_items",
+            "items_expression": {
+              "filter_expression": {
+                "type": "and",
+                "filters": [
+                  {
+                    "type": "or",
+                    "filters": [
+                      {
+                        "operator": "eq",
+                        "expression": {
+                          "datatype": "string",
+                          "type": "property_name",
+                          "property_name": "xmlns"
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE"
+                      },
+                      {
+                        "operator": "eq",
+                        "expression": {
+                          "datatype": "string",
+                          "type": "property_name",
+                          "property_name": "xmlns"
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF0C5091D"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "and",
+                    "filters": [
+                      {
+                        "operator": "gte",
+                        "type": "boolean_expression",
+                        "expression": {
+                          "datatype": "integer",
+                          "type": "diff_days",
+                          "from_date_expression": {
+                            "datatype": "date",
+                            "type": "property_path",
+                            "property_path": [
+                              "form",
+                              "meta",
+                              "timeEnd"
+                            ]
+                          },
+                          "to_date_expression": {
+                            "date_expression": {
+                              "date_expression": {
+                                "type": "root_doc",
+                                "expression": {
+                                  "datatype": null,
+                                  "type": "property_name",
+                                  "property_name": "server_modified_on"
+                                }
+                              },
+                              "type": "add_months",
+                              "months_expression": {
+                                "type": "evaluator",
+                                "statement": "iteration - 3",
+                                "context_variables": {
+                                  "iteration": {
+                                    "type": "base_iteration_number"
+                                  }
+                                }
+                              }
+                            },
+                            "type": "month_end_date"
+                          }
+                        },
+                        "property_value": 0
+                      }
+                    ]
+                  }
+                ]
+              },
+              "type": "filter_items",
+              "items_expression": {
+                "type": "get_case_forms",
+                "case_id_expression": {
+                  "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "_id"
+                  },
+                  "type": "root_doc"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "engine_id": "ucr"
+  }
+}
