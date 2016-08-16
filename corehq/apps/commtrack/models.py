@@ -25,7 +25,7 @@ from corehq.apps.products.models import Product, SQLProduct
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.quickcache import quickcache
 from . import const
-from .const import StockActions, RequisitionActions
+from .const import StockActions
 
 
 STOCK_ACTION_ORDER = [
@@ -33,23 +33,6 @@ STOCK_ACTION_ORDER = [
     StockActions.CONSUMPTION,
     StockActions.STOCKONHAND,
     StockActions.STOCKOUT,
-]
-
-REQUISITION_ACTION_TYPES = [
-    # request a product
-    RequisitionActions.REQUEST,
-
-    # approve a requisition (it is allowed to be fulfilled)
-    # this is optional and depends on app config
-    RequisitionActions.APPROVAL,
-
-    # fulfill a requisition (order is ready)
-    RequisitionActions.FULFILL,
-
-    # receive the sock (closes the requisition)
-    # NOTE: it's not totally clear if this is necessary or
-    # should be built into the regular receipt workflow.
-    RequisitionActions.RECEIPTS,
 ]
 
 
@@ -109,22 +92,6 @@ class CommtrackRequisitionConfig(DocumentSchema):
 
     # requisitions have their own sets of actions
     actions = SchemaListProperty(CommtrackActionConfig)
-
-    def get_sorted_actions(self):
-        def _action_key(a):
-            # intentionally fails hard if misconfigured.
-            return const.ORDERED_REQUISITION_ACTIONS.index(a.action)
-
-        return sorted(self.actions, key=_action_key)
-
-    def get_next_action(self, previous_action_type):
-        sorted_actions = self.get_sorted_actions()
-        sorted_types = [a.action for a in sorted_actions]
-        if previous_action_type in sorted_types:
-            next_index = sorted_types.index(previous_action_type) + 1
-            return sorted_actions[next_index] if next_index < len(sorted_actions) else None
-        else:
-            return None
 
 
 class ConsumptionConfig(DocumentSchema):
