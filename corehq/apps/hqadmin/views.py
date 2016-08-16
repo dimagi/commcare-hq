@@ -1048,7 +1048,7 @@ class DimagisphereView(TemplateView):
 
 def top_five_projects_by_country(request):
     data = {}
-    if request.GET.get('country'):
+    if 'country' in request.GET:
         country = request.GET.get('country')
         projects = (DomainES().is_active()
                     .filter(filters.term('deployment.countries', country))
