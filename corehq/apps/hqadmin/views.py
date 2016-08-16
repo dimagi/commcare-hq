@@ -82,7 +82,8 @@ from .history import get_recent_changes, download_changes
 from .models import HqDeploy, VCMMigration
 from .reporting.reports import get_project_spaces, get_stats_data
 from .utils import get_celery_stats
-
+from corehq.apps.es.domains import DomainES
+from corehq.apps.es import filters
 
 @require_superuser
 def default(request):
@@ -1043,3 +1044,18 @@ class DimagisphereView(TemplateView):
         context = super(DimagisphereView, self).get_context_data(**kwargs)
         context['tvmode'] = 'tvmode' in self.request.GET
         return context
+
+
+def top_five_projects_by_country(request):
+    data = {}
+    if 'country' in request.GET:
+        country = request.GET.get('country')
+        projects = (DomainES().is_active()
+                    .filter(filters.term('deployment.countries', country))
+                    .sort('cp_n_active_cc_users', True)
+                    .source(['name', 'cp_n_active_cc_users',
+                             'deployment.countries', 'internal.organization_name',
+                             'internal.area', 'internal.notes', 'deployment.date'])
+                    .size(5).run().hits)
+        data = {country: projects}
+    return json_response(data)
