@@ -1108,6 +1108,7 @@ class ReprocessMessagingCaseUpdatesView(BaseAdminSectionView):
 
             if case_ids_not_processed:
                 messages.error(self.request,
-                    _("Could not find cases belonging to these case ids: {}").format(','.join(case_ids_not_processed)))
+                    _("Could not find cases belonging to these case ids: {}")
+                    .format(','.join(case_ids_not_processed)))
 
         return self.get(request, *args, **kwargs)
