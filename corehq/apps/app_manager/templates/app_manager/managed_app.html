@@ -172,7 +172,7 @@
         <li class="divider"></li>
     {% if app.get_doc_type == "Application" %}
         <li>
-        <ul class="nav nav-hq-sidebar sortable">
+        <ul class="nav nav-hq-sidebar sortable appmanager-main-menu">
             <li class="sort-action">
                 <form method="post"
                       action="{% url "corehq.apps.app_manager.views.rearrange" domain app.id 'modules' %}">
@@ -186,7 +186,7 @@
                         data-index="{{ module.id }}">
                         <a href="{% url "view_module" domain app.id module.id %}">
                             <i class="drag_handle"></i>
-                            {% if module.module_type == 'advanced' %}<i class="fa fa-gears"></i>
+                            {% if module.module_type == 'advanced' %}<i class="fa fa-flask"></i>
                             {% elif module.module_type == 'report' %}<i class="fa fa-bar-chart"></i>
                             {% elif module.module_type == 'shadow' %}<i class="fa fa-folder-open-o"></i>
                             {% else %}<i class="fa fa-folder-open"></i>{% endif %}
@@ -211,11 +211,11 @@
                                             {% if request|toggle_enabled:"SUPPORT" %}
                                             <i
                                             {% if form.get_action_type == 'open' %}
-                                                class="fa fa-external-link"
+                                                class="fcc fcc-app-createform"
                                             {% elif form.get_action_type == 'close' %}
-                                                class="fa fa-ban"
+                                                class="fcc fcc-app-completeform"
                                             {% elif form.get_action_type == 'update' %}
-                                                class="fa fa-undo"
+                                                class="fcc fcc-app-updateform"
                                             {% endif %}
                                                 title="{{ form.get_icon_help_text }}"
                                                 data-toggle="tooltip"
