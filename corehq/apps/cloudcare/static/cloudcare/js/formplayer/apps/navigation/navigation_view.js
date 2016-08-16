@@ -1,3 +1,4 @@
+/* globals FormplayerFrontend */
 FormplayerFrontend.module("Navigation", function (Navigation, FormplayerFrontend, Backbone, Marionette) {
     /**
      * PhoneNavigation
@@ -21,5 +22,5 @@ FormplayerFrontend.module("Navigation", function (Navigation, FormplayerFrontend
             e.preventDefault();
             // Not implemented, will reload the app to the latest saved version
         },
-    })
-})
+    });
+});
