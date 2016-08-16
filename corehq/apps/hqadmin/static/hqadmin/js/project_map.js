@@ -16,7 +16,6 @@ var projectMapInit = function(mapboxAccessToken) {
         var that = {};
 
         // { countryName : { projectName : { propertyName: propertyValue } } }
-        var projectsByCountryThenName = {};
         var maxNumProjects = 0;
         var maxNumUsers = 0;
         var projects_per_country = {};
@@ -28,36 +27,7 @@ var projectMapInit = function(mapboxAccessToken) {
                 url: '/hq/admin/json/project_map/' + window.location.search,
                 dataType: 'json',
             }).done(function (data) {
-                var tempProjects = {};
-                // data.aaData seems to hold the information. not sure though if this is the best way of getting the data.
-                data.aaData.forEach(function (project) {
-                    var countryNames = project[5];
-                    if (!Array.isArray(countryNames) || countryNames.length < 1) {
-                        // todo: find a way to display projects with no listed deployment country. ignoring for now.
-                    } else {
-                        // this will use only the first listed country
-                        // todo: figure out desired handling of multiple deployment countries
-                        var countryName = countryNames[0].toLowerCase();
-                        if (!tempProjects[countryName]) {
-                            tempProjects[countryName] = {};
-                        }
-                        tempProjects[countryName][project[0]] = {
-                            'Name': project[0],
-                            'Link': project[1],
-                            'Date Created': project[2].substring(0,10),
-                            'Organization': project[3],
-                            'Deployment Date': project[4].substring(0,10),
-                            'Deployment Countries': countryNames.join(', '),
-                            '# Forms Submitted': project[7],
-                            '# Active Mobile Workers': project[6],
-                            'Notes': project[8],
-                            'Sector': project[9],
-                            'Sub-Sector': project[10]
-                        };
-                    }
-                });
 
-                projectsByCountryThenName = tempProjects;
                 projects_per_country = data.country_projs_count;
                 users_per_country = data.users_per_country;
 
@@ -112,17 +82,8 @@ var projectMapInit = function(mapboxAccessToken) {
             var self = this;
             self.selectedCountry = ko.observable('country name');
             self.selectedProject = ko.observable('project name');
-
-            // for showing a country's projects table
             self.tableProperties = ['Name', 'Sector', 'Organization', 'Deployment Date'];
             self.topFiveProjects = ko.observableArray();
-            // for showing info on a single project
-            self.projectPropertiesLeft = ['Sector', 'Sub-Sector', 'Organization', 'Deployment Countries', 'Deployment Date',
-                                          '# Active Mobile Workers', '# Forms Submitted'];
-            self.projectPropertiesRight = ['Notes'];
-            self.getSelectedProjectProperty = function(propertyName) {
-                return self.getProjectProperty(self.selectedProject(), propertyName);
-            };
         };
 
         selectionModel = new SelectionModel();
@@ -143,14 +104,6 @@ var projectMapInit = function(mapboxAccessToken) {
             window.location.hash = countryName;
         };
 
-        that.showProjectInfo = function(countryName, projectIdentifier) {
-            var modalContent = $('.modal-content');
-            modalContent.removeClass('show-table');
-            modalContent.addClass('show-project-info');
-
-            window.location.hash ='#' + countryName + '#' + projectIdentifier;
-        };
-
         Object.freeze(that);
         return that;
     }();
@@ -158,7 +111,6 @@ var projectMapInit = function(mapboxAccessToken) {
     $(document).on('click', '.project-row', function(evt) {
         var projectName = $(this).attr('data-project-name');
         selectionModel.selectedProject(projectName);
-        modalController.showProjectInfo(selectionModel.selectedCountry(), projectName);
     });
 
     $(document).on('click', '.back', function(evt) {
@@ -263,7 +215,6 @@ var projectMapInit = function(mapboxAccessToken) {
                         })
                     });
                 })
-
                 // launch the modal
                 $('#modal').modal();
             }
