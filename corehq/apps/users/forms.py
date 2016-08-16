@@ -10,7 +10,7 @@ from django.core.validators import EmailValidator, validate_email
 from django.core.urlresolvers import reverse
 from django.forms.widgets import PasswordInput
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop, string_concat
 from django.template.loader import get_template
 from django.template import Context
 from django_countries.data import COUNTRIES
@@ -383,10 +383,10 @@ class SetUserPasswordForm(SetPasswordForm):
 
         if self.project.strong_mobile_passwords:
             self.fields['new_password1'].widget = forms.TextInput()
-            self.fields['new_password1'].help_text = mark_safe("""
-                <i class="fa fa-warning"></i>This password is automatically generated. Please copy it or create your own. It will not be shown again. <br />
-                <span data-bind="text: passwordHelp, css: color">
-            """)
+            self.fields['new_password1'].help_text = mark_safe_lazy(string_concat('<i class="fa fa-warning"></i>',
+                 ugettext_lazy("This password is automatically generated. Please copy it or create your own. It will not be shown again."),
+                 '<br /><span data-bind="text: passwordHelp, css: color">'
+            ))
             initial_password = _generate_strong_password()
 
         self.helper = FormHelper()
@@ -550,9 +550,10 @@ class NewMobileWorkerForm(forms.Form):
                 "ng_keydown": "markNonDefault()",
                 "class": "default",
             })
-            self.fields['password'].help_text = mark_safe("""
-                <i class="fa fa-warning"></i>This password is automatically generated. Please copy it or create your own. It will not be shown again. <br />
-            """)
+            self.fields['password'].help_text = mark_safe_lazy(string_concat('<i class="fa fa-warning"></i>',
+                ugettext_lazy('This password is automatically generated. Please copy it or create your own. It will not be shown again.'),
+                '<br />'
+            ))
 
         if project.uses_locations:
             self.fields['location_id'].widget = AngularLocationSelectWidget()

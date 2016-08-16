@@ -46,7 +46,7 @@
                 .addClass('has-success');
             if ($formElements.password().hasClass('non-default')) {
                 $formElements.passwordHint()
-                    .text('Good Job! Your password is strong!');
+                    .text(gettext('Good Job! Your password is strong!'));
             }
         },
         passwordAlmost: function () {
@@ -55,7 +55,7 @@
                 .addClass('has-pending');
             if ($formElements.password().hasClass('non-default')) {
                 $formElements.passwordHint()
-                    .text('Your password is almost strong enough!');
+                    .text(gettext('Your password is almost strong enough!'));
             }
         },
         passwordError: function () {
@@ -64,7 +64,7 @@
                 .addClass('has-error');
             if ($formElements.password().hasClass('non-default')) {
                 $formElements.passwordHint()
-                    .text('Your password is too weak! Try adding numbers or symbols!');
+                    .text(gettext('Your password is too weak! Try adding numbers or symbols!'));
             }
         },
         markDefault: function () {
@@ -72,7 +72,9 @@
                 .removeClass('non-default')
                 .addClass('default');
             $formElements.passwordHint().html(
-                '<i class="fa fa-warning"></i>This password is automatically generated. Please copy it or create your own. It will not be shown again. <br />'
+                '<i class="fa fa-warning"></i>' +
+                gettext('This password is automatically generated. Please copy it or create your own. It will not be shown again.') +
+                ' <br />'
             );
         },
         markNonDefault: function () {
