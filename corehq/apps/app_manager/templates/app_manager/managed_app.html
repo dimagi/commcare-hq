@@ -189,7 +189,8 @@
                             {% if module.module_type == 'advanced' %}<i class="fa fa-gears"></i>
                             {% elif module.module_type == 'report' %}<i class="fa fa-bar-chart"></i>
                             {% elif module.module_type == 'shadow' %}<i class="fa fa-folder-open-o"></i>
-                            {% else %}<i class="fa fa-folder-open"></i>{% endif %}
+                            {% elif module.is_surveys %}<i class="fa fa-folder-open"></i>
+                            {% else %}<i class="fa fa-list"></i>{% endif %}
                             <span {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>
                                 {{ module.name|html_trans:langs }}
 
@@ -244,7 +245,13 @@
                                 {% if module.doc_type != 'CareplanModule' and module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %}
                                 <a class="submit_on_click" href="#">
                                     <i class="fa fa-plus icon-blue"></i>
-                                    <span class="text-muted">{% trans "Form" %}</span>
+                                    <span class="text-muted">
+                                        {% if module.is_surveys %}
+                                            {% trans "Survey" %}
+                                        {% else %}
+                                            {% trans "Followup Questions" %}
+                                        {% endif %}
+                                    </span>
                                 </a>
                                 {% endif %}
                             </li>
@@ -261,33 +268,34 @@
                     <li class="sort-disabled dropdown">
                         <a href="#" data-toggle="dropdown">
                             <i class="new-module-icon fa fa-plus icon-blue"></i>
-                            <span class="text-muted">{% trans "Module" %}</span><span class="caret"></span>
+                            <span class="text-muted">{% trans "New" %}</span><span class="caret"></span>
                         </a>
                         <ul class="dropdown-menu" role="menu">
-                            <li><a href="#" class="new-module" data-type="case">{% trans "New Case Module" %}</a></li>
+                            <li><a href="#" class="new-module" data-type="case" data-survey="1">{% trans "Surveys" %}</a></li>
+                            <li><a href="#" class="new-module" data-type="case" data-record-list="1">{% trans "Record List" %}</a></li>
                             {% if show_care_plan %}
-                            <li><a data-toggle="modal" href="#careplan-module-modal">{% trans "New Care Plan Module" %}</a></li>
+                            <!--li><a data-toggle="modal" href="#careplan-module-modal">{% trans "New Care Plan Module" %}</a></li-->
                             {% endif %}
                             {% if show_advanced %}
-                            <li>
+                            <!--li>
                                 <a href="#" class="new-module" data-type="advanced">
                                     {% trans "New Advanced Module" %}
                                 </a>
-                            </li>
+                            </li-->
                             {% endif %}
                             {% if show_report_modules %}
-                            <li>
+                            <!--li>
                                 <a href="#" class="new-module" data-type="report">
                                     {% trans "New Report Module" %}
                                 </a>
-                            </li>
+                            </li-->
                             {% endif %}
                             {% if show_shadow_modules %}
-                            <li>
+                            <!--li>
                                 <a href="#" class="new-module" data-type="shadow">
                                     {% trans "New Shadow Module" %}
                                 </a>
-                            </li>
+                            </li-->
                             {% endif %}
                         </ul>
                     </li>
