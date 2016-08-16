@@ -43,7 +43,9 @@
     <script src="{% static 'style/js/ui-element.js' %}"></script>
     <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
+    {% if request|toggle_enabled:"PREVIEW_APP" %}
     <script src="{% static 'app_manager/js/preview_app.js' %}"></script>
+    {% endif %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -56,7 +58,9 @@
         }).on('hide.bs.modal', function () {
             window.location = "{% url "corehq.apps.app_manager.views.view_app" domain %}";
         });
+        {% if request|toggle_enabled:"PREVIEW_APP" %}
         hqImport('app_manager/js/preview_app.js').initializePreviewButton();
+        {% endif %}
     });
     $(window).load(function () {
        $('.app-manager-content').removeClass('hide');
