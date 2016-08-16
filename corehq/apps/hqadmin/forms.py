@@ -72,7 +72,10 @@ class ReprocessMessagingCaseUpdatesForm(forms.Form):
 
     def clean_case_ids(self):
         value = self.cleaned_data.get('case_ids', '')
-        return set(value.split())
+        value = value.split()
+        if not value:
+            raise ValidationError(_("This field is required."))
+        return set(value)
 
     def __init__(self, *args, **kwargs):
         super(ReprocessMessagingCaseUpdatesForm, self).__init__(*args, **kwargs)
