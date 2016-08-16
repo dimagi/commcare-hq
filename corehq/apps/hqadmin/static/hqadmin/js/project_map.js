@@ -259,7 +259,7 @@ var projectMapInit = function(mapboxAccessToken) {
                             name: project['name'],
                             sector: project['internal']['area'],
                             organization: project['internal']['organization_name'],
-                            deployment: project['deployment']['date'],
+                            deployment: project['deployment']['date'].substring(0,10),
                         })
                     });
                 })
