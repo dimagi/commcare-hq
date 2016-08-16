@@ -1004,7 +1004,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             amplifies_workers=self.cleaned_data['amplifies_workers'],
             amplifies_project=self.cleaned_data['amplifies_project'],
             business_unit=self.cleaned_data['business_unit'],
-            data_access_threshold=self.cleaned_data['data_access_threshold']
+            data_access_threshold=self.cleaned_data['data_access_threshold'],
             **kwargs
         )
 
