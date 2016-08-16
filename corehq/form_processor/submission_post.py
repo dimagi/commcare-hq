@@ -15,6 +15,7 @@ from django.http import (
 import sys
 import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals
+from casexml.apps.case.xml import V2
 from corehq.toggles import ASYNC_RESTORE
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.tzmigration import timezone_migration_in_progress
@@ -23,7 +24,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.metadata import scrub_meta
-from casexml.apps.phone.const import ASYNC_RESTORE_CACHE_KEY_PREFIX
+from casexml.apps.phone.const import ASYNC_RESTORE_CACHE_KEY_PREFIX, RESTORE_CACHE_KEY_PREFIX
 from couchforms.const import BadRequest, DEVICE_LOG_XMLNS
 from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub
 from couchforms.signals import successful_form_received
@@ -130,6 +131,9 @@ class SubmissionPost(object):
         if task_id is not None:
             revoke_celery_task(task_id)
             cache.delete(cache_key)
+
+        first_sync_cache_key = restore_cache_key(RESTORE_CACHE_KEY_PREFIX, user_id, version=V2)
+        cache.delete(first_sync_cache_key)
 
     def run(self):
         failure_result = self._handle_basic_failure_modes()
