@@ -23,22 +23,24 @@
                   media="all"
                   href="{% static 'style/less/style.debug.less' %}" />
         {% else %}
-        <link type="text/less"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'style/less/bootstrap.less' %}" />
-        <link type="text/less"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'font-awesome/less/font-awesome.less' %}" />
-        <link type="text/less"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'style/less/font-commcare.less' %}" />
-        <link type="text/less"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'style/less/style.less' %}" />
+          {% compress css %}
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'style/less/bootstrap.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'font-awesome/less/font-awesome.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'style/less/font-commcare.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'style/less/style.less' %}" />
+          {% endcompress %}
         {% endif %}
         <link type="text/css"
               rel="stylesheet"
