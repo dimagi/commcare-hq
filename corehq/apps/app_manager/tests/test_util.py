@@ -214,7 +214,7 @@ class SchemaTest(SimpleTestCase):
                 self.factory.app.case_sharing = True
                 self.factory_2.app.case_sharing = True
 
-                referral = self.add_form("referral")
+                self.add_form("referral")
                 child = self.add_form("child")
                 self.factory.form_opens_case(child, case_type='referral', is_subcase=True)
                 pregnancy = self.add_form("pregnancy")
