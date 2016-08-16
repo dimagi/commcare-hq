@@ -33,17 +33,13 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             var page = urlObject.page;
             var search = urlObject.search;
             var queryDict = urlObject.queryDict;
-            var previewMode = urlObject.previewMode;
-            var singleApp = urlObject.singleApp;
             SessionNavigate.MenuList.Controller.selectMenu(
                 appId,
                 sessionId,
                 steps,
                 page,
                 search,
-                queryDict,
-                previewMode,
-                singleApp
+                queryDict
             );
         },
         showDetail: function (model, index) {
@@ -100,7 +96,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     });
 
     FormplayerFrontend.on('app:singleApp', function(appId) {
-        FormplayerFrontend.navigate("/phone_mode/" + appId);
+        FormplayerFrontend.navigate("/single_app/" + appId);
         API.singleApp(appId);
     });
 
