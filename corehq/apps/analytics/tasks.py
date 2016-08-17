@@ -255,8 +255,9 @@ def track_new_user_accepted_invite_on_hubspot(webuser, cookies, meta):
 
 
 @analytics_task()
-def track_clicked_preview_on_hubspot(webuser, cookies, meta):
-    _send_form_to_hubspot(HUBSPOT_CLICKED_PREVIEW_FORM_ID, webuser, cookies, meta)
+def track_clicked_preview_on_hubspot(couchuser, cookies, meta):
+    if couchuser.is_web_user():
+        _send_form_to_hubspot(HUBSPOT_CLICKED_PREVIEW_FORM_ID, couchuser, cookies, meta)
 
 
 @analytics_task()
