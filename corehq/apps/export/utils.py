@@ -165,6 +165,10 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
                     ))
 
                 new_column = _get_normal_column(new_table, column_path, transform)
+
+                # If we can't find the column in the current table
+                # look in every other table to see if the column is a repeat
+                # that did not receive more than one entry
                 if not new_column:
                     new_column = _get_for_single_node_repeat(instance.tables, column_path, transform)
                     if new_column:
@@ -258,7 +262,15 @@ def _convert_transform(serializable_transform):
 
 
 def _get_for_single_node_repeat(tables, column_path, transform):
+    """
+    This function takes a column path and looks for it in all the other tables
+    """
+    from .models import MAIN_TABLE
+
     for new_table in tables:
+        if new_table.path == MAIN_TABLE:
+            continue
+
         column_dot_path = '.'.join(map(lambda node: node.name, column_path))
         table_dot_path = '.'.join(map(lambda node: node.name, new_table.path))
         if column_dot_path.startswith(table_dot_path):
