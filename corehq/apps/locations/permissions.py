@@ -47,14 +47,14 @@ def get_user_location(user, domain):
     if user.is_commcare_user():
         return user.location
     else:
-        return user.get_location(sql_location.domain)
+        return user.get_location(domain)
 
 
 def get_user_sql_location(user, domain):
     if user.is_commcare_user():
         return user.sql_location
     else:
-        return user.get_sql_ocation(sql_location.domain)
+        return user.get_sql_location(domain)
 
 
 def user_can_edit_location(user, sql_location, project):
