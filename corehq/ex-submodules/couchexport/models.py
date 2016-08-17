@@ -699,7 +699,7 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
     def trim(self, document_table, doc, apply_transforms=True):
         tables = []
         for table_index, data in document_table:
-            if self.tables_by_index.has_key(table_index):
+            if table_index in self.tables_by_index:
                 # todo: currently (index, rows) instead of (display, rows); where best to convert to display?
                 tables.append((table_index, self.tables_by_index[table_index].trim(
                     data, doc, apply_transforms, self.global_transform_function
