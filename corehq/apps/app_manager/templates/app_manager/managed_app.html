@@ -133,16 +133,10 @@
                 {{ app.name }}
             </a>
             <div id="app-settings-gear">
-                <a href="{% url "view_app" domain app.id %}#app-settings" {% if is_app_view %}data-toggle="tab" data-default="1" data-pagetitle="{% trans "Settings" %}: {{ app.name }}"{% endif %}>
+                <a href="{% url "view_app" domain app.id %}#app-settings" {% if is_app_view %}data-toggle="tab" data-default="1"{% endif %}>
                     <i class="fa fa-gear"></i>
                 </a>
             </div>
-        </li>
-        <li>
-            <a href="{% url "view_app" domain app.id %}languages/#languages-and-translations" {% if is_app_view %}data-toggle="tab" data-pagetitle="{% trans "Languages" %}: {{ app.name }}"{% endif %}>
-                <i class="fa fa-globe"></i>
-                {% trans "Languages" %}
-            </a>
             {% if app.get_doc_type == 'Application' %}
                 <span id="langs">
                     {% if not app.is_remote_app and app.langs|length > 1%}
