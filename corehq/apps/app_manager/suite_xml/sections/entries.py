@@ -174,7 +174,7 @@ class EntriesHelper(object):
                     media_audio=module.case_list.default_media_audio,
                 )
             if isinstance(module, Module):
-                for datum_meta in self.get_datum_meta_module(module, use_filter=False):
+                for datum_meta in self.get_case_datums_basic_module(module):
                     e.datums.append(datum_meta.datum)
             elif isinstance(module, AdvancedModule):
                 e.datums.append(SessionDatum(
@@ -292,12 +292,15 @@ class EntriesHelper(object):
 
         return datums
 
-    def get_case_datums_basic_module(self, module, form):
+    def get_case_datums_basic_module(self, module, form=None):
         datums = []
         if not form or form.requires_case():
             datums.extend(self.get_datum_meta_module(module, use_filter=True))
-        datums.extend(EntriesHelper.get_new_case_id_datums_meta(form))
-        datums.extend(EntriesHelper.get_extra_case_id_datums(form))
+
+        if form:
+            datums.extend(EntriesHelper.get_new_case_id_datums_meta(form))
+            datums.extend(EntriesHelper.get_extra_case_id_datums(form))
+
         self.add_parent_datums(datums, module)
         return datums
 
