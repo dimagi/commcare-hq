@@ -128,9 +128,9 @@
 <nav class="app-manager-content hide">
     <ul class="nav nav-hq-sidebar">
         <li class="{% if release_manager %}active {% endif %}release-manager-li">
-            <a id="demand-releases" href="{% url "view_app" domain app.id %}releases/#releases" {% if is_app_view %}data-toggle="tab" data-pagetitle="{% trans "Deploy" %}: {{ app.name }}"{% endif %}>
-                <i class="fa fa-download"></i>
-                {% trans "Deploy" %}
+            <a id="demand-releases" href="{% url "view_app" domain app.id %}releases/#releases" {% if is_app_view %}data-toggle="tab"{% endif %}>
+                <i class="fa fa-mobile-phone"></i>
+                {{ app.name }}
             </a>
             <div id="app-settings-gear">
                 <a href="{% url "view_app" domain app.id %}#app-settings" {% if is_app_view %}data-toggle="tab" data-default="1" data-pagetitle="{% trans "Settings" %}: {{ app.name }}"{% endif %}>
