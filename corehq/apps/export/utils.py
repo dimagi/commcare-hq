@@ -90,6 +90,13 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
         instance.split_multiselects = getattr(saved_export, 'split_multiselects', False)
         instance.include_errors = getattr(saved_export, 'include_errors', False)
 
+    # The SavedExportSchema only saves selected columns so default all the
+    # selections to False unless found in the SavedExportSchema (legacy)
+    for table in instance.tables:
+        table.selected = False
+        for column in table.columns:
+            column.selected = False
+
     # With new export instance, copy over preferences from previous export
     for old_table in saved_export.tables:
         table_path = _convert_index_to_path_nodes(old_table.index)
@@ -114,11 +121,6 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
         migration_meta.converted_tables.append(ConversionMeta(
             path=old_table.index,
         ))
-
-        # The SavedExportSchema only saves selected columns so default all the selections to False
-        # unless found in the SavedExportSchema (legacy)
-        for new_column in new_table.columns:
-            new_column.selected = False
 
         for column in old_table.columns:
             info = []
