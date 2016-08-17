@@ -167,6 +167,8 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
                 new_column = _get_normal_column(new_table, column_path, transform)
                 if not new_column:
                     new_column = _get_for_single_node_repeat(instance.tables, column_path, transform)
+                    if new_column:
+                        info.append('Column is for a repeat with just a single instance')
 
                 if not new_column:
                     raise SkipConversion('Column not found in new schema')
