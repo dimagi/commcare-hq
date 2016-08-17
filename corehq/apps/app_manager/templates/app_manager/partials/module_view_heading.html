@@ -6,7 +6,11 @@
         {% csrf_token %}
         <button type="submit" class="disable-on-submit btn btn-danger">
             <i class="fa fa-trash"></i>
-            {% trans "Delete Module" %}
+            {% if module.case_type == "" %}
+                {% trans "Delete Surveys" %}
+            {% else %}
+                {% trans "Delete Record List" %}
+            {% endif %}
         </button>
     </form>
 </div>
