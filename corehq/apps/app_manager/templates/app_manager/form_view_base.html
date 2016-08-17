@@ -275,10 +275,18 @@
     <div class="pull-right">
         <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">
             {% csrf_token %}
-            <button type="submit" class="disable-on-submit btn btn-danger">
+            <button type="submit" class="disable-on-submit btn btn-danger"
+                {% if form.get_action_type == 'open' %}disabled="disabled"{% endif %}>
                 <i class="fa fa-trash"></i>
                 {% trans "Delete Form" %}
             </button>
+            {% if form.get_action_type == 'open' %}
+                <span class="hq-help-template"
+                      data-title="Why can't I delete this?"
+                      data-placement="left"
+                      data-content="It's usually a bad idea to remove the registration form. If you really must, turn on <b>Allow deletion of registration form</b> in <a href='{% url "view_module" domain app.id module.id %}'>record list settings</a>."
+                ></span>
+            {% endif %}
         </form>
     </div>
 
