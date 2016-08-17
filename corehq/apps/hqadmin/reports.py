@@ -542,6 +542,19 @@ FACET_MAPPING = [
     ]),
 ]
 
+DIMAGISPHERE_FACET_MAPPING = [
+    ("Location", True, [
+        {"facet": "deployment.countries.exact", "name": "Country", "collapsed": True},
+    ]),
+    ("Type", True, [
+        {"facet": "internal.area.exact", "name": "Sector", "expanded": True},
+        {"facet": "internal.sub_area.exact", "name": "Sub-Sector", "expanded": True},
+    ]),
+    ("Self Starters", False, [
+        {"facet": "internal.self_started", "name": "Self Started", "expanded": True},
+    ]),
+]
+
 
 class AdminReport(GenericTabularReport):
     dispatcher = AdminReportDispatcher
@@ -839,6 +852,7 @@ class AdminDomainMapReport(AdminDomainStatsReport):
     name = ugettext_noop('Project Map')
     facet_title = ugettext_noop("Project Facets")
     search_for = ugettext_noop("projects...")
+    es_facet_mapping = DIMAGISPHERE_FACET_MAPPING
     base_template = "hqadmin/project_map.html"
 
     exportable = False
