@@ -1,6 +1,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load xforms_extras %}
+{% load crispy_forms_tags %}
 
 <script type="text/html" id="CommcareSettings.widgets.select">
     <span>
@@ -207,7 +208,31 @@
             languages
         </div>
         <div class="tab-pane" id="actions">
-            actions
+            {% if copy_app_form %}
+                <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
+                    {% crispy copy_app_form %}
+                </form>
+                <br>
+            {% endif %}
+            {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
+                <legend>Export compressed application</legend>
+                <form action="{% url "gzip_app" domain app.id %}" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-arrow-down"></i>
+                        {% trans "Download" %}
+                    </button>
+                </form>
+                <br>
+            {% endif %}
+            <legend>{% trans "Delete Application" %}</legend>
+            <form action="{% url "corehq.apps.app_manager.views.delete_app" domain app.id %}" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger disable-on-submit">
+                    <i class="fa fa-trash"></i>
+                    {% trans "Delete this application" %}
+                </button>
+            </form>
         </div>
     </div>
 </div> 
