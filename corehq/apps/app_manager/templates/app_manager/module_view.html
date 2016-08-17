@@ -35,6 +35,7 @@
     {% include 'app_manager/partials/graph_configuration_modal.html' %}
 
     <script>
+        {% if module.case_type != "" %}
         $(function () {
             var state = hqImport('app_manager/js/detail-screen-config.js').state;
             var DetailScreenConfig = hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig;
@@ -82,6 +83,7 @@
                 }
             }
         });
+        {% endif %}
         $(function () {
             var moduleType = {{ module.module_type|JSON }};
             var showCaseTypeError = function(message) {
@@ -231,9 +233,10 @@
 <ul class="nav nav-tabs" id="module-view-tabs">
     {% block tab-headers %}
     <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
-    {% if module.module_type != 'shadow' %}
+    {% if module.module_type != 'shadow' and module.case_type != "" %}
     <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
     {% endif %}
+    {% if module.case_type != "" %}
     {% for detail in details %}
     <li>
         <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">
@@ -248,6 +251,7 @@
     </li>
     {% endif %}
     {% endfor %}
+    {% endif %}
     {% endblock %}{# endblock tab-headers #}
 </ul>
 <div class="spacer"></div>
@@ -328,6 +332,7 @@
             </fieldset>
         </form>
     </div>
+    {% if module.module_type != 'shadow' and module.case_type != "" %}
     <div class="tab-pane" id="case-settings">
         <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_module_attr" domain app.id module.id 'all' %}">
             {% csrf_token %}
@@ -393,7 +398,9 @@
             </fieldset>
         </form>
     </div>
+    {% endif %}
 
+    {% if module.case_type != "" %}
     {% for detail in details %}
     <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
         {% include 'app_manager/partials/case_list.html' %}
@@ -404,6 +411,7 @@
     </div>
     {% endif %}
     {% endfor %}
+    {% endif %}
     {% endblock %}{# endblock tab-content #}
 </div>
 </div>
