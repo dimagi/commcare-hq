@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import json
 
 from corehq.apps.builds.utils import get_all_versions
-from corehq.apps.es import FormES
+from corehq.apps.es import FormES, filters
 from corehq.apps.es.aggregations import NestedTermAggregationsHelper, AggregationTerm, SumAggregation
 from corehq.apps.style.decorators import (
     use_nvd3,
@@ -544,14 +544,10 @@ FACET_MAPPING = [
 
 DIMAGISPHERE_FACET_MAPPING = [
     ("Location", True, [
-        {"facet": "deployment.countries.exact", "name": "Country", "collapsed": True},
+        {"facet": "deployment.countries.exact", "name": "Country", "expanded": True},
     ]),
     ("Type", True, [
         {"facet": "internal.area.exact", "name": "Sector", "expanded": True},
-        {"facet": "internal.sub_area.exact", "name": "Sub-Sector", "expanded": True},
-    ]),
-    ("Self Starters", False, [
-        {"facet": "internal.self_started", "name": "Self Started", "expanded": True},
     ]),
 ]
 
@@ -885,7 +881,7 @@ class AdminDomainMapReport(AdminDomainStatsReport):
                     dom.get('internal', {}).get('sub_area') or _('No info')
                 ]
 
-    def _calc_num_active_users_per_country(self):
+    def _calc_num_active_users_per_country(self, filters):
         active_users_per_country = (NestedTermAggregationsHelper(
                                     base_query=DomainES(),
                                     terms=[AggregationTerm('countries', 'deployment.countries')],
@@ -893,17 +889,39 @@ class AdminDomainMapReport(AdminDomainStatsReport):
                                     ).get_data())
         return active_users_per_country
 
-    def _calc_num_projs_per_countries(self):
+    def _calc_num_projs_per_countries(self, filters):
         num_projects_by_country = (DomainES()
+                                   .filter(filters)
                                    .terms_aggregation('deployment.countries', 'countries')
                                    .size(0).run().aggregations.countries.counts_by_bucket())
         return num_projects_by_country
 
+    def parse_params(self, es_params):
+        es_filters = {}
+
+        def get_country_params():
+            if es_params.get('deployment.countries.exact'):
+                return filters.term("deployment.countries", es_params.get('deployment.countries.exact'))
+
+        def get_sector_params():
+            if es_params.get('internal.area.exact'):
+                return filters.term("internal.area", es_params.get('internal.area.exact')[0].lower())
+
+        if get_country_params() is not None and get_sector_params() is not None:
+            es_filters = filters.AND(get_country_params(), get_sector_params())
+        elif get_country_params() is not None:
+            es_filters = get_country_params()
+        elif get_sector_params() is not None:
+            es_filters = get_sector_params()
+
+        return es_filters
+
     @property
     def json_dict(self):
         json = super(AdminDomainMapReport, self).json_dict
-        json['users_per_country'] = dict(self._calc_num_active_users_per_country())
-        json['country_projs_count'] = self._calc_num_projs_per_countries()
+        params = self.parse_params(self.es_params)
+        json['users_per_country'] = dict(self._calc_num_active_users_per_country(params))
+        json['country_projs_count'] = self._calc_num_projs_per_countries(params)
         return json
 
 class AdminUserReport(AdminFacetedReport):
