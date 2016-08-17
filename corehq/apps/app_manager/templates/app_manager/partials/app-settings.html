@@ -153,7 +153,7 @@
     </aside>
 </script>
 
-<a href="{% url "app_summary" domain app.id %}" class="btn btn-info pull-right">
+<a href="{% url "app_summary" domain app.id %}" class="btn btn-default pull-right">
     <i class="fa fa-list-alt"></i>
     App Summary
 </a>
@@ -205,7 +205,7 @@
             </div>
         {% endif %}
         <div class="tab-pane" id="languages">
-            languages
+            {% include 'app_manager/languages.html' %}
         </div>
         <div class="tab-pane" id="actions">
             {% if copy_app_form %}
