@@ -52,5 +52,6 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^dimagisphere/$',
         require_superuser(DimagisphereView.as_view(template_name='hqadmin/dimagisphere/form_feed.html')),
         name='dimagisphere'),
+    url(r'^top_five_projects_by_country/$', 'top_five_projects_by_country', name='top_five_projects_by_country'),
     AdminReportDispatcher.url_pattern(),
 )

@@ -99,6 +99,7 @@ from corehq.apps.app_manager import current_builds, app_strings, remote_app, \
 from corehq.apps.app_manager.suite_xml import xml_models as suite_models
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
+    get_case_sharing_apps_in_domain,
     get_latest_build_doc,
     get_latest_released_app_doc,
     domain_has_apps,
@@ -5418,7 +5419,19 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         extra_types = set()
         if is_usercase_in_use(self.domain):
             extra_types.add(USERCASE_TYPE)
+
         return set(chain(*[m.get_case_types() for m in self.get_modules()])) | extra_types
+
+    @memoized
+    def get_shared_case_types(self):
+        shared_case_types = set()
+
+        if self.case_sharing:
+            apps = get_case_sharing_apps_in_domain(self.domain, self.id)
+            for app in apps:
+                shared_case_types |= set(chain(*[m.get_case_types() for m in app.get_modules()]))
+
+        return shared_case_types
 
     def has_media(self):
         return len(self.multimedia_map) > 0

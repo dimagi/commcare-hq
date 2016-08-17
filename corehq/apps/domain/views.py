@@ -2425,7 +2425,6 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         internal_attrs = [
             'sf_contract_id',
             'sf_account_id',
-            'services',
             'initiative',
             'self_started',
             'area',

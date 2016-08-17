@@ -4,7 +4,10 @@
         self.penalizedWords = ['dimagi', 'commcare', 'hq', 'commcarehq'];
         self.password = ko.observable();
         self.strength = ko.computed(function () {
-            return zxcvbn(self.password(), self.penalizedWords).score;
+            if (self.password()) {
+                return zxcvbn(self.password(), self.penalizedWords).score;
+            }
+            return 0;
         });
         self.color = ko.computed(function () {
             if (self.strength() < 1) {
