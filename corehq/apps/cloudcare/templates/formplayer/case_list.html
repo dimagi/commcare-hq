@@ -40,21 +40,39 @@
     <div>
         <nav>
             <ul class="pagination">
-                <li class="page-item">
+                <% if (currentPage > 0) { %>
+                <li class="page-item" id="prev-page">
                     <a class="page-link" aria-label="Previous" data-id="<%= currentPage - 1 %>">
                         <span aria-hidden="true">&laquo;</span>
                         <span class="sr-only">Previous</span>
                     </a>
                 </li>
+                <% } else { %>
+                <li class="paginate-disabled">
+                    <a class="paginate-disabled">
+                        <span aria-hidden="true">&laquo;</span>
+                        <span class="sr-only">Previous</span>
+                    </a>
+                </li>
+                <% } %>
                 <% for (i = 0; i < pageCount; i++) { %>
                 <li class="page-item"><a class="page-link" data-id="<%= i %>"><%= i %></a></li>
                 <% } %>
-                <li class="page-item">
+                <% if (currentPage < pageCount - 1) { %>
+                <li class="page-item" id="next-page">
                     <a class="page-link" aria-label="Next" data-id="<%= currentPage + 1 %>">
                         <span aria-hidden="true">&raquo;</span>
                         <span class="sr-only">Next</span>
                     </a>
                 </li>
+                <% } else { %>
+                <li class="paginate-disabled">
+                    <a class="paginate-disabled">
+                        <span aria-hidden="true">&raquo;</span>
+                        <span class="sr-only">Next</span>
+                    </a>
+                </li>
+                <% } %>
             </ul>
         </nav>
     </div>
