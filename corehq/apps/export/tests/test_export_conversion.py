@@ -282,19 +282,25 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestCase, TestFileMixin):
         self.assertTrue(meta.is_remote_app_migration)
 
 
+class TestConvertBase(TestCase, TestFileMixin):
+    file_path = ('data', 'saved_export_schemas')
+    root = os.path.dirname(__file__)
+    app_id = '58b0156dc3a8420669efb286bc81e048'
+    domain = 'convert-domain'
+
+    def setUp(self):
+        delete_all_export_instances()
+
+
 @mock.patch(
     'corehq.apps.export.models.new.get_request',
-    return_value=MockRequest(domain='my-domain'),
+    return_value=MockRequest(domain='convert-domain'),
 )
 @mock.patch(
     'corehq.apps.export.utils._is_remote_app_conversion',
     return_value=False,
 )
-class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
-    file_path = ('data', 'saved_export_schemas')
-    root = os.path.dirname(__file__)
-    app_id = '58b0156dc3a8420669efb286bc81e048'
-    domain = 'convert-domain'
+class TestConvertSavedExportSchemaToFormExportInstance(TestConvertBase):
 
     @classmethod
     def setUpClass(cls):
@@ -360,9 +366,6 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
                 ),
             ],
         )
-
-    def setUp(self):
-        delete_all_export_instances()
 
     def test_basic_conversion(self, _, __):
 
