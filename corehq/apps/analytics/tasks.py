@@ -193,6 +193,13 @@ def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
 
 
 @analytics_task()
+def hubspot_track_user_phone_number_on_signup(webuser):
+    _track_on_hubspot(webuser, {
+        'PhoneNumber': webuser.phone_numbers[0],
+    })
+
+
+@analytics_task()
 def track_built_app_on_hubspot(webuser):
     vid = _get_user_hubspot_id(webuser)
     if vid:

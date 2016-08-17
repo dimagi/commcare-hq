@@ -19,8 +19,8 @@ from corehq.apps.analytics import ab_tests
 from corehq.apps.analytics.tasks import (
     track_workflow,
     track_confirmed_account_on_hubspot,
-    track_clicked_signup_on_hubspot
-)
+    track_clicked_signup_on_hubspot,
+    hubspot_track_user_phone_number_on_signup)
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.models import Domain
@@ -67,12 +67,12 @@ class ProcessRegistrationView(JSONResponseMixin, View):
             username=reg_form.cleaned_data['email'],
             password=reg_form.cleaned_data['password']
         )
-        if 'phone_number' in reg_form.cleaned_data:
-            track_workflow(new_user.email, "Requested new account", properties={
-                'PhoneNumber': reg_form.cleaned_data['phone_number'],
-            })
-        else:
-            track_workflow(new_user.email, "Requested new account")
+        if 'phone_number' in reg_form.cleaned_data and reg_form.cleaned_data['phone_number']:
+            web_user = WebUser.get_by_username(new_user.username)
+            web_user.phone_numbers.append(reg_form.cleaned_data['phone_number'])
+            web_user.save()
+            hubspot_track_user_phone_number_on_signup.delay(web_user)
+        track_workflow(new_user.email, "Requested new account")
         login(self.request, new_user)
 
     @property
