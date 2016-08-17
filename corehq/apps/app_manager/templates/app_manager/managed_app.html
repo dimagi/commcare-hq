@@ -195,7 +195,6 @@
                                         <a id="view_form_{{ module.id }}_{{ form.id }}_sidebar"
                                            href="{% url "form_source" domain app.id module.id form.id %}">
                                             <i class="drag_handle"></i>
-                                            {% if request|toggle_enabled:"SUPPORT" %}
                                             <i
                                             {% if form.get_action_type == 'open' %}
                                                 class="fcc fcc-app-createform appmanager-icon-type"
@@ -209,7 +208,6 @@
                                                 data-placement="top"
                                                 >
                                             </i>
-                                            {% endif %}
                                             <span {% if form == selected_form %}class="variable-form_name"{% endif %}>
                                             {{ form.name|html_trans:langs }}
                                             </span>
