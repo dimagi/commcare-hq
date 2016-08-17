@@ -270,6 +270,24 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
         """
         self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu[@id='m1']")
 
+    def test_child_module_no_forms_show_case_list(self):
+        m0f0 = self.module_0.get_form(0)
+        self.factory.form_requires_case(m0f0)
+
+        del self.module_1['forms'][0]
+
+        self.module_1.case_list.show = True
+        self.module_1.case_list.lable = {"en": "Case List"}
+
+        self.module_1.parent_select.active = True
+        self.module_1.parent_select.module_id = self.module_0.unique_id
+
+        self.assertXmlPartialEqual(
+            self.get_xml('child-module-with-parent-select-and-case-list'),
+            self.app.create_suite(),
+            "./entry"
+        )
+
 
 class UserCaseOnlyModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
     """
