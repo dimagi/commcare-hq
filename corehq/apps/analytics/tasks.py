@@ -186,17 +186,14 @@ def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
             'is_a_commcare_user': True,
             'lifecyclestage': 'lead'
         }
+        if (hasattr(webuser, 'phone_numbers') and len(webuser.phone_numbers) > 0):
+            tracking_dict.update({
+                'phone': webuser.phone_numbers[0],
+            })
         tracking_dict.update(get_ab_test_properties(webuser))
         _track_on_hubspot(webuser, tracking_dict)
         _send_form_to_hubspot(HUBSPOT_SIGNUP_FORM_ID, webuser, cookies, meta)
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, cookies, meta)
-
-
-@analytics_task()
-def hubspot_track_user_phone_number_on_signup(webuser):
-    _track_on_hubspot(webuser, {
-        'PhoneNumber': webuser.phone_numbers[0],
-    })
 
 
 @analytics_task()
