@@ -47,8 +47,15 @@
         $(function () {
             $('[data-toggle="tooltip"]').tooltip()
             $('.edit-form-li').each(function () {
-                if (!{{ formdesigner|JSON }}) {
-                    $(this).find('.edit-form-pencil').addClass('no-data');
+                var $this = $(this);
+                if (!{{ formdesigner|JSON }} || !$this.hasClass("active")) {
+                    var $pencil = $this.find('.edit-form-pencil');
+                    $pencil.addClass('no-data');
+                    $this.hover(function() {
+                        $pencil.removeClass('no-data');
+                    }, function() {
+                        $pencil.addClass('no-data');
+                    });
                 }
             });
 
