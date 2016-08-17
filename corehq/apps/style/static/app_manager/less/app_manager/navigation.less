@@ -36,25 +36,59 @@ nav.app-manager-content {
     }
   }
 
-  // Pencil icons for editing forms
-  .edit-form-pencil {
-    position: absolute;
-    right: -13px;
-    top: 3px;
-    opacity: 0.5;
-  }
-
-  .edit-form-li {
-    position: relative;
-
-    &.active .edit-form-pencil .fa {
-      color: white;
-    }
-  }
 
 }
 
 // Used to indicate sortable table rows (i.e., case list rows)
 .sortable-handle {
   cursor: move;
+}
+
+
+.appmanager-main-menu {
+  .edit-form-li,
+  .edit-module-li {
+    position: relative;
+    .drag_handle {
+      display: block;
+      position: absolute;
+      left: 0;
+      top: 0;
+      line-height: 24px;
+      text-align: center;
+      width: 19px;
+      opacity: 0;
+      .transition(all .6s);
+    }
+    .appmanager-icon-type {
+      font-size: 1.4rem;
+    }
+  }
+
+  // Pencil icons for editing forms
+  .edit-form-pencil {
+    position: absolute;
+    right: -13px;
+    top: 3px;
+    opacity: 0.0;
+    .transition(all .6s);
+    &.no-data {
+      display: none;
+    }
+  }
+
+  .edit-form-li > a:hover,
+  .edit-module-li > a:hover {
+    > .drag_handle {
+      opacity: 1.0;
+    }
+  }
+
+  .edit-form-li:hover .edit-form-pencil {
+    opacity: 0.5;
+  }
+
+  .edit-form-li.active .edit-form-pencil .fa {
+    color: white;
+  }
 }
