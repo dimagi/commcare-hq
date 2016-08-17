@@ -44,7 +44,7 @@ var projectMapInit = function(mapboxAccessToken) {
                     if (users_per_country[country] > maxNumUsers) {
                         maxNumUsers = users_per_country[country];
                     }
-                    totalNumUsers += users_per_country[country]
+                    totalNumUsers += users_per_country[country];
                 });
 
                 colorAll();
@@ -173,7 +173,7 @@ var projectMapInit = function(mapboxAccessToken) {
             opacity: 1,
             color: 'white',
             dashArray: '3',
-            fillOpacity: getOpacity(feature.properties.name)
+            fillOpacity: getOpacity(feature.properties.name),
         };
     }
 
@@ -183,7 +183,7 @@ var projectMapInit = function(mapboxAccessToken) {
         layer.setStyle({
             weight: 4,
             color: '#002c5f',
-            dashArray: ''
+            dashArray: '',
         });
         if (!L.Browser.ie && !L.Browser.opera) {
             layer.bringToFront();
@@ -298,7 +298,7 @@ var projectMapInit = function(mapboxAccessToken) {
 
     stats.onAdd = function (map) {
         var div = L.DomUtil.create('div', 'info legend');
-        div.innerHTML += '<p><b>Statistics</b></p>'
+        div.innerHTML += '<p><b>Statistics</b></p>';
         div.innerHTML += '<p>Number of Active Countries: ' + dataController.getNumActiveCountries() +  '</p>';
         div.innerHTML += '<p>Number of Active Mobile Users: ' + dataController.getNumUsers() +  '</p>';
         div.innerHTML += '<p>Number of Active Projects: ' + dataController.getNumProjects() +  '</p>';
