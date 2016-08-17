@@ -58,6 +58,17 @@
                     });
                 }
             });
+
+            // TODO: this doesn't respond correctly as you jump between pages
+            // TODO: can't jump from settings to deploy
+            {% if module or form or release_manager %}
+                $('#app-settings-gear').hide();
+                $('.release-manager-li').mouseenter(function() {
+                    $('#app-settings-gear').show();
+                }).mouseleave(function() {
+                    $('#app-settings-gear').hide();
+                });
+            {% endif %}
         });
     </script>
     {% endif %}
@@ -116,21 +127,18 @@
 {% if app %}
 <nav class="app-manager-content hide">
     <ul class="nav nav-hq-sidebar">
-        <li {% if release_manager %}class="active"{% endif %}>
+        <li class="{% if release_manager %}active {% endif %}release-manager-li">
             <a id="demand-releases" href="{% url "view_app" domain app.id %}releases/#releases" {% if is_app_view %}data-toggle="tab" data-pagetitle="{% trans "Deploy" %}: {{ app.name }}"{% endif %}>
                 <i class="fa fa-download"></i>
                 {% trans "Deploy" %}
             </a>
+            <div id="app-settings-gear">
+                <a href="{% url "view_app" domain app.id %}#app-settings" {% if is_app_view %}data-toggle="tab" data-default="1" data-pagetitle="{% trans "Settings" %}: {{ app.name }}"{% endif %}>
+                    <i class="fa fa-gear"></i>
+                </a>
+            </div>
         </li>
         <li class="divider"></li>
-        <li {% if not module and not form and not release_manager %}class="app-name-div
-                {% if not copy_app_form or not copy_app_form.is_bound %}active{% endif %}"
-            {% endif %}>
-            <a href="{% url "view_app" domain app.id %}#app-settings" {% if is_app_view %}data-toggle="tab" data-default="1" data-pagetitle="{% trans "Settings" %}: {{ app.name }}"{% endif %} >
-                <i class="fa fa-cog"></i>
-                {% trans "Settings" %}
-            </a>
-        </li>
         {% if app.get_doc_type == 'Application' %}
         <li>
             <a id="demand-multimedia" href="{% url "view_app" domain app.id %}multimedia/#multimedia" {% if is_app_view %}data-toggle="tab" data-pagetitle="{% trans "Multimedia" %}: {{ app.name }}"{% endif %}>
