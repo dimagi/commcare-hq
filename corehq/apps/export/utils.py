@@ -273,7 +273,7 @@ def _get_for_single_node_repeat(tables, column_path, transform):
 
         column_dot_path = '.'.join(map(lambda node: node.name, column_path))
         table_dot_path = '.'.join(map(lambda node: node.name, new_table.path))
-        if column_dot_path.startswith(table_dot_path):
+        if column_dot_path.startswith(table_dot_path + '.'):
             new_column_path = new_table.path + column_path[len(new_table.path):]
         else:
             continue
