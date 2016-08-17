@@ -131,6 +131,7 @@ class StockReportParser(object):
             RequisitionActions.FULFILL,
             RequisitionActions.RECEIPTS
         ]:
+            # todo: soft assert? remove?
             # dropped support for this
             raise SMSError(_(
                 "You can no longer use requisitions! Please contact your project supervisor for help"
@@ -409,9 +410,11 @@ def process_transactions(E, transactions):
         if tx.action in (
             const.StockActions.STOCKONHAND,
             const.StockActions.STOCKOUT,
+            # todo: remove?
             const.RequisitionActions.REQUEST
         ):
             balances.append(tx)
+        # todo: remove?
         elif tx.action == const.RequisitionActions.FULFILL:
             balances.append(tx)
             transfers.append(tx)
@@ -422,6 +425,7 @@ def process_transactions(E, transactions):
 
 
 def process_balances(E, balances):
+    # todo: remove checks for requisition actions
     if balances:
         if balances[0].action == const.RequisitionActions.REQUEST:
             section_id = 'ct-requested'
@@ -451,6 +455,7 @@ def process_transfers(E, transfers):
 
         if transfers[0].action in [
             const.StockActions.RECEIPTS,
+            # todo: remove?
             const.RequisitionActions.FULFILL
         ]:
             here, there = ('dest', 'src')
@@ -586,6 +591,7 @@ def to_instance(data):
             *stock_blocks
         )
         return etree.tostring(root, encoding='utf-8', pretty_print=True)
+    # todo: remove?
     else:
         return requisition_case_xml(data, stock_blocks)
 
