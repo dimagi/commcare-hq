@@ -117,7 +117,11 @@ class CloudcareMain(View):
                 apps = [get_app_json(ApplicationBase.wrap(app)) for app in apps if app]
 
         else:
-            apps = get_brief_apps_in_domain(domain)
+            # big TODO: write a new apps view for Formplayer, can likely cut most out now
+            if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
+                apps = get_cloudcare_apps(domain)
+            else:
+                apps = get_brief_apps_in_domain(domain)
             apps = [get_app_json(app) for app in apps if app and app.application_version == V2]
             meta = get_meta(request)
             track_clicked_preview_on_hubspot(request.couch_user, request.COOKIES, meta)
