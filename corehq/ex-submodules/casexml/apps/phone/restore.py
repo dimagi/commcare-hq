@@ -633,7 +633,7 @@ class RestoreConfig(object):
             task = get_async_restore_payload.delay(self)
             new_task = True
             # store the task id in cache
-            self.cache.set(self.async_cache_key, task.id, timeout=None)
+            self.cache.set(self.async_cache_key, task.id, timeout=24 * 60 * 60)
         try:
             response = task.get(timeout=self._get_task_timeout(new_task))
         except TimeoutError:
