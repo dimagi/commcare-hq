@@ -162,7 +162,7 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
                         transform,
                     ))
 
-                new_column = _convert_normal_column(new_table, column_path, transform)
+                new_column = _get_normal_column(new_table, column_path, transform)
                 if not new_column:
                     raise SkipConversion('Column not found in new schema')
                 else:
@@ -323,7 +323,7 @@ def _convert_stock_column(new_table, old_column):
         raise SkipConversion('StockExportColumn not found in new export')
 
 
-def _convert_normal_column(new_table, column_path, transform):
+def _get_normal_column(new_table, column_path, transform):
     guess_types = [
         'ScalarItem',
         'MultipleChoiceItem',
