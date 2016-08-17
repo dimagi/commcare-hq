@@ -22,7 +22,7 @@ from casexml.apps.phone.restore import (
     restore_cache_key,
     CachedPayload
 )
-from casexml.apps.phone.const import ASYNC_RESTORE_CACHE_KEY_PREFIX
+from casexml.apps.phone.const import ASYNC_RESTORE_CACHE_KEY_PREFIX, RESTORE_CACHE_KEY_PREFIX
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
 from casexml.apps.phone.tests.utils import create_restore_user
 from couchforms.models import DefaultAuthContext
@@ -169,11 +169,13 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
     def test_restore_in_progress_form_submitted_kills_old_jobs(self):
         """If the user submits a form somehow while a job is running, the job should be terminated
         """
-        cache_id = restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, self.user.user_id)
-        fake_task_id = 'fake-task-id'
+        task_cache_id = restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, self.user.user_id)
+        initial_sync_cache_id = restore_cache_key(RESTORE_CACHE_KEY_PREFIX, self.user.user_id, version='2.0')
+        fake_cached_thing = 'fake-cached-thing'
         restore_config = self._restore_config(async=True)
         # pretend we have a task running
-        restore_config.cache.set(cache_id, fake_task_id)
+        restore_config.cache.set(task_cache_id, fake_cached_thing)
+        restore_config.cache.set(initial_sync_cache_id, fake_cached_thing)
 
         form = """
         <data>
@@ -187,12 +189,14 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
             # with a different user in the same domain, task doesn't get killed
             submit_form_locally(form.format(user_id="other_user"), self.domain)
             self.assertFalse(revoke.called)
-            self.assertEqual(restore_config.cache.get(cache_id), fake_task_id)
+            self.assertEqual(restore_config.cache.get(task_cache_id), fake_cached_thing)
+            self.assertEqual(restore_config.cache.get(initial_sync_cache_id), fake_cached_thing)
 
             # task gets killed when the user submits a form
             submit_form_locally(form.format(user_id=self.user.user_id), self.domain)
-            revoke.assert_called_with(fake_task_id)
-            self.assertIsNone(restore_config.cache.get(cache_id))
+            revoke.assert_called_with(fake_cached_thing)
+            self.assertIsNone(restore_config.cache.get(task_cache_id))
+            self.assertIsNone(restore_config.cache.get(initial_sync_cache_id))
 
     @flag_enabled('ASYNC_RESTORE')
     def test_submit_system_form(self):
