@@ -320,11 +320,13 @@
             <li class="active">
                 <a href="#form-settings" id="tour-form-settings-tab" data-toggle="tab">{% trans "Settings" %}</a>
             </li>
+            {% if form.requires_case %}
             <li>
                 <a id="case-configuration-tab" href="#case-configuration" data-toggle="tab">
                     {% trans "Case Management" %}
                 </a>
             </li>
+            {% endif %}
             {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
             <li>
                 <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
@@ -349,6 +351,7 @@
                 {% include "app_manager/partials/form_tab_settings.html" %}
             {% endif %}
 
+            {% if form.requires_case %}
             <div class="tab-pane" id="case-configuration">
                 {% if form_errors or xform_validation_errored %}
                     <p class="alert alert-warning">
@@ -374,6 +377,7 @@
                     </p>
                 {% endif %}
             </div>
+            {% endif %}
 
             <div class="tab-pane" id="usercase-configuration">
                 {% if form_errors or xform_validation_errored %}
