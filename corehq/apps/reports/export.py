@@ -71,8 +71,11 @@ class BulkExport(object):
                             include_headers=isinstance(self, CustomBulkExport))
                         if isinstance(self, CustomBulkExport):
                             table = self.export_objects[i].trim(table, doc)
-                        table = self.export_objects[i].parse_tables(table)
-                        writer.write(table)
+                        if table and table[0]:
+                            # if an export only contains data from repeats and a form has no repeats
+                            # then the table list will be empty
+                            table = self.export_objects[i].parse_tables(table)
+                            writer.write(table)
                 except SchemaMismatchException:
                     # fire off a delayed force update to prevent this from happening again
                     rebuild_schemas.delay(self.export_objects[i].index)
