@@ -1,17 +1,16 @@
-from copy import copy
 import json
+from copy import copy
 
-from corehq.apps.change_feed.topics import get_multi_topic_offset, get_topic_offset
-from dimagi.utils.logging import notify_error
 from django.conf import settings
 from kafka import KafkaConsumer
-from kafka.common import ConsumerTimeout, KafkaConfigurationError, KafkaUnavailableError
+from kafka.common import ConsumerTimeout
+
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
-import logging
+from corehq.apps.change_feed.topics import get_multi_topic_offset, get_topic_offset
+from dimagi.utils.logging import notify_error
 from pillowtop.checkpoints.manager import PillowCheckpointEventHandler, DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
 from pillowtop.feed.interface import ChangeFeed, Change, ChangeMeta
-
 
 MIN_TIMEOUT = 100
 
@@ -107,6 +106,12 @@ class KafkaChangeFeed(ChangeFeed):
         topic = self._get_single_topic_or_fail()
         return get_topic_offset(topic)
 
+    def get_checkpoint_value(self):
+        try:
+            return self.get_latest_change_id()
+        except ValueError:
+            return json.dumps(self.get_current_offsets())
+
     def _get_consumer(self, timeout, auto_offset_reset='smallest'):
         config = {
             'group_id': self._group_id,
@@ -126,8 +131,7 @@ class MultiTopicCheckpointEventHandler(PillowCheckpointEventHandler):
     """
 
     def __init__(self, checkpoint, checkpoint_frequency, change_feed):
-        self.checkpoint = checkpoint
-        self.checkpoint_frequency = checkpoint_frequency
+        super(MultiTopicCheckpointEventHandler, self).__init__(checkpoint, checkpoint_frequency)
         assert isinstance(change_feed, KafkaChangeFeed)
         self.change_feed = change_feed
         # todo: do this somewhere smarter?
@@ -141,7 +145,8 @@ class MultiTopicCheckpointEventHandler(PillowCheckpointEventHandler):
 
     def fire_change_processed(self, change, context):
         if context.changes_seen % self.checkpoint_frequency == 0 and context.do_set_checkpoint:
-            self.checkpoint.update_to(json.dumps(self.change_feed.get_current_checkpoint_offsets()))
+            updated_to = self.change_feed.get_current_checkpoint_offsets()
+            self.checkpoint.update_to(json.dumps(updated_to))
 
 
 def change_from_kafka_message(message):

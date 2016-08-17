@@ -210,7 +210,7 @@ def _get_report_module_context(app, module):
             'description': report.description,
             'charts': [chart for chart in report.charts if
                        chart.type == 'multibar'],
-            'filter_structure': report.filters,
+            'filter_structure': report.filters_without_prefilters,
         }
 
     all_reports = ReportConfiguration.by_domain(app.domain) + \
@@ -641,6 +641,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     fixture_select = params.get('fixture_select', None)
     sort_elements = params.get('sort_elements', None)
     persist_case_context = params.get('persistCaseContext', None)
+    persistent_case_context_xml = params.get('persistentCaseContextXML', None)
     use_case_tiles = params.get('useCaseTiles', None)
     persist_tile_on_forms = params.get("persistTileOnForms", None)
     pull_down_tile = params.get("enableTilePullDown", None)
@@ -667,6 +668,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
         detail.short.columns = map(DetailColumn.from_json, short)
         if persist_case_context is not None:
             detail.short.persist_case_context = persist_case_context
+            detail.short.persistent_case_context_xml = persistent_case_context_xml
         if use_case_tiles is not None:
             detail.short.use_case_tiles = use_case_tiles
         if persist_tile_on_forms is not None:
@@ -693,6 +695,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
             item.field = sort_element['field']
             item.type = sort_element['type']
             item.direction = sort_element['direction']
+            item.display[lang] = sort_element['display']
             detail.short.sort_elements.append(item)
     if parent_select is not None:
         module.parent_select = ParentSelect.wrap(parent_select)

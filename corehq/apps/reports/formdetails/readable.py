@@ -1,6 +1,7 @@
 from pydoc import html
 from django.http import Http404
 from django.utils.safestring import mark_safe
+from corehq.apps.app_manager.exceptions import XFormException
 from corehq.util.timezones.conversions import PhoneTime
 from corehq.util.timezones.utils import get_timezone_for_request
 from dimagi.ext.jsonobject import *
@@ -271,7 +272,7 @@ def get_questions_for_submission(xform):
     try:
         questions = get_questions(domain, app_id, xmlns)
         questions_error = None
-    except QuestionListNotFound as e:
+    except (QuestionListNotFound, XFormException) as e:
         questions = []
         questions_error = e
     return questions, questions_error

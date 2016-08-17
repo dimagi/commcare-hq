@@ -53,8 +53,56 @@
 
     mobileWorkers.constant('customFields', []);
     mobileWorkers.constant('customFieldNames', []);
+    mobileWorkers.constant('location_url', '');
 
     var MobileWorker = function (data) {
+        function generateStrongPassword() {
+            function pick(possible, min, max) {
+                var n, chars = '';
+
+                if (typeof max === 'undefined') {
+                    n = min;
+                } else {
+                    n = min + Math.floor(Math.random() * (max - min + 1));
+                }
+
+                for (var i = 0; i < n; i++) {
+                    chars += possible.charAt(Math.floor(Math.random() * possible.length));
+                }
+
+                return chars;
+            }
+
+            function shuffle(password) {
+                var array = password.split('');
+                var tmp, current, top = array.length;
+
+                if (top) while (--top) {
+                    current = Math.floor(Math.random() * (top + 1));
+                    tmp = array[current];
+                    array[current] = array[top];
+                    array[top] = tmp;
+                }
+
+                return array.join('');
+            }
+
+            var specials = '!@#$%^&*()_+{}:"<>?\|[];\',./`~';
+            var lowercase = 'abcdefghijklmnopqrstuvwxyz';
+            var uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            var numbers = '0123456789';
+
+            var all = specials + lowercase + uppercase + numbers;
+
+            var password = '';
+            password += pick(specials, 1);
+            password += pick(lowercase, 1);
+            password += pick(uppercase, 1);
+            password += pick(numbers, 1);
+            password += pick(all, 6, 10);
+            return shuffle(password);
+        }
+
         var self = this;
         self.creationStatus = STATUS.NEW;
 
@@ -62,8 +110,9 @@
         self.first_name = data.first_name || '';
         self.last_name = data.last_name || '';
         self.editUrl = data.editUrl || '';
+        self.location_id = data.location_id || '';
 
-        self.password = '';
+        self.password = data.generateStrongPasswords ? generateStrongPassword() : '';
 
         self.customFields = {};
 
@@ -84,7 +133,7 @@
 
     mobileWorkerControllers.MobileWorkerCreationController = function (
             $scope, workerCreationFactory, djangoRMI, customFields,
-            customFieldNames
+            customFieldNames, generateStrongPasswords, location_url, $http
     ) {
         $scope._ = _;  // make underscore available
         $scope.mobileWorker = {};
@@ -93,6 +142,18 @@
         $scope.workers = [];
         $scope.customFormFields = customFields;
         $scope.customFormFieldNames = customFieldNames;
+        $scope.generateStrongPasswords = generateStrongPasswords;
+
+        $scope.availableLocations = [];
+
+        $scope.searchLocations = function (query) {
+            var reqStr = location_url + "?name=" + query;
+            $http.get(reqStr).then(
+                function (response) {
+                    $scope.availableLocations = response.data;
+                }
+            );
+        };
 
         $scope.initializeMobileWorker = function (mobileWorker) {
             visualFormCtrl.usernameClear();
@@ -107,7 +168,10 @@
                 });
             } else {
                 $(".select2multiplechoicewidget").select2('data', null);
-                $scope.mobileWorker = new MobileWorker({customFields: customFields});
+                $scope.mobileWorker = new MobileWorker({
+                    customFields: customFields,
+                    generateStrongPasswords: generateStrongPasswords,
+                });
             }
             ga_track_event('Manage Mobile Workers', 'New Mobile Worker', '');
         };

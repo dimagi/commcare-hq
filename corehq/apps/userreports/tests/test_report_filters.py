@@ -1,11 +1,13 @@
 from datetime import datetime, date
 from django.test import SimpleTestCase
+from mock import Mock
+
 from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, \
-    NumericFilter, DynamicChoiceListFilter, Choice
+    NumericFilter, DynamicChoiceListFilter, Choice, PreFilter
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, \
-    CHOICE_DELIMITER, NumericFilterValue, DateFilterValue
+    CHOICE_DELIMITER, NumericFilterValue, DateFilterValue, PreFilterValue
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.apps.userreports.reports.filters.specs import ReportFilter
 from dimagi.utils.dates import DateSpan
@@ -137,6 +139,145 @@ class NumericFilterTestCase(SimpleTestCase):
         NumericFilterValue(filter, {'operator': '<', 'operand': 3})
         with self.assertRaises(AssertionError):
             NumericFilterValue(filter, {'operator': 'sql injection', 'operand': 3})
+
+
+class PreFilterTestCase(SimpleTestCase):
+
+    def test_pre_filter(self):
+        filter_ = ReportFilterFactory.from_spec({
+            'type': 'pre',
+            'field': 'at_risk_field',
+            'slug': 'at_risk_slug',
+            'datatype': 'string',
+            'pre_value': 'true'
+        })
+        self.assertEqual(type(filter_), PreFilter)
+        self.assertEqual(filter_.name, 'at_risk_slug')
+        self.assertEqual(filter_.default_value(), {'operator': '=', 'operand': 'true'})
+
+    def test_pre_filter_value(self):
+        pre_value = 'yes'
+        filter_ = ReportFilter.wrap({
+            'type': 'pre',
+            'field': 'at_risk_field',
+            'slug': 'at_risk_slug',
+            'datatype': 'string',
+            'pre_value': pre_value
+        })
+        filter_value = PreFilterValue(filter_, {'operand': pre_value})
+        self.assertEqual(filter_value.to_sql_values(), {'at_risk_slug': 'yes'})
+
+    def test_pre_filter_value_null(self):
+        column = Mock()
+        column.name = 'at_risk_field'
+        column.is_.return_value = 'foo'
+        table = Mock()
+        table.c = [column]
+
+        pre_value = None
+        filter_ = ReportFilter.wrap({
+            'type': 'pre',
+            'field': 'at_risk_field',
+            'slug': 'at_risk_slug',
+            'datatype': 'string',
+            'pre_value': pre_value
+        })
+        filter_value = PreFilterValue(filter_, {'operand': pre_value})
+        self.assertEqual(filter_value.to_sql_values(), {})
+        self.assertEqual(filter_value.to_sql_filter().build_expression(table), 'foo')
+
+    def test_pre_filter_value_array(self):
+        column = Mock()
+        column.name = 'at_risk_field'
+        column.in_.return_value = 'foo'
+        table = Mock()
+        table.c = [column]
+
+        pre_value = ['yes', 'maybe']
+        filter_ = ReportFilter.wrap({
+            'type': 'pre',
+            'field': 'at_risk_field',
+            'slug': 'at_risk_slug',
+            'datatype': 'array',
+            'pre_value': pre_value
+        })
+        filter_value = PreFilterValue(filter_, {'operand': pre_value})
+        self.assertEqual(filter_value.to_sql_values(), {'at_risk_slug_0': 'yes', 'at_risk_slug_1': 'maybe'})
+        self.assertEqual(filter_value.to_sql_filter().build_expression(table), 'foo')
+
+    def test_pre_filter_operator(self):
+        value = {'operator': '<=', 'operand': '99'}
+        filter_ = ReportFilterFactory.from_spec({
+            'type': 'pre',
+            'field': 'risk_indicator_field',
+            'slug': 'risk_indicator_slug',
+            'datatype': 'integer',
+            'pre_value': value['operand'],
+            'pre_operator': value['operator'],
+        })
+        self.assertEqual(type(filter_), PreFilter)
+        self.assertEqual(filter_.default_value(), {'operator': '<=', 'operand': 99})  # operand will be coerced
+
+    def test_pre_filter_invalid_operator(self):
+        value = {'operator': 'in', 'operand': 'no'}  # "in" is invalid for scalar operand
+        filter_ = ReportFilter.wrap({
+            'type': 'pre',
+            'field': 'at_risk_field',
+            'slug': 'at_risk_slug',
+            'datatype': 'string',
+            'pre_value': value['operand'],
+            'pre_operator': value['operator'],
+        })
+        filter_value = PreFilterValue(filter_, value)
+        with self.assertRaises(TypeError):
+            filter_value.to_sql_filter()
+
+    def test_pre_filter_between_operator(self):
+        column = Mock()
+        column.name = 'dob_field'
+        column.between.return_value = 'foo'
+        table = Mock()
+        table.c = [column]
+
+        value = {'operator': 'between', 'operand': ['2017-03-13', '2017-04-11']}
+        filter_ = ReportFilter.wrap({
+            'type': 'pre',
+            'field': 'dob_field',
+            'slug': 'dob_slug',
+            'datatype': 'date',
+            'pre_value': value['operand'],
+            'pre_operator': value['operator'],
+        })
+        filter_value = PreFilterValue(filter_, value)
+        self.assertEqual(filter_value.to_sql_values(), {'dob_slug_0': '2017-03-13', 'dob_slug_1': '2017-04-11'})
+        self.assertEqual(filter_value.to_sql_filter().build_expression(table), 'foo')
+
+    def test_pre_filter_dyn_operator(self):
+        from corehq.apps.reports.daterange import get_daterange_start_end_dates
+
+        column = Mock()
+        column.name = 'dob_field'
+        column.between.return_value = 'foo'
+        table = Mock()
+        table.c = [column]
+
+        start_date, end_date = get_daterange_start_end_dates('lastmonth')
+
+        value = {'operator': 'lastmonth', 'operand': [None]}
+        filter_ = ReportFilter.wrap({
+            'type': 'pre',
+            'field': 'dob_field',
+            'slug': 'dob_slug',
+            'datatype': 'array',
+            'pre_value': value['operand'],
+            'pre_operator': value['operator'],
+        })
+        filter_value = PreFilterValue(filter_, value)
+        self.assertEqual(filter_value.to_sql_values(), {
+            'dob_slug_0': str(start_date),
+            'dob_slug_1': str(end_date),
+        })
+        self.assertEqual(filter_value.to_sql_filter().build_expression(table), 'foo')
 
 
 class ChoiceListFilterTestCase(SimpleTestCase):

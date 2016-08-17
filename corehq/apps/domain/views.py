@@ -632,7 +632,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
         }
         cards = None
         if subscription:
-            cards = get_customer_cards(self.account, self.request.user.username, self.domain)
+            cards = get_customer_cards(self.request.user.username, self.domain)
             date_end = (subscription.date_end.strftime(USER_DATE_FORMAT)
                         if subscription.date_end is not None else "--")
 
@@ -808,6 +808,9 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
         }
 
     def _get_cards(self):
+        if not settings.STRIPE_PRIVATE_KEY:
+            return []
+
         user = self.request.user.username
         payment_method, new_payment_method = StripePaymentMethod.objects.get_or_create(
             web_user=user,
@@ -848,7 +851,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
 
     @property
     def stripe_cards(self):
-        return get_customer_cards(self.account, self.request.user.username, self.domain)
+        return get_customer_cards(self.request.user.username, self.domain)
 
     @property
     def show_hidden(self):
@@ -1370,6 +1373,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
             "hipaa_compliant": self.domain_object.hipaa_compliant,
             "secure_sessions": self.domain_object.secure_sessions,
             "two_factor_auth": self.domain_object.two_factor_auth,
+            "strong_mobile_passwords": self.domain_object.strong_mobile_passwords,
         }
         if self.request.method == 'POST':
             return PrivacySecurityForm(self.request.POST, initial=initial,
@@ -2723,6 +2727,7 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
     def page_context(self):
         return {
             'flags': self.enabled_flags(),
+            'use_sql_backend': self.domain_object.use_sql_backend
         }
 
 

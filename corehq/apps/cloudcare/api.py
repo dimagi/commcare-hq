@@ -154,16 +154,6 @@ class CaseAPIHelper(object):
             case_ids = get_case_ids_in_domain(self.domain, type=self.case_type)
         elif status == CASE_STATUS_OPEN:
             case_ids = get_open_case_ids_in_domain(self.domain, type=self.case_type)
-        elif status == CASE_STATUS_CLOSED:
-            _assert = soft_assert('@'.join(['droberts', 'dimagi.com']))
-            _assert(False, "I'm surprised CaseAPIHelper "
-                           "ever gets called with status=closed")
-            # this is rare so we don't care if it requires two calls to get
-            # all the ids
-            case_ids = (
-                set(get_case_ids_in_domain(self.domain, type=self.case_type))
-                - set(get_open_case_ids_in_domain(self.domain, type=self.case_type))
-            )
         else:
             raise ValueError("Invalid value for 'status': '%s'" % status)
 

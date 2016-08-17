@@ -523,16 +523,16 @@
                         <td><label data-bind="text: time_since_last, css: checkpoint_status_css" class="label"></label></td>
                         <td class="col-md-6" data-bind="foreach: progress">
                             <div class="row">
-                              <div class="col-xs-6 col-sm-4">
+                              <div class="col-sm-4">
                                   <div class="progress">
                                         <div class="progress-bar progress-bar-striped" data-bind="style: {width: width() + '%'}, css: status()"></div>
                                     </div>
                               </div>
-                              <div class="col-xs-4 col-sm-2">
+                              <div class="col-sm-4">
                                   <span data-bind="text: seq"></span>
                                         / <span data-bind="text: db_offset"></span>
                               </div>
-                              <div class="col-xs-4 col-sm-2" data-bind="text: name">
+                              <div class="col-sm-4" data-bind="text: name">
                               </div>
                             </div>
                         </td>

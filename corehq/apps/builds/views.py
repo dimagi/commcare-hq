@@ -30,17 +30,15 @@ def post(request):
     artifacts       = request.FILES.get('artifacts')
     build_number    = request.POST.get('build_number')
     version         = request.POST.get('version')
-
-    if not artifacts:
-        return HttpResponseBadRequest("Must post a zip file called 'artifacts' with a username, password"
-            "and the following meta-data: build_number (i.e. 2348), version (i.e. '1.2.3')")
     try:
         build_number = int(build_number)
     except Exception:
-        print "%r" % build_number
         return HttpResponseBadRequest("build_number has to be a base-10 integer")
 
-    CommCareBuild.create_from_zip(artifacts, build_number=build_number, version=version)
+    if not artifacts:
+        CommCareBuild.create_without_artifacts(version, build_number)
+    else:
+        CommCareBuild.create_from_zip(artifacts, build_number=build_number, version=version)
     return HttpResponse()
 
 
@@ -89,7 +87,8 @@ class EditMenuView(BasePageView):
         return {
             'doc': self.doc,
             'all_versions': get_all_versions(
-                [v['build']['version'] for v in self.doc['menu']])
+                [v['build']['version'] for v in self.doc['menu']]),
+            'j2me_enabled_versions': CommCareBuild.j2me_enabled_build_versions()
         }
 
     @property
@@ -150,38 +149,41 @@ def import_build(request):
         if source.startswith(key):
             KNOWN_BUILD_SERVER_LOGINS[key](session)
 
-    r = session.get(source)
+    if source:
+        r = session.get(source)
 
-    try:
-        r.raise_for_status()
-    except requests.exceptions.HTTPError:
-        return json_response({
-            'reason': 'Fetching artifacts.zip failed',
-            'response': {
-                'status_code': r.status_code,
-                'content': r.content,
-                'headers': r.headers,
-            }
-        }, status_code=400)
-    try:
-        _, inferred_build_number = (
-            extract_build_info_from_filename(r.headers['content-disposition'])
-        )
-    except (KeyError, ValueError):  # no header or header doesn't match
-        inferred_build_number = None
+        try:
+            r.raise_for_status()
+        except requests.exceptions.HTTPError:
+            return json_response({
+                'reason': 'Fetching artifacts.zip failed',
+                'response': {
+                    'status_code': r.status_code,
+                    'content': r.content,
+                    'headers': r.headers,
+                }
+            }, status_code=400)
+        try:
+            _, inferred_build_number = (
+                extract_build_info_from_filename(r.headers['content-disposition'])
+            )
+        except (KeyError, ValueError):  # no header or header doesn't match
+            inferred_build_number = None
 
-    if inferred_build_number:
-        build_number = inferred_build_number
+        if inferred_build_number:
+            build_number = inferred_build_number
 
-    if not build_number:
-        return json_response({
-            'reason': "You didn't give us a build number "
-                      "and we couldn't infer it"
-        }, status_code=400)
+        if not build_number:
+            return json_response({
+                'reason': "You didn't give us a build number "
+                          "and we couldn't infer it"
+            }, status_code=400)
 
-    build = CommCareBuild.create_from_zip(
-        StringIO(r.content), version, build_number)
+        build = CommCareBuild.create_from_zip(
+            StringIO(r.content), version, build_number)
 
+    else:
+        build = CommCareBuild.create_without_artifacts(version, build_number)
     return json_response({
         'message': 'New CommCare build added',
         'info': {

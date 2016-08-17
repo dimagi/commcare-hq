@@ -1,3 +1,4 @@
+import functools
 from couchdbkit.ext.django import schema
 import datetime
 import sqlalchemy
@@ -83,7 +84,6 @@ class IndicatorDocument(schema.Document):
     document_filter = None
     group_by = ()
     save_direct_to_sql = True
-    kafka_topic = None  # if set, this will use a kafka feed instead of couch for the pillow
 
     # A list of doc types to delete from fluff (in case a previously matching document no
     # longer is relevant)
@@ -98,6 +98,14 @@ class IndicatorDocument(schema.Document):
     @property
     def table(self):
         return self._table
+
+    @property
+    def kafka_topic(self):
+        """if set, this will use a kafka feed instead of couch for the pillow"""
+        from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document
+        from corehq.apps.change_feed.topics import get_topic
+        meta = get_doc_meta_object_from_document(self.document_class().to_json())
+        return get_topic(meta)
 
     @property
     def wrapped_group_by(self):
@@ -364,26 +372,8 @@ class IndicatorDocument(schema.Document):
 
     @classmethod
     def pillow(cls):
-        from .pillow import FluffPillow
-        wrapper = cls.wrapper or cls.document_class
-        doc_type = cls.document_class._doc_type
-        extra_args = dict(doc_type=doc_type)
-        if cls.domains:
-            domains = ' '.join(cls.domains)
-            extra_args['domains'] = domains
-
-        return type(FluffPillow)(cls.__name__ + 'Pillow', (FluffPillow,), {
-            'extra_args': extra_args,
-            'document_class': cls.document_class,
-            'wrapper': wrapper,
-            'indicator_class': cls,
-            'document_filter': cls.document_filter,
-            'domains': cls.domains,
-            'doc_type': doc_type,
-            'save_direct_to_sql': cls().save_direct_to_sql,
-            'deleted_types': cls.deleted_types,
-            'kafka_topic': cls().kafka_topic,
-        })
+        from .pillow import get_fluff_pillow
+        return functools.partial(get_fluff_pillow, cls)
 
     @classmethod
     def has_calculator(cls, calc_name):

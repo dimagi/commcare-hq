@@ -2,7 +2,8 @@
   "domains": [
     "icds-sql",
     "icds-test",
-    "icds-cas"
+    "icds-cas",
+    "icds-cas-sandbox"
   ],
   "config": {
     "table_id": "static-child_delivery_forms",

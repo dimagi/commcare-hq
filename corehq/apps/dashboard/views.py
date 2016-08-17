@@ -156,7 +156,7 @@ class DomainDashboardView(JSONResponseMixin, BaseDashboardView):
 
 def _get_default_tile_configurations():
     can_edit_data = lambda request: (request.couch_user.can_edit_data()
-                                     or request.couch_user.can_export_data())
+                                     or request.couch_user.can_access_any_exports())
     can_edit_apps = lambda request: (request.couch_user.is_web_user()
                                      or request.couch_user.can_edit_apps())
     can_view_reports = lambda request: user_can_view_reports(request.project, request.couch_user)

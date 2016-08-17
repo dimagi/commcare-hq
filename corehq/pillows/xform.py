@@ -19,11 +19,10 @@ from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDeprecated, \
     XFormDuplicate, SubmissionErrorLog
-from pillowtop.checkpoints.manager import PillowCheckpoint
+from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
-from .base import HQPillow
 
 
 def is_valid_date(txt):
@@ -119,9 +118,8 @@ def transform_xform_for_elasticsearch(doc_dict):
 
 
 def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow'):
-    checkpoint = PillowCheckpoint(
-        'all-xforms-to-elasticsearch',
-    )
+    assert pillow_id == 'XFormToElasticsearchPillow', 'Pillow ID is not allowed to change'
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, XFORM_INDEX_INFO)
     form_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
@@ -156,7 +154,8 @@ def get_couch_form_reindexer():
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
         doc_filter=xform_pillow_filter,
-        doc_transform=transform_xform_for_elasticsearch
+        doc_transform=transform_xform_for_elasticsearch,
+        pillow=get_xform_to_elasticsearch_pillow(),
     )
 
 

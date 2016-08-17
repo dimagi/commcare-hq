@@ -18,20 +18,7 @@ class AdoptionDisaggregatedReport(CareBaseReport):
 
     @property
     def fields(self):
-        filters = [GeographyFilter]
-        if self.domain == 'care-macf-malawi':
-            filters.append(MalawiPPTYearFilter)
-        else:
-            filters.append(PPTYearFilter)
-        filters.extend([
-            GenderFilter,
-            GroupLeadershipFilter,
-            CBTNameFilter
-        ])
-        if self.domain == 'care-macf-malawi':
-            filters.append(RealOrTestFilter)
-        if self.domain == 'pathways-india-mis':
-            filters.append(ScheduleFilter)
+        filters = super(AdoptionDisaggregatedReport, self).fields
         filters.append(TypeFilter)
         filters.append(GroupByFilter)
         filters.append(DisaggregateByFilter)

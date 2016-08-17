@@ -247,6 +247,7 @@ HQ_APPS = (
     'corehq.apps.smsbillables',
     'corehq.apps.accounting',
     'corehq.apps.appstore',
+    'corehq.apps.preview_app',
     'corehq.apps.data_analytics',
     'corehq.apps.domain',
     'corehq.apps.domainsync',
@@ -503,7 +504,7 @@ INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
 INVOICING_CONTACT_EMAIL = 'billing-support@dimagi.com'
 MASTER_LIST_EMAIL = 'master-list@dimagi.com'
-REPORT_BUILDER_ADD_ON_EMAIL = 'updates@dimagi.com'
+REPORT_BUILDER_ADD_ON_EMAIL = 'rhartford' + '@' + 'dimagi.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@dimagi.com'
 CONTACT_EMAIL = 'info@dimagi.com'
 BOOKKEEPER_CONTACT_EMAILS = []
@@ -522,9 +523,6 @@ CLOUDCARE_BASE_URL = None
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
 
-# OpenRosa Standards
-OPENROSA_VERSION = "1.0"
-
 # OTA restore fixture generators
 FIXTURE_GENERATORS = {
     # fixtures that may be sent to the phone independent of cases
@@ -540,10 +538,12 @@ FIXTURE_GENERATORS = {
         "custom.bihar.reports.indicators.fixtures.generator",
         "custom.m4change.fixtures.report_fixtures.generator",
         "custom.m4change.fixtures.location_fixtures.generator",
+        "custom.enikshay.fixtures.calendar_fixture_generator",
     ],
     # fixtures that must be sent along with the phones cases
     'case': [
         "corehq.apps.locations.fixtures.location_fixture_generator",
+        "corehq.apps.locations.fixtures.flat_location_fixture_generator",
     ]
 }
 
@@ -747,7 +747,7 @@ ANALYTICS_CONFIG = {
     "HQ_INSTANCE": '',  # e.g. "www" or "staging"
 }
 
-MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiY3p1ZSIsImEiOiJjaWgwa3U5OXIwMGk3a3JrcjF4cjYwdGd2In0.8Tys94ISZlY-h5Y4W160RA'
+MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiZGltYWdpIiwiYSI6ImpZWWQ4dkUifQ.3FNy5rVvLolWLycXPxKVEA'
 
 OPEN_EXCHANGE_RATES_API_ID = ''
 
@@ -769,12 +769,6 @@ ENABLE_PRELOGIN_SITE = False
 PRELOGIN_APPS = (
     'corehq.apps.prelogin',
 )
-
-# If there are existing doc_ids and case_ids you want to check directly,
-# they are referenced in your localsettings for more accurate direct checks,
-# otherwise use view-based which can be inaccurate.
-ES_CASE_CHECK_DIRECT_DOC_ID = None
-ES_XFORM_CHECK_DIRECT_DOC_ID = None
 
 # our production logstash aggregation
 LOGSTASH_DEVICELOG_PORT = 10777
@@ -896,6 +890,8 @@ ZIPLINE_API_USER = ''
 ZIPLINE_API_PASSWORD = ''
 
 KAFKA_URL = 'localhost:9092'
+
+MOBILE_INTEGRATION_TEST_TOKEN = None
 
 
 try:
@@ -1534,8 +1530,16 @@ PILLOWTOPS = {
         'custom.succeed.models.UCLAPatientFluffPillow',
     ],
     'mvp_indicators': [
-        'mvp_docs.pillows.MVPFormIndicatorPillow',
-        'mvp_docs.pillows.MVPCaseIndicatorPillow',
+        {
+            'name': 'MVPCaseIndicatorPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'mvp_docs.pillows.get_mvp_case_indicator_pillow',
+        },
+        {
+            'name': 'MVPFormIndicatorPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'mvp_docs.pillows.get_mvp_form_indicator_pillow',
+        },
     ],
     'experimental': [
         {
@@ -1779,6 +1783,7 @@ DOMAIN_MODULE_MAP = {
     'pathways-tanzania': 'custom.care_pathways',
     'care-macf-malawi': 'custom.care_pathways',
     'care-macf-bangladesh': 'custom.care_pathways',
+    'care-macf-ghana': 'custom.care_pathways'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

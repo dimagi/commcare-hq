@@ -71,7 +71,7 @@ class BaseLocationView(BaseDomainView):
             'hierarchy': location_hierarchy_config(self.domain),
             'api_root': reverse('api_dispatch_list', kwargs={'domain': self.domain,
                                                              'resource_name': 'location_internal',
-                                                             'api_name': 'v0.3'}),
+                                                             'api_name': 'v0.5'}),
         })
         return context
 
@@ -302,7 +302,7 @@ class NewLocationView(BaseLocationView):
 
     @property
     def parent_pages(self):
-        selected = self.location.location_id or self.location.parent_id
+        selected = self.location.location_id or self.location.parent_location_id
         breadcrumbs = [{
             'title': LocationsListView.page_title,
             'url': reverse(
@@ -352,7 +352,7 @@ class NewLocationView(BaseLocationView):
             'form': self.location_form,
             'location': self.location,
             'consumption': self.consumption,
-            'locations': load_locs_json(self.domain, self.location.parent_id,
+            'locations': load_locs_json(self.domain, self.location.parent_location_id,
                                         user=self.request.couch_user),
             'form_tab': self.form_tab,
         }
@@ -686,6 +686,9 @@ class LocationImportView(BaseLocationView):
             return self.get(request, *args, **kwargs)
         if not args:
             messages.error(request, _('no domain specified'))
+            return self.get(request, *args, **kwargs)
+        if upload.content_type != 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+            messages.error(request, _("Invalid file-format. Please upload a valid xlsx file."))
             return self.get(request, *args, **kwargs)
 
         domain = args[0]

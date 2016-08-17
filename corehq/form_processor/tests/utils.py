@@ -140,7 +140,7 @@ class FormProcessorTestUtils(object):
         deleted = set()
         for row in db.view(viewname, reduce=False, **view_kwargs):
             doc_id = row['id']
-            if id not in deleted:
+            if doc_id not in deleted:
                 try:
                     safe_delete(db, doc_id)
                     deleted.add(doc_id)

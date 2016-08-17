@@ -43,7 +43,8 @@ urlpatterns = patterns('corehq.apps.users.views',
     url(r'^join/(?P<invitation_id>[ \w-]+)/$', 'accept_invitation', name='domain_accept_invitation'),
     url(r'^web/role/save/$', 'post_user_role', name='post_user_role'),
     url(r'^web/role/delete/$', 'delete_user_role', name='delete_user_role'),
-
+    url(r'^register_fcm_device_token/(?P<couch_user_id>[ \w-]+)/(?P<device_token>[ \w-]+)/$',
+        'register_fcm_device_token', name='register_fcm_device_token'),
     url(r'^httpdigest/?$', 'test_httpdigest'),
 ) + \
 patterns("corehq.apps.users.views.mobile.users",

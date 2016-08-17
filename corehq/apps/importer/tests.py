@@ -268,6 +268,25 @@ class ImporterTest(TestCase):
         # shouldn't create any more cases, just the one
         self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
 
+    @run_with_all_backends
+    def test_external_id_matching_on_create_with_custom_column_name(self):
+        headers = ['id_column', 'age', 'sex', 'location']
+        external_id = 'external-id-test'
+        config = self._config(headers[1:], search_column='id_column', search_field='external_id')
+        file = MockExcelFile(
+            header_columns=headers,
+            num_rows=2,
+            row_generator=id_match_generator(external_id)
+        )
+        res = do_import(file, config, self.domain)
+        self.assertEqual(1, res['created_count'])
+        self.assertEqual(1, res['match_count'])
+        self.assertFalse(res['errors'])
+        case_ids = self.accessor.get_case_ids_in_domain()
+        self.assertEqual(1, len(case_ids))
+        case = self.accessor.get_case(case_ids[0])
+        self.assertEqual(external_id, case.external_id)
+
     def testNoCreateNew(self):
         config = self._config(self.default_headers, create_new_cases=False)
         file = MockExcelFile(header_columns=self.default_headers, num_rows=5)

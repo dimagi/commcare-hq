@@ -308,11 +308,19 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                 return q.filter(id_filter)
 
     @classmethod
-    def pull_users_and_groups(cls, domain, mobile_user_and_group_slugs, include_inactive=False):
+    def pull_users_and_groups(cls, domain, mobile_user_and_group_slugs,
+                              include_inactive=False, limit_user_ids=None):
         user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
         user_types = cls.selected_user_types(mobile_user_and_group_slugs)
         group_ids = cls.selected_group_ids(mobile_user_and_group_slugs)
         users = []
+
+        if limit_user_ids:
+            if not user_ids:
+                user_ids = limit_user_ids
+            else:
+                user_ids = set(limit_user_ids).intersection(set(user_ids))
+
         if user_ids or HQUserType.REGISTERED in user_types:
             users = util.get_all_users_by_domain(
                 domain=domain,

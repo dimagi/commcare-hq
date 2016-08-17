@@ -110,7 +110,7 @@ class AsyncLocationFilter(BaseReportFilter):
     def api_root(self):
         return reverse('api_dispatch_list', kwargs={'domain': self.domain,
                                                     'resource_name': 'location_internal',
-                                                    'api_name': 'v0.3'})
+                                                    'api_name': 'v0.5'})
 
     @property
     def filter_context(self):

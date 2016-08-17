@@ -14,6 +14,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
+from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.soft_assert import soft_assert
@@ -574,7 +575,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
     @memoized
     def has_permission(self, domain, permission, data=None):
         # is_admin is the same as having all the permissions set
-        if self.is_global_admin():
+        if (self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain))):
             return True
         elif self.is_domain_admin(domain):
             return True
@@ -589,7 +590,6 @@ class _AuthorizableMixin(IsMemberOfMixin):
     def get_role(self, domain=None, checking_global_admin=True):
         """
         Get the role object for this user
-
         """
         if domain is None:
             # default to current_domain for django templates
@@ -600,7 +600,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
 
         if checking_global_admin and self.is_global_admin():
             return AdminUserRole(domain=domain)
-        if self.is_member_of(domain): #need to have a way of seeing is_member_of
+        if self.is_member_of(domain):
             return self.get_domain_membership(domain).role
         else:
             raise DomainMembershipError()
@@ -885,7 +885,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             COMMCARE_USER_TYPE_DEMO
         )
 
-        session_data = copy.deepcopy(dict(self.user_data))
+        session_data = self.to_json().get('user_data')
 
         if self.is_commcare_user() and self.is_demo_user:
             session_data.update({
@@ -1065,6 +1065,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             # truncate names when saving to django
             if attr == 'first_name' or attr == 'last_name':
                 attr_val = attr_val[:30]
+            if attr == 'last_login' and attr_val == '':
+                attr_val = None
             setattr(django_user, attr, attr_val)
         django_user.DO_NOT_SAVE_COUCH_USER= True
         return django_user
@@ -1272,21 +1274,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return self.base_doc.endswith(DELETED_SUFFIX)
 
     def get_viewable_reports(self, domain=None, name=False, slug=False):
-        try:
-            domain = domain or self.current_domain
-        except AttributeError:
-            domain = None
-
-        if self.is_commcare_user():
-            role = self.get_role(domain)
-            if role is None:
-                models = []
-            else:
-                models = role.permissions.view_report_list
-        else:
-            dm = self.get_domain_membership(domain)
-            models = dm.viewable_reports() if dm else []
-
         def slug_name(model):
             try:
                 if slug:
@@ -1297,22 +1284,36 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                 logging.warning("Unable to load report model: %s", model)
                 return None
 
+        models = self._get_viewable_report_slugs(domain)
         if slug or name:
             return filter(None, [slug_name(m) for m in models])
 
         return models
 
-    def get_exportable_reports(self, domain=None):
-        viewable_reports = self.get_viewable_reports(domain=domain, slug=True)
-        from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
-        export_reports = set(DataInterfaceDispatcher().get_reports_dict(domain).keys())
-        return list(export_reports.intersection(viewable_reports))
+    def _get_viewable_report_slugs(self, domain):
+        try:
+            domain = domain or self.current_domain
+        except AttributeError:
+            domain = None
 
-    def can_export_data(self, domain=None):
-        can_see_exports = self.can_view_reports()
-        if not can_see_exports:
-            can_see_exports = bool(self.get_exportable_reports(domain))
-        return can_see_exports
+        if self.is_commcare_user():
+            role = self.get_role(domain)
+            if role is None:
+                return []
+            else:
+                return role.permissions.view_report_list
+        else:
+            dm = self.get_domain_membership(domain)
+            return dm.viewable_reports() if dm else []
+
+    def can_view_any_reports(self, domain):
+        return self.can_view_reports(domain) or bool(self.get_viewable_reports(domain))
+
+    def can_access_any_exports(self, domain=None):
+        return self.can_view_reports(domain) or any([
+            permission_slug for permission_slug in self._get_viewable_report_slugs(domain)
+            if permission_slug in EXPORT_PERMISSIONS
+        ])
 
     def is_current_web_user(self, request):
         return self.user_id == request.couch_user.user_id
@@ -1322,16 +1323,21 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         if item.startswith('can_'):
             perm = item[len('can_'):]
             if perm:
-                def fn(domain=None, data=None):
-                    try:
-                        domain = domain or self.current_domain
-                    except AttributeError:
-                        domain = None
-                    return self.has_permission(domain, perm, data)
+                fn = self._get_perm_check_fn(perm)
                 fn.__name__ = item
                 return fn
+
         raise AttributeError("'{}' object has no attribute '{}'".format(
             self.__class__.__name__, item))
+
+    def _get_perm_check_fn(self, perm):
+        def fn(domain=None, data=None):
+            try:
+                domain = domain or self.current_domain
+            except AttributeError:
+                domain = None
+            return self.has_permission(domain, perm, data)
+        return fn
 
 
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):
@@ -1441,6 +1447,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @classmethod
     def create_or_update_from_xform(cls, xform):
+        _assert = soft_assert('@'.join(['droberts', 'dimagi.com']))
+        _assert(False, 'someone actually called CommCareUser.create_or_update_from_xform')
         # if we have 1,000,000 users with the same name in a domain
         # then we have bigger problems then duplicate user accounts
         MAX_DUPLICATE_USERS = 1000000
@@ -1920,8 +1928,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
     def get_usercase_id(self):
-        from corehq.apps.hqcase.utils import get_case_id_by_domain_hq_user_id
-        return get_case_id_by_domain_hq_user_id(self.domain, self._id, USERCASE_TYPE)
+        case = CaseAccessors(self.domain).get_case_by_domain_hq_user_id(self._id, USERCASE_TYPE)
+        return case.case_id if case else None
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
@@ -1930,6 +1938,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     login_attempts = IntegerProperty(default=0)
     attempt_date = DateProperty()
+    fcm_device_token = StringProperty()
 
     def sync_from_old_couch_user(self, old_couch_user):
         super(WebUser, self).sync_from_old_couch_user(old_couch_user)
@@ -1985,69 +1994,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     def get_domains(self):
         return [dm.domain for dm in self.domain_memberships]
-
-    @memoized
-    def has_permission(self, domain, permission, data=None):
-        # is_admin is the same as having all the permissions set
-        if (self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain))):
-            return True
-        elif self.is_domain_admin(domain):
-            return True
-
-        dm_list = list()
-
-        dm = self.get_domain_membership(domain)
-        if dm:
-            dm_list.append([dm, ''])
-
-        # now find out which dm has the highest permissions
-        if dm_list:
-            role = self.total_domain_membership(dm_list, domain)
-            dm = CustomDomainMembership(domain=domain, custom_role=role)
-            return dm.has_permission(permission, data)
-        else:
-            return False
-
-    @memoized
-    def get_role(self, domain=None, include_teams=True, checking_global_admin=True):
-        """
-        Get the role object for this user
-
-        """
-        if domain is None:
-            # default to current_domain for django templates
-            domain = self.current_domain
-
-        if checking_global_admin and self.is_global_admin():
-            return AdminUserRole(domain=domain)
-
-        if not include_teams:
-            return super(WebUser, self).get_role(domain)
-
-        dm_list = list()
-
-        dm = self.get_domain_membership(domain)
-        if dm:
-            dm_list.append([dm, ''])
-
-        # now find out which dm has the highest permissions
-        if dm_list:
-            return self.total_domain_membership(dm_list, domain)
-        else:
-            raise DomainMembershipError()
-
-    def total_domain_membership(self, domain_memberships, domain):
-        #sort out the permissions
-        total_permission = Permissions()
-        if domain_memberships:
-            for domain_membership, membership_source in domain_memberships:
-                permission = domain_membership.permissions
-                total_permission |= permission
-
-            #set up a user role
-            return UserRole(domain=domain, permissions=total_permission,
-                            name=', '.join(["%s %s" % (dm.role.name, ms) for dm, ms in domain_memberships if dm.role]))
-            #set up a domain_membership
 
     @classmethod
     def get_admins_by_domain(cls, domain):

@@ -32,12 +32,12 @@
 
   {% compress js %}
   <script src="{% static 'less/dist/less-1.7.3.min.js' %}"></script>
-  <script type="text/javascript" src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-  <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
-  <script type="text/javascript" src="{% static 'knockout/dist/knockout.js' %}"></script>
-  <script type="text/javascript" src="{% static 'style/js/hq.helpers.js' %}"></script>
-  <script type="text/javascript" src="{% static 'leaflet/dist/leaflet.js' %}"></script>
-  <script type="text/javascript" src="{% static 'hqadmin/js/project_map.js' %}"></script>
+  <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+  <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+  <script src="{% static 'knockout/dist/knockout.js' %}"></script>
+  <script src="{% static 'style/js/hq.helpers.js' %}"></script>
+  <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
+  <script src="{% static 'hqadmin/js/project_map.js' %}"></script>
   <script src="{% static 'appstore/js/facet_sidebar.js' %}"></script>
   {% endcompress %}
 </head>
@@ -99,7 +99,11 @@
     </div>
     <div class="filter-wrapper wrapper">
       <h4 class="text-hq-nav-header">{{ facet_report.facet_title }}</h4>
-      {% include 'appstore/partials/sidebar.html' with search_name="es_search" search_for=facet_report.search_for %}
+      <div class="btn-group btn-toggle text-hq-nav-header">
+        <button class="btn btn-default" id="users">Users</button>
+        <button class="btn btn-primary active" id="projects">Projects</button>
+      </div>
+        {% include 'appstore/partials/sidebar.html' with search_name="es_search" search_for=facet_report.search_for %}
     </div>
   </div>
   <script type="application/javascript">

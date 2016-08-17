@@ -27,7 +27,6 @@ class WorldVisionMotherFluff(fluff.IndicatorDocument):
 
     domains = WORLD_VISION_DOMAINS
     group_by = ('domain', 'user_id')
-    kafka_topic = topics.CASE
 
     name = flat_field(lambda case: case.name)
     lvl_4 = case_property('phc')
@@ -124,7 +123,6 @@ class WorldVisionHierarchyFluff(fluff.IndicatorDocument):
     document_class = CommCareUser
     domains = WORLD_VISION_DOMAINS
     group_by = ('domain',)
-    kafka_topic = topics.META
 
     numerator = Numerator()
     lvl_4 = user_data('phc')
@@ -144,7 +142,6 @@ class WorldVisionChildFluff(fluff.IndicatorDocument):
 
     domains = WORLD_VISION_DOMAINS
     group_by = ('domain', 'user_id')
-    kafka_topic = topics.CASE
 
     name = flat_field(lambda case: case.name)
     mother_id = flat_field(lambda case: case.indices[0]['referenced_id'] if case.indices else None)

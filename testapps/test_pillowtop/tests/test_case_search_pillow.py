@@ -27,6 +27,7 @@ class CaseSearchPillowTest(TestCase):
     domain = 'meereen'
 
     def setUp(self):
+        super(CaseSearchPillowTest, self).setUp()
         FormProcessorTestUtils.delete_all_cases()
         self.elasticsearch = get_es_new()
         self.pillow = get_case_search_to_elasticsearch_pillow()
@@ -38,6 +39,7 @@ class CaseSearchPillowTest(TestCase):
     def tearDown(self):
         ensure_index_deleted(CASE_SEARCH_INDEX)
         CaseSearchConfig.objects.all().delete()
+        super(CaseSearchPillowTest, self).tearDown()
 
     def test_case_search_pillow(self):
         consumer = get_test_kafka_consumer(topics.CASE)

@@ -42,8 +42,6 @@ class OpmUserFluff(fluff.IndicatorDocument):
     # Only consider active users
     document_filter = CustomFilter(is_valid_user)
 
-    kafka_topic = topics.META
-
     name = flat_field(lambda user: user.name)
 
     numerator = Numerator()

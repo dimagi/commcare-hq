@@ -62,7 +62,13 @@ from corehq.apps.style.decorators import (
     use_multiselect,
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
-from corehq.apps.users.bulkupload import check_headers, dump_users_and_groups, GroupNameError, UserUploadError
+from corehq.apps.users.bulkupload import (
+    check_duplicate_usernames,
+    check_headers,
+    dump_users_and_groups,
+    GroupNameError,
+    UserUploadError,
+)
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.forms import (
     CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm,
@@ -109,6 +115,7 @@ class EditCommCareUserView(BaseEditUserView):
         context = super(EditCommCareUserView, self).main_context
         context.update({
             'edit_user_form_title': self.edit_user_form_title,
+            'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
         })
         return context
 
@@ -145,7 +152,7 @@ class EditCommCareUserView(BaseEditUserView):
     @property
     @memoized
     def reset_password_form(self):
-        return SetUserPasswordForm(self.domain, self.editable_user_id, user="")
+        return SetUserPasswordForm(self.request.project, self.editable_user_id, user="")
 
     @property
     @memoized
@@ -546,8 +553,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     @memoized
     def new_mobile_worker_form(self):
         if self.request.method == "POST":
-            return NewMobileWorkerForm(self.domain, self.request.POST)
-        return NewMobileWorkerForm(self.domain)
+            return NewMobileWorkerForm(self.request.project, self.request.POST)
+        return NewMobileWorkerForm(self.request.project)
 
     @property
     @memoized
@@ -571,7 +578,9 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'can_add_extra_users': self.can_add_extra_users,
             'pagination_limit_cookie_name': (
                 'hq.pagination.limit.mobile_workers_list.%s' % self.domain),
-            'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain)
+            'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain),
+            'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
+            'location_url': reverse('corehq.apps.locations.views.child_locations_for_select2', args=[self.domain]),
         }
 
     @property
@@ -703,7 +712,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             form_data = {}
             for k, v in user_data.get('customFields', {}).items():
                 form_data["{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k)] = v
-            for f in ['username', 'password', 'first_name', 'last_name']:
+            for f in ['username', 'password', 'first_name', 'last_name', 'location_id']:
                 form_data[f] = user_data[f]
             form_data['domain'] = self.domain
             self.request.POST = form_data
@@ -718,6 +727,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             password = self.new_mobile_worker_form.cleaned_data['password']
             first_name = self.new_mobile_worker_form.cleaned_data['first_name']
             last_name = self.new_mobile_worker_form.cleaned_data['last_name']
+            location_id = self.new_mobile_worker_form.cleaned_data['location_id']
 
             couch_user = CommCareUser.create(
                 self.domain,
@@ -728,6 +738,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 last_name=last_name,
                 user_data=self.custom_data.get_data_to_save(),
             )
+            if location_id:
+                couch_user.set_location(Location.get(location_id))
 
             return {
                 'success': True,
@@ -742,8 +754,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         }
 
 
-# This is almost entirely a duplicate of CreateCommCareUserView. That view will
-# be going away soon, so I didn't bother to abstract out the commonalities.
 class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
     template_name = "users/new_mobile_worker_modal.html"
     urlname = 'new_mobile_worker_modal'
@@ -902,10 +912,20 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
             messages.error(request, _(e.message))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
+        # convert to list here because iterator destroys the row once it has
+        # been read the first time
+        self.user_specs = list(self.user_specs)
+
+        try:
+            check_duplicate_usernames(self.user_specs)
+        except UserUploadError as e:
+            messages.error(request, _(e.message))
+            return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
+
         task_ref = expose_cached_download(payload=None, expiry=1*60*60, file_extension=None)
         task = bulk_upload_async.delay(
             self.domain,
-            list(self.user_specs),
+            self.user_specs,
             list(self.group_specs),
             list(self.location_specs)
         )
@@ -1039,9 +1059,11 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
     @memoized
     def form(self):
         if self.request.method == 'POST':
-            return SelfRegistrationForm(self.request.POST, domain=self.domain)
+            return SelfRegistrationForm(self.request.POST, domain=self.domain,
+                require_email=self.invitation.require_email)
         else:
-            return SelfRegistrationForm(domain=self.domain)
+            return SelfRegistrationForm(domain=self.domain,
+                require_email=self.invitation.require_email)
 
     def get_context_data(self, **kwargs):
         context = super(CommCareUserSelfRegistrationView, self).get_context_data(**kwargs)
@@ -1076,8 +1098,10 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
                 self.domain,
                 self.form.cleaned_data.get('username'),
                 self.form.cleaned_data.get('password'),
+                email=self.form.cleaned_data.get('email'),
                 phone_number=self.invitation.phone_number,
                 device_id='Generated from HQ',
+                user_data=self.invitation.custom_user_data,
             )
             # Since the user is being created by following the link and token
             # we sent to their phone by SMS, we can verify their phone number

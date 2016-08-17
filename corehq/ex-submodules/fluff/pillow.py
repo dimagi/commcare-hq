@@ -1,39 +1,29 @@
 from couchdbkit import ResourceNotFound
+
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from dimagi.utils.read_only import ReadOnlyObject
-from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class
-from pillowtop.listener import PythonPillow, PYTHONPILLOW_CHUNK_SIZE
-from .indicators import IndicatorDocument
+from pillowtop.checkpoints.manager import PillowCheckpoint, \
+    PillowCheckpointEventHandler
+from pillowtop.checkpoints.util import get_machine_id
+from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.processors.interface import PillowProcessor
 from .signals import BACKEND_SQL, BACKEND_COUCH, indicator_document_updated
 
 
-class FluffPillow(PythonPillow):
-    document_filter = None
-    wrapper = None
-    indicator_class = IndicatorDocument
-    domains = None
-    doc_type = None
-    save_direct_to_sql = False
-    delete_filtered = False  # delete docs not matching filter
+class FluffPillowProcessor(PillowProcessor):
 
-    # see explanation in IndicatorDocument for how this is used
-    deleted_types = ()
-    kafka_topic = None
+    def __init__(self, indicator_class, delete_filtered=False):
+        self.indicator_class = indicator_class
+        self.domains = indicator_class.domains
+        self.document_filter = indicator_class.document_filter
+        self.document_class = indicator_class.document_class
+        self.save_direct_to_sql = indicator_class().save_direct_to_sql
+        self.deleted_types = indicator_class.deleted_types
+        self.doc_type = indicator_class.document_class._doc_type
+        self.wrapper = indicator_class.wrapper or indicator_class.document_class
+        self.delete_filtered = delete_filtered
 
-    def __init__(self, chunk_size=None, checkpoint=None, change_feed=None, preload_docs=True):
-        # explicitly check against None since we want to pass chunk_size=0 through
-        chunk_size = chunk_size if chunk_size is not None else PYTHONPILLOW_CHUNK_SIZE
-        # fluff pillows should default to SQL checkpoints
-        checkpoint = checkpoint or get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
-        if change_feed is None and self.kafka_topic:
-            change_feed = KafkaChangeFeed(topics=[self.kafka_topic], group_id=self.__class__.__name__)
-            preload_docs = False  # it's never necessary preload_docs for kafka pillows
-        super(FluffPillow, self).__init__(
-            chunk_size=chunk_size,
-            checkpoint=checkpoint,
-            change_feed=change_feed,
-            preload_docs=preload_docs,
-        )
+        self._assert_valid()
 
     @classmethod
     def get_sql_engine(cls):
@@ -45,9 +35,19 @@ class FluffPillow(PythonPillow):
             cls._engine = engine
         return engine
 
-    def python_filter(self, change):
-        self._assert_pillow_valid()
+    def _assert_valid(self):
+        assert self.domains
+        assert None not in self.domains
+        assert self.doc_type is not None
+        assert self.doc_type not in self.deleted_types
 
+    def process_change(self, pillow_instance, change):
+        if self.should_process_change(change):
+            doc_dict = self.change_transform(change.get_document())
+            if doc_dict:
+                self.change_transport(doc_dict)
+
+    def should_process_change(self, change):
         def domain_filter(domain):
             return domain in self.domains
 
@@ -61,19 +61,9 @@ class FluffPillow(PythonPillow):
         domain = change.metadata.domain if change.metadata else _get_document_or_dict(change).get('domain')
         if domain_filter(domain):
             # same for metadata.document_type
-            doc_type = (change.metadata and change.metadata.document_type) or _get_document_or_dict(change).get('doc_type')
+            doc_type = (change.metadata and change.metadata.document_type) or _get_document_or_dict(change).get(
+                'doc_type')
             return doc_type_filter(doc_type)
-
-    def _assert_pillow_valid(self):
-        assert self.domains
-        assert None not in self.domains
-        assert self.doc_type is not None
-        assert self.doc_type not in self.deleted_types
-
-    @classmethod
-    def _get_base_name(cls):
-        # used in the name/checkpoint ID
-        return 'fluff'
 
     def _is_doc_type_match(self, type):
         return type == self.doc_type
@@ -93,11 +83,11 @@ class FluffPillow(PythonPillow):
                 return None
 
         indicator = _get_indicator_doc_from_class_and_id(self.indicator_class, doc.get_id)
-        if not self._is_doc_type_deleted_match(doc.doc_type):
-            indicator.calculate(doc)
-        else:
+        if delete or self._is_doc_type_deleted_match(doc.doc_type):
             indicator['id'] = doc.get_id
             delete = True
+        else:
+            indicator.calculate(doc)
 
         return {
             'doc_dict': doc_dict,
@@ -107,7 +97,6 @@ class FluffPillow(PythonPillow):
 
     def change_transport(self, data):
         indicators = data['indicators']
-
         diff = indicators.diff(None)  # pass in None for old_doc to force diff with ALL indicators
         if self.save_direct_to_sql:
             engine = self.get_sql_engine()
@@ -137,3 +126,41 @@ def _get_indicator_doc_from_class_and_id(indicator_class, doc_id):
         return indicator_class.get(indicator_id)
     except ResourceNotFound:
         return indicator_class(_id=indicator_id)
+
+
+class FluffPillow(ConstructedPillow):
+    def __init__(self, indicator_class, processor):
+        self.indicator_class = indicator_class
+        self.kafka_topic = indicator_class().kafka_topic
+        self.domains = processor.domains
+        self.doc_type = processor.doc_type
+
+        name = '{}Pillow'.format(indicator_class.__name__)
+        checkpoint = PillowCheckpoint('fluff.{}.{}'.format(name, get_machine_id()))
+
+        super(FluffPillow, self).__init__(
+            name=name,
+            checkpoint=checkpoint,
+            change_feed=KafkaChangeFeed(topics=[self.kafka_topic], group_id=indicator_class.__name__),
+            processor=processor,
+            change_processed_event_handler=PillowCheckpointEventHandler(
+                checkpoint=checkpoint, checkpoint_frequency=1000,
+            )
+        )
+
+
+def get_fluff_pillow(indicator_class, delete_filtered=False):
+    processor = FluffPillowProcessor(indicator_class, delete_filtered=delete_filtered)
+
+    return FluffPillow(
+        indicator_class=indicator_class,
+        processor=processor,
+    )
+
+
+def get_fluff_pillow_configs():
+    from pillowtop import get_all_pillow_configs
+    return [
+        config for config in get_all_pillow_configs()
+        if config.section == 'fluff'
+    ]

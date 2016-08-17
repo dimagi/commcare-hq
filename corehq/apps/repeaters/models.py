@@ -463,7 +463,7 @@ class RepeatRecord(Document):
     def url(self):
         try:
             return self.repeater.get_url(self)
-        except XFormNotFound:
+        except (XFormNotFound, ResourceNotFound):
             return None
 
     @property

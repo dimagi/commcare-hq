@@ -1458,8 +1458,6 @@ class Subscription(models.Model):
         user_desc = self.plan_version.user_facing_description
         plan_name = user_desc['name']
         domain_name = self.subscriber.domain
-        emails = {a.username for a in WebUser.get_admins_by_domain(domain_name)}
-        emails |= {e for e in WebUser.get_dimagi_emails_by_domain(domain_name)}
         if self.is_trial:
             subject = _("CommCare Alert: 30 day trial for '%(domain)s' "
                         "ends %(ending_on)s") % {
@@ -1477,13 +1475,6 @@ class Subscription(models.Model):
                 'domain': domain_name,
                 'ending_on': ending_on,
             }
-
-            billing_contact_emails = self.account.billingcontactinfo.email_list
-            if not billing_contact_emails:
-                log_accounting_error(
-                    "Billing account %d doesn't have any contact emails" % self.account.id
-                )
-            emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
 
             template = 'accounting/subscription_ending_reminder_email.html'
             template_plaintext = 'accounting/subscription_ending_reminder_email_plaintext.html'
@@ -1503,7 +1494,7 @@ class Subscription(models.Model):
         bcc = [settings.ACCOUNTS_EMAIL] if not self.is_trial else []
         if self.account.dimagi_contact is not None:
             bcc.append(self.account.dimagi_contact)
-        for email in emails:
+        for email in self._reminder_email_contacts(domain_name):
             send_html_email_async.delay(
                 subject, email, email_html,
                 text_content=email_plaintext,
@@ -1540,7 +1531,7 @@ class Subscription(models.Model):
         context = {
             'domain': domain,
             'end_date': end_date,
-            'contacts': ', '.join(self.account.billingcontactinfo.email_list),
+            'contacts': ', '.join(self._reminder_email_contacts(domain)),
             'dimagi_contact': email,
         }
         email_html = render_to_string(template, context)
@@ -1550,6 +1541,21 @@ class Subscription(models.Model):
             text_content=email_plaintext,
             email_from=settings.DEFAULT_FROM_EMAIL,
         )
+
+    def _reminder_email_contacts(self, domain_name):
+        emails = {a.username for a in WebUser.get_admins_by_domain(domain_name)}
+        emails |= {e for e in WebUser.get_dimagi_emails_by_domain(domain_name)}
+        if not self.is_trial:
+            billing_contact_emails = (
+                self.account.billingcontactinfo.email_list
+                if BillingContactInfo.objects.filter(account=self.account).exists() else []
+            )
+            if not billing_contact_emails:
+                log_accounting_error(
+                    "Billing account %d doesn't have any contact emails" % self.account.id
+                )
+            emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
+        return emails
 
     def set_billing_account_entry_point(self):
         no_current_entry_point = self.account.entry_point == EntryPoint.NOT_SET

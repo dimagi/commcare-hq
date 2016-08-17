@@ -4,8 +4,10 @@ from corehq.apps.accounting.models import Feature, FeatureRate, SoftwarePlanVers
     BillingAccount, BillingContactInfo, Currency, PaymentRecord, SoftwareProductRate, \
     SoftwareProduct, SoftwarePlan, DefaultProductPlan, CreditAdjustment, Subscription, CreditLine, Subscriber, \
     SubscriptionAdjustment, BillingRecord, Invoice
-from corehq.apps.api.resources.v0_1 import CustomResourceMeta, AdminAuthentication
+from corehq.apps.api.resources.auth import AdminAuthentication
 from tastypie import fields
+
+from corehq.apps.api.resources.meta import CustomResourceMeta
 from django_prbac.models import Role
 
 
@@ -92,7 +94,7 @@ class SoftwarePlanResource(ModelResource):
 
 
 class DefaultProductPlanResource(ModelResource):
-    plan = fields.IntegerField('plan', null=False)
+    plan = fields.IntegerField('plan_id', null=False)
 
     class Meta(AccountingResourceMeta):
         queryset = DefaultProductPlan.objects.all().order_by('pk')

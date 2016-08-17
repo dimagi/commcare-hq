@@ -10,8 +10,7 @@ from testil import tempdir
 from casexml.apps.case.tests.util import delete_all_xforms
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module
-from corehq.apps.app_manager.tests import TestXmlMixin
-from corehq.apps.app_manager.tests.util import delete_all_apps
+from corehq.apps.app_manager.tests.util import TestXmlMixin, delete_all_apps
 from corehq.apps.app_manager.util import get_correct_app_class
 from corehq.apps.cleanup.management.commands.fix_forms_and_apps_with_missing_xmlns import (
     generate_random_xmlns,

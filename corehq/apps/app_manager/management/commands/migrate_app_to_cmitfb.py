@@ -15,7 +15,11 @@ logger.setLevel('DEBUG')
 
 
 class Command(BaseCommand):
-    help = "Migrate an app from case management in the app builder to form builder"
+    help = '''
+        Migrate apps from case management in the app builder to form builder.
+        Pass either a domain name (to migrate all apps in the domain) or an
+        individual app id. Will skip any apps that have already been migrated.
+    '''
 
     def handle(self, *args, **options):
         app_ids = []
@@ -34,8 +38,11 @@ class Command(BaseCommand):
 
     def migrate_app(self, app_id):
         app = Application.get(app_id)
-        modules = [m for m in app.modules if m.module_type == 'basic']
+        if app.vellum_case_management:
+            logger.info('already migrated app {}'.format(app_id))
+            return
 
+        modules = [m for m in app.modules if m.module_type == 'basic']
         for module in modules:
             forms = [f for f in module.forms if f.doc_type == 'Form']
             for form in forms:

@@ -1,20 +1,21 @@
 {% load hq_shared_tags %}
+{% load i18n %}
 
 <script id="grid-template" type="text/template">
 
     <div>
-        <h1>Applications</h1>
+        <h1>{% trans "Applications" %}</h1>
     </div>
 
     <div class="row">
-        <div id="incompleteSessionsItem" class="grid-item col-sm-4 text-center">
-            <h3>Incomplete Forms</h3>
-            <i class="fa fa-list incomplete-icon" aria-hidden="true"></i>
+        <div class="incomplete-sessions-item grid-item col-sm-4 text-center formplayer-request">
+            <h3>{% trans "Incomplete Forms" %}</h3>
+            <i class="fa fa-list app-icon incomplete-icon" aria-hidden="true"></i>
         </div>
 
-        <div id="syncItem" class="grid-item col-sm-4 text-center">
-            <h3>Sync</h3>
-            <i class="fa fa-refresh sync-icon" aria-hidden="true"></i>
+        <div class="sync-item grid-item col-sm-4 text-center formplayer-request">
+            <h3>{% trans "Sync" %}</h3>
+            <i class="fa fa-refresh app-icon sync-icon" aria-hidden="true"></i>
         </div>
 
         <div class="application-container">
@@ -23,6 +24,25 @@
 
     </div>
 </script>
+
+<script id="single-app-template" type="text/template">
+
+    <div class="row">
+        <div class="start-app grid-item col-xs-6 col-sm-4 text-center formplayer-request">
+            <h3>{% trans "Start" %}</h3>
+            <i class="fa fa-pencil app-icon start-app-icon" aria-hidden="true"></i>
+        </div>
+        <div class="incomplete-sessions-item grid-item col-xs-6 col-sm-4 text-center formplayer-request">
+            <h3>{% trans "Incomplete Forms" %}</h3>
+            <i class="fa fa-list app-icon incomplete-icon" aria-hidden="true"></i>
+        </div>
+        <div class="sync-item grid-item col-xs-6 col-sm-4 text-center formplayer-request">
+            <h3>{% trans "Sync" %}</h3>
+            <i class="fa fa-refresh app-icon sync-icon" aria-hidden="true"></i>
+        </div>
+    </div>
+</script>
+
 
 <script id="row-template" type="text/template">
     <h3><%- name %></h3>
