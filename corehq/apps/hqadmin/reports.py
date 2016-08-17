@@ -883,7 +883,7 @@ class AdminDomainMapReport(AdminDomainStatsReport):
 
     def _calc_num_active_users_per_country(self, filters):
         active_users_per_country = (NestedTermAggregationsHelper(
-                                    base_query=DomainES(),
+                                    base_query=DomainES().filter(filters),
                                     terms=[AggregationTerm('countries', 'deployment.countries')],
                                     bottom_level_aggregation=SumAggregation('users', 'cp_n_active_cc_users')
                                     ).get_data())
