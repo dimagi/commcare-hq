@@ -164,6 +164,9 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
 
                 new_column = _get_normal_column(new_table, column_path, transform)
                 if not new_column:
+                    new_column = _get_for_single_node_repeat(instance.tables, column_path, transform)
+
+                if not new_column:
                     raise SkipConversion('Column not found in new schema')
                 else:
                     info.append('Column is guessed to be of type: {}'.format(
@@ -248,6 +251,19 @@ def _convert_transform(serializable_transform):
         if fn == transform_fn:
             return slug
     return None
+
+
+def _get_for_single_node_repeat(tables, column_path, transform):
+    for new_table in tables:
+        column_dot_path = '.'.join(map(lambda node: node.name, column_path))
+        table_dot_path = '.'.join(map(lambda node: node.name, new_table.path))
+        if column_dot_path.startswith(table_dot_path):
+            new_column_path = new_table.path + column_path[len(new_table.path):]
+        else:
+            continue
+        new_column = _get_normal_column(new_table, new_column_path, transform)
+        if new_column:
+            return new_column
 
 
 def _get_system_property(index, transform, export_type, table_path):
