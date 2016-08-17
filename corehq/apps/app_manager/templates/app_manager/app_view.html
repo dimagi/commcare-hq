@@ -240,19 +240,6 @@
         </div>
         {% include 'app_manager/languages.html' %}
 
-        {% if app.get_doc_type == "Application" %}
-            <div class="tab-pane multimedia" id="multimedia">
-                <div data-bind="if: load_state() === 'loading'">
-                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
-                    {% trans "Loading ..." %}
-                </div>
-                <div data-bind="html: multimedia_page_html"></div>
-                <div data-bind="if: load_state() === 'error'">
-                    <button class="btn btn-default" data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
-                </div>
-            </div>
-
-        {% endif %}
         <div class="tab-pane{% if copy_app_form.is_bound %} active{% endif %}" id="copy">
             <div>
                 <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">

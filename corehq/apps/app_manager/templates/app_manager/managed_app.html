@@ -138,15 +138,6 @@
                 </a>
             </div>
         </li>
-        <li class="divider"></li>
-        {% if app.get_doc_type == 'Application' %}
-        <li>
-            <a id="demand-multimedia" href="{% url "view_app" domain app.id %}multimedia/#multimedia" {% if is_app_view %}data-toggle="tab" data-pagetitle="{% trans "Multimedia" %}: {{ app.name }}"{% endif %}>
-                <i class="fa fa-photo"></i>
-                {% trans "Multimedia" %}
-            </a>
-        </li>
-        {% endif %}
         <li>
             <a href="{% url "view_app" domain app.id %}languages/#languages-and-translations" {% if is_app_view %}data-toggle="tab" data-pagetitle="{% trans "Languages" %}: {{ app.name }}"{% endif %}>
                 <i class="fa fa-globe"></i>
