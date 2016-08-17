@@ -168,12 +168,6 @@
                 </span>
             {% endif %}
         </li>
-        <li>
-            <a href="{% url "app_summary" domain app.id %}">
-                <i class="fa fa-list"></i>
-                {% trans "App Summary" %}
-            </a>
-        </li>
         <li class="divider"></li>
     {% if app.get_doc_type == "Application" %}
         <li>
