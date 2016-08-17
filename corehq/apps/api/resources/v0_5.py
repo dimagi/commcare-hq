@@ -546,7 +546,7 @@ class StockTransactionResource(HqBaseResource, ModelResource):
 
 
 ConfigurableReportData = namedtuple("ConfigurableReportData", [
-    "data", "id", "domain", "total_records", "get_params", "next_page"
+    "data", "columns", "id", "domain", "total_records", "get_params", "next_page"
 ])
 
 
@@ -556,6 +556,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
     ConfigurableReport view.
     """
     data = fields.ListField(attribute="data", readonly=True)
+    columns = fields.ListField(attribute="columns", readonly=True)
     total_records = fields.IntegerField(attribute="total_records", readonly=True)
     next_page = fields.CharField(attribute="next_page", readonly=True)
 
@@ -609,8 +610,14 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         report.set_filter_values(filter_values)
 
         page = list(report.get_data(start=start, limit=limit))
+
+        columns = [
+            {"header": column.header, "slug": column.slug}
+            for column in report.columns
+        ]
+
         total_records = report.get_total_records()
-        return page, total_records
+        return page, columns, total_records
 
     def obj_get(self, bundle, **kwargs):
         domain = kwargs['domain']
@@ -619,11 +626,12 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         limit = self._get_limit_param(bundle)
 
         report_config = self._get_report_configuration(pk, domain)
-        page, total_records = self._get_report_data(
+        page, columns, total_records = self._get_report_data(
             report_config, domain, start, limit, bundle.request.GET)
 
         return ConfigurableReportData(
             data=page,
+            columns=columns,
             total_records=total_records,
             id=report_config._id,
             domain=domain,
