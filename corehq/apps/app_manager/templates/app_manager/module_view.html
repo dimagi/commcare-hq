@@ -215,6 +215,7 @@
 {% endblock %}
 
 {% block form-view %}
+    {% include 'app_manager/partials/module_view_heading.html' %}
     {% if module.case_type == '' %}
     <h3 style="display: inline-block; margin-right: -5px;"><i class="fa fa-folder-open"></i></h3>
     {% else %}
@@ -232,8 +233,7 @@
         saveValueName: 'comment',
         cols: 50,
     "></inline-edit>
-    <br />
-    {% include 'app_manager/partials/module_view_heading.html' %}
+    <div class="spacer"></div>
 <div class="tabbable">
 <ul class="nav nav-tabs" id="module-view-tabs">
     {% block tab-headers %}
