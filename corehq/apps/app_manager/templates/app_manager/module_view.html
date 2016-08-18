@@ -215,6 +215,11 @@
 {% endblock %}
 
 {% block form-view %}
+    {% if module.case_type == '' %}
+    <h3 style="display: inline-block; margin-right: -5px;"><i class="fa fa-folder-open"></i></h3>
+    {% else %}
+    <h3 style="display: inline-block; margin-right: -5px;"><i class="fa fa-list"></i></h3>
+    {% endif %}
     {% inline_edit_trans module.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
     <br />
     <inline-edit params="
