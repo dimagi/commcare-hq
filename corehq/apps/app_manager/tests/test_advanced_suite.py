@@ -10,6 +10,7 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
     AutoSelectCase,
+    LoadCaseFromFixture,
     LoadUpdateAction,
     Module,
 )
@@ -138,6 +139,39 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         </partial>
         """
         self.assertXmlPartialEqual(menu, suite, "./menu[@id='m1']")
+
+    def test_advanced_suite_load_case_from_fixture(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        app.get_module(1).get_form(0).actions.load_update_cases.append(LoadUpdateAction(
+            case_tag="adherence",
+            case_type="clinic",
+            load_case_from_fixture=LoadCaseFromFixture(
+                fixture_nodeset="instance('item-list:table_tag')/calendar/year/month/day[@date > 735992 and @date < 736000]",
+                fixture_tag="selected_date",
+                fixture_variable="date",
+                case_property="adherence_event_date",
+                auto_select=True,
+            )
+        ))
+        suite = app.create_suite()
+        session = """
+        <partial>
+          <session>
+              <datum id="case_id_case_clinic" nodeset="instance('casedb')/casedb/case[@case_type='clinic'][@status='open']" value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long" />
+              <datum id="selected_date" nodeset="instance('item-list:table_tag')/calendar/year/month/day[@date &gt; 735992 and @date &lt; 736000]" value="./@date" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
+              <datum id="adherence" nodeset="instance('casedb')/casedb/case[@case_type='clinic'][@status='open'][adherence_event_date=instance('commcaresession')/session/data/selected_date]" value="./@case_id" autoselect="true" />
+          </session>
+        </partial>
+        """
+        self.assertXmlPartialEqual(session, suite, './entry[2]/session')
+        instance = """
+        <partial>
+          <instance id="casedb" src="jr://instance/casedb"/>
+          <instance id="commcaresession" src="jr://instance/session"/>
+          <instance id="item-list:table_tag" src="jr://fixture/item-list:table_tag"/>
+        </partial>
+        """
+        self.assertXmlPartialEqual(instance, suite, './entry[2]/instance')
 
     def test_tiered_select_with_advanced_module_as_parent(self):
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
