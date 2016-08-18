@@ -2,6 +2,7 @@ from casexml.apps.case.xml import V1, V2, V3, check_version, V2_NAMESPACE
 from xml.etree import ElementTree
 import logging
 from dimagi.utils.parsing import json_format_datetime, json_format_date
+from dateutil.parser import parse as parse_datetime
 
 
 def datetime_to_xml_string(datetime_string):
@@ -23,7 +24,13 @@ def safe_element(tag, text=None):
 
 
 def date_to_xml_string(date):
-    return json_format_date(date) if date else ''
+    if not date:
+        return ''
+
+    if isinstance(date, basestring):
+        date = parse_datetime(date)
+
+    return json_format_date(date)
 
 
 def get_dynamic_element(key, val):
@@ -124,7 +131,7 @@ class V1CaseXMLGenerator(CaseXMLGeneratorBase):
         if self.case.owner_id:
             element.append(safe_element('owner_id', self.case.owner_id))
         if self.case.opened_on:
-            element.append(safe_element('date_opened', json_format_date(self.case.opened_on)))
+            element.append(safe_element('date_opened', date_to_xml_string(self.case.opened_on)))
         super(V1CaseXMLGenerator, self).add_custom_properties(element)
 
     def add_indices(self, element):
@@ -163,7 +170,7 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
         if self.case.external_id:
             element.append(safe_element('external_id', self.case.external_id))
         if self.case.opened_on:
-            element.append(safe_element("date_opened", json_format_date(self.case.opened_on)))
+            element.append(safe_element("date_opened", date_to_xml_string(self.case.opened_on)))
         super(V2CaseXMLGenerator, self).add_custom_properties(element)
 
     def add_indices(self, element):
