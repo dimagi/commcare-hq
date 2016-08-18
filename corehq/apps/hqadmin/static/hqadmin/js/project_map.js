@@ -164,13 +164,12 @@ var projectMapInit = function(mapboxAccessToken) {
     }
 
     function getColorScaleIndex(count, scales) {
-        for (var i in scales){
+        for (var i = 0; i < scales.length; i++){
             if (count < scales[i]){
                 return i;
-            } else {
-                return scales.length;
             }
         }
+        return scales.length;
     }
 
     function getOpacity(featureId) {
