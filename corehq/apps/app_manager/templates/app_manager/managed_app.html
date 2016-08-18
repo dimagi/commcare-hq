@@ -118,7 +118,12 @@
 
 {% block page_navigation %}
 {% if app %}
-<nav class="app-manager-content hide">
+<div class="appmanager-loading-container">
+<div class="appmanager-loading appmanager-loading-nav">
+  <i class="fa fa-spin fa-spinner"></i>
+</div>
+</div>
+<nav class="appmanager-content">
     <ul class="nav nav-hq-sidebar">
         <li {% if release_manager %}class="active"{% endif %}>
             <a id="demand-releases" href="{% url "view_app" domain app.id %}releases/#releases" {% if is_app_view %}data-toggle="tab" data-pagetitle="{% trans "Deploy" %}: {{ app.name }}"{% endif %}>
