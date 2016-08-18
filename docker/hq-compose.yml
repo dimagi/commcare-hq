@@ -29,7 +29,7 @@ postgres:
     - ${VOLUME_PREFIX}postgresql:/var/lib/postgresql/data
 
 couch:
-  image: klaemo/couchdb:latest
+  image: klaemo/couchdb:1.6
   expose:
     - "5984"
   volumes:
