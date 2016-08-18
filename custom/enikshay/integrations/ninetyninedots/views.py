@@ -16,7 +16,7 @@ from custom.enikshay.integrations.ninetyninedots.utils import (
 )
 
 
-@toggles.ENIKSHAY_INTEGRATIONS.required_decorator()
+@toggles.NINETYNINE_DOTS.required_decorator()
 @login_or_digest_or_basic_or_apikey()
 @require_POST
 @csrf_exempt
@@ -39,7 +39,7 @@ def update_patient_adherence(request, domain):
     return json_response({"success": "Patient adherences updated."})
 
 
-@toggles.ENIKSHAY_INTEGRATIONS.required_decorator()
+@toggles.NINETYNINE_DOTS.required_decorator()
 @login_or_digest_or_basic_or_apikey()
 @require_POST
 @csrf_exempt
@@ -70,7 +70,7 @@ def update_adherence_confidence(request, domain):
     return json_response({"success": "Patient adherences updated."})
 
 
-@toggles.ENIKSHAY_INTEGRATIONS.required_decorator()
+@toggles.NINETYNINE_DOTS.required_decorator()
 @login_or_digest_or_basic_or_apikey()
 @require_POST
 @csrf_exempt

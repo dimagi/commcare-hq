@@ -610,9 +610,9 @@ ICDS_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-ENIKSHAY_INTEGRATIONS = StaticToggle(
-    'enikshay_integrations',
-    'Enable access to eNikshay external integrations',
+NINETYNINE_DOTS = StaticToggle(
+    '99dots_integration',
+    'Enable access to 99DOTS',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
