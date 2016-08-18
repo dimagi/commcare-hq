@@ -147,10 +147,12 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
                         column_index=column.index,
                     )
                     info.append('Column is part of a repeat: {}'. format(old_table.index))
+
                 column_path = _convert_index_to_path_nodes(index)
                 # The old style column indexes always look like they contains no repeats,
                 # so replace that parts that could be repeats with the table path
                 column_path = table_path + column_path[len(table_path):]
+
 
                 system_property = _get_system_property(
                     column.index,
@@ -174,6 +176,16 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
                     new_column = _get_for_single_node_repeat(instance.tables, column_path, transform)
                     if new_column:
                         info.append('Column is for a repeat with just a single instance')
+
+                # If we still haven't found the column, try to find it as a stock question
+                if not new_column and _is_form_stock_question(index):
+                    new_column = _get_column_for_stock_form_export(
+                        new_table,
+                        column_path,
+                        index
+                    )
+                    if new_column:
+                        info.append('Column is a stock form question')
 
                 if not new_column:
                     raise SkipConversion('Column not found in new schema')
@@ -282,11 +294,38 @@ def _get_for_single_node_repeat(tables, column_path, transform):
             return new_column
 
 
+def _get_column_for_stock_form_export(new_table, column_path, index):
+    # Takes a path like column.transfer:question_id.@date
+    # and maps it to column.transfer.@date
+    def _remove_question_id_from_path(path):
+        parts = path.split('.')
+        parts_without_question_ids = map(lambda part: part.split(':')[0], parts)
+        return '.'.join(parts_without_question_ids)
+
+    stock_columns = filter(lambda c: c.item.doc_type == 'StockItem', new_table.columns)
+
+    # Map column to its readable path (dot path)
+    stock_column_to_readable_path = {c: c.item.readable_path for c in stock_columns}
+
+    matched_columns = []
+    for column, readable_path in stock_column_to_readable_path.iteritems():
+        if _remove_question_id_from_path(readable_path) == index:
+            matched_columns.append(column)
+
+    if len(matched_columns) == 1:
+        return matched_columns[0]
+    elif len(matched_columns) == 0:
+        return None
+    else:
+        raise SkipConversion('Multiple matched stock nodes')
+
+
 def _is_form_stock_question(index):
     parts = index.split('.')
     parent_stock_attributes = ['@date', '@type', '@entity-id', '@section-id']
     entry_stock_attributes = ['@id', '@quantity']
 
+    # Attempts to take a balance node and convert it. It is looks for an index that matches:
     # <balance|transfer>.<@date|@type...>
     try:
         parent_tag_name, attribute = parts[-2:]
@@ -296,6 +335,7 @@ def _is_form_stock_question(index):
     except ValueError:
         return False
 
+    # Attempts to take an entry node and convert it. It is looks for an index that matches:
     # <balance|transfer>.entry.<@id|@quantity>
     try:
         parent_tag_name, tag_name, attribute = parts[-3:]
@@ -388,7 +428,6 @@ def _get_normal_column(new_table, column_path, transform):
         'MultipleChoiceItem',
         'GeopointItem',
         'MultiMediaItem',
-        'StockItem',
         'ExportItem',
     ]
     # Since old exports had no concept of item type, we just guess all
