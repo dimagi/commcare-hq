@@ -898,21 +898,17 @@ class AdminDomainMapReport(AdminDomainStatsReport):
 
     def parse_params(self, es_params):
         es_filters = {}
+        country_params = es_params.get('deployment.countries.exact')
+        sector_params = es_params.get('internal.area.exact')
 
-        def get_country_params():
-            if es_params.get('deployment.countries.exact'):
-                return filters.term("deployment.countries", es_params.get('deployment.countries.exact'))
-
-        def get_sector_params():
-            if es_params.get('internal.area.exact'):
-                return filters.term("internal.area", es_params.get('internal.area.exact')[0].lower())
-
-        if get_country_params() is not None and get_sector_params() is not None:
-            es_filters = filters.AND(get_country_params(), get_sector_params())
-        elif get_country_params() is not None:
-            es_filters = get_country_params()
-        elif get_sector_params() is not None:
-            es_filters = get_sector_params()
+        if country_params and sector_params:
+            es_filters = (filters.AND(
+                            filters.term("deployment.countries", country_params),
+                            filters.term("internal.area", sector_params[0].lower())))
+        elif country_params:
+            es_filters = filters.term("deployment.countries", country_params)
+        elif sector_params:
+            es_filters = filters.term("internal.area", sector_params[0].lower())
 
         return es_filters
 
