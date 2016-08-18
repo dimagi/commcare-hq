@@ -7,6 +7,6 @@ def get_meta(request):
     }
 
 def get_instance_string():
-    instance = settings.ANALYTICS_CONFIG.get('HQ_INSTANCE')
+    instance = settings.ANALYTICS_CONFIG.get('HQ_INSTANCE', '')
     env = '' if instance == 'www' else instance + '_'
     return env
