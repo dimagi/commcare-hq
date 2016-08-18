@@ -16,8 +16,13 @@ from corehq.apps.export.models import (
     CaseExportDataSchema,
     ExportGroupSchema,
     ExportItem,
+    StockItem,
     FormExportInstance,
     CaseExportInstance,
+    MAIN_TABLE,
+    PARENT_CASE_TABLE,
+    PathNode,
+    CASE_HISTORY_TABLE,
 )
 from corehq.apps.app_manager.models import Domain, Application, RemoteApp, Module
 from corehq.apps.export.utils import (
@@ -34,12 +39,6 @@ from corehq.apps.export.const import (
     CASE_NAME_TRANSFORM,
     FORM_EXPORT,
     CASE_EXPORT,
-)
-from corehq.apps.export.models import (
-    MAIN_TABLE,
-    PARENT_CASE_TABLE,
-    PathNode,
-    CASE_HISTORY_TABLE,
 )
 from corehq.apps.export.dbaccessors import (
     delete_all_export_instances,
@@ -597,6 +596,62 @@ class TestSingleNodeRepeatConversion(TestConvertBase):
             ],
             'ExportItem',
             None
+        )
+        self.assertTrue(column.selected)
+
+
+@mock.patch(
+    'corehq.apps.export.models.new.get_request',
+    return_value=MockRequest(domain='convert-domain'),
+)
+@mock.patch(
+    'corehq.apps.export.utils._is_remote_app_conversion',
+    return_value=False,
+)
+class TestConvertStockFormExport(TestConvertBase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestConvertStockFormExport, cls).setUpClass()
+        cls.schema = FormExportDataSchema(
+            domain=cls.domain,
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[
+                        StockItem(
+                            path=[
+                                PathNode(name='form'),
+                                PathNode(name='transfer:questionid'),
+                                PathNode(name='entry'),
+                                PathNode(name='@id'),
+                            ],
+                            label='Question 1',
+                            last_occurrences={cls.app_id: 3},
+                        ),
+                    ],
+                    last_occurrences={cls.app_id: 2},
+                ),
+            ]
+        )
+
+    def test_convert_form_export_stock_basic(self, _, __):
+        saved_export_schema = SavedExportSchema.wrap(self.get_json('stock_form_export'))
+        with mock.patch(
+                'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
+                return_value=self.schema):
+            instance, _ = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
+
+        table = instance.get_table(MAIN_TABLE)
+        index, column = table.get_column(
+            [
+                PathNode(name='form'),
+                PathNode(name='transfer:questionid'),
+                PathNode(name='entry'),
+                PathNode(name='@id'),
+            ],
+            'StockItem',
+            None,
         )
         self.assertTrue(column.selected)
 
