@@ -50,6 +50,7 @@ class TestIndicatorsFromApp(SimpleTestCase, TestFileMixin):
             'formsSubmittedWeek0',
             'forms_submitted_month1',
             'totalCases',
+            'motherFormsMonth0',
         ])
 
     def test_get_indicators_used_in_app_blank(self):
@@ -160,7 +161,7 @@ class TestIndicatorsFromApp(SimpleTestCase, TestFileMixin):
     ('formsSubmittedWeek0', (const.FORMS_SUBMITTED, None, const.WEEK0, True)),
     ('forms_submitted_month1', (const.FORMS_SUBMITTED, None, const.MONTH1, False)),
     ('totalCases', (const.CASES_TOTAL, None, None, True)),
-    ('motherFormsMonth0', ('custom', None, None, True)),
+    ('motherFormsMonth0', (const.CUSTOM_FORM, 'motherForms', const.MONTH0, False)),
 ], TestIndicatorsFromApp)
 def test_parse_indicator(self, indicator_name, parsed_tuple):
     self.assertEqual(

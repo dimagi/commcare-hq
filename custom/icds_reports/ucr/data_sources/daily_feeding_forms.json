@@ -9,7 +9,7 @@
     "table_id": "static-daily_feeding_forms",
     "display_name": "Forms - Daily Feeding (Static)",
     "referenced_doc_type": "XFormInstance",
-    "description": "The number of AWC Management forms Supervisors in an Area have filled in the last 30 days",
+    "description": "The number of daily feeding forms filled out by AWCs",
     "base_item_expression": {},
     "configured_filter": {
       "operator": "eq",
@@ -467,9 +467,474 @@
         "type": "count",
         "display_name": "Count",
         "column_id": "count"
+      },
+      {
+        "display_name": null,
+        "transform": {},
+        "datatype": "date",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "month",
+        "type": "expression",
+        "expression": {
+          "type": "month_start_date",
+          "date_expression": {
+            "type": "root_doc",
+            "expression": {
+              "datatype": "date",
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "meta",
+                "timeEnd"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "display_name": null,
+        "transform": {},
+        "datatype": "integer",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "eligible_children",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": "integer",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "num_children"
+            ]
+          }
+        }
+      },
+      {
+        "display_name": null,
+        "transform": {},
+        "datatype": "integer",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "attended_children",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": "integer",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "num_attended_children"
+            ]
+          }
+        }
+      },
+      {
+        "display_name": null,
+        "transform": {},
+        "datatype": "integer",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "attended_children_percent",
+        "type": "expression",
+        "expression": {
+          "type": "named",
+          "name": "attended_children_percent"
+        }
+      },
+      {
+        "display_name": null,
+        "column_id": "attendance_full",
+        "type": "boolean",
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "gte",
+          "expression": {
+            "type": "named",
+            "name": "attended_children_percent"
+          },
+          "property_value": 0.8
+        }
+      },
+      {
+        "display_name": null,
+        "column_id": "attendance_partial",
+        "type": "boolean",
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "lt",
+              "expression": {
+                "type": "named",
+                "name": "attended_children_percent"
+              },
+              "property_value": 0.8
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "gte",
+              "expression": {
+                "type": "named",
+                "name": "attended_children_percent"
+              },
+              "property_value": 0.6
+            }
+          ]
+        }
+      },
+      {
+        "display_name": null,
+        "column_id": "attendance_non",
+        "type": "boolean",
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "lt",
+          "expression": {
+            "type": "named",
+            "name": "attended_children_percent"
+          },
+          "property_value": 0.6
+        }
+      },
+      {
+        "display_name": null,
+        "transform": {},
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "gps_location"
+          ]
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "form_location",
+        "type": "expression"
+      },
+      {
+        "display_name": null,
+        "transform": {},
+        "datatype": "decimal",
+        "expression": {
+          "type": "split_string",
+          "string_expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "gps_location"
+            ]
+          },
+          "index_expression": {
+            "type": "constant",
+            "constant": 0
+          }
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "form_location_lat",
+        "type": "expression"
+      },
+      {
+        "display_name": null,
+        "transform": {},
+        "datatype": "decimal",
+        "expression": {
+          "type": "split_string",
+          "string_expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "gps_location"
+            ]
+          },
+          "index_expression": {
+            "type": "constant",
+            "constant": 0
+          }
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "form_location_long",
+        "type": "expression"
+      },
+      {
+        "type": "boolean",
+        "column_id": "awc_not_open_holiday",
+        "filter": {
+          "type": "or",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "reason_awc_not_open_self"
+                ]
+              },
+              "property_value": "national"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "reason_awc_not_open_self"
+                ]
+              },
+              "property_value": "state"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "reason_awc_not_open_others"
+                ]
+              },
+              "property_value": "national"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "reason_awc_not_open_others"
+                ]
+              },
+              "property_value": "state"
+            }
+          ]
+        }
+      },
+      {
+        "type": "boolean",
+        "column_id": "awc_not_open_festival",
+        "filter": {
+          "type": "or",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "reason_awc_not_open_self"
+                ]
+              },
+              "property_value": "festival"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "reason_awc_not_open_others"
+                ]
+              },
+              "property_value": "festival"
+            }
+          ]
+        }
+      },
+      {
+        "type": "boolean",
+        "column_id": "awc_not_open_no_help",
+        "filter": {
+          "type": "or",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "reason_awc_not_open_self"
+                ]
+              },
+              "property_value": "nobody_available"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "reason_awc_not_open_others"
+                ]
+              },
+              "property_value": "helper_absent"
+            }
+          ]
+        }
+      },
+      {
+        "type": "boolean",
+        "column_id": "awc_not_open_department_work",
+        "filter": {
+          "type": "or",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "reason_awc_not_open_self"
+                ]
+              },
+              "property_value": "other_department_work"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "reason_awc_not_open_others"
+                ]
+              },
+              "property_value": "other_department_work"
+            }
+          ]
+        }
+      },
+      {
+        "type": "boolean",
+        "column_id": "awc_not_open_other",
+        "filter": {
+          "type": "or",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "reason_awc_not_open_self"
+                ]
+              },
+              "property_value": "sickness"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "reason_awc_not_open_self"
+                ]
+              },
+              "property_value": "other"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "reason_awc_not_open_self"
+                ]
+              },
+              "property_value": "death_in_family"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "reason_awc_not_open_others"
+                ]
+              },
+              "property_value": "other"
+            }
+          ]
+        }
+      },
+      {
+        "type": "boolean",
+        "column_id": "awc_not_open",
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "awc_opened_aww"
+                ]
+              },
+              "property_value": "no"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "awc_opened_someone_else"
+                ]
+              },
+              "property_value": "no"
+            }
+          ]
+        }
       }
     ],
-    "named_expressions": {},
+    "named_expressions": {
+      "attended_children_percent": {
+        "type": "evaluator",
+        "datatype": "decimal",
+        "statement": "num_attended_children / eligible_children",
+        "context_variables": {
+          "num_attended_children": {
+            "datatype": "integer",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "num_attended_children"
+            ]
+          },
+          "eligible_children": {
+            "datatype": "integer",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "num_children"
+            ]
+          }
+        }
+      }
+    },
     "named_filters": {
       "awc_open": {
         "type": "or",

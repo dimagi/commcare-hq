@@ -4,6 +4,7 @@ from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc
 from corehq.apps.users.bulkupload import (
     check_duplicate_usernames,
+    check_existing_usernames,
     SiteCodeToSupplyPointCache,
     UserLocMapping,
     UserUploadError,
@@ -301,3 +302,14 @@ class TestUserBulkUploadUtils(SimpleTestCase):
             check_duplicate_usernames(user_specs)
         except UserUploadError:
             self.fail('UserUploadError incorrectly raised')
+
+    def test_existing_username_with_no_id(self):
+        user_specs = [
+            {
+                u'username': u'hello',
+            },
+        ]
+
+        with patch('corehq.apps.users.bulkupload.get_user_docs_by_username',
+                return_value=[{'username': 'hello@domain.commcarehq.org'}]):
+            self.assertRaises(UserUploadError, check_existing_usernames, user_specs, 'domain')

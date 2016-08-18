@@ -46,6 +46,8 @@
 
                         alert_user("{% trans 'Password changed successfully' %}", 'success');
                         ga_track_event("Edit Mobile Worker", "Reset password", "{{couch_user_id|escapejs}}");
+                    } else {
+                        alert_user("{% trans 'Password was not changed' %}", 'danger');
                     }
                 },
                 error: function (response) {

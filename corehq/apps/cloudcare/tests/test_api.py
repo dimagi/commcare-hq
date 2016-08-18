@@ -7,7 +7,6 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
-from casexml.apps.phone.xml import date_to_xml_string
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 from corehq import toggles
 from corehq.apps.domain.shortcuts import create_domain
@@ -304,13 +303,13 @@ def _create_case(user, type, close=False, **extras):
         user_id=user.user_id,
         owner_id=user.user_id,
         **extras
-    ).as_xml(format_datetime=date_to_xml_string)]
+    ).as_xml()]
     if close:
         blocks.append(CaseBlock(
             create=False,
             case_id=case_id,
             close=True,
-        ).as_xml(format_datetime=date_to_xml_string))
+        ).as_xml())
     post_case_blocks(blocks, {'domain': TEST_DOMAIN})
     case = CommCareCase.get(case_id)
     assert case.closed == close

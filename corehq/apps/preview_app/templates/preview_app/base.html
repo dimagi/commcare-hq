@@ -23,22 +23,24 @@
                   media="all"
                   href="{% static 'style/less/style.debug.less' %}" />
         {% else %}
-        <link type="text/less"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'style/less/bootstrap.less' %}" />
-        <link type="text/less"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'font-awesome/less/font-awesome.less' %}" />
-        <link type="text/less"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'style/less/font-commcare.less' %}" />
-        <link type="text/less"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'style/less/style.less' %}" />
+          {% compress css %}
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'style/less/bootstrap.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'font-awesome/less/font-awesome.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'style/less/font-commcare.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'style/less/style.less' %}" />
+          {% endcompress %}
         {% endif %}
         <link type="text/css"
               rel="stylesheet"
@@ -110,6 +112,7 @@
             <section id="case-crumbs" style="width: 800px"></section>
             <section id="cases"></section>
             <div id="menu-container">
+                <div id="phone-mode-navigation"></div>
                 <div id="breadcrumb-region"></div>
                 <div id="menu-region"></div>
             </div>
@@ -132,7 +135,7 @@
                 username: "{{ request.user.username  }}",
                 domain: "{{ request.domain }}",
                 formplayer_url: "{{ formplayer_url }}",
-                previewMode: true,
+                phoneMode: true,
             })
         })
         </script>
@@ -142,6 +145,7 @@
         {% include 'formplayer/case_list.html' %}
         {% include 'formplayer/menu_list.html' %}
         {% include 'formplayer/session_list.html' %}
+        {% include 'formplayer/navigation.html' %}
 
         {% include 'formplayer/dependencies.html' %}
         {% include "style/includes/ko.html" %}

@@ -1842,6 +1842,8 @@ class SMSSettingsView(BaseMessagingSectionView):
                     [w.to_json() for w in domain_obj.restricted_sms_times],
                 "send_to_duplicated_case_numbers":
                     enabled_disabled(domain_obj.send_to_duplicated_case_numbers),
+                "sms_survey_date_format":
+                    domain_obj.sms_survey_date_format,
                 "use_custom_case_username":
                     default_custom(domain_obj.custom_case_username),
                 "custom_case_username":
@@ -1905,6 +1907,8 @@ class SMSSettingsView(BaseMessagingSectionView):
                  "custom_case_username"),
                 ("send_to_duplicated_case_numbers",
                  "send_to_duplicated_case_numbers"),
+                ("sms_survey_date_format",
+                 "sms_survey_date_format"),
                 ("sms_conversation_length",
                  "sms_conversation_length"),
                 ("count_messages_as_read_by_anyone",

@@ -22,11 +22,17 @@ def parse_indicator(indicator_name):
     if is_legacy:
         if indicator_name == const.LEGACY_TOTAL_CASES:
             return ParsedIndicator(const.CASES_TOTAL, None, None, True)
+
         for legacy_slug, new_slug in const.LEGACY_SLUG_MAP.items():
             if indicator_name.startswith(legacy_slug):
                 period = indicator_name.lstrip(legacy_slug).lower()
                 return ParsedIndicator(new_slug, None, period, True)
-        return ParsedIndicator('custom', None, None, True)
+
+        indicator_name_lower = indicator_name.lower()
+        for date_range in const.DATE_RANGES:
+            if indicator_name_lower.endswith(date_range):
+                name = indicator_name[0:-len(date_range)]
+                return ParsedIndicator(const.CUSTOM_FORM, name, date_range, False)
 
     else:
         split = indicator_name.rsplit('_')

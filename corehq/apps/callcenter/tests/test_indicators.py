@@ -5,7 +5,7 @@ from django.conf import settings
 from django.test.utils import override_settings
 
 from casexml.apps.case.mock import CaseBlock
-from corehq.apps.callcenter.const import DATE_RANGES, WEEK1, WEEK0, MONTH0
+from corehq.apps.callcenter.const import DATE_RANGES, WEEK1, WEEK0, MONTH0, MONTH1
 from corehq.apps.callcenter.indicator_sets import AAROHI_MOTHER_FORM, CallCenterIndicators, \
     cache_key, CachedIndicators
 from corehq.apps.callcenter.models import CallCenterIndicatorConfig, TypedIndicator
@@ -336,7 +336,42 @@ class CallCenterTests(BaseCCTests):
             self.aarohi_domain.default_timezone,
             self.aarohi_domain.call_center_config.case_type,
             self.aarohi_user,
-            custom_cache=locmem_cache
+            custom_cache=locmem_cache,
+        )
+        self._test_indicators(
+            self.aarohi_user,
+            indicator_set.get_data(),
+            expected
+        )
+
+    def test_custom_indicators_limited(self):
+        expected = {}
+
+        # custom
+        expected.update(
+            get_indicators('motherForms', [3L, None, 9L, None], is_legacy=True, limit_ranges=[WEEK0, MONTH0])
+        )
+        expected.update(
+            get_indicators('childForms', [None, 0L, None, None], is_legacy=True, limit_ranges=[WEEK1])
+        )
+        expected.update(
+            get_indicators('motherDuration', [None, None, None, 0L], is_legacy=True, limit_ranges=[MONTH1])
+        )
+
+        indicator_config = CallCenterIndicatorConfig()
+        indicator_config.custom_form = [
+            TypedIndicator(type='motherForms', date_range=WEEK0),
+            TypedIndicator(type='motherForms', date_range=MONTH0),
+            TypedIndicator(type='childForms', date_range=WEEK1),
+            TypedIndicator(type='motherDuration', date_range=MONTH1),
+        ]
+        indicator_set = CallCenterIndicators(
+            self.aarohi_domain.name,
+            self.aarohi_domain.default_timezone,
+            self.aarohi_domain.call_center_config.case_type,
+            self.aarohi_user,
+            custom_cache=locmem_cache,
+            indicator_config=indicator_config
         )
         self._test_indicators(
             self.aarohi_user,

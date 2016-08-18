@@ -179,12 +179,17 @@ def update_hubspot_properties(webuser, properties):
 
 @analytics_task()
 def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
-    if path.startswith(reverse("register_user")):
+    from corehq.apps.registration.views import ProcessRegistrationView
+    if path.startswith(reverse(ProcessRegistrationView.urlname)):
         tracking_dict = {
             'created_account_in_hq': True,
             'is_a_commcare_user': True,
             'lifecyclestage': 'lead'
         }
+        if (hasattr(webuser, 'phone_numbers') and len(webuser.phone_numbers) > 0):
+            tracking_dict.update({
+                'phone': webuser.phone_numbers[0],
+            })
         tracking_dict.update(get_ab_test_properties(webuser))
         _track_on_hubspot(webuser, tracking_dict)
         _send_form_to_hubspot(HUBSPOT_SIGNUP_FORM_ID, webuser, cookies, meta)
@@ -254,8 +259,9 @@ def track_new_user_accepted_invite_on_hubspot(webuser, cookies, meta):
 
 
 @analytics_task()
-def track_clicked_preview_on_hubspot(webuser, cookies, meta):
-    _send_form_to_hubspot(HUBSPOT_CLICKED_PREVIEW_FORM_ID, webuser, cookies, meta)
+def track_clicked_preview_on_hubspot(couchuser, cookies, meta):
+    if couchuser.is_web_user():
+        _send_form_to_hubspot(HUBSPOT_CLICKED_PREVIEW_FORM_ID, couchuser, cookies, meta)
 
 
 @analytics_task()

@@ -205,7 +205,7 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertEqual([create_form_id], case.xform_ids)
 
         if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
-            self.assertEqual([create_form_id], [a.xform_id for a in case.actions])
+            self.assertTrue(create_form_id in [a.xform_id for a in case.actions])
             for a in case.actions:
                 self.assertEqual(create_form_id, a.xform_id)
 
@@ -227,7 +227,10 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertEqual([create_form_id, edit_form_id], case.xform_ids)
 
         if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
-            self.assertEqual([create_form_id, edit_form_id], [a.xform_id for a in case.actions])
+            self.assertTrue(all(
+                form_id in [a.xform_id for a in case.actions]
+                for form_id in [create_form_id, edit_form_id]
+            ))
 
         # submit a second (new) form updating the value
         case_block = CaseBlock(
@@ -245,10 +248,10 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertEqual([create_form_id, edit_form_id, second_edit_form_id], case.xform_ids)
 
         if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
-            self.assertEqual(
-                [create_form_id, edit_form_id, second_edit_form_id],
-                [a.xform_id for a in case.actions]
-            )
+            self.assertTrue(all(
+                form_id in [a.xform_id for a in case.actions]
+                for form_id in [create_form_id, edit_form_id, second_edit_form_id]
+            ))
 
         # deprecate the middle edit
         case_block = CaseBlock(
@@ -271,7 +274,7 @@ class EditFormTest(TestCase, TestFileMixin):
 
         if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
             self.assertEqual(
-                [create_form_id, edit_form_id, second_edit_form_id],
+                [create_form_id, create_form_id, edit_form_id, second_edit_form_id],
                 [a.xform_id for a in case.actions]
             )
 

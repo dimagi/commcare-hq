@@ -55,5 +55,6 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
         name='dimagisphere'),
     url(r'^reprocess_messaging_case_updates/$', ReprocessMessagingCaseUpdatesView.as_view(),
         name=ReprocessMessagingCaseUpdatesView.urlname),
+    url(r'^top_five_projects_by_country/$', 'top_five_projects_by_country', name='top_five_projects_by_country'),
     AdminReportDispatcher.url_pattern(),
 )

@@ -296,6 +296,30 @@
       },
       {
         "display_name": null,
+        "transform": {},
+        "datatype": "date",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "month",
+        "type": "expression",
+        "expression": {
+          "type": "month_start_date",
+          "date_expression": {
+            "type": "root_doc",
+            "expression": {
+              "datatype": "date",
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "meta",
+                "timeEnd"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "display_name": null,
         "property_path": [
           "form",
           "vhsnd_date_past_month"
@@ -576,6 +600,104 @@
         "display_name": null,
         "type": "boolean",
         "column_id": "due_list_prep_antenatal_checkup"
+      },
+      {
+        "filter": {
+          "operator": "eq",
+          "expression": {
+            "datatype": "string",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "children_weighed"
+            ]
+          },
+          "type": "boolean_expression",
+          "property_value": "yes"
+        },
+        "display_name": null,
+        "type": "boolean",
+        "column_id": "vhnd_gmp"
+      },
+      {
+        "expression": {
+          "datatype": "integer",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "pregnant_women_present"
+          ]
+        },
+        "display_name": null,
+        "type": "expression",
+        "datatype": "integer",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "vhnd_num_pregnant_women"
+      },
+      {
+        "expression": {
+          "datatype": "integer",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "lactating_women_present"
+          ]
+        },
+        "display_name": null,
+        "type": "expression",
+        "datatype": "integer",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "vhnd_num_lactating_women"
+      },
+      {
+        "expression": {
+          "datatype": "integer",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "mother_6_to_12_months_present"
+          ]
+        },
+        "display_name": null,
+        "type": "expression",
+        "datatype": "integer",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "vhnd_num_mothers_6_12"
+      },
+      {
+        "expression": {
+          "datatype": "integer",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "mother_1_year_above_present"
+          ]
+        },
+        "display_name": null,
+        "type": "expression",
+        "datatype": "integer",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "vhnd_num_mothers_12"
+      },
+      {
+        "expression": {
+          "datatype": "integer",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "fathers_present"
+          ]
+        },
+        "display_name": null,
+        "type": "expression",
+        "datatype": "integer",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "vhnd_num_fathers"
       }
     ],
     "named_expressions": {},

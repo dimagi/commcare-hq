@@ -68,7 +68,7 @@ class CloudantDatabase(namedtuple('CloudantInstance', 'instance db_name')):
         status_code = requests.get(db_uri, auth=self.instance).status_code
         return status_code == 200
 
-    def grant_api_key_access(self, api_key):
+    def grant_api_key_access(self, api_key, admin=False):
         db_uri = self._get_db_uri()
         security_url = self._get_security_url()
         security = requests.get(security_url, auth=self.instance).json()
@@ -76,10 +76,15 @@ class CloudantDatabase(namedtuple('CloudantInstance', 'instance db_name')):
 
         if not security:
             security = {'cloudant': {}}
-        security['cloudant'][api_key] = ["_admin", "_reader", "_writer", "_replicator"]
+        if admin:
+            permissions = ["_admin", "_reader", "_writer", "_replicator"]
+        else:
+            permissions = ["_reader"]
+        security['cloudant'][api_key] = permissions
 
         def ask():
-            return 'Granting api_key {} access to database {}'.format(api_key, db_uri)
+            return ('Granting api_key {} access with permissions {} to database {}'
+                    .format(api_key, ' '.join(permissions), db_uri))
 
         def run():
             return requests.put(security_url, auth=self.instance, json=security).json()

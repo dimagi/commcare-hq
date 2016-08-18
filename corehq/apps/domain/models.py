@@ -175,6 +175,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
         default=AMPLIFIES_NOT_SET
     )
     business_unit = StringProperty(choices=BUSINESS_UNITS + [""], default="")
+    data_access_threshold = IntegerProperty()
 
 
 class CaseDisplaySettings(DocumentSchema):
@@ -302,6 +303,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     send_to_duplicated_case_numbers = BooleanProperty(default=True)
     enable_registration_welcome_sms_for_case = BooleanProperty(default=False)
     enable_registration_welcome_sms_for_mobile_worker = BooleanProperty(default=False)
+    sms_survey_date_format = StringProperty()
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)

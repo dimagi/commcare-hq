@@ -128,9 +128,277 @@
         "column_id": "submitted_on"
       },
       {
+        "display_name": null,
+        "transform": {},
+        "datatype": "date",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "month",
+        "type": "expression",
+        "expression": {
+          "type": "month_start_date",
+          "date_expression": {
+            "type": "root_doc",
+            "expression": {
+              "datatype": "date",
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "meta",
+                "timeEnd"
+              ]
+            }
+          }
+        }
+      },
+      {
         "type": "count",
         "display_name": "Count",
         "column_id": "count"
+      },
+      {
+        "display_name": null,
+        "transform": {},
+        "datatype": "string",
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "location_form_filled "
+              ]
+            },
+            "property_value": "center"
+          },
+          "expression_if_true": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "gps_location"
+            ]
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "awc_location",
+        "type": "expression"
+      },
+      {
+        "display_name": null,
+        "transform": {},
+        "datatype": "decimal",
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "location_form_filled "
+              ]
+            },
+            "property_value": "center"
+          },
+          "expression_if_true": {
+            "type": "split_string",
+            "string_expression": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "gps_location"
+              ]
+            },
+            "index_expression": {
+              "type": "constant",
+              "constant": 0
+            }
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "awc_location_lat",
+        "type": "expression"
+      },
+      {
+        "display_name": null,
+        "transform": {},
+        "datatype": "decimal",
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "location_form_filled "
+              ]
+            },
+            "property_value": "center"
+          },
+          "expression_if_true": {
+            "type": "split_string",
+            "string_expression": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "gps_location"
+              ]
+            },
+            "index_expression": {
+              "type": "constant",
+              "constant": 1
+            }
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "awc_location_long",
+        "type": "expression"
+      },
+      {
+        "display_name": null,
+        "column_id": "aww_present",
+        "type": "boolean",
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "lt",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "aww_present"
+            ]
+          },
+          "property_value": "yes"
+        }
+      },
+      {
+        "display_name": null,
+        "column_id": "awc_open",
+        "type": "boolean",
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "lt",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "center_questions",
+              "awc_open"
+            ]
+          },
+          "property_value": "yes"
+        }
+      },
+      {
+        "display_name": null,
+        "column_id": "awc_not_open_aww_not_available",
+        "type": "boolean",
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "lt",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "center_questions",
+              "awc_closed_reason"
+            ]
+          },
+          "property_value": "aww_helper_unavailable"
+        }
+      },
+      {
+        "display_name": null,
+        "column_id": "awc_not_open_closed_early",
+        "type": "boolean",
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "lt",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "center_questions",
+              "awc_closed_reason"
+            ]
+          },
+          "property_value": "closed_early"
+        }
+      },
+      {
+        "display_name": null,
+        "column_id": "awc_not_open_holiday",
+        "type": "boolean",
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "lt",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "center_questions",
+              "awc_closed_reason"
+            ]
+          },
+          "property_value": "holiday"
+        }
+      },
+      {
+        "display_name": null,
+        "column_id": "awc_not_open_unknown",
+        "type": "boolean",
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "lt",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "center_questions",
+              "awc_closed_reason"
+            ]
+          },
+          "property_value": "unknown"
+        }
+      },
+      {
+        "display_name": null,
+        "column_id": "awc_not_open_other",
+        "type": "boolean",
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "lt",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "center_questions",
+              "awc_closed_reason"
+            ]
+          },
+          "property_value": "other"
+        }
       }
     ],
     "named_expressions": {},

@@ -11,7 +11,7 @@ from casexml.apps.phone.tests.utils import create_restore_user
 from django.test import TestCase, SimpleTestCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 
 
 class IndexSimpleTest(SimpleTestCase):
@@ -62,13 +62,13 @@ class IndexTest(TestCase):
 
     def setUp(self):
         super(IndexTest, self).setUp()
+        delete_all_users()
         self.project = Domain(name='index-test')
         self.project.save()
         self.user = create_restore_user(domain=self.project.name)
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
-        delete_all_users()
         super(IndexTest, self).tearDown()
 
     def testIndexes(self):
@@ -78,6 +78,8 @@ class IndexTest(TestCase):
                 [CaseBlock(create=True, case_id=prereq, user_id=self.user.user_id).as_xml()],
                 domain=self.project.name
             )
+
+        now = datetime.datetime.utcnow()
 
         # Step 1. Create a case with index <mom>
         create_index = CaseBlock(
@@ -99,6 +101,7 @@ class IndexTest(TestCase):
             user_id=self.user.user_id,
             index={'mom': ('mother-case', ''), 'dad': ('father-case', self.FATHER_CASE_ID)},
             date_modified=now,
+            date_opened=now.date()
         ).as_xml()
 
         update_index_expected = CaseBlock(
@@ -108,6 +111,7 @@ class IndexTest(TestCase):
             create=True,
             index={'dad': ('father-case', self.FATHER_CASE_ID)},
             date_modified=now,
+            date_opened=now.date()
         ).as_xml()
 
         post_case_blocks([update_index], domain=self.project.name)
@@ -116,12 +120,12 @@ class IndexTest(TestCase):
 
         # Step 3. Put <mom> back
 
-        now = datetime.datetime.utcnow()
         update_index = CaseBlock(
             case_id=self.CASE_ID,
             user_id=self.user.user_id,
             index={'mom': ('mother-case', self.MOTHER_CASE_ID)},
             date_modified=now,
+            date_opened=now.date()
         ).as_xml()
 
         update_index_expected = CaseBlock(
@@ -132,6 +136,7 @@ class IndexTest(TestCase):
             index={'mom': ('mother-case', self.MOTHER_CASE_ID),
                    'dad': ('father-case', self.FATHER_CASE_ID)},
             date_modified=now,
+            date_opened=now.date()
         ).as_xml()
 
         post_case_blocks([update_index], domain=self.project.name)
@@ -158,6 +163,7 @@ class IndexTest(TestCase):
         self.assertIn('IllegalCaseId', xform.problem)
         self.assertIn('Bad case id', xform.problem)
 
+    @run_with_all_backends
     def testRelationshipGetsSet(self):
         create_index = CaseBlock(
             create=True,
@@ -181,6 +187,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
             case_id='abcdef',
             case_type='at_risk',
             date_modified='2015-07-24',
+            date_opened='2015-07-24',
             index={
                 'host': IndexAttrs(case_type='newborn', case_id='123456', relationship='extension')
             },
@@ -192,6 +199,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
             <case case_id="abcdef" date_modified="2015-07-24" xmlns="http://commcarehq.org/case/transaction/v2">
                 <update>
                     <case_type>at_risk</case_type>
+                    <date_opened>2015-07-24</date_opened>
                 </update>
                 <index>
                     <host case_type="newborn" relationship="extension">123456</host>
@@ -208,6 +216,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
             case_id='123456',
             case_type='newborn',
             date_modified='2015-07-24',
+            date_opened='2015-07-24',
             index={
                 'parent': IndexAttrs(case_type='mother', case_id='789abc', relationship='child')
             },
@@ -219,6 +228,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
             <case case_id="123456" date_modified="2015-07-24" xmlns="http://commcarehq.org/case/transaction/v2">
                 <update>
                     <case_type>newborn</case_type>
+                    <date_opened>2015-07-24</date_opened>
                 </update>
                 <index>
                     <parent case_type="mother">789abc</parent>
@@ -235,6 +245,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
             case_id='123456',
             case_type='newborn',
             date_modified='2015-07-24',
+            date_opened='2015-07-24',
             index={
                 'parent': ChildIndexAttrs(case_type='mother', case_id='789abc')
             },
@@ -246,6 +257,7 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
             <case case_id="123456" date_modified="2015-07-24" xmlns="http://commcarehq.org/case/transaction/v2">
                 <update>
                     <case_type>newborn</case_type>
+                    <date_opened>2015-07-24</date_opened>
                 </update>
                 <index>
                     <parent case_type="mother">789abc</parent>

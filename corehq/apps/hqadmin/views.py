@@ -62,7 +62,10 @@ from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
 from corehq.apps.data_analytics.models import MALTRow, GIRRow
 from corehq.apps.data_analytics.const import GIR_FIELDS
 from corehq.apps.data_analytics.admin import MALTRowAdmin
-from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
+from corehq.apps.domain.decorators import (
+    require_superuser, require_superuser_or_developer,
+    login_or_basic, domain_admin_required
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
@@ -85,7 +88,8 @@ from .history import get_recent_changes, download_changes
 from .models import HqDeploy, VCMMigration
 from .reporting.reports import get_project_spaces, get_stats_data
 from .utils import get_celery_stats
-
+from corehq.apps.es.domains import DomainES
+from corehq.apps.es import filters
 
 @require_superuser
 def default(request):
@@ -398,6 +402,10 @@ class AdminRestoreView(TemplateView):
     template_name = 'hqadmin/admin_restore.html'
 
     @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(AdminRestoreView, self).dispatch(request, *args, **kwargs)
+
+
     def get(self, request, *args, **kwargs):
         full_username = request.GET.get('as', '')
         if not full_username or '@' not in full_username:
@@ -441,6 +449,18 @@ class AdminRestoreView(TemplateView):
             'timing_data': timing_context.to_list()
         })
         return context
+
+
+class DomainAdminRestoreView(AdminRestoreView):
+    urlname = 'domain_admin_restore'
+
+    def dispatch(self, request, *args, **kwargs):
+        return TemplateView.dispatch(self, request, *args, **kwargs)
+
+    @method_decorator(login_or_basic)
+    @method_decorator(domain_admin_required)
+    def get(self, request, *args, **kwargs):
+        return super(DomainAdminRestoreView, self).get(request, *args, **kwargs)
 
 
 class ManagementCommandsView(BaseAdminSectionView):
@@ -1112,3 +1132,18 @@ class ReprocessMessagingCaseUpdatesView(BaseAdminSectionView):
                     .format(','.join(case_ids_not_processed)))
 
         return self.get(request, *args, **kwargs)
+
+
+def top_five_projects_by_country(request):
+    data = {}
+    if 'country' in request.GET:
+        country = request.GET.get('country')
+        projects = (DomainES().is_active()
+                    .filter(filters.term('deployment.countries', country))
+                    .sort('cp_n_active_cc_users', True)
+                    .source(['name', 'cp_n_active_cc_users',
+                             'deployment.countries', 'internal.organization_name',
+                             'internal.area', 'internal.notes', 'deployment.date'])
+                    .size(5).run().hits)
+        data = {country: projects}
+    return json_response(data)

@@ -16,7 +16,6 @@ var projectMapInit = function(mapboxAccessToken) {
         var that = {};
 
         // { countryName : { projectName : { propertyName: propertyValue } } }
-        var projectsByCountryThenName = {};
         var maxNumProjects = 0;
         var maxNumUsers = 0;
         var projects_per_country = {};
@@ -28,36 +27,7 @@ var projectMapInit = function(mapboxAccessToken) {
                 url: '/hq/admin/json/project_map/' + window.location.search,
                 dataType: 'json',
             }).done(function (data) {
-                var tempProjects = {};
-                // data.aaData seems to hold the information. not sure though if this is the best way of getting the data.
-                data.aaData.forEach(function (project) {
-                    var countryNames = project[5];
-                    if (!Array.isArray(countryNames) || countryNames.length < 1) {
-                        // todo: find a way to display projects with no listed deployment country. ignoring for now.
-                    } else {
-                        // this will use only the first listed country
-                        // todo: figure out desired handling of multiple deployment countries
-                        var countryName = countryNames[0].toLowerCase();
-                        if (!tempProjects[countryName]) {
-                            tempProjects[countryName] = {};
-                        }
-                        tempProjects[countryName][project[0]] = {
-                            'Name': project[0],
-                            'Link': project[1],
-                            'Date Created': project[2].substring(0,10),
-                            'Organization': project[3],
-                            'Deployment Date': project[4].substring(0,10),
-                            'Deployment Countries': countryNames.join(', '),
-                            '# Forms Submitted': project[7],
-                            '# Active Mobile Workers': project[6],
-                            'Notes': project[8],
-                            'Sector': project[9],
-                            'Sub-Sector': project[10]
-                        };
-                    }
-                });
 
-                projectsByCountryThenName = tempProjects;
                 projects_per_country = data.country_projs_count;
                 users_per_country = data.users_per_country;
 
@@ -112,23 +82,8 @@ var projectMapInit = function(mapboxAccessToken) {
             var self = this;
             self.selectedCountry = ko.observable('country name');
             self.selectedProject = ko.observable('project name');
-
-            // for showing a country's projects table
             self.tableProperties = ['Name', 'Sector', 'Organization', 'Deployment Date'];
-            self.selectedCountryProjectNames = ko.computed(function() {
-                return Object.keys(projectsByCountryThenName[this.selectedCountry().toLowerCase()] || {});
-            }, this);
-            self.getProjectProperty = function(projectName, propertyName) {
-                return ((projectsByCountryThenName[this.selectedCountry().toLowerCase()] || {})[projectName] || {})[propertyName] || '';
-            };
-
-            // for showing info on a single project
-            self.projectPropertiesLeft = ['Sector', 'Sub-Sector', 'Organization', 'Deployment Countries', 'Deployment Date',
-                                          '# Active Mobile Workers', '# Forms Submitted'];
-            self.projectPropertiesRight = ['Notes'];
-            self.getSelectedProjectProperty = function(propertyName) {
-                return self.getProjectProperty(self.selectedProject(), propertyName);
-            };
+            self.topFiveProjects = ko.observableArray();
         };
 
         selectionModel = new SelectionModel();
@@ -149,31 +104,9 @@ var projectMapInit = function(mapboxAccessToken) {
             window.location.hash = countryName;
         };
 
-        that.showProjectInfo = function(countryName, projectIdentifier) {
-            var modalContent = $('.modal-content');
-            modalContent.removeClass('show-table');
-            modalContent.addClass('show-project-info');
-
-            window.location.hash ='#' + countryName + '#' + projectIdentifier;
-        };
-
         Object.freeze(that);
         return that;
     }();
-
-    $(document).on('click', '.project-row', function(evt) {
-        var projectName = $(this).attr('data-project-name');
-        selectionModel.selectedProject(projectName);
-        modalController.showProjectInfo(selectionModel.selectedCountry(), projectName);
-    });
-
-    $(document).on('click', '.back', function(evt) {
-        modalController.showProjectsTable(selectionModel.selectedCountry());
-    });
-
-    $('#modal').on('hidden.bs.modal', function (e) {
-         window.location.hash = '';
-    });
 
     var countriesGeo;
     // A lot of the styling work here is modeled after http://leafletjs.com/examples/choropleth.html
@@ -254,10 +187,24 @@ var projectMapInit = function(mapboxAccessToken) {
             click: function(e) {
                 selectionModel.selectedCountry(feature.properties.name);
                 modalController.showProjectsTable(selectionModel.selectedCountry());
-
+                var country = (feature.properties.name).toUpperCase();
+                selectionModel.topFiveProjects.removeAll();
+                $.ajax({
+                    url: "/hq/admin/top_five_projects_by_country/?country=" + country,
+                    datatype: "json",
+                }).done(function(data){
+                    data[country].forEach(function(project){
+                        selectionModel.topFiveProjects.push({
+                            name: project['name'],
+                            sector: project['internal']['area'],
+                            organization: project['internal']['organization_name'],
+                            deployment: project['deployment']['date'].substring(0,10),
+                        });
+                    });
+                });
                 // launch the modal
                 $('#modal').modal();
-            }
+            },
         });
     }
 
@@ -298,7 +245,7 @@ var projectMapInit = function(mapboxAccessToken) {
         // when there is a low number of max projects (for example, under strict filters), they may not all be included
         var indicesToRemove = [];
         var colors = COUNTRY_COLORS.filter(function(elem, index) {
-            if (countValues[index] <= 0 || (index > 0 && countValues[index] == countValues[index-1])) {
+            if (countValues[index] <= 0 || (index > 0 && countValues[index] === countValues[index-1])) {
                 indicesToRemove.push(index);
                 return false;
             } else {
