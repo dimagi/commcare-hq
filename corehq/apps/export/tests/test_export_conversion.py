@@ -632,6 +632,23 @@ class TestConvertStockFormExport(TestConvertBase):
                     ],
                     last_occurrences={cls.app_id: 2},
                 ),
+                ExportGroupSchema(
+                    path=[PathNode(name='form'), PathNode(name='repeat', is_repeat=True)],
+                    items=[
+                        StockItem(
+                            path=[
+                                PathNode(name='form'),
+                                PathNode(name='repeat', is_repeat=True),
+                                PathNode(name='transfer:questionid'),
+                                PathNode(name='entry'),
+                                PathNode(name='@id'),
+                            ],
+                            label='Question 1',
+                            last_occurrences={cls.app_id: 3},
+                        ),
+                    ],
+                    last_occurrences={cls.app_id: 2},
+                ),
             ]
         )
 
@@ -646,6 +663,27 @@ class TestConvertStockFormExport(TestConvertBase):
         index, column = table.get_column(
             [
                 PathNode(name='form'),
+                PathNode(name='transfer:questionid'),
+                PathNode(name='entry'),
+                PathNode(name='@id'),
+            ],
+            'StockItem',
+            None,
+        )
+        self.assertTrue(column.selected)
+
+    def test_convert_form_export_stock_in_repeat(self, _, __):
+        saved_export_schema = SavedExportSchema.wrap(self.get_json('stock_form_export_repeat'))
+        with mock.patch(
+                'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
+                return_value=self.schema):
+            instance, _ = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
+
+        table = instance.get_table([PathNode(name='form'), PathNode(name='repeat', is_repeat=True)])
+        index, column = table.get_column(
+            [
+                PathNode(name='form'),
+                PathNode(name='repeat', is_repeat=True),
                 PathNode(name='transfer:questionid'),
                 PathNode(name='entry'),
                 PathNode(name='@id'),
