@@ -258,20 +258,6 @@
 
 {% block form-view %}
     <div id="build_errors"></div>
-    {% inline_edit_trans form.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
-    <br />
-    <inline-edit params="
-        name: 'comment',
-        id:'comment-id',
-        readOnlyClass: 'app-comment',
-        value: '{{ form.comment|escapejs }}',
-        placeholder: '{% trans "Enter form description here"|escapejs %}',
-        url: '{% url "edit_form_attr" domain app.id form.unique_id 'comment' %}',
-        saveValueName: 'comment',
-        cols: 50,
-    "></inline-edit>
-    <br />
-    <br />
     <div class="pull-right">
         <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">
             {% csrf_token %}
@@ -290,30 +276,25 @@
         </form>
     </div>
 
-    <div class="btn-group">
-        {% if not form.no_vellum %}
-        <a id="edit_label" href="{% url "form_source" domain app.id module.id form.id %}" class="btn btn-primary">
-            <i class="fa fa-pencil"></i>
-            {% trans "Edit" %}
-        </a>
-        {% else %}
-        <button class="btn btn-primary disabled" disabled="disabled"
-                title="{% trans "Your administrator has locked this form from edits through the form builder"|force_escape %}">
-            <i class="fa fa-pencil"></i>
-            {% trans "Edit" %}
-        </button>
-        {% endif %}
-        {% if allow_cloudcare %}
-            {% if form.source %}
-            <a id="cloudcare-preview-url" href="#" target="_blank" class="btn btn-default">
-                <i class="fa fa-play"></i>
-                {% trans "Preview Form" %}
-            </a>
-            {% endif %}
-        {% endif %}
-    </div>
+    {% if form.get_action_type == 'open' %}
+    <h3 style="display: inline-block; margin-right: -5px;"><i class="fcc fcc-app-createform appmanager-icon-type"></i></h3>
+    {% elif form.requires_case %}
+    <h3 style="display: inline-block; margin-right: -5px;"><i class="fcc fcc-app-updateform appmanager-icon-type"></i></h3>
+    {% endif %}
 
-    <br/><br/><br/>
+    {% inline_edit_trans form.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
+    <br />
+    <inline-edit params="
+        name: 'comment',
+        id:'comment-id',
+        readOnlyClass: 'app-comment',
+        value: '{{ form.comment|escapejs }}',
+        placeholder: '{% trans "Enter form description here"|escapejs %}',
+        url: '{% url "edit_form_attr" domain app.id form.unique_id 'comment' %}',
+        saveValueName: 'comment',
+        cols: 50,
+    "></inline-edit>
+    <div class="spacer"></div>
 
     <div class="tabbable">
         <ul class="nav nav-tabs">
