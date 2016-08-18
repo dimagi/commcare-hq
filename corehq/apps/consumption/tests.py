@@ -64,7 +64,10 @@ class DefaultConsumptionBase(object):
         self.assertEqual(None, self.consumption_method('wrong', product_id, type_id, 'useless'))
 
     def testGetForId(self):
+        from time import sleep
+
         _create_id_consumption(5)
+        sleep(1)
         self.assertEqual(5, self.consumption_method(domain, product_id, type_id, supply_point_id))
         self.assertEqual(5, self.consumption_method(domain, product_id, 'useless', supply_point_id))
         self.assertEqual(None, self.consumption_method(domain, product_id, type_id, 'wrong'))
@@ -73,6 +76,7 @@ class DefaultConsumptionBase(object):
         self.assertEqual(None, self.consumption_method('wrong', product_id, type_id, supply_point_id))
 
         _create_type_consumption(4)
+        sleep(1)
         self.assertEqual(5, self.consumption_method(domain, product_id, type_id, supply_point_id))
         self.assertEqual(5, self.consumption_method(domain, product_id, 'useless', supply_point_id))
         self.assertEqual(4, self.consumption_method(domain, product_id, type_id, 'wrong'))
@@ -81,6 +85,7 @@ class DefaultConsumptionBase(object):
         self.assertEqual(None, self.consumption_method('wrong', product_id, type_id, supply_point_id))
 
         _create_product_consumption(3)
+        sleep(1)
         self.assertEqual(5, self.consumption_method(domain, product_id, type_id, supply_point_id))
         self.assertEqual(5, self.consumption_method(domain, product_id, 'useless', supply_point_id))
         self.assertEqual(4, self.consumption_method(domain, product_id, type_id, 'wrong'))
@@ -89,6 +94,7 @@ class DefaultConsumptionBase(object):
         self.assertEqual(None, self.consumption_method('wrong', product_id, type_id, supply_point_id))
 
         _create_domain_consumption(2)
+        sleep(1)
         self.assertEqual(5, self.consumption_method(domain, product_id, type_id, supply_point_id))
         self.assertEqual(5, self.consumption_method(domain, product_id, 'useless', supply_point_id))
         self.assertEqual(4, self.consumption_method(domain, product_id, type_id, 'wrong'))
