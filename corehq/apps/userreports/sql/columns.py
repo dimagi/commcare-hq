@@ -28,7 +28,9 @@ class UCRExpandDatabaseSubcolumn(DatabaseColumn):
     """
     def __init__(self, header, agg_column, expand_value, format_fn=None, slug=None, *args, **kwargs):
         self.expand_value = expand_value
-        super(UCRExpandDatabaseSubcolumn, self).__init__(header, agg_column, format_fn=None, slug=None, *args, **kwargs)
+        super(UCRExpandDatabaseSubcolumn, self).__init__(
+            header, agg_column, format_fn=None, slug=None, *args, **kwargs
+        )
 
 
 def column_to_sql(column):
