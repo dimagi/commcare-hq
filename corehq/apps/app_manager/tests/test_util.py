@@ -207,24 +207,22 @@ class SchemaTest(SimpleTestCase):
         })
 
     def test_get_case_sharing_hierarchy(self):
-        with patch('corehq.apps.app_manager.models.get_case_sharing_apps_in_domain') as mock_sharing:
+        with patch('corehq.apps.app_manager.util.get_case_sharing_apps_in_domain') as mock_sharing:
             mock_sharing.return_value = [self.factory.app, self.factory_2.app]
-            with patch('corehq.apps.app_manager.util.get_case_sharing_apps_in_domain') as mock_sharing_2:
-                mock_sharing_2.return_value = [self.factory.app, self.factory_2.app]
-                self.factory.app.case_sharing = True
-                self.factory_2.app.case_sharing = True
+            self.factory.app.case_sharing = True
+            self.factory_2.app.case_sharing = True
 
-                self.add_form("referral")
-                child = self.add_form("child")
-                self.factory.form_opens_case(child, case_type='referral', is_subcase=True)
-                pregnancy = self.add_form("pregnancy")
-                self.factory.form_opens_case(pregnancy, case_type='referral', is_subcase=True)
-                referral_2 = self.add_form_app_2('referral')
-                schema = util.get_casedb_schema(referral_2)
-                subsets = {s["id"]: s for s in schema["subsets"]}
-                self.assertTrue(re.match(r'^parent \((pregnancy|child) or (pregnancy|child)\)$',
-                                subsets["parent"]["name"]))
-                self.assertEqual(subsets["parent"]["structure"], {"case_name": {}})
+            self.add_form("referral")
+            child = self.add_form("child")
+            self.factory.form_opens_case(child, case_type='referral', is_subcase=True)
+            pregnancy = self.add_form("pregnancy")
+            self.factory.form_opens_case(pregnancy, case_type='referral', is_subcase=True)
+            referral_2 = self.add_form_app_2('referral')
+            schema = util.get_casedb_schema(referral_2)
+            subsets = {s["id"]: s for s in schema["subsets"]}
+            self.assertTrue(re.match(r'^parent \((pregnancy|child) or (pregnancy|child)\)$',
+                            subsets["parent"]["name"]))
+            self.assertEqual(subsets["parent"]["structure"], {"case_name": {}})
 
     # -- helpers --
 

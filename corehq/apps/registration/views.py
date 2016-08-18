@@ -15,10 +15,11 @@ import sys
 from django.views.generic.base import TemplateView, View
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 
+from corehq.apps.analytics import ab_tests
 from corehq.apps.analytics.tasks import (
     track_workflow,
     track_confirmed_account_on_hubspot,
-    track_clicked_signup_on_hubspot
+    track_clicked_signup_on_hubspot,
 )
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.domain.decorators import login_required
@@ -66,12 +67,24 @@ class ProcessRegistrationView(JSONResponseMixin, View):
             username=reg_form.cleaned_data['email'],
             password=reg_form.cleaned_data['password']
         )
+        if 'phone_number' in reg_form.cleaned_data and reg_form.cleaned_data['phone_number']:
+            web_user = WebUser.get_by_username(new_user.username)
+            web_user.phone_numbers.append(reg_form.cleaned_data['phone_number'])
+            web_user.save()
         track_workflow(new_user.email, "Requested new account")
         login(self.request, new_user)
 
+    @property
+    @memoized
+    def ab(self):
+        return ab_tests.ABTest(ab_tests.NEW_USER_NUMBER, self.request)
+
     @allow_remote_invocation
     def register_new_user(self, data):
-        reg_form = RegisterNewWebUserForm(data['data'])
+        reg_form = RegisterNewWebUserForm(
+            data['data'],
+            show_number=(self.ab.version == ab_tests.NEW_USER_NUMBER_OPTION_SHOW_NUM)
+        )
         if reg_form.is_valid():
             self._create_new_account(reg_form)
             try:
@@ -126,6 +139,7 @@ class UserRegistrationView(BasePageView):
             else:
                 return redirect("homepage")
         response = super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
+        self.ab.update_response(response)
         return response
 
     def get(self, request, *args, **kwargs):
@@ -139,13 +153,21 @@ class UserRegistrationView(BasePageView):
         return self.request.GET.get('e', '')
 
     @property
+    @memoized
+    def ab(self):
+        return ab_tests.ABTest(ab_tests.NEW_USER_NUMBER, self.request)
+
+    @property
     def page_context(self):
         return {
             'reg_form': RegisterNewWebUserForm(
-                initial={'email': self.prefilled_email}
+                initial={'email': self.prefilled_email},
+                show_number=(self.ab.version == ab_tests.NEW_USER_NUMBER_OPTION_SHOW_NUM)
             ),
             'reg_form_defaults': {'email': self.prefilled_email} if self.prefilled_email else {},
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+            'show_number': (self.ab.version == ab_tests.NEW_USER_NUMBER_OPTION_SHOW_NUM),
+            'ab_test': self.ab.context,
         }
 
     @property
