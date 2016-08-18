@@ -31,6 +31,7 @@ from corehq.apps.userreports.models import ReportConfiguration, \
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.reports.view import query_dict_to_dict, \
     get_filter_values
+from corehq.apps.userreports.sql.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions, CouchUser, UserRole
 from corehq.util import get_document_or_404
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
@@ -611,10 +612,15 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
 
         page = list(report.get_data(start=start, limit=limit))
 
-        columns = [
-            {"header": column.header, "slug": column.slug}
-            for column in report.columns
-        ]
+        columns = []
+        for column in report.columns:
+            simple_column = {
+                "header": column.header,
+                "slug": column.slug,
+            }
+            if isinstance(column, UCRExpandDatabaseSubcolumn):
+                simple_column['expand_column_value'] = column.expand_value
+            columns.append(simple_column)
 
         total_records = report.get_total_records()
         return page, columns, total_records
