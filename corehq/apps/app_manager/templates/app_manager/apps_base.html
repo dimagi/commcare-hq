@@ -80,7 +80,12 @@
             window.location = "{% url "corehq.apps.app_manager.views.view_app" domain %}";
         });
         {% if request|toggle_enabled:"PREVIEW_APP" %}
-        hqImport('app_manager/js/preview_app.js').initializePreviewButton();
+            var previewApp = hqImport('app_manager/js/preview_app.js');
+            previewApp.initPreviewWindow(
+                    '#js-appmanager-preview',
+                    '#js-appmanager-body',
+                    '#js-toggle-app-preview'
+            );
         {% endif %}
     });
     $(window).load(function () {
