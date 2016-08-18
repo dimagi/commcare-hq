@@ -6,6 +6,7 @@ def get_meta(request):
         'REMOTE_ADDR': request.META.get('REMOTE_ADDR'),
     }
 
+
 def get_instance_string():
     instance = settings.ANALYTICS_CONFIG.get('HQ_INSTANCE', '')
     env = '' if instance == 'www' else instance + '_'
