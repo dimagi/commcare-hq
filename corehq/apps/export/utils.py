@@ -90,6 +90,13 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
         instance.split_multiselects = getattr(saved_export, 'split_multiselects', False)
         instance.include_errors = getattr(saved_export, 'include_errors', False)
 
+    # The SavedExportSchema only saves selected columns so default all the
+    # selections to False unless found in the SavedExportSchema (legacy)
+    for table in instance.tables:
+        table.selected = False
+        for column in table.columns:
+            column.selected = False
+
     # With new export instance, copy over preferences from previous export
     for old_table in saved_export.tables:
         table_path = _convert_index_to_path_nodes(old_table.index)
@@ -114,11 +121,6 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
         migration_meta.converted_tables.append(ConversionMeta(
             path=old_table.index,
         ))
-
-        # The SavedExportSchema only saves selected columns so default all the selections to False
-        # unless found in the SavedExportSchema (legacy)
-        for new_column in new_table.columns:
-            new_column.selected = False
 
         for column in old_table.columns:
             info = []
@@ -162,7 +164,16 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
                         transform,
                     ))
 
-                new_column = _convert_normal_column(new_table, column_path, transform)
+                new_column = _get_normal_column(new_table, column_path, transform)
+
+                # If we can't find the column in the current table
+                # look in every other table to see if the column is a repeat
+                # that did not receive more than one entry
+                if not new_column:
+                    new_column = _get_for_single_node_repeat(instance.tables, column_path, transform)
+                    if new_column:
+                        info.append('Column is for a repeat with just a single instance')
+
                 if not new_column:
                     raise SkipConversion('Column not found in new schema')
                 else:
@@ -250,6 +261,27 @@ def _convert_transform(serializable_transform):
     return None
 
 
+def _get_for_single_node_repeat(tables, column_path, transform):
+    """
+    This function takes a column path and looks for it in all the other tables
+    """
+    from .models import MAIN_TABLE
+
+    column_dot_path = '.'.join(map(lambda node: node.name, column_path))
+    for new_table in tables:
+        if new_table.path == MAIN_TABLE:
+            continue
+
+        table_dot_path = '.'.join(map(lambda node: node.name, new_table.path))
+        if column_dot_path.startswith(table_dot_path + '.'):
+            new_column_path = new_table.path + column_path[len(new_table.path):]
+        else:
+            continue
+        new_column = _get_normal_column(new_table, new_column_path, transform)
+        if new_column:
+            return new_column
+
+
 def _get_system_property(index, transform, export_type, table_path):
     """
     Given an old style export index and a transform, returns new style list of PathNodes
@@ -323,7 +355,7 @@ def _convert_stock_column(new_table, old_column):
         raise SkipConversion('StockExportColumn not found in new export')
 
 
-def _convert_normal_column(new_table, column_path, transform):
+def _get_normal_column(new_table, column_path, transform):
     guess_types = [
         'ScalarItem',
         'MultipleChoiceItem',

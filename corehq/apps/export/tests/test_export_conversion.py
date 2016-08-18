@@ -282,19 +282,25 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestCase, TestFileMixin):
         self.assertTrue(meta.is_remote_app_migration)
 
 
+class TestConvertBase(TestCase, TestFileMixin):
+    file_path = ('data', 'saved_export_schemas')
+    root = os.path.dirname(__file__)
+    app_id = '58b0156dc3a8420669efb286bc81e048'
+    domain = 'convert-domain'
+
+    def setUp(self):
+        delete_all_export_instances()
+
+
 @mock.patch(
     'corehq.apps.export.models.new.get_request',
-    return_value=MockRequest(domain='my-domain'),
+    return_value=MockRequest(domain='convert-domain'),
 )
 @mock.patch(
     'corehq.apps.export.utils._is_remote_app_conversion',
     return_value=False,
 )
-class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
-    file_path = ('data', 'saved_export_schemas')
-    root = os.path.dirname(__file__)
-    app_id = '58b0156dc3a8420669efb286bc81e048'
-    domain = 'convert-domain'
+class TestConvertSavedExportSchemaToFormExportInstance(TestConvertBase):
 
     @classmethod
     def setUpClass(cls):
@@ -360,9 +366,6 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
                 ),
             ],
         )
-
-    def setUp(self):
-        delete_all_export_instances()
 
     def test_basic_conversion(self, _, __):
 
@@ -508,6 +511,69 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
         for path, transform, selected in expected_paths:
             index, column = table.get_column(path, 'ExportItem', transform)
             self.assertEqual(column.selected, selected, '{} selected is not {}'.format(path, selected))
+
+
+@mock.patch(
+    'corehq.apps.export.models.new.get_request',
+    return_value=MockRequest(domain='convert-domain'),
+)
+@mock.patch(
+    'corehq.apps.export.utils._is_remote_app_conversion',
+    return_value=False,
+)
+class TestSingleNodeRepeatConversion(TestConvertBase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestSingleNodeRepeatConversion, cls).setUpClass()
+        cls.schema = FormExportDataSchema(
+            domain=cls.domain,
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[],
+                    last_occurrences={cls.app_id: 2},
+                ),
+                ExportGroupSchema(
+                    path=[PathNode(name='form'), PathNode(name='repeat', is_repeat=True)],
+                    items=[
+                        ExportItem(
+                            path=[
+                                PathNode(name='form'),
+                                PathNode(name='repeat', is_repeat=True),
+                                PathNode(name='single_answer')
+                            ],
+                            label='Single Answer',
+                            last_occurrences={cls.app_id: 2},
+                        )
+                    ],
+                    last_occurrences={cls.app_id: 2},
+                ),
+            ]
+        )
+
+    def test_single_node_repeats(self, _, __):
+        """
+        This test ensures that if a repeat only receives one entry, that the selection
+        will still be migrated.
+        """
+        saved_export_schema = SavedExportSchema.wrap(self.get_json('single_node_repeat'))
+        with mock.patch(
+                'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
+                return_value=self.schema):
+            instance, _ = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
+
+        table = instance.get_table([PathNode(name='form'), PathNode(name='repeat', is_repeat=True)])
+        index, column = table.get_column(
+            [
+                PathNode(name='form'),
+                PathNode(name='repeat', is_repeat=True),
+                PathNode(name='single_answer'),
+            ],
+            'ExportItem',
+            None
+        )
+        self.assertTrue(column.selected)
 
 
 class TestRevertNewExports(TestCase):
