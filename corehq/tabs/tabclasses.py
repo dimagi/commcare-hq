@@ -1487,6 +1487,8 @@ class AdminTab(UITab):
                  'url': reverse('raw_couch')},
                 {'title': _('Check Call Center UCR tables'),
                  'url': reverse('callcenter_ucr_check')},
+                {'title': _('Grant superuser privileges'),
+                 'url': reverse('superuser_management')},
                 {'title': _('Manage VCM Migration'),
                  'url': reverse(VCMMigrationView.urlname)},
                 {'title': _('Reprocess Messaging Case Updates'),

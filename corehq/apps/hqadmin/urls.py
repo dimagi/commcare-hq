@@ -5,6 +5,7 @@ from corehq.apps.hqadmin.views import AdminRestoreView
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from .views import (
     FlagBrokenBuilds, AuthenticateAs, SystemInfoView,
+    SuperuserManagement,
     DownloadMALTView,
     RecentCouchChangesView,
     ManagementCommandsView,
@@ -31,6 +32,7 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
         AuthenticateAs.as_view(), name=AuthenticateAs.urlname),
     url(r'^management_commands/$', ManagementCommandsView.as_view(),
         name=ManagementCommandsView.urlname),
+    url(r'^superuser_management/$', SuperuserManagement.as_view(), name=SuperuserManagement.urlname),
     url(r'^run_command/$', 'run_command', name="run_management_command"),
     url(r'^vcm_migration/$', VCMMigrationView.as_view(), name=VCMMigrationView.urlname),
     url(r'^phone/restore/$', AdminRestoreView.as_view(), name="admin_restore"),
