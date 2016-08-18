@@ -122,19 +122,6 @@ class SubmissionPost(object):
             found_old = scrub_meta(xform)
             legacy_notification_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
 
-    def _invalidate_async_tasks(self, user_id):
-        from casexml.apps.phone.restore import restore_cache_key
-        cache = get_redis_default_cache()
-        cache_key = restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, user_id)
-        task_id = cache.get(cache_key)
-
-        if task_id is not None:
-            revoke_celery_task(task_id)
-            cache.delete(cache_key)
-
-        first_sync_cache_key = restore_cache_key(RESTORE_CACHE_KEY_PREFIX, user_id, version=V2)
-        cache.delete(first_sync_cache_key)
-
     def run(self):
         failure_result = self._handle_basic_failure_modes()
         if failure_result:
@@ -144,9 +131,7 @@ class SubmissionPost(object):
         submitted_form = result.submitted_form
 
         self._post_process_form(submitted_form)
-
-        if ASYNC_RESTORE.enabled(self.domain):
-            self._invalidate_async_tasks(submitted_form.user_id)
+        self._invalidate_caches(submitted_form.user_id)
 
         if submitted_form.is_submission_error_log:
             self.formdb.save_new_form(submitted_form)
@@ -188,6 +173,31 @@ class SubmissionPost(object):
             errors = self.process_signals(instance)
             response = self._get_open_rosa_response(instance, errors)
             return response, instance, cases
+
+    @property
+    def _cache(self):
+        return get_redis_default_cache()
+
+    @property
+    def _restore_cache_key(self):
+        from casexml.apps.phone.restore import restore_cache_key
+        return restore_cache_key
+
+    def _invalidate_caches(self, user_id):
+        """invalidate cached initial restores"""
+        initial_restore_cache_key = self._restore_cache_key(RESTORE_CACHE_KEY_PREFIX, user_id, version=V2)
+        self._cache.delete(initial_restore_cache_key)
+
+        if ASYNC_RESTORE.enabled(self.domain):
+            self._invalidate_async_caches(user_id)
+
+    def _invalidate_async_caches(self, user_id):
+        cache_key = self._restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, user_id)
+        task_id = self._cache.get(cache_key)
+
+        if task_id is not None:
+            revoke_celery_task(task_id)
+            self._cache.delete(cache_key)
 
     def save_processed_models(self, xforms, case_stock_result):
         from casexml.apps.case.signals import case_post_save
