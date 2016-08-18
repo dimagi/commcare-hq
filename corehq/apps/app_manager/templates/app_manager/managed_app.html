@@ -46,18 +46,19 @@
     <script>
         $(function () {
             $('[data-toggle="tooltip"]').tooltip()
-            $('.edit-form-pencil').hide().tooltip({
+            $('.edit-form-pencil').tooltip({
                 title: "{% trans "Edit in form builder" %}",
                 placement: 'auto'
             });
             $('.edit-form-li').each(function () {
-                if ($(this).is('.active') && {{ formdesigner|JSON }}) {
-                    $(this).find('.edit-form-pencil').show();
-                } else {
-                    $(this).mouseenter(function () {
-                        $(this).find('.edit-form-pencil').show();
-                    }).mouseleave(function () {
-                        $(this).find('.edit-form-pencil').hide();
+                var $this = $(this);
+                if (!{{ formdesigner|JSON }} || !$this.hasClass("active")) {
+                    var $pencil = $this.find('.edit-form-pencil');
+                    $pencil.addClass('no-data');
+                    $this.hover(function() {
+                        $pencil.removeClass('no-data');
+                    }, function() {
+                        $pencil.addClass('no-data');
                     });
                 }
             });
@@ -172,7 +173,7 @@
         <li class="divider"></li>
     {% if app.get_doc_type == "Application" %}
         <li>
-        <ul class="nav nav-hq-sidebar sortable">
+        <ul class="nav nav-hq-sidebar sortable appmanager-main-menu">
             <li class="sort-action">
                 <form method="post"
                       action="{% url "corehq.apps.app_manager.views.rearrange" domain app.id 'modules' %}">
@@ -186,9 +187,9 @@
                         data-index="{{ module.id }}">
                         <a href="{% url "view_module" domain app.id module.id %}">
                             <i class="drag_handle"></i>
-                            {% if module.module_type == 'advanced' %}<i class="fa fa-gears"></i>
-                            {% elif module.module_type == 'report' %}<i class="fa fa-bar-chart"></i>
-                            {% elif module.module_type == 'shadow' %}<i class="fa fa-folder-open-o"></i>
+                            {% if module.module_type == 'advanced' %}<i class="fa fa-flask appmanager-icon-type"></i>
+                            {% elif module.module_type == 'report' %}<i class="fa fa-bar-chart appmanager-icon-type"></i>
+                            {% elif module.module_type == 'shadow' %}<i class="fa fa-folder-open-o appmanager-icon-type"></i>
                             {% else %}<i class="fa fa-folder-open"></i>{% endif %}
                             <span {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>
                                 {{ module.name|html_trans:langs }}
@@ -206,16 +207,17 @@
                                 {% for form in module.get_forms %}
                                     <li class="edit-form-li{% ifequal form selected_form %} active{% endifequal %}" data-moduleid="{{ module.id }}" data-index="{{ form.id }}">
                                         <!--[F]-->
-                                        <a id="view_form_{{ module.id }}_{{ form.id }}_sidebar" href="{% url "view_form" domain app.id module.id form.id %}">
+                                        <a id="view_form_{{ module.id }}_{{ form.id }}_sidebar"
+                                           href="{% url "view_form" domain app.id module.id form.id %}">
                                             <i class="drag_handle"></i>
                                             {% if request|toggle_enabled:"SUPPORT" %}
                                             <i
                                             {% if form.get_action_type == 'open' %}
-                                                class="fa fa-external-link"
+                                                class="fcc fcc-app-createform appmanager-icon-type"
                                             {% elif form.get_action_type == 'close' %}
-                                                class="fa fa-ban"
+                                                class="fcc fcc-app-completeform appmanager-icon-type"
                                             {% elif form.get_action_type == 'update' %}
-                                                class="fa fa-undo"
+                                                class="fcc fcc-app-updateform appmanager-icon-type"
                                             {% endif %}
                                                 title="{{ form.get_icon_help_text }}"
                                                 data-toggle="tooltip"

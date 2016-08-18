@@ -64,6 +64,7 @@ from corehq.apps.style.decorators import (
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.bulkupload import (
     check_duplicate_usernames,
+    check_existing_usernames,
     check_headers,
     dump_users_and_groups,
     GroupNameError,
@@ -915,6 +916,12 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         # convert to list here because iterator destroys the row once it has
         # been read the first time
         self.user_specs = list(self.user_specs)
+
+        try:
+            check_existing_usernames(self.user_specs, self.domain)
+        except UserUploadError as e:
+            messages.error(request, _(e.message))
+            return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
         try:
             check_duplicate_usernames(self.user_specs)

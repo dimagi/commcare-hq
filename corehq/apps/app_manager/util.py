@@ -1,6 +1,7 @@
 from collections import defaultdict, namedtuple, OrderedDict
 from copy import deepcopy
 import functools
+from itertools import chain
 import json
 import os
 import uuid
@@ -328,6 +329,17 @@ def get_case_properties(app, case_types, defaults=(),
     )
 
 
+def get_shared_case_types(app):
+    shared_case_types = set()
+
+    if app.case_sharing:
+        apps = get_case_sharing_apps_in_domain(app.domain, app.id)
+        for app in apps:
+            shared_case_types |= set(chain(*[m.get_case_types() for m in app.get_modules()]))
+
+    return shared_case_types
+
+
 def get_per_type_defaults(domain, case_types=None):
     from corehq.apps.callcenter.utils import get_call_center_case_type_if_enabled
 
@@ -360,7 +372,7 @@ def get_casedb_schema(form):
     """
     app = form.get_app()
     base_case_type = form.get_module().case_type
-    case_types = app.get_case_types() | app.get_shared_case_types()
+    case_types = app.get_case_types() | get_shared_case_types(app)
     per_type_defaults = get_per_type_defaults(app.domain, case_types)
     builder = ParentCasePropertyBuilder(app, ['case_name'], per_type_defaults)
     related = builder.get_parent_type_map(case_types, allow_multiple_parents=True)

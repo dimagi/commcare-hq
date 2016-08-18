@@ -212,11 +212,12 @@ class NinetyNineDotsCaseTests(TestCase):
     def test_update_adherence_confidence(self):
         self._create_case_structure()
         case_accessor = CaseAccessors(self.domain)
-        adherence_cases = self._create_adherence_cases([
+        adherence_dates = [
             datetime(2005, 7, 10),
             datetime(2016, 8, 10),
             datetime(2016, 8, 11),
-        ])
+        ]
+        adherence_cases = self._create_adherence_cases(adherence_dates)
 
         update_adherence_confidence_level(
             self.domain,
@@ -225,22 +226,19 @@ class NinetyNineDotsCaseTests(TestCase):
             datetime(2016, 8, 11, tzinfo=pytz.UTC),
             "new_confidence_level",
         )
+        adherence_case_ids = [adherence_date.strftime("%Y-%m-%d") for adherence_date in adherence_dates]
+        adherence_cases = {case.case_id: case for case in case_accessor.get_cases(adherence_case_ids)}
 
-        adherence_cases = case_accessor.get_cases([
-            datetime(2005, 7, 10).strftime("%Y-%m-%d"),
-            datetime(2016, 8, 10).strftime("%Y-%m-%d"),
-            datetime(2016, 8, 11).strftime("%Y-%m-%d"),
-        ])
         self.assertEqual(
-            adherence_cases[0].dynamic_case_properties()['adherence_confidence'],
+            adherence_cases[adherence_case_ids[0]].dynamic_case_properties()['adherence_confidence'],
             'medium',
         )
         self.assertEqual(
-            adherence_cases[1].dynamic_case_properties()['adherence_confidence'],
+            adherence_cases[adherence_case_ids[1]].dynamic_case_properties()['adherence_confidence'],
             'new_confidence_level',
         )
         self.assertEqual(
-            adherence_cases[2].dynamic_case_properties()['adherence_confidence'],
+            adherence_cases[adherence_case_ids[2]].dynamic_case_properties()['adherence_confidence'],
             'new_confidence_level',
         )
 
