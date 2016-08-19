@@ -9,7 +9,7 @@
     </div>
     {% for cls, form_repeaters, type in repeaters %}
     <div style="padding-bottom:2em;">
-        <h2>{% blocktrans %}Forward {{ type }}:{% endblocktrans %}</h2>
+        <h2>{{ type }}</h2>
         {% if form_repeaters %}
             <table class="table table-striped table-bordered">
             {% if form_repeaters %}

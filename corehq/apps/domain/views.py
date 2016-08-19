@@ -2129,10 +2129,10 @@ class RepeaterMixin(object):
     @property
     def friendly_repeater_names(self):
         return {
-            'FormRepeater': _("Forms"),
-            'CaseRepeater': _("Cases"),
-            'ShortFormRepeater': _("Form Stubs"),
-            'AppStructureRepeater': _("App Schema Changes"),
+            'FormRepeater': _("Forward Forms"),
+            'CaseRepeater': _("Forward Cases"),
+            'ShortFormRepeater': _("Forward Form Stubs"),
+            'AppStructureRepeater': _("Forward App Schema Changes"),
         }
 
 
