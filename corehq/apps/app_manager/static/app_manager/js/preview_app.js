@@ -48,7 +48,7 @@ hqDefine('app_manager/js/preview_app.js', function() {
         }
         $appPreview.find('.btn-preview-close').click(_toggleAppPreview);
 
-        var _resizeAppPreview = function (event) {
+        var _resizeAppPreview = function () {
             if ($appPreview.data(module.DATA.OPEN)) {
                 $appPreview.addClass('open');
                 $appBody.css('margin-right', $appPreview.outerWidth() + 50 + 'px');
