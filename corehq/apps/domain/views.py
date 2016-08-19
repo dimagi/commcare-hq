@@ -617,7 +617,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
     @property
     def can_purchase_credits(self):
-        return self.request.couch_user.is_domain_admin(self.domain)
+        return self.request.couch_user.has_permission(self.domain, Permissions.billing_admin.name)
 
     @property
     @memoized
@@ -1001,21 +1001,21 @@ class BaseStripePaymentView(DomainAccountingSettings):
 
     @property
     def account(self):
-        raise NotImplementedError("you must impmement the property account")
+        raise NotImplementedError("you must implement the property account")
 
     @property
     @memoized
-    def domain_admin(self):
-        if self.request.couch_user.is_domain_admin(self.domain):
+    def billing_admin(self):
+        if self.request.couch_user.has_permission(self.domain, Permissions.billing_admin.name):
             return self.request.couch_user.username
         else:
             raise PaymentRequestError(
-                "The logged in user was not a domain admin."
+                "The logged in user was not a billing admin."
             )
 
     def get_or_create_payment_method(self):
         return StripePaymentMethod.objects.get_or_create(
-            web_user=self.domain_admin,
+            web_user=self.billing_admin,
             method_type=PaymentMethodType.STRIPE,
         )[0]
 
@@ -1152,8 +1152,7 @@ class WireInvoiceView(View):
     http_method_names = ['post']
     urlname = 'domain_wire_invoice'
 
-    @method_decorator(login_and_domain_required)
-    @method_decorator(domain_admin_required)
+    @method_decorator(require_permission(Permissions.billing_admin))
     def dispatch(self, request, *args, **kwargs):
         return super(WireInvoiceView, self).dispatch(request, *args, **kwargs)
 
@@ -1172,8 +1171,7 @@ class WireInvoiceView(View):
 class BillingStatementPdfView(View):
     urlname = 'domain_billing_statement_download'
 
-    @method_decorator(login_and_domain_required)
-    @method_decorator(domain_admin_required)
+    @method_decorator(require_permission(Permissions.billing_admin))
     def dispatch(self, request, *args, **kwargs):
         return super(BillingStatementPdfView, self).dispatch(request, *args, **kwargs)
 
