@@ -162,11 +162,13 @@ class TestIndicatorsFromApp(SimpleTestCase, TestFileMixin):
     ('forms_submitted_month1', (const.FORMS_SUBMITTED, None, const.MONTH1, False)),
     ('totalCases', (const.CASES_TOTAL, None, None, True)),
     ('motherFormsMonth0', (const.CUSTOM_FORM, 'motherForms', const.MONTH0, False)),
+    ('motherFormsMonth0)', None),
 ], TestIndicatorsFromApp)
 def test_parse_indicator(self, indicator_name, parsed_tuple):
+    expected = ParsedIndicator(*parsed_tuple) if parsed_tuple else parsed_tuple
     self.assertEqual(
         parse_indicator(indicator_name),
-        ParsedIndicator(*parsed_tuple)
+        expected
     )
 
 
