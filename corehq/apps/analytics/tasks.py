@@ -7,7 +7,6 @@ from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
 from corehq.util.dates import unix_time
-from corehq.apps.analytics.utils import get_instance_string
 from datetime import datetime, date, timedelta
 import time
 import json
@@ -251,7 +250,7 @@ def track_sent_invite_on_hubspot(webuser, cookies, meta):
 
 @analytics_task()
 def track_existing_user_accepted_invite_on_hubspot(webuser, cookies, meta):
-    _send_form_to_hubspot(HUBSPOT_INVITATION_SENT_FORM, webuser, cookies, meta)
+    _send_form_to_hubspot(HUBSPOT_EXISTING_USER_INVITE_FORM, webuser, cookies, meta)
 
 
 @analytics_task()
@@ -335,9 +334,6 @@ def track_periodic_data():
     domains_to_mobile_users = UserES().mobile_users().terms_aggregation('domain', 'domain').size(0).run()\
                                       .aggregations.domain.counts_by_bucket()
 
-    # Keep track of india and www data seperately
-    env = get_instance_string()
-
     # For each web user, iterate through their domains and select the max number of form submissions and
     # max number of mobile workers
     submit = []
@@ -360,19 +356,19 @@ def track_periodic_data():
             'email': email,
             'properties': [
                 {
-                    'property': '{}max_form_submissions_in_a_domain'.format(env),
+                    'property': 'max_form_submissions_in_a_domain',
                     'value': max_forms
                 },
                 {
-                    'property': '{}max_mobile_workers_in_a_domain'.format(env),
+                    'property': 'max_mobile_workers_in_a_domain',
                     'value': max_workers
                 },
                 {
-                    'property': '{}project_spaces_created_by_user'.format(env),
+                    'property': 'project_spaces_created_by_user',
                     'value': project_spaces_created,
                 },
                 {
-                    'property': '{}over_300_form_submissions'.format(env),
+                    'property': 'over_300_form_submissions',
                     'value': max_forms > 300
                 }
             ]
