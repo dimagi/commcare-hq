@@ -210,7 +210,7 @@ var projectMapInit = function(mapboxAccessToken) {
         info.update();
     }
 
-    function formatCountryNames(countries) {
+    function capitalizeCountryNames(countries) {
         return countries.map(function(country) {
             var formattedCountryName = country.charAt(0).toUpperCase();
             if (country.indexOf(",") > -1) {
@@ -245,7 +245,7 @@ var projectMapInit = function(mapboxAccessToken) {
                             sector: project['internal']['area'],
                             deployment: deploymentDate,
                             active_users: project['cp_n_active_cc_users'],
-                            countries: formatCountryNames(project['deployment']['countries']).join(', '),
+                            countries: capitalizeCountryNames(project['deployment']['countries']).join(', '),
                         });
                     });
                 });
