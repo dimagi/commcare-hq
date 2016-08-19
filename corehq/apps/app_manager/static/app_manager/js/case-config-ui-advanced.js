@@ -521,7 +521,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                     '<% if (action.parent_tags()) { %> : ' +
                     'subcase of <span style="font-weight: bold;"><%= action.parent_tags() %></span>' +
                     '<% } %>' + closeSnip + "</span>",
-                    action, {variable: 'action'});
+                    action)({variable: 'action'});
             } else {
                 if (action.auto_select) {
                     nameSnip = "<%= action.case_tag() %> (autoselect mode: <%= action.auto_select.mode() %>)";
@@ -530,7 +530,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                     "<% if (action.hasPreload()) { %> : load<% } %>" +
                     "<% if (action.hasCaseProperties()) { %> : update<% } %>" +
                     closeSnip + "</span>",
-                    action, {variable: 'action'});
+                    action)({variable: 'action'});
             }
         },
         suggestedProperties: function(action, allow_parent) {
