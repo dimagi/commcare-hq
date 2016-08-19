@@ -86,6 +86,7 @@ class TestIndicatorsFromApp(SimpleTestCase, TestFileMixin):
 
     def test_get_config_from_app(self):
         app = self._get_app()
+        app.domain = 'aarohi'
         self._add_indicators_to_module_details(app.get_module(0), self.test_indicators[0:2])
         self._add_indicators_to_module_details(app.get_module(1), self.test_indicators[2:4])
         forms = list(app.get_forms(bare=True))
@@ -167,7 +168,7 @@ class TestIndicatorsFromApp(SimpleTestCase, TestFileMixin):
 def test_parse_indicator(self, indicator_name, parsed_tuple):
     expected = ParsedIndicator(*parsed_tuple) if parsed_tuple else parsed_tuple
     self.assertEqual(
-        parse_indicator(indicator_name),
+        parse_indicator(indicator_name, const.PER_DOMAIN_FORM_INDICATORS['aarohi']),
         expected
     )
 
