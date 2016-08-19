@@ -365,21 +365,21 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                 index = self.load_update_cases().length;
                 var tag_prefix = action.value === 'auto_select'? 'auto' : '',
                     action_data = {
-                    case_type: config.caseType,
-                    details_module: null,
-                    case_tag: tag_prefix + 'load_' + config.caseType + index,
-                    case_index: {
-                        tag: '',
-                        reference_id: 'parent',
-                        relationship: 'child'
-                    },
-                    preload: [],
-                    case_properties: [],
-                    close_condition: DEFAULT_CONDITION('never'),
-                    show_product_stock: false,
-                    product_program: '',
-                    auto_select: null
-                };
+                        case_type: config.caseType,
+                        details_module: null,
+                        case_tag: tag_prefix + 'load_' + config.caseType + index,
+                        case_index: {
+                            tag: '',
+                            reference_id: 'parent',
+                            relationship: 'child',
+                        },
+                        preload: [],
+                        case_properties: [],
+                        close_condition: DEFAULT_CONDITION('never'),
+                        show_product_stock: false,
+                        product_program: '',
+                        auto_select: null,
+                    };
                 if (action.value === 'auto_select') {
                     action_data.auto_select = {
                         mode: '',
