@@ -84,6 +84,10 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         showDetail: function (model, index) {
             var self = this;
             var detailObjects = model.options.model.get('details');
+            // If we have no details, just select the entity
+            if(detailObjects === null || detailObjects === undefined){
+                FormplayerFrontend.trigger("menu:select", index);
+            }
             var detailObject = detailObjects[index];
             var headers = detailObject.headers;
             var details = detailObject.details;

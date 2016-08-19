@@ -259,12 +259,6 @@ GRAPH_CREATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-OFFLINE_CLOUDCARE = StaticToggle(
-    'offline-cloudcare',
-    'Offline Cloudcare',
-    TAG_EXPERIMENTAL
-)
-
 IS_DEVELOPER = StaticToggle(
     'is_developer',
     'Is developer',
@@ -605,6 +599,13 @@ CUSTOM_MENU_BAR = StaticToggle(
 ICDS_REPORTS = StaticToggle(
     'icds_reports',
     'Enable access to the Tableau dashboard for ICDS',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+ENIKSHAY_INTEGRATIONS = StaticToggle(
+    'enikshay_integrations',
+    'Enable access to eNikshay external integrations',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )

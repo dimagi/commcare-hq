@@ -1,6 +1,7 @@
 import base64
 import json
 import uuid
+from copy import deepcopy
 from datetime import datetime
 
 from django.conf import settings
@@ -46,7 +47,7 @@ from corehq.apps.locations.resources.v0_1 import InternalLocationResource
 from custom.ilsgateway.resources.v0_1 import ILSLocationResource
 from custom.ewsghana.resources.v0_1 import EWSLocationResource
 from corehq.apps.users.analytics import update_analytics_indexes
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, UserRole, Permissions
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.reportxform import transform_xform_for_report_forms_index
 from corehq.pillows.xform import transform_xform_for_elasticsearch
@@ -645,6 +646,24 @@ class TestWebUserResource(APIResourceTest):
     """
     resource = v0_5.WebUserResource
     api_name = 'v0.5'
+    default_user_json = {
+        "username": "test_1234",
+        "password": "qwer1234",
+        "email": "admin@example.com",
+        "first_name": "Joe",
+        "is_admin": True,
+        "last_name": "Admin",
+        "permissions": {
+            "edit_apps": True,
+            "edit_commcare_users": True,
+            "edit_data": True,
+            "edit_web_users": True,
+            "view_reports": True
+        },
+        "phone_numbers": [
+        ],
+        "role": "Admin"
+    }
 
     def _check_user_data(self, user, json_user):
         self.assertEqual(user._id, json_user['id'])
@@ -695,57 +714,97 @@ class TestWebUserResource(APIResourceTest):
         self._check_user_data(self.user, api_user)
 
     def test_create(self):
-
-        user_json = {
-            "username":"test_1234",
-            "password":"qwer1234",
-            "email":"admin@example.com",
-            "first_name":"Joe",
-            "is_admin": True,
-            "last_name":"Admin",
-            "permissions":{
-                "edit_apps":True,
-                "edit_commcare_users":True,
-                "edit_data":True,
-                "edit_web_users":True,
-                "view_reports":True
-            },
-            "phone_numbers":[
-            ],
-            "role":"admin"
-        }
+        user_json = deepcopy(self.default_user_json)
         response = self._assert_auth_post_resource(self.list_endpoint,
                                                    json.dumps(user_json),
                                                    content_type='application/json')
         self.assertEqual(response.status_code, 201)
         user_back = WebUser.get_by_username("test_1234")
-        self.addCleanup(user_back.delete)
         self.assertEqual(user_back.username, "test_1234")
         self.assertEqual(user_back.first_name, "Joe")
         self.assertEqual(user_back.last_name, "Admin")
         self.assertEqual(user_back.email, "admin@example.com")
+        self.assertTrue(user_back.is_domain_admin(self.domain.name))
+        user_back.delete()
+
+    def test_create_admin_without_role(self):
+        user_json = deepcopy(self.default_user_json)
+        user_json.pop('role')
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        user_back = WebUser.get_by_username("test_1234")
+        self.assertEqual(user_back.username, "test_1234")
+        self.assertEqual(user_back.first_name, "Joe")
+        self.assertEqual(user_back.last_name, "Admin")
+        self.assertEqual(user_back.email, "admin@example.com")
+        self.assertTrue(user_back.is_domain_admin(self.domain.name))
+        user_back.delete()
+
+    def test_create_with_preset_role(self):
+        user_json = deepcopy(self.default_user_json)
+        user_json["role"] = "Field Implementer"
+        user_json["is_admin"] = False
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        user_back = WebUser.get_by_username("test_1234")
+        self.assertEqual(user_back.role, 'Field Implementer')
+        user_back.delete()
+
+    def test_create_with_custom_role(self):
+        new_user_role = UserRole.get_or_create_with_permissions(
+            self.domain.name, Permissions(edit_apps=True, view_reports=True), 'awesomeness')
+        user_json = deepcopy(self.default_user_json)
+        user_json["role"] = new_user_role.name
+        user_json["is_admin"] = False
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        user_back = WebUser.get_by_username("test_1234")
+        self.assertEqual(user_back.role, new_user_role.name)
+        user_back.delete()
+
+    def test_create_with_invalid_admin_role(self):
+        user_json = deepcopy(self.default_user_json)
+        user_json["role"] = 'Jack of all trades'
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   failure_code=400)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content, '{"error": "An admin can have only one role : Admin"}')
+
+    def test_create_with_invalid_non_admin_role(self):
+        user_json = deepcopy(self.default_user_json)
+        user_json['is_admin'] = False
+        user_json["role"] = 'Jack of all trades'
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   failure_code=400)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content, '{"error": "Invalid User Role Jack of all trades"}')
+
+    def test_create_with_missing_non_admin_role(self):
+        user_json = deepcopy(self.default_user_json)
+        user_json['is_admin'] = False
+        user_json.pop("role")
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   failure_code=400)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content, '{"error": "Please assign role for non admin user"}')
 
     def test_update(self):
-
         user = WebUser.create(domain=self.domain.name, username="test", password="qwer1234")
         self.addCleanup(user.delete)
-
-        user_json = {
-            "email": "admin@example.com",
-            "first_name": "Joe",
-            "is_admin": True,
-            "last_name": "Admin",
-            "permissions": {
-                "edit_apps": True,
-                "edit_commcare_users": True,
-                "edit_data": True,
-                "edit_web_users": True,
-                "view_reports": True
-            },
-            "phone_numbers": [],
-            "role": "admin"
-        }
-
+        user_json = deepcopy(self.default_user_json)
+        user_json.pop('username')
         backend_id = user._id
         response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
                                                    json.dumps(user_json),
@@ -1763,32 +1822,33 @@ class TestConfigurableReportDataResource(APIResourceTest):
         super(TestConfigurableReportDataResource, cls).setUpClass()
 
         case_type = "my_case_type"
-        field_name = "my_field"
+        cls.field_name = "my_field"
+        cls.case_property_values = ["foo", "foo", "bar", "baz"]
 
         cls.cases = []
-        for val in ["foo", "foo", "bar", "baz"]:
+        for val in cls.case_property_values:
             id = uuid.uuid4().hex
             case_block = CaseBlock(
                 create=True,
                 case_id=id,
                 case_type=case_type,
-                update={field_name: val},
+                update={cls.field_name: val},
             ).as_xml()
             post_case_blocks([case_block], {'domain': cls.domain.name})
             cls.cases.append(CommCareCase.get(id))
 
         cls.report_columns = [
             {
-                "column_id": field_name,
+                "column_id": cls.field_name,
                 "type": "field",
-                "field": field_name,
+                "field": cls.field_name,
                 "aggregation": "simple",
             }
         ]
         cls.report_filters = [
             {
                 'datatype': 'string',
-                'field': field_name,
+                'field': cls.field_name,
                 'type': 'dynamic_choice_list',
                 'slug': 'my_field_filter',
             }
@@ -1807,16 +1867,28 @@ class TestConfigurableReportDataResource(APIResourceTest):
                 },
                 "property_value": case_type,
             },
-            configured_indicators=[{
-                "type": "expression",
-                "expression": {
-                    "type": "property_name",
-                    "property_name": field_name
+            configured_indicators=[
+                {
+                    "type": "expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": cls.field_name
+                    },
+                    "column_id": cls.field_name,
+                    "display_name": cls.field_name,
+                    "datatype": "string"
                 },
-                "column_id": field_name,
-                "display_name": field_name,
-                "datatype": "string"
-            }],
+                {
+                    "type": "expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "opened_by"
+                    },
+                    "column_id": "opened_by",
+                    "display_name": "opened_by",
+                    "datatype": "string"
+                },
+            ],
         )
         cls.data_source.validate()
         cls.data_source.save()
@@ -1840,6 +1912,34 @@ class TestConfigurableReportDataResource(APIResourceTest):
 
         self.assertEqual(response_dict["total_records"], len(self.cases))
         self.assertEqual(len(response_dict["data"]), len(self.cases))
+
+    def test_expand_column_infos(self):
+
+        aggregated_report = ReportConfiguration(
+            domain=self.domain.name,
+            config_id=self.data_source._id,
+            aggregation_columns=["opened_by"],
+            columns=[
+                {
+                    "column_id": self.field_name,
+                    "type": "field",
+                    "field": self.field_name,
+                    "aggregation": "expand",
+                }
+            ],
+            filters=[],
+        )
+        aggregated_report.save()
+
+        response = self.client.get(
+            self.single_endpoint(aggregated_report._id))
+        response_dict = json.loads(response.content)
+        columns = response_dict["columns"]
+
+        for c in columns:
+            self.assertIn("expand_column_value", c)
+        self.assertSetEqual(set(self.case_property_values), {c['expand_column_value'] for c in columns})
+
 
     def test_page_size(self):
         response = self.client.get(
