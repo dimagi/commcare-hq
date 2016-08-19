@@ -7,12 +7,12 @@ from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
 
 from casexml.apps.case.xml import V2
-from casexml.apps.case.mock import CaseFactory
 from casexml.apps.case.tests.util import (
     delete_all_cases,
     delete_all_sync_logs,
 )
 from corehq.apps.domain.models import Domain
+from corehq.form_processor.tests.utils import run_with_all_backends
 from casexml.apps.phone.restore import (
     RestoreConfig,
     RestoreParams,
@@ -22,13 +22,12 @@ from casexml.apps.phone.restore import (
     restore_cache_key,
     CachedPayload
 )
-from casexml.apps.phone.const import ASYNC_RESTORE_CACHE_KEY_PREFIX
+from casexml.apps.phone.const import ASYNC_RESTORE_CACHE_KEY_PREFIX, RESTORE_CACHE_KEY_PREFIX
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
 from casexml.apps.phone.tests.utils import create_restore_user
-from corehq.apps.receiverwrapper.auth import AuthContext
-from couchforms.models import DefaultAuthContext
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.util.test_utils import flag_enabled
+from corehq.apps.receiverwrapper.util import submit_form_locally
 
 
 class BaseAsyncRestoreTest(TestCase):
@@ -166,57 +165,52 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
         self.assertTrue(restore_config.force_cache)
 
     @flag_enabled('ASYNC_RESTORE')
+    @run_with_all_backends
     def test_restore_in_progress_form_submitted_kills_old_jobs(self):
         """If the user submits a form somehow while a job is running, the job should be terminated
         """
-        cache_id = restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, self.user.user_id)
-        fake_task_id = 'fake-task-id'
+        task_cache_id = restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, self.user.user_id)
+        initial_sync_cache_id = restore_cache_key(RESTORE_CACHE_KEY_PREFIX, self.user.user_id, version='2.0')
+        fake_cached_thing = 'fake-cached-thing'
         restore_config = self._restore_config(async=True)
         # pretend we have a task running
-        restore_config.cache.set(cache_id, fake_task_id)
-        correct_user_factory = CaseFactory(
-            domain=self.domain,
-            form_extras={
-                'auth_context': AuthContext(
-                    authenticated=True,
-                    domain=self.domain,
-                    user_id=self.user.user_id
-                ),
-            }
-        )
-        other_user_factory = CaseFactory(
-            domain=self.domain,
-            form_extras={
-                'auth_context': AuthContext(
-                    authenticated=True,
-                    domain=self.domain,
-                    user_id='other_user'
-                ),
-            }
-        )
+        restore_config.cache.set(task_cache_id, fake_cached_thing)
+        restore_config.cache.set(initial_sync_cache_id, fake_cached_thing)
+
+        form = """
+        <data xmlns="http://openrosa.org/formdesigner/blah">
+            <meta>
+                <userID>{user_id}</userID>
+            </meta>
+        </data>
+        """
+
         with mock.patch('corehq.form_processor.submission_post.revoke_celery_task') as revoke:
             # with a different user in the same domain, task doesn't get killed
-            other_user_factory.create_case()
+            submit_form_locally(form.format(user_id="other_user"), self.domain)
             self.assertFalse(revoke.called)
-            self.assertEqual(restore_config.cache.get(cache_id), fake_task_id)
+            self.assertEqual(restore_config.cache.get(task_cache_id), fake_cached_thing)
+            self.assertEqual(restore_config.cache.get(initial_sync_cache_id), fake_cached_thing)
 
             # task gets killed when the user submits a form
-            correct_user_factory.create_case()
-            revoke.assert_called_with(fake_task_id)
-            self.assertIsNone(restore_config.cache.get(cache_id))
+            submit_form_locally(form.format(user_id=self.user.user_id), self.domain)
+            revoke.assert_called_with(fake_cached_thing)
+            self.assertIsNone(restore_config.cache.get(task_cache_id))
+            self.assertIsNone(restore_config.cache.get(initial_sync_cache_id))
 
     @flag_enabled('ASYNC_RESTORE')
-    def test_submit_system_form(self):
-        system_user_factory = CaseFactory(
-            domain=self.domain,
-            form_extras={
-                'auth_context': DefaultAuthContext()
-            }
-        )
-        # This would fail hard if there was no AuthContext:
-        # http://manage.dimagi.com/default.asp?234245
-        system_user_factory.create_case()
+    @run_with_all_backends
+    def test_submit_form_no_userid(self):
+        form = """
+        <data xmlns="http://openrosa.org/formdesigner/blah">
+            <meta>
+                <deviceID>test</deviceID>
+            </meta>
+        </data>
+        """
+        submit_form_locally(form, self.domain)
 
+    @run_with_all_backends
     @mock.patch.object(CachedPayload, 'finalize')  # fake that a cached payload exists
     @mock.patch.object(RestoreConfig, 'cache')
     @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
