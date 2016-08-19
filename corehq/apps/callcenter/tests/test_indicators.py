@@ -32,6 +32,9 @@ locmem_cache = cache.caches['locmem']
 
 def create_domain_and_user(domain_name, username):
     domain = create_domain(domain_name)
+    user = CommCareUser.get_by_username(username)
+    if user:
+        user.delete()
     user = CommCareUser.create(domain_name, username, '***')
 
     domain.call_center_config.enabled = True
