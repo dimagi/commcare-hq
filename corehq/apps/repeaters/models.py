@@ -207,6 +207,9 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     password = StringProperty()
     friendly_name = _("Data")
 
+    @classmethod
+    def get_custom_url(cls, domain):
+        return None
 
     def get_pending_record_count(self):
         return get_pending_repeat_record_count(self.domain, self._id)
