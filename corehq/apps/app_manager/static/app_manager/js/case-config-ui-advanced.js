@@ -163,7 +163,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                 });
 
                 // Hide all panels, then show the requested one
-                $(selector + ' .panel-collapse.in').collapse('hide')
+                $(selector + ' .panel-collapse.in').collapse('hide');
                 $(selector + ' > .panel:nth-child(' + (index + 1) + ') .panel-collapse').collapse('show');
             });
         };
@@ -202,8 +202,9 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
         self.config = config;
 
         self.getCaseTags = function (type, action) {
-            var tags = [];
-            var actions = [];
+            var tags = [],
+                actions = [],
+                index;
             if (type === 'all') {
                 actions = actions.concat(self.open_cases());
                 actions = actions.concat(self.load_update_cases());
@@ -211,14 +212,14 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
             if (type === 'subcase') {
                 actions = actions.concat(self.load_update_cases());
                 // only allow creating subcases of actions before this one
-                var index = self.open_cases.indexOf(action);
+                index = self.open_cases.indexOf(action);
                 if (index > 0) {
                     actions = actions.concat(self.open_cases.slice(0, index));
                 }
             }
             if (type === 'auto-select') {
                 // only allow auto-selecting based off loaded actions before this one
-                var index = self.load_update_cases.indexOf(action);
+                index = self.load_update_cases.indexOf(action);
                 if (index > 0) {
                     actions = actions.concat(self.load_update_cases.slice(0, index));
                 }
@@ -359,25 +360,26 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
         };
 
         self.addFormAction = function (action) {
+            var index;
             if (action.value === 'load' || action.value === 'auto_select') {
-                var index = self.load_update_cases().length;
-                var tag_prefix = action.value === 'auto_select'? 'auto' : '';
-                var action_data = {
-                    case_type: config.caseType,
-                    details_module: null,
-                    case_tag: tag_prefix + 'load_' + config.caseType + index,
-                    case_index: {
-                        tag: '',
-                        reference_id: 'parent',
-                        relationship: 'child'
-                    },
-                    preload: [],
-                    case_properties: [],
-                    close_condition: DEFAULT_CONDITION('never'),
-                    show_product_stock: false,
-                    product_program: '',
-                    auto_select: null
-                };
+                index = self.load_update_cases().length;
+                var tag_prefix = action.value === 'auto_select'? 'auto' : '',
+                    action_data = {
+                        case_type: config.caseType,
+                        details_module: null,
+                        case_tag: tag_prefix + 'load_' + config.caseType + index,
+                        case_index: {
+                            tag: '',
+                            reference_id: 'parent',
+                            relationship: 'child',
+                        },
+                        preload: [],
+                        case_properties: [],
+                        close_condition: DEFAULT_CONDITION('never'),
+                        show_product_stock: false,
+                        product_program: '',
+                        auto_select: null,
+                    };
                 if (action.value === 'auto_select') {
                     action_data.auto_select = {
                         mode: '',
@@ -389,7 +391,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                 self.load_update_cases.push(LoadUpdateAction.wrap(action_data, self.config));
                 self.config.applyAccordion('load', index);
             } else if (action.value === 'open') {
-                var index = self.open_cases().length;
+                index = self.open_cases().length;
                 self.open_cases.push(OpenCaseAction.wrap({
                     case_type: config.caseType,
                     name_path: '',
