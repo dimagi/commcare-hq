@@ -1,5 +1,8 @@
 import warnings
 from functools import partial
+
+from bulk_update.helper import bulk_update as bulk_update_helper
+
 from couchdbkit import ResourceNotFound
 from dimagi.ext.couchdbkit import *
 import itertools
@@ -80,6 +83,20 @@ class LocationTypeManager(models.Manager):
 StockLevelField = partial(models.DecimalField, max_digits=10, decimal_places=1)
 
 
+@memoized
+def stock_level_config_for_domain(domain, commtrack_enabled):
+    from corehq.apps.commtrack.models import CommtrackConfig
+    ct_config = CommtrackConfig.for_domain(domain)
+    if (
+        (ct_config is None) or
+        (not commtrack_enabled) or
+        LOCATION_TYPE_STOCK_RATES.enabled(domain)
+    ):
+        return None
+    else:
+        return ct_config.stock_levels_config
+
+
 class LocationType(models.Model):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=255)
@@ -136,36 +153,35 @@ class LocationType(models.Model):
     def commtrack_enabled(self):
         return Domain.get_by_name(self.domain).commtrack_enabled
 
-    def _populate_stock_levels(self):
-        from corehq.apps.commtrack.models import CommtrackConfig
-        ct_config = CommtrackConfig.for_domain(self.domain)
-        if (
-            (ct_config is None)
-            or (not self.commtrack_enabled)
-            or LOCATION_TYPE_STOCK_RATES.enabled(self.domain)
-        ):
-            return
-        config = ct_config.stock_levels_config
+    def _populate_stock_levels(self, config):
         self.emergency_level = config.emergency_level
         self.understock_threshold = config.understock_threshold
         self.overstock_threshold = config.overstock_threshold
 
     def save(self, *args, **kwargs):
-        from .tasks import sync_administrative_status
         if not self.code:
             from corehq.apps.commtrack.util import unicode_slug
             self.code = unicode_slug(self.name)
         if not self.commtrack_enabled:
             self.administrative = True
-        self._populate_stock_levels()
+
+        config = stock_level_config_for_domain(self.domain, self.commtrack_enabled)
+        if config:
+            self._populate_stock_levels(config)
+
         is_not_first_save = self.pk is not None
         saved = super(LocationType, self).save(*args, **kwargs)
 
-        if is_not_first_save and self._administrative_old != self.administrative:
-            sync_administrative_status.delay(self)
-            self._administrative_old = self.administrative
+        if is_not_first_save:
+            self.sync_administrative_status()
 
         return saved
+
+    def sync_administrative_status(self, sync_supply_points=True):
+        from .tasks import sync_administrative_status
+        if self._administrative_old != self.administrative:
+            sync_administrative_status.delay(self, sync_supply_points=sync_supply_points)
+            self._administrative_old = self.administrative
 
     def __unicode__(self):
         return self.name
@@ -181,6 +197,56 @@ class LocationType(models.Model):
     @memoized
     def can_have_children(self):
         return LocationType.objects.filter(parent_type=self).exists()
+
+    @classmethod
+    def _pre_bulk_save(cls, objects):
+        if not objects:
+            return
+
+        commtrack_enabled = objects[0].commtrack_enabled
+        if not commtrack_enabled:
+            for o in objects:
+                o.administrative = True
+
+        domain = objects[0].domain
+        stock_config = stock_level_config_for_domain(domain, commtrack_enabled)
+        if stock_config:
+            for o in objects:
+                o._populate_stock_levels(stock_config)
+
+    @classmethod
+    def bulk_create(cls, objects):
+        # 'objects' is a list of new LocationType objects to be created
+        if not objects:
+            return []
+
+        cls._pre_bulk_save(objects)
+        domain = objects[0].domain
+        names = [o.name for o in objects]
+        cls.objects.bulk_create(objects)
+        # we can return 'objects' directly without the below extra DB call after django 1.10,
+        # which autosets 'id' attribute of all objects that are bulk created
+        return list(cls.objects.filter(domain=domain, name__in=names))
+
+    @classmethod
+    def bulk_update(cls, objects):
+        # 'objects' is a list of existing LocationType objects to be updated
+        # Note: this is tightly coupled with .bulk_management.NewLocationImporter.bulk_commit()
+        #       so it can't be used on its own
+        cls._pre_bulk_save(objects)
+        now = datetime.utcnow()
+        for o in objects:
+            o.last_modified = now
+        # the caller should call 'sync_administrative_status' for individual objects
+        bulk_update_helper(objects)
+
+    @classmethod
+    def bulk_delete(cls, objects):
+        # Given a list of existing SQL objects, bulk delete them
+        if not objects:
+            return
+        ids = [o.id for o in objects]
+        cls.objects.filter(id__in=ids).delete()
 
 
 class LocationQueriesMixin(object):
