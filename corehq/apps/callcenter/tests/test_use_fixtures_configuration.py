@@ -172,6 +172,25 @@ def test_parse_indicator(self, indicator_name, parsed_tuple):
     )
 
 
+@generate_cases([
+    (['FindPatientFormsMonth0', 'FindPatientFormsMonth1)'], ['FindPatientFormsMonth0']),  # custom
+    (['formsSubmittedWeek0', 'formsSubmittedWek1'], ['formsSubmittedWeek0']),  # legacy bad period
+    (['formsSubmittedWeek0', 'formsSubmitedWeek1'], ['formsSubmittedWeek0']),  # legacy bad indicator name
+    (['cases_active_week0', 'cases_active_wek1'], ['cases_active_week0']),  # bad period
+    (['cases_active_week0', 'cases_ative_week1'], ['cases_active_week0']),  # pad indicator name
+], TestIndicatorsFromApp)
+def test_get_config_from_app_bad_names(self, indicators, expected):
+    app = self._get_app()
+    app.domain = 'infomovel'
+    self._add_indicators_to_module_details(app.get_module(0), indicators=indicators)
+    config = get_call_center_config_from_app(app)
+    indicators_from_config = get_indicator_slugs_from_config(config)
+    self.assertEqual(
+        sorted(indicators_from_config),
+        expected
+    )
+
+
 def _get_detail_column(indicator_name):
     from corehq.apps.app_manager.models import DetailColumn
     return DetailColumn(
