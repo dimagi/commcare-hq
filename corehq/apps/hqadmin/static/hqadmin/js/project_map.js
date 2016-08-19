@@ -18,6 +18,8 @@ var projectMapInit = function(mapboxAccessToken) {
         // { countryName : { projectName : { propertyName: propertyValue } } }
         var maxNumProjects = 0;
         var maxNumUsers = 0;
+        var totalNumUsers = 0;
+        var totalNumProjects = 0;
         var projects_per_country = {};
         var users_per_country = {};
         var is_project_count_map = true;
@@ -35,12 +37,14 @@ var projectMapInit = function(mapboxAccessToken) {
                     if (projects_per_country[country] > maxNumProjects) {
                         maxNumProjects = projects_per_country[country];
                     }
+                    totalNumProjects += projects_per_country[country];
                 });
 
                 Object.keys(users_per_country).map(function(country) {
                     if (users_per_country[country] > maxNumUsers) {
                         maxNumUsers = users_per_country[country];
                     }
+                    totalNumUsers += users_per_country[country];
                 });
 
                 colorAll();
@@ -70,12 +74,24 @@ var projectMapInit = function(mapboxAccessToken) {
             }
         };
 
+        that.getNumActiveCountries = function () {
+            return Object.keys(projects_per_country).length;
+        };
+
         that.getMax = function () {
             if (is_project_count_map) {
                 return maxNumProjects;
             } else {
                 return maxNumUsers;
             }
+        };
+
+        that.getNumProjects = function () {
+            return totalNumProjects;
+        };
+
+        that.getNumUsers = function () {
+            return totalNumUsers;
         };
 
         var SelectionModel = function () {
@@ -157,7 +173,7 @@ var projectMapInit = function(mapboxAccessToken) {
             opacity: 1,
             color: 'white',
             dashArray: '3',
-            fillOpacity: getOpacity(feature.properties.name)
+            fillOpacity: getOpacity(feature.properties.name),
         };
     }
 
@@ -167,7 +183,7 @@ var projectMapInit = function(mapboxAccessToken) {
         layer.setStyle({
             weight: 4,
             color: '#002c5f',
-            dashArray: ''
+            dashArray: '',
         });
         if (!L.Browser.ie && !L.Browser.opera) {
             layer.bringToFront();
@@ -277,12 +293,26 @@ var projectMapInit = function(mapboxAccessToken) {
 
     legend.addTo(map);
 
+
+    var stats = L.control({position: 'bottomright'});
+
+    stats.onAdd = function (map) {
+        var div = L.DomUtil.create('div', 'info legend');
+        div.innerHTML += '<p><b>Statistics</b></p>';
+        div.innerHTML += '<p>Number of Active Countries: ' + dataController.getNumActiveCountries() +  '</p>';
+        div.innerHTML += '<p>Number of Active Mobile Users: ' + dataController.getNumUsers() +  '</p>';
+        div.innerHTML += '<p>Number of Active Projects: ' + dataController.getNumProjects() +  '</p>';
+        return div;
+    };
+
     // copied from dimagisphere
     // todo: should probably be getting this from somewhere else and possibly not on every page load.
     $.getJSON('https://raw.githubusercontent.com/dimagi/world.geo.json/master/countries.geo.json', function (data) {
         countriesGeo = L.geoJson(data, {style: style, onEachFeature: onEachFeature}).addTo(map);
         dataController.refreshProjectData({}, function() {
-            // if url contains reference to a project and/or a country, load that project/country
+
+            stats.addTo(map);
+
             var references = window.location.hash.substring(1).split('#');
             if (references.length === 2) {
                 // country, then project
