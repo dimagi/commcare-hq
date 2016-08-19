@@ -176,7 +176,7 @@ class CaseRepeaterForm(GenericRepeaterForm):
         return ['white_listed_case_types'] + ['black_listed_users'] + fields
 
     def clean(self):
-        cleaned_data = super(GenericRepeaterForm, self).clean()
+        cleaned_data = super(CaseRepeaterForm, self).clean()
         white_listed_case_types = cleaned_data['white_listed_case_types']
         black_listed_users = cleaned_data['black_listed_users']
         if not set(white_listed_case_types).issubset([t[0] for t in self.case_type_choices]):
