@@ -219,7 +219,7 @@ var projectMapInit = function(mapboxAccessToken) {
                 formattedCountryName += country.substring(1).toLowerCase();
             }
             return formattedCountryName;
-        })
+        });
     }
 
     function onEachFeature(feature, layer) {
