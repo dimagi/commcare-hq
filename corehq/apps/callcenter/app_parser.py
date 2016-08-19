@@ -8,9 +8,9 @@ ParsedIndicator = namedtuple('ParsedIndicator', 'category, type, date_range, is_
 
 def get_call_center_config_from_app(app):
     indicators = get_indicators_used_in_app(app)
-    parsed_indicators = {
+    parsed_indicators = filter(None, {
         parse_indicator(indicator) for indicator in indicators
-    }
+    })
     config = CallCenterIndicatorConfig()
     for parsed_indicator in parsed_indicators:
         config.set_indicator(parsed_indicator)
