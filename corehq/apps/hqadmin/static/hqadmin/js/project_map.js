@@ -1,6 +1,8 @@
 var projectMapInit = function(mapboxAccessToken) {
     // courtesy of http://colorbrewer2.org/
-    var COUNTRY_COLORS = ['#fef0d9','#fdcc8a','#fc8d59','#e34a33','#b30000'];
+    var COUNTRY_COLORS = ['#fef0d9','#fdd49e','#fdbb84','#fc8d59','#e34a33','#b30000'];
+    var PROJECT_COUNTS_THRESHOLD = [10, 20, 30, 40, 50];
+    var USER_COUNTS_THRESHOLD = [100, 200, 300, 400, 500];
 
     var selectionModel;
 
@@ -14,8 +16,6 @@ var projectMapInit = function(mapboxAccessToken) {
 
     var dataController = function() {
         var that = {};
-
-        // { countryName : { projectName : { propertyName: propertyValue } } }
         var maxNumProjects = 0;
         var maxNumUsers = 0;
         var totalNumUsers = 0;
@@ -48,7 +48,6 @@ var projectMapInit = function(mapboxAccessToken) {
                 });
 
                 colorAll();
-
                 callback();
             });
         };
@@ -92,6 +91,10 @@ var projectMapInit = function(mapboxAccessToken) {
 
         that.getNumUsers = function () {
             return totalNumUsers;
+        };
+
+        that.isProjectCountMap = function (){
+            return is_project_count_map;
         };
 
         var SelectionModel = function () {
@@ -148,14 +151,25 @@ var projectMapInit = function(mapboxAccessToken) {
     });
 
     function getColor(featureId) {
+        var thresholdScales;
         var count = dataController.getCount(featureId);
-        if (!count) {
-            return COUNTRY_COLORS[0];
+        var isProjectCountMap = dataController.isProjectCountMap();
+        if (isProjectCountMap) {
+            thresholdScales = PROJECT_COUNTS_THRESHOLD;
+        } else {
+            thresholdScales = USER_COUNTS_THRESHOLD;
         }
-        var pct = count / dataController.getMax();
-        var index = Math.min(Math.floor(pct * COUNTRY_COLORS.length), COUNTRY_COLORS.length - 1);
-
+        var index = getColorScaleIndex(count, thresholdScales);
         return COUNTRY_COLORS[index];
+    }
+
+    function getColorScaleIndex(count, scales) {
+        for (var i = 0; i < scales.length; i++){
+            if (count < scales[i]){
+                return i;
+            }
+        }
+        return scales.length;
     }
 
     function getOpacity(featureId) {
@@ -249,44 +263,27 @@ var projectMapInit = function(mapboxAccessToken) {
 
     legend.onAdd = function (map) {
         var div = L.DomUtil.create('div', 'info legend');
-
-        // get the upper bounds for each bucket
-        var countValues = COUNTRY_COLORS.map(function(e, i) {
-            // tested this extensively
-            var bound = dataController.getMax() * (i+1) / COUNTRY_COLORS.length;
-            return Math.max(0, (i < COUNTRY_COLORS.length - 1 && Math.floor(bound) === bound) ? bound - 1 : Math.floor(bound));
-        });
-
-        // only include legend items that are actually used right now
-        // when there is a low number of max projects (for example, under strict filters), they may not all be included
-        var indicesToRemove = [];
-        var colors = COUNTRY_COLORS.filter(function(elem, index) {
-            if (countValues[index] <= 0 || (index > 0 && countValues[index] === countValues[index-1])) {
-                indicesToRemove.push(index);
-                return false;
-            } else {
-                return true;
-            }
-        });
-
-        countValues = countValues.filter(function(elem, index) {
-            return indicesToRemove.indexOf(index) <= -1;
-        });
-
+        var thresholds;
         div.innerHTML += '<i style="background:' + 'black' + '"></i> ' + '0' + '<br>';
-
-        // loop through our form count intervals and generate a label with a colored square for each interval
-        for (var i = 0; i < countValues.length; i++) {
-            div.innerHTML += '<i style="background:' + colors[i] + '"></i> ';
-            if (countValues[i-1] !==  undefined) {
-                if (countValues[i-1] +1 < countValues[i]) {
-                    div.innerHTML += (countValues[i-1] + 1) + '&ndash;';
+        var is_project_count_map = dataController.isProjectCountMap();
+        if (is_project_count_map) {
+            thresholds = PROJECT_COUNTS_THRESHOLD;
+        } else {
+            thresholds = USER_COUNTS_THRESHOLD;
+        }
+        for (var i = 0; i < thresholds.length; i++) {
+            div.innerHTML += '<i style="background:' + COUNTRY_COLORS[i] + '"></i> ';
+            if (thresholds[i-1] !==  undefined) {
+                if (thresholds[i-1] +1 < thresholds[i]) {
+                    div.innerHTML += (thresholds[i-1] + 1) + '&ndash;';
                 }
-            } else if (countValues[i] > 1) {
+            } else if (thresholds[i] > 1) {
                 div.innerHTML += '1&ndash;';
             }
-            div.innerHTML += countValues[i] + '<br>';
+            div.innerHTML += thresholds[i] + '<br>';
         }
+        div.innerHTML += '<i style="background:' + COUNTRY_COLORS[thresholds.length] + '"></i> '
+                         + (thresholds[thresholds.length-1] + 1)+ '&ndash;';
 
         return div;
     };
