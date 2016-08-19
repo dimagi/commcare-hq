@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 import logging
 import urllib
 import urlparse
+from django.utils.translation import ugettext_lazy as _
+
 from requests.exceptions import Timeout, ConnectionError
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.form_processor.exceptions import XFormNotFound
@@ -203,6 +205,8 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     use_basic_auth = BooleanProperty(default=False)
     username = StringProperty()
     password = StringProperty()
+    friendly_name = _("Data")
+
 
     def get_pending_record_count(self):
         return get_pending_repeat_record_count(self.domain, self._id)
@@ -334,6 +338,7 @@ class FormRepeater(Repeater):
 
     include_app_id_param = BooleanProperty(default=True)
     white_listed_form_xmlns = StringListProperty(default=[])  # empty value means all form xmlns are accepted
+    friendly_name = _("Forward Forms")
 
     @memoized
     def payload_doc(self, repeat_record):
@@ -378,6 +383,7 @@ class CaseRepeater(Repeater):
     version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
     white_listed_case_types = StringListProperty(default=[])  # empty value means all case-types are accepted
     black_listed_users = StringListProperty(default=[])  # users who caseblock submissions should be ignored
+    friendly_name = _("Forward Cases")
 
     def allowed_to_forward(self, payload):
         allowed_case_type = not self.white_listed_case_types or payload.type in self.white_listed_case_types
@@ -411,6 +417,7 @@ class ShortFormRepeater(Repeater):
     """
 
     version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
+    friendly_name = _("Forward Form Stubs")
 
     @memoized
     def payload_doc(self, repeat_record):
@@ -432,6 +439,7 @@ class ShortFormRepeater(Repeater):
 
 @register_repeater_type
 class AppStructureRepeater(Repeater):
+    friendly_name = _("Forward App Schema Changes")
 
     def payload_doc(self, repeat_record):
         return None

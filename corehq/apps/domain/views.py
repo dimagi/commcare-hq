@@ -2124,18 +2124,6 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         }
 
 
-class RepeaterMixin(object):
-
-    @property
-    def friendly_repeater_names(self):
-        return {
-            'FormRepeater': _("Forward Forms"),
-            'CaseRepeater': _("Forward Cases"),
-            'ShortFormRepeater': _("Forward Form Stubs"),
-            'AppStructureRepeater': _("Forward App Schema Changes"),
-        }
-
-
 class DomainForwardingRepeatRecords(GenericTabularReport):
     name = 'Repeat Records'
     base_template = 'domain/repeat_record_report.html'
@@ -2256,7 +2244,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         )
 
 
-class DomainForwardingOptionsView(BaseAdminProjectSettingsView, RepeaterMixin):
+class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
     urlname = 'domain_forwarding'
     page_title = ugettext_lazy("Data Forwarding")
     template_name = 'domain/admin/domain_forwarding.html'
@@ -2281,7 +2269,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView, RepeaterMixin):
         }
 
 
-class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
+class AddRepeaterView(BaseAdminProjectSettingsView):
     urlname = 'add_repeater'
     page_title = ugettext_lazy("Forward Data")
     template_name = 'domain/admin/add_form_repeater.html'
@@ -2308,7 +2296,7 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
 
     @property
     def page_name(self):
-        return "Forward %s" % self.friendly_repeater_names.get(self.repeater_type, "Data")
+        return self.repeater_class.friendly_name
 
     @property
     @memoized
