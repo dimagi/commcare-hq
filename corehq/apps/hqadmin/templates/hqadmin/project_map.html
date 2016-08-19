@@ -61,10 +61,11 @@
               </thead>
               <tbody data-bind="foreach: {data: topFiveProjects}">
                 <tr class="project-row">
-                  <td data-bind="text: name"></td>
-                  <td data-bind="text: sector"></td>
                   <td data-bind="text: organization"></td>
+                  <td data-bind="text: sector"></td>
                   <td data-bind="text: deployment"></td>
+                  <td data-bind="text: active_users"></td>
+                  <td data-bind="text: countries"></td>
                 </tr>
               </tbody>
             </table>
