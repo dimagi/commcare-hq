@@ -67,7 +67,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
-from corehq.apps.users.models import Invitation, CouchUser
+from corehq.apps.users.models import Invitation, CouchUser, Permissions
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
 from custom.openclinica.forms import OpenClinicaSettingsForm
@@ -112,7 +112,7 @@ from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPa
 from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
-from corehq.apps.users.decorators import require_can_edit_web_users
+from corehq.apps.users.decorators import require_can_edit_web_users, require_permission
 from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
 from corehq.apps.repeaters.models import Repeater, FormRepeater, CaseRepeater, ShortFormRepeater, \
     AppStructureRepeater, RepeatRecord, repeater_types, RegisterGenerator
@@ -590,9 +590,9 @@ def logo(request, domain):
     return HttpResponse(logo[0], content_type=logo[1])
 
 
-class DomainAccountingSettings(BaseAdminProjectSettingsView):
+class DomainAccountingSettings(BaseProjectSettingsView):
 
-    @method_decorator(login_and_domain_required)
+    @method_decorator(require_permission(Permissions.billing_admin))
     def dispatch(self, request, *args, **kwargs):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
 
