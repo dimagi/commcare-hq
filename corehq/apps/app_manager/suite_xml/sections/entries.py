@@ -454,7 +454,7 @@ class EntriesHelper(object):
                 detail_confirm=self.details_helper.get_detail_id_safe(target_module, 'case_long'),
             ),
             case_type=action.case_type,
-            requires_selection=False,
+            requires_selection=True,
             action=action,
         ))
 
@@ -468,7 +468,7 @@ class EntriesHelper(object):
             parent_filter = ''
         session_var_for_fixture = session_var(load_case_from_fixture.fixture_tag)
         filter_for_casedb = '[{0}={1}]'.format(load_case_from_fixture.case_property, session_var_for_fixture)
-        nodest = EntriesHelper.get_nodeset_xpath(action.case_type, filter_xpath=filter_for_casedb) + parent_filter
+        nodeset = EntriesHelper.get_nodeset_xpath(action.case_type, filter_xpath=filter_for_casedb) + parent_filter
 
         datums.append(FormDatumMeta(
             datum=SessionDatum(
