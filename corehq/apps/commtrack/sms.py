@@ -11,6 +11,7 @@ from lxml import etree
 import logging
 
 from corehq.form_processor.interfaces.supply import SupplyInterface
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils.parsing import json_format_datetime
 from datetime import datetime
@@ -102,6 +103,8 @@ class StockReportParser(object):
 
     def parse(self, text):
         """take in a text and return the parsed stock transactions"""
+        _assert = soft_assert('@'.join(['droberts', 'dimagi.com']))
+
         args = text.split()
 
         if len(args) == 0:
@@ -131,7 +134,10 @@ class StockReportParser(object):
             RequisitionActions.FULFILL,
             RequisitionActions.RECEIPTS
         ]:
-            # todo: soft assert? remove?
+            _assert(False, 'Someone is actually using requisition actions', {
+                'domain': self.domain,
+                'action': action.action,
+            })
             # dropped support for this
             raise SMSError(_(
                 "You can no longer use requisitions! Please contact your project supervisor for help"
@@ -139,6 +145,10 @@ class StockReportParser(object):
 
         elif (self.commtrack_settings.multiaction_enabled
               and action_keyword == self.commtrack_settings.multiaction_keyword):
+            _assert(False, 'Someone is actually using multiaction_keyword', {
+                'domain': self.domain,
+                'commtrack_settings': self.commtrack_settings,
+            })
             # multiple action stock report
             _tx = self.multiple_action_transactions(args)
         else:
