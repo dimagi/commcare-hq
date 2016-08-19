@@ -1,4 +1,5 @@
 import jsonobject
+import os
 import yaml
 
 
@@ -95,7 +96,6 @@ def test_pillow_settings(env_name, pillows_by_group, extra_debugging=False):
         print dump_yaml([action.to_json()
                          for action in get_pillow_actions_for_env(env_name)])
 
-    from fab.utils import get_pillow_env_config
     pillows = list(get_pillows_for_env([get_pillow_env_config(env_name)], pillows_by_group=pillows_by_group))
 
     print 'Included Pillows'
@@ -104,3 +104,21 @@ def test_pillow_settings(env_name, pillows_by_group, extra_debugging=False):
     print 'Excluded Pillows'
     pillow_configs = list(_get_pillow_configs_from_settings_dict(pillows_by_group))
     print dump_yaml(sorted(set(pillow_configs) - set(pillows)))
+
+
+def get_pillow_env_config(environment):
+    pillow_conf = {}
+    pillow_file = os.path.join(
+        'deployment/commcare-hq-deploy/fab',
+        'pillows',
+        '{}.yml'.format(environment)
+    )
+    if os.path.exists(pillow_file):
+        with open(pillow_file, 'r+') as f:
+            yml = yaml.load(f)
+            pillow_conf.update(yml)
+    else:
+        return None
+
+    return pillow_conf
+
