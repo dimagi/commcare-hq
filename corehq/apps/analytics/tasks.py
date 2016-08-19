@@ -250,7 +250,7 @@ def track_sent_invite_on_hubspot(webuser, cookies, meta):
 
 @analytics_task()
 def track_existing_user_accepted_invite_on_hubspot(webuser, cookies, meta):
-    _send_form_to_hubspot(HUBSPOT_INVITATION_SENT_FORM, webuser, cookies, meta)
+    _send_form_to_hubspot(HUBSPOT_EXISTING_USER_INVITE_FORM, webuser, cookies, meta)
 
 
 @analytics_task()
