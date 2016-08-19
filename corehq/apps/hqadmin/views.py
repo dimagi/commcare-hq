@@ -1186,9 +1186,8 @@ def top_five_projects_by_country(request):
         projects = (DomainES().is_active()
                     .filter(filters.term('deployment.countries', country))
                     .sort('cp_n_active_cc_users', True)
-                    .source(['name', 'cp_n_active_cc_users',
-                             'deployment.countries', 'internal.organization_name',
-                             'internal.area', 'internal.notes', 'deployment.date'])
+                    .source(['internal.organization_name', 'internal.area',
+                             'deployment.date', 'cp_n_active_cc_users', 'deployment.countries'])
                     .size(5).run().hits)
         data = {country: projects}
     return json_response(data)
