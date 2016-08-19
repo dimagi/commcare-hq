@@ -25,7 +25,10 @@ from corehq.apps.groups.models import Group
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.dbaccessors.all_commcare_users import get_all_commcare_users_by_domain
+from corehq.apps.users.dbaccessors.all_commcare_users import (
+    get_all_commcare_users_by_domain,
+    get_user_docs_by_username,
+)
 from corehq.apps.users.models import UserRole
 
 from .forms import get_mobile_worker_max_username_length
@@ -82,8 +85,26 @@ def check_duplicate_usernames(user_specs):
             duplicated_usernames.add(username)
         usernames.add(username)
 
-    raise UserUploadError(_("The following usernames have duplicate entries in "
-        "your file: " + ', '.join(duplicated_usernames)))
+    if duplicated_usernames:
+        raise UserUploadError(_("The following usernames have duplicate entries in "
+            "your file: " + ', '.join(duplicated_usernames)))
+
+
+def check_existing_usernames(user_specs, domain):
+    usernames_without_ids = set()
+
+    for row in user_specs:
+        username = row.get('username')
+        user_id = row.get('user_id')
+        if username and user_id:
+            continue
+        usernames_without_ids.add(normalize_username(username, domain))
+
+    existing_usernames = [u.get('username') for u in get_user_docs_by_username(usernames_without_ids)]
+
+    if existing_usernames:
+        raise UserUploadError(_("The following usernames already exist and must "
+            "have an id specified to be updated: " + ', '.join(existing_usernames)))
 
 
 class GroupMemoizer(object):

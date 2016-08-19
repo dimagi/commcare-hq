@@ -808,6 +808,9 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
         }
 
     def _get_cards(self):
+        if not settings.STRIPE_PRIVATE_KEY:
+            return []
+
         user = self.request.user.username
         payment_method, new_payment_method = StripePaymentMethod.objects.get_or_create(
             web_user=user,
@@ -2416,15 +2419,12 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         if self.request.method == 'POST':
             return DomainInternalForm(can_edit_eula, self.request.POST)
         initial = {
-            'deployment_date': self.domain_object.deployment.date.date
-            if self.domain_object.deployment.date else '',
             'countries': self.domain_object.deployment.countries,
             'is_test': self.domain_object.is_test,
         }
         internal_attrs = [
             'sf_contract_id',
             'sf_account_id',
-            'services',
             'initiative',
             'self_started',
             'area',
@@ -2437,6 +2437,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'experienced_threshold',
             'amplifies_workers',
             'amplifies_project',
+            'data_access_threshold',
             'business_unit',
             'workshop_region',
         ]

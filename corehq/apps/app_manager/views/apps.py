@@ -138,8 +138,7 @@ def get_app_view_context(request, app):
     is_cloudcare_allowed = has_privilege(request, privileges.CLOUDCARE)
     context = {}
 
-    settings_layout = copy.deepcopy(
-        get_commcare_settings_layout()[app.get_doc_type()])
+    settings_layout = copy.deepcopy(get_commcare_settings_layout()[app.get_doc_type()])
     for section in settings_layout:
         new_settings = []
         for setting in section['settings']:
@@ -148,6 +147,9 @@ def get_app_view_context(request, app):
                 continue
             privilege_name = setting.get('privilege')
             if privilege_name and not has_privilege(request, privilege_name):
+                continue
+            disable_if_true = setting.get('disable_if_true')
+            if disable_if_true and getattr(app, setting['id']):
                 continue
             new_settings.append(setting)
         section['settings'] = new_settings
@@ -255,6 +257,10 @@ def get_apps_base_context(request, domain, app):
                     toggles.APP_BUILDER_ADVANCED.enabled(domain)
                     or getattr(app, 'commtrack_enabled', False)
                 )
+            ),
+            'show_report_modules': (
+                v2_app
+                and toggles.MOBILE_UCR.enabled(domain)
             ),
             'show_shadow_modules': (
                 v2_app

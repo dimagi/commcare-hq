@@ -259,12 +259,6 @@ GRAPH_CREATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-OFFLINE_CLOUDCARE = StaticToggle(
-    'offline-cloudcare',
-    'Offline Cloudcare',
-    TAG_EXPERIMENTAL
-)
-
 IS_DEVELOPER = StaticToggle(
     'is_developer',
     'Is developer',
@@ -320,13 +314,6 @@ REPORT_BUILDER_BETA_GROUP = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-REPORT_BUILDER_MAP_REPORTS = StaticToggle(
-    'report_builder_map_reports',
-    'Report Builder map reports',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
 STOCK_TRANSACTION_EXPORT = StaticToggle(
     'ledger_export',
     'Show "export transactions" link on case details page',
@@ -344,7 +331,7 @@ SYNC_ALL_LOCATIONS = StaticToggle(
 FLAT_LOCATION_FIXTURE = StaticToggle(
     'flat_location_fixture',
     'Sync the location fixture in a flat format.',
-    TAG_PRODUCT_PATH,
+    TAG_ONE_OFF,  # todo: this should change to product path once we are signed off on format
     [NAMESPACE_DOMAIN]
 )
 
@@ -404,6 +391,14 @@ LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
     "Don't fail hard on missing or deleted sync tokens.",
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
+)
+
+# This toggle offers the "multiple_apps_unlimited" mobile flag to non-Dimagi users
+MOBILE_PRIVILEGES_FLAG = StaticToggle(
+    'mobile_privileges_flag',
+    'Offer "Enable Privileges on Mobile" flag.',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_USER]
 )
 
 MULTIPLE_LOCATIONS_PER_USER = StaticToggle(
@@ -604,6 +599,13 @@ CUSTOM_MENU_BAR = StaticToggle(
 ICDS_REPORTS = StaticToggle(
     'icds_reports',
     'Enable access to the Tableau dashboard for ICDS',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+ENIKSHAY_INTEGRATIONS = StaticToggle(
+    'enikshay_integrations',
+    'Enable access to eNikshay external integrations',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
@@ -851,5 +853,20 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
     'Allows users to specify their own export columns',
     TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
+
+CUSTOM_CALENDAR_FIXTURE = StaticToggle(
+    'custom_calendar_fixture',
+    'Send a calendar fixture down to all users (UATBC/eNikshay one off)',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
+PREVIEW_APP = StaticToggle(
+    'preview_app',
+    'Preview an application in the app builder',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )

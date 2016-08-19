@@ -10,6 +10,7 @@ from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.apps.users.models import Permissions, CommCareUser
 from corehq.apps.groups.models import Group, DeleteGroupRecord
 from corehq.apps.users.decorators import require_permission
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 
@@ -133,6 +134,11 @@ def update_group_data(request, domain, group_id):
 @require_can_edit_groups
 @require_POST
 def update_group_membership(request, domain, group_id):
+    with CriticalSection(['update-group-membership-%s' % group_id]):
+        return _update_group_membership(request, domain, group_id)
+
+
+def _update_group_membership(request, domain, group_id):
     group = Group.get(group_id)
     if group.domain != domain:
         return HttpResponseForbidden()
@@ -147,4 +153,3 @@ def update_group_membership(request, domain, group_id):
         messages.error(request, _("Form not valid. A user may have been deleted while you were viewing this page"
                                   "Please try again."))
     return HttpResponseRedirect(reverse("group_members", args=[domain, group_id]))
-

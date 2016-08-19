@@ -110,14 +110,6 @@ class AbstractXFormInstance(object):
         raise NotImplementedError()
 
     @property
-    def version(self):
-        return self.form_data.get(const.TAG_VERSION, "")
-
-    @property
-    def uiversion(self):
-        return self.form_data.get(const.TAG_UIVERSION, "")
-
-    @property
     def type(self):
         return self.form_data.get(const.TAG_TYPE, "")
 
@@ -139,7 +131,31 @@ class AbstractXFormInstance(object):
         return None
 
 
-class AbstractCommCareCase(object):
+def get_index_map(indices):
+    return dict([
+        (index.identifier, {
+            "case_type": index.referenced_type,
+            "case_id": index.referenced_id,
+            "relationship": index.relationship,
+        }) for index in indices
+    ])
+
+
+class CaseToXMLMixin(object):
+    def to_xml(self, version, include_case_on_closed=False):
+        from xml.etree import ElementTree
+        from casexml.apps.phone.xml import get_case_element
+        if self.closed:
+            if include_case_on_closed:
+                elem = get_case_element(self, ('create', 'update', 'close'), version)
+            else:
+                elem = get_case_element(self, ('close'), version)
+        else:
+            elem = get_case_element(self, ('create', 'update'), version)
+        return ElementTree.tostring(elem)
+
+
+class AbstractCommCareCase(CaseToXMLMixin):
 
     # @property
     # def case_id(self):
@@ -232,13 +248,8 @@ class AbstractCommCareCase(object):
 
     @memoized
     def get_index_map(self, reversed=False):
-        return dict([
-            (index.identifier, {
-                "case_type": index.referenced_type,
-                "case_id": index.referenced_id,
-                "relationship": index.relationship,
-            }) for index in (self.indices if not reversed else self.reverse_indices)
-        ])
+        indices = self.indices if not reversed else self.reverse_indices
+        return get_index_map(indices)
 
     def get_properties_in_api_format(self):
         return dict(self.dynamic_case_properties().items() + {

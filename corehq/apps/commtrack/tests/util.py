@@ -161,6 +161,7 @@ class CommTrackTest(TestCase):
             optimal_window=60,
             min_periods=0,
         )
+        # todo: remove?
         if self.requisitions_enabled:
             self.ct_settings.requisition_config = get_default_requisition_config()
 

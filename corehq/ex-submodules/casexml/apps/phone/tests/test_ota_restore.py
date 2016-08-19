@@ -154,6 +154,9 @@ class OtaRestoreTest(BaseOtaRestoreTest):
                 <case_name>test case name</case_name>
                 <external_id>someexternal</external_id>
             </create>
+            <update>
+                <date_opened>2010-06-29</date_opened>
+            </update>
         </case>""".format(user_id=self.restore_user.user_id)
         check_xml_line_by_line(
             self,
@@ -174,6 +177,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
             </create>
             <update>
                 <external_id>someexternal</external_id>
+                <date_opened>2010-06-29</date_opened>
             </update>
         </case>""".format(user_id=self.restore_user.user_id)
         check_xml_line_by_line(

@@ -7,7 +7,7 @@ from corehq.apps.sms.models import (OUTGOING, INCOMING, SMS,
     PhoneLoadBalancingMixin, QueuedSMS, PhoneNumber)
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
     log_sms_exception, create_billable_for_sms, get_utcnow)
-from django.db import transaction
+from django.db import transaction, DataError
 from django.conf import settings
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -264,6 +264,11 @@ def store_billable(self, msg):
             )
         except RetryBillableTaskException as e:
             self.retry(exc=e)
+        except DataError:
+            from corehq.util.soft_assert import soft_assert
+            _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
+            _soft_assert(msg.domain < 25, "Domain name too long: " + msg.domain)
+            raise
 
 
 @task(queue='background_queue', ignore_result=True, acks_late=True)

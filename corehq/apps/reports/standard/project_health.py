@@ -53,7 +53,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     active = jsonobject.IntegerProperty()
     performing = jsonobject.IntegerProperty()
 
-    def __init__(self, domain, month, users, has_filter, active_not_deleted_users,
+    def __init__(self, domain, month, selected_users, active_not_deleted_users,
                  performance_threshold, previous_summary=None,
                  delta_high_performers=0, delta_low_performers=0):
         self._previous_summary = previous_summary
@@ -65,9 +65,9 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             user_type__in=['CommCareUser', 'CommCareUser-Deleted'],
             user_id__in=active_not_deleted_users,
         )
-        if has_filter:
+        if selected_users:
             base_queryset = base_queryset.filter(
-                user_id__in=users,
+                user_id__in=selected_users,
             )
 
         self._user_stat_from_malt = (base_queryset
@@ -270,7 +270,9 @@ def build_worksheet(title, headers, rows):
 class ProjectHealthDashboard(ProjectReport):
     slug = 'project_health'
     name = ugettext_lazy("Project Performance")
-    report_template_path = "reports/project_health/project_health_dashboard.html"
+    report_template_path = "reports/async/project_health_dashboard.html"
+    description = ugettext_lazy("A summary of the overall health of your project"
+                                " based on how your users are doing over time.")
 
     fields = [
         'corehq.apps.reports.filters.location.LocationGroupFilter',
@@ -279,7 +281,6 @@ class ProjectHealthDashboard(ProjectReport):
 
     exportable = True
     emailable = True
-    asynchronous = False
 
     @property
     @memoized
@@ -305,7 +306,6 @@ class ProjectHealthDashboard(ProjectReport):
         groupids_param = []
 
         if param_ids:
-            param_ids = param_ids[0].split(',')
             for id in param_ids:
                 if id.startswith("g__"):
                     groupids_param.append(id[3:])
@@ -333,7 +333,6 @@ class ProjectHealthDashboard(ProjectReport):
 
     def get_users_by_filter(self):
         locationids_param, groupids_param = self.parse_params(self.get_group_location_ids())
-
         users_list_by_location = self.get_users_by_location_filter(locationids_param)
         users_list_by_group = self.get_users_by_group_filter(groupids_param)
 
@@ -355,8 +354,7 @@ class ProjectHealthDashboard(ProjectReport):
                 performance_threshold=performance_threshold,
                 month=month_as_date,
                 previous_summary=last_month_summary,
-                users=filtered_users,
-                has_filter=bool(self.get_group_location_ids()),
+                selected_users=filtered_users,
                 active_not_deleted_users=active_not_deleted_users,
             )
             six_month_summary.append(this_month_summary)

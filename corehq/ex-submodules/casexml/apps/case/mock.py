@@ -67,7 +67,7 @@ class CaseBlock(dict):
             case_type=undefined,
             case_name=undefined,
             create=False,
-            date_opened=undefined,
+            date_opened=None,
             update=None,
             close=False,
             index=None,
@@ -99,7 +99,10 @@ class CaseBlock(dict):
         """
         super(CaseBlock, self).__init__()
         self._id = case_id
-        date_modified = date_modified or datetime.utcnow()
+        now = datetime.utcnow()
+        date_modified = date_modified or now
+        date_opened = date_opened or (date_modified.date()\
+            if isinstance(date_modified, datetime) else date_modified)
         update = copy.copy(update) if update else {}
         index = copy.copy(index) if index else {}
 
@@ -115,9 +118,7 @@ class CaseBlock(dict):
             case_name = "" if case_name is CaseBlock.undefined else case_name
             owner_id = "" if owner_id is CaseBlock.undefined else owner_id
         self['update'] = update
-        self['update'].update({
-            'date_opened':                  date_opened
-        })
+
         create_or_update = {
             self.CASE_TYPE:                 case_type,
             'case_name':                    case_name,
@@ -137,6 +138,7 @@ class CaseBlock(dict):
             })
         self['update'].update({
             'external_id':              external_id,
+            'date_opened':              date_opened,
         })
 
         # fail if user specifies both, say, case_name='Johnny' and update={'case_name': 'Johnny'}
@@ -177,7 +179,7 @@ class CaseBlock(dict):
         format_datetime = format_datetime or json_format_datetime
         case = ElementTree.Element('case')
         order = ['case_id', 'date_modified', 'create', 'update', 'close',
-                 self.CASE_TYPE, 'user_id', 'case_name', 'external_id', 'date_opened', 'owner_id']
+                 self.CASE_TYPE, 'user_id', 'case_name', 'external_id', 'owner_id', 'date_opened']
 
         def sort_key(item):
             word, _ = item

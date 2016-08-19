@@ -4,12 +4,14 @@ from django.test import TestCase, SimpleTestCase
 
 from corehq.apps.export.models import (
     ExportItem,
+    StockItem,
     MultipleChoiceItem,
     FormExportDataSchema,
     ExportGroupSchema,
     FormExportInstance,
     TableConfiguration,
     SplitExportColumn,
+    StockFormExportColumn,
     PathNode,
     MAIN_TABLE,
     FormExportInstanceDefaults,
@@ -43,6 +45,15 @@ class TestExportInstanceGeneration(SimpleTestCase):
                             path=[PathNode(name='data'), PathNode(name='question1')],
                             label='Question 1',
                             last_occurrences={cls.app_id: 3},
+                        ),
+                        StockItem(
+                            path=[
+                                PathNode(name='data'),
+                                PathNode(name='balance:question-id'),
+                                PathNode(name='@type'),
+                            ],
+                            label='Stock 1',
+                            last_occurrences={cls.app_id: 3},
                         )
                     ],
                     last_occurrences={cls.app_id: 3},
@@ -58,7 +69,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
                             ],
                             label='Question 2',
                             last_occurrences={cls.app_id: 2},
-                        )
+                        ),
                     ],
                     last_occurrences={cls.app_id: 2},
                 ),
@@ -83,17 +94,19 @@ class TestExportInstanceGeneration(SimpleTestCase):
         )
         self.assertTrue(isinstance(split_column, SplitExportColumn))
 
+        index, stock_column = instance.tables[0].get_column(
+            [PathNode(name='data'), PathNode(name='balance:question-id'), PathNode(name='@type')],
+            'StockItem',
+            None
+        )
+        self.assertTrue(isinstance(stock_column, StockFormExportColumn))
+
         selected = filter(
             lambda column: column.selected,
             instance.tables[0].columns + instance.tables[1].columns
         )
-        shown = filter(
-            lambda column: column.selected,
-            instance.tables[0].columns + instance.tables[1].columns
-        )
         selected_system_props = len([x for x in MAIN_FORM_TABLE_PROPERTIES if x.selected])
-        self.assertEqual(len(selected), 1 + selected_system_props)
-        self.assertEqual(len(shown), 1 + selected_system_props)
+        self.assertEqual(len(selected), 2 + selected_system_props)
 
     def test_generate_instance_from_schema_deleted(self, _, __):
         """Given a higher app_version, all the old questions should not be shown or selected"""

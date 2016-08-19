@@ -633,24 +633,19 @@ class RestoreConfig(object):
             task = get_async_restore_payload.delay(self)
             new_task = True
             # store the task id in cache
-            self.cache.set(self.async_cache_key, task.id, timeout=None)
+            self.cache.set(self.async_cache_key, task.id, timeout=24 * 60 * 60)
         try:
-            response = task.get(timeout=self._get_task_timeout_or_raise(new_task))
+            response = task.get(timeout=self._get_task_timeout(new_task))
         except TimeoutError:
             # return a 202 with progress
             response = AsyncRestoreResponse(task, self.restore_user.username)
 
         return response
 
-    def _get_task_timeout_or_raise(self, new_task):
+    def _get_task_timeout(self, new_task):
         # if this is a new task, wait for INITIAL_ASYNC_TIMEOUT in case
         # this restore completes quickly. otherwise, only wait 1 second for
-        # a response. Integration tests with mobile set the overwrite_cache
-        # flag. This should always return a timeout response.
-        if self.overwrite_cache:
-            # for async restores with overwrite_cache, the first response
-            # should be a Timeout. This is used for testing purposes.
-            raise TimeoutError()
+        # a response.
         return INITIAL_ASYNC_TIMEOUT_THRESHOLD if new_task else 1
 
     def _generate_restore_response(self, async_task=None):

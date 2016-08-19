@@ -3,11 +3,11 @@ from functools import wraps
 import logging
 from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.xml import V2_NAMESPACE
-from corehq import toggles
+from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.app_manager.const import (
     APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
     CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER,
-    SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE,
+    SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE
 )
 from lxml import etree as ET
 from corehq.util.view_utils import get_request
@@ -936,7 +936,7 @@ class XForm(WrappedNode):
                 bind = self.get_bind(path)
                 try:
                     matching_repeat_context = [
-                        rc for rc in repeat_contexts if path.startswith(rc)
+                        rc for rc in repeat_contexts if path.startswith(rc + '/')
                     ][0]
                 except IndexError:
                     matching_repeat_context = None
@@ -948,6 +948,21 @@ class XForm(WrappedNode):
                     "type": "DataBindOnly",
                     "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
                 }
+
+                # Include meta information about the stock entry
+                if data_node.tag_name == 'entry':
+                    parent = next(data_node.xml.iterancestors())
+                    if parent:
+                        is_stock_element = any(map(
+                            lambda namespace: namespace == COMMTRACK_REPORT_XMLNS,
+                            parent.nsmap.values()
+                        ))
+                        if is_stock_element:
+                            question.update({
+                                "stock_entry_attributes": dict(data_node.xml.attrib),
+                                "stock_type_attributes": dict(parent.attrib),
+                            })
+
                 if use_hashtags:
                     hashtag_path = self.hashtag_path(path)
                     question.update({
@@ -1191,12 +1206,9 @@ class XForm(WrappedNode):
         )
 
         # never add pollsensor to a pre-2.14 app
-        app = form.get_app()
-        if app.enable_auto_gps:
+        if form.get_app().enable_auto_gps:
             if form.get_auto_gps_capture():
                 self.add_pollsensor(ref=self.resolve_path("meta/location"))
-                if app.enable_auto_gps_poll_optimization:
-                    self.add_pollsensor(ref=self.resolve_path("meta/location"), event="xforms-revalidate")
             elif self.model_node.findall("{f}bind[@type='geopoint']"):
                 self.add_pollsensor()
 

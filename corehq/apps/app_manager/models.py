@@ -1103,8 +1103,8 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
     def check_paths(self, paths):
         errors = []
         try:
-            valid_paths = {question['value']: question['tag']
-                           for question in self.get_questions(langs=[], include_triggers=True)}
+            questions = self.get_questions(langs=[], include_triggers=True, include_groups=True)
+            valid_paths = {question['value']: question['tag'] for question in questions}
         except XFormException as e:
             errors.append({'type': 'invalid xml', 'message': unicode(e)})
         else:
@@ -1316,6 +1316,37 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                 actions[action_type] = a
         return actions
 
+    @memoized
+    def get_action_type(self):
+
+        if self.actions.close_case.condition.is_active():
+            return 'close'
+        elif (self.actions.open_case.condition.is_active() or
+                self.actions.subcases):
+            return 'open'
+        elif self.actions.update_case.condition.is_active():
+            return 'update'
+        else:
+            return 'none'
+
+    @memoized
+    def get_icon_help_text(self):
+        messages = []
+
+        if self.actions.open_case.condition.is_active():
+            messages.append(_('This form opens a {}').format(self.get_module().case_type))
+
+        if self.actions.subcases:
+            messages.append(_('This form opens a subcase {}').format(', '.join(self.get_subcase_types())))
+
+        if self.actions.close_case.condition.is_active():
+            messages.append(_('This form closes a {}').format(self.get_module().case_type))
+
+        elif self.requires_case():
+            messages.append(_('This form updates a {}').format(self.get_module().case_type))
+
+        return '. '.join(messages)
+
     def active_actions(self):
         if self.get_app().application_version == APP_V1:
             action_types = (
@@ -1469,7 +1500,8 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         Return a list of each case type for which this Form opens a new subcase.
         :return:
         '''
-        return {subcase.case_type for subcase in self.actions.subcases if subcase.close_condition.type == "never"}
+        return {subcase.case_type for subcase in self.actions.subcases
+                if subcase.close_condition.type == "never" and subcase.case_type}
 
     @memoized
     def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
@@ -1734,20 +1766,10 @@ class SortElement(IndexedSchema):
     field = StringProperty()
     type = StringProperty()
     direction = StringProperty()
+    display = DictProperty()
 
-
-class SortOnlyDetailColumn(DetailColumn):
-    """This is a mock type, not intended to be part of a document"""
-
-    @property
-    def _i(self):
-        """
-        assert that SortOnlyDetailColumn never has ._i or .id called
-        since it should never be in an app document
-
-        """
-        raise NotImplementedError()
-
+    def has_display_values(self):
+        return any(s.strip() != '' for s in self.display.values())
 
 class CaseListLookupMixin(DocumentSchema):
     """
@@ -1795,6 +1817,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
 
     # If True, a small tile will display the case name after selection.
     persist_case_context = BooleanProperty()
+    persistent_case_context_xml = StringProperty(default='case_name')
 
     # If True, use case tiles in the case list
     use_case_tiles = BooleanProperty()
@@ -5391,6 +5414,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         extra_types = set()
         if is_usercase_in_use(self.domain):
             extra_types.add(USERCASE_TYPE)
+
         return set(chain(*[m.get_case_types() for m in self.get_modules()])) | extra_types
 
     def has_media(self):

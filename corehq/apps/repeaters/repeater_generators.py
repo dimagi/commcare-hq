@@ -79,7 +79,6 @@ class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
 class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):
 
     def get_payload(self, repeat_record, payload_doc):
-        del payload_doc['actions']
         data = payload_doc.to_api_json(lite=True)
         return json.dumps(data, cls=DjangoJSONEncoder)
 
@@ -132,8 +131,9 @@ class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
 
     def get_payload(self, repeat_record, form):
         from corehq.apps.api.resources.v0_4 import XFormInstanceResource
+        from corehq.apps.api.util import form_to_es_form
         res = XFormInstanceResource()
-        bundle = res.build_bundle(obj=form)
+        bundle = res.build_bundle(obj=form_to_es_form(form))
         return res.serialize(None, res.full_dehydrate(bundle), 'application/json')
 
     @property

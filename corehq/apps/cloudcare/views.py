@@ -114,10 +114,14 @@ class CloudcareMain(View):
             else:
                 # legacy functionality - use the latest build regardless of stars
                 apps = [get_latest_build_doc(domain, app['_id']) for app in apps]
-                apps = [get_app_json(ApplicationBase.wrap(app)) for app in apps if app]
+                apps = [get_app_json(app) for app in apps if app]
 
         else:
-            apps = get_brief_apps_in_domain(domain)
+            # big TODO: write a new apps view for Formplayer, can likely cut most out now
+            if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
+                apps = get_cloudcare_apps(domain)
+            else:
+                apps = get_brief_apps_in_domain(domain)
             apps = [get_app_json(app) for app in apps if app and app.application_version == V2]
             meta = get_meta(request)
             track_clicked_preview_on_hubspot(request.couch_user, request.COOKIES, meta)
@@ -199,7 +203,6 @@ class CloudcareMain(View):
             "apps_raw": apps,
             "preview": preview,
             "maps_api_key": settings.GMAPS_API_KEY,
-            "offline_enabled": toggles.OFFLINE_CLOUDCARE.enabled(request.user.username),
             "sessions_enabled": request.couch_user.is_commcare_user(),
             "use_cloudcare_releases": request.project.use_cloudcare_releases,
             "username": request.user.username,

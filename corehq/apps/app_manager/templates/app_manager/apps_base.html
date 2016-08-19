@@ -9,13 +9,35 @@
 {% block title %}{% trans "Applications" %}{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
-    {% compress css %}
-    {# Explicitly include these because app manager doesn't really do class-based views, can't use the decorators #}
-    <link type="text/css" rel="stylesheet" media="screen" href="{% static 'jquery-ui/themes/redmond/jquery-ui.min.css' %}"/>
-    <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2-3.5.2-legacy/select2.css' %}" />
-    <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2-3.5.2-legacy/select2-bootstrap.css' %}" />
-    <link type="text/less" rel="stylesheet" media="all" href="{% static 'app_manager/less/app_manager.less' %}"/>
-    {% endcompress %}
+  {% compress css %}
+  {# Explicitly include these because app manager doesn't really do class-based views, can't use the decorators #}
+  <link type="text/css" rel="stylesheet" media="screen" href="{% static 'jquery-ui/themes/redmond/jquery-ui.min.css' %}"/>
+  <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2-3.5.2-legacy/select2.css' %}" />
+  <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2-3.5.2-legacy/select2-bootstrap.css' %}" />
+  {% endcompress %}
+
+  {% if less_debug %}
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'app_manager/less/app_manager.debug.less' %}" />
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'app_manager/less/preview_app.debug.less' %}"/>
+  {% else %}
+  {% compress css %}
+      <link type="text/less"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'app_manager/less/app_manager.less' %}" />
+      <link type="text/less"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'app_manager/less/preview_app.less' %}"/>
+  {% endcompress %}
+  {% endif %}
+
 {% endblock %}
 
 {% block js %}{{ block.super }}
@@ -42,6 +64,9 @@
     <script src="{% static 'style/js/ui-element.js' %}"></script>
     <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
+    {% if request|toggle_enabled:"PREVIEW_APP" %}
+    <script src="{% static 'app_manager/js/preview_app.js' %}"></script>
+    {% endif %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -54,6 +79,9 @@
         }).on('hide.bs.modal', function () {
             window.location = "{% url "corehq.apps.app_manager.views.view_app" domain %}";
         });
+        {% if request|toggle_enabled:"PREVIEW_APP" %}
+        hqImport('app_manager/js/preview_app.js').initializePreviewButton();
+        {% endif %}
     });
     $(window).load(function () {
        $('.app-manager-content').removeClass('hide');
@@ -71,6 +99,9 @@
 {% endblock %}
 
 {% block page_content %}
+{% if request|toggle_enabled:"PREVIEW_APP" %}
+{% include 'app_manager/partials/preview_app.html'%}
+{% endif %}
 <div class="app-manager-content hide">
     {% if app %}
         {% if error %}

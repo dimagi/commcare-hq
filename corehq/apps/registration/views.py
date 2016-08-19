@@ -15,18 +15,18 @@ import sys
 from django.views.generic.base import TemplateView, View
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 
+from corehq.apps.analytics import ab_tests
 from corehq.apps.analytics.tasks import (
     track_workflow,
     track_confirmed_account_on_hubspot,
     track_clicked_signup_on_hubspot,
     update_hubspot_properties
 )
-from corehq.apps.analytics.utils import get_meta
-from corehq.apps.analytics import ab_tests
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.util import save_xform
+from corehq.apps.analytics.utils import get_meta
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.exceptions import NameUnavailableException
@@ -51,7 +51,7 @@ def get_domain_context():
 
 
 def registration_default(request):
-    return redirect(register_user)
+    return redirect(UserRegistrationView.urlname)
 
 
 def _get_url_with_email(url, email):
@@ -72,12 +72,24 @@ class ProcessRegistrationView(JSONResponseMixin, View):
             username=reg_form.cleaned_data['email'],
             password=reg_form.cleaned_data['password']
         )
+        if 'phone_number' in reg_form.cleaned_data and reg_form.cleaned_data['phone_number']:
+            web_user = WebUser.get_by_username(new_user.username)
+            web_user.phone_numbers.append(reg_form.cleaned_data['phone_number'])
+            web_user.save()
         track_workflow(new_user.email, "Requested new account")
         login(self.request, new_user)
 
+    @property
+    @memoized
+    def ab(self):
+        return ab_tests.ABTest(ab_tests.NEW_USER_NUMBER, self.request)
+
     @allow_remote_invocation
     def register_new_user(self, data):
-        reg_form = RegisterNewWebUserForm(data['data'])
+        reg_form = RegisterNewWebUserForm(
+            data['data'],
+            show_number=(self.ab.version == ab_tests.NEW_USER_NUMBER_OPTION_SHOW_NUM)
+        )
         if reg_form.is_valid():
             self._create_new_account(reg_form)
             try:
@@ -115,8 +127,8 @@ class ProcessRegistrationView(JSONResponseMixin, View):
         }
 
 
-class NewUserRegistrationView(BasePageView):
-    urlname = 'register_new_user'
+class UserRegistrationView(BasePageView):
+    urlname = 'register_user'
     template_name = 'registration/register_new_user.html'
 
     @use_blazy
@@ -131,122 +143,41 @@ class NewUserRegistrationView(BasePageView):
                 return redirect("registration_domain")
             else:
                 return redirect("homepage")
-        response = super(NewUserRegistrationView, self).dispatch(request, *args, **kwargs)
-        if self.ab.version != ab_tests.NEW_USER_SIGNUP_OPTION_NEW:
-            response = HttpResponseRedirect(
-                _get_url_with_email(reverse('register_user'), self.prefilled_email)
-            )
+        response = super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
         self.ab.update_response(response)
         return response
 
-    @property
-    @memoized
-    def ab(self):
-        return ab_tests.ABTest(ab_tests.NEW_USER_SIGNUP, self.request)
+    def get(self, request, *args, **kwargs):
+        if self.prefilled_email:
+            meta = get_meta(request)
+            track_clicked_signup_on_hubspot.delay(self.prefilled_email, request.COOKIES, meta)
+        return super(UserRegistrationView, self).get(request, *args, **kwargs)
 
     @property
     def prefilled_email(self):
         return self.request.GET.get('e', '')
 
     @property
+    @memoized
+    def ab(self):
+        return ab_tests.ABTest(ab_tests.NEW_USER_NUMBER, self.request)
+
+    @property
     def page_context(self):
         return {
             'reg_form': RegisterNewWebUserForm(
-                initial={'email': self.prefilled_email}
+                initial={'email': self.prefilled_email},
+                show_number=(self.ab.version == ab_tests.NEW_USER_NUMBER_OPTION_SHOW_NUM)
             ),
             'reg_form_defaults': {'email': self.prefilled_email} if self.prefilled_email else {},
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+            'show_number': (self.ab.version == ab_tests.NEW_USER_NUMBER_OPTION_SHOW_NUM),
             'ab_test': self.ab.context,
         }
 
     @property
     def page_url(self):
         return reverse(self.urlname)
-
-
-@transaction.atomic
-def register_user(request):
-    prefilled_email = request.POST.get('e', '')
-    context = get_domain_context()
-
-    if request.user.is_authenticated():
-        # Redirect to a page which lets user choose whether or not to create a new account
-        domains_for_user = Domain.active_for_user(request.user)
-        if len(domains_for_user) == 0:
-            return redirect("registration_domain")
-        else:
-            return redirect("homepage")
-    else:
-        ab = ab_tests.ABTest(ab_tests.NEW_USER_SIGNUP, request)
-        if ab.version != ab_tests.NEW_USER_SIGNUP_OPTION_OLD:
-            # TODO: deal with this, if this test is still going on when PR is merged
-            response = HttpResponseRedirect(
-                _get_url_with_email(reverse(NewUserRegistrationView.urlname), prefilled_email)
-            )
-            ab.update_response(response)
-            return response
-
-        if request.method == 'POST' and request.POST.get('prelogin_redirect', '') != '1':
-            form = NewWebUserRegistrationForm(request.POST)
-            if form.is_valid():
-                activate_new_user(form, ip=get_ip(request))
-                new_user = authenticate(username=form.cleaned_data['email'],
-                                        password=form.cleaned_data['password'])
-
-                track_workflow(new_user.email, "Requested new account")
-
-                login(request, new_user)
-
-                requested_domain = form.cleaned_data['hr_name']
-                if form.cleaned_data['create_domain']:
-                    try:
-                        requested_domain = request_new_domain(
-                            request, form, is_new_user=True)
-                        if form.cleaned_data['xform']:
-                            lang = 'en'
-                            app = Application.new_app(requested_domain, "Untitled Application",
-                                                      application_version=APP_V2)
-                            module = Module.new_module(_("Untitled Module"), lang)
-                            app.add_module(module)
-                            save_xform(app, app.new_form(0, "Untitled Form", lang), form.cleaned_data['xform'])
-                            app.save()
-                            web_user = WebUser.get_by_username(new_user.email)
-                            if web_user:
-                                update_hubspot_properties(web_user, {
-                                    'signup_via_demo': 'yes',
-                                })
-                    except NameUnavailableException:
-                        context.update({
-                            'current_page': {'page_name': _('Oops!')},
-                            'error_msg': _('Project name already taken - please try another'),
-                            'show_homepage_link': 1
-                        })
-                        return render(request, 'error.html', context)
-
-                context.update({
-                    'requested_domain': requested_domain,
-                    'track_domain_registration': True,
-                    'current_page': {'page_name': _('Confirmation Email Sent')},
-                })
-                return render(request, 'registration/confirmation_sent.html', context)
-            context.update({'create_domain': form.cleaned_data['create_domain']})
-        else:
-            form = NewWebUserRegistrationForm(
-                initial={'email': prefilled_email, 'create_domain': True, 'xform': request.POST.get('xform', '')})
-            context.update({'create_domain': True})
-            meta = get_meta(request)
-            track_clicked_signup_on_hubspot(prefilled_email, request.COOKIES, meta)
-
-        context.update({
-            'form': form,
-            'current_page': {'page_name': _('Create an Account')},
-            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
-            'is_register_user': True,
-            'ab_test': ab.context,
-        })
-        response = render(request, 'registration/create_new_user.html', context)
-        ab.update_response(response)
-        return response
 
 
 class RegisterDomainView(TemplateView):

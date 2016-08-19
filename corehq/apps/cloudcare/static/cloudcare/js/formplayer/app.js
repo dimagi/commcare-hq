@@ -18,6 +18,8 @@ FormplayerFrontend.on("before:start", function () {
 
         regions: {
             main: "#menu-region",
+            breadcrumb: "#breadcrumb-region",
+            phoneModeNavigation: '#phone-mode-navigation',
         },
     });
 
@@ -42,9 +44,12 @@ FormplayerFrontend.reqres.setHandler('resourceMap', function (resource_path, app
     var currentApp = FormplayerFrontend.request("appselect:getApp", app_id);
     if (resource_path.substring(0, 7) === 'http://') {
         return resource_path;
-    } else if (currentApp.attributes.hasOwnProperty("multimedia_map") &&
-        currentApp.attributes.multimedia_map.hasOwnProperty(resource_path)) {
-        var resource = currentApp.attributes.multimedia_map[resource_path];
+    } else if (!_.isEmpty(currentApp.get("multimedia_map"))) {
+        var resource = currentApp.get('multimedia_map')[resource_path];
+        if (!resource) {
+            console.warn('Unable to find resource ' + resource_path + 'in multimedia map');
+            return;
+        }
         var id = resource.multimedia_id;
         var media_type = resource.media_type;
         var name = _.last(resource_path.split('/'));
@@ -67,16 +72,28 @@ FormplayerFrontend.reqres.setHandler('clearMenu', function () {
     $('#menu-region').html("");
 });
 
-$(document).bind("ajaxStart", function(){
+$(document).bind("ajaxStart", function () {
     $(".formplayer-request").addClass('formplayer-requester-disabled');
     tfLoading();
-}).bind("ajaxStop", function() {
+}).bind("ajaxStop", function () {
     $(".formplayer-request").removeClass('formplayer-requester-disabled');
     tfLoadingComplete();
 });
 
-FormplayerFrontend.reqres.setHandler('error', function(errorMessage) {
+FormplayerFrontend.reqres.setHandler('showError', function (errorMessage) {
     showError(errorMessage, $("#cloudcare-notifications"), 10000);
+});
+
+FormplayerFrontend.reqres.setHandler('showSuccess', function(successMessage) {
+    showSuccess(successMessage, $("#cloudcare-notifications"), 10000);
+});
+
+FormplayerFrontend.reqres.setHandler('handleNotification', function(notification) {
+    if(notification.error){
+        FormplayerFrontend.request('showError', notification.message);
+    } else{
+        FormplayerFrontend.request('showSuccess', notification.message);
+    }
 });
 
 FormplayerFrontend.reqres.setHandler('startForm', function (data) {
@@ -94,14 +111,24 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
             FormplayerFrontend.request("clearForm");
-            FormplayerFrontend.trigger("apps:currentApp");
             showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
+
+            if(resp.nextScreen !== null && resp.nextScreen !== undefined) {
+                FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
+            } else {
+                FormplayerFrontend.trigger("apps:currentApp");
+            }
         } else {
             showError(resp.output, $("#cloudcare-notifications"));
         }
         // TODO form linking
     };
     data.formplayerEnabled = true;
+    data.resourceMap = function(resource_path) {
+        var urlObject = Util.currentUrlToObject();
+        var appId = urlObject.appId;
+        return FormplayerFrontend.request('resourceMap', resource_path, appId);
+    };
     var sess = new WebFormSession(data);
     sess.renderFormXml(data, $('#webforms'));
 });
@@ -117,7 +144,15 @@ FormplayerFrontend.on("start", function (options) {
         Backbone.history.start();
         // will be the same for every domain. TODO: get domain/username/pass from django
         if (this.getCurrentRoute() === "") {
-            FormplayerFrontend.trigger("apps:list", options.apps);
+            if (options.phoneMode) {
+                FormplayerFrontend.regions.phoneModeNavigation.show(
+                    new FormplayerFrontend.Navigation.PhoneNavigation()
+                );
+
+                FormplayerFrontend.trigger("app:singleApp", options.apps[0]['_id']);
+            } else {
+                FormplayerFrontend.trigger("apps:list", options.apps);
+            }
         }
     }
 });

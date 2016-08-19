@@ -1,8 +1,12 @@
+from datetime import datetime
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.modules import to_function
+from toggle.shortcuts import set_toggle
 
+from corehq.toggles import NEW_EXPORTS, NAMESPACE_DOMAIN, ALLOW_USER_DEFINED_EXPORT_COLUMNS
 from corehq.util.log import with_progress_bar
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 from corehq.apps.reports.dbaccessors import (
     stale_get_exports_json,
     stale_get_export_count,
@@ -10,6 +14,10 @@ from corehq.apps.reports.dbaccessors import (
 from corehq.apps.reports.models import (
     FormExportSchema,
     CaseExportSchema,
+)
+from corehq.apps.app_manager.dbaccessors import (
+    get_app,
+    get_brief_apps_in_domain,
 )
 from .exceptions import SkipConversion
 from .const import (
@@ -35,19 +43,28 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
         FormExportInstance,
         CaseExportDataSchema,
         CaseExportInstance,
-        PathNode,
         ExportMigrationMeta,
         ConversionMeta,
+        TableConfiguration,
     )
 
-    # Build a new schema and instance
-    migration_meta = ExportMigrationMeta(
-        saved_export_id=saved_export._id,
-        domain=domain,
-    )
     schema = None
     instance_cls = None
     export_type = saved_export.type
+
+    is_remote_app_migration = _is_remote_app_conversion(
+        domain,
+        getattr(saved_export, 'app_id', None),
+        export_type,
+    )
+    migration_meta = ExportMigrationMeta(
+        saved_export_id=saved_export._id,
+        domain=domain,
+        export_type=export_type,
+        is_remote_app_migration=is_remote_app_migration,
+        migration_date=datetime.utcnow(),
+    )
+    # Build a new schema and instance
     if export_type == FORM_EXPORT:
         instance_cls = FormExportInstance
         schema = FormExportDataSchema.generate_schema_from_builds(
@@ -73,27 +90,37 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
         instance.split_multiselects = getattr(saved_export, 'split_multiselects', False)
         instance.include_errors = getattr(saved_export, 'include_errors', False)
 
+    # The SavedExportSchema only saves selected columns so default all the
+    # selections to False unless found in the SavedExportSchema (legacy)
+    for table in instance.tables:
+        table.selected = False
+        for column in table.columns:
+            column.selected = False
+
     # With new export instance, copy over preferences from previous export
     for old_table in saved_export.tables:
         table_path = _convert_index_to_path_nodes(old_table.index)
         new_table = instance.get_table(_convert_index_to_path_nodes(old_table.index))
-        if new_table:
-            new_table.label = old_table.display
-            new_table.selected = True
-            migration_meta.converted_tables.append(ConversionMeta(
-                path=old_table.index,
-            ))
-        else:
-            migration_meta.skipped_tables.append(ConversionMeta(
-                path=old_table.index,
-                failure_reason='Not found in new export',
-            ))
-            continue
+        if not new_table:
+            if not is_remote_app_migration:
+                migration_meta.skipped_tables.append(ConversionMeta(
+                    path=old_table.index,
+                    failure_reason='Not found in new export',
+                ))
+                continue
 
-        # The SavedExportSchema only saves selected columns so default all the selections to False
-        # unless found in the SavedExportSchema (legacy)
-        for new_column in new_table.columns:
-            new_column.selected = False
+            # Create a user defined TableConfiguration
+            new_table = TableConfiguration(
+                is_user_defined=True,
+                path=_convert_index_to_path_nodes(old_table.index),
+            )
+            instance.tables.append(new_table)
+
+        new_table.label = old_table.display
+        new_table.selected = True
+        migration_meta.converted_tables.append(ConversionMeta(
+            path=old_table.index,
+        ))
 
         for column in old_table.columns:
             info = []
@@ -102,20 +129,8 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
 
             try:
                 if column.doc_type == 'StockExportColumn':
-                    # Handle stock export column separately because it's a messy edge since
-                    # it doesn't have a unique index (_id).
                     info.append('Column is a stock column')
-
-                    index, new_column = new_table.get_column(
-                        [PathNode(name='stock')],
-                        'ExportItem',
-                        None,
-                    )
-                    if new_column:
-                        new_column.selected = True
-                        new_column.label = column.display
-                    else:
-                        raise SkipConversion('StockExportColumn not found in new export')
+                    _convert_stock_column(new_table, column)
                     continue
 
                 if column.transform:
@@ -149,29 +164,22 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
                         transform,
                     ))
 
-                guess_types = [
-                    'ScalarItem',
-                    'MultipleChoiceItem',
-                    'GeopointItem',
-                    'MultiMediaItem',
-                    'ExportItem',
-                ]
-                # Since old exports had no concept of item type, we just guess all
-                # the types and see if there are any matches.
-                for guess_type in guess_types:
-                    index, new_column = new_table.get_column(
-                        column_path,
-                        guess_type,
-                        _strip_deid_transform(transform),
-                    )
+                new_column = _get_normal_column(new_table, column_path, transform)
+
+                # If we can't find the column in the current table
+                # look in every other table to see if the column is a repeat
+                # that did not receive more than one entry
+                if not new_column:
+                    new_column = _get_for_single_node_repeat(instance.tables, column_path, transform)
                     if new_column:
-                        info.append('Column is guessed to be of type: {}'.format(
-                            guess_type,
-                        ))
-                        break
+                        info.append('Column is for a repeat with just a single instance')
 
                 if not new_column:
                     raise SkipConversion('Column not found in new schema')
+                else:
+                    info.append('Column is guessed to be of type: {}'.format(
+                        new_column.item.doc_type,
+                    ))
 
                 new_column.label = column.display
                 new_column.selected = True
@@ -180,12 +188,17 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
                     new_column.deid_transform = transform
                     info.append('Column has deid_transform: {}'.format(transform))
             except SkipConversion, e:
-                migration_meta.skipped_columns.append(ConversionMeta(
-                    path=column.index,
-                    failure_reason=str(e),
-                    info=info,
-                ))
-                continue
+                if is_remote_app_migration:
+                    # In the event that we skip a column and it's a remote application,
+                    # just add a user defined column
+                    new_column = _create_user_defined_column(column, column_path, transform)
+                    new_table.columns.append(new_column)
+                else:
+                    migration_meta.skipped_columns.append(ConversionMeta(
+                        path=column.index,
+                        failure_reason=str(e),
+                        info=info,
+                    ))
             else:
                 migration_meta.converted_columns.append(ConversionMeta(
                     path=column.index,
@@ -216,6 +229,18 @@ def _is_repeat(index):
     return index.startswith('#') and index.endswith('#') and index != '#'
 
 
+def _create_user_defined_column(old_column, column_path, transform):
+    from .models import UserDefinedExportColumn
+
+    column = UserDefinedExportColumn(
+        label=old_column.display,
+        selected=True,
+        deid_transform=transform,
+        custom_path=column_path,
+    )
+    return column
+
+
 def _strip_repeat_index(index):
     index = index.strip('#.')
     index = index.replace('#.', '')  # For nested repeats
@@ -236,7 +261,32 @@ def _convert_transform(serializable_transform):
     return None
 
 
+def _get_for_single_node_repeat(tables, column_path, transform):
+    """
+    This function takes a column path and looks for it in all the other tables
+    """
+    from .models import MAIN_TABLE
+
+    column_dot_path = '.'.join(map(lambda node: node.name, column_path))
+    for new_table in tables:
+        if new_table.path == MAIN_TABLE:
+            continue
+
+        table_dot_path = '.'.join(map(lambda node: node.name, new_table.path))
+        if column_dot_path.startswith(table_dot_path + '.'):
+            new_column_path = new_table.path + column_path[len(new_table.path):]
+        else:
+            continue
+        new_column = _get_normal_column(new_table, new_column_path, transform)
+        if new_column:
+            return new_column
+
+
 def _get_system_property(index, transform, export_type, table_path):
+    """
+    Given an old style export index and a transform, returns new style list of PathNodes
+    and transform
+    """
     from .models import (
         MAIN_TABLE,
         CASE_HISTORY_TABLE,
@@ -288,6 +338,53 @@ def _convert_index_to_path_nodes(index):
         return [PathNode(name=n) for n in index.split('.')]
 
 
+def _convert_stock_column(new_table, old_column):
+    from .models import PathNode
+    # Handle stock export column separately because it's a messy edge since
+    # it doesn't have a unique index (_id).
+
+    index, new_column = new_table.get_column(
+        [PathNode(name='stock')],
+        'ExportItem',
+        None,
+    )
+    if new_column:
+        new_column.selected = True
+        new_column.label = old_column.display
+    else:
+        raise SkipConversion('StockExportColumn not found in new export')
+
+
+def _get_normal_column(new_table, column_path, transform):
+    guess_types = [
+        'ScalarItem',
+        'MultipleChoiceItem',
+        'GeopointItem',
+        'MultiMediaItem',
+        'ExportItem',
+    ]
+    # Since old exports had no concept of item type, we just guess all
+    # the types and see if there are any matches.
+    for guess_type in guess_types:
+        index, new_column = new_table.get_column(
+            column_path,
+            guess_type,
+            _strip_deid_transform(transform),
+        )
+        if new_column:
+            break
+    return new_column
+
+
+def _is_remote_app_conversion(domain, app_id, export_type):
+    if app_id and export_type == FORM_EXPORT:
+        app = get_app(domain, app_id)
+        return app.is_remote_app()
+    elif export_type == CASE_EXPORT:
+        apps = get_brief_apps_in_domain(domain, include_remote=True)
+        return any(map(lambda app: app.is_remote_app(), apps))
+
+
 def revert_new_exports(new_exports):
     """
     Takes a list of new style ExportInstance and marks them as deleted as well as restoring
@@ -328,8 +425,27 @@ def migrate_domain(domain, dryrun=False):
                 print 'Failed parsing {}: {}'.format(old_export['_id'], e)
             else:
                 metas.append(migration_meta)
+
+    if not dryrun:
+        set_toggle(NEW_EXPORTS.slug, domain, True, namespace=NAMESPACE_DOMAIN)
+        toggle_js_domain_cachebuster.clear(domain)
+
+    # Remote app migrations must have access to UserDefined columns and tables
+    if any(map(lambda meta: meta.is_remote_app_migration, metas)):
+        set_toggle(
+            ALLOW_USER_DEFINED_EXPORT_COLUMNS.slug,
+            domain,
+            True,
+            namespace=NAMESPACE_DOMAIN
+        )
+        toggle_js_domain_cachebuster.clear(domain)
+
     for meta in metas:
-        print 'Export information for export: {}'.format(meta.saved_export_id)
+        print ''
+        print '***' * 15
+        print '* Export information for export: {}'.format(meta.saved_export_id)
+        print '***' * 15
+        print ''
 
         if meta.skipped_tables:
             print '## Skipped tables: ##'
