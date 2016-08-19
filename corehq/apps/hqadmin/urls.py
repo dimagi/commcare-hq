@@ -12,7 +12,8 @@ from .views import (
     CallcenterUCRCheck,
     DimagisphereView,
     DownloadGIRView,
-    VCMMigrationView)
+    VCMMigrationView,
+    ReprocessMessagingCaseUpdatesView)
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 
@@ -54,6 +55,8 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^dimagisphere/$',
         require_superuser(DimagisphereView.as_view(template_name='hqadmin/dimagisphere/form_feed.html')),
         name='dimagisphere'),
+    url(r'^reprocess_messaging_case_updates/$', ReprocessMessagingCaseUpdatesView.as_view(),
+        name=ReprocessMessagingCaseUpdatesView.urlname),
     url(r'^top_five_projects_by_country/$', 'top_five_projects_by_country', name='top_five_projects_by_country'),
     AdminReportDispatcher.url_pattern(),
 )

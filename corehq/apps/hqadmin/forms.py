@@ -1,10 +1,10 @@
 import re
-from corehq.apps.style.crispy import FormActions
+from corehq.apps.style.crispy import FormActions, FieldWithHelpBubble
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from django import forms
 from django.core.exceptions import ValidationError
-
+from django.utils.translation import ugettext as _
 from corehq.apps.users.models import CommCareUser
 
 
@@ -62,6 +62,40 @@ class AuthenticateAsForm(forms.Form):
                 crispy.Submit(
                     'authenticate_as',
                     'Authenticate As'
+                )
+            )
+        )
+
+
+class ReprocessMessagingCaseUpdatesForm(forms.Form):
+    case_ids = forms.CharField(widget=forms.Textarea)
+
+    def clean_case_ids(self):
+        value = self.cleaned_data.get('case_ids', '')
+        value = value.split()
+        if not value:
+            raise ValidationError(_("This field is required."))
+        return set(value)
+
+    def __init__(self, *args, **kwargs):
+        super(ReprocessMessagingCaseUpdatesForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_class = "form-horizontal"
+        self.helper.form_id = 'reprocess-messaging-updates'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8'
+        self.helper.layout = crispy.Layout(
+            FieldWithHelpBubble(
+                'case_ids',
+                help_bubble_text=_("Enter a space-separated list of case ids to reprocess. "
+                    "Reminder rules will be rerun for the case, and the case's phone "
+                    "number entries will be synced."),
+            ),
+            FormActions(
+                crispy.Submit(
+                    'submit',
+                    'Submit'
                 )
             )
         )
