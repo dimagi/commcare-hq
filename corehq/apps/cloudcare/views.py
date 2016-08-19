@@ -114,7 +114,7 @@ class CloudcareMain(View):
             else:
                 # legacy functionality - use the latest build regardless of stars
                 apps = [get_latest_build_doc(domain, app['_id']) for app in apps]
-                apps = [get_app_json(ApplicationBase.wrap(app)) for app in apps if app]
+                apps = [get_app_json(app) for app in apps if app]
 
         else:
             # big TODO: write a new apps view for Formplayer, can likely cut most out now

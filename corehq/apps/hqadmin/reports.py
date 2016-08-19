@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import json
 
 from corehq.apps.builds.utils import get_all_versions
-from corehq.apps.es import FormES
+from corehq.apps.es import FormES, filters
 from corehq.apps.es.aggregations import NestedTermAggregationsHelper, AggregationTerm, SumAggregation
 from corehq.apps.style.decorators import (
     use_nvd3,
@@ -542,6 +542,15 @@ FACET_MAPPING = [
     ]),
 ]
 
+DIMAGISPHERE_FACET_MAPPING = [
+    ("Location", True, [
+        {"facet": "deployment.countries.exact", "name": "Country", "expanded": True},
+    ]),
+    ("Type", True, [
+        {"facet": "internal.area.exact", "name": "Sector", "expanded": True},
+    ]),
+]
+
 
 class AdminReport(GenericTabularReport):
     dispatcher = AdminReportDispatcher
@@ -839,6 +848,7 @@ class AdminDomainMapReport(AdminDomainStatsReport):
     name = ugettext_noop('Project Map')
     facet_title = ugettext_noop("Project Facets")
     search_for = ugettext_noop("projects...")
+    es_facet_mapping = DIMAGISPHERE_FACET_MAPPING
     base_template = "hqadmin/project_map.html"
 
     exportable = False
@@ -871,25 +881,43 @@ class AdminDomainMapReport(AdminDomainStatsReport):
                     dom.get('internal', {}).get('sub_area') or _('No info')
                 ]
 
-    def _calc_num_active_users_per_country(self):
+    def _calc_num_active_users_per_country(self, filters):
         active_users_per_country = (NestedTermAggregationsHelper(
-                                    base_query=DomainES(),
+                                    base_query=DomainES().filter(filters),
                                     terms=[AggregationTerm('countries', 'deployment.countries')],
                                     bottom_level_aggregation=SumAggregation('users', 'cp_n_active_cc_users')
                                     ).get_data())
         return active_users_per_country
 
-    def _calc_num_projs_per_countries(self):
+    def _calc_num_projs_per_countries(self, filters):
         num_projects_by_country = (DomainES()
+                                   .filter(filters)
                                    .terms_aggregation('deployment.countries', 'countries')
                                    .size(0).run().aggregations.countries.counts_by_bucket())
         return num_projects_by_country
 
+    def parse_params(self, es_params):
+        es_filters = {}
+        country_params = es_params.get('deployment.countries.exact')
+        sector_params = es_params.get('internal.area.exact')
+
+        if country_params and sector_params:
+            es_filters = (filters.AND(
+                            filters.term("deployment.countries", country_params),
+                            filters.term("internal.area", sector_params[0].lower())))
+        elif country_params:
+            es_filters = filters.term("deployment.countries", country_params)
+        elif sector_params:
+            es_filters = filters.term("internal.area", sector_params[0].lower())
+
+        return es_filters
+
     @property
     def json_dict(self):
         json = super(AdminDomainMapReport, self).json_dict
-        json['users_per_country'] = dict(self._calc_num_active_users_per_country())
-        json['country_projs_count'] = self._calc_num_projs_per_countries()
+        params = self.parse_params(self.es_params)
+        json['users_per_country'] = dict(self._calc_num_active_users_per_country(params))
+        json['country_projs_count'] = self._calc_num_projs_per_countries(params)
         return json
 
 class AdminUserReport(AdminFacetedReport):

@@ -1822,32 +1822,33 @@ class TestConfigurableReportDataResource(APIResourceTest):
         super(TestConfigurableReportDataResource, cls).setUpClass()
 
         case_type = "my_case_type"
-        field_name = "my_field"
+        cls.field_name = "my_field"
+        cls.case_property_values = ["foo", "foo", "bar", "baz"]
 
         cls.cases = []
-        for val in ["foo", "foo", "bar", "baz"]:
+        for val in cls.case_property_values:
             id = uuid.uuid4().hex
             case_block = CaseBlock(
                 create=True,
                 case_id=id,
                 case_type=case_type,
-                update={field_name: val},
+                update={cls.field_name: val},
             ).as_xml()
             post_case_blocks([case_block], {'domain': cls.domain.name})
             cls.cases.append(CommCareCase.get(id))
 
         cls.report_columns = [
             {
-                "column_id": field_name,
+                "column_id": cls.field_name,
                 "type": "field",
-                "field": field_name,
+                "field": cls.field_name,
                 "aggregation": "simple",
             }
         ]
         cls.report_filters = [
             {
                 'datatype': 'string',
-                'field': field_name,
+                'field': cls.field_name,
                 'type': 'dynamic_choice_list',
                 'slug': 'my_field_filter',
             }
@@ -1866,16 +1867,28 @@ class TestConfigurableReportDataResource(APIResourceTest):
                 },
                 "property_value": case_type,
             },
-            configured_indicators=[{
-                "type": "expression",
-                "expression": {
-                    "type": "property_name",
-                    "property_name": field_name
+            configured_indicators=[
+                {
+                    "type": "expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": cls.field_name
+                    },
+                    "column_id": cls.field_name,
+                    "display_name": cls.field_name,
+                    "datatype": "string"
                 },
-                "column_id": field_name,
-                "display_name": field_name,
-                "datatype": "string"
-            }],
+                {
+                    "type": "expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "opened_by"
+                    },
+                    "column_id": "opened_by",
+                    "display_name": "opened_by",
+                    "datatype": "string"
+                },
+            ],
         )
         cls.data_source.validate()
         cls.data_source.save()
@@ -1899,6 +1912,34 @@ class TestConfigurableReportDataResource(APIResourceTest):
 
         self.assertEqual(response_dict["total_records"], len(self.cases))
         self.assertEqual(len(response_dict["data"]), len(self.cases))
+
+    def test_expand_column_infos(self):
+
+        aggregated_report = ReportConfiguration(
+            domain=self.domain.name,
+            config_id=self.data_source._id,
+            aggregation_columns=["opened_by"],
+            columns=[
+                {
+                    "column_id": self.field_name,
+                    "type": "field",
+                    "field": self.field_name,
+                    "aggregation": "expand",
+                }
+            ],
+            filters=[],
+        )
+        aggregated_report.save()
+
+        response = self.client.get(
+            self.single_endpoint(aggregated_report._id))
+        response_dict = json.loads(response.content)
+        columns = response_dict["columns"]
+
+        for c in columns:
+            self.assertIn("expand_column_value", c)
+        self.assertSetEqual(set(self.case_property_values), {c['expand_column_value'] for c in columns})
+
 
     def test_page_size(self):
         response = self.client.get(

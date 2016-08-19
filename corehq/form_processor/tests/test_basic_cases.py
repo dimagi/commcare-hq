@@ -7,12 +7,17 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import check_user_has_case
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.tests.utils import create_restore_user
+from casexml.apps.phone.restore import restore_cache_key
+from casexml.apps.phone.const import RESTORE_CACHE_KEY_PREFIX
 from corehq.apps.domain.models import Domain
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.form_processor.backends.couch.update_strategy import coerce_to_datetime
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
+
 
 DOMAIN = 'fundamentals'
 
@@ -266,6 +271,22 @@ class FundamentalCaseTests(TestCase):
         # update the date_opened to date type to check for value on restore
         case['update']['date_opened'] = case['update']['date_opened'].date()
         check_user_has_case(self, user, case.as_xml())
+
+    @run_with_all_backends
+    def test_restore_caches_cleared(self):
+        cache = get_redis_default_cache()
+        cache_key = restore_cache_key(RESTORE_CACHE_KEY_PREFIX, 'user_id', version="2.0")
+        cache.set(cache_key, 'test-thing')
+        self.assertEqual(cache.get(cache_key), 'test-thing')
+        form = """
+            <data xmlns="http://openrosa.org/formdesigner/blah">
+                <meta>
+                    <userID>{user_id}</userID>
+                </meta>
+            </data>
+        """
+        submit_form_locally(form.format(user_id='user_id'), DOMAIN)
+        self.assertIsNone(cache.get(cache_key))
 
 
 def _submit_case_block(create, case_id, **kwargs):
