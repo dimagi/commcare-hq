@@ -47,9 +47,15 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header row">
-            <h4 class="modal-title table center" id="modal-title">
-              <span>Projects in <span class="country-name" data-bind="text: selectedCountry"></span></span>
-            </h4>
+            <div class="col-md-2"></div>
+            <div class="col-md-8 center">
+                <h4 class="modal-title table center" id="modal-title">
+                    <span>Projects in <span class="country-name" data-bind="text: selectedCountry"></span> with the Most Users</span>
+                </h4>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
         </div>
         <div class="modal-body">
           <div class="table">
