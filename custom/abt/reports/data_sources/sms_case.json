@@ -6,6 +6,7 @@
     "airstanzania",
     "abtmali",
     "airsmadagascar",
+    "airsmozambique",
     "airsethiopia"
   ],
   "config": {
@@ -275,6 +276,33 @@
         "expression": {
           "default": 0,
           "cases": {
+            "mozambique": {
+              "default": 0,
+              "cases": {
+                "derre": 16555,
+                "milange": 91807,
+                "mocuba": 140365,
+                "molumbo": 44715,
+                "morrumbala": 97861,
+                "quelimane": 76936
+              },
+              "type": "switch",
+              "switch_on": {
+                "value_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "user_data",
+                    "level_1_name"
+                  ]
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareUser",
+                "doc_id_expression": {
+                  "type": "property_name",
+                  "property_name": "owner_id"
+                }
+              }
+            },
             "Rwanda": {
               "default": 0,
               "cases": {
@@ -468,6 +496,50 @@
         "expression": {
           "default": 0,
           "cases": {
+            "mozambique": {
+              "default": 0,
+              "cases": {
+                "alto_benfica": 9933,
+                "chire": 21069,
+                "corromana": 19652,
+                "dachudua_majaua": 16805,
+                "derre": 13054,
+                "dulanha": 10084,
+                "guerissa": 3501,
+                "liciro": 12042,
+                "madal": 10350.25,
+                "maquival": 17310,
+                "megaza": 7499,
+                "milange_sede": 52876,
+                "mocuba_sede": 52953,
+                "molumbo_": 25063,
+                "morrumbala_sede": 35337,
+                "muandiua": 16676,
+                "muaquia": 12697,
+                "mugeba": 31865,
+                "munhiba": 17409,
+                "namanjavira": 15508,
+                "namuinho": 49276,
+                "pinda": 10524,
+                "sabe": 6756
+              },
+              "type": "switch",
+              "switch_on": {
+                "value_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "user_data",
+                    "level_2_name"
+                  ]
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareUser",
+                "doc_id_expression": {
+                  "type": "property_name",
+                  "property_name": "owner_id"
+                }
+              }
+            },
             "Senegal": {
               "default": 0,
               "cases": {
@@ -1233,6 +1305,7 @@
         "expression": {
           "default": 0,
           "cases": {
+            "mozambique": 468239,
             "Senegal": 220551,
             "Rwanda": 144417,
             "Zambia": 539348,
