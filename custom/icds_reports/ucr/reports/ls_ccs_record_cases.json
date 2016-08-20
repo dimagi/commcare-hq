@@ -5,11 +5,11 @@
     "icds-cas",
     "icds-cas-sandbox"
   ],
-  "report_id": "static-ls_thr_30_days",
+  "report_id": "static-ls_ccs_record_cases",
   "data_source_table": "static-ccs_record_cases",
   "config": {
-    "title": "LS - THR in Last 30 days (Static)",
-    "description": "",
+    "title": "LS - CCS Record Cases (Static)",
+    "description": "All CCS Record Cases",
     "visible": false,
     "aggregation_columns": [
       "owner_id"
@@ -27,15 +27,6 @@
           "type": "location"
         },
         "display": "Filter by Supervisor"
-      },
-      {
-        "compare_as_string": true,
-        "datatype": "date",
-        "required": false,
-        "slug": "last_date_thr",
-        "field": "last_date_thr",
-        "type": "date",
-        "display": "Last Date THR"
       }
     ],
     "columns": [
@@ -65,18 +56,6 @@
         "calculate_total": true,
         "type": "field",
         "display": "open_count"
-      },
-      {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
-        "column_id": "open_ccs_thr_gte_21",
-        "field": "open_ccs_thr_gte_21",
-        "transform": { },
-        "calculate_total": true,
-        "type": "field",
-        "display": "open_ccs_thr_gte_21"
       }
     ],
     "sort_expression": [ ],
