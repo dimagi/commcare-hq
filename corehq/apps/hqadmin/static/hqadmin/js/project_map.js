@@ -101,7 +101,7 @@ var projectMapInit = function(mapboxAccessToken) {
             var self = this;
             self.selectedCountry = ko.observable('country name');
             self.selectedProject = ko.observable('project name');
-            self.tableProperties = ['Name', 'Sector', 'Organization', 'Deployment Date'];
+            self.tableProperties = ['Organization', 'Sector', 'Deployed', 'Active Users', 'Countries'];
             self.topFiveProjects = ko.observableArray();
         };
 
@@ -210,6 +210,18 @@ var projectMapInit = function(mapboxAccessToken) {
         info.update();
     }
 
+    function capitalizeCountryNames(countries) {
+        return countries.map(function(country) {
+            var formattedCountryName = country.charAt(0).toUpperCase();
+            if (country.indexOf(",") > -1) {
+                formattedCountryName += country.substring(1, country.indexOf(",")).toLowerCase();
+            } else {
+                formattedCountryName += country.substring(1).toLowerCase();
+            }
+            return formattedCountryName;
+        });
+    }
+
     function onEachFeature(feature, layer) {
         layer.on({
             mouseover: highlightFeature,
@@ -224,11 +236,16 @@ var projectMapInit = function(mapboxAccessToken) {
                     datatype: "json",
                 }).done(function(data){
                     data[country].forEach(function(project){
+                        var deploymentDate = project['deployment']['date'];
+                        if (deploymentDate) {
+                            deploymentDate = deploymentDate.substring(0, 10);
+                        }
                         selectionModel.topFiveProjects.push({
-                            name: project['name'],
-                            sector: project['internal']['area'],
                             organization: project['internal']['organization_name'],
-                            deployment: project['deployment']['date'].substring(0,10),
+                            sector: project['internal']['area'],
+                            deployment: deploymentDate,
+                            active_users: project['cp_n_active_cc_users'],
+                            countries: capitalizeCountryNames(project['deployment']['countries']).join(', '),
                         });
                     });
                 });
