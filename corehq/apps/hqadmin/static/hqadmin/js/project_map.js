@@ -2,7 +2,7 @@ var projectMapInit = function(mapboxAccessToken) {
     // courtesy of http://colorbrewer2.org/
     var COUNTRY_COLORS = ['#fef0d9','#fdd49e','#fdbb84','#fc8d59','#e34a33','#b30000'];
     var PROJECT_COUNTS_THRESHOLD = [10, 20, 30, 40, 50];
-    var USER_COUNTS_THRESHOLD = [100, 200, 300, 400, 500];
+    var USER_COUNTS_THRESHOLD = [10, 100, 500, 1000, 4000];
 
     var selectionModel;
 
@@ -283,7 +283,7 @@ var projectMapInit = function(mapboxAccessToken) {
             div.innerHTML += thresholds[i] + '<br>';
         }
         div.innerHTML += '<i style="background:' + COUNTRY_COLORS[thresholds.length] + '"></i> '
-                         + (thresholds[thresholds.length-1] + 1)+ '&ndash;';
+                         + (thresholds[thresholds.length-1] + 1)+ '+';
 
         return div;
     };
