@@ -9,6 +9,10 @@ class XMLSyntaxError(CouchFormException):
     pass
 
 
+class MissingXMLNSError(CouchFormException):
+    pass
+
+
 class DuplicateError(CouchFormException):
 
     def __init__(self, xform):
