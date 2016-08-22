@@ -1,0 +1,26 @@
+@appicon-height-preview: 130px;
+@appicon-icon-height-preview: @appicon-height-preview - 40px;
+
+.appicon {
+  min-height: @appicon-height-preview;
+
+  h3 {
+    font-size: 14px;
+    padding-top: @appicon-icon-height-preview;
+    padding-bottom: 0;
+    padding-left: 5px;
+    padding-right: 5px;
+    &.appicon-title-single-line {
+      padding-top: @appicon-icon-height-preview + 8;
+    }
+  }
+
+  .appicon-icon {
+    margin-left: -@appicon-icon-height-preview/2;
+    width: @appicon-icon-height-preview;
+    height: @appicon-icon-height-preview;
+    line-height: @appicon-icon-height-preview;
+    font-size: @appicon-icon-height-preview;
+  }
+}
+
