@@ -17,8 +17,8 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
 
     AppList.BaseAppView = {
         events: {
-            'click .incomplete-sessions-item': 'incompleteSessionsClick',
-            'click .sync-item': 'syncClick',
+            'click .js-incomplete-sessions-item': 'incompleteSessionsClick',
+            'click .js-sync-item': 'syncClick',
         },
         incompleteSessionsClick: function (e) {
             e.preventDefault();
@@ -52,7 +52,7 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
         className: 'single-app-view',
 
         events: _.extend({
-            'click .start-app': 'startApp',
+            'click .js-start-app': 'startApp',
         }, AppList.BaseAppView.events),
         incompleteSessionsClick: _.extend(AppList.BaseAppView.incompleteSessionsClick),
         syncClick: _.extend(AppList.BaseAppView.syncClick),
