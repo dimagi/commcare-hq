@@ -57,9 +57,7 @@
 {% endblock %}
 
 {% block js %} {{ block.super }}
-    {% compress js %}
-        {% include "formplayer/dependencies.html" %}
-    {% endcompress %}
+    {% include "formplayer/dependencies.html" %}
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
