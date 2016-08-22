@@ -72,6 +72,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             nextScreenCollection.styles = menuResponse.styles;
             nextScreenCollection.tiles = menuResponse.tiles;
             nextScreenCollection.action = menuResponse.action;
+            nextScreenCollection.breadcrumbs = menuResponse.breadcrumbs;
             var currentFragment = Backbone.history.getFragment();
             var urlObject = Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(currentFragment));
             urlObject.setSessionId(nextScreenCollection.sessionId);
