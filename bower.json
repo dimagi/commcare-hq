@@ -67,6 +67,7 @@
     "bootstrap": "3.3.7",
     "select2": "4.0.0",
     "underscore": "1.6.0",
-    "backbone": "0.9.1"
+    "backbone": "0.9.1",
+    "jquery-migrate": "1.2.1"
   }
 }
