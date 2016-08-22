@@ -42,14 +42,7 @@ from .const import (
     POST_TIMEOUT,
 )
 from .exceptions import RequestConnectionError
-
-
-repeater_types = {}
-
-
-def register_repeater_type(cls):
-    repeater_types[cls.__name__] = cls
-    return cls
+from .utils import get_all_repeater_types
 
 
 def simple_post_with_cached_timeout(data, url, expiry=60 * 60, force_send=False, *args, **kwargs):
@@ -268,7 +261,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     @quickcache(['cls.__name__', 'domain'], timeout=5 * 60, memoize_timeout=10)
     def by_domain(cls, domain):
         key = [domain]
-        if cls.__name__ in repeater_types:
+        if cls.__name__ in get_all_repeater_types():
             key.append(cls.__name__)
         elif cls.__name__ == Repeater.__name__:
             # In this case the wrap function delegates to the
@@ -305,6 +298,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     @staticmethod
     def get_class_from_doc_type(doc_type):
         doc_type = doc_type.replace(DELETED, '')
+        repeater_types = get_all_repeater_types()
         if doc_type in repeater_types:
             return repeater_types[doc_type]
         else:
@@ -332,7 +326,6 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         return headers
 
 
-@register_repeater_type
 class FormRepeater(Repeater):
     """
     Record that forms should be repeated to a new url
@@ -376,7 +369,6 @@ class FormRepeater(Repeater):
         return "forwarding forms to: %s" % self.url
 
 
-@register_repeater_type
 class CaseRepeater(Repeater):
     """
     Record that cases should be repeated to a new url
@@ -412,7 +404,6 @@ class CaseRepeater(Repeater):
         return "forwarding cases to: %s" % self.url
 
 
-@register_repeater_type
 class ShortFormRepeater(Repeater):
     """
     Record that form id & case ids should be repeated to a new url
@@ -440,7 +431,6 @@ class ShortFormRepeater(Repeater):
         return "forwarding short form to: %s" % self.url
 
 
-@register_repeater_type
 class AppStructureRepeater(Repeater):
     friendly_name = _("Forward App Schema Changes")
 

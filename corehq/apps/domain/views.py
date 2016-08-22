@@ -115,11 +115,12 @@ from dimagi.utils.web import get_ip, json_response, get_site_domain
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission
 from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
 from corehq.apps.repeaters.models import Repeater, FormRepeater, CaseRepeater, ShortFormRepeater, \
-    AppStructureRepeater, RepeatRecord, repeater_types, RegisterGenerator
+    AppStructureRepeater, RepeatRecord, RegisterGenerator
 from corehq.apps.repeaters.dbaccessors import (
     get_paged_repeat_records,
     get_repeat_record_count,
 )
+from corehq.apps.repeaters.utils import get_all_repeater_types
 from corehq.apps.repeaters.const import (
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
@@ -544,7 +545,7 @@ def test_repeater(request, domain):
     url = request.POST["url"]
     repeater_type = request.POST['repeater_type']
     format = request.POST.get('format', None)
-    repeater_class = repeater_types[repeater_type]
+    repeater_class = get_all_repeater_types()[repeater_type]
     form = GenericRepeaterForm(
         {"url": url, "format": format},
         domain=domain,
@@ -2255,11 +2256,15 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
 
     @property
     def repeaters(self):
-        available_repeaters = [
-            FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater,
+        return [
+            (
+                r.__name__,
+                r.by_domain(self.domain),
+                r.friendly_name,
+                r.get_custom_url(self.domain)
+            )
+            for r in get_all_repeater_types.values()
         ]
-        return [(r.__name__, r.by_domain(self.domain), self.friendly_repeater_names[r.__name__])
-                for r in available_repeaters]
 
     @property
     def page_context(self):
@@ -2302,9 +2307,9 @@ class AddRepeaterView(BaseAdminProjectSettingsView):
     @memoized
     def repeater_class(self):
         try:
-            return repeater_types[self.repeater_type]
+            return get_all_repeater_types()[self.repeater_type]
         except KeyError:
-            raise Http404()
+            raise Http404("No such repeater {}. Valid types: {}".format(self.repeater_type, get_all_repeater_types.keys()))
 
     @property
     @memoized

@@ -765,6 +765,7 @@ LOCAL_APPS = ()
 LOCAL_COUCHDB_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
 LOCAL_PILLOWTOPS = {}
+LOCAL_REPEATERS = ()
 
 # Prelogin site
 ENABLE_PRELOGIN_SITE = False
@@ -1578,6 +1579,16 @@ PILLOWTOPS = {
         },
     ]
 }
+
+BASE_REPEATERS = (
+    'corehq.apps.repeaters.models.FormRepeater',
+    'corehq.apps.repeaters.models.CaseRepeater',
+    'corehq.apps.repeaters.models.ShortFormRepeater',
+    'corehq.apps.repeaters.models.AppStructureRepeater',
+)
+
+REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS
+
 
 
 STATIC_UCR_REPORTS = [
