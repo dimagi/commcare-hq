@@ -89,6 +89,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                 request_new_domain(
                     self.request, reg_form, is_new_user=True
                 )
+                '''
                 if form.cleaned_data['xform']:
                     lang = 'en'
                     app = Application.new_app(requested_domain, "Untitled Application", application_version=APP_V2)
@@ -96,6 +97,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                     app.add_module(module)
                     save_xform(app, app.new_form(0, "Untitled Form", lang), form.cleaned_data['xform'])
                     app.save()
+                '''
             except NameUnavailableException:
                 # technically, the form should never reach this as names are
                 # auto-generated now. But, just in case...
