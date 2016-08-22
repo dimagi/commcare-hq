@@ -46,7 +46,7 @@ class AppManagerTest(TestCase):
 
     def setUp(self):
         super(AppManagerTest, self).setUp()
-        self.app = Application.new_app(self.domain, "TestApp", application_version=APP_V1)
+        self.app = Application.new_app(self.domain, "TestApp", application_version=APP_V2)
 
         for i in range(3):
             module = self.app.add_module(Module.new_module("Module%d" % i, "en"))

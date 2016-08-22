@@ -259,15 +259,8 @@ class CommCareBuildConfig(Document):
         i = self.application_versions.index(application_version)
         return self.defaults[i]
 
-    def get_menu(self, application_version=None):
-        if application_version:
-            major = {
-                APP_V1: '1',
-                APP_V2: '2',
-            }[application_version]
-            return filter(lambda x: x.build.major_release() == major, self.menu)
-        else:
-            return self.menu
+    def get_menu(self):
+        return self.menu
 
     @classmethod
     @quickcache([], timeout=5 * 60)

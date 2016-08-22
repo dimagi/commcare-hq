@@ -31,7 +31,6 @@ from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.tour import tours
 from corehq.apps.translations.models import Translation
 from corehq.apps.app_manager.const import (
-    APP_V1,
     APP_V2,
     MAJOR_RELEASE_TO_VERSION,
     AUTO_SELECT_USERCASE,
@@ -412,11 +411,10 @@ def new_app(request, domain):
     "Adds an app to the database"
     lang = 'en'
     type = request.POST["type"]
-    application_version = request.POST.get('application_version', APP_V1)
     cls = str_to_cls[type]
     form_args = []
     if cls == Application:
-        app = cls.new_app(domain, "Untitled Application", lang=lang, application_version=application_version)
+        app = cls.new_app(domain, "Untitled Application", lang=lang, application_version=APP_V2)
         module = Module.new_module("Untitled Module", lang)
         app.add_module(module)
         form = app.new_form(0, "Untitled Form", lang)
@@ -671,12 +669,6 @@ def edit_app_attr(request, domain, app_id, attr):
         app.set_custom_suite(hq_settings['custom_suite'])
 
     return HttpResponse(json.dumps(resp))
-
-
-@require_can_edit_apps
-def get_commcare_version(request, app_id, app_version):
-    options = CommCareBuildConfig.fetch().get_menu(app_version)
-    return json_response(options)
 
 
 @no_conflict_require_POST

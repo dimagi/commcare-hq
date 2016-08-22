@@ -1348,30 +1348,24 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         return '. '.join(messages)
 
     def active_actions(self):
-        if self.get_app().application_version == APP_V1:
+        assert self.get_app().application_version == APP_V2
+        if self.requires == 'none':
             action_types = (
-                'open_case', 'update_case', 'close_case',
-                'open_referral', 'update_referral', 'close_referral',
-                'case_preload', 'referral_preload'
+                'open_case', 'update_case', 'close_case', 'subcases',
+                'usercase_update', 'usercase_preload',
+            )
+        elif self.requires == 'case':
+            action_types = (
+                'update_case', 'close_case', 'case_preload', 'subcases',
+                'usercase_update', 'usercase_preload', 'load_from_form',
             )
         else:
-            if self.requires == 'none':
-                action_types = (
-                    'open_case', 'update_case', 'close_case', 'subcases',
-                    'usercase_update', 'usercase_preload',
-                )
-            elif self.requires == 'case':
-                action_types = (
-                    'update_case', 'close_case', 'case_preload', 'subcases',
-                    'usercase_update', 'usercase_preload', 'load_from_form',
-                )
-            else:
-                # this is left around for legacy migrated apps
-                action_types = (
-                    'open_case', 'update_case', 'close_case',
-                    'case_preload', 'subcases',
-                    'usercase_update', 'usercase_preload',
-                )
+            # this is left around for legacy migrated apps
+            action_types = (
+                'open_case', 'update_case', 'close_case',
+                'case_preload', 'subcases',
+                'usercase_update', 'usercase_preload',
+            )
         return self._get_active_actions(action_types)
 
     def active_non_preloader_actions(self):
@@ -5173,15 +5167,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         self.put_attachment(value, 'custom_suite.xml')
 
     def create_suite(self, build_profile_id=None):
-        if self.application_version == APP_V1:
-            template='app_manager/suite-%s.xml' % self.application_version
-            langs = self.get_build_langs(build_profile_id)
-            return render_to_string(template, {
-                'app': self,
-                'langs': ["default"] + langs
-            })
-        else:
-            return SuiteGenerator(self, build_profile_id).generate_suite()
+        assert self.application_version == APP_V2
+        return SuiteGenerator(self, build_profile_id).generate_suite()
 
     def create_media_suite(self, build_profile_id=None):
         return MediaSuiteGenerator(self, build_profile_id).generate_suite()
