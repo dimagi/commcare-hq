@@ -154,24 +154,8 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             )
         ))
         suite = app.create_suite()
-        session = """
-        <partial>
-          <session>
-              <datum id="case_id_case_clinic" nodeset="instance('casedb')/casedb/case[@case_type='clinic'][@status='open']" value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long" />
-              <datum id="selected_date" nodeset="instance('item-list:table_tag')/calendar/year/month/day[@date &gt; 735992 and @date &lt; 736000]" value="./@date" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
-              <datum id="adherence" nodeset="instance('casedb')/casedb/case[@case_type='clinic'][@status='open'][adherence_event_date=instance('commcaresession')/session/data/selected_date]" value="./@case_id" autoselect="true" />
-          </session>
-        </partial>
-        """
-        self.assertXmlPartialEqual(session, suite, './entry[2]/session')
-        instance = """
-        <partial>
-          <instance id="casedb" src="jr://instance/casedb"/>
-          <instance id="commcaresession" src="jr://instance/session"/>
-          <instance id="item-list:table_tag" src="jr://fixture/item-list:table_tag"/>
-        </partial>
-        """
-        self.assertXmlPartialEqual(instance, suite, './entry[2]/instance')
+        self.assertXmlPartialEqual(self.get_xml('load_case_from_fixture_session'), suite, './entry[2]/session')
+        self.assertXmlPartialEqual(self.get_xml('load_case_from_fixture_instance'), suite, './entry[2]/instance')
 
     def test_advanced_suite_load_case_from_fixture_with_arbitrary_datum(self):
         app = Application.wrap(self.get_json('suite-advanced'))
@@ -189,25 +173,10 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             )
         ))
         suite = app.create_suite()
-        session = """
-        <partial>
-          <session>
-              <datum id="case_id_case_clinic" nodeset="instance('casedb')/casedb/case[@case_type='clinic'][@status='open']" value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long" />
-              <datum id="extra_id" function="extra_function()" />
-              <datum id="selected_date" nodeset="instance('item-list:table_tag')/calendar/year/month/day[@date &gt; 735992 and @date &lt; 736000]" value="./@date" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
-              <datum id="adherence" nodeset="instance('casedb')/casedb/case[@case_type='clinic'][@status='open'][adherence_event_date=instance('commcaresession')/session/data/selected_date]" value="./@case_id" autoselect="true" />
-          </session>
-        </partial>
-        """
-        self.assertXmlPartialEqual(session, suite, './entry[2]/session')
-        instance = """
-        <partial>
-          <instance id="casedb" src="jr://instance/casedb"/>
-          <instance id="commcaresession" src="jr://instance/session"/>
-          <instance id="item-list:table_tag" src="jr://fixture/item-list:table_tag"/>
-        </partial>
-        """
-        self.assertXmlPartialEqual(instance, suite, './entry[2]/instance')
+        self.assertXmlPartialEqual(self.get_xml('load_case_from_fixture_arbitrary_datum'), suite,
+                                   './entry[2]/session')
+        self.assertXmlPartialEqual(self.get_xml('load_case_from_fixture_instance'), suite, './entry[2]/instance')
+
     def test_tiered_select_with_advanced_module_as_parent(self):
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
 
