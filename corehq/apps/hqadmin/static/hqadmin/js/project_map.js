@@ -101,7 +101,7 @@ var projectMapInit = function(mapboxAccessToken) {
             var self = this;
             self.selectedCountry = ko.observable('country name');
             self.selectedProject = ko.observable('project name');
-            self.tableProperties = ['Organization', 'Sector', 'Deployed', 'Active Users', 'Countries'];
+            self.tableProperties = ['Sector', 'Sub-Sector', 'Active Users', 'Countries'];
             self.topFiveProjects = ko.observableArray();
         };
 
