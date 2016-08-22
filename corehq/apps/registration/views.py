@@ -20,7 +20,12 @@ from corehq.apps.analytics.tasks import (
     track_workflow,
     track_confirmed_account_on_hubspot,
     track_clicked_signup_on_hubspot,
+    update_hubspot_properties
 )
+from corehq.apps.app_manager.const import APP_V2
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.models import Application, Module
+from corehq.apps.app_manager.util import save_xform
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.models import Domain
@@ -356,7 +361,16 @@ def confirm_domain(request, guid=None):
         % (requesting_user.username))
     track_workflow(requesting_user.email, "Confirmed new project")
     track_confirmed_account_on_hubspot.delay(requesting_user)
-    return HttpResponseRedirect(reverse("dashboard_default", args=[requested_domain]))
+    url = reverse("dashboard_default", args=[requested_domain])
+
+    # If user already created an app (via prelogin demo), send them there
+    apps = get_apps_in_domain(requested_domain.name, include_remote=False)
+    if len(apps) == 1:
+        app = apps[0]
+        if len(app.modules) == 1 and len(app.modules[0].forms) == 1:
+            url = reverse('form_source', args=[requested_domain.name, app.id, 0, 0])
+
+    return HttpResponseRedirect(url)
 
 
 @retry_resource(3)
