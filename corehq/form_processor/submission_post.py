@@ -357,8 +357,9 @@ def _notify_submission_error(interface, instance, exception, message=None):
     error_message = u'{}: {}'.format(type(exception).__name__, unicode(exception))
     instance = interface.xformerror_from_xform_instance(instance, error_message, with_new_id=True)
     domain = getattr(instance, 'domain', '---')
-    message = u"Error in case or stock processing for domain: {}".format(domain)
+    message = message or u"Error in case or stock processing"
     details = {
+        'domain': domain,
         'original form ID': instance.orig_id,
         'error form ID': instance.form_id,
         'error message': error_message
