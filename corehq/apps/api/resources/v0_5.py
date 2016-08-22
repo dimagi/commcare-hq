@@ -34,7 +34,6 @@ from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.reports.view import query_dict_to_dict, \
     get_filter_values
 from corehq.apps.userreports.sql.columns import UCRExpandDatabaseSubcolumn
-from corehq.apps.users.forms import SetUserPasswordForm
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions, CouchUser, UserRole
 from corehq.util import get_document_or_404
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
