@@ -236,14 +236,9 @@ var projectMapInit = function(mapboxAccessToken) {
                     datatype: "json",
                 }).done(function(data){
                     data[country].forEach(function(project){
-                        var deploymentDate = project['deployment']['date'];
-                        if (deploymentDate) {
-                            deploymentDate = deploymentDate.substring(0, 10);
-                        }
                         selectionModel.topFiveProjects.push({
-                            organization: project['internal']['organization_name'],
                             sector: project['internal']['area'],
-                            deployment: deploymentDate,
+                            sub_sector: project['internal']['sub_area'],
                             active_users: project['cp_n_active_cc_users'],
                             countries: capitalizeCountryNames(project['deployment']['countries']).join(', '),
                         });
