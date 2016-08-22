@@ -32,8 +32,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.exceptions import NameUnavailableException
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.registration.models import RegistrationRequest
-from corehq.apps.registration.forms import NewWebUserRegistrationForm, DomainRegistrationForm, \
-    RegisterNewWebUserForm
+from corehq.apps.registration.forms import DomainRegistrationForm, RegisterNewWebUserForm
 from corehq.apps.registration.utils import activate_new_user, send_new_request_update_email, request_new_domain, \
     send_domain_registration_email
 from corehq.apps.style.decorators import use_blazy, use_jquery_ui, \
@@ -52,12 +51,6 @@ def get_domain_context():
 
 def registration_default(request):
     return redirect(UserRegistrationView.urlname)
-
-
-def _get_url_with_email(url, email):
-    if email:
-        url = "{}?e={}".format(url, urllib.quote_plus(email))
-    return url
 
 
 class ProcessRegistrationView(JSONResponseMixin, View):
@@ -96,6 +89,13 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                 request_new_domain(
                     self.request, reg_form, is_new_user=True
                 )
+                if form.cleaned_data['xform']:
+                    lang = 'en'
+                    app = Application.new_app(requested_domain, "Untitled Application", application_version=APP_V2)
+                    module = Module.new_module(_("Untitled Module"), lang)
+                    app.add_module(module)
+                    save_xform(app, app.new_form(0, "Untitled Form", lang), form.cleaned_data['xform'])
+                    app.save()
             except NameUnavailableException:
                 # technically, the form should never reach this as names are
                 # auto-generated now. But, just in case...
@@ -155,7 +155,7 @@ class UserRegistrationView(BasePageView):
 
     @property
     def prefilled_email(self):
-        return self.request.GET.get('e', '')
+        return self.request.POST.get('e', '')
 
     @property
     @memoized

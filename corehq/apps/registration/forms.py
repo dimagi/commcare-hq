@@ -50,6 +50,7 @@ class RegisterNewWebUserForm(forms.Form):
                data-target='#eulaModal'
                href='#eulaModal'>
                CommCare HQ End User License Agreement</a>.""")))
+    xform = forms.CharField(required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
         self.show_phone_number = kwargs.pop('show_number', False)
