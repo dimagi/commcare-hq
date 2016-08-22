@@ -323,8 +323,7 @@ class SubmissionPost(object):
             )
         )
         return OpenRosaResponse(
-            message=("The sever got itself into big trouble! "
-                     "Details: %s" % error_instance.problem),
+            message="There was an error processing the form: %s" % error_instance.problem,
             nature=ResponseNature.SUBMIT_ERROR,
             status=500,
         ).response()
