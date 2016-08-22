@@ -47,6 +47,10 @@
         <script src="{% static 'app_manager/js/case-config-ui-1.js' %}"></script>
     {% endif %}
 
+    {% if request|toggle_enabled:"USE_FORMPLAYER_FRONTEND"%}
+        <script src="{% static 'cloudcare/js/formplayer/apps/util/util.js' %}"></script>
+    {% endif %}
+
     {% include "app_manager/partials/form_filter/value-or-none-ui.html" %}
     {% include "app_manager/partials/xpathValidator.html" %}
     {% include "app_manager/partials/nav_menu_media_js_common.html" %}
@@ -239,7 +243,19 @@
                 }
                 return url;
             };
-            var cloudCareUrl = getCloudCareUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
+
+            var getFormplayerUrl = function(urlRoot, appId, moduleId, formId) {
+                var urlObject = new Util.CloudcareUrl(appId, null, null, null, null, null, null, 'm' + moduleId + '-f' + formId);
+                return urlRoot + '#' + Util.objectToEncodedUrl(urlObject.toJson());
+            };
+
+            {% if request|toggle_enabled:"USE_FORMPLAYER_FRONTEND"%}
+                var cloudCareUrl = getFormplayerUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}");
+                debugger;
+            {% else %}
+                var cloudCareUrl = getCloudCareUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
+            {% endif %}
+
             $("#cloudcare-preview-url").attr("href", cloudCareUrl);
             $('#cloudcare-preview-url').click(function(e) {
                 ga_track_event('CloudCare', 'Click "Preview Form"');

@@ -33,13 +33,15 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             var page = urlObject.page;
             var search = urlObject.search;
             var queryDict = urlObject.queryDict;
+            var previewCommand = urlObject.previewCommand;
             SessionNavigate.MenuList.Controller.selectMenu(
                 appId,
                 sessionId,
                 steps,
                 page,
                 search,
-                queryDict
+                queryDict,
+                previewCommand
             );
         },
         showDetail: function (model, index) {
