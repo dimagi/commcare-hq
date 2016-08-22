@@ -1,5 +1,6 @@
 from collections import defaultdict
 import re
+from corehq import toggles
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.xml_models import Instance
 from dimagi.utils.decorators.memoized import memoized
@@ -57,6 +58,12 @@ class EntryInstances(PostProcessor):
                         xpaths.add(datum.value)
         xpaths.discard(None)
         instances, unknown_instance_ids = EntryInstances.get_required_instances(xpaths)
+
+        if toggles.CUSTOM_CALENDAR_FIXTURE.enabled(self.app.domain):
+            instance_name = 'enikshay:calendar'
+            if instance_name in unknown_instance_ids:
+                instances.add(Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name)))
+                unknown_instance_ids.remove(instance_name)
 
         entry.require_instances(instances=instances, instance_ids=unknown_instance_ids)
 
