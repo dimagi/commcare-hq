@@ -15,6 +15,7 @@ from corehq.apps.reports.models import (
     FormExportSchema,
     CaseExportSchema,
 )
+from corehq.apps.app_manager.const import STOCK_QUESTION_TAG_NAMES
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_brief_apps_in_domain,
@@ -122,6 +123,10 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
             path=old_table.index,
         ))
 
+        # This keeps track of the order the columns should be in so we can reorder after
+        # iterating over all the columns
+        ordering = []
+
         for column in old_table.columns:
             info = []
             index = column.index
@@ -146,10 +151,12 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
                         column_index=column.index,
                     )
                     info.append('Column is part of a repeat: {}'. format(old_table.index))
+
                 column_path = _convert_index_to_path_nodes(index)
                 # The old style column indexes always look like they contains no repeats,
                 # so replace that parts that could be repeats with the table path
                 column_path = table_path + column_path[len(table_path):]
+
 
                 system_property = _get_system_property(
                     column.index,
@@ -174,6 +181,16 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
                     if new_column:
                         info.append('Column is for a repeat with just a single instance')
 
+                # If we still haven't found the column, try to find it as a stock question
+                if not new_column and _is_form_stock_question(index):
+                    new_column = _get_column_for_stock_form_export(
+                        new_table,
+                        column_path,
+                        index
+                    )
+                    if new_column:
+                        info.append('Column is a stock form question')
+
                 if not new_column:
                     raise SkipConversion('Column not found in new schema')
                 else:
@@ -187,6 +204,7 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
                     # Must be deid transform
                     new_column.deid_transform = transform
                     info.append('Column has deid_transform: {}'.format(transform))
+                ordering.append(new_column)
             except SkipConversion, e:
                 if is_remote_app_migration:
                     # In the event that we skip a column and it's a remote application,
@@ -205,6 +223,8 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
                     failure_reason=None,
                     info=info,
                 ))
+
+        new_table.columns = _reorder_columns(new_table, ordering)
 
     if not dryrun:
         migration_meta.save()
@@ -247,6 +267,22 @@ def _strip_repeat_index(index):
     return index
 
 
+def _reorder_columns(new_table, columns):
+    """
+    Given a TableConfiguration and a list of in order columns, this function
+    returns a new list of columns that are in order based on the columns given.
+    Any columns found in the table that aren't in the order are put after the
+    ordered columns.
+    """
+    new_order = []
+    for column in columns:
+        new_order.append(column)
+    for column in new_table.columns:
+        if column not in new_order:
+            new_order.append(column)
+    return new_order
+
+
 def _strip_deid_transform(transform):
     return None if transform in DEID_TRANSFORM_FUNCTIONS.keys() else transform
 
@@ -280,6 +316,61 @@ def _get_for_single_node_repeat(tables, column_path, transform):
         new_column = _get_normal_column(new_table, new_column_path, transform)
         if new_column:
             return new_column
+
+
+def _get_column_for_stock_form_export(new_table, column_path, index):
+    # Takes a path like column.transfer:question_id.@date
+    # and maps it to column.transfer.@date
+    def _remove_question_id_from_path(path):
+        parts = path.split('.')
+        parts_without_question_ids = map(lambda part: part.split(':')[0], parts)
+        return '.'.join(parts_without_question_ids)
+
+    stock_columns = filter(lambda c: c.item.doc_type == 'StockItem', new_table.columns)
+
+    # Map column to its readable path (dot path)
+    stock_column_to_readable_path = {c: c.item.readable_path for c in stock_columns}
+
+    matched_columns = []
+    for column, readable_path in stock_column_to_readable_path.iteritems():
+        if _remove_question_id_from_path(readable_path) == index:
+            matched_columns.append(column)
+
+    if len(matched_columns) == 1:
+        return matched_columns[0]
+    elif len(matched_columns) == 0:
+        return None
+    else:
+        raise SkipConversion('Multiple matched stock nodes')
+
+
+def _is_form_stock_question(index):
+    parts = index.split('.')
+    parent_stock_attributes = ['@date', '@type', '@entity-id', '@section-id']
+    entry_stock_attributes = ['@id', '@quantity']
+
+    # Attempts to take a balance node and convert it. It is looks for an index that matches:
+    # <balance|transfer>.<@date|@type...>
+    try:
+        parent_tag_name, attribute = parts[-2:]
+        if (parent_tag_name in STOCK_QUESTION_TAG_NAMES and
+                attribute in parent_stock_attributes):
+            return True
+    except ValueError:
+        return False
+
+    # Attempts to take an entry node and convert it. It is looks for an index that matches:
+    # <balance|transfer>.entry.<@id|@quantity>
+    try:
+        parent_tag_name, tag_name, attribute = parts[-3:]
+        if (parent_tag_name in STOCK_QUESTION_TAG_NAMES and
+                tag_name == 'entry' and
+                attribute in entry_stock_attributes):
+            return True
+    except ValueError:
+        return False
+
+    return False
 
 
 def _get_system_property(index, transform, export_type, table_path):

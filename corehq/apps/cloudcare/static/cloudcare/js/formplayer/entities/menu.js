@@ -106,8 +106,9 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 },
                 error: function (request) {
                     FormplayerFrontend.request(
-                        'error',
-                        gettext('Unable to connect to form playing service')
+                        'showError',
+                        gettext('Unable to connect to form playing service. ' +
+                                'Please report an issue if you continue to see this message.')
                     );
                     defer.resolve(request);
                 },

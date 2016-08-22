@@ -883,7 +883,7 @@ class AdminDomainMapReport(AdminDomainStatsReport):
 
     def _calc_num_active_users_per_country(self, filters):
         active_users_per_country = (NestedTermAggregationsHelper(
-                                    base_query=DomainES().filter(filters),
+                                    base_query=DomainES().is_active().real_domains().filter(filters),
                                     terms=[AggregationTerm('countries', 'deployment.countries')],
                                     bottom_level_aggregation=SumAggregation('users', 'cp_n_active_cc_users')
                                     ).get_data())
@@ -891,10 +891,18 @@ class AdminDomainMapReport(AdminDomainStatsReport):
 
     def _calc_num_projs_per_countries(self, filters):
         num_projects_by_country = (DomainES()
+                                   .is_active()
+                                   .real_domains()
                                    .filter(filters)
                                    .terms_aggregation('deployment.countries', 'countries')
                                    .size(0).run().aggregations.countries.counts_by_bucket())
         return num_projects_by_country
+
+    def _calc_total_active_real_projects(self, filters):
+        total_num_projects = (DomainES().is_active().real_domains()
+                              .filter(filters)
+                              .count())
+        return total_num_projects
 
     def parse_params(self, es_params):
         es_filters = {}
@@ -918,6 +926,7 @@ class AdminDomainMapReport(AdminDomainStatsReport):
         params = self.parse_params(self.es_params)
         json['users_per_country'] = dict(self._calc_num_active_users_per_country(params))
         json['country_projs_count'] = self._calc_num_projs_per_countries(params)
+        json['total_num_projects'] = self._calc_total_active_real_projects(params)
         return json
 
 class AdminUserReport(AdminFacetedReport):
