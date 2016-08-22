@@ -362,7 +362,6 @@ def _notify_submission_error(interface, instance, exception, message=None):
         'domain': domain,
         'original form ID': instance.orig_id,
         'error form ID': instance.form_id,
-        'error message': error_message
     }
     should_email = not isinstance(exception, CouchSaveAborted)  # intentionally don't double-email these
     if should_email:
