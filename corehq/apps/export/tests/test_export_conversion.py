@@ -545,6 +545,76 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestConvertBase):
     'corehq.apps.export.utils._is_remote_app_conversion',
     return_value=False,
 )
+class TestConversionOrdering(TestConvertBase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestConversionOrdering, cls).setUpClass()
+        cls.schema = FormExportDataSchema(
+            domain=cls.domain,
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[
+                        ExportItem(
+                            path=[PathNode(name='form'), PathNode(name='question1')],
+                            label='q1',
+                        ),
+                        ExportItem(
+                            path=[PathNode(name='form'), PathNode(name='question2')],
+                            label='q2',
+                        ),
+                        ExportItem(
+                            path=[PathNode(name='form'), PathNode(name='other')],
+                            label='other',
+                        ),
+                        ExportItem(
+                            path=[PathNode(name='form'), PathNode(name='question3')],
+                            label='q3',
+                        ),
+                    ],
+                    last_occurrences={cls.app_id: 2},
+                ),
+            ]
+        )
+
+    def test_conversion_ordering(self, _, __):
+        saved_export_schema = SavedExportSchema.wrap(self.get_json('conversion_ordering'))
+        with mock.patch(
+                'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
+                return_value=self.schema):
+            instance, _ = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
+
+        table = instance.get_table(MAIN_TABLE)
+        column = table.columns[0]
+        self.assertEqual(
+            column.item.path,
+            [PathNode(name='form'), PathNode(name='question3')],
+        )
+
+        column = table.columns[1]
+        self.assertEqual(
+            column.item.path,
+            [PathNode(name='form'), PathNode(name='question2')],
+        )
+
+        column = table.columns[2]
+        self.assertEqual(
+            column.item.path,
+            [PathNode(name='form'), PathNode(name='question1')],
+        )
+
+        self.assertIn(column, table.columns)
+
+
+@mock.patch(
+    'corehq.apps.export.models.new.get_request',
+    return_value=MockRequest(domain='convert-domain'),
+)
+@mock.patch(
+    'corehq.apps.export.utils._is_remote_app_conversion',
+    return_value=False,
+)
 class TestSingleNodeRepeatConversion(TestConvertBase):
 
     @classmethod
