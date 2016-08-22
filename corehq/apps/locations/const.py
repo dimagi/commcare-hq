@@ -9,7 +9,9 @@ LOCATION_SHEET_HEADERS = {
     'external_id': 'external_id',
     'latitude': 'latitude',
     'longitude': 'longitude',
-    'do_delete': 'Delete(Y/N)'
+    'do_delete': 'Delete(Y/N)',
+    'custom_data': 'data',
+    'uncategorized_data': 'uncategorized_data',
 }
 
 LOCATION_TYPE_SHEET_HEADERS = {

@@ -92,7 +92,6 @@ class LocationTypeStub(object):
 
         self.needs_save = self._needs_save()
 
-        # todo, expand_from and expand_to
         for attr in self.meta_data_attrs:
             setattr(self.db_object, attr, getattr(self, attr, None))
 
@@ -130,7 +129,8 @@ class LocationStub(object):
     meta_data_attrs = ['name', 'site_code', 'latitude', 'longitude', 'external_id']
 
     def __init__(self, name, site_code, location_type, parent_code, location_id,
-                 do_delete, external_id, latitude, longitude, index):
+                 do_delete, external_id, latitude, longitude, custom_data, uncategorized_data,
+                 index):
         self.name = name
         self.site_code = site_code
         self.location_type = location_type
@@ -141,6 +141,8 @@ class LocationStub(object):
         self.do_delete = do_delete
         self.external_id = external_id
         self.index = index
+        self.custom_data = custom_data or {}
+        self.uncategorized_data = uncategorized_data or {}
         if not self.location_id and not self.site_code:
             raise LocationExcelSheetError(
                 _(u"Location in sheet '{}', at row '{}' doesn't contain either location_id or site_code")
@@ -166,9 +168,12 @@ class LocationStub(object):
         longitude = row.get(cls.titles['longitude'])
         do_delete = row.get(cls.titles['do_delete'], 'N').lower() in ['y', 'yes']
         external_id = row.get(cls.titles['external_id'])
+        custom_data = row.get(cls.titles['custom_data'])
+        uncategorized_data = row.get(cls.titles['uncategorized_data'])
         index = index
         return cls(name, site_code, location_type, parent_code, location_id,
-                   do_delete, external_id, latitude, longitude, index)
+                   do_delete, external_id, latitude, longitude, custom_data, uncategorized_data,
+                   index)
 
     def lookup_old_collection_data(self, old_collection):
         # Lookup whether the location already exists in old_collection or is new.
@@ -184,6 +189,15 @@ class LocationStub(object):
 
         for attr in self.meta_data_attrs:
             setattr(self.db_object, attr, getattr(self, attr, None))
+        self.db_object.metadata = self.custom_location_data
+
+    @property
+    @memoized
+    def custom_location_data(self):
+        custom_data = {}
+        custom_data.update(self.custom_data)
+        custom_data.update(self.uncategorized_data)
+        return custom_data
 
     def autoset_location_id_or_site_code(self, old_collection):
         # if one of location_id/site_code are missing, lookup for the other in
@@ -225,6 +239,10 @@ class LocationStub(object):
             if (old_value or new_value) and old_value != new_value:
                 return True
 
+        # check if custom location data is being updated
+        if self.custom_location_data != old_version.metadata:
+            return True
+
         # check if any foreign-key refs are being updated
         if (self.location_type != old_version.location_type.code):
             return True
@@ -259,6 +277,12 @@ class LocationCollection(object):
     @memoized
     def types_by_code(self):
         return {lt.code: lt for lt in self.types}
+
+    @property
+    @memoized
+    def custom_data_validator(self):
+        from .views import LocationFieldsView
+        return LocationFieldsView.get_validator(self.domain_name)
 
 
 class LocationExcelValidator(object):
@@ -304,7 +328,7 @@ class LocationExcelValidator(object):
         location_stubs = []
         for sheet_name, sheet_reader in sheets_by_title.items():
             if sheet_name != self.types_sheet_title:
-                actual = set(sheet_reader.headers)
+                actual = set(sheet_reader.fieldnames)
                 expected = set(LOCATION_SHEET_HEADERS.values())
                 if actual != expected:
                     raise LocationExcelSheetError(
@@ -451,7 +475,11 @@ class LocationTreeValidator(object):
                              self._check_unique_location_codes() +
                              self._check_unique_location_ids())
 
-        basic_errors = uniqueness_errors + unknown_or_missing_errors + location_row_errors
+        # validate custom location data
+        custom_data_errors = self._custom_data_errors()
+
+        basic_errors = uniqueness_errors + unknown_or_missing_errors + location_row_errors + \
+            custom_data_errors
 
         if basic_errors:
             # it doesn't make sense to try to validate a tree when you can't
@@ -546,6 +574,21 @@ class LocationTreeValidator(object):
             _(u"Location 'id: {id}' is not found in your domain. It's listed in the sheet {type} at row {index}")
             .format(id=l_id, type=listed[l_id].location_type, index=listed[l_id].index)
             for l_id in unknown
+        ]
+
+    @memoized
+    def _custom_data_errors(self):
+        if not self.old_collection or not self.old_collection.custom_data_validator:
+            # tests
+            return []
+
+        validator = self.old_collection.custom_data_validator
+
+        return [
+            _(u"Problem with custom data for location '{site_code}', in sheet '{type}', at index '{i}' - '{er}'")
+            .format(site_code=l.site_code, type=l.location_type, i=l.index, er=validator(l.custom_data))
+            for l in self.all_listed_locations
+            if validator(l.custom_data)
         ]
 
     @memoized
