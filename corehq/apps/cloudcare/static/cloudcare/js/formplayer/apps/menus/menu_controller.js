@@ -118,7 +118,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 },
             });
 
-            $('#select-case').click(function () {
+            $('#select-case').unbind('click').click(function () {
                 FormplayerFrontend.trigger("menu:select", model._index);
             });
             $('#case-detail-modal').find('.detail-tabs').html(tabListView.render().el);
