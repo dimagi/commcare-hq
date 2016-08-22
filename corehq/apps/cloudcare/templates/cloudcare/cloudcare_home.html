@@ -36,9 +36,17 @@
     <link type="text/less"
           rel="stylesheet"
           media="all"
+          href="{% static 'cloudcare/less/font-formplayer.less' %}" />
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
           href="{% static 'cloudcare/less/cloudcare.debug.less' %}" />
     {% else %}
     {% compress css %}
+        <link type="text/less"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'cloudcare/less/font-formplayer.less' %}" />
         <link type="text/less"
               rel="stylesheet"
               media="all"
