@@ -204,6 +204,12 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     def get_custom_url(cls, domain):
         return None
 
+    @classmethod
+    def available_for_domain(cls, domain):
+        """Returns whether this repeater can be used by a particular domain
+        """
+        return True
+
     def get_pending_record_count(self):
         return get_pending_repeat_record_count(self.domain, self._id)
 
