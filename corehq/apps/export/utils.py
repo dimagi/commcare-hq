@@ -123,6 +123,10 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
             path=old_table.index,
         ))
 
+        # This keeps track of the order the columns should be in so we can reorder after
+        # iterating over all the columns
+        ordering = []
+
         for column in old_table.columns:
             info = []
             index = column.index
@@ -200,6 +204,7 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
                     # Must be deid transform
                     new_column.deid_transform = transform
                     info.append('Column has deid_transform: {}'.format(transform))
+                ordering.append(new_column)
             except SkipConversion, e:
                 if is_remote_app_migration:
                     # In the event that we skip a column and it's a remote application,
@@ -218,6 +223,8 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
                     failure_reason=None,
                     info=info,
                 ))
+
+        new_table.columns = _reorder_columns(new_table, ordering)
 
     if not dryrun:
         migration_meta.save()
@@ -260,6 +267,22 @@ def _strip_repeat_index(index):
     return index
 
 
+def _reorder_columns(new_table, columns):
+    """
+    Given a TableConfiguration and a list of in order columns, this function
+    returns a new list of columns that are in order based on the columns given.
+    Any columns found in the table that aren't in the order are put after the
+    ordered columns.
+    """
+    new_order = []
+    for column in columns:
+        new_order.append(column)
+    for column in new_table.columns:
+        if column not in new_order:
+            new_order.append(column)
+    return new_order
+
+
 def _strip_deid_transform(transform):
     return None if transform in DEID_TRANSFORM_FUNCTIONS.keys() else transform
 
@@ -272,6 +295,7 @@ def _convert_transform(serializable_transform):
         if fn == transform_fn:
             return slug
     return None
+
 
 def _get_for_single_node_repeat(tables, column_path, transform):
     """
