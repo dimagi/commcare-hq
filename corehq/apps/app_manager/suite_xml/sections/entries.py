@@ -445,6 +445,17 @@ class EntriesHelper(object):
         datums = []
         load_case_from_fixture = action.load_case_from_fixture
 
+        if (load_case_from_fixture.arbitrary_datum_id and
+                load_case_from_fixture.arbitrary_datum_function):
+            datums.append(FormDatumMeta(
+                SessionDatum(
+                    id=load_case_from_fixture.arbitrary_datum_id,
+                    function=load_case_from_fixture.arbitrary_datum_function,
+                ),
+                case_type=action.case_type,
+                requires_selection=True,
+                action=action,
+            ))
         datums.append(FormDatumMeta(
             datum=SessionDatum(
                 id=load_case_from_fixture.fixture_tag,

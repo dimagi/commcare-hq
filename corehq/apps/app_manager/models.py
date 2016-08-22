@@ -449,16 +449,19 @@ class AutoSelectCase(DocumentSchema):
 
 class LoadCaseFromFixture(DocumentSchema):
     """
-    fixture_nodeset:  FixtureDataType.tag
-    fixture_tag:      name of the column to display in the list
-    fixture_variable: boolean if display_column actually contains the key for the localized string
-    case_property:    name of the column whose value should be saved when the user selects an item
+    fixture_nodeset:    FixtureDataType.tag
+    fixture_tag:        name of the column to display in the list
+    fixture_variable:   boolean if display_column actually contains the key for the localized string
+    case_property:      name of the column whose value should be saved when the user selects an item
+    arbitrary_datum_id: adds an arbitrary datum before the action. (used for enikshay)
     """
     fixture_nodeset = StringProperty()
     fixture_tag = StringProperty()
     fixture_variable = StringProperty()
     case_property = StringProperty(default='')
     auto_select = BooleanProperty(default=False)
+    arbitrary_datum_id = StringProperty()
+    arbitrary_datum_function = StringProperty()
 
 
 class LoadUpdateAction(AdvancedAction):

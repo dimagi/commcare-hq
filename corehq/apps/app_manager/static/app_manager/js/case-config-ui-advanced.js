@@ -398,6 +398,8 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                         fixture_variable: '',
                         case_property: '',
                         auto_select: '',
+                        arbitrary_datum_id: '',
+                        arbitrary_datum_function: '',
                     };
                 }
                 self.load_update_cases.push(LoadUpdateAction.wrap(action_data, self.config));
@@ -1045,6 +1047,8 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                 'fixture_variable',
                 'case_property',
                 'auto_select',
+                'arbitrary_datum_id',
+                'arbitrary_datum_function',
             ],
         },
         wrap: function (data, action) {
