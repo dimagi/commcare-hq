@@ -73,7 +73,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         return bail(request, domain, app_id)
 
     if app and app.application_version == '1.0':
-        _assert = soft_assert(to=['droberts' + '@' + 'dimagi.com'])
+        _assert = soft_assert()
         _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
         return render(request, 'app_manager/no_longer_supported.html', {
             'domain': domain,
