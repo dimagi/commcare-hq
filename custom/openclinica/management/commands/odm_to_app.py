@@ -3,7 +3,6 @@ Create a template app from ODM-formatted OpenClinica study metadata
 """
 from lxml import etree
 from django.core.management.base import BaseCommand
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import (
     Application,
     Module,
