@@ -1,4 +1,4 @@
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from tastypie import http
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.authorization import ReadOnlyAuthorization
@@ -32,6 +32,7 @@ from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.reports.view import query_dict_to_dict, \
     get_filter_values
 from corehq.apps.userreports.sql.columns import UCRExpandDatabaseSubcolumn
+from corehq.apps.users.forms import SetUserPasswordForm
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions, CouchUser, UserRole
 from corehq.util import get_document_or_404
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
@@ -40,6 +41,7 @@ from corehq.toggles import ZAPIER_INTEGRATION
 from . import v0_1, v0_4, CouchResourceMixin
 from . import HqBaseResource, DomainSpecificResourceMixin
 from phonelog.models import DeviceReportEntry
+from itertools import chain
 
 
 MOCK_BULK_USER_ES = None
@@ -177,6 +179,23 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 elif key in ['email', 'username']:
                     setattr(bundle.obj, key, value.lower())
                     should_save = True
+                elif key == 'password':
+                    domain = Domain.get_by_name(bundle.obj.domain)
+                    password_form_instance = SetUserPasswordForm(domain,
+                        user_id=bundle.obj.get_id,
+                        user=bundle.obj,
+                        data={
+                            "new_password1": bundle.data.get("password"),
+                            "new_password2": bundle.data.get("password")
+                    })
+                    if not password_form_instance.is_valid():
+                        if not hasattr(bundle.obj, 'errors'):
+                            bundle.obj.errors = []
+                        bundle.obj.errors += password_form_instance.errors.values()
+                        return False
+                    else:
+                        bundle.obj.set_password(bundle.data.get("password"))
+                        should_save = True
                 else:
                     setattr(bundle.obj, key, value)
                     should_save = True
@@ -210,8 +229,15 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         if self._update(bundle):
             assert bundle.obj.domain == kwargs['domain']
             bundle.obj.save()
-        return bundle
+            return bundle
+        else:
+            raise BadRequest(''.join(chain.from_iterable(bundle.obj.errors)))
 
+    def obj_delete(self, bundle, **kwargs):
+        user = CommCareUser.get(kwargs['pk'])
+        if user:
+            user.retire()
+        return ImmediateHttpResponse(response=http.HttpAccepted())
 
 class WebUserResource(v0_1.WebUserResource):
 

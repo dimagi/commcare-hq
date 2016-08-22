@@ -15,8 +15,8 @@ class MobileAuthKeyRecord(Document):
     domain = StringProperty()
     user_id = StringProperty()
 
-    valid = DateTimeProperty()
-    expires = DateTimeProperty()
+    valid = DateTimeProperty()  # initialized with 30 days before the date created
+    expires = DateTimeProperty()  # just bumped up by multiple of 30 days when expired
     type = StringProperty(choices=['AES256'], default='AES256')
     key = StringProperty()
 
@@ -42,3 +42,13 @@ class MobileAuthKeyRecord(Document):
             include_docs=True,
         ).first()
         return key_record
+
+    @classmethod
+    def flush_user_keys_for_domain(cls, domain, user_id):
+        # Fetch all key records for users
+        user_key_records = cls.view('mobile_auth/key_records',
+                                    startey=[domain, user_id],
+                                    endkey=[domain, user_id, '9'],
+                                    include_docs=True
+        ).all()
+        [record.delete() for record in user_key_records]
