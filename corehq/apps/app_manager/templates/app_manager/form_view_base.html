@@ -8,6 +8,11 @@
 
 {% block stylesheets %}{{ block.super }}
     <link rel="stylesheet" href="{% static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
+    <style>
+        .nodeset {
+            min-width: 400px;
+        }
+    </style>
 {% endblock %}
 
 {% block head %}{{ block.super }}

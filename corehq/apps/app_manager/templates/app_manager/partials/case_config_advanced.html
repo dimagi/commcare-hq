@@ -331,12 +331,12 @@
             </div>
             <div class="form-inline">
                 <div class="form-group">
-                    <label>{% trans "Fixture Tag" %}</label>
-                    <input type="text" class="form-control" data-bind="value: load_case_from_fixture.fixture_tag" />
+                    <label>{% trans "Fixture Nodest" %}</label>
+                    <input type="text" class="form-control nodeset" data-bind="value: load_case_from_fixture.fixture_nodeset" />
                 </div>
                 <div class="form-group">
-                    <label>{% trans "Fixture Nodest" %}</label>
-                    <input type="text" class="form-control input-xl" data-bind="value: load_case_from_fixture.fixture_nodeset" />
+                    <label>{% trans "Fixture Tag" %}</label>
+                    <input type="text" class="form-control" data-bind="value: load_case_from_fixture.fixture_tag" />
                 </div>
                 <div class="form-group">
                     <label>{% trans "Fixture Variable" %}</label>
@@ -355,12 +355,12 @@
             </div>
             <div class="form-inline">
                 <div class="form-group">
-                    <label>{% trans "Arbitrary Datum id" %}</label>
-                    <input type="text" class="form-control" data-bind="value: load_case_from_fixture.arbitrary_datum_id" />
+                    <label>{% trans "Arbitrary Datum Function" %}</label>
+                    <input type="text" class="form-control nodeset" data-bind="value: load_case_from_fixture.arbitrary_datum_function" />
                 </div>
                 <div class="form-group">
-                    <label>{% trans "Arbitrary Datum Function" %}</label>
-                    <input type="text" class="form-control input-xl" data-bind="value: load_case_from_fixture.arbitrary_datum_function" />
+                    <label>{% trans "Arbitrary Datum id" %}</label>
+                    <input type="text" class="form-control" data-bind="value: load_case_from_fixture.arbitrary_datum_id" />
                 </div>
             </div>
             <div data-bind="visible: case_type">
