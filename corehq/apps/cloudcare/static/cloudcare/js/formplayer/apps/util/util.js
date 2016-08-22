@@ -35,15 +35,16 @@ Util.setCrossDomainAjaxOptions = function (options) {
     options.contentType = "application/json";
 };
 
-Util.CloudcareUrl = function (appId, sessionId, steps, page, search, queryDict, singleApp, previewCommand) {
+Util.CloudcareUrl = function (appId, options) {
+    options = options || {};
     this.appId = appId;
-    this.sessionId = sessionId;
-    this.steps = steps;
-    this.page = page;
-    this.search = search;
-    this.queryDict = queryDict;
-    this.singleApp = singleApp;
-    this.previewCommand = previewCommand;
+    this.sessionId = options.sessionId;
+    this.steps = options.steps;
+    this.page = options.page;
+    this.search = options.search;
+    this.queryDict = options.queryDict;
+    this.singleApp = options.singleApp;
+    this.previewCommand = options.previewCommand;
 
     this.addStep = function (step) {
         if (!this.steps) {
@@ -105,15 +106,18 @@ Util.CloudcareUrl.prototype.toJson = function () {
 
 Util.CloudcareUrl.fromJson = function (json) {
     var data = JSON.parse(json);
+    var options = {
+        'sessionId': data.sessionId,
+        'steps': data.steps,
+        'page': data.page,
+        'search': data.search,
+        'queryDict': data.queryDict,
+        'singleApp': data.singleApp,
+        'previewCommand': data.previewCommand,
+    };
     return new Util.CloudcareUrl(
         data.appId,
-        data.sessionId,
-        data.steps,
-        data.page,
-        data.search,
-        data.queryDict,
-        data.singleApp,
-        data.previewCommand
+        options
     );
 };
 

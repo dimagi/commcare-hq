@@ -245,13 +245,12 @@
             };
 
             var getFormplayerUrl = function(urlRoot, appId, moduleId, formId) {
-                var urlObject = new Util.CloudcareUrl(appId, null, null, null, null, null, null, 'm' + moduleId + '-f' + formId);
+                var urlObject = new Util.CloudcareUrl(appId, {'previewCommand': 'm' + moduleId + '-f' + formId});
                 return urlRoot + '#' + Util.objectToEncodedUrl(urlObject.toJson());
             };
 
             {% if request|toggle_enabled:"USE_FORMPLAYER_FRONTEND"%}
                 var cloudCareUrl = getFormplayerUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}");
-                debugger;
             {% else %}
                 var cloudCareUrl = getCloudCareUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
             {% endif %}
