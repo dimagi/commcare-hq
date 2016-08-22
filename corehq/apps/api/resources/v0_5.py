@@ -1,4 +1,5 @@
-from django.http import Http404, HttpResponse
+from django.http import Http404
+from django.forms import ValidationError
 from tastypie import http
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.authorization import ReadOnlyAuthorization
@@ -20,6 +21,7 @@ from corehq.apps.api.resources.auth import RequirePermissionAuthentication, Admi
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
+from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
 
@@ -181,21 +183,16 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                     should_save = True
                 elif key == 'password':
                     domain = Domain.get_by_name(bundle.obj.domain)
-                    password_form_instance = SetUserPasswordForm(domain,
-                        user_id=bundle.obj.get_id,
-                        user=bundle.obj,
-                        data={
-                            "new_password1": bundle.data.get("password"),
-                            "new_password2": bundle.data.get("password")
-                    })
-                    if not password_form_instance.is_valid():
-                        if not hasattr(bundle.obj, 'errors'):
-                            bundle.obj.errors = []
-                        bundle.obj.errors += password_form_instance.errors.values()
-                        return False
-                    else:
-                        bundle.obj.set_password(bundle.data.get("password"))
-                        should_save = True
+                    if domain.strong_mobile_passwords:
+                        try:
+                            clean_password(bundle.data.get("password"))
+                        except ValidationError as e:
+                            if not hasattr(bundle.obj, 'errors'):
+                                bundle.obj.errors = []
+                            bundle.obj.errors.append(e.message)
+                            return False
+                    bundle.obj.set_password(bundle.data.get("password"))
+                    should_save = True
                 else:
                     setattr(bundle.obj, key, value)
                     should_save = True
