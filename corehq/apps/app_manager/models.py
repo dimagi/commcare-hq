@@ -467,10 +467,12 @@ class LoadCaseFromFixture(DocumentSchema):
 class LoadUpdateAction(AdvancedAction):
     """
     details_module:           Use the case list configuration from this module to show the cases.
-    preload:                  Value from the case to load into the form. Keys are question paths, values are case properties.
+    preload:                  Value from the case to load into the form. Keys are question paths,
+                              values are case properties.
     auto_select:              Configuration for auto-selecting the case
     load_case_from_fixture:   Configureation for loading a case using fixture data
-    show_product_stock:       If True list the product stock using the module's Product List configuration.
+    show_product_stock:       If True list the product stock using the module's Product List
+                              configuration.
     product_program:          Only show products for this CommCare Supply program.
     """
     details_module = StringProperty()
