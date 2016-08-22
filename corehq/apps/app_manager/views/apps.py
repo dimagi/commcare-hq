@@ -118,10 +118,7 @@ def default_new_app(request, domain):
     if tours.NEW_APP.is_enabled(request.user):
         identify.delay(request.couch_user.username, {'First Template App Chosen': 'blank'})
     lang = 'en'
-    app = Application.new_app(
-        domain, _("Untitled Application"), lang=lang,
-        application_version=APP_V2
-    )
+    app = Application.new_app(domain, _("Untitled Application"), lang=lang)
     module = Module.new_module(_("Untitled Module"), lang)
     app.add_module(module)
     form = app.new_form(0, "Untitled Form", lang)
@@ -414,7 +411,7 @@ def new_app(request, domain):
     cls = str_to_cls[type]
     form_args = []
     if cls == Application:
-        app = cls.new_app(domain, "Untitled Application", lang=lang, application_version=APP_V2)
+        app = cls.new_app(domain, "Untitled Application", lang=lang)
         module = Module.new_module("Untitled Module", lang)
         app.add_module(module)
         form = app.new_form(0, "Untitled Form", lang)

@@ -6,7 +6,6 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.test.client import Client
 from mock import patch
-from corehq.apps.app_manager.const import APP_V2
 
 from corehq.apps.users.models import WebUser
 from corehq.apps.repeaters.models import AppStructureRepeater
@@ -30,9 +29,7 @@ class TestDomainViews(TestCase):
         self.user.eula.signed = True
         self.user.save()
 
-        self.app = Application.new_app(domain="fandago",
-                                       name="cheeto",
-                                       application_version=APP_V2)
+        self.app = Application.new_app(domain="fandago", name="cheeto")
         self.app.save()
 
     def tearDown(self):

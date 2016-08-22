@@ -5249,9 +5249,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, unique_form_id))
 
     @classmethod
-    def new_app(cls, domain, name, application_version, lang="en"):
+    def new_app(cls, domain, name, lang="en"):
         app = cls(domain=domain, modules=[], name=name, langs=[lang],
-                  application_version=application_version, vellum_case_management=True)
+                  application_version=APP_V2, vellum_case_management=True)
         return app
 
     def add_module(self, module):
