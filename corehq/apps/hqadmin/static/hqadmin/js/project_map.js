@@ -311,6 +311,7 @@ var projectMapInit = function(mapboxAccessToken) {
         div.innerHTML += '<p>Number of Active Countries: ' + dataController.getNumActiveCountries() +  '</p>';
         div.innerHTML += '<p>Number of Active Mobile Users: ' + dataController.getNumUsers() +  '</p>';
         div.innerHTML += '<p>Number of Active Projects: ' + dataController.getNumProjects() +  '</p>';
+        div.innerHTML += '<br><p><em> Active: A project or user submitted a form in past 30 days.</em></p>';
         return div;
     };
 
