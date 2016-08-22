@@ -29,6 +29,7 @@ def _assert_has_valid_parents(nodes):
 def assert_no_cycles(nodes):
     """
     'nodes' should be a list of (uid, parent_uid) tuples
+    Root parent should be indicated by ROOT_LOCATION_TYPE
     """
 
     all_nodes = dict(nodes)

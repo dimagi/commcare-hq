@@ -35,6 +35,7 @@ from corehq.toggles import NEW_BULK_LOCATION_MANAGEMENT
 from corehq.util import reverse, get_document_or_404
 
 from .analytics import users_have_locations
+from .const import ROOT_LOCATION_TYPE
 from .dbaccessors import get_users_assigned_to_locations
 from .permissions import (
     locations_access_required,
@@ -247,7 +248,10 @@ class LocationTypesView(BaseLocationView):
         Return loc types in order from parents to children
         """
         assert_no_cycles([
-            (lt['pk'], lt['parent_type']) for lt in loc_types
+            (lt['pk'], lt['parent_type'])
+            if lt['parent_type'] else
+            (lt['pk'], ROOT_LOCATION_TYPE)
+            for lt in loc_types
         ])
 
         lt_dict = {lt['pk']: lt for lt in loc_types}
