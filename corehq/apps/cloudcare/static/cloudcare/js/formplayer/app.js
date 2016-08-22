@@ -19,7 +19,7 @@ FormplayerFrontend.on("before:start", function () {
         regions: {
             main: "#menu-region",
             breadcrumb: "#breadcrumb-region",
-            caseTileStyle: "#case-tile-style",
+            phoneModeNavigation: '#phone-mode-navigation',
         },
     });
 
@@ -146,8 +146,12 @@ FormplayerFrontend.on("start", function (options) {
         Backbone.history.start();
         // will be the same for every domain. TODO: get domain/username/pass from django
         if (this.getCurrentRoute() === "") {
-            if (options.previewMode) {
-                FormplayerFrontend.trigger("app:preview", options.apps[0]['_id']);
+            if (options.phoneMode) {
+                FormplayerFrontend.regions.phoneModeNavigation.show(
+                    new FormplayerFrontend.Navigation.PhoneNavigation()
+                );
+
+                FormplayerFrontend.trigger("app:singleApp", options.apps[0]['_id']);
             } else {
                 FormplayerFrontend.trigger("apps:list", options.apps);
             }

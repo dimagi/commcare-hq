@@ -47,32 +47,17 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header row">
-          <div class="col-md-2">
-            <button class="pull-left back project-info">Back</button>
-          </div>
-          <div class="col-md-8 center">
-            <h4 class="modal-title table" id="modal-title">
-              <span>Projects in <span class="country-name" data-bind="text: selectedCountry"></span></span>
-            </h4>
-            <h4 class="modal-title project-info" id="modal-title">
-              <span class="project-identifier" data-bind="text: selectedProject"></span>
-            </h4>
-          </div>
-          <div class="col-md-2">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          </div>
+            <div class="col-md-2"></div>
+            <div class="col-md-8 center">
+                <h4 class="modal-title table center" id="modal-title">
+                    <span>Projects in <span class="country-name" data-bind="text: selectedCountry"></span> with the Most Users</span>
+                </h4>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
         </div>
         <div class="modal-body">
-          <div class="project-info clearfix">
-            <div class="col-md-6" data-bind="foreach: {data: projectPropertiesLeft, as: 'propertyName'}">
-              <h5 data-bind="text: propertyName + ':'"></h5>
-              <span data-bind="text: $root.getSelectedProjectProperty(propertyName)"></span>
-            </div>
-            <div class="col-md-6"data-bind="foreach: {data: projectPropertiesRight, as: 'propertyName'}">
-              <h5 data-bind="text: propertyName + ':'"></h5>
-              <span data-bind="text: $root.getSelectedProjectProperty(propertyName)"></span>
-            </div>
-          </div>
           <div class="table">
             <table class="table table-hover table-condensed">
               <thead>
@@ -80,9 +65,13 @@
                   <th data-bind="text: $data"></th>
                 </tr>
               </thead>
-              <tbody data-bind="foreach: {data: selectedCountryProjectNames(), as: 'projectName'}">
-                <tr class="project-row" data-bind="foreach: {data: $parent.tableProperties, as: 'propertyName'}, attr: {'data-project-name': projectName}">
-                  <td data-bind="text: $root.getProjectProperty(projectName, propertyName)"></td>
+              <tbody data-bind="foreach: {data: topFiveProjects}">
+                <tr class="project-row">
+                  <td data-bind="text: organization"></td>
+                  <td data-bind="text: sector"></td>
+                  <td data-bind="text: deployment"></td>
+                  <td data-bind="text: active_users"></td>
+                  <td data-bind="text: countries"></td>
                 </tr>
               </tbody>
             </table>
@@ -99,11 +88,11 @@
     </div>
     <div class="filter-wrapper wrapper">
       <h4 class="text-hq-nav-header">{{ facet_report.facet_title }}</h4>
-      <div class="btn-group btn-toggle text-hq-nav-header">
-        <button class="btn btn-default" id="users">Users</button>
-        <button class="btn btn-primary active" id="projects">Projects</button>
-      </div>
-        {% include 'appstore/partials/sidebar.html' with search_name="es_search" search_for=facet_report.search_for %}
+        <div class="btn-group btn-toggle text-hq-nav-header">
+            <button class="btn btn-primary active" id="projects">Projects</button>
+            <button class="btn btn-default" id="users">Users</button>
+        </div>
+      {% include 'appstore/partials/sidebar.html' with search_name="es_search" search_for=facet_report.search_for %}
     </div>
   </div>
   <script type="application/javascript">

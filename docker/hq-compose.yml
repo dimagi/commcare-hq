@@ -1,7 +1,7 @@
 web:
   build: .
   environment:
-    DEPENDENT_SERVICES: "couch postgres redis kafka elasticsearch riakcs"
+    DEPENDENT_SERVICES: "COUCH:5984 POSTGRES:5432 REDIS:6379 KAFKA:9092 ELASTICSEARCH:9200 RIAKCS:9980"
     DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
     JS_SETUP: "${JS_SETUP}"
     NOSE_DIVIDED_WE_RUN: "${NOSE_DIVIDED_WE_RUN}"
@@ -29,7 +29,7 @@ postgres:
     - ${VOLUME_PREFIX}postgresql:/var/lib/postgresql/data
 
 couch:
-  image: klaemo/couchdb:latest
+  image: klaemo/couchdb:1.6.1
   expose:
     - "5984"
   volumes:

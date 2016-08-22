@@ -51,6 +51,17 @@ def async_convert_saved_export_to_export_instance(domain, legacy_export, dryrun=
         dryrun=dryrun,
     )
 
+    if not meta.skipped_tables and not meta.skipped_columns:
+        logger.info(
+            'domain={domain} export_id={export_id} export_type={export_type} '
+            'remote={remote} SUCCESS'.format(
+                domain=meta.domain,
+                export_id=meta.saved_export_id,
+                export_type=meta.export_type,
+                remote=meta.is_remote_app_migration,
+            )
+        )
+
     for table_meta in meta.skipped_tables:
         _log_conversion_meta(meta, table_meta, 'table')
 

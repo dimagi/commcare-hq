@@ -281,11 +281,10 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     @property
     @memoized
     def serialized_attachments(self):
-        from couchforms.const import ATTACHMENT_NAME
         from .serializers import XFormAttachmentSQLSerializer
         return {
             att.name: XFormAttachmentSQLSerializer(att).data
-            for att in self.get_attachments() if att.name != ATTACHMENT_NAME
+            for att in self.get_attachments()
         }
 
     @property

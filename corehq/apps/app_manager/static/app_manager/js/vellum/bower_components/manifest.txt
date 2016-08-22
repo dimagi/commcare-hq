@@ -13,7 +13,7 @@
 ├─┬ jstree#3.2.1 (latest is 3.3.2)
 │ └── jquery#1.11.3 (3.1.0 available)
 ├── langcodes#e03b2f012e
-├── markdown-it#6.0.5 (latest is 7.0.0)
+├── markdown-it#6.0.5 (latest is 7.0.1)
 ├── require-css#0.1.8
 ├── require-less#0.1.5
 ├── requirejs#2.1.22 (latest is 2.2.0)
@@ -21,6 +21,5 @@
 ├── requirejs-text#2.0.15
 ├── requirejs-tpl#a3ca1e0e7f
 ├── underscore#1.6.0 (latest is 1.8.3)
-├── when#2.8.0 extraneous (latest is 3.7.7)
 ├── xpath#0.0.3
 └── xrayquire#396ae6569b

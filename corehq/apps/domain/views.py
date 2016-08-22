@@ -2425,7 +2425,6 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         internal_attrs = [
             'sf_contract_id',
             'sf_account_id',
-            'services',
             'initiative',
             'self_started',
             'area',
@@ -2438,6 +2437,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'experienced_threshold',
             'amplifies_workers',
             'amplifies_project',
+            'data_access_threshold',
             'business_unit',
             'workshop_region',
         ]
