@@ -97,6 +97,7 @@ class UCLAPatientFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
     domains = ('succeed',)
     document_filter = CustomFilter(lambda c: c.type == 'participant')
+    deleted_types = ('CommCareCase-Deleted', )
 
     group_by = ('domain', )
 
