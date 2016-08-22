@@ -50,5 +50,5 @@ class MobileAuthKeyRecord(Document):
                                     startey=[domain, user_id],
                                     endkey=[domain, user_id, '9'],
                                     include_docs=True
-        ).all()
+                                    ).all()
         [record.delete() for record in user_key_records]

@@ -91,4 +91,3 @@ def flush_key_records(request, domain):
         return HttpResponse("Success")
     else:
         return HttpResponseNotFound('User Not Found')
-
