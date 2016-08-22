@@ -340,21 +340,21 @@ def _transform_instance_to_error(interface, e, instance):
     return interface.xformerror_from_xform_instance(instance, error_message)
 
 
-def handle_unexpected_error(interface, instance, e):
+def handle_unexpected_error(interface, instance, exception, message=None):
     # The following code saves the xform instance
     # as an XFormError, with a different ID.
     # That's because if you save with the original ID
     # and then resubmit, the new submission never has a
     # chance to get reprocessed; it'll just get saved as
     # a duplicate.
-    _notify_submission_error(interface, instance, e)
+    _notify_submission_error(interface, instance, exception, message=message)
     FormAccessors(interface.domain).save_new_form(instance)
 
 
-def _notify_submission_error(interface, instance, e):
+def _notify_submission_error(interface, instance, exception, message=None):
     from corehq.util.global_request.api import get_request
     request = get_request()
-    error_message = u'{}: {}'.format(type(e).__name__, unicode(e))
+    error_message = u'{}: {}'.format(type(exception).__name__, unicode(exception))
     instance = interface.xformerror_from_xform_instance(instance, error_message, with_new_id=True)
     domain = getattr(instance, 'domain', '---')
     message = u"Error in case or stock processing for domain: {}".format(domain)
@@ -363,7 +363,7 @@ def _notify_submission_error(interface, instance, e):
         'error form ID': instance.form_id,
         'error message': error_message
     }
-    should_email = not isinstance(e, CouchSaveAborted)  # intentionally don't double-email these
+    should_email = not isinstance(exception, CouchSaveAborted)  # intentionally don't double-email these
     if should_email:
         notify_exception(request, message, details=details)
     else:
