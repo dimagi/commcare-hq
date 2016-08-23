@@ -122,7 +122,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         });
 
         // need to remove this attribute so the grid style is re-evaluated
-        $("#case-tiles-style").html(tileStyle).removeAttr("data-css-polyfilled");
+        $("#case-tiles-style").html(tileStyle).data("css-polyfilled", false);
     };
 
     MenuList.CaseListView = Marionette.CompositeView.extend({

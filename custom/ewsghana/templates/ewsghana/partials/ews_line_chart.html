@@ -160,7 +160,7 @@
                 success: function(response) {
                     $(line_chart_id + ' svg').empty();
                     line_chart_data = response;
-                    $('#inventory_filter_btn').removeAttr('disabled');
+                    $('#inventory_filter_btn').prop('disabled', false);
                     $('.hq-loading').fadeOut();
                     addGraph();
                 },
@@ -201,7 +201,7 @@
                     });
 
                     line_chart_data = response;
-                    $('#stockouts_filter_btn').removeAttr('disabled');
+                    $('#stockouts_filter_btn').prop('disabled', false);
                     $('.hq-loading').fadeOut();
 
                     addGraph();

@@ -54,7 +54,7 @@
         $('#restrict_users').on('change', function () {
             var $saveButton = $('#save_restrict_option');
             $saveButton
-                    .removeAttr('disabled')
+                    .prop('disabled', false)
                     .removeClass('disabled btn-default')
                     .addClass('btn-success')
                     .text('{% trans "Save" %}');
