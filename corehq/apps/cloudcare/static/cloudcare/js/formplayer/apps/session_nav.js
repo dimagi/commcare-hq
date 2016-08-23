@@ -33,13 +33,15 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             var page = urlObject.page;
             var search = urlObject.search;
             var queryDict = urlObject.queryDict;
+            var previewCommand = urlObject.previewCommand;
             SessionNavigate.MenuList.Controller.selectMenu(
                 appId,
                 sessionId,
                 steps,
                 page,
                 search,
-                queryDict
+                queryDict,
+                previewCommand
             );
         },
         showDetail: function (model, index) {
@@ -72,6 +74,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             nextScreenCollection.styles = menuResponse.styles;
             nextScreenCollection.tiles = menuResponse.tiles;
             nextScreenCollection.action = menuResponse.action;
+            nextScreenCollection.breadcrumbs = menuResponse.breadcrumbs;
             var currentFragment = Backbone.history.getFragment();
             var urlObject = Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(currentFragment));
             urlObject.setSessionId(nextScreenCollection.sessionId);

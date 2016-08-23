@@ -67,9 +67,9 @@ var projectMapInit = function(mapboxAccessToken) {
 
         that.getUnit = function (count) {
             if (is_project_count_map) {
-                return count > 1 ? 'projects' : 'project';
+                return count > 1 ? 'active projects' : 'active project';
             } else {
-                return count > 1 ? 'users' : 'user';
+                return count > 1 ? 'active users' : 'active user';
             }
         };
 
@@ -101,7 +101,7 @@ var projectMapInit = function(mapboxAccessToken) {
             var self = this;
             self.selectedCountry = ko.observable('country name');
             self.selectedProject = ko.observable('project name');
-            self.tableProperties = ['Organization', 'Sector', 'Deployed', 'Active Users', 'Countries'];
+            self.tableProperties = ['Sector', 'Sub-Sector', 'Active Users', 'Countries'];
             self.topFiveProjects = ko.observableArray();
         };
 
@@ -236,14 +236,9 @@ var projectMapInit = function(mapboxAccessToken) {
                     datatype: "json",
                 }).done(function(data){
                     data[country].forEach(function(project){
-                        var deploymentDate = project['deployment']['date'];
-                        if (deploymentDate) {
-                            deploymentDate = deploymentDate.substring(0, 10);
-                        }
                         selectionModel.topFiveProjects.push({
-                            organization: project['internal']['organization_name'],
                             sector: project['internal']['area'],
-                            deployment: deploymentDate,
+                            sub_sector: project['internal']['sub_area'],
                             active_users: project['cp_n_active_cc_users'],
                             countries: capitalizeCountryNames(project['deployment']['countries']).join(', '),
                         });
@@ -268,7 +263,7 @@ var projectMapInit = function(mapboxAccessToken) {
         function _getInfoContent(countryName) {
             var count = dataController.getCount(countryName);
             var unit = dataController.getUnit(count);
-            var message = count ? count + ' ' + unit : 'no ' + unit;
+            var message = count ? count + ' ' + unit : 'no ' + unit + 's';
             return '<b>' + countryName + '</b>: ' + message;
         }
         this._div.innerHTML = (props ? _getInfoContent(props.name) : 'Hover over a country');
@@ -316,6 +311,7 @@ var projectMapInit = function(mapboxAccessToken) {
         div.innerHTML += '<p>Number of Active Countries: ' + dataController.getNumActiveCountries() +  '</p>';
         div.innerHTML += '<p>Number of Active Mobile Users: ' + dataController.getNumUsers() +  '</p>';
         div.innerHTML += '<p>Number of Active Projects: ' + dataController.getNumProjects() +  '</p>';
+        div.innerHTML += '<br><p><em> Active: A project or user submitted a form in past 30 days.</em></p>';
         return div;
     };
 

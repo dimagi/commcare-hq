@@ -11,6 +11,8 @@
     {% endif %}
 {% endblock %}
 
+{% block page_title %}{% endblock %}
+
 {% block head %}
     {{ block.super }}
     {% include "imports/proptable.html" %}
@@ -37,9 +39,17 @@
   <link type="text/less"
         rel="stylesheet"
         media="all"
+        href="{% static 'cloudcare/less/font-formplayer.less' %}" />
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
         href="{% static 'cloudcare/less/cloudcare.debug.less' %}" />
   {% else %}
   {% compress css %}
+      <link type="text/less"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'cloudcare/less/font-formplayer.less' %}" />
       <link type="text/less"
             rel="stylesheet"
             media="all"
@@ -49,9 +59,7 @@
 {% endblock %}
 
 {% block js %} {{ block.super }}
-    {% compress js %}
-        {% include "formplayer/dependencies.html" %}
-    {% endcompress %}
+    {% include "formplayer/dependencies.html" %}
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}

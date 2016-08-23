@@ -34,6 +34,5 @@ settings_urls = patterns('corehq.apps.cloudcare.views',
 urlpatterns = patterns('corehq.apps.cloudcare.views',
     url(r'^$', 'default', name='cloudcare_default'),
     url(r'^apps/', include(app_urls)),
-    url(r'^test/$', TemplateView.as_view(template_name='cloudcare/test.html')),
     url(r'^api/', include(api_urls)),
 )

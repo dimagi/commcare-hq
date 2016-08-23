@@ -55,7 +55,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
     var API = {
 
-        getMenus: function (appId, sessionId, stepList, page, search, queryDict) {
+        getMenus: function (appId, sessionId, stepList, page, search, queryDict, previewCommand) {
 
             var user = FormplayerFrontend.request('currentUser');
             var username = user.username;
@@ -81,6 +81,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                         "search_text": search,
                         "menu_session_id": sessionId,
                         "query_dictionary": queryDict,
+                        "previewCommand": previewCommand,
                     });
 
                     if (stepList) {
@@ -117,12 +118,13 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
         },
     };
 
-    FormplayerFrontend.reqres.setHandler("app:select:menus", function (appId, sessionId, stepList, page, search, queryDict) {
+    FormplayerFrontend.reqres.setHandler("app:select:menus", function (appId, sessionId, stepList, page, search, queryDict, previewCommand) {
         return API.getMenus(appId,
             sessionId,
             stepList,
             page,
             search,
-            queryDict);
+            queryDict,
+            previewCommand);
     });
 });

@@ -20,9 +20,13 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from corehq.toggles import deterministic_random
 from corehq.util.decorators import analytics_task
+from corehq.util.soft_assert import soft_assert
 
 from dimagi.utils.logging import notify_exception
 
+_hubspot_failure_soft_assert = soft_assert(to=['{}@{}'.format('cellowitz', 'dimagi.com'),
+                                               '{}@{}'.format('aphilippot', 'dimagi.com')],
+                                           send_to_ops=False)
 
 logger = logging.getLogger('analytics')
 logger.setLevel('DEBUG')
@@ -393,6 +397,8 @@ def submit_data_to_hub_and_kiss(submit_json):
     for (dispatcher, error_message) in [hubspot_dispatch, kissmetrics_dispatch]:
         try:
             dispatcher(submit_json)
+        except requests.exceptions.HTTPError, e:
+            _hubspot_failure_soft_assert(False, e.response.content)
         except Exception, e:
             notify_exception(None, u"{msg}: {exc}".format(msg=error_message, exc=e))
 

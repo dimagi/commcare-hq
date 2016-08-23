@@ -88,6 +88,8 @@ class Permissions(DocumentSchema):
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
 
+    billing_admin = BooleanProperty(default=False)
+
     @classmethod
     def wrap(cls, data):
         # this is why you don't store module paths in the database...
@@ -162,6 +164,7 @@ class Permissions(DocumentSchema):
             edit_data=True,
             edit_apps=True,
             view_reports=True,
+            billing_admin=True
         )
 
 
@@ -1148,6 +1151,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             return cls.wrap_correctly(result['doc'])
         else:
             return None
+
 
     def clear_quickcache_for_user(self):
         from corehq.apps.hqwebapp.templatetags.hq_shared_tags import _get_domain_list
