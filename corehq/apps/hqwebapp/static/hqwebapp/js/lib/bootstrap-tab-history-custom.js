@@ -53,7 +53,7 @@ $(function () {
         }
         link.tab('show');
     };
-    $(window).bind('load', statechange);
+    $(window).on('load', statechange);
     History.Adapter.bind(window, 'statechange', statechange);
     History.Adapter.bind(window, 'statechange', function () {
         var State = History.getState();
