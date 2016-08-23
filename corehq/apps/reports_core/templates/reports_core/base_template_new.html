@@ -59,12 +59,16 @@
         };
 
         var paginationNotice = function (data) {
-            if (data.aaData !== undefined && data.iTotalRecords !== undefined) {
-                if (data.aaData.length < data.iTotalRecords) {
-                    $('#info-message').html("{% trans 'Showing the current page of data. Switch pages to see more data.' %}");
-                    $('#report-info').removeClass('hide');
-                } else {
-                    $('#report-info').addClass('hide');
+            if (mapSpec) {  // Only show warning for map reports
+                if (data.aaData !== undefined && data.iTotalRecords !== undefined) {
+                    if (data.aaData.length < data.iTotalRecords) {
+                        $('#info-message').html(
+                            "{% trans 'Showing the current page of data. Switch pages to see more data.' %}"
+                        );
+                        $('#report-info').removeClass('hide');
+                    } else {
+                        $('#report-info').addClass('hide');
+                    }
                 }
             }
         };
