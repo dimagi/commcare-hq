@@ -5,7 +5,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 
 
-def get_open_episode_case(domain, person_case_id):
+def get_open_episode_case_from_person(domain, person_case_id):
     """
     Gets the first open 'episode' case for the person
 
@@ -36,7 +36,7 @@ def get_open_episode_case(domain, person_case_id):
 
 def get_adherence_cases_between_dates(domain, person_case_id, start_date, end_date):
     case_accessor = CaseAccessors(domain)
-    episode = get_open_episode_case(domain, person_case_id)
+    episode = get_open_episode_case_from_person(domain, person_case_id)
     indexed_cases = case_accessor.get_reverse_indexed_cases([episode.case_id])
     open_pertinent_adherence_cases = [
         case for case in indexed_cases
