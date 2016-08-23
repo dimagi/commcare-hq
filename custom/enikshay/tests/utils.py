@@ -10,9 +10,9 @@ class ENikshayCaseStructureMixin(object):
         self.domain = getattr(self, 'domain', 'fake-domain-from-mixin')
         self.factory = CaseFactory(domain=self.domain)
 
-        self.person_id = "person"
-        self.occurrence_id = "occurrence"
-        self.episode_id = "episode"
+        self.person_id = u"person"
+        self.occurrence_id = u"occurrence"
+        self.episode_id = u"episode"
 
     def create_case_structure(self):
         person = CaseStructure(
@@ -24,6 +24,7 @@ class ENikshayCaseStructureMixin(object):
                     name="Pippin",
                     aadhaar_number="499118665246",
                     mobile_number="0123456789",
+                    backup_number="0999999999",
                     dob="1987-08-15",
                 )
             },

@@ -8,12 +8,19 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
 from dimagi.utils.web import json_response
 
+from corehq.apps.repeaters.views import AddCaseRepeaterView
 from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceException
 from custom.enikshay.integrations.ninetyninedots.utils import (
     create_adherence_cases,
     update_adherence_confidence_level,
     update_default_confidence_level,
 )
+
+
+class RegisterPatientRepeaterView(AddCaseRepeaterView):
+    urlname = 'add_99dots_repeater'
+    page_title = "99DOTS"
+    page_name = "99DOTS forwarder"
 
 
 @toggles.NINETYNINE_DOTS.required_decorator()
