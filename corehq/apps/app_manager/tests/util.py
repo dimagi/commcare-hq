@@ -141,19 +141,12 @@ def add_build(version, build_number):
     return CommCareBuild.create_from_zip(jad_path, version, build_number)
 
 
-def _get_default(self, application_version):
-    if application_version == '1.0':
-        return BuildSpec({
-            "version": "1.2.1",
-            "build_number": None,
-            "latest": True
-        })
-    else:
-        return BuildSpec({
-            "version": "2.7.0",
-            "build_number": None,
-            "latest": True
-        })
+def _get_default(self):
+    return BuildSpec({
+        "version": "2.7.0",
+        "build_number": None,
+        "latest": True
+    })
 
 patch_default_builds = mock.patch.object(CommCareBuildConfig, 'get_default',
                                          _get_default)

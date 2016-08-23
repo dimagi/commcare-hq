@@ -20,7 +20,7 @@ def multimedia_list_download(request, domain, app_id):
     for m in app.get_modules():
         for f in m.get_forms():
             parsed = XForm(f.source)
-            parsed.validate(version=app.application_version)
+            parsed.validate()
             if include_images:
                 filelist.extend(parsed.image_references)
             if include_audio:

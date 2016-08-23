@@ -9,7 +9,7 @@ class AnalyticsTest(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.domain = 'app-manager-analytics-test'
-        cls.app = Application.new_app(cls.domain, "My App", application_version='2.0')
+        cls.app = Application.new_app(cls.domain, "My App")
         cls.app.add_module(Module.new_module("My Module", 'en'))
         cls.app.get_module(0).new_form("My Form", 'en')
         cls.app.get_module(0).get_form(0).xmlns = 'myxmlns'
