@@ -3,15 +3,14 @@
 
 .appicon {
   min-height: @appicon-height-preview;
+  margin-bottom: 10px;
 
-  h3 {
-    font-size: 14px;
-    padding-top: @appicon-icon-height-preview;
-    padding-bottom: 0;
-    padding-left: 5px;
-    padding-right: 5px;
-    &.appicon-title-single-line {
-      padding-top: @appicon-icon-height-preview + 8;
+  .appicon-title {
+    height: 30px;
+    bottom: 7px;
+    h3 {
+      font-size: 14px;
+      font-weight: 300;
     }
   }
 
@@ -21,6 +20,12 @@
     height: @appicon-icon-height-preview;
     line-height: @appicon-icon-height-preview;
     font-size: @appicon-icon-height-preview;
+  }
+}
+
+.appicon-start, .appicon-sync {
+  .appicon-title {
+    height: 21px;
   }
 }
 

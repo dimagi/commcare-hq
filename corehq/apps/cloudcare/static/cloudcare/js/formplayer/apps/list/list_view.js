@@ -4,7 +4,7 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
     AppList.GridItem = Marionette.ItemView.extend({
         template: "#row-template",
         tagName: "div",
-        className: "grid-item col-sm-4 text-center formplayer-request",
+        className: "grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request",
         events: {
             "click": "rowClick",
         },
@@ -33,7 +33,7 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
     AppList.GridView = Marionette.CompositeView.extend({
         template: "#grid-template",
         childView: AppList.GridItem,
-        childViewContainer: ".application-container",
+        childViewContainer: ".js-application-container",
 
         events: _.extend(AppList.BaseAppView.events),
         incompleteSessionsClick: _.extend(AppList.BaseAppView.incompleteSessionsClick),
