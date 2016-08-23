@@ -49,7 +49,6 @@ branches:
   - loc-tests # sravan 8/8
   - vellum-staging # J$ 11/13
   - welcome-to-vellum # Jenny 8/3
-  - adherence-calendar # j$ 8/19
   - underscore-1-8 # Jenny 8/19
 submodules:
   submodules/touchforms-src:
