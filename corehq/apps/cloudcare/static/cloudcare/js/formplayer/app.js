@@ -124,6 +124,9 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
         // TODO form linking
     };
     data.formplayerEnabled = true;
+    data.answerCallback = function(sessionId) {
+        FormplayerFrontend.request('debugger.formXML', sessionId);
+    };
     data.resourceMap = function(resource_path) {
         var urlObject = Util.currentUrlToObject();
         var appId = urlObject.appId;
@@ -131,6 +134,39 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
     };
     var sess = new WebFormSession(data);
     sess.renderFormXml(data, $('#webforms'));
+});
+
+FormplayerFrontend.reqres.setHandler('debugger.formXML', function(sessionId) {
+    var user = FormplayerFrontend.request('currentUser');
+    var success = function(data) {
+        var $instanceTab = $('#debugger-xml-instance-tab'),
+            codeMirror;
+
+        codeMirror = CodeMirror(function(el) {
+            $('#xml-viewer-pretty').html(el);
+        }, {
+            value: data.output,
+            mode: 'xml',
+            viewportMargin: Infinity,
+            readOnly: true,
+            lineNumbers: true,
+        });
+
+        $instanceTab.off();
+        $instanceTab.on('shown.bs.tab', function() {
+            codeMirror.refresh();
+        });
+    }
+    var options = {
+        url: user.formplayer_url + '/get-instance',
+        data: JSON.stringify({
+            'session-id': sessionId,
+        }),
+        success: success
+    };
+    Util.setCrossDomainAjaxOptions(options);
+
+    $.ajax(options);
 });
 
 FormplayerFrontend.on("start", function (options) {
