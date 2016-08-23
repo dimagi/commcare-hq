@@ -62,13 +62,15 @@
                     if (!self.load_state() || self.load_state() === 'error') {
                         self.load_state('loading');
                         $.ajax({
-                            url: '{% url 'app_multimedia_ajax' domain app.get_id %}'
-                        }).success(function (content) {
-                            self.load_state('loaded');
-                            self.multimedia_page_html(content);
-                        }).error(function () {
-                            alert('Oops, there was a problem loading this section. Please try again.');
-                            self.load_state('error');
+                            url: '{% url 'app_multimedia_ajax' domain app.get_id %}',
+                            success: function(content) {
+                                self.load_state('loaded');
+                                self.multimedia_page_html(content);
+                            },
+                            error: function() {
+                                alert('Oops, there was a problem loading this section. Please try again.');
+                                self.load_state('error');
+                            },
                         });
                     }
                 };
@@ -106,14 +108,16 @@
                 // Load the content
                 $.ajax({
                     url: "{% url 'release_manager_ajax' domain app.get_id %}",
-                }).success(function(content) {
-                    state = "loaded";
-                    showSpinner = false;
-                    $main.html(content);
-                }).error(function() {
-                    state = "error";
-                    showSpinner = false;
-                    $main.html($loadingError.html());
+                    success: function(content) {
+                        state = "loaded";
+                        showSpinner = false;
+                        $main.html(content);
+                    },
+                    error: function() {
+                        state = "error";
+                        showSpinner = false;
+                        $main.html($loadingError.html());
+                    },
                 });
             });
         });

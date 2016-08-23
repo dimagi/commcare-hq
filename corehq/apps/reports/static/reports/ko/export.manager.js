@@ -63,21 +63,25 @@ var ExportManager = function (o) {
             var autoRefresh = true;
             var pollDownloader = function () {
                 if (autoRefresh && $('#ready_'+params.data.download_id).length === 0) {
-                    $.get(params.data.download_url, function(data) {
-                        self.$modal.find(self.exportModalLoadedData).html(data);
-                        self.setUpEventTracking({
-                            xmlns: params.xmlns,
-                            isBulkDownload: params.isBulkDownload,
-                            exportName: params.exportName,
-                            isMultimedia: params.isMultimedia
-                        });
-                        if (autoRefresh) {
-                            setTimeout(pollDownloader, 2000);
-                        }
-                    }).error(function () {
-                        self.$modal.find(self.exportModalLoading).addClass('hide');
-                        self.$modal.find(self.exportModalLoadedData).html('<p class="alert alert-error">Oh no! Your download was unable to be completed. We have been notified and are already hard at work solving this issue.</p>');
-                        autoRefresh = false;
+                    $.get({
+                        url: params.data.download_url,
+                        success: function(data) {
+                            self.$modal.find(self.exportModalLoadedData).html(data);
+                            self.setUpEventTracking({
+                                xmlns: params.xmlns,
+                                isBulkDownload: params.isBulkDownload,
+                                exportName: params.exportName,
+                                isMultimedia: params.isMultimedia
+                            });
+                            if (autoRefresh) {
+                                setTimeout(pollDownloader, 2000);
+                            }
+                        },
+                        error: function () {
+                            self.$modal.find(self.exportModalLoading).addClass('hide');
+                            self.$modal.find(self.exportModalLoadedData).html('<p class="alert alert-error">Oh no! Your download was unable to be completed. We have been notified and are already hard at work solving this issue.</p>');
+                            autoRefresh = false;
+                        },
                     });
                 } else {
                     self.$modal.find(self.exportModalLoading).addClass('hide');
