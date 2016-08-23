@@ -24,6 +24,7 @@ from corehq.apps.reports.models import ReportConfig
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports
+from corehq.apps.users.models import Permissions
 from corehq.form_processor.utils import use_new_exports
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
@@ -1102,6 +1103,7 @@ class ProjectSettingsTab(UITab):
 
         items = []
         user_is_admin = self.couch_user.is_domain_admin(self.domain)
+        user_is_billing_admin = self.couch_user.has_permission(self.domain, Permissions.billing_admin.name)
 
         project_info = []
 
@@ -1193,7 +1195,7 @@ class ProjectSettingsTab(UITab):
 
         from corehq.apps.users.models import WebUser
         if isinstance(self.couch_user, WebUser):
-            if user_is_admin or self.couch_user.is_superuser:
+            if user_is_billing_admin or self.couch_user.is_superuser:
                 from corehq.apps.domain.views import (
                     DomainSubscriptionView, EditExistingBillingAccountView,
                     DomainBillingStatementsView, ConfirmSubscriptionRenewalView,
