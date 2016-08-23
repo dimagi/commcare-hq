@@ -67,9 +67,9 @@ var projectMapInit = function(mapboxAccessToken) {
 
         that.getUnit = function (count) {
             if (is_project_count_map) {
-                return count > 1 ? 'projects' : 'project';
+                return count > 1 ? 'active projects' : 'active project';
             } else {
-                return count > 1 ? 'users' : 'user';
+                return count > 1 ? 'active users' : 'active user';
             }
         };
 
@@ -263,7 +263,7 @@ var projectMapInit = function(mapboxAccessToken) {
         function _getInfoContent(countryName) {
             var count = dataController.getCount(countryName);
             var unit = dataController.getUnit(count);
-            var message = count ? count + ' ' + unit : 'no ' + unit;
+            var message = count ? count + ' ' + unit : 'no ' + unit + 's';
             return '<b>' + countryName + '</b>: ' + message;
         }
         this._div.innerHTML = (props ? _getInfoContent(props.name) : 'Hover over a country');
