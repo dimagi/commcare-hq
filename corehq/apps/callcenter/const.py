@@ -40,7 +40,7 @@ CDC_FirstVisit = 'http://openrosa.org/formdesigner/66e768cc5f551f6c42f3034ee67a8
 CDC_ContactRegistration = 'http://openrosa.org/formdesigner/e3aa9c0da42a616cbd28c8ce3d74f0d09718fe81'
 CDC_PatientEducation = 'http://openrosa.org/formdesigner/58d56d542f35bd8d3dd16fbd31ee4e5a3a7b35d2'
 CDC_ActivistaEducation = 'http://openrosa.org/formdesigner/b8532594e7d38cdd6c632a8249814ce5c043c03c'
-CDC_BuscaActicaVisit = 'http://openrosa.org/formdesigner/52ca9bc2d99d28a07bc60f3a353a80047a0950a8'
+CDC_BuscaActivaVisit = 'http://openrosa.org/formdesigner/52ca9bc2d99d28a07bc60f3a353a80047a0950a8'
 CDC_RegisterPatientForms = "http://openrosa.org/formdesigner/1738a73d0c19b608912255c412674cb9c8b64629"
 
 CUSTOM_FORM = 'custom_form'
@@ -66,13 +66,13 @@ PER_DOMAIN_FORM_INDICATORS = {
         'ContactRegistration': {'type': TYPE_SUM, 'xmlns': CDC_ContactRegistration},
         'PatientEducation': {'type': TYPE_SUM, 'xmlns': CDC_PatientEducation},
         'ActivistaEducation': {'type': TYPE_SUM, 'xmlns': CDC_ActivistaEducation},
-        'BuscaActicaVisit': {'type': TYPE_SUM, 'xmlns': CDC_BuscaActicaVisit},
+        'BuscaActivaVisit': {'type': TYPE_SUM, 'xmlns': CDC_BuscaActivaVisit},
     },
     'cdc-mozambique-test': {
         'FindPatientForms': {'type': TYPE_SUM, 'xmlns': CDC_FindPatientForms},
         'FirstVisitForms': {'type': TYPE_SUM, 'xmlns': CDC_FirstVisit},
         'RegisterPatientForms': {'type': TYPE_SUM, 'xmlns': CDC_RegisterPatientForms},
-        'BuscaActicaForms': {'type': TYPE_SUM, 'xmlns': CDC_BuscaActicaVisit},
+        'BuscaActivaForms': {'type': TYPE_SUM, 'xmlns': CDC_BuscaActivaVisit},
         'HomeVisitForms': {'type': TYPE_SUM, 'xmlns': CDC_NormalVisit},
     },
 }
