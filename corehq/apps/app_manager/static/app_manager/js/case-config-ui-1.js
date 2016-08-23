@@ -98,7 +98,7 @@ var CaseConfig = (function () {
     CaseConfig.prototype.init = function () {
         var casexml = this;
         if (this.questions.length) {
-            this.home.delegate('input:not(.action-checkbox), select', 'change textchange', function () {
+            this.home.delegate('change textchange', 'input:not(.action-checkbox), select', function () {
                 // recompute casexml_json
                 casexml.refreshActions();
                 casexml.render();
@@ -106,7 +106,7 @@ var CaseConfig = (function () {
                 casexml.render();
                 $("#casexml_json").text(JSON.stringify(casexml.actions));
                 casexml.saveButton.fire('change');
-            }).delegate('input.action-checkbox', 'change', function () {
+            }).delegate('change', 'input.action-checkbox', function () {
                 var container = $(this).parent().next('.well');
                 if ($(this).is(':checked')) {
                     container.slideDown();
