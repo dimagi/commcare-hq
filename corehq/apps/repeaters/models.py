@@ -72,6 +72,7 @@ def simple_post_with_cached_timeout(data, url, expiry=60 * 60, force_send=False,
 DELETED = "-Deleted"
 
 FormatInfo = namedtuple('FormatInfo', 'name label generator_class')
+PostInfo = namedtuple('PostInfo', 'payload headers force_send max_tries')
 
 
 class GeneratorCollection(object):
@@ -503,12 +504,7 @@ class RepeatRecord(Document):
         ).one()
         return results['value'] if results else 0
 
-    def update_success(self):
-        self.last_checked = datetime.utcnow()
-        self.next_check = None
-        self.succeeded = True
-
-    def update_failure(self, reason=None):
+    def set_next_try(self, reason=None):
         # we use an exponential back-off to avoid submitting to bad urls
         # too frequently.
         assert self.succeeded is False
@@ -525,7 +521,6 @@ class RepeatRecord(Document):
 
         self.last_checked = now
         self.next_check = self.last_checked + window
-        self.failure_reason = reason
 
     def try_now(self):
         # try when we haven't succeeded and either we've
@@ -556,34 +551,59 @@ class RepeatRecord(Document):
         else:
             headers = self.repeater.get_headers(self)
             if self.try_now() or force_send:
-                # we don't use celery's version of retry because
-                # we want to override the success/fail each try
-                failure_reason = None
-                for i in range(max_tries):
-                    try:
-                        resp = simple_post_with_cached_timeout(
-                            payload,
-                            self.url,
-                            headers=headers,
-                            force_send=force_send,
-                            timeout=POST_TIMEOUT,
-                        )
-                        if 200 <= resp.status_code < 300:
-                            self.update_success()
-                            break
-                        else:
-                            failure_reason = u'{}: {}'.format(resp.status_code, resp.reason)
-                    except Exception, e:
-                        failure_reason = unicode(e)
+                tries = 0
+                post_info = PostInfo(payload, headers, force_send, max_tries)
+                self.post(post_info, tries=tries)
 
-                if not self.succeeded:
-                    # mark it failed for later and give up
-                    self.update_failure(failure_reason)
-                    log_counter(REPEATER_ERROR_COUNT, {
-                        '_id': self._id,
-                        'reason': failure_reason,
-                        'target_url': self.url,
-                    })
+    def post(self, post_info, tries=0):
+        tries += 1
+        try:
+            response = simple_post_with_cached_timeout(
+                post_info.payload,
+                self.url,
+                headers=post_info.headers,
+                force_send=post_info.force_send,
+                timeout=POST_TIMEOUT,
+            )
+        except Exception, e:
+            self.handle_exception(e)
+        else:
+            return self.handle_response(response, post_info, tries)
+
+    def handle_response(self, response, post_info, tries):
+        if 200 <= response.status_code < 300:
+            return self.handle_success(response)
+        else:
+            return self.handle_failure(response, post_info, tries)
+
+    def handle_success(self, response):
+        """Do something once the repeater succeeds
+        """
+        self.last_checked = datetime.utcnow()
+        self.next_check = None
+        self.succeeded = True
+
+    def handle_failure(self, response, post_info, tries):
+        """Do something with the response if the repeater fails
+        """
+        if tries < post_info.max_tries:
+            return self.post(post_info, tries)
+        else:
+            self._fail(u'{}: {}'.format(response.status_code, response.reason))
+
+    def handle_exception(self, exception):
+        """handle internal exceptions
+        """
+        self._fail(unicode(exception))
+
+    def _fail(self, reason):
+        self.set_next_try()
+        self.failure_reason = reason
+        log_counter(REPEATER_ERROR_COUNT, {
+            '_id': self._id,
+            'reason': reason,
+            'target_url': self.url,
+        })
 
 # import signals
 # Do not remove this import, its required for the signals code to run even though not explicitly used in this file

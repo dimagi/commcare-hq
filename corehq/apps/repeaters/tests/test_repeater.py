@@ -159,7 +159,7 @@ class RepeaterTest(BaseRepeaterTest):
         record = RepeatRecord(domain=self.domain, next_check=now)
         self.assertIsNone(record.last_checked)
 
-        record.update_failure()
+        record.set_next_try()
         self.assertTrue(record.last_checked > now)
         self.assertEqual(record.next_check, record.last_checked + MIN_RETRY_WAIT)
 
