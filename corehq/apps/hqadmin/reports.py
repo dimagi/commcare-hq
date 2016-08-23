@@ -938,7 +938,7 @@ class AdminUserReport(AdminFacetedReport):
     es_index = 'users'
 
     es_facet_list = [
-        "is_active",  # this is NOT "has submitted a form in the last 30 days"
+        "is_active",  # a user can log in to the project
         "is_staff",
         "is_superuser",
         "domain",
