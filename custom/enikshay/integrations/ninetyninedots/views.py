@@ -95,26 +95,26 @@ def update_default_confidence(request, domain):
 
 def validate_beneficiary_id(beneficiary_id):
     if beneficiary_id is None:
-        raise AdherenceException(message="Beneficiary ID is null")
+        raise AdherenceException("Beneficiary ID is null")
     if not isinstance(beneficiary_id, basestring):
-        raise AdherenceException(message="Beneficiary ID should be a string")
+        raise AdherenceException("Beneficiary ID should be a string")
 
 
 def validate_dates(start_date, end_date):
     if start_date is None:
-        raise AdherenceException(message="start_date is null")
+        raise AdherenceException("start_date is null")
     if end_date is None:
-        raise AdherenceException(message="end_date is null")
+        raise AdherenceException("end_date is null")
     try:
         parse_datetime(start_date).astimezone(pytz.UTC)
         parse_datetime(end_date).astimezone(pytz.UTC)
     except:
-        raise AdherenceException(message="Malformed Date")
+        raise AdherenceException("Malformed Date")
 
 
 def validate_adherence_values(adherence_values):
     if adherence_values is None or not isinstance(adherence_values, list):
-        raise AdherenceException(message="Adherences invalid")
+        raise AdherenceException("Adherences invalid")
 
 
 def validate_confidence_level(confidence_level):

@@ -22,6 +22,9 @@ class ENikshayCaseStructureMixin(object):
                 "create": True,
                 "update": dict(
                     name="Pippin",
+                    aadhaar_number="499118665246",
+                    mobile_number="0123456789",
+                    dob="1987-08-15",
                 )
             },
         )
@@ -31,7 +34,7 @@ class ENikshayCaseStructureMixin(object):
                 'create': True,
                 'case_type': 'occurrence',
                 "update": dict(
-                    person_id=self.person_id
+                    name="Occurrence #1",
                 )
             },
             indices=[CaseIndex(
@@ -48,7 +51,6 @@ class ENikshayCaseStructureMixin(object):
                 'case_type': 'episode',
                 "update": dict(
                     person_name="Pippin",
-                    person_id=self.person_id,
                     opened_on=datetime(1989, 6, 11, 0, 0),
                     patient_type="new",
                     hiv_status="reactive",
