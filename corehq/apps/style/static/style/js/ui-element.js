@@ -61,7 +61,7 @@ var uiElement;
             setPlaceholderValue($elem, value);
         };
 
-        this.$edit_view = $elem.bind('change textchange', function () {
+        this.$edit_view = $elem.on('change textchange', function () {
             that.fire('change');
         });
         this.$noedit_view = $('<span class="ui-element-input"/>');

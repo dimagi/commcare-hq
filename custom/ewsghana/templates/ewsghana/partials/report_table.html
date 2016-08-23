@@ -124,7 +124,7 @@
                     .transition().duration(100).call(multibar_chart);
         };
 
-        $('.toggle-column').bind('click', function () {
+        $('.toggle-column').on('click', function () {
             {% if report_table.slug != 'product_selection_pane' and report_table.slug != 'facility_report' %}
                 if (datatable.fnSettings().aoColumns.length > 1) {
                     show_hide_table_columns(this);

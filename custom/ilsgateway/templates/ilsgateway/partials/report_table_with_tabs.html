@@ -81,7 +81,7 @@
     <script type="text/javascript">
 
         {% if report_table.slug == 'ils_notes' %}
-            $('#save_note').bind('click', function() {
+            $('#save_note').on('click', function() {
                 var url = '{% url 'save_ils_note' domain %}';
                 var data = {
                     'text': $('#add_note').val(),
@@ -147,7 +147,7 @@
                     .transition().duration(100).call(multibar_chart);
             };
 
-            $('.toggle-column').bind('click', function() {
+            $('.toggle-column').on('click', function() {
                 show_hide_table_columns(this);
                 show_hide_chart_data();
                 if ($('.toggle-column:checked').length == 10) {

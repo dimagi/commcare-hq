@@ -5,7 +5,7 @@ $(function() {
         });
     };
 
-    $('.page-level-alert').bind('closed', function () {
+    $('.page-level-alert').on('closed', function () {
         var announcement_id = $('.page-level-alert').find('.announcement-control').data('announcementid');
         if (announcement_id) {
             clearAnnouncement(announcement_id);

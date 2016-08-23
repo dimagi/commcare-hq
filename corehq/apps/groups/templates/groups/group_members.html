@@ -64,7 +64,7 @@
                 return false;
             });
 
-            $(window).bind('beforeunload', function () {
+            $(window).on('beforeunload', function () {
                 var someUnsavedChanges = false;
                 var ret = "{% trans "The following changes will not be saved: " %}";
 
