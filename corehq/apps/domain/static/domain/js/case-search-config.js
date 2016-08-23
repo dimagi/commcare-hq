@@ -68,11 +68,15 @@ hqDefine('domain/js/case-search-config.js', function () {
                     ),
                 });
             }
-            $.post(form.action, {
-                'enable': self.toggleEnabled(),
-                'config': {'fuzzy_properties': fuzzyProperties},
-            }).success(function () {
-                // TODO: Watch changes. On success change Save button from btn-primary to btn-default
+            $.post({
+                url: form.action, 
+                data: {
+                    'enable': self.toggleEnabled(),
+                    'config': {'fuzzy_properties': fuzzyProperties},
+                },
+                success: function () {
+                    // TODO: Watch changes. On success change Save button from btn-primary to btn-default
+                },
             });
         };
     };

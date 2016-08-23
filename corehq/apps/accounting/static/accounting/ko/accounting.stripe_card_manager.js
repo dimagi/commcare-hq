@@ -27,12 +27,13 @@ var NewStripeCard = function(data){
         return $.ajax({
             type: "POST",
             url: data.url,
-            data: self.unwrap()
-        }).success(function(data){
-            $("#card-modal").modal('hide');
-            $("#success-modal").modal('show');
-            cardManager.wrap(data);
-            self.reset();
+            data: self.unwrap(),
+            success: function(data) {
+                $("#card-modal").modal('hide');
+                $("#success-modal").modal('show');
+                cardManager.wrap(data);
+                self.reset();
+            },
         }).fail(function(data){
             var response = JSON.parse(data.responseText);
             self.errorMsg(response.error);
@@ -104,11 +105,12 @@ var StripeCard = function(card, baseUrl){
         cardManager.cards.destroy(card);
         $.ajax({
             type: "DELETE",
-            url: self.url
-        }).success(function(data){
-            cardManager.wrap(data);
-            $(button.currentTarget).closest(".modal").modal('hide');
-            $("#success-modal").modal('show');
+            url: self.url,
+            success: function(data) {
+                cardManager.wrap(data);
+                $(button.currentTarget).closest(".modal").modal('hide');
+                $("#success-modal").modal('show');
+            },
         }).fail(function(data){
             var response = JSON.parse(data.responseText);
             self.deleteErrorMsg(response.error);
@@ -124,9 +126,10 @@ var StripeCard = function(card, baseUrl){
         return $.ajax({
             type: "POST",
             url: self.url,
-            data: data
-        }).success(function(data){
-            cardManager.wrap(data);
+            data: data,
+            success: function(data) {
+                cardManager.wrap(data);
+            },
         }).fail(function(data){
             var response = JSON.parse(data.responseText);
             alert(response.error);
