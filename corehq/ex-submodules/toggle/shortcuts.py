@@ -4,16 +4,15 @@ from django.core.cache import cache
 from .models import Toggle
 
 
-def toggle_enabled(slug, item, check_cache=True, namespace=None):
+def toggle_enabled(slug, item, namespace=None):
     """
     Given a toggle and a username, whether the toggle is enabled for that user
     """
     item = namespaced_item(item, namespace)
     cache_key = get_toggle_cache_key(slug, item)
-    if check_cache:
-        from_cache = cache.get(cache_key)
-        if from_cache is not None:
-            return from_cache
+    from_cache = cache.get(cache_key)
+    if from_cache is not None:
+        return from_cache
 
     if not settings.UNIT_TESTING or getattr(settings, 'DB_ENABLED', True):
         try:
