@@ -3,18 +3,32 @@ import pytz
 
 from django.test import TestCase
 from custom.enikshay.tests.utils import ENikshayCaseStructureMixin
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
 
 from custom.enikshay.case_utils import (
     get_open_episode_case_from_person,
     get_adherence_cases_between_dates,
+    get_occurrence_case_from_episode,
+    get_person_case_from_occurrence,
 )
 
 
 class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(ENikshayCaseUtilsTests, cls).setUpClass()
+        FormProcessorTestUtils.delete_all_cases()
+
+    def setUp(self):
+        super(ENikshayCaseUtilsTests, self).setUp()
+        self.cases = self.create_case_structure()
+
+    def tearDown(self):
+        super(ENikshayCaseUtilsTests, self).tearDown()
+        FormProcessorTestUtils.delete_all_cases()
+
     @run_with_all_backends
     def test_get_adherence_cases_between_dates(self):
-        self.create_case_structure()
         adherence_dates = [
             datetime(2005, 7, 10),
             datetime(2016, 8, 10),
@@ -57,5 +71,18 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
 
     @run_with_all_backends
     def test_get_episode(self):
-        self.create_case_structure()
         self.assertEqual(get_open_episode_case_from_person(self.domain, 'person').case_id, 'episode')
+
+    @run_with_all_backends
+    def test_get_occurrence_case_from_episode(self):
+        self.assertEqual(
+            get_occurrence_case_from_episode(self.domain, self.episode_id).case_id,
+            self.occurrence_id
+        )
+
+    @run_with_all_backends
+    def test_get_person_case_from_occurrence(self):
+        self.assertEqual(
+            get_person_case_from_occurrence(self.domain, self.occurrence_id).case_id,
+            self.person_id
+        )
