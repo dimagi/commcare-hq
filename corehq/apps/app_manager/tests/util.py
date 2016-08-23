@@ -142,7 +142,6 @@ def add_build(version, build_number):
 
 
 def _get_default(self):
-    self.assert_app_v2()
     return BuildSpec({
         "version": "2.7.0",
         "build_number": None,
