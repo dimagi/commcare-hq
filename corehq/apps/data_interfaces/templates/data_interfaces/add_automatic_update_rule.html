@@ -79,7 +79,7 @@
             return $scope.action == 'UPDATE_AND_CLOSE' || $scope.action == 'UPDATE';
         };
 
-        angular.element(document).ready(function() {
+        $(function() {
             djangoRMI.get_case_property_map().success(function(response) {
                 if(response.success) {
                     $scope.case_property_map = response.data;

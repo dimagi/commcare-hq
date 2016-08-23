@@ -40,7 +40,7 @@
             return false;
         }
 
-        $(document).ready(function() {
+        $(function() {
             {% for snapshot in snapshots %}
                 $('#publish_{{ snapshot.name }}').click(function() {
                     ga_track_event('Exchange', 'Publish Previous Version', '{{ snapshot.name }}');

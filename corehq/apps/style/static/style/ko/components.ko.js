@@ -6,7 +6,7 @@ _.each(components, function(moduleName, elementName) {
     ko.components.register(elementName, hqImport(moduleName));
 });
 
-$(document).ready(function() {
+$(function() {
     _.each(_.keys(components), function(elementName) {
         _.each($(elementName), function(el) { $(el).koApplyBindings(); });
     });

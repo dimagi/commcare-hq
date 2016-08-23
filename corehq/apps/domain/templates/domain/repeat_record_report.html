@@ -16,7 +16,7 @@
 
 {% block js-inline %}{{ block.super }}
 <script>
-    $(document).ready(function() {
+    $(function() {
         var codeMirror = null;
         $('#view-record-payload-modal').on('shown.bs.modal', function(event) {
             var recordData = $(event.relatedTarget).data(),
