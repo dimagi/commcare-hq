@@ -30,3 +30,8 @@ class NinetyNineDotsRegisterPatientRepeater(CaseRepeater):
         )
 
         return allowed_case_types_and_users and enabled and not_registered
+
+    def allow_retries(self, response):
+        if response is not None and response.status_code == 500:
+            return True
+        return False

@@ -5,6 +5,8 @@ import jsonobject
 from corehq.apps.repeaters.models import RegisterGenerator
 from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator
 
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.util import post_case_blocks
 from custom.enikshay.integrations.ninetyninedots.repeaters import NinetyNineDotsRegisterPatientRepeater
 from custom.enikshay.case_utils import (
     get_occurrence_case_from_episode,
@@ -39,7 +41,39 @@ class RegisterPatientPayloadGenerator(BasePayloadGenerator):
         return json.dumps(data.to_json())
 
     def handle_success(self, response, payload_doc):
-        pass
+        if response.status_code == 201:
+            _update_episode_case(
+                payload_doc.domain,
+                payload_doc.case_id,
+                {
+                    "dots_99_registered": "true",
+                    "dots_99_error": ""
+                }
+            )
+
+    def handle_failure(self, response, payload_doc):
+        if 400 <= response.status_code <= 500:
+            _update_episode_case(
+                payload_doc.domain,
+                payload_doc.case_id,
+                {
+                    "dots_99_registered": "false",
+                    "dots_99_error": "{}: {}".format(
+                        response.status_code,
+                        json.loads(response.message).get('error')
+                    ),
+                }
+            )
+
+
+def _update_episode_case(domain, case_id, updated_properties):
+    post_case_blocks(
+        [CaseBlock(
+            case_id=case_id,
+            update=updated_properties
+        ).as_xml()],
+        {'domain': domain}
+    )
 
 
 def _get_phone_numbers(payload_doc):
