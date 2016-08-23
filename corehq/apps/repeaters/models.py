@@ -322,6 +322,17 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         # to be overridden
         return self.url
 
+    @property
+    def allow_retries(self):
+        """Whether to requeue the repeater when it fails
+        """
+        return True
+
+    def allow_immediate_retries(self, response):
+        """Whether to retry failed requests immediately a few times
+        """
+        return True
+
     def get_headers(self, repeat_record):
         # to be overridden
         generator = self.get_payload_generator(self.format_or_default_format())
@@ -331,6 +342,18 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             headers.update({'Authorization': 'Basic ' + user_pass})
 
         return headers
+
+    def handle_success(self, response, repeat_record):
+        """handle a successful post
+        """
+        generator = self.get_payload_generator(self.format_or_default_format())
+        return generator.handle_success(response, self.payload_doc(repeat_record))
+
+    def handle_failure(self, response, repeat_record):
+        """handle a failed post
+        """
+        generator = self.get_payload_generator(self.format_or_default_format())
+        return generator.handle_failure(response, self.payload_doc(repeat_record))
 
 
 class FormRepeater(Repeater):
@@ -582,14 +605,16 @@ class RepeatRecord(Document):
         self.last_checked = datetime.utcnow()
         self.next_check = None
         self.succeeded = True
+        self.repeater.handle_success(response, self)
 
     def handle_failure(self, response, post_info, tries):
         """Do something with the response if the repeater fails
         """
-        if tries < post_info.max_tries:
+        if tries < post_info.max_tries and self.repeater.allow_immediate_retries(response):
             return self.post(post_info, tries)
         else:
             self._fail(u'{}: {}'.format(response.status_code, response.reason))
+            self.repeater.handle_failure(response, self)
 
     def handle_exception(self, exception):
         """handle internal exceptions
@@ -597,7 +622,8 @@ class RepeatRecord(Document):
         self._fail(unicode(exception))
 
     def _fail(self, reason):
-        self.set_next_try()
+        if self.repeater.allow_retries:
+            self.set_next_try()
         self.failure_reason = reason
         log_counter(REPEATER_ERROR_COUNT, {
             '_id': self._id,
