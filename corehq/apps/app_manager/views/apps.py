@@ -240,28 +240,18 @@ def get_apps_base_context(request, domain, app):
     }
 
     if app:
-        v2_app = app.application_version == APP_V2
+        app.assert_app_v2()
         context.update({
             'show_care_plan': (
-                v2_app
-                and not app.has_careplan_module
+                not app.has_careplan_module
                 and toggles.APP_BUILDER_CAREPLAN.enabled(request.user.username)
             ),
             'show_advanced': (
-                v2_app
-                and (
-                    toggles.APP_BUILDER_ADVANCED.enabled(domain)
-                    or getattr(app, 'commtrack_enabled', False)
-                )
+                toggles.APP_BUILDER_ADVANCED.enabled(domain)
+                or getattr(app, 'commtrack_enabled', False)
             ),
-            'show_report_modules': (
-                v2_app
-                and toggles.MOBILE_UCR.enabled(domain)
-            ),
-            'show_shadow_modules': (
-                v2_app
-                and toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain)
-            ),
+            'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
+            'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),
         })
 
     return context
@@ -584,7 +574,6 @@ def edit_app_attr(request, domain, app_id, attr):
         'use_j2me_endpoint',
         # Application only
         'cloudcare_enabled',
-        'application_version',
         'case_sharing',
         'translation_strategy',
         'auto_gps_capture',
@@ -600,7 +589,6 @@ def edit_app_attr(request, domain, app_id, attr):
     resp = {"update": {}}
     # For either type of app
     easy_attrs = (
-        ('application_version', None),
         ('build_spec', BuildSpec.from_string),
         ('case_sharing', None),
         ('cloudcare_enabled', None),

@@ -7,8 +7,7 @@ from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.app_manager.const import (
     SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
     CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER,
-    SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE,
-    APP_V2)
+    SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE, APP_V2)
 from lxml import etree as ET
 from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
@@ -536,16 +535,15 @@ def autoset_owner_id_for_advanced_action(action):
     return False
 
 
-def validate_xform(source, version='1.0'):
+def validate_xform(source):
     if isinstance(source, unicode):
         source = source.encode("utf-8")
     # normalize and strip comments
     source = ET.tostring(parse_xml(source))
-    validation_results = formtranslate.api.validate(source, version=version)
+    validation_results = formtranslate.api.validate(source)
     if not validation_results.success:
         raise XFormValidationError(
             fatal_error=validation_results.fatal_error,
-            version=version,
             validation_problems=validation_results.problems,
         )
 
@@ -572,9 +570,8 @@ class XForm(WrappedNode):
     def __str__(self):
         return ET.tostring(self.xml) if self.xml is not None else ''
 
-    def validate(self, version='1.0'):
-        validate_xform(ET.tostring(self.xml) if self.xml is not None else '',
-                       version=version)
+    def validate(self):
+        validate_xform(ET.tostring(self.xml) if self.xml is not None else '')
         return self
 
     @property
@@ -1083,7 +1080,7 @@ class XForm(WrappedNode):
         return data_nodes
 
     def add_case_and_meta(self, form):
-        assert form.get_app().application_version == APP_V2
+        form.get_app().assert_app_v2()
         self.create_casexml_2(form)
         self.add_usercase(form)
         self.add_meta_2(form)

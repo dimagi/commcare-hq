@@ -1,6 +1,7 @@
 from datetime import datetime
 from zipfile import ZipFile
 from couchdbkit.exceptions import ResourceNotFound, BadValueError
+from corehq.apps.app_manager.const import APP_V2
 from dimagi.ext.couchdbkit import *
 from corehq.apps.builds.fixtures import commcare_build_config
 from corehq.apps.builds.jadjar import JadJar
@@ -254,7 +255,7 @@ class CommCareBuildConfig(Document):
         except ResourceNotFound:
             return cls.bootstrap()
 
-    def get_default(self, application_version):
+    def get_default(self, application_version=APP_V2):
         i = self.application_versions.index(application_version)
         return self.defaults[i]
 

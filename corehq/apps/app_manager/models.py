@@ -844,8 +844,7 @@ class FormBase(DocumentSchema):
             form.strip_vellum_ns_attributes()
             try:
                 if form.xml is not None:
-                    validate_xform(etree.tostring(form.xml),
-                                   version=self.get_app().application_version)
+                    validate_xform(etree.tostring(form.xml))
             except XFormValidationError as e:
                 validation_dict = {
                     "fatal_error": e.fatal_error,
@@ -1348,7 +1347,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         return '. '.join(messages)
 
     def active_actions(self):
-        assert self.get_app().application_version == APP_V2
+        self.get_app().assert_app_v2()
         if self.requires == 'none':
             action_types = (
                 'open_case', 'update_case', 'close_case', 'subcases',
@@ -4274,9 +4273,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     # a=Alphanumeric, n=Numeric, x=Neither (not allowed)
     admin_password_charset = StringProperty(choices=['a', 'n', 'x'], default='n')
 
-    # This is here instead of in Application because it needs to be available in stub representation
-    application_version = StringProperty(default=APP_V2, choices=[APP_V1, APP_V2], required=False)
-
     langs = StringListProperty()
 
     secure_submissions = BooleanProperty(default=False)
@@ -4350,7 +4346,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 should_save = True
             del data['build_langs']
 
-
         if data.has_key('original_doc'):
             data['copy_history'] = [data.pop('original_doc')]
             should_save = True
@@ -4359,7 +4354,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
         self = super(ApplicationBase, cls).wrap(data)
         if not self.build_spec or self.build_spec.is_null():
-            self.build_spec = get_default_build_spec(self.application_version)
+            self.build_spec = get_default_build_spec()
 
         if should_save:
             self.save()
@@ -4912,6 +4907,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     created_from_template = StringProperty()
     use_grid_menus = BooleanProperty(default=False)
 
+    # legacy property; kept around to be able to identify (deprecated) v1 apps
+    application_version = StringProperty(default=APP_V2, choices=[APP_V1, APP_V2], required=False)
+
+    def assert_app_v2(self):
+        assert self.application_version == APP_V2
+
     @property
     @memoized
     def commtrack_enabled(self):
@@ -5167,7 +5168,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         self.put_attachment(value, 'custom_suite.xml')
 
     def create_suite(self, build_profile_id=None):
-        assert self.application_version == APP_V2
+        self.assert_app_v2()
         return SuiteGenerator(self, build_profile_id).generate_suite()
 
     def create_media_suite(self, build_profile_id=None):
@@ -5251,7 +5252,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @classmethod
     def new_app(cls, domain, name, lang="en"):
         app = cls(domain=domain, modules=[], name=name, langs=[lang],
-                  application_version=APP_V2, vellum_case_management=True)
+                  vellum_case_management=True)
         return app
 
     def add_module(self, module):
