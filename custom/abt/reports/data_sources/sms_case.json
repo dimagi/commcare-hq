@@ -7,6 +7,7 @@
     "abtmali",
     "airsmadagascar",
     "airsmozambique",
+    "airsrwanda",
     "airsethiopia"
   ],
   "config": {
@@ -307,7 +308,7 @@
               "default": 0,
               "cases": {
                 "Kirehe": 82946,
-                "Nyagatare": 77027
+                "Nyagatare": 105243
               },
               "type": "switch",
               "switch_on": {
@@ -568,29 +569,38 @@
             "Rwanda": {
               "default": 0,
               "cases": {
-                "Gahara": 9697,
+                "Gahara I": 5498,
+                "Gahara II": 4199,
                 "Gatore": 6062,
+                "Gatunda": 7799,
                 "Karama": 7226,
+                "Karangazi I": 6277,
+                "Karangazi II": 6941,
                 "Katabagemu": 8330,
+                "Kigarama I": 4282,
+                "Kigarama II": 3299,
                 "Kigina": 6454,
                 "Kirehe": 5476,
-                "Kigarama": 7581,
-                "Musheri": 5692,
-                "Mukama": 5946,
+                "Kiyombe": 3860,
+                "Mahama": 6029,
                 "Matimba": 4651,
                 "Mimuri": 6857,
-                "Mahama": 6029,
-                "Mpanga": 7663,
+                "Mpanga I": 4603,
+                "Mpanga II": 3060,
+                "Mukama": 5946,
                 "Musaza": 6618,
+                "Musheri": 5692,
                 "Mushikiri": 6454,
-                "Nyagatare": 8347,
                 "Nasho": 7029,
+                "Nyagatare": 4963,
+                "Nyagatare II": 6741,
                 "Nyamugari": 9494,
                 "Nyarubuye": 4389,
-                "Rwimiyaga": 10945,
                 "Rukomo": 7928,
                 "Rwempasha": 3743,
-                "Tabagwe": 7362
+                "Rwimiyaga 1": 6981,
+                "Rwimiyaga II": 3964,
+                "Tabagwe": 7344
               },
               "type": "switch",
               "switch_on": {
@@ -1307,7 +1317,7 @@
           "cases": {
             "mozambique": 468239,
             "Senegal": 220551,
-            "Rwanda": 144417,
+            "Rwanda": 188189,
             "Zambia": 539348,
             "Ethiopia": 708258,
             "Mali": 242684,
