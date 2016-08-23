@@ -4346,7 +4346,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 should_save = True
             del data['build_langs']
 
-        if data.has_key('original_doc'):
+        if 'original_doc' in data:
             data['copy_history'] = [data.pop('original_doc')]
             should_save = True
 
