@@ -4,7 +4,7 @@ from django.test import SimpleTestCase, TestCase
 from django.utils.dateparse import parse_datetime
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
-from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
+from casexml.apps.case.mock import CaseStructure, CaseIndex
 from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -20,6 +20,7 @@ from custom.enikshay.integrations.ninetyninedots.utils import (
     update_default_confidence_level,
 )
 from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceException
+from custom.enikshay.tests.utils import ENikshayCaseStructureMixin
 
 
 class Receiver99DotsTests(SimpleTestCase):
@@ -33,70 +34,14 @@ class Receiver99DotsTests(SimpleTestCase):
             self.assertEqual(e.message, "Adherences invalid")
 
 
-class NinetyNineDotsCaseTests(TestCase):
+class NinetyNineDotsCaseTests(ENikshayCaseStructureMixin, TestCase):
     @classmethod
     def setUpClass(cls):
         super(NinetyNineDotsCaseTests, cls).setUpClass()
         FormProcessorTestUtils.delete_all_cases()
-        cls.domain = 'enikshay-test'
-        cls.factory = CaseFactory(domain=cls.domain)
-        cls.person_id = "person"
-        cls.occurrence_id = "occurrence"
-        cls.episode_id = "episode"
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
-
-    def _create_case_structure(self):
-        person = CaseStructure(
-            case_id=self.person_id,
-            attrs={
-                "case_type": "person",
-                "create": True,
-                "update": dict(
-                    name="Pippin",
-                )
-            },
-        )
-        occurrence = CaseStructure(
-            case_id=self.occurrence_id,
-            attrs={
-                'create': True,
-                'case_type': 'occurrence',
-                "update": dict(
-                    person_id=self.person_id
-                )
-            },
-            indices=[CaseIndex(
-                person,
-                identifier='host',
-                relationship=CASE_INDEX_EXTENSION,
-                related_type=person.attrs['case_type'],
-            )],
-        )
-        episode = CaseStructure(
-            case_id=self.episode_id,
-            attrs={
-                'create': True,
-                'case_type': 'episode',
-                "update": dict(
-                    person_name="Pippin",
-                    person_id=self.person_id,
-                    opened_on=datetime(1989, 6, 11, 0, 0),
-                    patient_type="new",
-                    hiv_status="reactive",
-                    episode_type="confirmed_tb",
-                    default_adherence_confidence="high",
-                )
-            },
-            indices=[CaseIndex(
-                occurrence,
-                identifier='host',
-                relationship=CASE_INDEX_EXTENSION,
-                related_type=occurrence.attrs['case_type'],
-            )],
-        )
-        return self.factory.create_or_update_cases([episode])
 
     def _create_adherence_cases(self, adherence_dates):
         return self.factory.create_or_update_cases([
@@ -128,12 +73,12 @@ class NinetyNineDotsCaseTests(TestCase):
 
     @run_with_all_backends
     def test_get_episode(self):
-        self._create_case_structure()
+        self.create_case_structure()
         self.assertEqual(get_open_episode_case(self.domain, 'person').case_id, 'episode')
 
     @run_with_all_backends
     def test_create_adherence_cases(self):
-        self._create_case_structure()
+        self.create_case_structure()
         case_accessor = CaseAccessors(self.domain)
         adherence_values = [
             {
@@ -167,7 +112,7 @@ class NinetyNineDotsCaseTests(TestCase):
 
     @run_with_all_backends
     def test_get_adherence_cases_between_dates(self):
-        self._create_case_structure()
+        self.create_case_structure()
         adherence_dates = [
             datetime(2005, 7, 10),
             datetime(2016, 8, 10),
@@ -210,7 +155,7 @@ class NinetyNineDotsCaseTests(TestCase):
 
     @run_with_all_backends
     def test_update_adherence_confidence(self):
-        self._create_case_structure()
+        self.create_case_structure()
         case_accessor = CaseAccessors(self.domain)
         adherence_dates = [
             datetime(2005, 7, 10),
@@ -244,7 +189,7 @@ class NinetyNineDotsCaseTests(TestCase):
 
     @run_with_all_backends
     def test_update_default_confidence_level(self):
-        self._create_case_structure()
+        self.create_case_structure()
         confidence_level = "new_confidence_level"
         update_default_confidence_level(self.domain, self.person_id, confidence_level)
         episode = get_open_episode_case(self.domain, self.person_id)
