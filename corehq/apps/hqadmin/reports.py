@@ -883,7 +883,7 @@ class AdminDomainMapReport(AdminDomainStatsReport):
 
     def _calc_num_active_users_per_country(self, filters):
         active_users_per_country = (NestedTermAggregationsHelper(
-                                    base_query=DomainES().is_active().real_domains().filter(filters),
+                                    base_query=DomainES().real_domains().is_active_project().filter(filters),
                                     terms=[AggregationTerm('countries', 'deployment.countries')],
                                     bottom_level_aggregation=SumAggregation('users', 'cp_n_active_cc_users')
                                     ).get_data())
@@ -891,15 +891,15 @@ class AdminDomainMapReport(AdminDomainStatsReport):
 
     def _calc_num_projs_per_countries(self, filters):
         num_projects_by_country = (DomainES()
-                                   .is_active()
                                    .real_domains()
+                                   .is_active_project()
                                    .filter(filters)
                                    .terms_aggregation('deployment.countries', 'countries')
                                    .size(0).run().aggregations.countries.counts_by_bucket())
         return num_projects_by_country
 
     def _calc_total_active_real_projects(self, filters):
-        total_num_projects = (DomainES().is_active().real_domains()
+        total_num_projects = (DomainES().is_active_project().real_domains()
                               .filter(filters)
                               .count())
         return total_num_projects
@@ -938,7 +938,7 @@ class AdminUserReport(AdminFacetedReport):
     es_index = 'users'
 
     es_facet_list = [
-        "is_active",  # this is NOT "has submitted a form in the last 30 days"
+        "is_active",  # a user can log in to the project
         "is_staff",
         "is_superuser",
         "domain",
