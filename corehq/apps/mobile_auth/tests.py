@@ -1,12 +1,10 @@
 from datetime import datetime, timedelta
-from django.test import TestCase, Client
+from django.test import TestCase
 from casexml.apps.case.tests.util import check_xml_line_by_line
 
-from corehq.apps.mobile_auth.models import MobileAuthKeyRecord
 from corehq.apps.mobile_auth.utils import new_key_record, get_mobile_auth_payload
 from dimagi.ext.jsonobject import HISTORICAL_DATETIME_FORMAT
 from corehq.apps.domain.shortcuts import create_domain
-from django.core.urlresolvers import reverse
 from corehq.apps.users.models import CommCareUser
 
 
@@ -69,27 +67,3 @@ class MobileAuthTest(TestCase):
             record=record,
             domain=self.domain_name,
         ))
-
-    def test_flush_key_records(self):
-        expired_domain_name = 'invalid-test-domain'
-        new_key_record(self.domain_name, self.user_id, now=self.now).save()
-        new_key_record(expired_domain_name, self.user_id, now=self.now).save()
-        # assert keys present for two separate domains
-        self.assertIsNotNone(MobileAuthKeyRecord.key_for_time(expired_domain_name, self.user_id, self.now))
-        self.assertIsNotNone(MobileAuthKeyRecord.key_for_time(self.domain_name, self.user_id, self.now))
-        MobileAuthKeyRecord.flush_user_keys_for_domain(expired_domain_name, self.user_id)
-        # assert keys flushed for only expired domain
-        self.assertIsNone(MobileAuthKeyRecord.key_for_time(expired_domain_name, self.user_id, self.now))
-        self.assertIsNotNone(MobileAuthKeyRecord.key_for_time(self.domain_name, self.user_id, self.now))
-
-    def test_flush_key_records_view(self):
-        new_key_record(self.domain_name, self.user_id, now=self.now).save()
-        # assert keys present
-        self.assertIsNotNone(MobileAuthKeyRecord.key_for_time(self.domain_name, self.user_id, self.now))
-        url = reverse('flush_key_records', args=[self.domain_name])
-        client = Client()
-        client.login(username=self.username, password=self.password)
-        response = client.post(url)
-        self.assertEqual(response.status_code, 200)
-        # assert keys removed for domain for user
-        self.assertIsNone(MobileAuthKeyRecord.key_for_time(self.domain_name, self.user_id, self.now))
