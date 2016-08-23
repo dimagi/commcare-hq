@@ -322,8 +322,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         # to be overridden
         return self.url
 
-    @property
-    def allow_retries(self):
+    def allow_retries(self, response):
         """Whether to requeue the repeater when it fails
         """
         return True
@@ -613,16 +612,16 @@ class RepeatRecord(Document):
         if tries < post_info.max_tries and self.repeater.allow_immediate_retries(response):
             return self.post(post_info, tries)
         else:
-            self._fail(u'{}: {}'.format(response.status_code, response.reason))
+            self._fail(u'{}: {}'.format(response.status_code, response.reason), response)
             self.repeater.handle_failure(response, self)
 
     def handle_exception(self, exception):
         """handle internal exceptions
         """
-        self._fail(unicode(exception))
+        self._fail(unicode(exception), None)
 
-    def _fail(self, reason):
-        if self.repeater.allow_retries:
+    def _fail(self, reason, response):
+        if self.repeater.allow_retries(response):
             self.set_next_try()
         self.failure_reason = reason
         log_counter(REPEATER_ERROR_COUNT, {
