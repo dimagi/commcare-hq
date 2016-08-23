@@ -3,8 +3,6 @@ import pytz
 from django.test import SimpleTestCase, TestCase
 from django.utils.dateparse import parse_datetime
 
-from casexml.apps.case.const import CASE_INDEX_EXTENSION
-from casexml.apps.case.mock import CaseStructure, CaseIndex
 from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -12,10 +10,7 @@ from custom.enikshay.integrations.ninetyninedots.views import (
     validate_adherence_values,
     validate_beneficiary_id
 )
-from custom.enikshay.case_utils import (
-    get_open_episode_case_from_person,
-    get_adherence_cases_between_dates,
-)
+from custom.enikshay.case_utils import get_open_episode_case_from_person
 from custom.enikshay.integrations.ninetyninedots.utils import (
     create_adherence_cases,
     update_adherence_confidence_level,
@@ -44,39 +39,6 @@ class NinetyNineDotsCaseTests(ENikshayCaseStructureMixin, TestCase):
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
-
-    def _create_adherence_cases(self, adherence_dates):
-        return self.factory.create_or_update_cases([
-            CaseStructure(
-                case_id=adherence_date.strftime('%Y-%m-%d'),
-                attrs={
-                    "case_type": "adherence",
-                    "create": True,
-                    "update": {
-                        "name": adherence_date,
-                        "adherence_value": "unobserved_dose",
-                        "adherence_source": "99DOTS",
-                        "adherence_date": adherence_date,
-                        "person_name": "Pippin",
-                        "adherence_confidence": "medium",
-                        "shared_number_99_dots": False,
-                    },
-                },
-                indices=[CaseIndex(
-                    CaseStructure(case_id=self.episode_id, attrs={"create": False}),
-                    identifier='host',
-                    relationship=CASE_INDEX_EXTENSION,
-                    related_type='episode',
-                )],
-                walk_related=False,
-            )
-            for adherence_date in adherence_dates
-        ])
-
-    @run_with_all_backends
-    def test_get_episode(self):
-        self.create_case_structure()
-        self.assertEqual(get_open_episode_case_from_person(self.domain, 'person').case_id, 'episode')
 
     @run_with_all_backends
     def test_create_adherence_cases(self):
@@ -113,49 +75,6 @@ class NinetyNineDotsCaseTests(ENikshayCaseStructureMixin, TestCase):
             )
 
     @run_with_all_backends
-    def test_get_adherence_cases_between_dates(self):
-        self.create_case_structure()
-        adherence_dates = [
-            datetime(2005, 7, 10),
-            datetime(2016, 8, 10),
-            datetime(2016, 8, 11),
-            datetime(2016, 8, 12),
-            datetime(2017, 9, 10),
-        ]
-        self._create_adherence_cases(adherence_dates)
-        fetched_cases = get_adherence_cases_between_dates(
-            self.domain,
-            self.person_id,
-            start_date=datetime(2016, 7, 1, tzinfo=pytz.UTC),
-            end_date=datetime(2016, 8, 13, tzinfo=pytz.UTC),
-        )
-        self.assertEqual(len(fetched_cases), 3)
-        self.assertItemsEqual(
-            ["2016-08-10", "2016-08-11", "2016-08-12"],
-            [case.case_id for case in fetched_cases]
-        )
-
-        fetched_cases = get_adherence_cases_between_dates(
-            self.domain,
-            self.person_id,
-            start_date=datetime(2010, 7, 1, tzinfo=pytz.UTC),
-            end_date=datetime(2010, 8, 13, tzinfo=pytz.UTC),
-        )
-        self.assertEqual(len(fetched_cases), 0)
-
-        fetched_cases = get_adherence_cases_between_dates(
-            self.domain,
-            self.person_id,
-            start_date=datetime(2016, 8, 10, tzinfo=pytz.UTC),
-            end_date=datetime(2016, 8, 10, tzinfo=pytz.UTC),
-        )
-        self.assertEqual(len(fetched_cases), 1)
-        self.assertEqual(
-            "2016-08-10",
-            fetched_cases[0].case_id,
-        )
-
-    @run_with_all_backends
     def test_update_adherence_confidence(self):
         self.create_case_structure()
         case_accessor = CaseAccessors(self.domain)
@@ -164,7 +83,7 @@ class NinetyNineDotsCaseTests(ENikshayCaseStructureMixin, TestCase):
             datetime(2016, 8, 10),
             datetime(2016, 8, 11),
         ]
-        adherence_cases = self._create_adherence_cases(adherence_dates)
+        adherence_cases = self.create_adherence_cases(adherence_dates)
 
         update_adherence_confidence_level(
             self.domain,

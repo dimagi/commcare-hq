@@ -66,3 +66,31 @@ class ENikshayCaseStructureMixin(object):
             )],
         )
         return {case.case_id: case for case in self.factory.create_or_update_cases([episode])}
+
+    def create_adherence_cases(self, adherence_dates):
+        return self.factory.create_or_update_cases([
+            CaseStructure(
+                case_id=adherence_date.strftime('%Y-%m-%d'),
+                attrs={
+                    "case_type": "adherence",
+                    "create": True,
+                    "update": {
+                        "name": adherence_date,
+                        "adherence_value": "unobserved_dose",
+                        "adherence_source": "99DOTS",
+                        "adherence_date": adherence_date,
+                        "person_name": "Pippin",
+                        "adherence_confidence": "medium",
+                        "shared_number_99_dots": False,
+                    },
+                },
+                indices=[CaseIndex(
+                    CaseStructure(case_id=self.episode_id, attrs={"create": False}),
+                    identifier='host',
+                    relationship=CASE_INDEX_EXTENSION,
+                    related_type='episode',
+                )],
+                walk_related=False,
+            )
+            for adherence_date in adherence_dates
+        ])
