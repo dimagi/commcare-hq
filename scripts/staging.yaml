@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - kill-1.x-apps  # Danny 8/23
   - loc-tests # sravan 8/8
   - vellum-staging # J$ 11/13
   - welcome-to-vellum # Jenny 8/3
@@ -61,6 +62,7 @@ submodules:
     # just so we always get latest master
     branches:
       - commcare_2.29
+      - kill-1.x-apps  # Danny 8/23
   submodules/django-digest-src:
     branches: []
   submodules/dimagi-utils-src:
