@@ -91,7 +91,7 @@
             <button class="btn btn-primary active" id="projects">Projects</button>
             <button class="btn btn-default" id="users">Users</button>
         </div>
-      {% include 'appstore/partials/sidebar.html' with search_name="es_search" search_for=facet_report.search_for %}
+      {% include 'appstore/partials/sidebar.html' with not_searchable="true" search_name="es_search" search_for=facet_report.search_for %}
     </div>
   </div>
   <script type="application/javascript">
