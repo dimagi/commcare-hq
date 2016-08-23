@@ -910,8 +910,8 @@ class AdminDomainMapReport(AdminDomainStatsReport):
         sector_params = es_params.get('internal.area.exact')
         if country_params and sector_params:
             es_filters = (filters.AND(
-                            filters.term("deployment.countries.exact", country_params),
-                            filters.term("internal.area.exact", sector_params)))
+                          filters.term("deployment.countries.exact", country_params),
+                          filters.term("internal.area.exact", sector_params)))
         elif country_params:
             es_filters = filters.term("deployment.countries.exact", country_params)
         elif sector_params:
