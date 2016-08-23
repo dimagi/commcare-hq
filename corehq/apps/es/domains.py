@@ -94,8 +94,9 @@ def in_domains(domains):
 def is_active(is_active=True):
     return filters.term('is_active', is_active)
 
-# Project is active
+
 def is_active_project(is_active=True):
+    # Project is active - has submitted a form in the last 30 days
     return filters.term('cp_is_active', is_active)
 
 
