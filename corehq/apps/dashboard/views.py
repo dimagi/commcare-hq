@@ -177,7 +177,7 @@ def _get_default_tile_configurations():
         and request.couch_user.can_edit_data()
     )
 
-    is_domain_admin = lambda request: request.couch_user.is_domain_admin(request.domain)
+    is_billing_admin = lambda request: request.couch_user.has_permission(request.domain, 'billing_admin')
 
     return [
         TileConfiguration(
@@ -253,7 +253,7 @@ def _get_default_tile_configurations():
             icon='fcc fcc-settings',
             context_processor_class=IconContext,
             urlname=DefaultProjectSettingsView.urlname,
-            visibility_check=is_domain_admin,
+            visibility_check=is_billing_admin,
             help_text=_('Set project-wide settings and manage subscriptions'),
         ),
         TileConfiguration(
