@@ -1,4 +1,4 @@
-/*global Marionette, Backbone, WebFormSession, Util */
+/*global Marionette, Backbone, WebFormSession, Util, CodeMirror */
 
 /**
  * The primary Marionette application managing menu navigation and launching form entry
@@ -156,13 +156,13 @@ FormplayerFrontend.reqres.setHandler('debugger.formXML', function(sessionId) {
         $instanceTab.on('shown.bs.tab', function() {
             codeMirror.refresh();
         });
-    }
+    };
     var options = {
         url: user.formplayer_url + '/get-instance',
         data: JSON.stringify({
             'session-id': sessionId,
         }),
-        success: success
+        success: success,
     };
     Util.setCrossDomainAjaxOptions(options);
 
