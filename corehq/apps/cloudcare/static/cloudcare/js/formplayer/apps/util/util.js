@@ -86,7 +86,17 @@ Util.CloudcareUrl = function (appId, options) {
     };
 
     this.spliceSteps = function(index) {
-        this.steps = this.steps.splice(0, index);
+
+        // null out the session if we clicked the root (home)
+        if (index === 0) {
+            this.steps = null;
+            this.sessionId = null;
+        } else {
+            this.steps = this.steps.splice(0, index);
+        }
+        this.page = null;
+        this.search = null;
+        this.queryDict = null;
     };
 };
 
