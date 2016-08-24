@@ -50,6 +50,7 @@ branches:
   - vellum-staging # J$ 11/13
   - welcome-to-vellum # Jenny 8/3
   - underscore-1-8 # Jenny 8/19
+  - send-datasource-to-es # j$ 8/24
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
