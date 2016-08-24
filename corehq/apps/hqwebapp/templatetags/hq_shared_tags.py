@@ -20,6 +20,7 @@ from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.web import json_handler
 from corehq.apps.hqwebapp.models import MaintenanceAlert
+from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
 
 
 register = template.Library()
@@ -444,7 +445,10 @@ class AddToBlockNode(template.Node):
         self.block_name = block_name
 
     def write(self, context, text):
-        request_blocks = self.get_request_blocks(context)
+        rendered_blocks = AppendingBlockNode.get_rendered_blocks_dict(context)
+        if self.block_name in rendered_blocks:
+            raise AlreadyRenderedException('Block {} already rendered. Cannot add new node'.format(self.block_name))
+        request_blocks = self.get_addtoblock_contents_dict(context)
         if self.block_name not in request_blocks:
             request_blocks[self.block_name] = ''
         request_blocks[self.block_name] += text
@@ -455,7 +459,7 @@ class AddToBlockNode(template.Node):
         return ''
 
     @staticmethod
-    def get_request_blocks(context):
+    def get_addtoblock_contents_dict(context):
         try:
             request_blocks = context.render_context._addtoblock_contents
         except AttributeError:
@@ -467,18 +471,27 @@ class AppendingBlockNode(loader_tags.BlockNode):
 
     def render(self, context):
         super_result = super(AppendingBlockNode, self).render(context)
-        request_blocks = AddToBlockNode.get_request_blocks(context)
+        request_blocks = AddToBlockNode.get_addtoblock_contents_dict(context)
         if self.name not in request_blocks:
             request_blocks[self.name] = ''
 
         contents = request_blocks.pop(self.name, '')
+        rendered_blocks = self.get_rendered_blocks_dict(context)
+        rendered_blocks.add(self.name)
         return super_result + contents
 
+    @staticmethod
+    def get_rendered_blocks_dict(context):
+        try:
+            rendered_blocks = context.render_context._rendered_blocks
+        except AttributeError:
+            rendered_blocks = context.render_context._rendered_blocks = set()
+        return rendered_blocks
 
 @register.simple_tag(takes_context=True)
 def url_replace(context, field, value):
     """Usage <a href="?{% url_replace 'since' restore_id %}">
-    will replace the 'since' parmeter in the url with <restore_id>
+    will replace the 'since' parameter in the url with <restore_id>
     note the presense of the '?' in the href value
 
     http://stackoverflow.com/a/16609591/2957657
