@@ -92,7 +92,8 @@ def activate_subscriptions(based_on_date=None):
             _activate_subscription(subscription)
         except Exception as e:
             log_accounting_error(
-                'Error activating subscription %d: %s' % (subscription.id, e.message)
+                'Error activating subscription %d: %s' % (subscription.id, e.message),
+                show_stack_trace=True,
             )
 
 
@@ -135,7 +136,10 @@ def deactivate_subscriptions(based_on_date=None):
         try:
             _deactivate_subscription(subscription, ending_date)
         except Exception as e:
-            log_accounting_error('Error deactivating subscription %d: %s' % (subscription.id, e.message))
+            log_accounting_error(
+                'Error deactivating subscription %d: %s' % (subscription.id, e.message),
+                show_stack_trace=True,
+            )
 
 
 def warn_subscriptions_still_active(based_on_date=None):
@@ -202,20 +206,24 @@ def generate_invoices(based_on_date=None):
         except CreditLineError as e:
             log_accounting_error(
                 "There was an error utilizing credits for "
-                "domain %s: %s" % (domain.name, e)
+                "domain %s: %s" % (domain.name, e),
+                show_stack_trace=True,
             )
         except InvoiceError as e:
             log_accounting_error(
-                "Could not create invoice for domain %s: %s" % (domain.name, e)
+                "Could not create invoice for domain %s: %s" % (domain.name, e),
+                show_stack_trace=True,
             )
         except InvoiceAlreadyCreatedError as e:
             log_accounting_error(
-                "Invoice already existed for domain %s: %s" % (domain.name, e)
+                "Invoice already existed for domain %s: %s" % (domain.name, e),
+                show_stack_trace=True,
             )
         except Exception as e:
             log_accounting_error(
                 "Error occurred while creating invoice for "
-                "domain %s: %s" % (domain.name, e)
+                "domain %s: %s" % (domain.name, e),
+                show_stack_trace=True,
             )
 
     if not settings.UNIT_TESTING:
@@ -315,7 +323,8 @@ def send_subscription_reminder_emails(num_days):
                 subscription.send_ending_reminder_email()
         except Exception as e:
             log_accounting_error(
-                "Error sending reminder for subscription %d: %s" % (subscription.id, e.message)
+                "Error sending reminder for subscription %d: %s" % (subscription.id, e.message),
+                show_stack_trace=True,
             )
 
 
@@ -361,7 +370,8 @@ def create_wire_credits_invoice(domain_name,
             record.send_email(contact_emails=contact_emails)
         except Exception as e:
             log_accounting_error(
-                "Error sending email for WirePrepaymentBillingRecord %d: %s" % (record.id, e.message)
+                "Error sending email for WirePrepaymentBillingRecord %d: %s" % (record.id, e.message),
+                show_stack_trace=True,
             )
     else:
         record.skipped_email = True
@@ -381,7 +391,8 @@ def send_purchase_receipt(payment_record, domain,
     except ResourceNotFound:
         log_accounting_error(
             "Strange. A payment attempt was made by a user that "
-            "we can't seem to find! %s" % username
+            "we can't seem to find! %s" % username,
+            show_stack_trace=True,
         )
         name = email = username
 
@@ -558,7 +569,10 @@ def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
                 'rate': currency.rate_to_default,
             })
     except Exception as e:
-        log_accounting_error("Error updating exchange rates: %s" % e.message)
+        log_accounting_error(
+            "Error updating exchange rates: %s" % e.message,
+            show_stack_trace=True,
+        )
 
 
 CONSISTENT_DATES_CHECK = Q(date_start__lt=F('date_end')) | Q(date_end__isnull=True)
