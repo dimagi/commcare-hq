@@ -1,4 +1,5 @@
 import couchdbkit
+from corehq.apps.app_manager.const import APP_V2
 
 
 class AppManagerException(Exception):
@@ -56,7 +57,7 @@ class ScheduleError(XFormException):
 
 class XFormValidationError(XFormException):
 
-    def __init__(self, fatal_error, version="1.0", validation_problems=None):
+    def __init__(self, fatal_error, version=APP_V2, validation_problems=None):
         self.fatal_error = fatal_error
         self.version = version
         self.validation_problems = validation_problems
