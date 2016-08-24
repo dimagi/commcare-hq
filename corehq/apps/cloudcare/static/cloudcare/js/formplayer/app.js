@@ -134,7 +134,8 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
 });
 
 FormplayerFrontend.on("start", function (options) {
-    var user = FormplayerFrontend.request('currentUser');
+    var user = FormplayerFrontend.request('currentUser'),
+        appId;
     user.username = options.username;
     user.language = options.language;
     user.apps = options.apps;
@@ -145,11 +146,9 @@ FormplayerFrontend.on("start", function (options) {
         // will be the same for every domain. TODO: get domain/username/pass from django
         if (this.getCurrentRoute() === "") {
             if (options.phoneMode) {
-                FormplayerFrontend.regions.phoneModeNavigation.show(
-                    new FormplayerFrontend.Navigation.PhoneNavigation()
-                );
+                appId = options.apps[0]['_id'];
 
-                FormplayerFrontend.trigger("app:singleApp", options.apps[0]['_id']);
+                FormplayerFrontend.trigger("app:singleApp", appId);
             } else {
                 FormplayerFrontend.trigger("apps:list", options.apps);
             }
