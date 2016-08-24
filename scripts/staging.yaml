@@ -49,6 +49,7 @@ branches:
   - loc-tests # sravan 8/8
   - vellum-staging # J$ 11/13
   - welcome-to-vellum # Jenny 8/3
+  - welcome-to-vellum+kill-1.x-apps # Jenny 8/24
   - underscore-1-8 # Jenny 8/19
   - send-datasource-to-es # j$ 8/24
 submodules:
