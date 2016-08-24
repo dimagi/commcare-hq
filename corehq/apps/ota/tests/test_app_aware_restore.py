@@ -3,7 +3,6 @@ from mock import patch
 
 from casexml.apps.phone.tests.utils import create_restore_user
 from corehq import toggles
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.fixtures.mobile_ucr import report_fixture_generator
 from corehq.apps.app_manager.models import Application, ReportModule, ReportAppConfig
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
@@ -27,7 +26,7 @@ class AppAwareSyncTests(TestCase):
         toggles.MOBILE_UCR.set(cls.domain, True, toggles.NAMESPACE_DOMAIN)
         cls.user = create_restore_user(cls.domain)
 
-        cls.app1 = Application.new_app(cls.domain, 'Test App 1', application_version=APP_V2)
+        cls.app1 = Application.new_app(cls.domain, 'Test App 1')
         cls.report_config1 = get_sample_report_config()
         cls.report_config1.domain = cls.domain
         cls.report_config1.save()
@@ -39,7 +38,7 @@ class AppAwareSyncTests(TestCase):
         module.report_configs = [ReportAppConfig.wrap(report_app_config)]
         cls.app1.save()
 
-        cls.app2 = Application.new_app(cls.domain, 'Test App 2', application_version=APP_V2)
+        cls.app2 = Application.new_app(cls.domain, 'Test App 2')
         cls.report_config2 = get_sample_report_config()
         cls.report_config2.domain = cls.domain
         cls.report_config2.save()
@@ -51,7 +50,7 @@ class AppAwareSyncTests(TestCase):
         module.report_configs = [ReportAppConfig.wrap(report_app_config)]
         cls.app2.save()
 
-        cls.app3 = Application.new_app(cls.domain, 'Test App 3', application_version=APP_V2)
+        cls.app3 = Application.new_app(cls.domain, 'Test App 3')
         cls.app3.save()
 
     @classmethod
