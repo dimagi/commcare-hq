@@ -174,3 +174,24 @@ FormplayerFrontend.on("sync", function () {
         tfSyncComplete(true);
     });
 });
+
+FormplayerFrontend.on('refreshApplication', function(appId) {
+    var user = FormplayerFrontend.request('currentUser');
+    var formplayer_url = user.formplayer_url;
+    var options = {
+        url: formplayer_url + "/delete_application_dbs",
+        data: JSON.stringify({"app_id": appId}),
+    };
+    Util.setCrossDomainAjaxOptions(options);
+    tfLoading();
+    var resp = $.ajax(options);
+    resp.success(function () {
+        tfLoadingComplete();
+    });
+    resp.error(function () {
+        tfLoadingComplete(true);
+    });
+    resp.complete(function() {
+        FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });
+    });
+});
