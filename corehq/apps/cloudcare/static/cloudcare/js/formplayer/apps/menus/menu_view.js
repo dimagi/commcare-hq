@@ -52,7 +52,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     });
 
     MenuList.CaseView = Marionette.ItemView.extend({
-        tagName: "tr",
+        tagName: "div",
         getTemplate: function () {
             if (_.isNull(this.options.tiles)) {
                 return "#case-view-item-template";
@@ -61,7 +61,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             }
         },
 
-        className: "formplayer-request",
+        className: "formplayer-request grid-wrapper",
         events: {
             "click": "rowClick",
         },
@@ -77,6 +77,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
                 tiles: this.options.tiles,
+                numEntitiesToDisplayPerRow: this.options.numEntitiesToDisplayPerRow,
                 resolveUri: function (uri) {
                     return FormplayerFrontend.request('resourceMap', uri, appId);
                 },
@@ -123,6 +124,8 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
 
         // need to remove this attribute so the grid style is re-evaluated
         $("#case-tiles-style").html(tileStyle).removeAttr("data-css-polyfilled");
+        $(".case-container-grid").removeAttr("data-css-polyfilled");
+        $("#case-tiles-style").removeAttr("data-css-polyfilled");
     };
 
     MenuList.CaseListView = Marionette.CompositeView.extend({
@@ -134,6 +137,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         initialize: function (options) {
             this.tiles = options.tiles;
             this.styles = options.styles;
+            this.numEntitiesPerRow = options.numEntitiesPerRow;
             generateCaseTileStyles(options.tiles);
         },
 
@@ -182,6 +186,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 styles: this.options.styles,
                 tiles: this.options.tiles,
                 breadcrumbs: this.options.breadcrumbs,
+                numEntitiesPerRow: this.options.numEntitiesPerRow,
             };
         },
     });

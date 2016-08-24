@@ -250,7 +250,7 @@
             };
 
             var getFormplayerUrl = function(urlRoot, appId, moduleId, formId) {
-                var urlObject = new Util.CloudcareUrl(appId, {'previewCommand': 'm' + moduleId + '-f' + formId});
+                var urlObject = new Util.CloudcareUrl({'appId': appId, 'previewCommand': 'm' + moduleId + '-f' + formId});
                 return urlRoot + '#' + Util.objectToEncodedUrl(urlObject.toJson());
             };
 

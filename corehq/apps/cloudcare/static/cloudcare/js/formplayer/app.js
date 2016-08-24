@@ -42,6 +42,9 @@ FormplayerFrontend.getCurrentRoute = function () {
  */
 FormplayerFrontend.reqres.setHandler('resourceMap', function (resource_path, app_id) {
     var currentApp = FormplayerFrontend.request("appselect:getApp", app_id);
+    if (currentApp === null || currentApp === undefined ) {
+        return;
+    }
     if (resource_path.substring(0, 7) === 'http://') {
         return resource_path;
     } else if (!_.isEmpty(currentApp.get("multimedia_map"))) {

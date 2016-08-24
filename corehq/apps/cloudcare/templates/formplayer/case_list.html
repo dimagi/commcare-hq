@@ -27,8 +27,13 @@
         </thead>
         <tbody class="case-container">
         </tbody>
-        <% } else { %>
-            <tbody class="wrapper case-container"></tbody>
+        <% } else {
+            console.log("Else: " + numEntitiesPerRow); %>
+            <% if (numEntitiesPerRow > 1) { %>
+                <div class="wrapper case-container case-container-grid"></div>
+            <% } else { %>
+                <tbody class="wrapper case-container"></tbody>
+            <% } %>
         <% } %>
     </table>
     <% if (action) { %>
@@ -90,12 +95,12 @@
 </script>
 
 <script type="text/template" id="case-tile-view-item-template">
-    <div class="grid-wrapper">
+    <div>
         <% _.each(data, function(datum, index) { %>
         <div class="grid-style-<%= index %> box">
             <% if (styles[index].displayFormat === 'Image') {
             if(resolveUri(datum)) { %>
-            <img class="module-icon" style="max-width:50%; max-height:50%;" src="<%= resolveUri(datum) %>"/>
+            <img class="module-icon" style="max-width:25%; height: auto;" src="<%= resolveUri(datum) %>"/>
             <% } %>
             <% } else { %>
             <div><%= datum %></div>

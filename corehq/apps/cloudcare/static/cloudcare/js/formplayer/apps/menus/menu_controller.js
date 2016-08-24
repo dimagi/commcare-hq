@@ -1,17 +1,10 @@
-/*global FormplayerFrontend */
+/*global FormplayerFrontend, Util */
 
 FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette, $) {
     MenuList.Controller = {
-        selectMenu: function (appId, sessionId, stepList, page, search, queryDict, previewCommand) {
+        selectMenu: function (options) {
 
-            var fetchingNextMenu = FormplayerFrontend.request("app:select:menus",
-                appId,
-                sessionId,
-                stepList,
-                page,
-                search,
-                queryDict,
-                previewCommand);
+            var fetchingNextMenu = FormplayerFrontend.request("app:select:menus", options);
 
             /*
              Determine the next screen to display.  Could be
@@ -30,6 +23,13 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                     FormplayerFrontend.trigger("apps:currentApp");
                     return;
                 }
+
+                var urlObject = Util.currentUrlToObject();
+                if(urlObject.appId === undefined || urlObject.appId === null) {
+                    urlObject.appId = menuResponse.appId;
+                    Util.setUrlToObject(urlObject);
+                }
+
                 MenuList.Controller.showMenu(menuResponse);
             });
         },
@@ -48,6 +48,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 type: menuResponse.type,
                 sessionId: menuResponse.sessionId,
                 tiles: menuResponse.tiles,
+                numEntitiesPerRow: menuResponse.numEntitiesPerRow,
             };
             if (menuResponse.type === "commands") {
                 menuListView = new MenuList.MenuListView(menuData);
@@ -88,6 +89,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             // If we have no details, just select the entity
             if(detailObjects === null || detailObjects === undefined){
                 FormplayerFrontend.trigger("menu:select", index);
+                return;
             }
             var detailObject = detailObjects[index];
             var headers = detailObject.headers;
