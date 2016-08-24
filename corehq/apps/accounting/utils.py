@@ -201,10 +201,11 @@ def fmt_dollar_amount(decimal_value):
     return _("USD %s") % quantize_accounting_decimal(decimal_value)
 
 
-def get_customer_cards(account, username, domain):
+def get_customer_cards(username, domain):
     from corehq.apps.accounting.models import (
         StripePaymentMethod, PaymentMethodType,
     )
+    import stripe
     try:
         payment_method = StripePaymentMethod.objects.get(
             web_user=username,
@@ -214,6 +215,11 @@ def get_customer_cards(account, username, domain):
         return stripe_customer.cards
     except StripePaymentMethod.DoesNotExist:
         pass
+    except stripe.error.AuthenticationError:
+        if not settings.STRIPE_PRIVATE_KEY:
+            log_accounting_info("Private key is not defined in settings")
+        else:
+            raise
     return None
 
 
@@ -251,11 +257,11 @@ def get_active_reminders_by_domain_name(domain_name):
     ]
 
 
-def make_anchor_tag(href, name, attrs={}):
+def make_anchor_tag(href, name, attrs=None):
     context = {
         'href': href,
         'name': name,
-        'attrs': attrs,
+        'attrs': attrs or {},
     }
     return render_to_string('accounting/partials/anchor_tag.html', context)
 

@@ -22,7 +22,6 @@ from django.utils.safestring import mark_safe
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 import pytz
 from corehq import privileges
-from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.couchapps.dbaccessors import forms_have_multimedia
@@ -61,6 +60,7 @@ from corehq.apps.export.const import (
     CASE_EXPORT,
     MAX_EXPORTABLE_ROWS,
 )
+from corehq.apps.export.tasks import async_convert_saved_export_to_export_instance
 from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
     get_case_export_instances,
@@ -80,13 +80,14 @@ from corehq.apps.style.decorators import (
     use_select2,
     use_daterangepicker,
     use_jquery_ui,
+    use_ko_validation,
     use_angular_js)
 from corehq.apps.style.forms.widgets import DateRangePickerWidget
 from corehq.apps.style.utils import format_angular_error, format_angular_success
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
-    DEID_EXPORT_PERMISSION
+    DEID_EXPORT_PERMISSION, has_permission_to_view_report
 from corehq.util.couch import get_document_or_404_lite
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.soft_assert import soft_assert
@@ -134,15 +135,8 @@ class ExportsPermissionsMixin(object):
 
     @property
     def has_view_permissions(self):
-        if self.form_or_case == 'form':
-            report_to_check = FORM_EXPORT_PERMISSION
-        elif self.form_or_case == 'case':
-            report_to_check = CASE_EXPORT_PERMISSION
-        return (self.request.couch_user.can_view_reports()
-                or self.request.couch_user.has_permission(
-                    self.domain,
-                    get_permission_name(Permissions.view_report),
-                    data=report_to_check))
+        report_to_check = FORM_EXPORT_PERMISSION if self.form_or_case == 'form' else CASE_EXPORT_PERMISSION
+        return has_permission_to_view_report(self.request.couch_user, self.domain, report_to_check)
 
     @property
     def has_deid_view_permissions(self):
@@ -193,6 +187,7 @@ class BaseExportView(BaseProjectDataView):
         # clear what this view specifically needs to render.
         context = self.export_helper.get_context()
         context.update({'export_home_url': self.export_home_url})
+
         return context
 
     def commit(self, request):
@@ -323,6 +318,16 @@ class BaseModifyCustomExportView(BaseExportView):
     @property
     def export_id(self):
         return self.kwargs.get('export_id')
+
+    @property
+    def page_context(self):
+        if not use_new_exports(self.domain):
+            async_convert_saved_export_to_export_instance.delay(
+                self.domain,
+                self.export_helper.custom_export,
+                dryrun=True
+            )
+        return super(BaseModifyCustomExportView, self).page_context
 
     @property
     @memoized
@@ -1465,6 +1470,7 @@ class BaseNewExportView(BaseExportView):
 
 class BaseModifyNewCustomView(BaseNewExportView):
 
+    @use_ko_validation
     @method_decorator(require_can_edit_data)
     def dispatch(self, request, *args, **kwargs):
         return super(BaseModifyNewCustomView, self).dispatch(request, *args, **kwargs)
@@ -1556,7 +1562,7 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
                         legacy_export.converted_saved_export_id
                     )
                 else:
-                    export_instance = convert_saved_export_to_export_instance(
+                    export_instance, meta = convert_saved_export_to_export_instance(
                         self.domain,
                         legacy_export,
                     )

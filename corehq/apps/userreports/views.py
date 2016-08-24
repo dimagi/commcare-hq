@@ -23,10 +23,11 @@ from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.accounting.models import Subscription
+from corehq.apps.analytics.tasks import update_hubspot_properties
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.tour import tours
+from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.util import reverse
@@ -93,7 +94,6 @@ from corehq.apps.userreports.util import has_report_builder_access, \
     allowed_report_builder_reports, number_of_report_builder_reports
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.toggles import REPORT_BUILDER_MAP_REPORTS
 from corehq.util.couch import get_document_or_404
 
 
@@ -237,11 +237,7 @@ class ReportBuilderView(BaseDomainView):
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
         if has_report_builder_access(request):
-            report_type = kwargs.get('report_type', None)
-            if report_type != 'map' or toggle_enabled(request, REPORT_BUILDER_MAP_REPORTS):
-                return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
-            else:
-                raise Http404
+            return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
         else:
             raise Http404
 
@@ -263,10 +259,8 @@ def paywall_home(domain):
     project = Domain.get_by_name(domain, strict=True)
     if project.requested_report_builder_subscription:
         return reverse(ReportBuilderPaywallActivatingSubscription.urlname, args=[domain])
-    elif project.requested_report_builder_trial:
-        return reverse(ReportBuilderPaywallActivatingTrial.urlname, args=[domain])
     else:
-        return reverse(ReportBuilderPaywall.urlname, args=[domain])
+        return reverse(ReportBuilderPaywallPricing.urlname, args=[domain])
 
 
 class ReportBuilderPaywallBase(BaseDomainView):
@@ -293,36 +287,6 @@ class ReportBuilderPaywallBase(BaseDomainView):
     def plan_name(self):
         plan_version, _ = Subscription.get_subscribed_plan_by_domain(self.domain)
         return plan_version.plan.name
-
-
-class ReportBuilderPaywall(ReportBuilderPaywallBase):
-    template_name = "userreports/paywall/paywall.html"
-    urlname = 'report_builder_paywall'
-
-    def dispatch(self, request, *args, **kwargs):
-        return super(ReportBuilderPaywall, self).dispatch(request, *args, **kwargs)
-
-
-class ReportBuilderPaywallActivatingTrial(ReportBuilderPaywallBase):
-    template_name = "userreports/paywall/activating_trial.html"
-    urlname = 'report_builder_paywall_activating_trial'
-    page_title = ugettext_lazy('Trial')
-
-    def post(self, request, domain, *args, **kwargs):
-        self.domain_object.requested_report_builder_trial.append(request.user.username)
-        self.domain_object.save()
-        send_mail_async.delay(
-            "Report Builder Trial Request: {}".format(domain),
-            "User {} in the {} domain has requested access to the "
-            "report builder trial. Current subscription is '{}'.".format(
-                request.user.username,
-                domain,
-                self.plan_name
-            ),
-            settings.DEFAULT_FROM_EMAIL,
-            [settings.REPORT_BUILDER_ADD_ON_EMAIL],
-        )
-        return self.get(request, domain, *args, **kwargs)
 
 
 class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
@@ -363,6 +327,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
             settings.DEFAULT_FROM_EMAIL,
             [settings.REPORT_BUILDER_ADD_ON_EMAIL],
         )
+        update_hubspot_properties.delay(request.couch_user, {'report_builder_subscription_request': 'yes'})
         return self.get(request, domain, *args, **kwargs)
 
 
@@ -474,9 +439,7 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 help_text=_('A table of aggregated data from form submissions or case properties.'
                             ' You choose the columns and rows.'),
             ),
-        ]
-        if REPORT_BUILDER_MAP_REPORTS.enabled(self.domain):
-            tiles.append(TileConfiguration(
+            TileConfiguration(
                 title=_('Map'),
                 slug='map',
                 analytics_usage_label="Map",
@@ -486,7 +449,8 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 url=reverse('report_builder_select_source', args=[self.domain, 'map']),
                 help_text=_('A map to show data from your cases or forms.'
                             ' You choose the property to map.'),
-            ))
+            )
+        ]
         return tiles
 
 
@@ -614,8 +578,12 @@ class ConfigureChartReport(ReportBuilderView):
             'report_type': self.report_type,
             'form': report_form,
             'editing_existing_report': bool(self.existing_report),
-            'property_options': [p._asdict() for p in report_form.data_source_properties.values()],
-            'initial_filters': [f._asdict() for f in report_form.initial_filters],
+            'report_column_options': [p.to_dict() for p in report_form.report_column_options.values()],
+            'data_source_indicators': [p._asdict() for p in report_form.data_source_properties.values()],
+            # For now only use date ranges that don't require additional parameters
+            'date_range_options': [r._asdict() for r in get_simple_dateranges()],
+            'initial_user_filters': [f._asdict() for f in report_form.initial_user_filters],
+            'initial_default_filters': [f._asdict() for f in report_form.initial_default_filters],
             'initial_columns': [
                 c._asdict() for c in getattr(report_form, 'initial_columns', [])
             ],

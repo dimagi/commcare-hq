@@ -16,7 +16,7 @@
     {% trans "Configure Report Settings" %}
 {% endblock page_title %}
 {% block js-inline %}{{ block.super }}
-<script type="text/javascript">
+<script>
 
     var ReportBuilder = {
         Constants: hqImport('userreports/js/constants.js')
@@ -25,19 +25,26 @@
     (function () {
 
         var reportType = {{ report_type|JSON }};
-        var initialFilters = {{ initial_filters|JSON }};
+        var initialUserFilters = {{ initial_user_filters|JSON }};
+        var initialDefaultFilters = {{ initial_default_filters|JSON }};
         var initialColumns = {{ initial_columns|JSON }};
         var sourceType = {{ form.source_type|JSON }};
-        var propertyOptions = {{ property_options|JSON }};
-        ReportBuilder.IS_NON_NUMERIC_MAP = propertyOptions.reduce(function(map, option) {
-            map[option.id] = option.is_non_numeric;
-            return map
-        }, {});
-
+        var dataSourceIndicators = {{ data_source_indicators|JSON }};
+        var reportColumnOptions = {{ report_column_options|JSON }};
+        var dateRangeOptions = {{ date_range_options|JSON }};
 
         var ConfigForm = hqImport('userreports/js/builder_view_models.js').ConfigForm;
         $("#report-config-form").koApplyBindings(
-            new ConfigForm(reportType, sourceType, initialColumns, initialFilters, propertyOptions)
+            new ConfigForm(
+                reportType,
+                sourceType,
+                initialColumns,
+                initialUserFilters,
+                initialDefaultFilters,
+                dataSourceIndicators,
+                reportColumnOptions,
+                dateRangeOptions
+            )
         );
 
 

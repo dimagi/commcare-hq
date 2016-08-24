@@ -27,7 +27,11 @@ def expose_file_download(path, **kwargs):
     return ref
 
 
-def get_download_context(download_id, check_state=False, message=None):
+def get_download_context(download_id, check_state=False, message=None, require_result=False):
+    """
+    :param require_result: If set to True, is_ready will not be set to True unless result is
+    also available. If check_state=False, this is ignored.
+    """
     is_ready = False
     context = {}
     download_data = DownloadBase.get(download_id)
@@ -69,6 +73,8 @@ def get_download_context(download_id, check_state=False, message=None):
         )
 
     context['is_ready'] = is_ready or progress_complete()
+    if check_state and require_result:
+        context['is_ready'] = context['is_ready'] and context.get('result') is not None
     context['is_alive'] = alive
     context['progress'] = progress
     context['download_id'] = download_id

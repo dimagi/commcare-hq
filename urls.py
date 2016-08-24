@@ -69,11 +69,14 @@ domain_specific = patterns('',
     (r'^dashboard/', include('corehq.apps.dashboard.urls')),
     (r'^configurable_reports/', include('corehq.apps.userreports.urls')),
     (r'^performance_messaging/', include('corehq.apps.performance_sms.urls')),
-    (r'^', include('custom.icds.urls')),
+    (r'^preview_app/', include('corehq.apps.preview_app.urls')),
+    (r'^', include('custom.icds_reports.urls')),
+    (r'^', include('custom.enikshay.urls')),
     (r'^_base_template/$', login_and_domain_required(
         lambda request, domain: render(request, 'style/base.html', {'domain': domain})
     )),
-    (r'^zapier/', include('corehq.apps.zapier.urls', namespace='zapier'))
+    (r'^zapier/', include('corehq.apps.zapier.urls', namespace='zapier')),
+    (r'^zipline/', include('custom.zipline.urls'))
 )
 
 urlpatterns = patterns('',

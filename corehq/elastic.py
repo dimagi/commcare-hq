@@ -9,7 +9,7 @@ from elasticsearch.exceptions import ElasticsearchException, RequestError
 from corehq.apps.es.utils import flatten_field_dict
 from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
-from pillowtop.listener import send_to_elasticsearch as send_to_es
+from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
@@ -139,10 +139,21 @@ class ESError(Exception):
     pass
 
 
-def run_query(index_name, q):
+def run_query(index_name, q, debug_host=None):
+    # the debug_host parameter allows you to query another env for testing purposes
+    if debug_host:
+        if not settings.DEBUG:
+            raise Exception("You can only specify an ES env in DEBUG mode")
+        es_host = getattr(settings, 'ELASTICSEARCH_HOST_{}'.format(debug_host.upper()))
+        es_instance = Elasticsearch([{'host': es_host,
+                                      'port': settings.ELASTICSEARCH_PORT}],
+                                    timeout=3, max_retries=0)
+    else:
+        es_instance = get_es_new()
+
     es_meta = ES_META[index_name]
     try:
-        return get_es_new().search(es_meta.index, es_meta.type, body=q)
+        return es_instance.search(es_meta.index, es_meta.type, body=q)
     except RequestError as e:
         raise ESError(e)
 

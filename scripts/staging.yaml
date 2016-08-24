@@ -45,29 +45,31 @@
 trunk: master
 name: autostaging
 branches:
-#  - addtoblock-js-inline  # Danny 7/20
-  - reduce-all_forms-view  # Danny 7/20
-  - mk-231812-j2me-config # Manish 7/15
-  - hqDefine-users  # danny 6/7
+  - kill-1.x-apps  # Danny 8/23
+  - loc-tests # sravan 8/8
   - vellum-staging # J$ 11/13
-  - dm/xform-blobs  # daniel 5/23
-  - nc/report-builder # Noah 6/29
+  - welcome-to-vellum # Jenny 8/3
+  - underscore-1-8 # Jenny 8/19
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
-      - 2.28-jars
+      - commcare_2.29
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
-      - 2.28-jars
+      - commcare_2.29
+      - kill-1.x-apps  # Danny 8/23
   submodules/django-digest-src:
     branches: []
   submodules/dimagi-utils-src:
     branches: []
   submodules/django-prbac-src:
     branches: []
+  corehq/apps/prelogin:
+    branches:
+      - welcome-to-vellum # Jenny 8/3
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []

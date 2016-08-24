@@ -5,6 +5,9 @@
     "airsbenin",
     "airstanzania",
     "abtmali",
+    "airsmadagascar",
+    "airsmozambique",
+    "airsrwanda",
     "airsethiopia"
   ],
   "config": {
@@ -274,11 +277,38 @@
         "expression": {
           "default": 0,
           "cases": {
+            "mozambique": {
+              "default": 0,
+              "cases": {
+                "derre": 16555,
+                "milange": 91807,
+                "mocuba": 140365,
+                "molumbo": 44715,
+                "morrumbala": 97861,
+                "quelimane": 76936
+              },
+              "type": "switch",
+              "switch_on": {
+                "value_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "user_data",
+                    "level_1_name"
+                  ]
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareUser",
+                "doc_id_expression": {
+                  "type": "property_name",
+                  "property_name": "owner_id"
+                }
+              }
+            },
             "Rwanda": {
               "default": 0,
               "cases": {
                 "Kirehe": 82946,
-                "Nyagatare": 77027
+                "Nyagatare": 105243
               },
               "type": "switch",
               "switch_on": {
@@ -327,6 +357,31 @@
               "default": 0,
               "cases": {
                 "Geita": 20000
+              },
+              "type": "switch",
+              "switch_on": {
+                "value_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "user_data",
+                    "level_1_name"
+                  ]
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareUser",
+                "doc_id_expression": {
+                  "type": "property_name",
+                  "property_name": "owner_id"
+                }
+              }
+            },
+            "Madagascar": {
+              "default": 0,
+              "cases": {
+                "Atsinanana": 108361,
+                "Analanjirofo": 80604,
+                "Vatovavy Fitovinany": 41018,
+                "Atsimo Atsinanana": 81941
               },
               "type": "switch",
               "switch_on": {
@@ -442,6 +497,50 @@
         "expression": {
           "default": 0,
           "cases": {
+            "mozambique": {
+              "default": 0,
+              "cases": {
+                "alto_benfica": 9933,
+                "chire": 21069,
+                "corromana": 19652,
+                "dachudua_majaua": 16805,
+                "derre": 13054,
+                "dulanha": 10084,
+                "guerissa": 3501,
+                "liciro": 12042,
+                "madal": 10350.25,
+                "maquival": 17310,
+                "megaza": 7499,
+                "milange_sede": 52876,
+                "mocuba_sede": 52953,
+                "molumbo_": 25063,
+                "morrumbala_sede": 35337,
+                "muandiua": 16676,
+                "muaquia": 12697,
+                "mugeba": 31865,
+                "munhiba": 17409,
+                "namanjavira": 15508,
+                "namuinho": 49276,
+                "pinda": 10524,
+                "sabe": 6756
+              },
+              "type": "switch",
+              "switch_on": {
+                "value_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "user_data",
+                    "level_2_name"
+                  ]
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareUser",
+                "doc_id_expression": {
+                  "type": "property_name",
+                  "property_name": "owner_id"
+                }
+              }
+            },
             "Senegal": {
               "default": 0,
               "cases": {
@@ -470,29 +569,38 @@
             "Rwanda": {
               "default": 0,
               "cases": {
-                "Gahara": 9697,
+                "Gahara I": 5498,
+                "Gahara II": 4199,
                 "Gatore": 6062,
+                "Gatunda": 7799,
                 "Karama": 7226,
+                "Karangazi I": 6277,
+                "Karangazi II": 6941,
                 "Katabagemu": 8330,
+                "Kigarama I": 4282,
+                "Kigarama II": 3299,
                 "Kigina": 6454,
                 "Kirehe": 5476,
-                "Kigarama": 7581,
-                "Musheri": 5692,
-                "Mukama": 5946,
+                "Kiyombe": 3860,
+                "Mahama": 6029,
                 "Matimba": 4651,
                 "Mimuri": 6857,
-                "Mahama": 6029,
-                "Mpanga": 7663,
+                "Mpanga I": 4603,
+                "Mpanga II": 3060,
+                "Mukama": 5946,
                 "Musaza": 6618,
+                "Musheri": 5692,
                 "Mushikiri": 6454,
-                "Nyagatare": 8347,
                 "Nasho": 7029,
+                "Nyagatare": 4963,
+                "Nyagatare II": 6741,
                 "Nyamugari": 9494,
                 "Nyarubuye": 4389,
-                "Rwimiyaga": 10945,
                 "Rukomo": 7928,
                 "Rwempasha": 3743,
-                "Tabagwe": 7362
+                "Rwimiyaga 1": 6981,
+                "Rwimiyaga II": 3964,
+                "Tabagwe": 7344
               },
               "type": "switch",
               "switch_on": {
@@ -634,6 +742,32 @@
                   "property_path": [
                     "user_data",
                     "level_2_data"
+                  ]
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareUser",
+                "doc_id_expression": {
+                  "type": "property_name",
+                  "property_name": "owner_id"
+                }
+              }
+            },
+            "Madagascar": {
+              "default": 0,
+              "cases": {
+                "Brickaville": 50560,
+                "Fenerive Est": 80604,
+                "Tamatave II": 57801,
+                "Farafangana": 81941,
+                "Vohipeno": 41018
+              },
+              "type": "switch",
+              "switch_on": {
+                "value_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "user_data",
+                    "level_2_name"
                   ]
                 },
                 "type": "related_doc",
@@ -811,70 +945,102 @@
             "Madagascar": {
               "default": 0,
               "cases": {
-                "Ambalatany": 2429,
-                "Ambalavato Nord": 1399,
-                "Evato": 3765,
-                "Iaborano Namahora": 1158,
-                "Mahafasa": 2279,
-                "Mahavelo": 2255,
-                "Sahamadio": 3605,
-                "Tangainony": 3114,
-                "Ambalavato Sud": 974,
-                "Ankarana": 2182,
-                "Antseranambe": 1169,
-                "Efatsy": 1522,
-                "Fenoarivo": 1323,
-                "Iabohazo": 1258,
-                "Ihorombe": 1784,
-                "Ivandrika": 1207,
-                "Mahabo Mananivo": 1850,
-                "Manambotra": 870,
-                "Vohitromby": 708,
-                "Amporoforo": 2509,
-                "Anosivelo": 3601,
-                "Anosy Tsararafara": 4488,
-                "Marovandrika": 2205,
-                "Vohilengo": 3589,
-                "Farafangana": 6974,
-                "Ambohigogo": 2430,
-                "Ambohimandroso": 2790,
-                "Bevoay": 1538,
-                "Etrotroka": 4311,
-                "Maheriraty": 1312,
-                "Tovona": 1195,
-                "Vohimasy": 1239,
-                "Ambalarondra": 4215,
-                "Ambinaninony": 3344,
-                "Ampasimbe": 3817,
-                "Andovoranto": 4180,
-                "Anjahamana": 1556,
-                "Brickaville": 7953,
-                "Mahatsara": 7537,
-                "Ranomafana Est": 5487,
-                "Vohitranivona": 2932,
-                "Ambatoharanana": 5026,
-                "Ambodimanga II": 7948,
-                "Ampasimbe manasatrana": 6544,
-                "Ampasina maningory": 13750,
-                "Antsiatsiaka": 3342,
-                "Fenerive Est": 9785,
-                "Mahambo": 9285,
-                "Mahanoro": 2348,
-                "Miorimivalana": 735,
-                "Saranambana": 1788,
-                "Vohipeno": 3355,
-                "Ambodilazana": 4144,
-                "Ambodirina": 1594,
-                "Amboditandroho": 2582,
-                "Ampasimadinika": 1572,
-                "Ampasimbe Onibe": 6236,
-                "Andondabe": 5080,
-                "Andranobolahy": 2981,
-                "Antetezambaro": 4962,
-                "Fanandrana": 3428,
-                "Foulpoint mahavelona": 6486,
-                "Sahambala": 4853,
-                "Tamatave II": 5572
+                "Ambalatany": 3032,
+                "Ambalavato Nord": 1027,
+                "Ambalavato Sud": 953,
+                "Ambohigogo": 2460,
+                "Ambohimandroso": 2891,
+                "Amborobe": 1208,
+                "Amporoforo": 3683,
+                "Andemaka": 3326,
+                "Ankarana Miraihina": 1853,
+                "Ankarimbary": 1518,
+                "Anoloka": 777,
+                "Anosivelo": 2757,
+                "Anosy Tsararafa": 5901,
+                "Antananabo": 1225,
+                "Antseranambe": 1299,
+                "Bevoay Beretra": 2336,
+                "Efatsy": 1617,
+                "Etrotroka": 5463,
+                "Evato": 4346,
+                "Farafangana": 7443,
+                "Fenoarivo": 1618,
+                "Iabohazo": 1423,
+                "Iaborano Namohora": 1250,
+                "Ifatsy": 2136,
+                "Ihorombe": 1894,
+                "Ilakatra": 3182,
+                "Ivandrika": 1393,
+                "Ivato": 818,
+                "Lanivo": 1616,
+                "Mahabo": 1605,
+                "Mahabo Mananivo": 1736,
+                "Mahafasa Centre": 2324,
+                "Mahasoabe": 1381,
+                "Mahavelo": 2220,
+                "Mahazoarivo": 6350,
+                "Maheriraty": 1460,
+                "Manambotra Sud": 962,
+                "Marovandrika": 2466,
+                "Nato": 989,
+                "Onjatsy": 398,
+                "Sahalava": 1828,
+                "Sahamadio": 4600,
+                "Savana": 1089,
+                "Tangainony": 2504,
+                "Tovona": 1699,
+                "Vohilany": 250,
+                "Vohilava": 1523,
+                "Vohilengo": {
+                  "default": 0,
+                  "cases": {
+                    "Farafangana": 4145
+                  },
+                  "type": "switch",
+                  "switch_on": {
+                    "value_expression": {
+                      "type": "property_path",
+                      "property_path": [
+                        "user_data",
+                        "level_2_name"
+                      ]
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareUser",
+                    "doc_id_expression": {
+                      "type": "property_name",
+                      "property_name": "owner_id"
+                    }
+                  }
+                },
+                "Vohimasy": 1280,
+                "Vohindava": 2202,
+                "Vohipeno": {
+                  "default": 0,
+                  "cases": {
+                    "Vohipeno": 4512
+                  },
+                  "type": "switch",
+                  "switch_on": {
+                    "value_expression": {
+                      "type": "property_path",
+                      "property_path": [
+                        "user_data",
+                        "level_2_name"
+                      ]
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareUser",
+                    "doc_id_expression": {
+                      "type": "property_name",
+                      "property_name": "owner_id"
+                    }
+                  }
+                },
+                "Vohitrindry": 2783,
+                "Vohitromby": 1077,
+                "Zafindrafady": 2418
               },
               "type": "switch",
               "switch_on": {
@@ -1149,12 +1315,13 @@
         "expression": {
           "default": 0,
           "cases": {
+            "mozambique": 468239,
             "Senegal": 220551,
-            "Rwanda": 144417,
+            "Rwanda": 188189,
             "Zambia": 539348,
             "Ethiopia": 708258,
             "Mali": 242684,
-            "Madagascar": 72120,
+            "Madagascar": 311924,
             "Tanzania": 502934,
             "benin": 270141
           },

@@ -67,7 +67,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
-from corehq.apps.users.models import Invitation, CouchUser
+from corehq.apps.users.models import Invitation, CouchUser, Permissions
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
 from custom.openclinica.forms import OpenClinicaSettingsForm
@@ -112,7 +112,7 @@ from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPa
 from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
-from corehq.apps.users.decorators import require_can_edit_web_users
+from corehq.apps.users.decorators import require_can_edit_web_users, require_permission
 from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
 from corehq.apps.repeaters.models import Repeater, FormRepeater, CaseRepeater, ShortFormRepeater, \
     AppStructureRepeater, RepeatRecord, repeater_types, RegisterGenerator
@@ -590,9 +590,9 @@ def logo(request, domain):
     return HttpResponse(logo[0], content_type=logo[1])
 
 
-class DomainAccountingSettings(BaseAdminProjectSettingsView):
+class DomainAccountingSettings(BaseProjectSettingsView):
 
-    @method_decorator(login_and_domain_required)
+    @method_decorator(require_permission(Permissions.billing_admin))
     def dispatch(self, request, *args, **kwargs):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
 
@@ -617,7 +617,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
     @property
     def can_purchase_credits(self):
-        return self.request.couch_user.is_domain_admin(self.domain)
+        return self.request.couch_user.has_permission(self.domain, Permissions.billing_admin.name)
 
     @property
     @memoized
@@ -632,7 +632,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
         }
         cards = None
         if subscription:
-            cards = get_customer_cards(self.account, self.request.user.username, self.domain)
+            cards = get_customer_cards(self.request.user.username, self.domain)
             date_end = (subscription.date_end.strftime(USER_DATE_FORMAT)
                         if subscription.date_end is not None else "--")
 
@@ -808,6 +808,9 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
         }
 
     def _get_cards(self):
+        if not settings.STRIPE_PRIVATE_KEY:
+            return []
+
         user = self.request.user.username
         payment_method, new_payment_method = StripePaymentMethod.objects.get_or_create(
             web_user=user,
@@ -848,7 +851,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
 
     @property
     def stripe_cards(self):
-        return get_customer_cards(self.account, self.request.user.username, self.domain)
+        return get_customer_cards(self.request.user.username, self.domain)
 
     @property
     def show_hidden(self):
@@ -998,21 +1001,21 @@ class BaseStripePaymentView(DomainAccountingSettings):
 
     @property
     def account(self):
-        raise NotImplementedError("you must impmement the property account")
+        raise NotImplementedError("you must implement the property account")
 
     @property
     @memoized
-    def domain_admin(self):
-        if self.request.couch_user.is_domain_admin(self.domain):
+    def billing_admin(self):
+        if self.request.couch_user.has_permission(self.domain, Permissions.billing_admin.name):
             return self.request.couch_user.username
         else:
             raise PaymentRequestError(
-                "The logged in user was not a domain admin."
+                "The logged in user was not a billing admin."
             )
 
     def get_or_create_payment_method(self):
         return StripePaymentMethod.objects.get_or_create(
-            web_user=self.domain_admin,
+            web_user=self.billing_admin,
             method_type=PaymentMethodType.STRIPE,
         )[0]
 
@@ -1149,8 +1152,7 @@ class WireInvoiceView(View):
     http_method_names = ['post']
     urlname = 'domain_wire_invoice'
 
-    @method_decorator(login_and_domain_required)
-    @method_decorator(domain_admin_required)
+    @method_decorator(require_permission(Permissions.billing_admin))
     def dispatch(self, request, *args, **kwargs):
         return super(WireInvoiceView, self).dispatch(request, *args, **kwargs)
 
@@ -1169,8 +1171,7 @@ class WireInvoiceView(View):
 class BillingStatementPdfView(View):
     urlname = 'domain_billing_statement_download'
 
-    @method_decorator(login_and_domain_required)
-    @method_decorator(domain_admin_required)
+    @method_decorator(require_permission(Permissions.billing_admin))
     def dispatch(self, request, *args, **kwargs):
         return super(BillingStatementPdfView, self).dispatch(request, *args, **kwargs)
 
@@ -1370,6 +1371,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
             "hipaa_compliant": self.domain_object.hipaa_compliant,
             "secure_sessions": self.domain_object.secure_sessions,
             "two_factor_auth": self.domain_object.two_factor_auth,
+            "strong_mobile_passwords": self.domain_object.strong_mobile_passwords,
         }
         if self.request.method == 'POST':
             return PrivacySecurityForm(self.request.POST, initial=initial,
@@ -2415,15 +2417,12 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         if self.request.method == 'POST':
             return DomainInternalForm(can_edit_eula, self.request.POST)
         initial = {
-            'deployment_date': self.domain_object.deployment.date.date
-            if self.domain_object.deployment.date else '',
             'countries': self.domain_object.deployment.countries,
             'is_test': self.domain_object.is_test,
         }
         internal_attrs = [
             'sf_contract_id',
             'sf_account_id',
-            'services',
             'initiative',
             'self_started',
             'area',
@@ -2436,6 +2435,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'experienced_threshold',
             'amplifies_workers',
             'amplifies_project',
+            'data_access_threshold',
             'business_unit',
             'workshop_region',
         ]
@@ -2723,6 +2723,7 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
     def page_context(self):
         return {
             'flags': self.enabled_flags(),
+            'use_sql_backend': self.domain_object.use_sql_backend
         }
 
 

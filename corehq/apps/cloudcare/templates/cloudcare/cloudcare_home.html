@@ -29,9 +29,30 @@
           media="all"
           href="{% static 'datatables/media/css/jquery.dataTables.min.css' %}" />
     <link rel="stylesheet" href="{% static 'formplayer/style/webforms.css' %}">
-    <link rel="stylesheet" href="{% static 'cloudcare/css/cloudcare.css' %}">
     <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}" />
     {% endcompress %}
+
+    {% if less_debug %}
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'cloudcare/less/font-formplayer.less' %}" />
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'cloudcare/less/cloudcare.debug.less' %}" />
+    {% else %}
+    {% compress css %}
+        <link type="text/less"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'cloudcare/less/font-formplayer.less' %}" />
+        <link type="text/less"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'cloudcare/less/cloudcare.less' %}"/>
+    {% endcompress %}
+    {% endif %}
 {% endblock %}
 
 {% block js %} {{ block.super }}

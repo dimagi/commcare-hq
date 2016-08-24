@@ -10,7 +10,7 @@ from corehq.apps.locations.urls import settings_urls as location_settings
 from corehq.apps.settings.views import (
     ChangeMyPasswordView,
     DefaultMySettingsView,
-    EnableSuperuserView,
+    EnableMobilePrivilegesView,
     MyAccountSettingsView,
     MyProjectsList,
 )
@@ -21,7 +21,7 @@ urlpatterns = patterns(
     url(r'^settings/$', MyAccountSettingsView.as_view(), name=MyAccountSettingsView.urlname),
     url(r'^projects/$', MyProjectsList.as_view(), name=MyProjectsList.urlname),
     url(r'^password/$', ChangeMyPasswordView.as_view(), name=ChangeMyPasswordView.urlname),
-    url(r'^superuser/$', EnableSuperuserView.as_view(), name=EnableSuperuserView.urlname),
+    url(r'^mobile_privileges/$', EnableMobilePrivilegesView.as_view(), name=EnableMobilePrivilegesView.urlname),
     url(r'new_api_key/$', 'new_api_key', name='new_api_key'),
 )
 

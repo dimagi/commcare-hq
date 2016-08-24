@@ -37,6 +37,10 @@ class RegisterNewWebUserForm(forms.Form):
         label=_("Create Password"),
         widget=forms.PasswordInput(),
     )
+    phone_number = forms.CharField(
+        label=_("Phone Number (Optional)"),
+        required=False,
+    )
     project_name = forms.CharField(label=_("Project Name"))
     eula_confirmed = forms.BooleanField(
         required=False,
@@ -48,7 +52,21 @@ class RegisterNewWebUserForm(forms.Form):
                CommCare HQ End User License Agreement</a>.""")))
 
     def __init__(self, *args, **kwargs):
+        self.show_phone_number = kwargs.pop('show_number', False)
         super(RegisterNewWebUserForm, self).__init__(*args, **kwargs)
+
+        if not self.show_phone_number:
+            del self.fields['phone_number']
+            phone_number_fields = []
+        else:
+            phone_number_fields = [
+                hqcrispy.InlineField(
+                    'phone_number',
+                    css_class="input-lg",
+                    data_bind="value: phoneNumber, "
+                              "valueUpdate: 'keyup'"
+                ),
+            ]
 
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -93,11 +111,13 @@ class RegisterNewWebUserForm(forms.Form):
                                   "}",
                     ),
                     hqcrispy.ValidationMessage('passwordDelayed'),
+                    crispy.Div(*phone_number_fields),
                     twbscrispy.StrictButton(
                         ugettext("Next"),
                         css_class="btn btn-success btn-lg",
                         data_bind="click: nextStep, disable: disableNextStepOne"
-                    )
+                    ),
+                    css_class="check-password",
                 ),
                 css_class="form-step step-1",
                 style="display: none;"

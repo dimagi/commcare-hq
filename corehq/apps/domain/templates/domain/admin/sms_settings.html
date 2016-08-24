@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
-    <script type="text/javascript">
+    <script>
     $(function () {
         var settings = {{ settings|JSON }};
         var other_sms_codes = {{ other_sms_codes|JSON }};
@@ -22,17 +22,6 @@
 {% block page_content %}
     <form id="settings" class="form form-horizontal" method="post">
         {% csrf_token %}
-        <fieldset>
-            <legend>{% trans 'SMS Keywords' %}</legend>
-            <div class="form-group" data-bind="css: { 'error': keyword_error }">
-                <label class="col-sm-2 control-label" for="keyword_stock_report">{% trans 'Stock Report' %}</label>
-                <div class="col-sm-3">
-                    <input id="keyword_stock_report" class="form-control" type="text" data-bind="value: keyword"/>
-                    <div class="help-inline" data-bind="text: keyword_error"></div>
-                </div>
-            </div>
-        </fieldset>
-
         <fieldset>
             <legend>{% trans 'Stock Actions' %}</legend>
             <div class="form-group">

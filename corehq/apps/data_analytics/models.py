@@ -2,14 +2,15 @@ from collections import namedtuple
 
 from django.db import models
 
-from corehq.apps.data_analytics.const import NOT_SET
+from corehq.apps.data_analytics.const import NOT_SET, DEFAULT_EXPERIENCED_THRESHOLD, DEFAULT_PERFORMANCE_THRESHOLD
 
 
 GIRExportRow = namedtuple('GIRExportRow',
                           'domain country sector subsector bu self_service test start device active_users wam '
                           'pam wam_current wam_1_prior wam_2_prior active_current active_1_prior active_2_prior '
                           'using_and_performing not_performing inactive_experienced inactive_not_experienced '
-                          'not_experienced not_performing_not_experienced d1 d2 d3 d4 d5 d6')
+                          'not_experienced not_performing_not_experienced d1 d2 d3 d4 d5 d6 eligible '
+                          'experienced_threshold performance_threshold ')
 
 
 class MALTRow(models.Model):
@@ -76,6 +77,9 @@ class GIRRow(models.Model):
     ever_exp = models.PositiveIntegerField()
     exp_and_active_ever = models.PositiveIntegerField()
     active_in_span = models.PositiveIntegerField()
+    eligible_forms = models.PositiveIntegerField()
+    performance_threshold = models.PositiveIntegerField(null=True)
+    experienced_threshold = models.PositiveIntegerField(null=True)
 
     class Meta:
         unique_together = ('month', 'domain_name')
@@ -115,4 +119,7 @@ class GIRRow(models.Model):
                             d3=self.ever_exp,
                             d4=self.exp_and_active_ever,
                             d5=self.active_users,
-                            d6=self.active_in_span)
+                            d6=self.active_in_span,
+                            eligible=self.eligible_forms,
+                            experienced_threshold=self.experienced_threshold or DEFAULT_EXPERIENCED_THRESHOLD,
+                            performance_threshold=self.performance_threshold or DEFAULT_PERFORMANCE_THRESHOLD)

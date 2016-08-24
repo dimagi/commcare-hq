@@ -1,8 +1,8 @@
 import base64
 import json
 import uuid
+from copy import deepcopy
 from datetime import datetime
-import dateutil.parser
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -22,6 +22,7 @@ from corehq.apps.userreports.models import ReportConfiguration, \
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.pillows.case import transform_case_for_elasticsearch
 from couchforms.models import XFormInstance
+from dimagi.utils.parsing import json_format_datetime
 
 from django_prbac.models import Role
 
@@ -46,7 +47,7 @@ from corehq.apps.locations.resources.v0_1 import InternalLocationResource
 from custom.ilsgateway.resources.v0_1 import ILSLocationResource
 from custom.ewsghana.resources.v0_1 import EWSLocationResource
 from corehq.apps.users.analytics import update_analytics_indexes
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, UserRole, Permissions
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.reportxform import transform_xform_for_report_forms_index
 from corehq.pillows.xform import transform_xform_for_elasticsearch
@@ -254,6 +255,7 @@ class TestXFormInstanceResource(APIResourceTest):
                                          '@xmlns': 'fake-xmlns'
                                      })
         backend_form.save()
+        self.addCleanup(backend_form.delete)
         translated_doc = transform_xform_for_elasticsearch(backend_form.to_json())
         fake_xform_es.add_doc(translated_doc['_id'], translated_doc)
 
@@ -265,9 +267,7 @@ class TestXFormInstanceResource(APIResourceTest):
 
         api_form = api_forms[0]
         self.assertEqual(api_form['form']['@xmlns'], backend_form.xmlns)
-        self.assertEqual(api_form['received_on'], backend_form.received_on.isoformat())
-
-        backend_form.delete()
+        self.assertEqual(api_form['received_on'], json_format_datetime(backend_form.received_on))
 
     def test_get_list_xmlns(self):
         """
@@ -385,6 +385,7 @@ class TestCommCareCaseResource(APIResourceTest):
 
         backend_case = CommCareCase(server_modified_on=modify_date, domain=self.domain.name)
         backend_case.save()
+        self.addCleanup(backend_case.delete)
 
         translated_doc = transform_case_for_elasticsearch(backend_case.to_json())
 
@@ -397,9 +398,7 @@ class TestCommCareCaseResource(APIResourceTest):
         self.assertEqual(len(api_cases), 1)
 
         api_case = api_cases[0]
-        self.assertEqual(dateutil.parser.parse(api_case['server_date_modified']), backend_case.server_modified_on)
-
-        backend_case.delete()
+        self.assertEqual(api_case['server_date_modified'], json_format_datetime(backend_case.server_modified_on))
 
     @run_with_all_backends
     def test_parent_and_child_cases(self):
@@ -462,11 +461,11 @@ class TestCommCareCaseResource(APIResourceTest):
         new_user = WebUser.create(community_domain.name, 'test', 'testpass')
         new_user.save()
 
+        self.addCleanup(new_user.delete)
+        self.addCleanup(community_domain.delete)
+
         response = self._assert_auth_get_resource(self.list_endpoint, username='test', password='testpass')
         self.assertEqual(response.status_code, 403)
-
-        community_domain.delete()
-        new_user.delete()
 
     def test_superuser(self):
         """
@@ -477,11 +476,11 @@ class TestCommCareCaseResource(APIResourceTest):
         new_user = WebUser.create(community_domain.name, 'test', 'testpass', is_superuser=True)
         new_user.save()
 
+        self.addCleanup(new_user.delete)
+        self.addCleanup(community_domain.delete)
+
         response = self._assert_auth_get_resource(self.list_endpoint, username='test', password='testpass')
         self.assertEqual(response.status_code, 200)
-
-        community_domain.delete()
-        new_user.delete()
 
 
 class TestHOPECaseResource(APIResourceTest):
@@ -507,6 +506,7 @@ class TestHOPECaseResource(APIResourceTest):
         backend_case = CommCareCase(server_modified_on=modify_date, domain=self.domain.name)
         backend_case.type = CC_BIHAR_PREGNANCY
         backend_case.save()
+        self.addCleanup(backend_case.delete)
 
         translated_doc = transform_case_for_elasticsearch(backend_case.to_json())
 
@@ -519,9 +519,7 @@ class TestHOPECaseResource(APIResourceTest):
         self.assertEqual(len(api_cases), 2)
 
         api_case = api_cases['mother_lists'][0]
-        self.assertEqual(dateutil.parser.parse(api_case['server_date_modified']), backend_case.server_modified_on)
-
-        backend_case.delete()
+        self.assertEqual(api_case['id'], backend_case.case_id)
 
 
 class TestCommCareUserResource(APIResourceTest):
@@ -534,6 +532,7 @@ class TestCommCareUserResource(APIResourceTest):
     def test_get_list(self):
 
         commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****')
+        self.addCleanup(commcare_user.delete)
         backend_id = commcare_user.get_id
         update_analytics_indexes()
 
@@ -544,11 +543,10 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(len(api_users), 1)
         self.assertEqual(api_users[0]['id'], backend_id)
 
-        commcare_user.delete()
-
     def test_get_single(self):
 
         commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****')
+        self.addCleanup(commcare_user.delete)
         backend_id = commcare_user._id
 
         response = self._assert_auth_get_resource(self.single_endpoint(backend_id))
@@ -557,12 +555,11 @@ class TestCommCareUserResource(APIResourceTest):
         api_user = json.loads(response.content)
         self.assertEqual(api_user['id'], backend_id)
 
-        commcare_user.delete()
-
     def test_create(self):
 
         group = Group({"name": "test"})
         group.save()
+        self.addCleanup(group.delete)
 
         self.assertEqual(0, len(CommCareUser.by_domain(self.domain.name)))
 
@@ -589,6 +586,7 @@ class TestCommCareUserResource(APIResourceTest):
                                     content_type='application/json')
         self.assertEqual(response.status_code, 201)
         [user_back] = CommCareUser.by_domain(self.domain.name)
+        self.addCleanup(user_back.delete)
         self.assertEqual(user_back.username, "jdoe")
         self.assertEqual(user_back.first_name, "John")
         self.assertEqual(user_back.last_name, "Doe")
@@ -597,14 +595,15 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(user_back.get_group_ids()[0], group._id)
         self.assertEqual(user_back.user_data["chw_id"], "13/43/DFA")
         self.assertEqual(user_back.default_phone_number, "50253311399")
-        user_back.delete()
-        group.delete()
 
     def test_update(self):
 
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234")
         group = Group({"name": "test"})
         group.save()
+
+        self.addCleanup(user.delete)
+        self.addCleanup(group.delete)
 
         user_json = {
             "first_name": "test",
@@ -639,8 +638,6 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(modified.get_group_ids()[0], group._id)
         self.assertEqual(modified.user_data["chw_id"], "13/43/DFA")
         self.assertEqual(modified.default_phone_number, "50253311399")
-        modified.delete()
-        group.delete()
 
 
 class TestWebUserResource(APIResourceTest):
@@ -649,6 +646,24 @@ class TestWebUserResource(APIResourceTest):
     """
     resource = v0_5.WebUserResource
     api_name = 'v0.5'
+    default_user_json = {
+        "username": "test_1234",
+        "password": "qwer1234",
+        "email": "admin@example.com",
+        "first_name": "Joe",
+        "is_admin": True,
+        "last_name": "Admin",
+        "permissions": {
+            "edit_apps": True,
+            "edit_commcare_users": True,
+            "edit_data": True,
+            "edit_web_users": True,
+            "view_reports": True
+        },
+        "phone_numbers": [
+        ],
+        "role": "Admin"
+    }
 
     def _check_user_data(self, user, json_user):
         self.assertEqual(user._id, json_user['id'])
@@ -699,25 +714,7 @@ class TestWebUserResource(APIResourceTest):
         self._check_user_data(self.user, api_user)
 
     def test_create(self):
-
-        user_json = {
-            "username":"test_1234",
-            "password":"qwer1234",
-            "email":"admin@example.com",
-            "first_name":"Joe",
-            "is_admin": True,
-            "last_name":"Admin",
-            "permissions":{
-                "edit_apps":True,
-                "edit_commcare_users":True,
-                "edit_data":True,
-                "edit_web_users":True,
-                "view_reports":True
-            },
-            "phone_numbers":[
-            ],
-            "role":"admin"
-        }
+        user_json = deepcopy(self.default_user_json)
         response = self._assert_auth_post_resource(self.list_endpoint,
                                                    json.dumps(user_json),
                                                    content_type='application/json')
@@ -727,29 +724,87 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(user_back.first_name, "Joe")
         self.assertEqual(user_back.last_name, "Admin")
         self.assertEqual(user_back.email, "admin@example.com")
+        self.assertTrue(user_back.is_domain_admin(self.domain.name))
         user_back.delete()
 
+    def test_create_admin_without_role(self):
+        user_json = deepcopy(self.default_user_json)
+        user_json.pop('role')
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        user_back = WebUser.get_by_username("test_1234")
+        self.assertEqual(user_back.username, "test_1234")
+        self.assertEqual(user_back.first_name, "Joe")
+        self.assertEqual(user_back.last_name, "Admin")
+        self.assertEqual(user_back.email, "admin@example.com")
+        self.assertTrue(user_back.is_domain_admin(self.domain.name))
+        user_back.delete()
+
+    def test_create_with_preset_role(self):
+        user_json = deepcopy(self.default_user_json)
+        user_json["role"] = "Field Implementer"
+        user_json["is_admin"] = False
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        user_back = WebUser.get_by_username("test_1234")
+        self.assertEqual(user_back.role, 'Field Implementer')
+        user_back.delete()
+
+    def test_create_with_custom_role(self):
+        new_user_role = UserRole.get_or_create_with_permissions(
+            self.domain.name, Permissions(edit_apps=True, view_reports=True), 'awesomeness')
+        user_json = deepcopy(self.default_user_json)
+        user_json["role"] = new_user_role.name
+        user_json["is_admin"] = False
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        user_back = WebUser.get_by_username("test_1234")
+        self.assertEqual(user_back.role, new_user_role.name)
+        user_back.delete()
+
+    def test_create_with_invalid_admin_role(self):
+        user_json = deepcopy(self.default_user_json)
+        user_json["role"] = 'Jack of all trades'
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   failure_code=400)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content, '{"error": "An admin can have only one role : Admin"}')
+
+    def test_create_with_invalid_non_admin_role(self):
+        user_json = deepcopy(self.default_user_json)
+        user_json['is_admin'] = False
+        user_json["role"] = 'Jack of all trades'
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   failure_code=400)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content, '{"error": "Invalid User Role Jack of all trades"}')
+
+    def test_create_with_missing_non_admin_role(self):
+        user_json = deepcopy(self.default_user_json)
+        user_json['is_admin'] = False
+        user_json.pop("role")
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   failure_code=400)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content, '{"error": "Please assign role for non admin user"}')
+
     def test_update(self):
-
         user = WebUser.create(domain=self.domain.name, username="test", password="qwer1234")
-
-        user_json = {
-            "email":"admin@example.com",
-            "first_name":"Joe",
-            "is_admin": True,
-            "last_name":"Admin",
-            "permissions":{
-                "edit_apps":True,
-                "edit_commcare_users":True,
-                "edit_data":True,
-                "edit_web_users":True,
-                "view_reports":True
-            },
-            "phone_numbers":[
-            ],
-            "role":"admin"
-        }
-
+        self.addCleanup(user.delete)
+        user_json = deepcopy(self.default_user_json)
+        user_json.pop('username')
         backend_id = user._id
         response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
                                                    json.dumps(user_json),
@@ -761,7 +816,6 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(modified.first_name, "Joe")
         self.assertEqual(modified.last_name, "Admin")
         self.assertEqual(modified.email, "admin@example.com")
-        modified.delete()
 
 
 class TestRepeaterResource(APIResourceTest):
@@ -777,6 +831,7 @@ class TestRepeaterResource(APIResourceTest):
             repeater = cls(domain=self.domain.name,
                            url='http://example.com/forwarding/{cls}'.format(cls=cls.__name__))
             repeater.save()
+            self.addCleanup(repeater.delete)
             backend_id = repeater._id
             response = self._assert_auth_get_resource(self.single_endpoint(backend_id))
             self.assertEqual(response.status_code, 200)
@@ -785,13 +840,13 @@ class TestRepeaterResource(APIResourceTest):
             self.assertEqual(result['url'], repeater.url)
             self.assertEqual(result['domain'], repeater.domain)
             self.assertEqual(result['type'], cls.__name__)
-            repeater.delete()
 
     def test_get_list(self):
 
         # Add a form repeater and check that it comes back
         form_repeater = FormRepeater(domain=self.domain.name, url='http://example.com/forwarding/form')
         form_repeater.save()
+        self.addCleanup(form_repeater.delete)
         backend_id = form_repeater._id
 
         response = self._assert_auth_get_resource(self.list_endpoint)
@@ -807,6 +862,7 @@ class TestRepeaterResource(APIResourceTest):
         # Add a case repeater and check that both come back
         case_repeater = CaseRepeater(domain=self.domain.name, url='http://example.com/forwarding/case')
         case_repeater.save()
+        self.addCleanup(case_repeater.delete)
         backend_id = case_repeater._id
 
         response = self._assert_auth_get_resource(self.list_endpoint)
@@ -817,11 +873,8 @@ class TestRepeaterResource(APIResourceTest):
 
         api_case_repeater = filter(lambda r: r['type'] == 'CaseRepeater', api_repeaters)[0]
         self.assertEqual(api_case_repeater['id'], case_repeater._id)
-        self.assertEqual(api_case_repeater['url'], case_repeater.url)    
-        self.assertEqual(api_case_repeater['domain'], case_repeater.domain)    
-
-        form_repeater.delete()
-        case_repeater.delete()
+        self.assertEqual(api_case_repeater['url'], case_repeater.url)
+        self.assertEqual(api_case_repeater['domain'], case_repeater.domain)
 
     def test_create(self):
 
@@ -838,10 +891,10 @@ class TestRepeaterResource(APIResourceTest):
                                         content_type='application/json')
             self.assertEqual(response.status_code, 201, response.content)
             [repeater_back] = cls.by_domain(self.domain.name)
+            self.addCleanup(repeater_back.delete)
             self.assertEqual(repeater_json['domain'], repeater_back.domain)
             self.assertEqual(repeater_json['type'], repeater_back.doc_type)
             self.assertEqual(repeater_json['url'], repeater_back.url)
-            repeater_back.delete()
 
     def test_update(self):
 
@@ -849,6 +902,7 @@ class TestRepeaterResource(APIResourceTest):
             repeater = cls(domain=self.domain.name,
                            url='http://example.com/forwarding/{cls}'.format(cls=cls.__name__))
             repeater.save()
+            self.addCleanup(repeater.delete)
             backend_id = repeater._id
             repeater_json = {
                 "domain": self.domain.name,
@@ -863,7 +917,6 @@ class TestRepeaterResource(APIResourceTest):
             self.assertEqual(1, len(cls.by_domain(self.domain.name)))
             modified = cls.get(backend_id)
             self.assertTrue('modified' in modified.url)
-            repeater.delete()
 
 
 class TestReportPillow(TestCase):
@@ -1272,6 +1325,7 @@ class TestSingleSignOnResource(APIResourceTest):
         If correct credentials for a user in a different domain are submitted, the response is forbidden
         '''
         wrong_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
+        self.addCleanup(wrong_domain.delete)
 
         # have to set up subscription for the bad domain or it will fail on authorization
         new_account = BillingAccount.get_or_create_account_by_domain(wrong_domain.name,
@@ -1286,7 +1340,6 @@ class TestSingleSignOnResource(APIResourceTest):
                                                   resource_name=self.resource.Meta.resource_name))
         response = self.client.post(wrong_list_endpoint, {'username': self.username, 'password': self.password})
         self.assertEqual(response.status_code, 403)
-        wrong_domain.delete()
 
     def test_wrong_credentials(self):
         '''
@@ -1319,6 +1372,7 @@ class TestGroupResource(APIResourceTest):
 
         group = Group({"name": "test", "domain": self.domain.name})
         group.save()
+        self.addCleanup(group.delete)
         backend_id = group.get_id
 
         response = self._assert_auth_get_resource(self.list_endpoint)
@@ -1328,12 +1382,11 @@ class TestGroupResource(APIResourceTest):
         self.assertEqual(len(api_groups), 1)
         self.assertEqual(api_groups[0]['id'], backend_id)
 
-        group.delete()
-
     def test_get_single(self):
 
         group = Group({"name": "test", "domain": self.domain.name})
         group.save()
+        self.addCleanup(group.delete)
         backend_id = group.get_id
 
         response = self._assert_auth_get_resource(self.single_endpoint(backend_id))
@@ -1341,7 +1394,6 @@ class TestGroupResource(APIResourceTest):
 
         api_groups = json.loads(response.content)
         self.assertEqual(api_groups['id'], backend_id)
-        group.delete()
 
     def test_create(self):
 
@@ -1360,16 +1412,17 @@ class TestGroupResource(APIResourceTest):
                                     content_type='application/json')
         self.assertEqual(response.status_code, 201)
         [group_back] = Group.by_domain(self.domain.name)
+        self.addCleanup(group_back.delete)
         self.assertEqual(group_back.name, "test group")
         self.assertTrue(group_back.reporting)
         self.assertTrue(group_back.case_sharing)
         self.assertEqual(group_back.metadata["localization"], "Ghana")
-        group_back.delete()
 
     def test_update(self):
 
         group = Group({"name": "test", "domain": self.domain.name})
         group.save()
+        self.addCleanup(group.delete)
 
         group_json = {
             "case_sharing": True,
@@ -1392,7 +1445,6 @@ class TestGroupResource(APIResourceTest):
         self.assertTrue(modified.reporting)
         self.assertTrue(modified.case_sharing)
         self.assertEqual(modified.metadata["localization"], "Ghana")
-        modified.delete()
 
 
 class FakeUserES(object):
@@ -1557,8 +1609,10 @@ class TestApiKey(APIResourceTest):
         other_user = WebUser.create(self.domain.name, username, password)
         other_user.set_role(self.domain.name, 'admin')
         other_user.save()
+        self.addCleanup(other_user.delete)
         django_user = WebUser.get_django_user(other_user)
         other_api_key, _ = ApiKey.objects.get_or_create(user=django_user)
+        self.addCleanup(other_api_key.delete)
 
         endpoint = "%s?%s" % (self.single_endpoint(self.user._id),
                               urlencode({
@@ -1567,9 +1621,6 @@ class TestApiKey(APIResourceTest):
                               }))
         response = self.client.get(endpoint)
         self.assertEqual(response.status_code, 401)
-
-        other_api_key.delete()
-        other_user.delete()
 
 
 class InternalTestMixin(object):
@@ -1594,7 +1645,7 @@ class InternalFixtureResourceTest(APIResourceTest, InternalTestMixin):
 
 class InternalLocationResourceTest(APIResourceTest, InternalTestMixin):
     resource = InternalLocationResource
-    api_name = 'v0_3'
+    api_name = 'v0_5'
 
     def test_basic(self):
         self.assert_accessible_via_sessions(self.list_endpoint)
@@ -1627,15 +1678,24 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
         cls.report_columns = [
             {
                 "column_id": 'foo',
+                "display": "foo display",
                 "type": "field",
                 "field": "my_field",
                 "aggregation": "simple",
             },
             {
                 "column_id": 'bar',
+                "display": "bar display",
                 "type": "field",
                 "field": "my_field",
                 "aggregation": "simple",
+            },
+            {
+                "column_id": 'expand',
+                "display": "expand display",
+                "type": "expanded",
+                "field": "my_field",
+                "max_expansion": 10,
             }
         ]
         cls.report_filters = [
@@ -1652,6 +1712,7 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
                 'slug': 'my_other_field_filter',
             }
         ]
+        cls.report_title = "test report"
 
         cls.data_source = DataSourceConfiguration(
             domain=cls.domain.name,
@@ -1661,12 +1722,18 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
         cls.data_source.save()
 
         cls.report_configuration = ReportConfiguration(
+            title=cls.report_title,
             domain=cls.domain.name,
             config_id=cls.data_source._id,
             columns=cls.report_columns,
             filters=cls.report_filters
         )
         cls.report_configuration.save()
+
+        another_report_configuration = ReportConfiguration(
+            domain=cls.domain.name, config_id=cls.data_source._id, columns=[], filters=[]
+        )
+        another_report_configuration.save()
 
     def test_get_detail(self):
         response = self._assert_auth_get_resource(
@@ -1678,17 +1745,33 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
 
         self.assertEqual(
             set(response_dict.keys()),
-            {'resource_uri', 'filters', 'columns', 'id'}
+            {'resource_uri', 'filters', 'columns', 'id', 'title'}
         )
 
         self.assertEqual(
-            [c['column_id'] for c in self.report_columns],
+            [{
+                "column_id": c['column_id'],
+                "display": c['display'],
+                "type": c['type']
+            } for c in self.report_columns],
             columns
         )
         self.assertEqual(
-            [{'datatype': x['datatype'], 'slug': x['slug']} for x in self.report_filters],
+            [{'datatype': x['datatype'], 'slug': x['slug'], 'type': x['type']} for x in self.report_filters],
             filters
         )
+        self.assertEqual(response_dict['title'], self.report_title)
+
+    def test_get_list(self):
+        response = self._assert_auth_get_resource(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+        response_dict = json.loads(response.content)
+
+        self.assertEqual(set(response_dict.keys()), {'meta', 'objects'})
+        self.assertEqual(set(response_dict['meta'].keys()), {'total_count'})
+
+        self.assertEqual(response_dict['meta']['total_count'], 2)
+        self.assertEqual(len(response_dict['objects']), 2)
 
     def test_disallowed_methods(self):
         response = self._assert_auth_post_resource(
@@ -1698,21 +1781,17 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
         )
         self.assertEqual(response.status_code, 405)
 
-        response = self._assert_auth_get_resource(self.list_endpoint, failure_code=405)
-        self.assertEqual(response.status_code, 405)
-
     def test_auth(self):
 
         wrong_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
         new_user = WebUser.create(wrong_domain.name, 'test', 'testpass')
         new_user.save()
+        self.addCleanup(wrong_domain.delete)
+        self.addCleanup(new_user.delete)
 
         response = self._assert_auth_get_resource(self.single_endpoint(self.report_configuration._id),
                                                   username='test', password='testpass')
         self.assertEqual(response.status_code, 403)  # 403 is "Forbidden"
-
-        wrong_domain.delete()
-        new_user.delete()
 
 
 class TestConfigurableReportDataResource(APIResourceTest):
@@ -1743,32 +1822,33 @@ class TestConfigurableReportDataResource(APIResourceTest):
         super(TestConfigurableReportDataResource, cls).setUpClass()
 
         case_type = "my_case_type"
-        field_name = "my_field"
+        cls.field_name = "my_field"
+        cls.case_property_values = ["foo", "foo", "bar", "baz"]
 
         cls.cases = []
-        for val in ["foo", "foo", "bar", "baz"]:
+        for val in cls.case_property_values:
             id = uuid.uuid4().hex
             case_block = CaseBlock(
                 create=True,
                 case_id=id,
                 case_type=case_type,
-                update={field_name: val},
+                update={cls.field_name: val},
             ).as_xml()
             post_case_blocks([case_block], {'domain': cls.domain.name})
             cls.cases.append(CommCareCase.get(id))
 
         cls.report_columns = [
             {
-                "column_id": field_name,
+                "column_id": cls.field_name,
                 "type": "field",
-                "field": field_name,
+                "field": cls.field_name,
                 "aggregation": "simple",
             }
         ]
         cls.report_filters = [
             {
                 'datatype': 'string',
-                'field': field_name,
+                'field': cls.field_name,
                 'type': 'dynamic_choice_list',
                 'slug': 'my_field_filter',
             }
@@ -1787,16 +1867,28 @@ class TestConfigurableReportDataResource(APIResourceTest):
                 },
                 "property_value": case_type,
             },
-            configured_indicators=[{
-                "type": "expression",
-                "expression": {
-                    "type": "property_name",
-                    "property_name": field_name
+            configured_indicators=[
+                {
+                    "type": "expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": cls.field_name
+                    },
+                    "column_id": cls.field_name,
+                    "display_name": cls.field_name,
+                    "datatype": "string"
                 },
-                "column_id": field_name,
-                "display_name": field_name,
-                "datatype": "string"
-            }],
+                {
+                    "type": "expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "opened_by"
+                    },
+                    "column_id": "opened_by",
+                    "display_name": "opened_by",
+                    "datatype": "string"
+                },
+            ],
         )
         cls.data_source.validate()
         cls.data_source.save()
@@ -1821,6 +1913,34 @@ class TestConfigurableReportDataResource(APIResourceTest):
         self.assertEqual(response_dict["total_records"], len(self.cases))
         self.assertEqual(len(response_dict["data"]), len(self.cases))
 
+    def test_expand_column_infos(self):
+
+        aggregated_report = ReportConfiguration(
+            domain=self.domain.name,
+            config_id=self.data_source._id,
+            aggregation_columns=["opened_by"],
+            columns=[
+                {
+                    "column_id": self.field_name,
+                    "type": "field",
+                    "field": self.field_name,
+                    "aggregation": "expand",
+                }
+            ],
+            filters=[],
+        )
+        aggregated_report.save()
+
+        response = self.client.get(
+            self.single_endpoint(aggregated_report._id))
+        response_dict = json.loads(response.content)
+        columns = response_dict["columns"]
+
+        for c in columns:
+            self.assertIn("expand_column_value", c)
+        self.assertSetEqual(set(self.case_property_values), {c['expand_column_value'] for c in columns})
+
+
     def test_page_size(self):
         response = self.client.get(
             self.single_endpoint(self.report_configuration._id, {"limit": 1}))
@@ -1832,9 +1952,9 @@ class TestConfigurableReportDataResource(APIResourceTest):
             self.single_endpoint(self.report_configuration._id, {"limit": 10000}))
         self.assertEqual(response.status_code, 400)
 
-    def test_page_start(self):
+    def test_page_offset(self):
         response = self.client.get(
-            self.single_endpoint(self.report_configuration._id, {"start": 2}))
+            self.single_endpoint(self.report_configuration._id, {"offset": 2}))
         response_dict = json.loads(response.content)
         self.assertEqual(response_dict["total_records"], len(self.cases))
         self.assertEqual(len(response_dict["data"]), len(self.cases) - 2)
@@ -1860,7 +1980,7 @@ class TestConfigurableReportDataResource(APIResourceTest):
         query_dict.update({"some_filter": "bar"})
         next = v0_5.ConfigurableReportDataResource(api_name=self.api_name)._get_next_page(
             self.domain.name, "123", 100, 50, 3450, query_dict)
-        self.assertEqual(next, self.single_endpoint("123", {"start": 150, "limit": 50, "some_filter": "bar"}))
+        self.assertEqual(next, self.single_endpoint("123", {"offset": 150, "limit": 50, "some_filter": "bar"}))
 
         # It's the last page
         next = v0_5.ConfigurableReportDataResource(api_name=self.api_name)._get_next_page(

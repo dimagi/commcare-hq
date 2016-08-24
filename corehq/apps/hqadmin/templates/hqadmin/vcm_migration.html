@@ -1,8 +1,20 @@
 {% extends "style/base_section.html" %}
 {% load i18n %}
 
+{% block head %}
+    <style type="text/css">
+        #add-emails {
+            width: 50%;
+        }
+
+        #add-emails input, #add-emails textarea {
+            margin-bottom: 5px;
+        }
+    </style>
+{% endblock %}
+
 {% block js-inline %}
-    <script type="text/javascript">
+    <script>
         function selectNeighbors($row, iterator) {
             var neighbors = [],
                 $row = iterator($row);
@@ -65,40 +77,52 @@
 
             $("#bulk-actions button").click(function() {
                 var $button = $(this),
+                    $form = $button.closest("form"),
                     action = $button.data("action"),
-                    domains = _.map($("#migrations :checked"), function(c) { return $(c).data("domain"); });
-                if (!domains.length) {
-                    alert("No domains selected");
+                    items = [],
+                    itemName = "";
+
+                if (action === "add") {
+                    items = $form.find("textarea").val().split(/\s+/);
+                    itemName = "email";
+                } else {
+                    items = _.map($("#migrations :checked"), function(c) { return $(c).data("domain"); });
+                    itemName = "domain";
+                }
+
+                if (!items.length) {
+                    alert("No " + itemName + "s to " + action);
                     return;
                 }
-                if (!confirm('Are you sure you want to ' + action + ' these ' + domains.length + ' domains?')) {
+                if (!confirm('Are you sure you want to ' + action + ' these ' + items.length + ' ' + itemName + 's?')) {
                     return;
                 }
-                $button.siblings().andSelf().attr("disabled", true).addClass("disabled");
-                $.ajax({
-                    url: '{{ url }}',
-                    type: 'POST',
-                    data: {
-                        action: action,
-                        domains: domains.join(","),
-                    },
-                    success: function() {
-                        alert_user('Success! Best to refresh this page.', 'success');
-                    },
-                    error: function() {
-                        alert_user('Error taking action.', 'danger');
-                    },
-                });
+
+                $form.find("button").attr("disabled", true).addClass("disabled");
+                $form.find("[name='action']").val(action);
+                $form.find("[name='items']").val(items.join(","));
+                $form.submit();
             });
         })
     </script>
 {% endblock %}
 
 {% block page_content %}
-    <div id="bulk-actions">
-        <button class="btn btn-default" data-action="email"><i class="fa fa-envelope"></i> Email Selected Domains</button>
-        <button class="btn btn-default hide" data-action="migrate"><i class="fa fa-gears"></i> Migrate Selected Domains</button>
-    </div>
+    <form id="bulk-actions" action="{{ url }}" method="POST">
+        {% csrf_token %}
+        <legend>Add Domains</legend>
+        <div id="add-emails">
+            <textarea name='emails' class='form-control' placeholder='Email addresses, space-separated'></textarea>
+            <input name='notes' class='form-control' placeholder='Notes to append to each domain' />
+            <button type="button" class="btn btn-default" data-action="add"><i class="fa fa-plus"></i> Add domains</button>
+        </div>
+        <br><br>
+        <legend>Update Domains</legend>
+        <button type="button" class="btn btn-default" data-action="email"><i class="fa fa-envelope"></i> Send email to selected domains</button>
+        <button type="button" class="btn btn-default" data-action="migrate"><i class="fa fa-gears"></i> Migrate selected domains</button>
+        <input type="hidden" name="action" />
+        <input type="hidden" name="items" />
+    </form>
     <br />
     <div class="text-muted">Shift+Click to select multiple rows, click in "Notes" column to edit.</div>
     <table class="table table-condensed table-striped table-hover" id="migrations">
@@ -106,7 +130,6 @@
             <th></th>
             <th></th>
             <th>Domain</th>
-            <th>Admins</th>
             <th class="text-center">
                 Emailed?
                 <br /><a href='javascript:void(0)' id='email-popover'>view email</a>
@@ -124,11 +147,6 @@
                 <td class="text-center"><input type="checkbox" data-domain="{{ a.domain }}" /></td>
                 <td class="text-center">{{ forloop.counter }}</td>
                 <td>{{ a.domain }}</td>
-                <td>
-                    {% for email in a.admins %}
-                        <div>{{ email }}</div>
-                    {% endfor %}
-                </td>
                 <td class="text-center">
                     {% if a.emailed %}
                         {{ a.emailed|date }}

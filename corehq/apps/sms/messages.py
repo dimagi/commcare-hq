@@ -52,7 +52,7 @@ _MESSAGES = {
     MSG_INVALID_INT: ugettext_noop("Invalid integer entered."),
     MSG_INVALID_FLOAT: ugettext_noop("Invalid decimal number entered."),
     MSG_INVALID_LONG: ugettext_noop("Invalid long integer entered."),
-    MSG_INVALID_DATE: ugettext_noop("Invalid date format: expected YYYYMMDD."),
+    MSG_INVALID_DATE: ugettext_noop("Invalid date format: expected {0}."),
     MSG_INVALID_TIME: ugettext_noop("Invalid time format: expected HHMM (24-hour)."),
     MSG_KEYWORD_NOT_FOUND: ugettext_noop("Keyword not found: '{0}'"),
     MSG_START_KEYWORD_USAGE: ugettext_noop("Usage: {0} <keyword>"),
@@ -82,9 +82,9 @@ _MESSAGES = {
         "using SMS with CommCareHQ"),
     MSG_MOBILE_WORKER_INVITATION_START: ugettext_noop("Welcome to CommCareHQ! What type of phone are you "
         "using? Reply 1 for Android, 2 for other."),
-    MSG_MOBILE_WORKER_ANDROID_INVITATION: ugettext_noop("Please register here: {0}"),
-    MSG_MOBILE_WORKER_JAVA_INVITATION: ugettext_noop("Please reply with an SMS saying 'join {0} worker "
-        "[username]', entering your requested username in place of [username]"),
+    MSG_MOBILE_WORKER_ANDROID_INVITATION: ugettext_noop("Welcome to CommCareHQ! Please register here: {0}"),
+    MSG_MOBILE_WORKER_JAVA_INVITATION: ugettext_noop("Welcome to CommCareHQ! Please reply with an SMS saying "
+        "'join {0} worker [username]', entering your requested username in place of [username]"),
     MSG_REGISTRATION_WELCOME_CASE: ugettext_noop("Thank you for registering with CommCareHQ."),
     MSG_REGISTRATION_WELCOME_MOBILE_WORKER: ugettext_noop("Thank you for registering with CommCareHQ."),
     MSG_UPDATE_UNRECOGNIZED_ACTION: ugettext_noop('Error: Unrecognized update action provided.'),

@@ -3,8 +3,8 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script type="text/javascript" src="{% static 'accounting/ko/accounting.payment_method_handler.js' %}"></script>
-    <script type="text/javascript" src="https://js.stripe.com/v2/"></script>
+    <script src="{% static 'accounting/ko/accounting.payment_method_handler.js' %}"></script>
+    <script src="https://js.stripe.com/v2/"></script>
 {% endblock %}
 
 {% block js-inline %}
@@ -22,20 +22,7 @@
             {
                 statusCodeText: {{ pagination.status_codes|JSON }},
                 allowItemCreation: {{ pagination.create.is_allowed|BOOL }},
-                createItemForm: '{% filter escapejs %}{{ pagination.create_item_form }}{% endfilter %}',
-                initRowFn: function (rowElems, paginatedItem) {
-                    var paymentButton = $(rowElems).find('.payment-button');
-                    if (paymentButton) {
-                        paymentButton.click(function (e) {
-                            paymentHandler.costItem(new Invoice({
-                                paginatedItem: paginatedItem,
-                                paginatedList: paginatedListModel
-                            }));
-                            paymentHandler.reset();
-                            e.preventDefault();
-                        });
-                    }
-                }
+                createItemForm: '{% filter escapejs %}{{ pagination.create_item_form }}{% endfilter %}'
             }
         );
         $(function () {
@@ -126,6 +113,19 @@
                 additional_data['show_hidden'] = _(window.location.href.split('?')[1].split('&')).contains('show_hidden=true');
             }
             return additional_data;
+        };
+        paginatedListModel.initRow = function (rowElems, paginatedItem) {
+            var paymentButton = $(rowElems).find('.payment-button');
+            if (paymentButton) {
+                paymentButton.click(function (e) {
+                    paymentHandler.costItem(new Invoice({
+                        paginatedItem: paginatedItem,
+                        paginatedList: paginatedListModel
+                    }));
+                    paymentHandler.reset();
+                    e.preventDefault();
+                });
+            }
         };
         paginatedListModel.init();
     }());

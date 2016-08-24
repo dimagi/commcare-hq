@@ -3,7 +3,7 @@ from corehq.apps.performance_sms.views import (
     ListPerformanceConfigsView,
     AddPerformanceConfigView,
     EditPerformanceConfig,
-)
+    EditPerformanceConfigAdvanced)
 
 urlpatterns = patterns(
     'corehq.apps.performance_sms.views',
@@ -13,6 +13,8 @@ urlpatterns = patterns(
         name=AddPerformanceConfigView.urlname),
     url(r'^edit/(?P<config_id>[\w-]+)/$', EditPerformanceConfig.as_view(),
         name=EditPerformanceConfig.urlname),
+    url(r'^edit/(?P<config_id>[\w-]+)/advanced/$', EditPerformanceConfigAdvanced.as_view(),
+        name=EditPerformanceConfigAdvanced.urlname),
     url(r'^delete/(?P<config_id>[\w-]+)/$', 'delete_performance_config',
         name='performance_sms.delete_performance_messages'),
     url(r'^sample/(?P<config_id>[\w-]+)/$', 'sample_performance_messages',

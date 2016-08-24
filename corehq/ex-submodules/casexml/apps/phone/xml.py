@@ -9,7 +9,6 @@ from casexml.apps.case.xml.generator import get_generator, date_to_xml_string,\
 
 USER_REGISTRATION_XMLNS_DEPRECATED = "http://openrosa.org/user-registration"
 USER_REGISTRATION_XMLNS = "http://openrosa.org/user/registration"
-VALID_USER_REGISTRATION_XMLNSES = [USER_REGISTRATION_XMLNS_DEPRECATED, USER_REGISTRATION_XMLNS]
 
 SYNC_XMLNS = "http://commcarehq.org/sync"
 

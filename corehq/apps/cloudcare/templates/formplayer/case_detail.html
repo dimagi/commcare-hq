@@ -10,6 +10,15 @@
     <td><%- data %></td>
 </script>
 
+<script type="text/template" id="detail-view-tab-list-template">
+    <ul class="nav nav-tabs" role="tablist">
+    </ul>
+</script>
+
+<script type="text/template" id="detail-view-tab-item-template">
+    <a href="#" role="tab" data-toggle="tab"><%- title %></a>
+</script>
+
 <div id="case-detail-modal" class="modal fade" role="dialog">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -17,12 +26,13 @@
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
                 <h4 class="modal-title">Case Detail</h4>
             </div>
+            <div class="detail-tabs">
+            </div>
             <div class="modal-body">
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" id="select-case" data-dismiss="modal">Select</button>
+                <button type="button" class="btn btn-default" id="select-case" data-dismiss="modal">Continue</button>
             </div>
         </div>
-
     </div>
 </div>

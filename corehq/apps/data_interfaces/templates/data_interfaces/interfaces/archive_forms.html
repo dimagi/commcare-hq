@@ -4,7 +4,7 @@
 {% load i18n %}
 
 {% block js-inline %} {{ block.super }}
-    <script type="text/javascript">
+    <script>
     function updateFormCounts() {
         var selectedCount = $('#form-management').find('input.xform-checkbox:checked').length;
         $(".selectedCount").text(selectedCount);

@@ -114,6 +114,7 @@ ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
 DATADOG_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.datadog.log")
 FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
 FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
+EXPORT_MIGRATION_LOG_FILE = "%s/%s" % (FILEPATH, "export_migration.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -247,6 +248,7 @@ HQ_APPS = (
     'corehq.apps.smsbillables',
     'corehq.apps.accounting',
     'corehq.apps.appstore',
+    'corehq.apps.preview_app',
     'corehq.apps.data_analytics',
     'corehq.apps.domain',
     'corehq.apps.domainsync',
@@ -354,7 +356,6 @@ HQ_APPS = (
     'a5288',
     'custom.bihar',
     'custom.apps.gsid',
-    'custom.icds',
     'hsph',
     'mvp',
     'mvp_docs',
@@ -503,7 +504,7 @@ INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
 INVOICING_CONTACT_EMAIL = 'billing-support@dimagi.com'
 MASTER_LIST_EMAIL = 'master-list@dimagi.com'
-REPORT_BUILDER_ADD_ON_EMAIL = 'updates@dimagi.com'
+REPORT_BUILDER_ADD_ON_EMAIL = 'rhartford' + '@' + 'dimagi.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@dimagi.com'
 CONTACT_EMAIL = 'info@dimagi.com'
 BOOKKEEPER_CONTACT_EMAILS = []
@@ -522,9 +523,6 @@ CLOUDCARE_BASE_URL = None
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
 
-# OpenRosa Standards
-OPENROSA_VERSION = "1.0"
-
 # OTA restore fixture generators
 FIXTURE_GENERATORS = {
     # fixtures that may be sent to the phone independent of cases
@@ -540,6 +538,7 @@ FIXTURE_GENERATORS = {
         "custom.bihar.reports.indicators.fixtures.generator",
         "custom.m4change.fixtures.report_fixtures.generator",
         "custom.m4change.fixtures.location_fixtures.generator",
+        "custom.enikshay.fixtures.calendar_fixture_generator",
     ],
     # fixtures that must be sent along with the phones cases
     'case': [
@@ -748,7 +747,7 @@ ANALYTICS_CONFIG = {
     "HQ_INSTANCE": '',  # e.g. "www" or "staging"
 }
 
-MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiY3p1ZSIsImEiOiJjaWgwa3U5OXIwMGk3a3JrcjF4cjYwdGd2In0.8Tys94ISZlY-h5Y4W160RA'
+MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiZGltYWdpIiwiYSI6ImpZWWQ4dkUifQ.3FNy5rVvLolWLycXPxKVEA'
 
 OPEN_EXCHANGE_RATES_API_ID = ''
 
@@ -770,12 +769,6 @@ ENABLE_PRELOGIN_SITE = False
 PRELOGIN_APPS = (
     'corehq.apps.prelogin',
 )
-
-# If there are existing doc_ids and case_ids you want to check directly,
-# they are referenced in your localsettings for more accurate direct checks,
-# otherwise use view-based which can be inaccurate.
-ES_CASE_CHECK_DIRECT_DOC_ID = None
-ES_XFORM_CHECK_DIRECT_DOC_ID = None
 
 # our production logstash aggregation
 LOGSTASH_DEVICELOG_PORT = 10777
@@ -897,6 +890,8 @@ ZIPLINE_API_USER = ''
 ZIPLINE_API_PASSWORD = ''
 
 KAFKA_URL = 'localhost:9092'
+
+MOBILE_INTEGRATION_TEST_TOKEN = None
 
 
 try:
@@ -1020,6 +1015,14 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
+        'export_migration': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'simple',
+            'filename': EXPORT_MIGRATION_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
         'mail_admins': {
             'level': 'ERROR',
             'class': 'corehq.util.log.HqAdminEmailHandler',
@@ -1102,6 +1105,10 @@ LOGGING = {
             'level': 'INFO',
             'propogate': True,
         },
+        'export_migration': {
+            'handlers': ['export_migration'],
+            'level': 'INFO',
+        }
     }
 }
 
@@ -1535,8 +1542,16 @@ PILLOWTOPS = {
         'custom.succeed.models.UCLAPatientFluffPillow',
     ],
     'mvp_indicators': [
-        'mvp_docs.pillows.MVPFormIndicatorPillow',
-        'mvp_docs.pillows.MVPCaseIndicatorPillow',
+        {
+            'name': 'MVPCaseIndicatorPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'mvp_docs.pillows.get_mvp_case_indicator_pillow',
+        },
+        {
+            'name': 'MVPFormIndicatorPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'mvp_docs.pillows.get_mvp_form_indicator_pillow',
+        },
     ],
     'experimental': [
         {
@@ -1578,6 +1593,12 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_lactating.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_pregnancies.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_4_6_infrastructure.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_individual_issues.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_block.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_by_ticket_level.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_by_type.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_district.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_state.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_10a_person_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_10b_person_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_11_visitor_book_forms.json'),
@@ -1641,9 +1662,11 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_mgt_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_tableau.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_cases_monthly.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_delivery_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases_monthly_tableau.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'daily_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'gm_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'home_visit_forms.json'),
@@ -1654,6 +1677,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tasks_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tech_issue_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'thr_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'usage_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
 

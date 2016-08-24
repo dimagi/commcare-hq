@@ -42,7 +42,7 @@ from corehq.apps.app_manager.models import Application, SavedAppBuild
 from corehq.apps.app_manager.views.apps import get_apps_base_context
 from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.utils import (back_to_main, encode_if_unicode, get_langs)
-
+from corehq.apps.builds.models import CommCareBuildConfig
 
 def _get_error_counts(domain, app_id, version_numbers):
     res = (UserErrorEntry.objects
@@ -76,8 +76,10 @@ def paginate_releases(request, domain, app_id):
         limit=limit,
         wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
     ).all()
+    j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
     for app in saved_apps:
         app['include_media'] = app['doc_type'] != 'RemoteApp'
+        app['j2me_enabled'] = app['menu_item_label'] in j2me_enabled_configs
 
     if toggles.APPLICATION_ERROR_REPORT.enabled(request.couch_user.username):
         versions = [app['version'] for app in saved_apps]
@@ -104,6 +106,7 @@ def releases_ajax(request, domain, app_id, template='app_manager/partials/releas
             if can_send_sms else []
         ),
         'build_profile_access': build_profile_access,
+        'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
         'vellum_case_management': app.vellum_case_management,
     })
     if not app.is_remote_app():
@@ -187,6 +190,10 @@ def save_copy(request, domain, app_id):
         get_timezone_for_user(request.couch_user, domain)
     )
     lang, langs = get_langs(request, app)
+    if copy:
+        # Set if build is supported for Java Phones
+        j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
+        copy['j2me_enabled'] = copy['menu_item_label'] in j2me_enabled_configs
     return json_response({
         "saved_app": copy,
         "error_html": render_to_string('app_manager/partials/build_errors.html', {
@@ -341,19 +348,15 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
 
     @use_angular_js
     def dispatch(self, request, *args, **kwargs):
-        try:
-            self.first_app_id = self.kwargs["first_app_id"]
-            self.second_app_id = self.kwargs["second_app_id"]
-            self.first_app = Application.get(self.first_app_id)
-            self.second_app = Application.get(self.second_app_id)
-            if not (request.couch_user.is_member_of(self.first_app.domain)
-                    and request.couch_user.is_member_of(self.second_app.domain)):
-                raise PermissionDenied()
-
-        except (ResourceNotFound, KeyError):
-            raise Http404()
-
         return super(AppDiffView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def first_app_id(self):
+        return self.kwargs["first_app_id"]
+
+    @property
+    def second_app_id(self):
+        return self.kwargs["second_app_id"]
 
     @property
     def app_diffs(self):
@@ -369,6 +372,12 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
 
     @property
     def page_context(self):
+        try:
+            self.first_app = Application.get(self.first_app_id)
+            self.second_app = Application.get(self.second_app_id)
+        except (ResourceNotFound, KeyError):
+            raise Http404()
+
         return {
             "app": self.first_app,
             "other_app": self.second_app,

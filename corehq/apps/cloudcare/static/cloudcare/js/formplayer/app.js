@@ -1,4 +1,4 @@
-/*global Marionette, Backbone, WebFormSession, Util */
+/*global Marionette, Backbone, WebFormSession, Util, CodeMirror */
 
 /**
  * The primary Marionette application managing menu navigation and launching form entry
@@ -18,6 +18,8 @@ FormplayerFrontend.on("before:start", function () {
 
         regions: {
             main: "#menu-region",
+            breadcrumb: "#breadcrumb-region",
+            phoneModeNavigation: '#phone-mode-navigation',
         },
     });
 
@@ -42,9 +44,12 @@ FormplayerFrontend.reqres.setHandler('resourceMap', function (resource_path, app
     var currentApp = FormplayerFrontend.request("appselect:getApp", app_id);
     if (resource_path.substring(0, 7) === 'http://') {
         return resource_path;
-    } else if (currentApp.attributes.hasOwnProperty("multimedia_map") &&
-        currentApp.attributes.multimedia_map.hasOwnProperty(resource_path)) {
-        var resource = currentApp.attributes.multimedia_map[resource_path];
+    } else if (!_.isEmpty(currentApp.get("multimedia_map"))) {
+        var resource = currentApp.get('multimedia_map')[resource_path];
+        if (!resource) {
+            console.warn('Unable to find resource ' + resource_path + 'in multimedia map');
+            return;
+        }
         var id = resource.multimedia_id;
         var media_type = resource.media_type;
         var name = _.last(resource_path.split('/'));
@@ -67,8 +72,28 @@ FormplayerFrontend.reqres.setHandler('clearMenu', function () {
     $('#menu-region').html("");
 });
 
-FormplayerFrontend.reqres.setHandler('error', function(errorMessage) {
+$(document).bind("ajaxStart", function () {
+    $(".formplayer-request").addClass('formplayer-requester-disabled');
+    tfLoading();
+}).bind("ajaxStop", function () {
+    $(".formplayer-request").removeClass('formplayer-requester-disabled');
+    tfLoadingComplete();
+});
+
+FormplayerFrontend.reqres.setHandler('showError', function (errorMessage) {
     showError(errorMessage, $("#cloudcare-notifications"), 10000);
+});
+
+FormplayerFrontend.reqres.setHandler('showSuccess', function(successMessage) {
+    showSuccess(successMessage, $("#cloudcare-notifications"), 10000);
+});
+
+FormplayerFrontend.reqres.setHandler('handleNotification', function(notification) {
+    if(notification.error){
+        FormplayerFrontend.request('showError', notification.message);
+    } else{
+        FormplayerFrontend.request('showSuccess', notification.message);
+    }
 });
 
 FormplayerFrontend.reqres.setHandler('startForm', function (data) {
@@ -86,16 +111,62 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
             FormplayerFrontend.request("clearForm");
-            FormplayerFrontend.trigger("apps:list");
-            showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 2500);
+            showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
+
+            if(resp.nextScreen !== null && resp.nextScreen !== undefined) {
+                FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
+            } else {
+                FormplayerFrontend.trigger("apps:currentApp");
+            }
         } else {
             showError(resp.output, $("#cloudcare-notifications"));
         }
         // TODO form linking
     };
     data.formplayerEnabled = true;
+    data.answerCallback = function(sessionId) {
+        FormplayerFrontend.request('debugger.formXML', sessionId);
+    };
+    data.resourceMap = function(resource_path) {
+        var urlObject = Util.currentUrlToObject();
+        var appId = urlObject.appId;
+        return FormplayerFrontend.request('resourceMap', resource_path, appId);
+    };
     var sess = new WebFormSession(data);
     sess.renderFormXml(data, $('#webforms'));
+});
+
+FormplayerFrontend.reqres.setHandler('debugger.formXML', function(sessionId) {
+    var user = FormplayerFrontend.request('currentUser');
+    var success = function(data) {
+        var $instanceTab = $('#debugger-xml-instance-tab'),
+            codeMirror;
+
+        codeMirror = CodeMirror(function(el) {
+            $('#xml-viewer-pretty').html(el);
+        }, {
+            value: data.output,
+            mode: 'xml',
+            viewportMargin: Infinity,
+            readOnly: true,
+            lineNumbers: true,
+        });
+
+        $instanceTab.off();
+        $instanceTab.on('shown.bs.tab', function() {
+            codeMirror.refresh();
+        });
+    };
+    var options = {
+        url: user.formplayer_url + '/get-instance',
+        data: JSON.stringify({
+            'session-id': sessionId,
+        }),
+        success: success,
+    };
+    Util.setCrossDomainAjaxOptions(options);
+
+    $.ajax(options);
 });
 
 FormplayerFrontend.on("start", function (options) {
@@ -109,7 +180,15 @@ FormplayerFrontend.on("start", function (options) {
         Backbone.history.start();
         // will be the same for every domain. TODO: get domain/username/pass from django
         if (this.getCurrentRoute() === "") {
-            FormplayerFrontend.trigger("apps:list", options.apps);
+            if (options.phoneMode) {
+                FormplayerFrontend.regions.phoneModeNavigation.show(
+                    new FormplayerFrontend.Navigation.PhoneNavigation()
+                );
+
+                FormplayerFrontend.trigger("app:singleApp", options.apps[0]['_id']);
+            } else {
+                FormplayerFrontend.trigger("apps:list", options.apps);
+            }
         }
     }
 });

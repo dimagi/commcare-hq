@@ -10,9 +10,13 @@ from pillowtop import get_pillow_by_name
 
 
 class process_kafka_changes(ContextDecorator):
-    def __init__(self, pillow_name):
-        with real_pillow_settings():
-            self.pillow = get_pillow_by_name(pillow_name, instantiate=True)
+    def __init__(self, pillow_name_or_instance):
+        if isinstance(pillow_name_or_instance, basestring):
+            with real_pillow_settings():
+                self.pillow = get_pillow_by_name(pillow_name_or_instance, instantiate=True)
+
+        else:
+            self.pillow = pillow_name_or_instance
 
         self.topics = self.pillow.get_change_feed().topics
 

@@ -15,7 +15,11 @@ logger.setLevel('DEBUG')
 
 
 class Command(BaseCommand):
-    help = "Migrate an app from case management in the app builder to form builder"
+    help = '''
+        Migrate apps from case management in the app builder to form builder.
+        Pass either a domain name (to migrate all apps in the domain) or an
+        individual app id. Will skip any apps that have already been migrated.
+    '''
 
     def handle(self, *args, **options):
         app_ids = []

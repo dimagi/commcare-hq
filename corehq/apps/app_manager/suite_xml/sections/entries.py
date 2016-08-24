@@ -174,7 +174,7 @@ class EntriesHelper(object):
                     media_audio=module.case_list.default_media_audio,
                 )
             if isinstance(module, Module):
-                for datum_meta in self.get_datum_meta_module(module, use_filter=False):
+                for datum_meta in self.get_case_datums_basic_module(module):
                     e.datums.append(datum_meta.datum)
             elif isinstance(module, AdvancedModule):
                 e.datums.append(SessionDatum(
@@ -292,12 +292,15 @@ class EntriesHelper(object):
 
         return datums
 
-    def get_case_datums_basic_module(self, module, form):
+    def get_case_datums_basic_module(self, module, form=None):
         datums = []
         if not form or form.requires_case():
             datums.extend(self.get_datum_meta_module(module, use_filter=True))
-        datums.extend(EntriesHelper.get_new_case_id_datums_meta(form))
-        datums.extend(EntriesHelper.get_extra_case_id_datums(form))
+
+        if form:
+            datums.extend(EntriesHelper.get_new_case_id_datums_meta(form))
+            datums.extend(EntriesHelper.get_extra_case_id_datums(form))
+
         self.add_parent_datums(datums, module)
         return datums
 
@@ -438,6 +441,59 @@ class EntriesHelper(object):
                 )
             ]
 
+    def get_load_case_from_fixture_datums(self, action, target_module):
+        datums = []
+        load_case_from_fixture = action.load_case_from_fixture
+
+        if (load_case_from_fixture.arbitrary_datum_id and
+                load_case_from_fixture.arbitrary_datum_function):
+            datums.append(FormDatumMeta(
+                SessionDatum(
+                    id=load_case_from_fixture.arbitrary_datum_id,
+                    function=load_case_from_fixture.arbitrary_datum_function,
+                ),
+                case_type=action.case_type,
+                requires_selection=True,
+                action=action,
+            ))
+        datums.append(FormDatumMeta(
+            datum=SessionDatum(
+                id=load_case_from_fixture.fixture_tag,
+                nodeset=load_case_from_fixture.fixture_nodeset,
+                value="./@" + load_case_from_fixture.fixture_variable,
+                detail_select=self.details_helper.get_detail_id_safe(target_module, 'case_short'),
+                detail_confirm=self.details_helper.get_detail_id_safe(target_module, 'case_long'),
+            ),
+            case_type=action.case_type,
+            requires_selection=True,
+            action=action,
+        ))
+
+        if action.case_index.tag:
+            parent_action = form.actions.actions_meta_by_tag[action.case_index.tag]['action']
+            parent_filter = EntriesHelper.get_parent_filter(
+                action.case_index.reference_id,
+                parent_action.case_session_var
+            )
+        else:
+            parent_filter = ''
+        session_var_for_fixture = session_var(load_case_from_fixture.fixture_tag)
+        filter_for_casedb = '[{0}={1}]'.format(load_case_from_fixture.case_property, session_var_for_fixture)
+        nodeset = EntriesHelper.get_nodeset_xpath(action.case_type, filter_xpath=filter_for_casedb) + parent_filter
+
+        datums.append(FormDatumMeta(
+            datum=SessionDatum(
+                id=action.case_tag,
+                nodeset=nodeset,
+                value="./@case_id",
+                autoselect=load_case_from_fixture.auto_select,
+            ),
+            case_type=action.case_type,
+            requires_selection=False,
+            action=action,
+        ))
+        return datums
+
     def configure_entry_advanced_form(self, module, e, form, **kwargs):
         def case_sharing_requires_assertion(form):
             actions = form.actions.open_cases
@@ -469,7 +525,7 @@ class EntriesHelper(object):
                     target = module.get_app().get_module_by_unique_id(module_id)
                     if target.case_type != case_type:
                         raise ParentModuleReferenceError(
-                            "Module with ID %s has incorrect case type" % module_id
+                            "Module '%s' has incorrect case type" % module.default_name()
                         )
                     if with_product_details and not hasattr(target, 'product_details'):
                         raise ParentModuleReferenceError(
@@ -517,6 +573,7 @@ class EntriesHelper(object):
         assertions = []
         for action in form.actions.get_load_update_actions():
             auto_select = action.auto_select
+            load_case_from_fixture = action.load_case_from_fixture
             if auto_select and auto_select.mode:
                 datum, assertions = EntriesHelper.get_auto_select_datums_and_assertions(action, auto_select, form)
                 datums.append(FormDatumMeta(
@@ -525,6 +582,9 @@ class EntriesHelper(object):
                     requires_selection=False,
                     action=action
                 ))
+            elif load_case_from_fixture:
+                target_module = get_target_module(action.case_type, action.details_module)
+                datums.extend(self.get_load_case_from_fixture_datums(action, target_module))
             else:
                 if action.case_index.tag:
                     parent_action = form.actions.actions_meta_by_tag[action.case_index.tag]['action']

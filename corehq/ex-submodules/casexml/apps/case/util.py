@@ -20,14 +20,15 @@ from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 
 
-def validate_phone_datetime(datetime_string, none_ok=False):
+def validate_phone_datetime(datetime_string, none_ok=False, form_id=None):
     if none_ok:
         if datetime_string is None:
             return None
         if not datetime_string != '':
             soft_assert('@'.join(['droberts', 'dimagi.com']))(
                 False,
-                'phone datetime should never be empty'
+                'phone datetime should never be empty',
+                {'form_id': form_id}
             )
             return None
     try:

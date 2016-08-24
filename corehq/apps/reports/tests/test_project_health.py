@@ -99,21 +99,22 @@ class MonthlyPerformanceSummaryTests(SetupProjectPerformanceMixin, TestCase):
         super(MonthlyPerformanceSummaryTests, cls).setUpClass()
         cls.class_setup()
         users_in_group = []
+        active_not_deleted_users = [cls.user._id, cls.user1._id, cls.user2._id]
         cls.prev_month = MonthlyPerformanceSummary(
             domain=cls.DOMAIN_NAME,
             performance_threshold=15,
             month=cls.prev_month_as_date,
             previous_summary=None,
-            users=users_in_group,
-            has_filter=False,
+            selected_users=users_in_group,
+            active_not_deleted_users=active_not_deleted_users,
         )
         cls.month = MonthlyPerformanceSummary(
             domain=cls.DOMAIN_NAME,
             performance_threshold=15,
             month=cls.month_as_date,
             previous_summary=cls.prev_month,
-            users=users_in_group,
-            has_filter=False,
+            selected_users=users_in_group,
+            active_not_deleted_users=active_not_deleted_users,
         )
 
     @classmethod
@@ -159,11 +160,11 @@ class MonthlyPerformanceSummaryTests(SetupProjectPerformanceMixin, TestCase):
         """
         self.assertEqual(self.prev_month.delta_high_performing, 1)
 
-    def test_get_all_user_stubs(self):
+    def test_helper_get_all_user_stubs(self):
         """
-        get_all_user_stubs() should contain two users from this month
+        _get_all_user_stubs() should contain two users from this month
         """
-        self.assertEqual(len(self.month.get_all_user_stubs().keys()), 2)
+        self.assertEqual(len(self.month._get_all_user_stubs().keys()), 2)
 
 
 @mock.patch('corehq.apps.reports.standard.project_health.GroupES', GroupESFake)

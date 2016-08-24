@@ -1,7 +1,11 @@
+from django.core.urlresolvers import reverse
+
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import YearFilter
+from corehq.apps.reports.standard import CustomProjectReport
 from custom.icds_reports.asr_sqldata import ASRIdentification, ASROperationalization, ASRPopulation, Annual, \
     DisabledChildren, Infrastructure, Equipment
+from custom.icds_reports import const
 from custom.icds_reports.filters import ICDSMonthFilter
 from custom.icds_reports.mpr_sqldata import MPRIdentification, MPRSectors, MPRPopulation, MPRBirthsAndDeaths, \
     MPRAWCDetails, MPRSupplementaryNutrition, MPRUsingSalt, MPRProgrammeCoverage, MPRPreschoolEducation, \
@@ -63,3 +67,13 @@ class ASRReport(IcdsBaseReport):
             Infrastructure(config=config),
             Equipment(config=config)
         ]
+
+
+class TableauReport(CustomProjectReport):
+
+    slug = 'tableau_dashboard'
+    name = 'Nutrition Dashboard'
+
+    @classmethod
+    def get_url(cls, domain=None, **kwargs):
+        return reverse('icds_tableau', args=[domain, const.WORKBOOK_NAME, const.DEFAULT_WORKSHEET])

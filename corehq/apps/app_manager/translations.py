@@ -379,7 +379,7 @@ def expected_bulk_app_sheet_rows(app):
                                 if isinstance(part, ItextOutput):
                                     value += "<output value=\"" + part.ref + "\"/>"
                                 else:
-                                    value += mark_safe(force_text(part).replace('<', '&lt;').replace('>', '&gt;'))
+                                    value += mark_safe(force_text(part).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;'))
                             itext_items[text_id][(lang, value_form)] = value
 
                 for text_id, values in itext_items.iteritems():
@@ -552,7 +552,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
             value_node.xml.append(n)
 
     def _looks_like_markdown(str):
-        return re.search(r'^\d+[\.\)] |^\*|~~.+~~|# |\*{1,3}\S+\*{1,3}|\[.+\]\(\S+\)', str)
+        return re.search(r'^\d+[\.\)] |^\*|~~.+~~|# |\*{1,3}\S+\*{1,3}|\[.+\]\(\S+\)', str, re.M)
 
     def get_markdown_node(text_node_):
         return text_node_.find("./{f}value[@form='markdown']")

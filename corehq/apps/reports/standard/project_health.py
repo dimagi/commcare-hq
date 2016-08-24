@@ -3,7 +3,6 @@ import datetime
 from django.utils.translation import ugettext_lazy
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CommCareUser
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.style.decorators import use_nvd3
 from corehq.apps.users.util import raw_username
@@ -15,6 +14,7 @@ from corehq.apps.es.groups import GroupES
 from corehq.apps.es.users import UserES
 from itertools import chain
 from corehq.apps.locations.models import SQLLocation
+from django.db.models import Sum
 
 
 def get_performance_threshold(domain_name):
@@ -53,28 +53,32 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     active = jsonobject.IntegerProperty()
     performing = jsonobject.IntegerProperty()
 
-    def __init__(self, domain, month, users, has_filter,
+    def __init__(self, domain, month, selected_users, active_not_deleted_users,
                  performance_threshold, previous_summary=None,
                  delta_high_performers=0, delta_low_performers=0):
         self._previous_summary = previous_summary
         self._next_summary = None
+
         base_queryset = MALTRow.objects.filter(
             domain_name=domain,
             month=month,
             user_type__in=['CommCareUser', 'CommCareUser-Deleted'],
+            user_id__in=active_not_deleted_users,
         )
-        if has_filter:
+        if selected_users:
             base_queryset = base_queryset.filter(
-                user_id__in=users,
+                user_id__in=selected_users,
             )
-        self._distinct_user_ids = base_queryset.distinct('user_id')
 
-        num_performing_users = (base_queryset
-                                .filter(num_of_forms__gte=performance_threshold)
-                                .distinct('user_id')
+        self._user_stat_from_malt = (base_queryset
+                                     .values('user_id', 'username')
+                                     .annotate(total_num_forms=Sum('num_of_forms')))
+
+        num_performing_users = (self._user_stat_from_malt
+                                .filter(total_num_forms__gte=performance_threshold)
                                 .count())
 
-        num_active_users = self._distinct_user_ids.count()
+        num_active_users = self._user_stat_from_malt.count()
         num_low_performing_user = num_active_users - num_performing_users
 
         if self._previous_summary:
@@ -176,25 +180,24 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                 return self.delta_inactive * 100.
             return float(self.delta_inactive / float(self._previous_summary.number_of_inactive_users)) * 100.
 
-    @memoized
-    def get_all_user_stubs(self):
+    def _get_all_user_stubs(self):
         return {
-            row.user_id: UserActivityStub(
-                user_id=row.user_id,
-                username=raw_username(row.username),
-                num_forms_submitted=row.num_of_forms,
-                is_performing=row.num_of_forms >= self.performance_threshold,
+            row['user_id']: UserActivityStub(
+                user_id=row['user_id'],
+                username=raw_username(row['username']),
+                num_forms_submitted=row['total_num_forms'],
+                is_performing=row['total_num_forms'] >= self.performance_threshold,
                 previous_stub=None,
                 next_stub=None,
-            ) for row in self._distinct_user_ids
+            ) for row in self._user_stat_from_malt
         }
 
     @memoized
     def get_all_user_stubs_with_extra_data(self):
         if self._previous_summary:
-            previous_stubs = self._previous_summary.get_all_user_stubs()
-            next_stubs = self._next_summary.get_all_user_stubs() if self._next_summary else {}
-            user_stubs = self.get_all_user_stubs()
+            previous_stubs = self._previous_summary._get_all_user_stubs()
+            next_stubs = self._next_summary._get_all_user_stubs() if self._next_summary else {}
+            user_stubs = self._get_all_user_stubs()
             ret = []
             for user_stub in user_stubs.values():
                 ret.append(UserActivityStub(
@@ -224,8 +227,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         """
         if self._previous_summary:
             unhealthy_users = filter(
-                lambda stub: stub.is_active and not stub.is_performing and not
-                CommCareUser.get(stub.user_id).is_deleted(),
+                lambda stub: stub.is_active and not stub.is_performing,
                 self.get_all_user_stubs_with_extra_data()
             )
             return sorted(unhealthy_users, key=lambda stub: stub.delta_forms)
@@ -237,8 +239,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         """
         if self._previous_summary:
             dropouts = filter(
-                lambda stub: not stub.is_active and not
-                CommCareUser.get(stub.user_id).is_deleted(),
+                lambda stub: not stub.is_active,
                 self.get_all_user_stubs_with_extra_data()
             )
             return sorted(dropouts, key=lambda stub: stub.delta_forms)
@@ -250,8 +251,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         """
         if self._previous_summary:
             dropouts = filter(
-                lambda stub: stub.is_newly_performing and not
-                CommCareUser.get(stub.user_id).is_deleted(),
+                lambda stub: stub.is_newly_performing,
                 self.get_all_user_stubs_with_extra_data()
             )
             return sorted(dropouts, key=lambda stub: -stub.delta_forms)
@@ -270,7 +270,9 @@ def build_worksheet(title, headers, rows):
 class ProjectHealthDashboard(ProjectReport):
     slug = 'project_health'
     name = ugettext_lazy("Project Performance")
-    report_template_path = "reports/project_health/project_health_dashboard.html"
+    report_template_path = "reports/async/project_health_dashboard.html"
+    description = ugettext_lazy("A summary of the overall health of your project"
+                                " based on how your users are doing over time.")
 
     fields = [
         'corehq.apps.reports.filters.location.LocationGroupFilter',
@@ -279,7 +281,6 @@ class ProjectHealthDashboard(ProjectReport):
 
     exportable = True
     emailable = True
-    asynchronous = False
 
     @property
     @memoized
@@ -305,7 +306,6 @@ class ProjectHealthDashboard(ProjectReport):
         groupids_param = []
 
         if param_ids:
-            param_ids = param_ids[0].split(',')
             for id in param_ids:
                 if id.startswith("g__"):
                     groupids_param.append(id[3:])
@@ -333,7 +333,6 @@ class ProjectHealthDashboard(ProjectReport):
 
     def get_users_by_filter(self):
         locationids_param, groupids_param = self.parse_params(self.get_group_location_ids())
-
         users_list_by_location = self.get_users_by_location_filter(locationids_param)
         users_list_by_group = self.get_users_by_group_filter(groupids_param)
 
@@ -346,6 +345,7 @@ class ProjectHealthDashboard(ProjectReport):
         last_month_summary = None
         performance_threshold = get_performance_threshold(self.domain)
         filtered_users = self.get_users_by_filter()
+        active_not_deleted_users = UserES().domain(self.domain).values_list("_id", flat=True)
         for i in range(-6, 1):
             year, month = add_months(now.year, now.month, i)
             month_as_date = datetime.date(year, month, 1)
@@ -354,8 +354,8 @@ class ProjectHealthDashboard(ProjectReport):
                 performance_threshold=performance_threshold,
                 month=month_as_date,
                 previous_summary=last_month_summary,
-                users=filtered_users,
-                has_filter=bool(self.get_group_location_ids()),
+                selected_users=filtered_users,
+                active_not_deleted_users=active_not_deleted_users,
             )
             six_month_summary.append(this_month_summary)
             if last_month_summary is not None:

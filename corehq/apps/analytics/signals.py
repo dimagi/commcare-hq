@@ -22,6 +22,7 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.signals import subscription_upgrade_or_downgrade
 from corehq.apps.domain.signals import commcare_domain_post_save
 from corehq.apps.users.signals import couch_user_post_save
+from corehq.apps.analytics.utils import get_instance_string
 
 
 @receiver(couch_user_post_save)
@@ -98,21 +99,25 @@ def get_subscription_properties_by_user(couch_user):
 
         return max(paying_subscribed_editions) if paying_subscribed_editions else ''
 
+    env = get_instance_string()
+
     return {
-        'is_on_community_plan': _is_one_of_editions(SoftwarePlanEdition.COMMUNITY),
-        'is_on_standard_plan': _is_one_of_editions(SoftwarePlanEdition.STANDARD),
-        'is_on_pro_plan': _is_one_of_editions(SoftwarePlanEdition.PRO),
-        'is_on_pro_bono_plan': _is_a_pro_bono_status(ProBonoStatus.YES),
-        'is_on_discounted_plan': _is_a_pro_bono_status(ProBonoStatus.DISCOUNTED),
-        'is_on_extended_trial_plan': _is_on_extended_trial(),
-        'max_edition_of_paying_plan': _max_edition()
+        '{}is_on_community_plan'.format(env): _is_one_of_editions(SoftwarePlanEdition.COMMUNITY),
+        '{}is_on_standard_plan'.format(env): _is_one_of_editions(SoftwarePlanEdition.STANDARD),
+        '{}is_on_pro_plan'.format(env): _is_one_of_editions(SoftwarePlanEdition.PRO),
+        '{}is_on_pro_bono_plan'.format(env): _is_a_pro_bono_status(ProBonoStatus.YES),
+        '{}is_on_discounted_plan'.format(env): _is_a_pro_bono_status(ProBonoStatus.DISCOUNTED),
+        '{}is_on_extended_trial_plan'.format(env): _is_on_extended_trial(),
+        '{}max_edition_of_paying_plan'.format(env): _max_edition()
     }
 
 
 def get_domain_membership_properties(couch_user):
+    env = get_instance_string()
+
     return {
-        "number_of_project_spaces": len(couch_user.domains),
-        "project_spaces_list": '\n'.join(couch_user.domains),
+        "{}number_of_project_spaces".format(env): len(couch_user.domains),
+        "{}project_spaces_list".format(env): '\n'.join(couch_user.domains),
     }
 
 

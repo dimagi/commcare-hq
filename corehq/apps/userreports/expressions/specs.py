@@ -266,7 +266,7 @@ class EvalExpressionSpec(JsonObject):
         var_dict = self.get_variables(item, context)
         try:
             return eval_statements(self.statement, var_dict)
-        except (InvalidExpression, SyntaxError):
+        except (InvalidExpression, SyntaxError, TypeError, ZeroDivisionError):
             return None
 
     def get_variables(self, item, context):
@@ -331,3 +331,28 @@ class SubcasesExpressionSpec(JsonObject):
         subcases = [c.to_json() for c in CaseAccessors(domain).get_reverse_indexed_cases([case_id])]
         context.set_cache_value(cache_key, subcases)
         return subcases
+
+
+class SplitStringExpressionSpec(JsonObject):
+    type = TypeProperty('split_string')
+    string_expression = DictProperty(required=True)
+    index_expression = DefaultProperty(required=True)
+    delimiter = StringProperty(required=False)
+
+    def configure(self, string_expression, index_expression):
+        self._string_expression = string_expression
+        self._index_expression = index_expression
+
+    def __call__(self, item, context=None):
+        string_value = self._string_expression(item, context)
+        if not isinstance(string_value, basestring):
+            return None
+
+        index_value = self._index_expression(item, context)
+        if not isinstance(index_value, int):
+            return None
+
+        try:
+            return string_value.split(self.delimiter)[index_value]
+        except IndexError:
+            return None
