@@ -175,6 +175,16 @@ FormplayerFrontend.on("sync", function () {
     });
 });
 
+
+/**
+ * refreshApplication
+ *
+ * This takes an appId and subsequently makes a request to formplayer to
+ * delete the relevant application database so that on next request
+ * it gets reinstalled. On completion, navigates back to the homescreen.
+ *
+ * @param {String} appId - The id of the application to refresh
+ */
 FormplayerFrontend.on('refreshApplication', function(appId) {
     var user = FormplayerFrontend.request('currentUser');
     var formplayer_url = user.formplayer_url;
