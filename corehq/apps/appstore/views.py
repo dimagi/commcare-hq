@@ -1,6 +1,9 @@
 import json
+from datetime import date
 from urllib import urlencode
 from django.utils.decorators import method_decorator
+
+from corehq.apps.accounting.tasks import ensure_explicit_community_subscription
 from corehq.apps.appstore.exceptions import CopiedFromDeletedException
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from dimagi.utils.couch import CriticalSection
@@ -349,6 +352,7 @@ def copy_snapshot(request, snapshot):
                                                user=user)
                     if new_domain.commtrack_enabled:
                         new_domain.convert_to_commtrack()
+                    ensure_explicit_community_subscription(new_domain_name, date.today())
 
                 except NameUnavailableException:
                     messages.error(request, _("A project by that name already exists"))
