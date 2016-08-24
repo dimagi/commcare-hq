@@ -19,7 +19,7 @@ from django_prbac.models import Role
 import jsonfield
 import stripe
 
-from couchdbkit import ResourceNotFound
+from couchdbkit import ResourceConflict, ResourceNotFound
 from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument, BooleanProperty
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cached_object import CachedObject
@@ -1074,12 +1074,12 @@ class Subscription(models.Model):
         Overloaded to update domain pillow with subscription information
         """
         super(Subscription, self).save(*args, **kwargs)
-        try:
-            Domain.get_by_name(self.subscriber.domain).save()
-        except Exception:
-            # If a subscriber doesn't have a valid domain associated with it
-            # we don't care the pillow won't be updated
-            pass
+        domain_obj = Domain.get_by_name(self.subscriber.domain)
+        if domain_obj:
+            try:
+                domain_obj.save()
+            except ResourceConflict:
+                Domain.get_by_name(self.subscriber.domain).save()
 
     @property
     def allowed_attr_changes(self):
