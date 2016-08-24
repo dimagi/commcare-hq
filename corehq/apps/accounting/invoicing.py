@@ -446,7 +446,7 @@ class ProductLineItemFactory(LineItemFactory):
     @property
     def unit_cost(self):
         if self.is_prorated:
-            return Decimal("%.2f" % round(self.rate.monthly_fee / 30, 2))
+            return Decimal("%.2f" % round(self.rate.monthly_fee / self._days_in_billing_period, 2))
         return Decimal('0.0')
 
     @property
