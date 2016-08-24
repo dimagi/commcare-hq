@@ -1,31 +1,31 @@
 import json
 from datetime import date
 from urllib import urlencode
-from django.utils.decorators import method_decorator
 
-from corehq.apps.accounting.tasks import ensure_explicit_community_subscription
-from corehq.apps.appstore.exceptions import CopiedFromDeletedException
-from corehq.apps.hqwebapp.views import BaseSectionPageView
-from dimagi.utils.couch import CriticalSection
-from dimagi.utils.couch.resource_conflict import retry_resource
-
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.template.loader import render_to_string
-from django.contrib import messages
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _, ugettext_lazy
+
+from dimagi.utils.couch import CriticalSection
+from dimagi.utils.couch.database import apply_update
+from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.name_to_url import name_to_url
-from django.utils.translation import ugettext as _, ugettext_lazy
-from corehq.apps.app_manager.views.apps import clear_app_cache
 
+from corehq.apps.accounting.tasks import ensure_explicit_community_subscription
+from corehq.apps.app_manager.views.apps import clear_app_cache
+from corehq.apps.appstore.exceptions import CopiedFromDeletedException
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.exceptions import NameUnavailableException
-from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
 from corehq.apps.domain.models import Domain
-from dimagi.utils.couch.database import apply_update
 from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.hqwebapp.views import BaseSectionPageView
+from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
 
 
 SNAPSHOT_FACETS = ['project_type', 'license', 'author.exact', 'is_starter_app']
