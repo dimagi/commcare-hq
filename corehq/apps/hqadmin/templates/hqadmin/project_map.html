@@ -81,12 +81,14 @@
   </div>
   <!-- Main Page Content -->
   <div class="main-content">
-    <div id="report-content"></div>
     <div class="map-wrapper wrapper">
       <div id="map"></div>
     </div>
     <div class="filter-wrapper wrapper">
-      <h4 class="text-hq-nav-header">{{ facet_report.facet_title }}</h4>
+      {% if request.user.is_superuser %}
+      <div id="internal-only">This is the Dimagi-only view of the Active Project Map - please do not share this outside of Dimagi</div>
+      {% endif %}
+      <h4 class="text-hq-nav-header">Active Project Map</h4>
         <div class="btn-group btn-toggle text-hq-nav-header">
             <button class="btn btn-primary active" id="projects">Projects</button>
             <button class="btn btn-default" id="users">Users</button>
