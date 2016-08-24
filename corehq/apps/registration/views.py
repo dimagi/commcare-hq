@@ -147,12 +147,6 @@ class UserRegistrationView(BasePageView):
         self.ab.update_response(response)
         return response
 
-    def get(self, request, *args, **kwargs):
-        if self.prefilled_email:
-            meta = get_meta(request)
-            track_clicked_signup_on_hubspot.delay(self.prefilled_email, request.COOKIES, meta)
-        return super(UserRegistrationView, self).get(request, *args, **kwargs)
-
     def post(self, request, *args, **kwargs):
         if self.prefilled_email:
             meta = get_meta(request)
@@ -161,7 +155,7 @@ class UserRegistrationView(BasePageView):
 
     @property
     def prefilled_email(self):
-        return self.request.GET.get('e', '') or self.request.POST.get('e', '')
+        return self.request.POST.get('e', '')
 
     @property
     def prefilled_xform(self):
