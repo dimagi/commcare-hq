@@ -1,8 +1,19 @@
 import collections
+import hashlib
+
+from django.utils.translation import ugettext_lazy as _
+
+from corehq.util.soft_assert import soft_assert
 from corehq import privileges, toggles
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
+from corehq.apps.userreports.const import (
+    REPORT_BUILDER_EVENTS_KEY,
+    UCR_SQL_BACKEND,
+    UCR_ES_BACKEND
+)
 from django_prbac.utils import has_privilege
+
+from corehq.apps.userreports.exceptions import BadBuilderConfigError
 
 
 def localize(value, lang):
@@ -95,3 +106,47 @@ def number_of_report_builder_reports(domain):
         lambda report: report.report_meta.created_by_builder, existing_reports
     )
     return len(builder_reports)
+
+
+def get_indicator_adapter(config, raise_errors=False):
+    from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter
+    from corehq.apps.userreports.es.adapter import IndicatorESAdapter
+
+    if config.backend_id == UCR_SQL_BACKEND:
+        if raise_errors:
+            return ErrorRaisingIndicatorSqlAdapter(config)
+        return IndicatorSqlAdapter(config)
+    elif config.backend_id == UCR_ES_BACKEND:
+        return IndicatorESAdapter(config)
+    else:
+        _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
+        _soft_assert(False, "Backend id not found in config")
+        raise BadBuilderConfigError(_("The data source was not found"))
+
+
+def get_table_name(domain, table_id):
+    def _hash(domain, table_id):
+        return hashlib.sha1('{}_{}'.format(hashlib.sha1(domain).hexdigest(), table_id)).hexdigest()[:8]
+
+    return truncate_value(
+        'config_report_{}_{}_{}'.format(domain, table_id, _hash(domain, table_id)),
+        from_left=False
+    )
+
+
+def truncate_value(value, max_length=63, from_left=True):
+    """
+    Truncate a value (typically a column name) to a certain number of characters,
+    using a hash to ensure uniqueness.
+    """
+    hash_length = 8
+    truncated_length = max_length - hash_length - 1
+    if from_left:
+        truncated_value = value[-truncated_length:]
+    else:
+        truncated_value = value[:truncated_length]
+
+    if len(value) > max_length:
+        short_hash = hashlib.sha1(value).hexdigest()[:hash_length]
+        return '{}_{}'.format(truncated_value, short_hash)
+    return value

@@ -7,9 +7,9 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from corehq import toggles
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
-from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.ui import help_text
 from corehq.apps.userreports.ui.fields import ReportDataSourceField, JsonField
+from corehq.apps.userreports.util import get_table_name
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
 
