@@ -14,8 +14,8 @@ def get_all_versions(versions=None):
     return sorted(list(set(versions)))
 
 
-def get_default_build_spec(application_version):
-    return CommCareBuildConfig.fetch().get_default(application_version)
+def get_default_build_spec():
+    return CommCareBuildConfig.fetch().get_default()
 
 
 def extract_build_info_from_filename(content_disposition):
