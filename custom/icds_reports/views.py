@@ -5,7 +5,7 @@ from django.template.loader import render_to_string
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.locations.models import SQLLocation
-from . import settings
+from . import const
 from .exceptions import TableauTokenException
 
 
@@ -60,9 +60,9 @@ def get_tableau_trusted_url(client_ip):
     Generate a login-free URL to access Tableau views for the client with IP client_ip
     See Tableau Trusted Authentication https://onlinehelp.tableau.com/current/server/en-us/trusted_auth.htm
     """
-    access_token = get_tableau_access_token(settings.TABLEAU_USERNAME, client_ip)
+    access_token = get_tableau_access_token(const.TABLEAU_USERNAME, client_ip)
     url = "{tableau_root}trusted/{access_token}/#/views/".format(
-        tableau_root=settings.TABLEAU_ROOT,
+        tableau_root=const.TABLEAU_ROOT,
         access_token=access_token
     )
     return url
@@ -79,12 +79,12 @@ def get_tableau_access_token(tableau_user, client_ip):
                    if this is empty, the token returned can be redeemed on any IP address
     """
     r = requests.post(
-        settings.TABLEU_TICKET_URL,
+        const.TABLEU_TICKET_URL,
         data={'username': tableau_user, 'client_ip': client_ip}
     )
 
     if r.status_code == 200:
-        if r.text == settings.TABLEAU_INVALID_TOKEN:
+        if r.text == const.TABLEAU_INVALID_TOKEN:
             raise TableauTokenException("Tableau server failed to issue a valid token")
         else:
             return r.text
