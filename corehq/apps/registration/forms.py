@@ -238,7 +238,7 @@ class DomainRegistrationForm(forms.Form):
         return self.cleaned_data
 
 
-class NewWebUserRegistrationForm(NoAutocompleteMixin, DomainRegistrationForm):
+class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
     """
     Form for a brand new user, before they've created a domain or done anything on CommCare HQ.
     """
@@ -275,7 +275,7 @@ class NewWebUserRegistrationForm(NoAutocompleteMixin, DomainRegistrationForm):
                                                </a>.""")))
 
     def __init__(self, *args, **kwargs):
-        super(NewWebUserRegistrationForm, self).__init__(*args, **kwargs)
+        super(WebUserInvitationForm, self).__init__(*args, **kwargs)
         initial_create_domain = kwargs.get('initial', {}).get('create_domain', True)
         data_create_domain = self.data.get('create_domain', "True")
         if not initial_create_domain or data_create_domain == "False":
