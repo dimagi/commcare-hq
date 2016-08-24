@@ -39,7 +39,7 @@ class _AuthTest(TestCase):
         except CommCareUser.Inconsistent:
             pass
 
-        self.app = Application.new_app(self.domain, 'My Crazy App', '2.0')
+        self.app = Application.new_app(self.domain, 'My Crazy App')
         self.app.save()
 
         self.url = reverse(secure_post, args=[self.domain, self.app.get_id])
