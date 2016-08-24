@@ -78,16 +78,16 @@ class Command(BaseCommand):
         )
 
         if options['environment'] == 'production':
-            deploy_notification_text += "Monitor the {{dashboard_link}}. "
+            deploy_notification_text += "Monitor the {dashboard_link}. "
 
         if settings.MOBILE_INTEGRATION_TEST_TOKEN:
-            deploy_notification_text += "Check the integration {{integration_tests_link}}. "
+            deploy_notification_text += "Check the integration {integration_tests_link}. "
             requests.get(
                 'https://jenkins.dimagi.com/job/integration-tests/build',
                 params={'token': settings.MOBILE_INTEGRATION_TEST_TOKEN},
             )
 
-        deploy_notification_text += "Find the diff {{diff_link}}"
+        deploy_notification_text += "Find the diff {diff_link}"
 
         if hasattr(settings, 'MIA_THE_DEPLOY_BOT_API'):
             link = diff_link(STYLE_SLACK, compare_url)
