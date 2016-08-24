@@ -185,7 +185,7 @@ class Command(BaseCommand):
     community_plan_v1_features = [
     ]
 
-    standard_plan_features = community_plan_v1_features + [
+    standard_plan_features = community_plan_v0_features + [
         privileges.API_ACCESS,
         privileges.LOOKUP_TABLES,
         privileges.OUTBOUND_SMS,
@@ -197,8 +197,6 @@ class Command(BaseCommand):
         privileges.ALLOW_EXCESS_USERS,
         privileges.LOCATIONS,
         privileges.USER_CASE,
-        privileges.EXCEL_DASHBOARD,
-        privileges.DAILY_SAVED_EXPORT,
     ]
 
     pro_plan_features = standard_plan_features + [
