@@ -1,4 +1,5 @@
 from django.http import Http404
+from django.forms import ValidationError
 from tastypie import http
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.authorization import ReadOnlyAuthorization
@@ -20,6 +21,7 @@ from corehq.apps.api.resources.auth import RequirePermissionAuthentication, Admi
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
+from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
 
@@ -40,6 +42,7 @@ from corehq.toggles import ZAPIER_INTEGRATION
 from . import v0_1, v0_4, CouchResourceMixin
 from . import HqBaseResource, DomainSpecificResourceMixin
 from phonelog.models import DeviceReportEntry
+from itertools import chain
 
 
 MOCK_BULK_USER_ES = None
@@ -177,6 +180,18 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 elif key in ['email', 'username']:
                     setattr(bundle.obj, key, value.lower())
                     should_save = True
+                elif key == 'password':
+                    domain = Domain.get_by_name(bundle.obj.domain)
+                    if domain.strong_mobile_passwords:
+                        try:
+                            clean_password(bundle.data.get("password"))
+                        except ValidationError as e:
+                            if not hasattr(bundle.obj, 'errors'):
+                                bundle.obj.errors = []
+                            bundle.obj.errors.append(e.message)
+                            return False
+                    bundle.obj.set_password(bundle.data.get("password"))
+                    should_save = True
                 else:
                     setattr(bundle.obj, key, value)
                     should_save = True
@@ -210,8 +225,15 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         if self._update(bundle):
             assert bundle.obj.domain == kwargs['domain']
             bundle.obj.save()
-        return bundle
+            return bundle
+        else:
+            raise BadRequest(''.join(chain.from_iterable(bundle.obj.errors)))
 
+    def obj_delete(self, bundle, **kwargs):
+        user = CommCareUser.get(kwargs['pk'])
+        if user:
+            user.retire()
+        return ImmediateHttpResponse(response=http.HttpAccepted())
 
 class WebUserResource(v0_1.WebUserResource):
 
