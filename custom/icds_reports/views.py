@@ -35,7 +35,7 @@ def tableau(request, domain, workbook, worksheet):
         'tableau_access_url': tableau_access_url,
     })
 
-    response = render_to_string('tableau.html', context)
+    response = render_to_string('icds_reports/tableau.html', context)
     return HttpResponse(response)
 
 
