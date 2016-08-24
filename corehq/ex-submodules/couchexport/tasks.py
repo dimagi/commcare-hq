@@ -62,13 +62,14 @@ def bulk_export_async(bulk_export_helper, download_id,
                       filename="bulk_export", expiry=10*60*60, domain=None):
 
     total = sum([len(file.export_objects) for file in bulk_export_helper.bulk_files]) + 1
+
     def _update_progress(progress):
         DownloadBase.set_progress(bulk_export_async, progress, total)
 
     _update_progress(1)  # give the user some feedback that something is happening
 
     if bulk_export_helper.zip_export:
-        filename = "%s_%s"% (domain, filename) if domain else filename
+        filename = "%s_%s" % (domain, filename) if domain else filename
         _, path = tempfile.mkstemp()
         os.close(_)
         zf = zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED)
@@ -76,7 +77,7 @@ def bulk_export_async(bulk_export_helper, download_id,
             for i, file in enumerate(bulk_export_helper.bulk_files):
                 try:
                     bulk = Temp(file.generate_bulk_file(update_progress=_update_progress))
-                    zf.write(bulk.path, "%s/%s" %(filename, file.filename))
+                    zf.write(bulk.path, "%s/%s" % (filename, file.filename))
                 except Exception as e:
                     logging.exception("FAILED to add file to bulk export archive. %s" % e)
         finally:
