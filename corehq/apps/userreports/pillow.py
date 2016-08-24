@@ -3,10 +3,12 @@ from alembic.autogenerate.api import compare_metadata
 from datetime import datetime, timedelta
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
+from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError
-from corehq.apps.userreports.sql import IndicatorSqlAdapter, metadata
+from corehq.apps.userreports.sql import metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
 from fluff.signals import get_migration_context, get_tables_to_rebuild, reformat_alembic_diffs
@@ -47,14 +49,18 @@ class ConfigurableReportTableManagerMixin(object):
         if configs is None:
             configs = self.get_all_configs()
 
-        self.table_adapters = [IndicatorSqlAdapter(config) for config in configs]
+        self.table_adapters = [get_indicator_adapter(config) for config in configs]
         self.rebuild_tables_if_necessary()
         self.bootstrapped = True
         self.last_bootstrapped = datetime.utcnow()
 
     def rebuild_tables_if_necessary(self):
+        self._rebuild_sql_tables(filter(lambda a: a.config.backend_id == UCR_SQL_BACKEND, self.table_adapters))
+        self._rebuild_es_tables(filter(lambda a: a.config.backend_id == UCR_ES_BACKEND, self.table_adapters))
+
+    def _rebuild_sql_tables(self, adapters):
         tables_by_engine = defaultdict(dict)
-        for adapter in self.table_adapters:
+        for adapter in adapters:
             tables_by_engine[adapter.engine_id][adapter.get_table().name] = adapter
 
         _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']))
@@ -79,15 +85,19 @@ class ConfigurableReportTableManagerMixin(object):
                 else:
                     self.rebuild_table(sql_adapter)
 
-    def rebuild_table(self, sql_adapter):
-        config = sql_adapter.config
+    def _rebuild_es_tables(self, adapters):
+        # TODO rebuild ES tables if necessary
+        pass
+
+    def rebuild_table(self, adapter):
+        config = adapter.config
         if not config.is_static:
             latest_rev = config.get_db().get_rev(config._id)
             if config._rev != latest_rev:
                 raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
-        sql_adapter.rebuild_table()
+        adapter.rebuild_table()
         if self.auto_repopulate_tables:
-            rebuild_indicators.delay(sql_adapter.config.get_id)
+            rebuild_indicators.delay(adapter.config.get_id)
 
 
 class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, PillowProcessor):
