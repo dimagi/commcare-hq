@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django_prbac.models import Role
-
 from django.db import models, migrations
 
 from corehq.apps.accounting.bootstrap.config.community_v1 import (
@@ -18,9 +16,6 @@ from corehq.sql_db.operations import HqRunPython
 
 
 def _bootstrap_new_community_role(apps, schema_editor):
-    assert not Role.objects.filter(slug='community_plan_v1').exists(), \
-        "A plan with the slug 'community_plan_v1' already exists. " \
-        "A user may have created a custom role with this name."
     ensure_plans(
         edition_to_role=BOOTSTRAP_EDITION_TO_ROLE,
         edition_to_product_rate=BOOTSTRAP_PRODUCT_RATES,
