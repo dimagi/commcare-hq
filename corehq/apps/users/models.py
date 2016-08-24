@@ -173,10 +173,12 @@ class UserRolePresets(object):
     APP_EDITOR = "App Editor"
     READ_ONLY = "Read Only"
     FIELD_IMPLEMENTER = "Field Implementer"
+    BILLING_ADMIN = "Billing Admin"
     INITIAL_ROLES = (
         READ_ONLY,
         APP_EDITOR,
         FIELD_IMPLEMENTER,
+        BILLING_ADMIN
     )
 
     @classmethod
@@ -186,6 +188,7 @@ class UserRolePresets(object):
             cls.READ_ONLY: lambda: Permissions(view_reports=True),
             cls.FIELD_IMPLEMENTER: lambda: Permissions(edit_commcare_users=True, view_reports=True),
             cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_reports=True),
+            cls.BILLING_ADMIN: lambda: Permissions(billing_admin=True)
         }
 
     @classmethod
