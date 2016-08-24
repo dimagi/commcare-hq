@@ -89,6 +89,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                 requested_domain = request_new_domain(
                     self.request, reg_form, is_new_user=True
                 )
+                # If user created a form via prelogin demo, create an app for them
                 if reg_form.cleaned_data['xform']:
                     lang = 'en'
                     app = Application.new_app(requested_domain, "Untitled Application", application_version=APP_V2)
@@ -96,6 +97,11 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                     app.add_module(module)
                     save_xform(app, app.new_form(0, "Untitled Form", lang), reg_form.cleaned_data['xform'])
                     app.save()
+                    web_user = WebUser.get_by_username(reg_form.cleaned_data['email'])
+                    if web_user:
+                        update_hubspot_properties(web_user, {
+                            'signup_via_demo': 'yes',
+                        })
             except NameUnavailableException:
                 # technically, the form should never reach this as names are
                 # auto-generated now. But, just in case...
