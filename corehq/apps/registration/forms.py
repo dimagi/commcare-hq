@@ -27,7 +27,7 @@ from corehq.apps.style import crispy as hqcrispy
 mark_safe_lazy = lazy(mark_safe, six.text_type)
 
 
-class RegisterNewWebUserForm(forms.Form):
+class RegisterWebUserForm(forms.Form):
     # Use: NewUserRegistrationView
     # Not inheriting from other forms to de-obfuscate the role of this form.
 
@@ -53,7 +53,7 @@ class RegisterNewWebUserForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         self.show_phone_number = kwargs.pop('show_number', False)
-        super(RegisterNewWebUserForm, self).__init__(*args, **kwargs)
+        super(RegisterWebUserForm, self).__init__(*args, **kwargs)
 
         if not self.show_phone_number:
             del self.fields['phone_number']
