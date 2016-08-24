@@ -70,7 +70,11 @@ class Command(BaseCommand):
                   "{} pillow errors queued for retry\n".format(rows_updated)
 
         deploy_notification_text = (
-            "CommCareHQ has been successfully deployed to *{}* by *{}* in *{}* minutes. "
+            "CommCareHQ has been successfully deployed to *{}* by *{}* in *{}* minutes. ".format(
+                options['environment'],
+                options['user'],
+                minutes or '?',
+            )
         )
 
         if options['environment'] == 'production':
@@ -83,11 +87,7 @@ class Command(BaseCommand):
                 params={'token': settings.MOBILE_INTEGRATION_TEST_TOKEN},
             )
 
-        deploy_notification_text += "Find the diff {{diff_link}}".format(
-            options['environment'],
-            options['user'],
-            minutes or '?',
-        )
+        deploy_notification_text += "Find the diff {{diff_link}}"
 
         if hasattr(settings, 'MIA_THE_DEPLOY_BOT_API'):
             link = diff_link(STYLE_SLACK, compare_url)
