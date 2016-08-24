@@ -180,7 +180,11 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
     var formplayer_url = user.formplayer_url;
     var options = {
         url: formplayer_url + "/delete_application_dbs",
-        data: JSON.stringify({"app_id": appId}),
+        data: JSON.stringify({
+            app_id: appId,
+            domain: user.domain,
+            username: user.username.split('@')[0],
+        }),
     };
     Util.setCrossDomainAjaxOptions(options);
     tfLoading();
