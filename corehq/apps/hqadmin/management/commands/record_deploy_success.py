@@ -84,10 +84,10 @@ class Command(BaseCommand):
             )
 
         deploy_notification_text += "Find the diff {{diff_link}}".format(
-                options['environment'],
-                options['user'],
-                minutes or '?',
-            )
+            options['environment'],
+            options['user'],
+            minutes or '?',
+        )
 
         if hasattr(settings, 'MIA_THE_DEPLOY_BOT_API'):
             link = diff_link(STYLE_SLACK, compare_url)
