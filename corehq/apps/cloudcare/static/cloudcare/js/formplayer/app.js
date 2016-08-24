@@ -192,6 +192,9 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
         tfLoadingComplete(true);
     });
     resp.complete(function() {
+        var urlObject = Util.currentUrlToObject();
+        urlObject.clearExceptApp();
+        FormplayerFrontend.regions.breadcrumb.empty();
         FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });
     });
 });
