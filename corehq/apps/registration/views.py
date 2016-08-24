@@ -22,7 +22,6 @@ from corehq.apps.analytics.tasks import (
     track_clicked_signup_on_hubspot,
     update_hubspot_properties
 )
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.util import save_xform
@@ -92,7 +91,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                 # If user created a form via prelogin demo, create an app for them
                 if reg_form.cleaned_data['xform']:
                     lang = 'en'
-                    app = Application.new_app(requested_domain, "Untitled Application", application_version=APP_V2)
+                    app = Application.new_app(requested_domain, "Untitled Application")
                     module = Module.new_module(_("Untitled Module"), lang)
                     app.add_module(module)
                     save_xform(app, app.new_form(0, "Untitled Form", lang), reg_form.cleaned_data['xform'])
