@@ -71,20 +71,23 @@ class Command(BaseCommand):
 
         deploy_notification_text = (
             "CommCareHQ has been successfully deployed to *{}* by *{}* in *{}* minutes. "
-            "Monitor the {{dashboard_link}}. "
-            "Check the integration {{integration_tests_link}}. "
-            "Find the diff {{diff_link}}".format(
-                options['environment'],
-                options['user'],
-                minutes or '?',
-            )
         )
 
+        if options['environment'] == 'production':
+            deploy_notification_text += "Monitor the {{dashboard_link}}. "
+
         if settings.MOBILE_INTEGRATION_TEST_TOKEN:
+            deploy_notification_text += "Check the integration {{integration_tests_link}}. "
             requests.get(
                 'https://jenkins.dimagi.com/job/integration-tests/build',
                 params={'token': settings.MOBILE_INTEGRATION_TEST_TOKEN},
             )
+
+        deploy_notification_text += "Find the diff {{diff_link}}".format(
+            options['environment'],
+            options['user'],
+            minutes or '?',
+        )
 
         if hasattr(settings, 'MIA_THE_DEPLOY_BOT_API'):
             link = diff_link(STYLE_SLACK, compare_url)
