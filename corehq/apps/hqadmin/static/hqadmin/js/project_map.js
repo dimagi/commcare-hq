@@ -245,7 +245,9 @@ var projectMapInit = function(mapboxAccessToken) {
                     });
                 });
                 // launch the modal
-                $('#modal').modal();
+                if (dataController.getCount(feature.properties.name)){
+                    $('#modal').modal();
+                };
             },
         });
     }
