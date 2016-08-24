@@ -2,7 +2,13 @@ from elasticsearch import NotFoundError
 from corehq.apps.userreports.util import get_table_name
 from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.elastic import get_es_new
+from corehq.pillows.base import DEFAULT_META
 from pillowtop.es_utils import INDEX_STANDARD_SETTINGS
+
+
+INDEX_SETTINGS = {}
+INDEX_SETTINGS.update(DEFAULT_META)
+INDEX_SETTINGS.update(INDEX_STANDARD_SETTINGS)
 
 
 class IndicatorESAdapter(IndicatorAdapter):
@@ -14,7 +20,7 @@ class IndicatorESAdapter(IndicatorAdapter):
 
     def rebuild_table(self):
         self.drop_table()
-        self.es.indices.create(index=self.table_name, body=INDEX_STANDARD_SETTINGS)
+        self.es.indices.create(index=self.table_name, body=INDEX_SETTINGS)
 
     def drop_table(self):
         try:
