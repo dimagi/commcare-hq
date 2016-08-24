@@ -73,7 +73,7 @@ class Command(BaseCommand):
             "CommCareHQ has been successfully deployed to *{}* by *{}* in *{}* minutes. "
         )
 
-        if options['environment'] = 'production':
+        if options['environment'] == 'production':
             deploy_notification_text += "Monitor the {{dashboard_link}}. "
 
         if settings.MOBILE_INTEGRATION_TEST_TOKEN:
