@@ -17,6 +17,9 @@ We track various user properties as [Hubspot Contact Properties](http://knowledg
 #### Hubspot Form Submissions
 We use the hubspot form API to submit forms to hubspot via the `_send_form_to_hubspot` function in the analytics tasks file. You can look through that file for examples but the general procedure is to create a new function with the `@analytics_task()` decorator to make it asynchronous and ensure it is retried on failure. This function should then call `_send_form_to_hubspot` with the form id of the form you are trying to submit. All form ids are listed as constants at the top of the file, and new forms can be created on the hubspot site.
 
+#### Signup Related Hubspot Analytics
+Much of the analytics we use in hubspot are generated during the signup process. We send down those analytics in the `track_user_sign_in_on_hubspot` [function](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/tasks.py#L181). Both a dictionary or properties, and a special signup form are sent down then and if changes need to be made to sign up analytics, they should be made there.
+
 #### Testing
 
 To start testing, run Celery and update `HUBSPOT_API_KEY` and `HUBSPOT_ID` in `settings.ANALYTICS_IDS`. Hubspot provides a public demo portal with API access for testing. The credentials for this are available on their [API overview page](http://developers.hubspot.com/docs/overview). If you need to test using our production portal the credentials can be found in dimagi_shared keepass. Let marketing know before testing on production portal and clean-up after the testing is finished
