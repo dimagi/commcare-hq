@@ -1011,6 +1011,7 @@ class ExportDataSchema(Document):
             return group_schema
 
         previous_group_schemas = schemas[0].group_schemas
+        last_app_versions = schemas[0].last_app_versions
         for current_schema in schemas[1:]:
             group_schemas = _merge_lists(
                 previous_group_schemas,
@@ -1020,8 +1021,14 @@ class ExportDataSchema(Document):
                 copyfn=lambda group_schema: ExportGroupSchema(group_schema.to_json())
             )
             previous_group_schemas = group_schemas
+            last_app_versions = _merge_dicts(
+                last_app_versions,
+                current_schema.last_app_versions,
+                max,
+            )
 
         schema.group_schemas = group_schemas
+        schema.last_app_versions = last_app_versions
 
         return schema
 
