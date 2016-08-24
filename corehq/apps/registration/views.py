@@ -86,18 +86,16 @@ class ProcessRegistrationView(JSONResponseMixin, View):
         if reg_form.is_valid():
             self._create_new_account(reg_form)
             try:
-                request_new_domain(
+                requested_domain = request_new_domain(
                     self.request, reg_form, is_new_user=True
                 )
-                '''
-                if form.cleaned_data['xform']:
+                if reg_form.cleaned_data['xform']:
                     lang = 'en'
                     app = Application.new_app(requested_domain, "Untitled Application", application_version=APP_V2)
                     module = Module.new_module(_("Untitled Module"), lang)
                     app.add_module(module)
-                    save_xform(app, app.new_form(0, "Untitled Form", lang), form.cleaned_data['xform'])
+                    save_xform(app, app.new_form(0, "Untitled Form", lang), reg_form.cleaned_data['xform'])
                     app.save()
-                '''
             except NameUnavailableException:
                 # technically, the form should never reach this as names are
                 # auto-generated now. But, just in case...
@@ -155,9 +153,19 @@ class UserRegistrationView(BasePageView):
             track_clicked_signup_on_hubspot.delay(self.prefilled_email, request.COOKIES, meta)
         return super(UserRegistrationView, self).get(request, *args, **kwargs)
 
+    def post(self, request, *args, **kwargs):
+        if self.prefilled_email:
+            meta = get_meta(request)
+            track_clicked_signup_on_hubspot.delay(self.prefilled_email, request.COOKIES, meta)
+        return super(UserRegistrationView, self).get(request, *args, **kwargs)
+
     @property
     def prefilled_email(self):
-        return self.request.POST.get('e', '')
+        return self.request.GET.get('e', '') or self.request.POST.get('e', '')
+
+    @property
+    def prefilled_xform(self):
+        return self.request.POST.get('xform', '')
 
     @property
     @memoized
@@ -166,12 +174,16 @@ class UserRegistrationView(BasePageView):
 
     @property
     def page_context(self):
+        prefills = {
+            'email': self.prefilled_email,
+            'xform': self.prefilled_xform,
+        }
         return {
             'reg_form': RegisterNewWebUserForm(
-                initial={'email': self.prefilled_email},
+                initial=prefills,
                 show_number=(self.ab.version == ab_tests.NEW_USER_NUMBER_OPTION_SHOW_NUM)
             ),
-            'reg_form_defaults': {'email': self.prefilled_email} if self.prefilled_email else {},
+            'reg_form_defaults': prefills,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'show_number': (self.ab.version == ab_tests.NEW_USER_NUMBER_OPTION_SHOW_NUM),
             'ab_test': self.ab.context,
@@ -228,8 +240,7 @@ class RegisterDomainView(TemplateView):
                 return render(request, 'error.html', context)
 
             try:
-                domain_name = request_new_domain(
-                    request, form, is_new_user=self.is_new_user)
+                domain_name = request_new_domain(request, form, is_new_user=self.is_new_user)
             except NameUnavailableException:
                 context.update({
                     'current_page': {'page_name': _('Oops!')},
