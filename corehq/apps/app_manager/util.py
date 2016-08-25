@@ -420,16 +420,15 @@ def get_session_schema(form):
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
     structure = {}
     datums = EntriesHelper(form.get_app()).get_datums_meta_for_form_generic(form)
-    for datum in datums:
-        if not datum.is_new_case_id and datum.case_type:
-            session_var = datum.datum.id
-            structure[session_var] = {
-                "reference": {
-                    "source": "casedb",
-                    "subset": "case",
-                    "key": "@case_id",
-                },
-            }
+    datums = [d for d in datums if not d.is_new_case_id and d.case_type and d.datum.id == 'case_id']
+    if len(datums):
+        structure['case_id'] = {
+            "reference": {
+                "source": "casedb",
+                "subset": "case",
+                "key": "@case_id",
+            },
+        }
     return {
         "id": "commcaresession",
         "uri": "jr://instance/session",

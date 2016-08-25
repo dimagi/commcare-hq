@@ -86,3 +86,7 @@ if not os.path.exists(shared_dirname):
 SHARED_DRIVE_ROOT = shared_dirname
 
 PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True
+
+ELASTICSEARCH_HOST_PROD = 'hqes0.internal-va.commcarehq.org'
+ELASTICSEARCH_HOST_STAGING = 'hqes0-staging.internal-va.commcarehq.org'
+ELASTICSEARCH_HOST_INDIA = '10.162.36.221'

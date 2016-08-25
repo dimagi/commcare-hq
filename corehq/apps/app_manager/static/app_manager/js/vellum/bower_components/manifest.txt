@@ -3,9 +3,12 @@
 │ │ └── jquery#1.11.3
 │ └── jquery#1.11.3 (3.1.0 available)
 ├── Caret.js#0.2.2 (latest is 0.3.1)
-├── MediaUploader#1a72aab8d2
+├── MediaUploader#b6c202a9d1
 ├── XMLWriter#ab8760d6e0
+├─┬ bootstrap#3.3.7 (latest is 4.0.0-alpha.3)
+│ └── jquery#1.11.3 (3.1.0 available)
 ├── chai#3.5.0
+├── codemirror#3.24.0 (latest is 5.18.2)
 ├── equivalent-xml-js#7de21be295
 ├── fuse.js#2.3.0 (latest is 2.4.1)
 ├── jquery#1.11.3 (latest is 3.1.0)

@@ -447,17 +447,38 @@ class AutoSelectCase(DocumentSchema):
     value_key = StringProperty(required=True)
 
 
+class LoadCaseFromFixture(DocumentSchema):
+    """
+    fixture_nodeset:    FixtureDataType.tag
+    fixture_tag:        name of the column to display in the list
+    fixture_variable:   boolean if display_column actually contains the key for the localized string
+    case_property:      name of the column whose value should be saved when the user selects an item
+    arbitrary_datum_*:  adds an arbitrary datum with function before the action
+    """
+    fixture_nodeset = StringProperty()
+    fixture_tag = StringProperty()
+    fixture_variable = StringProperty()
+    case_property = StringProperty(default='')
+    auto_select = BooleanProperty(default=False)
+    arbitrary_datum_id = StringProperty()
+    arbitrary_datum_function = StringProperty()
+
+
 class LoadUpdateAction(AdvancedAction):
     """
-    details_module:     Use the case list configuration from this module to show the cases.
-    preload:            Value from the case to load into the form. Keys are question paths, values are case properties.
-    auto_select:        Configuration for auto-selecting the case
-    show_product_stock: If True list the product stock using the module's Product List configuration.
-    product_program:    Only show products for this CommCare Supply program.
+    details_module:           Use the case list configuration from this module to show the cases.
+    preload:                  Value from the case to load into the form. Keys are question paths,
+                              values are case properties.
+    auto_select:              Configuration for auto-selecting the case
+    load_case_from_fixture:   Configureation for loading a case using fixture data
+    show_product_stock:       If True list the product stock using the module's Product List
+                              configuration.
+    product_program:          Only show products for this CommCare Supply program.
     """
     details_module = StringProperty()
     preload = DictProperty()
     auto_select = SchemaProperty(AutoSelectCase, default=None)
+    load_case_from_fixture = SchemaProperty(LoadCaseFromFixture, default=None)
     show_product_stock = BooleanProperty(default=False)
     product_program = StringProperty()
     case_index = SchemaProperty(CaseIndex)

@@ -2,7 +2,7 @@
 
 FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette, $) {
     MenuList.Controller = {
-        selectMenu: function (appId, sessionId, stepList, page, search, queryDict) {
+        selectMenu: function (appId, sessionId, stepList, page, search, queryDict, previewCommand) {
 
             var fetchingNextMenu = FormplayerFrontend.request("app:select:menus",
                 appId,
@@ -10,7 +10,8 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 stepList,
                 page,
                 search,
-                queryDict);
+                queryDict,
+                previewCommand);
 
             /*
              Determine the next screen to display.  Could be
@@ -118,7 +119,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 },
             });
 
-            $('#select-case').click(function () {
+            $('#select-case').unbind('click').click(function () {
                 FormplayerFrontend.trigger("menu:select", model._index);
             });
             $('#case-detail-modal').find('.detail-tabs').html(tabListView.render().el);

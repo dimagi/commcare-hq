@@ -219,7 +219,7 @@
     "ReportXFormToElasticsearchPillow": {
         "advertised_name": "ReportXFormToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "ReportXFormToElasticsearchPillow-test_report_xforms_20160707_2322",
+        "checkpoint_id": "ReportXFormToElasticsearchPillow-test_report_xforms_20160824_1708",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "ReportXFormToElasticsearchPillow"
     },

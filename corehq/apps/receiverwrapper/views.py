@@ -30,6 +30,7 @@ from django.views.decorators.csrf import csrf_exempt
 from couchforms.const import MAGIC_PROPERTY
 from couchforms.getters import MultimediaBug
 from dimagi.utils.logging import notify_exception
+from corehq.apps.ota.utils import handle_401_response
 
 
 @count_by_response_code('commcare.xform_submissions')
@@ -192,6 +193,7 @@ def _secure_post_digest(request, domain, app_id=None):
     )
 
 
+@handle_401_response
 @login_or_basic_ex(allow_cc_users=True)
 def _secure_post_basic(request, domain, app_id=None):
     """only ever called from secure post"""
