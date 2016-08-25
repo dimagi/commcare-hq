@@ -550,9 +550,6 @@ DIMAGISPHERE_FACET_MAPPING = [
         {"facet": "internal.area.exact", "name": "Sector", "expanded": True},
         {"facet": "internal.sub_area.exact", "name": "Sub-Sector", "expanded": False},
     ]),
-    ("Self Starters", True, [
-        {"facet": "internal.self_started", "name": "Self Started", "expanded": True},
-    ]),
 ]
 
 
@@ -915,7 +912,6 @@ class AdminDomainMapReport(AdminDomainStatsReport):
             'deployment.countries.exact': es_params.get('deployment.countries.exact'),
             'internal.area.exact': es_params.get('internal.area.exact'),
             'internal.sub_area.exact': es_params.get('internal.sub_area.exact'),
-            'internal.self_started': es_params.get('internal.self_started'),
         }
         terms = []
         for param in params_dict:
