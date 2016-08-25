@@ -153,14 +153,16 @@
               <div id="menu-region" class="content menu-content"></div>
             </div>
         </div>
-        <section id="webforms" class="webforms container-fluid" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
-        {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
-            <section id="cloudcare-debugger" data-bind="
-            template: {
-                name: 'instance-viewer-ko-template',
-                afterRender: adjustWidth
-            }
-        "></section>
+        <div class="scrollable-container dragscroll">
+          <section id="webforms" class="webforms container-fluid" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
+          {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
+              <section id="cloudcare-debugger" data-bind="
+              template: {
+                  name: 'instance-viewer-ko-template',
+                  afterRender: adjustWidth
+              }
+          "></section>
+        </div>
         {% endif %}
 
         <script>
