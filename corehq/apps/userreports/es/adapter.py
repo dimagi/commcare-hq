@@ -5,6 +5,10 @@ from corehq.elastic import get_es_new
 from pillowtop.es_utils import INDEX_STANDARD_SETTINGS
 
 
+def normalize_id(values):
+    return '-'.join(values).replace(' ', '_')
+
+
 class IndicatorESAdapter(IndicatorAdapter):
 
     def __init__(self, config):
@@ -41,5 +45,5 @@ class IndicatorESAdapter(IndicatorAdapter):
                 all_values = {i.column.database_column_name: i.value for i in indicator_row}
                 es.create(
                     index=self.table_name, body=all_values,
-                    id='-'.join(primary_key_values), doc_type="indicator"
+                    id=normalize_id(primary_key_values), doc_type="indicator"
                 )
