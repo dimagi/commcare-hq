@@ -210,7 +210,7 @@ var projectMapInit = function(mapboxAccessToken) {
         info.update();
     }
 
-    function capitalizeCountryNames(countries) {
+    function formatCountryNames(countries) {
         return countries.map(function(country) {
             var formattedCountryName = country.charAt(0).toUpperCase();
             if (country.indexOf(",") > -1) {
