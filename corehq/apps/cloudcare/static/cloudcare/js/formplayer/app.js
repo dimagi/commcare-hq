@@ -125,7 +125,7 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
     };
     data.formplayerEnabled = true;
     data.answerCallback = function(sessionId) {
-        FormplayerFrontend.request('debugger.formXML', sessionId);
+        FormplayerFrontend.trigger('debugger.formXML', sessionId);
     };
     data.resourceMap = function(resource_path) {
         var urlObject = Util.currentUrlToObject();
@@ -136,7 +136,7 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
     sess.renderFormXml(data, $('#webforms'));
 });
 
-FormplayerFrontend.reqres.setHandler('debugger.formXML', function(sessionId) {
+FormplayerFrontend.on('debugger.formXML', function(sessionId) {
     var user = FormplayerFrontend.request('currentUser');
     var success = function(data) {
         var $instanceTab = $('#debugger-xml-instance-tab'),
@@ -170,7 +170,8 @@ FormplayerFrontend.reqres.setHandler('debugger.formXML', function(sessionId) {
 });
 
 FormplayerFrontend.on("start", function (options) {
-    var user = FormplayerFrontend.request('currentUser');
+    var user = FormplayerFrontend.request('currentUser'),
+        appId;
     user.username = options.username;
     user.language = options.language;
     user.apps = options.apps;
@@ -181,11 +182,9 @@ FormplayerFrontend.on("start", function (options) {
         // will be the same for every domain. TODO: get domain/username/pass from django
         if (this.getCurrentRoute() === "") {
             if (options.phoneMode) {
-                FormplayerFrontend.regions.phoneModeNavigation.show(
-                    new FormplayerFrontend.Navigation.PhoneNavigation()
-                );
+                appId = options.apps[0]['_id'];
 
-                FormplayerFrontend.trigger("app:singleApp", options.apps[0]['_id']);
+                FormplayerFrontend.trigger("app:singleApp", appId);
             } else {
                 FormplayerFrontend.trigger("apps:list", options.apps);
             }
@@ -209,5 +208,43 @@ FormplayerFrontend.on("sync", function () {
     });
     resp.error(function () {
         tfSyncComplete(true);
+    });
+});
+
+
+/**
+ * refreshApplication
+ *
+ * This takes an appId and subsequently makes a request to formplayer to
+ * delete the relevant application database so that on next request
+ * it gets reinstalled. On completion, navigates back to the homescreen.
+ *
+ * @param {String} appId - The id of the application to refresh
+ */
+FormplayerFrontend.on('refreshApplication', function(appId) {
+    var user = FormplayerFrontend.request('currentUser');
+    var formplayer_url = user.formplayer_url;
+    var options = {
+        url: formplayer_url + "/delete_application_dbs",
+        data: JSON.stringify({
+            app_id: appId,
+            domain: user.domain,
+            username: user.username.split('@')[0],
+        }),
+    };
+    Util.setCrossDomainAjaxOptions(options);
+    tfLoading();
+    var resp = $.ajax(options);
+    resp.success(function () {
+        tfLoadingComplete();
+    });
+    resp.error(function () {
+        tfLoadingComplete(true);
+    });
+    resp.complete(function() {
+        var urlObject = Util.currentUrlToObject();
+        urlObject.clearExceptApp();
+        FormplayerFrontend.regions.breadcrumb.empty();
+        FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });
     });
 });

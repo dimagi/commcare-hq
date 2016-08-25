@@ -144,7 +144,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                 <span class="placeholder text-muted" data-bind="text: placeholder, css: readOnlyClass, visible: !value()"></span>\
             </div>\
             <div class="read-write form-inline" data-bind="visible: isEditing()">\
-                <div class="form-group langcode-container">\
+                <div class="form-group langcode-container" data-bind="css: {\'has-lang\': lang}">\
                     <!-- ko if: nodeName === "textarea" -->\
                         <textarea class="form-control" data-bind="\
                             attr: {name: name, id: id, placeholder: placeholder, rows: rows, cols: cols},\

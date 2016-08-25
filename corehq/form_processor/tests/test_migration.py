@@ -10,6 +10,7 @@ from corehq.util.test_utils import create_and_save_a_form, create_and_save_a_cas
 class MigrationTestCase(TestCase):
 
     def setUp(self):
+        super(MigrationTestCase, self).setUp()
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
         self.domain = uuid.uuid4().hex
 

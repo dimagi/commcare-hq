@@ -109,6 +109,7 @@ Util.CloudcareUrl.prototype.toJson = function () {
         page: self.page,
         search: self.search,
         queryDict: self.queryDict,
+        singleApp: self.singleApp,
         previewCommand: self.previewCommand,
     };
     return JSON.stringify(dict);

@@ -23,6 +23,9 @@ FormplayerFrontend.module("SessionNavigate.AppList", function(AppList, Formplaye
             var singleAppView = new AppList.SingleAppView({
                 appId: appId,
             });
+            FormplayerFrontend.regions.phoneModeNavigation.show(
+                new FormplayerFrontend.Navigation.PhoneNavigation({ appId: appId })
+            );
             FormplayerFrontend.regions.main.show(singleAppView);
         },
     };

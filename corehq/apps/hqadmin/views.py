@@ -1183,7 +1183,7 @@ def top_five_projects_by_country(request):
     data = {}
     if 'country' in request.GET:
         country = request.GET.get('country')
-        projects = (DomainES().is_active().real_domains()
+        projects = (DomainES().is_active_project().real_domains()
                     .filter(filters.term('deployment.countries', country))
                     .sort('cp_n_active_cc_users', True)
                     .source(['internal.area', 'internal.sub_area', 'cp_n_active_cc_users', 'deployment.countries'])

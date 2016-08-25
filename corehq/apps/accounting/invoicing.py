@@ -415,8 +415,10 @@ class ProductLineItemFactory(LineItemFactory):
     @property
     @memoized
     def is_prorated(self):
-        last_day = calendar.monthrange(self.invoice.date_end.year, self.invoice.date_end.month)[1]
-        return not (self.invoice.date_end.day == last_day and self.invoice.date_start.day == 1)
+        return not (
+            self.invoice.date_end.day == self._days_in_billing_period
+            and self.invoice.date_start.day == 1
+        )
 
     @property
     def base_description(self):
@@ -444,7 +446,7 @@ class ProductLineItemFactory(LineItemFactory):
     @property
     def unit_cost(self):
         if self.is_prorated:
-            return Decimal("%.2f" % round(self.rate.monthly_fee / 30, 2))
+            return Decimal("%.2f" % round(self.rate.monthly_fee / self._days_in_billing_period, 2))
         return Decimal('0.0')
 
     @property
@@ -456,6 +458,10 @@ class ProductLineItemFactory(LineItemFactory):
     @property
     def plan_name(self):
         return self.subscription.plan_version.plan.name
+
+    @property
+    def _days_in_billing_period(self):
+        return calendar.monthrange(self.invoice.date_end.year, self.invoice.date_end.month)[1]
 
     def _auto_generate_credits(self, line_item):
         CreditLine.add_credit(
