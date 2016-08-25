@@ -125,7 +125,7 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
     };
     data.formplayerEnabled = true;
     data.answerCallback = function(sessionId) {
-        FormplayerFrontend.request('debugger.formXML', sessionId);
+        FormplayerFrontend.trigger('debugger.formXML', sessionId);
     };
     data.resourceMap = function(resource_path) {
         var urlObject = Util.currentUrlToObject();
@@ -136,7 +136,7 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
     sess.renderFormXml(data, $('#webforms'));
 });
 
-FormplayerFrontend.reqres.setHandler('debugger.formXML', function(sessionId) {
+FormplayerFrontend.on('debugger.formXML', function(sessionId) {
     var user = FormplayerFrontend.request('currentUser');
     var success = function(data) {
         var $instanceTab = $('#debugger-xml-instance-tab'),
