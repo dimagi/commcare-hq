@@ -178,9 +178,12 @@ class PPSConsumption(fluff.Calculator):
             return
 
         for item in (form.get_data('form/products/item') or []):
+            path = 'is-relevant/{}'
+            if self.field == 'total_stock':
+                path = 'is-relevant/question1/{}'
             yield {
                 'date': real_date,
-                'value': numeric_value(get_value_from_path(item, 'is-relevant/{}'.format(self.field))),
+                'value': numeric_value(get_value_from_path(item, path.format(self.field))),
                 'group_by': [get_product_name(item['@id']), item['@id']]
             }
 
