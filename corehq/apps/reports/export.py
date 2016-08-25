@@ -40,7 +40,8 @@ class BulkExport(object):
     def generate_export_objects(self, export_tags):
         self.export_objects = []
 
-    def generate_bulk_file(self):
+    def generate_bulk_file(self, update_progress=None):
+        update_progress = update_progress or (lambda x: x)
         configs = list()
         schemas = list()
         checkpoints = list()
@@ -89,7 +90,7 @@ class BulkExport(object):
                                 separator=self.separator)
                         ])]
                     )
-
+                update_progress(i+1)
             writer.close()
         return path
 
