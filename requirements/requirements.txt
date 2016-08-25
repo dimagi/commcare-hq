@@ -7,7 +7,7 @@ jsonobject-couchdbkit==0.7.4.1
 celery==3.1.18
 # required by django-digest
 decorator==4.0.4
-django==1.8.14
+django==1.9.9
 django-braces==1.8.1
 django-celery==3.1.16
 django-crispy-forms==1.6.0
