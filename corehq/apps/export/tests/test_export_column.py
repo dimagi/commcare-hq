@@ -202,6 +202,9 @@ class TestGeopointExportColumn(SimpleTestCase):
         result = column.get_value('domain', 'docid', {'form': {'geo': '10 20'}}, [], split_column=False)
         self.assertEqual(result, '10 20')
 
+        result = column.get_value('domain', 'docid', {'form': {'geo': None}}, [], split_column=True)
+        self.assertEqual(result, [None, None, None, None])
+
     def test_get_headers(self):
         column = SplitGPSExportColumn(
             item=GeopointItem(path=[PathNode(name='form'), PathNode(name='geo')]),
