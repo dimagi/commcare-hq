@@ -242,12 +242,7 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
     lang = request.COOKIES.get('lang', app.langs[0])
 
     def should_edit(attribute):
-        if attribute in request.POST:
-            return True
-        elif attribute in request.FILES:
-            return True
-        else:
-            return False
+        return attribute in request.POST
 
     if should_edit("name"):
         name = request.POST['name']
@@ -259,7 +254,7 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
         resp['update'] = {'.variable-form_name': form.name[lang]}
     if should_edit('comment'):
         form.comment = request.POST['comment']
-    if should_edit("xform"):
+    if should_edit("xform") or "xform" in request.FILES:
         try:
             # support FILES for upload and POST for ajax post from Vellum
             try:
@@ -283,8 +278,6 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
                     pass
             if xform:
                 save_xform(app, form, xform)
-                case_references = json.loads(request.POST.get('references', "{}"))
-                _update_case_refs_from_form_builder(form, case_references)
             else:
                 raise Exception("You didn't select a form to upload")
         except Exception, e:
@@ -292,6 +285,8 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
                 return HttpResponseBadRequest(unicode(e))
             else:
                 messages.error(request, unicode(e))
+    if should_edit("references") or should_edit("case_references"):
+        form.case_references = _get_case_references(request.POST)
     if should_edit("show_count"):
         show_count = request.POST['show_count']
         form.show_count = True if show_count == "True" else False
@@ -357,7 +352,7 @@ def new_form(request, domain, app_id, module_id):
 def patch_xform(request, domain, app_id, unique_form_id):
     patch = request.POST['patch']
     sha1_checksum = request.POST['sha1']
-    case_references = json.loads(request.POST.get('references', "{}"))
+    case_references = _get_case_references(request.POST)
 
     app = get_app(domain, app_id)
     form = app.get_form(unique_form_id)
@@ -369,8 +364,8 @@ def patch_xform(request, domain, app_id, unique_form_id):
     dmp = diff_match_patch()
     xform, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
     save_xform(app, form, xform)
-
-    _update_case_refs_from_form_builder(form, case_references)
+    if "case_references" in request.POST or "references" in request.POST:
+        form.case_references = case_references
 
     response_json = {
         'status': 'ok',
@@ -651,6 +646,14 @@ def form_casexml(request, domain, form_unique_id):
     return HttpResponse(form.create_casexml())
 
 
-def _update_case_refs_from_form_builder(form, reference_json):
-    if form.form_type == 'module_form':
-        form.actions.load_from_form = PreloadAction.wrap(reference_json)
+def _get_case_references(data):
+    def is_valid(value):
+        return isinstance(value, list) and all(isinstance(v, unicode) for v in value)
+    if "references" in data:
+        # old/deprecated format
+        refs = {k: [v] for k, v in json.loads(data['references'])["preload"].items()}
+    else:
+        refs = json.loads(data.get('case_references', '{}'))
+    if not all(is_valid(v) for v in refs.values()):
+        raise ValueError("bad case references data: {!r}".format(refs))
+    return refs
