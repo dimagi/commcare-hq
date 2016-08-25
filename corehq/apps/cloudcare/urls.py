@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, url, include
 
-from corehq.apps.cloudcare.views import EditCloudcareUserPermissionsView, CloudcareMain
+from corehq.apps.cloudcare.views import EditCloudcareUserPermissionsView, CloudcareMain, CloudcareResetUser
 
 app_urls = patterns('corehq.apps.cloudcare.views',
     url(r'^view/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/context/$',
@@ -24,6 +24,11 @@ api_urls = patterns('corehq.apps.cloudcare.views',
     url(r'^ledgers/$', 'get_ledgers', name='cloudcare_get_ledgers'),
     url(r'^render_form/$', 'render_form', name='cloudcare_render_form'),
     url(r'^sync_db/$', 'sync_db_api', name='cloudcare_sync_db'),
+    url(
+        r'^reset_user/$',
+        CloudcareResetUser.as_view(),
+        name=CloudcareResetUser.urlname
+    )
 )
 
 # used in settings urls
