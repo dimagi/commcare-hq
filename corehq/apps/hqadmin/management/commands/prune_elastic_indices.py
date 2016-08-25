@@ -3,6 +3,7 @@ import elasticsearch
 from django.core.management import BaseCommand
 from corehq.elastic import get_es_new
 from corehq.pillows.utils import get_all_expected_es_indices
+from corehq.apps.userreports.util import get_ucr_es_indices
 
 
 class Command(BaseCommand):
@@ -23,7 +24,10 @@ class Command(BaseCommand):
         # if it doesn't exist
         # fixme: this can delete real indices if a reindex is in progress
         found_indices = set(es.indices.get_aliases().keys())
-        expected_indices = {info.index for info in get_all_expected_es_indices()}
+        pillow_indices = {info.index for info in get_all_expected_es_indices()}
+        ucr_indices = {index for index in get_ucr_es_indices()}
+        expected_indices = pillow_indices | ucr_indices
+        print expected_indices
 
         if options['verbose']:
             if expected_indices - found_indices:
