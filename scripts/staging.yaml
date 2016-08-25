@@ -52,6 +52,7 @@ branches:
   - welcome-to-vellum+kill-1.x-apps # Jenny 8/24
   - underscore-1-8 # Jenny 8/19
   - send-datasource-to-es # j$ 8/24
+  - django-1.8 # nick P 8/25
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
