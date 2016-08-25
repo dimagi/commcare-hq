@@ -134,6 +134,10 @@
         <script src="{% static 'jquery-ui/ui/sortable.js' %}"></script>
         {% endcompress %}
 
+        {% compress js %}
+        <script src="{% static 'dragscroll/dragscroll.js' %}"></script>
+        {% endcompress %}
+
         <style id="case-tiles-style"></style>
         <!-- For Formplayer's app preview -->
 
