@@ -227,25 +227,26 @@ var projectMapInit = function(mapboxAccessToken) {
             mouseover: highlightFeature,
             mouseout: resetHighlight,
             click: function(e) {
-                selectionModel.selectedCountry(feature.properties.name);
-                modalController.showProjectsTable(selectionModel.selectedCountry());
-                var country = (feature.properties.name).toUpperCase();
-                selectionModel.topFiveProjects.removeAll();
-                $.ajax({
-                    url: "/hq/admin/top_five_projects_by_country/?country=" + country,
-                    datatype: "json",
-                }).done(function(data){
-                    data[country].forEach(function(project){
-                        selectionModel.topFiveProjects.push({
-                            sector: project['internal']['area'],
-                            sub_sector: project['internal']['sub_area'],
-                            active_users: project['cp_n_active_cc_users'],
-                            countries: capitalizeCountryNames(project['deployment']['countries']).join(', '),
+                if (dataController.getCount(feature.properties.name)){
+                    selectionModel.selectedCountry(feature.properties.name);
+                    modalController.showProjectsTable(selectionModel.selectedCountry());
+                    var country = (feature.properties.name).toUpperCase();
+                    selectionModel.topFiveProjects.removeAll();
+                    $.ajax({
+                        url: "/hq/admin/top_five_projects_by_country/?country=" + country,
+                        datatype: "json",
+                    }).done(function(data){
+                        data[country].forEach(function(project){
+                            selectionModel.topFiveProjects.push({
+                                sector: project['internal']['area'],
+                                sub_sector: project['internal']['sub_area'],
+                                active_users: project['cp_n_active_cc_users'],
+                                countries: capitalizeCountryNames(project['deployment']['countries']).join(', '),
+                            });
                         });
                     });
-                });
-                // launch the modal
-                $('#modal').modal();
+                    $('#modal').modal();
+                };
             },
         });
     }
