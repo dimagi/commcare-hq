@@ -65,10 +65,6 @@
 {% block js-inline %} {{ block.super }}
     <script>
         window.GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is loaded on-demand
-        var translatedStrings = {
-            synced: "{% trans "User Data Successfully Synced" %}",
-            errSyncing: "{% trans "Could not sync user data. Please try again and report a bug if issue persists." %}"
-        };
         var apps = {{ apps|JSON }};
         var language = "{{ language }}";
         var username = "{{ username  }}";
