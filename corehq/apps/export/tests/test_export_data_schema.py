@@ -487,6 +487,7 @@ class TestExportDataSchemaVersionControl(TestCase, TestXmlMixin):
 
     def tearDown(self):
         delete_all_export_data_schemas()
+        super(TestExportDataSchemaVersionControl, self).tearDown()
 
     def test_rebuild_version_control(self):
         app = self.current_app
