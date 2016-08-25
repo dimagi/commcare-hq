@@ -1077,12 +1077,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         except User.DoesNotExist:
             django_user = User(username=self.username)
         for attr in DjangoUserMixin.ATTRS:
-            attr_val = getattr(self, attr) or ''
+            attr_val = getattr(self, attr)
+            if not attr_val and attr != 'last_login':
+                attr_val = ''
             # truncate names when saving to django
             if attr == 'first_name' or attr == 'last_name':
                 attr_val = attr_val[:30]
-            if attr == 'last_login' and attr_val == '':
-                attr_val = None
             setattr(django_user, attr, attr_val)
         django_user.DO_NOT_SAVE_COUCH_USER= True
         return django_user
