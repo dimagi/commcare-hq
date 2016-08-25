@@ -305,6 +305,22 @@
                         </select>
                     </div>
                 </div>
+
+                {% if app.grid_display_for_some_modules %}
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">
+                        {% trans "Display Style" %}
+                    </label>
+                    <div class="col-sm-4">
+                        <select type="text" name="display_style" class="form-control">
+                            <option value="list">{% trans "list(the default)" %}</option>
+                            <option value="grid"{% if module.grid_display_style %} selected{% endif %}>
+                                {% trans "Grid" %}
+                            </option>
+                        </select>
+                    </div>
+                </div>
+                {% endif %}
                 {% include "app_manager/partials/module_filter.html" with value=module.module_filter %}
                 {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
                 {% if child_module_enabled %}

@@ -2270,6 +2270,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     task_list = SchemaProperty(CaseList)
     parent_select = SchemaProperty(ParentSelect)
     search_config = SchemaProperty(CaseSearch)
+    display_style = StringProperty(default='list')
 
     @classmethod
     def wrap(cls, data):
@@ -2371,6 +2372,8 @@ class Module(ModuleBase, ModuleDetailsMixin):
         """
         return any(form.uses_usercase() for form in self.get_forms())
 
+    def grid_display_style(self):
+        return self.display_style == 'grid'
 
 class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
     form_type = 'advanced_form'
@@ -5632,6 +5635,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 if m.case_type == case_type
                 for t in m.get_subcase_types()}
 
+    def grid_display_for_some_modules(self):
+        return self.profile['properties']['cc-grid-menus'] == 'some'
+
+    def grid_display_for_root_module(self):
+        return self.profile['properties']['cc-grid-menus'] == 'first'
 
 class RemoteApp(ApplicationBase):
     """
