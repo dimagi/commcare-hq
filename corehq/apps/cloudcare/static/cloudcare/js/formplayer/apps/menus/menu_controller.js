@@ -88,6 +88,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             // If we have no details, just select the entity
             if(detailObjects === null || detailObjects === undefined){
                 FormplayerFrontend.trigger("menu:select", index);
+                return;
             }
             var detailObject = detailObjects[index];
             var headers = detailObject.headers;
