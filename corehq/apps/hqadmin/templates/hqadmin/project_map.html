@@ -97,7 +97,10 @@
     </div>
     <div class="filter-wrapper wrapper">
       {% if request.user.is_superuser and is_internal_view %}
-      <div id="internal-only">This is the Dimagi-only view of the Active Project Map - please do not share this outside of Dimagi</div>
+          <div id="internal-only">
+              <p>This is the Dimagi-only view of the Active Project Map - please do not share this outside of Dimagi.</p>
+              <p>For external view, <a href="/hq/admin/project_map">click here</a></p>
+          </div>
       {% endif %}
       <h4 class="text-hq-nav-header">Active Project Map</h4>
         <div class="btn-group btn-toggle text-hq-nav-header">
