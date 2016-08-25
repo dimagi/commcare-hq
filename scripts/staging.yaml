@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - django-1.8+loc-tests # Nick P 8/25
   - kill-1.x-apps  # Danny 8/23
   - loc-tests # sravan 8/8
   - vellum-staging # J$ 11/13
