@@ -19,6 +19,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_built_app_ids_with_submissions_for_app_id,
     get_all_built_app_ids_and_versions,
     get_latest_app_ids_and_versions,
+    get_app_ids_in_domain,
 )
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_case_properties, ParentCasePropertyBuilder
@@ -51,6 +52,7 @@ from corehq.apps.export.const import (
     PLAIN_USER_DEFINED_SPLIT_TYPE,
     DATA_SCHEMA_VERSION,
 )
+from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
@@ -942,6 +944,9 @@ class ExportDataSchema(Document):
         )
         if app_id:
             app_build_ids.append(app_id)
+        else:
+            app_build_ids.extend(cls._get_current_app_ids_for_domain(domain))
+
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
             if (not app_doc.get('has_submissions', False) and
                     app_doc.get('copy_of')):
@@ -954,7 +959,7 @@ class ExportDataSchema(Document):
                 identifier,
             )
 
-            current_schema.record_update(app_id, app.version)
+            current_schema.record_update(app.copy_of or app._id, app.version)
 
         current_schema.domain = domain
         current_schema.app_id = app_id
@@ -1006,6 +1011,7 @@ class ExportDataSchema(Document):
             return group_schema
 
         previous_group_schemas = schemas[0].group_schemas
+        last_app_versions = schemas[0].last_app_versions
         for current_schema in schemas[1:]:
             group_schemas = _merge_lists(
                 previous_group_schemas,
@@ -1015,8 +1021,14 @@ class ExportDataSchema(Document):
                 copyfn=lambda group_schema: ExportGroupSchema(group_schema.to_json())
             )
             previous_group_schemas = group_schemas
+            last_app_versions = _merge_dicts(
+                last_app_versions,
+                current_schema.last_app_versions,
+                max,
+            )
 
         schema.group_schemas = group_schemas
+        schema.last_app_versions = last_app_versions
 
         return schema
 
@@ -1065,6 +1077,10 @@ class FormExportDataSchema(ExportDataSchema):
 
     def _set_identifier(self, form_xmlns):
         self.xmlns = form_xmlns
+
+    @classmethod
+    def _get_current_app_ids_for_domain(cls, domain):
+        raise BadExportConfiguration('Form exports should only use one app_id and this should not be called')
 
     @staticmethod
     def _get_app_build_ids_to_process(domain, app_id, last_app_versions):
@@ -1203,6 +1219,10 @@ class CaseExportDataSchema(ExportDataSchema):
 
     def _set_identifier(self, case_type):
         self.case_type = case_type
+
+    @classmethod
+    def _get_current_app_ids_for_domain(cls, domain):
+        return get_app_ids_in_domain(domain)
 
     @staticmethod
     def _get_app_build_ids_to_process(domain, app_id, last_app_versions):
