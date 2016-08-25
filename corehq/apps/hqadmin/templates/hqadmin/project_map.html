@@ -62,7 +62,7 @@
             <table class="table table-hover table-condensed">
               <thead>
               {% if request.user.is_superuser and is_internal_view %}
-                <tr data-bind="foreach: tableProperties">
+                <tr data-bind="foreach: internalTableProperties">
                   <th data-bind="text: $data"></th>
                 </tr>
               {% else %}
