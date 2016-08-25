@@ -1548,7 +1548,12 @@ class SplitGPSExportColumn(ExportColumn):
         )
         if not split_column:
             return value
+
         values = [None] * 4
+
+        if not isinstance(value, basestring):
+            return values
+
         for index, coordinate in enumerate(value.split(' ')):
             values[index] = coordinate
         return values
