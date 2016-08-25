@@ -928,6 +928,17 @@ class AdminDomainMapReport(AdminDomainStatsReport):
         json['total_num_projects'] = self._calc_total_active_real_projects(params)
         return json
 
+
+class AdminDomainMapInternal(AdminDomainMapReport):
+    slug = "internal_project_map"
+    
+    @property
+    def template_context(self):
+        context = super(AdminDomainMapInternal, self).template_context
+        context['is_internal_view'] = True;
+        return context
+
+
 class AdminUserReport(AdminFacetedReport):
     slug = "user_list"
     name = ugettext_noop('User List')
