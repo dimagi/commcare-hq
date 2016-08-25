@@ -238,12 +238,11 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
     tfLoading();
     resp = $.ajax(options);
     resp.fail(function () {
-            tfLoadingComplete(true);
-        })
-        .done(function() {
-            tfLoadingComplete();
-            FormplayerFrontend.trigger('navigateHome', appId)
-        });
+        tfLoadingComplete(true);
+    }).done(function() {
+        tfLoadingComplete();
+        FormplayerFrontend.trigger('navigateHome', appId);
+    });
 });
 
 FormplayerFrontend.on('clearUserData', function(appId) {
@@ -255,16 +254,15 @@ FormplayerFrontend.on('clearUserData', function(appId) {
         xhrFields: { withCredentials: true },
     });
     resp.fail(function (jqXHR) {
-            if (jqXHR.status === 400) {
-                tfLoadingComplete(true, gettext('Unable to clear user data for mobile worker'));
-            } else {
-                tfLoadingComplete(true, gettext('Unabled to clear user data'));
-            }
-        })
-        .done(function() {
-            tfLoadingComplete();
-            FormplayerFrontend.trigger('navigateHome', appId)
-        });
+        if (jqXHR.status === 400) {
+            tfLoadingComplete(true, gettext('Unable to clear user data for mobile worker'));
+        } else {
+            tfLoadingComplete(true, gettext('Unabled to clear user data'));
+        }
+    }).done(function() {
+        tfLoadingComplete();
+        FormplayerFrontend.trigger('navigateHome', appId);
+    });
 });
 
 FormplayerFrontend.on('navigateHome', function(appId) {
