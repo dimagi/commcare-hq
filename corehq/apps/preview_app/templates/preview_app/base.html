@@ -149,7 +149,9 @@
         <div id="menu-container">
             <div id="phone-mode-navigation"></div>
             <div id="breadcrumb-region"></div>
-            <div id="menu-region" class="content"></div>
+            <div class="scrollable-container dragscroll">
+              <div id="menu-region" class="content menu-content"></div>
+            </div>
         </div>
         <section id="webforms" class="webforms container-fluid" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
         {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
