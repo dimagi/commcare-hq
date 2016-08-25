@@ -177,6 +177,7 @@ FormplayerFrontend.on("start", function (options) {
     user.apps = options.apps;
     user.domain = options.domain;
     user.formplayer_url = options.formplayer_url;
+    user.clearUserDataUrl = options.clearUserDataUrl;
     if (Backbone.history) {
         Backbone.history.start();
         // will be the same for every domain. TODO: get domain/username/pass from django
@@ -248,7 +249,7 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
 FormplayerFrontend.on('clearUserData', function(appId) {
     var user = FormplayerFrontend.request('currentUser');
     var resp = $.ajax({
-        url: '/a/' + user.domain + '/cloudcare/api/reset_user/',
+        url: user.clearUserDataUrl,
         type: 'POST',
         dataType: "json",
         xhrFields: { withCredentials: true },

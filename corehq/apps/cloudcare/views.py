@@ -218,15 +218,15 @@ class CloudcareMain(View):
             return render(request, "cloudcare/cloudcare_home.html", context)
 
 
-class CloudcareResetUser(View):
+class CloudcareClearUserData(View):
 
-    urlname = 'reset_user'
+    urlname = 'clear_user_data'
     http_method_names = ['post']
 
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
     def dispatch(self, request, *args, **kwargs):
-        return super(CloudcareResetUser, self).dispatch(request, *args, **kwargs)
+        return super(CloudcareClearUserData, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, domain):
         couch_user = request.couch_user
