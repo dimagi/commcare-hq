@@ -1187,7 +1187,6 @@ def top_five_projects_by_country(request):
     if internalMode:
         attributes = ['name', 'internal.organization_name', 'internal.notes'] + attributes
 
-
     if 'country' in request.GET:
         country = request.GET.get('country')
         projects = (DomainES().is_active_project().real_domains()
