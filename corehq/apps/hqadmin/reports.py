@@ -931,11 +931,11 @@ class AdminDomainMapReport(AdminDomainStatsReport):
 
 class AdminDomainMapInternal(AdminDomainMapReport):
     slug = "internal_project_map"
-    
+
     @property
     def template_context(self):
         context = super(AdminDomainMapInternal, self).template_context
-        context['is_internal_view'] = True;
+        context['is_internal_view'] = True
         return context
 
 
