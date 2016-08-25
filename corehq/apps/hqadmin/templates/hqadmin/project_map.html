@@ -61,7 +61,7 @@
           <div class="table">
             <table class="table table-hover table-condensed">
               <thead>
-              {% if request.user.is_superuser %}
+              {% if request.user.is_superuser and is_internal_view %}
                 <tr data-bind="foreach: tableProperties">
                   <th data-bind="text: $data"></th>
                 </tr>
@@ -73,7 +73,7 @@
               </thead>
               <tbody data-bind="foreach: {data: topFiveProjects}">
                 <tr class="project-row">
-                  {% if request.user.is_superuser %}
+                  {% if request.user.is_superuser and is_internal_view %}
                       <td data-bind="text: name"></td>
                       <td data-bind="text: organization"></td>
                       <td data-bind="text: description"></td>
@@ -96,7 +96,7 @@
       <div id="map"></div>
     </div>
     <div class="filter-wrapper wrapper">
-      {% if request.user.is_superuser %}
+      {% if request.user.is_superuser and is_internal_view %}
       <div id="internal-only">This is the Dimagi-only view of the Active Project Map - please do not share this outside of Dimagi</div>
       {% endif %}
       <h4 class="text-hq-nav-header">Active Project Map</h4>
