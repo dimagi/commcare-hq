@@ -61,12 +61,23 @@
           <div class="table">
             <table class="table table-hover table-condensed">
               <thead>
+              {% if request.user.is_superuser %}
                 <tr data-bind="foreach: tableProperties">
                   <th data-bind="text: $data"></th>
                 </tr>
+              {% else %}
+                <tr data-bind="foreach: externalTableProperties">
+                  <th data-bind="text: $data"></th>
+                </tr>
+              {% endif %}
               </thead>
               <tbody data-bind="foreach: {data: topFiveProjects}">
                 <tr class="project-row">
+                  {% if request.user.is_superuser %}
+                      <td data-bind="text: name"></td>
+                      <td data-bind="text: organization"></td>
+                      <td data-bind="text: description"></td>
+                  {% endif %}
                   <td data-bind="text: sector"></td>
                   <td data-bind="text: sub_sector"></td>
                   <td data-bind="text: active_users"></td>
