@@ -959,7 +959,7 @@ class ExportDataSchema(Document):
                 identifier,
             )
 
-            current_schema.record_update(app.copy_of or app_id, app.version)
+            current_schema.record_update(app.copy_of or app._id, app.version)
 
         current_schema.domain = domain
         current_schema.app_id = app_id
