@@ -10,9 +10,8 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domainsync.management.commands.copy_utils import copy_postgres_data_for_docs
 from corehq.util.couchdb_management import CouchConfig
 from corehq.util.dates import iso_string_to_date
-from dimagi.utils.couch.database import get_db, iter_docs
+from dimagi.utils.couch.database import iter_docs
 from corehq.apps.domainsync.config import DocumentTransform, save
-from couchdbkit.client import Database
 from optparse import make_option
 
 # doctypes we want to be careful not to copy, which must be explicitly

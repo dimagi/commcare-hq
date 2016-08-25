@@ -12,7 +12,6 @@ from corehq.apps.smsforms.app import (
     _get_responses,
     _responses_to_text,
 )
-from dateutil.parser import parse
 from corehq.apps.smsforms.models import SQLXFormsSession
 
 

@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-import copy
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import logging
@@ -39,7 +38,6 @@ from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers
 from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.users.util import (
-    normalize_username,
     user_display_string,
 )
 from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \

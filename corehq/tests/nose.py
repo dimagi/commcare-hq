@@ -17,7 +17,6 @@ import sys
 import threading
 import types
 from fnmatch import fnmatch
-from unittest.case import TestCase
 
 from django.apps import apps
 
