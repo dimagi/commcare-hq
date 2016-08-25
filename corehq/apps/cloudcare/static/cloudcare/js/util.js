@@ -120,10 +120,10 @@ hqDefine('cloudcare/js/util.js', function () {
         showLoading();
     };
 
-    var tfLoadingComplete = function (isError) {
+    var tfLoadingComplete = function (isError, message) {
         hideLoading();
         if (isError) {
-            showError(gettext('Error saving!'), $('#cloudcare-notifications'));
+            showError(message || gettext('Error saving!'), $('#cloudcare-notifications'));
         }
     };
 

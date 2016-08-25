@@ -222,29 +222,53 @@ FormplayerFrontend.on("sync", function () {
  * @param {String} appId - The id of the application to refresh
  */
 FormplayerFrontend.on('refreshApplication', function(appId) {
-    var user = FormplayerFrontend.request('currentUser');
-    var formplayer_url = user.formplayer_url;
-    var options = {
-        url: formplayer_url + "/delete_application_dbs",
-        data: JSON.stringify({
-            app_id: appId,
-            domain: user.domain,
-            username: user.username.split('@')[0],
-        }),
-    };
+    var user = FormplayerFrontend.request('currentUser'),
+        formplayer_url = user.formplayer_url,
+        resp,
+        options = {
+            url: formplayer_url + "/delete_application_dbs",
+            data: JSON.stringify({
+                app_id: appId,
+                domain: user.domain,
+                username: user.username.split('@')[0],
+            }),
+        };
     Util.setCrossDomainAjaxOptions(options);
     tfLoading();
-    var resp = $.ajax(options);
-    resp.success(function () {
-        tfLoadingComplete();
+    resp = $.ajax(options);
+    resp.fail(function () {
+            tfLoadingComplete(true);
+        })
+        .done(function() {
+            tfLoadingComplete();
+            FormplayerFrontend.trigger('navigateHome', appId)
+        });
+});
+
+FormplayerFrontend.on('clearUserData', function(appId) {
+    var user = FormplayerFrontend.request('currentUser');
+    var resp = $.ajax({
+        url: '/a/' + user.domain + '/cloudcare/api/reset_user/',
+        type: 'POST',
+        dataType: "json",
+        xhrFields: { withCredentials: true },
     });
-    resp.error(function () {
-        tfLoadingComplete(true);
-    });
-    resp.complete(function() {
-        var urlObject = Util.currentUrlToObject();
-        urlObject.clearExceptApp();
-        FormplayerFrontend.regions.breadcrumb.empty();
-        FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });
-    });
+    resp.fail(function (jqXHR) {
+            if (jqXHR.status === 400) {
+                tfLoadingComplete(true, gettext('Unable to clear user data for mobile worker'));
+            } else {
+                tfLoadingComplete(true, gettext('Unabled to clear user data'));
+            }
+        })
+        .done(function() {
+            tfLoadingComplete();
+            FormplayerFrontend.trigger('navigateHome', appId)
+        });
+});
+
+FormplayerFrontend.on('navigateHome', function(appId) {
+    var urlObject = Util.currentUrlToObject();
+    urlObject.clearExceptApp();
+    FormplayerFrontend.regions.breadcrumb.empty();
+    FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });
 });
