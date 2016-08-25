@@ -177,7 +177,7 @@ def _get_default_tile_configurations():
         and request.couch_user.can_edit_data()
     )
 
-    is_billing_admin = lambda request: request.couch_user.has_permission(request.domain, 'billing_admin')
+    is_billing_admin = lambda request: request.couch_user.can_edit_billing()
 
     return [
         TileConfiguration(

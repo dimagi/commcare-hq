@@ -88,7 +88,7 @@ class Permissions(DocumentSchema):
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
 
-    billing_admin = BooleanProperty(default=False)
+    edit_billing = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -164,7 +164,7 @@ class Permissions(DocumentSchema):
             edit_data=True,
             edit_apps=True,
             view_reports=True,
-            billing_admin=True
+            edit_billing=True
         )
 
 
@@ -188,7 +188,7 @@ class UserRolePresets(object):
             cls.READ_ONLY: lambda: Permissions(view_reports=True),
             cls.FIELD_IMPLEMENTER: lambda: Permissions(edit_commcare_users=True, view_reports=True),
             cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_reports=True),
-            cls.BILLING_ADMIN: lambda: Permissions(billing_admin=True)
+            cls.BILLING_ADMIN: lambda: Permissions(edit_billing=True)
         }
 
     @classmethod
