@@ -718,6 +718,29 @@ class TestBulkManagement(TestCase):
         ]), check_attr='name')
         self.assertCouchSync()
 
+    def test_partial_type_edit(self):
+        # edit a subset of types
+        lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
+        self.create_locations(self.basic_tree, lt_by_code)
+        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
+
+        edit_types = [
+            ('State', 'state', '', False, False, False, '', '', 0),
+            # change name of this type
+            ('District', 'county', 'state', False, False, False, '', '', 0),
+            ('City', 'city', 'county', False, False, False, '', '', 0),
+        ]
+
+        result = self.bulk_update_locations(
+            edit_types,
+            self.basic_tree,
+        )
+
+        self.assertEqual(result.errors, [])
+        self.assertLocationTypesMatch(edit_types)
+        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
+        self.assertCouchSync()
+
     def test_edit_expansions(self):
         # 'expand_from', 'expand_to' can be updated
         lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)

@@ -716,7 +716,7 @@ def save_types(type_stubs):
     type_objects_by_code.update({
         lt.code: lt.db_object
         for lt in type_stubs
-        if not lt.is_new and not lt.do_delete and lt.needs_save
+        if not lt.is_new and not lt.do_delete
     })
     to_bulk_update = []
     for lt in type_stubs:
