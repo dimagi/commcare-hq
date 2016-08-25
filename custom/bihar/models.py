@@ -1,5 +1,5 @@
 import datetime
-from custom.bihar import getters
+from custom.bihar import getters, BIHAR_DOMAINS
 from custom.bihar.calculations.homevisit import DateRangeFilter
 from custom.bihar.calculations.utils import filters
 from casexml.apps.case.models import CommCareCase
