@@ -1,6 +1,5 @@
 import datetime
-from corehq.apps.change_feed import topics
-from custom.bihar import getters, BIHAR_DOMAINS
+from custom.bihar import getters
 from custom.bihar.calculations.homevisit import DateRangeFilter
 from custom.bihar.calculations.utils import filters
 from casexml.apps.case.models import CommCareCase
