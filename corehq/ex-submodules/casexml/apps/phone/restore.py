@@ -78,7 +78,11 @@ def restore_cache_key(prefix, user_id, version=None):
 
 def stream_response(payload, headers=None, status=200):
     try:
-        response = StreamingHttpResponse(FileWrapper(payload), content_type="text/xml; charset=utf-8", status=status)
+        response = StreamingHttpResponse(
+            FileWrapper(payload),
+            content_type="text/xml; charset=utf-8",
+            status=status
+        )
         if headers:
             for header, value in headers.items():
                 response[header] = value
