@@ -6,7 +6,6 @@ import sys
 import uuid
 from urlparse import urlparse, parse_qs
 
-import dateutil
 from captcha.fields import CaptchaField
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy

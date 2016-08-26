@@ -25,7 +25,6 @@ from corehq.apps.hqcase.dbaccessors import (
 )
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import get_es_new, ES_META
-from corehq.util.soft_assert import soft_assert
 
 
 CLOUDCARE_API_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'  # todo: add '.%fZ'?

@@ -5,7 +5,7 @@ from casexml.apps.case.xform import get_all_extensions_to_close, CaseProcessingR
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.submission_post import CaseStockProcessingResult
-from corehq.form_processor.utils import should_use_sql_backend, adjust_datetimes
+from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import set_local_domain_sql_backend_override
 from corehq.util.dates import iso_string_to_datetime
 from couchforms.models import XFormInstance

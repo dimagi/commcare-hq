@@ -1,5 +1,4 @@
 # Stub models file
-from corehq.apps.change_feed import topics
 from dimagi.ext.couchdbkit import Document
 # ensure our signals get loaded at django bootstrap time
 from . import signals

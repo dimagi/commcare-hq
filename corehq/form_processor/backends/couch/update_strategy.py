@@ -1,4 +1,3 @@
-import base64
 import copy
 from functools import cmp_to_key
 import logging

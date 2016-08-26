@@ -32,7 +32,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_all_user_ids_submitted,
 )
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
-from corehq.apps.reports.filters.select import SelectApplicationFilter, GroupFilter
+from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
 from corehq.apps.reports.util import format_datatables_data

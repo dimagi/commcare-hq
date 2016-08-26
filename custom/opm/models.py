@@ -1,7 +1,6 @@
 """
 Fluff IndicatorDocument definitions for the OPM reports.
 """
-from corehq.apps.change_feed import topics
 from fluff.filters import CustomFilter
 from corehq.apps.users.models import CommCareUser
 import fluff

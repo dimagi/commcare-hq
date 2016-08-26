@@ -8,7 +8,7 @@ from xml.sax.saxutils import unescape
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import (
     RETURN_TO, )
-from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
+from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.xml_models import StackDatum, Stack, CreateFrame
 from corehq.apps.app_manager.xpath import CaseIDXPath, session_var, \

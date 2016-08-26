@@ -1,7 +1,6 @@
 import json
 import uuid
 
-from django.core.exceptions import PermissionDenied
 from django.db.models import Count
 from django.http import HttpResponse, Http404
 from django.http import HttpResponseRedirect

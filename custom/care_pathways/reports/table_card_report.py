@@ -1,7 +1,6 @@
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from custom.care_pathways.reports import CareBaseReport
-from custom.care_pathways.filters import GeographyFilter, GenderFilter, GroupLeadershipFilter, CBTNameFilter, PPTYearFilter, ScheduleFilter, TableCardGroupByFilter, TableCardTypeFilter, \
-    MalawiPPTYearFilter, RealOrTestFilter
+from custom.care_pathways.filters import TableCardGroupByFilter, TableCardTypeFilter
 from dimagi.utils.decorators.memoized import memoized
 from custom.care_pathways.sqldata import TableCardReportIndividualPercentSqlData, TableCardReportGrouppedPercentSqlData, TableCardSqlData
 
