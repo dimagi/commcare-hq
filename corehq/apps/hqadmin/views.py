@@ -557,6 +557,10 @@ class VCMMigrationView(BaseAdminSectionView):
         })
         return context
 
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(VCMMigrationView, self).dispatch(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
         action = self.request.POST['action']
 
