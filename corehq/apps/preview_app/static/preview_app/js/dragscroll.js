@@ -9,6 +9,8 @@
  * @copyright 2015 asvd <heliosframework@gmail.com>
  */
 
+/* globals define */
+/* globals exports */
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
@@ -48,7 +50,7 @@
                         if (!el.hasAttribute('nochilddrag') ||
                             _document.elementFromPoint(
                                 e.pageX, e.pageY
-                            ) == cont
+                            ) === cont
                         ) {
                             pushed = 1;
                             lastClientX = e.clientX;
@@ -56,7 +58,7 @@
 
                             // monkeypatch
                             if (!$(e.srcElement).hasClass('form-control')) {
-                               e.preventDefault();
+                                e.preventDefault();
                             }
 
                         }
@@ -71,10 +73,10 @@
                     mousemove,
                     cont.mm = function(e) {
                         if (pushed) {
-                             (scroller = el.scroller||el).scrollLeft -=
-                                 (- lastClientX + (lastClientX=e.clientX));
-                             scroller.scrollTop -=
-                                 (- lastClientY + (lastClientY=e.clientY));
+                            (scroller = el.scroller||el).scrollLeft -=
+                                (- lastClientX + (lastClientX=e.clientX));
+                            scroller.scrollTop -=
+                                (- lastClientY + (lastClientY=e.clientY));
                         }
                     }, 0
                 );
@@ -83,7 +85,7 @@
     };
 
 
-    if (_document.readyState == 'complete') {
+    if (_document.readyState === 'complete') {
         reset();
     } else {
         _window[addEventListener]('load', reset, 0);
