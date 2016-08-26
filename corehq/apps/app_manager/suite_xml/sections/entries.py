@@ -441,7 +441,7 @@ class EntriesHelper(object):
                 )
             ]
 
-    def get_load_case_from_fixture_datums(self, action, target_module):
+    def get_load_case_from_fixture_datums(self, action, target_module, form):
         datums = []
         load_case_from_fixture = action.load_case_from_fixture
 
@@ -584,7 +584,7 @@ class EntriesHelper(object):
                 ))
             elif load_case_from_fixture:
                 target_module = get_target_module(action.case_type, action.details_module)
-                datums.extend(self.get_load_case_from_fixture_datums(action, target_module))
+                datums.extend(self.get_load_case_from_fixture_datums(action, target_module, form))
             else:
                 if action.case_index.tag:
                     parent_action = form.actions.actions_meta_by_tag[action.case_index.tag]['action']
