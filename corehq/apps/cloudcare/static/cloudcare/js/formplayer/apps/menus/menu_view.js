@@ -6,6 +6,8 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         className: "formplayer-request",
         events: {
             "click": "rowClick",
+            "click .js-module-audio-play": "audioPlay",
+            "click .js-module-audio-pause": "audioPause",
         },
 
         getTemplate: function () {
@@ -18,8 +20,37 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
 
         rowClick: function (e) {
             e.preventDefault();
-            var model = this.model;
-            FormplayerFrontend.trigger("menu:select", model.get('index'));
+            if (!($(e.originalEvent.srcElement).hasClass('js-module-audio-icon')
+                || $(e.originalEvent.srcElement).hasClass('js-module-audio-play')
+                || $(e.originalEvent.srcElement).hasClass('js-module-audio-pause'))
+            ) {
+                var model = this.model;
+                FormplayerFrontend.trigger("menu:select", model.get('index'));
+            }
+        },
+        audioPlay: function (e) {
+            e.preventDefault();
+            var $playBtn = $(e.originalEvent.srcElement).closest('.js-module-audio-play');
+            var $pauseBtn = $playBtn.parent().find('.js-module-audio-pause');
+            $pauseBtn.removeClass('hide');
+            $playBtn.addClass('hide');
+            var $audioElem = $playBtn.parent().find('.js-module-audio');
+            if ($audioElem.data('isFirstPlay') !== 'yes') {
+                $audioElem.data('isFirstPlay', 'yes');
+                $audioElem.one('ended', function () {
+                    $playBtn.removeClass('hide');
+                    $pauseBtn.addClass('hide');
+                    $audioElem.data('isFirstPlay', 'no');
+                });
+            }
+            $audioElem.get(0).play();
+        },
+        audioPause: function (e) {
+            e.preventDefault();
+            var $pauseBtn = $(e.originalEvent.srcElement).closest('.js-module-audio-pause');
+            $pauseBtn.parent().find('.js-module-audio-play').removeClass('hide');
+            $pauseBtn.addClass('hide');
+            $pauseBtn.parent().find('.js-module-audio').get(0).pause();
         },
         templateHelpers: function () {
             var imageUri = this.options.model.get('imageUri');
