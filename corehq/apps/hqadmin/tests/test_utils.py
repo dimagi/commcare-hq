@@ -1,4 +1,5 @@
 from django.test import TestCase, override_settings
+from mock import patch
 
 from ..models import PillowCheckpointSeqStore
 from ..utils import pillow_seq_store, EPSILON
@@ -16,7 +17,14 @@ class TestPillowCheckpointSeqStore(TestCase):
     dependent_apps = ['pillowtop']
 
     def setUp(self):
+        super(TestPillowCheckpointSeqStore, self).setUp()
         self.pillow = DummyPillow()
+        self.pillow_patch = patch("corehq.apps.hqadmin.utils.get_couch_pillow_instances", return_value=[DummyPillow()])
+        self.pillow_patch.start()
+
+    def tearDown(self):
+        self.pillow_patch.stop()
+        super(TestPillowCheckpointSeqStore, self).tearDown()
 
     def test_basic_cloudant_seq(self):
         seq = '1-blahblah'

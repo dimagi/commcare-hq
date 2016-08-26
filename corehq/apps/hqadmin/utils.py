@@ -4,7 +4,7 @@ from django.conf import settings
 from django.utils.safestring import mark_safe
 
 from dimagi.utils.logging import notify_exception
-from pillowtop.utils import force_seq_int, get_all_pillow_instances
+from pillowtop.utils import force_seq_int, get_couch_pillow_instances
 from restkit import Resource
 
 from .models import PillowCheckpointSeqStore
@@ -13,7 +13,7 @@ EPSILON = 10000000
 
 
 def pillow_seq_store():
-    for pillow in get_all_pillow_instances():
+    for pillow in get_couch_pillow_instances():
         checkpoint = pillow.checkpoint
         store, created = PillowCheckpointSeqStore.objects.get_or_create(checkpoint_id=checkpoint.checkpoint_id)
         db_seq = checkpoint.get_current_sequence_id()
