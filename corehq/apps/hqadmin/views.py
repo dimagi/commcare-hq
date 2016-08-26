@@ -685,7 +685,7 @@ class FlagBrokenBuilds(FormView):
 
 
 @require_superuser
-@datespan_in_request(from_param="startdate", to_param="enddate", default_days=365)
+@datespan_in_request(from_param="startdate", to_param="enddate", default_days=90)
 def stats_data(request):
     histo_type = request.GET.get('histogram_type')
     interval = request.GET.get("interval", "week")
