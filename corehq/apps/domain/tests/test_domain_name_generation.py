@@ -26,10 +26,9 @@ class DomainNameGenerationTest(TestCase):
         self.assertEquals(Domain.generate_name(name), name + "-1")
 
     def test_failure(self):
-        name = "ab"
-        self.add_domain(name)
+        self.add_domain("ab")
         with self.assertRaises(NameUnavailableException):
-            Domain.generate_name(name, 1)
+            Domain.generate_name("abc", 2)
 
     def test_long_names(self):
         name = "abcd"
@@ -42,3 +41,5 @@ class DomainNameGenerationTest(TestCase):
 
         self.add_domain("ab-9")
         self.assertEquals(Domain.generate_name(name, 4), "a-1")
+
+        self.assertEqual(Domain.generate_name('very long name', 5), 'very')
