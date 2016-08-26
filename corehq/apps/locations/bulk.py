@@ -178,7 +178,7 @@ class LocationImporter(object):
         )
 
     def _process_parent_site_code(self, parent_site_code, location_type, parent_child_map):
-        if not parent_site_code:
+        if not parent_site_code and parent_site_code != 0:
             return None
 
         if isinstance(parent_site_code, int):
