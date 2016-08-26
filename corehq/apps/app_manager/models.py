@@ -113,7 +113,7 @@ from corehq.apps.app_manager.util import (
     app_callout_templates,
     xpath_references_case,
     xpath_references_user_case,
-)
+    module_case_hierarchy_has_circular_reference)
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -2338,6 +2338,13 @@ class Module(ModuleBase, ModuleDetailsMixin):
                 'type': 'no forms or case list',
                 'module': self.get_module_info(),
             })
+
+        if module_case_hierarchy_has_circular_reference(self):
+            errors.append({
+                'type': 'circular case hierarchy',
+                'module': self.get_module_info(),
+            })
+
         return errors
 
     def requires(self):

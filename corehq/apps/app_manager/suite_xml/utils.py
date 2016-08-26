@@ -10,6 +10,8 @@ def get_select_chain(app, module, include_self=True):
             current_module = app.get_module_by_unique_id(
                 current_module.parent_select.module_id
             )
+            if current_module in select_chain:
+                raise SuiteValidationError("Circular reference in case hierarchy")
             select_chain.append(current_module)
         return select_chain
 

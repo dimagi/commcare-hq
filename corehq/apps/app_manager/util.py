@@ -10,7 +10,7 @@ from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain, get_case_sharing_apps_in_domain
 )
-from corehq.apps.app_manager.exceptions import SuiteError
+from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
 from corehq.apps.app_manager.xpath import DOT_INTERPOLATE_PATTERN, UserCaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
@@ -174,6 +174,15 @@ def is_valid_case_type(case_type, module):
     matches_regex = bool(_case_type_regex.match(case_type or ''))
     prevent_usercase_type = (case_type != USERCASE_TYPE or isinstance(module, AdvancedModule))
     return matches_regex and prevent_usercase_type
+
+
+def module_case_hierarchy_has_circular_reference(module):
+    from corehq.apps.app_manager.suite_xml.utils import get_select_chain
+    try:
+        get_select_chain(module.get_app(), module)
+        return False
+    except SuiteValidationError:
+        return True
 
 
 class ParentCasePropertyBuilder(object):
