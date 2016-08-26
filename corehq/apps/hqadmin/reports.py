@@ -548,6 +548,7 @@ DIMAGISPHERE_FACET_MAPPING = [
     ]),
     ("Type", True, [
         {"facet": "internal.area.exact", "name": "Sector", "expanded": True},
+        {"facet": "internal.sub_area.exact", "name": "Sub-Sector", "expanded": False},
     ]),
 ]
 
@@ -906,16 +907,18 @@ class AdminDomainMapReport(AdminDomainStatsReport):
 
     def parse_params(self, es_params):
         es_filters = {}
-        country_params = es_params.get('deployment.countries.exact')
-        sector_params = es_params.get('internal.area.exact')
-        if country_params and sector_params:
-            es_filters = (filters.AND(
-                          filters.term("deployment.countries.exact", country_params),
-                          filters.term("internal.area.exact", sector_params)))
-        elif country_params:
-            es_filters = filters.term("deployment.countries.exact", country_params)
-        elif sector_params:
-            es_filters = filters.term("internal.area.exact", sector_params)
+
+        params_dict = {
+            'deployment.countries.exact': es_params.get('deployment.countries.exact'),
+            'internal.area.exact': es_params.get('internal.area.exact'),
+            'internal.sub_area.exact': es_params.get('internal.sub_area.exact'),
+        }
+        terms = []
+        for param in params_dict:
+            if params_dict[param] is not None:
+                terms.append(filters.term(param, params_dict[param]))
+        if terms:
+            es_filters = (filters.AND(terms))
 
         return es_filters
 
@@ -927,6 +930,7 @@ class AdminDomainMapReport(AdminDomainStatsReport):
         json['country_projs_count'] = self._calc_num_projs_per_countries(params)
         json['total_num_projects'] = self._calc_total_active_real_projects(params)
         return json
+
 
 class AdminUserReport(AdminFacetedReport):
     slug = "user_list"
