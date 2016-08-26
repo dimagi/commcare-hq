@@ -181,6 +181,17 @@ class LocationImporter(object):
         if not parent_site_code:
             return None
 
+        if isinstance(parent_site_code, int):
+            parent_site_code = str(parent_site_code)
+
+        if not isinstance(parent_site_code, basestring):
+            # Decimal types can display differently than they are stored. Don't try
+            # to guess what the value is, and instead raise an error.
+            raise LocationImportError(
+                _("Parent site code '{0}' should have a 'Text' type in Excel")
+                .format(parent_site_code)
+            )
+
         parent_obj = Location.by_site_code(self.domain, parent_site_code.lower())
         if parent_obj:
             if invalid_location_type(location_type, parent_obj, parent_child_map):
