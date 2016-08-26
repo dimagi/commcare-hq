@@ -116,14 +116,13 @@ class LocationsListView(BaseLocationView):
 
         user = self.request.couch_user
         if user.has_permission(self.domain, 'access_all_locations'):
-            root_location = None
+            locs = filter_for_archived(
+                SQLLocation.objects.filter(domain=self.domain, parent_id=None),
+                self.show_inactive,
+            )
+            return [to_json(loc, True) for loc in locs]
         else:
-            root_location = user.get_location_id(self.domain)
-        locs = filter_for_archived(
-            SQLLocation.objects.filter(domain=self.domain, parent__location_id=root_location),
-            self.show_inactive,
-        )
-        return [to_json(loc, True) for loc in locs]
+            return [to_json(user.get_sql_location(self.domain), True)]
 
 
 class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
