@@ -2338,6 +2338,15 @@ class Module(ModuleBase, ModuleDetailsMixin):
                 'type': 'no forms or case list',
                 'module': self.get_module_info(),
             })
+
+        try:
+            get_select_chain(self.get_app(), self)
+        except SuiteValidationError:
+            errors.append({
+                'type': 'circular case hierarchy',
+                'module': self.get_module_info(),
+            })
+
         return errors
 
     def requires(self):
