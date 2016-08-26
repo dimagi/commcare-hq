@@ -143,7 +143,7 @@ class ESQuery(object):
 
     def __init__(self, index=None, debug_host=None):
         self.index = index if index is not None else self.index
-        if self.index not in ES_META:
+        if self.index not in ES_META and not self.index.startswith('config_report'):
             msg = "%s is not a valid ES index.  Available options are: %s" % (
                 index, ', '.join(ES_META.keys()))
             raise IndexError(msg)

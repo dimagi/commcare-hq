@@ -151,7 +151,14 @@ def run_query(index_name, q, debug_host=None):
     else:
         es_instance = get_es_new()
 
-    es_meta = ES_META[index_name]
+    try:
+        es_meta = ES_META[index_name]
+    except KeyError:
+        # todo: figure out if we really need types
+        if index_name.startswith('config_report_'):
+            es_meta = EsMeta(index_name, 'indicator')
+        else:
+            raise
     try:
         return es_instance.search(es_meta.index, es_meta.type, body=q)
     except RequestError as e:
