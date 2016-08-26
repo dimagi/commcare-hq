@@ -586,7 +586,8 @@ class SmsLineItemFactory(FeatureLineItemFactory):
         return SmsBillable.objects.filter(
             domain__in=self.subscribed_domains,
             is_valid=True,
-            date_sent__range=[self.invoice.date_start, self.invoice.date_end]
+            date_sent__gte=self.invoice.date_start,
+            date_sent__lt=self.invoice.date_end + datetime.timedelta(days=1),
         ).order_by('-date_sent')
 
     @property
