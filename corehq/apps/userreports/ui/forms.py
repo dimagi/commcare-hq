@@ -12,7 +12,7 @@ from corehq.apps.userreports.ui.fields import ReportDataSourceField, JsonField
 from corehq.apps.userreports.util import get_table_name
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
-from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND
+from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND, DEFAULT_UCR_BACKEND
 
 
 class DocumentFormBase(forms.Form):
@@ -153,7 +153,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
     backend_id = forms.ChoiceField(
         choices=BACKEND_CHOICES,
         label=_("Backend"),
-        initial=UCR_SQL_BACKEND
+        initial=DEFAULT_UCR_BACKEND
     )
 
     def __init__(self, domain, *args, **kwargs):

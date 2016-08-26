@@ -20,6 +20,7 @@ from corehq.apps.cachehq.mixins import (
     CachedCouchDocumentMixin,
     QuickCachedDocumentMixin,
 )
+from corehq.apps.userreports.const import DEFAULT_UCR_BACKEND
 from corehq.apps.userreports.dbaccessors import get_number_of_report_configs_by_data_source, \
     get_report_configs_for_domain, get_datasources_for_domain
 from corehq.apps.userreports.exceptions import (
@@ -28,7 +29,6 @@ from corehq.apps.userreports.exceptions import (
     ReportConfigurationNotFoundError,
     StaticDataSourceConfigurationNotFoundError,
 )
-from corehq.apps.userreports.const import UCR_SQL_BACKEND
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
@@ -78,7 +78,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     """
     domain = StringProperty(required=True)
     engine_id = StringProperty(default=UCR_ENGINE_ID)
-    backend_id = StringProperty(default=UCR_SQL_BACKEND)
+    backend_id = StringProperty()
     referenced_doc_type = StringProperty(required=True)
     table_id = StringProperty(required=True)
     display_name = StringProperty()
@@ -94,6 +94,12 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.
         string_conversions = ()
+
+    @classmethod
+    def wrap(self, data):
+        if not data.get('backend_id', None):
+            data['backend_id'] = DEFAULT_UCR_BACKEND
+        return super(DataSourceConfiguration, self).wrap(data)
 
     def __unicode__(self):
         return u'{} - {}'.format(self.domain, self.display_name)
