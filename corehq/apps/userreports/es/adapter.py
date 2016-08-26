@@ -1,12 +1,38 @@
 from elasticsearch import NotFoundError
 from corehq.apps.userreports.util import get_table_name
 from corehq.apps.userreports.adapter import IndicatorAdapter
+from corehq.apps.es.es_query import HQESQuery
 from corehq.elastic import get_es_new
+from dimagi.utils.decorators.memoized import memoized
 from pillowtop.es_utils import INDEX_STANDARD_SETTINGS
 
 
 def normalize_id(values):
     return '-'.join(values).replace(' ', '_')
+
+
+class ESAlchemy(object):
+    def __init__(self, index_name, config):
+        self.index_name = index_name
+        self.config = config
+        self.es = HQESQuery(index_name)
+
+    def __getitem__(self, sliced):
+        hits = self.es[sliced].hits
+        return [[hit[col] for col in self.column_ordering] for hit in hits]
+
+    @property
+    @memoized
+    def column_ordering(self):
+        columns = self.config.indicators.get_columns()
+        return [col.database_column_name for col in columns]
+
+    @property
+    def column_descriptions(self):
+        return [{"name": col} for col in self.column_ordering]
+
+    def count(self):
+        return self.es.count()
 
 
 class IndicatorESAdapter(IndicatorAdapter):
@@ -26,6 +52,9 @@ class IndicatorESAdapter(IndicatorAdapter):
         except NotFoundError:
             # index doesn't exist yet
             pass
+
+    def get_query_object(self):
+        return ESAlchemy(self.table_name, self.config)
 
     def best_effort_save(self, doc):
         try:
