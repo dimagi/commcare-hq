@@ -116,10 +116,7 @@ class DomainInvoiceFactory(object):
 
     def _create_invoice_for_subscription(self, subscription):
         def _get_invoice_start(sub, date_start):
-            if sub.date_start > date_start:
-                return sub.date_start
-            else:
-                return date_start
+            return max(sub.date_start, date_start)
 
         def _get_invoice_end(sub, date_end):
             if sub.date_end is not None and sub.date_end <= date_end:
