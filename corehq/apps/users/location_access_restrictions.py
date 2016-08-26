@@ -1,17 +1,36 @@
-from django.core.exceptions import PermissionDenied
 from django.utils.translation import ugettext as _
 
-from dimagi.utils.decorators.memoized import memoized
+from tastypie.resources import Resource
 from corehq.apps.hqwebapp.views import no_permissions
 
-LOCATION_ACCESS_MSG = (
-    "This project has restricted data access rules.  Please contact your "
-    "project administrator to access specific data in the project"
-)
+LOCATION_SAFE_TASTYPIE_RESOURCES = set()
+
+
+def location_safe(view_fn):
+    view_fn.is_location_safe = True
+    return view_fn
+
+
+def tastypie_location_safe(resource):
+    """
+    tastypie is a special snowflake that doesn't preserve anything, so it gets
+    it's own class decorator:
+
+        @tastypie_location_safe
+        class LocationResource(HqBaseResource):
+            type = "location"
+    """
+    if not issubclass(resource, Resource):
+        raise TypeError("This decorator can only be applied to tastypie resources")
+    LOCATION_SAFE_TASTYPIE_RESOURCES.add(resource.Meta.resource_name)
+    return resource
 
 
 def location_restricted_response(request):
-    return no_permissions(request, message=LOCATION_ACCESS_MSG)
+    return no_permissions(request, message=_(
+        "This project has restricted data access rules.  Please contact your "
+        "project administrator to access specific data in the project"
+    ))
 
 
 class LocationAccessMiddleware(object):
@@ -33,45 +52,20 @@ class LocationAccessMiddleware(object):
         else:
             request.can_access_all_locations = False
             if (
-                not is_location_safe(view_fn)
+                not is_location_safe(view_fn, view_args, view_kwargs)
                 or not user.get_sql_location(domain)
             ):
                 return location_restricted_response(request)
 
 
-class ViewSafetyChecker(object):
-    @property
-    @memoized
-    def _location_safe_views(self):
-        """
-        This is a set of views which will safely restrict access based on the web
-        user's assigned location where appropriate. It's implemented as a
-        classmethod so it can be lazily initialized (to minimize
-        import loops) and memoized.
-        """
-        from corehq.apps.locations import views as location_views
-        return {self._get_view_path(view_fn) for view_fn in (
-            location_views.LocationsListView,
-            location_views.archive_location,
-            location_views.unarchive_location,
-            location_views.delete_location,
-            # TODO still need to control reparenting in these two:
-            # location_views.NewLocationView,
-            # location_views.EditLocationView,
-        )}
-
-    @memoized
-    def _is_location_safe_path(self, view_path):
-        return view_path in self._location_safe_views
-
-    def _get_view_path(self, view_fn):
-        return '.'.join([view_fn.__module__, view_fn.__name__])
-
-    def is_location_safe(self, view_fn):
-        return self._is_location_safe_path(self._get_view_path(view_fn))
-
-
-view_safety_checker = ViewSafetyChecker()
-
-def is_location_safe(view_fn):
-    return view_safety_checker.is_location_safe(view_fn)
+def is_location_safe(view_fn, view_args, view_kwargs):
+    """
+    Check if view_fn had the @location_safe decorator applied.
+    view_args and kwargs are also needed because view_fn alone doesn't always
+    contain enough information
+    """
+    if getattr(view_fn, 'is_location_safe', False):
+        return True
+    if 'resource_name' in view_kwargs:
+        return view_kwargs['resource_name'] in LOCATION_SAFE_TASTYPIE_RESOURCES
+    return False

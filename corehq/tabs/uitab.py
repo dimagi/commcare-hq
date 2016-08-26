@@ -11,11 +11,11 @@ from django.conf import settings
 def url_is_location_safe(url):
     from corehq.apps.users.location_access_restrictions import is_location_safe
     try:
-        view_fn = resolve(url).func
+        match = resolve(url)
     except Resolver404:
         return False
     else:
-        if is_location_safe(view_fn):
+        if is_location_safe(match.func, match.args, match.kwargs):
             return True
         return False
 
