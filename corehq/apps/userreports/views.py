@@ -89,9 +89,14 @@ from corehq.apps.userreports.ui.forms import (
     ConfigurableDataSourceEditForm,
     ConfigurableDataSourceFromAppForm,
 )
-from corehq.apps.userreports.util import has_report_builder_access, \
-    has_report_builder_add_on_privilege, add_event, \
-    allowed_report_builder_reports, number_of_report_builder_reports
+from corehq.apps.userreports.util import (
+    add_event
+    get_indicator_adapter,
+    has_report_builder_access,
+    has_report_builder_add_on_privilege,
+    allowed_report_builder_reports,
+    number_of_report_builder_reports
+)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.couch import get_document_or_404
@@ -972,7 +977,7 @@ def delete_data_source(request, domain, config_id):
 
 def delete_data_source_shared(domain, config_id, request=None):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
-    adapter = IndicatorSqlAdapter(config)
+    adapter = get_indicator_adapter(config)
     adapter.drop_table()
     config.delete()
     if request:
