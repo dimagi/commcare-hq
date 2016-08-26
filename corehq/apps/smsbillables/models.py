@@ -273,7 +273,7 @@ class SmsBillable(models.Model):
     log_id = models.CharField(max_length=50, db_index=True)
     phone_number = models.CharField(max_length=50)
     is_valid = models.BooleanField(default=True, db_index=True)
-    domain = models.CharField(max_length=25, db_index=True)
+    domain = models.CharField(max_length=100, db_index=True)
     direction = models.CharField(max_length=10, db_index=True, choices=DIRECTION_CHOICES)
     date_sent = models.DateTimeField()
     date_created = models.DateTimeField(auto_now_add=True)
