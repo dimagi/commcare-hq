@@ -25,8 +25,10 @@ def _user_locations_ids(user, project, only_editable):
         return (SQLLocation.by_domain(project.name)
                            .values_list('location_id', flat=True))
 
-    if (user.is_domain_admin(project.name) or
-            not project.location_restriction_for_users):
+    if not project.location_restriction_for_users:
+        return SQLLocation.objects.accessible_to_user(project.name, user).location_ids()
+
+    if user.is_domain_admin(project.name):
         return all_ids()
 
     user_loc = (user.get_location(project.name) if isinstance(user, WebUser)
