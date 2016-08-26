@@ -337,6 +337,7 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
 
 
 @task(ignore_result=True)
+@transaction.atomic()
 def create_wire_credits_invoice(domain_name,
                                 account_created_by,
                                 account_entry_point,
