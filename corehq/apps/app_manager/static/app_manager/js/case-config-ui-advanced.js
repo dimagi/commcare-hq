@@ -1063,6 +1063,8 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
             });
 
             self.validate = ko.computed(function () {
+                var case_type = self.case_type,
+                    case_tag = self.case_tag;
                 if (!self.config.caseConfigViewModel) {
                     return;
                 }
