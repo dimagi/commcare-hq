@@ -1061,6 +1061,26 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                     !self.case_property() &&
                     !self.auto_select();
             });
+
+            self.validate = ko.computed(function () {
+                if (!self.config.caseConfigViewModel) {
+                    return;
+                }
+                if (!case_type) {
+                    return "Case Type required";
+                }
+                if (case_tag) {
+                    if (!/^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/.test(case_tag)) {
+                        return "Case Tag: only letters, numbers, '-', and '_' allowed";
+                    }
+                    var tags = self.config.caseConfigViewModel.getCaseTags('all');
+                    if (_.where(tags, {value: case_tag}).length > 1) {
+                        return "Case Tag already in use";
+                    }
+                }
+                return null;
+            });
+
             return self;
         }
     };
