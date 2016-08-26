@@ -194,6 +194,11 @@ class ESQuery(object):
                 return add_filter
         raise AttributeError("There is no builtin filter named %s" % attr)
 
+    def __getitem__(self, sliced):
+        start = sliced.start or 0
+        size = sliced.stop - start
+        return self.start(start).size(size).run()
+
     def run(self):
         """Actually run the query.  Returns an ESQuerySet object."""
         raw = run_query(self.index, self.raw_query, debug_host=self.debug_host)
