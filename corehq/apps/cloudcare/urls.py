@@ -1,5 +1,5 @@
 from django.conf.urls import patterns, url, include
-from django.views.generic import TemplateView
+
 from corehq.apps.cloudcare.views import EditCloudcareUserPermissionsView, CloudcareMain
 
 app_urls = patterns('corehq.apps.cloudcare.views',

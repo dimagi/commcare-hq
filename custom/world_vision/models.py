@@ -1,5 +1,4 @@
 from functools import partial
-from corehq.apps.change_feed import topics
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from dimagi.utils.dates import force_to_datetime
 import fluff

@@ -685,7 +685,7 @@ class FlagBrokenBuilds(FormView):
 
 
 @require_superuser
-@datespan_in_request(from_param="startdate", to_param="enddate", default_days=365)
+@datespan_in_request(from_param="startdate", to_param="enddate", default_days=90)
 def stats_data(request):
     histo_type = request.GET.get('histogram_type')
     interval = request.GET.get("interval", "week")
@@ -1183,7 +1183,7 @@ def top_five_projects_by_country(request):
     data = {}
     if 'country' in request.GET:
         country = request.GET.get('country')
-        projects = (DomainES().is_active().real_domains()
+        projects = (DomainES().is_active_project().real_domains()
                     .filter(filters.term('deployment.countries', country))
                     .sort('cp_n_active_cc_users', True)
                     .source(['internal.area', 'internal.sub_area', 'cp_n_active_cc_users', 'deployment.countries'])

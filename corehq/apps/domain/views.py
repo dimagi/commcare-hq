@@ -592,7 +592,7 @@ def logo(request, domain):
 
 class DomainAccountingSettings(BaseProjectSettingsView):
 
-    @method_decorator(require_permission(Permissions.billing_admin))
+    @method_decorator(require_permission(Permissions.edit_billing))
     def dispatch(self, request, *args, **kwargs):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
 
@@ -617,7 +617,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
     @property
     def can_purchase_credits(self):
-        return self.request.couch_user.has_permission(self.domain, Permissions.billing_admin.name)
+        return self.request.couch_user.can_edit_billing()
 
     @property
     @memoized
@@ -1006,7 +1006,7 @@ class BaseStripePaymentView(DomainAccountingSettings):
     @property
     @memoized
     def billing_admin(self):
-        if self.request.couch_user.has_permission(self.domain, Permissions.billing_admin.name):
+        if self.request.couch_user.can_edit_billing():
             return self.request.couch_user.username
         else:
             raise PaymentRequestError(
@@ -1152,7 +1152,7 @@ class WireInvoiceView(View):
     http_method_names = ['post']
     urlname = 'domain_wire_invoice'
 
-    @method_decorator(require_permission(Permissions.billing_admin))
+    @method_decorator(require_permission(Permissions.edit_billing))
     def dispatch(self, request, *args, **kwargs):
         return super(WireInvoiceView, self).dispatch(request, *args, **kwargs)
 
@@ -1171,7 +1171,7 @@ class WireInvoiceView(View):
 class BillingStatementPdfView(View):
     urlname = 'domain_billing_statement_download'
 
-    @method_decorator(require_permission(Permissions.billing_admin))
+    @method_decorator(require_permission(Permissions.edit_billing))
     def dispatch(self, request, *args, **kwargs):
         return super(BillingStatementPdfView, self).dispatch(request, *args, **kwargs)
 

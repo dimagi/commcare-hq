@@ -142,6 +142,7 @@ class TestConvertBase(TestCase, TestFileMixin):
     domain = 'convert-domain'
 
     def setUp(self):
+        super(TestConvertBase, self).setUp()
         delete_all_export_instances()
 
     def _convert_form_export(self, export_file_name):
@@ -201,8 +202,10 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestConvertBase):
     @classmethod
     def tearDownClass(cls):
         cls.project.delete()
+        super(TestConvertSavedExportSchemaToCaseExportInstance, cls).tearDownClass()
 
     def setUp(self):
+        super(TestConvertSavedExportSchemaToCaseExportInstance, self).setUp()
         delete_all_export_instances()
 
     def test_basic_conversion(self, _):

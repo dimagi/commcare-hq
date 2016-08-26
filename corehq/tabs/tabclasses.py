@@ -1103,7 +1103,7 @@ class ProjectSettingsTab(UITab):
 
         items = []
         user_is_admin = self.couch_user.is_domain_admin(self.domain)
-        user_is_billing_admin = self.couch_user.has_permission(self.domain, Permissions.billing_admin.name)
+        user_is_billing_admin = self.couch_user.can_edit_billing()
 
         project_info = []
 
