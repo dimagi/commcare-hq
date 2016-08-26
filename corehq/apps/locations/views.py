@@ -31,6 +31,7 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.users.forms import MultipleSelectionForm
+from corehq.apps.users.location_access_restrictions import location_safe
 from corehq.util import reverse, get_document_or_404
 
 from .analytics import users_have_locations
@@ -82,6 +83,7 @@ class LocationsListView(BaseLocationView):
     template_name = 'locations/manage/locations.html'
 
     @use_jquery_ui
+    @location_safe
     def dispatch(self, request, *args, **kwargs):
         return super(LocationsListView, self).dispatch(request, *args, **kwargs)
 
@@ -393,6 +395,7 @@ class NewLocationView(BaseLocationView):
         return self.settings_form_post(request, *args, **kwargs)
 
 
+@location_safe
 @can_edit_location
 def archive_location(request, domain, loc_id):
     loc = Location.get(loc_id)
@@ -410,6 +413,7 @@ def archive_location(request, domain, loc_id):
 
 @require_http_methods(['DELETE'])
 @can_edit_location
+@location_safe
 def delete_location(request, domain, loc_id):
     loc = Location.get(loc_id)
     if loc.domain != domain:
@@ -435,6 +439,7 @@ def location_descendants_count(request, domain, loc_id):
 
 
 @can_edit_location
+@location_safe
 def unarchive_location(request, domain, loc_id):
     # hack for circumventing cache
     # which was found to be out of date, at least in one case
