@@ -14,8 +14,8 @@ from corehq.apps.userreports.exceptions import InvalidQueryColumn
 from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.reports.sorting import ASCENDING
 from corehq.apps.userreports.reports.util import get_expanded_columns
-from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.sql.connection import get_engine_id
+from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import connection_manager
 
 
