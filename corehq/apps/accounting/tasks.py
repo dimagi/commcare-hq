@@ -22,7 +22,6 @@ from dimagi.utils.django.email import send_HTML_email
 
 from corehq.apps.accounting.exceptions import (
     CreditLineError,
-    InvoiceAlreadyCreatedError,
     InvoiceError,
 )
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
@@ -212,11 +211,6 @@ def generate_invoices(based_on_date=None):
         except InvoiceError as e:
             log_accounting_error(
                 "Could not create invoice for domain %s: %s" % (domain.name, e),
-                show_stack_trace=True,
-            )
-        except InvoiceAlreadyCreatedError as e:
-            log_accounting_error(
-                "Invoice already existed for domain %s: %s" % (domain.name, e),
                 show_stack_trace=True,
             )
         except Exception as e:
