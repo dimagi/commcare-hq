@@ -20,6 +20,10 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_brief_apps_in_domain,
 )
+from .dbaccessors import (
+    get_form_export_instances,
+    get_case_export_instances,
+)
 from .exceptions import SkipConversion
 from .const import (
     CASE_EXPORT,
@@ -123,6 +127,10 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
             path=old_table.index,
         ))
 
+        # This keeps track of the order the columns should be in so we can reorder after
+        # iterating over all the columns
+        ordering = []
+
         for column in old_table.columns:
             info = []
             index = column.index
@@ -200,6 +208,7 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
                     # Must be deid transform
                     new_column.deid_transform = transform
                     info.append('Column has deid_transform: {}'.format(transform))
+                ordering.append(new_column)
             except SkipConversion, e:
                 if is_remote_app_migration:
                     # In the event that we skip a column and it's a remote application,
@@ -218,6 +227,8 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
                     failure_reason=None,
                     info=info,
                 ))
+
+        new_table.columns = _reorder_columns(new_table, ordering)
 
     if not dryrun:
         migration_meta.save()
@@ -260,6 +271,22 @@ def _strip_repeat_index(index):
     return index
 
 
+def _reorder_columns(new_table, columns):
+    """
+    Given a TableConfiguration and a list of in order columns, this function
+    returns a new list of columns that are in order based on the columns given.
+    Any columns found in the table that aren't in the order are put after the
+    ordered columns.
+    """
+    new_order = []
+    for column in columns:
+        new_order.append(column)
+    for column in new_table.columns:
+        if column not in new_order:
+            new_order.append(column)
+    return new_order
+
+
 def _strip_deid_transform(transform):
     return None if transform in DEID_TRANSFORM_FUNCTIONS.keys() else transform
 
@@ -272,6 +299,7 @@ def _convert_transform(serializable_transform):
         if fn == transform_fn:
             return slug
     return None
+
 
 def _get_for_single_node_repeat(tables, column_path, transform):
     """
@@ -452,7 +480,7 @@ def _is_remote_app_conversion(domain, app_id, export_type):
         return any(map(lambda app: app.is_remote_app(), apps))
 
 
-def revert_new_exports(new_exports):
+def revert_new_exports(new_exports, dryrun=False):
     """
     Takes a list of new style ExportInstance and marks them as deleted as well as restoring
     the old export it was converted from (if it was converted from an old export)
@@ -466,11 +494,27 @@ def revert_new_exports(new_exports):
             schema_cls = FormExportSchema if new_export.type == FORM_EXPORT else CaseExportSchema
             old_export = schema_cls.get(new_export.legacy_saved_export_schema_id)
             old_export.doc_type = old_export.doc_type.rstrip(DELETED_SUFFIX)
-            old_export.save()
+            if not dryrun:
+                old_export.save()
             reverted_exports.append(old_export)
         new_export.doc_type += DELETED_SUFFIX
-        new_export.save()
+        if not dryrun:
+            new_export.save()
     return reverted_exports
+
+
+def revert_migrate_domain(domain, dryrun=False):
+    instances = get_form_export_instances(domain)
+    instances.extend(get_case_export_instances(domain))
+
+    reverted_exports = revert_new_exports(instances, dryrun=dryrun)
+
+    if not dryrun:
+        set_toggle(NEW_EXPORTS.slug, domain, False, namespace=NAMESPACE_DOMAIN)
+        toggle_js_domain_cachebuster.clear(domain)
+
+    for reverted_export in reverted_exports:
+        print 'Reverted export: {}'.format(reverted_export._id)
 
 
 def migrate_domain(domain, dryrun=False):

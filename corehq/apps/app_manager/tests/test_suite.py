@@ -2,6 +2,7 @@
 import hashlib
 import re
 from django.test import SimpleTestCase
+from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
@@ -752,3 +753,13 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             app.create_suite(),
             "./detail/detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data']",
         )
+
+    def test_circular_parent_case_ref(self):
+        factory = AppFactory()
+        m0, m0f0 = factory.new_basic_module('m0', 'case1')
+        m1, m1f0 = factory.new_basic_module('m1', 'case2')
+        factory.form_requires_case(m0f0, 'case1', parent_case_type='case2')
+        factory.form_requires_case(m1f0, 'case2', parent_case_type='case1')
+
+        with self.assertRaises(SuiteValidationError):
+            factory.app.create_suite()

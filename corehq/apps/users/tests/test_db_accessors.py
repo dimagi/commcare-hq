@@ -5,11 +5,13 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_user_docs_by_username,
     delete_all_users,
     get_all_user_ids,
+    get_deleted_user_by_username,
 )
 from corehq.apps.users.dbaccessors.couch_users import (
     get_user_id_by_username,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.users.dbaccessors.all_commcare_users import hard_delete_deleted_users
 
 
 class AllCommCareUsersTest(TestCase):
@@ -18,6 +20,7 @@ class AllCommCareUsersTest(TestCase):
     def setUpClass(cls):
         super(AllCommCareUsersTest, cls).setUpClass()
         delete_all_users()
+        hard_delete_deleted_users()
         cls.ccdomain = Domain(name='cc_user_domain')
         cls.ccdomain.save()
         cls.other_domain = Domain(name='other_domain')
@@ -47,6 +50,13 @@ class AllCommCareUsersTest(TestCase):
             password='secret',
             email='email_other_domain@example.com',
         )
+        cls.retired_user = CommCareUser.create(
+            domain=cls.ccdomain.name,
+            username='retired_user',
+            password='secret',
+            email='retired_user_email@example.com',
+        )
+        cls.retired_user.retire()
 
     @classmethod
     def tearDownClass(cls):
@@ -91,3 +101,8 @@ class AllCommCareUsersTest(TestCase):
     def test_get_id_by_username(self):
         user_id = get_user_id_by_username(self.ccuser_1.username)
         self.assertEqual(user_id, self.ccuser_1._id)
+
+    def test_get_deleted_user_by_username(self):
+        self.assertEqual(self.retired_user['_id'],
+                         get_deleted_user_by_username(CommCareUser, self.retired_user.username)['_id'])
+        self.assertEqual(None, get_deleted_user_by_username(CommCareUser, self.ccuser_2.username))

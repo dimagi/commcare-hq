@@ -266,7 +266,7 @@ class EvalExpressionSpec(JsonObject):
         var_dict = self.get_variables(item, context)
         try:
             return eval_statements(self.statement, var_dict)
-        except (InvalidExpression, SyntaxError):
+        except (InvalidExpression, SyntaxError, TypeError, ZeroDivisionError):
             return None
 
     def get_variables(self, item, context):

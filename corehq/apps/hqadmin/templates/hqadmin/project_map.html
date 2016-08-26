@@ -67,9 +67,8 @@
               </thead>
               <tbody data-bind="foreach: {data: topFiveProjects}">
                 <tr class="project-row">
-                  <td data-bind="text: organization"></td>
                   <td data-bind="text: sector"></td>
-                  <td data-bind="text: deployment"></td>
+                  <td data-bind="text: sub_sector"></td>
                   <td data-bind="text: active_users"></td>
                   <td data-bind="text: countries"></td>
                 </tr>
@@ -92,7 +91,7 @@
             <button class="btn btn-primary active" id="projects">Projects</button>
             <button class="btn btn-default" id="users">Users</button>
         </div>
-      {% include 'appstore/partials/sidebar.html' with search_name="es_search" search_for=facet_report.search_for %}
+      {% include 'appstore/partials/sidebar.html' with not_searchable="true" search_name="es_search" search_for=facet_report.search_for %}
     </div>
   </div>
   <script type="application/javascript">

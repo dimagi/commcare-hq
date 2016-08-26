@@ -27,8 +27,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.exceptions import NameUnavailableException
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.registration.models import RegistrationRequest
-from corehq.apps.registration.forms import NewWebUserRegistrationForm, DomainRegistrationForm, \
-    RegisterNewWebUserForm
+from corehq.apps.registration.forms import DomainRegistrationForm, RegisterWebUserForm
 from corehq.apps.registration.utils import activate_new_user, send_new_request_update_email, request_new_domain, \
     send_domain_registration_email
 from corehq.apps.style.decorators import use_blazy, use_jquery_ui, \
@@ -81,7 +80,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
 
     @allow_remote_invocation
     def register_new_user(self, data):
-        reg_form = RegisterNewWebUserForm(
+        reg_form = RegisterWebUserForm(
             data['data'],
             show_number=(self.ab.version == ab_tests.NEW_USER_NUMBER_OPTION_SHOW_NUM)
         )
@@ -160,7 +159,7 @@ class UserRegistrationView(BasePageView):
     @property
     def page_context(self):
         return {
-            'reg_form': RegisterNewWebUserForm(
+            'reg_form': RegisterWebUserForm(
                 initial={'email': self.prefilled_email},
                 show_number=(self.ab.version == ab_tests.NEW_USER_NUMBER_OPTION_SHOW_NUM)
             ),

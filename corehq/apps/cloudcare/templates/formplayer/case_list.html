@@ -56,7 +56,7 @@
                 </li>
                 <% } %>
                 <% for (i = 0; i < pageCount; i++) { %>
-                <li class="page-item"><a class="page-link" data-id="<%= i %>"><%= i %></a></li>
+                <li class="page-item"><a class="page-link" data-id="<%= i %>"><%= i + 1 %></a></li>
                 <% } %>
                 <% if (currentPage < pageCount - 1) { %>
                 <li class="page-item" id="next-page">

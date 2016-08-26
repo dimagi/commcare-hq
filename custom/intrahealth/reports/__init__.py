@@ -44,7 +44,8 @@ class IntraHealthReportConfigMixin(object):
             visit="''",
             strsd=json_format_date(self.datespan.startdate),
             stred=json_format_date(self.datespan.enddate),
-            empty_prd_code='__none__'
+            empty_prd_code='__none__',
+            zero=0
         )
         self.config_update(config)
         return config

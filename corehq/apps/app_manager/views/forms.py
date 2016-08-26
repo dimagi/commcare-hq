@@ -283,6 +283,8 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
                     pass
             if xform:
                 save_xform(app, form, xform)
+                case_references = json.loads(request.POST.get('references', "{}"))
+                _update_case_refs_from_form_builder(form, case_references)
             else:
                 raise Exception("You didn't select a form to upload")
         except Exception, e:

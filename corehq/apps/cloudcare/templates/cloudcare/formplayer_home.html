@@ -11,6 +11,8 @@
     {% endif %}
 {% endblock %}
 
+{% block page_title %}{% endblock %}
+
 {% block head %}
     {{ block.super }}
     {% include "imports/proptable.html" %}
@@ -37,9 +39,17 @@
   <link type="text/less"
         rel="stylesheet"
         media="all"
+        href="{% static 'cloudcare/less/font-formplayer.less' %}" />
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
         href="{% static 'cloudcare/less/cloudcare.debug.less' %}" />
   {% else %}
   {% compress css %}
+      <link type="text/less"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'cloudcare/less/font-formplayer.less' %}" />
       <link type="text/less"
             rel="stylesheet"
             media="all"
@@ -49,18 +59,12 @@
 {% endblock %}
 
 {% block js %} {{ block.super }}
-    {% compress js %}
-        {% include "formplayer/dependencies.html" %}
-    {% endcompress %}
+    {% include "formplayer/dependencies.html" %}
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
     <script>
         window.GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is loaded on-demand
-        var translatedStrings = {
-            synced: "{% trans "User Data Successfully Synced" %}",
-            errSyncing: "{% trans "Could not sync user data. Please try again and report a bug if issue persists." %}"
-        };
         var apps = {{ apps|JSON }};
         var language = "{{ language }}";
         var username = "{{ username  }}";

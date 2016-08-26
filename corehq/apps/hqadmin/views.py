@@ -685,7 +685,7 @@ class FlagBrokenBuilds(FormView):
 
 
 @require_superuser
-@datespan_in_request(from_param="startdate", to_param="enddate", default_days=365)
+@datespan_in_request(from_param="startdate", to_param="enddate", default_days=90)
 def stats_data(request):
     histo_type = request.GET.get('histogram_type')
     interval = request.GET.get("interval", "week")
@@ -1004,6 +1004,8 @@ def _gir_csv_response(month, year):
     query_month = "{year}-{month}-01".format(year=year, month=month)
     prev_month = "{year}-{month}-01".format(year=year, month=month - 1)
     two_ago = "{year}-{month}-01".format(year=year, month=month - 2)
+    if not GIRRow.objects.filter(month=query_month).exists():
+        return HttpResponse('Sorry, that month is not yet available')
     queryset = GIRRow.objects.filter(month__in=[query_month, prev_month, two_ago]).order_by('-month')
     domain_months = defaultdict(list)
     for item in queryset:
@@ -1183,11 +1185,10 @@ def top_five_projects_by_country(request):
     data = {}
     if 'country' in request.GET:
         country = request.GET.get('country')
-        projects = (DomainES().is_active().real_domains()
+        projects = (DomainES().is_active_project().real_domains()
                     .filter(filters.term('deployment.countries', country))
                     .sort('cp_n_active_cc_users', True)
-                    .source(['internal.organization_name', 'internal.area',
-                             'deployment.date', 'cp_n_active_cc_users', 'deployment.countries'])
+                    .source(['internal.area', 'internal.sub_area', 'cp_n_active_cc_users', 'deployment.countries'])
                     .size(5).run().hits)
         data = {country: projects}
     return json_response(data)

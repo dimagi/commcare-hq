@@ -20,10 +20,6 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
         initialize: function (params) {
             this.fetch = params.fetch;
         },
-
-        comparator: function(m) {
-            return -m.get('dateOpened').getTime();
-        },
     });
 
     var API = {

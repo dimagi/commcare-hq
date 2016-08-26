@@ -33,7 +33,7 @@ from corehq.apps.app_manager.util import (
     prefix_usercase_properties,
     commtrack_ledger_sections,
     module_offers_search,
-)
+    module_case_hierarchy_has_circular_reference)
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.userreports.models import ReportConfiguration, \
     StaticReportConfiguration
@@ -438,6 +438,8 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     if should_edit("parent_module"):
         parent_module = request.POST.get("parent_module")
         module.parent_select.module_id = parent_module
+        if module_case_hierarchy_has_circular_reference(module):
+            return HttpResponseBadRequest(_("The case hierarchy for this module contains a circular reference."))
     if should_edit("auto_select_case"):
         module["auto_select_case"] = request.POST.get("auto_select_case") == 'true'
 
@@ -699,6 +701,8 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
             detail.short.sort_elements.append(item)
     if parent_select is not None:
         module.parent_select = ParentSelect.wrap(parent_select)
+        if module_case_hierarchy_has_circular_reference(module):
+            return HttpResponseBadRequest(_("The case hierarchy for this module contains a circular reference."))
     if fixture_select is not None:
         module.fixture_select = FixtureSelect.wrap(fixture_select)
     if search_properties is not None:

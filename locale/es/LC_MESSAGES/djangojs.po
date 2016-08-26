@@ -8,14 +8,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-08-09 19:09+0000\n"
+"POT-Creation-Date: 2016-08-23 19:22+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: \n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: corehq/apps/accounting/static/accounting/js/accounting.billing_info_handler.js:85
@@ -40,7 +40,7 @@ msgstr ""
 msgid "Auto-set by "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:519
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:526
 msgid "Select One"
 msgstr ""
 
@@ -61,8 +61,12 @@ msgstr ""
 msgid "(Default)"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:99
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:114
 msgid "Form successfully saved"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/entities/menu.js:111
+msgid "Unable to connect to form playing service. "
 msgstr ""
 
 #: corehq/apps/export/static/export/js/list_exports.ng.js:86
@@ -126,39 +130,42 @@ msgstr ""
 msgid "Upload "
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:82
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:89
 msgid "Please enter your name."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:91
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:98
 msgid "Please specify an email."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:118
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:125
 msgid "There is already a user with this email."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:126
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:133
 msgid "Checking email..."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:136
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:143
 msgid "Please specify a password."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:152
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:163
 msgid "Please specify a project name."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:22
+#: corehq/apps/registration/static/registration/js/password.js:25
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:67
 msgid "Your password is too weak! Try adding numbers or symbols!"
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:24
+#: corehq/apps/registration/static/registration/js/password.js:27
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:58
 msgid "Your password is almost strong enough!"
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:26
+#: corehq/apps/registration/static/registration/js/password.js:29
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:49
 msgid "Good Job! Your password is strong!"
 msgstr ""
 
@@ -256,24 +263,42 @@ msgstr ""
 msgid "Not a valid email"
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:336
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:357
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:372
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:337
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:358
 msgid ""
 "Web users viewing the report will see this display text instead of the "
 "property name. Name your filter something easy for users to understand."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:338
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:359
 msgid ""
-"What type of property is this filter?<br/><br/><strong>Date</strong>: select "
-"this if the property is a date.<br/><strong>Choice</strong>: select this if "
+"What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
+"this if the property is a date.<br/><strong>Choice</strong>: Select this if "
 "the property is text or multiple choice."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:349
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:373
+msgid ""
+"What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
+"this to filter the property by a date range.<br/><strong>Value</strong>: "
+"Select this to filter the property by a single value."
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:374
+msgid "What value or date range must the property be equal to?"
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:385
 msgid ""
 "Column format selection will determine how each row's value is calculated."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:76
+msgid ""
+"This password is automatically generated. Please copy it or create your own. "
+"It will not be shown again."
 msgstr ""

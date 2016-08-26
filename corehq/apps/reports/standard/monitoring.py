@@ -10,8 +10,6 @@ from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
 from corehq.apps.es.aggregations import (
     TermsAggregation,
-    RangeAggregation,
-    AggregationRange,
     FilterAggregation,
     MissingAggregation,
 )

@@ -47,13 +47,14 @@
     "bootstrap-tour": "0.10.2",
     "jquery.caret": "~1.5.2",
     "syntaxhighlighter": "alexgorbatchev/syntaxhighlighter#3.0.83",
-    "bootstrap": "3.3.6",
+    "bootstrap": "3.3.7",
     "font-awesome": "fontawesome#4.5.0",
     "ui-select": "angular-ui/ui-select#v0.13.2",
     "jquery-migrate": "1.2.1",
     "moment": "2.12.0",
     "jquery-treetable": "^3.2.0",
-    "css-grid-polyfill-binaries": "1.1.1"
+    "css-grid-polyfill-binaries": "1.1.1",
+    "requirejs": "~2.2.0"
   },
   "devDependencies": {
     "chai": "3.3.0",
@@ -64,7 +65,7 @@
   "private": true,
   "resolutions": {
     "jquery": "1.11.1",
-    "bootstrap": "3.3.6",
+    "bootstrap": "3.3.7",
     "select2": "4.0.0",
     "underscore": "1.6.0",
     "backbone": "0.9.1"
