@@ -317,6 +317,7 @@ class NewLocationView(BaseLocationView):
     form_tab = 'basic'
 
     @use_multiselect
+    @location_safe
     def dispatch(self, request, *args, **kwargs):
         return super(NewLocationView, self).dispatch(request, *args, **kwargs)
 
@@ -462,6 +463,7 @@ class EditLocationView(NewLocationView):
     page_title = ugettext_noop("Edit Location")
     creates_new_location = False
 
+    @location_safe
     @method_decorator(can_edit_location)
     def dispatch(self, request, *args, **kwargs):
         return super(EditLocationView, self).dispatch(request, *args, **kwargs)
