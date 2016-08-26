@@ -174,7 +174,7 @@ def warn_active_subscriptions_per_domain_not_one():
             log_accounting_error("There is no active subscription for domain %s" % domain_name)
 
 
-@periodic_task(run_every=crontab(minute=0, hour=5))
+@periodic_task(run_every=crontab(minute=0, hour=5), acks_late=True)
 def update_subscriptions():
     deactivate_subscriptions()
     activate_subscriptions()
@@ -286,7 +286,7 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
         })
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0))
+@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
 def remind_subscription_ending():
     """
     Sends reminder emails for subscriptions ending N days from now.
@@ -336,7 +336,7 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
             subscription.send_dimagi_ending_reminder_email()
 
 
-@task(ignore_result=True)
+@task(ignore_result=True, acks_late=True)
 @transaction.atomic()
 def create_wire_credits_invoice(domain_name,
                                 account_created_by,
@@ -542,7 +542,7 @@ def weekly_digest():
         })
 
 
-@periodic_task(run_every=crontab(hour=01, minute=0,))
+@periodic_task(run_every=crontab(hour=01, minute=0,), acks_late=True)
 def pay_autopay_invoices():
     """ Check for autopayable invoices every day and pay them """
     AutoPayInvoicePaymentHandler().pay_autopayable_invoices(datetime.datetime.today())
