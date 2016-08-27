@@ -96,7 +96,7 @@ FormplayerFrontend.reqres.setHandler('handleNotification', function(notification
     }
 });
 
-FormplayerFrontend.reqres.setHandler('startForm', function (data) {
+FormplayerFrontend.on('startForm', function (data) {
     FormplayerFrontend.request("clearMenu");
 
     data.onLoading = tfLoading;
