@@ -13,7 +13,12 @@ Util.objectToEncodedUrl = function (object) {
 
 Util.currentUrlToObject = function () {
     var url = Backbone.history.getFragment();
-    return Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(url));
+    try {
+        return Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(url));
+    } catch (e) {
+        // This means that we're on the homepage
+        return new Util.CloudcareUrl();
+    }
 };
 
 Util.setUrlToObject = function (urlObject) {
