@@ -13,6 +13,7 @@ from corehq.apps.userreports.const import (
 )
 from django_prbac.utils import has_privilege
 
+from corehq.apps.userreports.dbaccessors import get_all_es_data_sources
 from corehq.apps.userreports.exceptions import BadBuilderConfigError
 
 
@@ -150,3 +151,8 @@ def truncate_value(value, max_length=63, from_left=True):
         short_hash = hashlib.sha1(value).hexdigest()[:hash_length]
         return '{}_{}'.format(truncated_value, short_hash)
     return value
+
+
+def get_ucr_es_indices():
+    sources = get_all_es_data_sources()
+    return [get_table_name(s.domain, s.table_id) for s in sources]
