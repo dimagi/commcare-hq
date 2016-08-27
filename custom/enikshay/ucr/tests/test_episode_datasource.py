@@ -65,6 +65,42 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
                 )
             },
         )
+
+        occurrence = CaseStructure(
+            case_id='occurrence',
+            attrs={
+                "case_type": "occurrence",
+                "create": True,
+            },
+            indices=[
+                CaseIndex(
+                    person,
+                    identifier='host',
+                    relationship=CASE_INDEX_EXTENSION,
+                    related_type=person.attrs['case_type']
+                )
+            ]
+        )
+
+        test = CaseStructure(
+            case_id='test',
+            attrs={
+                'case_type': 'test',
+                'create': True,
+                'update': dict(
+                    test_type_value='microscopy-zn',
+                    result=lab_result,
+                    purpose_of_testing='diagnostic_or_pretreatment'
+                )
+            },
+            indices=[CaseIndex(
+                occurrence,
+                identifier='host',
+                relationship=CASE_INDEX_EXTENSION,
+                related_type=occurrence.attrs['case_type'],
+            )]
+        )
+
         episode = CaseStructure(
             case_id='episode_case_1',
             attrs={
@@ -81,16 +117,16 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
                 )
             },
             indices=[CaseIndex(
-                person,
+                occurrence,
                 identifier='host',
                 relationship=CASE_INDEX_EXTENSION,
-                related_type=person.attrs['case_type'],
+                related_type=occurrence.attrs['case_type'],
             )],
         )
-        self.factory.create_or_update_cases([episode])
+        self.factory.create_or_update_cases([episode, test])
 
     def test_sputum_positive(self):
-        self._create_case_structure(lab_result="TB detected")
+        self._create_case_structure(lab_result="tb_detected")
         query = self._rebuild_table_get_query_object()
         self.assertEqual(query.count(), 1)
         row = query.first()
@@ -114,7 +150,7 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
         self.assertEqual(row.new_smear_positive_pulmonary_TB_over_15, 0)
 
     def test_sputum_negative(self):
-        self._create_case_structure(lab_result="TB not detected")
+        self._create_case_structure(lab_result="tb_not_detected")
         query = self._rebuild_table_get_query_object()
         self.assertEqual(query.count(), 1)
         row = query.first()
@@ -128,7 +164,7 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
         self.assertEqual(row.new_smear_negative_pulmonary_TB_over_15, 0)
 
     def test_extra_pulmonary(self):
-        self._create_case_structure(lab_result="TB detected", disease_classification="extra_pulmonary")
+        self._create_case_structure(lab_result="tb_detected", disease_classification="extra_pulmonary")
         query = self._rebuild_table_get_query_object()
         self.assertEqual(query.count(), 1)
         row = query.first()
