@@ -114,14 +114,20 @@ FormplayerFrontend.on('startForm', function (data) {
             showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
 
             if(resp.nextScreen !== null && resp.nextScreen !== undefined) {
-                FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
+                if (resp.nextScreen.hasOwnProperty('tree')) {
+                    // If the response has "tree" property then we know it's a form link
+                    // so we should start the form.
+                    FormplayerFrontend.trigger('startForm', resp.nextScreen);
+                } else {
+                    FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
+                }
+
             } else {
                 FormplayerFrontend.trigger("apps:currentApp");
             }
         } else {
             showError(resp.output, $("#cloudcare-notifications"));
         }
-        // TODO form linking
     };
     data.formplayerEnabled = true;
     data.answerCallback = function(sessionId) {
