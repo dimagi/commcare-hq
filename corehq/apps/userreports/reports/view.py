@@ -15,6 +15,8 @@ from corehq.apps.style.decorators import (
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, \
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
 from couchexport.shortcuts import export_response
+
+from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR
 from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib import messages
@@ -327,7 +329,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     def get_ajax(self, request):
         try:
             data_source = self.data_source
-            if len(data_source.columns) > 50:
+            if not DISABLE_COLUMN_LIMIT_IN_UCR.enabled(self.domain) and len(data_source.columns) > 50:
                 raise UserReportsError(_("This report has too many columns to be displayed"))
             data_source.set_filter_values(self.filter_values)
 
