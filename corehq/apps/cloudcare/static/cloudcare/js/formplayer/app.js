@@ -64,7 +64,7 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
     return FormplayerFrontend.currentUser;
 });
 
-FormplayerFrontend.reqres.setHandler('clearForm', function () {
+FormplayerFrontend.on('clearForm', function () {
     $('#webforms').html("");
 });
 
