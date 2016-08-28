@@ -219,6 +219,11 @@ class CloudcareMain(View):
 
 
 class CloudcareClearUserData(View):
+    """
+    This currently closes all cases for a web user when they hit the
+    clear user data button. Note, this is a _work in progress_ and
+    should not be used elsewhere
+    """
 
     urlname = 'clear_user_data'
     http_method_names = ['post']
@@ -231,7 +236,7 @@ class CloudcareClearUserData(View):
     def post(self, request, domain):
         couch_user = request.couch_user
 
-        if not couch_user.is_web_user:
+        if not couch_user.is_web_user or not toggles.PREVIEW_APP.enabled(domain):
             # If this is called by a mobile user, it's most likely a mistake so we should
             # not close all their cases.
             return json_response({'status': 'fail'}, status_code=400)
