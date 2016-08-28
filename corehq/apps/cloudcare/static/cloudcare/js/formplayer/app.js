@@ -268,6 +268,7 @@ FormplayerFrontend.on('clearUserData', function(appId) {
 FormplayerFrontend.on('navigateHome', function(appId) {
     var urlObject = Util.currentUrlToObject();
     urlObject.clearExceptApp();
+    FormplayerFrontend.trigger("clearForm");
     FormplayerFrontend.regions.breadcrumb.empty();
     FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });
 });
