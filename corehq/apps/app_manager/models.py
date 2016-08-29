@@ -5648,6 +5648,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def grid_display_for_root_module(self):
         return self.profile['properties']['cc-grid-menus'] == 'first'
 
+    def grid_display_for_all_modules(self):
+        return self.profile['properties']['cc-grid-menus'] == 'all'
+
 class RemoteApp(ApplicationBase):
     """
     A wrapper for a url pointing to a suite or profile file. This allows you to
