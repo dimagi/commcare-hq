@@ -1,8 +1,10 @@
 from corehq.apps.commtrack.dbaccessors import get_supply_point_ids_in_domain_by_location
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.const import LOCATION_TYPE_SHEET_HEADERS
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.interfaces.supply import SupplyInterface
+from corehq.toggles import NEW_BULK_LOCATION_MANAGEMENT
 from corehq.util.quickcache import quickcache
 from corehq.util.spreadsheets.excel import flatten_json, json_to_headers
 from dimagi.utils.decorators.memoized import memoized
@@ -26,7 +28,8 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
     only_administrative - if False get all locations
                           if True get only administrative locations
     """
-    from .permissions import user_can_edit_location, user_can_view_location
+    from .permissions import (user_can_edit_location, user_can_view_location,
+        user_can_access_location_id)
 
     def loc_to_json(loc, project):
         ret = {
@@ -37,7 +40,10 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
             'can_edit': True
         }
         if user:
-            ret['can_edit'] = user_can_edit_location(user, loc, project)
+            if user.has_permission(domain, 'access_all_locations'):
+                ret['can_edit'] = user_can_edit_location(user, loc, project)
+            else:
+                ret['can_edit'] = user_can_access_location_id(domain, user, loc.location_id)
         return ret
 
     project = Domain.get_by_name(domain)
@@ -218,9 +224,46 @@ class LocationExporter(object):
             'rows': tab_rows,
         })
 
+    def type_sheet(self, location_types):
+        headers = LOCATION_TYPE_SHEET_HEADERS
+
+        def foreign_code(lt, attr):
+            val = getattr(lt, attr, None)
+            if val:
+                return val.code
+            else:
+                return None
+
+        rows = []
+        for lt in location_types:
+            type_row = {
+                headers['code']: lt.code,
+                headers['name']: lt.name,
+                headers['parent_code']: foreign_code(lt, 'parent_type'),
+                headers['do_delete']: '',
+                headers['shares_cases']: lt.shares_cases,
+                headers['view_descendants']: lt.view_descendants,
+                headers['expand_from']: foreign_code(lt, 'expand_from'),
+                headers['expand_to']: foreign_code(lt, 'expand_to'),
+            }
+            rows.append(dict(flatten_json(type_row)))
+
+        return ('types', {
+            'headers': [headers[header] for header in ['code', 'name', 'parent_code', 'do_delete',
+                        'shares_cases', 'view_descendants', 'expand_from', 'expand_to']],
+            'rows': rows
+        })
+
     def get_export_dict(self):
-        return [self._loc_type_dict(loc_type.name)
-                for loc_type in self.domain_obj.location_types]
+        location_types = self.domain_obj.location_types
+        sheets = []
+        if NEW_BULK_LOCATION_MANAGEMENT.enabled(self.domain):
+            sheets.extend([self.type_sheet(location_types)])
+        sheets.extend([
+            self._loc_type_dict(loc_type.name)
+            for loc_type in location_types
+        ])
+        return sheets
 
 
 def dump_locations(response, domain, include_consumption=False, include_ids=False):
@@ -247,13 +290,13 @@ def write_to_file(locations):
     """
     outfile = StringIO()
     writer = Excel2007ExportWriter()
-    header_table = [(loc_type, [tab['headers']]) for loc_type, tab in locations]
+    header_table = [(tab_name, [tab['headers']]) for tab_name, tab in locations]
     writer.open(header_table=header_table, file=outfile)
-    for loc_type, tab in locations:
+    for tab_name, tab in locations:
         headers = tab['headers']
         tab_rows = [[row.get(header, '') for header in headers]
                     for row in tab['rows']]
-        writer.write([(loc_type, tab_rows)])
+        writer.write([(tab_name, tab_rows)])
     writer.close()
     return outfile.getvalue()
 
