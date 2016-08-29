@@ -2,9 +2,9 @@ from django.http import Http404, HttpResponse
 from django.core.exceptions import PermissionDenied
 from corehq.apps.domain.decorators import login_and_domain_required, domain_specific_login_redirect
 from functools import wraps
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, CommCareUser
 from django.utils.translation import ugettext as _
-
+from corehq.apps.users.dbaccessors.all_commcare_users import get_deleted_user_by_username
 
 def require_permission_raw(permission_check, login_decorator=login_and_domain_required):
     """
@@ -79,3 +79,22 @@ def require_permission_to_edit_user(view_func):
         else:
             return domain_specific_login_redirect(request, domain)
     return _inner
+
+
+def ensure_active_user_by_username(username):
+    """
+    :param username: ex: jordan@testapp-9.commcarehq.org
+    :return
+        valid: is True by default but is set to False for inactive/deleted user
+        error_code: mapping in app_string for the user
+        default_response: english description of the error to be used in case error_code missing
+    """
+    ccu = CommCareUser.get_by_username(username)
+    valid, message, error_code = True, None, None
+    if ccu and not ccu.is_active:
+        valid, message, error_code = False, 'Your account has been deactivated, please contact your domain admin '\
+                                            'to reactivate', 'user.deactivated'
+    elif get_deleted_user_by_username(CommCareUser, username):
+        valid, message, error_code = False, 'Your account has been deleted, please contact your domain admin to '\
+                                            'request for restore', 'user.deleted'
+    return valid, message, error_code

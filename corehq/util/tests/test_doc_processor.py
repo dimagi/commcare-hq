@@ -141,8 +141,7 @@ class BaseResumableSqlModelIteratorTest(object):
         raise NotImplementedError
 
     @classmethod
-    def setUpClass(cls):
-        super(BaseResumableSqlModelIteratorTest, cls).setUpClass()
+    def base_setUpClass(cls):
         cls.domain = uuid.uuid4().hex
         with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
             FormProcessorTestUtils.delete_all_cases_forms_ledgers()
@@ -150,19 +149,16 @@ class BaseResumableSqlModelIteratorTest(object):
             cls.first_doc_id = cls.all_doc_ids[0]
 
     @classmethod
-    def tearDownClass(cls):
+    def base_tearDownClass(cls):
         with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
             FormProcessorTestUtils.delete_all_cases_forms_ledgers()
-        super(BaseResumableSqlModelIteratorTest, cls).tearDownClass()
 
-    def setUp(self):
-        super(BaseResumableSqlModelIteratorTest, self).setUp()
+    def base_setUp(self):
         self.iteration_key = uuid.uuid4().hex
         self.itr = self.get_iterator()
 
-    def tearDown(self):
+    def base_tearDown(self):
         self.itr.discard_state()
-        super(BaseResumableSqlModelIteratorTest, self).tearDown()
 
     def get_iterator(self, deleted_doc_ids=None, chunk_size=2):
         reindex_accessor = SimulateDeleteReindexAccessor(self.reindex_accessor, deleted_doc_ids)
@@ -221,6 +217,24 @@ class XFormResumableSqlModelIteratorTest(BaseResumableSqlModelIteratorTest, Test
 
         return form_ids
 
+    @classmethod
+    def setUpClass(cls):
+        super(XFormResumableSqlModelIteratorTest, cls).setUpClass()
+        super(XFormResumableSqlModelIteratorTest, cls).base_setUpClass()
+
+    @classmethod
+    def tearDownClass(cls):
+        super(XFormResumableSqlModelIteratorTest, cls).base_tearDownClass()
+        super(XFormResumableSqlModelIteratorTest, cls).tearDownClass()
+
+    def setUp(self):
+        super(XFormResumableSqlModelIteratorTest, self).setUp()
+        super(XFormResumableSqlModelIteratorTest, self).base_setUp()
+
+    def tearDown(self):
+        super(XFormResumableSqlModelIteratorTest, self).base_tearDown()
+        super(XFormResumableSqlModelIteratorTest, self).tearDown()
+
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class CaseResumableSqlModelIteratorTest(BaseResumableSqlModelIteratorTest, TestCase):
@@ -232,6 +246,24 @@ class CaseResumableSqlModelIteratorTest(BaseResumableSqlModelIteratorTest, TestC
     def create_docs(cls, domain, count):
         factory = CaseFactory(cls.domain)
         return [factory.create_case().case_id for i in range(count)]
+
+    @classmethod
+    def setUpClass(cls):
+        super(CaseResumableSqlModelIteratorTest, cls).setUpClass()
+        super(CaseResumableSqlModelIteratorTest, cls).base_setUpClass()
+
+    @classmethod
+    def tearDownClass(cls):
+        super(CaseResumableSqlModelIteratorTest, cls).base_tearDownClass()
+        super(CaseResumableSqlModelIteratorTest, cls).tearDownClass()
+
+    def setUp(self):
+        super(CaseResumableSqlModelIteratorTest, self).setUp()
+        super(CaseResumableSqlModelIteratorTest, self).base_setUp()
+
+    def tearDown(self):
+        super(CaseResumableSqlModelIteratorTest, self).base_tearDown()
+        super(CaseResumableSqlModelIteratorTest, self).tearDown()
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -263,9 +295,23 @@ class LedgerResumableSqlModelIteratorTest(BaseResumableSqlModelIteratorTest, Tes
         ]
 
     @classmethod
+    def setUpClass(cls):
+        super(LedgerResumableSqlModelIteratorTest, cls).setUpClass()
+        super(LedgerResumableSqlModelIteratorTest, cls).base_setUpClass()
+
+    @classmethod
     def tearDownClass(cls):
         cls.product.delete()
+        super(LedgerResumableSqlModelIteratorTest, cls).base_tearDownClass()
         super(LedgerResumableSqlModelIteratorTest, cls).tearDownClass()
+
+    def setUp(self):
+        super(LedgerResumableSqlModelIteratorTest, self).setUp()
+        super(LedgerResumableSqlModelIteratorTest, self).base_setUp()
+
+    def tearDown(self):
+        super(LedgerResumableSqlModelIteratorTest, self).base_tearDown()
+        super(LedgerResumableSqlModelIteratorTest, self).tearDown()
 
 
 class DemoProcessor(BaseDocProcessor):

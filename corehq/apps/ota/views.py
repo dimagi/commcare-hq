@@ -32,10 +32,11 @@ from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCach
 from django.http import HttpResponse
 from soil import MultipleTaskDownload
 
-from .utils import demo_user_restore_response, get_restore_user, is_permitted_to_restore
+from .utils import demo_user_restore_response, get_restore_user, is_permitted_to_restore, handle_401_response
 
 
 @json_error
+@handle_401_response
 @login_or_digest_or_basic_or_apikey()
 def restore(request, domain, app_id=None):
     """

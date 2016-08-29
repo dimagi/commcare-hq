@@ -19,10 +19,10 @@ class ShardingTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(ShardingTests, cls).setUpClass()
         if not settings.USE_PARTITIONED_DATABASE:
             # https://github.com/nose-devs/nose/issues/946
             raise SkipTest('Only applicable if sharding is setup')
+        super(ShardingTests, cls).setUpClass()
         cls.partion_config = PartitionConfig()
         assert len(cls.partion_config.get_form_processing_dbs()) > 1
 

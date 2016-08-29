@@ -2,7 +2,6 @@ import pytz
 import uuid
 
 from datetime import datetime, timedelta
-from django.conf import settings
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 

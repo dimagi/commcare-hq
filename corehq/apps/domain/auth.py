@@ -58,19 +58,26 @@ def guess_phone_type_from_user_agent(user_agent):
     return None
 
 
+def get_username_and_password_from_request(request):
+    username, password = None, None
+    if 'HTTP_AUTHORIZATION' in request.META:
+        auth = request.META['HTTP_AUTHORIZATION'].split()
+        if len(auth) == 2:
+            if auth[0].lower() == BASIC:
+                username, password = base64.b64decode(auth[1]).split(':', 1)
+    return username, password
+
+
 def basicauth(realm=''):
     # stolen and modified from: https://djangosnippets.org/snippets/243/
     def real_decorator(view):
         def wrapper(request, *args, **kwargs):
-            if 'HTTP_AUTHORIZATION' in request.META:
-                auth = request.META['HTTP_AUTHORIZATION'].split()
-                if len(auth) == 2:
-                    if auth[0].lower() == BASIC:
-                        uname, passwd = base64.b64decode(auth[1]).split(':', 1)
-                        user = authenticate(username=uname, password=passwd)
-                        if user is not None and user.is_active:
-                            request.user = user
-                            return view(request, *args, **kwargs)
+            uname, passwd = get_username_and_password_from_request(request)
+            if uname and passwd:
+                user = authenticate(username=uname, password=passwd)
+                if user is not None and user.is_active:
+                    request.user = user
+                    return view(request, *args, **kwargs)
 
             # Either they did not provide an authorization header or
             # something in the authorization attempt failed. Send a 401

@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
 from tastypie import fields
@@ -7,14 +5,13 @@ from tastypie.bundle import Bundle
 from tastypie.authentication import Authentication
 from tastypie.exceptions import BadRequest
 
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.models import ESXFormInstance, ESCase
 from corehq.apps.api.resources.auth import DomainAdminAuthentication, RequirePermissionAuthentication
 from corehq.apps.api.resources.v0_1 import _safe_bool
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from couchforms.models import doc_types, XFormInstance
+from couchforms.models import doc_types
 from casexml.apps.case import xform as casexml_xform
 from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
 

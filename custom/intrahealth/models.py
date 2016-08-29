@@ -1,4 +1,3 @@
-from corehq.apps.change_feed import topics
 from corehq.fluff.calculators.case import CasePropertyFilter
 import fluff
 from couchforms.models import XFormInstance
