@@ -93,11 +93,6 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                     return Backbone.Collection.prototype.fetch.call(this, options);
                 },
 
-                initialize: function (params) {
-                    this.domain = params.domain;
-                    this.appId = params.appId;
-                    this.fetch = params.fetch;
-                },
             });
 
             var defer = $.Deferred();

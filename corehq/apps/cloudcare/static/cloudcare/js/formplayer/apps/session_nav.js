@@ -56,31 +56,26 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             FormplayerFrontend.request("getSession", sessionId);
         },
         renderResponse: function (menuResponse) {
-            FormplayerFrontend.trigger("clearForm");
-            var NextScreenCollection = Backbone.Collection.extend({});
-            var nextScreenCollection;
-            //TODO: clean up this hackiness
-            if (menuResponse.commands) {
-                nextScreenCollection = new NextScreenCollection(menuResponse.commands);
-                nextScreenCollection.type = "commands";
-            } else {
-                nextScreenCollection = new NextScreenCollection(menuResponse.entities);
-                nextScreenCollection.type = "entities";
-            }
-            nextScreenCollection.title = menuResponse.title;
-            nextScreenCollection.locales = menuResponse.locales;
-            nextScreenCollection.sessionId = menuResponse.menuSessionId;
-            nextScreenCollection.headers = menuResponse.headers;
-            nextScreenCollection.styles = menuResponse.styles;
-            nextScreenCollection.tiles = menuResponse.tiles;
-            nextScreenCollection.action = menuResponse.action;
-            nextScreenCollection.breadcrumbs = menuResponse.breadcrumbs;
-            var currentFragment = Backbone.history.getFragment();
-            var urlObject = Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(currentFragment));
-            urlObject.setSessionId(nextScreenCollection.sessionId);
-            var encodedUrl = Util.objectToEncodedUrl(urlObject.toJson());
+            FormplayerFrontend.request("clearForm");
+            var currentFragment,
+                urlObject,
+                encodedUrl,
+                menuCollection;
+
+            currentFragment = Backbone.history.getFragment();
+            urlObject = Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(currentFragment));
+            urlObject.setSessionId(menuResponse.menuSessionId);
+            encodedUrl = Util.objectToEncodedUrl(urlObject.toJson());
+            menuResponse.appId = urlObject.appId;
+
+            menuCollection = new FormplayerFrontend.Entities.MenuSelectCollection(
+                menuResponse,
+                { parse: true }
+            );
+
             FormplayerFrontend.navigate(encodedUrl);
-            SessionNavigate.MenuList.Controller.showMenu(nextScreenCollection);
+
+            SessionNavigate.MenuList.Controller.showMenu(menuCollection);
         },
     };
 
