@@ -6,8 +6,8 @@ from django.utils.translation import ugettext as _
 from corehq import toggles
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
-from corehq.apps.userreports.sql import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration, id_is_static
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.util.context_managers import notify_someone
 from pillowtop.dao.couch import ID_CHUNK_SIZE
 
@@ -20,7 +20,7 @@ def _get_config_by_id(indicator_config_id):
 
 
 def _build_indicators(config, document_store, relevant_ids, resume_helper):
-    adapter = ErrorRaisingIndicatorSqlAdapter(config)
+    adapter = get_indicator_adapter(config, raise_errors=True)
 
     last_id = None
     for doc in document_store.iter_documents(relevant_ids):
@@ -40,7 +40,7 @@ def rebuild_indicators(indicator_config_id, initiated_by=None):
     failure = _('There was an error rebuilding Your UCR table {}.').format(config.table_id)
     send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
-        adapter = IndicatorSqlAdapter(config)
+        adapter = get_indicator_adapter(config)
         if not id_is_static(indicator_config_id):
             # Save the start time now in case anything goes wrong. This way we'll be
             # able to see if the rebuild started a long time ago without finishing.

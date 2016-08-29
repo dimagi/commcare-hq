@@ -7,7 +7,6 @@ from datetime import datetime
 import itertools
 
 import six
-from django.conf import settings
 from django.db import connections, InternalError, transaction
 
 from corehq.form_processor.exceptions import (

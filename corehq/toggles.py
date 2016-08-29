@@ -870,3 +870,10 @@ PREVIEW_APP = StaticToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
+
+DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
+    'disable_column_limit_in_ucr',
+    'Disable column limit in UCR',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)

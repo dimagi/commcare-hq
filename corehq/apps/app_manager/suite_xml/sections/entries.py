@@ -441,7 +441,7 @@ class EntriesHelper(object):
                 )
             ]
 
-    def get_load_case_from_fixture_datums(self, action, target_module):
+    def get_load_case_from_fixture_datums(self, action, target_module, form):
         datums = []
         load_case_from_fixture = action.load_case_from_fixture
 
@@ -469,29 +469,32 @@ class EntriesHelper(object):
             action=action,
         ))
 
-        if action.case_index.tag:
-            parent_action = form.actions.actions_meta_by_tag[action.case_index.tag]['action']
-            parent_filter = EntriesHelper.get_parent_filter(
-                action.case_index.reference_id,
-                parent_action.case_session_var
-            )
-        else:
-            parent_filter = ''
-        session_var_for_fixture = session_var(load_case_from_fixture.fixture_tag)
-        filter_for_casedb = '[{0}={1}]'.format(load_case_from_fixture.case_property, session_var_for_fixture)
-        nodeset = EntriesHelper.get_nodeset_xpath(action.case_type, filter_xpath=filter_for_casedb) + parent_filter
+        if action.case_tag:
+            if action.case_index.tag:
+                parent_action = form.actions.actions_meta_by_tag[action.case_index.tag]['action']
+                parent_filter = EntriesHelper.get_parent_filter(
+                    action.case_index.reference_id,
+                    parent_action.case_session_var
+                )
+            else:
+                parent_filter = ''
+            session_var_for_fixture = session_var(load_case_from_fixture.fixture_tag)
+            filter_for_casedb = '[{0}={1}]'.format(load_case_from_fixture.case_property, session_var_for_fixture)
+            nodeset = EntriesHelper.get_nodeset_xpath(action.case_type, filter_xpath=filter_for_casedb)
+            nodeset += parent_filter
 
-        datums.append(FormDatumMeta(
-            datum=SessionDatum(
-                id=action.case_tag,
-                nodeset=nodeset,
-                value="./@case_id",
-                autoselect=load_case_from_fixture.auto_select,
-            ),
-            case_type=action.case_type,
-            requires_selection=False,
-            action=action,
-        ))
+            datums.append(FormDatumMeta(
+                datum=SessionDatum(
+                    id=action.case_tag,
+                    nodeset=nodeset,
+                    value="./@case_id",
+                    autoselect=load_case_from_fixture.auto_select,
+                ),
+                case_type=action.case_type,
+                requires_selection=False,
+                action=action,
+            ))
+
         return datums
 
     def configure_entry_advanced_form(self, module, e, form, **kwargs):
@@ -584,7 +587,7 @@ class EntriesHelper(object):
                 ))
             elif load_case_from_fixture:
                 target_module = get_target_module(action.case_type, action.details_module)
-                datums.extend(self.get_load_case_from_fixture_datums(action, target_module))
+                datums.extend(self.get_load_case_from_fixture_datums(action, target_module, form))
             else:
                 if action.case_index.tag:
                     parent_action = form.actions.actions_meta_by_tag[action.case_index.tag]['action']

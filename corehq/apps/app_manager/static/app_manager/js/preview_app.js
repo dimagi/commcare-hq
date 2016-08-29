@@ -24,32 +24,49 @@ hqDefine('app_manager/js/preview_app.js', function() {
         appManagerBodySelector,
         previewToggleBtnSelector
     ) {
-        
+
         var $appPreview = $(previewWindowSelector);
         var $appBody = $(appManagerBodySelector);
         var $togglePreviewBtn = $(previewToggleBtnSelector);
 
-        $appPreview.data(module.DATA.OPEN, false);
         $appPreview.data(module.DATA.POSITION, module.POSITION.FIXED);
 
         var _toggleAppPreview = function () {
-            $appPreview.data(module.DATA.OPEN, !$appPreview.data(module.DATA.OPEN));
-            $(window).trigger(module.EVENTS.RESIZE);
-            if($appPreview.data(module.DATA.OPEN)) {
-                $('.preview-action-show').addClass('hide');
-                $('.preview-action-hide').removeClass('hide');
+            if (localStorage.getItem(module.DATA.OPEN) === module.DATA.OPEN) {
+                localStorage.removeItem(module.DATA.OPEN);
             } else {
-                $('.preview-action-show').removeClass('hide');
-                $('.preview-action-hide').addClass('hide');
+                localStorage.setItem(module.DATA.OPEN, module.DATA.OPEN);
+            }
+            $(window).trigger(module.EVENTS.RESIZE);
+            if (localStorage.getItem(module.DATA.OPEN)) {
+                _showAppPreview();
+            } else {
+                _hideAppPreview();
             }
         };
+
+        var _showAppPreview = function() {
+            $('.preview-action-show').addClass('hide');
+            $('.preview-action-hide').removeClass('hide');
+        };
+        var _hideAppPreview = function() {
+            $('.preview-action-show').removeClass('hide');
+            $('.preview-action-hide').addClass('hide');
+        };
+
+        if (localStorage.getItem(module.DATA.OPEN)) {
+            _showAppPreview();
+        } else {
+            _hideAppPreview();
+        }
+
         if ($togglePreviewBtn) {
             $togglePreviewBtn.click(_toggleAppPreview);
         }
         $appPreview.find('.btn-preview-close').click(_toggleAppPreview);
 
         var _resizeAppPreview = function () {
-            if ($appPreview.data(module.DATA.OPEN)) {
+            if (localStorage.getItem(module.DATA.OPEN)) {
                 $appPreview.addClass('open');
                 $appBody.css('margin-right', $appPreview.outerWidth() + 50 + 'px');
             } else {

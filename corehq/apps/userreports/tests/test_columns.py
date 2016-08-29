@@ -313,6 +313,11 @@ class TestAggregateDateColumn(SimpleTestCase):
         wrapped = ReportColumnFactory.from_spec(self._spec)
         self.assertEqual('2015-03', wrapped.get_format_fn()({'year': 2015, 'month': 3}))
 
+    def test_custom_format(self):
+        self._spec.update({'format': '%b %Y'})
+        wrapped = ReportColumnFactory.from_spec(self._spec)
+        self.assertEqual('Mar 2015', wrapped.get_format_fn()({'year': 2015, 'month': 3}))
+
     def test_format_missing(self):
         wrapped = ReportColumnFactory.from_spec(self._spec)
         self.assertEqual('Unknown Date', wrapped.get_format_fn()({'year': None, 'month': None}))
