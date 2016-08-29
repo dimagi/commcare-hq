@@ -35,5 +35,6 @@ class FeatureUsageCalculator(object):
         return SmsBillable.objects.filter(
             domain__exact=self.domain,
             is_valid=True,
-            date_sent__range=[self.start_date, self.end_date]
+            date_sent__gte=self.start_date,
+            date_sent__lt=self.end_date + datetime.timedelta(days=1),
         ).count()

@@ -42,6 +42,11 @@ FormplayerFrontend.getCurrentRoute = function () {
  */
 FormplayerFrontend.reqres.setHandler('resourceMap', function (resource_path, app_id) {
     var currentApp = FormplayerFrontend.request("appselect:getApp", app_id);
+    if (!currentApp) {
+        console.warn('App is undefined for app_id: ' + app_id);
+        console.warn('Not processing resource: ' + resource_path);
+        return;
+    }
     if (resource_path.substring(0, 7) === 'http://') {
         return resource_path;
     } else if (!_.isEmpty(currentApp.get("multimedia_map"))) {
@@ -96,7 +101,7 @@ FormplayerFrontend.reqres.setHandler('handleNotification', function(notification
     }
 });
 
-FormplayerFrontend.reqres.setHandler('startForm', function (data) {
+FormplayerFrontend.on('startForm', function (data) {
     FormplayerFrontend.request("clearMenu");
 
     data.onLoading = tfLoading;
@@ -114,18 +119,24 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
             showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
 
             if(resp.nextScreen !== null && resp.nextScreen !== undefined) {
-                FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
+                if (resp.nextScreen.hasOwnProperty('tree')) {
+                    // If the response has "tree" property then we know it's a form link
+                    // so we should start the form.
+                    FormplayerFrontend.trigger('startForm', resp.nextScreen);
+                } else {
+                    FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
+                }
+
             } else {
                 FormplayerFrontend.trigger("apps:currentApp");
             }
         } else {
             showError(resp.output, $("#cloudcare-notifications"));
         }
-        // TODO form linking
     };
     data.formplayerEnabled = true;
     data.answerCallback = function(sessionId) {
-        FormplayerFrontend.request('debugger.formXML', sessionId);
+        FormplayerFrontend.trigger('debugger.formXML', sessionId);
     };
     data.resourceMap = function(resource_path) {
         var urlObject = Util.currentUrlToObject();
@@ -136,7 +147,7 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
     sess.renderFormXml(data, $('#webforms'));
 });
 
-FormplayerFrontend.reqres.setHandler('debugger.formXML', function(sessionId) {
+FormplayerFrontend.on('debugger.formXML', function(sessionId) {
     var user = FormplayerFrontend.request('currentUser');
     var success = function(data) {
         var $instanceTab = $('#debugger-xml-instance-tab'),
@@ -170,22 +181,22 @@ FormplayerFrontend.reqres.setHandler('debugger.formXML', function(sessionId) {
 });
 
 FormplayerFrontend.on("start", function (options) {
-    var user = FormplayerFrontend.request('currentUser');
+    var user = FormplayerFrontend.request('currentUser'),
+        appId;
     user.username = options.username;
     user.language = options.language;
     user.apps = options.apps;
     user.domain = options.domain;
     user.formplayer_url = options.formplayer_url;
+    user.clearUserDataUrl = options.clearUserDataUrl;
     if (Backbone.history) {
         Backbone.history.start();
         // will be the same for every domain. TODO: get domain/username/pass from django
         if (this.getCurrentRoute() === "") {
             if (options.phoneMode) {
-                FormplayerFrontend.regions.phoneModeNavigation.show(
-                    new FormplayerFrontend.Navigation.PhoneNavigation()
-                );
+                appId = options.apps[0]['_id'];
 
-                FormplayerFrontend.trigger("app:singleApp", options.apps[0]['_id']);
+                FormplayerFrontend.trigger("app:singleApp", appId);
             } else {
                 FormplayerFrontend.trigger("apps:list", options.apps);
             }
@@ -210,4 +221,64 @@ FormplayerFrontend.on("sync", function () {
     resp.error(function () {
         tfSyncComplete(true);
     });
+});
+
+
+/**
+ * refreshApplication
+ *
+ * This takes an appId and subsequently makes a request to formplayer to
+ * delete the relevant application database so that on next request
+ * it gets reinstalled. On completion, navigates back to the homescreen.
+ *
+ * @param {String} appId - The id of the application to refresh
+ */
+FormplayerFrontend.on('refreshApplication', function(appId) {
+    var user = FormplayerFrontend.request('currentUser'),
+        formplayer_url = user.formplayer_url,
+        resp,
+        options = {
+            url: formplayer_url + "/delete_application_dbs",
+            data: JSON.stringify({
+                app_id: appId,
+                domain: user.domain,
+                username: user.username.split('@')[0],
+            }),
+        };
+    Util.setCrossDomainAjaxOptions(options);
+    tfLoading();
+    resp = $.ajax(options);
+    resp.fail(function () {
+        tfLoadingComplete(true);
+    }).done(function() {
+        tfLoadingComplete();
+        FormplayerFrontend.trigger('navigateHome', appId);
+    });
+});
+
+FormplayerFrontend.on('clearUserData', function(appId) {
+    var user = FormplayerFrontend.request('currentUser');
+    var resp = $.ajax({
+        url: user.clearUserDataUrl,
+        type: 'POST',
+        dataType: "json",
+        xhrFields: { withCredentials: true },
+    });
+    resp.fail(function (jqXHR) {
+        if (jqXHR.status === 400) {
+            tfLoadingComplete(true, gettext('Unable to clear user data for mobile worker'));
+        } else {
+            tfLoadingComplete(true, gettext('Unabled to clear user data'));
+        }
+    }).done(function() {
+        tfLoadingComplete();
+        FormplayerFrontend.trigger('navigateHome', appId);
+    });
+});
+
+FormplayerFrontend.on('navigateHome', function(appId) {
+    var urlObject = Util.currentUrlToObject();
+    urlObject.clearExceptApp();
+    FormplayerFrontend.regions.breadcrumb.empty();
+    FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });
 });

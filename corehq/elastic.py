@@ -144,7 +144,7 @@ def run_query(index_name, q, debug_host=None):
     if debug_host:
         if not settings.DEBUG:
             raise Exception("You can only specify an ES env in DEBUG mode")
-        es_host = getattr(settings, 'ELASTICSEARCH_HOST_{}'.format(debug_host.upper()))
+        es_host = settings.ELASTICSEARCH_DEBUG_HOSTS[debug_host]
         es_instance = Elasticsearch([{'host': es_host,
                                       'port': settings.ELASTICSEARCH_PORT}],
                                     timeout=3, max_retries=0)

@@ -16,7 +16,6 @@ from celery.task import periodic_task
 from celery.task import task
 from celery.utils.log import get_task_logger
 
-from corehq.apps.es import FormES
 from corehq.apps.export.dbaccessors import get_all_daily_saved_export_instances
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from couchexport.files import Temp

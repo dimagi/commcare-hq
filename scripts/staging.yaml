@@ -45,15 +45,14 @@
 trunk: master
 name: autostaging
 branches:
-  - django-1.8+loc-tests # Nick P 8/25
   - kill-1.x-apps  # Danny 8/23
   - loc-tests # sravan 8/8
   - vellum-staging # J$ 11/13
   - welcome-to-vellum # Jenny 8/3
   - welcome-to-vellum+kill-1.x-apps # Jenny 8/24
-  - underscore-1-8 # Jenny 8/19
   - send-datasource-to-es # j$ 8/24
   - django-1.8 # nick P 8/25
+  - jquery-2-2-0 # Jenny 8/29
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

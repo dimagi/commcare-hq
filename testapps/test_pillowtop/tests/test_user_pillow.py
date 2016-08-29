@@ -7,7 +7,7 @@ from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.es import UserES, ESQuery
+from corehq.apps.es import UserES
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new

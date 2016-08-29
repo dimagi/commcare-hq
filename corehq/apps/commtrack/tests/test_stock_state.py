@@ -1,7 +1,6 @@
 from decimal import Decimal
 import functools
 
-from corehq.apps.change_feed import topics
 from corehq.apps.commtrack.consumption import recalculate_domain_consumption
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.products.models import SQLProduct

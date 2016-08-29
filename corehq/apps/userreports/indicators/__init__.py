@@ -1,6 +1,6 @@
 from collections import defaultdict
 from corehq.apps.commtrack.models import StockState
-from corehq.apps.userreports.sql import truncate_value
+from corehq.apps.userreports.util import truncate_value
 from fluff import TYPE_INTEGER
 
 

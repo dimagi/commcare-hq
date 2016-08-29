@@ -87,6 +87,9 @@ SHARED_DRIVE_ROOT = shared_dirname
 
 PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True
 
-ELASTICSEARCH_HOST_PROD = 'hqes0.internal-va.commcarehq.org'
-ELASTICSEARCH_HOST_STAGING = 'hqes0-staging.internal-va.commcarehq.org'
-ELASTICSEARCH_HOST_INDIA = '10.162.36.221'
+# These ES hosts are to be used strictly for DEBUG mode read operations
+ELASTICSEARCH_DEBUG_HOSTS = {
+    'prod': 'hqes0.internal-va.commcarehq.org',
+    'staging': 'hqes0-staging.internal-va.commcarehq.org',
+    'india': '10.162.36.221',
+}

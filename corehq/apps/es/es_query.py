@@ -75,13 +75,11 @@ Running against production
 --------------------------
 Since the ESQuery library is read-only, it's mostly safe to run against
 production. You can define alternate elasticsearch hosts in your localsettings
-file using the prefix 'ELASTICSEARCH_HOST_' and pass in this host name as the
-``debug_host`` to the constructor:
+file in the ``ELASTICSEARCH_DEBUG_HOSTS`` dictionary and pass in this host name
+as the ``debug_host`` to the constructor:
 
 .. code-block:: python
 
-    >>> print settings.ELASTICSEARCH_HOST_PROD
-    hqes0.internal-va.commcarehq.org
     >>> CaseES(debug_host='prod').domain('dimagi').count()
     120
 
