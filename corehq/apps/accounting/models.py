@@ -1758,7 +1758,7 @@ class InvoiceBase(models.Model):
 
 class WireInvoice(InvoiceBase):
     # WireInvoice is tied to a domain, rather than a subscription
-    domain = models.CharField(max_length=80)
+    domain = models.CharField(max_length=100)
 
     class Meta:
         app_label = 'accounting'
