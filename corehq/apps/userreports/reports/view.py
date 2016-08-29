@@ -329,7 +329,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     def get_ajax(self, request):
         try:
             data_source = self.data_source
-            if not DISABLE_COLUMN_LIMIT_IN_UCR.enabled(self.domain) and len(data_source.columns) > 50:
+            if len(data_source.columns) > 50 and not DISABLE_COLUMN_LIMIT_IN_UCR.enabled(self.domain):
                 raise UserReportsError(_("This report has too many columns to be displayed"))
             data_source.set_filter_values(self.filter_values)
 

@@ -874,6 +874,6 @@ PREVIEW_APP = StaticToggle(
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     'disable_column_limit_in_ucr',
     'Disable column limit in UCR',
-    TAG_EXPERIMENTAL,
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
