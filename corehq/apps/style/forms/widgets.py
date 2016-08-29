@@ -4,9 +4,9 @@ from django.forms.utils import flatatt
 from django.forms.widgets import (
     CheckboxInput,
     Input,
+    RadioChoiceInput,
     RadioSelect,
     RadioFieldRenderer,
-    RadioInput,
     TextInput,
     MultiWidget,
 )
@@ -39,7 +39,7 @@ class BootstrapCheckboxInput(CheckboxInput):
                          (flatatt(final_attrs), self.inline_label))
 
 
-class BootstrapRadioInput(RadioInput):
+class BootstrapRadioInput(RadioChoiceInput):
 
     def __unicode__(self):
         if 'id' in self.attrs:
