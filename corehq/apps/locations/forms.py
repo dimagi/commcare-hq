@@ -181,7 +181,7 @@ class LocationForm(forms.Form):
             # location is being re-parented
 
             if parent and self.location.location_id in parent.path:
-                assert False, 'location being re-parented to self or descendant'
+                forms.ValidationError(_("Location's parent is itself or a descendant"))
 
             if self.location.descendants:
                 raise forms.ValidationError(
@@ -242,10 +242,9 @@ class LocationForm(forms.Form):
             assert False, 'You must select a location type'
 
         if not child_types:
-            assert False, \
-                'the selected parent location cannot have child locations!'
+            forms.ValidationError(_('The selected parent location cannot have child locations!'))
         elif loc_type not in child_types:
-            assert False, 'not valid for the select parent location'
+            raise forms.ValidationError(_('Location type not valid for the selected parent.'))
 
         return loc_type
 
