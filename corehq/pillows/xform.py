@@ -6,6 +6,7 @@ from dateutil import parser
 from jsonobject.exceptions import BadValueError
 
 from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
+from casexml.apps.case.xml.parser import CaseGenerationException
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.apps.receiverwrapper.util import get_app_version_info
@@ -113,7 +114,10 @@ def transform_xform_for_elasticsearch(doc_dict):
             if object_key in case_dict and not isinstance(case_dict[object_key], dict):
                 case_dict[object_key] = None
 
-    doc_ret["__retrieved_case_ids"] = list(get_case_ids_from_form(doc_dict))
+    try:
+        doc_ret["__retrieved_case_ids"] = list(get_case_ids_from_form(doc_dict))
+    except CaseGenerationException:
+        doc_ret["__retrieved_case_ids"] = []
     return doc_ret
 
 
