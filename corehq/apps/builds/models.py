@@ -1,7 +1,7 @@
 from datetime import datetime
 from zipfile import ZipFile
-from corehq.apps.app_manager.const import APP_V1, APP_V2
 from couchdbkit.exceptions import ResourceNotFound, BadValueError
+from corehq.apps.app_manager.const import APP_V2
 from dimagi.ext.couchdbkit import *
 from corehq.apps.builds.fixtures import commcare_build_config
 from corehq.apps.builds.jadjar import JadJar
@@ -255,19 +255,12 @@ class CommCareBuildConfig(Document):
         except ResourceNotFound:
             return cls.bootstrap()
 
-    def get_default(self, application_version):
+    def get_default(self, application_version=APP_V2):
         i = self.application_versions.index(application_version)
         return self.defaults[i]
 
-    def get_menu(self, application_version=None):
-        if application_version:
-            major = {
-                APP_V1: '1',
-                APP_V2: '2',
-            }[application_version]
-            return filter(lambda x: x.build.major_release() == major, self.menu)
-        else:
-            return self.menu
+    def get_menu(self):
+        return self.menu
 
     @classmethod
     @quickcache([], timeout=5 * 60)

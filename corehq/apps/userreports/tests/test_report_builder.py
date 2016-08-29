@@ -2,7 +2,6 @@ import os
 from django.test import TestCase, SimpleTestCase
 from mock import patch
 
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
@@ -62,7 +61,7 @@ class ReportBuilderDBTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.app = Application.new_app('domain', 'Untitled Application', application_version=APP_V2)
+        cls.app = Application.new_app('domain', 'Untitled Application')
         module = cls.app.add_module(Module.new_module('Untitled Module', None))
         cls.form = cls.app.new_form(module.id, "Untitled Form", 'en', read(['data', 'forms', 'simple.xml']))
         cls.app.save()

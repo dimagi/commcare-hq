@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from mock import patch
 from django.test import SimpleTestCase
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import (
     AUTO_SELECT_CASE,
     AUTO_SELECT_FIXTURE,
@@ -215,7 +214,7 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('load_from_fixture_instance'), suite, './entry[2]/instance')
 
     def test_tiered_select_with_advanced_module_as_parent(self):
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app = Application.new_app('domain', "Untitled Application")
 
         parent_module = app.add_module(AdvancedModule.new_module('parent', None))
         parent_module.case_type = 'parent'
