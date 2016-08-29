@@ -921,7 +921,11 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
             try:
                 user_spec['username'] = enforce_string_type(user_spec['username'])
             except StringTypeRequiredError:
-                messages.error(request, _("Expected username to be a Text type for username {0}").format(user_spec['username']))
+                messages.error(
+                    request,
+                    _("Error: Expected username to be a Text type for username {0}")
+                    .format(user_spec['username'])
+                )
                 return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
         try:
