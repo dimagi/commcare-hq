@@ -5,8 +5,8 @@ import datetime
 from dateutil import parser
 from jsonobject.exceptions import BadValueError
 
-from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
-from casexml.apps.case.xml.parser import CaseGenerationException
+from casexml.apps.case.xform import extract_case_blocks
+from casexml.apps.case.xml.parser import CaseGenerationException, case_update_from_block
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.apps.receiverwrapper.util import get_app_version_info
@@ -115,7 +115,7 @@ def transform_xform_for_elasticsearch(doc_dict):
                 case_dict[object_key] = None
 
     try:
-        doc_ret["__retrieved_case_ids"] = list(get_case_ids_from_form(doc_dict))
+        doc_ret["__retrieved_case_ids"] = set(case_update_from_block(cb).id for cb in case_blocks)
     except CaseGenerationException:
         doc_ret["__retrieved_case_ids"] = []
     return doc_ret
