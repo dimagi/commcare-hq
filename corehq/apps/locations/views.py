@@ -31,9 +31,12 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.users.forms import MultipleSelectionForm
+from corehq.apps.users.location_access_restrictions import location_safe
+from corehq.toggles import NEW_BULK_LOCATION_MANAGEMENT
 from corehq.util import reverse, get_document_or_404
 
 from .analytics import users_have_locations
+from .const import ROOT_LOCATION_TYPE
 from .dbaccessors import get_users_assigned_to_locations
 from .permissions import (
     locations_access_required,
@@ -43,8 +46,9 @@ from .permissions import (
     user_can_edit_any_location,
     can_edit_any_location,
 )
-from .models import Location, LocationType, SQLLocation
+from .models import Location, LocationType, SQLLocation, filter_for_archived
 from .forms import LocationForm, UsersAtLocationForm
+from .tree_utils import assert_no_cycles
 from .util import load_locs_json, location_hierarchy_config, dump_locations
 
 
@@ -82,6 +86,7 @@ class LocationsListView(BaseLocationView):
     template_name = 'locations/manage/locations.html'
 
     @use_jquery_ui
+    @location_safe
     def dispatch(self, request, *args, **kwargs):
         return super(LocationsListView, self).dispatch(request, *args, **kwargs)
 
@@ -91,18 +96,36 @@ class LocationsListView(BaseLocationView):
 
     @property
     def page_context(self):
-        selected_id = self.request.GET.get('selected')
         has_location_types = len(self.domain_object.location_types) > 0
         loc_restricted = self.request.project.location_restriction_for_users
         return {
-            'selected_id': selected_id,
-            'locations': load_locs_json(self.domain, selected_id, self.show_inactive, self.request.couch_user),
+            'locations': self.get_visible_locations(),
             'show_inactive': self.show_inactive,
             'has_location_types': has_location_types,
             'can_edit_root': (
                 not loc_restricted or (loc_restricted and not self.request.couch_user.get_location(self.domain))),
             'can_edit_any_location': user_can_edit_any_location(self.request.couch_user, self.request.project),
         }
+
+    def get_visible_locations(self):
+        def to_json(loc, can_edit):
+            return {
+                'name': loc.name,
+                'location_type': loc.location_type.name,
+                'uuid': loc.location_id,
+                'is_archived': loc.is_archived,
+                'can_edit': can_edit,
+            }
+
+        user = self.request.couch_user
+        if user.has_permission(self.domain, 'access_all_locations'):
+            locs = filter_for_archived(
+                SQLLocation.objects.filter(domain=self.domain, parent_id=None),
+                self.show_inactive,
+            )
+            return [to_json(loc, True) for loc in locs]
+        else:
+            return [to_json(user.get_sql_location(self.domain), True)]
 
 
 class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
@@ -244,20 +267,14 @@ class LocationTypesView(BaseLocationView):
         """
         Return loc types in order from parents to children
         """
+        assert_no_cycles([
+            (lt['pk'], lt['parent_type'])
+            if lt['parent_type'] else
+            (lt['pk'], ROOT_LOCATION_TYPE)
+            for lt in loc_types
+        ])
+
         lt_dict = {lt['pk']: lt for lt in loc_types}
-
-        # Make sure there are no cycles
-        for loc_type in loc_types:
-            visited = set()
-
-            def step(lt):
-                assert lt['name'] not in visited, \
-                    "There's a loc type cycle, we need to prohibit that"
-                visited.add(lt['name'])
-                if lt['parent_type']:
-                    step(lt_dict[lt['parent_type']])
-            step(loc_type)
-
         hierarchy = {}
 
         def insert_loc_type(loc_type):
@@ -297,6 +314,7 @@ class NewLocationView(BaseLocationView):
     form_tab = 'basic'
 
     @use_multiselect
+    @location_safe
     def dispatch(self, request, *args, **kwargs):
         return super(NewLocationView, self).dispatch(request, *args, **kwargs)
 
@@ -374,6 +392,7 @@ class NewLocationView(BaseLocationView):
         return self.settings_form_post(request, *args, **kwargs)
 
 
+@location_safe
 @can_edit_location
 def archive_location(request, domain, loc_id):
     loc = Location.get(loc_id)
@@ -391,6 +410,7 @@ def archive_location(request, domain, loc_id):
 
 @require_http_methods(['DELETE'])
 @can_edit_location
+@location_safe
 def delete_location(request, domain, loc_id):
     loc = Location.get(loc_id)
     if loc.domain != domain:
@@ -416,6 +436,7 @@ def location_descendants_count(request, domain, loc_id):
 
 
 @can_edit_location
+@location_safe
 def unarchive_location(request, domain, loc_id):
     # hack for circumventing cache
     # which was found to be out of date, at least in one case
@@ -439,6 +460,7 @@ class EditLocationView(NewLocationView):
     page_title = ugettext_noop("Edit Location")
     creates_new_location = False
 
+    @location_safe
     @method_decorator(can_edit_location)
     def dispatch(self, request, *args, **kwargs):
         return super(EditLocationView, self).dispatch(request, *args, **kwargs)
@@ -715,6 +737,8 @@ class LocationImportView(BaseLocationView):
 @locations_access_required
 def location_importer_job_poll(request, domain, download_id,
                                template="style/partials/download_status.html"):
+    if NEW_BULK_LOCATION_MANAGEMENT.enabled(domain):
+        template = "locations/manage/partials/locations_upload_status.html"
     try:
         context = get_download_context(download_id, check_state=True)
     except TaskFailedError:
