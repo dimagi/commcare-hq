@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.app_manager.models import Application
 from casexml.apps.case.xform import get_case_ids_from_form
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
+from corehq.apps.app_manager.dbaccessors import get_app
 from dimagi.utils.django.management import are_you_sure
 from datetime import datetime
 
@@ -13,7 +14,6 @@ CASE_HEADER = ['CaseID', 'CaseType', 'CaseOpenedOn', 'CaseName', 'CaseUserId', '
 CURRENT_TIME = datetime.strftime(datetime.now(), '-%Y-%m-%d-%H:%M:%S')
 XFORM_FILENAME = "XForm-Details%s.csv" % CURRENT_TIME
 CASE_FILE_NAME = 'Case-Details%s.csv' % CURRENT_TIME
-
 
 
 class Command(BaseCommand):
@@ -32,6 +32,7 @@ though deletion would be re-confirmed so dont panic
         self.xform_writer, self.case_writer = None, None
         self.forms_accessor, self.case_accessors = None, None
         self.domain, self.app_id, self.version_number, self.test_run = None, None, None, None
+        self.version_mapping = dict()
 
     def setup(self):
         self.xform_writer = csv.writer(open(XFORM_FILENAME, 'w+b'))
@@ -68,8 +69,11 @@ though deletion would be re-confirmed so dont panic
     def iterate_forms_and_collect_case_ids(self):
         print "Iterating Through %s XForms and Collecting Case Ids" % len(self.xform_ids)
         for xform in self.forms_accessor.iter_forms(self.xform_ids):
+            # Get app version by fetching app corresponding to xform build_id since xform.form
+            # does not have updated app version unless form was updated for that version
+            xform.app_version_built_with = self.get_xform_build_version(xform)
             _print_form_details(xform, self.xform_writer)
-            if '@version' in xform.form and int(xform.form['@version']) < self.version_number:
+            if xform.app_version_built_with < self.version_number:
                 self.ensure_valid_xform(xform)
                 self.filtered_xform_ids.append(xform.form_id)
                 self.case_ids = self.case_ids.union(get_case_ids_from_form(xform))
@@ -77,6 +81,13 @@ though deletion would be re-confirmed so dont panic
                 print 'skipping xform id: %s' % xform.form_id
         if self.case_ids:
             self.print_case_details()
+
+    def get_xform_build_version(self, xform):
+        version_from_mapping = self.version_mapping.get(xform.build_id)
+        if not version_from_mapping:
+            version_from_mapping = int(get_app(self.domain, xform.build_id).version)
+            self.version_mapping[xform.build_id] = version_from_mapping
+        return version_from_mapping
 
     def ensure_valid_xform(self, xform):
         if xform.app_id != self.app_id and xform.domain != self.domain:
@@ -106,7 +117,7 @@ def _print_form_details(xform, file_writer):
 
 
 def _form_details(xform):
-    return [xform.form.get('@version'), xform.form_id, xform.domain]
+    return [xform.app_version_built_with, xform.form_id, xform.domain]
 
 
 def _print_case_details(case, file_writer):
