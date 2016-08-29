@@ -30,8 +30,12 @@ from xml2json.lib import xml2json
 
 from corehq import toggles, privileges
 from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
-from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc, \
-    get_brief_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import (
+    get_latest_build_doc,
+    get_brief_apps_in_domain,
+    get_latest_released_app_doc,
+    wrap_app,
+)
 from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
 from corehq.apps.app_manager.models import Application, ApplicationBase
 from corehq.apps.app_manager.suite_xml.sections.details import get_instances_for_module
@@ -106,11 +110,19 @@ class CloudcareMain(View):
         if not preview:
             apps = get_cloudcare_apps(domain)
             if request.project.use_cloudcare_releases:
-                # replace the apps with the last starred build of each app, removing the ones that aren't starred
-                apps = filter(
-                    lambda app: app.is_released,
-                    [get_app(domain, app['_id'], latest=True) for app in apps]
+
+                if toggles.CLOUDCARE_LATEST_BUILD.enabled(domain):
+                    get_cloudcare_app = get_latest_build_doc
+                else:
+                    get_cloudcare_app = get_latest_released_app_doc
+
+                apps = map(
+                    lambda app: get_cloudcare_app(domain, app['_id']),
+                    apps,
                 )
+                apps = filter(None, apps)
+                apps = map(wrap_app, apps)
+
                 # convert to json
                 apps = [get_app_json(app) for app in apps]
             else:
