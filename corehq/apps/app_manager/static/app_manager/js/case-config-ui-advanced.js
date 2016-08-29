@@ -445,6 +445,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                     }
                 }
             }
+            self.config.saveButton.fire('change');
         };
 
         self.unwrap = function () {
