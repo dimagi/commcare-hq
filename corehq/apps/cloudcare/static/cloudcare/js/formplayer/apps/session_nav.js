@@ -55,21 +55,40 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         getSession: function(sessionId) {
             FormplayerFrontend.request("getSession", sessionId);
         },
-        renderResponse: function (menuResponse) {
+        /**
+         * renderResponse
+         *
+         * Takes a response from a successfully submitted form and routes
+         * the application to the correct screen. In normal circumstances,
+         * the response is a menu response since the user is navigating to
+         * module list or home screen. When linking forms, the response will
+         * be a form response which will route to a new form.
+         */
+        renderResponse: function (response) {
             FormplayerFrontend.request("clearForm");
             var currentFragment,
                 urlObject,
                 encodedUrl,
+                sessionId,
                 menuCollection;
+
+            // Response can be a form response which will result in the the session id
+            // being stored in the session_id field. If it's menu response it will be
+            // stored in menuSessionId
+            sessionId = response.session_id || response.menuSessionId;
+            console.log(sessionId);
 
             currentFragment = Backbone.history.getFragment();
             urlObject = Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(currentFragment));
-            urlObject.setSessionId(menuResponse.menuSessionId);
+            urlObject.setSessionId(sessionId);
             encodedUrl = Util.objectToEncodedUrl(urlObject.toJson());
-            menuResponse.appId = urlObject.appId;
+            response.appId = urlObject.appId;
+            response.sessionId = sessionId;
 
+            // When the response gets parsed, it will automatically trigger form
+            // entry if it is a form response.
             menuCollection = new FormplayerFrontend.Entities.MenuSelectCollection(
-                menuResponse,
+                response,
                 { parse: true }
             );
 
