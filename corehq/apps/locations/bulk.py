@@ -7,7 +7,7 @@ from couchdbkit import ResourceNotFound
 from corehq.apps.consumption.shortcuts import get_default_consumption, set_default_consumption_for_supply_point
 from corehq.apps.products.models import Product
 from corehq.apps.custom_data_fields.edit_entity import add_prefix
-from corehq.utils.spreadsheets.excel import enforce_string_type, StringTypeRequiredError
+from corehq.util.spreadsheets.excel import enforce_string_type, StringTypeRequiredError
 
 from .exceptions import LocationImportError
 from .models import Location, LocationType

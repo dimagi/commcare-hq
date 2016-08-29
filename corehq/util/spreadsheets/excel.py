@@ -265,6 +265,9 @@ def alphanumeric_sort_key(key):
 
 
 def enforce_string_type(value):
+    if isinstance(value, basestring):
+        return value
+
     if isinstance(value, (int, long)):
         return str(value)
 
