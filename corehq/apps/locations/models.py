@@ -784,7 +784,7 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
             return (SQLLocation.objects.get(domain=domain,
                                             site_code__iexact=site_code)
                     .couch_location)
-        except SQLLocation.DoesNotExist:
+        except (SQLLocation.DoesNotExist, ResourceNotFound):
             return None
 
     @classmethod
