@@ -76,7 +76,6 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             // being stored in the session_id field. If it's menu response it will be
             // stored in menuSessionId
             sessionId = response.session_id || response.menuSessionId;
-            console.log(sessionId);
 
             currentFragment = Backbone.history.getFragment();
             urlObject = Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(currentFragment));
