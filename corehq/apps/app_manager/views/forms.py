@@ -651,9 +651,12 @@ def _get_case_references(data):
         return isinstance(value, list) and all(isinstance(v, unicode) for v in value)
     if "references" in data:
         # old/deprecated format
-        refs = {k: [v] for k, v in json.loads(data['references'])["preload"].items()}
+        preload = json.loads(data['references'])["preload"]
+        refs = {
+            "load": {k: [v] for k, v in preload.items()}
+        }
     else:
         refs = json.loads(data.get('case_references', '{}'))
-    if not all(is_valid(v) for v in refs.values()):
+    if set(refs) - {"load"} or not all(is_valid(v) for v in refs["load"].values()):
         raise ValueError("bad case references data: {!r}".format(refs))
     return refs

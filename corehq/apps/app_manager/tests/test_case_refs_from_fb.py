@@ -26,18 +26,36 @@ class FormCaseReferenceTest(SimpleTestCase):
             })
         }
         self.form.case_references = _get_case_references(post_data)
-        self.assertEqual(self.form.case_references, {"/data/question": ["name"]})
+        self.assertEqual(self.form.case_references,
+            {"load": {"/data/question": ["name"]}})
         self.assertFalse(self.form.actions.load_from_form.preload)
 
     def test_two_references(self):
         refs = {
-            "/data/question": ["name", "dob"],
-            "/data/other_question": ["close_reason"],
+            "load": {
+                "/data/question": ["name", "dob"],
+                "/data/other_question": ["close_reason"],
+            },
         }
         post_data = {"case_references": json.dumps(refs)}
         self.form.case_references = _get_case_references(post_data)
         self.assertEqual(self.form.case_references, refs)
         self.assertFalse(self.form.actions.load_from_form.preload)
+
+    def test_legacy_preload_action_case_references(self):
+        self.form.actions.load_from_form = PreloadAction({
+            "preload": {
+                "/data/question": "name"
+            },
+            "condition": {
+                "answer": None,
+                "question": None,
+                "type": "always",
+                "operator": None,
+            }
+        })
+        self.assertEqual(self.form.case_references,
+            {"load": {"/data/question": ["name"]}})
 
 
 class AdvancedFormCaseReferenceTest(SimpleTestCase):
@@ -65,8 +83,10 @@ class AdvancedFormCaseReferenceTest(SimpleTestCase):
 
     def test_two_references(self):
         refs = {
-            "/data/question": ["name", "dob"],
-            "/data/other_question": ["close_reason"],
+            "load": {
+                "/data/question": ["name", "dob"],
+                "/data/other_question": ["close_reason"],
+            },
         }
         post_data = {"case_references": json.dumps(refs)}
         self.form.case_references = _get_case_references(post_data)

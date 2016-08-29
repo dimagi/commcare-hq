@@ -1528,18 +1528,18 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     @property
     def case_references(self):
         refs = self.case_references_data or {}
-        if not refs and self.actions.load_from_form.preload:
+        if "load" not in refs and self.actions.load_from_form.preload:
             # for backward compatibility
             # preload only has one reference per question path
             preload = self.actions.load_from_form.preload
-            refs = {key: [value] for key, value in preload.iteritems()}
+            refs["load"] = {key: [value] for key, value in preload.iteritems()}
         return refs
 
     @case_references.setter
     def case_references(self, refs):
         """Set case references
 
-        format: {"/data/path": ["case_property", ...]}
+        format: {"load": {"/data/path": ["case_property", ...], ...}}
         """
         self.case_references_data = refs
         if self.actions.load_from_form.preload:
@@ -1615,7 +1615,8 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                                 questions,
                                 question_path
                             )
-        for question_path, case_properties in self.case_references.iteritems():
+        case_loads = self.case_references.get("load", {})
+        for question_path, case_properties in case_loads.iteritems():
             for name in case_properties:
                 self.add_property_load(
                     app_case_meta,
