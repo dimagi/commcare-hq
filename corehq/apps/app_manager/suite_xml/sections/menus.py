@@ -148,7 +148,8 @@ class MenuContributor(SuiteContributorByModule):
     @staticmethod
     def _give_menus_grid_style(menus):
         for menu in menus:
-            menu.style = "grid"
+            if not menu.id == id_strings.ROOT:
+                menu.style = "grid"
 
     @staticmethod
     def _give_root_menu_grid_style(menus):
