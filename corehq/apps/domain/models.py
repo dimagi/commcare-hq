@@ -581,9 +581,10 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         generate a new, unique name. Throws exception if it can't figure out
         a name, which shouldn't happen unless max_length is absurdly short.
         '''
-
-        name = hr_name[0:max_length].strip()
-        name = name_to_url(name, "project")
+        from corehq.apps.domain.utils import get_domain_url_slug
+        name = get_domain_url_slug(hr_name, max_length=max_length)
+        if not name:
+            raise NameUnavailableException
         if Domain.get_by_name(name):
             prefix = name
             while len(prefix):
