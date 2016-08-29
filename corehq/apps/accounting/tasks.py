@@ -542,7 +542,7 @@ def weekly_digest():
         })
 
 
-@periodic_task(run_every=crontab(hour=01, minute=0,), acks_late=True)
+@periodic_task(run_every=crontab(hour=1, minute=0,), acks_late=True)
 def pay_autopay_invoices():
     """ Check for autopayable invoices every day and pay them """
     AutoPayInvoicePaymentHandler().pay_autopayable_invoices(datetime.datetime.today())
