@@ -8,7 +8,8 @@ def get_select_chain(app, module, include_self=True):
         current_module = module
         while hasattr(current_module, 'parent_select') and current_module.parent_select.active:
             current_module = app.get_module_by_unique_id(
-                current_module.parent_select.module_id
+                current_module.parent_select.module_id,
+                error="Module used by parent child selection in '{}' not found".format(current_module.default_name()),
             )
             if current_module in select_chain:
                 raise SuiteValidationError("Circular reference in case hierarchy")

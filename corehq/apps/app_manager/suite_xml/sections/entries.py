@@ -525,7 +525,8 @@ class EntriesHelper(object):
 
                 from corehq.apps.app_manager.models import ModuleNotFoundException
                 try:
-                    target = module.get_app().get_module_by_unique_id(module_id)
+                    target = module.get_app().get_module_by_unique_id(module_id,
+                             error="Could not find target module used by form '{}'".format(form.default_name()))
                     if target.case_type != case_type:
                         raise ParentModuleReferenceError(
                             "Module '%s' has incorrect case type" % module.default_name()
@@ -775,7 +776,8 @@ class EntriesHelper(object):
                 index += 1
 
     def configure_entry_careplan_form(self, module, e, form=None, **kwargs):
-        parent_module = self.app.get_module_by_unique_id(module.parent_select.module_id)
+        parent_module = self.app.get_module_by_unique_id(module.parent_select.module_id,
+                        error="Could not find module '{}' is attached to.".format(module.default_name()))
         e.datums.append(SessionDatum(
             id='case_id',
             nodeset=EntriesHelper.get_nodeset_xpath(parent_module.case_type),
