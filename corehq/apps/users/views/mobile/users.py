@@ -83,7 +83,7 @@ from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.couch import get_document_or_404
 from corehq.util.spreadsheets.excel import JSONReaderError, HeaderValueError, \
-    WorksheetNotFound, WorkbookJSONReader
+    WorksheetNotFound, WorkbookJSONReader, enforce_string_type, StringTypeRequiredError
 from soil import DownloadBase
 from .custom_data_fields import UserFieldsView
 
@@ -916,6 +916,13 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         # convert to list here because iterator destroys the row once it has
         # been read the first time
         self.user_specs = list(self.user_specs)
+
+        for user_spec in self.user_specs:
+            try:
+                user_spec['username'] = enforce_string_type(user_spec['username'])
+            except StringTypeRequiredError:
+                messages.error(request, _("Expected username to be a Text type for username {0}").format(user_spec['username']))
+                return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
         try:
             check_existing_usernames(self.user_specs, self.domain)
