@@ -38,7 +38,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             }
             else if(response.tree){
                 // form entry time, doggy
-                FormplayerFrontend.request('startForm', response, this.app_id);
+                FormplayerFrontend.trigger('startForm', response, this.app_id);
             }
             else if(response.exception){
                 FormplayerFrontend.request('showError', response.exception);
