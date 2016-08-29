@@ -31,9 +31,11 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.users.forms import MultipleSelectionForm
+from corehq.toggles import NEW_BULK_LOCATION_MANAGEMENT
 from corehq.util import reverse, get_document_or_404
 
 from .analytics import users_have_locations
+from .const import ROOT_LOCATION_TYPE
 from .dbaccessors import get_users_assigned_to_locations
 from .permissions import (
     locations_access_required,
@@ -45,6 +47,7 @@ from .permissions import (
 )
 from .models import Location, LocationType, SQLLocation
 from .forms import LocationForm, UsersAtLocationForm
+from .tree_utils import assert_no_cycles
 from .util import load_locs_json, location_hierarchy_config, dump_locations
 
 
@@ -244,20 +247,14 @@ class LocationTypesView(BaseLocationView):
         """
         Return loc types in order from parents to children
         """
+        assert_no_cycles([
+            (lt['pk'], lt['parent_type'])
+            if lt['parent_type'] else
+            (lt['pk'], ROOT_LOCATION_TYPE)
+            for lt in loc_types
+        ])
+
         lt_dict = {lt['pk']: lt for lt in loc_types}
-
-        # Make sure there are no cycles
-        for loc_type in loc_types:
-            visited = set()
-
-            def step(lt):
-                assert lt['name'] not in visited, \
-                    "There's a loc type cycle, we need to prohibit that"
-                visited.add(lt['name'])
-                if lt['parent_type']:
-                    step(lt_dict[lt['parent_type']])
-            step(loc_type)
-
         hierarchy = {}
 
         def insert_loc_type(loc_type):
@@ -715,6 +712,8 @@ class LocationImportView(BaseLocationView):
 @locations_access_required
 def location_importer_job_poll(request, domain, download_id,
                                template="style/partials/download_status.html"):
+    if NEW_BULK_LOCATION_MANAGEMENT.enabled(domain):
+        template = "locations/manage/partials/locations_upload_status.html"
     try:
         context = get_download_context(download_id, check_state=True)
     except TaskFailedError:
