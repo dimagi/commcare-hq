@@ -31,7 +31,6 @@ from xml2json.lib import xml2json
 from corehq import toggles, privileges
 from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
 from corehq.apps.app_manager.dbaccessors import (
-    get_app,
     get_latest_build_doc,
     get_brief_apps_in_domain,
     get_latest_released_app_doc,
