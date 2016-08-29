@@ -7,6 +7,7 @@ from couchdbkit import ResourceNotFound
 from corehq.apps.consumption.shortcuts import get_default_consumption, set_default_consumption_for_supply_point
 from corehq.apps.products.models import Product
 from corehq.apps.custom_data_fields.edit_entity import add_prefix
+from corehq.util.spreadsheets.excel import enforce_string_type, StringTypeRequiredError
 
 from .exceptions import LocationImportError
 from .models import Location, LocationType
@@ -181,12 +182,9 @@ class LocationImporter(object):
         if not parent_site_code and parent_site_code != 0:
             return None
 
-        if isinstance(parent_site_code, int):
-            parent_site_code = str(parent_site_code)
-
-        if not isinstance(parent_site_code, basestring):
-            # Decimal types can display differently than they are stored. Don't try
-            # to guess what the value is, and instead raise an error.
+        try:
+            parent_site_code = enforce_string_type(parent_site_code)
+        except StringTypeRequiredError:
             raise LocationImportError(
                 _("Parent site code '{0}' should have a 'Text' type in Excel")
                 .format(parent_site_code)
