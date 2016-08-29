@@ -340,7 +340,7 @@ hqDefine('app_manager/js/releases.js', function () {
             $.post({
                 url: self.url('delete'),
                 data: {saved_app: savedApp.id()},
-                succss: function () {
+                success: function () {
                     self.savedApps.remove(savedApp);
                     savedApp._deleteState(false);
                 },
@@ -388,18 +388,9 @@ hqDefine('app_manager/js/releases.js', function () {
             self.getMoreSavedApps(false);
         };
         self.actuallyMakeBuild = function () {
-            var comment = window.prompt(
-                "Add a comment about the version to help you remember later:"
-            );
-            if (comment || comment === "") {
-                $(this).find("input[name='comment']").val(comment);
-            } else {
-                return;
-            }
             self.buildState('pending');
             $.post(self.url('newBuild'), {
-                comment: comment,
-                success: function(data) {
+                success: function (data) {
                     $('#build-errors-wrapper').html(data.error_html);
                     if (data.saved_app) {
                         var app = SavedApp(data.saved_app, self);
@@ -407,7 +398,7 @@ hqDefine('app_manager/js/releases.js', function () {
                     }
                     self.buildState('');
                 },
-                error: function() {
+                error: function () {
                     self.buildState('error');
                 },
             });

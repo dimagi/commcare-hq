@@ -134,10 +134,9 @@
 
         {% if request|toggle_enabled:"PREVIEW_APP" %}
         <li>
-          <a id="js-toggle-app-preview"
-             href="#">
+          <a id="js-toggle-app-preview">
               <i class="fa fa-mobile-phone preview-icon"></i>
-              <span class="preview-action-show">{% trans "Show App Preview" %}</span>
+              <span class="preview-action-show hide">{% trans "Show App Preview" %}</span>
               <span class="preview-action-hide hide">{% trans "Hide App Preview" %}</span>
           </a>
         </li>

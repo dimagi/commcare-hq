@@ -184,9 +184,12 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
                 button.on('save', options.save);
             }
             $(window).on('beforeunload', function () {
-                var stillAttached = button.ui.parents()[button.ui.parents().length - 1].tagName.toLowerCase() == 'html';
-                if (button.state !== 'saved' && stillAttached) {
-                    return options.unsavedMessage || "";
+                var lastParent = button.ui.parents()[button.ui.parents().length - 1];
+                if (lastParent) {
+                    var stillAttached = lastParent.tagName.toLowerCase() == 'html';
+                    if (button.state !== 'saved' && stillAttached) {
+                        return options.unsavedMessage || "";
+                    }
                 }
             });
             return button;

@@ -6,8 +6,6 @@ from django.utils.translation import ugettext as _
 
 import stripe
 
-from dimagi.utils.decorators.memoized import memoized
-
 from corehq.apps.accounting.models import (
     BillingAccount,
     CreditLine,
@@ -25,7 +23,6 @@ from corehq.apps.accounting.utils import (
     log_accounting_error,
     log_accounting_info,
 )
-from corehq.apps.domain.models import Domain
 from corehq.const import USER_DATE_FORMAT
 
 stripe.api_key = settings.STRIPE_PRIVATE_KEY
