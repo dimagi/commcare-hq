@@ -61,6 +61,7 @@ from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.reports.util import is_mobile_worker_with_report_access
+from corehq.apps.users.location_access_restrictions import location_safe
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
@@ -111,6 +112,7 @@ def not_found(request, template_name='404.html'):
 
 
 @require_GET
+@location_safe
 def redirect_to_default(req, domain=None):
     if not req.user.is_authenticated():
         if domain != None:
@@ -1111,6 +1113,7 @@ class DataTablesAJAXPaginationMixin(object):
 
 @always_allow_browser_caching
 @login_and_domain_required
+@location_safe
 def toggles_js(request, domain, template='hqwebapp/js/toggles_template.js'):
     return render(request, template, {
         'toggles_dict': toggles.toggle_values_by_name(username=request.user.username, domain=domain),
