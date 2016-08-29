@@ -7,7 +7,7 @@ from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from django.views.decorators.http import require_POST, require_http_methods
+from django.views.decorators.http import require_http_methods
 
 from couchdbkit import ResourceNotFound
 from corehq.apps.style.decorators import (

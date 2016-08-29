@@ -67,7 +67,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
-from corehq.apps.users.models import Invitation, CouchUser
+from corehq.apps.users.models import Invitation, CouchUser, Permissions
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
 from custom.openclinica.forms import OpenClinicaSettingsForm
@@ -112,7 +112,7 @@ from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPa
 from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
-from corehq.apps.users.decorators import require_can_edit_web_users
+from corehq.apps.users.decorators import require_can_edit_web_users, require_permission
 from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
 from corehq.apps.repeaters.models import Repeater, FormRepeater, CaseRepeater, ShortFormRepeater, \
     AppStructureRepeater, RepeatRecord, repeater_types, RegisterGenerator
@@ -590,9 +590,9 @@ def logo(request, domain):
     return HttpResponse(logo[0], content_type=logo[1])
 
 
-class DomainAccountingSettings(BaseAdminProjectSettingsView):
+class DomainAccountingSettings(BaseProjectSettingsView):
 
-    @method_decorator(login_and_domain_required)
+    @method_decorator(require_permission(Permissions.edit_billing))
     def dispatch(self, request, *args, **kwargs):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
 
@@ -617,7 +617,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
     @property
     def can_purchase_credits(self):
-        return self.request.couch_user.is_domain_admin(self.domain)
+        return self.request.couch_user.can_edit_billing()
 
     @property
     @memoized
@@ -1001,21 +1001,21 @@ class BaseStripePaymentView(DomainAccountingSettings):
 
     @property
     def account(self):
-        raise NotImplementedError("you must impmement the property account")
+        raise NotImplementedError("you must implement the property account")
 
     @property
     @memoized
-    def domain_admin(self):
-        if self.request.couch_user.is_domain_admin(self.domain):
+    def billing_admin(self):
+        if self.request.couch_user.can_edit_billing():
             return self.request.couch_user.username
         else:
             raise PaymentRequestError(
-                "The logged in user was not a domain admin."
+                "The logged in user was not a billing admin."
             )
 
     def get_or_create_payment_method(self):
         return StripePaymentMethod.objects.get_or_create(
-            web_user=self.domain_admin,
+            web_user=self.billing_admin,
             method_type=PaymentMethodType.STRIPE,
         )[0]
 
@@ -1152,8 +1152,7 @@ class WireInvoiceView(View):
     http_method_names = ['post']
     urlname = 'domain_wire_invoice'
 
-    @method_decorator(login_and_domain_required)
-    @method_decorator(domain_admin_required)
+    @method_decorator(require_permission(Permissions.edit_billing))
     def dispatch(self, request, *args, **kwargs):
         return super(WireInvoiceView, self).dispatch(request, *args, **kwargs)
 
@@ -1172,8 +1171,7 @@ class WireInvoiceView(View):
 class BillingStatementPdfView(View):
     urlname = 'domain_billing_statement_download'
 
-    @method_decorator(login_and_domain_required)
-    @method_decorator(domain_admin_required)
+    @method_decorator(require_permission(Permissions.edit_billing))
     def dispatch(self, request, *args, **kwargs):
         return super(BillingStatementPdfView, self).dispatch(request, *args, **kwargs)
 

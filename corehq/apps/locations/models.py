@@ -281,7 +281,7 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     # since stocks_all_products can cause an empty list to
     # be what is stored for a location that actually has
     # all products available.
-    _products = models.ManyToManyField(SQLProduct, null=True)
+    _products = models.ManyToManyField(SQLProduct)
     stocks_all_products = models.BooleanField(default=True)
 
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)

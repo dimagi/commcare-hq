@@ -9,7 +9,6 @@ from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation, J
 
 from dimagi.utils.decorators.memoized import memoized
 
-from corehq import toggles
 from corehq.apps.domain.decorators import login_required, require_superuser
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.notifications.forms import NotificationCreationForm

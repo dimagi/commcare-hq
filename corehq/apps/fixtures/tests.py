@@ -20,6 +20,7 @@ from django.test import TestCase, SimpleTestCase
 class FixtureDataTest(TestCase):
 
     def setUp(self):
+        super(FixtureDataTest, self).setUp()
         self.domain = 'qwerty'
         self.tag = "district"
         delete_all_users()
@@ -103,6 +104,7 @@ class FixtureDataTest(TestCase):
         delete_all_users()
         delete_all_fixture_data_types()
         get_fixture_data_types_in_domain.clear(self.domain)
+        super(FixtureDataTest, self).tearDown()
 
     def test_xml(self):
         check_xml_line_by_line(self, """
