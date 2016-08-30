@@ -109,7 +109,7 @@ function LocationModel(data, root, depth, func, withAllOption) {
     this.func = typeof func !== 'undefined' ? func : LocationModel;
     this.withAllOption = typeof withAllOption !== 'undefined' ? withAllOption : true;
 
-  this.enable = function() {
+  this.children_are_editable = function() {
     return _.every(this.children(), function(child) {
       return child.name() === '_all' || child.can_edit()
     });
