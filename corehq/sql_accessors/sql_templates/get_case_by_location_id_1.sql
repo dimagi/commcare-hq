@@ -4,6 +4,10 @@ CREATE FUNCTION get_case_by_location_id(domain_name TEXT, p_location_id TEXT) RE
 BEGIN
     RETURN QUERY
     SELECT * FROM form_processor_commcarecasesql
-    WHERE domain = domain_name AND location_id = p_location_id AND type = 'supply-point';
+    WHERE domain = domain_name
+        AND location_id = p_location_id
+        AND type = 'supply-point'
+        AND deleted = FALSE
+    ;
 END;
 $$ LANGUAGE plpgsql;
