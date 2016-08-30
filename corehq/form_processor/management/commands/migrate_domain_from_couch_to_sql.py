@@ -1,9 +1,10 @@
+import uuid
 from datetime import datetime
 from django.core.management.base import LabelCommand, CommandError
 from mock import MagicMock
 from casexml.apps.case.xform import get_all_extensions_to_close, CaseProcessingResult
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL
+from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL
 from corehq.form_processor.submission_post import CaseStockProcessingResult
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import set_local_domain_sql_backend_override
@@ -57,8 +58,6 @@ def _migrate_form_and_associated_models(domain, couch_form):
     sql_form = _migrate_form(domain, couch_form)
     _migrate_form_attachments(sql_form, couch_form)
     _migrate_form_operations(sql_form, couch_form)
-    # todo: this should hopefully not be necessary once all attachments are in blobDB
-    sql_form.get_xml = MagicMock(return_value=couch_form.get_xml())
     case_stock_result = _get_case_and_ledger_updates(domain, sql_form)
     _save_migrated_models(domain, sql_form, case_stock_result)
 
@@ -100,11 +99,17 @@ def _migrate_form(domain, couch_form):
 
 
 def _migrate_form_attachments(sql_form, couch_form):
-    # todo: attachments.
-    # note that if these are in the blobdb then we likely don't need to move them,
-    # just need to bring the references across
-    # interface.store_attachments(xform, attachments)
-    pass
+    """Copy over attachement meta - includes form.xml"""
+    for name, blob in couch_form.blobs.iteritems():
+        sql_form.track_create(XFormAttachmentSQL(
+            name=name,
+            form=sql_form,
+            attachment_id=uuid.uuid4().hex,
+            content_type=blob.content_type,
+            content_length=blob.content_length,
+            blob_id=blob.id,
+            md5=blob.info.md5_hash
+        ))
 
 
 def _migrate_form_operations(sql_form, couch_form):
