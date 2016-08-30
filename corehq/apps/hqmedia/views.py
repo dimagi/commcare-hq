@@ -637,7 +637,7 @@ def iter_index_files(app, build_profile_id=None):
                 yield (_get_name(name), data)
     try:
         files = download_index_files(app, build_profile_id)
-    except Exception, e:
+    except Exception as e:
         errors = [unicode(e)]
 
     return _files(files), errors
