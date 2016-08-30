@@ -1,4 +1,5 @@
 from lxml import etree
+from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.suite_xml.xml_models import Suite
 
