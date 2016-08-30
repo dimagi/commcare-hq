@@ -149,6 +149,7 @@ def _get_advanced_module_view_context(app, module, lang=None):
         'child_module_enabled': True,
         'is_search_enabled': case_search_enabled_for_domain(app.domain),
         'search_properties': module.search_config.properties if module_offers_search(module) else [],
+        'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
         'schedule_phases': [
             {
                 'id': schedule.id,
@@ -183,6 +184,7 @@ def _get_basic_module_view_context(app, module, lang=None):
         ),
         'is_search_enabled': case_search_enabled_for_domain(app.domain),
         'search_properties': module.search_config.properties if module_offers_search(module) else [],
+        'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
     }
 
 
@@ -719,7 +721,8 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
                     search_properties.get('relevant')
                     if search_properties.get('relevant') is not None
                     else CLAIM_DEFAULT_RELEVANT_CONDITION
-                )
+                ),
+                include_closed=search_properties.get('include_closed')
             )
 
     resp = {}

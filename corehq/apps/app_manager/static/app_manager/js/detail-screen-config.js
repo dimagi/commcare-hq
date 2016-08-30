@@ -203,7 +203,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         };
     };
 
-    var searchViewModel = function (searchProperties, lang, saveButton) {
+    var searchViewModel = function (searchProperties, includeClosed, lang, saveButton) {
         var self = this,
             DEFAULT_CLAIM_RELEVANT= "count(instance('casedb')/casedb/case[@case_id=instance('querysession')/session/data/case_id]) = 0";
 
@@ -215,6 +215,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
 
         self.relevant = ko.observable();
         self.default_relevant = ko.observable(true);
+        self.includeClosed = ko.observable(includeClosed);
         self.searchProperties = ko.observableArray();
         if (searchProperties.length > 0) {
             for (var i = 0; i < searchProperties.length; i++) {
@@ -269,6 +270,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             return {
                 properties: self._getProperties(),
                 relevant: self._getRelevant(),
+                include_closed: self.includeClosed(),
             };
         };
     };
@@ -1243,6 +1245,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     // Set up case search
                     this.search = new searchViewModel(
                         spec.searchProperties || [],
+                        spec.includeClosed,
                         spec.lang,
                         this.shortScreen.saveButton
                     );

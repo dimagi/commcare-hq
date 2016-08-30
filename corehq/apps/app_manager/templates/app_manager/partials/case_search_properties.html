@@ -41,6 +41,11 @@
                 <i class="fa fa-plus"></i> {% trans "Add search property" %}
             </button>
         </p>
+        <div class="checkbox">
+            <label>
+                <input type="checkbox" data-bind="checked: includeClosed"> {% trans "Include closed cases" %}
+            </label>
+        </div>
         <div class="form-group">
             <label>
                 {% trans "Conditional claim condition" %}

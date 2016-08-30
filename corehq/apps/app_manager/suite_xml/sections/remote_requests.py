@@ -95,6 +95,10 @@ class RemoteRequestContributor(SuiteContributorByModule):
                                     key='case_type',
                                     ref="'{}'".format(module.case_type)
                                 ),
+                                QueryData(
+                                    key='include_closed',
+                                    ref='{}'.format(module.search_config.include_closed)
+                                )
                             ],
                             prompts=[
                                 QueryPrompt(

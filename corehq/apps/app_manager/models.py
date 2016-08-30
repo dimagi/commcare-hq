@@ -1898,6 +1898,7 @@ class CaseSearch(DocumentSchema):
     command_label = DictProperty(default={'en': 'Search All Cases'})
     properties = SchemaListProperty(CaseSearchProperty)
     relevant = StringProperty(default=CLAIM_DEFAULT_RELEVANT_CONDITION)
+    include_closed = BooleanProperty(default=False)
 
 
 class ParentSelect(DocumentSchema):
