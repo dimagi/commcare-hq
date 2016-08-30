@@ -105,13 +105,13 @@ class LocationsListView(BaseLocationView):
         }
 
     def get_visible_locations(self):
-        def to_json(loc, can_edit):
+        def to_json(loc):
             return {
                 'name': loc.name,
                 'location_type': loc.location_type.name,
                 'uuid': loc.location_id,
                 'is_archived': loc.is_archived,
-                'can_edit': can_edit,
+                'can_edit': True,
             }
 
         user = self.request.couch_user
@@ -120,9 +120,9 @@ class LocationsListView(BaseLocationView):
                 SQLLocation.objects.filter(domain=self.domain, parent_id=None),
                 self.show_inactive,
             )
-            return [to_json(loc, True) for loc in locs]
+            return map(to_json, locs)
         else:
-            return [to_json(user.get_sql_location(self.domain), True)]
+            return [to_json(user.get_sql_location(self.domain))]
 
 
 class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
