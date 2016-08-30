@@ -147,7 +147,6 @@ def _get_case_and_ledger_updates(domain, sql_form):
             [],  # ignore dirtiness_flags,
             extensions_to_close
         )
-        # todo: is this necessary?
         for case in case_result.cases:
             case_db.mark_changed(case)
 
