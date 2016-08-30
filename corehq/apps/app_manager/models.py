@@ -5263,7 +5263,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 return obj
         if not error:
             error = _("Module in app '{app_id}' with unique id '{unique_id}' not found.").format(
-                      app_id=self.id, unique_id=unique_id)
+                app_id=self.id, unique_id=unique_id)
         raise ModuleNotFoundException(error)
 
     def get_forms(self, bare=True):
