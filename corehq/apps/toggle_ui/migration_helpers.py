@@ -1,8 +1,7 @@
 from couchdbkit import ResourceNotFound
 
-from corehq.toggles import NAMESPACE_DOMAIN
 from toggle.models import Toggle
-from toggle.shortcuts import update_toggle_cache
+from toggle.shortcuts import update_toggle_cache, parse_toggle
 
 
 def move_toggles(from_toggle_id, to_toggle_id):
@@ -22,10 +21,7 @@ def move_toggles(from_toggle_id, to_toggle_id):
     for item in from_toggle.enabled_users:
         if item not in to_toggle.enabled_users:
             to_toggle.enabled_users.append(item)
-            namespace = None
-            if item.startswith(NAMESPACE_DOMAIN):
-                item = item.split(":")[1]
-                namespace = NAMESPACE_DOMAIN
+            namespace, item = parse_toggle(item)
             update_toggle_cache(to_toggle_id, item, True, namespace=namespace)
 
     to_toggle.save()
