@@ -18,7 +18,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import View
 
 
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 

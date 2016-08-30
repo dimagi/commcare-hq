@@ -19,7 +19,7 @@ from django.utils.decorators import method_decorator
 import json
 from django.utils.safestring import mark_safe
 
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 import pytz
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege

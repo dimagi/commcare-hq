@@ -22,7 +22,7 @@ from django.views.generic import View, TemplateView
 
 from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from openpyxl.utils.exceptions import InvalidFileException
 import re
 

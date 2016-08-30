@@ -3,7 +3,7 @@ from copy import copy
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.utils.translation import ugettext_noop, ugettext_lazy as _
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin

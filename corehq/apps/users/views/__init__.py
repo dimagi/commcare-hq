@@ -19,7 +19,7 @@ from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 
 from django_otp.plugins.otp_static.models import StaticToken
-from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
+from djng.views.mixins import allow_remote_invocation, JSONResponseMixin
 
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.util.view_utils import json_error
