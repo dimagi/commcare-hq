@@ -13,7 +13,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
 
     var API = {
         listApps: function () {
-            FormplayerFrontend.request("clearForm");
+            FormplayerFrontend.trigger("clearForm");
             SessionNavigate.AppList.Controller.listApps();
         },
         singleApp: function(appId) {
@@ -23,7 +23,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             SessionNavigate.MenuList.Controller.selectMenu(appId);
         },
         listMenus: function (sessionObject) {
-            FormplayerFrontend.request("clearForm");
+            FormplayerFrontend.trigger("clearForm");
             var urlObject = Util.CloudcareUrl.fromJson(
                 Util.encodedUrlToObject(sessionObject || Backbone.history.getFragment())
             );
@@ -48,7 +48,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             SessionNavigate.MenuList.Controller.showDetail(model, index);
         },
         listSessions: function() {
-            FormplayerFrontend.request("clearForm");
+            FormplayerFrontend.trigger("clearForm");
             SessionNavigate.SessionList.Controller.listSessions();
         },
 
@@ -56,7 +56,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             FormplayerFrontend.request("getSession", sessionId);
         },
         renderResponse: function (menuResponse) {
-            FormplayerFrontend.request("clearForm");
+            FormplayerFrontend.trigger("clearForm");
             var NextScreenCollection = Backbone.Collection.extend({});
             var nextScreenCollection;
             //TODO: clean up this hackiness
@@ -160,7 +160,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     });
 
     FormplayerFrontend.on("breadcrumbSelect", function (index) {
-        FormplayerFrontend.request("clearForm");
+        FormplayerFrontend.trigger("clearForm");
         var urlObject = Util.currentUrlToObject();
         urlObject.spliceSteps(index);
         Util.setUrlToObject(urlObject);

@@ -69,7 +69,7 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
     return FormplayerFrontend.currentUser;
 });
 
-FormplayerFrontend.reqres.setHandler('clearForm', function () {
+FormplayerFrontend.on('clearForm', function () {
     $('#webforms').html("");
 });
 
@@ -279,6 +279,7 @@ FormplayerFrontend.on('clearUserData', function(appId) {
 FormplayerFrontend.on('navigateHome', function(appId) {
     var urlObject = Util.currentUrlToObject();
     urlObject.clearExceptApp();
+    FormplayerFrontend.trigger("clearForm");
     FormplayerFrontend.regions.breadcrumb.empty();
     FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });
 });
