@@ -2010,7 +2010,8 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     @property
     def root_module(self):
         if self.root_module_id:
-            return self._parent.get_module_by_unique_id(self.root_module_id)
+            return self._parent.get_module_by_unique_id(self.root_module_id,
+                   error="Could not find parent module for '{}'".format(self.default_name()))
 
     def requires_case_details(self):
         return False
@@ -3870,7 +3871,8 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     def source_module(self):
         if self.source_module_id:
             try:
-                return self._parent.get_module_by_unique_id(self.source_module_id)
+                return self._parent.get_module_by_unique_id(self.source_module_id,
+                       error="Could not find source module for '{}'.".format(self.default_name()))
             except ModuleNotFoundException:
                 pass
         return None
@@ -5253,15 +5255,15 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         except IndexError:
             raise ModuleNotFoundException()
 
-    def get_module_by_unique_id(self, unique_id):
+    def get_module_by_unique_id(self, unique_id, error=''):
         def matches(module):
             return module.get_or_create_unique_id() == unique_id
         for obj in self.get_modules():
             if matches(obj):
                 return obj
-        raise ModuleNotFoundException(
-            ("Module in app '%s' with unique id '%s' not found"
-             % (self.id, unique_id)))
+        if not error:
+            error = "Module in app '%s' with unique id '%s' not found. %s" % (self.id, unique_id, error)
+        raise ModuleNotFoundException(error)
 
     def get_forms(self, bare=True):
         for module in self.get_modules():
@@ -5877,7 +5879,9 @@ class DeleteFormRecord(DeleteRecord):
     def undo(self):
         app = Application.get(self.app_id)
         if self.module_unique_id is not None:
-            module = app.get_module_by_unique_id(self.module_unique_id)
+            name = trans(self.form.name, app.default_language, include_lang=False)
+            module = app.get_module_by_unique_id(self.module_unique_id,
+                     error="Could not find module containing form '{}'".format(name))
         else:
             module = app.modules[self.module_id]
         forms = module.forms
