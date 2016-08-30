@@ -2622,6 +2622,12 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 for path in action.get_paths():
                     yield path
 
+            if self.schedule:
+                if self.schedule.transition_condition.type == 'if':
+                    yield self.schedule.transition_condition.question
+                if self.schedule.termination_condition.type == 'if':
+                    yield self.schedule.termination_condition.question
+
         errors.extend(self.check_paths(generate_paths()))
 
         return errors
