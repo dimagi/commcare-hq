@@ -90,7 +90,7 @@ from corehq.apps.userreports.ui.forms import (
     ConfigurableDataSourceFromAppForm,
 )
 from corehq.apps.userreports.util import (
-    add_event
+    add_event,
     get_indicator_adapter,
     has_report_builder_access,
     has_report_builder_add_on_privilege,
