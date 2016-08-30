@@ -20,4 +20,5 @@ class Migration(migrations.Migration):
             "SELECT 1"
         ),
         migrator.get_migration('get_case_ids_in_domain_2.sql'),
+        migrator.get_migration('get_case_ids_modified_with_owner_since_1.sql'),
     ]
