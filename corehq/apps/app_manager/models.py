@@ -5643,15 +5643,17 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 for t in m.get_subcase_types()}
 
     def grid_display_for_some_modules(self):
-        return self.profile['properties']['cc-grid-menus'] == 'some'
+        return self.cc_grid_menus_property == 'some'
 
     def grid_display_for_root_module(self):
-        return self.profile['properties']['cc-grid-menus'] == 'first'
+        return self.cc_grid_menus_property == 'first'
 
     def grid_display_for_all_modules(self):
-        return self.profile['properties']['cc-grid-menus'] == 'all'
+        return self.cc_grid_menus_property == 'all'
 
-
+    @property
+    def cc_grid_menus_property(self):
+        return self.profile.get('properties', {}).get('cc-grid-menus', None)
 class RemoteApp(ApplicationBase):
     """
     A wrapper for a url pointing to a suite or profile file. This allows you to
