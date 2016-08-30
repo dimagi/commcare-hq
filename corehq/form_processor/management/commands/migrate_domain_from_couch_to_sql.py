@@ -138,8 +138,7 @@ def _get_case_and_ledger_updates(domain, sql_form):
     get_and_check_xform_domain(sql_form)
     xforms = [sql_form]
 
-    # todo: I think this can be changed to lock=False
-    with interface.casedb_cache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
+    with interface.casedb_cache(domain=domain, lock=False, deleted_ok=True, xforms=xforms) as case_db:
         touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, xforms)
         extensions_to_close = get_all_extensions_to_close(domain, touched_cases.values())
         case_result = CaseProcessingResult(
