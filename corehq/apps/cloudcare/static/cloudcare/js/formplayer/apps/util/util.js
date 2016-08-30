@@ -91,6 +91,14 @@ Util.CloudcareUrl = function (appId, options) {
         this.previewCommand = null;
     };
 
+    this.onSubmit = function () {
+        this.steps = null;
+        this.page = null;
+        this.search = null;
+        this.queryDict = null;
+        this.previewCommand = null;
+    };
+
     this.spliceSteps = function(index) {
 
         // null out the session if we clicked the root (home)

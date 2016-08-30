@@ -118,6 +118,11 @@ FormplayerFrontend.on('startForm', function (data) {
             FormplayerFrontend.request("clearForm");
             showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
 
+            // After end of form nav, we want to clear everything except app and sesson id
+            var urlObject = Util.currentUrlToObject();
+            urlObject.onSubmit();
+            Util.setUrlToObject(urlObject);
+
             if(resp.nextScreen !== null && resp.nextScreen !== undefined) {
                 if (resp.nextScreen.hasOwnProperty('tree')) {
                     // If the response has "tree" property then we know it's a form link
