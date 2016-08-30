@@ -4,11 +4,13 @@ from optparse import make_option
 from django.core.management.base import CommandError, LabelCommand
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import do_couch_to_sql_migration
+from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
+from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.utils import should_use_sql_backend
 from couchforms.dbaccessors import get_form_ids_by_type
-from couchforms.models import doc_types
+from couchforms.models import doc_types, XFormInstance
 
 
 class Command(LabelCommand):
@@ -39,6 +41,10 @@ class Command(LabelCommand):
             form_ids_in_couch = set(get_form_ids_by_type(domain, doc_type))
             form_ids_in_sql = set(FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type))
             self._print_status(doc_type, form_ids_in_couch, form_ids_in_sql)
+
+        form_ids_in_couch = set(get_doc_ids_in_domain_by_type(domain, "XFormInstance-Deleted", XFormInstance.get_db()))
+        form_ids_in_sql = set(FormAccessorSQL.get_deleted_form_ids_in_domain(domain))
+        self._print_status("XFormInstance-Deleted", form_ids_in_couch, form_ids_in_sql)
 
         case_ids_in_couch = set(get_case_ids_in_domain(domain))
         case_ids_in_sql = set(CaseAccessorSQL.get_case_ids_in_domain(domain))
