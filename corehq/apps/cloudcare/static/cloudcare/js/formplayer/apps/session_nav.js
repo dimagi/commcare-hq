@@ -44,8 +44,8 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
                 previewCommand
             );
         },
-        showDetail: function (model, index) {
-            SessionNavigate.MenuList.Controller.showDetail(model, index);
+        showDetail: function (model, detailTabIndex) {
+            SessionNavigate.MenuList.Controller.showDetail(model, detailTabIndex);
         },
         listSessions: function() {
             FormplayerFrontend.trigger("clearForm");
@@ -135,8 +135,8 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         API.listMenus();
     });
 
-    FormplayerFrontend.on("menu:show:detail", function (model, index) {
-        API.showDetail(model, index);
+    FormplayerFrontend.on("menu:show:detail", function (model, detailTabIndex) {
+        API.showDetail(model, detailTabIndex);
     });
 
     FormplayerFrontend.on("sessions", function () {

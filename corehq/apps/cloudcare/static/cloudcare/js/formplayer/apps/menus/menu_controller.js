@@ -82,15 +82,15 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             FormplayerFrontend.regions.breadcrumb.show(breadcrumbView.render());
         },
 
-        showDetail: function (model, index) {
+        showDetail: function (model, detailTabIndex) {
             var self = this;
             var detailObjects = model.options.model.get('details');
             // If we have no details, just select the entity
             if(detailObjects === null || detailObjects === undefined){
-                FormplayerFrontend.trigger("menu:select", index);
+                FormplayerFrontend.trigger("menu:select", model._index);
                 return;
             }
-            var detailObject = detailObjects[index];
+            var detailObject = detailObjects[detailTabIndex];
             var headers = detailObject.headers;
             var details = detailObject.details;
             var detailModel = [];
@@ -115,8 +115,8 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             tabCollection.reset(tabModels);
             var tabListView = new MenuList.DetailTabListView({
                 collection: tabCollection,
-                showDetail: function (index) {
-                    self.showDetail(model, index);
+                showDetail: function (detailTabIndex) {
+                    self.showDetail(model, detailTabIndex);
                 },
             });
 
