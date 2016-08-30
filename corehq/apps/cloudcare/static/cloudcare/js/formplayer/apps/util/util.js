@@ -88,6 +88,7 @@ Util.CloudcareUrl = function (appId, options) {
         this.page = null;
         this.search= null;
         this.queryDict = null;
+        this.previewCommand = null;
     };
 
     this.spliceSteps = function(index) {
