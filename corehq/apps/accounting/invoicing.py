@@ -59,7 +59,13 @@ class DomainInvoiceFactory(object):
         subscriptions = self._get_subscriptions()
         self._ensure_full_coverage(subscriptions)
         for subscription in subscriptions:
-            self._create_invoice_for_subscription(subscription)
+            try:
+                self._create_invoice_for_subscription(subscription)
+            except InvoiceAlreadyCreatedError as e:
+                log_accounting_error(
+                    "Invoice already existed for domain %s: %s" % (self.domain.name, e),
+                    show_stack_trace=True,
+                )
 
     def _get_subscriptions(self):
         subscriptions = Subscription.objects.filter(
