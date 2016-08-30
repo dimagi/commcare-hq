@@ -868,7 +868,7 @@ PREVIEW_APP = StaticToggle(
     'preview_app',
     'Preview an application in the app builder',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
