@@ -102,8 +102,8 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     // generate the case tile's style block and insert
     var generateCaseTileStyles = function (tiles) {
         var templateString,
-            tileStyle,
-            tileStyleTemplate,
+            caseTileStyle,
+            caseTileStyleTemplate,
             tileModels;
 
         tileModels = _.chain(tiles || [])
@@ -117,14 +117,33 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             }).value();
 
         templateString = $("#case-tile-style-template").html();
-        tileStyleTemplate = _.template(templateString);
-        tileStyle = tileStyleTemplate({
+        caseTileStyleTemplate = _.template(templateString);
+        caseTileStyle = caseTileStyleTemplate({
             models: tileModels,
         });
 
         // need to remove this attribute so the grid style is re-evaluated
-        $("#case-tiles-style").html(tileStyle).removeAttr("data-css-polyfilled");
-        $(".case-container-grid").removeAttr("data-css-polyfilled");
+        $("#case-tiles-style").html(caseTileStyle).removeAttr("data-css-polyfilled");
+    };
+
+    var generateCaseTileContainerStyles = function(numCases, numCasesPerRow) {
+        var templateString,
+            caseTileContainerStyle,
+            caseTileContainerStyleTemplate,
+            containerModel;
+
+        containerModel = {
+            numCasesPerRow: numCasesPerRow,
+            numRows: Math.ceil(numCases / numCasesPerRow),
+        };
+        templateString = $("#case-tile-container-style-template").html();
+        caseTileContainerStyleTemplate = _.template(templateString);
+        caseTileContainerStyle = caseTileContainerStyleTemplate({
+            model: containerModel,
+        });
+
+        // need to remove this attribute so the grid style is re-evaluated
+        $("#case-tiles-container-style").html(caseTileContainerStyle).removeAttr("data-css-polyfilled");
         $("#case-tiles-style").removeAttr("data-css-polyfilled");
     };
 
@@ -137,8 +156,10 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         initialize: function (options) {
             this.tiles = options.tiles;
             this.styles = options.styles;
+            this.numCases = options.collection.length;
             this.numEntitiesPerRow = options.numEntitiesPerRow;
             generateCaseTileStyles(options.tiles);
+            generateCaseTileContainerStyles(this.numCases, this.numEntitiesPerRow);
         },
 
         childViewOptions: function () {
@@ -187,6 +208,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 tiles: this.options.tiles,
                 breadcrumbs: this.options.breadcrumbs,
                 numEntitiesPerRow: this.options.numEntitiesPerRow,
+                numCases: this.options.numCases,
             };
         },
     });

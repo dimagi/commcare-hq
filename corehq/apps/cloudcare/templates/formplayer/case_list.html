@@ -114,7 +114,12 @@
     <% _.each(models, function(model){ %>
         .<%= model.id %> {
             grid-area: <%= model.gridStyle %>;
-            font-size: <%= model.fontStyle %>;
         }
     <% }); %>
+</script>
+
+<script type="text/template" id="case-tile-container-style-template">
+    display: grid;
+    grid-template-columns: repeat(<%= model.numCasesPerRow %>, 1fr);
+    grid-template-rows: repeat(<%= model.numRows %>, 100px);
 </script>
