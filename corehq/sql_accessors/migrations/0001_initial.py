@@ -72,7 +72,6 @@ class Migration(migrations.Migration):
         migrator.get_migration('check_form_exists.sql'),
         migrator.get_migration('get_case_attachments.sql'),
         migrator.get_migration('get_case_by_id.sql'),
-        migrator.get_migration('get_case_by_location_id.sql'),
         migrator.get_migration('get_case_transactions.sql'),
         migrator.get_migration('get_cases_by_id.sql'),
         migrator.get_migration('get_form_attachment_by_name.sql'),

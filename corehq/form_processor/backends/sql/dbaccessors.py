@@ -591,11 +591,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return None
 
     @staticmethod
-    def get_case_ids_in_domain(domain, type_=None):
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute('SELECT case_id FROM get_case_ids_in_domain(%s, %s)', [domain, type_])
-            results = fetchall_as_namedtuple(cursor)
-            return [result.case_id for result in results]
+    def get_case_ids_in_domain(domain, type_=None, deleted=False):
+        return CaseAccessorSQL._get_case_ids_in_domain(domain, case_type=type_)
+
+    @staticmethod
+    def get_deleted_case_ids_in_domain(domain):
+        return CaseAccessorSQL._get_case_ids_in_domain(domain, deleted=True)
 
     @staticmethod
     def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None):
@@ -672,12 +673,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         )
 
     @staticmethod
-    def _get_case_ids_in_domain(domain, case_type=None, owner_ids=None, is_closed=None):
+    def _get_case_ids_in_domain(domain, case_type=None, owner_ids=None, is_closed=None, deleted=False):
         owner_ids = list(owner_ids) if owner_ids else None
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
-                'SELECT case_id FROM get_case_ids_in_domain(%s, %s, %s, %s)',
-                [domain, case_type, owner_ids, is_closed]
+                'SELECT case_id FROM get_case_ids_in_domain(%s, %s, %s, %s, %s)',
+                [domain, case_type, owner_ids, is_closed, deleted]
             )
             results = fetchall_as_namedtuple(cursor)
             return [result.case_id for result in results]
@@ -754,13 +755,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_deleted_case_ids_by_owner(domain, owner_id):
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute(
-                'SELECT case_id FROM get_deleted_case_ids_by_owner(%s, %s)',
-                [domain, owner_id]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return [result.case_id for result in results]
+        return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=[owner_id], deleted=True)
 
     @staticmethod
     def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
