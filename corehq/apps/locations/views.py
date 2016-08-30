@@ -92,15 +92,22 @@ class LocationsListView(BaseLocationView):
         return json.loads(self.request.GET.get('show_inactive', 'false'))
 
     @property
+    def can_edit_root(self):
+        # once permissions are unified, this need only be can_access_all_locations
+        loc_restricted = self.request.project.location_restriction_for_users
+        return self.can_access_all_locations and (
+            not loc_restricted
+            or (loc_restricted and not self.request.couch_user.get_location(self.domain))
+        )
+
+    @property
     def page_context(self):
         has_location_types = len(self.domain_object.location_types) > 0
-        loc_restricted = self.request.project.location_restriction_for_users
         return {
             'locations': self.get_visible_locations(),
             'show_inactive': self.show_inactive,
             'has_location_types': has_location_types,
-            'can_edit_root': (
-                not loc_restricted or (loc_restricted and not self.request.couch_user.get_location(self.domain))),
+            'can_edit_root': self.can_edit_root,
             'can_edit_any_location': user_can_edit_any_location(self.request.couch_user, self.request.project),
         }
 
@@ -115,7 +122,7 @@ class LocationsListView(BaseLocationView):
             }
 
         user = self.request.couch_user
-        if user.has_permission(self.domain, 'access_all_locations'):
+        if self.can_access_all_locations:
             locs = filter_for_archived(
                 SQLLocation.objects.filter(domain=self.domain, parent_id=None),
                 self.show_inactive,
@@ -123,6 +130,10 @@ class LocationsListView(BaseLocationView):
             return map(to_json, locs)
         else:
             return [to_json(user.get_sql_location(self.domain))]
+
+    @property
+    def can_access_all_locations(self):
+        return self.request.couch_user.has_permission(self.domain, 'access_all_locations')
 
 
 class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
