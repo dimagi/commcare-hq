@@ -177,7 +177,7 @@ class LocationForm(forms.Form):
             parent_id = self.location.parent_location_id
         else:
             parent_id = self.cleaned_data['parent_id'] or None
-        if not user_can_access_location_id(self.domain, self.user, parent_id):
+        if self.user and not user_can_access_location_id(self.domain, self.user, parent_id):
             raise forms.ValidationError(LOCATION_ACCESS_DENIED)
 
         parent = Location.get(parent_id) if parent_id else None
