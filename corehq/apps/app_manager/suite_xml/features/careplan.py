@@ -1,3 +1,4 @@
+from django.utils.translation import ugettext as _
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK
 from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
