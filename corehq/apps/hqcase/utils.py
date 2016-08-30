@@ -15,7 +15,7 @@ from corehq.form_processor.interfaces.dbaccessors import get_cached_case_attachm
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.phone.caselogic import get_related_cases
 from corehq.apps.hqcase.exceptions import CaseAssignmentError
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.util import SYSTEM_USER_ID
 from casexml.apps.case import const
 
