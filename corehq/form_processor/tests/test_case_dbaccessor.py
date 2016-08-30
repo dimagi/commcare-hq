@@ -661,7 +661,7 @@ class CaseAccessorTestsSQL(TestCase):
         CaseAccessorSQL.soft_delete_cases(DOMAIN, [case1.case_id, case2.case_id])
 
         case_ids = CaseAccessorSQL.get_deleted_case_ids_by_owner(DOMAIN, user_id)
-        self.assertEqual(case_ids, [case1.case_id, case2.case_id])
+        self.assertEqual(set(case_ids), {case1.case_id, case2.case_id})
 
 
 class CaseAccessorsTests(TestCase):
