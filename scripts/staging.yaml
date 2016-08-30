@@ -55,6 +55,7 @@ branches:
   - django-1.8 # nick P 8/25
   - jquery-2-2-0 # Jenny 8/29
   - jquery-2-2-0-switch # Jenny 8/30
+  - jquery-2-2-0+jquery-2-2-0-switch # Jenny 8/30
   - locations-whitelist  # Ethan 8/29
 submodules:
   submodules/touchforms-src:
