@@ -1,3 +1,5 @@
+/* globals LOAD_LOCS_URL, REQUIRED */
+
 function api_get_children(loc_uuid, callback) {
     var params = (loc_uuid ? {parent_id: loc_uuid} : {});
     $('#loc_ajax').show().removeClass('hide');
@@ -47,9 +49,9 @@ function LocationSelectViewModel(hierarchy, default_caption, auto_drill, loc_fil
 
     // add a new level of drill-down to the tree
     this.path_push = function(loc) {
-        if (this.selected_path().length != this.location_types.length && this.selected_path.indexOf(loc) === -1) {
+        if (this.selected_path().length !== this.location_types.length && this.selected_path.indexOf(loc) === -1) {
             this.selected_path.push(loc);
-            if (this.auto_drill && loc.num_children() == 1) {
+            if (this.auto_drill && loc.num_children() === 1) {
                 loc.selected_child(loc.get_child(0));
             }
         }
@@ -59,7 +61,7 @@ function LocationSelectViewModel(hierarchy, default_caption, auto_drill, loc_fil
     this.find_loc = function(uuid, loc) {
         loc = loc || this.root();
 
-        if (loc.uuid() == uuid) {
+        if (loc.uuid() === uuid) {
             return [loc];
         } else {
             var path = null;
@@ -109,7 +111,7 @@ function LocationModel(data, root, depth, func, withAllOption) {
 
 
     this.display_name = ko.computed(function() {
-        return this.name() == '_all' ? root.default_caption : this.name();
+        return this.name() === '_all' ? root.default_caption : this.name();
     }, this);
 
     this.selected_child = ko.observable();
@@ -138,7 +140,7 @@ function LocationModel(data, root, depth, func, withAllOption) {
         }
     }, this);
     this.selected_is_valid = ko.computed(function() {
-        return this.selected_child() && this.selected_child().name() != '_all';
+        return this.selected_child() && this.selected_child().name() !== '_all';
     }, this);
 
     // helpers to account for the 'all' meta-entry
@@ -158,7 +160,7 @@ function LocationModel(data, root, depth, func, withAllOption) {
         this.type(data.location_type);
         this.uuid(data.uuid);
         this.can_edit(_.isBoolean(data.can_edit) ? data.can_edit : true);
-        if (!!data.children) {
+        if (data.children) {
             this.set_children(data.children);
         }
     };
@@ -194,7 +196,7 @@ function LocationModel(data, root, depth, func, withAllOption) {
         var types = [];
         $.each(root.location_types, function(i, loc_type) {
             $.each(loc_type.allowed_parents, function(i, parent_type) {
-                if (loc.type() == parent_type) {
+                if (loc.type() === parent_type) {
                     types.push(loc_type.type);
                 }
             });
@@ -207,7 +209,7 @@ function LocationModel(data, root, depth, func, withAllOption) {
     }, this);
 
     this.filter = function() {
-        return this.name() == '_all' || root.loc_filter(this);
+        return this.name() === '_all' || root.loc_filter(this);
     };
 
     this.can_edit_children = function() {
