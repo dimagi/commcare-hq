@@ -37,7 +37,7 @@ def _process_main_forms(domain):
     for change in _get_main_form_iterator(domain).iter_all_changes():
         form = change.get_document()
         wrapped_form = XFormInstance.wrap(form)
-        form_received = iso_string_to_datetime(form['received_on'])
+        form_received = wrapped_form.received_on
         assert last_received_on <= form_received
         last_received_on = form_received
         print 'processing form {}: {}'.format(form['_id'], form_received)
