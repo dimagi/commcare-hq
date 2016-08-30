@@ -14,10 +14,7 @@ def url_is_location_safe(url):
         match = resolve(url)
     except Resolver404:
         return False
-    else:
-        if is_location_safe(match.func, match.args, match.kwargs):
-            return True
-        return False
+    return is_location_safe(match.func, match.args, match.kwargs)
 
 
 class UITab(object):
