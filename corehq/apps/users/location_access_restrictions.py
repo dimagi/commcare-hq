@@ -1,7 +1,6 @@
 from django.utils.translation import ugettext_lazy
 
 from tastypie.resources import Resource
-from corehq.apps.hqwebapp.views import no_permissions
 
 LOCATION_ACCESS_DENIED = ugettext_lazy(
     "This project has restricted data access rules.  Please contact your "
@@ -32,6 +31,7 @@ def tastypie_location_safe(resource):
 
 
 def location_restricted_response(request):
+    from corehq.apps.hqwebapp.views import no_permissions
     return no_permissions(request, message=LOCATION_ACCESS_DENIED)
 
 
