@@ -1,15 +1,23 @@
 from django_prbac.decorators import requires_privilege_raise404
+from tastypie.resources import Resource
 from corehq import privileges
 from functools import wraps
 from django.http import Http404
+from django.utils.translation import ugettext_lazy
 from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import (login_and_domain_required,
                                            domain_admin_required)
-from corehq.apps.users.location_access_restrictions import location_restricted_response
 from corehq.apps.users.models import CommCareUser
 from .models import SQLLocation
 from .util import get_xform_location
+
+LOCATION_ACCESS_DENIED = ugettext_lazy(
+    "This project has restricted data access rules.  Please contact your "
+    "project administrator to access specific data in the project"
+)
+
+LOCATION_SAFE_TASTYPIE_RESOURCES = set()
 
 
 def locations_access_required(view_fn):
@@ -133,6 +141,45 @@ def can_edit_form_location(domain, web_user, form):
 
 #### Unified location permissions below this point
 # TODO incorporate the above stuff into the new system
+
+
+def location_safe(view_fn):
+    """Decorator to apply to a view after making sure it's location-safe"""
+    view_fn.is_location_safe = True
+    return view_fn
+
+
+def tastypie_location_safe(resource):
+    """
+    tastypie is a special snowflake that doesn't preserve anything, so it gets
+    it's own class decorator:
+
+        @tastypie_location_safe
+        class LocationResource(HqBaseResource):
+            type = "location"
+    """
+    if not issubclass(resource, Resource):
+        raise TypeError("This decorator can only be applied to tastypie resources")
+    LOCATION_SAFE_TASTYPIE_RESOURCES.add(resource.Meta.resource_name)
+    return resource
+
+
+def location_restricted_response(request):
+    from corehq.apps.hqwebapp.views import no_permissions
+    return no_permissions(request, message=LOCATION_ACCESS_DENIED)
+
+
+def is_location_safe(view_fn, view_args, view_kwargs):
+    """
+    Check if view_fn had the @location_safe decorator applied.
+    view_args and kwargs are also needed because view_fn alone doesn't always
+    contain enough information
+    """
+    if getattr(view_fn, 'is_location_safe', False):
+        return True
+    if 'resource_name' in view_kwargs:
+        return view_kwargs['resource_name'] in LOCATION_SAFE_TASTYPIE_RESOURCES
+    return False
 
 
 def user_can_access_location_id(domain, user, location_id):

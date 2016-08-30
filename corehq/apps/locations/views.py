@@ -31,7 +31,7 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.users.forms import MultipleSelectionForm
-from corehq.apps.users.location_access_restrictions import location_safe
+from corehq.apps.locations.permissions import location_safe
 from corehq.util import reverse, get_document_or_404
 
 from .analytics import users_have_locations

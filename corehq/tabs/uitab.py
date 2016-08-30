@@ -9,7 +9,7 @@ from django.conf import settings
 
 
 def url_is_location_safe(url):
-    from corehq.apps.users.location_access_restrictions import is_location_safe
+    from corehq.apps.locations.permissions import is_location_safe
     try:
         match = resolve(url)
     except Resolver404:

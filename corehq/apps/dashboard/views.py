@@ -18,7 +18,7 @@ from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.locations.views import LocationsListView
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.users.views import DefaultProjectUserSettingsView
-from corehq.apps.users.location_access_restrictions import location_safe
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.style.decorators import use_angular_js
 from django_prbac.utils import has_privilege
 from django.conf import settings

@@ -14,7 +14,7 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.es import UserES
 from corehq.apps.users.forms import MultipleSelectionForm
-from corehq.apps.users.location_access_restrictions import LOCATION_ACCESS_DENIED
+from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import raw_username, user_display_string
 

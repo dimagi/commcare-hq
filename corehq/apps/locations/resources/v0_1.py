@@ -8,7 +8,7 @@ from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.location_access_restrictions import (
+from corehq.apps.locations.permissions import (
     tastypie_location_safe, LOCATION_ACCESS_DENIED)
 from corehq.apps.users.models import WebUser
 from corehq.util.quickcache import quickcache
