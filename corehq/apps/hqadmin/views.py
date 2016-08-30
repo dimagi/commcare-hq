@@ -10,7 +10,6 @@ from StringIO import StringIO
 
 import dateutil
 from dimagi.utils.decorators.memoized import memoized
-from django.utils.datastructures import SortedDict
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 from django.conf import settings
@@ -914,7 +913,7 @@ def callcenter_test(request):
         query_date = date.today()
 
     def view_data(case_id, indicators):
-        new_dict = SortedDict()
+        new_dict = OrderedDict()
         key_list = sorted(indicators.keys())
         for key in key_list:
             new_dict[key] = indicators[key]
