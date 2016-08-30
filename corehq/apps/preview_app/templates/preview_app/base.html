@@ -134,6 +134,8 @@
         <script src="{% static 'jquery-ui/ui/resizable.js' %}"></script>
         <script src="{% static 'jquery-ui/ui/droppable.js' %}"></script>
         <script src="{% static 'jquery-ui/ui/sortable.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/effect.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/effect-slide.js' %}"></script>
         {% endcompress %}
 
         {% compress js %}
@@ -159,9 +161,9 @@
         <div id="webforms-navigation"
              class="webforms-navigation-container"
              data-bind="template: { name: 'preview-form-navigation-ko-template', afterRender: initNavigation }"></div>
-        <div class="scrollable-container dragscroll webforms-scrollable-container">
+        <div class="scrollable-container dragscroll webforms-scrollable-container" id="js-webforms-container">
           <section id="webforms"
-                   class="webforms container-fluid"
+                   class="webforms"
                    data-bind="template: { name: 'form-fullform-ko-template' }"></section>
           {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
               <section id="cloudcare-debugger" data-bind="

@@ -20,16 +20,27 @@
   display: none;
 }
 
+.webforms > .row {
+  margin: 0;
+}
+.webforms > .row > .col-sm-12 {
+  padding: 0;
+}
+.webforms .widget {
+  margin-right: 0;
+}
+
 .webforms .q {
   background-color: white;
-  margin-bottom: 0;
-  padding: 20px 0;
+  margin: 0;
+  padding: 20px 3px;
   box-sizing: border-box;
   min-height: @webforms-container-height;
   position: absolute;
   top: 0;
   left: 0;
   width: 250px;
+  display: none;
 }
 
 .webforms form {
@@ -41,7 +52,28 @@
 }
 
 .webforms .form-actions {
-  display: none; // todo
+  display: none;
+  position: absolute;
+  top: -(@webforms-nav-height+1);
+  left: 34px;
+  height: 30px;
+  margin: 0;
+  padding: 0;
+  > div {
+    padding: 0;
+  }
+  .submit {
+    background-color: @cc-att-pos-mid;
+    width: 216px;
+    border: none;
+    height: @webforms-nav-height;
+    .border-top-radius(0);
+    .border-bottom-radius(0);
+    .transition(background 1s);
+    &:hover {
+      background-color: @cc-att-pos-low;
+    }
+  }
 }
 
 .webforms-nav {
@@ -62,6 +94,13 @@
     .border-top-radius(0);
     .border-bottom-radius(0);
     .transition(1s background);
+    &:focus {
+      outline: none;
+      background-color: transparent;
+      &:hover {
+        background-color: @cc-neutral-hi;
+      }
+    }
   }
 
   .webforms-nav-prev {
@@ -105,4 +144,8 @@
     white-space: nowrap;
     text-overflow: ellipsis;
   }
+}
+
+.webforms-container-submit {
+  overflow: visible;
 }
