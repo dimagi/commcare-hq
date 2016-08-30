@@ -2,7 +2,6 @@
   "name": "CommCareHQ",
   "version": "0.0.1",
   "dependencies": {
-    "jquery-1.11.1": "jquery#1.11.1",
     "jquery": "2.2.0",
     "underscore": "1.8.3",
     "jquery-form": "3.45.0",
@@ -22,6 +21,7 @@
     "angular-messages": "1.4.4",
     "angular-cookies": "1.4.4",
     "angular-sanitize": "1.4.4",
+    "jquery-1.11.1": "jquery#1.11.1",
     "knockout": "3.3.0",
     "knockout-validation": "2.0.3",
     "select2-3.4.5-legacy": "select2#3.4.5",
