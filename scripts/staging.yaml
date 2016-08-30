@@ -56,6 +56,7 @@ branches:
   - jquery-2-2-0-switch # Jenny 8/30
   - locations-whitelist  # Ethan 8/29
   - br/utf-8-restore  # Ben 8/30
+  - np/upgrade-django-angular # Nick P 8/30
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
