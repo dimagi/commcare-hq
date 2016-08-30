@@ -652,6 +652,17 @@ class CaseAccessorTestsSQL(TestCase):
         deleted = CaseAccessorSQL.get_deleted_case_ids_in_domain(DOMAIN)
         self.assertEquals(deleted, [case1.case_id])
 
+    def test_get_deleted_case_ids_by_owner(self):
+        user_id = uuid.uuid4().hex
+        case1 = _create_case(user_id=user_id)
+        case2 = _create_case(user_id=user_id)
+        case3 = _create_case(user_id=user_id)
+
+        CaseAccessorSQL.soft_delete_cases(DOMAIN, [case1.case_id, case2.case_id])
+
+        case_ids = CaseAccessorSQL.get_deleted_case_ids_by_owner(DOMAIN, user_id)
+        self.assertEqual(case_ids, [case1.case_id, case2.case_id])
+
 
 class CaseAccessorsTests(TestCase):
 
