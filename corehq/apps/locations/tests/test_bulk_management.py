@@ -530,10 +530,9 @@ class TestBulkManagement(TestCase):
         delete_city112 = [
             ('S1', 's1', 'state', '', _loc_id('s1'), False) + extra_stub_args,
             ('S2', 's2', 'state', '', _loc_id('s2'), False) + extra_stub_args,
-            ('County11', 'county11', 'county', 's1', _loc_id('county11'), False) + extra_stub_args,
+            ('County11', 'county11', 'county', 's1', _loc_id('county11'), True) + extra_stub_args,
             ('County21', 'county21', 'county', 's2', _loc_id('county21'), False) + extra_stub_args,
-            ('City111', 'city111', 'city', 'county11', _loc_id('city111'), False) + extra_stub_args,
-            # delete city112
+            ('City111', 'city111', 'city', 'county11', _loc_id('city111'), True) + extra_stub_args,
             ('City112', 'city112', 'city', 'county11', _loc_id('city112'), True) + extra_stub_args,
             ('City211', 'city211', 'city', 'county21', _loc_id('city211'), False) + extra_stub_args,
         ]
@@ -647,6 +646,36 @@ class TestBulkManagement(TestCase):
             ('County11', 'county11', 'county', 's1', '', False) + extra_stub_args,
             ('County21', 'county21', 'county', 's2', '', False) + extra_stub_args,
             # delete locations of type 'city'
+            ('City111', 'city111', 'city', 'county11', '', True) + extra_stub_args,
+            ('City112', 'city112', 'city', 'county11', '', True) + extra_stub_args,
+            ('City211', 'city211', 'city', 'county21', '', True) + extra_stub_args,
+        ]
+
+        result = self.bulk_update_locations(
+            delete_city_types,  # No change to types
+            delete_cities_locations,  # This is the desired end result
+        )
+
+        self.assertEqual(result.errors, [])
+        self.assertLocationTypesMatch(delete_city_types)
+        self.assertLocationsMatch(self.as_pairs(delete_cities_locations))
+        self.assertCouchSync()
+
+    def test_delete_everything(self):
+        # delete everything
+        lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
+        self.create_locations(self.basic_tree, lt_by_code)
+
+        delete_city_types = [
+            ('State', 'state', '', True, False, False, '', '', 0),
+            ('County', 'county', 'state', True, False, True, '', '', 0),
+            ('City', 'city', 'county', True, True, False, '', '', 0),
+        ]
+        delete_cities_locations = [
+            ('S1', 's1', 'state', '', '', True) + extra_stub_args,
+            ('S2', 's2', 'state', '', '', True) + extra_stub_args,
+            ('County11', 'county11', 'county', 's1', '', True) + extra_stub_args,
+            ('County21', 'county21', 'county', 's2', '', True) + extra_stub_args,
             ('City111', 'city111', 'city', 'county11', '', True) + extra_stub_args,
             ('City112', 'city112', 'city', 'county11', '', True) + extra_stub_args,
             ('City211', 'city211', 'city', 'county21', '', True) + extra_stub_args,
