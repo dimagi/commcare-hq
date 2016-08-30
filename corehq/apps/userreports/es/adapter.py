@@ -14,7 +14,7 @@ class IndicatorESAdapter(IndicatorAdapter):
     def __init__(self, config):
         super(IndicatorESAdapter, self).__init__(config)
         self.es = get_es_new()
-        self.table_name = get_table_name(config.domain, config.table_id)
+        self.table_name = get_table_name(config.domain, config.table_id).lower()
 
     def rebuild_table(self):
         self.drop_table()
