@@ -14,7 +14,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.style.decorators import use_datatables
 from corehq.toggles import all_toggles, ALL_TAGS, NAMESPACE_USER, NAMESPACE_DOMAIN
 from toggle.models import Toggle
-from toggle.shortcuts import clear_toggle_cache
+from toggle.shortcuts import clear_toggle_cache, parse_toggle
 
 NOT_FOUND = "Not Found"
 
@@ -160,14 +160,11 @@ class ToggleEditView(ToggleBaseView):
     def call_save_fn_and_clear_cache(self, toggle_slug, changed_entries, currently_enabled):
         for entry in changed_entries:
             enabled = entry in currently_enabled
-            namespace = None
-            if entry.startswith(NAMESPACE_DOMAIN):
-                domain = entry = entry.split(":")[1]
-                namespace = NAMESPACE_DOMAIN
-
+            namespace, entry = parse_toggle(entry)
+            if namespace == NAMESPACE_DOMAIN:
+                domain = entry
                 if self.static_toggle.save_fn is not None:
                     self.static_toggle.save_fn(domain, enabled)
-
                 toggle_js_domain_cachebuster.clear(domain)
             else:
                 # these are sent down with no namespace
