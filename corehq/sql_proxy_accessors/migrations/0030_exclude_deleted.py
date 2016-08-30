@@ -14,16 +14,13 @@ migrator = RawSQLMigration(('corehq', 'sql_proxy_accessors', 'sql_templates'), {
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sql_proxy_accessors', '0023_rename_get_multiple_forms_attachments'),
+        ('sql_proxy_accessors', '0027_add_undelete_functions'),
     ]
 
     operations = [
         HqRunSQL(
-            "DROP FUNCTION IF EXISTS get_case_ids_in_domain(TEXT, TEXT)",
+            "DROP FUNCTION IF EXISTS get_case_ids_in_domain(TEXT, TEXT, TEXT[], BOOLEAN)",
             "SELECT 1"
         ),
-        HqRunSQL(
-            "DROP FUNCTION IF EXISTS get_case_ids_in_domain_by_owners(text, text[], boolean)",
-            "SELECT 1"
-        ),
+        migrator.get_migration('get_case_ids_in_domain_2.sql'),
     ]
