@@ -1,4 +1,5 @@
 from lxml import etree
+from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.suite_xml.xml_models import Suite
 
@@ -9,7 +10,7 @@ def get_select_chain(app, module, include_self=True):
         while hasattr(current_module, 'parent_select') and current_module.parent_select.active:
             current_module = app.get_module_by_unique_id(
                 current_module.parent_select.module_id,
-                error="Module used by parent child selection in '{}' not found".format(
+                error=_("Module used by parent child selection in '{}' not found").format(
                       current_module.default_name()),
             )
             if current_module in select_chain:
