@@ -113,8 +113,7 @@ class RemoteRequestContributor(SuiteContributorByModule):
                     data=[SessionDatum(
                         id='case_id',
                         nodeset=(CaseTypeXpath(module.case_type)
-                                 .case(instance_name=RESULTS_INSTANCE)
-                                 .select(u'@status', u'open', quote=True)),
+                                 .case(instance_name=RESULTS_INSTANCE)),
                         value='./@case_id',
                         detail_select=details_helper.get_detail_id_safe(module, 'case_short'),
                         detail_confirm=details_helper.get_detail_id_safe(module, 'case_long'),
