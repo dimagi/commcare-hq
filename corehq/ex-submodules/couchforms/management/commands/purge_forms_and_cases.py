@@ -1,6 +1,8 @@
 import csv
 
 from django.core.management.base import BaseCommand, CommandError
+from django.http import Http404
+
 from corehq.apps.app_manager.models import Application
 from casexml.apps.case.xform import get_case_ids_from_form
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
@@ -72,8 +74,8 @@ though deletion would be re-confirmed so dont panic
             # Get app version by fetching app corresponding to xform build_id since xform.form
             # does not have updated app version unless form was updated for that version
             xform.app_version_built_with = self.get_xform_build_version(xform)
-            _print_form_details(xform, self.xform_writer)
-            if xform.app_version_built_with < self.version_number:
+            if xform.app_version_built_with and xform.app_version_built_with < self.version_number:
+                _print_form_details(xform, self.xform_writer)
                 self.ensure_valid_xform(xform)
                 self.filtered_xform_ids.append(xform.form_id)
                 self.case_ids = self.case_ids.union(get_case_ids_from_form(xform))
@@ -83,10 +85,17 @@ though deletion would be re-confirmed so dont panic
             self.print_case_details()
 
     def get_xform_build_version(self, xform):
-        version_from_mapping = self.version_mapping.get(xform.build_id)
-        if not version_from_mapping:
-            version_from_mapping = int(get_app(self.domain, xform.build_id).version)
-            self.version_mapping[xform.build_id] = version_from_mapping
+        version_from_mapping = None
+        if xform.build_id:
+            version_from_mapping = self.version_mapping.get(xform.build_id, None)
+            if not version_from_mapping:
+                try:
+                    get_app_version = get_app(self.domain, xform.build_id).version
+                except Http404:
+                    get_app_version = None
+                if get_app_version:
+                    version_from_mapping = int(get_app_version)
+                self.version_mapping[xform.build_id] = version_from_mapping
         return version_from_mapping
 
     def ensure_valid_xform(self, xform):
