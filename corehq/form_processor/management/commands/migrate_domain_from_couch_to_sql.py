@@ -98,6 +98,7 @@ def _migrate_form_and_attachments(domain, couch_form):
     # export_tag intentionally removed
     # sql_form.export_tag = ["domain", "xmlns"]
     sql_form.partial_submission = couch_form.partial_submission
+    sql_form.initial_processing_complete = couch_form.initial_processing_complete
     return sql_form
 
 
