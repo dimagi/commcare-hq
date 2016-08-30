@@ -754,7 +754,10 @@ def save_locations(location_stubs, types_by_code):
     for l in location_stubs:
         location_stubs_by_parent_code[l.parent_code].append(l)
 
+    to_be_deleted = []
+
     def update_children(parent_stub):
+        # recursively create/update locations top to bottom
         if parent_stub == ROOT_LOCATION_TYPE:
             parent_code = ROOT_LOCATION_TYPE
             parent_location = None
@@ -765,14 +768,18 @@ def save_locations(location_stubs, types_by_code):
         child_stubs = location_stubs_by_parent_code[parent_code]
 
         for child_stub in child_stubs:
-            lt = types_by_code.get(child_stub.location_type)
             child = child_stub.db_object
             child.parent = parent_location
             if child_stub.do_delete:
-                child.delete()
+                # keep track of to be deleted items to delete them in top-to-bottom order
+                to_be_deleted.append(child)
             elif child_stub.needs_save:
-                child.location_type = lt
+                child.location_type = types_by_code.get(child_stub.location_type)
                 child.save()
             update_children(child_stub)
 
     update_children(ROOT_LOCATION_TYPE)
+    for l in reversed(to_be_deleted):
+        # Deletion has to happen bottom to top, otherwise mptt complains
+        #   about missing parents
+        l.delete()
