@@ -61,12 +61,23 @@
           <div class="table">
             <table class="table table-hover table-condensed">
               <thead>
-                <tr data-bind="foreach: tableProperties">
+              {% if request.user.is_superuser and is_internal_view %}
+                <tr data-bind="foreach: internalTableProperties">
                   <th data-bind="text: $data"></th>
                 </tr>
+              {% else %}
+                <tr data-bind="foreach: externalTableProperties">
+                  <th data-bind="text: $data"></th>
+                </tr>
+              {% endif %}
               </thead>
               <tbody data-bind="foreach: {data: topFiveProjects}">
                 <tr class="project-row">
+                  {% if request.user.is_superuser and is_internal_view %}
+                      <td data-bind="text: name"></td>
+                      <td data-bind="text: organization"></td>
+                      <td data-bind="text: description"></td>
+                  {% endif %}
                   <td data-bind="text: sector"></td>
                   <td data-bind="text: sub_sector"></td>
                   <td data-bind="text: active_users"></td>
@@ -81,12 +92,17 @@
   </div>
   <!-- Main Page Content -->
   <div class="main-content">
-    <div id="report-content"></div>
     <div class="map-wrapper wrapper">
       <div id="map"></div>
     </div>
     <div class="filter-wrapper wrapper">
-      <h4 class="text-hq-nav-header">{{ facet_report.facet_title }}</h4>
+      {% if request.user.is_superuser and is_internal_view %}
+          <div id="internal-only">
+              <p>This is the Dimagi-only view of the Active Project Map - please do not share this outside of Dimagi.</p>
+              <p>For external view, <a href="/hq/admin/project_map">click here</a></p>
+          </div>
+      {% endif %}
+      <h4 class="text-hq-nav-header">Active Project Map</h4>
         <div class="btn-group btn-toggle text-hq-nav-header">
             <button class="btn btn-primary active" id="projects">Projects</button>
             <button class="btn btn-default" id="users">Users</button>

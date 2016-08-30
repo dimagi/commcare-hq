@@ -101,7 +101,8 @@ var projectMapInit = function(mapboxAccessToken) {
             var self = this;
             self.selectedCountry = ko.observable('country name');
             self.selectedProject = ko.observable('project name');
-            self.tableProperties = ['Sector', 'Sub-Sector', 'Active Users', 'Countries'];
+            self.internalTableProperties = ['Name', 'Organization', 'Notes', 'Sector', 'Sub-Sector', 'Active Users', 'Countries'];
+            self.externalTableProperties = ['Sector', 'Sub-Sector', 'Active Users', 'Countries'];
             self.topFiveProjects = ko.observableArray();
         };
 
@@ -210,7 +211,7 @@ var projectMapInit = function(mapboxAccessToken) {
         info.update();
     }
 
-    function capitalizeCountryNames(countries) {
+    function formatCountryNames(countries) {
         return countries.map(function(country) {
             var formattedCountryName = country.charAt(0).toUpperCase();
             if (country.indexOf(",") > -1) {
@@ -236,14 +237,29 @@ var projectMapInit = function(mapboxAccessToken) {
                         url: "/hq/admin/top_five_projects_by_country/?country=" + country,
                         datatype: "json",
                     }).done(function(data){
-                        data[country].forEach(function(project){
-                            selectionModel.topFiveProjects.push({
-                                sector: project['internal']['area'],
-                                sub_sector: project['internal']['sub_area'],
-                                active_users: project['cp_n_active_cc_users'],
-                                countries: capitalizeCountryNames(project['deployment']['countries']).join(', '),
+                        if (data.internal) {
+                            data[country].forEach(function(project){
+                                selectionModel.topFiveProjects.push({
+                                    name: project['name'],
+                                    organization: project['organization_name'],
+                                    description: project['internal']['notes'],
+                                    sector: project['internal']['area'],
+                                    sub_sector: project['internal']['sub_area'],
+                                    active_users: project['cp_n_active_cc_users'],
+                                    countries: formatCountryNames(project['deployment']['countries']).join(', '),
+                                });
                             });
-                        });
+                        } else {
+                            data[country].forEach(function(project){
+                                selectionModel.topFiveProjects.push({
+                                    sector: project['internal']['area'],
+                                    sub_sector: project['internal']['sub_area'],
+                                    active_users: project['cp_n_active_cc_users'],
+                                    countries: formatCountryNames(project['deployment']['countries']).join(', '),
+                                });
+                            });
+                        }
+
                     });
                     $('#modal').modal();
                 };

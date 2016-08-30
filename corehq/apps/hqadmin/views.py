@@ -1187,12 +1187,17 @@ class ReprocessMessagingCaseUpdatesView(BaseAdminSectionView):
 
 def top_five_projects_by_country(request):
     data = {}
+    internalMode = request.user.is_superuser
+    attributes = ['internal.area', 'internal.sub_area', 'cp_n_active_cc_users', 'deployment.countries']
+
+    if internalMode:
+        attributes = ['name', 'internal.organization_name', 'internal.notes'] + attributes
+
     if 'country' in request.GET:
         country = request.GET.get('country')
         projects = (DomainES().is_active_project().real_domains()
                     .filter(filters.term('deployment.countries', country))
-                    .sort('cp_n_active_cc_users', True)
-                    .source(['internal.area', 'internal.sub_area', 'cp_n_active_cc_users', 'deployment.countries'])
-                    .size(5).run().hits)
-        data = {country: projects}
+                    .sort('cp_n_active_cc_users', True).source(attributes).size(5).run().hits)
+        data = {country: projects, 'internal': internalMode}
+
     return json_response(data)
