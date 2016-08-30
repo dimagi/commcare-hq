@@ -20,7 +20,7 @@ class CareplanMenuContributor(SuiteContributorByModule):
 
             if not module.display_separately:
                 parent = self.app.get_module_by_unique_id(module.parent_select.module_id,
-                         error="Could not find module '{}' is attached to.".format(module.default_name()))
+                         error=_("Could not find module '{}' is attached to.").format(module.default_name()))
                 create_goal_form = module.get_form_by_type(CAREPLAN_GOAL, 'create')
                 create_menu = Menu(
                     id=id_strings.menu_id(parent),
