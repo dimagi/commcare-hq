@@ -1,5 +1,6 @@
 from collections import namedtuple, defaultdict
 from itertools import izip_longest
+from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
 
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain_meta
