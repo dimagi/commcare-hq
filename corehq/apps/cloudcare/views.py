@@ -236,7 +236,11 @@ class CloudcareClearUserData(View):
     def post(self, request, domain):
         couch_user = request.couch_user
 
-        if not couch_user.is_web_user or not toggles.PREVIEW_APP.enabled(domain):
+        is_toggle_enabled = (
+            toggles.PREVIEW_APP.enabled(domain) or
+            toggles.PREVIEW_APP.enabled(couch_user.username)
+        )
+        if (not couch_user.is_web_user or not is_toggle_enabled):
             # If this is called by a mobile user, it's most likely a mistake so we should
             # not close all their cases.
             return json_response({'status': 'fail'}, status_code=400)
