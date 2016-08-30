@@ -92,13 +92,20 @@ def check_duplicate_usernames(user_specs):
 
 def check_existing_usernames(user_specs, domain):
     usernames_without_ids = set()
+    invalid_usernames = set()
 
     for row in user_specs:
         username = row.get('username')
         user_id = row.get('user_id')
         if username and user_id:
             continue
-        usernames_without_ids.add(normalize_username(username, domain))
+        try:
+            usernames_without_ids.add(normalize_username(username, domain))
+        except ValidationError:
+            invalid_usernames.add(username)
+
+    if invalid_usernames:
+        raise UserUploadError(_('The following usernames are invalid: ' + ', '.join(invalid_usernames)))
 
     existing_usernames = [u.get('username') for u in get_user_docs_by_username(usernames_without_ids)]
 
