@@ -18,7 +18,7 @@ from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, Use
 from casexml.apps.case.xml import V2
 from corehq.toggles import ASYNC_RESTORE
 from corehq.apps.commtrack.exceptions import MissingProductId
-from corehq.apps.tzmigration import timezone_migration_in_progress
+from corehq.apps.tzmigration.api import timezone_migration_in_progress
 from corehq.form_processor.exceptions import CouchSaveAborted
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
