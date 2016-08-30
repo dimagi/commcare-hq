@@ -1,7 +1,7 @@
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext_noop, ugettext as _
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 
 from corehq import privileges
 from corehq.apps.app_manager.dbaccessors import domain_has_apps

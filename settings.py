@@ -212,7 +212,7 @@ DEFAULT_APPS = (
     'djcelery',
     'djtables',
     'django_prbac',
-    'djangular',
+    'djng',
     'captcha',
     'couchdbkit.ext.django',
     'crispy_forms',

@@ -13,7 +13,7 @@ from django.utils.translation import ugettext as _
 import sys
 
 from django.views.generic.base import TemplateView, View
-from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
+from djng.views.mixins import allow_remote_invocation, JSONResponseMixin
 
 from corehq.apps.analytics import ab_tests
 from corehq.apps.analytics.tasks import (
