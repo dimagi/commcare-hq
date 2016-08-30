@@ -864,6 +864,15 @@ CUSTOM_CALENDAR_FIXTURE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+
+NEW_BULK_LOCATION_MANAGEMENT = StaticToggle(
+    'new_bulk_location_management',
+    'Enable advanced features in Bulk Location Upload',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
+
 PREVIEW_APP = StaticToggle(
     'preview_app',
     'Preview an application in the app builder',
