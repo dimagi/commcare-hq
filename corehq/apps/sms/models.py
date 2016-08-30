@@ -80,7 +80,7 @@ class Log(models.Model):
     location_id = models.CharField(max_length=126, null=True)
 
     # The MessagingSubEvent that this log is tied to
-    messaging_subevent = models.ForeignKey('MessagingSubEvent', null=True, on_delete=models.PROTECT)
+    messaging_subevent = models.ForeignKey('sms.MessagingSubEvent', null=True, on_delete=models.PROTECT)
 
     def set_system_error(self, message=None):
         self.error = True
