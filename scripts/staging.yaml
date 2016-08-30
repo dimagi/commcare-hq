@@ -49,7 +49,7 @@ branches:
   - locations-whitelist+loc-tests  # Ethan 8/29 (trivial conflict)
   - loc-tests # sravan 8/8
   - vellum-staging # J$ 11/13
-  - welcome-to-vellum # Jenny 8/3
+#  - welcome-to-vellum # Jenny 8/3
 #  - welcome-to-vellum+kill-1.x-apps # Jenny 8/24
   - send-datasource-to-es # j$ 8/24
   - django-1.8 # nick P 8/25
@@ -74,7 +74,7 @@ submodules:
   submodules/django-prbac-src:
     branches: []
   corehq/apps/prelogin:
-    branches:
-      - welcome-to-vellum # Jenny 8/3
+    branches: []
+#      - welcome-to-vellum # Jenny 8/3
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
