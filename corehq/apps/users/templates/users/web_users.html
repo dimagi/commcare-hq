@@ -611,6 +611,20 @@
                                     </div>
                                     <div class="form-group">
                                         <label class="col-sm-4 control-label">
+                                            {% trans "Full Organization Access" %}
+                                        </label>
+                                        <div class="col-sm-8 controls">
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox"
+                                                           data-bind="checked: permissions.access_all_locations" />
+                                                    {% trans "Allow role to access data from all locations" %}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label">
                                             {% trans "View All Reports" %}
                                         </label>
                                         <div class="col-sm-8 controls">
