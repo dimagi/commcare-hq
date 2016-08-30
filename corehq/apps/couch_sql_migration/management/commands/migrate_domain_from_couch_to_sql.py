@@ -48,7 +48,11 @@ class Command(LabelCommand):
 
         case_ids_in_couch = set(get_case_ids_in_domain(domain))
         case_ids_in_sql = set(CaseAccessorSQL.get_case_ids_in_domain(domain))
-        self._print_status('Cases', case_ids_in_couch, case_ids_in_sql)
+        self._print_status('CommCareCase', case_ids_in_couch, case_ids_in_sql)
+
+        case_ids_in_couch = set(get_doc_ids_in_domain_by_type(domain, "CommCareCase-Deleted", XFormInstance.get_db()))
+        case_ids_in_sql = set(CaseAccessorSQL.get_deleted_case_ids_in_domain(domain))
+        self._print_status('CommCareCase-Deleted', case_ids_in_couch, case_ids_in_sql)
 
     def _print_status(self, name, ids_in_couch, ids_in_sql):
         header = ((82 - len(name)) / 2) * '_'
