@@ -62,6 +62,10 @@ class BaseLocationView(BaseDomainView):
         return super(BaseLocationView, self).dispatch(request, *args, **kwargs)
 
     @property
+    def can_access_all_locations(self):
+        return self.request.couch_user.has_permission(self.domain, 'access_all_locations')
+
+    @property
     def section_url(self):
         return reverse(LocationsListView.urlname, args=[self.domain])
 
@@ -130,10 +134,6 @@ class LocationsListView(BaseLocationView):
             return map(to_json, locs)
         else:
             return [to_json(user.get_sql_location(self.domain))]
-
-    @property
-    def can_access_all_locations(self):
-        return self.request.couch_user.has_permission(self.domain, 'access_all_locations')
 
 
 class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
@@ -554,6 +554,8 @@ class EditLocationView(NewLocationView):
     @property
     @memoized
     def users_form(self):
+        if not self.can_access_all_locations:
+            return None
         form = UsersAtLocationForm(
             domain_object=self.domain_object,
             location=self.location,
@@ -589,7 +591,7 @@ class EditLocationView(NewLocationView):
         return context
 
     def users_form_post(self, request, *args, **kwargs):
-        if self.users_form.is_valid():
+        if self.users_form and self.users_form.is_valid():
             self.users_form.save()
             return self.form_valid()
         else:
