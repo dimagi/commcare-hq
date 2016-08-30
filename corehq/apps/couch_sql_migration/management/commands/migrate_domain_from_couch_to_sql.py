@@ -14,17 +14,25 @@ from couchforms.models import doc_types
 class Command(LabelCommand):
     args = "<domain>"
     option_list = LabelCommand.option_list + (
+        make_option('--MIGRATE', action='store_true', default=False),
         make_option('--stats', action='store_true', default=False),
     )
+
+    @staticmethod
+    def require_only_option(sole_option, options):
+        base_options = {option.dest for option in LabelCommand.option_list}
+        assert all(not value for key, value in options.items()
+                   if key not in base_options and key != sole_option)
 
     def handle_label(self, domain, **options):
         if should_use_sql_backend(domain):
             raise CommandError(u'It looks like {} has already been migrated.'.format(domain))
 
+        if options['MIGRATE']:
+            self.require_only_option('MIGRATE', options)
+            do_couch_to_sql_migration(domain)
         if options['stats']:
             self.print_stats(domain)
-        else:
-            do_couch_to_sql_migration(domain)
 
     def print_stats(self, domain):
         for doc_type in doc_types():
