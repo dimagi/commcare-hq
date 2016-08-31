@@ -19,7 +19,7 @@ from django.contrib.auth import login
 from django.core import management, cache
 from django.shortcuts import render
 from django.template.loader import render_to_string
-from django.views.generic import FormView, TemplateView
+from django.views.generic import FormView, TemplateView, View
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.http import (
@@ -27,6 +27,7 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseNotFound,
+    JsonResponse
 )
 from restkit import Resource
 from restkit.errors import Unauthorized
@@ -36,6 +37,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.xml import SYNC_XMLNS
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.callcenter.utils import CallCenterCase
+from corehq.apps.domain.auth import basicauth
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
@@ -63,8 +65,8 @@ from corehq.apps.data_analytics.const import GIR_FIELDS
 from corehq.apps.data_analytics.admin import MALTRowAdmin
 from corehq.apps.domain.decorators import (
     require_superuser, require_superuser_or_developer,
-    login_or_basic, domain_admin_required
-)
+    login_or_basic, domain_admin_required,
+    check_lockout)
 from corehq.apps.domain.models import Domain
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
@@ -1200,3 +1202,16 @@ def top_five_projects_by_country(request):
         data = {country: projects, 'internal': internalMode}
 
     return json_response(data)
+
+
+class DomainListView(View):
+    urlname = 'domain_list'
+
+    @method_decorator(check_lockout)
+    @method_decorator(basicauth())
+    def get(self, request, *args, **kwargs):
+        couch_user = CouchUser.from_django_user(request.user)
+        return JsonResponse({
+            'domains': couch_user.domains,
+            'user': couch_user.username,
+        })

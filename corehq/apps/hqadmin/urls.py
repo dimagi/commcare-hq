@@ -13,7 +13,8 @@ from .views import (
     DimagisphereView,
     DownloadGIRView,
     VCMMigrationView,
-    ReprocessMessagingCaseUpdatesView)
+    ReprocessMessagingCaseUpdatesView,
+    DomainListView)
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 
@@ -58,5 +59,6 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^reprocess_messaging_case_updates/$', ReprocessMessagingCaseUpdatesView.as_view(),
         name=ReprocessMessagingCaseUpdatesView.urlname),
     url(r'^top_five_projects_by_country/$', 'top_five_projects_by_country', name='top_five_projects_by_country'),
+    url(r'^domain_list/$', DomainListView.as_view(), name=DomainListView.urlname),
     AdminReportDispatcher.url_pattern(),
 )
