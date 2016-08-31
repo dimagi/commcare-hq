@@ -6,7 +6,8 @@ import settings
 from casexml.apps.case.xform import get_all_extensions_to_close, CaseProcessingResult
 from corehq.apps.tzmigration.planning import DiffDB
 from corehq.apps.tzmigration.timezonemigration import json_diff
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.backends.sql.processor import FormProcessorSQL
+from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL
 from corehq.form_processor.submission_post import CaseStockProcessingResult
 from corehq.form_processor.utils import should_use_sql_backend
@@ -197,14 +198,15 @@ def _save_migrated_models(domain, sql_form, case_stock_result=None):
     However, note that that function does some things that this one shouldn't,
     e.g. process ownership cleanliness flags.
     """
-    interface = FormProcessorInterface(domain)
-    interface.save_processed_models(
-        [sql_form],
-        case_stock_result.case_models if case_stock_result else None,
-        case_stock_result.stock_result if case_stock_result else None
+    forms_tuple = ProcessedForms(sql_form, None)
+    stock_result = case_stock_result.stock_result if case_stock_result else None
+    if stock_result:
+        assert stock_result.populated
+    return FormProcessorSQL.save_processed_models(
+        forms_tuple,
+        cases=case_stock_result.case_models if case_stock_result else None,
+        stock_result=stock_result
     )
-    if case_stock_result:
-        case_stock_result.case_result.close_extensions()
 
 
 def _get_main_form_iterator(domain):
