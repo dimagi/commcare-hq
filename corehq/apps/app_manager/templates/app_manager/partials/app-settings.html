@@ -153,31 +153,6 @@
     </aside>
 </script>
 
-<a href="{% url "app_summary" domain app.id %}" class="btn btn-default pull-right">
-    <i class="fa fa-list-alt"></i>
-    App Summary
-</a>
-
-<inline-edit params="
-    value: '{{ app.name|escapejs }}',
-    readOnlyClass: 'h3',
-    url: '{% url "edit_app_attr" domain app.id 'name' %}',
-    placeholder: '{% trans "Untitled App"|escapejs %}',
-    postSave: function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); },
-    rows: 1,
-    saveValueName: 'name',
-"></inline-edit>
-<br />
-<inline-edit params="
-    value: '{{ app.short_comment|escapejs }}',
-    url: '{% url "edit_app_attr" domain app.id 'comment' %}',
-    placeholder: '{% trans "Enter app description here"|escapejs %}',
-    saveValueName: 'comment',
-    readOnlyClass: 'app-comment',
-    cols: 50,
-"></inline-edit>
-
-<br><br>
 <div class="tabbable">
     <ul class="nav nav-tabs">
         <li class="active"><a href="#commcare-settings" data-toggle="tab">{% trans "App Settings" %}</a></li>
