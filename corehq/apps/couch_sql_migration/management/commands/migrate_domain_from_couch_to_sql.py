@@ -3,7 +3,7 @@ from optparse import make_option
 
 from django.core.management.base import CommandError, LabelCommand
 
-from corehq.apps.couch_sql_migration.couchsqlmigration import do_couch_to_sql_migration, delete_diff_db
+from corehq.apps.couch_sql_migration.couchsqlmigration import do_couch_to_sql_migration, delete_diff_db, get_diff_db
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
@@ -19,6 +19,7 @@ class Command(LabelCommand):
         make_option('--MIGRATE', action='store_true', default=False),
         make_option('--blow_away', action='store_true', default=False),
         make_option('--stats', action='store_true', default=False),
+        make_option('--show-diffs', action='store_true', default=False),
     )
 
     @staticmethod
@@ -43,6 +44,12 @@ class Command(LabelCommand):
             _blow_away_migration(domain)
         if options['stats']:
             self.print_stats(domain)
+        if options['show_diffs']:
+            self.show_diffs(domain)
+
+    def show_diffs(self, domain):
+        from corehq.apps.tzmigration.planning import show_diffs
+        show_diffs(get_diff_db(domain))
 
     def print_stats(self, domain):
         for doc_type in doc_types():
