@@ -91,8 +91,8 @@ class CouchSqlDomainMigrator(object):
 
     def _calculate_case_diffs(self):
         cases = {}
-        for case_doc in _get_case_iterator(self.domain).iter_all_changes():
-            cases[case_doc['_id']] = case_doc
+        for change in _get_case_iterator(self.domain).iter_all_changes():
+            cases[change.id] = change.get_document()
             if len(cases) == 1000:
                 self._diff_cases(cases)
                 cases = {}
@@ -105,9 +105,10 @@ class CouchSqlDomainMigrator(object):
         sql_cases = CaseAccessorSQL.get_cases(list(couch_cases))
         for sql_case in sql_cases:
             couch_case = couch_cases[sql_case.case_id]
+            diffs = json_diff(couch_case, sql_case.to_json())
             self.diff_db.add_diffs(
-                couch_case.doc_type, sql_case.case_id,
-                json_diff(couch_case, sql_case.to_json())
+                couch_case['doc_type'], sql_case.case_id,
+                _filter_case_diffs(diffs)
             )
 
 
@@ -327,3 +328,39 @@ IGNORE_PATHS = {
 def _filter_form_diffs(doc_type, diffs):
     paths_to_ignore = IGNORE_PATHS.get(doc_type, BASE_IGNORED_FORM_PATHS)
     return [diff for diff in diffs if diff.path[0] not in paths_to_ignore]
+
+CASE_IGNORED_PATHS = {
+    '_rev',
+    'initial_processing_complete',
+    'actions',
+    'id',
+    '#export_tag',
+    'computed_',
+    'version',
+    'case_attachments',
+    'deleted',
+    'export_tag',
+    'computed_modified_on_',
+    'case_id',
+    'case_json',
+    'modified_by',
+}
+
+
+def _case_ignored_diffs():
+    from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
+    return (
+        FormJsonDiff(diff_type=u'type', path=(u'name',), old_value=u'', new_value=None),
+        FormJsonDiff(diff_type=u'type', path=(u'closed_by',), old_value=u'', new_value=None),
+        FormJsonDiff(diff_type=u'missing', path=(u'location_id',), old_value=Ellipsis, new_value=None),
+    )
+
+CASE_IGNORED_DIFFS = _case_ignored_diffs()
+
+
+def _filter_case_diffs(diffs):
+    return [
+        diff for diff in diffs
+        if diff.path[0] not in CASE_IGNORED_PATHS and diff not in CASE_IGNORED_DIFFS
+    ]
+
