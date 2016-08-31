@@ -48,6 +48,22 @@ class PlanningDiff(Base):
     old_value = Column(UnicodeText, nullable=True)
     new_value = Column(UnicodeText, nullable=True)
 
+    @property
+    def json_diff(self):
+        from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
+
+        def json_loads_or_ellipsis(val):
+            if val is None:
+                return Ellipsis
+            else:
+                return json.loads(val)
+
+        return FormJsonDiff(
+            self.diff_type, json.loads(self.path),
+            json_loads_or_ellipsis(self.old_value),
+            json_loads_or_ellipsis(self.new_value)
+        )
+
 
 class PlanningStockReportHelper(Base):
     __tablename__ = 'stock_report_helper'
@@ -101,22 +117,9 @@ class DiffDB(BaseDB):
                 new_value=json_dumps_or_none(d.new_value)))
         session.commit()
 
-
     def get_diffs(self):
-        from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
         session = self.Session()
-
-        def json_loads_or_ellipsis(val):
-            if val is None:
-                return Ellipsis
-            else:
-                return json.loads(val)
-
-        for d in session.query(PlanningDiff).all():
-            yield d.doc_id, FormJsonDiff(
-                d.diff_type, json.loads(d.path),
-                json_loads_or_ellipsis(d.old_value),
-                json_loads_or_ellipsis(d.new_value))
+        return session.query(PlanningDiff).all()
 
 
 class PlanningDB(BaseDB):

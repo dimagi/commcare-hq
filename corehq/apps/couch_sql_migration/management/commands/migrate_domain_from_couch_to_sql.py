@@ -49,8 +49,9 @@ class Command(LabelCommand):
             self.show_diffs(domain)
 
     def show_diffs(self, domain):
-        from corehq.apps.tzmigration.timezonemigration import show_diffs
-        show_diffs(get_diff_db(domain))
+        db = get_diff_db(domain)
+        for diff in db.get_diffs():
+            print '[{}({})] {}'.format(diff.kind, diff.doc_id, diff.json_diff)
 
     def print_stats(self, domain):
         for doc_type in doc_types():
