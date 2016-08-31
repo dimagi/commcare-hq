@@ -42,13 +42,14 @@ class ExportSchemaTest(TestCase, DocTestMixin):
             dt = datetime.utcnow()
             schema1 = ExportSchema(index=index, timestamp=dt)
             schema1.save(**save_args)
-            self.assertEqual(schema1._id, ExportSchema.last(index)._id)
+            self.assert_docs_equal(schema1, ExportSchema.last(index))
             schema2 = ExportSchema(index=index, timestamp=dt + timedelta(seconds=1))
             schema2.save(**save_args)
-            self.assertEqual(schema2._id, ExportSchema.last(index)._id)
+            self.assert_docs_equal(schema2, ExportSchema.last(index))
             schema3 = ExportSchema(index=index, timestamp=dt - timedelta(seconds=1))
             schema3.save(**save_args)
-            self.assertEqual(schema2._id, ExportSchema.last(index)._id)
+            # still schema2 (which has a later date than schema3)
+            self.assert_docs_equal(schema2, ExportSchema.last(index))
 
     def test_get_all_checkpoints(self):
         index = ["mydomain", "myxmlns"]
