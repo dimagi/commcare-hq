@@ -40,6 +40,7 @@ class CouchSqlDomainMigrator(object):
         self._process_main_forms()
         self._copy_unprocessed_forms()
         self._calculate_case_diffs()
+        # TODO: calculate ledger diffs
 
     def _process_main_forms(self):
         last_received_on = datetime.min
