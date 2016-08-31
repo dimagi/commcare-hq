@@ -46,8 +46,14 @@ class Command(BaseCommand):
 
                 has_skipped_tables = any(map(lambda meta: bool(meta.skipped_tables), metas))
                 has_skipped_columns = any(map(lambda meta: bool(meta.skipped_columns), metas))
+                is_remote_app_migration = any(map(lambda meta: bool(meta.is_remote_app_migration), metas))
                 if has_skipped_tables or has_skipped_columns:
                     print 'Skipping {} because we would have skipped columns'.format(domain)
+                    skipped_domains.append(domain)
+                    continue
+
+                if is_remote_app_migration:
+                    print 'Skipping {} because it contains remote apps'.format(domain)
                     skipped_domains.append(domain)
                     continue
 
