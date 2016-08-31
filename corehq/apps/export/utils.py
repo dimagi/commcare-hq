@@ -534,6 +534,7 @@ def migrate_domain(domain, dryrun=False):
                 )
             except Exception, e:
                 print 'Failed parsing {}: {}'.format(old_export['_id'], e)
+                raise e
             else:
                 metas.append(migration_meta)
 

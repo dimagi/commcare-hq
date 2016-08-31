@@ -42,7 +42,12 @@ class Command(BaseCommand):
             domain = doc['key']
 
             if not use_new_exports(domain):
-                metas = migrate_domain(domain, True)
+                try:
+                    metas = migrate_domain(domain, True)
+                except Exception:
+                    print 'Migration raised an exception, skipping.'
+                    skipped_domains.append(domain)
+                    continue
 
                 has_skipped_tables = any(map(lambda meta: bool(meta.skipped_tables), metas))
                 has_skipped_columns = any(map(lambda meta: bool(meta.skipped_columns), metas))
@@ -59,7 +64,12 @@ class Command(BaseCommand):
 
                 if not dryrun:
                     print 'Migrating {}'.format(domain)
-                    migrate_domain(domain, False)
+                    try:
+                        migrate_domain(domain, False)
+                    except Exception:
+                        print 'Migration raised an exception, skipping.'
+                        skipped_domains.append(domain)
+                        continue
                 else:
                     print 'No skipped tables/columns. Not migrating since dryrun is specified'
                 count += 1
