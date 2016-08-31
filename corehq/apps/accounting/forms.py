@@ -616,7 +616,6 @@ class SubscriptionForm(forms.Form):
             SoftwareProductType.COMMCARE
         )
 
-
     @transaction.atomic
     def create_subscription(self):
         account = BillingAccount.objects.get(id=self.cleaned_data['account'])

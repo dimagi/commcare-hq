@@ -1,4 +1,4 @@
-/*global Marionette, Backbone, WebFormSession, Util */
+/*global Marionette, Backbone, WebFormSession, Util, CodeMirror */
 
 /**
  * The primary Marionette application managing menu navigation and launching form entry
@@ -42,6 +42,11 @@ FormplayerFrontend.getCurrentRoute = function () {
  */
 FormplayerFrontend.reqres.setHandler('resourceMap', function (resource_path, app_id) {
     var currentApp = FormplayerFrontend.request("appselect:getApp", app_id);
+    if (!currentApp) {
+        console.warn('App is undefined for app_id: ' + app_id);
+        console.warn('Not processing resource: ' + resource_path);
+        return;
+    }
     if (resource_path.substring(0, 7) === 'http://') {
         return resource_path;
     } else if (!_.isEmpty(currentApp.get("multimedia_map"))) {
@@ -64,8 +69,9 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
     return FormplayerFrontend.currentUser;
 });
 
-FormplayerFrontend.reqres.setHandler('clearForm', function () {
+FormplayerFrontend.on('clearForm', function () {
     $('#webforms').html("");
+    FormplayerFrontend.trigger("webforms:clearForm");
 });
 
 FormplayerFrontend.reqres.setHandler('clearMenu', function () {
@@ -96,7 +102,7 @@ FormplayerFrontend.reqres.setHandler('handleNotification', function(notification
     }
 });
 
-FormplayerFrontend.reqres.setHandler('startForm', function (data) {
+FormplayerFrontend.on('startForm', function (data) {
     FormplayerFrontend.request("clearMenu");
 
     data.onLoading = tfLoading;
@@ -113,6 +119,11 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
             FormplayerFrontend.request("clearForm");
             showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
 
+            // After end of form nav, we want to clear everything except app and sesson id
+            var urlObject = Util.currentUrlToObject();
+            urlObject.onSubmit();
+            Util.setUrlToObject(urlObject);
+
             if(resp.nextScreen !== null && resp.nextScreen !== undefined) {
                 FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
             } else {
@@ -121,9 +132,11 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
         } else {
             showError(resp.output, $("#cloudcare-notifications"));
         }
-        // TODO form linking
     };
     data.formplayerEnabled = true;
+    data.answerCallback = function(sessionId) {
+        FormplayerFrontend.trigger('debugger.formXML', sessionId);
+    };
     data.resourceMap = function(resource_path) {
         var urlObject = Util.currentUrlToObject();
         var appId = urlObject.appId;
@@ -133,23 +146,56 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
     sess.renderFormXml(data, $('#webforms'));
 });
 
-FormplayerFrontend.on("start", function (options) {
+FormplayerFrontend.on('debugger.formXML', function(sessionId) {
     var user = FormplayerFrontend.request('currentUser');
+    var success = function(data) {
+        var $instanceTab = $('#debugger-xml-instance-tab'),
+            codeMirror;
+
+        codeMirror = CodeMirror(function(el) {
+            $('#xml-viewer-pretty').html(el);
+        }, {
+            value: data.output,
+            mode: 'xml',
+            viewportMargin: Infinity,
+            readOnly: true,
+            lineNumbers: true,
+        });
+
+        $instanceTab.off();
+        $instanceTab.on('shown.bs.tab', function() {
+            codeMirror.refresh();
+        });
+    };
+    var options = {
+        url: user.formplayer_url + '/get-instance',
+        data: JSON.stringify({
+            'session-id': sessionId,
+        }),
+        success: success,
+    };
+    Util.setCrossDomainAjaxOptions(options);
+
+    $.ajax(options);
+});
+
+FormplayerFrontend.on("start", function (options) {
+    var user = FormplayerFrontend.request('currentUser'),
+        appId;
     user.username = options.username;
     user.language = options.language;
     user.apps = options.apps;
     user.domain = options.domain;
     user.formplayer_url = options.formplayer_url;
+    user.clearUserDataUrl = options.clearUserDataUrl;
     if (Backbone.history) {
         Backbone.history.start();
         // will be the same for every domain. TODO: get domain/username/pass from django
         if (this.getCurrentRoute() === "") {
             if (options.phoneMode) {
-                FormplayerFrontend.regions.phoneModeNavigation.show(
-                    new FormplayerFrontend.Navigation.PhoneNavigation()
-                );
+                appId = options.apps[0]['_id'];
 
-                FormplayerFrontend.trigger("app:singleApp", options.apps[0]['_id']);
+                FormplayerFrontend.trigger("app:singleApp", appId);
             } else {
                 FormplayerFrontend.trigger("apps:list", options.apps);
             }
@@ -174,4 +220,65 @@ FormplayerFrontend.on("sync", function () {
     resp.error(function () {
         tfSyncComplete(true);
     });
+});
+
+
+/**
+ * refreshApplication
+ *
+ * This takes an appId and subsequently makes a request to formplayer to
+ * delete the relevant application database so that on next request
+ * it gets reinstalled. On completion, navigates back to the homescreen.
+ *
+ * @param {String} appId - The id of the application to refresh
+ */
+FormplayerFrontend.on('refreshApplication', function(appId) {
+    var user = FormplayerFrontend.request('currentUser'),
+        formplayer_url = user.formplayer_url,
+        resp,
+        options = {
+            url: formplayer_url + "/delete_application_dbs",
+            data: JSON.stringify({
+                app_id: appId,
+                domain: user.domain,
+                username: user.username.split('@')[0],
+            }),
+        };
+    Util.setCrossDomainAjaxOptions(options);
+    tfLoading();
+    resp = $.ajax(options);
+    resp.fail(function () {
+        tfLoadingComplete(true);
+    }).done(function() {
+        tfLoadingComplete();
+        FormplayerFrontend.trigger('navigateHome', appId);
+    });
+});
+
+FormplayerFrontend.on('clearUserData', function(appId) {
+    var user = FormplayerFrontend.request('currentUser');
+    var resp = $.ajax({
+        url: user.clearUserDataUrl,
+        type: 'POST',
+        dataType: "json",
+        xhrFields: { withCredentials: true },
+    });
+    resp.fail(function (jqXHR) {
+        if (jqXHR.status === 400) {
+            tfLoadingComplete(true, gettext('Unable to clear user data for mobile worker'));
+        } else {
+            tfLoadingComplete(true, gettext('Unabled to clear user data'));
+        }
+    }).done(function() {
+        tfLoadingComplete();
+        FormplayerFrontend.trigger('navigateHome', appId);
+    });
+});
+
+FormplayerFrontend.on('navigateHome', function(appId) {
+    var urlObject = Util.currentUrlToObject();
+    urlObject.clearExceptApp();
+    FormplayerFrontend.trigger("clearForm");
+    FormplayerFrontend.regions.breadcrumb.empty();
+    FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });
 });

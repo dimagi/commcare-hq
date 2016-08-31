@@ -1,4 +1,4 @@
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from elasticsearch.exceptions import ConnectionError
 
 from casexml.apps.case.mock import CaseFactory

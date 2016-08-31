@@ -2,6 +2,7 @@ from copy import copy
 from datetime import datetime, timedelta, date
 import itertools
 import json
+from wsgiref.util import FileWrapper
 
 from django.views.generic.base import TemplateView
 
@@ -27,7 +28,6 @@ from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.base import ContentFile
-from django.core.servers.basehttp import FileWrapper
 from django.http import (
     Http404,
     HttpResponseBadRequest,

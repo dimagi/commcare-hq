@@ -14,7 +14,6 @@ from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
 from corehq.apps.export.models import (
     FormExportDataSchema,
     CaseExportDataSchema,
-    ExportDataSchema,
     PARENT_CASE_TABLE,
 )
 from corehq.apps.export.const import PROPERTY_TAG_UPDATE, DATA_SCHEMA_VERSION
@@ -487,6 +486,7 @@ class TestExportDataSchemaVersionControl(TestCase, TestXmlMixin):
 
     def tearDown(self):
         delete_all_export_data_schemas()
+        super(TestExportDataSchemaVersionControl, self).tearDown()
 
     def test_rebuild_version_control(self):
         app = self.current_app
@@ -594,6 +594,63 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         self.assertEqual(new_schema.last_app_versions[app._id], app.version)
         # One for case, one for case history
         self.assertEqual(len(new_schema.group_schemas), 2)
+
+
+class TestBuildingCaseSchemaFromMultipleApplications(TestCase, TestXmlMixin):
+    file_path = ['data']
+    root = os.path.dirname(__file__)
+    domain = 'aspace'
+    case_type = 'candy'
+
+    @classmethod
+    def setUpClass(cls):
+        cls.current_app = Application.wrap(cls.get_json('basic_case_application'))
+
+        cls.first_build = Application.wrap(cls.get_json('basic_case_application'))
+        cls.first_build._id = '123'
+        cls.first_build.copy_of = cls.current_app.get_id
+        cls.first_build.version = 3
+
+        cls.other_build = Application.wrap(cls.get_json('basic_case_application'))
+        cls.other_build._id = '456'
+        cls.other_build.copy_of = 'other-app-id'
+        cls.other_build.version = 4
+        cls.other_build.has_submissions = True
+
+        cls.apps = [
+            cls.current_app,
+            cls.first_build,
+            cls.other_build,
+        ]
+        with drop_connected_signals(app_post_save):
+            for app in cls.apps:
+                app.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        for app in cls.apps:
+            app.delete()
+
+    def tearDown(self):
+        delete_all_export_data_schemas()
+
+    def test_multiple_app_schema_generation(self):
+        schema = CaseExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            self.current_app._id,
+            self.case_type,
+        )
+
+        self.assertEqual(
+            schema.last_app_versions[self.other_build.copy_of],
+            self.other_build.version,
+        )
+        # One for case, one for case history
+        self.assertEqual(len(schema.group_schemas), 2)
+
+        group_schema = schema.group_schemas[0]
+        self.assertEqual(group_schema.last_occurrences[self.current_app._id], self.current_app.version)
+        self.assertEqual(len(group_schema.items), 2)
 
 
 class TestBuildingParentCaseSchemaFromApplication(TestCase, TestXmlMixin):

@@ -13,7 +13,12 @@ Util.objectToEncodedUrl = function (object) {
 
 Util.currentUrlToObject = function () {
     var url = Backbone.history.getFragment();
-    return Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(url));
+    try {
+        return Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(url));
+    } catch (e) {
+        // This means that we're on the homepage
+        return new Util.CloudcareUrl();
+    }
 };
 
 Util.setUrlToObject = function (urlObject) {
@@ -35,14 +40,16 @@ Util.setCrossDomainAjaxOptions = function (options) {
     options.contentType = "application/json";
 };
 
-Util.CloudcareUrl = function (appId, sessionId, steps, page, search, queryDict, singleApp) {
+Util.CloudcareUrl = function (appId, options) {
+    options = options || {};
     this.appId = appId;
-    this.sessionId = sessionId;
-    this.steps = steps;
-    this.page = page;
-    this.search = search;
-    this.queryDict = queryDict;
-    this.singleApp = singleApp;
+    this.sessionId = options.sessionId;
+    this.steps = options.steps;
+    this.page = options.page;
+    this.search = options.search;
+    this.queryDict = options.queryDict;
+    this.singleApp = options.singleApp;
+    this.previewCommand = options.previewCommand;
 
     this.addStep = function (step) {
         if (!this.steps) {
@@ -81,10 +88,29 @@ Util.CloudcareUrl = function (appId, sessionId, steps, page, search, queryDict, 
         this.page = null;
         this.search= null;
         this.queryDict = null;
+        this.previewCommand = null;
+    };
+
+    this.onSubmit = function () {
+        this.steps = null;
+        this.page = null;
+        this.search = null;
+        this.queryDict = null;
+        this.previewCommand = null;
     };
 
     this.spliceSteps = function(index) {
-        this.steps = this.steps.splice(0, index);
+
+        // null out the session if we clicked the root (home)
+        if (index === 0) {
+            this.steps = null;
+            this.sessionId = null;
+        } else {
+            this.steps = this.steps.splice(0, index);
+        }
+        this.page = null;
+        this.search = null;
+        this.queryDict = null;
     };
 };
 
@@ -97,20 +123,26 @@ Util.CloudcareUrl.prototype.toJson = function () {
         page: self.page,
         search: self.search,
         queryDict: self.queryDict,
+        singleApp: self.singleApp,
+        previewCommand: self.previewCommand,
     };
     return JSON.stringify(dict);
 };
 
 Util.CloudcareUrl.fromJson = function (json) {
     var data = JSON.parse(json);
+    var options = {
+        'sessionId': data.sessionId,
+        'steps': data.steps,
+        'page': data.page,
+        'search': data.search,
+        'queryDict': data.queryDict,
+        'singleApp': data.singleApp,
+        'previewCommand': data.previewCommand,
+    };
     return new Util.CloudcareUrl(
         data.appId,
-        data.sessionId,
-        data.steps,
-        data.page,
-        data.search,
-        data.queryDict,
-        data.singleApp
+        options
     );
 };
 

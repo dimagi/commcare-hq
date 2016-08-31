@@ -99,7 +99,6 @@ from corehq.apps.app_manager import current_builds, app_strings, remote_app, \
 from corehq.apps.app_manager.suite_xml import xml_models as suite_models
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
-    get_case_sharing_apps_in_domain,
     get_latest_build_doc,
     get_latest_released_app_doc,
     domain_has_apps,
@@ -114,7 +113,7 @@ from corehq.apps.app_manager.util import (
     app_callout_templates,
     xpath_references_case,
     xpath_references_user_case,
-)
+    module_case_hierarchy_has_circular_reference)
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -375,7 +374,7 @@ class FormActions(DocumentSchema):
 
     case_preload = SchemaProperty(PreloadAction)
     referral_preload = SchemaProperty(PreloadAction)
-    load_from_form = SchemaProperty(PreloadAction)
+    load_from_form = SchemaProperty(PreloadAction)  # DEPRECATED
 
     usercase_update = SchemaProperty(UpdateCaseAction)
     usercase_preload = SchemaProperty(PreloadAction)
@@ -448,17 +447,38 @@ class AutoSelectCase(DocumentSchema):
     value_key = StringProperty(required=True)
 
 
+class LoadCaseFromFixture(DocumentSchema):
+    """
+    fixture_nodeset:    FixtureDataType.tag
+    fixture_tag:        name of the column to display in the list
+    fixture_variable:   boolean if display_column actually contains the key for the localized string
+    case_property:      name of the column whose value should be saved when the user selects an item
+    arbitrary_datum_*:  adds an arbitrary datum with function before the action
+    """
+    fixture_nodeset = StringProperty()
+    fixture_tag = StringProperty()
+    fixture_variable = StringProperty()
+    case_property = StringProperty(default='')
+    auto_select = BooleanProperty(default=False)
+    arbitrary_datum_id = StringProperty()
+    arbitrary_datum_function = StringProperty()
+
+
 class LoadUpdateAction(AdvancedAction):
     """
-    details_module:     Use the case list configuration from this module to show the cases.
-    preload:            Value from the case to load into the form. Keys are question paths, values are case properties.
-    auto_select:        Configuration for auto-selecting the case
-    show_product_stock: If True list the product stock using the module's Product List configuration.
-    product_program:    Only show products for this CommCare Supply program.
+    details_module:           Use the case list configuration from this module to show the cases.
+    preload:                  Value from the case to load into the form. Keys are question paths,
+                              values are case properties.
+    auto_select:              Configuration for auto-selecting the case
+    load_case_from_fixture:   Configureation for loading a case using fixture data
+    show_product_stock:       If True list the product stock using the module's Product List
+                              configuration.
+    product_program:          Only show products for this CommCare Supply program.
     """
     details_module = StringProperty()
     preload = DictProperty()
     auto_select = SchemaProperty(AutoSelectCase, default=None)
+    load_case_from_fixture = SchemaProperty(LoadCaseFromFixture, default=None)
     show_product_stock = BooleanProperty(default=False)
     product_program = StringProperty()
     case_index = SchemaProperty(CaseIndex)
@@ -1285,6 +1305,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     form_filter = StringProperty()
     requires = StringProperty(choices=["case", "referral", "none"], default="none")
     actions = SchemaProperty(FormActions)
+    case_references_data = DictProperty()
 
     def add_stuff_to_xform(self, xform, build_profile_id=None):
         super(Form, self).add_stuff_to_xform(xform, build_profile_id)
@@ -1504,6 +1525,26 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         return {subcase.case_type for subcase in self.actions.subcases
                 if subcase.close_condition.type == "never" and subcase.case_type}
 
+    @property
+    def case_references(self):
+        refs = self.case_references_data or {}
+        if "load" not in refs and self.actions.load_from_form.preload:
+            # for backward compatibility
+            # preload only has one reference per question path
+            preload = self.actions.load_from_form.preload
+            refs["load"] = {key: [value] for key, value in preload.iteritems()}
+        return refs
+
+    @case_references.setter
+    def case_references(self, refs):
+        """Set case references
+
+        format: {"load": {"/data/path": ["case_property", ...], ...}}
+        """
+        self.case_references_data = refs
+        if self.actions.load_from_form.preload:
+            self.actions.load_from_form = PreloadAction()
+
     @memoized
     def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
         parent_types = set()
@@ -1574,6 +1615,16 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                                 questions,
                                 question_path
                             )
+        case_loads = self.case_references.get("load", {})
+        for question_path, case_properties in case_loads.iteritems():
+            for name in case_properties:
+                self.add_property_load(
+                    app_case_meta,
+                    module_case_type,
+                    name,
+                    questions,
+                    question_path
+                )
 
 
 class MappingItem(DocumentSchema):
@@ -1994,7 +2045,8 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     @property
     def root_module(self):
         if self.root_module_id:
-            return self._parent.get_module_by_unique_id(self.root_module_id)
+            return self._parent.get_module_by_unique_id(self.root_module_id,
+                   error=_("Could not find parent module for '{}'").format(self.default_name()))
 
     def requires_case_details(self):
         return False
@@ -2322,6 +2374,13 @@ class Module(ModuleBase, ModuleDetailsMixin):
                 'type': 'no forms or case list',
                 'module': self.get_module_info(),
             })
+
+        if module_case_hierarchy_has_circular_reference(self):
+            errors.append({
+                'type': 'circular case hierarchy',
+                'module': self.get_module_info(),
+            })
+
         return errors
 
     def requires(self):
@@ -2567,6 +2626,12 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 for path in action.get_paths():
                     yield path
 
+            if self.schedule:
+                if self.schedule.transition_condition.type == 'if':
+                    yield self.schedule.transition_condition.question
+                if self.schedule.termination_condition.type == 'if':
+                    yield self.schedule.termination_condition.question
+
         errors.extend(self.check_paths(generate_paths()))
 
         return errors
@@ -2603,6 +2668,14 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             scheduler_updates = set()
 
         return updates.union(scheduler_updates)
+
+    @property
+    def case_references(self):
+        return {}
+
+    @case_references.setter
+    def case_references(self, refs):
+        pass
 
     @memoized
     def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
@@ -3847,7 +3920,8 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     def source_module(self):
         if self.source_module_id:
             try:
-                return self._parent.get_module_by_unique_id(self.source_module_id)
+                return self._parent.get_module_by_unique_id(self.source_module_id,
+                       error=_("Could not find source module for '{}'.").format(self.default_name()))
             except ModuleNotFoundException:
                 pass
         return None
@@ -5230,15 +5304,16 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         except IndexError:
             raise ModuleNotFoundException()
 
-    def get_module_by_unique_id(self, unique_id):
+    def get_module_by_unique_id(self, unique_id, error=''):
         def matches(module):
             return module.get_or_create_unique_id() == unique_id
         for obj in self.get_modules():
             if matches(obj):
                 return obj
-        raise ModuleNotFoundException(
-            ("Module in app '%s' with unique id '%s' not found"
-             % (self.id, unique_id)))
+        if not error:
+            error = _("Module in app '{app_id}' with unique id '{unique_id}' not found.").format(
+                app_id=self.id, unique_id=unique_id)
+        raise ModuleNotFoundException(error)
 
     def get_forms(self, bare=True):
         for module in self.get_modules():
@@ -5421,17 +5496,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             extra_types.add(USERCASE_TYPE)
 
         return set(chain(*[m.get_case_types() for m in self.get_modules()])) | extra_types
-
-    @memoized
-    def get_shared_case_types(self):
-        shared_case_types = set()
-
-        if self.case_sharing:
-            apps = get_case_sharing_apps_in_domain(self.domain, self.id)
-            for app in apps:
-                shared_case_types |= set(chain(*[m.get_case_types() for m in app.get_modules()]))
-
-        return shared_case_types
 
     def has_media(self):
         return len(self.multimedia_map) > 0
@@ -5865,7 +5929,9 @@ class DeleteFormRecord(DeleteRecord):
     def undo(self):
         app = Application.get(self.app_id)
         if self.module_unique_id is not None:
-            module = app.get_module_by_unique_id(self.module_unique_id)
+            name = trans(self.form.name, app.default_language, include_lang=False)
+            module = app.get_module_by_unique_id(self.module_unique_id,
+                     error=_("Could not find module containing form '{}'").format(name))
         else:
             module = app.modules[self.module_id]
         forms = module.forms

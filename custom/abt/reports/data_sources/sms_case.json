@@ -6,6 +6,8 @@
     "airstanzania",
     "abtmali",
     "airsmadagascar",
+    "airsmozambique",
+    "airsrwanda",
     "airsethiopia"
   ],
   "config": {
@@ -275,11 +277,38 @@
         "expression": {
           "default": 0,
           "cases": {
+            "mozambique": {
+              "default": 0,
+              "cases": {
+                "derre": 16555,
+                "milange": 91807,
+                "mocuba": 140365,
+                "molumbo": 44715,
+                "morrumbala": 97861,
+                "quelimane": 76936
+              },
+              "type": "switch",
+              "switch_on": {
+                "value_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "user_data",
+                    "level_1_name"
+                  ]
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareUser",
+                "doc_id_expression": {
+                  "type": "property_name",
+                  "property_name": "owner_id"
+                }
+              }
+            },
             "Rwanda": {
               "default": 0,
               "cases": {
                 "Kirehe": 82946,
-                "Nyagatare": 77027
+                "Nyagatare": 105243
               },
               "type": "switch",
               "switch_on": {
@@ -468,6 +497,50 @@
         "expression": {
           "default": 0,
           "cases": {
+            "mozambique": {
+              "default": 0,
+              "cases": {
+                "alto_benfica": 9933,
+                "chire": 21069,
+                "corromana": 19652,
+                "dachudua_majaua": 16805,
+                "derre": 13054,
+                "dulanha": 10084,
+                "guerissa": 3501,
+                "liciro": 12042,
+                "madal": 10350.25,
+                "maquival": 17310,
+                "megaza": 7499,
+                "milange_sede": 52876,
+                "mocuba_sede": 52953,
+                "molumbo_": 25063,
+                "morrumbala_sede": 35337,
+                "muandiua": 16676,
+                "muaquia": 12697,
+                "mugeba": 31865,
+                "munhiba": 17409,
+                "namanjavira": 15508,
+                "namuinho": 49276,
+                "pinda": 10524,
+                "sabe": 6756
+              },
+              "type": "switch",
+              "switch_on": {
+                "value_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "user_data",
+                    "level_2_name"
+                  ]
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareUser",
+                "doc_id_expression": {
+                  "type": "property_name",
+                  "property_name": "owner_id"
+                }
+              }
+            },
             "Senegal": {
               "default": 0,
               "cases": {
@@ -496,29 +569,38 @@
             "Rwanda": {
               "default": 0,
               "cases": {
-                "Gahara": 9697,
+                "Gahara I": 5498,
+                "Gahara II": 4199,
                 "Gatore": 6062,
+                "Gatunda": 7799,
                 "Karama": 7226,
+                "Karangazi I": 6277,
+                "Karangazi II": 6941,
                 "Katabagemu": 8330,
+                "Kigarama I": 4282,
+                "Kigarama II": 3299,
                 "Kigina": 6454,
                 "Kirehe": 5476,
-                "Kigarama": 7581,
-                "Musheri": 5692,
-                "Mukama": 5946,
+                "Kiyombe": 3860,
+                "Mahama": 6029,
                 "Matimba": 4651,
                 "Mimuri": 6857,
-                "Mahama": 6029,
-                "Mpanga": 7663,
+                "Mpanga I": 4603,
+                "Mpanga II": 3060,
+                "Mukama": 5946,
                 "Musaza": 6618,
+                "Musheri": 5692,
                 "Mushikiri": 6454,
-                "Nyagatare": 8347,
                 "Nasho": 7029,
+                "Nyagatare": 4963,
+                "Nyagatare II": 6741,
                 "Nyamugari": 9494,
                 "Nyarubuye": 4389,
-                "Rwimiyaga": 10945,
                 "Rukomo": 7928,
                 "Rwempasha": 3743,
-                "Tabagwe": 7362
+                "Rwimiyaga 1": 6981,
+                "Rwimiyaga II": 3964,
+                "Tabagwe": 7344
               },
               "type": "switch",
               "switch_on": {
@@ -1233,8 +1315,9 @@
         "expression": {
           "default": 0,
           "cases": {
+            "mozambique": 468239,
             "Senegal": 220551,
-            "Rwanda": 144417,
+            "Rwanda": 188189,
             "Zambia": 539348,
             "Ethiopia": 708258,
             "Mali": 242684,

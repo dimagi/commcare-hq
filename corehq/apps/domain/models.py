@@ -175,6 +175,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
         default=AMPLIFIES_NOT_SET
     )
     business_unit = StringProperty(choices=BUSINESS_UNITS + [""], default="")
+    data_access_threshold = IntegerProperty()
 
 
 class CaseDisplaySettings(DocumentSchema):
@@ -580,8 +581,10 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         generate a new, unique name. Throws exception if it can't figure out
         a name, which shouldn't happen unless max_length is absurdly short.
         '''
-
-        name = name_to_url(hr_name, "project")
+        from corehq.apps.domain.utils import get_domain_url_slug
+        name = get_domain_url_slug(hr_name, max_length=max_length)
+        if not name:
+            raise NameUnavailableException
         if Domain.get_by_name(name):
             prefix = name
             while len(prefix):

@@ -1290,6 +1290,16 @@ Here's an example of an aggregate date column that aggregates the `received_on` 
   }
 ```
 
+AggregateDate supports an optional "format" parameter, which accepts the same [format string](https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior) as [Date formatting](#date-formatting). If you don't specify a format, the default will be "%Y-%m", which will show as, for example, "2008-09".
+
+Keep in mind that the only variables available for formatting are `year` and `month`, but that still gives you a fair range, e.g.
+
+| format    | Example result    |
+| --------- | ----------------- |
+| "%Y-%m"   | "2008-09"         |
+| "%B, %Y"  | "September, 2008" |
+| "%b (%y)" | "Sep (08)"        |
+
 
 ### Expanded Columns
 

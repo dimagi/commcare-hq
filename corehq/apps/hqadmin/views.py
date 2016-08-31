@@ -9,7 +9,7 @@ from collections import defaultdict, namedtuple, OrderedDict
 from StringIO import StringIO
 
 import dateutil
-from django.utils.datastructures import SortedDict
+from dimagi.utils.decorators.memoized import memoized
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 from django.conf import settings
@@ -40,6 +40,8 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_nvd3_v3
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.serializers import XFormInstanceSQLRawDocSerializer, \
@@ -80,7 +82,7 @@ from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
 
 from . import service_checks, escheck
-from .forms import AuthenticateAsForm, BrokenBuildsForm
+from .forms import AuthenticateAsForm, BrokenBuildsForm, SuperuserManagementForm, ReprocessMessagingCaseUpdatesForm
 from .history import get_recent_changes, download_changes
 from .models import HqDeploy, VCMMigration
 from .reporting.reports import get_project_spaces, get_stats_data
@@ -153,6 +155,51 @@ class AuthenticateAs(BaseAdminSectionView):
             request.user.backend = 'django.contrib.auth.backends.ModelBackend'
             login(request, request.user)
             return HttpResponseRedirect('/')
+        return self.get(request, *args, **kwargs)
+
+
+class SuperuserManagement(BaseAdminSectionView):
+    urlname = 'superuser_management'
+    page_title = _("Grant or revoke superuser access")
+    template_name = 'hqadmin/superuser_management.html'
+
+    @method_decorator(require_superuser)
+    def dispatch(self, *args, **kwargs):
+        return super(SuperuserManagement, self).dispatch(*args, **kwargs)
+
+    @property
+    def page_context(self):
+        # only staff can toggle is_staff
+        can_toggle_is_staff = self.request.user.is_staff
+        # render validation errors if rendered after POST
+        args = [can_toggle_is_staff, self.request.POST] if self.request.POST else [can_toggle_is_staff]
+        return {
+            'form': SuperuserManagementForm(*args)
+        }
+
+    def post(self, request, *args, **kwargs):
+        can_toggle_is_staff = request.user.is_staff
+        form = SuperuserManagementForm(can_toggle_is_staff, self.request.POST)
+        if form.is_valid():
+            users = form.cleaned_data['users']
+            is_superuser = 'is_superuser' in form.cleaned_data['privileges']
+            is_staff = 'is_staff' in form.cleaned_data['privileges']
+
+            for user in users:
+                # save user object only if needed and just once
+                should_save = False
+                if user.is_superuser is not is_superuser:
+                    user.is_superuser = is_superuser
+                    should_save = True
+
+                if can_toggle_is_staff and user.is_staff is not is_staff:
+                    user.is_staff = is_staff
+                    should_save = True
+
+                if should_save:
+                    user.save()
+            messages.success(request, _("Successfully updated superuser permissions"))
+
         return self.get(request, *args, **kwargs)
 
 
@@ -509,6 +556,10 @@ class VCMMigrationView(BaseAdminSectionView):
         })
         return context
 
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(VCMMigrationView, self).dispatch(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
         action = self.request.POST['action']
 
@@ -637,7 +688,7 @@ class FlagBrokenBuilds(FormView):
 
 
 @require_superuser
-@datespan_in_request(from_param="startdate", to_param="enddate", default_days=365)
+@datespan_in_request(from_param="startdate", to_param="enddate", default_days=90)
 def stats_data(request):
     histo_type = request.GET.get('histogram_type')
     interval = request.GET.get("interval", "week")
@@ -862,7 +913,7 @@ def callcenter_test(request):
         query_date = date.today()
 
     def view_data(case_id, indicators):
-        new_dict = SortedDict()
+        new_dict = OrderedDict()
         key_list = sorted(indicators.keys())
         for key in key_list:
             new_dict[key] = indicators[key]
@@ -956,6 +1007,8 @@ def _gir_csv_response(month, year):
     query_month = "{year}-{month}-01".format(year=year, month=month)
     prev_month = "{year}-{month}-01".format(year=year, month=month - 1)
     two_ago = "{year}-{month}-01".format(year=year, month=month - 2)
+    if not GIRRow.objects.filter(month=query_month).exists():
+        return HttpResponse('Sorry, that month is not yet available')
     queryset = GIRRow.objects.filter(month__in=[query_month, prev_month, two_ago]).order_by('-month')
     domain_months = defaultdict(list)
     for item in queryset:
@@ -1065,16 +1118,85 @@ class DimagisphereView(TemplateView):
         return context
 
 
+class ReprocessMessagingCaseUpdatesView(BaseAdminSectionView):
+    urlname = 'reprocess_messaging_case_updates'
+    page_title = ugettext_lazy("Reprocess Messaging Case Updates")
+    template_name = 'hqadmin/messaging_case_updates.html'
+
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ReprocessMessagingCaseUpdatesView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def form(self):
+        if self.request.method == 'POST':
+            return ReprocessMessagingCaseUpdatesForm(self.request.POST)
+        return ReprocessMessagingCaseUpdatesForm()
+
+    @property
+    def page_context(self):
+        context = get_hqadmin_base_context(self.request)
+        context.update({
+            'form': self.form,
+        })
+        return context
+
+    def get_case(self, case_id):
+        try:
+            return CaseAccessorSQL.get_case(case_id)
+        except CaseNotFound:
+            pass
+
+        try:
+            return CaseAccessorCouch.get_case(case_id)
+        except ResourceNotFound:
+            pass
+
+        return None
+
+    def post(self, request, *args, **kwargs):
+        from corehq.apps.reminders.signals import case_changed_receiver as reminders_case_changed_receiver
+        from corehq.apps.sms.signals import case_changed_receiver as sms_case_changed_receiver
+
+        if self.form.is_valid():
+            case_ids = self.form.cleaned_data['case_ids']
+            case_ids_not_processed = []
+            case_ids_processed = []
+            for case_id in case_ids:
+                case = self.get_case(case_id)
+                if not case or case.doc_type != 'CommCareCase':
+                    case_ids_not_processed.append(case_id)
+                else:
+                    reminders_case_changed_receiver(None, case)
+                    sms_case_changed_receiver(None, case)
+                    case_ids_processed.append(case_id)
+
+            if case_ids_processed:
+                messages.success(self.request,
+                    _("Processed the following case ids: {}").format(','.join(case_ids_processed)))
+
+            if case_ids_not_processed:
+                messages.error(self.request,
+                    _("Could not find cases belonging to these case ids: {}")
+                    .format(','.join(case_ids_not_processed)))
+
+        return self.get(request, *args, **kwargs)
+
+
 def top_five_projects_by_country(request):
     data = {}
+    internalMode = request.user.is_superuser
+    attributes = ['internal.area', 'internal.sub_area', 'cp_n_active_cc_users', 'deployment.countries']
+
+    if internalMode:
+        attributes = ['name', 'internal.organization_name', 'internal.notes'] + attributes
+
     if 'country' in request.GET:
         country = request.GET.get('country')
-        projects = (DomainES().is_active()
+        projects = (DomainES().is_active_project().real_domains()
                     .filter(filters.term('deployment.countries', country))
-                    .sort('cp_n_active_cc_users', True)
-                    .source(['name', 'cp_n_active_cc_users',
-                             'deployment.countries', 'internal.organization_name',
-                             'internal.area', 'internal.notes', 'deployment.date'])
-                    .size(5).run().hits)
-        data = {country: projects}
+                    .sort('cp_n_active_cc_users', True).source(attributes).size(5).run().hits)
+        data = {country: projects, 'internal': internalMode}
+
     return json_response(data)

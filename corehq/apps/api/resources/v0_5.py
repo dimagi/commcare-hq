@@ -1,4 +1,5 @@
 from django.http import Http404
+from django.forms import ValidationError
 from tastypie import http
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.authorization import ReadOnlyAuthorization
@@ -20,6 +21,7 @@ from corehq.apps.api.resources.auth import RequirePermissionAuthentication, Admi
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
+from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
 
@@ -31,6 +33,7 @@ from corehq.apps.userreports.models import ReportConfiguration, \
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.reports.view import query_dict_to_dict, \
     get_filter_values
+from corehq.apps.userreports.sql.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions, CouchUser, UserRole
 from corehq.util import get_document_or_404
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
@@ -39,6 +42,7 @@ from corehq.toggles import ZAPIER_INTEGRATION
 from . import v0_1, v0_4, CouchResourceMixin
 from . import HqBaseResource, DomainSpecificResourceMixin
 from phonelog.models import DeviceReportEntry
+from itertools import chain
 
 
 MOCK_BULK_USER_ES = None
@@ -176,6 +180,18 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 elif key in ['email', 'username']:
                     setattr(bundle.obj, key, value.lower())
                     should_save = True
+                elif key == 'password':
+                    domain = Domain.get_by_name(bundle.obj.domain)
+                    if domain.strong_mobile_passwords:
+                        try:
+                            clean_password(bundle.data.get("password"))
+                        except ValidationError as e:
+                            if not hasattr(bundle.obj, 'errors'):
+                                bundle.obj.errors = []
+                            bundle.obj.errors.append(e.message)
+                            return False
+                    bundle.obj.set_password(bundle.data.get("password"))
+                    should_save = True
                 else:
                     setattr(bundle.obj, key, value)
                     should_save = True
@@ -209,8 +225,15 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         if self._update(bundle):
             assert bundle.obj.domain == kwargs['domain']
             bundle.obj.save()
-        return bundle
+            return bundle
+        else:
+            raise BadRequest(''.join(chain.from_iterable(bundle.obj.errors)))
 
+    def obj_delete(self, bundle, **kwargs):
+        user = CommCareUser.get(kwargs['pk'])
+        if user:
+            user.retire()
+        return ImmediateHttpResponse(response=http.HttpAccepted())
 
 class WebUserResource(v0_1.WebUserResource):
 
@@ -546,7 +569,7 @@ class StockTransactionResource(HqBaseResource, ModelResource):
 
 
 ConfigurableReportData = namedtuple("ConfigurableReportData", [
-    "data", "id", "domain", "total_records", "get_params", "next_page"
+    "data", "columns", "id", "domain", "total_records", "get_params", "next_page"
 ])
 
 
@@ -556,6 +579,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
     ConfigurableReport view.
     """
     data = fields.ListField(attribute="data", readonly=True)
+    columns = fields.ListField(attribute="columns", readonly=True)
     total_records = fields.IntegerField(attribute="total_records", readonly=True)
     next_page = fields.CharField(attribute="next_page", readonly=True)
 
@@ -609,8 +633,19 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         report.set_filter_values(filter_values)
 
         page = list(report.get_data(start=start, limit=limit))
+
+        columns = []
+        for column in report.columns:
+            simple_column = {
+                "header": column.header,
+                "slug": column.slug,
+            }
+            if isinstance(column, UCRExpandDatabaseSubcolumn):
+                simple_column['expand_column_value'] = column.expand_value
+            columns.append(simple_column)
+
         total_records = report.get_total_records()
-        return page, total_records
+        return page, columns, total_records
 
     def obj_get(self, bundle, **kwargs):
         domain = kwargs['domain']
@@ -619,11 +654,12 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         limit = self._get_limit_param(bundle)
 
         report_config = self._get_report_configuration(pk, domain)
-        page, total_records = self._get_report_data(
+        page, columns, total_records = self._get_report_data(
             report_config, domain, start, limit, bundle.request.GET)
 
         return ConfigurableReportData(
             data=page,
+            columns=columns,
             total_records=total_records,
             id=report_config._id,
             domain=domain,

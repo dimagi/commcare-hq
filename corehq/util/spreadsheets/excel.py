@@ -10,6 +10,10 @@ class HeaderValueError(Exception):
     pass
 
 
+class StringTypeRequiredError(Exception):
+    pass
+
+
 class IteratorJSONReader(object):
     """
     >>> def normalize(it):
@@ -258,3 +262,14 @@ def alphanumeric_sort_key(key):
     import re
     convert = lambda text: int(text) if text.isdigit() else text
     return [convert(c) for c in re.split('([0-9]+)', key)]
+
+
+def enforce_string_type(value):
+    if isinstance(value, basestring):
+        return value
+
+    if isinstance(value, (int, long)):
+        return str(value)
+
+    # Don't try to guess for decimal types how they should be converted to string
+    raise StringTypeRequiredError()

@@ -126,7 +126,12 @@
 
 {% block page_navigation %}
 {% if app %}
-<nav class="app-manager-content hide">
+<div class="appmanager-loading-container">
+<div class="appmanager-loading appmanager-loading-nav">
+  <i class="fa fa-spin fa-spinner"></i>
+</div>
+</div>
+<nav class="appmanager-content">
     <ul class="nav nav-hq-sidebar">
         <li class="{% if release_manager %}active {% endif %}release-manager-li">
             <a id="demand-releases" href="{% url "view_app" domain app.id %}releases/#releases" {% if is_app_view %}data-toggle="tab"{% endif %}>
@@ -154,6 +159,60 @@
                 </span>
             {% endif %}
         </li>
+
+        {% if request|toggle_enabled:"PREVIEW_APP" %}
+        <!-- TODO: where does this fit in? -->
+        <!--li>
+          <a id="js-toggle-app-preview">
+              <i class="fa fa-mobile-phone preview-icon"></i>
+              <span class="preview-action-show hide">{% trans "Show App Preview" %}</span>
+              <span class="preview-action-hide hide">{% trans "Hide App Preview" %}</span>
+          </a>
+        </li-->
+        {% endif %}
+        <!--li class="divider"></li>
+        <li {% if not module and not form and not release_manager %}class="app-name-div
+                {% if not copy_app_form or not copy_app_form.is_bound %}active{% endif %}"
+            {% endif %}>
+            <a href="{% url "view_app" domain app.id %}#app-settings" {% if is_app_view %}data-toggle="tab" data-default="1" data-pagetitle="{% trans "Settings" %}: {{ app.name }}"{% endif %} >
+                <i class="fa fa-cog"></i>
+                {% trans "Settings" %}
+            </a>
+        </li>
+        {% if app.get_doc_type == 'Application' %}
+        <li>
+            <a id="demand-multimedia" href="{% url "view_app" domain app.id %}multimedia/#multimedia" {% if is_app_view %}data-toggle="tab" data-pagetitle="{% trans "Multimedia" %}: {{ app.name }}"{% endif %}>
+                <i class="fa fa-photo"></i>
+                {% trans "Multimedia" %}
+            </a>
+        </li>
+        {% endif %}
+        <li>
+            <a href="{% url "view_app" domain app.id %}languages/#languages-and-translations" {% if is_app_view %}data-toggle="tab" data-pagetitle="{% trans "Languages" %}: {{ app.name }}"{% endif %}>
+                <i class="fa fa-globe"></i>
+                {% trans "Languages" %}
+            </a>
+            <div id="app-settings-gear">
+                <a href="{% url "view_app" domain app.id %}#app-settings" {% if is_app_view %}data-toggle="tab" data-default="1"{% endif %}>
+                    <i class="fa fa-gear"></i>
+                </a>
+            </div>
+            {% if app.get_doc_type == 'Application' %}
+                <span id="langs">
+                    {% if not app.is_remote_app and app.langs|length > 1%}
+                        <select name="lang" class="form-control">
+                            {% for lang in app.langs %}
+                                <option value="{{ lang }}"
+                                        {% if lang == langs.0 %}selected=""{% endif %}>
+                                    {% if lang == app.langs.0 %}*{% endif %}
+                                    {{ lang }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
+                </span>
+            {% endif %}
+        </li-->
         <li class="divider"></li>
     {% if app.get_doc_type == "Application" %}
         <li>

@@ -381,18 +381,8 @@ hqDefine('app_manager/js/releases.js', function () {
             self.getMoreSavedApps(false);
         };
         self.actuallyMakeBuild = function () {
-            var comment = window.prompt(
-                "Add a comment about the version to help you remember later:"
-            );
-            if (comment || comment === "") {
-                $(this).find("input[name='comment']").val(comment);
-            } else {
-                return;
-            }
             self.buildState('pending');
-            $.post(self.url('newBuild'), {
-                comment: comment
-            }).success(function (data) {
+            $.post(self.url('newBuild')).success(function (data) {
                 $('#build-errors-wrapper').html(data.error_html);
                 if (data.saved_app) {
                     var app = SavedApp(data.saved_app, self);

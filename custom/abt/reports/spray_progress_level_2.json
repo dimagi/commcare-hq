@@ -10,6 +10,7 @@
         "airstanzania",
         "airsghana",
         "airsbenin",
+        "airsmozambique",
         "airs-testing"
     ],
     "data_source_table":"static-sms-indicators-001",
@@ -38,7 +39,7 @@
                 "field":"date_of_data_collection",
                 "type":"date",
                 "display":{
-                    "en":"Date of data collection"
+                    "en": "Date of data collection"
                 }
             },
             {
@@ -51,7 +52,8 @@
                 "type":"dynamic_choice_list",
                 "display":{
                     "fra":"Pays",
-                    "en":"Country"
+                    "en": "Country",
+                    "por": "Pa\u00eds"
                 }
             },
             {
@@ -64,7 +66,8 @@
                 "type":"dynamic_choice_list",
                 "display":{
                     "fra":"Niveau 2",
-                    "en":"Level 2"
+                    "en": "Level 2",
+                    "por": "N\u00edvel 2"
                 }
             }
         ],
@@ -82,7 +85,8 @@
                 "type":"field",
                 "display":{
                     "fra":"Pays",
-                    "en":"Country"
+                    "en": "Country",
+                    "por": "Pa\u00eds"
                 },
                 "aggregation":"simple"
             },
@@ -99,7 +103,8 @@
                 "type":"field",
                 "display":{
                     "fra":"Niveau 2",
-                    "en":"Level 2"
+                    "en": "Level 2",
+                    "por": "N\u00edvel 2"
                 },
                 "aggregation":"simple"
             },
@@ -115,7 +120,8 @@
                 "type":"field",
                 "display":{
                     "fra":"# Applicateurs",
-                    "en":"SOPs Worked"
+                    "en": "SOPs Worked",
+                    "por": "Roceadores que trabalharam"
                 },
                 "aggregation":"sum"
             },
@@ -131,7 +137,8 @@
                 "type":"field",
                 "display":{
                     "fra":"# Pieces Trouv\u00e9es",
-                    "en":"# Structures found"
+                    "en": "# Structures found",
+                    "por": "Estruturas encontradas"
                 },
                 "aggregation":"sum"
             },
@@ -147,7 +154,8 @@
                 "type":"field",
                 "display":{
                     "fra":"# Pieces Trait\u00e9es",
-                    "en":"# Structures Sprayed"
+                    "en": "# Structures Sprayed",
+                    "por": "Estruturas Pulverizadas"
                 },
                 "aggregation":"sum"
             },
@@ -163,7 +171,8 @@
                 "type":"field",
                 "display":{
                     "fra":"# Bouteilles Utilis\u00e9es",
-                    "en":"# Insecticide Used"
+                    "en": "# Insecticide Used",
+                    "por": "Insectisida Usado"
                 },
                 "aggregation":"sum"
             },
@@ -204,7 +213,8 @@
                 "type":"percent",
                 "display":{
                     "fra":"Moyenne de pi\u00e8ces par applicateur",
-                    "en":"# Structures per SOP"
+                    "en": "# Structures per SOP",
+                    "por": "Estruturas por roceador"
                 }
             },
             {
@@ -244,7 +254,8 @@
                 "type":"percent",
                 "display":{
                     "fra":"Moyenne de pi\u00e8ces par bouteille",
-                    "en":"# Structures per IU"
+                    "en": "# Structures per IU",
+                    "por": "Insectisida Usado por Estrutura"
                 }
             },
             {
@@ -286,7 +297,8 @@
                 "type":"percent",
                 "display":{
                     "fra":"Taux de couverture",
-                    "en":"Cumulative Spray Coverage"
+                    "en": "Cumulative Spray Coverage",
+                    "por": "Cobertura comulativa de pulveriza\u00e7\u00e3o"
                 },
                 "aggregation":"simple"
             },
@@ -302,7 +314,8 @@
                 "type":"field",
                 "display":{
                     "fra":"Cible",
-                    "en":"Target"
+                    "en": "Target",
+                    "por": "Meta"
                 },
                 "aggregation":"simple"
             },
@@ -345,7 +358,8 @@
                 "type":"percent",
                 "display":{
                     "fra":"Progr\u00e8s de pulv\u00e9risation quotidien",
-                    "en":"Cumulative Spray Progress"
+                    "en": "Cumulative Spray Progress",
+                    "por": "Progresso comulativo da pulveriza\u00e7\u00e3o"
                 },
                 "aggregation":"simple"
             }

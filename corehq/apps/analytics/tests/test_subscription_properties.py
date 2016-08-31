@@ -65,31 +65,31 @@ class TestSubscriptionProperties(TestCase):
 
     def test_properties(self):
         properties = get_subscription_properties_by_user(self.user)
-        self.assertEqual(properties['is_on_community_plan'], 'yes')
-        self.assertEqual(properties['is_on_standard_plan'], 'no')
-        self.assertEqual(properties['is_on_pro_plan'], 'no')
-        self.assertEqual(properties['max_edition_of_paying_plan'], SoftwarePlanEdition.ENTERPRISE)
+        self.assertEqual(properties['_is_on_community_plan'], 'yes')
+        self.assertEqual(properties['_is_on_standard_plan'], 'no')
+        self.assertEqual(properties['_is_on_pro_plan'], 'no')
+        self.assertEqual(properties['_max_edition_of_paying_plan'], SoftwarePlanEdition.ENTERPRISE)
 
     def test_probono_properties(self):
         properties = get_subscription_properties_by_user(self.user)
 
-        self.assertEqual(properties['is_on_pro_bono_plan'], 'no')
+        self.assertEqual(properties['_is_on_pro_bono_plan'], 'no')
         self._change_to_probono(self.community.name, ProBonoStatus.YES)
         properties = get_subscription_properties_by_user(self.user)
-        self.assertEqual(properties['is_on_pro_bono_plan'], 'yes')
+        self.assertEqual(properties['_is_on_pro_bono_plan'], 'yes')
 
-        self.assertEqual(properties['is_on_discounted_plan'], 'no')
+        self.assertEqual(properties['_is_on_discounted_plan'], 'no')
         self._change_to_probono(self.community.name, ProBonoStatus.DISCOUNTED)
         properties = get_subscription_properties_by_user(self.user)
-        self.assertEqual(properties['is_on_discounted_plan'], 'yes')
+        self.assertEqual(properties['_is_on_discounted_plan'], 'yes')
 
     def test_extended_trial(self):
         properties = get_subscription_properties_by_user(self.user)
 
-        self.assertEqual(properties['is_on_extended_trial_plan'], 'no')
+        self.assertEqual(properties['_is_on_extended_trial_plan'], 'no')
         self._change_to_extended_trial(self.community.name)
         properties = get_subscription_properties_by_user(self.user)
-        self.assertEqual(properties['is_on_extended_trial_plan'], 'yes')
+        self.assertEqual(properties['_is_on_extended_trial_plan'], 'yes')
 
     def _change_to_probono(self, domain_name, pro_bono_status):
         plan, subscription = Subscription.get_subscribed_plan_by_domain(domain_name)

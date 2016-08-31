@@ -25,8 +25,8 @@ logger = logging.getLogger('accounting')
 EXCHANGE_RATE_DECIMAL_PLACES = 9
 
 
-def log_accounting_error(message):
-    logger.error("[BILLING] %s" % message)
+def log_accounting_error(message, show_stack_trace=False):
+    logger.error("[BILLING] %s" % message, exc_info=show_stack_trace)
 
 
 def log_accounting_info(message):

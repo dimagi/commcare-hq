@@ -17,7 +17,7 @@ from corehq.apps.data_analytics.const import (
 )
 
 
-UserCategories = namedtuple('UserCategories', 'active performing experienced total sms')
+UserCategories = namedtuple('UserCategories', 'active performing experienced total sms eligible')
 
 
 class GIRTableGenerator(object):
@@ -41,8 +41,9 @@ class GIRTableGenerator(object):
 
     @staticmethod
     def classify_users(domain, monthspan):
-        performing_users = []
-        experienced_users = []
+        performing_users = set()
+        experienced_users = set()
+        eligible_forms = 0
         all_users, user_forms, sms = active_mobile_users(domain, monthspan.startdate, monthspan.computed_enddate)
         user_query = MALTRow.objects.filter(domain_name=domain).filter(month__lte=monthspan.startdate)\
             .values('user_id', 'month').distinct()
@@ -52,12 +53,14 @@ class GIRTableGenerator(object):
         for user in all_users:
             if user_forms.get(user, 0) >= \
                     (domain.internal.performance_threshold or DEFAULT_PERFORMANCE_THRESHOLD):
-                performing_users.append(user)
+                performing_users.add(user)
             if user_months.get(user, 0) >= \
                     (domain.internal.experienced_threshold or DEFAULT_EXPERIENCED_THRESHOLD):
-                experienced_users.append(user)
-        return UserCategories(set(user_forms.keys()), set(performing_users),
-                              set(experienced_users), all_users, sms)
+                experienced_users.add(user)
+        for user in performing_users & experienced_users:
+            eligible_forms += user_forms.get(user)
+        return UserCategories(set(user_forms.keys()), performing_users,
+                              experienced_users, all_users, sms, eligible_forms)
 
     @staticmethod
     def get_bu(domain):
@@ -133,6 +136,9 @@ class GIRTableGenerator(object):
             'possibly_exp': len(possible_experience),
             'ever_exp': len(user_tuple.experienced),
             'exp_and_active_ever': len(user_tuple.active & user_tuple.experienced),
-            'active_in_span': len(recently_active)
+            'active_in_span': len(recently_active),
+            'eligible_forms': user_tuple.eligible,
+            'experienced_threshold': domain.internal.experienced_threshold or DEFAULT_EXPERIENCED_THRESHOLD,
+            'performance_threshold': domain.internal.performance_threshold or DEFAULT_PERFORMANCE_THRESHOLD,
         }
         return gir_dict

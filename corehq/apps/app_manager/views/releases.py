@@ -1,7 +1,6 @@
 import json
 import uuid
 
-from django.core.exceptions import PermissionDenied
 from django.db.models import Count
 from django.http import HttpResponse, Http404
 from django.http import HttpResponseRedirect
@@ -197,6 +196,7 @@ def save_copy(request, domain, app_id):
     return json_response({
         "saved_app": copy,
         "error_html": render_to_string('app_manager/partials/build_errors.html', {
+            'request': request,
             'app': get_app(domain, app_id),
             'build_errors': errors,
             'domain': domain,
