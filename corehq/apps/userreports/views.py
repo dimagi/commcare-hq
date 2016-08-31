@@ -37,6 +37,7 @@ from couchexport.files import Temp
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 
 from corehq import toggles
@@ -704,6 +705,14 @@ class ConfigureChartReport(ReportBuilderView):
                     report_configuration = self.report_form.create_report()
                 except BadSpecError as err:
                     messages.error(self.request, err.message)
+                    notify_exception(self.request, err.message, details={
+                        'domain': self.domain,
+                        'report_form_class': self.report_form.__class__.__name__,
+                        'report_type': self.report_form.report_type,
+                        'group_by': self.report_form.group_by,
+                        'user_filters': self.report_form.user_filters,
+                        'default_filters': self.report_form.default_filters,
+                    })
                     return self.get(*args, **kwargs)
                 self._track_new_report_events()
 
