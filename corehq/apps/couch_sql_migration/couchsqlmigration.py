@@ -280,8 +280,8 @@ BASE_IGNORED_FORM_PATHS = {
     'orig_id',
     'deprecated_form_id',
     'path',
-    'user_id'
-    'external_blobs'
+    'user_id',
+    'external_blobs',
 }
 IGNORE_PATHS = {
     'XFormInstance': BASE_IGNORED_FORM_PATHS
