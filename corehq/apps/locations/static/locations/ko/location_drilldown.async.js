@@ -111,7 +111,7 @@ function LocationModel(data, root, depth, func, withAllOption) {
 
     this.children_are_editable = function() {
         return _.every(this.children(), function(child) {
-            return child.name() === '_all' || child.can_edit()
+            return child.name() === '_all' || child.can_edit();
         });
     };
 
