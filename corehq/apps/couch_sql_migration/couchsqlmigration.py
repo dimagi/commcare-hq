@@ -135,8 +135,9 @@ def _copy_form_properties(domain, sql_form, couch_form):
 
 def _migrate_form_attachments(sql_form, couch_form):
     """Copy over attachement meta - includes form.xml"""
+    attachments = []
     for name, blob in couch_form.blobs.iteritems():
-        sql_form.track_create(XFormAttachmentSQL(
+        attachments.append(XFormAttachmentSQL(
             name=name,
             form=sql_form,
             attachment_id=uuid.uuid4().hex,
@@ -145,6 +146,7 @@ def _migrate_form_attachments(sql_form, couch_form):
             blob_id=blob.id,
             md5=blob.info.md5_hash
         ))
+    sql_form.unsaved_attachments = attachments
 
 
 def _migrate_form_operations(sql_form, couch_form):
