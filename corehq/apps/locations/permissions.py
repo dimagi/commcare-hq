@@ -6,6 +6,7 @@ from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import (login_and_domain_required,
                                            domain_admin_required)
+from corehq.apps.users.location_access_restrictions import location_restricted_response
 from corehq.apps.users.models import CommCareUser
 from .models import SQLLocation
 from .util import get_xform_location
@@ -83,25 +84,6 @@ def user_can_view_location(user, sql_location, project):
     return sql_location.location_id in user_loc.lineage
 
 
-def can_edit_location(view_fn):
-    """
-    Decorator controlling a user's access to a specific location.
-    The decorated function must be passed a loc_id arg (eg: from urls.py)
-    """
-    @wraps(view_fn)
-    def _inner(request, domain, loc_id, *args, **kwargs):
-        try:
-            # pass to view?
-            location = SQLLocation.objects.get(location_id=loc_id)
-        except SQLLocation.DoesNotExist:
-            raise Http404()
-        else:
-            if user_can_edit_location(request.couch_user, location, request.project):
-                return view_fn(request, domain, loc_id, *args, **kwargs)
-        raise Http404()
-    return locations_access_required(_inner)
-
-
 def user_can_edit_location_types(user, project):
     if (user.is_domain_admin(project.name) or
             not project.location_restriction_for_users):
@@ -147,3 +129,43 @@ def can_edit_form_location(domain, web_user, form):
         if not form_location:
             return False
         return user_can_edit_location(web_user, form_location, domain_obj)
+
+
+#### Unified location permissions below this point
+# TODO incorporate the above stuff into the new system
+
+
+def user_can_access_location_id(domain, user, location_id):
+    if user.has_permission(domain, 'access_all_locations'):
+        return True
+
+    users_location = user.get_sql_location(domain)
+    return (users_location.get_descendants(include_self=True)
+                          .filter(location_id=location_id)
+                          .exists())
+
+
+def can_edit_location(view_fn):
+    """
+    Decorator controlling a user's access to a specific location.
+    The decorated function must be passed a loc_id arg (eg: from urls.py)
+    """
+    @wraps(view_fn)
+    def _inner(request, domain, loc_id, *args, **kwargs):
+        if Domain.get_by_name(domain).location_restriction_for_users:
+            # TODO Old style restrictions, remove after converting existing projects
+            try:
+                # pass to view?
+                location = SQLLocation.objects.get(location_id=loc_id)
+            except SQLLocation.DoesNotExist:
+                raise Http404()
+            else:
+                if user_can_edit_location(request.couch_user, location, request.project):
+                    return view_fn(request, domain, loc_id, *args, **kwargs)
+            raise Http404()
+
+        if user_can_access_location_id(domain, request.couch_user, loc_id):
+            return view_fn(request, domain, loc_id, *args, **kwargs)
+        return location_restricted_response(request)
+
+    return locations_access_required(_inner)
