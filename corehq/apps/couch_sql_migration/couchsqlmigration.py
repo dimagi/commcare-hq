@@ -205,7 +205,8 @@ def _save_migrated_models(domain, sql_form, case_stock_result=None):
     return FormProcessorSQL.save_processed_models(
         forms_tuple,
         cases=case_stock_result.case_models if case_stock_result else None,
-        stock_result=stock_result
+        stock_result=stock_result,
+        publish_to_kafka=False
     )
 
 
