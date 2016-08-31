@@ -71,7 +71,6 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
 
 FormplayerFrontend.on('clearForm', function () {
     $('#webforms').html("");
-    FormplayerFrontend.trigger("webforms:clearForm");
 });
 
 FormplayerFrontend.reqres.setHandler('clearMenu', function () {
