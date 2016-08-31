@@ -11,7 +11,7 @@ from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, XF
 from corehq.form_processor.submission_post import CaseStockProcessingResult
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import set_local_domain_sql_backend_override
-from couchforms.models import XFormInstance
+from couchforms.models import XFormInstance, doc_types
 from fluff.management.commands.ptop_reindexer_fluff import ReindexEventHandler
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
 
@@ -58,6 +58,34 @@ class CouchSqlDomainMigrator(object):
 
         case_stock_result = _get_case_and_ledger_updates(self.domain, sql_form)
         _save_migrated_models(self.domain, sql_form, case_stock_result)
+
+    def _copy_unprocessed_forms(self):
+        for change in _get_unprocessed_form_iterator(self.domain).iter_all_changes():
+            couch_form_json = change.get_document()
+            couch_form = _wrap_form(couch_form_json)
+            print 'copying unprocessed {} {}: {}'.format(couch_form.doc_type, couch_form.form_id, couch_form.received_on)
+            sql_form = XFormInstanceSQL(
+                form_id=couch_form.form_id,
+                xmlns=couch_form.xmlns,
+                user_id=couch_form.user_id,
+            )
+            _copy_form_properties(self.domain, sql_form, couch_form)
+            _migrate_form_attachments(sql_form, couch_form)
+            _migrate_form_operations(sql_form, couch_form)
+
+            self.diff_db.add_diffs(
+                'form', couch_form.form_id,
+                json_diff(couch_form.to_json(), sql_form.to_json())
+            )
+
+            _save_migrated_models(self.domain, sql_form)
+
+
+def _wrap_form(doc):
+    if doc['doc_type'] in doc_types():
+        return doc_types()[doc['doc_type']].wrap(doc)
+    if doc['doc_type'] in ("XFormInstance-Deleted", "HQSubmission"):
+        return XFormInstance.wrap(doc)
 
 
 def _migrate_form(domain, couch_form):
@@ -163,7 +191,7 @@ def _get_case_and_ledger_updates(domain, sql_form):
     )
 
 
-def _save_migrated_models(domain, sql_form, case_stock_result):
+def _save_migrated_models(domain, sql_form, case_stock_result=None):
     """
     See SubmissionPost.save_processed_models for ~what this should do.
     However, note that that function does some things that this one shouldn't,
@@ -172,10 +200,11 @@ def _save_migrated_models(domain, sql_form, case_stock_result):
     interface = FormProcessorInterface(domain)
     interface.save_processed_models(
         [sql_form],
-        case_stock_result.case_models,
-        case_stock_result.stock_result
+        case_stock_result.case_models if case_stock_result else None,
+        case_stock_result.stock_result if case_stock_result else None
     )
-    case_stock_result.case_result.close_extensions()
+    if case_stock_result:
+        case_stock_result.case_result.close_extensions()
 
 
 def _get_main_form_iterator(domain):
