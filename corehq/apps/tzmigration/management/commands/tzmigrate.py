@@ -4,23 +4,12 @@ from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.tzmigration import set_migration_started, \
     set_migration_complete, set_migration_not_started, get_migration_status, \
     MigrationStatus
+from corehq.apps.tzmigration.planning import show_diffs
 from corehq.apps.tzmigration.timezonemigration import prepare_planning_db, \
     get_planning_db, get_planning_db_filepath, delete_planning_db, \
-    prepare_case_json, FormJsonDiff, commit_plan
+    prepare_case_json, commit_plan
 from corehq.form_processor.utils import should_use_sql_backend
-from corehq.util.dates import iso_string_to_datetime
 from couchforms.dbaccessors import get_form_ids_by_type
-
-
-def _is_datetime(string):
-    if not isinstance(string, basestring):
-        return False
-    try:
-        iso_string_to_datetime(string)
-    except (ValueError, OverflowError, TypeError):
-        return False
-    else:
-        return True
 
 
 class Command(BaseCommand):
@@ -107,12 +96,4 @@ class Command(BaseCommand):
                 list(case_ids_in_sqlite - case_ids_in_couch))
 
     def show_diffs(self):
-        for form_id, json_diff in self.planning_db.get_diffs():
-            if json_diff.diff_type == 'diff':
-                if _is_datetime(json_diff.old_value) and _is_datetime(json_diff.new_value):
-                    continue
-            if json_diff in (
-                    FormJsonDiff(diff_type=u'type', path=[u'external_id'], old_value=u'', new_value=None),
-                    FormJsonDiff(diff_type=u'type', path=[u'closed_by'], old_value=u'', new_value=None)):
-                continue
-            print '[{}] {}'.format(form_id, json_diff)
+        show_diffs(self.planning_db)
