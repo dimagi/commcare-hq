@@ -4,8 +4,6 @@ from datetime import datetime
 
 import settings
 from casexml.apps.case.xform import get_all_extensions_to_close, CaseProcessingResult
-from corehq.apps.tzmigration.planning import DiffDB
-from corehq.apps.tzmigration.timezonemigration import json_diff
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL
@@ -26,6 +24,8 @@ def do_couch_to_sql_migration(domain):
 
 class CouchSqlDomainMigrator(object):
     def __init__(self, domain):
+        from corehq.apps.tzmigration.planning import DiffDB
+
         assert should_use_sql_backend(domain)
         self.domain = domain
         db_filepath = get_diff_db_filepath(domain)
@@ -48,6 +48,8 @@ class CouchSqlDomainMigrator(object):
             self._migrate_form_and_associated_models(wrapped_form)
 
     def _migrate_form_and_associated_models(self, couch_form):
+        from corehq.apps.tzmigration.timezonemigration import json_diff
+
         sql_form = _migrate_form(self.domain, couch_form)
         _migrate_form_attachments(sql_form, couch_form)
         _migrate_form_operations(sql_form, couch_form)
@@ -61,6 +63,8 @@ class CouchSqlDomainMigrator(object):
         _save_migrated_models(sql_form, case_stock_result)
 
     def _copy_unprocessed_forms(self):
+        from corehq.apps.tzmigration.timezonemigration import json_diff
+
         for change in _get_unprocessed_form_iterator(self.domain).iter_all_changes():
             couch_form_json = change.get_document()
             couch_form = _wrap_form(couch_form_json)
@@ -243,11 +247,13 @@ def get_diff_db_filepath(domain):
 
 
 def get_diff_db(domain):
+    from corehq.apps.tzmigration.planning import DiffDB
+
     db_filepath = get_diff_db_filepath(domain)
     return DiffDB.open(db_filepath)
 
 
-def delete_planning_db(domain):
+def delete_diff_db(domain):
     db_filepath = get_diff_db_filepath(domain)
     try:
         os.remove(db_filepath)
