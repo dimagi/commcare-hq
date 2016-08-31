@@ -1,7 +1,11 @@
+import os
 import uuid
 from datetime import datetime
 
+import settings
 from casexml.apps.case.xform import get_all_extensions_to_close, CaseProcessingResult
+from corehq.apps.tzmigration.planning import DiffDB
+from corehq.apps.tzmigration.timezonemigration import json_diff
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL
 from corehq.form_processor.submission_post import CaseStockProcessingResult
@@ -15,40 +19,45 @@ from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeP
 def do_couch_to_sql_migration(domain):
     # (optional) collect some information about the domain's cases and forms for cross-checking
     set_local_domain_sql_backend_override(domain)
-    assert should_use_sql_backend(domain)
-    _process_main_forms(domain)
-    _copy_unprocessed_forms(domain)
+    CouchSqlDomainMigrator(domain).migrate()
     # (optional) compare the information collected to the information at the beginning
 
 
-def _process_main_forms(domain):
-    last_received_on = datetime.min
-    # process main forms (including cases and ledgers)
-    for change in _get_main_form_iterator(domain).iter_all_changes():
-        form = change.get_document()
-        wrapped_form = XFormInstance.wrap(form)
-        form_received = wrapped_form.received_on
-        assert last_received_on <= form_received
-        last_received_on = form_received
-        print 'processing form {}: {}'.format(form['_id'], form_received)
-        _migrate_form_and_associated_models(domain, wrapped_form)
+class CouchSqlDomainMigrator(object):
+    def __init__(self, domain):
+        assert should_use_sql_backend(domain)
+        self.domain = domain
+        db_filepath = get_diff_db_filepath(domain)
+        self.diff_db = DiffDB.init(db_filepath)
 
+    def migrate(self):
+        self._process_main_forms()
+        self._copy_unprocessed_forms()
 
-def _get_main_form_iterator(domain):
-    return CouchDomainDocTypeChangeProvider(
-        couch_db=XFormInstance.get_db(),
-        domains=[domain],
-        doc_types=['XFormInstance'],
-        event_handler=ReindexEventHandler(u'couch to sql migrator ({})'.format(domain)),
-    )
+    def _process_main_forms(self):
+        last_received_on = datetime.min
+        # process main forms (including cases and ledgers)
+        for change in _get_main_form_iterator(self.domain).iter_all_changes():
+            form = change.get_document()
+            wrapped_form = XFormInstance.wrap(form)
+            form_received = wrapped_form.received_on
+            assert last_received_on <= form_received
+            last_received_on = form_received
+            print 'processing form {}: {}'.format(form['_id'], form_received)
+            self._migrate_form_and_associated_models(wrapped_form)
 
+    def _migrate_form_and_associated_models(self, couch_form):
+        sql_form = _migrate_form(self.domain, couch_form)
+        _migrate_form_attachments(sql_form, couch_form)
+        _migrate_form_operations(sql_form, couch_form)
 
-def _migrate_form_and_associated_models(domain, couch_form):
-    sql_form = _migrate_form(domain, couch_form)
-    _migrate_form_attachments(sql_form, couch_form)
-    _migrate_form_operations(sql_form, couch_form)
-    case_stock_result = _get_case_and_ledger_updates(domain, sql_form)
-    _save_migrated_models(domain, sql_form, case_stock_result)
+        self.diff_db.add_diffs(
+            'form', couch_form.form_id,
+            json_diff(couch_form.to_json(), sql_form.to_json())
+        )
+
+        case_stock_result = _get_case_and_ledger_updates(self.domain, sql_form)
+        _save_migrated_models(self.domain, sql_form, case_stock_result)
 
 
 def _migrate_form(domain, couch_form):
@@ -64,6 +73,10 @@ def _migrate_form(domain, couch_form):
     # todo: timezone migration if we want here
     # adjust_datetimes(form_data)
     sql_form = interface.new_xform(form_data)
+    _copy_form_properties(domain, sql_form, couch_form)
+
+
+def _copy_form_properties(domain, sql_form, couch_form):
     assert isinstance(sql_form, XFormInstanceSQL)
     sql_form.domain = domain
 
@@ -165,12 +178,13 @@ def _save_migrated_models(domain, sql_form, case_stock_result):
     case_stock_result.case_result.close_extensions()
 
 
-def _copy_unprocessed_forms(domain):
-    # copy unprocessed forms
-    for change in _get_unprocessed_form_iterator(domain).iter_all_changes():
-        form = change.get_document()
-        print 'copying unprocessed {} {}: {}'.format(form['doc_type'], form['_id'], form['received_on'])
-        # save updated models
+def _get_main_form_iterator(domain):
+    return CouchDomainDocTypeChangeProvider(
+        couch_db=XFormInstance.get_db(),
+        domains=[domain],
+        doc_types=['XFormInstance'],
+        event_handler=ReindexEventHandler(u'couch to sql migrator ({})'.format(domain)),
+    )
 
 
 def _get_unprocessed_form_iterator(domain):
@@ -189,3 +203,24 @@ def _get_unprocessed_form_iterator(domain):
         ],
         event_handler=ReindexEventHandler(u'couch to sql migrator ({} unprocessed forms)'.format(domain)),
     )
+
+
+def get_diff_db_filepath(domain):
+    return os.path.join(settings.SHARED_DRIVE_CONF.restore_dir,
+                        '{}-tzmigration.db'.format(domain))
+
+
+def get_diff_db(domain):
+    db_filepath = get_diff_db_filepath(domain)
+    return DiffDB.open(db_filepath)
+
+
+def delete_planning_db(domain):
+    db_filepath = get_diff_db_filepath(domain)
+    try:
+        os.remove(db_filepath)
+    except OSError as e:
+        # continue if the file didn't exist to begin with
+        # reraise on any other error
+        if e.errno != 2:
+            raise
