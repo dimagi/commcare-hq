@@ -4,11 +4,13 @@ from datetime import datetime
 
 import settings
 from casexml.apps.case.xform import get_all_extensions_to_close, CaseProcessingResult
+from corehq.apps.tzmigration import force_phone_timezones_should_be_processed
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL
 from corehq.form_processor.submission_post import CaseStockProcessingResult
+from corehq.form_processor.utils import adjust_datetimes
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import set_local_domain_sql_backend_override
 from couchforms.models import XFormInstance, doc_types
@@ -128,8 +130,8 @@ def _migrate_form(domain, couch_form):
     interface = FormProcessorInterface(domain)
 
     form_data = couch_form.form
-    # todo: timezone migration if we want here
-    # adjust_datetimes(form_data)
+    with force_phone_timezones_should_be_processed():
+        adjust_datetimes(form_data)
     sql_form = interface.new_xform(form_data)
     return _copy_form_properties(domain, sql_form, couch_form)
 
