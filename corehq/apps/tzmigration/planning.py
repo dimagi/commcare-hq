@@ -57,7 +57,7 @@ class PlanningStockReportHelper(Base):
     stock_report_helper_json = Column(UnicodeText, nullable=False)
 
 
-class PlanningDB(object):
+class BaseDB(object):
 
     def __init__(self, db_filepath):
         self.db_filepath = db_filepath
@@ -82,11 +82,8 @@ class PlanningDB(object):
             self._connection = sqlite3.connect(self.db_filepath)
         return self._connection
 
-    def add_form(self, form_id, form_json):
-        session = self.Session()
-        session.add(PlanningForm(uuid=form_id, form_json=json.dumps(form_json)))
-        session.commit()
 
+class DiffDB(BaseDB):
     def add_diffs(self, kind, doc_id, doc_diffs):
         session = self.Session()
 
@@ -102,6 +99,30 @@ class PlanningDB(object):
                 doc_id=doc_id, diff_type=d.diff_type, path=json.dumps(d.path),
                 old_value=json_dumps_or_none(d.old_value),
                 new_value=json_dumps_or_none(d.new_value)))
+        session.commit()
+
+
+    def get_diffs(self):
+        from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
+        session = self.Session()
+
+        def json_loads_or_ellipsis(val):
+            if val is None:
+                return Ellipsis
+            else:
+                return json.loads(val)
+
+        for d in session.query(PlanningDiff).all():
+            yield d.doc_id, FormJsonDiff(
+                d.diff_type, json.loads(d.path),
+                json_loads_or_ellipsis(d.old_value),
+                json_loads_or_ellipsis(d.new_value))
+
+
+class PlanningDB(BaseDB):
+    def add_form(self, form_id, form_json):
+        session = self.Session()
+        session.add(PlanningForm(uuid=form_id, form_json=json.dumps(form_json)))
         session.commit()
 
     def ensure_case(self, case_id):
@@ -147,22 +168,6 @@ class PlanningDB(object):
             query = query.filter(PlanningCase.doc_type == 'CommCareCase')
         case_ids = {uuid for (uuid,) in query.all()}
         return case_ids
-
-    def get_diffs(self):
-        from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
-        session = self.Session()
-
-        def json_loads_or_ellipsis(val):
-            if val is None:
-                return Ellipsis
-            else:
-                return json.loads(val)
-
-        for d in session.query(PlanningDiff).all():
-            yield d.doc_id, FormJsonDiff(
-                d.diff_type, json.loads(d.path),
-                json_loads_or_ellipsis(d.old_value),
-                json_loads_or_ellipsis(d.new_value))
 
     def update_case_json(self, case_id, case_json):
         session = self.Session()
