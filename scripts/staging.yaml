@@ -57,7 +57,6 @@ branches:
   - locations-whitelist  # Ethan 8/29
   - br/utf-8-restore  # Ben 8/30
   - np/djangular-0.7.16 # Nick P 8/31
-  - np/test-accounting-error # Nick P 8/31
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
