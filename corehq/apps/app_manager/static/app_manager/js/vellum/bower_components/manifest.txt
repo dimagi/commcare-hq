@@ -1,9 +1,9 @@
-├─┬ At.js#f37de8344a
+├─┬ At.js#bd0dacc0bf
 │ ├─┬ Caret.js#0.2.2 (latest is 0.3.1)
 │ │ └── jquery#1.11.3
 │ └── jquery#1.11.3 (3.1.0 available)
 ├── Caret.js#0.2.2 (latest is 0.3.1)
-├── MediaUploader#b6c202a9d1
+├── MediaUploader#8a75015f15
 ├── XMLWriter#ab8760d6e0
 ├─┬ bootstrap#3.3.7 (latest is 4.0.0-alpha.3)
 │ └── jquery#1.11.3 (3.1.0 available)
@@ -24,6 +24,5 @@
 ├── requirejs-text#2.0.15
 ├── requirejs-tpl#a3ca1e0e7f
 ├── underscore#1.8.3
-├── when#2.8.0 extraneous (latest is 3.7.7)
 ├── xpath#0.0.3
 └── xrayquire#396ae6569b
