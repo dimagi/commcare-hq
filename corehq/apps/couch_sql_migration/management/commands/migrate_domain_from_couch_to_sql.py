@@ -4,10 +4,12 @@ from optparse import make_option
 from django.core.management.base import CommandError, LabelCommand
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
-    do_couch_to_sql_migration, delete_diff_db, get_diff_db
-)
+    do_couch_to_sql_migration, delete_diff_db, get_diff_db,
+    commit_migration)
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
+from corehq.apps.tzmigration import set_migration_started, set_migration_not_started, get_migration_status, \
+    MigrationStatus, set_migration_complete
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.utils import should_use_sql_backend
 from couchforms.dbaccessors import get_form_ids_by_type
@@ -18,6 +20,7 @@ class Command(LabelCommand):
     args = "<domain>"
     option_list = LabelCommand.option_list + (
         make_option('--MIGRATE', action='store_true', default=False),
+        make_option('--COMMIT', action='store_true', default=False),
         make_option('--blow-away', action='store_true', default=False),
         make_option('--stats', action='store_true', default=False),
         make_option('--show-diffs', action='store_true', default=False),
@@ -35,6 +38,7 @@ class Command(LabelCommand):
 
         if options['MIGRATE']:
             self.require_only_option('MIGRATE', options)
+            set_migration_started(domain)
             do_couch_to_sql_migration(domain)
         if options['blow_away']:
             self.require_only_option('blow_away', options)
@@ -42,11 +46,22 @@ class Command(LabelCommand):
                 "This will delete all SQL forms and cases for the domain {}. "
                 "Are you sure you want to continue?".format(domain)
             )
+            set_migration_not_started(domain)
             _blow_away_migration(domain)
         if options['stats']:
             self.print_stats(domain)
         if options['show_diffs']:
             self.show_diffs(domain)
+        if options['COMMIT']:
+            self.require_only_option('COMMIT', options)
+            assert get_migration_status(domain, strict=True) == MigrationStatus.IN_PROGRESS
+            _confirm(
+                "This will allow convert the domain to use the SQL backend and"
+                "allow new form submissions to be processed. "
+                "Are you sure you want to do this for domain '{}'?".format(domain)
+            )
+            commit_migration(domain)
+            set_migration_complete(domain)
 
     def show_diffs(self, domain):
         db = get_diff_db(domain)

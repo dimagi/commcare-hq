@@ -4,6 +4,7 @@ from datetime import datetime
 
 import settings
 from casexml.apps.case.xform import get_all_extensions_to_close, CaseProcessingResult
+from corehq.apps.domain.models import Domain
 from corehq.apps.tzmigration import force_phone_timezones_should_be_processed
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
@@ -12,7 +13,8 @@ from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, XF
 from corehq.form_processor.submission_post import CaseStockProcessingResult
 from corehq.form_processor.utils import adjust_datetimes
 from corehq.form_processor.utils import should_use_sql_backend
-from corehq.form_processor.utils.general import set_local_domain_sql_backend_override
+from corehq.form_processor.utils.general import set_local_domain_sql_backend_override, \
+    clear_local_domain_sql_backend_override
 from couchforms.models import XFormInstance, doc_types
 from fluff.management.commands.ptop_reindexer_fluff import ReindexEventHandler
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
@@ -304,6 +306,14 @@ def delete_diff_db(domain):
         # reraise on any other error
         if e.errno != 2:
             raise
+
+
+def commit_migration(domain_name):
+    domain = Domain.get_by_name(domain_name)
+    domain.use_sql_backend = True
+    domain.save()
+    clear_local_domain_sql_backend_override(domain_name)
+    assert should_use_sql_backend(domain_name)
 
 
 BASE_IGNORED_FORM_PATHS = {
