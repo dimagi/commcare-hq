@@ -534,6 +534,7 @@ def migrate_domain(domain, dryrun=False):
                 )
             except Exception, e:
                 print 'Failed parsing {}: {}'.format(old_export['_id'], e)
+                raise e
             else:
                 metas.append(migration_meta)
 
@@ -567,3 +568,4 @@ def migrate_domain(domain, dryrun=False):
             print '## Skipped columns: ##'
             for column_meta in meta.skipped_columns:
                 column_meta.pretty_print()
+    return metas
