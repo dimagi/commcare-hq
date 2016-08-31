@@ -54,9 +54,10 @@ class CouchSqlDomainMigrator(object):
         _migrate_form_attachments(sql_form, couch_form)
         _migrate_form_operations(sql_form, couch_form)
 
+        diffs = json_diff(couch_form.to_json(), sql_form.to_json())
         self.diff_db.add_diffs(
             'form', couch_form.form_id,
-            json_diff(couch_form.to_json(), sql_form.to_json())
+            _filter_form_diffs(couch_form.doc_type, diffs)
         )
 
         case_stock_result = _get_case_and_ledger_updates(self.domain, sql_form)
@@ -264,3 +265,28 @@ def delete_diff_db(domain):
         # reraise on any other error
         if e.errno != 2:
             raise
+
+
+BASE_IGNORED_FORM_PATHS = {
+    '_rev',
+    'migrating_blobs_from_couch',
+    '#export_tag',
+    'computed_',
+    'state',
+    'edited_on',
+    'computed_modified_on_',
+    'problem',
+    'orig_id',
+    'deprecated_form_id',
+    'path',
+    'user_id'
+    'external_blobs'
+}
+IGNORE_PATHS = {
+    'XFormInstance': BASE_IGNORED_FORM_PATHS
+}
+
+
+def _filter_form_diffs(doc_type, diffs):
+    paths_to_ignore = IGNORE_PATHS.get(doc_type, BASE_IGNORED_FORM_PATHS)
+    return [diff for diff in diffs if diff.path[0] not in paths_to_ignore]
