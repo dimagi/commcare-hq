@@ -1,8 +1,11 @@
+import mock
 import uuid
 import random
 import string
 
-from corehq.apps.users.models import WebUser, CommCareUser
+from django.core.urlresolvers import reverse
+
+from corehq.apps.users.models import WebUser, CommCareUser, UserRole, Permissions
 from corehq.toggles import (RESTRICT_FORM_EDIT_BY_LOCATION, NAMESPACE_DOMAIN)
 from corehq.util.test_utils import flag_enabled
 from corehq.form_processor.utils.xform import (
@@ -12,6 +15,7 @@ from corehq.form_processor.utils.xform import (
 from corehq.form_processor.tests.utils import run_with_all_backends
 from casexml.apps.case.tests.util import delete_all_xforms
 
+from ..views import LocationsListView
 from ..permissions import can_edit_form_location
 from .util import LocationHierarchyTestCase, delete_all_locations
 
@@ -129,3 +133,48 @@ class TestPermissions(LocationHierarchyTestCase):
     def assertCannotEdit(self, user, form):
         msg = "This user CAN edit this form!"
         self.assertFalse(can_edit_form_location(self.domain, user, form), msg=msg)
+
+
+@mock.patch('django_prbac.decorators.has_privilege', new=lambda *args, **kwargs: True)
+class TestAccessRestrictions(LocationHierarchyTestCase):
+    domain = 'test-access-restrictions-domain'
+    location_type_names = ['state', 'county', 'city']
+    stock_tracking_types = ['state', 'county', 'city']
+    location_structure = [
+        ('Massachusetts', [
+            ('Middlesex', [
+                ('Cambridge', []),
+                ('Somerville', []),
+            ]),
+            ('Suffolk', [
+                ('Boston', []),
+                ('Brookline', []),
+            ])
+        ])
+    ]
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestAccessRestrictions, cls).setUpClass()
+        cls.suffolk_user = WebUser.create(cls.domain, 'suffolk-joe', 'password')
+        cls.suffolk_user.set_location(cls.domain, cls.locations['Suffolk'].couch_location)
+        role = UserRole(
+            domain=cls.domain,
+            name='Regional Supervisor',
+            permissions=Permissions(access_all_locations=False),
+        )
+        role.save()
+        cls.suffolk_user.set_role(cls.domain, role.get_qualified_id())
+        cls.suffolk_user.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        super(TestAccessRestrictions, cls).tearDownClass()
+        cls.suffolk_user.delete()
+
+    def test_can_access_location_list(self):
+        self.client.login(username=self.suffolk_user.username, password="password")
+        url = reverse(LocationsListView.urlname, args=[self.domain])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['locations'][0]['name'], 'Suffolk')
