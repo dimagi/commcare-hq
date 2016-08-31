@@ -321,7 +321,7 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     def to_json(self, include_attachments=False):
         from .serializers import XFormInstanceSQLSerializer
         serializer = XFormInstanceSQLSerializer(self, include_attachments=include_attachments)
-        return serializer.data
+        return dict(serializer.data)
 
     def _get_attachment_from_db(self, attachment_name):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
@@ -614,7 +614,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def to_json(self):
         from .serializers import CommCareCaseSQLSerializer
         serializer = CommCareCaseSQLSerializer(self)
-        ret = serializer.data
+        ret = dict(serializer.data)
         for key in self.case_json:
             if key not in ret:
                 ret[key] = self.case_json[key]
@@ -1287,7 +1287,7 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     def to_json(self):
         from .serializers import LedgerValueSerializer
         serializer = LedgerValueSerializer(self)
-        return serializer.data
+        return dict(serializer.data)
 
     class Meta:
         app_label = "form_processor"
