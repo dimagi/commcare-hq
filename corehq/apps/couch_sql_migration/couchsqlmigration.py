@@ -58,7 +58,7 @@ class CouchSqlDomainMigrator(object):
         )
 
         case_stock_result = _get_case_and_ledger_updates(self.domain, sql_form)
-        _save_migrated_models(self.domain, sql_form, case_stock_result)
+        _save_migrated_models(sql_form, case_stock_result)
 
     def _copy_unprocessed_forms(self):
         for change in _get_unprocessed_form_iterator(self.domain).iter_all_changes():
@@ -79,7 +79,7 @@ class CouchSqlDomainMigrator(object):
                 json_diff(couch_form.to_json(), sql_form.to_json())
             )
 
-            _save_migrated_models(self.domain, sql_form)
+            _save_migrated_models(sql_form)
 
 
 def _wrap_form(doc):
@@ -192,7 +192,7 @@ def _get_case_and_ledger_updates(domain, sql_form):
     )
 
 
-def _save_migrated_models(domain, sql_form, case_stock_result=None):
+def _save_migrated_models(sql_form, case_stock_result=None):
     """
     See SubmissionPost.save_processed_models for ~what this should do.
     However, note that that function does some things that this one shouldn't,
