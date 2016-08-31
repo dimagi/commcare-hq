@@ -90,16 +90,19 @@ class RemoteRequestContributor(SuiteContributorByModule):
                         RemoteRequestQuery(
                             url=absolute_reverse('remote_search', args=[domain]),
                             storage_instance=RESULTS_INSTANCE,
-                            data=[
+                            data=([
                                 QueryData(
                                     key='case_type',
                                     ref="'{}'".format(module.case_type)
                                 ),
                                 QueryData(
                                     key='include_closed',
-                                    ref='{}'.format(module.search_config.include_closed)
+                                    ref="'{}'".format(module.search_config.include_closed)
                                 )
-                            ],
+                            ] + [
+                                QueryData(key="'{}'".format(c.property), ref="'{}'".format(c.defaultValue))
+                                 for c in module.search_config.default_properties
+                            ]),
                             prompts=[
                                 QueryPrompt(
                                     key=p.name,

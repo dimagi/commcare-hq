@@ -55,7 +55,7 @@ from corehq.apps.app_manager.models import (
     SortElement,
     ReportAppConfig,
     FixtureSelect,
-)
+    DefaultCaseSearchProperty)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 
@@ -150,6 +150,7 @@ def _get_advanced_module_view_context(app, module, lang=None):
         'is_search_enabled': case_search_enabled_for_domain(app.domain),
         'search_properties': module.search_config.properties if module_offers_search(module) else [],
         'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
+        'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
         'schedule_phases': [
             {
                 'id': schedule.id,
@@ -185,6 +186,7 @@ def _get_basic_module_view_context(app, module, lang=None):
         'is_search_enabled': case_search_enabled_for_domain(app.domain),
         'search_properties': module.search_config.properties if module_offers_search(module) else [],
         'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
+        'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
     }
 
 
@@ -722,7 +724,11 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
                     if search_properties.get('relevant') is not None
                     else CLAIM_DEFAULT_RELEVANT_CONDITION
                 ),
-                include_closed=search_properties.get('include_closed')
+                include_closed=bool(search_properties.get('include_closed')),
+                default_properties=[
+                    DefaultCaseSearchProperty.wrap(p)
+                    for p in search_properties.get('default_properties')
+                ]
             )
 
     resp = {}

@@ -203,7 +203,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         };
     };
 
-    var searchViewModel = function (searchProperties, includeClosed, lang, saveButton) {
+    var searchViewModel = function (searchProperties, includeClosed, defaultProperties, lang, saveButton) {
         var self = this,
             DEFAULT_CLAIM_RELEVANT= "count(instance('casedb')/casedb/case[@case_id=instance('querysession')/session/data/case_id]) = 0";
 
@@ -213,10 +213,18 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             self.label = ko.observable(label);
         };
 
+        var DefaultProperty = function (property, defaultValue) {
+            var self = this;
+            self.property = ko.observable(property);
+            self.defaultValue = ko.observable(defaultValue);
+        };
+
         self.relevant = ko.observable();
         self.default_relevant = ko.observable(true);
-        self.includeClosed = ko.observable(includeClosed);
+        self.includeClosed = ko.observable();
         self.searchProperties = ko.observableArray();
+        self.defaultProperties = ko.observableArray();
+
         if (searchProperties.length > 0) {
             for (var i = 0; i < searchProperties.length; i++) {
                 // property labels come in keyed by lang.
@@ -255,6 +263,36 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             );
         };
 
+        if (defaultProperties.length > 0) {
+            for (var i = 0; i < defaultProperties.length; i++) {
+                self.defaultProperties.push(new DefaultProperty(
+                    defaultProperties[i].property,
+                    defaultProperties[i].defaultValue
+                ));
+            }
+        } else {
+            self.defaultProperties.push(new DefaultProperty('', ''));
+        }
+        self.addDefaultProperty = function () {
+            self.defaultProperties.push(new DefaultProperty('',''));
+        };
+        self.removeDefaultProperty = function (property) {
+            self.defaultProperties.remove(property)
+        };
+        self._getDefaultProperties = function () {
+            return _.map(
+                _.filter(
+                    self.defaultProperties(),
+                    function (p) { return p.property().length > 0; }  // Skip properties where property is blank
+                ),
+                function (p) {
+                    return {
+                        property: p.property(),
+                        defaultValue: p.defaultValue()
+                    };
+                }
+            );
+        };
         self._getRelevant = function() {
             if (self.default_relevant()) {
                 if (!self.relevant() || self.relevant().trim() === "") {
@@ -271,6 +309,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 properties: self._getProperties(),
                 relevant: self._getRelevant(),
                 include_closed: self.includeClosed(),
+                default_properties: self._getDefaultProperties(),
             };
         };
     };
@@ -1246,6 +1285,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     this.search = new searchViewModel(
                         spec.searchProperties || [],
                         spec.includeClosed,
+                        spec.defaultProperties,
                         spec.lang,
                         this.shortScreen.saveButton
                     );

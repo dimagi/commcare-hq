@@ -1891,6 +1891,12 @@ class CaseSearchProperty(DocumentSchema):
     label = DictProperty()
 
 
+class DefaultCaseSearchProperty(DocumentSchema):
+    """Case Properties with fixed value to search on"""
+    property = StringProperty()
+    default_value = StringProperty()
+
+
 class CaseSearch(DocumentSchema):
     """
     Properties and search command label
@@ -1899,6 +1905,7 @@ class CaseSearch(DocumentSchema):
     properties = SchemaListProperty(CaseSearchProperty)
     relevant = StringProperty(default=CLAIM_DEFAULT_RELEVANT_CONDITION)
     include_closed = BooleanProperty(default=False)
+    default_properties = SchemaListProperty(DefaultCaseSearchProperty)
 
 
 class ParentSelect(DocumentSchema):

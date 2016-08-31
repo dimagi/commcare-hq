@@ -58,5 +58,36 @@
                 </label>
             </div>
         </div>
+        <table class="table table-condensed">
+            <thead data-bind="visible: defaultProperties().length > 0">
+                <tr>
+                    <th class="col-sm-5">{% trans "Key" %}</th>
+                    <th class="col-sm-6">{% trans "Value" %}</th>
+                    <th class="col-sm-1">&nbsp;</th>
+                </tr>
+            </thead>
+            <tbody data-bind="foreach: defaultProperties">
+            <tr>
+                <td class="col-sm-4">
+                    <input class="form-control" type="text" data-bind="value: property"/>
+                </td>
+                <td class="col-sm-6">
+                    <input class="form-control" type="text" data-bind="value: defaultValue"/>
+                </td>
+                <td class="col-sm-2">
+                    <i style="cursor: pointer;"
+                       data-bind="click: $parent.removeDefaultProperty,
+                                  css: COMMCAREHQ.icons.DELETE"></i>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <p>
+            <button type="button"
+                    class="btn btn-default"
+                    data-bind="click: addDefaultProperty">
+                <i class="fa fa-plus"></i> {% trans "Add default property" %}
+            </button>
+        </p>
     </form>
 </div>

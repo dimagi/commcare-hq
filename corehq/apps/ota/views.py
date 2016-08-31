@@ -71,7 +71,7 @@ def search(request, domain):
                  .case_type(case_type)
                  .size(CASE_SEARCH_MAX_RESULTS))
 
-    if not include_closed:
+    if include_closed != 'True':
         search_es = search_es.is_closed(False)
 
     try:
