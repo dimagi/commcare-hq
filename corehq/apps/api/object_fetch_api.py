@@ -1,7 +1,7 @@
 import urllib
+from wsgiref.util import FileWrapper
 
 from django.core.urlresolvers import reverse
-from django.core.servers.basehttp import FileWrapper
 from django.http import HttpResponse, Http404, StreamingHttpResponse, HttpResponseForbidden
 from django.utils.decorators import method_decorator
 from django.views.generic import View
