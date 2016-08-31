@@ -700,6 +700,7 @@ class CreateBroadcastView(BaseMessagingSectionView):
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_jquery_ui
     @use_timepicker
+    @use_select2
     def dispatch(self, *args, **kwargs):
         return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
 
