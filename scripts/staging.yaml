@@ -61,13 +61,13 @@ submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches:
-      - commcare_2.29
+    branches: []
+#      - commcare_2.29
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches:
-      - commcare_2.29
+    branches: []
+#      - commcare_2.29
 #      - kill-1.x-apps  # Danny 8/23
   submodules/django-digest-src:
     branches: []
