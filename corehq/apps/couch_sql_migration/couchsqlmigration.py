@@ -3,7 +3,9 @@ import uuid
 from datetime import datetime
 
 import settings
+from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xform import get_all_extensions_to_close, CaseProcessingResult
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL
@@ -34,6 +36,7 @@ class CouchSqlDomainMigrator(object):
     def migrate(self):
         self._process_main_forms()
         self._copy_unprocessed_forms()
+        self._calculate_case_diffs()
 
     def _process_main_forms(self):
         last_received_on = datetime.min
@@ -85,6 +88,27 @@ class CouchSqlDomainMigrator(object):
             )
 
             _save_migrated_models(sql_form)
+
+    def _calculate_case_diffs(self):
+        cases = {}
+        for case_doc in _get_case_iterator(self.domain).iter_all_changes():
+            cases[case_doc['_id']] = case_doc
+            if len(cases) == 1000:
+                self._diff_cases(cases)
+                cases = {}
+
+        if cases:
+            self._diff_cases(cases)
+
+    def _diff_cases(self, couch_cases):
+        from corehq.apps.tzmigration.timezonemigration import json_diff
+        sql_cases = CaseAccessorSQL.get_cases(list(couch_cases))
+        for sql_case in sql_cases:
+            couch_case = couch_cases[sql_case.case_id]
+            self.diff_db.add_diffs(
+                couch_case.doc_type, sql_case.case_id,
+                json_diff(couch_case, sql_case.to_json())
+            )
 
 
 def _wrap_form(doc):
@@ -242,6 +266,18 @@ def _get_unprocessed_form_iterator(domain):
             'SubmissionErrorLog',
         ],
         event_handler=ReindexEventHandler(u'couch to sql migrator ({} unprocessed forms)'.format(domain)),
+    )
+
+
+def _get_case_iterator(domain):
+    return CouchDomainDocTypeChangeProvider(
+        couch_db=XFormInstance.get_db(),
+        domains=[domain],
+        doc_types=[
+            'CommCareCase',
+            'CommCareCase-Deleted',
+        ],
+        event_handler=ReindexEventHandler(u'couch to sql migrator ({})'.format(domain)),
     )
 
 
