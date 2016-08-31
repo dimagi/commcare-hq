@@ -15,7 +15,7 @@ from corehq.form_processor.utils.xform import (
 from corehq.form_processor.tests.utils import run_with_all_backends
 from casexml.apps.case.tests.util import delete_all_xforms
 
-from ..views import LocationsListView
+from ..views import LocationsListView, EditLocationView
 from ..permissions import can_edit_form_location
 from .util import LocationHierarchyTestCase, delete_all_locations
 
@@ -178,3 +178,22 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['locations'][0]['name'], 'Suffolk')
+
+    def _assert_edit_location_gives_status(self, location, status_code):
+        self.client.login(username=self.suffolk_user.username, password="password")
+        location_id = self.locations[location].location_id
+        url = reverse(EditLocationView.urlname, args=[self.domain, location_id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status_code)
+
+    def test_can_edit_child_location(self):
+        self._assert_edit_location_gives_status("Boston", 200)
+
+    def test_can_edit_assigned_location(self):
+        self._assert_edit_location_gives_status("Suffolk", 200)
+
+    def test_cant_edit_parent_location(self):
+        self._assert_edit_location_gives_status("Massachusetts", 403)
+
+    def test_cant_edit_other_location(self):
+        self._assert_edit_location_gives_status("Cambridge", 403)
