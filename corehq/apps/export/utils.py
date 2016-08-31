@@ -567,3 +567,4 @@ def migrate_domain(domain, dryrun=False):
             print '## Skipped columns: ##'
             for column_meta in meta.skipped_columns:
                 column_meta.pretty_print()
+    return metas
