@@ -463,7 +463,7 @@ class LocationTreeValidator(object):
         # level errors make it unrealistic to keep validating
 
         location_row_errors = (self._site_code_and_location_id_missing() +
-                               self._check_unknown_location_ids())
+                               self._check_unknown_location_ids() + self._validate_geodata())
 
         unknown_or_missing_errors = []
         if self.old_collection:
@@ -497,6 +497,24 @@ class LocationTreeValidator(object):
         # Location names must be unique among siblings
         errors.extend(self._check_location_names())
         return errors
+
+    @memoized
+    def _validate_geodata(self):
+        errors = []
+        for l in self.all_listed_locations:
+            try:
+                if l.latitude:
+                    float(l.latitude)
+                if l.longitude:
+                    float(l.longitude)
+            except ValueError:
+                errors.append(l)
+        return [
+            _(u"latitude/longitude 'lat-{lat}, lng-{lng}' for location in sheet '{type}' "
+              "at index {index} should be valid decimal numbers.")
+            .format(type=l.location_type, index=l.index, lat=l.latitude, lng=l.longitude)
+            for l in errors
+        ]
 
     @memoized
     def _site_code_and_location_id_missing(self):
