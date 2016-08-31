@@ -106,7 +106,7 @@ def _migrate_form(domain, couch_form):
     # todo: timezone migration if we want here
     # adjust_datetimes(form_data)
     sql_form = interface.new_xform(form_data)
-    _copy_form_properties(domain, sql_form, couch_form)
+    return _copy_form_properties(domain, sql_form, couch_form)
 
 
 def _copy_form_properties(domain, sql_form, couch_form):
