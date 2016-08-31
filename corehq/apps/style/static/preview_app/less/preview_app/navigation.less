@@ -5,23 +5,23 @@
   min-height: @preview-navbar-height;
   color: white;
   margin-bottom: 0;
+  border-bottom: none;
 
   .navbar-nav {
-    margin-top: 0;
-    margin-bottom: 0;
     float: left;
+    margin: 0 -10px;
   }
   .navbar-right {
     float: right;
   }
   .navbar-nav > li {
-    display: inline-block;
-    font-size: 2rem;
+    float: left;
   }
   .navbar-nav > li > a {
     color: white;
     line-height: @preview-navbar-height;
-    padding-right: 19px;
+    padding: 13px 10px;
+    font-size: 1.4rem;
     .transition(background 1s);
 
     &:link, &:focus, &:visited, &:hover {
