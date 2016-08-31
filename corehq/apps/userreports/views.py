@@ -700,7 +700,11 @@ class ConfigureChartReport(ReportBuilderView):
                     return self.get(*args, **kwargs)
             else:
                 self._confirm_report_limit()
-                report_configuration = self.report_form.create_report()
+                try:
+                    report_configuration = self.report_form.create_report()
+                except BadSpecError as err:
+                    messages.error(self.request, err.message)
+                    return self.get(*args, **kwargs)
                 self._track_new_report_events()
 
             self._track_valid_form_events(existing_sum_avg_cols, report_configuration)
