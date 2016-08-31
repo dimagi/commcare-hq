@@ -264,10 +264,10 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         };
 
         if (defaultProperties.length > 0) {
-            for (var i = 0; i < defaultProperties.length; i++) {
+            for (var k = 0; k < defaultProperties.length; k++) {
                 self.defaultProperties.push(new DefaultProperty(
-                    defaultProperties[i].property,
-                    defaultProperties[i].defaultValue
+                    defaultProperties[k].property,
+                    defaultProperties[k].defaultValue
                 ));
             }
         } else {
@@ -280,7 +280,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             self.defaultProperties.push(new DefaultProperty('',''));
         };
         self.removeDefaultProperty = function (property) {
-            self.defaultProperties.remove(property)
+            self.defaultProperties.remove(property);
         };
         self._getDefaultProperties = function () {
             return _.map(
@@ -291,7 +291,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 function (p) {
                     return {
                         property: p.property(),
-                        defaultValue: p.defaultValue()
+                        defaultValue: p.defaultValue(),
                     };
                 }
             );

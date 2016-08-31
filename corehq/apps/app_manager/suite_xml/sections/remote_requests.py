@@ -101,7 +101,7 @@ class RemoteRequestContributor(SuiteContributorByModule):
                                 )
                             ] + [
                                 QueryData(key="'{}'".format(c.property), ref="'{}'".format(c.defaultValue))
-                                 for c in module.search_config.default_properties
+                                for c in module.search_config.default_properties
                             ]),
                             prompts=[
                                 QueryPrompt(
