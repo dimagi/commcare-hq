@@ -95,8 +95,9 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
     """
 
     def dispatch(self, request_type, request, **kwargs):
+        super_result = super(HqBaseResource, self).dispatch(request_type, request, **kwargs)
         if request.user.is_superuser or domain_has_privilege(request.domain, privileges.API_ACCESS):
-            return super(HqBaseResource, self).dispatch(request_type, request, **kwargs)
+            return super_result
         else:
             raise ImmediateHttpResponse(HttpResponse(
                 json.dumps({"error": "Your current plan does not have access to this feature"}),
