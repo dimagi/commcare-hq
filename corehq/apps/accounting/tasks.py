@@ -555,6 +555,14 @@ def pay_autopay_invoices():
     AutoPayInvoicePaymentHandler().pay_autopayable_invoices(datetime.datetime.today())
 
 
+@periodic_task(run_every=crontab(hour=21, minute=0,), acks_late=True)
+def test_error():
+    try:
+        raise Exception("Testing Errors")
+    except Exception as e:
+        log_accounting_error("test accounting error: %s" % e.message, show_stack_trace=True)
+
+
 @periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue', acks_late=True)
 def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
     try:
