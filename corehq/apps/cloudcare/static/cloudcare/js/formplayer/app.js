@@ -124,14 +124,7 @@ FormplayerFrontend.on('startForm', function (data) {
             Util.setUrlToObject(urlObject);
 
             if(resp.nextScreen !== null && resp.nextScreen !== undefined) {
-                if (resp.nextScreen.hasOwnProperty('tree')) {
-                    // If the response has "tree" property then we know it's a form link
-                    // so we should start the form.
-                    FormplayerFrontend.trigger('startForm', resp.nextScreen);
-                } else {
-                    FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
-                }
-
+                FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
             } else {
                 FormplayerFrontend.trigger("apps:currentApp");
             }
