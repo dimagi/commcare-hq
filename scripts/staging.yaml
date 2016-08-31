@@ -78,6 +78,5 @@ submodules:
   corehq/apps/prelogin:
     branches: 
       - welcome-to-vellum # Jenny 8/3
-      - np/djng # Nick P 8/30
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
