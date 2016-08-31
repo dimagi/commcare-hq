@@ -20,5 +20,4 @@ class Migration(migrations.Migration):
             field=models.CharField(max_length=255, null=True),
             preserve_default=True,
         ),
-        migrator.get_migration('save_case_and_related_models.sql'),
     ]

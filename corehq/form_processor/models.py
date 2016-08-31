@@ -391,6 +391,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
     content_type = models.CharField(max_length=255, null=True)
     content_length = models.IntegerField(null=True)
     blob_id = models.CharField(max_length=255, default=None)
+    blob_bucket = models.CharField(max_length=255, null=True, default=None)
 
     # RFC-1864-compliant Content-MD5 header value
     md5 = models.CharField(max_length=255, default=None)
@@ -431,6 +432,8 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
         return deleted
 
     def _blobdb_bucket(self):
+        if self.blob_bucket is not None:
+            return self.blob_bucket
         if self.attachment_id is None:
             raise AttachmentNotFound("cannot manipulate attachment on unidentified document")
         return os.path.join(self._attachment_prefix, str(self.attachment_id))

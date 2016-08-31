@@ -148,7 +148,7 @@ BEGIN
         ELSE
             INSERT INTO form_processor_caseattachmentsql (
                 attachment_id, name, content_type, md5, case_id, blob_id, content_length, properties,
-                identifier, attachment_src, attachment_from
+                identifier, attachment_src, attachment_from, blob_bucket
             ) VALUES (
                 attachment.attachment_id,
                 attachment.name,
@@ -160,7 +160,8 @@ BEGIN
                 attachment.properties,
                 attachment.identifier,
                 attachment.attachment_src,
-                attachment.attachment_from
+                attachment.attachment_from,
+                attachment.blob_bucket
             );
         END IF;
     END LOOP;
