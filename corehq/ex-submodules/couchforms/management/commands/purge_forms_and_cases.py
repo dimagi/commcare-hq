@@ -73,9 +73,9 @@ though deletion would be re-confirmed so dont panic
         for xform in self.forms_accessor.iter_forms(self.xform_ids):
             # Get app version by fetching app corresponding to xform build_id since xform.form
             # does not have updated app version unless form was updated for that version
-            xform.app_version_built_with = self.get_xform_build_version(xform)
-            if xform.app_version_built_with and xform.app_version_built_with < self.version_number:
-                _print_form_details(xform, self.xform_writer)
+            app_version_built_with = self.get_xform_build_version(xform)
+            if app_version_built_with and app_version_built_with < self.version_number:
+                _print_form_details(xform, self.xform_writer, app_version_built_with)
                 self.ensure_valid_xform(xform)
                 self.filtered_xform_ids.append(xform.form_id)
                 self.case_ids = self.case_ids.union(get_case_ids_from_form(xform))
@@ -118,15 +118,15 @@ though deletion would be re-confirmed so dont panic
         self.case_accessors.soft_delete_cases(list(self.case_ids))
 
 
-def _print_form_details(xform, file_writer):
+def _print_form_details(xform, file_writer, app_version_built_with):
     print XFORM_HEADER
-    form_details = _form_details(xform)
+    form_details = _form_details(xform, app_version_built_with)
     file_writer.writerow(form_details)
     print form_details
 
 
-def _form_details(xform):
-    return [xform.app_version_built_with, xform.form_id, xform.domain]
+def _form_details(xform, app_version_built_with):
+    return [app_version_built_with, xform.form_id, xform.domain]
 
 
 def _print_case_details(case, file_writer):
