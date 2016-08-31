@@ -221,7 +221,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
 
         self.relevant = ko.observable();
         self.default_relevant = ko.observable(true);
-        self.includeClosed = ko.observable();
+        self.includeClosed = ko.observable(includeClosed);
         self.searchProperties = ko.observableArray();
         self.defaultProperties = ko.observableArray();
 
@@ -273,6 +273,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         } else {
             self.defaultProperties.push(new DefaultProperty('', ''));
         }
+        self.defaultProperties.subscribe(function () {
+            saveButton.fire('change');
+        });
         self.addDefaultProperty = function () {
             self.defaultProperties.push(new DefaultProperty('',''));
         };
@@ -312,6 +315,12 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 default_properties: self._getDefaultProperties(),
             };
         };
+        self.includeClosed.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.default_relevant.subscribe(function () {
+            saveButton.fire('change');
+        });
     };
 
     var caseListLookupViewModel = function($el, state, lang, saveButton) {
