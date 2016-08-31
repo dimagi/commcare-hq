@@ -1,15 +1,12 @@
-import sqlite3
 import json
-
+import sqlite3
 from sqlite3 import dbapi2 as sqlite
+
 from sqlalchemy import create_engine, Column, Integer, ForeignKey, String, \
     UnicodeText, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
-
-from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
-from corehq.util.dates import iso_string_to_datetime
 
 Base = declarative_base()
 
@@ -205,26 +202,3 @@ class PlanningDB(BaseDB):
         return (json.loads(case_json) for case_json, in
                 session.query(PlanningCase).order_by(PlanningCase.id)
                 .with_entities(PlanningCase.case_json).all())
-
-
-def show_diffs(diff_db):
-    for form_id, json_diff in diff_db.get_diffs():
-        if json_diff.diff_type == 'diff':
-            if _is_datetime(json_diff.old_value) and _is_datetime(json_diff.new_value):
-                continue
-        if json_diff in (
-                FormJsonDiff(diff_type=u'type', path=[u'external_id'], old_value=u'', new_value=None),
-                FormJsonDiff(diff_type=u'type', path=[u'closed_by'], old_value=u'', new_value=None)):
-            continue
-        print '[{}] {}'.format(form_id, json_diff)
-
-
-def _is_datetime(string):
-    if not isinstance(string, basestring):
-        return False
-    try:
-        iso_string_to_datetime(string)
-    except (ValueError, OverflowError, TypeError):
-        return False
-    else:
-        return True

@@ -18,7 +18,7 @@ class Command(LabelCommand):
     args = "<domain>"
     option_list = LabelCommand.option_list + (
         make_option('--MIGRATE', action='store_true', default=False),
-        make_option('--blow_away', action='store_true', default=False),
+        make_option('--blow-away', action='store_true', default=False),
         make_option('--stats', action='store_true', default=False),
         make_option('--show-diffs', action='store_true', default=False),
     )
@@ -49,7 +49,7 @@ class Command(LabelCommand):
             self.show_diffs(domain)
 
     def show_diffs(self, domain):
-        from corehq.apps.tzmigration.planning import show_diffs
+        from corehq.apps.tzmigration.timezonemigration import show_diffs
         show_diffs(get_diff_db(domain))
 
     def print_stats(self, domain):

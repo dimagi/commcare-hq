@@ -4,10 +4,9 @@ from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.tzmigration import set_migration_started, \
     set_migration_complete, set_migration_not_started, get_migration_status, \
     MigrationStatus
-from corehq.apps.tzmigration.planning import show_diffs
 from corehq.apps.tzmigration.timezonemigration import prepare_planning_db, \
     get_planning_db, get_planning_db_filepath, delete_planning_db, \
-    prepare_case_json, commit_plan
+    prepare_case_json, commit_plan, show_diffs
 from corehq.form_processor.utils import should_use_sql_backend
 from couchforms.dbaccessors import get_form_ids_by_type
 

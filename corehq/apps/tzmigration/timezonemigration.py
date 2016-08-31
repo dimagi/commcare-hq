@@ -15,6 +15,7 @@ from corehq.apps.tzmigration.planning import PlanningDB
 from corehq.blobs.mixin import BlobHelper
 from corehq.form_processor.parsers.ledgers import get_stock_actions
 from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes
+from corehq.util.dates import iso_string_to_datetime
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
@@ -72,6 +73,29 @@ def _json_diff(obj1, obj2, path):
 
 def json_diff(obj1, obj2):
     return list(_json_diff(obj1, obj2, path=()))
+
+
+def show_diffs(diff_db):
+    for form_id, json_diff in diff_db.get_diffs():
+        if json_diff.diff_type == 'diff':
+            if _is_datetime(json_diff.old_value) and _is_datetime(json_diff.new_value):
+                continue
+        if json_diff in (
+                FormJsonDiff(diff_type=u'type', path=[u'external_id'], old_value=u'', new_value=None),
+                FormJsonDiff(diff_type=u'type', path=[u'closed_by'], old_value=u'', new_value=None)):
+            continue
+        print '[{}] {}'.format(form_id, json_diff)
+
+
+def _is_datetime(string):
+    if not isinstance(string, basestring):
+        return False
+    try:
+        iso_string_to_datetime(string)
+    except (ValueError, OverflowError, TypeError):
+        return False
+    else:
+        return True
 
 
 def _run_timezone_migration_for_domain(domain):
