@@ -3,11 +3,12 @@ from optparse import make_option
 
 from django.core.management.base import CommandError, LabelCommand
 
-from corehq.apps.couch_sql_migration.couchsqlmigration import do_couch_to_sql_migration, delete_diff_db, get_diff_db
+from corehq.apps.couch_sql_migration.couchsqlmigration import (
+    do_couch_to_sql_migration, delete_diff_db, get_diff_db
+)
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
-from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.utils import should_use_sql_backend
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import doc_types, XFormInstance
