@@ -491,6 +491,18 @@ class TestBulkManagement(TestCase):
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
         self.assertCouchSync()
 
+    def test_data_format(self):
+        data = [
+            ('S1', '1', 'state', '', '', False, '12', 'not-lat', '2345', {}, {}, 0),
+            ('S2', '2', 'state', '', '', False, '12', '3434', '2345', {}, {}, 0),
+        ]
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            data
+        )
+        self.assertEqual(len(result.errors), 1)
+        self.assertTrue('lat' in result.errors[0])
+
     def test_move_county21_to_state1(self):
         lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
         locations_by_code = self.create_locations(self.basic_tree, lt_by_code)
@@ -522,12 +534,12 @@ class TestBulkManagement(TestCase):
         self.assertLocationsMatch(self.as_pairs(move_county21_to_state1))
         self.assertCouchSync()
 
-    def test_delete_city112(self):
+    def test_delete_county11(self):
         lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
         locations_by_code = self.create_locations(self.basic_tree, lt_by_code)
 
         _loc_id = lambda x: locations_by_code[x].location_id
-        delete_city112 = [
+        delete_county11 = [
             ('S1', 's1', 'state', '', _loc_id('s1'), False) + extra_stub_args,
             ('S2', 's2', 'state', '', _loc_id('s2'), False) + extra_stub_args,
             ('County11', 'county11', 'county', 's1', _loc_id('county11'), True) + extra_stub_args,
@@ -539,12 +551,12 @@ class TestBulkManagement(TestCase):
 
         result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
-            delete_city112,
+            delete_county11,
         )
 
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
-        self.assertLocationsMatch(self.as_pairs(delete_city112))
+        self.assertLocationsMatch(self.as_pairs(delete_county11))
         self.assertCouchSync()
 
     def test_invalid_tree(self):
