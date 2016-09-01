@@ -112,3 +112,7 @@ run_with_all_backends = functools.partial(
         ),
     ]
 )
+
+
+def sql_row_to_dict(row):
+    return {key: getattr(row, key) for key in row.keys()}

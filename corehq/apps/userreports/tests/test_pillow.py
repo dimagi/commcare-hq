@@ -17,7 +17,7 @@ from corehq.apps.userreports.pillow import REBUILD_CHECK_INTERVAL, \
     ConfigurableReportTableManagerMixin, get_kafka_ucr_pillow, get_kafka_ucr_static_pillow
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators, \
-    doc_to_change, domain_lite
+    doc_to_change, domain_lite, sql_row_to_dict
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.util.test_utils import softer_assert, trap_extra_setup
@@ -70,8 +70,9 @@ class IndicatorPillowTestBase(TestCase):
         self.adapter.refresh_table()
         self.assertEqual(1, self.adapter.get_query_object().count())
         row = self.adapter.get_query_object()[0]
-        for k in row.keys():
-            v = getattr(row, k)
+        if not isinstance(row, dict):
+            row = sql_row_to_dict(row)
+        for k, v in row.iteritems():
             if isinstance(expected_indicators[k], decimal.Decimal):
                 self.assertAlmostEqual(expected_indicators[k], v)
             else:
