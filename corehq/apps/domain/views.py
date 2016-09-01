@@ -1094,7 +1094,8 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
 
         return json_response({'success': True})
 
-    def _get_items(self, request):
+    @staticmethod
+    def _get_items(request):
         features = [{'type': get_feature_name(feature_type[0], SoftwareProductType.COMMCARE),
                      'amount': Decimal(request.POST.get(feature_type[0], 0))}
                     for feature_type in FeatureType.CHOICES
