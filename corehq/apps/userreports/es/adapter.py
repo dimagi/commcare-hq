@@ -17,9 +17,12 @@ class ESAlchemy(object):
         self.config = config
         self.es = HQESQuery(index_name)
 
-    def __getitem__(self, sliced):
-        hits = self.es[sliced].hits
-        return [[hit[col] for col in self.column_ordering] for hit in hits]
+    def __getitem__(self, sliced_or_int):
+        hits = self.es[sliced_or_int]
+        hits = [self._hit_to_row(hit) for hit in hits]
+        if isinstance(sliced_or_int, (int, long)):
+            return hits[0]
+        return hits
 
     @property
     @memoized
