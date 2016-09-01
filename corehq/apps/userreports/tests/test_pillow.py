@@ -117,6 +117,7 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
         self.config.save()
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
         CommCareCase.get_db().save_doc(sample_doc)
+        self.addCleanup(lambda id: CommCareCase.get_db().delete_doc(id), sample_doc['_id'])
         rebuild_indicators(self.config._id)
         self._check_sample_doc_state(expected_indicators)
 
