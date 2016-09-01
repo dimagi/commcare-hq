@@ -61,7 +61,7 @@ class CouchSqlDomainMigrator(object):
         _migrate_form_attachments(sql_form, couch_form)
         _migrate_form_operations(sql_form, couch_form)
 
-        diffs = json_diff(couch_form.to_json(), sql_form.to_json())
+        diffs = json_diff(couch_form.to_json(), sql_form.to_json(), track_list_indices=False)
         self.diff_db.add_diffs(
             'form', couch_form.form_id,
             _filter_form_diffs(couch_form.doc_type, diffs)
@@ -88,7 +88,7 @@ class CouchSqlDomainMigrator(object):
             _migrate_form_attachments(sql_form, couch_form)
             _migrate_form_operations(sql_form, couch_form)
 
-            diffs = json_diff(couch_form.to_json(), sql_form.to_json())
+            diffs = json_diff(couch_form.to_json(), sql_form.to_json(), track_list_indices=False)
             self.diff_db.add_diffs(
                 'form', couch_form.form_id,
                 _filter_form_diffs(couch_form.doc_type, diffs)
@@ -112,7 +112,7 @@ class CouchSqlDomainMigrator(object):
         sql_cases = CaseAccessorSQL.get_cases(list(couch_cases))
         for sql_case in sql_cases:
             couch_case = couch_cases[sql_case.case_id]
-            diffs = json_diff(couch_case, sql_case.to_json())
+            diffs = json_diff(couch_case, sql_case.to_json(), track_list_indices=False)
             self.diff_db.add_diffs(
                 couch_case['doc_type'], sql_case.case_id,
                 _filter_case_diffs(diffs)
