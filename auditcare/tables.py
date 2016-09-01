@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 
-from django.conf import settings
 from djtables import Table, Column
 from djtables.column import DateColumn
 

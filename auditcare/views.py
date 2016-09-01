@@ -11,11 +11,6 @@ from auditcare.decorators.login import lockout_response
 from auditcare.decorators.login import log_request
 from auditcare.inspect import history_for_doc
 
-try:
-    from functools import wraps
-except ImportError:
-    from django.utils.functional import wraps  # Python 2.4 fallback.
-
 from django.conf import settings
 from django.shortcuts import render_to_response
 from django.template import RequestContext

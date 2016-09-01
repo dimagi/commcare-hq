@@ -1,5 +1,5 @@
 #Source: http://djangosnippets.org/snippets/1378/ which yielded: http://pastebin.com/raw.php?i=7KfALc0j
-from django.core.urlresolvers import RegexURLResolver, RegexURLPattern, Resolver404, get_resolver
+from django.core.urlresolvers import RegexURLPattern, Resolver404, get_resolver
 
 __all__ = ('resolve_to_name',)
 
