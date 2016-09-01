@@ -321,7 +321,7 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     def to_json(self, include_attachments=False):
         from .serializers import XFormInstanceSQLSerializer
         serializer = XFormInstanceSQLSerializer(self, include_attachments=include_attachments)
-        return serializer.data
+        return dict(serializer.data)
 
     def _get_attachment_from_db(self, attachment_name):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
@@ -391,6 +391,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
     content_type = models.CharField(max_length=255, null=True)
     content_length = models.IntegerField(null=True)
     blob_id = models.CharField(max_length=255, default=None)
+    blob_bucket = models.CharField(max_length=255, null=True, default=None)
 
     # RFC-1864-compliant Content-MD5 header value
     md5 = models.CharField(max_length=255, default=None)
@@ -431,6 +432,8 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
         return deleted
 
     def _blobdb_bucket(self):
+        if self.blob_bucket is not None:
+            return self.blob_bucket
         if self.attachment_id is None:
             raise AttachmentNotFound("cannot manipulate attachment on unidentified document")
         return os.path.join(self._attachment_prefix, str(self.attachment_id))
@@ -614,7 +617,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def to_json(self):
         from .serializers import CommCareCaseSQLSerializer
         serializer = CommCareCaseSQLSerializer(self)
-        ret = serializer.data
+        ret = dict(serializer.data)
         for key in self.case_json:
             if key not in ret:
                 ret[key] = self.case_json[key]
@@ -1287,7 +1290,7 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     def to_json(self):
         from .serializers import LedgerValueSerializer
         serializer = LedgerValueSerializer(self)
-        return serializer.data
+        return dict(serializer.data)
 
     class Meta:
         app_label = "form_processor"

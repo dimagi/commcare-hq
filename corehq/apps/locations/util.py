@@ -28,7 +28,8 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
     only_administrative - if False get all locations
                           if True get only administrative locations
     """
-    from .permissions import user_can_edit_location, user_can_view_location
+    from .permissions import (user_can_edit_location, user_can_view_location,
+        user_can_access_location_id)
 
     def loc_to_json(loc, project):
         ret = {
@@ -39,7 +40,10 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
             'can_edit': True
         }
         if user:
-            ret['can_edit'] = user_can_edit_location(user, loc, project)
+            if user.has_permission(domain, 'access_all_locations'):
+                ret['can_edit'] = user_can_edit_location(user, loc, project)
+            else:
+                ret['can_edit'] = user_can_access_location_id(domain, user, loc.location_id)
         return ret
 
     project = Domain.get_by_name(domain)

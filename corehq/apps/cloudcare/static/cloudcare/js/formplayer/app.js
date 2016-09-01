@@ -115,7 +115,7 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
-            FormplayerFrontend.request("clearForm");
+            FormplayerFrontend.trigger("clearForm");
             showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
 
             // After end of form nav, we want to clear everything except app and sesson id
@@ -125,8 +125,10 @@ FormplayerFrontend.on('startForm', function (data) {
 
             if(resp.nextScreen !== null && resp.nextScreen !== undefined) {
                 FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
-            } else {
+            } else if(urlObject.appId !== null && urlObject.appId !== undefined) {
                 FormplayerFrontend.trigger("apps:currentApp");
+            } else {
+                FormplayerFrontend.navigate('/apps', { trigger: true });
             }
         } else {
             showError(resp.output, $("#cloudcare-notifications"));

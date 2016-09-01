@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from datetime import datetime, timedelta
 import json
 import warnings
@@ -6,7 +7,6 @@ from django.conf import settings
 from django.template import loader_tags
 from django.template.base import Variable, VariableDoesNotExist
 from django.template.loader import render_to_string
-from django.utils.datastructures import SortedDict
 from django.utils.translation import ugettext as _
 from django.http import QueryDict
 from django import template
@@ -169,7 +169,7 @@ def mod(value, arg):
 @register.filter(name='sort')
 def listsort(value):
     if isinstance(value, dict):
-        new_dict = SortedDict()
+        new_dict = OrderedDict()
         key_list = value.keys()
         key_list.sort()
         for key in key_list:

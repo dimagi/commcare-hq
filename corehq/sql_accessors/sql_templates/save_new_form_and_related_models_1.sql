@@ -74,7 +74,8 @@ BEGIN
         END IF;
 
         INSERT INTO form_processor_xformattachmentsql (
-            attachment_id, name, content_type, md5, form_id, blob_id, content_length, properties
+            attachment_id, name, content_type, md5, form_id, blob_id, content_length, properties,
+            blob_bucket
         ) VALUES (
             attachment.attachment_id,
             attachment.name,
@@ -83,7 +84,8 @@ BEGIN
             attachment.form_id,
             attachment.blob_id,
             attachment.content_length,
-            attachment.properties
+            attachment.properties,
+            attachment.blob_bucket
         );
     END LOOP;
 

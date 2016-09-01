@@ -1,5 +1,6 @@
 from couchdbkit.ext.django.loading import get_db
 from django.test import TestCase, SimpleTestCase
+from corehq.util.test_utils import DocTestMixin
 from couchexport.export import SCALAR_NEVER_WAS, get_formatted_rows, scalar_never_was
 from couchexport.models import ExportSchema, SavedExportSchema, SplitColumn
 from datetime import datetime, timedelta
@@ -9,7 +10,7 @@ import json
 from couchexport.models import Format
 
 
-class ExportSchemaTest(TestCase):
+class ExportSchemaTest(TestCase, DocTestMixin):
 
     def testSaveAndLoad(self):
         index = ["foo", 2]
@@ -25,22 +26,45 @@ class ExportSchemaTest(TestCase):
         self.assertEqual(inner, back.schema)
         self.assertEqual(index, back.index)
 
-    def testGetLast(self):
+    def test_get_last(self):
         indices = ["a string", ["a", "list"]]
         save_args = get_safe_write_kwargs()
+
+        for index in indices:
+            self.addCleanup(
+                lambda idx: map(lambda cp: cp.delete(),
+                                ExportSchema.get_all_checkpoints(idx)),
+                index
+            )
 
         for index in indices:
             self.assertEqual(None, ExportSchema.last(index))
             dt = datetime.utcnow()
             schema1 = ExportSchema(index=index, timestamp=dt)
             schema1.save(**save_args)
-            self.assertEqual(schema1._id, ExportSchema.last(index)._id)
+            self.assert_docs_equal(schema1, ExportSchema.last(index))
             schema2 = ExportSchema(index=index, timestamp=dt + timedelta(seconds=1))
             schema2.save(**save_args)
-            self.assertEqual(schema2._id, ExportSchema.last(index)._id)
+            self.assert_docs_equal(schema2, ExportSchema.last(index))
             schema3 = ExportSchema(index=index, timestamp=dt - timedelta(seconds=1))
             schema3.save(**save_args)
-            self.assertEqual(schema2._id, ExportSchema.last(index)._id)
+            # still schema2 (which has a later date than schema3)
+            self.assert_docs_equal(schema2, ExportSchema.last(index))
+
+    def test_get_all_checkpoints(self):
+        index = ["mydomain", "myxmlns"]
+        self.addCleanup(lambda: map(lambda cp: cp.delete(),
+                                    ExportSchema.get_all_checkpoints(index)))
+
+        schema1 = ExportSchema(index=index, timestamp=datetime.utcnow())
+        schema1.save()
+        schema1_prime, = list(ExportSchema.get_all_checkpoints(index))
+        self.assert_docs_equal(schema1_prime, schema1)
+        schema2 = ExportSchema(index=index, timestamp=datetime.utcnow())
+        schema2.save()
+        schema1_prime, schema2_prime = list(ExportSchema.get_all_checkpoints(index))
+        self.assert_docs_equal(schema1_prime, schema1)
+        self.assert_docs_equal(schema2_prime, schema2)
 
 
 class SavedSchemaTest(TestCase):

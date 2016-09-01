@@ -1086,6 +1086,7 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
     def get_context_data(self, **kwargs):
         context = super(CommCareUserSelfRegistrationView, self).get_context_data(**kwargs)
         context.update({
+            'hr_name': self.domain_object.display_name(),
             'form': self.form,
             'invitation': self.invitation,
             'can_add_extra_mobile_workers': can_add_extra_mobile_workers(self.request),
