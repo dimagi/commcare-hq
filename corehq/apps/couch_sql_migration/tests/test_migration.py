@@ -3,6 +3,7 @@ import uuid
 from django.core.management import call_command
 from django.test import TestCase
 
+from corehq.apps.couch_sql_migration.couchsqlmigration import get_diff_db
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.tzmigration import TimezoneMigrationProgress
@@ -33,14 +34,14 @@ class MigrationTestCase(TestCase):
         self.assertEqual(1, len(FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain()))
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(1, len(FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain()))
-        # todo: verify form properties?
+        self._compare_diffs([])
 
     def test_basic_case_migration(self):
         create_and_save_a_case(self.domain_name, case_id=uuid.uuid4().hex, case_name='test case')
         self.assertEqual(1, len(CaseAccessors(domain=self.domain_name).get_case_ids_in_domain()))
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(1, len(CaseAccessors(domain=self.domain_name).get_case_ids_in_domain()))
-        # todo: verify properties?
+        self._compare_diffs([])
 
     def test_commit(self):
         self._do_migration_and_assert_flags(self.domain_name)
@@ -53,3 +54,8 @@ class MigrationTestCase(TestCase):
         self.assertTrue(should_use_sql_backend(domain))
         clear_local_domain_sql_backend_override(domain)
         self.assertFalse(should_use_sql_backend(domain))
+
+    def _compare_diffs(self, expected):
+        diffs = get_diff_db(self.domain_name).get_diffs()
+        json_diffs = [(diff.kind, diff.json_diff) for diff in diffs]
+        self.assertEqual(expected, json_diffs)
