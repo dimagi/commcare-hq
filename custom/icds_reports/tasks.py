@@ -21,4 +21,3 @@ def move_ucr_data_into_aggregation_tables():
             sql_to_execute = sql_file.read()
             for interval in ["0 months", "1 months", "2 months"]:
                 cursor.execute(sql_to_execute, {"interval": interval})
-
