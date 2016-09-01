@@ -330,10 +330,30 @@ def commit_migration(domain_name):
 
 def _filter_form_diffs(doc_type, diffs):
     paths_to_ignore = const.FORM_IGNORE_PATHS[doc_type]
-    return [
+    filtered = [
         diff for diff in diffs
         if diff.path[0] not in paths_to_ignore and diff not in const.FORM_IGNORED_DIFFS
     ]
+    filtered = _check_deprecation_date(filtered, doc_type)
+    return filtered
+
+
+def _check_deprecation_date(filtered, doc_type):
+    from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
+    if doc_type == 'XFormDeprecated':
+        edited_on = [diff for diff in filtered if diff.path[0] == 'edited_on']
+        deprecated_date = [diff for diff in filtered if diff.path[0] == 'deprecated_date']
+        if edited_on and deprecated_date:
+            edited_on = edited_on[0]
+            deprecated_date = deprecated_date[0]
+            filtered.remove(edited_on)
+            filtered.remove(deprecated_date)
+            if deprecated_date.old_value != edited_on.new_value:
+                filtered.append(FormJsonDiff(
+                    diff_type='complex', path=('edited_on', 'deprecated_date'),
+                    old_value=deprecated_date.old_value, new_value=edited_on.new_value
+                ))
+    return filtered
 
 
 def _filter_case_diffs(diffs):
