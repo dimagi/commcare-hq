@@ -757,7 +757,7 @@
               "cases": {
                 "Brickaville": 50560,
                 "Fenerive Est": 80604,
-                "Tamatave II": 57801,
+                "Tamatave II": 58982,
                 "Farafangana": 81941,
                 "Vohipeno": 41018
               },
@@ -945,6 +945,18 @@
             "Madagascar": {
               "default": 0,
               "cases": {
+                "Ambodilazana": 5357,
+                "Ambodiriana": 2026,
+                "Amboditandroho": 2728,
+                "Ampasimadinika": 2230,
+                "Ampasimbe Onibe": 6683,
+                "Andodabe": 6130,
+                "Andranobolaha": 3255,
+                "Antetezambaro": 5359,
+                "Fanandrana": 4044,
+                "Foulpointe": 7021,
+                "Sahambala": 7526,
+                "Toamasina Suburbaine": 6623,
                 "Ambalatany": 3032,
                 "Ambalavato Nord": 1027,
                 "Ambalavato Sud": 953,
