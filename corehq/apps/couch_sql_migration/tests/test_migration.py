@@ -3,9 +3,11 @@ import uuid
 from django.core.management import call_command
 from django.test import TestCase
 
+from casexml.apps.case.mock import CaseBlock
 from corehq.apps.couch_sql_migration.couchsqlmigration import get_diff_db
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.tzmigration import TimezoneMigrationProgress
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
@@ -77,6 +79,44 @@ class MigrationTestCase(TestCase):
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(1, len(self._get_form_ids()))
         self.assertEqual(1, len(self._get_form_ids('XFormDuplicate')))
+        self._compare_diffs([])
+
+    def test_deprecated_form_migration(self):
+        form_id = uuid.uuid4().hex
+        case_id = uuid.uuid4().hex
+        owner_id = uuid.uuid4().hex
+        case_block = CaseBlock(
+            create=True,
+            case_id=case_id,
+            case_type='person',
+            owner_id=owner_id,
+            update={
+                'property': 'original value'
+            }
+        ).as_string()
+        submit_case_blocks(case_block, domain=self.domain_name, form_id=form_id)
+
+        # submit a new form with a different case update
+        case_block = CaseBlock(
+            create=True,
+            case_id=case_id,
+            case_type='newtype',
+            owner_id=owner_id,
+            update={
+                'property': 'edited value'
+            }
+        ).as_string()
+        submit_case_blocks(case_block, domain=self.domain_name, form_id=form_id)
+
+        self.assertEqual(1, len(self._get_form_ids()))
+        self.assertEqual(1, len(self._get_form_ids('XFormDeprecated')))
+        self.assertEqual(1, len(self._get_case_ids()))
+
+        self._do_migration_and_assert_flags(self.domain_name)
+
+        self.assertEqual(1, len(self._get_form_ids()))
+        self.assertEqual(1, len(self._get_form_ids('XFormDeprecated')))
+        self.assertEqual(1, len(self._get_case_ids()))
         self._compare_diffs([])
 
     def test_basic_case_migration(self):
