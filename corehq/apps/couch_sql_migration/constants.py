@@ -4,7 +4,6 @@ BASE_IGNORED_FORM_PATHS = {
     '#export_tag',
     'computed_',
     'state',
-    'edited_on',
     'computed_modified_on_',
     'deprecated_form_id',
     'path',
@@ -13,10 +12,11 @@ BASE_IGNORED_FORM_PATHS = {
 }
 
 FORM_IGNORE_PATHS = {
-    'XFormInstance': BASE_IGNORED_FORM_PATHS | {'problem', 'orig_id'},
-    'XFormArchived': BASE_IGNORED_FORM_PATHS | {'problem', 'orig_id'},
-    'XFormError': BASE_IGNORED_FORM_PATHS,
-    'XFormDuplicate': BASE_IGNORED_FORM_PATHS,
+    'XFormInstance': BASE_IGNORED_FORM_PATHS | {'problem', 'orig_id', 'edited_on'},
+    'XFormArchived': BASE_IGNORED_FORM_PATHS | {'edited_on'},
+    'XFormError': BASE_IGNORED_FORM_PATHS | {'edited_on'},
+    'XFormDuplicate': BASE_IGNORED_FORM_PATHS | {'edited_on'},
+    'XFormDeprecated': BASE_IGNORED_FORM_PATHS,
 }
 
 
