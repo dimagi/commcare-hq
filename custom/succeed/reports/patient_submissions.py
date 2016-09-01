@@ -5,7 +5,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
-from corehq.apps.userreports.sql import get_table_name
+from corehq.apps.userreports.util import get_table_name
 from custom.succeed.reports.patient_details import PatientDetailsReport
 from django.utils import html
 

@@ -27,8 +27,11 @@ class XFormOperationSQLSerializer(serializers.ModelSerializer):
 
 
 class XFormAttachmentSQLSerializer(serializers.ModelSerializer):
+    id = serializers.UUIDField(source="attachment_id")
+
     class Meta:
         model = XFormAttachmentSQL
+        fields = ('id', 'content_type', 'content_length')
 
 
 class XFormInstanceSQLSerializer(DeletableModelSerializer):

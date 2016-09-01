@@ -2,7 +2,7 @@ var projectMapInit = function(mapboxAccessToken) {
     // courtesy of http://colorbrewer2.org/
     var COUNTRY_COLORS = ['#fef0d9','#fdd49e','#fdbb84','#fc8d59','#e34a33','#b30000'];
     var PROJECT_COUNTS_THRESHOLD = [10, 20, 30, 40, 50];
-    var USER_COUNTS_THRESHOLD = [100, 200, 300, 400, 500];
+    var USER_COUNTS_THRESHOLD = [10, 100, 500, 1000, 4000];
 
     var selectionModel;
 
@@ -32,12 +32,12 @@ var projectMapInit = function(mapboxAccessToken) {
 
                 projects_per_country = data.country_projs_count;
                 users_per_country = data.users_per_country;
+                totalNumProjects = data.total_num_projects;
 
                 Object.keys(projects_per_country).map(function(country) {
                     if (projects_per_country[country] > maxNumProjects) {
                         maxNumProjects = projects_per_country[country];
                     }
-                    totalNumProjects += projects_per_country[country];
                 });
 
                 Object.keys(users_per_country).map(function(country) {
@@ -67,9 +67,9 @@ var projectMapInit = function(mapboxAccessToken) {
 
         that.getUnit = function (count) {
             if (is_project_count_map) {
-                return count > 1 ? 'projects' : 'project';
+                return count > 1 ? 'active projects' : 'active project';
             } else {
-                return count > 1 ? 'users' : 'user';
+                return count > 1 ? 'active users' : 'active user';
             }
         };
 
@@ -101,7 +101,8 @@ var projectMapInit = function(mapboxAccessToken) {
             var self = this;
             self.selectedCountry = ko.observable('country name');
             self.selectedProject = ko.observable('project name');
-            self.tableProperties = ['Name', 'Sector', 'Organization', 'Deployment Date'];
+            self.internalTableProperties = ['Name', 'Organization', 'Notes', 'Sector', 'Sub-Sector', 'Active Users', 'Countries'];
+            self.externalTableProperties = ['Sector', 'Sub-Sector', 'Active Users', 'Countries'];
             self.topFiveProjects = ko.observableArray();
         };
 
@@ -210,30 +211,58 @@ var projectMapInit = function(mapboxAccessToken) {
         info.update();
     }
 
+    function formatCountryNames(countries) {
+        return countries.map(function(country) {
+            var formattedCountryName = country.charAt(0).toUpperCase();
+            if (country.indexOf(",") > -1) {
+                formattedCountryName += country.substring(1, country.indexOf(",")).toLowerCase();
+            } else {
+                formattedCountryName += country.substring(1).toLowerCase();
+            }
+            return formattedCountryName;
+        });
+    }
+
     function onEachFeature(feature, layer) {
         layer.on({
             mouseover: highlightFeature,
             mouseout: resetHighlight,
             click: function(e) {
-                selectionModel.selectedCountry(feature.properties.name);
-                modalController.showProjectsTable(selectionModel.selectedCountry());
-                var country = (feature.properties.name).toUpperCase();
-                selectionModel.topFiveProjects.removeAll();
-                $.ajax({
-                    url: "/hq/admin/top_five_projects_by_country/?country=" + country,
-                    datatype: "json",
-                }).done(function(data){
-                    data[country].forEach(function(project){
-                        selectionModel.topFiveProjects.push({
-                            name: project['name'],
-                            sector: project['internal']['area'],
-                            organization: project['internal']['organization_name'],
-                            deployment: project['deployment']['date'].substring(0,10),
-                        });
+                if (dataController.getCount(feature.properties.name)){
+                    selectionModel.selectedCountry(feature.properties.name);
+                    modalController.showProjectsTable(selectionModel.selectedCountry());
+                    var country = (feature.properties.name).toUpperCase();
+                    selectionModel.topFiveProjects.removeAll();
+                    $.ajax({
+                        url: "/hq/admin/top_five_projects_by_country/?country=" + country,
+                        datatype: "json",
+                    }).done(function(data){
+                        if (data.internal) {
+                            data[country].forEach(function(project){
+                                selectionModel.topFiveProjects.push({
+                                    name: project['name'],
+                                    organization: project['organization_name'],
+                                    description: project['internal']['notes'],
+                                    sector: project['internal']['area'],
+                                    sub_sector: project['internal']['sub_area'],
+                                    active_users: project['cp_n_active_cc_users'],
+                                    countries: formatCountryNames(project['deployment']['countries']).join(', '),
+                                });
+                            });
+                        } else {
+                            data[country].forEach(function(project){
+                                selectionModel.topFiveProjects.push({
+                                    sector: project['internal']['area'],
+                                    sub_sector: project['internal']['sub_area'],
+                                    active_users: project['cp_n_active_cc_users'],
+                                    countries: formatCountryNames(project['deployment']['countries']).join(', '),
+                                });
+                            });
+                        }
+
                     });
-                });
-                // launch the modal
-                $('#modal').modal();
+                    $('#modal').modal();
+                };
             },
         });
     }
@@ -251,7 +280,7 @@ var projectMapInit = function(mapboxAccessToken) {
         function _getInfoContent(countryName) {
             var count = dataController.getCount(countryName);
             var unit = dataController.getUnit(count);
-            var message = count ? count + ' ' + unit : 'no ' + unit;
+            var message = count ? count + ' ' + unit : 'no ' + unit + 's';
             return '<b>' + countryName + '</b>: ' + message;
         }
         this._div.innerHTML = (props ? _getInfoContent(props.name) : 'Hover over a country');
@@ -283,7 +312,7 @@ var projectMapInit = function(mapboxAccessToken) {
             div.innerHTML += thresholds[i] + '<br>';
         }
         div.innerHTML += '<i style="background:' + COUNTRY_COLORS[thresholds.length] + '"></i> '
-                         + (thresholds[thresholds.length-1] + 1)+ '&ndash;';
+                         + (thresholds[thresholds.length-1] + 1)+ '+';
 
         return div;
     };
@@ -299,6 +328,7 @@ var projectMapInit = function(mapboxAccessToken) {
         div.innerHTML += '<p>Number of Active Countries: ' + dataController.getNumActiveCountries() +  '</p>';
         div.innerHTML += '<p>Number of Active Mobile Users: ' + dataController.getNumUsers() +  '</p>';
         div.innerHTML += '<p>Number of Active Projects: ' + dataController.getNumProjects() +  '</p>';
+        div.innerHTML += '<br><p><em> Active: A project or user submitted a form in past 30 days.</em></p>';
         return div;
     };
 

@@ -27,6 +27,15 @@
           "type": "location"
         },
         "display": "Filter by Supervisor"
+      },
+      {
+        "compare_as_string": true,
+        "datatype": "date",
+        "required": false,
+        "slug": "last_date_thr",
+        "field": "last_date_thr",
+        "type": "date",
+        "display": "Last Date THR"
       }
     ],
     "columns": [

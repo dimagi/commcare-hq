@@ -9,7 +9,7 @@ from django.conf import settings
 from soil import DownloadBase
 
 
-@serial_task('{domain}', default_retry_delay=5 * 60, timeout=30 * 60,
+@serial_task('{domain}', default_retry_delay=5 * 60, timeout=60 * 60,
     max_retries=12, queue=settings.CELERY_MAIN_QUEUE, ignore_result=False)
 def import_locations_async(domain, file_ref_id):
     importer = MultiExcelImporter(import_locations_async, file_ref_id)

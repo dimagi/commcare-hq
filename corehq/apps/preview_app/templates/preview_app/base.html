@@ -3,7 +3,10 @@
 {% load statici18n %}
 <html lang="{{ LANGUAGE_CODE }}">
     <head>
-
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="HandheldFriendly" content="True">
 
         {% if less_debug %}
             <link type="text/less"
@@ -21,7 +24,23 @@
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
+                  href="{% static 'cloudcare/less/font-formplayer.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
                   href="{% static 'style/less/style.debug.less' %}" />
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'formplayer/style/webforms.css' %}">
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'cloudcare/less/cloudcare.debug.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'preview_app/less/preview_app.debug.less' %}"/>
         {% else %}
           {% compress css %}
             <link type="text/less"
@@ -35,11 +54,27 @@
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
+                  href="{% static 'cloudcare/less/font-formplayer.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
                   href="{% static 'style/less/font-commcare.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
                   href="{% static 'style/less/style.less' %}" />
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'formplayer/style/webforms.css' %}">
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'cloudcare/less/cloudcare.less' %}"/>
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'preview_app/less/preview_app.less' %}"/>
           {% endcompress %}
         {% endif %}
         <link type="text/css"
@@ -47,16 +82,12 @@
               media="screen"
               href="{% static "jquery-ui/themes/redmond/jquery-ui.min.css" %}" />
 
-
         <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
         <link rel="stylesheet" href="{% static 'jquery-ui/themes/base/jquery-ui.min.css' %}">
         <link type="text/css"
               rel="stylesheet"
               media="all"
               href="{% static 'datatables/media/css/jquery.dataTables.min.css' %}"/>
-        <link rel="stylesheet" href="{% static 'formplayer/style/webforms.css' %}">
-        <link rel="stylesheet" href="{% static 'cloudcare/css/cloudcare.css' %}">
-        <link rel="stylesheet" href="{% static 'cloudcare/css/formplayer.css' %}">
         <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}"/>
 
 
@@ -78,7 +109,10 @@
         <script src="{% static 'less/dist/less-1.7.3.min.js' %}"></script>
         {% if less_watch %}<script>less.watch();</script>{% endif %}
         {% endif %}
+
         <script type="text/javascript" src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
+        <script src="{% static 'jquery.cookie/jquery.cookie.js' %}"></script>
         <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
         <script type="text/javascript" src="{% static 'style/js/hq.helpers.js' %}"></script>
@@ -102,30 +136,36 @@
         <script src="{% static 'jquery-ui/ui/sortable.js' %}"></script>
         {% endcompress %}
 
+        {% compress js %}
+        <script src="{% static 'preview_app/js/dragscroll.js' %}"></script>
+        {% endcompress %}
+
         <style id="case-tiles-style"></style>
         <!-- For Formplayer's app preview -->
 
     </head>
     <body>
-        <div class="container">
-            <section id="cloudcare-notifications"></section>
-            <section id="case-crumbs" style="width: 800px"></section>
-            <section id="cases"></section>
-            <div id="menu-container">
-                <div id="phone-mode-navigation"></div>
-                <div id="breadcrumb-region"></div>
-                <div id="menu-region"></div>
+        <section id="cloudcare-notifications"></section>
+        <section id="case-crumbs" style="width: 800px"></section>
+        <section id="cases"></section>
+        <div id="menu-container">
+            <div id="phone-mode-navigation"></div>
+            <div id="breadcrumb-region"></div>
+            <div class="scrollable-container dragscroll">
+              <div id="menu-region" class="content menu-content"></div>
             </div>
-            <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
-            {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
-                <section id="cloudcare-debugger" data-bind="
-                template: {
-                    name: 'instance-viewer-ko-template',
-                    afterRender: adjustWidth
-                }
-            "></section>
-            {% endif %}
         </div>
+        <div class="scrollable-container dragscroll">
+          <section id="webforms" class="webforms container-fluid" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
+          {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
+              <section id="cloudcare-debugger" data-bind="
+              template: {
+                  name: 'instance-viewer-ko-template',
+                  afterRender: adjustWidth
+              }
+          "></section>
+        </div>
+        {% endif %}
 
         <script>
         $(function () {
@@ -135,6 +175,7 @@
                 username: "{{ request.user.username  }}",
                 domain: "{{ request.domain }}",
                 formplayer_url: "{{ formplayer_url }}",
+                clearUserDataUrl: "{% url 'clear_user_data' request.domain %}",
                 phoneMode: true,
             })
         })

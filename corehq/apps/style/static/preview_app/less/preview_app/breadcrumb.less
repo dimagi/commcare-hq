@@ -1,0 +1,28 @@
+#breadcrumb-region .breadcrumb {
+  color: @cc-neutral-mid;
+  text-transform: uppercase;
+  background-color: white;
+  margin: 0;
+  padding: 0 10px;
+  line-height: 30px;
+  font-size: 10px;
+  font-weight: 600;
+
+  li {
+    display: none;
+    &:before {
+      display: none;
+    }
+  }
+  li:last-child {
+    display: block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
+#breadcrumb-region {
+  overflow: hidden;
+  max-height: 30px;
+  width: 100%;
+}

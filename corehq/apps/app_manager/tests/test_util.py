@@ -193,19 +193,6 @@ class SchemaTest(SimpleTestCase):
             },
         })
 
-    def test_get_session_schema_advanced_form(self):
-        m2, m2f0 = self.factory.new_advanced_module('visit history', 'visit')
-        self.factory.form_requires_case(m2f0, 'visit')
-
-        schema = util.get_session_schema(m2f0)
-        self.assertDictEqual(schema["structure"]["case_id_load_visit_0"], {
-            "reference": {
-                "source": "casedb",
-                "subset": "case",
-                "key": "@case_id",
-            },
-        })
-
     def test_get_case_sharing_hierarchy(self):
         with patch('corehq.apps.app_manager.util.get_case_sharing_apps_in_domain') as mock_sharing:
             mock_sharing.return_value = [self.factory.app, self.factory_2.app]

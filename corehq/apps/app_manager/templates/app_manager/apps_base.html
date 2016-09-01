@@ -80,11 +80,17 @@
             window.location = "{% url "corehq.apps.app_manager.views.view_app" domain %}";
         });
         {% if request|toggle_enabled:"PREVIEW_APP" %}
-        hqImport('app_manager/js/preview_app.js').initializePreviewButton();
+            var previewApp = hqImport('app_manager/js/preview_app.js');
+            previewApp.initPreviewWindow(
+                    '#js-appmanager-preview',
+                    '#js-appmanager-body',
+                    '#js-toggle-app-preview'
+            );
         {% endif %}
     });
     $(window).load(function () {
-       $('.app-manager-content').removeClass('hide');
+       $('.appmanager-content').fadeIn();
+       $('.appmanager-loading').fadeOut();
     });
     </script>
 {% endblock %}
@@ -102,7 +108,13 @@
 {% if request|toggle_enabled:"PREVIEW_APP" %}
 {% include 'app_manager/partials/preview_app.html'%}
 {% endif %}
-<div class="app-manager-content hide">
+<div class="appmanager-loading-container">
+  <div class="appmanager-loading appmanager-loading-body">
+    <i class="fa fa-spin fa-spinner"></i>
+  </div>
+</div>
+<div class="appmanager-content appmanager-content-animate-preview"
+     id="js-appmanager-body">
     {% if app %}
         {% if error %}
         <div id="error">

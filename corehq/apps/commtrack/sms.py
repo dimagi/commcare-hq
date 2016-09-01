@@ -42,7 +42,7 @@ def handle(verified_contact, text, msg=None):
         return False
 
     try:
-        if toggles.STOCK_AND_RECEIPT_SMS_HANDLER.enabled(domain):
+        if toggles.STOCK_AND_RECEIPT_SMS_HANDLER.enabled(domain.name):
             # handle special stock parser for custom domain logic
             data = StockAndReceiptParser(domain, verified_contact).parse(text.lower())
         else:

@@ -877,5 +877,19 @@ PREVIEW_APP = StaticToggle(
     'preview_app',
     'Preview an application in the app builder',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
+DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
+    'disable_column_limit_in_ucr',
+    'Disable column limit in UCR',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+CLOUDCARE_LATEST_BUILD = StaticToggle(
+    'use_latest_build_cloudcare',
+    'Uses latest build for cloudcare instead of latest starred',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
 )

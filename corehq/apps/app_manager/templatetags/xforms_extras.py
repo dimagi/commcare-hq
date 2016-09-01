@@ -3,9 +3,6 @@ from django.utils import html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 
-import json
-import re
-
 register = template.Library()
 
 EMPTY_LABEL = '<span class="label label-info">Empty</span>'
