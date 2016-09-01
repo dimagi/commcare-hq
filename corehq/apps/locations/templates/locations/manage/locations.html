@@ -112,8 +112,14 @@
                         $(button).enableButton();
                     },
                     success: function (response) {
-                        alert_user(delete_success_message({"name": name}), "success");
-                        remove_elements_after_action(button);
+                        if (response.success){
+                            alert_user(delete_success_message({"name": name}), "success");
+                            remove_elements_after_action(button);
+                        }
+                        else {
+                            alert_user(response.message, "warning");
+                            $(button).enableButton();
+                        }
                     }
                 });
                 $(delete_location_modal).modal('hide');
