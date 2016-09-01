@@ -16,6 +16,8 @@ BEGIN
         form_processor_commcarecaseindexsql.domain = domain_name
         AND form_processor_commcarecaseindexsql.case_id = ANY(verified_case_ids);
     DELETE FROM form_processor_caseattachmentsql WHERE form_processor_caseattachmentsql.case_id = ANY(verified_case_ids);
+    DELETE FROM form_processor_ledgertransaction WHERE form_processor_ledgertransaction.case_id = ANY(verified_case_ids);
+    DELETE FROM form_processor_ledgervalue WHERE form_processor_ledgervalue.case_id = ANY(verified_case_ids);
     DELETE FROM form_processor_commcarecasesql WHERE form_processor_commcarecasesql.case_id = ANY(verified_case_ids);
     GET DIAGNOSTICS deleted_count = ROW_COUNT;
 END;

@@ -27,5 +27,4 @@ class Migration(migrations.Migration):
             "SELECT 1"
         ),
         migrator.get_migration('get_case_indices_1.sql'),
-        migrator.get_migration('hard_delete_cases_1.sql'),
     ]
