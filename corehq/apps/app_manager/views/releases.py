@@ -104,7 +104,7 @@ def releases_ajax(request, domain, app_id, template='app_manager/partials/releas
             get_sms_autocomplete_context(request, domain)['sms_contacts']
             if can_send_sms else []
         ),
-        'build_profile_access': build_profile_access,
+        'build_profile_access': build_profile_access and False,
         'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
         'vellum_case_management': app.vellum_case_management,
     })
