@@ -67,6 +67,7 @@ class IndicatorPillowTestBase(TestCase):
     @patch('corehq.apps.userreports.specs.datetime')
     def _check_sample_doc_state(self, expected_indicators, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
+        self.adapter.refresh_table()
         self.assertEqual(1, self.adapter.get_query_object().count())
         row = self.adapter.get_query_object()[0]
         for k in row.keys():
@@ -132,6 +133,7 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
                 'type': 'ticket',
                 'priority': bad_value
             }))
+        self.adapter.refresh_table()
         # make sure we saved rows to the table for everything
         self.assertEqual(len(bad_ints), self.adapter.get_query_object().count())
 

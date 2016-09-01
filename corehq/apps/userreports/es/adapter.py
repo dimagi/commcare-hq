@@ -56,6 +56,9 @@ class IndicatorESAdapter(IndicatorAdapter):
             # index doesn't exist yet
             pass
 
+    def refresh_table(self):
+        self.es.indices.refresh(index=self.table_name)
+
     def get_query_object(self):
         return ESAlchemy(self.table_name, self.config)
 
