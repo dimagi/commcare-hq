@@ -271,6 +271,7 @@
             <fieldset>
                 {% block settings_fields %}
                 {% if module.module_type == 'shadow' %}
+                <legend>Basic</legend>
                 <div id="sourceModuleForms">
                     <div class="form-group">
                         <label class="col-sm-2 control-label">
@@ -305,8 +306,27 @@
                 </div>
                 {% endif %}
                 <div class="spacer"></div>
+                <legend>{% trans "Multimedia" %}</legend>
                 {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
+                <legend>Advanced</legend>
                 {% endblock %}
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">
+                        {% trans "Share data with other record lists" %}
+                        <span class="hq-help-template"
+                              data-title="{% trans "Case Type" %}"
+
+                              data-content="{% trans "The name for the type of case you are tracking (e.g. &quot;pregnancy&quot;, &quot;farm&quot;, &quot;household&quot;, etc.). All cases you register in this module will be this type of case, and only cases of this type will show in the case list. Other modules with the same case type will use the same set of cases." %}"
+                                ></span>
+                    </label>
+                    <div class="col-sm-4">
+                        <select type="text" class="form-control">
+                            <option>{% trans "Do not share" %}</option>
+                            <option>Share with "Other Record List"</option>
+                            <option>Share with "Another Record List" and "Different Record List"</option>
+                        </select>
+                    </div>
+                </div>
             </fieldset>
         </form>
     </div>
@@ -315,47 +335,6 @@
         <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_module_attr" domain app.id module.id 'all' %}">
             {% csrf_token %}
             <div class="save-button-holder clearfix"></div>
-            <fieldset>
-                <legend>{% trans "Basic" %}</legend>
-                <div class="form-group">
-                    <label class="col-sm-2 control-label">
-                        {% trans "Case Type" %}
-                        <span class="hq-help-template"
-                              data-title="{% trans "Case Type" %}"
-
-                              data-content="{% trans "The name for the type of case you are tracking (e.g. &quot;pregnancy&quot;, &quot;farm&quot;, &quot;household&quot;, etc.). All cases you register in this module will be this type of case, and only cases of this type will show in the case list. Other modules with the same case type will use the same set of cases." %}"
-                                ></span>
-                    </label>
-                    <div class="col-sm-4">
-                        <input class="code form-control" type="text" id="case_type" name="case_type" value="{{ module.case_type }}" />
-                        <span class="help-block" id="case_type_error" style="display: none;">
-                            {% trans "Case types can only include the characters a-z, 0-9, '-' and '_'" %}
-                        </span>
-                    </div>
-                </div>
-                <!--div class="form-group">
-                    <label class="control-label col-sm-2">
-                        {% trans "Label for Cases" %}
-                        <span class="hq-help-template"
-                              data-title="{% trans "Label for Cases" %}"
-                              data-content="{% trans "This label will appear at the top of the phone's case select screen." %}"
-                        ></span>
-                    </label>
-                    <div class="col-sm-4">
-                        <input type="text" name="case_label" value="{{ module.case_label|trans:langs }}" class="form-control" />
-                    </div>
-                </div-->
-                {% if app.application_version == '1.0' %}
-                <div class="form-group">
-                    <label class="control-label col-sm-2">
-                        {% trans "Label for Referrals" %}
-                    </label>
-                    <div class="col-sm-4">
-                        <input type="text" name="referral_label" value="{{ module.referral_label|trans:langs }}" class="form-control" />
-                    </div>
-                </div>
-                {% endif %}
-            </fieldset>
             <fieldset>
                 <legend>{% trans "Advanced" %}</legend>
                 {% block case_management_advanced_fields %}
