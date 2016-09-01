@@ -56,6 +56,10 @@ class IndicatorESAdapter(IndicatorAdapter):
             # index doesn't exist yet
             pass
 
+    def rebuild_table_if_necessary(self):
+        if not self.es.indices.exists(index=self.table_name):
+            self.rebuild_table()
+
     def refresh_table(self):
         self.es.indices.refresh(index=self.table_name)
 

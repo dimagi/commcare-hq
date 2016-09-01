@@ -86,8 +86,8 @@ class ConfigurableReportTableManagerMixin(object):
                     self.rebuild_table(sql_adapter)
 
     def _rebuild_es_tables(self, adapters):
-        # TODO rebuild ES tables if necessary
-        pass
+        for adapter in adapters:
+            adapter.rebuild_table_if_necessary()
 
     def rebuild_table(self, adapter):
         config = adapter.config
