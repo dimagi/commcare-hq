@@ -22,8 +22,11 @@ class DeletableModelSerializer(serializers.ModelSerializer):
 
 
 class XFormOperationSQLSerializer(serializers.ModelSerializer):
+    user = serializers.CharField(source="user_id")
+
     class Meta:
         model = XFormOperationSQL
+        exclude = ('id', 'form', 'user_id')
 
 
 class XFormAttachmentSQLSerializer(serializers.ModelSerializer):
