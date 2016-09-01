@@ -338,13 +338,29 @@ BASE_IGNORED_FORM_PATHS = {
     'external_blobs',
 }
 IGNORE_PATHS = {
-    'XFormInstance': BASE_IGNORED_FORM_PATHS
+    'XFormInstance': BASE_IGNORED_FORM_PATHS,
+    'XFormArchived': BASE_IGNORED_FORM_PATHS,
 }
+
+
+def _form_ignored_diffs():
+    from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
+    return (
+        FormJsonDiff(
+            diff_type=u'missing', path=(u'history', u'[*]', u'doc_type'),
+            old_value=u'XFormOperation', new_value=Ellipsis
+        ),
+    )
+
+FORM_IGNORED_DIFFS = _form_ignored_diffs()
 
 
 def _filter_form_diffs(doc_type, diffs):
     paths_to_ignore = IGNORE_PATHS.get(doc_type, BASE_IGNORED_FORM_PATHS)
-    return [diff for diff in diffs if diff.path[0] not in paths_to_ignore]
+    return [
+        diff for diff in diffs
+        if diff.path[0] not in paths_to_ignore and diff not in FORM_IGNORED_DIFFS
+    ]
 
 CASE_IGNORED_PATHS = {
     '_rev',
