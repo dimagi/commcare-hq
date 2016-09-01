@@ -22,6 +22,16 @@
 {% endif %}
 <div data-bind="saveButton: shortScreen.saveButton"></div>
 
+<legend>
+    Title on Phone
+    <span class="hq-help-template"
+          data-title="{% trans "Label on Phone" %}"
+          data-content="{% trans "This label will appear at the top of the phone's case select screen." %}"
+    ></span>
+</legend>
+<div class="row"><div class="col-sm-3"><input type="text" name="case_label" value="Records" class="form-control" /></div></div>
+<br><br>
+
 <div data-bind="with: customXMLViewModel">
     <div data-bind="visible: enabled">
         <legend>{% trans "Custom Case List XML" %}</legend>
