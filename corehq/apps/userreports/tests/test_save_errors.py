@@ -31,7 +31,7 @@ class SaveErrorsTest(TestCase):
 
     @run_with_all_backends
     def test_raise_error_for_missing_table(self):
-        adapter = get_indicator_adapter(self.config, True)
+        adapter = get_indicator_adapter(self.config, raise_errors=True)
         adapter.drop_table()
 
         doc = {
