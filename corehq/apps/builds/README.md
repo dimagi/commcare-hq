@@ -46,7 +46,7 @@ download and install your own locally built CommCare application!
 
 ### Install the configuration file
 
-At the bottom of the `http{}` block in `/etc/nging/nginx.conf` add the line
+At the bottom of the `http{}` block in `/etc/nginx/nginx.conf` add the line
 
 `include /path/to/commcarehq/deployment/nginx/cchq_local_nginx.conf;`
 
