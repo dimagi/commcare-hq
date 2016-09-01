@@ -12,21 +12,21 @@ class MigrationTestCase(TestCase):
     def setUp(self):
         super(MigrationTestCase, self).setUp()
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
-        self.domain = uuid.uuid4().hex
+        self.domain_name = uuid.uuid4().hex
 
     def test_basic_form_migration(self):
-        create_and_save_a_form(self.domain)
-        self.assertFalse(should_use_sql_backend(self.domain))
-        self.assertEqual(1, len(FormAccessors(domain=self.domain).get_all_form_ids_in_domain()))
-        self._do_migration_and_assert_flags(self.domain)
-        self.assertEqual(1, len(FormAccessors(domain=self.domain).get_all_form_ids_in_domain()))
+        create_and_save_a_form(self.domain_name)
+        self.assertFalse(should_use_sql_backend(self.domain_name))
+        self.assertEqual(1, len(FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain()))
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(1, len(FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain()))
         # todo: verify form properties?
 
     def test_basic_case_migration(self):
-        create_and_save_a_case(self.domain, case_id=uuid.uuid4().hex, case_name='test case')
-        self.assertEqual(1, len(CaseAccessors(domain=self.domain).get_case_ids_in_domain()))
-        self._do_migration_and_assert_flags(self.domain)
-        self.assertEqual(1, len(CaseAccessors(domain=self.domain).get_case_ids_in_domain()))
+        create_and_save_a_case(self.domain_name, case_id=uuid.uuid4().hex, case_name='test case')
+        self.assertEqual(1, len(CaseAccessors(domain=self.domain_name).get_case_ids_in_domain()))
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(1, len(CaseAccessors(domain=self.domain_name).get_case_ids_in_domain()))
         # todo: verify properties?
 
     def _do_migration_and_assert_flags(self, domain):
