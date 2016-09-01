@@ -55,6 +55,7 @@ from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.apps.cloudcare.const import CLOUDCARE_CLOSE_XMLNS
+from corehq.apps.cloudcare.utils import get_formplayer_url
 from corehq.apps.cloudcare.touchforms_api import BaseSessionDataHelper, CaseSessionDataHelper
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
@@ -220,7 +221,7 @@ class CloudcareMain(View):
             "sessions_enabled": request.couch_user.is_commcare_user(),
             "use_cloudcare_releases": request.project.use_cloudcare_releases,
             "username": request.user.username,
-            "formplayer_url": settings.FORMPLAYER_URL,
+            "formplayer_url": get_formplayer_url(domain, request.couch_user.username),
             'use_sqlite_backend': use_sqlite_backend(domain),
         }
         context.update(_url_context())

@@ -3,6 +3,7 @@ from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from touchforms.formplayer.api import post_data
 import json
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
+from corehq.apps.cloudcare.utils import get_formplayer_url
 from django.core.urlresolvers import reverse
 from corehq.apps.users.models import CouchUser
 from corehq import toggles
@@ -63,7 +64,7 @@ class BaseSessionDataHelper(object):
         session_data.update(session_extras)
         xform_url = reverse("xform_player_proxy")
         if session_data.get('domain') and toggles.USE_FORMPLAYER.enabled(session_data.get('domain')):
-            xform_url = settings.FORMPLAYER_URL
+            xform_url = get_formplayer_url(self.domain, self.couch_user.username)
         ret = {
             "session_data": session_data,
             "xform_url": xform_url,
