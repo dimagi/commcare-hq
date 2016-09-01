@@ -64,6 +64,21 @@ class MigrationTestCase(TestCase):
         self.assertEqual(1, len(FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain('XFormError')))
         self._compare_diffs([])
 
+    def test_duplicate_form_migration(self):
+        with open('corehq/ex-submodules/couchforms/tests/data/posts/duplicate.xml') as f:
+            duplicate_form_xml = f.read()
+
+        submit_form_locally(duplicate_form_xml, self.domain_name)
+        submit_form_locally(duplicate_form_xml, self.domain_name)
+
+        self.assertFalse(should_use_sql_backend(self.domain_name))
+        self.assertEqual(1, len(FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain()))
+        self.assertEqual(1, len(FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain('XFormDuplicate')))
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(1, len(FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain()))
+        self.assertEqual(1, len(FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain('XFormDuplicate')))
+        self._compare_diffs([])
+
     def test_basic_case_migration(self):
         create_and_save_a_case(self.domain_name, case_id=uuid.uuid4().hex, case_name='test case')
         self.assertEqual(1, len(CaseAccessors(domain=self.domain_name).get_case_ids_in_domain()))
