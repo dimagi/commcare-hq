@@ -76,7 +76,9 @@ class CouchSqlDomainMigrator(object):
         for change in _get_unprocessed_form_iterator(self.domain).iter_all_changes():
             couch_form_json = change.get_document()
             couch_form = _wrap_form(couch_form_json)
-            print 'copying unprocessed {} {}: {}'.format(couch_form.doc_type, couch_form.form_id, couch_form.received_on)
+            print 'copying unprocessed {} {}: {}'.format(
+                couch_form.doc_type, couch_form.form_id, couch_form.received_on
+            )
             sql_form = XFormInstanceSQL(
                 form_id=couch_form.form_id,
                 xmlns=couch_form.xmlns,
@@ -375,4 +377,3 @@ def _filter_case_diffs(diffs):
         diff for diff in diffs
         if diff.path[0] not in CASE_IGNORED_PATHS and diff not in CASE_IGNORED_DIFFS
     ]
-

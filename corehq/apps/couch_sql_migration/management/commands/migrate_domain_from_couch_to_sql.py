@@ -74,7 +74,9 @@ class Command(LabelCommand):
             form_ids_in_sql = set(FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type))
             self._print_status(doc_type, form_ids_in_couch, form_ids_in_sql)
 
-        form_ids_in_couch = set(get_doc_ids_in_domain_by_type(domain, "XFormInstance-Deleted", XFormInstance.get_db()))
+        form_ids_in_couch = set(get_doc_ids_in_domain_by_type(
+            domain, "XFormInstance-Deleted", XFormInstance.get_db())
+        )
         form_ids_in_sql = set(FormAccessorSQL.get_deleted_form_ids_in_domain(domain))
         self._print_status("XFormInstance-Deleted", form_ids_in_couch, form_ids_in_sql)
 
@@ -82,7 +84,9 @@ class Command(LabelCommand):
         case_ids_in_sql = set(CaseAccessorSQL.get_case_ids_in_domain(domain))
         self._print_status('CommCareCase', case_ids_in_couch, case_ids_in_sql)
 
-        case_ids_in_couch = set(get_doc_ids_in_domain_by_type(domain, "CommCareCase-Deleted", XFormInstance.get_db()))
+        case_ids_in_couch = set(get_doc_ids_in_domain_by_type(
+            domain, "CommCareCase-Deleted", XFormInstance.get_db())
+        )
         case_ids_in_sql = set(CaseAccessorSQL.get_deleted_case_ids_in_domain(domain))
         self._print_status('CommCareCase-Deleted', case_ids_in_couch, case_ids_in_sql)
 
