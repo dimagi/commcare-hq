@@ -115,7 +115,7 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
-            FormplayerFrontend.request("clearForm");
+            FormplayerFrontend.trigger("clearForm");
             showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
 
             // After end of form nav, we want to clear everything except app and sesson id

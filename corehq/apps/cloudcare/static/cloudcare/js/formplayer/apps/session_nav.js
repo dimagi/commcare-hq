@@ -65,7 +65,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
          * be a form response which will route to a new form.
          */
         renderResponse: function (response) {
-            FormplayerFrontend.request("clearForm");
+            FormplayerFrontend.trigger("clearForm");
             var currentFragment,
                 urlObject,
                 encodedUrl,
