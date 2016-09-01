@@ -119,12 +119,28 @@ class MigrationTestCase(TestCase):
         self.assertEqual(1, len(self._get_case_ids()))
         self._compare_diffs([])
 
+    def test_deleted_form_migration(self):
+        # TODO
+        pass
+
+    def test_submission_error_log_migration(self):
+        # TODO
+        pass
+
+    def test_hqsubmission_migration(self):
+        # TODO
+        pass
+
     def test_basic_case_migration(self):
         create_and_save_a_case(self.domain_name, case_id=uuid.uuid4().hex, case_name='test case')
         self.assertEqual(1, len(self._get_case_ids()))
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(1, len(self._get_case_ids()))
         self._compare_diffs([])
+
+    def test_deleted_case_migration(self):
+        # TODO
+        pass
 
     def test_commit(self):
         self._do_migration_and_assert_flags(self.domain_name)
