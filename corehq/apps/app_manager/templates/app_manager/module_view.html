@@ -238,9 +238,6 @@
 <ul class="nav nav-tabs" id="module-view-tabs">
     {% block tab-headers %}
     <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
-    {% if module.module_type != 'shadow' and module.case_type != "" %}
-    <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
-    {% endif %}
     {% if module.case_type != "" %}
     {% for detail in details %}
     <li>
@@ -312,6 +309,21 @@
                 {% endblock %}
                 <div class="form-group">
                     <label class="col-sm-2 control-label">
+                        {% trans "Add a view-only version of this record list" %}
+                        <span class="hq-help-template"
+                              data-title="{% trans "Case Type" %}"
+                              data-content="This is a CLMI"
+                        ></span>
+                    </label>
+                    <div class="col-sm-4">
+                        <button class="btn btn-success">
+                            <i class="fa fa-plus"></i>
+                            Add
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">
                         {% trans "Share data with other record lists" %}
                         <span class="hq-help-template"
                               data-title="{% trans "Case Type" %}"
@@ -330,24 +342,6 @@
             </fieldset>
         </form>
     </div>
-    {% if module.module_type != 'shadow' and module.case_type != "" %}
-    <div class="tab-pane" id="case-settings">
-        <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_module_attr" domain app.id module.id 'all' %}">
-            {% csrf_token %}
-            <div class="save-button-holder clearfix"></div>
-            <fieldset>
-                <legend>{% trans "Advanced" %}</legend>
-                {% block case_management_advanced_fields %}
-                {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List Menu Item" DESC="An item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
-                {#% include 'app_manager/partials/case_list_form_setting.html' %#}
-                {% if app.application_version == '2.0' and module.module_type == 'basic' and request.project.survey_management_enabled %}
-                    {% include 'app_manager/partials/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
-                {% endif %}
-                {% endblock case_management_advanced_fields %}
-            </fieldset>
-        </form>
-    </div>
-    {% endif %}
 
     {% if module.case_type != "" %}
     {% for detail in details %}
