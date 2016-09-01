@@ -51,7 +51,7 @@ branches:
   - vellum-staging # J$ 11/13
   - welcome-to-vellum # Jenny 8/3
 #  - welcome-to-vellum+kill-1.x-apps # Jenny 8/24
-#  - django-1.8 # nick P 8/25
+  - django-1.8 # nick P 8/25
   - jquery-2-2-0 # Jenny 8/29
   - jquery-2-2-0-switch # Jenny 8/30
   - locations-whitelist  # Ethan 8/29
