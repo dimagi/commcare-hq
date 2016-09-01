@@ -53,7 +53,7 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id="",
         domain=domain,
         attachments=attachments,
     )
-    return xform
+    return xform, cases
 
 
 def get_case_wrapper(data):
