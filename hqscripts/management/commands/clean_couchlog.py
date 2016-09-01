@@ -1,5 +1,7 @@
 from django.core.management.base import BaseCommand
 from couchlog.models import ExceptionRecord
+
+
 class Command(BaseCommand):
     """
     Deletes sofabed cruft from couchlog.

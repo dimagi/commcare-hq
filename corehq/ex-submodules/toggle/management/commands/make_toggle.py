@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 from ...models import Toggle
 
+
 class Command(BaseCommand):
     help = "Makes a toggle."
     args = "<slug> *<users>"
