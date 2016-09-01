@@ -73,6 +73,7 @@ class MigrationTestCase(TestCase):
 
     def test_commit(self):
         self._do_migration_and_assert_flags(self.domain_name)
+        clear_local_domain_sql_backend_override(self.domain_name)
         call_command('migrate_domain_from_couch_to_sql', self.domain_name, COMMIT=True, no_input=True)
         self.assertTrue(Domain.get_by_name(self.domain_name).use_sql_backend)
 
@@ -80,8 +81,6 @@ class MigrationTestCase(TestCase):
         self.assertFalse(should_use_sql_backend(domain))
         call_command('migrate_domain_from_couch_to_sql', domain, MIGRATE=True, no_input=True)
         self.assertTrue(should_use_sql_backend(domain))
-        clear_local_domain_sql_backend_override(domain)
-        self.assertFalse(should_use_sql_backend(domain))
 
     def _compare_diffs(self, expected):
         diffs = get_diff_db(self.domain_name).get_diffs()
