@@ -324,7 +324,7 @@ def commit_migration(domain_name):
 
 
 def _filter_form_diffs(doc_type, diffs):
-    paths_to_ignore = const.FORM_IGNORE_PATHS.get(doc_type, const.BASE_IGNORED_FORM_PATHS)
+    paths_to_ignore = const.FORM_IGNORE_PATHS[doc_type]
     return [
         diff for diff in diffs
         if diff.path[0] not in paths_to_ignore and diff not in const.FORM_IGNORED_DIFFS
