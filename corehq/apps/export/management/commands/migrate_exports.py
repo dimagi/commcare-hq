@@ -73,7 +73,7 @@ class Command(BaseCommand):
                 else:
                     print 'No skipped tables/columns. Not migrating since dryrun is specified'
                 count += 1
-            if count >= limit:
+            if limit is not None and count >= limit:
                 break
 
         send_HTML_email(
