@@ -1,8 +1,8 @@
-from django.core.management.base import LabelCommand, CommandError
+from django.core.management.base import BaseCommand, CommandError
 from dimagi.utils.post import post_file
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Posts a single form to a url."
     args = ""
     label = ""
