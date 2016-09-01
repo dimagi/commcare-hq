@@ -122,7 +122,7 @@ class DiffDB(BaseDB):
         return session.query(PlanningDiff).all()
 
 
-class PlanningDB(BaseDB):
+class PlanningDB(DiffDB):
     def add_form(self, form_id, form_json):
         session = self.Session()
         session.add(PlanningForm(uuid=form_id, form_json=json.dumps(form_json)))
