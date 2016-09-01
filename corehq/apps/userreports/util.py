@@ -113,16 +113,12 @@ def get_indicator_adapter(config, raise_errors=False):
     from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter
     from corehq.apps.userreports.es.adapter import IndicatorESAdapter
 
-    if config.backend_id == UCR_SQL_BACKEND:
+    if config.backend_id == UCR_ES_BACKEND:
+        return IndicatorESAdapter(config)
+    else:
         if raise_errors:
             return ErrorRaisingIndicatorSqlAdapter(config)
         return IndicatorSqlAdapter(config)
-    elif config.backend_id == UCR_ES_BACKEND:
-        return IndicatorESAdapter(config)
-    else:
-        _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
-        _soft_assert(False, "Backend id not found in config")
-        raise BadBuilderConfigError(_("The data source was not found"))
 
 
 def get_table_name(domain, table_id):
