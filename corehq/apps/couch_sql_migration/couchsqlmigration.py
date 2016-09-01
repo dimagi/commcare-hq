@@ -6,7 +6,7 @@ import settings
 from casexml.apps.case.xform import get_all_extensions_to_close, CaseProcessingResult
 from corehq.apps.domain.models import Domain
 from corehq.apps.tzmigration import force_phone_timezones_should_be_processed
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, doc_type_to_state
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL
@@ -163,6 +163,8 @@ def _copy_form_properties(domain, sql_form, couch_form):
     # sql_form.export_tag = ["domain", "xmlns"]
     sql_form.partial_submission = couch_form.partial_submission
     sql_form.initial_processing_complete = couch_form.initial_processing_complete
+
+    sql_form.state = doc_type_to_state[couch_form.doc_type]
     return sql_form
 
 
