@@ -2,6 +2,7 @@ import os
 import uuid
 from datetime import datetime
 
+import corehq.apps.couch_sql_migration.constants as const
 import settings
 from casexml.apps.case.xform import get_all_extensions_to_close, CaseProcessingResult
 from corehq.apps.domain.models import Domain
@@ -322,77 +323,16 @@ def commit_migration(domain_name):
     assert should_use_sql_backend(domain_name)
 
 
-BASE_IGNORED_FORM_PATHS = {
-    '_rev',
-    'migrating_blobs_from_couch',
-    '#export_tag',
-    'computed_',
-    'state',
-    'edited_on',
-    'computed_modified_on_',
-    'problem',
-    'orig_id',
-    'deprecated_form_id',
-    'path',
-    'user_id',
-    'external_blobs',
-}
-IGNORE_PATHS = {
-    'XFormInstance': BASE_IGNORED_FORM_PATHS,
-    'XFormArchived': BASE_IGNORED_FORM_PATHS,
-}
-
-
-def _form_ignored_diffs():
-    from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
-    return (
-        FormJsonDiff(
-            diff_type=u'missing', path=(u'history', u'[*]', u'doc_type'),
-            old_value=u'XFormOperation', new_value=Ellipsis
-        ),
-    )
-
-FORM_IGNORED_DIFFS = _form_ignored_diffs()
-
-
 def _filter_form_diffs(doc_type, diffs):
-    paths_to_ignore = IGNORE_PATHS.get(doc_type, BASE_IGNORED_FORM_PATHS)
+    paths_to_ignore = const.FORM_IGNORE_PATHS.get(doc_type, const.BASE_IGNORED_FORM_PATHS)
     return [
         diff for diff in diffs
-        if diff.path[0] not in paths_to_ignore and diff not in FORM_IGNORED_DIFFS
+        if diff.path[0] not in paths_to_ignore and diff not in const.FORM_IGNORED_DIFFS
     ]
-
-CASE_IGNORED_PATHS = {
-    '_rev',
-    'initial_processing_complete',
-    'actions',
-    'id',
-    '#export_tag',
-    'computed_',
-    'version',
-    'case_attachments',
-    'deleted',
-    'export_tag',
-    'computed_modified_on_',
-    'case_id',
-    'case_json',
-    'modified_by',
-}
-
-
-def _case_ignored_diffs():
-    from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
-    return (
-        FormJsonDiff(diff_type=u'type', path=(u'name',), old_value=u'', new_value=None),
-        FormJsonDiff(diff_type=u'type', path=(u'closed_by',), old_value=u'', new_value=None),
-        FormJsonDiff(diff_type=u'missing', path=(u'location_id',), old_value=Ellipsis, new_value=None),
-    )
-
-CASE_IGNORED_DIFFS = _case_ignored_diffs()
 
 
 def _filter_case_diffs(diffs):
     return [
         diff for diff in diffs
-        if diff.path[0] not in CASE_IGNORED_PATHS and diff not in CASE_IGNORED_DIFFS
+        if diff.path[0] not in const.CASE_IGNORED_PATHS and diff not in const.CASE_IGNORED_DIFFS
     ]
