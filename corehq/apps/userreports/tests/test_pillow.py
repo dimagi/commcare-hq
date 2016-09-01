@@ -15,10 +15,10 @@ from corehq.apps.userreports.data_source_providers import MockDataSourceProvider
 from corehq.apps.userreports.exceptions import StaleRebuildError
 from corehq.apps.userreports.pillow import REBUILD_CHECK_INTERVAL, \
     ConfigurableReportTableManagerMixin, get_kafka_ucr_pillow, get_kafka_ucr_static_pillow
-from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators, \
     doc_to_change, domain_lite
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.util.test_utils import softer_assert, trap_extra_setup
 from corehq.util.context_managers import drop_connected_signals
@@ -56,7 +56,7 @@ class IndicatorPillowTestBase(TestCase):
         super(IndicatorPillowTestBase, self).setUp()
         self.config = get_sample_data_source()
         self.config.save()
-        self.adapter = IndicatorSqlAdapter(self.config)
+        self.adapter = get_indicator_adapter(self.config)
         self.fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
 
     def tearDown(self):
@@ -103,7 +103,7 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
         later_config.save()
         self.assertNotEqual(self.config._rev, later_config._rev)
         with self.assertRaises(StaleRebuildError):
-            self.pillow.rebuild_table(IndicatorSqlAdapter(self.config))
+            self.pillow.rebuild_table(get_indicator_adapter(self.config))
 
     @patch('corehq.apps.userreports.specs.datetime')
     def test_change_transport(self, datetime_mock):

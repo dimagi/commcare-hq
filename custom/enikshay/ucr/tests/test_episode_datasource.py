@@ -6,7 +6,7 @@ from django.test import TestCase
 from corehq.util.test_utils import TestFileMixin
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
-from corehq.apps.userreports.sql import IndicatorSqlAdapter
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.tasks import rebuild_indicators
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
@@ -46,7 +46,7 @@ class BaseEnikshayDatasourceTest(TestCase, TestFileMixin):
 
     def _rebuild_table_get_query_object(self):
         rebuild_indicators(self.datasource._id)
-        adapter = IndicatorSqlAdapter(self.datasource)
+        adapter = get_indicator_adapter(self.datasource)
         return adapter.get_query_object()
 
 
