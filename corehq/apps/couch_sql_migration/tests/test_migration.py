@@ -6,6 +6,7 @@ from django.test import TestCase
 from corehq.apps.couch_sql_migration.couchsqlmigration import get_diff_db
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.tzmigration import TimezoneMigrationProgress
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -43,6 +44,24 @@ class MigrationTestCase(TestCase):
         self.assertEqual(1, len(FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain('XFormArchived')))
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(1, len(FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain('XFormArchived')))
+        self._compare_diffs([])
+
+    def test_error_form_migration(self):
+        submit_form_locally(
+            """<data xmlns="example.com/foo">
+                <meta>
+                    <instanceID>abc-easy-as-123</instanceID>
+                </meta>
+            <case case_id="" xmlns="http://commcarehq.org/case/transaction/v2">
+                <update><foo>bar</foo></update>
+            </case>
+            </data>""",
+            self.domain_name,
+        )
+        self.assertFalse(should_use_sql_backend(self.domain_name))
+        self.assertEqual(1, len(FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain('XFormError')))
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(1, len(FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain('XFormError')))
         self._compare_diffs([])
 
     def test_basic_case_migration(self):

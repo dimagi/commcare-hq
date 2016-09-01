@@ -6,8 +6,6 @@ BASE_IGNORED_FORM_PATHS = {
     'state',
     'edited_on',
     'computed_modified_on_',
-    'problem',
-    'orig_id',
     'deprecated_form_id',
     'path',
     'user_id',
@@ -15,8 +13,9 @@ BASE_IGNORED_FORM_PATHS = {
 }
 
 FORM_IGNORE_PATHS = {
-    'XFormInstance': BASE_IGNORED_FORM_PATHS,
-    'XFormArchived': BASE_IGNORED_FORM_PATHS,
+    'XFormInstance': BASE_IGNORED_FORM_PATHS | {'problem', 'orig_id'},
+    'XFormArchived': BASE_IGNORED_FORM_PATHS | {'problem', 'orig_id'},
+    'XFormError': BASE_IGNORED_FORM_PATHS,
 }
 
 
