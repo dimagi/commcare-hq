@@ -125,8 +125,10 @@ FormplayerFrontend.on('startForm', function (data) {
 
             if(resp.nextScreen !== null && resp.nextScreen !== undefined) {
                 FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
-            } else {
+            } else if(urlObject.appId !== null && urlObject.appId !== undefined) {
                 FormplayerFrontend.trigger("apps:currentApp");
+            } else {
+                FormplayerFrontend.navigate('/apps', { trigger: true });
             }
         } else {
             showError(resp.output, $("#cloudcare-notifications"));
