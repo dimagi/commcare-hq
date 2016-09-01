@@ -38,6 +38,15 @@
   group: "log"
   force: true
 
+- name: "Advanced App Builder"
+  description: "Advanced App Builder"
+  id: "advanced_app_builder"
+  group: "sense"
+  values: ["true", "false"]
+  value_names: ["Yes", "No"]
+  default: "false"
+  widget: "bool"
+
 - name: "Weekly Log Sending Frequency"
   description: "What kind of log transmission the phone should attempt on a weekly basis (submitted to PostURL)"
   id: "log_prop_weekly"
