@@ -4,8 +4,8 @@ function api_get_children(loc_uuid, callback) {
     // show_inactive comes from global state
     params.include_inactive = show_inactive;
     $.getJSON(LOAD_LOCS_URL, params, function(allData) {
-            callback(allData.objects);
-        });
+        callback(allData.objects);
+    });
 }
 
 function LocationTreeViewModel(hierarchy) {
@@ -22,42 +22,27 @@ function LocationTreeViewModel(hierarchy) {
     this.find_loc = function(uuid, loc) {
         loc = loc || this.root();
 
-        if (loc.uuid() == uuid) {
+        if (loc.uuid() === uuid) {
             return [loc];
         } else {
             var path = null;
             $.each(loc.children(), function(i, e) {
-                    var subpath = model.find_loc(uuid, e);
-                    if (subpath) {
-                        path = subpath;
-                        path.splice(0, 0, loc);
-                        return false;
-                    }
-                });
+                var subpath = model.find_loc(uuid, e);
+                if (subpath) {
+                    path = subpath;
+                    path.splice(0, 0, loc);
+                    return false;
+                }
+            });
             return path;
         }
-    }
+    };
 
-    // load location hierarchy and set initial expansion
-    this.load = function(locs, selected) {
+    // load location hierarchy
+    this.load = function(locs) {
         this.root(new LocationModel({name: '_root', children: locs, can_edit: can_edit_root}, this));
         this.root().expanded(true);
-
-        if (selected) {
-            // this relies on the hierarchy of the selected location being pre-populated
-            // in the initial locations set from the server (i.e., no location of the
-            // pre-selected location's lineage is loaded asynchronously
-            var sel_path = this.find_loc(selected);
-            if (sel_path) {
-                for (var i = 1; i < sel_path.length; i++) {
-                    sel_path[i - 1].expanded(true);
-                }
-
-                // highlight the initially selected
-                $(sel_path.slice(-1)[0].$e).effect('highlight', {color: '#ff6'}, 15000);
-            }
-        }
-    }
+    };
 }
 
 function LocationModel(data, root, depth) {
