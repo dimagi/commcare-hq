@@ -353,6 +353,38 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
 
         self._products = value
 
+    def sql_full_delete(self):
+        """
+        SQL ONLY FULL DELETE
+        Delete this location and it's descendants.
+        """
+        ids_to_delete = self.get_descendants(include_self=True).location_ids()
+
+        for loc_id in ids_to_delete:
+            loc = SQLLocation.objects.prefetch_related(
+                'location_type').get(location_id=loc_id)
+            loc._sql_close_case_and_remove_users()
+
+        self.get_descendants(include_self=True).delete()
+
+    def _sql_close_case_and_remove_users(self):
+        """
+        SQL ONLY VERSION
+        Closes linked supply point cases for a location and unassigns the users
+        assigned to that location.
+
+        Used by both archive and delete methods
+        """
+
+        sp = self.linked_supply_point()
+        # sanity check that the supply point exists and is still open.
+        # this is important because if you archive a child, then try
+        # to archive the parent, we don't want to try to close again
+        if sp and not sp.closed:
+            close_case(sp.case_id, self.domain, COMMTRACK_USERNAME)
+
+        _unassign_users_from_location(self.domain, self.location_id)
+
     class Meta:
         app_label = 'locations'
         unique_together = ('domain', 'site_code',)
@@ -698,13 +730,9 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         This also unassigns users assigned to the location.
         """
         to_delete = [self] + self.descendants
-
         # if there are errors deleting couch locations, roll back sql delete
         with transaction.atomic():
-            for loc in to_delete:
-                loc._close_case_and_remove_users()
-            # delete all SQLLocations without calling their `delete` methods
-            self.sql_location.get_descendants(include_self=True).delete()
+            self.sql_location.sql_full_delete()
             Location.get_db().bulk_delete(to_delete)
 
     @classmethod

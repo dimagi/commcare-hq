@@ -10,7 +10,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.http import require_http_methods
 
-from couchdbkit import ResourceNotFound
+from couchdbkit import ResourceNotFound, BulkSaveError
 from corehq.apps.style.decorators import (
     use_jquery_ui,
     use_multiselect,
@@ -435,13 +435,13 @@ def delete_location(request, domain, loc_id):
         if loc.domain != domain:
             raise Http404()
         loc.full_delete()
-    except ResourceNotFound:
+    except (ResourceNotFound, BulkSaveError):
         # Sometimes the couch and sql locations go out of sync and we can end up
         # in a state where the couch doc is deleted and the sql doc still exists.
         loc = SQLLocation.objects.prefetch_related(
             'location_type').get(location_id=loc_id)
         # delete the sql location anyway
-        loc.get_descendants(include_self=True).delete()
+        loc.sql_full_delete()
         logger.error(
             'Location with ID [{}] in domain [{}] was missing its couch doc '
             'upon deletion. If this is recurring it might be worth checking '
