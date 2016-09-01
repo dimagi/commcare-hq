@@ -12,7 +12,9 @@ from corehq.form_processor.models import (
     CommCareCaseSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE,
     CommCareCaseIndexSQL_DB_TABLE, CaseTransaction_DB_TABLE,
     XFormAttachmentSQL_DB_TABLE, XFormInstanceSQL_DB_TABLE,
-    LedgerValue_DB_TABLE, LedgerTransaction_DB_TABLE)
+    LedgerValue_DB_TABLE, LedgerTransaction_DB_TABLE,
+    XFormOperationSQL_DB_TABLE,
+)
 
 
 def fetchall_as_namedtuple(cursor):
@@ -75,6 +77,17 @@ def form_attachment_adapter(attachment):
         attachment.blob_bucket,
     ]
     return ObjectAdapter(fields, XFormAttachmentSQL_DB_TABLE)
+
+
+def form_operation_adapter(operation):
+    fields = [
+        operation.id,
+        operation.user_id,
+        operation.operation,
+        operation.date,
+        operation.form_id,
+    ]
+    return ObjectAdapter(fields, XFormOperationSQL_DB_TABLE)
 
 
 def case_adapter(case):
