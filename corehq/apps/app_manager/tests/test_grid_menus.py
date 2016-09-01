@@ -72,7 +72,7 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
         factory.app.create_profile()
         factory.app.profile['properties'] = {'cc-grid-menus': 'none'}
         factory.new_basic_module('registration', 'patient')
-        factory.app.get_module(1).display_style = 'grid'
+        factory.app.get_module(0).display_style = 'grid'
         suite = factory.app.create_suite()
         m0_xpath = './menu[@id="m0"]'
         self.assertXmlHasXpath(suite, m0_xpath)
