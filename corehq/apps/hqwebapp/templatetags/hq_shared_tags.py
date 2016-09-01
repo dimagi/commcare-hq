@@ -438,6 +438,17 @@ def appending_block(parser, token):
     return node
 
 
+@register.tag(name='include')
+def include_aware_block(parser, token):
+    """
+    this overrides {% include %} to keep track of whether the current template
+    render context is in an include block
+    """
+    node = loader_tags.do_include(parser, token)
+    node.__class__ = IncludeAwareNode
+    return node
+
+
 class AddToBlockNode(template.Node):
 
     def __init__(self, nodelist, block_name):
@@ -471,14 +482,17 @@ class AppendingBlockNode(loader_tags.BlockNode):
 
     def render(self, context):
         super_result = super(AppendingBlockNode, self).render(context)
-        request_blocks = AddToBlockNode.get_addtoblock_contents_dict(context)
-        if self.name not in request_blocks:
-            request_blocks[self.name] = ''
+        if not IncludeAwareNode.get_include_count(context):
+            request_blocks = AddToBlockNode.get_addtoblock_contents_dict(context)
+            if self.name not in request_blocks:
+                request_blocks[self.name] = ''
 
-        contents = request_blocks.pop(self.name, '')
-        rendered_blocks = self.get_rendered_blocks_dict(context)
-        rendered_blocks.add(self.name)
-        return super_result + contents
+            contents = request_blocks.pop(self.name, '')
+            rendered_blocks = self.get_rendered_blocks_dict(context)
+            rendered_blocks.add(self.name)
+            return super_result + contents
+        else:
+            return super_result
 
     @staticmethod
     def get_rendered_blocks_dict(context):
@@ -487,6 +501,24 @@ class AppendingBlockNode(loader_tags.BlockNode):
         except AttributeError:
             rendered_blocks = context.render_context._rendered_blocks = set()
         return rendered_blocks
+
+
+class IncludeAwareNode(loader_tags.IncludeNode):
+
+    def render(self, context):
+        include_count = IncludeAwareNode.get_include_count(context)
+        include_count.append(True)
+        super_result = super(IncludeAwareNode, self).render(context)
+        include_count.pop()
+        return super_result
+
+    @staticmethod
+    def get_include_count(context):
+        try:
+            include_count = context.render_context._includes
+        except AttributeError:
+            include_count = context.render_context._includes = []
+        return include_count
 
 @register.simple_tag(takes_context=True)
 def url_replace(context, field, value):
