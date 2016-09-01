@@ -46,7 +46,7 @@ trunk: master
 name: autostaging
 branches:
 #  - kill-1.x-apps  # Danny 8/23
-  - locations-whitelist+loc-tests  # Ethan 8/29 (trivial conflict)
+  - loc-test+location-whitelist # Cal 8/31 fixes new conflict
   - loc-tests # sravan 8/8
   - vellum-staging # J$ 11/13
   - welcome-to-vellum # Jenny 8/3
