@@ -28,6 +28,7 @@ from corehq.apps.accounting.emails import send_subscription_change_alert
 from corehq.apps.accounting.exceptions import (
     AccountingError,
     CreditLineError,
+    InvoiceCannotBeDeletedError,
     InvoiceEmailThrottledError,
     NewSubscriptionError,
     ProductPlanNotFoundError,
@@ -1717,6 +1718,9 @@ class InvoiceBase(models.Model):
     @property
     def email_recipients(self):
         raise NotImplementedError
+
+    def delete(self, *args, **kwargs):
+        raise InvoiceCannotBeDeletedError('Direct object deletion disabled.')
 
 
 class WireInvoice(InvoiceBase):
