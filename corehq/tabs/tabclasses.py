@@ -1103,7 +1103,7 @@ class ProjectSettingsTab(UITab):
 
         items = []
         user_is_admin = self.couch_user.is_domain_admin(self.domain)
-        user_is_billing_admin = self.couch_user.has_permission(self.domain, Permissions.billing_admin.name)
+        user_is_billing_admin = self.couch_user.can_edit_billing()
 
         project_info = []
 
@@ -1502,6 +1502,8 @@ class AdminTab(UITab):
                  'url': reverse('admin_report_dispatcher', args=('domains',))},
                 {'title': _('Submission Map'),
                  'url': reverse('dimagisphere')},
+                {'title': _('Active Project Map'),
+                 'url': reverse('admin_report_dispatcher', args=('project_map',))},
                 {'title': _('User List'),
                  'url': reverse('admin_report_dispatcher', args=('user_list',))},
                 {'title': _('Application List'),

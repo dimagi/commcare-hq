@@ -10,7 +10,6 @@ from StringIO import StringIO
 
 import dateutil
 from dimagi.utils.decorators.memoized import memoized
-from django.utils.datastructures import SortedDict
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 from django.conf import settings
@@ -557,6 +556,10 @@ class VCMMigrationView(BaseAdminSectionView):
         })
         return context
 
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(VCMMigrationView, self).dispatch(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
         action = self.request.POST['action']
 
@@ -685,7 +688,7 @@ class FlagBrokenBuilds(FormView):
 
 
 @require_superuser
-@datespan_in_request(from_param="startdate", to_param="enddate", default_days=365)
+@datespan_in_request(from_param="startdate", to_param="enddate", default_days=90)
 def stats_data(request):
     histo_type = request.GET.get('histogram_type')
     interval = request.GET.get("interval", "week")
@@ -910,7 +913,7 @@ def callcenter_test(request):
         query_date = date.today()
 
     def view_data(case_id, indicators):
-        new_dict = SortedDict()
+        new_dict = OrderedDict()
         key_list = sorted(indicators.keys())
         for key in key_list:
             new_dict[key] = indicators[key]
@@ -1004,6 +1007,8 @@ def _gir_csv_response(month, year):
     query_month = "{year}-{month}-01".format(year=year, month=month)
     prev_month = "{year}-{month}-01".format(year=year, month=month - 1)
     two_ago = "{year}-{month}-01".format(year=year, month=month - 2)
+    if not GIRRow.objects.filter(month=query_month).exists():
+        return HttpResponse('Sorry, that month is not yet available')
     queryset = GIRRow.objects.filter(month__in=[query_month, prev_month, two_ago]).order_by('-month')
     domain_months = defaultdict(list)
     for item in queryset:
@@ -1181,13 +1186,17 @@ class ReprocessMessagingCaseUpdatesView(BaseAdminSectionView):
 
 def top_five_projects_by_country(request):
     data = {}
+    internalMode = request.user.is_superuser
+    attributes = ['internal.area', 'internal.sub_area', 'cp_n_active_cc_users', 'deployment.countries']
+
+    if internalMode:
+        attributes = ['name', 'internal.organization_name', 'internal.notes'] + attributes
+
     if 'country' in request.GET:
         country = request.GET.get('country')
-        projects = (DomainES().is_active().real_domains()
+        projects = (DomainES().is_active_project().real_domains()
                     .filter(filters.term('deployment.countries', country))
-                    .sort('cp_n_active_cc_users', True)
-                    .source(['internal.organization_name', 'internal.area',
-                             'deployment.date', 'cp_n_active_cc_users', 'deployment.countries'])
-                    .size(5).run().hits)
-        data = {country: projects}
+                    .sort('cp_n_active_cc_users', True).source(attributes).size(5).run().hits)
+        data = {country: projects, 'internal': internalMode}
+
     return json_response(data)

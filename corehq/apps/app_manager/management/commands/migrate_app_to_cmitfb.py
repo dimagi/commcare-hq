@@ -51,7 +51,8 @@ class Command(BaseCommand):
                     xform = XForm(form.source)
                     xform.add_case_preloads(preload)
                     save_xform(app, form, ET.tostring(xform.xml))
-                    form.actions.load_from_form = form.actions.case_preload
+                    form.case_references = {"load": {path: [case_property]
+                        for path, case_property in preload.iteritems()}}
                     form.actions.case_preload = PreloadAction()
 
         app.vellum_case_management = True

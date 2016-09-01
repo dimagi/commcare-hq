@@ -548,6 +548,7 @@ DIMAGISPHERE_FACET_MAPPING = [
     ]),
     ("Type", True, [
         {"facet": "internal.area.exact", "name": "Sector", "expanded": True},
+        {"facet": "internal.sub_area.exact", "name": "Sub-Sector", "expanded": False},
     ]),
 ]
 
@@ -883,7 +884,7 @@ class AdminDomainMapReport(AdminDomainStatsReport):
 
     def _calc_num_active_users_per_country(self, filters):
         active_users_per_country = (NestedTermAggregationsHelper(
-                                    base_query=DomainES().is_active().real_domains().filter(filters),
+                                    base_query=DomainES().real_domains().is_active_project().filter(filters),
                                     terms=[AggregationTerm('countries', 'deployment.countries')],
                                     bottom_level_aggregation=SumAggregation('users', 'cp_n_active_cc_users')
                                     ).get_data())
@@ -891,32 +892,33 @@ class AdminDomainMapReport(AdminDomainStatsReport):
 
     def _calc_num_projs_per_countries(self, filters):
         num_projects_by_country = (DomainES()
-                                   .is_active()
                                    .real_domains()
+                                   .is_active_project()
                                    .filter(filters)
                                    .terms_aggregation('deployment.countries', 'countries')
                                    .size(0).run().aggregations.countries.counts_by_bucket())
         return num_projects_by_country
 
     def _calc_total_active_real_projects(self, filters):
-        total_num_projects = (DomainES().is_active().real_domains()
+        total_num_projects = (DomainES().is_active_project().real_domains()
                               .filter(filters)
                               .count())
         return total_num_projects
 
     def parse_params(self, es_params):
         es_filters = {}
-        country_params = es_params.get('deployment.countries.exact')
-        sector_params = es_params.get('internal.area.exact')
 
-        if country_params and sector_params:
-            es_filters = (filters.AND(
-                            filters.term("deployment.countries", country_params),
-                            filters.term("internal.area", sector_params[0].lower())))
-        elif country_params:
-            es_filters = filters.term("deployment.countries", country_params)
-        elif sector_params:
-            es_filters = filters.term("internal.area", sector_params[0].lower())
+        params_dict = {
+            'deployment.countries.exact': es_params.get('deployment.countries.exact'),
+            'internal.area.exact': es_params.get('internal.area.exact'),
+            'internal.sub_area.exact': es_params.get('internal.sub_area.exact'),
+        }
+        terms = []
+        for param in params_dict:
+            if params_dict[param] is not None:
+                terms.append(filters.term(param, params_dict[param]))
+        if terms:
+            es_filters = (filters.AND(terms))
 
         return es_filters
 
@@ -929,6 +931,17 @@ class AdminDomainMapReport(AdminDomainStatsReport):
         json['total_num_projects'] = self._calc_total_active_real_projects(params)
         return json
 
+
+class AdminDomainMapInternal(AdminDomainMapReport):
+    slug = "internal_project_map"
+
+    @property
+    def template_context(self):
+        context = super(AdminDomainMapInternal, self).template_context
+        context['is_internal_view'] = True
+        return context
+
+
 class AdminUserReport(AdminFacetedReport):
     slug = "user_list"
     name = ugettext_noop('User List')
@@ -938,7 +951,7 @@ class AdminUserReport(AdminFacetedReport):
     es_index = 'users'
 
     es_facet_list = [
-        "is_active",  # this is NOT "has submitted a form in the last 30 days"
+        "is_active",  # a user can log in to the project
         "is_staff",
         "is_superuser",
         "domain",

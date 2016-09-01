@@ -61,7 +61,7 @@
                 </li>
                 <% } %>
                 <% for (i = 0; i < pageCount; i++) { %>
-                <li class="page-item"><a class="page-link" data-id="<%= i %>"><%= i %></a></li>
+                <li class="page-item"><a class="page-link" data-id="<%= i %>"><%= i + 1 %></a></li>
                 <% } %>
                 <% if (currentPage < pageCount - 1) { %>
                 <li class="page-item" id="next-page">
@@ -116,10 +116,4 @@
             grid-area: <%= model.gridStyle %>;
         }
     <% }); %>
-</script>
-
-<script type="text/template" id="case-tile-container-style-template">
-    display: grid;
-    grid-template-columns: repeat(<%= model.numCasesPerRow %>, 1fr);
-    grid-template-rows: repeat(<%= model.numRows %>, 100px);
 </script>

@@ -20,6 +20,10 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_brief_apps_in_domain,
 )
+from .dbaccessors import (
+    get_form_export_instances,
+    get_case_export_instances,
+)
 from .exceptions import SkipConversion
 from .const import (
     CASE_EXPORT,
@@ -476,7 +480,7 @@ def _is_remote_app_conversion(domain, app_id, export_type):
         return any(map(lambda app: app.is_remote_app(), apps))
 
 
-def revert_new_exports(new_exports):
+def revert_new_exports(new_exports, dryrun=False):
     """
     Takes a list of new style ExportInstance and marks them as deleted as well as restoring
     the old export it was converted from (if it was converted from an old export)
@@ -490,11 +494,27 @@ def revert_new_exports(new_exports):
             schema_cls = FormExportSchema if new_export.type == FORM_EXPORT else CaseExportSchema
             old_export = schema_cls.get(new_export.legacy_saved_export_schema_id)
             old_export.doc_type = old_export.doc_type.rstrip(DELETED_SUFFIX)
-            old_export.save()
+            if not dryrun:
+                old_export.save()
             reverted_exports.append(old_export)
         new_export.doc_type += DELETED_SUFFIX
-        new_export.save()
+        if not dryrun:
+            new_export.save()
     return reverted_exports
+
+
+def revert_migrate_domain(domain, dryrun=False):
+    instances = get_form_export_instances(domain)
+    instances.extend(get_case_export_instances(domain))
+
+    reverted_exports = revert_new_exports(instances, dryrun=dryrun)
+
+    if not dryrun:
+        set_toggle(NEW_EXPORTS.slug, domain, False, namespace=NAMESPACE_DOMAIN)
+        toggle_js_domain_cachebuster.clear(domain)
+
+    for reverted_export in reverted_exports:
+        print 'Reverted export: {}'.format(reverted_export._id)
 
 
 def migrate_domain(domain, dryrun=False):
@@ -514,6 +534,7 @@ def migrate_domain(domain, dryrun=False):
                 )
             except Exception, e:
                 print 'Failed parsing {}: {}'.format(old_export['_id'], e)
+                raise e
             else:
                 metas.append(migration_meta)
 
@@ -547,3 +568,4 @@ def migrate_domain(domain, dryrun=False):
             print '## Skipped columns: ##'
             for column_meta in meta.skipped_columns:
                 column_meta.pretty_print()
+    return metas

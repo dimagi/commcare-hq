@@ -40,7 +40,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             }
             else if(response.tree){
                 // form entry time, doggy
-                FormplayerFrontend.request('startForm', response, this.app_id);
+                FormplayerFrontend.trigger('startForm', response, this.app_id);
             }
             else if(response.exception){
                 FormplayerFrontend.request('showError', response.exception);
@@ -96,11 +96,6 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                     return Backbone.Collection.prototype.fetch.call(this, options);
                 },
 
-                initialize: function (params) {
-                    this.domain = params.domain;
-                    this.appId = params.appId;
-                    this.fetch = params.fetch;
-                },
             });
 
             var defer = $.Deferred();
