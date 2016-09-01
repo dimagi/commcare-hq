@@ -2,6 +2,8 @@ from django.apps import apps
 from django.core.exceptions import ImproperlyConfigured
 from django.db import connection
 
+from corehq.apps.accounting.models import InvoiceBase, InvoiceBaseQuerySet
+
 
 class BaseDeletion(object):
 
@@ -56,7 +58,11 @@ class ModelDeletion(BaseDeletion):
             raise RuntimeError("Expected a valid domain name")
         if self.is_app_installed():
             model = self.get_model_class()
-            model.objects.filter(**{self.domain_filter_kwarg: domain_name}).delete()
+            queryset = model.objects.filter(**{self.domain_filter_kwarg: domain_name})
+            if issubclass(model, InvoiceBase):
+                super(InvoiceBaseQuerySet, queryset).delete()
+            else:
+                queryset.delete()
 
 
 def _delete_domain_backend_mappings(domain_name):

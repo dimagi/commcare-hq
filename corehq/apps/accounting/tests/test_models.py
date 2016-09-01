@@ -8,6 +8,7 @@ from django.db import models
 from dimagi.utils.dates import add_months_to_date
 
 from corehq.apps.accounting import tasks
+from corehq.apps.accounting.exceptions import InvoiceCannotBeDeletedError
 from corehq.apps.accounting.models import (
     BillingAccount,
     Currency,
@@ -267,3 +268,50 @@ class TestStripePaymentMethod(BaseAccountingTest):
         self.assertEqual(self.fake_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'False'})
         self.assertIsNone(self.billing_account.auto_pay_user)
         self.assertFalse(self.billing_account.auto_pay_enabled)
+
+
+class TestInvoiceBase(BaseAccountingTest):
+
+    def setUp(self):
+        super(TestInvoiceBase, self).setUp()
+
+        self.billing_contact = generator.arbitrary_web_user()
+        self.dimagi_user = generator.arbitrary_web_user(is_dimagi=True)
+        self.domain = Domain(name='test')
+        self.domain.save()
+        self.invoice_start, self.invoice_end = get_previous_month_date_range()
+        self.currency = generator.init_default_currency()
+        self.account = generator.billing_account(self.dimagi_user, self.billing_contact)
+
+        self.subscription_length = 4  # months
+        subscription_start_date = datetime.date(2016, 2, 23)
+        subscription_end_date = add_months_to_date(subscription_start_date, self.subscription_length)
+        self.subscription = generator.generate_domain_subscription(
+            self.account,
+            self.domain,
+            date_start=subscription_start_date,
+            date_end=subscription_end_date,
+        )
+
+        self.invoice = Invoice(
+            subscription=self.subscription,
+            date_start=self.invoice_start,
+            date_end=self.invoice_end,
+            is_hidden=False,
+        )
+
+    def test_delete_raises_error(self):
+        invoice_count = Invoice.objects.count()
+
+        with self.assertRaises(InvoiceCannotBeDeletedError):
+            self.invoice.delete()
+
+        self.assertEqual(invoice_count, Invoice.objects.count())
+
+    def test_delete_queryset_raises_error(self):
+        invoice_count = Invoice.objects.count()
+
+        with self.assertRaises(InvoiceCannotBeDeletedError):
+            Invoice.objects.all().delete()
+
+        self.assertEqual(invoice_count, Invoice.objects.count())

@@ -21,7 +21,7 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustment,
     SubscriptionType,
-)
+    InvoiceBaseQuerySet)
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.sms.models import INCOMING, OUTGOING
@@ -69,7 +69,7 @@ class BaseInvoiceTestCase(BaseAccountingTest):
         BillingRecord.objects.all().delete()
         LineItem.objects.all().delete()
         SubscriptionAdjustment.objects.all().delete()
-        Invoice.objects.all().delete()
+        super(InvoiceBaseQuerySet, Invoice.objects.all()).delete()
         generator.delete_all_subscriptions()
         generator.delete_all_accounts()
 

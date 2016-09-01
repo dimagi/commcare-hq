@@ -1710,10 +1710,16 @@ class Subscription(models.Model):
         ), last_subscription
 
 
+class InvoiceBaseQuerySet(models.QuerySet):
+
+    def delete(self):
+        raise InvoiceCannotBeDeletedError('Direct object deletion disabled.')
+
+
 class InvoiceBaseManager(models.Manager):
 
     def get_queryset(self):
-        return super(InvoiceBaseManager, self).get_queryset().filter(is_hidden_to_ops=False)
+        return InvoiceBaseQuerySet(self.model, using=self._db).filter(is_hidden_to_ops=False)
 
 
 class InvoiceBase(models.Model):
