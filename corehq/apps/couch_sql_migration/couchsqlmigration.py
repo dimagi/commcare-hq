@@ -168,8 +168,12 @@ def _copy_form_properties(domain, sql_form, couch_form):
     sql_form.state = doc_type_to_state[couch_form.doc_type]
 
     if couch_form.is_error:
+        # doc_type != XFormInstance
         sql_form.problem = couch_form.problem
         sql_form.orig_id = couch_form.orig_id
+
+    if couch_form.is_deprecated:
+        sql_form.edited_on = couch_form.deprecated_date
 
     return sql_form
 
