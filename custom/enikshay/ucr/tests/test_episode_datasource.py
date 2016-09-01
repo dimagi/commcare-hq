@@ -9,6 +9,7 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.userreports.tests.utils import run_with_all_backends
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 
@@ -125,6 +126,7 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
         )
         self.factory.create_or_update_cases([episode, test])
 
+    @run_with_all_backends
     def test_sputum_positive(self):
         self._create_case_structure(lab_result="tb_detected")
         query = self._rebuild_table_get_query_object()
@@ -149,6 +151,7 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
         self.assertEqual(row.new_smear_positive_pulmonary_TB_under_15, 1)
         self.assertEqual(row.new_smear_positive_pulmonary_TB_over_15, 0)
 
+    @run_with_all_backends
     def test_sputum_negative(self):
         self._create_case_structure(lab_result="tb_not_detected")
         query = self._rebuild_table_get_query_object()
@@ -163,6 +166,7 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
         self.assertEqual(row.new_smear_negative_pulmonary_TB_under_15, 1)
         self.assertEqual(row.new_smear_negative_pulmonary_TB_over_15, 0)
 
+    @run_with_all_backends
     def test_extra_pulmonary(self):
         self._create_case_structure(lab_result="tb_detected", disease_classification="extra_pulmonary")
         query = self._rebuild_table_get_query_object()
