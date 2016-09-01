@@ -32,18 +32,18 @@ class MigrationTestCase(TestCase):
     def test_basic_form_migration(self):
         create_and_save_a_form(self.domain_name)
         self.assertFalse(should_use_sql_backend(self.domain_name))
-        self.assertEqual(1, len(FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain()))
+        self.assertEqual(1, len(self._get_form_ids()))
         self._do_migration_and_assert_flags(self.domain_name)
-        self.assertEqual(1, len(FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain()))
+        self.assertEqual(1, len(self._get_form_ids()))
         self._compare_diffs([])
 
     def test_archived_form_migration(self):
         form = create_and_save_a_form(self.domain_name)
         form.archive('user1')
         self.assertFalse(should_use_sql_backend(self.domain_name))
-        self.assertEqual(1, len(FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain('XFormArchived')))
+        self.assertEqual(1, len(self._get_form_ids('XFormArchived')))
         self._do_migration_and_assert_flags(self.domain_name)
-        self.assertEqual(1, len(FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain('XFormArchived')))
+        self.assertEqual(1, len(self._get_form_ids('XFormArchived')))
         self._compare_diffs([])
 
     def test_error_form_migration(self):
@@ -59,9 +59,9 @@ class MigrationTestCase(TestCase):
             self.domain_name,
         )
         self.assertFalse(should_use_sql_backend(self.domain_name))
-        self.assertEqual(1, len(FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain('XFormError')))
+        self.assertEqual(1, len(self._get_form_ids('XFormError')))
         self._do_migration_and_assert_flags(self.domain_name)
-        self.assertEqual(1, len(FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain('XFormError')))
+        self.assertEqual(1, len(self._get_form_ids('XFormError')))
         self._compare_diffs([])
 
     def test_duplicate_form_migration(self):
@@ -72,18 +72,18 @@ class MigrationTestCase(TestCase):
         submit_form_locally(duplicate_form_xml, self.domain_name)
 
         self.assertFalse(should_use_sql_backend(self.domain_name))
-        self.assertEqual(1, len(FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain()))
-        self.assertEqual(1, len(FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain('XFormDuplicate')))
+        self.assertEqual(1, len(self._get_form_ids()))
+        self.assertEqual(1, len(self._get_form_ids('XFormDuplicate')))
         self._do_migration_and_assert_flags(self.domain_name)
-        self.assertEqual(1, len(FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain()))
-        self.assertEqual(1, len(FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain('XFormDuplicate')))
+        self.assertEqual(1, len(self._get_form_ids()))
+        self.assertEqual(1, len(self._get_form_ids('XFormDuplicate')))
         self._compare_diffs([])
 
     def test_basic_case_migration(self):
         create_and_save_a_case(self.domain_name, case_id=uuid.uuid4().hex, case_name='test case')
-        self.assertEqual(1, len(CaseAccessors(domain=self.domain_name).get_case_ids_in_domain()))
+        self.assertEqual(1, len(self._get_case_ids()))
         self._do_migration_and_assert_flags(self.domain_name)
-        self.assertEqual(1, len(CaseAccessors(domain=self.domain_name).get_case_ids_in_domain()))
+        self.assertEqual(1, len(self._get_case_ids()))
         self._compare_diffs([])
 
     def test_commit(self):
@@ -101,3 +101,9 @@ class MigrationTestCase(TestCase):
         diffs = get_diff_db(self.domain_name).get_diffs()
         json_diffs = [(diff.kind, diff.json_diff) for diff in diffs]
         self.assertEqual(expected, json_diffs)
+
+    def _get_form_ids(self, doc_type='XFormInstance'):
+        return FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain(doc_type=doc_type)
+
+    def _get_case_ids(self):
+        return CaseAccessors(domain=self.domain_name).get_case_ids_in_domain()
