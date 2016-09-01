@@ -3,7 +3,7 @@ import re
 from optparse import make_option
 
 from django.contrib.auth.models import User
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 
 from corehq.apps.users.models import WebUser
 from dimagi.utils.couch.database import iter_docs
@@ -36,10 +36,10 @@ def log_event(writer, event, override_user=""):
     writer.writerow([event.user, event.event_date, event.ip_address, event.request_path])
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     args = 'domain filename'
     help = """Generate request report"""
-    option_list = LabelCommand.option_list +\
+    option_list = BaseCommand.option_list +\
                   (make_option('--display-superuser', action='store_true',
                       dest='display_superuser', default=False,
                       help="Include superusers in report, otherwise 'Dimagi User'"),)
