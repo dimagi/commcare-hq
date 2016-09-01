@@ -1,5 +1,5 @@
 # django imports
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 from auditcare.utils.resolver import resolve_to_name
 from dimagi.utils.django.management import are_you_sure
 from optparse import make_option
@@ -9,11 +9,11 @@ from collections import defaultdict
 import urls
 
 from auditcare.utils import resolver, show_urls
-class Command(LabelCommand):
+class Command(BaseCommand):
     args = ''
     help = """Output ALL views in your project in a format helpful for auditcare"""
 
-    option_list = LabelCommand.option_list +\
+    option_list = BaseCommand.option_list +\
                   (make_option('--show-path', action='store_true', dest='show_path', default=False,
                       help='Show the URL paths, this is for informational purposes only'),)
 
@@ -34,4 +34,3 @@ class Command(LabelCommand):
 
 
 
-            
