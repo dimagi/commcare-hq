@@ -325,21 +325,10 @@
                     </div>
                 </div>
                 {% endif %}
-                {% include "app_manager/partials/module_filter.html" with value=module.module_filter %}
+                {% if module.case_type != "" %}
                 <div class="form-group">
                     <label class="col-sm-2 control-label">
-                        {% trans "Menu Mode" %}
-                    </label>
-                    <div class="col-sm-4">
-                        <select type="text" name="put_in_root" class="form-control">
-                            <option value="false">{% trans "Display module and then forms" %}</option>
-                            <option value="true"{% if module.put_in_root %} selected{% endif %}>{% trans "Display only forms" %}</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group hide">
-                    <label class="col-sm-2 control-label">
-                        Case Type
+                        Label for Reports and Exports
                         <span class="hq-help-template"
                               data-title="{% trans "Case Type" %}"
 
@@ -350,7 +339,7 @@
                         <input class="form-control" value="record" />
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group hide">
                     <label class="col-sm-2 control-label">
                         {% trans "Share data with other record lists" %}
                         <span class="hq-help-template"
@@ -367,6 +356,20 @@
                         </select>
                     </div>
                 </div>
+                {% endif %}
+                {% include "app_manager/partials/module_filter.html" with value=module.module_filter %}
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">
+                        {% trans "Menu Mode" %}
+                    </label>
+                    <div class="col-sm-4">
+                        <select type="text" name="put_in_root" class="form-control">
+                            <option value="false">{% trans "Display module and then forms" %}</option>
+                            <option value="true"{% if module.put_in_root %} selected{% endif %}>{% trans "Display only forms" %}</option>
+                        </select>
+                    </div>
+                </div>
+                {% if module.case_type != "" %}
                 <div class="form-group">
                     <label class="col-sm-2 control-label">
                         {% trans "Add a view-only version of this record list" %}
@@ -382,6 +385,7 @@
                         </button>
                     </div>
                 </div>
+                {% endif %}
             </fieldset>
         </form>
     </div>
