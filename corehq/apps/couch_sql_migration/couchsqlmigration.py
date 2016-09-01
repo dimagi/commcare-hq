@@ -88,9 +88,10 @@ class CouchSqlDomainMigrator(object):
             _migrate_form_attachments(sql_form, couch_form)
             _migrate_form_operations(sql_form, couch_form)
 
+            diffs = json_diff(couch_form.to_json(), sql_form.to_json())
             self.diff_db.add_diffs(
                 'form', couch_form.form_id,
-                json_diff(couch_form.to_json(), sql_form.to_json())
+                _filter_form_diffs(couch_form.doc_type, diffs)
             )
 
             _save_migrated_models(sql_form)
