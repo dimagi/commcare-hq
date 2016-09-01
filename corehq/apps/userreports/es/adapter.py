@@ -1,3 +1,4 @@
+import datetime
 from elasticsearch import NotFoundError
 from corehq.apps.userreports.util import get_table_name
 from corehq.apps.userreports.adapter import IndicatorAdapter
@@ -23,6 +24,25 @@ class ESAlchemy(object):
         if isinstance(sliced_or_int, (int, long)):
             return hits[0]
         return hits
+
+    @property
+    @memoized
+    def mapping(self):
+        # todo: this should use the column configuration instead of mapping
+        es = get_es_new()
+        mapping = es.indices.get_mapping(index=self.index_name)
+        return mapping[self.index_name]['mappings']['indicator']['properties']
+
+    def _hit_to_row(self, hit):
+        def mapping_to_datatype(col, value):
+            type = self.mapping[col]['type']
+            if type == 'date':
+                try:
+                    return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
+                except ValueError:
+                    return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
+            return value
+        return {col: mapping_to_datatype(col, hit[col]) for col in self.column_ordering}
 
     @property
     @memoized
