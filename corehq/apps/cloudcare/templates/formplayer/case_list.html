@@ -100,7 +100,7 @@
         <div class="grid-style-<%= index %> box">
             <% if (styles[index].displayFormat === 'Image') {
             if(resolveUri(datum)) { %>
-            <img class="module-icon" style="max-width:25%; height: auto;" src="<%= resolveUri(datum) %>"/>
+            <img class="module-icon" style="max-width:25%; height: 25%;" src="<%= resolveUri(datum) %>"/>
             <% } %>
             <% } else { %>
             <div><%= datum %></div>
@@ -116,4 +116,10 @@
             grid-area: <%= model.gridStyle %>;
         }
     <% }); %>
+</script>
+
+<script type="text/template" id="case-tile-container-style-template">
+    display: grid;
+    grid-template-columns: repeat(<%= model.numCasesPerRow %>, 100px);
+    grid-template-rows: repeat(<%= model.numRows %>, 100px);
 </script>
