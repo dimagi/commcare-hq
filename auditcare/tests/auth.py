@@ -4,7 +4,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.test.client import Client
-from django.contrib.auth.models import User, AnonymousUser
+from django.contrib.auth.models import User
 from django.test import TestCase
 
 from auditcare.models import AuditEvent, ModelActionAudit, AccessAudit

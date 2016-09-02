@@ -1,6 +1,3 @@
-from django.contrib.auth import authenticate
-from django.contrib.auth.views import login as django_login, logout as django_logout
-
 from models import AuditEvent
 
 def log_access(view_func):

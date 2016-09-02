@@ -4,7 +4,6 @@ import traceback
 
 from django.conf import settings
 from django.contrib import admin
-from django.contrib.auth import views as auth_views
 
 from auditcare.models import AuditEvent
 from auditcare.decorators import watch_login

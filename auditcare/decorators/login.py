@@ -2,10 +2,6 @@
 #for more information see: http://code.google.com/p/django-axes/
 import django
 from django.contrib.auth.forms import AuthenticationForm
-try:
-    from functools import wraps
-except ImportError:
-    from django.utils.functional import wraps  # Python 2.4 fallback.
 
 from datetime import datetime, timedelta
 from django.conf import settings
@@ -15,7 +11,6 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from auditcare import models
 from auditcare.models import AccessAudit
-from django.contrib.auth import authenticate
 
 # see if the user has overridden the failure limit
 FAILURE_LIMIT = getattr(settings, 'AXES_LOGIN_FAILURE_LIMIT', 3)

@@ -1,14 +1,12 @@
 # django imports
 from django.core.management.base import BaseCommand
-from auditcare.utils.resolver import resolve_to_name
-from dimagi.utils.django.management import are_you_sure
 from optparse import make_option
-from couchforms.models import XFormInstance
-from collections import defaultdict
 
 import urls
 
-from auditcare.utils import resolver, show_urls
+from auditcare.utils import show_urls
+
+
 class Command(BaseCommand):
     args = ''
     help = """Output ALL views in your project in a format helpful for auditcare"""

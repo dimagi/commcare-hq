@@ -1,5 +1,4 @@
 import csv
-import re
 from optparse import make_option
 
 from django.contrib.auth.models import User
