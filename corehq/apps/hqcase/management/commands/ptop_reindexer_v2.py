@@ -1,4 +1,5 @@
 from copy import deepcopy
+import functools
 from optparse import make_option
 
 from django.core.management import BaseCommand, CommandError
@@ -48,6 +49,13 @@ class Command(BaseCommand):
                     default=False,
                     help='Skip important confirmation warnings.'),
 
+        make_option('--domain',
+                    type='string',
+                    action='store',
+                    dest='domain',
+                    default=None,
+                    help='Limit to specific domains (comma-separated)'),
+
         # for resumable reindexers
         make_option('--reset',
                     action='store_true',
@@ -69,6 +77,13 @@ class Command(BaseCommand):
     def handle(self, index, *args, **options):
         cleanup = options.pop('cleanup')
         noinput = options.pop('noinput')
+        domains = options.pop('domain').split(',')
+        if domains:
+            def doc_filter(doc):
+                return doc.get('domain') in domains
+        else:
+            doc_filter = None
+
         reindex_fns = {
             'domain': get_domain_reindexer,
             'user': get_user_reindexer,
@@ -77,7 +92,7 @@ class Command(BaseCommand):
             'case': get_couch_case_reindexer,
             'form': get_couch_form_reindexer,
             'sql-case': get_sql_case_reindexer,
-            'sql-form': get_sql_form_reindexer,
+            'sql-form': functools.partial(get_sql_form_reindexer, doc_filter),
             'case-search': get_case_search_reindexer,
             'ledger-v2': get_ledger_v2_reindexer,
             'ledger-v1': get_ledger_v1_reindexer,

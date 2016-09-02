@@ -169,12 +169,13 @@ def get_couch_form_reindexer():
     )
 
 
-def get_sql_form_reindexer():
+def get_sql_form_reindexer(doc_filter):
     iteration_key = "SqlXFormToElasticsearchPillow_{}_reindexer".format(XFORM_INDEX_INFO.index)
     doc_provider = SqlDocumentProvider(iteration_key, FormReindexAccessor())
     return ResumableBulkElasticPillowReindexer(
         doc_provider,
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
-        doc_transform=transform_xform_for_elasticsearch
+        doc_transform=transform_xform_for_elasticsearch,
+        doc_filter=doc_filter,
     )
