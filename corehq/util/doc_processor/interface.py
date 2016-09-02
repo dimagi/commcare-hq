@@ -1,3 +1,4 @@
+import logging
 import weakref
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
@@ -194,7 +195,11 @@ class DocumentProcessorController(object):
         self._setup()
         with self.doc_processor:
             for doc in self.document_iterator:
-                self._process_doc(doc)
+                try:
+                    self._process_doc(doc)
+                except Exception as e:
+                    logging.error('Error processing {!r}'.format(doc))
+                    raise
                 self._update_progress()
 
         self._processing_complete()
