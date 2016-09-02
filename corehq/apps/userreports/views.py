@@ -704,14 +704,14 @@ class ConfigureChartReport(ReportBuilderView):
                 try:
                     report_configuration = self.report_form.create_report()
                 except BadSpecError as err:
-                    messages.error(self.request, err.message)
-                    notify_exception(self.request, err.message, details={
+                    messages.error(self.request, str(err))
+                    notify_exception(self.request, str(err), details={
                         'domain': self.domain,
                         'report_form_class': self.report_form.__class__.__name__,
                         'report_type': self.report_form.report_type,
-                        'group_by': self.report_form.group_by,
-                        'user_filters': self.report_form.user_filters,
-                        'default_filters': self.report_form.default_filters,
+                        'group_by': getattr(self.report_form, 'group_by', 'Not set'),
+                        'user_filters': getattr(self.report_form, 'user_filters', 'Not set'),
+                        'default_filters': getattr(self.report_form, 'default_filters', 'Not set'),
                     })
                     return self.get(*args, **kwargs)
                 self._track_new_report_events()
