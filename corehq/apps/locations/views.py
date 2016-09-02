@@ -22,7 +22,7 @@ from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 
 from corehq import toggles
-from corehq.apps.commtrack.tasks import import_locations_async
+from corehq.apps.commtrack.tasks import import_locations_async, location_lock_key, LOCK_LOCATIONS_TIMEOUT
 from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields import CustomDataModelMixin
@@ -31,10 +31,14 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.users.forms import MultipleSelectionForm
+from corehq.toggles import NEW_BULK_LOCATION_MANAGEMENT
 from corehq.apps.locations.permissions import location_safe
 from corehq.util import reverse, get_document_or_404
+from dimagi.utils.couch import release_lock
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from .analytics import users_have_locations
+from .const import ROOT_LOCATION_TYPE
 from .dbaccessors import get_users_assigned_to_locations
 from .permissions import (
     locations_access_required,
@@ -46,12 +50,37 @@ from .permissions import (
 )
 from .models import Location, LocationType, SQLLocation, filter_for_archived
 from .forms import LocationForm, UsersAtLocationForm
+from .tree_utils import assert_no_cycles
 from .util import load_locs_json, location_hierarchy_config, dump_locations
 
 
 @locations_access_required
 def default(request, domain):
     return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
+
+
+def lock_locations(func):
+    # Decorate a post/delete method of a view to ensure concurrent locations edits don't happen.
+    def func_wrapper(request, *args, **kwargs):
+        key = location_lock_key(request.domain)
+        client = get_redis_client()
+        lock = client.lock(key, LOCK_LOCATIONS_TIMEOUT)
+        if lock.acquire(blocking=False):
+            try:
+                return func(request, *args, **kwargs)
+            finally:
+                release_lock(lock, True)
+        else:
+            message = _("Some of the location edits are still in progress, "
+                        "please wait until they finish and then try again")
+            messages.warning(request, message)
+            if request.method == 'DELETE':
+                # handle delete_location view
+                return json_response({'success': False, 'message': message})
+            else:
+                return HttpResponseRedirect(request.META['HTTP_REFERER'])
+
+    return func_wrapper
 
 
 class BaseLocationView(BaseDomainView):
@@ -179,6 +208,7 @@ class LocationTypesView(BaseLocationView):
             'expand_to': loc_type.expand_to.pk if loc_type.expand_to else None,
         } for loc_type in LocationType.objects.by_domain(self.domain)]
 
+    @method_decorator(lock_locations)
     def post(self, request, *args, **kwargs):
         payload = json.loads(request.POST.get('json'))
         sql_loc_types = {}
@@ -275,20 +305,14 @@ class LocationTypesView(BaseLocationView):
         """
         Return loc types in order from parents to children
         """
+        assert_no_cycles([
+            (lt['pk'], lt['parent_type'])
+            if lt['parent_type'] else
+            (lt['pk'], ROOT_LOCATION_TYPE)
+            for lt in loc_types
+        ])
+
         lt_dict = {lt['pk']: lt for lt in loc_types}
-
-        # Make sure there are no cycles
-        for loc_type in loc_types:
-            visited = set()
-
-            def step(lt):
-                assert lt['name'] not in visited, \
-                    "There's a loc type cycle, we need to prohibit that"
-                visited.add(lt['name'])
-                if lt['parent_type']:
-                    step(lt_dict[lt['parent_type']])
-            step(loc_type)
-
         hierarchy = {}
 
         def insert_loc_type(loc_type):
@@ -402,6 +426,7 @@ class NewLocationView(BaseLocationView):
             return self.form_valid()
         return self.get(request, *args, **kwargs)
 
+    @method_decorator(lock_locations)
     def post(self, request, *args, **kwargs):
         return self.settings_form_post(request, *args, **kwargs)
 
@@ -424,6 +449,7 @@ def archive_location(request, domain, loc_id):
 
 @require_http_methods(['DELETE'])
 @can_edit_location
+@lock_locations
 @location_safe
 def delete_location(request, domain, loc_id):
     loc = Location.get(loc_id)
@@ -607,6 +633,7 @@ class EditLocationView(NewLocationView):
         self.sql_location.save()
         return self.form_valid()
 
+    @method_decorator(lock_locations)
     def post(self, request, *args, **kwargs):
         if self.request.POST['form_type'] == "location-settings":
             return self.settings_form_post(request, *args, **kwargs)
@@ -717,6 +744,7 @@ class LocationImportView(BaseLocationView):
         })
         return context
 
+    @method_decorator(lock_locations)
     def post(self, request, *args, **kwargs):
         upload = request.FILES.get('bulk_upload_file')
         if not upload:
@@ -753,6 +781,8 @@ class LocationImportView(BaseLocationView):
 @locations_access_required
 def location_importer_job_poll(request, domain, download_id,
                                template="style/partials/download_status.html"):
+    if NEW_BULK_LOCATION_MANAGEMENT.enabled(domain):
+        template = "locations/manage/partials/locations_upload_status.html"
     try:
         context = get_download_context(download_id, check_state=True)
     except TaskFailedError:
