@@ -1,7 +1,7 @@
 {% load hq_shared_tags %}
 
 <script type="text/template" id="case-view-list-template">
-    <div>
+    <div class="container-fluid">
         <div class="col-sm-8">
             <h2 id="title"><%= title %></h2>
         </div>
@@ -15,9 +15,8 @@
             </div>
         </div>
     </div>
-    <table class="table table-hover table-striped table-bordered">
-
         <% if (_.isNull(tiles) || !tiles) { %>
+        <table class="table table-hover table-striped table-bordered">
         <thead>
         <tr>
             <% _.each(headers, function(header) { %>
@@ -27,15 +26,16 @@
         </thead>
         <tbody class="case-container">
         </tbody>
-        <% } else {
-            console.log("Else: " + numEntitiesPerRow); %>
+        </table>
+        <% } else { %>
             <% if (numEntitiesPerRow > 1) { %>
-                <div class="wrapper case-container case-container-grid"></div>
+                <div class="wrapper case-container case-container-grid container-fluid"></div>
             <% } else { %>
-                <tbody class="wrapper case-container"></tbody>
+                <table class="table table-hover table-striped table-bordered">
+                    <tbody class="wrapper case-container"></tbody>
+                </table>
             <% } %>
         <% } %>
-    </table>
     <% if (action) { %>
     <div>
         <button type="button" class="btn btn-default" id="double-management"><%= action.text %></button>
