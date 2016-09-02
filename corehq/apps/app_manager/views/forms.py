@@ -483,10 +483,10 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'module_case_types': module_case_types,
         'form_errors': form_errors,
         'xform_validation_errored': xform_validation_errored,
-        'allow_cloudcare': app.application_version == APP_V2 and isinstance(form, Form),
+        'allow_cloudcare': isinstance(form, Form),
         'allow_form_copy': isinstance(form, Form),
-        'allow_form_filtering': (module_filter_preview or
-            (not isinstance(form, CareplanForm) and not form_has_schedule)),
+        'allow_form_filtering': module_filter_preview or (
+            not isinstance(form, CareplanForm) and not form_has_schedule),
         'allow_form_workflow': not isinstance(form, CareplanForm),
         'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
         'is_usercase_in_use': is_usercase_in_use(request.domain),

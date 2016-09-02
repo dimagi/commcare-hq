@@ -61,6 +61,9 @@ def soft_assert(to=None, notify_admins=False,
     if isinstance(to, basestring):
         to = [to]
 
+    if to is None:
+        to = []
+
     if to is not None and send_to_ops and settings.SOFT_ASSERT_EMAIL:
         to = to + [settings.SOFT_ASSERT_EMAIL]
 
