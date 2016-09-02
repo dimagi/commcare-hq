@@ -52,7 +52,8 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.analytics import users_have_locations
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.utils import turn_off_demo_mode, demo_restore_date_created
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
@@ -538,9 +539,15 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     @use_select2
     @use_angular_js
+    @location_safe
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, *args, **kwargs):
         return super(MobileWorkerListView, self).dispatch(*args, **kwargs)
+
+    @property
+    @memoized
+    def can_access_all_locations(self):
+        return self.couch_user.has_permission(self.domain, 'access_all_locations')
 
     @property
     def can_bulk_edit_users(self):
@@ -577,6 +584,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'custom_field_names': [f.label for f in self.custom_data.fields],
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
+            'can_access_all_locations': self.can_access_all_locations,
             'pagination_limit_cookie_name': (
                 'hq.pagination.limit.mobile_workers_list.%s' % self.domain),
             'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain),
@@ -614,6 +622,10 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         user_es = get_search_users_in_domain_es_query(
             domain=self.domain, search_string=search_string,
             offset=page * limit, limit=limit)
+        if not self.can_access_all_locations:
+            loc_ids = (SQLLocation.objects.accessible_to_user(self.domain, self.couch_user)
+                                          .location_ids())
+            user_es = user_es.location(list(loc_ids))
         return user_es.mobile_users()
 
     @allow_remote_invocation
