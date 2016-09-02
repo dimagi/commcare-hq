@@ -21,6 +21,7 @@
     "angular-messages": "1.4.4",
     "angular-cookies": "1.4.4",
     "angular-sanitize": "1.4.4",
+    "jquery-1.11.1": "jquery#1.11.1",
     "knockout": "3.3.0",
     "knockout-validation": "2.0.3",
     "select2-3.4.5-legacy": "select2#3.4.5",
