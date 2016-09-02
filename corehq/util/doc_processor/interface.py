@@ -197,7 +197,7 @@ class DocumentProcessorController(object):
             for doc in self.document_iterator:
                 try:
                     self._process_doc(doc)
-                except Exception as e:
+                except Exception:
                     logging.error('Error processing {!r}'.format(doc))
                     raise
                 self._update_progress()

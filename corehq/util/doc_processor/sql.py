@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 
 from django.conf import settings
 
@@ -63,7 +64,11 @@ def resumable_sql_model_iterator(iteration_key, reindex_accessor, chunk_size=100
     class ResumableModelIterator(ResumableFunctionIterator):
         def __iter__(self):
             for doc in super(ResumableModelIterator, self).__iter__():
-                yield reindex_accessor.doc_to_json(doc)
+                try:
+                    yield reindex_accessor.doc_to_json(doc)
+                except Exception:
+                    logging.error('Error converting {!r}'.format(doc))
+                    raise
 
     item_getter = reindex_accessor.get_doc
 
