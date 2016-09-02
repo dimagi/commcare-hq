@@ -199,8 +199,8 @@ class ESQuery(object):
             start = sliced_or_int
             size = 1
         else:
-            start = sliced.start or 0
-            size = sliced.stop - start
+            start = sliced_or_int.start or 0
+            size = sliced_or_int.stop - start
         return self.start(start).size(size).run().hits
 
     def run(self):
