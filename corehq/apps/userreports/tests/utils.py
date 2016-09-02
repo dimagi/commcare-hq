@@ -88,26 +88,23 @@ def domain_lite(name):
 
 
 def post_run_with_sql_backend(fn, *args, **kwargs):
-    with patch('corehq.apps.userreports.models.DEFAULT_UCR_BACKEND', "SQL"):
-        fn.doCleanups()
-        fn.tearDown()
+    fn.doCleanups()
+    fn.tearDown()
 
 
 def pre_run_with_es_backend(fn, *args, **kwargs):
-    with patch('corehq.apps.userreports.models.DEFAULT_UCR_BACKEND', "ES"):
-        fn.setUp()
+    fn.setUp()
 
 
-# settings doesn't actually do anything here. It's only for logging
 run_with_all_backends = functools.partial(
     run_with_multiple_configs,
     run_configs=[
         RunConfig(
-            settings={'DEFAULT_UCR_BACKEND': "SQL"},
+            settings={'OVERRIDE_UCR_BACKEND': "SQL"},
             post_run=post_run_with_sql_backend
         ),
         RunConfig(
-            settings={'DEFAULT_UCR_BACKEND': "ES"},
+            settings={'OVERRIDE_UCR_BACKEND': "ES"},
             pre_run=pre_run_with_es_backend,
         ),
     ]

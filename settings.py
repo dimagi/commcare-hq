@@ -895,6 +895,7 @@ KAFKA_URL = 'localhost:9092'
 
 MOBILE_INTEGRATION_TEST_TOKEN = None
 
+OVERRIDE_UCR_BACKEND = None
 
 try:
     # try to see if there's an environmental variable set for local_settings
