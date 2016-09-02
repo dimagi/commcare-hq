@@ -95,6 +95,11 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         # prevent JsonObject from auto-converting dates etc.
         string_conversions = ()
 
+    def __init__(self, *args, **kwargs):
+        if not kwargs.get('backend_id', None):
+            kwargs['backend_id'] = DEFAULT_UCR_BACKEND
+        super(DataSourceConfiguration, self).__init__(*args, **kwargs)
+
     @classmethod
     def wrap(self, data):
         if not data.get('backend_id', None):
