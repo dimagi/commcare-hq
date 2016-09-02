@@ -13,7 +13,12 @@ Util.objectToEncodedUrl = function (object) {
 
 Util.currentUrlToObject = function () {
     var url = Backbone.history.getFragment();
-    return Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(url));
+    try {
+        return Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(url));
+    } catch (e) {
+        // This means that we're on the homepage
+        return new Util.CloudcareUrl();
+    }
 };
 
 Util.setUrlToObject = function (urlObject) {
@@ -83,6 +88,15 @@ Util.CloudcareUrl = function (appId, options) {
         this.page = null;
         this.search= null;
         this.queryDict = null;
+        this.previewCommand = null;
+    };
+
+    this.onSubmit = function () {
+        this.steps = null;
+        this.page = null;
+        this.search = null;
+        this.queryDict = null;
+        this.previewCommand = null;
     };
 
     this.spliceSteps = function(index) {

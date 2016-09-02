@@ -59,7 +59,13 @@ class DomainInvoiceFactory(object):
         subscriptions = self._get_subscriptions()
         self._ensure_full_coverage(subscriptions)
         for subscription in subscriptions:
-            self._create_invoice_for_subscription(subscription)
+            try:
+                self._create_invoice_for_subscription(subscription)
+            except InvoiceAlreadyCreatedError as e:
+                log_accounting_error(
+                    "Invoice already existed for domain %s: %s" % (self.domain.name, e),
+                    show_stack_trace=True,
+                )
 
     def _get_subscriptions(self):
         subscriptions = Subscription.objects.filter(
@@ -116,10 +122,7 @@ class DomainInvoiceFactory(object):
 
     def _create_invoice_for_subscription(self, subscription):
         def _get_invoice_start(sub, date_start):
-            if sub.date_start > date_start:
-                return sub.date_start
-            else:
-                return date_start
+            return max(sub.date_start, date_start)
 
         def _get_invoice_end(sub, date_end):
             if sub.date_end is not None and sub.date_end <= date_end:
@@ -586,7 +589,8 @@ class SmsLineItemFactory(FeatureLineItemFactory):
         return SmsBillable.objects.filter(
             domain__in=self.subscribed_domains,
             is_valid=True,
-            date_sent__range=[self.invoice.date_start, self.invoice.date_end]
+            date_sent__gte=self.invoice.date_start,
+            date_sent__lt=self.invoice.date_end + datetime.timedelta(days=1),
         ).order_by('-date_sent')
 
     @property

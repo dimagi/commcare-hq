@@ -10,7 +10,6 @@ from StringIO import StringIO
 
 import dateutil
 from dimagi.utils.decorators.memoized import memoized
-from django.utils.datastructures import SortedDict
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 from django.conf import settings
@@ -20,7 +19,7 @@ from django.contrib.auth import login
 from django.core import management, cache
 from django.shortcuts import render
 from django.template.loader import render_to_string
-from django.views.generic import FormView, TemplateView
+from django.views.generic import FormView, TemplateView, View
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.http import (
@@ -28,6 +27,7 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseNotFound,
+    JsonResponse
 )
 from restkit import Resource
 from restkit.errors import Unauthorized
@@ -557,6 +557,10 @@ class VCMMigrationView(BaseAdminSectionView):
         })
         return context
 
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(VCMMigrationView, self).dispatch(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
         action = self.request.POST['action']
 
@@ -910,7 +914,7 @@ def callcenter_test(request):
         query_date = date.today()
 
     def view_data(case_id, indicators):
-        new_dict = SortedDict()
+        new_dict = OrderedDict()
         key_list = sorted(indicators.keys())
         for key in key_list:
             new_dict[key] = indicators[key]
@@ -1183,12 +1187,32 @@ class ReprocessMessagingCaseUpdatesView(BaseAdminSectionView):
 
 def top_five_projects_by_country(request):
     data = {}
+    internalMode = request.user.is_superuser
+    attributes = ['internal.area', 'internal.sub_area', 'cp_n_active_cc_users', 'deployment.countries']
+
+    if internalMode:
+        attributes = ['name', 'internal.organization_name', 'internal.notes'] + attributes
+
     if 'country' in request.GET:
         country = request.GET.get('country')
         projects = (DomainES().is_active_project().real_domains()
                     .filter(filters.term('deployment.countries', country))
-                    .sort('cp_n_active_cc_users', True)
-                    .source(['internal.area', 'internal.sub_area', 'cp_n_active_cc_users', 'deployment.countries'])
-                    .size(5).run().hits)
-        data = {country: projects}
+                    .sort('cp_n_active_cc_users', True).source(attributes).size(5).run().hits)
+        data = {country: projects, 'internal': internalMode}
+
     return json_response(data)
+
+
+class WebUserDataView(View):
+    urlname = 'web_user_data'
+
+    def dispatch(self, request, *args, **kwargs):
+        return super(WebUserDataView, self).dispatch(request, domain='dummy', *args, **kwargs)
+
+    @method_decorator(login_or_basic)
+    def get(self, request, *args, **kwargs):
+        if request.couch_user.is_web_user():
+            data = {'domains': request.couch_user.domains}
+            return JsonResponse(data)
+        else:
+            return HttpResponse('Only web users can access this endpoint', status=400)

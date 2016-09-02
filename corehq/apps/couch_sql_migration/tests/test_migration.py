@@ -31,5 +31,5 @@ class MigrationTestCase(TestCase):
 
     def _do_migration_and_assert_flags(self, domain):
         self.assertFalse(should_use_sql_backend(domain))
-        call_command('migrate_domain_from_couch_to_sql', domain)
+        call_command('migrate_domain_from_couch_to_sql', domain, MIGRATE=True)
         self.assertTrue(should_use_sql_backend(domain))

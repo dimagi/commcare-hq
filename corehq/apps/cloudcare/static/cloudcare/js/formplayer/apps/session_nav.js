@@ -13,7 +13,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
 
     var API = {
         listApps: function () {
-            FormplayerFrontend.request("clearForm");
+            FormplayerFrontend.trigger("clearForm");
             SessionNavigate.AppList.Controller.listApps();
         },
         singleApp: function(appId) {
@@ -23,7 +23,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             SessionNavigate.MenuList.Controller.selectMenu(appId);
         },
         listMenus: function (sessionObject) {
-            FormplayerFrontend.request("clearForm");
+            FormplayerFrontend.trigger("clearForm");
             var urlObject = Util.CloudcareUrl.fromJson(
                 Util.encodedUrlToObject(sessionObject || Backbone.history.getFragment())
             );
@@ -44,43 +44,56 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
                 previewCommand
             );
         },
-        showDetail: function (model, index) {
-            SessionNavigate.MenuList.Controller.showDetail(model, index);
+        showDetail: function (model, detailTabIndex) {
+            SessionNavigate.MenuList.Controller.showDetail(model, detailTabIndex);
         },
         listSessions: function() {
-            FormplayerFrontend.request("clearForm");
+            FormplayerFrontend.trigger("clearForm");
             SessionNavigate.SessionList.Controller.listSessions();
         },
 
         getSession: function(sessionId) {
             FormplayerFrontend.request("getSession", sessionId);
         },
-        renderResponse: function (menuResponse) {
-            FormplayerFrontend.request("clearForm");
-            var NextScreenCollection = Backbone.Collection.extend({});
-            var nextScreenCollection;
-            //TODO: clean up this hackiness
-            if (menuResponse.commands) {
-                nextScreenCollection = new NextScreenCollection(menuResponse.commands);
-                nextScreenCollection.type = "commands";
-            } else {
-                nextScreenCollection = new NextScreenCollection(menuResponse.entities);
-                nextScreenCollection.type = "entities";
-            }
-            nextScreenCollection.title = menuResponse.title;
-            nextScreenCollection.locales = menuResponse.locales;
-            nextScreenCollection.sessionId = menuResponse.menuSessionId;
-            nextScreenCollection.headers = menuResponse.headers;
-            nextScreenCollection.styles = menuResponse.styles;
-            nextScreenCollection.tiles = menuResponse.tiles;
-            nextScreenCollection.action = menuResponse.action;
-            nextScreenCollection.breadcrumbs = menuResponse.breadcrumbs;
-            var currentFragment = Backbone.history.getFragment();
-            var urlObject = Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(currentFragment));
-            urlObject.setSessionId(nextScreenCollection.sessionId);
-            var encodedUrl = Util.objectToEncodedUrl(urlObject.toJson());
+        /**
+         * renderResponse
+         *
+         * Takes a response from a successfully submitted form and routes
+         * the application to the correct screen. In normal circumstances,
+         * the response is a menu response since the user is navigating to
+         * module list or home screen. When linking forms, the response will
+         * be a form response which will route to a new form.
+         */
+        renderResponse: function (response) {
+            FormplayerFrontend.trigger("clearForm");
+            var currentFragment,
+                urlObject,
+                encodedUrl,
+                sessionId,
+                menuCollection;
+
+            // Response can be a form response which will result in the the session id
+            // being stored in the session_id field. If it's menu response it will be
+            // stored in menuSessionId
+            sessionId = response.session_id || response.menuSessionId;
+
+            currentFragment = Backbone.history.getFragment();
+            urlObject = Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(currentFragment));
+            urlObject.setSessionId(sessionId);
+            encodedUrl = Util.objectToEncodedUrl(urlObject.toJson());
+            response.appId = urlObject.appId;
+            response.sessionId = sessionId;
+
+            // When the response gets parsed, it will automatically trigger form
+            // entry if it is a form response.
+            menuCollection = new FormplayerFrontend.Entities.MenuSelectCollection(
+                response,
+                { parse: true }
+            );
+
             FormplayerFrontend.navigate(encodedUrl);
-            SessionNavigate.MenuList.Controller.showMenu(nextScreenCollection);
+
+            SessionNavigate.MenuList.Controller.showMenu(menuCollection);
         },
     };
 
@@ -135,8 +148,8 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         API.listMenus();
     });
 
-    FormplayerFrontend.on("menu:show:detail", function (model, index) {
-        API.showDetail(model, index);
+    FormplayerFrontend.on("menu:show:detail", function (model, detailTabIndex) {
+        API.showDetail(model, detailTabIndex);
     });
 
     FormplayerFrontend.on("sessions", function () {
@@ -160,7 +173,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     });
 
     FormplayerFrontend.on("breadcrumbSelect", function (index) {
-        FormplayerFrontend.request("clearForm");
+        FormplayerFrontend.trigger("clearForm");
         var urlObject = Util.currentUrlToObject();
         urlObject.spliceSteps(index);
         Util.setUrlToObject(urlObject);

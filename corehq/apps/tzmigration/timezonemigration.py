@@ -1,20 +1,20 @@
 import collections
-from copy import deepcopy
 import os
+from copy import deepcopy
 
 from couchdbkit import ResourceNotFound
 from django.conf import settings
+
 from casexml.apps.case.cleanup import rebuild_case_from_actions
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.xform import get_case_updates
-
-from corehq.form_processor.utils.metadata import scrub_meta
 from corehq.apps.tzmigration import set_migration_started, \
     set_migration_complete, force_phone_timezones_should_be_processed
 from corehq.apps.tzmigration.planning import PlanningDB
 from corehq.blobs.mixin import BlobHelper
 from corehq.form_processor.parsers.ledgers import get_stock_actions
 from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes
+from corehq.form_processor.utils.metadata import scrub_meta
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs

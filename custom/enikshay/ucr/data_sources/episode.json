@@ -107,6 +107,21 @@
                 }
             },
             {
+                "display_name": "occurrence_id",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "occurrence_id",
+                "expression": {
+                    "datatype": null,
+                    "type": "named",
+                    "name": "occurrence_id"
+                }
+            },
+            {
                 "display_name": "person_id",
                 "transform": {
                 },
@@ -223,6 +238,52 @@
                     "property_name": "basis_of_diagnosis"
                 },
                 "column_id": "basis_of_diagnosis"
+            },
+            {
+                "type": "boolean",
+                "column_id": "sputum_result",
+                "filter": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "reduce_items",
+                            "items_expression": {
+                                "type": "sort_items",
+                                "items_expression": {
+                                    "type": "filter_items",
+                                    "items_expression": {
+                                        "type": "get_subcases",
+                                        "case_id_expression": {
+                                            "type": "named",
+                                            "name": "occurrence_id"
+                                        }
+                                    },
+                                    "filter_expression": {
+                                        "type": "boolean_expression",
+                                        "operator": "eq",
+                                        "expression": {
+                                            "type": "property_name",
+                                            "property_name": "test_type_value"
+                                        },
+                                        "property_value": "microscopy-zn"
+                                    }
+                                },
+                                "sort_expression": {
+                                    "type": "property_name",
+                                    "property_name": "opened_on"
+                                }
+                            },
+                            "aggregation_fn": "last_item"
+                        },
+                        "value_expression": {
+                            "type": "property_name",
+                            "property_name": "result"
+                        }
+                    },
+                    "property_value": "tb_detected"
+                }
             },
             {
                 "display_name": "hiv_status",
@@ -352,26 +413,43 @@
             },
             {
                 "filter": {
-                    "operator": "eq",
                     "type": "boolean_expression",
+                    "operator": "eq",
                     "expression": {
-                        "value_expression": {
-                            "datatype": null,
-                            "type": "property_name",
-                            "property_name": "purpose_of_testing"
-                        },
                         "type": "nested",
                         "argument_expression": {
-                            "array_expression": {
-                                "type": "get_subcases",
-                                "case_id_expression": {
-                                    "datatype": null,
+                            "type": "reduce_items",
+                            "items_expression": {
+                                "type": "sort_items",
+                                "items_expression": {
+                                    "type": "filter_items",
+                                    "items_expression": {
+                                        "type": "get_subcases",
+                                        "case_id_expression": {
+                                            "type": "named",
+                                            "name": "occurrence_id"
+                                        }
+                                    },
+                                    "filter_expression": {
+                                        "type": "boolean_expression",
+                                        "operator": "eq",
+                                        "expression": {
+                                            "type": "property_name",
+                                            "property_name": "test_type_value"
+                                        },
+                                        "property_value": "microscopy-zn"
+                                    }
+                                },
+                                "sort_expression": {
                                     "type": "property_name",
-                                    "property_name": "_id"
+                                    "property_name": "opened_on"
                                 }
                             },
-                            "type": "array_index",
-                            "index_expression": 0
+                            "aggregation_fn": "last_item"
+                        },
+                        "value_expression": {
+                            "type": "property_name",
+                            "property_name": "purpose_of_testing"
                         }
                     },
                     "property_value": "diagnostic_or_pretreatment"
@@ -862,6 +940,1085 @@
                 "display_name": "new_smear_positive_extra_pulmonary_TB_transgender",
                 "type": "boolean",
                 "column_id": "new_smear_positive_extra_pulmonary_TB_transgender"
+            },
+            {
+                "column_id": "patient_under_15",
+                "type": "boolean",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "under_15"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "type": "property_name",
+                                    "property_name": "episode_type"
+                                },
+                                "operator": "eq",
+                                "property_value": ""
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "column_id": "patient_over_15",
+                "type": "boolean",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "not",
+                            "filter": {
+                                "name": "under_15",
+                                "type": "named"
+                            }
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "type": "property_name",
+                                    "property_name": "episode_type"
+                                },
+                                "operator": "eq",
+                                "property_value": ""
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "relapse"
+                        },
+                        {
+                            "type": "named",
+                            "name": "test_purpose_diagnostic"
+                        },
+                        {
+                            "type": "named",
+                            "name": "under_15"
+                        }
+                    ]
+                },
+                "display_name": "relapses_under_15",
+                "type": "boolean",
+                "column_id": "relapses_under_15"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "relapse"
+                        },
+                        {
+                            "type": "named",
+                            "name": "test_purpose_diagnostic"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "name": "under_15",
+                                "type": "named"
+                            }
+                        }
+                    ]
+                },
+                "display_name": "relapses_over_15",
+                "type": "boolean",
+                "column_id": "relapses_over_15"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "relapse"
+                        },
+                        {
+                            "type": "named",
+                            "name": "test_purpose_diagnostic"
+                        },
+                        {
+                            "type": "named",
+                            "name": "female"
+                        }
+                    ]
+                },
+                "display_name": "relapses_female",
+                "type": "boolean",
+                "column_id": "relapses_female"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "relapse"
+                        },
+                        {
+                            "type": "named",
+                            "name": "test_purpose_diagnostic"
+                        },
+                        {
+                            "type": "named",
+                            "name": "male"
+                        }
+                    ]
+                },
+                "display_name": "relapses_male",
+                "type": "boolean",
+                "column_id": "relapses_male"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "relapse"
+                        },
+                        {
+                            "type": "named",
+                            "name": "test_purpose_diagnostic"
+                        },
+                        {
+                            "type": "named",
+                            "name": "transgender"
+                        }
+                    ]
+                },
+                "display_name": "relapses_transgender",
+                "type": "boolean",
+                "column_id": "relapses_transgender"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "relapse"
+                        },
+                        {
+                            "type": "named",
+                            "name": "test_purpose_diagnostic"
+                        }
+                    ]
+                },
+                "display_name": "relapses_all",
+                "type": "boolean",
+                "column_id": "relapses_all"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_under_15_male",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "male",
+                            "type": "named"
+                        },
+                        {
+                            "name": "under_15",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_under_15_female",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "female",
+                            "type": "named"
+                        },
+                        {
+                            "name": "under_15",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_under_15_transgender",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "transgender",
+                            "type": "named"
+                        },
+                        {
+                            "name": "under_15",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_under_15_all",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "under_15",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_age_between_15_and_24_male",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "male",
+                            "type": "named"
+                        },
+                        {
+                            "name": "age_between_15_and_24",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_age_between_15_and_24_female",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "female",
+                            "type": "named"
+                        },
+                        {
+                            "name": "age_between_15_and_24",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_age_between_15_and_24_transgender",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "transgender",
+                            "type": "named"
+                        },
+                        {
+                            "name": "age_between_15_and_24",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_age_between_15_and_24_all",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "age_between_15_and_24",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_age_between_25_and_34_male",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "male",
+                            "type": "named"
+                        },
+                        {
+                            "name": "age_between_25_and_34",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_age_between_25_and_34_female",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "female",
+                            "type": "named"
+                        },
+                        {
+                            "name": "age_between_25_and_34",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_age_between_25_and_34_transgender",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "transgender",
+                            "type": "named"
+                        },
+                        {
+                            "name": "age_between_25_and_34",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_age_between_25_and_34_all",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "age_between_25_and_34",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_age_between_35_and_44_male",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "male",
+                            "type": "named"
+                        },
+                        {
+                            "name": "age_between_35_and_44",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_age_between_35_and_44_female",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "female",
+                            "type": "named"
+                        },
+                        {
+                            "name": "age_between_35_and_44",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_age_between_35_and_44_transgender",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "transgender",
+                            "type": "named"
+                        },
+                        {
+                            "name": "age_between_35_and_44",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_age_between_35_and_44_all",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "age_between_35_and_44",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_age_between_45_and_54_male",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "male",
+                            "type": "named"
+                        },
+                        {
+                            "name": "age_between_45_and_54",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_age_between_45_and_54_female",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "female",
+                            "type": "named"
+                        },
+                        {
+                            "name": "age_between_45_and_54",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_age_between_45_and_54_transgender",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "transgender",
+                            "type": "named"
+                        },
+                        {
+                            "name": "age_between_45_and_54",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_age_between_45_and_54_all",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "age_between_45_and_54",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_age_between_55_and_64_male",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "male",
+                            "type": "named"
+                        },
+                        {
+                            "name": "age_between_55_and_64",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_age_between_55_and_64_female",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "female",
+                            "type": "named"
+                        },
+                        {
+                            "name": "age_between_55_and_64",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_age_between_55_and_64_transgender",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "transgender",
+                            "type": "named"
+                        },
+                        {
+                            "name": "age_between_55_and_64",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_age_between_55_and_64_all",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "age_between_55_and_64",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_age_over_65_male",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "male",
+                            "type": "named"
+                        },
+                        {
+                            "name": "age_over_65",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_age_over_65_female",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "female",
+                            "type": "named"
+                        },
+                        {
+                            "name": "age_over_65",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_age_over_65_transgender",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "transgender",
+                            "type": "named"
+                        },
+                        {
+                            "name": "age_over_65",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "smear_positive_pulmonary_tb_age_over_65_all",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "age_over_65",
+                            "type": "named"
+                        },
+                        {
+                            "name": "pulmonary",
+                            "type": "named"
+                        },
+                        {
+                            "name": "sputum_positive",
+                            "type": "named"
+                        },
+                        {
+                            "name": "test_purpose_diagnostic",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "with_patient_type_and_under_15",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "name": "under_15",
+                            "type": "named"
+                        },
+                        {
+                            "name": "has_patient_type",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "with_patient_type_and_over_15",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "type": "not",
+                            "filter": {
+                                "name": "under_15",
+                                "type": "named"
+                            }
+                        },
+                        {
+                            "name": "has_patient_type",
+                            "type": "named"
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
+            },
+            {
+                "column_id": "hiv_test_done",
+                "display_name": null,
+                "filter": {
+                    "filters": [
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "datatype": "string",
+                                "type": "property_name",
+                                "property_name": "hiv_status"
+                            },
+                            "property_value": ["reactive", "non_reactive"]
+                        }
+                    ],
+                    "type": "and"
+                },
+                "type": "boolean"
             }
         ],
         "named_filters": {
@@ -875,6 +2032,141 @@
                 },
                 "property_value": 5475
             },
+            "age_between_15_and_24": {
+                "type": "and",
+                "filters": [
+                    {
+                        "operator": "gte",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "named",
+                            "name": "age_in_days"
+                        },
+                        "property_value": 5475
+                    },
+                    {
+                        "operator": "lt",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "named",
+                            "name": "age_in_days"
+                        },
+                        "property_value": 9125
+                    }
+                ]
+            },
+            "age_between_25_and_34": {
+                "type": "and",
+                "filters": [
+                    {
+                        "operator": "gte",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "named",
+                            "name": "age_in_days"
+                        },
+                        "property_value": 9125
+                    },
+                    {
+                        "operator": "lt",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "named",
+                            "name": "age_in_days"
+                        },
+                        "property_value": 12775
+                    }
+                ]
+            },
+            "age_between_35_and_44": {
+                "type": "and",
+                "filters": [
+                    {
+                        "operator": "gte",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "named",
+                            "name": "age_in_days"
+                        },
+                        "property_value": 12775
+                    },
+                    {
+                        "operator": "lt",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "named",
+                            "name": "age_in_days"
+                        },
+                        "property_value": 16425
+                    }
+                ]
+            },
+            "age_between_45_and_54": {
+                "type": "and",
+                "filters": [
+                    {
+                        "operator": "gte",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "named",
+                            "name": "age_in_days"
+                        },
+                        "property_value": 16425
+                    },
+                    {
+                        "operator": "lt",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "named",
+                            "name": "age_in_days"
+                        },
+                        "property_value": 20075
+                    }
+                ]
+            },
+            "age_between_55_and_64": {
+                "type": "and",
+                "filters": [
+                    {
+                        "operator": "gte",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "named",
+                            "name": "age_in_days"
+                        },
+                        "property_value": 20075
+                    },
+                    {
+                        "operator": "lt",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "named",
+                            "name": "age_in_days"
+                        },
+                        "property_value": 23725
+                    }
+                ]
+            },
+            "age_over_65": {
+                "operator": "gte",
+                "type": "boolean_expression",
+                "expression": {
+                    "datatype": "integer",
+                    "type": "named",
+                    "name": "age_in_days"
+                },
+                "property_value": 23725
+            },
             "new_patient": {
                 "operator": "eq",
                 "expression": {
@@ -884,6 +2176,16 @@
                 },
                 "type": "boolean_expression",
                 "property_value": "new"
+            },
+            "relapse": {
+                "operator": "eq",
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "patient_type"
+                },
+                "type": "boolean_expression",
+                "property_value": "recurrent"
             },
             "female": {
                 "operator": "eq",
@@ -896,24 +2198,8 @@
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
                     "doc_id_expression": {
-                        "value_expression": {
-                            "datatype": null,
-                            "type": "property_name",
-                            "property_name": "referenced_id"
-                        },
-                        "type": "nested",
-                        "argument_expression": {
-                            "type": "array_index",
-                            "array_expression": {
-                                "datatype": null,
-                                "type": "property_name",
-                                "property_name": "indices"
-                            },
-                            "index_expression": {
-                                "type": "constant",
-                                "constant": 0
-                            }
-                        }
+                        "type": "named",
+                        "name": "person_id"
                     }
                 },
                 "type": "boolean_expression",
@@ -950,24 +2236,8 @@
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
                     "doc_id_expression": {
-                        "value_expression": {
-                            "datatype": null,
-                            "type": "property_name",
-                            "property_name": "referenced_id"
-                        },
-                        "type": "nested",
-                        "argument_expression": {
-                            "type": "array_index",
-                            "array_expression": {
-                                "datatype": null,
-                                "type": "property_name",
-                                "property_name": "indices"
-                            },
-                            "index_expression": {
-                                "type": "constant",
-                                "constant": 0
-                            }
-                        }
+                        "type": "named",
+                        "name": "person_id"
                     }
                 },
                 "type": "boolean_expression",
@@ -984,24 +2254,9 @@
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
                     "doc_id_expression": {
-                        "value_expression": {
-                            "datatype": null,
-                            "type": "property_name",
-                            "property_name": "referenced_id"
-                        },
-                        "type": "nested",
-                        "argument_expression": {
-                            "type": "array_index",
-                            "array_expression": {
-                                "datatype": null,
-                                "type": "property_name",
-                                "property_name": "indices"
-                            },
-                            "index_expression": {
-                                "type": "constant",
-                                "constant": 0
-                            }
-                        }
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
                     }
                 },
                 "type": "boolean_expression",
@@ -1018,18 +2273,105 @@
                 "property_value": "reactive"
             },
             "sputum_positive": {
+                "type": "boolean_expression",
                 "operator": "eq",
                 "expression": {
-                    "datatype": "string",
-                    "type": "property_name",
-                    "property_name": "lab_result"
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "reduce_items",
+                        "items_expression": {
+                            "type": "sort_items",
+                            "items_expression": {
+                                "type": "filter_items",
+                                "items_expression": {
+                                    "type": "get_subcases",
+                                    "case_id_expression": {
+                                        "type": "named",
+                                        "name": "occurrence_id"
+                                    }
+                                },
+                                "filter_expression": {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "property_value": "microscopy-zn"
+                                }
+                            },
+                            "sort_expression": {
+                                "type": "property_name",
+                                "property_name": "opened_on"
+                            }
+                        },
+                        "aggregation_fn": "last_item"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "result"
+                    }
                 },
+                "property_value": "tb_detected"
+            },
+            "test_purpose_diagnostic": {
+                "operator": "eq",
                 "type": "boolean_expression",
-                "property_value": "TB detected"
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "reduce_items",
+                        "items_expression": {
+                            "type": "sort_items",
+                            "items_expression": {
+                                "type": "filter_items",
+                                "items_expression": {
+                                    "type": "get_subcases",
+                                    "case_id_expression": {
+                                        "type": "named",
+                                        "name": "occurrence_id"
+                                    }
+                                },
+                                "filter_expression": {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "property_value": "microscopy-zn"
+                                }
+                            },
+                            "sort_expression": {
+                                "type": "property_name",
+                                "property_name": "opened_on"
+                            }
+                        },
+                        "aggregation_fn": "last_item"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "purpose_of_testing"
+                    }
+                },
+                "property_value": "diagnostic_or_pretreatment"
+            },
+            "has_patient_type": {
+                "type": "not",
+                "filter": {
+                    "operator": "in",
+                    "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "patient_type"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": ["", null]
+                }
             }
         },
         "named_expressions": {
-            "person_id": {
+            "occurrence_id": {
                 "value_expression": {
                     "datatype": null,
                     "type": "property_name",
@@ -1046,6 +2388,50 @@
                     "index_expression": {
                         "type": "constant",
                         "constant": 0
+                    }
+                }
+            },
+            "person_id": {
+                "value_expression": {
+                    "type": "nested",
+                    "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "referenced_id"
+                    },
+                    "argument_expression": {
+                        "type": "array_index",
+                        "array_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "indices"
+                        },
+                        "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    }
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                    "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "referenced_id"
+                    },
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "array_index",
+                        "array_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "indices"
+                        },
+                        "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                        }
                     }
                 }
             },
@@ -1073,21 +2459,45 @@
                     "related_doc_type": "CommCareCase",
                     "doc_id_expression": {
                         "value_expression": {
-                            "datatype": null,
-                            "type": "property_name",
-                            "property_name": "referenced_id"
-                        },
-                        "type": "nested",
-                        "argument_expression": {
-                            "type": "array_index",
-                            "array_expression": {
+                            "type": "nested",
+                            "value_expression": {
                                 "datatype": null,
                                 "type": "property_name",
-                                "property_name": "indices"
+                                "property_name": "referenced_id"
                             },
-                            "index_expression": {
-                                "type": "constant",
-                                "constant": 0
+                            "argument_expression": {
+                                "type": "array_index",
+                                "array_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "indices"
+                                },
+                                "index_expression": {
+                                    "type": "constant",
+                                    "constant": 0
+                                }
+                            }
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                            "value_expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "referenced_id"
+                            },
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "array_index",
+                                "array_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "indices"
+                                },
+                                "index_expression": {
+                                    "type": "constant",
+                                    "constant": 0
+                                }
                             }
                         }
                     }

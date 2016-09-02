@@ -514,8 +514,15 @@ MOBILE_UCR = StaticToggle(
 
 RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
     'restrict_web_users_by_location',
-    "Allow project to restrict web user permissions by location",
+    "Allow project to restrict web user permissions by location (deprecated)",
     TAG_PRODUCT_CORE,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+LOCATION_BASED_ACCESS_RESTRICTIONS = StaticToggle(
+    'location_based_access_restrictions',
+    "Allow project to restrict web user access by location",
+    TAG_PRODUCT_PATH,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -868,5 +875,19 @@ PREVIEW_APP = StaticToggle(
     'preview_app',
     'Preview an application in the app builder',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
+DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
+    'disable_column_limit_in_ucr',
+    'Disable column limit in UCR',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+CLOUDCARE_LATEST_BUILD = StaticToggle(
+    'use_latest_build_cloudcare',
+    'Uses latest build for cloudcare instead of latest starred',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
 )

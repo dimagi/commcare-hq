@@ -83,7 +83,7 @@ from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.couch import get_document_or_404
 from corehq.util.spreadsheets.excel import JSONReaderError, HeaderValueError, \
-    WorksheetNotFound, WorkbookJSONReader
+    WorksheetNotFound, WorkbookJSONReader, enforce_string_type, StringTypeRequiredError
 from soil import DownloadBase
 from .custom_data_fields import UserFieldsView
 
@@ -917,6 +917,17 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         # been read the first time
         self.user_specs = list(self.user_specs)
 
+        for user_spec in self.user_specs:
+            try:
+                user_spec['username'] = enforce_string_type(user_spec['username'])
+            except StringTypeRequiredError:
+                messages.error(
+                    request,
+                    _("Error: Expected username to be a Text type for username {0}")
+                    .format(user_spec['username'])
+                )
+                return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
+
         try:
             check_existing_usernames(self.user_specs, self.domain)
         except UserUploadError as e:
@@ -1075,6 +1086,7 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
     def get_context_data(self, **kwargs):
         context = super(CommCareUserSelfRegistrationView, self).get_context_data(**kwargs)
         context.update({
+            'hr_name': self.domain_object.display_name(),
             'form': self.form,
             'invitation': self.invitation,
             'can_add_extra_mobile_workers': can_add_extra_mobile_workers(self.request),

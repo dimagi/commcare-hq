@@ -928,11 +928,11 @@ class SelfRegistrationForm(forms.Form):
 
     username = TrimmedCharField(
         required=True,
-        label=ugettext_lazy('Username (create a username)'),
+        label=ugettext_lazy('Username'),
     )
     password = forms.CharField(
         required=True,
-        label=ugettext_lazy('Password (create a password)'),
+        label=ugettext_lazy('Password'),
         widget=PasswordInput(),
     )
     password2 = forms.CharField(

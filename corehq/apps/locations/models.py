@@ -253,6 +253,13 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         direct_matches = self.filter_by_user_input(domain, user_input)
         return self.get_queryset_descendants(direct_matches, include_self=True)
 
+    def accessible_to_user(self, domain, user):
+        if user.has_permission(domain, 'access_all_locations'):
+            return self.get_queryset()
+
+        users_location = user.get_sql_location(domain)
+        return users_location.get_descendants(include_self=True)
+
 
 class OnlyUnarchivedLocationManager(LocationManager):
 
@@ -375,12 +382,12 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         Returns a list of this location's children.
         """
         children = self.get_children()
-        return _filter_for_archived(children, include_archive_ancestors)
+        return filter_for_archived(children, include_archive_ancestors)
 
     @classmethod
     def root_locations(cls, domain, include_archive_ancestors=False):
         roots = cls.objects.root_nodes().filter(domain=domain)
-        return _filter_for_archived(roots, include_archive_ancestors)
+        return filter_for_archived(roots, include_archive_ancestors)
 
     def get_path_display(self):
         return '/'.join(self.get_ancestors(include_self=True)
@@ -503,7 +510,7 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         return self.location_type.name
 
 
-def _filter_for_archived(locations, include_archive_ancestors):
+def filter_for_archived(locations, include_archive_ancestors):
     """
     Perform filtering on a location queryset.
 
@@ -784,7 +791,7 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
             return (SQLLocation.objects.get(domain=domain,
                                             site_code__iexact=site_code)
                     .couch_location)
-        except SQLLocation.DoesNotExist:
+        except (SQLLocation.DoesNotExist, ResourceNotFound):
             return None
 
     @classmethod
