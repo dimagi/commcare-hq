@@ -53,7 +53,7 @@ from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import Location, SQLLocation
-from corehq.apps.locations.permissions import location_safe
+from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.ota.utils import turn_off_demo_mode, demo_restore_date_created
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
@@ -95,6 +95,15 @@ BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
 DEFAULT_USER_LIST_LIMIT = 10
 
 
+def _can_edit_workers_location(web_user, mobile_worker):
+    if web_user.has_permission(mobile_worker.domain, 'access_all_locations'):
+        return True
+    loc_id = mobile_worker.location_id
+    if not loc_id:
+        return False
+    return user_can_access_location_id(mobile_worker.domain, web_user, loc_id)
+
+
 class EditCommCareUserView(BaseEditUserView):
     urlname = "edit_commcare_user"
     user_update_form_class = UpdateCommCareUserInfoForm
@@ -108,6 +117,7 @@ class EditCommCareUserView(BaseEditUserView):
             return "users/edit_commcare_user.html"
 
     @use_multiselect
+    @location_safe
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, *args, **kwargs):
         return super(EditCommCareUserView, self).dispatch(request, *args, **kwargs)
@@ -137,11 +147,12 @@ class EditCommCareUserView(BaseEditUserView):
     def editable_user(self):
         try:
             user = CommCareUser.get_by_user_id(self.editable_user_id, self.domain)
-            if not user:
-                raise Http404()
-            return user
         except (ResourceNotFound, CouchUser.AccountTypeError, KeyError):
             raise Http404()
+        else:
+            if not user or not _can_edit_workers_location(self.couch_user, user):
+                raise Http404()
+            return user
 
     @property
     def edit_user_form_title(self):
@@ -377,9 +388,12 @@ def archive_commcare_user(request, domain, user_id, is_active=False):
 
 
 @require_can_edit_commcare_users
+@location_safe
 @require_POST
 def delete_commcare_user(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
+    if not _can_edit_workers_location(request.couch_user, user):
+        raise PermissionDenied()
     user.retire()
     messages.success(request, "User %s has been deleted. All their submissions and cases will be permanently deleted in the next few minutes" % user.username)
     return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[domain]))
@@ -674,7 +688,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'error': _("Please provide an is_active status."),
             }
         user = CommCareUser.get_by_user_id(user_id, self.domain)
-        if is_active and not self.can_add_extra_users:
+        if (not _can_edit_workers_location(self.couch_user, user)
+                or (is_active and not self.can_add_extra_users)):
             return {
                 'error': _("No Permission."),
             }
