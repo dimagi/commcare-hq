@@ -561,8 +561,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     @memoized
     def new_mobile_worker_form(self):
         if self.request.method == "POST":
-            return NewMobileWorkerForm(self.request.project, self.request.POST)
-        return NewMobileWorkerForm(self.request.project)
+            return NewMobileWorkerForm(self.request.project, self.couch_user, self.request.POST)
+        return NewMobileWorkerForm(self.request.project, self.couch_user)
 
     @property
     @memoized
