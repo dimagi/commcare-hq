@@ -48,8 +48,6 @@ branches:
   - kill-1.x-apps  # Danny 8/23
   - loc-tests # sravan 8/8
   - vellum-staging # J$ 11/13
-  - welcome-to-vellum # Jenny 8/3
-  - welcome-to-vellum+kill-1.x-apps # Jenny 8/24
   - django-1.8 # nick P 8/25
   - jquery-2-2-0 # Jenny 8/29
   - jquery-2-2-0-switch # Jenny 8/30
@@ -77,7 +75,6 @@ submodules:
   submodules/django-prbac-src:
     branches: []
   corehq/apps/prelogin:
-    branches:
-      - welcome-to-vellum # Jenny 8/3
+    branches: []
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
