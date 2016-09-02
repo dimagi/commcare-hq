@@ -243,13 +243,13 @@
     {% for detail in details %}
     <li>
         <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">
-            Selection
+            {{ detail.label }}
         </a>
     </li>
     {% if detail.long %}
     <li>
         <a href="#{{ detail.type }}-detail-screen-detail-config-tab" data-toggle="tab">
-            Confirmation
+            {{ detail.detail_label }}
         </a>
     </li>
     {% endif %}
@@ -303,7 +303,39 @@
                     </div>
                 </div>
                 {% endif %}
-                <div class="spacer"></div>
+                <legend>Basic</legend>
+                {% if module.case_type != "" %}
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">
+                        {% trans "Case Type" %}
+                        <span class="hq-help-template"
+                              data-title="{% trans "Case Type" %}"
+
+                              data-content="{% trans "The name for the type of case you are tracking (e.g. &quot;pregnancy&quot;, &quot;farm&quot;, &quot;household&quot;, etc.). All cases you register in this module will be this type of case, and only cases of this type will show in the case list. Other modules with the same case type will use the same set of cases." %}"
+                                ></span>
+                    </label>
+                    <div class="col-sm-4">
+                        <input class="form-control" value="record" />
+                    </div>
+                </div>
+                <div class="form-group hide">
+                    <label class="col-sm-2 control-label">
+                        {% trans "Share records with other lists" %}
+                        <span class="hq-help-template"
+                              data-title="{% trans "Case Type" %}"
+
+                              data-content="{% trans "The name for the type of case you are tracking (e.g. &quot;pregnancy&quot;, &quot;farm&quot;, &quot;household&quot;, etc.). All cases you register in this module will be this type of case, and only cases of this type will show in the case list. Other modules with the same case type will use the same set of cases." %}"
+                                ></span>
+                    </label>
+                    <div class="col-sm-4">
+                        <select type="text" class="form-control">
+                            <option>{% trans "Do not share" %}</option>
+                            <option>Share with "Other Record List"</option>
+                            <option>Share with "Another Record List" and "Different Record List"</option>
+                        </select>
+                    </div>
+                </div>
+                {% endif %}
                 <legend>{% trans "Multimedia" %}</legend>
                 {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
                 <legend>Advanced</legend>
@@ -325,38 +357,6 @@
                     </div>
                 </div>
                 {% endif %}
-                {% if module.case_type != "" %}
-                <div class="form-group">
-                    <label class="col-sm-2 control-label">
-                        Label for Reports and Exports
-                        <span class="hq-help-template"
-                              data-title="{% trans "Case Type" %}"
-
-                              data-content="{% trans "The name for the type of case you are tracking (e.g. &quot;pregnancy&quot;, &quot;farm&quot;, &quot;household&quot;, etc.). All cases you register in this module will be this type of case, and only cases of this type will show in the case list. Other modules with the same case type will use the same set of cases." %}"
-                                ></span>
-                    </label>
-                    <div class="col-sm-4">
-                        <input class="form-control" value="record" />
-                    </div>
-                </div>
-                <div class="form-group hide">
-                    <label class="col-sm-2 control-label">
-                        {% trans "Share data with other record lists" %}
-                        <span class="hq-help-template"
-                              data-title="{% trans "Case Type" %}"
-
-                              data-content="{% trans "The name for the type of case you are tracking (e.g. &quot;pregnancy&quot;, &quot;farm&quot;, &quot;household&quot;, etc.). All cases you register in this module will be this type of case, and only cases of this type will show in the case list. Other modules with the same case type will use the same set of cases." %}"
-                                ></span>
-                    </label>
-                    <div class="col-sm-4">
-                        <select type="text" class="form-control">
-                            <option>{% trans "Do not share" %}</option>
-                            <option>Share with "Other Record List"</option>
-                            <option>Share with "Another Record List" and "Different Record List"</option>
-                        </select>
-                    </div>
-                </div>
-                {% endif %}
                 {% include "app_manager/partials/module_filter.html" with value=module.module_filter %}
                 <div class="form-group">
                     <label class="col-sm-2 control-label">
@@ -369,23 +369,6 @@
                         </select>
                     </div>
                 </div>
-                {% if module.case_type != "" %}
-                <div class="form-group">
-                    <label class="col-sm-2 control-label">
-                        {% trans "Add a view-only version of this record list" %}
-                        <span class="hq-help-template"
-                              data-title="{% trans "Case Type" %}"
-                              data-content="This is a CLMI"
-                        ></span>
-                    </label>
-                    <div class="col-sm-4">
-                        <button class="btn btn-success">
-                            <i class="fa fa-plus"></i>
-                            Add
-                        </button>
-                    </div>
-                </div>
-                {% endif %}
             </fieldset>
         </form>
     </div>

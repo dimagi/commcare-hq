@@ -55,6 +55,7 @@
             <span data-bind="text: title">Advanced</span>
         </a>
         </legend>
+        {% include 'app_manager/partials/case_list_form_setting.html' %}
         <div class="collapse" data-bind="attr: {id: id}, css: {'in': !reallyCollapse()}" id="form-settings-advanced" style="overflow: hidden;">
             <div class="form-group" data-bind="
                 visible: visible,
