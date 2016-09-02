@@ -68,7 +68,6 @@ def resumable_sql_model_iterator(iteration_key, reindex_accessor, chunk_size=100
                     yield reindex_accessor.doc_to_json(doc)
                 except Exception:
                     logging.error('Error converting {!r}'.format(doc))
-                    raise
 
     item_getter = reindex_accessor.get_doc
 

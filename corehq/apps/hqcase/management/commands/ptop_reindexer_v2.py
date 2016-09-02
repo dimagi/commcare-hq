@@ -80,7 +80,7 @@ class Command(BaseCommand):
         domains = options.pop('domain').split(',')
         if domains:
             def doc_filter(doc):
-                return doc.get('domain') in domains
+                return doc.get('domain') not in domains
         else:
             doc_filter = None
 
