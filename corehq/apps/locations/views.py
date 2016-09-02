@@ -829,18 +829,21 @@ def location_export(request, domain):
 
 
 @locations_access_required
+@location_safe
 def child_locations_for_select2(request, domain):
     id = request.GET.get('id')
     ids = request.GET.get('ids')
     query = request.GET.get('name', '').lower()
     user = request.couch_user
 
+    base_queryset = SQLLocation.objects.accessible_to_user(domain, user)
+
     def loc_to_payload(loc):
         return {'id': loc.location_id, 'name': loc.display_name}
 
     if id:
         try:
-            loc = SQLLocation.objects.get(location_id=id)
+            loc = base_queryset.get(location_id=id)
             if loc.domain != domain:
                 raise SQLLocation.DoesNotExist()
         except SQLLocation.DoesNotExist:
@@ -854,7 +857,7 @@ def child_locations_for_select2(request, domain):
         from corehq.apps.locations.util import get_locations_from_ids
         ids = json.loads(ids)
         try:
-            locations = get_locations_from_ids(ids, domain)
+            locations = get_locations_from_ids(ids, domain, base_queryset=base_queryset)
         except SQLLocation.DoesNotExist:
             return json_response(
                 {'message': 'one or more locations not found'},
@@ -866,7 +869,7 @@ def child_locations_for_select2(request, domain):
         user_loc = user.get_sql_location(domain)
 
         if user_can_edit_any_location(user, request.project):
-            locs = SQLLocation.objects.filter(domain=domain, is_archived=False)
+            locs = base_queryset.filter(domain=domain, is_archived=False)
         elif user_loc:
             locs = user_loc.get_descendants(include_self=True)
 

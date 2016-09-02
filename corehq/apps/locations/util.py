@@ -348,17 +348,20 @@ def get_locations_and_children(location_ids):
     )
 
 
-def get_locations_from_ids(location_ids, domain):
+def get_locations_from_ids(location_ids, domain, base_queryset=None):
     """
     Returns the SQLLocations with the given location_ids, ensuring
     that they belong to the given domain. Raises SQLLocation.DoesNotExist
     if any of the locations do not match the given domain or are not
     found.
     """
+    if not base_queryset:
+        base_queryset = SQLLocation.objects
+
     location_ids = list(set(location_ids))
     expected_count = len(location_ids)
 
-    locations = SQLLocation.objects.filter(
+    locations = base_queryset.filter(
         domain=domain,
         is_archived=False,
         location_id__in=location_ids,
