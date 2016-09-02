@@ -144,7 +144,7 @@ class LocationImporter(object):
                                                        site_code=provided_code)
 
         if existing:
-            if existing.location_type.name != location_type:
+            if existing.location_type_name != location_type:
                 return {
                     'id': None,
                     'message': _("Existing location type error, type of {0} is not {1}").format(
@@ -196,7 +196,7 @@ class LocationImporter(object):
             if invalid_location_type(location_type, parent_obj, parent_child_map):
                 raise LocationImportError(
                     _('Invalid parent type of {0} for child type {1}').format(
-                        parent_obj.location_type.name,
+                        parent_obj.location_type_name,
                         location_type
                     )
                 )
@@ -220,7 +220,7 @@ class LocationImporter(object):
             if getattr(existing, prop, None) != form_data.get(prop):
                 return False
         if (
-            form_data.get('location_type') != existing.location_type.name
+            form_data.get('location_type') != existing.location_type_name
             or form_data.get('parent_id') != existing.parent_location_id
         ):
             return False
@@ -230,7 +230,7 @@ class LocationImporter(object):
             if get_default_consumption(
                 self.domain,
                 product._id,
-                existing.location_type.name,
+                existing.location_type_name,
                 existing.location_id
             ) != val:
                 return False
@@ -312,7 +312,7 @@ def import_locations(domain, excel_importer):
 
 
 def invalid_location_type(location_type, parent_obj, parent_relationships):
-    parent_type = parent_obj.location_type.name
+    parent_type = parent_obj.location_type_name
     return (
         parent_type not in parent_relationships or
         location_type not in parent_relationships[parent_type]
