@@ -331,7 +331,7 @@
             {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
             <li>
                 <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-                    {% trans "Save to User" %}
+                    {% trans "User Case Management" %}
                 </a>
             </li>
             {% endif %}{% endif %}
@@ -387,7 +387,7 @@
                     </p>
                 {% elif form.source %}
                     <header class="clearfix">
-                        <h4 class="pull-left">{% trans "Save to User" %}</h4>
+                        <h4 class="pull-left">{% trans "User Case Management" %}</h4>
                         <span class="hq-help-template"
                             data-title="{% trans "User Case Management" %}"
                             data-content="{% trans "The user case allows you to store data about the user in a case and use that data in forms." %}"
