@@ -14,7 +14,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             $.when(fetchingNextMenu).done(function (menuResponse) {
 
                 // show any notifications from Formplayer
-                if(menuResponse.notification && !_.isNull(menuResponse.notification.message)){
+                if (menuResponse.notification && !_.isNull(menuResponse.notification.message)){
                     FormplayerFrontend.request("handleNotification", menuResponse.notification);
                 }
 
@@ -25,7 +25,15 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 }
 
                 var urlObject = Util.currentUrlToObject();
-                if(urlObject.appId === undefined || urlObject.appId === null) {
+                // If we don't have an appId in the URL (usually due to form preview)
+                // then parse the appId from the response.
+                if (urlObject.appId === undefined || urlObject.appId === null) {
+                    if (menuResponse.appId === null || menuResponse.appId === undefined) {
+                        FormplayerFrontend.request('showError', "Response did not contain appId even though it was" +
+                            "required. If this persists, please report an issue to CommCareHQ");
+                        FormplayerFrontend.trigger("apps:list", options.apps);
+                        return;
+                    }
                     urlObject.appId = menuResponse.appId;
                     Util.setUrlToObject(urlObject);
                 }
