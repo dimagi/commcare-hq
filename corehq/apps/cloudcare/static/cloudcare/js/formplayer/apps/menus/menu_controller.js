@@ -66,7 +66,15 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 FormplayerFrontend.regions.main.show(menuListView.render());
             }
             else if (menuResponse.type === "entities") {
-                menuListView = new MenuList.CaseListView(menuData);
+                if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
+                    menuListView = new MenuList.CaseListView(menuData);
+                } else {
+                    if (menuResponse.numEntitiesPerRow > 1) {
+                        menuListView = new MenuList.CaseTileGridView(menuData);
+                    } else {
+                        menuListView = new MenuList.CaseTileListView(menuData);
+                    }
+                }
                 FormplayerFrontend.regions.main.show(menuListView.render());
             }
 

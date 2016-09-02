@@ -83,16 +83,11 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     });
 
     MenuList.CaseView = Marionette.ItemView.extend({
-        tagName: "div",
-        getTemplate: function () {
-            if (_.isNull(this.options.tiles)) {
-                return "#case-view-item-template";
-            } else {
-                return "#case-tile-view-item-template";
-            }
-        },
+        tagName: "tr",
+        template: "#case-view-item-template",
 
-        className: "formplayer-request grid-wrapper",
+        className: "formplayer-request",
+
         events: {
             "click": "rowClick",
         },
@@ -107,6 +102,23 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
+                resolveUri: function (uri) {
+                    return FormplayerFrontend.request('resourceMap', uri, appId);
+                },
+            };
+        },
+    });
+
+    MenuList.CaseTileView = MenuList.CaseView.extend({
+        tagName: "tr",
+        template: "#case-tile-view-item-template",
+        className: "formplayer-request grid-wrapper",
+
+        templateHelpers: function () {
+            var appId = this.model.collection.appId;
+            return {
+                data: this.options.model.get('data'),
+                styles: this.options.styles,
                 tiles: this.options.tiles,
                 numEntitiesToDisplayPerRow: this.options.numEntitiesToDisplayPerRow,
                 resolveUri: function (uri) {
@@ -114,6 +126,10 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 },
             };
         },
+    });
+
+    MenuList.CaseTileGridViewItem = MenuList.CaseTileView.extend({
+        tagName: "div",
     });
 
     // return the string grid-area attribute
@@ -138,8 +154,10 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             tileModels;
 
         tileModels = _.chain(tiles || [])
-            .filter(function(tile) { return tile !== null; })
-            .map(function(tile, idx) {
+            .filter(function (tile) {
+                return tile !== null;
+            })
+            .map(function (tile, idx) {
                 return {
                     id: 'grid-style-' + idx,
                     gridStyle: getGridAttributes(tile),
@@ -157,7 +175,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         $("#case-tiles-style").html(caseTileStyle).removeAttr("data-css-polyfilled");
     };
 
-    var generateCaseTileContainerStyles = function(numCases, numCasesPerRow) {
+    var generateCaseTileContainerStyles = function (numCases, numCasesPerRow) {
         var templateString,
             caseTileContainerStyle,
             caseTileContainerStyleTemplate,
@@ -181,22 +199,16 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     MenuList.CaseListView = Marionette.CompositeView.extend({
         tagName: "div",
         template: "#case-view-list-template",
-        childView: MenuList.CaseView,
         childViewContainer: ".case-container",
+        childView: MenuList.CaseView,
 
         initialize: function (options) {
-            this.tiles = options.tiles;
             this.styles = options.styles;
-            this.numCases = options.collection.length;
-            this.numEntitiesPerRow = options.numEntitiesPerRow;
-            generateCaseTileStyles(options.tiles);
-            generateCaseTileContainerStyles(this.numCases, this.numEntitiesPerRow);
         },
 
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
-                tiles: this.options.tiles,
             };
         },
 
@@ -236,11 +248,54 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 currentPage: this.options.currentPage,
                 pageCount: this.options.pageCount,
                 styles: this.options.styles,
+                breadcrumbs: this.options.breadcrumbs,
+            };
+        },
+    });
+
+    MenuList.CaseTileListView = MenuList.CaseListView.extend({
+        template: "#case-view-tile-list-template",
+        childView: MenuList.CaseTileView,
+        initialize: function (options) {
+            this.styles = options.styles;
+            this.tiles = options.tiles;
+            this.numCases = options.collection.length;
+            this.numEntitiesPerRow = options.numEntitiesPerRow;
+            generateCaseTileStyles(options.tiles);
+        },
+
+        childViewOptions: function () {
+            return {
+                styles: this.options.styles,
+                tiles: this.options.tiles,
+            };
+        },
+
+        templateHelpers: function () {
+            return {
+                title: this.options.title,
+                action: this.options.action,
+                currentPage: this.options.currentPage,
+                pageCount: this.options.pageCount,
+                styles: this.options.styles,
                 tiles: this.options.tiles,
                 breadcrumbs: this.options.breadcrumbs,
                 numEntitiesPerRow: this.options.numEntitiesPerRow,
                 numCases: this.options.numCases,
             };
+        },
+    });
+
+    MenuList.CaseTileGridView = MenuList.CaseTileListView.extend({
+        childView: MenuList.CaseTileGridViewItem,
+
+        initialize: function (options) {
+            this.styles = options.styles;
+            this.tiles = options.tiles;
+            this.numCases = options.collection.length;
+            this.numEntitiesPerRow = options.numEntitiesPerRow;
+            generateCaseTileStyles(options.tiles);
+            generateCaseTileContainerStyles(this.numCases, this.numEntitiesPerRow);
         },
     });
 
