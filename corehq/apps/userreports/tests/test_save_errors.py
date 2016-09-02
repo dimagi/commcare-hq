@@ -5,7 +5,6 @@ from django.test import TestCase
 from corehq.apps.userreports.app_manager import _clean_table_name
 from corehq.apps.userreports.exceptions import TableNotFoundWarning
 from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.tests.utils import run_with_all_backends
 from corehq.apps.userreports.util import get_indicator_adapter
 
 

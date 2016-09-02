@@ -56,7 +56,7 @@ class ConfigurableReportTableManagerMixin(object):
 
     def rebuild_tables_if_necessary(self):
         self._rebuild_sql_tables(
-                filter(lambda a: get_backend_id(a.config) == UCR_SQL_BACKEND, self.table_adapters))
+            filter(lambda a: get_backend_id(a.config) == UCR_SQL_BACKEND, self.table_adapters))
         self._rebuild_es_tables(filter(lambda a: get_backend_id(a.config) == UCR_ES_BACKEND, self.table_adapters))
 
     def _rebuild_sql_tables(self, adapters):

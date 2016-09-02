@@ -4,7 +4,6 @@ import functools
 import json
 import os
 import uuid
-from mock import patch
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import data_sources
