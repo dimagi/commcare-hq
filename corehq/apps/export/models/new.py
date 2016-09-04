@@ -58,6 +58,7 @@ from corehq.apps.export.dbaccessors import (
     get_latest_form_export_schema,
 )
 from corehq.apps.export.utils import is_occurrence_deleted
+from corehq.apps.export.transforms import transform_date_to_request_timezone
 
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
@@ -196,8 +197,8 @@ class ExportColumn(DocumentSchema):
         Transform the given value with the transform specified in self.item.transform.
         Also transform dates if the transform_dates flag is true.
         """
-        if transform_dates:
-            value = couch_to_excel_datetime(value, doc)
+
+        value = transform_date_to_request_timezone(value, doc, excel_format=transform_dates)
         if self.item.transform:
             value = TRANSFORM_FUNCTIONS[self.item.transform](value, doc)
         if self.deid_transform:
