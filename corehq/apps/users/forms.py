@@ -734,8 +734,8 @@ class SupplyPointSelectWidget(forms.Widget):
 
 
 class CommtrackUserForm(forms.Form):
-    location = forms.CharField(
-        label=ugettext_noop("Location"),
+    primary_location = forms.CharField(
+        label=ugettext_noop("Locajtion"),
         required=False
     )
     program_id = forms.ChoiceField(
@@ -750,7 +750,7 @@ class CommtrackUserForm(forms.Form):
             domain = kwargs['domain']
             del kwargs['domain']
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
-        self.fields['location'].widget = SupplyPointSelectWidget(domain=domain)
+        self.fields['primary_location'].widget = SupplyPointSelectWidget(domain=domain)
         if Domain.get_by_name(domain).commtrack_enabled:
             programs = Program.by_domain(domain, wrap=False)
             choices = list((prog['_id'], prog['name']) for prog in programs)
@@ -769,10 +769,7 @@ class CommtrackUserForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
     def save(self, user):
-        location_id = self.cleaned_data['location']
-        # This means it will clear the location associations set in a domain
-        # with multiple locations configured. It is acceptable for now because
-        # multi location config is a not really supported special flag for IPM.
+        location_id = self.cleaned_data['primary_location']
         if location_id:
             if location_id != user.location_id:
                 user.set_location(Location.get(location_id))

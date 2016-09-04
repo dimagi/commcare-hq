@@ -382,6 +382,7 @@ class DomainMembership(Membership):
     override_global_tz = BooleanProperty(default=False)
     role_id = StringProperty()
     location_id = StringProperty()
+    assigned_location_ids = StringListProperty()
     program_id = StringProperty()
 
     @property
@@ -791,6 +792,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     announcements_seen = ListProperty()
     user_data = DictProperty()
     location_id = StringProperty()
+    assigned_location_ids = StringListProperty()
     has_built_app = BooleanProperty(default=False)
 
     _user = None
