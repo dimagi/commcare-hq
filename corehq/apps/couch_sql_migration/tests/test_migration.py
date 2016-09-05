@@ -13,12 +13,13 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.tzmigration import TimezoneMigrationProgress
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
+from corehq.form_processor.models import CaseTransaction
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import clear_local_domain_sql_backend_override
-from corehq.util.test_utils import create_and_save_a_form, create_and_save_a_case
+from corehq.util.test_utils import create_and_save_a_form, create_and_save_a_case, set_parent_case
 from couchforms.models import XFormInstance
 
 
@@ -156,9 +157,38 @@ class MigrationTestCase(TestCase):
         self.assertEqual(1, len(self._get_case_ids()))
         self._compare_diffs([])
 
-    def test_deleted_case_migration(self):
-        # TODO
+    def test_case_with_indices_migration(self):
         pass
+
+    def test_deleted_case_migration(self):
+        parent_case_id = uuid.uuid4().hex
+        child_case_id = uuid.uuid4().hex
+        parent_case = create_and_save_a_case(self.domain_name, case_id=parent_case_id, case_name='test parent')
+        child_case = create_and_save_a_case(self.domain_name, case_id=child_case_id, case_name='test child')
+        set_parent_case(self.domain_name, child_case, parent_case)
+
+        form_ids = self._get_form_ids()
+        self.assertEqual(3, len(form_ids))
+        FormAccessors(self.domain.name).soft_delete_forms(
+            form_ids, datetime.utcnow(), 'test-deletion-with-cases'
+        )
+        CaseAccessors(self.domain.name).soft_delete_cases(
+            [parent_case_id, child_case_id], datetime.utcnow(), 'test-deletion-with-cases'
+        )
+        self.assertEqual(2, len(get_doc_ids_in_domain_by_type(
+            self.domain_name, "CommCareCase-Deleted", XFormInstance.get_db())
+        ))
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(2, len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain_name)))
+        self._compare_diffs([])
+        parent_transactions = CaseAccessorSQL.get_transactions(parent_case_id)
+        self.assertEqual(2, len(parent_transactions))
+        self.assertTrue(parent_transactions[0].is_case_create)
+        self.assertTrue(parent_transactions[1].is_form_transaction)
+        child_transactions = CaseAccessorSQL.get_transactions(child_case_id)
+        self.assertEqual(2, len(child_transactions))
+        self.assertTrue(child_transactions[0].is_case_create)
+        self.assertTrue(child_transactions[1].is_case_index)
 
     def test_commit(self):
         self._do_migration_and_assert_flags(self.domain_name)
