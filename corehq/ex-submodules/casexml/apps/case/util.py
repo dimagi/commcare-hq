@@ -53,7 +53,7 @@ def post_case_blocks(case_blocks, form_extras=None, domain=None):
     Extras is used to add runtime attributes to the form before
     sending it off to the case (current use case is sync-token pairing)
     """
-    from corehq.apps.receiverwrapper.util import submit_form_locally
+    from corehq.apps.hqcase.utils import submit_case_blocks
 
     if form_extras is None:
         form_extras = {}
@@ -63,10 +63,11 @@ def post_case_blocks(case_blocks, form_extras=None, domain=None):
         from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
         domain = domain or TEST_DOMAIN_NAME
 
-    form = make_form_from_case_blocks(case_blocks)
-
-    response, xform, cases = submit_form_locally(form, domain, **form_extras)
-    return xform, cases
+    return submit_case_blocks(
+        [ElementTree.tostring(case_block) for case_block in case_blocks],
+        domain=domain,
+        form_extras=form_extras
+    )
 
 
 def create_real_cases_from_dummy_cases(cases):
