@@ -1,6 +1,6 @@
 from corehq.apps.commtrack.dbaccessors import get_supply_point_ids_in_domain_by_location
 from corehq.apps.products.models import Product
-from corehq.apps.locations.models import Location, SQLLocation, LocationType
+from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.quickcache import quickcache

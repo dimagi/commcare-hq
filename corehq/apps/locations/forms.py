@@ -23,7 +23,6 @@ from corehq.apps.users.util import raw_username, user_display_string
 from .models import SQLLocation, LocationType
 from .permissions import user_can_access_location_id
 from .signals import location_edited
-from .util import get_lineage_from_location_id
 
 
 class ParentLocWidget(forms.Widget):
@@ -234,8 +233,8 @@ class LocationForm(forms.Form):
             site_code = site_code.lower()
             if (SQLLocation.objects.filter(domain=self.domain,
                                         site_code__iexact=site_code)
-                                .exclude(location_id=self.location.location_id)
-                                .exists()):
+                                   .exclude(location_id=self.location.location_id)
+                                   .exists()):
                 raise forms.ValidationError(
                     'another location already uses this site code'
                 )
@@ -269,7 +268,7 @@ class LocationForm(forms.Form):
                 assert False, 'You must select a location type'
         else:
             try:
-                loc_type_obj = LocationType.objects.get(Q(code=loc_type)|Q(name=loc_type))
+                loc_type_obj = LocationType.objects.get(Q(code=loc_type) | Q(name=loc_type))
             except LocationType.DoesNotExist:
                 assert False, "LocationType '{}' not found".format(loc_type)
             else:
