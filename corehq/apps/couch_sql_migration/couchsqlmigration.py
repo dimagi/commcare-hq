@@ -348,13 +348,21 @@ def _filter_form_diffs(doc_type, diffs):
         if diff.path[0] not in paths_to_ignore and diff not in const.FORM_IGNORED_DIFFS
     ]
     filtered = _check_deprecation_date(filtered, doc_type)
+    filtered = _check_deletion_fields_date(filtered, doc_type)
     return filtered
 
 
-def _check_deprecation_date(filtered, doc_type):
+def _check_deprecation_date(filtered_diffs, doc_type):
     if doc_type == 'XFormDeprecated':
-        _check_renamed_fields(filtered, 'deprecated_date', 'edited_on')
-    return filtered
+        _check_renamed_fields(filtered_diffs, 'deprecated_date', 'edited_on')
+    return filtered_diffs
+
+
+def _check_deletion_fields_date(filtered_diffs, doc_type):
+    if doc_type == 'XFormInstance-Deleted':
+        _check_renamed_fields(filtered_diffs, '-deletion_id', 'deletion_id')
+        _check_renamed_fields(filtered_diffs, '-deletion_date', 'deleted_on')
+    return filtered_diffs
 
 
 def _check_renamed_fields(filtered_diffs, couch_field_name, sql_field_name):
