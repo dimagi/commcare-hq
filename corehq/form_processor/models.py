@@ -620,6 +620,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         from .serializers import CommCareCaseSQLSerializer
         serializer = CommCareCaseSQLSerializer(self)
         ret = dict(serializer.data)
+        ret['indices'] = [dict(index) for index in ret['indices']]
         for key in self.case_json:
             if key not in ret:
                 ret[key] = self.case_json[key]
