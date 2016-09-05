@@ -13,6 +13,7 @@ BASE_IGNORED_FORM_PATHS = {
 
 FORM_IGNORE_PATHS = {
     'XFormInstance': BASE_IGNORED_FORM_PATHS | {'problem', 'orig_id', 'edited_on'},
+    'XFormInstance-Deleted': BASE_IGNORED_FORM_PATHS | {'problem', 'orig_id', 'edited_on'},
     'XFormArchived': BASE_IGNORED_FORM_PATHS | {'edited_on'},
     'XFormError': BASE_IGNORED_FORM_PATHS | {'edited_on'},
     'XFormDuplicate': BASE_IGNORED_FORM_PATHS | {'edited_on'},

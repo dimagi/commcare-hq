@@ -17,6 +17,7 @@ from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import set_local_domain_sql_backend_override, \
     clear_local_domain_sql_backend_override
 from couchforms.models import XFormInstance, doc_types
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 from fluff.management.commands.ptop_reindexer_fluff import ReindexEventHandler
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
 
@@ -165,15 +166,23 @@ def _copy_form_properties(domain, sql_form, couch_form):
     sql_form.partial_submission = couch_form.partial_submission
     sql_form.initial_processing_complete = couch_form.initial_processing_complete
 
-    sql_form.state = doc_type_to_state[couch_form.doc_type]
+    if couch_form.doc_type.endswith(DELETED_SUFFIX):
+        doc_type = couch_form.doc_type[:-len(DELETED_SUFFIX)]
+        sql_form.state = doc_type_to_state[doc_type] | XFormInstanceSQL.DELETED
+    else:
+        sql_form.state = doc_type_to_state[couch_form.doc_type]
+
+    if couch_form.is_deleted:
+        sql_form.deletion_id = couch_form.deletion_id
+        sql_form.deleted_on = couch_form.deletion_date
 
     if couch_form.is_error:
-        # doc_type != XFormInstance
-        sql_form.problem = couch_form.problem
-        sql_form.orig_id = couch_form.orig_id
+        # doc_type != XFormInstance (includes deleted)
+        sql_form.problem = getattr(couch_form, 'problem', None)
+        sql_form.orig_id = getattr(couch_form, 'orig_id', None)
 
-    if couch_form.is_deprecated:
-        sql_form.edited_on = couch_form.deprecated_date
+    if couch_form.is_deprecated or couch_form.is_deleted:
+        sql_form.edited_on = getattr(couch_form, 'deprecated_date', None)
 
     return sql_form
 

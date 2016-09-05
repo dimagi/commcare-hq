@@ -1,20 +1,24 @@
 import uuid
 
+from datetime import datetime
 from django.core.management import call_command
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.couch_sql_migration.couchsqlmigration import get_diff_db
+from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.tzmigration import TimezoneMigrationProgress
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import clear_local_domain_sql_backend_override
 from corehq.util.test_utils import create_and_save_a_form, create_and_save_a_case
+from couchforms.models import XFormInstance
 
 
 class MigrationTestCase(TestCase):
@@ -120,8 +124,18 @@ class MigrationTestCase(TestCase):
         self._compare_diffs([])
 
     def test_deleted_form_migration(self):
-        # TODO
-        pass
+        form = create_and_save_a_form(self.domain_name)
+        FormAccessors(self.domain.name).soft_delete_forms(
+            [form.form_id], datetime.utcnow(), 'test-deletion'
+        )
+
+        self.assertFalse(should_use_sql_backend(self.domain_name))
+        self.assertEqual(1, len(get_doc_ids_in_domain_by_type(
+            self.domain_name, "XFormInstance-Deleted", XFormInstance.get_db())
+        ))
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(1, len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain_name)))
+        self._compare_diffs([])
 
     def test_submission_error_log_migration(self):
         # TODO
