@@ -152,7 +152,7 @@ class CouchSqlDomainMigrator(object):
             diffs = json_diff(couch_case, sql_case.to_json(), track_list_indices=False)
             self.diff_db.add_diffs(
                 couch_case['doc_type'], sql_case.case_id,
-                _filter_case_diffs(diffs)
+                _filter_case_diffs(couch_case['doc_type'], diffs)
             )
 
 
@@ -446,7 +446,7 @@ def _check_deprecation_date(filtered_diffs, doc_type):
 
 
 def _check_deletion_fields_date(filtered_diffs, doc_type):
-    if doc_type == 'XFormInstance-Deleted':
+    if doc_type in ('XFormInstance-Deleted', 'CommCareCase-Deleted'):
         _check_renamed_fields(filtered_diffs, '-deletion_id', 'deletion_id')
         _check_renamed_fields(filtered_diffs, '-deletion_date', 'deleted_on')
     return filtered_diffs
@@ -468,8 +468,10 @@ def _check_renamed_fields(filtered_diffs, couch_field_name, sql_field_name):
             ))
 
 
-def _filter_case_diffs(diffs):
-    return [
+def _filter_case_diffs(doc_type, diffs):
+    filtered_diffs = [
         diff for diff in diffs
-        if diff.path[0] not in const.CASE_IGNORED_PATHS and diff not in const.CASE_IGNORED_DIFFS
+        if diff.path not in const.CASE_IGNORED_PATHS and diff not in const.CASE_IGNORED_DIFFS
     ]
+    filtered_diffs = _check_deletion_fields_date(filtered_diffs, doc_type)
+    return filtered_diffs
