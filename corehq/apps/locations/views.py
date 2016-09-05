@@ -348,7 +348,7 @@ class NewLocationView(BaseLocationView):
             )
         }]
         if self.location.parent:
-            sql_parent = self.location.parent.sql_location
+            sql_parent = self.location.parent
             for loc in sql_parent.get_ancestors(include_self=True):
                 breadcrumbs.append({
                     'title': loc.name,
