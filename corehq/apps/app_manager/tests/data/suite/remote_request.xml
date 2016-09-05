@@ -40,10 +40,9 @@
              detail-select="m0_case_short"/>
     </session>
     <stack>
-      <create>
-        <command value="'m0'"/>
-        <datum id="case_id" value="instance('querysession')/session/data/case_id"/>
-      </create>
+      <push>
+        <rewind value="instance('querysession')/session/data/case_id"/>
+      </push>
     </stack>
   </remote-request>
 </partial>
