@@ -4,13 +4,17 @@ from datetime import datetime
 
 import corehq.apps.couch_sql_migration.constants as const
 import settings
+from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xform import get_all_extensions_to_close, CaseProcessingResult
 from corehq.apps.domain.models import Domain
 from corehq.apps.tzmigration import force_phone_timezones_should_be_processed
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, doc_type_to_state
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
-from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL
+from corehq.form_processor.models import (
+    XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL, CommCareCaseSQL,
+    CaseTransaction, RebuildWithReason, CommCareCaseIndexSQL
+)
 from corehq.form_processor.submission_post import CaseStockProcessingResult
 from corehq.form_processor.utils import adjust_datetimes
 from corehq.form_processor.utils import should_use_sql_backend
@@ -41,6 +45,7 @@ class CouchSqlDomainMigrator(object):
     def migrate(self):
         self._process_main_forms()
         self._copy_unprocessed_forms()
+        self._copy_unprocessed_cases()
         self._calculate_case_diffs()
         # TODO: calculate ledger diffs
 
@@ -98,6 +103,35 @@ class CouchSqlDomainMigrator(object):
                 )
 
             _save_migrated_models(sql_form)
+
+    def _copy_unprocessed_cases(self):
+        for change in _get_case_iterator(self.domain, doc_types=['CommCareCase-Deleted']).iter_all_changes():
+            couch_case = CommCareCase.wrap(change.get_document())
+            print 'copying unprocessed {} {}'.format(couch_case.doc_type, couch_case.case_id)
+            sql_case = CommCareCaseSQL(
+                case_id=couch_case.case_id,
+                domain=self.domain,
+                type=couch_case.type,
+                name=couch_case.name,
+                owner_id=couch_case.owner_id,
+                opened_on=couch_case.opened_on,
+                opened_by=couch_case.opened_by,
+                modified_on=couch_case.modified_on,
+                modified_by=couch_case.modified_by,
+                server_modified_on=couch_case.server_modified_on,
+                closed=couch_case.closed,
+                closed_on=couch_case.closed_on,
+                closed_by=couch_case.closed_by,
+                deleted=True,
+                deletion_id=couch_case.deletion_id,
+                deleted_on=couch_case.deletion_date,
+                external_id=couch_case.external_id,
+                case_json=couch_case.dynamic_case_properties()
+            )
+            _migrate_case_actions(couch_case, sql_case)
+            _migrate_case_indices(couch_case, sql_case)
+            _migrate_case_attachments(couch_case, sql_case)
+            CaseAccessorSQL.save_case(sql_case)
 
     def _calculate_case_diffs(self):
         cases = {}
@@ -218,6 +252,57 @@ def _migrate_form_operations(sql_form, couch_form):
         ))
 
 
+def _migrate_case_actions(couch_case, sql_case):
+    from casexml.apps.case import const
+    transactions = {}
+    for action in couch_case.actions:
+        if action.xform_id and action.xform_id in transactions:
+            transaction = transactions[action.xform_id]
+        else:
+            transaction = CaseTransaction(
+                case=sql_case,
+                form_id=action.xform_id,
+                sync_log_id=action.sync_log_id,
+                type=CaseTransaction.TYPE_FORM if action.xform_id else 0,
+                server_date=action.server_date,
+            )
+            if action.xform_id:
+                transactions[action.xform_id] = transaction
+            else:
+                sql_case.track_create(transaction)
+        if action.action_type == const.CASE_ACTION_CREATE:
+            transaction.type |= CaseTransaction.TYPE_CASE_CREATE
+        if action.action_type == const.CASE_ACTION_CLOSE:
+            transaction.type |= CaseTransaction.TYPE_CASE_CLOSE
+        if action.action_type == const.CASE_ACTION_INDEX:
+            transaction.type |= CaseTransaction.TYPE_CASE_INDEX
+        if action.action_type == const.CASE_ACTION_ATTACHMENT:
+            transaction.type |= CaseTransaction.TYPE_CASE_ATTACHMENT
+        if action.action_type == const.CASE_ACTION_REBUILD:
+            transaction.type = CaseTransaction.TYPE_REBUILD_WITH_REASON
+            transaction.details = RebuildWithReason(reason="Unknown")
+
+    for transaction in transactions.values():
+        sql_case.track_create(transaction)
+
+
+def _migrate_case_attachments(couch_case, sql_case):
+    # TODO: maybe wait until case attachments are in blobdb
+    pass
+
+
+def _migrate_case_indices(couch_case, sql_case):
+    for index in couch_case.indices:
+        sql_case.track_create(CommCareCaseIndexSQL(
+            case=sql_case,
+            domain=couch_case.domain,
+            identifier=index.identifier,
+            referenced_id=index.referenced_id,
+            referenced_type=index.referenced_type,
+            relationship_id=CommCareCaseIndexSQL.RELATIONSHIP_MAP[index.relationship]
+        ))
+
+
 def _get_case_and_ledger_updates(domain, sql_form):
     """
     Get a CaseStockProcessingResult with the appropriate cases and ledgers to
@@ -302,14 +387,12 @@ def _get_unprocessed_form_iterator(domain):
     )
 
 
-def _get_case_iterator(domain):
+def _get_case_iterator(domain, doc_types=None):
+    doc_types = doc_types or ['CommCareCase', 'CommCareCase-Deleted', ]
     return CouchDomainDocTypeChangeProvider(
         couch_db=XFormInstance.get_db(),
         domains=[domain],
-        doc_types=[
-            'CommCareCase',
-            'CommCareCase-Deleted',
-        ],
+        doc_types=doc_types,
         event_handler=ReindexEventHandler(u'couch to sql migrator ({})'.format(domain)),
     )
 
