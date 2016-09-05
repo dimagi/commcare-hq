@@ -106,13 +106,6 @@ def parent_child(domain):
                       data=dict(location_hierarchy_config(domain)).iteritems())
 
 
-def allowed_child_types(domain, sql_location):
-    return (LocationType.objects
-            .filter(domain=domain,
-                    parent_type=sql_location.location_type if sql_location else None)
-            .values_list('name', flat=True))
-
-
 @quickcache(['domain'], timeout=60)
 def get_location_data_model(domain):
     from .views import LocationFieldsView

@@ -19,10 +19,10 @@ from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import raw_username, user_display_string
 
-from .models import Location, SQLLocation, LocationType
+from .models import SQLLocation, LocationType
 from .permissions import user_can_access_location_id
 from .signals import location_edited
-from .util import allowed_child_types, get_lineage_from_location_id
+from .util import get_lineage_from_location_id
 
 
 class ParentLocWidget(forms.Widget):
@@ -99,7 +99,7 @@ class LocationForm(forms.Form):
             'external_id': location.external_id,
         }
         if not self.is_new_location:
-            kwargs['initial']['location_type'] = self.location.location_type.code
+            kwargs['initial']['location_type'] = self.location.location_type.name
         kwargs['initial']['parent_id'] = self.location.parent_location_id
         lat, lon = (getattr(self.location, k, None)
                     for k in ('latitude', 'longitude'))
@@ -129,11 +129,10 @@ class LocationForm(forms.Form):
 
     def get_fields(self, is_new):
         if is_new:
-            allowed_types = allowed_child_types(self.location.domain, self.location.parent)
             return filter(None, [
                 _("Location Information"),
                 'name',
-                'location_type' if len(allowed_types) > 1 else None,
+                'location_type' if len(self._get_allowed_types(self.location.parent)) > 1 else None,
             ])
         else:
             return [
@@ -243,28 +242,35 @@ class LocationForm(forms.Form):
 
         return site_code
 
+    def _get_allowed_types(self, parent):
+        parent_type = parent.location_type if parent else None
+        return list(LocationType.objects
+                    .filter(domain=self.domain,
+                            parent_type=parent_type)
+                    .all())
+
     def clean_location_type(self):
         loc_type = self.cleaned_data['location_type']
-
-        try:
-            loc_type_obj = LocationType.objects.get(Q(code=loc_type)|Q(name=loc_type))
-            self.cleaned_data['location_type_object'] = loc_type_obj
-        except LocationType.DoesNotExist:
-            assert False, "LocationType '{}' not found".format(loc_type)
-
-        child_types = allowed_child_types(self.domain,
-                                          self.cleaned_data.get('parent'))
-        if not loc_type:
-            if len(child_types) == 1:
-                return child_types[0]
-            assert False, 'You must select a location type'
-
-        if not child_types:
+        allowed_types = self._get_allowed_types(self.cleaned_data.get('parent'))
+        if not allowed_types:
             raise forms.ValidationError(_('The selected parent location cannot have child locations!'))
-        elif loc_type not in child_types:
-            raise forms.ValidationError(_('Location type not valid for the selected parent.'))
 
-        return loc_type
+        if not loc_type:
+            if len(allowed_types) == 1:
+                loc_type_obj = allowed_types[0]
+            else:
+                assert False, 'You must select a location type'
+        else:
+            try:
+                loc_type_obj = LocationType.objects.get(Q(code=loc_type)|Q(name=loc_type))
+            except LocationType.DoesNotExist:
+                assert False, "LocationType '{}' not found".format(loc_type)
+            else:
+                if loc_type_obj not in allowed_types:
+                    raise forms.ValidationError(_('Location type not valid for the selected parent.'))
+
+        self.cleaned_data['location_type_object'] = loc_type_obj
+        return loc_type_obj.name
 
     def clean_coordinates(self):
         coords = self.cleaned_data['coordinates'].strip()
