@@ -72,7 +72,7 @@ class TestReportRunner(TestCase):
 
     def _move_location(self, location, new_parent_id):
         form = LocationForm(
-            location,
+            location.sql_location,
             bound_data={
                 'name': location.name,
                 'parent_id': new_parent_id,
@@ -84,7 +84,7 @@ class TestReportRunner(TestCase):
 
     def _change_group(self, location, group):
         form = LocationForm(
-            location,
+            location.sql_location,
             bound_data={
                 'name': location.name,
                 'data-field-group': group,
