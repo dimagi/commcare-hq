@@ -2,11 +2,12 @@ import os
 import uuid
 from datetime import datetime
 
+import corehq.apps.couch_sql_migration.constants as const
 import settings
 from casexml.apps.case.xform import get_all_extensions_to_close, CaseProcessingResult
 from corehq.apps.domain.models import Domain
 from corehq.apps.tzmigration import force_phone_timezones_should_be_processed
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, doc_type_to_state
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL
@@ -61,7 +62,7 @@ class CouchSqlDomainMigrator(object):
         _migrate_form_attachments(sql_form, couch_form)
         _migrate_form_operations(sql_form, couch_form)
 
-        diffs = json_diff(couch_form.to_json(), sql_form.to_json())
+        diffs = json_diff(couch_form.to_json(), sql_form.to_json(), track_list_indices=False)
         self.diff_db.add_diffs(
             'form', couch_form.form_id,
             _filter_form_diffs(couch_form.doc_type, diffs)
@@ -88,9 +89,10 @@ class CouchSqlDomainMigrator(object):
             _migrate_form_attachments(sql_form, couch_form)
             _migrate_form_operations(sql_form, couch_form)
 
+            diffs = json_diff(couch_form.to_json(), sql_form.to_json(), track_list_indices=False)
             self.diff_db.add_diffs(
                 'form', couch_form.form_id,
-                json_diff(couch_form.to_json(), sql_form.to_json())
+                _filter_form_diffs(couch_form.doc_type, diffs)
             )
 
             _save_migrated_models(sql_form)
@@ -111,7 +113,7 @@ class CouchSqlDomainMigrator(object):
         sql_cases = CaseAccessorSQL.get_cases(list(couch_cases))
         for sql_case in sql_cases:
             couch_case = couch_cases[sql_case.case_id]
-            diffs = json_diff(couch_case, sql_case.to_json())
+            diffs = json_diff(couch_case, sql_case.to_json(), track_list_indices=False)
             self.diff_db.add_diffs(
                 couch_case['doc_type'], sql_case.case_id,
                 _filter_case_diffs(diffs)
@@ -162,6 +164,17 @@ def _copy_form_properties(domain, sql_form, couch_form):
     # sql_form.export_tag = ["domain", "xmlns"]
     sql_form.partial_submission = couch_form.partial_submission
     sql_form.initial_processing_complete = couch_form.initial_processing_complete
+
+    sql_form.state = doc_type_to_state[couch_form.doc_type]
+
+    if couch_form.is_error:
+        # doc_type != XFormInstance
+        sql_form.problem = couch_form.problem
+        sql_form.orig_id = couch_form.orig_id
+
+    if couch_form.is_deprecated:
+        sql_form.edited_on = couch_form.deprecated_date
+
     return sql_form
 
 
@@ -319,61 +332,36 @@ def commit_migration(domain_name):
     assert should_use_sql_backend(domain_name)
 
 
-BASE_IGNORED_FORM_PATHS = {
-    '_rev',
-    'migrating_blobs_from_couch',
-    '#export_tag',
-    'computed_',
-    'state',
-    'edited_on',
-    'computed_modified_on_',
-    'problem',
-    'orig_id',
-    'deprecated_form_id',
-    'path',
-    'user_id',
-    'external_blobs',
-}
-IGNORE_PATHS = {
-    'XFormInstance': BASE_IGNORED_FORM_PATHS
-}
-
-
 def _filter_form_diffs(doc_type, diffs):
-    paths_to_ignore = IGNORE_PATHS.get(doc_type, BASE_IGNORED_FORM_PATHS)
-    return [diff for diff in diffs if diff.path[0] not in paths_to_ignore]
-
-CASE_IGNORED_PATHS = {
-    '_rev',
-    'initial_processing_complete',
-    'actions',
-    'id',
-    '#export_tag',
-    'computed_',
-    'version',
-    'case_attachments',
-    'deleted',
-    'export_tag',
-    'computed_modified_on_',
-    'case_id',
-    'case_json',
-    'modified_by',
-}
+    paths_to_ignore = const.FORM_IGNORE_PATHS[doc_type]
+    filtered = [
+        diff for diff in diffs
+        if diff.path[0] not in paths_to_ignore and diff not in const.FORM_IGNORED_DIFFS
+    ]
+    filtered = _check_deprecation_date(filtered, doc_type)
+    return filtered
 
 
-def _case_ignored_diffs():
+def _check_deprecation_date(filtered, doc_type):
     from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
-    return (
-        FormJsonDiff(diff_type=u'type', path=(u'name',), old_value=u'', new_value=None),
-        FormJsonDiff(diff_type=u'type', path=(u'closed_by',), old_value=u'', new_value=None),
-        FormJsonDiff(diff_type=u'missing', path=(u'location_id',), old_value=Ellipsis, new_value=None),
-    )
-
-CASE_IGNORED_DIFFS = _case_ignored_diffs()
+    if doc_type == 'XFormDeprecated':
+        edited_on = [diff for diff in filtered if diff.path[0] == 'edited_on']
+        deprecated_date = [diff for diff in filtered if diff.path[0] == 'deprecated_date']
+        if edited_on and deprecated_date:
+            edited_on = edited_on[0]
+            deprecated_date = deprecated_date[0]
+            filtered.remove(edited_on)
+            filtered.remove(deprecated_date)
+            if deprecated_date.old_value != edited_on.new_value:
+                filtered.append(FormJsonDiff(
+                    diff_type='complex', path=('edited_on', 'deprecated_date'),
+                    old_value=deprecated_date.old_value, new_value=edited_on.new_value
+                ))
+    return filtered
 
 
 def _filter_case_diffs(diffs):
     return [
         diff for diff in diffs
-        if diff.path[0] not in CASE_IGNORED_PATHS and diff not in CASE_IGNORED_DIFFS
+        if diff.path[0] not in const.CASE_IGNORED_PATHS and diff not in const.CASE_IGNORED_DIFFS
     ]

@@ -1,6 +1,7 @@
 from itertools import izip_longest
 from optparse import make_option
 
+from django.conf import settings
 from django.core.management.base import CommandError, LabelCommand
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
@@ -24,6 +25,7 @@ class Command(LabelCommand):
         make_option('--blow-away', action='store_true', default=False),
         make_option('--stats', action='store_true', default=False),
         make_option('--show-diffs', action='store_true', default=False),
+        make_option('--no-input', action='store_true', default=False),
     )
 
     @staticmethod
@@ -36,16 +38,21 @@ class Command(LabelCommand):
         if should_use_sql_backend(domain):
             raise CommandError(u'It looks like {} has already been migrated.'.format(domain))
 
+        self.no_input = options.pop('no_input', False)
+        if self.no_input and not settings.UNIT_TESTING:
+            raise CommandError('no-input only allowed for unit testing')
+
         if options['MIGRATE']:
             self.require_only_option('MIGRATE', options)
             set_migration_started(domain)
             do_couch_to_sql_migration(domain)
         if options['blow_away']:
             self.require_only_option('blow_away', options)
-            _confirm(
-                "This will delete all SQL forms and cases for the domain {}. "
-                "Are you sure you want to continue?".format(domain)
-            )
+            if not self.no_input:
+                _confirm(
+                    "This will delete all SQL forms and cases for the domain {}. "
+                    "Are you sure you want to continue?".format(domain)
+                )
             set_migration_not_started(domain)
             _blow_away_migration(domain)
         if options['stats']:
@@ -55,11 +62,12 @@ class Command(LabelCommand):
         if options['COMMIT']:
             self.require_only_option('COMMIT', options)
             assert get_migration_status(domain, strict=True) == MigrationStatus.IN_PROGRESS
-            _confirm(
-                "This will allow convert the domain to use the SQL backend and"
-                "allow new form submissions to be processed. "
-                "Are you sure you want to do this for domain '{}'?".format(domain)
-            )
+            if not self.no_input:
+                _confirm(
+                    "This will allow convert the domain to use the SQL backend and"
+                    "allow new form submissions to be processed. "
+                    "Are you sure you want to do this for domain '{}'?".format(domain)
+                )
             commit_migration(domain)
             set_migration_complete(domain)
 

@@ -45,7 +45,7 @@ class LedgerTests(TestCase):
         self.case = self.factory.create_case()
 
     def _submit_ledgers(self, ledger_blocks):
-        return submit_case_blocks(ledger_blocks, DOMAIN).form_id
+        return submit_case_blocks(ledger_blocks, DOMAIN)[0].form_id
 
     def _set_balance(self, balance):
         from corehq.apps.commtrack.tests.util import get_single_balance_block

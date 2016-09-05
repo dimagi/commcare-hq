@@ -321,7 +321,9 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     def to_json(self, include_attachments=False):
         from .serializers import XFormInstanceSQLSerializer
         serializer = XFormInstanceSQLSerializer(self, include_attachments=include_attachments)
-        return dict(serializer.data)
+        data = dict(serializer.data)
+        data['history'] = [dict(op) for op in data['history']]
+        return data
 
     def _get_attachment_from_db(self, attachment_name):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL

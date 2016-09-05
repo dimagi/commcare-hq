@@ -160,7 +160,7 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
             get_single_balance_block(case_id, prod_id, balance)
             for prod_id, balance in balances
         ]
-        form = submit_case_blocks(ledger_blocks, self.domain)
+        form = submit_case_blocks(ledger_blocks, self.domain)[0]
 
         # submit duplicate
         with process_kafka_changes(self.ledger_pillow):
