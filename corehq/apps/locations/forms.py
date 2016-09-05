@@ -12,6 +12,7 @@ from crispy_forms import layout as crispy
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 
+from corehq.apps.commtrack.util import generate_code
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.es import UserES
 from corehq.apps.users.forms import MultipleSelectionForm
@@ -231,16 +232,22 @@ class LocationForm(forms.Form):
 
         if site_code:
             site_code = site_code.lower()
+            if (SQLLocation.objects.filter(domain=self.domain,
+                                        site_code__iexact=site_code)
+                                .exclude(location_id=self.location.location_id)
+                                .exists()):
+                raise forms.ValidationError(
+                    'another location already uses this site code'
+                )
+            return site_code
 
-        if (SQLLocation.objects.filter(domain=self.domain,
-                                       site_code__iexact=site_code)
-                               .exclude(location_id=self.location.location_id)
-                               .exists()):
-            raise forms.ValidationError(
-                'another location already uses this site code'
-            )
-
-        return site_code
+        else:
+            all_codes = [
+                code.lower() for code in
+                (SQLLocation.objects.filter(domain=self.domain)
+                                    .values_list('site_code', flat=True))
+            ]
+            return generate_code(self.cleaned_data['name'], all_codes)
 
     def _get_allowed_types(self, parent):
         parent_type = parent.location_type if parent else None
