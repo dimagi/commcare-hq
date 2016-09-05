@@ -107,6 +107,7 @@ class SubmissionErrorTest(TestCase):
         self.assertIn('Invalid XML', log.problem)
         self.assertEqual("this isn't even close to xml", log.get_xml())
 
+    @run_with_all_backends
     def test_missing_xmlns(self):
         file, res = self._submit('missing_xmlns.xml')
         self.assertEqual(500, res.status_code)
