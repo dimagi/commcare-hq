@@ -11,6 +11,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.tzmigration import TimezoneMigrationProgress
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
@@ -134,8 +135,15 @@ class MigrationTestCase(TestCase):
         self._compare_diffs([])
 
     def test_submission_error_log_migration(self):
-        # TODO
-        pass
+        try:
+            submit_form_locally("To be an XForm or NOT to be an xform/>", self.domain_name)
+        except LocalSubmissionError:
+            pass
+
+        self.assertEqual(1, len(self._get_form_ids(doc_type='SubmissionErrorLog')))
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(1, len(self._get_form_ids(doc_type='SubmissionErrorLog')))
+        self._compare_diffs([])
 
     def test_hqsubmission_migration(self):
         # TODO

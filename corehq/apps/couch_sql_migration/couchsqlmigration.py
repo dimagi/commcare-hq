@@ -90,11 +90,12 @@ class CouchSqlDomainMigrator(object):
             _migrate_form_attachments(sql_form, couch_form)
             _migrate_form_operations(sql_form, couch_form)
 
-            diffs = json_diff(couch_form.to_json(), sql_form.to_json(), track_list_indices=False)
-            self.diff_db.add_diffs(
-                'form', couch_form.form_id,
-                _filter_form_diffs(couch_form.doc_type, diffs)
-            )
+            if couch_form.doc_type != 'SubmissionErrorLog':
+                diffs = json_diff(couch_form.to_json(), sql_form.to_json(), track_list_indices=False)
+                self.diff_db.add_diffs(
+                    'form', couch_form.form_id,
+                    _filter_form_diffs(couch_form.doc_type, diffs)
+                )
 
             _save_migrated_models(sql_form)
 
@@ -183,6 +184,9 @@ def _copy_form_properties(domain, sql_form, couch_form):
 
     if couch_form.is_deprecated or couch_form.is_deleted:
         sql_form.edited_on = getattr(couch_form, 'deprecated_date', None)
+
+    if couch_form.is_submission_error_log:
+        sql_form.xmlns = sql_form.xmlns or ''
 
     return sql_form
 
