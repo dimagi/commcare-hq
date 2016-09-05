@@ -58,7 +58,7 @@ from corehq.apps.export.dbaccessors import (
     get_latest_form_export_schema,
 )
 from corehq.apps.export.utils import is_occurrence_deleted
-from corehq.apps.export.transforms import transform_date_to_request_timezone
+from corehq.apps.export.transforms import transform_date_to_domain_timezone
 
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
@@ -190,15 +190,20 @@ class ExportColumn(DocumentSchema):
         assert base_path == self.item.path[:len(base_path)], "ExportItem's path doesn't start with the base_path"
         # Get the path from the doc root to the desired ExportItem
         path = [x.name for x in self.item.path[len(base_path):]]
-        return self._transform(NestedDictGetter(path)(doc), doc, transform_dates)
+        return self._transform(domain, NestedDictGetter(path)(doc), doc, transform_dates)
 
-    def _transform(self, value, doc, transform_dates):
+    def _transform(self, domain, value, doc, transform_dates):
         """
         Transform the given value with the transform specified in self.item.transform.
         Also transform dates if the transform_dates flag is true.
         """
 
-        value = transform_date_to_request_timezone(value, doc, excel_format=transform_dates)
+        value = transform_date_to_domain_timezone(
+            domain,
+            value,
+            doc,
+            excel_format=transform_dates
+        )
         if self.item.transform:
             value = TRANSFORM_FUNCTIONS[self.item.transform](value, doc)
         if self.deid_transform:
@@ -1748,6 +1753,7 @@ class StockFormExportColumn(ExportColumn):
             return None
 
         return self._transform(
+            domain,
             NestedDictGetter(path[stock_type_path_index + 1:])(new_doc),
             new_doc,
             transform_dates

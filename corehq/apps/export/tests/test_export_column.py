@@ -348,7 +348,7 @@ class TestUserDefinedExportColumn(SimpleTestCase):
 
 class TestDatesInExportColumn(SimpleTestCase):
 
-    @patch('corehq.util.timezones.utils.get_timezone_for_request', lambda: pytz.UTC)
+    @patch('corehq.util.timezones.utils.get_timezone_for_domain', lambda _: pytz.UTC)
     def test_get_value_utc(self):
         column = ExportColumn(
             item=ExportItem(
@@ -367,7 +367,7 @@ class TestDatesInExportColumn(SimpleTestCase):
             '2016-09-02T10:00:00+00:00',
         )
 
-    @patch('corehq.util.timezones.utils.get_timezone_for_request', lambda: pytz.timezone('America/Chicago'))
+    @patch('corehq.util.timezones.utils.get_timezone_for_domain', lambda _: pytz.timezone('America/Chicago'))
     def test_get_value_chicago(self):
         column = ExportColumn(
             item=ExportItem(
@@ -386,7 +386,7 @@ class TestDatesInExportColumn(SimpleTestCase):
             '2016-09-02T05:00:00-05:00',
         )
 
-    @patch('corehq.util.timezones.utils.get_timezone_for_request', lambda: pytz.UTC)
+    @patch('corehq.util.timezones.utils.get_timezone_for_domain', lambda _: pytz.UTC)
     def test_get_value_utc_transform_dates(self):
         column = ExportColumn(
             item=ExportItem(
@@ -406,7 +406,7 @@ class TestDatesInExportColumn(SimpleTestCase):
             '2016-09-02 10:00:00',
         )
 
-    @patch('corehq.util.timezones.utils.get_timezone_for_request', lambda: pytz.timezone('America/Chicago'))
+    @patch('corehq.util.timezones.utils.get_timezone_for_domain', lambda _: pytz.timezone('America/Chicago'))
     def test_get_value_chicago_transform_dates(self):
         column = ExportColumn(
             item=ExportItem(
@@ -426,7 +426,7 @@ class TestDatesInExportColumn(SimpleTestCase):
             '2016-09-02 05:00:00',
         )
 
-    @patch('corehq.util.timezones.utils.get_timezone_for_request', lambda: pytz.UTC)
+    @patch('corehq.util.timezones.utils.get_timezone_for_domain', lambda _: pytz.UTC)
     def test_get_value_missing(self):
         column = ExportColumn(
             item=ExportItem(

@@ -62,7 +62,6 @@ def get_timezone_for_user(couch_user_or_id, domain):
     return get_timezone_for_domain(domain)
 
 
-
-def get_timezone_aware_date_for_request(date):
+def get_timezone_aware_date_for_domain(domain, date):
     tz_utc_aware_date = pytz.utc.localize(date)
-    return tz_utc_aware_date.astimezone(get_timezone_for_request())
+    return tz_utc_aware_date.astimezone(get_timezone_for_domain(domain))

@@ -3,7 +3,7 @@ from django.core.cache import cache
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.util import cached_user_id_to_username, cached_owner_id_to_display
 from corehq.util.dates import iso_string_to_datetime
-from corehq.util.timezones.utils import get_timezone_aware_date_for_request
+from corehq.util.timezones.utils import get_timezone_aware_date_for_domain
 
 EXCEL_FORMAT = '%Y-%m-%d %H:%M:%S'
 
@@ -41,9 +41,9 @@ def _cached_case_id_to_case_name(case_id):
     return ret
 
 
-def transform_date_to_request_timezone(value, doc, excel_format=False):
+def transform_date_to_domain_timezone(domain, value, doc, excel_format=False):
     """
-    Transforms a date based on the current request's timezone.
+    Transforms a date based on the current domain's timezone.
     If transform_dates is True then the date is formatted for
     excel. If it cannot be parsed, it just returns the value.
     """
@@ -57,7 +57,7 @@ def transform_date_to_request_timezone(value, doc, excel_format=False):
         # Most likely not a date
         return value
 
-    date_value_aware = get_timezone_aware_date_for_request(date_value)
+    date_value_aware = get_timezone_aware_date_for_domain(domain, date_value)
 
     if excel_format:
         value = date_value_aware.strftime(EXCEL_FORMAT)
