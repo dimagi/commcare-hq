@@ -30,6 +30,7 @@ class MigrationTestCase(TestCase):
         self.domain = create_domain(self.domain_name)
         # all new domains are set complete when they are created
         TimezoneMigrationProgress.objects.filter(domain=self.domain_name).delete()
+        self.assertFalse(should_use_sql_backend(self.domain_name))
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
@@ -37,7 +38,6 @@ class MigrationTestCase(TestCase):
 
     def test_basic_form_migration(self):
         create_and_save_a_form(self.domain_name)
-        self.assertFalse(should_use_sql_backend(self.domain_name))
         self.assertEqual(1, len(self._get_form_ids()))
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(1, len(self._get_form_ids()))
@@ -46,7 +46,6 @@ class MigrationTestCase(TestCase):
     def test_archived_form_migration(self):
         form = create_and_save_a_form(self.domain_name)
         form.archive('user1')
-        self.assertFalse(should_use_sql_backend(self.domain_name))
         self.assertEqual(1, len(self._get_form_ids('XFormArchived')))
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(1, len(self._get_form_ids('XFormArchived')))
@@ -64,7 +63,6 @@ class MigrationTestCase(TestCase):
             </data>""",
             self.domain_name,
         )
-        self.assertFalse(should_use_sql_backend(self.domain_name))
         self.assertEqual(1, len(self._get_form_ids('XFormError')))
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(1, len(self._get_form_ids('XFormError')))
@@ -77,7 +75,6 @@ class MigrationTestCase(TestCase):
         submit_form_locally(duplicate_form_xml, self.domain_name)
         submit_form_locally(duplicate_form_xml, self.domain_name)
 
-        self.assertFalse(should_use_sql_backend(self.domain_name))
         self.assertEqual(1, len(self._get_form_ids()))
         self.assertEqual(1, len(self._get_form_ids('XFormDuplicate')))
         self._do_migration_and_assert_flags(self.domain_name)
@@ -129,7 +126,6 @@ class MigrationTestCase(TestCase):
             [form.form_id], datetime.utcnow(), 'test-deletion'
         )
 
-        self.assertFalse(should_use_sql_backend(self.domain_name))
         self.assertEqual(1, len(get_doc_ids_in_domain_by_type(
             self.domain_name, "XFormInstance-Deleted", XFormInstance.get_db())
         ))
