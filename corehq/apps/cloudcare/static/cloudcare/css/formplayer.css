@@ -1,6 +1,9 @@
 .grid-wrapper {
-    grid: subgrid;
     display: grid;
     border-style: solid;
     border-width: 1px;
+}
+
+.tile-row {
+    height: 400px
 }

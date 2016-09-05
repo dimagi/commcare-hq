@@ -110,9 +110,9 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     });
 
     MenuList.CaseTileView = MenuList.CaseView.extend({
-        tagName: "tr",
+        tagName: "div",
         template: "#case-tile-view-item-template",
-        className: "formplayer-request grid-wrapper",
+        className: "row formplayer-request grid-wrapper tile-row",
 
         templateHelpers: function () {
             var appId = this.model.collection.appId;
@@ -130,6 +130,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
 
     MenuList.CaseTileGridViewItem = MenuList.CaseTileView.extend({
         tagName: "div",
+        template: "#case-tile-grid-view-item-template",
     });
 
     // return the string grid-area attribute

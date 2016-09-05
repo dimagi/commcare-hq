@@ -92,9 +92,8 @@
         <% if (numEntitiesPerRow > 1) { %>
             <div class="wrapper case-container case-container-grid container-fluid"></div>
         <% } else { %>
-            <table class="table table-hover table-striped table-bordered">
-                <tbody class="wrapper case-container"></tbody>
-            </table>
+            <div class="wrapper container case-container container-fluid">
+            </div>
         <% } %>
     <% if (action) { %>
     <div>
@@ -155,18 +154,32 @@
 </script>
 
 <script type="text/template" id="case-tile-view-item-template">
+    <% _.each(data, function(datum, index) { %>
+    <div class="grid-style-<%= index %> box">
+        <% if (styles[index].displayFormat === 'Image') {
+        if(resolveUri(datum)) { %>
+        <img class="module-icon" style="max-width:25%; height: auto;" src="<%= resolveUri(datum) %>"/>
+        <% } %>
+        <% } else { %>
+        <div><%= datum %></div>
+        <% } %>
+    </div>
+    <% }); %>
+</script>
+
+<script type="text/template" id="case-tile-grid-view-item-template">
     <div>
-        <% _.each(data, function(datum, index) { %>
-        <div class="grid-style-<%= index %> box">
-            <% if (styles[index].displayFormat === 'Image') {
-            if(resolveUri(datum)) { %>
-            <img class="module-icon" style="max-width:25%; height: auto;" src="<%= resolveUri(datum) %>"/>
-            <% } %>
-            <% } else { %>
-            <div><%= datum %></div>
-            <% } %>
-        </div>
-        <% }); %>
+    <% _.each(data, function(datum, index) { %>
+    <div class="grid-style-<%= index %> box">
+        <% if (styles[index].displayFormat === 'Image') {
+        if(resolveUri(datum)) { %>
+        <img class="module-icon" style="max-width:25%; height: auto;" src="<%= resolveUri(datum) %>"/>
+        <% } %>
+        <% } else { %>
+        <div><%= datum %></div>
+        <% } %>
+    </div>
+    <% }); %>
     </div>
 </script>
 
