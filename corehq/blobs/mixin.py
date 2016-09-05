@@ -137,12 +137,10 @@ class BlobMixin(Document):
 
         with blob:
             body = blob.read()
-        try:
-            body = body.decode("utf-8", "strict")
-        except UnicodeDecodeError:
-            # Return bytes on decode failure, otherwise unicode.
-            # Ugly, but consistent with restkit.wrappers.Response.body_string
-            pass
+        body = body.decode("utf-8", "replace")
+        # Returning bytes on decode failure (as restkit.wrappers.Response.body_string does) can result in
+        # invalid XML, and cause ptop_reindexer_v2 to crash when reindexing sql-forms. Rather replace with
+        # \ufffd so we know there is a problem, but allow reindexing. cf. FB 236666 for details.
         return body
 
     def delete_attachment(self, name):
@@ -378,12 +376,10 @@ class DeferredBlobMixin(BlobMixin):
             body = self._deferred_blobs[name]["content"]
             if stream:
                 return ClosingContextProxy(StringIO(body))
-            try:
-                body = body.decode("utf-8", "strict")
-            except UnicodeDecodeError:
-                # Return bytes on decode failure, otherwise unicode.
-                # Ugly, but consistent with restkit.wrappers.Response.body_string
-                pass
+            body = body.decode("utf-8", "replace")
+            # Returning bytes on decode failure (as restkit.wrappers.Response.body_string does) can result in
+            # invalid XML, and cause ptop_reindexer_v2 to crash when reindexing sql-forms. Rather replace with
+            # \ufffd so we know there is a problem, but allow reindexing. cf. FB 236666 for details.
             return body
         return super(DeferredBlobMixin, self).fetch_attachment(name, stream)
 
