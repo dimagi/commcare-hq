@@ -352,21 +352,25 @@ def _filter_form_diffs(doc_type, diffs):
 
 
 def _check_deprecation_date(filtered, doc_type):
-    from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
     if doc_type == 'XFormDeprecated':
-        edited_on = [diff for diff in filtered if diff.path[0] == 'edited_on']
-        deprecated_date = [diff for diff in filtered if diff.path[0] == 'deprecated_date']
-        if edited_on and deprecated_date:
-            edited_on = edited_on[0]
-            deprecated_date = deprecated_date[0]
-            filtered.remove(edited_on)
-            filtered.remove(deprecated_date)
-            if deprecated_date.old_value != edited_on.new_value:
-                filtered.append(FormJsonDiff(
-                    diff_type='complex', path=('edited_on', 'deprecated_date'),
-                    old_value=deprecated_date.old_value, new_value=edited_on.new_value
-                ))
+        _check_renamed_fields(filtered, 'deprecated_date', 'edited_on')
     return filtered
+
+
+def _check_renamed_fields(filtered_diffs, couch_field_name, sql_field_name):
+    from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
+    sql_fields = [diff for diff in filtered_diffs if diff.path[0] == sql_field_name]
+    couch_fields = [diff for diff in filtered_diffs if diff.path[0] == couch_field_name]
+    if sql_fields and couch_fields:
+        sql_field = sql_fields[0]
+        couch_field = couch_fields[0]
+        filtered_diffs.remove(sql_field)
+        filtered_diffs.remove(couch_field)
+        if couch_field.old_value != sql_field.new_value:
+            filtered_diffs.append(FormJsonDiff(
+                diff_type='complex', path=(couch_field_name, sql_field_name),
+                old_value=couch_field.old_value, new_value=sql_field.new_value
+            ))
 
 
 def _filter_case_diffs(diffs):
