@@ -37,15 +37,6 @@ def validate_phone_datetime(datetime_string, none_ok=False, form_id=None):
         raise PhoneDateValueError('{!r}'.format(datetime_string))
 
 
-def make_form_from_case_blocks(case_blocks):
-    form = ElementTree.Element("data")
-    form.attrib['xmlns'] = "https://www.commcarehq.org/test/casexml-wrapper"
-    form.attrib['xmlns:jrm'] = "http://openrosa.org/jr/xforms"
-    for block in case_blocks:
-        form.append(block)
-    return ElementTree.tostring(form)
-
-
 def post_case_blocks(case_blocks, form_extras=None, domain=None):
     """
     Post case blocks.
