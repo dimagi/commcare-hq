@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-09-06 19:13+0000\n"
+"POT-Creation-Date: 2016-09-06 19:24+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -901,8 +901,8 @@ msgstr ""
 #: corehq/apps/groups/templates/groups/group_members.html:338
 #: corehq/apps/indicators/templates/indicators/forms/copy_to_domain.html:64
 #: corehq/apps/locations/templates/locations/manage/location.html:231
-#: corehq/apps/locations/templates/locations/manage/locations.html:341
-#: corehq/apps/locations/templates/locations/manage/locations.html:366
+#: corehq/apps/locations/templates/locations/manage/locations.html:347
+#: corehq/apps/locations/templates/locations/manage/locations.html:372
 #: corehq/apps/notifications/forms.py:50
 #: corehq/apps/products/templates/products/manage/products.html:164
 #: corehq/apps/programs/templates/programs/manage/programs.html:107
@@ -2211,7 +2211,7 @@ msgstr ""
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:87
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:232
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html:88
-#: corehq/apps/locations/templates/locations/manage/locations.html:236
+#: corehq/apps/locations/templates/locations/manage/locations.html:242
 #: corehq/apps/performance_sms/templates/performance_sms/list_performance_configs.html:38
 #: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:9
 #: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:53
@@ -5117,8 +5117,8 @@ msgstr ""
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html:96
 #: corehq/apps/groups/templates/groups/group_members.html:283
 #: corehq/apps/hqpillow_retry/templates/hqpillow_retry/pillow_errors.html:25
-#: corehq/apps/locations/templates/locations/manage/locations.html:253
-#: corehq/apps/locations/templates/locations/manage/locations.html:342
+#: corehq/apps/locations/templates/locations/manage/locations.html:259
+#: corehq/apps/locations/templates/locations/manage/locations.html:348
 #: corehq/apps/performance_sms/templates/performance_sms/edit_performance_config.html:32
 #: corehq/apps/programs/templates/programs/manage/programs.html:70
 #: corehq/apps/programs/templates/programs/manage/programs.html:105
@@ -8197,6 +8197,7 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html:20
 #: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status.html:11
+#: corehq/apps/locations/templates/locations/manage/partials/locations_upload_status.html:7
 msgid "However, we ran into the following problems:"
 msgstr ""
 
@@ -11225,8 +11226,8 @@ msgstr ""
 msgid "Sorry, you do not have access to %(feature_name)s"
 msgstr ""
 
-#: corehq/apps/domain/views.py:290 corehq/apps/locations/views.py:642
-#: corehq/apps/locations/views.py:859 corehq/apps/ota/views.py:200
+#: corehq/apps/domain/views.py:290 corehq/apps/locations/views.py:669
+#: corehq/apps/locations/views.py:889 corehq/apps/ota/views.py:200
 #: corehq/apps/style/templates/style/includes/global_navigation_bar.html:51
 #: corehq/reports.py:359 corehq/tabs/tabclasses.py:1088
 msgid "Project Settings"
@@ -12949,10 +12950,12 @@ msgid "Successfully uploaded %(count)s tables."
 msgstr ""
 
 #: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status.html:19
+#: corehq/apps/locations/templates/locations/manage/partials/locations_upload_status.html:15
 msgid "Additional information:"
 msgstr ""
 
 #: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status.html:27
+#: corehq/apps/locations/templates/locations/manage/partials/locations_upload_status.html:23
 msgid "Upload failed! Details:"
 msgstr ""
 
@@ -13075,7 +13078,7 @@ msgstr ""
 msgid "Error processing your Excel (.xlsx) file"
 msgstr ""
 
-#: corehq/apps/fixtures/upload.py:148 corehq/apps/locations/views.py:746
+#: corehq/apps/fixtures/upload.py:148 corehq/apps/locations/views.py:774
 msgid "Invalid file-format. Please upload a valid xlsx file."
 msgstr ""
 
@@ -13166,13 +13169,13 @@ msgstr ""
 #: corehq/apps/fixtures/views.py:356
 #: corehq/apps/importer/templates/importer/excel_commit.html:42
 #: corehq/apps/importer/templates/importer/partials/import_status.html:70
-#: corehq/apps/locations/views.py:697 corehq/apps/products/views.py:324
+#: corehq/apps/locations/views.py:724 corehq/apps/products/views.py:324
 #: corehq/apps/style/templates/style/partials/download_status.html:19
 #: corehq/apps/users/views/mobile/users.py:997
 msgid "Importing your data. This may take some time..."
 msgstr ""
 
-#: corehq/apps/fixtures/views.py:357 corehq/apps/locations/views.py:698
+#: corehq/apps/fixtures/views.py:357 corehq/apps/locations/views.py:725
 #: corehq/apps/products/views.py:325
 #: corehq/apps/users/views/mobile/users.py:998
 msgid "Problem importing data! Please try again or report an issue."
@@ -14362,7 +14365,7 @@ msgid "Multimedia Reference Checker"
 msgstr ""
 
 #: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:26
-#: corehq/apps/locations/templates/locations/manage/locations.html:211
+#: corehq/apps/locations/templates/locations/manage/locations.html:217
 #: corehq/apps/users/templates/users/mobile_workers.html:144
 #: corehq/tabs/tabclasses.py:960
 msgid "Bulk Upload"
@@ -14877,7 +14880,7 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/doc_info.py:152 corehq/apps/hqwebapp/doc_info.py:234
 #: corehq/apps/locations/templates/locations/manage/location.html:169
-#: corehq/apps/locations/views.py:146 corehq/apps/reminders/forms.py:2440
+#: corehq/apps/locations/views.py:175 corehq/apps/reminders/forms.py:2440
 #: corehq/apps/reports/commtrack/standard.py:235
 #: corehq/apps/reports/commtrack/standard.py:369
 #: corehq/apps/reports/commtrack/standard.py:378
@@ -15694,6 +15697,155 @@ msgstr ""
 msgid "Parent with site code {0} does not exist in this project"
 msgstr ""
 
+#: corehq/apps/locations/bulk_management.py:148
+msgid ""
+"Location in sheet '{}', at row '{}' doesn't contain either location_id or "
+"site_code"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:308
+#, python-brace-format
+msgid ""
+"'types' sheet should contain exactly '{expected}' as the sheet headers. "
+"'{missing}' are missing"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:322
+msgid ""
+"Location sheets do not exist for the location types '{}' - All types listed "
+"in 'types' sheet should have a location sheet"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:335
+#, python-brace-format
+msgid ""
+"Locations sheet with title '{name}' should contain exactly '{expected}' as "
+"the sheet headers. '{missing}' are missing"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:413
+msgid "Created {} new location types"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:414
+msgid "Updated {} existing location types"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:415
+msgid "Deleted {} existing location types"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:416
+msgid "Created {} new locations"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:417
+msgid "Updated {} existing locations"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:418
+msgid "Deleted {} existing locations"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:451
+#, python-brace-format
+msgid ""
+"Location deletion in sheet '{type}', row '{i}' is ignored, as the location "
+"does not exist"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:513
+#, python-brace-format
+msgid ""
+"latitude/longitude 'lat-{lat}, lng-{lng}' for location in sheet '{type}' at "
+"index {index} should be valid decimal numbers."
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:522
+#, python-brace-format
+msgid ""
+"Location in sheet '{type}' at index {index} has no site_code and location_id "
+"- at least one of them should be listed"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:533
+msgid "Location type code '{}' is used {} times - they should be unique"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:542
+msgid "Location site_code '{}' is used {} times - they should be unique"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:551
+msgid ""
+"Location location_id '{}' is listed {} times - they should be listed once"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:564
+msgid ""
+"Location type code '{}' is not listed in the excel. All types should be "
+"listed"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:577
+#, python-brace-format
+msgid ""
+"Location '{name} (id {id})' is not listed in the excel. All locations should "
+"be listed"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:592
+#, python-brace-format
+msgid ""
+"Location 'id: {id}' is not found in your domain. It's listed in the sheet "
+"{type} at row {index}"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:606
+#, python-brace-format
+msgid ""
+"Problem with custom data for location '{site_code}', in sheet '{type}', at "
+"index '{i}' - '{er}'"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:619
+msgid "Location Type '{}' refers to a parent which doesn't exist"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:624
+msgid "Location Type '{}' has a parentage that loops"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:634
+msgid "'{}' can't have '{}' as 'Expand From', valid options are '{}'"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:640
+msgid "'{}' can't have '{}' as 'Expand To', valid options are '{}'"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:654
+msgid ""
+"Location '{}' in sheet points to a nonexistent or to be deleted location-"
+"type '{}'"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:660
+msgid "Location '{}' is a '{}' and should not have a parent"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:666
+msgid "Location '{}' does not have a parent set or its parent is being deleted"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:670
+msgid "Location '{}' is a '{}', so it should have a parent that is a '{}'"
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py:691
+msgid "There are {} locations with the name '{}' under the parent '{}'"
+msgstr ""
+
 #: corehq/apps/locations/forms.py:51
 msgid "Parent"
 msgstr ""
@@ -15721,27 +15873,27 @@ msgstr ""
 msgid "A number referencing this location on an external system"
 msgstr ""
 
-#: corehq/apps/locations/forms.py:131 corehq/apps/locations/forms.py:137
+#: corehq/apps/locations/forms.py:130 corehq/apps/locations/forms.py:136
 msgid "Location Information"
 msgstr ""
 
-#: corehq/apps/locations/forms.py:191
+#: corehq/apps/locations/forms.py:190
 msgid "Location's parent is itself or a descendant"
 msgstr ""
 
-#: corehq/apps/locations/forms.py:252
+#: corehq/apps/locations/forms.py:251
 msgid "The selected parent location cannot have child locations!"
 msgstr ""
 
-#: corehq/apps/locations/forms.py:254
+#: corehq/apps/locations/forms.py:253
 msgid "Location type not valid for the selected parent."
 msgstr ""
 
-#: corehq/apps/locations/forms.py:318
+#: corehq/apps/locations/forms.py:317
 msgid "Workers at Location"
 msgstr ""
 
-#: corehq/apps/locations/forms.py:372
+#: corehq/apps/locations/forms.py:371
 msgid ""
 "The following users already have locations assigned,  you must unassign them "
 "before they can be added here:  "
@@ -15791,7 +15943,7 @@ msgid "You have unsaved changes."
 msgstr ""
 
 #: corehq/apps/locations/templates/locations/location_types.html:52
-#: corehq/apps/locations/views.py:156
+#: corehq/apps/locations/views.py:185
 msgid "Organization Levels"
 msgstr ""
 
@@ -16030,11 +16182,11 @@ msgid ""
 "please report an issue"
 msgstr ""
 
-#: corehq/apps/locations/templates/locations/manage/locations.html:162
+#: corehq/apps/locations/templates/locations/manage/locations.html:168
 msgid "Manage Organization Structure"
 msgstr ""
 
-#: corehq/apps/locations/templates/locations/manage/locations.html:164
+#: corehq/apps/locations/templates/locations/manage/locations.html:170
 msgid ""
 "\n"
 "                    The Organization feature allows you to represent the "
@@ -16049,42 +16201,42 @@ msgid ""
 "                "
 msgstr ""
 
-#: corehq/apps/locations/templates/locations/manage/locations.html:173
+#: corehq/apps/locations/templates/locations/manage/locations.html:179
 msgid "Showing the Archived Location List."
 msgstr ""
 
-#: corehq/apps/locations/templates/locations/manage/locations.html:180
+#: corehq/apps/locations/templates/locations/manage/locations.html:186
 msgid "Show Archived Locations"
 msgstr ""
 
-#: corehq/apps/locations/templates/locations/manage/locations.html:184
+#: corehq/apps/locations/templates/locations/manage/locations.html:190
 msgid "Show Active Locations"
 msgstr ""
 
-#: corehq/apps/locations/templates/locations/manage/locations.html:202
+#: corehq/apps/locations/templates/locations/manage/locations.html:208
 msgid "Download Organization Structure"
 msgstr ""
 
-#: corehq/apps/locations/templates/locations/manage/locations.html:214
+#: corehq/apps/locations/templates/locations/manage/locations.html:220
 msgid "Edit Organization Levels"
 msgstr ""
 
-#: corehq/apps/locations/templates/locations/manage/locations.html:217
+#: corehq/apps/locations/templates/locations/manage/locations.html:223
 msgid "Edit Location Fields"
 msgstr ""
 
-#: corehq/apps/locations/templates/locations/manage/locations.html:243
+#: corehq/apps/locations/templates/locations/manage/locations.html:249
 msgid "Unarchive"
 msgstr ""
 
-#: corehq/apps/locations/templates/locations/manage/locations.html:248
-#: corehq/apps/locations/templates/locations/manage/locations.html:367
+#: corehq/apps/locations/templates/locations/manage/locations.html:254
+#: corehq/apps/locations/templates/locations/manage/locations.html:373
 #: corehq/apps/products/templates/products/manage/products.html:121
 #: corehq/apps/products/views.py:188
 msgid "Archive"
 msgstr ""
 
-#: corehq/apps/locations/templates/locations/manage/locations.html:307
+#: corehq/apps/locations/templates/locations/manage/locations.html:313
 #: custom/ilsgateway/templates/ilsgateway/slab/slab_configuration.html:98
 #, python-format
 msgid ""
@@ -16095,11 +16247,11 @@ msgid ""
 "    "
 msgstr ""
 
-#: corehq/apps/locations/templates/locations/manage/locations.html:327
+#: corehq/apps/locations/templates/locations/manage/locations.html:333
 msgid "Delete Location:"
 msgstr ""
 
-#: corehq/apps/locations/templates/locations/manage/locations.html:331
+#: corehq/apps/locations/templates/locations/manage/locations.html:337
 msgid ""
 "\n"
 "                    <strong>Warning!</strong> Deleting a location is "
@@ -16113,11 +16265,11 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/locations/templates/locations/manage/locations.html:353
+#: corehq/apps/locations/templates/locations/manage/locations.html:359
 msgid "Archive Location:"
 msgstr ""
 
-#: corehq/apps/locations/templates/locations/manage/locations.html:357
+#: corehq/apps/locations/templates/locations/manage/locations.html:363
 msgid ""
 "\n"
 "                    <strong>Warning!</strong> Archiving a location will "
@@ -16144,113 +16296,119 @@ msgstr ""
 msgid "Include location ID in download."
 msgstr ""
 
-#: corehq/apps/locations/views.py:62
+#: corehq/apps/locations/views.py:78
+msgid ""
+"Some of the location edits are still in progress, please wait until they "
+"finish and then try again"
+msgstr ""
+
+#: corehq/apps/locations/views.py:91
 #: corehq/apps/users/templates/users/edit_commcare_user.html:131
 #: corehq/privileges.py:120
 msgid "Locations"
 msgstr ""
 
-#: corehq/apps/locations/views.py:90 corehq/apps/locations/views.py:727
-#: corehq/apps/locations/views.py:728
+#: corehq/apps/locations/views.py:119 corehq/apps/locations/views.py:754
+#: corehq/apps/locations/views.py:755
 msgid "Organization Structure"
 msgstr ""
 
-#: corehq/apps/locations/views.py:269
+#: corehq/apps/locations/views.py:299
 msgid "You cannot delete organization levels that have locations"
 msgstr ""
 
-#: corehq/apps/locations/views.py:329
+#: corehq/apps/locations/views.py:353
 msgid "New Location"
 msgstr ""
 
-#: corehq/apps/locations/views.py:397
+#: corehq/apps/locations/views.py:421
 msgid "Location saved!"
 msgstr ""
 
-#: corehq/apps/locations/views.py:422 corehq/apps/locations/views.py:452
-#: corehq/apps/locations/views.py:482
+#: corehq/apps/locations/views.py:447 corehq/apps/locations/views.py:478
+#: corehq/apps/locations/views.py:508
 #, python-brace-format
 msgid "Location '{location_name}' has successfully been {action}."
 msgstr ""
 
-#: corehq/apps/locations/views.py:424
+#: corehq/apps/locations/views.py:449
 msgid "archived"
 msgstr ""
 
-#: corehq/apps/locations/views.py:454
+#: corehq/apps/locations/views.py:480
 #: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:231
 #: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:281
 msgid "deleted"
 msgstr ""
 
-#: corehq/apps/locations/views.py:484
+#: corehq/apps/locations/views.py:510
 msgid "unarchived"
 msgstr ""
 
-#: corehq/apps/locations/views.py:491
+#: corehq/apps/locations/views.py:517
 msgid "Edit Location"
 msgstr ""
 
-#: corehq/apps/locations/views.py:563
+#: corehq/apps/locations/views.py:589
 msgid "Update Product List"
 msgstr ""
 
-#: corehq/apps/locations/views.py:564
+#: corehq/apps/locations/views.py:590
 msgid "Specify Products Per Location"
 msgstr ""
 
-#: corehq/apps/locations/views.py:568
+#: corehq/apps/locations/views.py:594
 msgid "Products at Location"
 msgstr ""
 
-#: corehq/apps/locations/views.py:580
+#: corehq/apps/locations/views.py:606
 msgid "Update Users at this Location"
 msgstr ""
 
-#: corehq/apps/locations/views.py:581
+#: corehq/apps/locations/views.py:607
 msgid "Specify Workers at this Location"
 msgstr ""
 
-#: corehq/apps/locations/views.py:597
+#: corehq/apps/locations/views.py:623
 #, python-brace-format
 msgid "Edit {name} <small>{type}</small>"
 msgstr ""
 
-#: corehq/apps/locations/views.py:687 corehq/apps/locations/views.py:696
+#: corehq/apps/locations/views.py:714 corehq/apps/locations/views.py:723
 msgid "Organization Structure Import Status"
 msgstr ""
 
-#: corehq/apps/locations/views.py:708
+#: corehq/apps/locations/views.py:735
 msgid "Upload Organization Structure From Excel"
 msgstr ""
 
-#: corehq/apps/locations/views.py:740 corehq/apps/products/views.py:287
+#: corehq/apps/locations/views.py:768 corehq/apps/products/views.py:287
 msgid "no file uploaded"
 msgstr ""
 
-#: corehq/apps/locations/views.py:743
+#: corehq/apps/locations/views.py:771
 msgid "no domain specified"
 msgstr ""
 
-#: corehq/apps/locations/views.py:779 corehq/apps/products/views.py:342
+#: corehq/apps/locations/views.py:809 corehq/apps/products/views.py:342
 msgid "Import complete."
 msgstr ""
 
-#: corehq/apps/locations/views.py:780
+#: corehq/apps/locations/views.py:810
 msgid "Organization Structure importing has finished"
 msgstr ""
 
-#: corehq/apps/locations/views.py:789
+#: corehq/apps/locations/views.py:819
 msgid ""
 "You need to define organization levels before you can do a bulk import or "
 "export."
 msgstr ""
 
-#: corehq/apps/locations/views.py:860
+#: corehq/apps/locations/views.py:890
 msgid "Project Access"
 msgstr ""
 
-#: corehq/apps/locations/views.py:885
+#: corehq/apps/locations/views.py:915
 msgid "All users have been unassigned from their locations"
 msgstr ""
 
