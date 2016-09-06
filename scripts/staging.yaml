@@ -55,7 +55,7 @@ branches:
   - np/djangular-0.7.16 # Nick P 8/31
   - ce/domain-list-api # Cal 8/31
   - ce/addtoblock-exception # Cal 9/1
-  - restrict-user-edit  # Ethan 9/2
+  - es/locations-to-sql  # Ethan 9/6
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
