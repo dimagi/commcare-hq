@@ -132,6 +132,10 @@ def get_table_name(domain, table_id):
     )
 
 
+def is_ucr_table(table_name):
+    return table_name.startswith('config_report_')
+
+
 def truncate_value(value, max_length=63, from_left=True):
     """
     Truncate a value (typically a column name) to a certain number of characters,

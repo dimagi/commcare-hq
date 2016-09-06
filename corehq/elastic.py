@@ -154,8 +154,9 @@ def run_query(index_name, q, debug_host=None):
     try:
         es_meta = ES_META[index_name]
     except KeyError:
+        from corehq.apps.userreports.util import is_ucr_table
         # todo: figure out if we really need types
-        if index_name.startswith('config_report_'):
+        if is_ucr_table(index_name):
             es_meta = EsMeta(index_name, 'indicator')
         else:
             raise
