@@ -14,8 +14,9 @@ class ENikshayCaseStructureMixin(object):
         self.occurrence_id = u"occurrence"
         self.episode_id = u"episode"
 
-    def create_case_structure(self):
-        person = CaseStructure(
+    @property
+    def person(self):
+        return CaseStructure(
             case_id=self.person_id,
             attrs={
                 "case_type": "person",
@@ -29,7 +30,10 @@ class ENikshayCaseStructureMixin(object):
                 )
             },
         )
-        occurrence = CaseStructure(
+
+    @property
+    def occurrence(self):
+        return CaseStructure(
             case_id=self.occurrence_id,
             attrs={
                 'create': True,
@@ -39,13 +43,16 @@ class ENikshayCaseStructureMixin(object):
                 )
             },
             indices=[CaseIndex(
-                person,
+                self.person,
                 identifier='host',
                 relationship=CASE_INDEX_EXTENSION,
-                related_type=person.attrs['case_type'],
+                related_type=self.person.attrs['case_type'],
             )],
         )
-        episode = CaseStructure(
+
+    @property
+    def episode(self):
+        return CaseStructure(
             case_id=self.episode_id,
             attrs={
                 'create': True,
@@ -60,13 +67,18 @@ class ENikshayCaseStructureMixin(object):
                 )
             },
             indices=[CaseIndex(
-                occurrence,
+                self.occurrence,
                 identifier='host',
                 relationship=CASE_INDEX_EXTENSION,
-                related_type=occurrence.attrs['case_type'],
+                related_type=self.occurrence.attrs['case_type'],
             )],
         )
-        return {case.case_id: case for case in self.factory.create_or_update_cases([episode])}
+
+    def create_case(self, case):
+        return self.factory.create_or_update_cases([case])
+
+    def create_case_structure(self):
+        return {case.case_id: case for case in self.factory.create_or_update_cases([self.episode])}
 
     def create_adherence_cases(self, adherence_dates):
         return self.factory.create_or_update_cases([
