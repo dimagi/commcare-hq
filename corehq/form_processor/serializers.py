@@ -185,7 +185,7 @@ class LedgerValueSerializer(serializers.ModelSerializer):
 
 
 class StockStateSerializer(serializers.ModelSerializer):
-    _id = serializers.CharField(source='ledger_id')
+    _id = serializers.CharField(source='id')
     entry_id = serializers.CharField(source='product_id')
     location_id = serializers.CharField(source='sql_location.location_id')
     balance = serializers.IntegerField(source='stock_on_hand')
