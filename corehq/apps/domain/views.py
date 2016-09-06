@@ -1094,8 +1094,8 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
             except ValidationError:
                 invalid_emails.append(email)
         if invalid_emails:
-            message = ('The following e-mail addresses failed validation: ' +
-                       ', '.join(['"{}"'.format(email) for email in invalid_emails]))
+            message = (_('The following e-mail addresses contain invalid characters, or are missing required '
+                         'characters: ') + ', '.join(['"{}"'.format(email) for email in invalid_emails]))
             return json_response({'error': {'message': message}})
         amount = Decimal(request.POST.get('amount', 0))
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
