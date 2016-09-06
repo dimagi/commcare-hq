@@ -287,6 +287,8 @@ class LedgerMigrationTests(BaseMigrationTestCase):
         transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case_id)
         self.assertEqual(3, len(transactions))
 
+        self._compare_diffs([])
+
     def _validate_ledger_data(self, state_dict, expected):
         for section, products in state_dict.items():
             for product, state in products.items():
