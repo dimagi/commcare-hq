@@ -87,7 +87,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             var detailObjects = model.options.model.get('details');
             // If we have no details, just select the entity
             if(detailObjects === null || detailObjects === undefined){
-                FormplayerFrontend.trigger("menu:select", model._index);
+                FormplayerFrontend.trigger("menu:select", model.model.get('id'));
                 return;
             }
             var detailObject = detailObjects[detailTabIndex];
@@ -121,7 +121,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             });
 
             $('#select-case').unbind('click').click(function () {
-                FormplayerFrontend.trigger("menu:select", model._index);
+                FormplayerFrontend.trigger("menu:select", model.model.get('id'));
             });
             $('#case-detail-modal').find('.detail-tabs').html(tabListView.render().el);
             $('#case-detail-modal').find('.modal-body').html(menuListView.render().el);
