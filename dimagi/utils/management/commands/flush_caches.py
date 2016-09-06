@@ -1,9 +1,9 @@
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 from django.core import cache
 from django.conf import settings
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "flush all caches"
     args = ""
     label = ""
