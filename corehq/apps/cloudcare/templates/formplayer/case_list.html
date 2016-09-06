@@ -156,6 +156,7 @@
 </script>
 
 <script type="text/template" id="case-tile-view-item-template">
+    <div class="grid-wrapper">
     <% _.each(data, function(datum, index) { %>
     <div class="grid-style-<%= index %> box">
         <% if (styles[index].displayFormat === 'Image') {
@@ -167,6 +168,7 @@
         <% } %>
     </div>
     <% }); %>
+    </div>
 </script>
 
 <script type="text/template" id="case-tile-grid-view-item-template">
@@ -189,6 +191,7 @@
     <% _.each(models, function(model){ %>
         .<%= model.id %> {
             grid-area: <%= model.gridStyle %>;
+            font-size: <%= model.fontStyle %>;
         }
     <% }); %>
 </script>
