@@ -1,7 +1,0 @@
-.grid-wrapper {
-    display: grid;
-    grid-template-columns: repeat(12, 60px) min-content 60px;
-    grid-template-rows: repeat(6, 60px) min-content 60px;
-    border-style: solid;
-    border-width: 1px;
-}
