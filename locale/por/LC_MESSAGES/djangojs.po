@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-08-29 18:14+0000\n"
+"POT-Creation-Date: 2016-09-06 19:16+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -39,7 +39,7 @@ msgstr ""
 msgid "Auto-set by "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:526
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:576
 msgid "Select One"
 msgstr ""
 
@@ -72,7 +72,7 @@ msgstr ""
 msgid "Unabled to clear user data"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/entities/menu.js:111
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/entities/menu.js:106
 msgid "Unable to connect to form playing service. "
 msgstr ""
 
