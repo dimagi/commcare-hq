@@ -778,11 +778,12 @@ NEW_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-TF_USES_SQLITE_BACKEND = StaticToggle(
+TF_USES_SQLITE_BACKEND = PredictablyRandomToggle(
     'tf_sql_backend',
     'Use a SQLite backend for Touchforms',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    0.1,
 )
 
 
