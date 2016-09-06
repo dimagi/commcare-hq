@@ -26,14 +26,10 @@ from couchforms.models import XFormInstance
 
 
 class BaseMigrationTestCase(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        super(BaseMigrationTestCase, cls).setUpClass()
-        cls.domain_name = uuid.uuid4().hex
-
     def setUp(self):
         super(BaseMigrationTestCase, self).setUp()
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+        self.domain_name = uuid.uuid4().hex
         self.domain = create_domain(self.domain_name)
         # all new domains are set complete when they are created
         TimezoneMigrationProgress.objects.filter(domain=self.domain_name).delete()
@@ -242,22 +238,20 @@ class MigrationTestCase(BaseMigrationTestCase):
 
 
 class LedgerMigrationTests(BaseMigrationTestCase):
-    @classmethod
-    def setUpClass(cls):
-        super(LedgerMigrationTests, cls).setUpClass()
-        cls.liquorice = make_product(cls.domain_name, 'liquorice', 'liquorice')
-        cls.sherbert = make_product(cls.domain_name, 'sherbert', 'sherbert')
-        cls.jelly_babies = make_product(cls.domain_name, 'jelly babies', 'jbs')
+    def setUp(self):
+        super(LedgerMigrationTests, self).setUp()
+        self.liquorice = make_product(self.domain_name, 'liquorice', 'liquorice')
+        self.sherbert = make_product(self.domain_name, 'sherbert', 'sherbert')
+        self.jelly_babies = make_product(self.domain_name, 'jelly babies', 'jbs')
 
-    @classmethod
-    def tearDownClass(cls):
+    def tearDown(self):
         try:
-            cls.liquorice.delete()
-            cls.sherbert.delete()
-            cls.jelly_babies.delete()
+            self.liquorice.delete()
+            self.sherbert.delete()
+            self.jelly_babies.delete()
         except ResourceNotFound:
             pass  # domain.delete() in parent class got there first
-        super(LedgerMigrationTests, cls).tearDownClass()
+        super(LedgerMigrationTests, self).tearDown()
 
     def _submit_ledgers(self, ledger_blocks):
         return submit_case_blocks(ledger_blocks, self.domain_name)[0].form_id
