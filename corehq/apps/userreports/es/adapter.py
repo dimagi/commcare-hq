@@ -25,30 +25,29 @@ class ESAlchemy(object):
             return hits[0]
         return hits
 
-    @property
-    @memoized
-    def mapping(self):
-        # todo: this should use the column configuration instead of mapping
-        es = get_es_new()
-        mapping = es.indices.get_mapping(index=self.index_name)
-        return mapping[self.index_name]['mappings']['indicator']['properties']
-
     def _hit_to_row(self, hit):
-        def mapping_to_datatype(col, value):
-            type = self.mapping[col]['type']
-            if type == 'date':
+        def mapping_to_datatype(column, value):
+            datatype = column.datatype
+            if datatype == 'datetime' or datatype == 'date':
                 try:
                     return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
                 except ValueError:
                     return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
             return value
-        return {col: mapping_to_datatype(col, hit[col]) for col in self.column_ordering}
+
+        return {
+            col.database_column_name: mapping_to_datatype(col, hit[col.database_column_name])
+            for col in self.columns
+        }
+
+    @property
+    def columns(self):
+        return self.config.indicators.get_columns()
 
     @property
     @memoized
     def column_ordering(self):
-        columns = self.config.indicators.get_columns()
-        return [col.database_column_name for col in columns]
+        return [col.database_column_name for col in self.columns]
 
     @property
     def column_descriptions(self):
