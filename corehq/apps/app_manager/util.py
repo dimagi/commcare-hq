@@ -431,9 +431,13 @@ def get_session_schema(form):
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
     structure = {}
     datums = EntriesHelper(form.get_app()).get_datums_meta_for_form_generic(form)
-    datums = [d for d in datums if not d.is_new_case_id and d.case_type and d.datum.id == 'case_id']
+    datums = [
+        d for d in datums
+        if not d.is_new_case_id and d.case_type and d.requires_selection
+    ]
     if len(datums):
-        structure['case_id'] = {
+        session_var = datums[-1].datum.id
+        structure[session_var] = {
             "reference": {
                 "source": "casedb",
                 "subset": "case",
