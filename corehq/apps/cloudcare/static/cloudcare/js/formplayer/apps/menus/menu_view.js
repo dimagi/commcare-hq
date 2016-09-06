@@ -1,4 +1,4 @@
-/*global FormplayerFrontend */
+/*global FormplayerFrontend, Util */
 
 FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette) {
     MenuList.MenuView = Marionette.ItemView.extend({
@@ -56,7 +56,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             var imageUri = this.options.model.get('imageUri');
             var audioUri = this.options.model.get('audioUri');
             var navState = this.options.model.get('navigationState');
-            var appId = this.model.collection.appId;
+            var urlObject = Util.currentUrlToObject().appId;
             return {
                 navState: navState,
                 imageUrl: imageUri ? FormplayerFrontend.request('resourceMap', imageUri, appId) : "",
@@ -98,7 +98,8 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
 
         templateHelpers: function () {
-            var appId = this.model.collection.appId;
+            var urlObject = Util.currentUrlToObject();
+            var appId = urlObject.appId;
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
@@ -115,7 +116,8 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         className: "formplayer-request",
 
         templateHelpers: function () {
-            var appId = this.model.collection.appId;
+            var urlObject = Util.currentUrlToObject();
+            var appId = urlObject.appId;
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
@@ -157,15 +159,18 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             tileModels;
 
         tileModels = _.chain(tiles || [])
-            .filter(function (tile) {
-                return tile !== null;
-            })
             .map(function (tile, idx) {
+                if (tile === null || tile === undefined) {
+                    return null;
+                }
                 return {
                     id: 'grid-style-' + idx,
                     gridStyle: getGridAttributes(tile),
                     fontStyle: tile.fontSize,
                 };
+            })
+            .filter(function (tile) {
+                return tile !== null;
             }).value();
 
         templateString = $("#case-tile-style-template").html();
