@@ -14,6 +14,7 @@ BASE_IGNORED_FORM_PATHS = {
 FORM_IGNORE_PATHS = {
     'XFormInstance': BASE_IGNORED_FORM_PATHS | {'problem', 'orig_id', 'edited_on'},
     'XFormInstance-Deleted': BASE_IGNORED_FORM_PATHS | {'problem', 'orig_id', 'edited_on'},
+    'HQSubmission': BASE_IGNORED_FORM_PATHS | {'problem', 'orig_id', 'edited_on'},
     'XFormArchived': BASE_IGNORED_FORM_PATHS | {'edited_on'},
     'XFormError': BASE_IGNORED_FORM_PATHS | {'edited_on'},
     'XFormDuplicate': BASE_IGNORED_FORM_PATHS | {'edited_on'},
@@ -27,6 +28,10 @@ def _form_ignored_diffs():
         FormJsonDiff(
             diff_type=u'missing', path=(u'history', u'[*]', u'doc_type'),
             old_value=u'XFormOperation', new_value=Ellipsis
+        ),
+        FormJsonDiff(
+            diff_type=u'diff', path=(u'doc_type',),
+            old_value=u'HQSubmission', new_value=u'XFormInstance'
         ),
     )
 

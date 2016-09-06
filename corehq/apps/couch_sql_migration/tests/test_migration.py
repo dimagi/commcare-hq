@@ -146,8 +146,16 @@ class MigrationTestCase(TestCase):
         self._compare_diffs([])
 
     def test_hqsubmission_migration(self):
-        # TODO
-        pass
+        form = create_and_save_a_form(self.domain_name)
+        form.doc_type = 'HQSubmission'
+        form.save()
+
+        self.assertEqual(1, len(get_doc_ids_in_domain_by_type(
+            self.domain_name, "HQSubmission", XFormInstance.get_db())
+        ))
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(1, len(self._get_form_ids()))
+        self._compare_diffs([])
 
     def test_basic_case_migration(self):
         create_and_save_a_case(self.domain_name, case_id=uuid.uuid4().hex, case_name='test case')

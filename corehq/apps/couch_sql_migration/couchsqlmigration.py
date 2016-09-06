@@ -202,6 +202,8 @@ def _copy_form_properties(domain, sql_form, couch_form):
     if couch_form.doc_type.endswith(DELETED_SUFFIX):
         doc_type = couch_form.doc_type[:-len(DELETED_SUFFIX)]
         sql_form.state = doc_type_to_state[doc_type] | XFormInstanceSQL.DELETED
+    elif couch_form.doc_type == 'HQSubmission':
+        sql_form.state = XFormInstanceSQL.NORMAL
     else:
         sql_form.state = doc_type_to_state[couch_form.doc_type]
 
