@@ -364,6 +364,10 @@ class StockState(models.Model):
         )
 
     @property
+    def ledger_id(self):
+        return self.ledger_reference.as_id()
+
+    @property
     @memoized
     def consumption_helper(self):
         return ConsumptionHelper(
