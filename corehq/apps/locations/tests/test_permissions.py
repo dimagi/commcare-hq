@@ -1,10 +1,13 @@
+import json
 import mock
 import uuid
 import random
 import string
+from StringIO import StringIO
 
 from django.core.urlresolvers import reverse
 
+from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.users.models import WebUser, CommCareUser, UserRole, Permissions
 from corehq.toggles import (RESTRICT_FORM_EDIT_BY_LOCATION, NAMESPACE_DOMAIN)
 from corehq.util.test_utils import flag_enabled
@@ -137,6 +140,7 @@ class TestPermissions(LocationHierarchyTestCase):
 
 
 @mock.patch('django_prbac.decorators.has_privilege', new=lambda *args, **kwargs: True)
+@mock.patch('corehq.apps.users.analytics.UserES', UserESFake)
 class TestAccessRestrictions(LocationHierarchyTestCase):
     domain = 'test-access-restrictions-domain'
     location_type_names = ['state', 'county', 'city']
@@ -170,14 +174,19 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
         cls.suffolk_user.set_role(cls.domain, role.get_qualified_id())
         cls.suffolk_user.save()
 
-        cls.boston_worker = CommCareUser.create(cls.domain, 'boston_worker', '123')
-        cls.boston_worker.set_location(cls.locations['Boston'])
-        cls.cambridge_worker = CommCareUser.create(cls.domain, 'cambridge_worker', '123')
-        cls.cambridge_worker.set_location(cls.locations['Cambridge'])
+        def make_mobile_worker(username, location):
+            worker = CommCareUser.create(cls.domain, username, '123')
+            worker.set_location(cls.locations[location])
+            UserESFake.save_doc(worker._doc)
+            return worker
+
+        cls.boston_worker = make_mobile_worker('boston_worker', 'Boston')
+        cls.cambridge_worker = make_mobile_worker('cambridge_worker', 'Cambridge')
 
     @classmethod
     def tearDownClass(cls):
         super(TestAccessRestrictions, cls).tearDownClass()
+        UserESFake.reset_docs()
         cls.suffolk_user.delete()
 
     def test_can_access_location_list(self):
@@ -234,8 +243,31 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
     def test_cant_edit_worker(self):
         self._assert_edit_user_gives_status(self.cambridge_worker, 404)
 
+    def _call_djangoRMI(self, url, method_name, data):
+        data = json.dumps(data)
+        return self.client.post(
+            url,
+            content_type="application/json;charset=utf-8",
+            **{
+                'HTTP_DJNG_REMOTE_METHOD': method_name,
+                'HTTP_X_REQUESTED_WITH': 'XMLHttpRequest',
+                'CONTENT_LENGTH': len(data),
+                'wsgi.input': StringIO(data),
+            })
+
     def test_restricted_worker_list(self):
         url = reverse(user_views.MobileWorkerListView.urlname, args=[self.domain])
         self.client.login(username=self.suffolk_user.username, password="password")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status_code)
+
+        # This is how you test a djangoRMI method...
+        response = self._call_djangoRMI(url, 'get_pagination_data', data={
+            "limit": 10,
+            "page": 1,
+            "customFormFieldNames": [],
+            "showDeactivatedUsers": False
+        })
+
+        self.assertEqual(response.status_code, 200)
+        users = json.loads(response.content)['response']['itemList']
+        self.assertEqual(len(users), 1)
+        self.assertEqual(users[0]['username'], 'boston_worker')
