@@ -1644,6 +1644,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'sputum_conversion.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'treatment_outcome.json')
 ]
 
 

@@ -72,7 +72,7 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
                 "case_type": "occurrence",
                 "create": True,
                 'update': dict(
-                    hiv_status='unknown'
+                    hiv_status='reactive'
                 )
             },
             indices=[
@@ -134,7 +134,7 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
         self.assertEqual(query.count(), 1)
         row = query.first()
 
-        self.assertEqual(row.hiv_status, 'unknown')
+        self.assertEqual(row.hiv_status, 'reactive')
 
     def test_sputum_positive(self):
         self._create_case_structure(lab_result="tb_detected")
