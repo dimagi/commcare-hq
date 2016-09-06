@@ -1,4 +1,4 @@
-from django.conf.urls import *
+from django.conf.urls import patterns, url
 from corehq.messaging.smsbackends.smsgh.views import SMSGHIncomingView
 
 urlpatterns = patterns('corehq.messaging.smsbackends.smsgh.views',

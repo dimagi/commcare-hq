@@ -1,4 +1,4 @@
-from django.conf.urls import *
+from django.conf.urls import patterns, url
 
 from corehq.apps.domain.utils import grandfathered_domain_re
 from .views import (
