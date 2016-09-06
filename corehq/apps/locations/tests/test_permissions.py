@@ -8,6 +8,7 @@ from django.core.urlresolvers import reverse
 from corehq.apps.users.models import WebUser, CommCareUser, UserRole, Permissions
 from corehq.toggles import (RESTRICT_FORM_EDIT_BY_LOCATION, NAMESPACE_DOMAIN)
 from corehq.util.test_utils import flag_enabled
+from corehq.apps.users.views.mobile import users as user_views
 from corehq.form_processor.utils.xform import (
     TestFormMetadata,
     get_simple_wrapped_form,
@@ -161,11 +162,18 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
         role = UserRole(
             domain=cls.domain,
             name='Regional Supervisor',
-            permissions=Permissions(access_all_locations=False),
+            permissions=Permissions(access_all_locations=False,
+                                    edit_commcare_users=True),
+
         )
         role.save()
         cls.suffolk_user.set_role(cls.domain, role.get_qualified_id())
         cls.suffolk_user.save()
+
+        cls.boston_worker = CommCareUser.create(cls.domain, 'boston_worker', '123')
+        cls.boston_worker.set_location(cls.locations['Boston'])
+        cls.cambridge_worker = CommCareUser.create(cls.domain, 'cambridge_worker', '123')
+        cls.cambridge_worker.set_location(cls.locations['Cambridge'])
 
     @classmethod
     def tearDownClass(cls):
@@ -179,12 +187,15 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['locations'][0]['name'], 'Suffolk')
 
-    def _assert_edit_location_gives_status(self, location, status_code):
+    def _assert_url_returns_status(self, url, status_code):
         self.client.login(username=self.suffolk_user.username, password="password")
-        location_id = self.locations[location].location_id
-        url = reverse(EditLocationView.urlname, args=[self.domain, location_id])
         response = self.client.get(url)
         self.assertEqual(response.status_code, status_code)
+
+    def _assert_edit_location_gives_status(self, location, status_code):
+        location_id = self.locations[location].location_id
+        url = reverse(EditLocationView.urlname, args=[self.domain, location_id])
+        self._assert_url_returns_status(url, status_code)
 
     def test_can_edit_child_location(self):
         self._assert_edit_location_gives_status("Boston", 200)
@@ -197,3 +208,34 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
 
     def test_cant_edit_other_location(self):
         self._assert_edit_location_gives_status("Cambridge", 403)
+
+    def test_can_edit_workers_location(self):
+        self.assertTrue(
+            user_views._can_edit_workers_location(
+                self.suffolk_user, self.boston_worker)
+        )
+        self.assertFalse(
+            user_views._can_edit_workers_location(
+                self.suffolk_user, self.cambridge_worker)
+        )
+
+    def _assert_edit_user_gives_status(self, user, status_code):
+        url = reverse(user_views.EditCommCareUserView.urlname,
+                      args=[self.domain, user._id])
+        with mock.patch(
+            'corehq.apps.users.views.mobile.users.get_domain_languages',
+            new=lambda *args: None,
+        ):
+            self._assert_url_returns_status(url, status_code)
+
+    def test_can_edit_worker(self):
+        self._assert_edit_user_gives_status(self.boston_worker, 200)
+
+    def test_cant_edit_worker(self):
+        self._assert_edit_user_gives_status(self.cambridge_worker, 404)
+
+    def test_restricted_worker_list(self):
+        url = reverse(user_views.MobileWorkerListView.urlname, args=[self.domain])
+        self.client.login(username=self.suffolk_user.username, password="password")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status_code)
