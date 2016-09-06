@@ -120,7 +120,6 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
                 tiles: this.options.tiles,
-                numEntitiesToDisplayPerRow: this.options.numEntitiesToDisplayPerRow,
                 resolveUri: function (uri) {
                     return FormplayerFrontend.request('resourceMap', uri, appId);
                 },
@@ -131,7 +130,6 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     MenuList.CaseTileGridViewItem = MenuList.CaseTileView.extend({
         tagName: "div",
         className: "row formplayer-request grid-wrapper",
-        // TODO WSP: We shouldn't need a separate template
         template: "#case-tile-grid-view-item-template",
     });
 
