@@ -194,11 +194,8 @@ class SchemaTest(SimpleTestCase):
         })
 
     def test_get_session_schema_for_child_module(self):
-        """
-            m0 - opens 'gold-fish' case.
-            m1 - has m0 as root-module, has parent-select, updates 'guppy' case, creates
-                 'pregnancy' subcases to guppy
-        """
+        # m0 - opens 'gold-fish' case.
+        # m1 - has m0 as root-module, has parent-select, updates 'guppy' case
         self.module_0, _ = self.factory.new_basic_module('parent', 'gold-fish')
         self.module_1, _ = self.factory.new_basic_module('child', 'guppy', parent_module=self.module_0)
         # m0f0 registers gold-fish case and a child case ('guppy')
@@ -206,10 +203,9 @@ class SchemaTest(SimpleTestCase):
         self.factory.form_requires_case(m0f0, update={'name': 'goldilocks'})
         self.factory.form_opens_case(m0f0, 'guppy', is_subcase=True)
 
-        # m1f0 has parent-select, updates `guppy` case, and opens sub-subcase 'pregnancy'
+        # m1f0 has parent-select, updates `guppy` case
         m1f0 = self.module_1.get_form(0)
         self.factory.form_requires_case(m1f0, parent_case_type='gold-fish')
-        # self.factory.form_opens_case(m1f0, 'pregnancy', is_subcase=True)
 
         casedb_schema = util.get_casedb_schema(m1f0)
         session_schema = util.get_session_schema(m1f0)
