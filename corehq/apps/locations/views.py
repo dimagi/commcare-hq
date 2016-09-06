@@ -1,4 +1,5 @@
 import json
+import logging
 
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseRedirect, Http404
@@ -9,7 +10,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.http import require_http_methods
 
-from couchdbkit import ResourceNotFound
+from couchdbkit import ResourceNotFound, BulkSaveError
 from corehq.apps.style.decorators import (
     use_jquery_ui,
     use_multiselect,
@@ -47,6 +48,9 @@ from .permissions import (
 from .models import Location, LocationType, SQLLocation, filter_for_archived
 from .forms import LocationForm, UsersAtLocationForm
 from .util import load_locs_json, location_hierarchy_config, dump_locations
+
+
+logger = logging.getLogger(__name__)
 
 
 @locations_access_required
@@ -426,10 +430,23 @@ def archive_location(request, domain, loc_id):
 @can_edit_location
 @location_safe
 def delete_location(request, domain, loc_id):
-    loc = Location.get(loc_id)
-    if loc.domain != domain:
-        raise Http404()
-    loc.full_delete()
+    try:
+        loc = Location.get(loc_id)
+        if loc.domain != domain:
+            raise Http404()
+        loc.full_delete()
+    except (ResourceNotFound, BulkSaveError):
+        # Sometimes the couch and sql locations go out of sync and we can end up
+        # in a state where the couch doc is deleted and the sql doc still exists.
+        loc = SQLLocation.objects.prefetch_related(
+            'location_type').get(location_id=loc_id)
+        # delete the sql location anyway
+        loc.sql_full_delete()
+        logger.error(
+            'Location with ID [{}] in domain [{}] was missing its couch doc '
+            'upon deletion. If this is recurring it might be worth checking '
+            'out any couch to postrgres issues.'.format(loc_id, domain)
+        )
     return json_response({
         'success': True,
         'message': _("Location '{location_name}' has successfully been {action}.").format(
@@ -782,18 +799,21 @@ def location_export(request, domain):
 
 
 @locations_access_required
+@location_safe
 def child_locations_for_select2(request, domain):
     id = request.GET.get('id')
     ids = request.GET.get('ids')
     query = request.GET.get('name', '').lower()
     user = request.couch_user
 
+    base_queryset = SQLLocation.objects.accessible_to_user(domain, user)
+
     def loc_to_payload(loc):
         return {'id': loc.location_id, 'name': loc.display_name}
 
     if id:
         try:
-            loc = SQLLocation.objects.get(location_id=id)
+            loc = base_queryset.get(location_id=id)
             if loc.domain != domain:
                 raise SQLLocation.DoesNotExist()
         except SQLLocation.DoesNotExist:
@@ -807,7 +827,7 @@ def child_locations_for_select2(request, domain):
         from corehq.apps.locations.util import get_locations_from_ids
         ids = json.loads(ids)
         try:
-            locations = get_locations_from_ids(ids, domain)
+            locations = get_locations_from_ids(ids, domain, base_queryset=base_queryset)
         except SQLLocation.DoesNotExist:
             return json_response(
                 {'message': 'one or more locations not found'},
@@ -819,7 +839,7 @@ def child_locations_for_select2(request, domain):
         user_loc = user.get_sql_location(domain)
 
         if user_can_edit_any_location(user, request.project):
-            locs = SQLLocation.objects.filter(domain=domain, is_archived=False)
+            locs = base_queryset.filter(domain=domain, is_archived=False)
         elif user_loc:
             locs = user_loc.get_descendants(include_self=True)
 

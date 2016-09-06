@@ -2,7 +2,6 @@ from xml.etree import ElementTree
 from django.test import TestCase
 
 from casexml.apps.case.exceptions import PhoneDateValueError
-from casexml.apps.case.util import make_form_from_case_blocks
 from casexml.apps.case.xform import process_cases_with_casedb
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
@@ -35,9 +34,18 @@ class StrictDatetimesTest(TestCase):
 
     @run_with_all_backends
     def test(self):
-        form = make_form_from_case_blocks([ElementTree.fromstring(CASE_BLOCK)])
+        form = _make_form_from_case_blocks([ElementTree.fromstring(CASE_BLOCK)])
         result = process_xform_xml(self.domain, form)
         with result.get_locked_forms() as xforms:
             with self.interface.casedb_cache(domain=self.domain) as case_db:
                 with self.assertRaises(PhoneDateValueError):
                     process_cases_with_casedb(xforms, case_db)
+
+
+def _make_form_from_case_blocks(case_blocks):
+    form = ElementTree.Element("data")
+    form.attrib['xmlns'] = "https://www.commcarehq.org/test/casexml-wrapper"
+    form.attrib['xmlns:jrm'] = "http://openrosa.org/jr/xforms"
+    for block in case_blocks:
+        form.append(block)
+    return ElementTree.tostring(form)

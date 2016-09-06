@@ -148,7 +148,8 @@ class FormProcessorSQL(object):
             form_id=uuid.uuid4().hex,
             received_on=datetime.datetime.utcnow(),
             problem=message,
-            state=XFormInstanceSQL.SUBMISSION_ERROR_LOG
+            state=XFormInstanceSQL.SUBMISSION_ERROR_LOG,
+            xmlns=''
         )
         cls.store_attachments(xform, [Attachment(
             name=ATTACHMENT_NAME,

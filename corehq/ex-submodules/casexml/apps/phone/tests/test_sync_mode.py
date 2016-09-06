@@ -1469,6 +1469,7 @@ class MultiUserSyncTest(SyncBaseTest):
             date_modified=time,
             case_id=case_id,
             user_id=self.user_id,
+            date_opened=time.date(),
             update={
                 'greeting': 'hello',
                 'greeting_2': 'hello'

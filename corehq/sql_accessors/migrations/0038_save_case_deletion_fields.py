@@ -11,9 +11,9 @@ migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {})
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sql_accessors', '0037_delete_ledgers_with_case'),
+        ('sql_accessors', '0038_attachment_bucket'),
     ]
 
     operations = [
-        migrator.get_migration('save_new_form_and_related_models_1.sql'),
+        migrator.get_migration('save_case_and_related_models_2.sql'),
     ]
