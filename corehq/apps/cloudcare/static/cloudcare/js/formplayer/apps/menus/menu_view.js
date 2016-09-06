@@ -56,7 +56,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             var imageUri = this.options.model.get('imageUri');
             var audioUri = this.options.model.get('audioUri');
             var navState = this.options.model.get('navigationState');
-            var urlObject = Util.currentUrlToObject().appId;
+            var appId = Util.currentUrlToObject().appId;
             return {
                 navState: navState,
                 imageUrl: imageUri ? FormplayerFrontend.request('resourceMap', imageUri, appId) : "",
@@ -98,8 +98,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
 
         templateHelpers: function () {
-            var urlObject = Util.currentUrlToObject();
-            var appId = urlObject.appId;
+            var appId = Util.currentUrlToObject().appId;
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
@@ -116,8 +115,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         className: "formplayer-request",
 
         templateHelpers: function () {
-            var urlObject = Util.currentUrlToObject();
-            var appId = urlObject.appId;
+            var appId = Util.currentUrlToObject().appId;
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
