@@ -15,7 +15,6 @@ from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.tzmigration import TimezoneMigrationProgress
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
-from corehq.form_processor.models import CaseTransaction
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import clear_local_domain_sql_backend_override
