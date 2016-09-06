@@ -1642,7 +1642,8 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_timely_home_visits.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register.json')
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'sputum_conversion.json'),
 ]
 
 
@@ -1682,7 +1683,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
 
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json')
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
