@@ -168,7 +168,7 @@ class CouchSqlDomainMigrator(object):
             diffs = json_diff(couch_state.to_json(), ledger_value.to_json(), track_list_indices=False)
             self.diff_db.add_diffs(
                 'stock state', ledger_value.ledger_reference.as_id(),
-                diffs
+                _filter_ledger_diffs(diffs)
             )
 
 
@@ -493,3 +493,10 @@ def _filter_case_diffs(doc_type, diffs):
     ]
     filtered_diffs = _check_deletion_fields_date(filtered_diffs, doc_type)
     return filtered_diffs
+
+
+def _filter_ledger_diffs(diffs):
+    return [
+        diff for diff in diffs
+        if diff.path not in const.LEDGER_IGNORED_PATHS
+    ]

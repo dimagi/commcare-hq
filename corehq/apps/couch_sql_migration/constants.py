@@ -68,3 +68,8 @@ def _case_ignored_diffs():
     )
 
 CASE_IGNORED_DIFFS = _case_ignored_diffs()
+
+
+LEDGER_IGNORED_PATHS = {
+    ('_id',),
+}
