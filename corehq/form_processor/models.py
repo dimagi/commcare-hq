@@ -290,9 +290,13 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     @property
     @memoized
     def form_data(self):
+        from couchforms import XMLSyntaxError
         from .utils import convert_xform_to_json, adjust_datetimes
         xml = self.get_xml()
-        form_json = convert_xform_to_json(xml)
+        try:
+            form_json = convert_xform_to_json(xml)
+        except XMLSyntaxError:
+            return {}
         # we can assume all sql domains are new timezone domains
         with force_phone_timezones_should_be_processed():
             adjust_datetimes(form_json)
