@@ -106,7 +106,7 @@ class ConnectionManager(object):
             DEFAULT_ENGINE_ID: settings.SQL_REPORTING_DATABASE_URL,
             UCR_ENGINE_ID: settings.UCR_DATABASE_URL,
         }
-        if settings.ICDS_UCR_DATABASE_ALIAS and settings.ICDS_UCR_DATABASE_ALIAS in settings.DATABASES:
+        if hasattr(settings, 'ICDS_UCR_DATABASE_ALIAS') and settings.ICDS_UCR_DATABASE_ALIAS in settings.DATABASES:
             db_connection_map[ICDS_UCR_ENGINE_ID] = \
                 "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}".format(
                     **settings.DATABASES[settings.ICDS_UCR_DATABASE_ALIAS]
