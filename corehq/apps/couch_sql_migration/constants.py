@@ -13,6 +13,8 @@ BASE_IGNORED_FORM_PATHS = {
 
 FORM_IGNORE_PATHS = {
     'XFormInstance': BASE_IGNORED_FORM_PATHS | {'problem', 'orig_id', 'edited_on'},
+    'XFormInstance-Deleted': BASE_IGNORED_FORM_PATHS | {'problem', 'orig_id', 'edited_on'},
+    'HQSubmission': BASE_IGNORED_FORM_PATHS | {'problem', 'orig_id', 'edited_on'},
     'XFormArchived': BASE_IGNORED_FORM_PATHS | {'edited_on'},
     'XFormError': BASE_IGNORED_FORM_PATHS | {'edited_on'},
     'XFormDuplicate': BASE_IGNORED_FORM_PATHS | {'edited_on'},
@@ -27,25 +29,30 @@ def _form_ignored_diffs():
             diff_type=u'missing', path=(u'history', u'[*]', u'doc_type'),
             old_value=u'XFormOperation', new_value=Ellipsis
         ),
+        FormJsonDiff(
+            diff_type=u'diff', path=(u'doc_type',),
+            old_value=u'HQSubmission', new_value=u'XFormInstance'
+        ),
     )
 
 FORM_IGNORED_DIFFS = _form_ignored_diffs()
 
 CASE_IGNORED_PATHS = {
-    '_rev',
-    'initial_processing_complete',
-    'actions',
-    'id',
-    '#export_tag',
-    'computed_',
-    'version',
-    'case_attachments',
-    'deleted',
-    'export_tag',
-    'computed_modified_on_',
-    'case_id',
-    'case_json',
-    'modified_by',
+    ('_rev',),
+    ('initial_processing_complete',),
+    ('actions', '[*]'),
+    ('id',),
+    ('#export_tag',),
+    ('computed_',),
+    ('version',),
+    ('case_attachments',),
+    ('deleted',),
+    ('export_tag',),
+    ('computed_modified_on_',),
+    ('case_id',),
+    ('case_json',),
+    ('modified_by',),
+    ('indices', '[*]', 'case_id'),
 }
 
 
@@ -55,6 +62,14 @@ def _case_ignored_diffs():
         FormJsonDiff(diff_type=u'type', path=(u'name',), old_value=u'', new_value=None),
         FormJsonDiff(diff_type=u'type', path=(u'closed_by',), old_value=u'', new_value=None),
         FormJsonDiff(diff_type=u'missing', path=(u'location_id',), old_value=Ellipsis, new_value=None),
+        FormJsonDiff(
+            diff_type=u'missing', path=(u'indices', u'[*]', u'doc_type'),
+            old_value=u'CommCareCaseIndex', new_value=Ellipsis),
     )
 
 CASE_IGNORED_DIFFS = _case_ignored_diffs()
+
+
+LEDGER_IGNORED_PATHS = {
+    ('_id',),
+}

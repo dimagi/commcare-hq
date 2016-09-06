@@ -4,28 +4,31 @@ from datetime import datetime
 
 import corehq.apps.couch_sql_migration.constants as const
 import settings
+from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xform import get_all_extensions_to_close, CaseProcessingResult
 from corehq.apps.domain.models import Domain
 from corehq.apps.tzmigration import force_phone_timezones_should_be_processed
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, doc_type_to_state
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, doc_type_to_state, LedgerAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
-from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL
+from corehq.form_processor.models import (
+    XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL, CommCareCaseSQL,
+    CaseTransaction, RebuildWithReason, CommCareCaseIndexSQL
+)
 from corehq.form_processor.submission_post import CaseStockProcessingResult
 from corehq.form_processor.utils import adjust_datetimes
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import set_local_domain_sql_backend_override, \
     clear_local_domain_sql_backend_override
 from couchforms.models import XFormInstance, doc_types
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 from fluff.management.commands.ptop_reindexer_fluff import ReindexEventHandler
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
 
 
 def do_couch_to_sql_migration(domain):
-    # (optional) collect some information about the domain's cases and forms for cross-checking
     set_local_domain_sql_backend_override(domain)
     CouchSqlDomainMigrator(domain).migrate()
-    # (optional) compare the information collected to the information at the beginning
 
 
 class CouchSqlDomainMigrator(object):
@@ -40,8 +43,8 @@ class CouchSqlDomainMigrator(object):
     def migrate(self):
         self._process_main_forms()
         self._copy_unprocessed_forms()
+        self._copy_unprocessed_cases()
         self._calculate_case_diffs()
-        # TODO: calculate ledger diffs
 
     def _process_main_forms(self):
         last_received_on = datetime.min
@@ -89,13 +92,43 @@ class CouchSqlDomainMigrator(object):
             _migrate_form_attachments(sql_form, couch_form)
             _migrate_form_operations(sql_form, couch_form)
 
-            diffs = json_diff(couch_form.to_json(), sql_form.to_json(), track_list_indices=False)
-            self.diff_db.add_diffs(
-                'form', couch_form.form_id,
-                _filter_form_diffs(couch_form.doc_type, diffs)
-            )
+            if couch_form.doc_type != 'SubmissionErrorLog':
+                diffs = json_diff(couch_form.to_json(), sql_form.to_json(), track_list_indices=False)
+                self.diff_db.add_diffs(
+                    'form', couch_form.form_id,
+                    _filter_form_diffs(couch_form.doc_type, diffs)
+                )
 
             _save_migrated_models(sql_form)
+
+    def _copy_unprocessed_cases(self):
+        for change in _get_case_iterator(self.domain, doc_types=['CommCareCase-Deleted']).iter_all_changes():
+            couch_case = CommCareCase.wrap(change.get_document())
+            print 'copying unprocessed {} {}'.format(couch_case.doc_type, couch_case.case_id)
+            sql_case = CommCareCaseSQL(
+                case_id=couch_case.case_id,
+                domain=self.domain,
+                type=couch_case.type,
+                name=couch_case.name,
+                owner_id=couch_case.owner_id,
+                opened_on=couch_case.opened_on,
+                opened_by=couch_case.opened_by,
+                modified_on=couch_case.modified_on,
+                modified_by=couch_case.modified_by,
+                server_modified_on=couch_case.server_modified_on,
+                closed=couch_case.closed,
+                closed_on=couch_case.closed_on,
+                closed_by=couch_case.closed_by,
+                deleted=True,
+                deletion_id=couch_case.deletion_id,
+                deleted_on=couch_case.deletion_date,
+                external_id=couch_case.external_id,
+                case_json=couch_case.dynamic_case_properties()
+            )
+            _migrate_case_actions(couch_case, sql_case)
+            _migrate_case_indices(couch_case, sql_case)
+            _migrate_case_attachments(couch_case, sql_case)
+            CaseAccessorSQL.save_case(sql_case)
 
     def _calculate_case_diffs(self):
         cases = {}
@@ -110,13 +143,32 @@ class CouchSqlDomainMigrator(object):
 
     def _diff_cases(self, couch_cases):
         from corehq.apps.tzmigration.timezonemigration import json_diff
-        sql_cases = CaseAccessorSQL.get_cases(list(couch_cases))
+        case_ids = list(couch_cases)
+        sql_cases = CaseAccessorSQL.get_cases(case_ids)
         for sql_case in sql_cases:
             couch_case = couch_cases[sql_case.case_id]
             diffs = json_diff(couch_case, sql_case.to_json(), track_list_indices=False)
             self.diff_db.add_diffs(
                 couch_case['doc_type'], sql_case.case_id,
-                _filter_case_diffs(diffs)
+                _filter_case_diffs(couch_case['doc_type'], diffs)
+            )
+
+        self._diff_ledgers(case_ids)
+
+    def _diff_ledgers(self, case_ids):
+        from corehq.apps.tzmigration.timezonemigration import json_diff
+        from corehq.apps.commtrack.models import StockState
+        couch_state_map = {
+            state.ledger_reference: state
+            for state in StockState.objects.filter(case_id__in=case_ids)
+        }
+
+        for ledger_value in LedgerAccessorSQL.get_ledger_values_for_cases(case_ids):
+            couch_state = couch_state_map.get(ledger_value.ledger_reference, None)
+            diffs = json_diff(couch_state.to_json(), ledger_value.to_json(), track_list_indices=False)
+            self.diff_db.add_diffs(
+                'stock state', ledger_value.ledger_reference.as_id(),
+                _filter_ledger_diffs(diffs)
             )
 
 
@@ -165,15 +217,28 @@ def _copy_form_properties(domain, sql_form, couch_form):
     sql_form.partial_submission = couch_form.partial_submission
     sql_form.initial_processing_complete = couch_form.initial_processing_complete
 
-    sql_form.state = doc_type_to_state[couch_form.doc_type]
+    if couch_form.doc_type.endswith(DELETED_SUFFIX):
+        doc_type = couch_form.doc_type[:-len(DELETED_SUFFIX)]
+        sql_form.state = doc_type_to_state[doc_type] | XFormInstanceSQL.DELETED
+    elif couch_form.doc_type == 'HQSubmission':
+        sql_form.state = XFormInstanceSQL.NORMAL
+    else:
+        sql_form.state = doc_type_to_state[couch_form.doc_type]
+
+    if couch_form.is_deleted:
+        sql_form.deletion_id = couch_form.deletion_id
+        sql_form.deleted_on = couch_form.deletion_date
 
     if couch_form.is_error:
-        # doc_type != XFormInstance
-        sql_form.problem = couch_form.problem
-        sql_form.orig_id = couch_form.orig_id
+        # doc_type != XFormInstance (includes deleted)
+        sql_form.problem = getattr(couch_form, 'problem', None)
+        sql_form.orig_id = getattr(couch_form, 'orig_id', None)
 
-    if couch_form.is_deprecated:
-        sql_form.edited_on = couch_form.deprecated_date
+    if couch_form.is_deprecated or couch_form.is_deleted:
+        sql_form.edited_on = getattr(couch_form, 'deprecated_date', None)
+
+    if couch_form.is_submission_error_log:
+        sql_form.xmlns = sql_form.xmlns or ''
 
     return sql_form
 
@@ -202,6 +267,57 @@ def _migrate_form_operations(sql_form, couch_form):
             user_id=couch_form_op.user,
             date=couch_form_op.date,
             operation=couch_form_op.operation
+        ))
+
+
+def _migrate_case_actions(couch_case, sql_case):
+    from casexml.apps.case import const
+    transactions = {}
+    for action in couch_case.actions:
+        if action.xform_id and action.xform_id in transactions:
+            transaction = transactions[action.xform_id]
+        else:
+            transaction = CaseTransaction(
+                case=sql_case,
+                form_id=action.xform_id,
+                sync_log_id=action.sync_log_id,
+                type=CaseTransaction.TYPE_FORM if action.xform_id else 0,
+                server_date=action.server_date,
+            )
+            if action.xform_id:
+                transactions[action.xform_id] = transaction
+            else:
+                sql_case.track_create(transaction)
+        if action.action_type == const.CASE_ACTION_CREATE:
+            transaction.type |= CaseTransaction.TYPE_CASE_CREATE
+        if action.action_type == const.CASE_ACTION_CLOSE:
+            transaction.type |= CaseTransaction.TYPE_CASE_CLOSE
+        if action.action_type == const.CASE_ACTION_INDEX:
+            transaction.type |= CaseTransaction.TYPE_CASE_INDEX
+        if action.action_type == const.CASE_ACTION_ATTACHMENT:
+            transaction.type |= CaseTransaction.TYPE_CASE_ATTACHMENT
+        if action.action_type == const.CASE_ACTION_REBUILD:
+            transaction.type = CaseTransaction.TYPE_REBUILD_WITH_REASON
+            transaction.details = RebuildWithReason(reason="Unknown")
+
+    for transaction in transactions.values():
+        sql_case.track_create(transaction)
+
+
+def _migrate_case_attachments(couch_case, sql_case):
+    # TODO: maybe wait until case attachments are in blobdb
+    pass
+
+
+def _migrate_case_indices(couch_case, sql_case):
+    for index in couch_case.indices:
+        sql_case.track_create(CommCareCaseIndexSQL(
+            case=sql_case,
+            domain=couch_case.domain,
+            identifier=index.identifier,
+            referenced_id=index.referenced_id,
+            referenced_type=index.referenced_type,
+            relationship_id=CommCareCaseIndexSQL.RELATIONSHIP_MAP[index.relationship]
         ))
 
 
@@ -289,14 +405,12 @@ def _get_unprocessed_form_iterator(domain):
     )
 
 
-def _get_case_iterator(domain):
+def _get_case_iterator(domain, doc_types=None):
+    doc_types = doc_types or ['CommCareCase', 'CommCareCase-Deleted', ]
     return CouchDomainDocTypeChangeProvider(
         couch_db=XFormInstance.get_db(),
         domains=[domain],
-        doc_types=[
-            'CommCareCase',
-            'CommCareCase-Deleted',
-        ],
+        doc_types=doc_types,
         event_handler=ReindexEventHandler(u'couch to sql migrator ({})'.format(domain)),
     )
 
@@ -339,29 +453,50 @@ def _filter_form_diffs(doc_type, diffs):
         if diff.path[0] not in paths_to_ignore and diff not in const.FORM_IGNORED_DIFFS
     ]
     filtered = _check_deprecation_date(filtered, doc_type)
+    filtered = _check_deletion_fields_date(filtered, doc_type)
     return filtered
 
 
-def _check_deprecation_date(filtered, doc_type):
-    from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
+def _check_deprecation_date(filtered_diffs, doc_type):
     if doc_type == 'XFormDeprecated':
-        edited_on = [diff for diff in filtered if diff.path[0] == 'edited_on']
-        deprecated_date = [diff for diff in filtered if diff.path[0] == 'deprecated_date']
-        if edited_on and deprecated_date:
-            edited_on = edited_on[0]
-            deprecated_date = deprecated_date[0]
-            filtered.remove(edited_on)
-            filtered.remove(deprecated_date)
-            if deprecated_date.old_value != edited_on.new_value:
-                filtered.append(FormJsonDiff(
-                    diff_type='complex', path=('edited_on', 'deprecated_date'),
-                    old_value=deprecated_date.old_value, new_value=edited_on.new_value
-                ))
-    return filtered
+        _check_renamed_fields(filtered_diffs, 'deprecated_date', 'edited_on')
+    return filtered_diffs
 
 
-def _filter_case_diffs(diffs):
+def _check_deletion_fields_date(filtered_diffs, doc_type):
+    if doc_type in ('XFormInstance-Deleted', 'CommCareCase-Deleted'):
+        _check_renamed_fields(filtered_diffs, '-deletion_id', 'deletion_id')
+        _check_renamed_fields(filtered_diffs, '-deletion_date', 'deleted_on')
+    return filtered_diffs
+
+
+def _check_renamed_fields(filtered_diffs, couch_field_name, sql_field_name):
+    from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
+    sql_fields = [diff for diff in filtered_diffs if diff.path[0] == sql_field_name]
+    couch_fields = [diff for diff in filtered_diffs if diff.path[0] == couch_field_name]
+    if sql_fields and couch_fields:
+        sql_field = sql_fields[0]
+        couch_field = couch_fields[0]
+        filtered_diffs.remove(sql_field)
+        filtered_diffs.remove(couch_field)
+        if couch_field.old_value != sql_field.new_value:
+            filtered_diffs.append(FormJsonDiff(
+                diff_type='complex', path=(couch_field_name, sql_field_name),
+                old_value=couch_field.old_value, new_value=sql_field.new_value
+            ))
+
+
+def _filter_case_diffs(doc_type, diffs):
+    filtered_diffs = [
+        diff for diff in diffs
+        if diff.path not in const.CASE_IGNORED_PATHS and diff not in const.CASE_IGNORED_DIFFS
+    ]
+    filtered_diffs = _check_deletion_fields_date(filtered_diffs, doc_type)
+    return filtered_diffs
+
+
+def _filter_ledger_diffs(diffs):
     return [
         diff for diff in diffs
-        if diff.path[0] not in const.CASE_IGNORED_PATHS and diff not in const.CASE_IGNORED_DIFFS
+        if diff.path not in const.LEDGER_IGNORED_PATHS
     ]

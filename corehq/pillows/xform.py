@@ -176,5 +176,6 @@ def get_sql_form_reindexer():
         doc_provider,
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
+        doc_filter=xform_pillow_filter,
         doc_transform=transform_xform_for_elasticsearch
     )

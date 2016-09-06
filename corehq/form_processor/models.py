@@ -290,9 +290,13 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     @property
     @memoized
     def form_data(self):
+        from couchforms import XMLSyntaxError
         from .utils import convert_xform_to_json, adjust_datetimes
         xml = self.get_xml()
-        form_json = convert_xform_to_json(xml)
+        try:
+            form_json = convert_xform_to_json(xml)
+        except XMLSyntaxError:
+            return {}
         # we can assume all sql domains are new timezone domains
         with force_phone_timezones_should_be_processed():
             adjust_datetimes(form_json)
@@ -620,6 +624,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         from .serializers import CommCareCaseSQLSerializer
         serializer = CommCareCaseSQLSerializer(self)
         ret = dict(serializer.data)
+        ret['indices'] = [dict(index) for index in ret['indices']]
         for key in self.case_json:
             if key not in ret:
                 ret[key] = self.case_json[key]
@@ -1289,9 +1294,22 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     def ledger_id(self):
         return self.ledger_reference.as_id()
 
-    def to_json(self):
+    @property
+    @memoized
+    def location(self):
+        from corehq.apps.locations.models import SQLLocation
+        try:
+            return SQLLocation.objects.get(supply_point_id=self.case_id)
+        except SQLLocation.DoesNotExist:
+            return None
+
+    @property
+    def location_id(self):
+        return self.location.location_id if self.location else None
+
+    def to_json(self, include_location_id=True):
         from .serializers import LedgerValueSerializer
-        serializer = LedgerValueSerializer(self)
+        serializer = LedgerValueSerializer(self, include_location_id=include_location_id)
         return dict(serializer.data)
 
     class Meta:

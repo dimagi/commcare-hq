@@ -10,7 +10,7 @@ set_session("gevent")
 from gevent.pool import Pool
 
 from couchdbkit.exceptions import ResourceNotFound
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 from corehq.apps.indicators.models import CaseIndicatorDefinition, \
     FormIndicatorDefinition, DocumentMismatchError, DocumentNotInDomainError, \
     FormLabelIndicatorDefinition
@@ -21,7 +21,7 @@ from mvp.models import MVP
 POOL_SIZE = 10
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Update MVP indicators in existing cases and forms."
     args = "<domain> <case or form> <case or form label> <start at record #>"
     label = ""
