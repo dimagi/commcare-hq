@@ -137,19 +137,52 @@
                 }
             },
             {
-                "display_name": "person_name",
-                "transform": {
-                },
+                "display_name": "person/name",
                 "datatype": "string",
                 "type": "expression",
                 "is_primary_key": false,
+                "transform": {
+                },
                 "is_nullable": true,
-                "column_id": "person_name",
                 "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "person_name"
-                }
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "name"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "column_id": "person_name"
+            },
+            {
+                "display_name": "person/current_address",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "current_address"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "column_id": "current_address"
             },
             {
                 "display_name": "modified_on",
@@ -210,6 +243,69 @@
                 "column_id": "sex"
             },
             {
+                "display_name": "person/age",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "age"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "column_id": "age"
+            },
+            {
+                "display_name": "weight",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "reg_weight"
+                },
+                "column_id": "weight"
+            },
+            {
+                "display_name": "person/mobile_number",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "mobile_number"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "column_id": "mobile_number"
+            },
+            {
                 "display_name": "patient_type",
                 "datatype": "string",
                 "type": "expression",
@@ -220,7 +316,7 @@
                 "expression": {
                     "datatype": "string",
                     "type": "property_name",
-                    "property_name": "patient_type"
+                    "property_name": "patient_type_choice"
                 },
                 "column_id": "patient_type"
             },
@@ -285,8 +381,295 @@
                     "property_value": "tb_detected"
                 }
             },
+                        {
+                "display_name": "diagnostic_test_type",
+                "column_id": "diagnostic_test_type",
+                "datatype": "string",
+                "type": "expression",
+                "expression":
+                {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "test_request_form"
+                    },
+                    "value_expression": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_path",
+                                "property_path": ["form", "ql_request_details", "purpose_of_testing"],
+                                "datatype": "string"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "diagnostic_or_pretreatment"
+                        },
+                        "expression_if_true": {
+                            "type": "property_path",
+                            "property_path": ["form", "rpt_referral_details", "test_type_label"]
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": ""
+                        }
+                    }
+                }
+            },
             {
-                "display_name": "hiv_status",
+                "display_name": "diagnostic_test_requested_date",
+                "column_id": "diagnostic_test_requested_date",
+                "datatype": "string",
+                "type": "expression",
+                "expression":
+                {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "test_request_form"
+                    },
+                    "value_expression": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_path",
+                                "property_path": ["form", "ql_request_details", "purpose_of_testing"],
+                                "datatype": "string"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "diagnostic_or_pretreatment"
+                        },
+                        "expression_if_true": {
+                            "type": "property_path",
+                            "property_path": ["form", "ql_request_details", "test_requested_date"]
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": ""
+                        }
+                    }
+                }
+            },
+            {
+                "display_name": "diagnostic_result",
+                "column_id": "diagnostic_result",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_request_form"
+                            },
+                            "value_expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_request_details",
+                                    "purpose_of_testing"
+                                ],
+                                "datatype": "string"
+                            }
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "diagnostic_or_pretreatment"
+                    },
+                    "expression_if_true": {
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "named",
+                            "name": "test_result_form"
+                        },
+                        "value_expression": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "result_label"
+                            ]
+                        }
+
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": ""
+                    }
+                }
+            },
+            {
+                "display_name": "endofip_test_requested_date",
+                "column_id": "endofip_test_requested_date",
+                "datatype": "string",
+                "type": "expression",
+                "expression":
+                {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "test_request_form"
+                    },
+                    "value_expression": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_path",
+                                "property_path": ["form", "ql_request_details", "purpose_of_testing"],
+                                "datatype": "string"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "end_of_ip"
+                        },
+                        "expression_if_true": {
+                            "type": "property_path",
+                            "property_path": ["form", "ql_request_details", "test_requested_date"]
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": ""
+                        }
+                    }
+                }
+            },
+            {
+                "display_name": "endofip_result",
+                "column_id": "endofip_result",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_request_form"
+                            },
+                            "value_expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_request_details",
+                                    "purpose_of_testing"
+                                ],
+                                "datatype": "string"
+                            }
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "end_of_ip"
+                    },
+                    "expression_if_true": {
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "named",
+                            "name": "test_result_form"
+                        },
+                        "value_expression": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "result_label"
+                            ]
+                        }
+
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": ""
+                    }
+                }
+            },
+            {
+                "display_name": "endofcp_test_requested_date",
+                "column_id": "endofcp_test_requested_date",
+                "datatype": "string",
+                "type": "expression",
+                "expression":
+                {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "test_request_form"
+                    },
+                    "value_expression": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_path",
+                                "property_path": ["form", "ql_request_details", "purpose_of_testing"],
+                                "datatype": "string"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "end_of_cp"
+                        },
+                        "expression_if_true": {
+                            "type": "property_path",
+                            "property_path": ["form", "ql_request_details", "test_requested_date"]
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": ""
+                        }
+                    }
+                }
+            },
+            {
+                "display_name": "endofcp_result",
+                "column_id": "endofcp_result",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_request_form"
+                            },
+                            "value_expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_request_details",
+                                    "purpose_of_testing"
+                                ],
+                                "datatype": "string"
+                            }
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "end_of_cp"
+                    },
+                    "expression_if_true": {
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "named",
+                            "name": "test_result_form"
+                        },
+                        "value_expression": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "result_label"
+                            ]
+                        }
+
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": ""
+                    }
+                }
+            },
+            {
+                "display_name": "diabetes_status",
                 "datatype": "string",
                 "type": "expression",
                 "is_primary_key": false,
@@ -296,9 +679,403 @@
                 "expression": {
                     "datatype": "string",
                     "type": "property_name",
-                    "property_name": "hiv_status"
+                    "property_name": "diabetes_status"
+                },
+                "column_id": "diabetes_status"
+            },
+            {
+                "display_name": "hiv_status",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "type": "named",
+                    "name": "hiv_status"
                 },
                 "column_id": "hiv_status"
+            },
+            {
+                "column_id": "purpose_of_test",
+                "display_name": "purpose_of_test",
+                "type": "expression",
+                "datatype": "string",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "test_case"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "purpose_of_testing"
+                    }
+                }
+            },
+            {
+                "column_id": "result_of_test",
+                "display_name": "result_of_test",
+                "type": "expression",
+                "datatype": "string",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "test_case"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "result"
+                    }
+                }
+            },
+            {
+                "display_name": "ip_initiation_date",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "ip_initiation_date"
+                },
+                "column_id": "ip_initiation_date"
+            },
+            {
+                "display_name": "dosage_frequency",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "dosage_frequency"
+                },
+                "column_id": "dosage_frequency"
+            },
+            {
+                "display_name": "treatment_outcome_date",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "treatment_outcome_date"
+                },
+                "column_id": "treatment_outcome_date"
+            },
+            {
+                "display_name": "treatment_outcome",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "treatment_outcome"
+                },
+                "column_id": "treatment_outcome"
+            },
+            {
+                "display_name": "initiated_on_art",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "initiated_on_art"
+                },
+                "column_id": "initiated_on_art"
+            },
+            {
+                "display_name": "art_initiation_date",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "art_initiation_date"
+                },
+                "column_id": "art_initiation_date"
+            },
+            {
+                "display_name": "treatment_supporter_first_name",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "treatment_supporter_first_name"
+                },
+                "column_id": "treatment_supporter_first_name"
+            },
+            {
+                "display_name": "treatment_supporter_last_name",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "treatment_supporter_last_name"
+                },
+                "column_id": "treatment_supporter_last_name"
+            },
+            {
+                "display_name": "treatment_supporter_designation",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "treatment_supporter_designation"
+                },
+                "column_id": "treatment_supporter_designation"
+            },
+            {
+                "display_name": "post_treatment_6_result",
+                "column_id": "post_treatment_6_result",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_request_form"
+                            },
+                            "value_expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_request_details",
+                                    "purpose_of_testing"
+                                ],
+                                "datatype": "string"
+                            }
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "post_treatment_6_month"
+                    },
+                    "expression_if_true": {
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "named",
+                            "name": "test_result_form"
+                        },
+                        "value_expression": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "result_label"
+                            ]
+                        }
+
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": ""
+                    }
+                }
+            },
+            {
+                "display_name": "post_treatment_12_result",
+                "column_id": "post_treatment_12_result",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_request_form"
+                            },
+                            "value_expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_request_details",
+                                    "purpose_of_testing"
+                                ],
+                                "datatype": "string"
+                            }
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "post_treatment_12_month"
+                    },
+                    "expression_if_true": {
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "named",
+                            "name": "test_result_form"
+                        },
+                        "value_expression": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "result_label"
+                            ]
+                        }
+
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": ""
+                    }
+                }
+            },
+            {
+                "display_name": "post_treatment_18_result",
+                "column_id": "post_treatment_18_result",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_request_form"
+                            },
+                            "value_expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_request_details",
+                                    "purpose_of_testing"
+                                ],
+                                "datatype": "string"
+                            }
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "post_treatment_18_month"
+                    },
+                    "expression_if_true": {
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "named",
+                            "name": "test_result_form"
+                        },
+                        "value_expression": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "result_label"
+                            ]
+                        }
+
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": ""
+                    }
+                }
+            },
+            {
+                "display_name": "post_treatment_24_result",
+                "column_id": "post_treatment_24_result",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_request_form"
+                            },
+                            "value_expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_request_details",
+                                    "purpose_of_testing"
+                                ],
+                                "datatype": "string"
+                            }
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "post_treatment_24_month"
+                    },
+                    "expression_if_true": {
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "named",
+                            "name": "test_result_form"
+                        },
+                        "value_expression": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "result_label"
+                            ]
+                        }
+
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": ""
+                    }
+                }
+            },
+            {
+                "display_name": "nikshay_id",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "nikshay_id"
+                },
+                "column_id": "nikshay_id"
             },
             {
                 "display_name": "disease_classification",
@@ -2009,9 +2786,8 @@
                             "operator": "in",
                             "type": "boolean_expression",
                             "expression": {
-                                "datatype": "string",
-                                "type": "property_name",
-                                "property_name": "hiv_status"
+                                "type": "named",
+                                "name": "hiv_status"
                             },
                             "property_value": ["reactive", "non_reactive"]
                         }
@@ -2433,6 +3209,190 @@
                             "constant": 0
                         }
                     }
+                }
+            },
+            "test_case": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {"type": "property_name", "property_name": "type"},
+                            "property_value": "test"
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
+            "test_request_form": {
+                "type": "nested",
+                "argument_expression": {
+                    "type": "reduce_items",
+                    "items_expression": {
+                        "type": "sort_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "sort_expression": {
+                            "type": "property_name",
+                            "property_name": "opened_on"
+                        }
+                    },
+                    "aggregation_fn": "last_item"
+                },
+                "value_expression": {
+                    "type": "reduce_items",
+                    "items_expression": {
+                        "type": "sort_items",
+                        "items_expression": {
+                            "type": "filter_items",
+                            "items_expression": {
+                                "type": "get_case_forms",
+                                "case_id_expression": {
+                                    "type": "property_name",
+                                    "property_name": "_id"
+                                }
+                            },
+                            "filter_expression": {
+                                "type": "boolean_expression",
+                                "operator": "eq",
+                                "expression": {"type": "property_name", "property_name": "xmlns"},
+                                "property_value": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F"
+                            }
+                        },
+                        "sort_expression": {
+                            "type": "property_name",
+                            "property_name": "received_on"
+                        }
+                    },
+                    "aggregation_fn": "last_item"
+                }
+            },
+            "test_result_form": {
+                "type": "nested",
+                "argument_expression": {
+                    "type": "reduce_items",
+                    "items_expression": {
+                        "type": "sort_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "sort_expression": {
+                            "type": "property_name",
+                            "property_name": "opened_on"
+                        }
+                    },
+                    "aggregation_fn": "last_item"
+                },
+                "value_expression": {
+                    "type": "reduce_items",
+                    "items_expression": {
+                        "type": "sort_items",
+                        "items_expression": {
+                            "type": "filter_items",
+                            "items_expression": {
+                                "type": "get_case_forms",
+                                "case_id_expression": {
+                                    "type": "property_name",
+                                    "property_name": "_id"
+                                }
+                            },
+                            "filter_expression": {
+                                "type": "boolean_expression",
+                                "operator": "eq",
+                                "expression": {"type": "property_name", "property_name": "xmlns"},
+                                "property_value": "http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3"
+                            }
+                        },
+                        "sort_expression": {
+                            "type": "property_name",
+                            "property_name": "received_on"
+                        }
+                    },
+                    "aggregation_fn": "last_item"
+                }
+            },
+            "hiv_status": {
+                "value_expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "hiv_status"
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                    "type": "named",
+                    "name": "occurrence_id"
                 }
             },
             "first_subcase": {
