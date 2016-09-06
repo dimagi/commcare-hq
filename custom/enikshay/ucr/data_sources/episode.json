@@ -137,6 +137,28 @@
                 }
             },
             {
+                "display_name": "patient_registration_date",
+                "transform": {
+                },
+                "datatype": "datetime",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "patient_registration_date",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "patient_registration"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "received_on"
+                    }
+
+                }
+            },
+            {
                 "display_name": "person/name",
                 "datatype": "string",
                 "type": "expression",
@@ -2795,9 +2817,231 @@
                     "type": "and"
                 },
                 "type": "boolean"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "test_purpose_diagnostic"
+                        }
+                    ]
+                },
+                "display_name": "new_positive_patients",
+                "type": "boolean",
+                "column_id": "new_positive_patients"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "cat2"
+                        },
+                        {
+                            "type": "named",
+                            "name": "test_purpose_diagnostic"
+                        },
+                        {
+                            "type": "named",
+                            "name": "has_patient_type"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "new_patient"
+                            }
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "others_patient"
+                            }
+                        }
+                    ]
+                },
+                "display_name": "positive_patients_cat2",
+                "type": "boolean",
+                "column_id": "positive_patients_cat2"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_negative"
+                        },
+                                                {
+                            "type": "named",
+                            "name": "cat2"
+                        },
+                        {
+                            "type": "named",
+                            "name": "test_purpose_diagnostic"
+                        },
+                        {
+                            "type": "named",
+                            "name": "has_patient_type"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "new_patient"
+                            }
+                        }
+                    ]
+                },
+                "display_name": "negative_patients_cat2",
+                "type": "boolean",
+                "column_id": "negative_patients_cat2"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "cat2"
+                        },
+                        {
+                            "type": "named",
+                            "name": "test_purpose_end_of_ip"
+                        },
+                        {
+                            "type": "named",
+                            "name": "has_patient_type"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "new_patient"
+                            }
+                        }
+                    ]
+                },
+                "display_name": "positive_endofip_patients_cat2",
+                "type": "boolean",
+                "column_id": "positive_endofip_patients_cat2"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_negative"
+                        },
+                        {
+                            "type": "named",
+                            "name": "cat2"
+                        },
+                        {
+                            "type": "named",
+                            "name": "test_purpose_end_of_ip"
+                        },
+                        {
+                            "type": "named",
+                            "name": "has_patient_type"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "new_patient"
+                            }
+                        }
+                    ]
+                },
+                "display_name": "negative_endofip_patients_cat2",
+                "type": "boolean",
+                "column_id": "negative_endofip_patients_cat2"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "sputum_positive"
+                            }
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "sputum_negative"
+                            }
+                        },
+                        {
+                            "type": "named",
+                            "name": "cat2"
+                        },
+                        {
+                            "type": "named",
+                            "name": "test_purpose_end_of_ip"
+                        },
+                        {
+                            "type": "named",
+                            "name": "has_patient_type"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "new_patient"
+                            }
+                        }
+                    ]
+                },
+                "display_name": "endofip_without_result_patients_cat2",
+                "type": "boolean",
+                "column_id": "endofip_without_result_patients_cat2"
             }
         ],
         "named_filters": {
+            "cat1": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "cat1_cat2"
+                },
+                "property_value": "cat1"
+            },
+            "cat2": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "cat1_cat2"
+                },
+                "property_value": "cat1"
+            },
             "under_15": {
                 "operator": "lt",
                 "type": "boolean_expression",
@@ -2953,6 +3197,16 @@
                 "type": "boolean_expression",
                 "property_value": "new"
             },
+            "others_patient": {
+                "operator": "eq",
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "patient_type"
+                },
+                "type": "boolean_expression",
+                "property_value": "others"
+            },
             "relapse": {
                 "operator": "eq",
                 "expression": {
@@ -3090,6 +3344,48 @@
                 },
                 "property_value": "tb_detected"
             },
+            "sputum_negative": {
+                "type": "boolean_expression",
+                "operator": "eq",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "reduce_items",
+                        "items_expression": {
+                            "type": "sort_items",
+                            "items_expression": {
+                                "type": "filter_items",
+                                "items_expression": {
+                                    "type": "get_subcases",
+                                    "case_id_expression": {
+                                        "type": "named",
+                                        "name": "occurrence_id"
+                                    }
+                                },
+                                "filter_expression": {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "property_value": "microscopy-zn"
+                                }
+                            },
+                            "sort_expression": {
+                                "type": "property_name",
+                                "property_name": "opened_on"
+                            }
+                        },
+                        "aggregation_fn": "last_item"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "result"
+                    }
+                },
+                "property_value": "tb_not_detected"
+            },
             "test_purpose_diagnostic": {
                 "operator": "eq",
                 "type": "boolean_expression",
@@ -3131,6 +3427,48 @@
                     }
                 },
                 "property_value": "diagnostic_or_pretreatment"
+            },
+            "test_purpose_end_of_ip": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "reduce_items",
+                        "items_expression": {
+                            "type": "sort_items",
+                            "items_expression": {
+                                "type": "filter_items",
+                                "items_expression": {
+                                    "type": "get_subcases",
+                                    "case_id_expression": {
+                                        "type": "named",
+                                        "name": "occurrence_id"
+                                    }
+                                },
+                                "filter_expression": {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "property_value": "microscopy-zn"
+                                }
+                            },
+                            "sort_expression": {
+                                "type": "property_name",
+                                "property_name": "opened_on"
+                            }
+                        },
+                        "aggregation_fn": "last_item"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "purpose_of_testing"
+                    }
+                },
+                "property_value": "end_of_ip"
             },
             "has_patient_type": {
                 "type": "not",
@@ -3382,6 +3720,71 @@
                     "aggregation_fn": "last_item"
                 }
             },
+            "patient_registration": {
+                "type": "nested",
+                "argument_expression": {
+                    "type": "reduce_items",
+                    "items_expression": {
+                        "type": "sort_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "sort_expression": {
+                            "type": "property_name",
+                            "property_name": "opened_on"
+                        }
+                    },
+                    "aggregation_fn": "last_item"
+                },
+                "value_expression": {
+                    "type": "reduce_items",
+                    "items_expression": {
+                        "type": "sort_items",
+                        "items_expression": {
+                            "type": "filter_items",
+                            "items_expression": {
+                                "type": "get_case_forms",
+                                "case_id_expression": {
+                                    "type": "property_name",
+                                    "property_name": "_id"
+                                }
+                            },
+                            "filter_expression": {
+                                "type": "boolean_expression",
+                                "operator": "eq",
+                                "expression": {"type": "property_name", "property_name": "xmlns"},
+                                "property_value": "http://openrosa.org/formdesigner/60B0DB43-CC15-43A0-BFE7-885310AFD6E4"
+
+                            }
+                        },
+                        "sort_expression": {
+                            "type": "property_name",
+                            "property_name": "received_on"
+                        }
+                    },
+                    "aggregation_fn": "first_item"
+                }
+            },
             "hiv_status": {
                 "value_expression": {
                     "datatype": "string",
@@ -3391,8 +3794,24 @@
                 "type": "related_doc",
                 "related_doc_type": "CommCareCase",
                 "doc_id_expression": {
-                    "type": "named",
-                    "name": "occurrence_id"
+                    "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "referenced_id"
+                    },
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "array_index",
+                        "array_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "indices"
+                        },
+                        "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    }
                 }
             },
             "first_subcase": {
