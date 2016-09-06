@@ -1,6 +1,5 @@
 import json
 from datetime import datetime
-from collections import namedtuple
 from django.test import TestCase
 
 from corehq.form_processor.tests.utils import run_with_all_backends
@@ -15,16 +14,28 @@ from custom.enikshay.integrations.ninetyninedots.repeater_generators import Regi
 from custom.enikshay.integrations.ninetyninedots.repeaters import NinetyNineDotsRegisterPatientRepeater
 
 
+class MockResponse(object):
+    def __init__(self, status_code, json_data):
+        self.json_data = json_data
+        self.status_code = status_code
+
+    def json(self):
+        return self.json_data
+
+
 class TestRegisterPatientRepeater(ENikshayCaseStructureMixin, TestCase):
     def setUp(self):
         super(TestRegisterPatientRepeater, self).setUp()
+
         delete_all_repeat_records()
         delete_all_repeaters()
         delete_all_cases()
+
         self.repeater = NinetyNineDotsRegisterPatientRepeater(
             domain=self.domain,
             url='case-repeater-url',
         )
+        self.repeater.white_listed_case_types = ['episode']
         self.repeater.save()
 
     def tearDown(self):
@@ -33,20 +44,10 @@ class TestRegisterPatientRepeater(ENikshayCaseStructureMixin, TestCase):
         delete_all_repeaters()
         delete_all_cases()
 
-    @classmethod
-    def repeat_records(cls, domain_name):
-        return RepeatRecord.all(domain=domain_name, due_before=datetime.utcnow())
+    def repeat_records(self):
+        return RepeatRecord.all(domain=self.domain, due_before=datetime.utcnow())
 
-    @run_with_all_backends
-    def test_trigger(self):
-        self.repeater.white_listed_case_types = ['episode']
-        self.repeater.save()
-
-        # 99dots not enabled
-        self.create_case(self.episode)
-        self.assertEqual(0, len(self.repeat_records(self.domain).all()))
-
-        # enable 99dots, should register a repeat record
+    def _create_99dots_enabled_case(self):
         dots_enabled_case = CaseStructure(
             case_id=self.episode_id,
             attrs={
@@ -57,9 +58,8 @@ class TestRegisterPatientRepeater(ENikshayCaseStructureMixin, TestCase):
             }
         )
         self.create_case(dots_enabled_case)
-        self.assertEqual(1, len(self.repeat_records(self.domain).all()))
 
-        # set as registered, shouldn't register a new repeat record
+    def _create_99dots_registered_case(self):
         dots_registered_case = CaseStructure(
             case_id=self.episode_id,
             attrs={
@@ -71,13 +71,30 @@ class TestRegisterPatientRepeater(ENikshayCaseStructureMixin, TestCase):
             }
         )
         self.create_case(dots_registered_case)
-        self.assertEqual(1, len(self.repeat_records(self.domain).all()))
+
+    @run_with_all_backends
+    def test_trigger(self):
+        # 99dots not enabled
+        self.create_case(self.episode)
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+        # enable 99dots, should register a repeat record
+        self._create_99dots_enabled_case()
+        self.assertEqual(1, len(self.repeat_records().all()))
+
+        # set as registered, shouldn't register a new repeat record
+        self._create_99dots_registered_case()
+        self.assertEqual(1, len(self.repeat_records().all()))
 
 
 class TestRegisterPatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
     def setUp(self):
         super(TestRegisterPatientPayloadGenerator, self).setUp()
         self.cases = self.create_case_structure()
+
+    def tearDown(self):
+        super(TestRegisterPatientPayloadGenerator, self).tearDown()
+        delete_all_cases()
 
     @run_with_all_backends
     def test_get_payload(self):
@@ -96,8 +113,7 @@ class TestRegisterPatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
     @run_with_all_backends
     def test_handle_success(self):
         payload_generator = RegisterPatientPayloadGenerator(None)
-        Response = namedtuple("Response", 'status_code')
-        payload_generator.handle_success(Response(201), self.cases[self.episode_id])
+        payload_generator.handle_success(MockResponse(201, {"success": "hooray"}), self.cases[self.episode_id])
         updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
         self.assertEqual(
             updated_episode_case.dynamic_case_properties().get('dots_99_registered'),
@@ -111,11 +127,10 @@ class TestRegisterPatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
     @run_with_all_backends
     def test_handle_failure(self):
         payload_generator = RegisterPatientPayloadGenerator(None)
-        Response = namedtuple("Response", 'status_code message')
         error = {
             "error": "Something went terribly wrong",
         }
-        payload_generator.handle_failure(Response(400, json.dumps(error)), self.cases[self.episode_id])
+        payload_generator.handle_failure(MockResponse(400, error), self.cases[self.episode_id])
         updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
         self.assertEqual(
             updated_episode_case.dynamic_case_properties().get('dots_99_registered'),

@@ -60,7 +60,7 @@ class RegisterPatientPayloadGenerator(BasePayloadGenerator):
                     "dots_99_registered": "false",
                     "dots_99_error": "{}: {}".format(
                         response.status_code,
-                        json.loads(response.message).get('error')
+                        response.json().get('error')
                     ),
                 }
             )
