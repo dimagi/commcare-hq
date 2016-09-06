@@ -1294,9 +1294,22 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     def ledger_id(self):
         return self.ledger_reference.as_id()
 
-    def to_json(self):
+    @property
+    @memoized
+    def location(self):
+        from corehq.apps.locations.models import SQLLocation
+        try:
+            return SQLLocation.objects.get(supply_point_id=self.case_id)
+        except SQLLocation.DoesNotExist:
+            return None
+
+    @property
+    def location_id(self):
+        return self.location.location_id if self.location else None
+
+    def to_json(self, include_location_id=True):
         from .serializers import LedgerValueSerializer
-        serializer = LedgerValueSerializer(self)
+        serializer = LedgerValueSerializer(self, include_location_id=include_location_id)
         return dict(serializer.data)
 
     class Meta:

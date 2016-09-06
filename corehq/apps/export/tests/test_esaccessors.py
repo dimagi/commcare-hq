@@ -1,6 +1,6 @@
 import uuid
 
-from django.test.testcases import SimpleTestCase
+from django.test import TestCase
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
 from corehq.elastic import send_to_elasticsearch, get_es_new
@@ -10,7 +10,7 @@ from corehq.util.elastic import ensure_index_deleted
 from pillowtop.es_utils import initialize_index_and_mapping
 
 
-class TestExportESAccessors(SimpleTestCase):
+class TestExportESAccessors(TestCase):
     dependent_apps = ['corehq.apps.export', 'corehq.couchapps']
     domain = 'export-es-domain'
 
@@ -33,7 +33,7 @@ class TestExportESAccessors(SimpleTestCase):
                 section_id=section,
                 entry_id=entry,
             )
-            ledger_json = ledger.to_json()
+            ledger_json = ledger.to_json(include_location_id=False)
             ledger_json['_id'] = ledger.ledger_reference.as_id()
             send_to_elasticsearch('ledgers', doc=ledger_json)
 
