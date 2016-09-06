@@ -173,6 +173,12 @@ class LedgerValueSerializer(serializers.ModelSerializer):
     location_id = serializers.CharField()
     case_id = serializers.CharField()
 
+    def __init__(self, *args, **kwargs):
+        include_location_id = kwargs.pop('include_location_id', False)
+        if not include_location_id:
+            self.fields.pop('location_id')
+        super(LedgerValueSerializer, self).__init__(*args, **kwargs)
+
     class Meta:
         model = LedgerValue
         exclude = ('id', 'case')

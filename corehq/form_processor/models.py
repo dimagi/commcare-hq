@@ -1303,9 +1303,9 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     def location_id(self):
         return self.location.location_id if self.location else None
 
-    def to_json(self):
+    def to_json(self, include_location_id=True):
         from .serializers import LedgerValueSerializer
-        serializer = LedgerValueSerializer(self)
+        serializer = LedgerValueSerializer(self, include_location_id=include_location_id)
         return dict(serializer.data)
 
     class Meta:
