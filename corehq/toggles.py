@@ -76,12 +76,21 @@ class PredictablyRandomToggle(StaticToggle):
     It extends StaticToggle, so individual domains/users can also be explicitly added.
     """
 
-    def __init__(self, slug, label, tag, namespaces, randomness, help_link=None, description=None):
+    def __init__(self,
+            slug,
+            label,
+            tag,
+            namespaces,
+            randomness,
+            help_link=None,
+            description=None,
+            always_disabled=None):
         super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
                                                       help_link=help_link, description=description)
         assert namespaces, 'namespaces must be defined!'
         assert 0 <= randomness <= 1, 'randomness must be between 0 and 1!'
         self.randomness = randomness
+        self.always_disabled = always_disabled or []
 
     @property
     def randomness_percent(self):
@@ -91,6 +100,8 @@ class PredictablyRandomToggle(StaticToggle):
         return '{}:{}:{}'.format(self.namespaces, self.slug, item)
 
     def enabled(self, item, **kwargs):
+        if item in self.always_disabled:
+            return False
         return (
             (item and deterministic_random(self._get_identifier(item)) < self.randomness)
             or super(PredictablyRandomToggle, self).enabled(item, **kwargs)
@@ -784,6 +795,7 @@ TF_USES_SQLITE_BACKEND = PredictablyRandomToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
     0.1,
+    always_disabled=['hsph-betterbirth'],
 )
 
 
