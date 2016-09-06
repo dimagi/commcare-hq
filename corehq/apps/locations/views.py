@@ -1,4 +1,5 @@
 import json
+import logging
 
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseRedirect, Http404
@@ -9,7 +10,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.http import require_http_methods
 
-from couchdbkit import ResourceNotFound
+from couchdbkit import ResourceNotFound, BulkSaveError
 from corehq.apps.style.decorators import (
     use_jquery_ui,
     use_multiselect,
@@ -22,7 +23,7 @@ from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 
 from corehq import toggles
-from corehq.apps.commtrack.tasks import import_locations_async
+from corehq.apps.commtrack.tasks import import_locations_async, location_lock_key, LOCK_LOCATIONS_TIMEOUT
 from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields import CustomDataModelMixin
@@ -31,10 +32,14 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.users.forms import MultipleSelectionForm
+from corehq.toggles import NEW_BULK_LOCATION_MANAGEMENT
 from corehq.apps.locations.permissions import location_safe
 from corehq.util import reverse, get_document_or_404
+from dimagi.utils.couch import release_lock
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from .analytics import users_have_locations
+from .const import ROOT_LOCATION_TYPE
 from .dbaccessors import get_users_assigned_to_locations
 from .permissions import (
     locations_access_required,
@@ -46,12 +51,40 @@ from .permissions import (
 )
 from .models import Location, LocationType, SQLLocation, filter_for_archived
 from .forms import LocationForm, UsersAtLocationForm
+from .tree_utils import assert_no_cycles
 from .util import load_locs_json, location_hierarchy_config, dump_locations
+
+
+logger = logging.getLogger(__name__)
 
 
 @locations_access_required
 def default(request, domain):
     return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
+
+
+def lock_locations(func):
+    # Decorate a post/delete method of a view to ensure concurrent locations edits don't happen.
+    def func_wrapper(request, *args, **kwargs):
+        key = location_lock_key(request.domain)
+        client = get_redis_client()
+        lock = client.lock(key, LOCK_LOCATIONS_TIMEOUT)
+        if lock.acquire(blocking=False):
+            try:
+                return func(request, *args, **kwargs)
+            finally:
+                release_lock(lock, True)
+        else:
+            message = _("Some of the location edits are still in progress, "
+                        "please wait until they finish and then try again")
+            messages.warning(request, message)
+            if request.method == 'DELETE':
+                # handle delete_location view
+                return json_response({'success': False, 'message': message})
+            else:
+                return HttpResponseRedirect(request.META['HTTP_REFERER'])
+
+    return func_wrapper
 
 
 class BaseLocationView(BaseDomainView):
@@ -179,6 +212,7 @@ class LocationTypesView(BaseLocationView):
             'expand_to': loc_type.expand_to.pk if loc_type.expand_to else None,
         } for loc_type in LocationType.objects.by_domain(self.domain)]
 
+    @method_decorator(lock_locations)
     def post(self, request, *args, **kwargs):
         payload = json.loads(request.POST.get('json'))
         sql_loc_types = {}
@@ -275,20 +309,14 @@ class LocationTypesView(BaseLocationView):
         """
         Return loc types in order from parents to children
         """
+        assert_no_cycles([
+            (lt['pk'], lt['parent_type'])
+            if lt['parent_type'] else
+            (lt['pk'], ROOT_LOCATION_TYPE)
+            for lt in loc_types
+        ])
+
         lt_dict = {lt['pk']: lt for lt in loc_types}
-
-        # Make sure there are no cycles
-        for loc_type in loc_types:
-            visited = set()
-
-            def step(lt):
-                assert lt['name'] not in visited, \
-                    "There's a loc type cycle, we need to prohibit that"
-                visited.add(lt['name'])
-                if lt['parent_type']:
-                    step(lt_dict[lt['parent_type']])
-            step(loc_type)
-
         hierarchy = {}
 
         def insert_loc_type(loc_type):
@@ -402,6 +430,7 @@ class NewLocationView(BaseLocationView):
             return self.form_valid()
         return self.get(request, *args, **kwargs)
 
+    @method_decorator(lock_locations)
     def post(self, request, *args, **kwargs):
         return self.settings_form_post(request, *args, **kwargs)
 
@@ -424,12 +453,26 @@ def archive_location(request, domain, loc_id):
 
 @require_http_methods(['DELETE'])
 @can_edit_location
+@lock_locations
 @location_safe
 def delete_location(request, domain, loc_id):
-    loc = Location.get(loc_id)
-    if loc.domain != domain:
-        raise Http404()
-    loc.full_delete()
+    try:
+        loc = Location.get(loc_id)
+        if loc.domain != domain:
+            raise Http404()
+        loc.full_delete()
+    except (ResourceNotFound, BulkSaveError):
+        # Sometimes the couch and sql locations go out of sync and we can end up
+        # in a state where the couch doc is deleted and the sql doc still exists.
+        loc = SQLLocation.objects.prefetch_related(
+            'location_type').get(location_id=loc_id)
+        # delete the sql location anyway
+        loc.sql_full_delete()
+        logger.error(
+            'Location with ID [{}] in domain [{}] was missing its couch doc '
+            'upon deletion. If this is recurring it might be worth checking '
+            'out any couch to postrgres issues.'.format(loc_id, domain)
+        )
     return json_response({
         'success': True,
         'message': _("Location '{location_name}' has successfully been {action}.").format(
@@ -607,6 +650,7 @@ class EditLocationView(NewLocationView):
         self.sql_location.save()
         return self.form_valid()
 
+    @method_decorator(lock_locations)
     def post(self, request, *args, **kwargs):
         if self.request.POST['form_type'] == "location-settings":
             return self.settings_form_post(request, *args, **kwargs)
@@ -717,6 +761,7 @@ class LocationImportView(BaseLocationView):
         })
         return context
 
+    @method_decorator(lock_locations)
     def post(self, request, *args, **kwargs):
         upload = request.FILES.get('bulk_upload_file')
         if not upload:
@@ -753,6 +798,8 @@ class LocationImportView(BaseLocationView):
 @locations_access_required
 def location_importer_job_poll(request, domain, download_id,
                                template="style/partials/download_status.html"):
+    if NEW_BULK_LOCATION_MANAGEMENT.enabled(domain):
+        template = "locations/manage/partials/locations_upload_status.html"
     try:
         context = get_download_context(download_id, check_state=True)
     except TaskFailedError:
@@ -782,18 +829,21 @@ def location_export(request, domain):
 
 
 @locations_access_required
+@location_safe
 def child_locations_for_select2(request, domain):
     id = request.GET.get('id')
     ids = request.GET.get('ids')
     query = request.GET.get('name', '').lower()
     user = request.couch_user
 
+    base_queryset = SQLLocation.objects.accessible_to_user(domain, user)
+
     def loc_to_payload(loc):
         return {'id': loc.location_id, 'name': loc.display_name}
 
     if id:
         try:
-            loc = SQLLocation.objects.get(location_id=id)
+            loc = base_queryset.get(location_id=id)
             if loc.domain != domain:
                 raise SQLLocation.DoesNotExist()
         except SQLLocation.DoesNotExist:
@@ -807,7 +857,7 @@ def child_locations_for_select2(request, domain):
         from corehq.apps.locations.util import get_locations_from_ids
         ids = json.loads(ids)
         try:
-            locations = get_locations_from_ids(ids, domain)
+            locations = get_locations_from_ids(ids, domain, base_queryset=base_queryset)
         except SQLLocation.DoesNotExist:
             return json_response(
                 {'message': 'one or more locations not found'},
@@ -819,7 +869,7 @@ def child_locations_for_select2(request, domain):
         user_loc = user.get_sql_location(domain)
 
         if user_can_edit_any_location(user, request.project):
-            locs = SQLLocation.objects.filter(domain=domain, is_archived=False)
+            locs = base_queryset.filter(domain=domain, is_archived=False)
         elif user_loc:
             locs = user_loc.get_descendants(include_self=True)
 

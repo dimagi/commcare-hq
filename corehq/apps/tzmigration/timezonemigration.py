@@ -30,7 +30,7 @@ FormJsonDiff = collections.namedtuple('FormJsonDiff', [
     'diff_type', 'path', 'old_value', 'new_value'])
 
 
-def _json_diff(obj1, obj2, path):
+def _json_diff(obj1, obj2, path, track_list_indices=True):
     if isinstance(obj1, str):
         obj1 = unicode(obj1)
     if isinstance(obj2, str):
@@ -51,7 +51,8 @@ def _json_diff(obj1, obj2, path):
         for key in keys:
             for result in _json_diff(value_or_ellipsis(obj1, key),
                                      value_or_ellipsis(obj2, key),
-                                     path=path + (key,)):
+                                     path=path + (key,),
+                                     track_list_indices=track_list_indices):
                 yield result
     elif isinstance(obj1, list):
 
@@ -62,16 +63,18 @@ def _json_diff(obj1, obj2, path):
                 return Ellipsis
 
         for i in range(max(len(obj1), len(obj2))):
+            list_index = i if track_list_indices else '[*]'
             for result in _json_diff(value_or_ellipsis(obj1, i),
                                      value_or_ellipsis(obj2, i),
-                                     path=path + (i,)):
+                                     path=path + (list_index,),
+                                     track_list_indices=track_list_indices):
                 yield result
     else:
         yield FormJsonDiff('diff', path, obj1, obj2)
 
 
-def json_diff(obj1, obj2):
-    return list(_json_diff(obj1, obj2, path=()))
+def json_diff(obj1, obj2, track_list_indices=True):
+    return list(_json_diff(obj1, obj2, path=(), track_list_indices=track_list_indices))
 
 
 def _run_timezone_migration_for_domain(domain):

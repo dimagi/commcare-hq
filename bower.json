@@ -53,7 +53,7 @@
     "moment": "2.12.0",
     "jquery-treetable": "^3.2.0",
     "css-grid-polyfill-binaries": "1.1.1",
-    "requirejs": "~2.2.0"
+    "requirejs": "~2.3.1"
   },
   "devDependencies": {
     "chai": "3.3.0",
@@ -66,7 +66,6 @@
     "jquery": "1.11.1",
     "bootstrap": "3.3.7",
     "select2": "4.0.0",
-    "underscore": "1.6.0",
     "backbone": "0.9.1"
   }
 }

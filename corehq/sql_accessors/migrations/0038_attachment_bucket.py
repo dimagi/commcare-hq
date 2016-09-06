@@ -16,5 +16,4 @@ class Migration(migrations.Migration):
 
     operations = [
         migrator.get_migration('save_new_form_and_related_models_1.sql'),
-        migrator.get_migration('save_case_and_related_models_1.sql'),
     ]

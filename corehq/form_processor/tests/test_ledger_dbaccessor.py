@@ -45,7 +45,7 @@ class LedgerDBAccessorTest(TestCase):
         super(LedgerDBAccessorTest, self).tearDown()
 
     def _submit_ledgers(self, ledger_blocks):
-        return submit_case_blocks(ledger_blocks, self.domain).form_id
+        return submit_case_blocks(ledger_blocks, self.domain)[0].form_id
 
     def _set_balance(self, balance, case_id, product_id):
         from corehq.apps.commtrack.tests.util import get_single_balance_block

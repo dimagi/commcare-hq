@@ -1,5 +1,5 @@
 from django.apps import apps
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.smsbillables.models import SmsUsageFee
@@ -12,7 +12,7 @@ def bootstrap_usage_fees(apps):
     log_smsbillables_info("Updated usage fees.")
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "bootstrap usage fees"
     args = ""
     label = ""

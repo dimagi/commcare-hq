@@ -1,3 +1,4 @@
+import traceback
 from optparse import make_option
 from django.core.management.base import BaseCommand
 
@@ -46,6 +47,7 @@ class Command(BaseCommand):
                     metas = migrate_domain(domain, True)
                 except Exception:
                     print 'Migration raised an exception, skipping.'
+                    traceback.print_exc()
                     skipped_domains.append(domain)
                     continue
 

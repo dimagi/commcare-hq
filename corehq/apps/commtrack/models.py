@@ -357,6 +357,13 @@ class StockState(models.Model):
         return self.stock_on_hand
 
     @property
+    def ledger_reference(self):
+        from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
+        return UniqueLedgerReference(
+            case_id=self.case_id, section_id=self.section_id, entry_id=self.product_id
+        )
+
+    @property
     @memoized
     def consumption_helper(self):
         return ConsumptionHelper(
@@ -409,7 +416,7 @@ class StockState(models.Model):
     def to_json(self):
         from corehq.form_processor.serializers import StockStateSerializer
         serializer = StockStateSerializer(self)
-        return serializer.data
+        return dict(serializer.data)
 
     class Meta:
         app_label = 'commtrack'

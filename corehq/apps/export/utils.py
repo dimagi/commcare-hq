@@ -138,6 +138,10 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
 
             try:
                 if column.doc_type == 'StockExportColumn':
+                    # Form exports shouldn't export the Stock column, but there's
+                    # a bug that lets users add it in old exports.
+                    if saved_export.type == FORM_EXPORT:
+                        continue
                     info.append('Column is a stock column')
                     _convert_stock_column(new_table, column)
                     continue

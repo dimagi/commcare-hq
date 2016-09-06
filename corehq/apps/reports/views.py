@@ -158,6 +158,7 @@ from .util import (
     get_group,
     group_filter,
     users_matching_filter,
+    safe_filename,
 )
 from corehq.apps.style.decorators import (
     use_jquery_ui,
@@ -566,10 +567,8 @@ def build_download_saved_export_response(payload, format, filename):
     content_type = Format.from_format(format).mimetype
     response = StreamingHttpResponse(FileWrapper(payload), content_type=content_type)
     if format != 'html':
-        # ht: http://stackoverflow.com/questions/1207457/convert-unicode-to-string-in-python-containing-extra-symbols
-        normalized_filename = unicodedata.normalize(
-            'NFKD', unicode(filename),
-        ).encode('ascii', 'ignore')
+        utf8_filename = unicode(filename).encode('utf8')
+        normalized_filename = safe_filename(utf8_filename)
         response['Content-Disposition'] = 'attachment; filename="%s"' % normalized_filename
     return response
 

@@ -3,7 +3,7 @@ from optparse import make_option
 from couchdbkit.exceptions import BulkSaveError
 from corehq.util.couch import categorize_bulk_save_errors
 from dimagi.utils.couch.database import get_db
-from django.core.management.base import BaseCommand, LabelCommand
+from django.core.management.base import BaseCommand
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ def bulk_delete(db, docs):
 class Command(BaseCommand):
     help = 'Delete document conflicts'
 
-    option_list = LabelCommand.option_list + (
+    option_list = BaseCommand.option_list + (
         make_option(
             '--batch_size',
             action='store',

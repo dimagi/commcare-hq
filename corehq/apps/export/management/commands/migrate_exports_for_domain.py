@@ -1,13 +1,13 @@
 from optparse import make_option
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 
 from corehq.apps.export.utils import migrate_domain
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Migrates old exports to new ones for a given domain"
 
-    option_list = LabelCommand.option_list + (
+    option_list = BaseCommand.option_list + (
         make_option(
             '--dry-run',
             action='store_true',

@@ -10,7 +10,9 @@ import pytz
 
 from couchdbkit import ResourceNotFound
 import dateutil
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
+from django.core.validators import validate_email
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.generic import View
 from django.db.models import Sum
@@ -1085,6 +1087,16 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
 
     def post(self, request, *args, **kwargs):
         emails = request.POST.get('emails', []).split()
+        invalid_emails = []
+        for email in emails:
+            try:
+                validate_email(email)
+            except ValidationError:
+                invalid_emails.append(email)
+        if invalid_emails:
+            message = (_('The following e-mail addresses contain invalid characters, or are missing required '
+                         'characters: ') + ', '.join(['"{}"'.format(email) for email in invalid_emails]))
+            return json_response({'error': {'message': message}})
         amount = Decimal(request.POST.get('amount', 0))
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
         try:
@@ -1094,7 +1106,8 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
 
         return json_response({'success': True})
 
-    def _get_items(self, request):
+    @staticmethod
+    def _get_items(request):
         features = [{'type': get_feature_name(feature_type[0], SoftwareProductType.COMMCARE),
                      'amount': Decimal(request.POST.get(feature_type[0], 0))}
                     for feature_type in FeatureType.CHOICES
