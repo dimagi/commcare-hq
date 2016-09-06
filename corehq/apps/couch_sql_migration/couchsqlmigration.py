@@ -27,10 +27,8 @@ from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeP
 
 
 def do_couch_to_sql_migration(domain):
-    # (optional) collect some information about the domain's cases and forms for cross-checking
     set_local_domain_sql_backend_override(domain)
     CouchSqlDomainMigrator(domain).migrate()
-    # (optional) compare the information collected to the information at the beginning
 
 
 class CouchSqlDomainMigrator(object):
