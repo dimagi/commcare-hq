@@ -1,7 +1,7 @@
 import csv
 import xlrd
 
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 
 from corehq.apps.accounting.models import Currency
 from corehq.apps.smsbillables.utils import log_smsbillables_info
@@ -119,7 +119,7 @@ def bootstrap_twilio_gateway(apps, twilio_rates_filename):
     log_smsbillables_info("Updated Twilio gateway fees.")
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "bootstrap Twilio gateway fees"
     args = ""
     label = ""
