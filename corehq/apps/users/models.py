@@ -1678,6 +1678,16 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.get_domain_membership(self.domain).location_id = None
         self.save()
 
+    def assign_to_locations(self, location_ids):
+        self.assigned_location_ids = location_ids
+        self.get_domain_membership(self.domain).assigned_location_ids = location_ids
+        self.save()
+
+    def unassign_all_locations(self):
+        self.assigned_location_ids = []
+        self.get_domain_membership(self.domain).assigned_location_ids = []
+        self.save()
+
     @property
     def locations(self):
         """
@@ -1969,6 +1979,14 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     def unset_location(self, domain):
         self.get_domain_membership(domain).location_id = None
+        self.save()
+
+    def assign_to_locations(self, domain, location_ids):
+        self.get_domain_membership(domain).assigned_location_ids = location_ids
+        self.save()
+
+    def unassign_all_locations(self, domain):
+        self.get_domain_membership(domain).assigned_location_ids = []
         self.save()
 
     def get_location_id(self, domain):

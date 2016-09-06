@@ -6,6 +6,7 @@ from crispy_forms.layout import Div, Fieldset, HTML, Layout, Submit
 import datetime
 from dimagi.utils.django.fields import TrimmedCharField
 from django import forms
+from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator, validate_email
 from django.core.urlresolvers import reverse
 from django.forms.widgets import PasswordInput
@@ -31,6 +32,7 @@ from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
 
 from corehq.util.soft_assert import soft_assert
+from dimagi.utils.decorators.memoized import memoized
 
 import re
 
@@ -734,6 +736,10 @@ class SupplyPointSelectWidget(forms.Widget):
 
 
 class CommtrackUserForm(forms.Form):
+    assigned_locations = forms.CharField(
+        label=ugettext_noop("Locations"),
+        required=False,
+    )
     primary_location = forms.CharField(
         label=ugettext_noop("Locajtion"),
         required=False
@@ -745,14 +751,17 @@ class CommtrackUserForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        domain = None
+        self.domain = None
         if 'domain' in kwargs:
-            domain = kwargs['domain']
+            self.domain = kwargs['domain']
             del kwargs['domain']
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
-        self.fields['primary_location'].widget = SupplyPointSelectWidget(domain=domain)
-        if Domain.get_by_name(domain).commtrack_enabled:
-            programs = Program.by_domain(domain, wrap=False)
+        self.fields['assigned_locations'].widget = SupplyPointSelectWidget(
+            domain=self.domain, multiselect=True, id='id_assigned_locations'
+        )
+        self.fields['primary_location'].widget = SupplyPointSelectWidget(domain=self.domain)
+        if self.commtrack_enabled:
+            programs = Program.by_domain(self.domain, wrap=False)
             choices = list((prog['_id'], prog['name']) for prog in programs)
             choices.insert(0, ('', ''))
             self.fields['program_id'].choices = choices
@@ -768,13 +777,70 @@ class CommtrackUserForm(forms.Form):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
+    @property
+    @memoized
+    def commtrack_enabled(self):
+        return Domain.get_by_name(self.domain).commtrack_enabled
+
     def save(self, user):
+        # todo: Avoid multiple user.save
+        domain_membership = user.get_domain_membership(self.domain)
+        if self.commtrack_enabled:
+            domain_membership.program_id = self.cleaned_data['program_id']
+
+        self._update_location_data(user)
+
+    def _update_location_data(self, user):
         location_id = self.cleaned_data['primary_location']
-        if location_id:
-            if location_id != user.location_id:
-                user.set_location(Location.get(location_id))
+        location_ids = self.cleaned_data['assigned_locations']
+
+        if user.is_commcare_user():
+            old_location_id = user.location_id
+            if location_id != old_location_id:
+                if location_id:
+                    user.set_location(Location.get(location_id))
+                else:
+                    user.unset_location()
+
+            old_location_ids = user.assigned_location_ids
+            if set(location_ids) != set(old_location_ids):
+                if location_ids:
+                    user.assign_to_locations(location_ids)
+                else:
+                    user.unassign_all_locations()
         else:
-            user.unset_location()
+            domain_membership = user.get_domain_membership(self.domain)
+            old_location_id = domain_membership.location_id
+            if location_id != old_location_id:
+                if location_id:
+                    user.set_location(self.domain, Location.get(location_id))
+                else:
+                    user.unset_location(self.domain)
+
+            old_location_ids = domain_membership.assigned_location_ids
+            if set(location_ids) != set(old_location_ids):
+                if location_ids:
+                    user.assign_to_locations(self.domain, location_ids)
+                else:
+                    user.unassign_all_locations(self.domain)
+
+    def clean_assigned_locations(self):
+        # select2 (< 4.0) doesn't format multiselect for remote data as an array
+        #   but formats it as comma-seperated list, so we need to clean the returned data
+        from corehq.apps.locations.models import SQLLocation
+        from corehq.apps.locations.util import get_locations_from_ids
+
+        value = self.cleaned_data.get('assigned_locations')
+        if not isinstance(value, basestring) or value.strip() == '':
+            return []
+
+        location_ids = [location_id.strip() for location_id in value.split(',')]
+        try:
+            locations = get_locations_from_ids(location_ids, self.domain)
+        except SQLLocation.DoesNotExist:
+            raise ValidationError(_('One or more of the locations was not found.'))
+
+        return [location.location_id for location in locations]
 
 
 class DomainRequestForm(forms.Form):
