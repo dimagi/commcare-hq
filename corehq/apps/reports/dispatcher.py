@@ -5,6 +5,7 @@ from django.views.generic.base import View
 from django.utils.translation import ugettext
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.decorators import login_and_domain_required, cls_to_view
+from corehq.apps.domain.utils import get_domain_module_map
 from dimagi.utils.decorators.datespan import datespan_in_request
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
@@ -84,7 +85,14 @@ class ReportDispatcher(View):
             return tuple(reports)
 
         corehq_reports = process(getattr(reports, attr_name, ()))
-        custom_reports = process(getattr(domain_module, attr_name, ()))
+
+        module_name = get_domain_module_map().get(domain, domain)
+        module = __import__(module_name, fromlist=['reports'])
+        reports = getattr(module, 'reports')
+        custom_reports = process(getattr(reports, attr_name, ()))
+
+        if not custom_reports:
+            custom_reports = process(getattr(domain_module, attr_name, ()))
 
         return corehq_reports + custom_reports
 
