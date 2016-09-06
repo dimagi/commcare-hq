@@ -170,6 +170,7 @@ class CommCareCaseSQLAPISerializer(serializers.ModelSerializer):
 
 class LedgerValueSerializer(serializers.ModelSerializer):
     _id = serializers.CharField(source='ledger_id')
+    location_id = serializers.CharField()
     case_id = serializers.CharField()
 
     class Meta:
