@@ -324,7 +324,7 @@ class LocationForm(forms.Form):
         if not is_new:
             orig_parent_id = self.cleaned_data.get('orig_parent_id')
             reparented = orig_parent_id is not None
-            location_edited.send(sender='loc_mgmt', loc=location,
+            location_edited.send(sender='loc_mgmt', sql_loc=location,
                                  moved=reparented, previous_parent=orig_parent_id)
 
         return location
