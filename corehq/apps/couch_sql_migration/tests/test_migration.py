@@ -157,7 +157,20 @@ class MigrationTestCase(TestCase):
         self._compare_diffs([])
 
     def test_case_with_indices_migration(self):
-        pass
+        parent_case_id = uuid.uuid4().hex
+        child_case_id = uuid.uuid4().hex
+        parent_case = create_and_save_a_case(self.domain_name, case_id=parent_case_id, case_name='test parent')
+        child_case = create_and_save_a_case(self.domain_name, case_id=child_case_id, case_name='test child')
+        set_parent_case(self.domain_name, child_case, parent_case)
+
+        self.assertEqual(2, len(self._get_case_ids()))
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(2, len(self._get_case_ids()))
+        self._compare_diffs([])
+
+        indices = CaseAccessorSQL.get_indices(self.domain_name, child_case_id)
+        self.assertEqual(1, len(indices))
+        self.assertEqual(parent_case_id, indices[0].referenced_id)
 
     def test_deleted_case_migration(self):
         parent_case_id = uuid.uuid4().hex
