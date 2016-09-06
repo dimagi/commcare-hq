@@ -1,6 +1,7 @@
 from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
+from corehq.apps.userreports.es.data_source import ConfigurableReportEsDataSource
 from corehq.apps.userreports.sql.data_source import ConfigurableReportSqlDataSource
-from corehq.apps.userreports.util import get_table_name
+from corehq.apps.userreports.util import get_table_name, get_backend_id
 
 
 class ConfigurableReportDataSource(object):
@@ -24,10 +25,16 @@ class ConfigurableReportDataSource(object):
     @property
     def data_source(self):
         if self._data_source is None:
-            self._data_source = ConfigurableReportSqlDataSource(
-                self.domain, self._config_id, self._filters,
-                self._aggregation_columns, self._columns,
-                self._order_by)
+            if get_backend_id(self.config) == 'SQL':
+                self._data_source = ConfigurableReportSqlDataSource(
+                    self.domain, self._config_id, self._filters,
+                    self._aggregation_columns, self._columns,
+                    self._order_by)
+            else:
+                self._data_source = ConfigurableReportEsDataSource(
+                    self.domain, self._config_id, self._filters,
+                    self._aggregation_columns, self._columns,
+                    self._order_by)
         return self._data_source
 
     @property
