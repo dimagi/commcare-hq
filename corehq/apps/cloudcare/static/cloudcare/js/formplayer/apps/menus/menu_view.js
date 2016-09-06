@@ -112,7 +112,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     MenuList.CaseTileView = MenuList.CaseView.extend({
         tagName: "div",
         template: "#case-tile-view-item-template",
-        className: "row formplayer-request grid-wrapper tile-row",
+        className: "grid-wrapper",
 
         templateHelpers: function () {
             var appId = this.model.collection.appId;

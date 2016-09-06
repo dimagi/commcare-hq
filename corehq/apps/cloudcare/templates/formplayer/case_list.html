@@ -75,7 +75,7 @@
 </script>
 
 <script type="text/template" id="case-view-tile-list-template">
-    <div class="container-fluid">
+    <div>
         <div class="col-sm-8">
             <h2 id="title"><%= title %></h2>
         </div>
@@ -92,8 +92,10 @@
         <% if (numEntitiesPerRow > 1) { %>
             <div class="wrapper case-container case-container-grid container-fluid"></div>
         <% } else { %>
-            <div class="wrapper container case-container container-fluid">
-            </div>
+            <table class="table table-hover table-striped table-bordered">
+            <tbody class="wrapper case-container">
+            </tbody>
+            </table>
         <% } %>
     <% if (action) { %>
     <div>
