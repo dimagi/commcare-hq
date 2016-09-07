@@ -22,7 +22,6 @@ import pytz
 import re
 from StringIO import StringIO
 import tempfile
-import unicodedata
 from urllib2 import URLError
 
 from django.conf import settings
