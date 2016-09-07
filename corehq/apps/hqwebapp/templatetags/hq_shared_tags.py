@@ -139,7 +139,7 @@ def domains_for_user(context, request, selected_domain=None):
 
     domain_list = _get_domain_list(request.couch_user)
     ctxt = {
-        'domain_list': domain_list,
+        'domain_list': sorted(domain_list, key=lambda domain: domain['name'].lower()),
         'current_domain': selected_domain,
         'can_publish_to_exchange': (
             selected_domain is not None and selected_domain != 'public' and
