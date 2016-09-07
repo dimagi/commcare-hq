@@ -187,10 +187,6 @@
     </div>
 </script>
 
-<script type="text/template" id="case-tile-grid-view-row-template">
-    <div class="row-fluid"></div>
-</script>
-
 <script type="text/template" id="case-tile-style-template">
     <% _.each(models, function(model){ %>
         .<%= model.id %> {
@@ -198,4 +194,26 @@
             font-size: <%= model.fontStyle %>;
         }
     <% }); %>
+</script>
+
+<script type="text/template" id="case-grid-style-template">
+    .case-tile-grid-item {
+        width: <%= model.widthPercentage %>%;
+        height: 0;
+        padding-bottom: <%= model.heightPercentage %>%;
+        display: inline-block;
+        border: 1px solid black;
+        border-collapse: collapse;
+    }
+</script>
+
+<script type="text/template" id="grid-wrapper-style-template">
+    .case-tile-grid-item {
+        width: <%= model.widthPercentage %>%;
+        height: 0;
+        padding-bottom: <%= model.heightPercentage %>%;
+        display: inline-block;
+        border: 1px solid black;
+        border-collapse: collapse;
+    }
 </script>

@@ -57,6 +57,8 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 sessionId: menuResponse.sessionId,
                 tiles: menuResponse.tiles,
                 numEntitiesPerRow: menuResponse.numEntitiesPerRow,
+                maxHeight: menuResponse.maxHeight,
+                maxWidth: menuResponse.maxWidth,
             };
             if (menuResponse.type === "commands") {
                 menuListView = new MenuList.MenuListView(menuData);

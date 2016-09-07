@@ -33,6 +33,8 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 this.pageCount = response.pageCount;
                 this.tiles = response.tiles;
                 this.numEntitiesPerRow = response.numEntitiesPerRow;
+                this.maxWidth = response.maxWidth;
+                this.maxHeight = response.maxHeight;
                 return response.entities;
             }
             else if(response.type === "query") {

@@ -155,17 +155,21 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         $("#case-tiles-style").html(caseTileStyle).removeAttr("data-css-polyfilled");
     };
 
-    var generateCaseTileContainerStyles = function (numCases, numCasesPerRow) {
+    var generateCaseTileContainerStyles = function (numCasesPerRow, maxWidth, maxHeight) {
         var templateString,
             caseTileContainerStyle,
             caseTileContainerStyleTemplate,
             containerModel;
 
+        var widthPercentage = 100 / numCasesPerRow;
+        var widthHeightRatio = maxHeight / maxWidth;
+        var heightPercentage = widthPercentage * widthHeightRatio;
+
         containerModel = {
-            numCasesPerRow: numCasesPerRow,
-            numRows: Math.ceil(numCases / numCasesPerRow),
+            widthPercentage: widthPercentage,
+            heightPercentage: heightPercentage,
         };
-        templateString = $("#case-tile-container-style-template").html();
+        templateString = $("#case-grid-style-template").html();
         caseTileContainerStyleTemplate = _.template(templateString);
         caseTileContainerStyle = caseTileContainerStyleTemplate({
             model: containerModel,
@@ -298,7 +302,10 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             this.tiles = options.tiles;
             this.numCases = options.collection.length;
             this.numEntitiesPerRow = options.numEntitiesPerRow;
+            this.maxWidth = options.maxWidth;
+            this.maxHeight = options.maxHeight;
             generateCaseTileStyles(options.tiles);
+            generateCaseTileContainerStyles(options.numEntitiesPerRow, options.maxWidth, options.maxHeight);
         },
     });
 
