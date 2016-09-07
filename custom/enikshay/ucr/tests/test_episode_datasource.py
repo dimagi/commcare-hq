@@ -71,6 +71,9 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
             attrs={
                 "case_type": "occurrence",
                 "create": True,
+                'update': dict(
+                    hiv_status='reactive'
+                )
             },
             indices=[
                 CaseIndex(
@@ -124,6 +127,14 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
             )],
         )
         self.factory.create_or_update_cases([episode, test])
+
+    def test_hiv_status(self):
+        self._create_case_structure()
+        query = self._rebuild_table_get_query_object()
+        self.assertEqual(query.count(), 1)
+        row = query.first()
+
+        self.assertEqual(row.hiv_status, 'reactive')
 
     def test_sputum_positive(self):
         self._create_case_structure(lab_result="tb_detected")
