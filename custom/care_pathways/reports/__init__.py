@@ -16,7 +16,7 @@ class CareReportMixin(object):
             value_chain=self.request.GET.get('type_value_chain', ''),
             domains=tuple(self.request.GET.getlist('type_domain', [])),
             practices=tuple(self.request.GET.getlist('type_practice', [])),
-            cbt_name=self.request.GET.get('cbt_name', ''),
+            cbt_name=self.request.GET.getlist('cbt_name', []),
             gender=self.request.GET.get('gender', ''),
             group_leadership=self.request.GET.get('group_leadership', ''),
             schedule=self.request.GET.getlist('farmer_social_category', []),

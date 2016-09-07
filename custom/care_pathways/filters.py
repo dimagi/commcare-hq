@@ -2,7 +2,8 @@ import datetime
 from django.utils.translation import ugettext_noop
 
 import settings
-from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
+from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, \
+    BaseMultipleOptionFilter
 from corehq.apps.reports.filters.select import YearFilter
 from corehq.apps.users.models import CommCareUser
 from custom.care_pathways.sqldata import GeographySqlData
@@ -136,10 +137,9 @@ class GroupLeadershipFilter(CareBaseSingleOptionFilter):
         return self.get_value(self.request, self.domain) or ("2" if self.domain == 'pathways-india-mis' else '')
 
 
-class CBTNameFilter(CareBaseSingleOptionFilter):
+class CBTNameFilter(BaseMultipleOptionFilter):
     slug = 'cbt_name'
     default_text = "All"
-    template = "care_pathways/filters/single_option_with_helper.html"
     help_text = "Community Based Trainer"
     filter_css_class = 'col-md-2'
 

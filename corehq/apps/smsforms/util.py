@@ -1,4 +1,4 @@
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 
 
 def form_requires_input(form):
