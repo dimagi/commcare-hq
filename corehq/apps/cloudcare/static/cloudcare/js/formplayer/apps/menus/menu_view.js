@@ -222,7 +222,6 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
 
         initialize: function (options) {
             this.styles = options.styles;
-            $("#case-placeholder").html($("#case-list-template").html());
         },
 
         childViewOptions: function () {
@@ -279,12 +278,11 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             MenuList.CaseTileListView.__super__.initialize.apply(this, arguments);
             generateCaseTileStyles(options.tiles);
             makeInnerGridStyle(options.maxHeight, options.maxWidth, options.numEntitiesPerRow);
-            $("#case-placeholder").html($("#case-tile-template").html());
         },
 
         templateHelpers: function () {
             var dict = MenuList.CaseTileListView.__super__.templateHelpers.apply(this, arguments);
-            dict['numEntitiesPerRow'] = this.options.numEntitiesPerRow;
+            dict['useGrid'] = this.options.numEntitiesPerRow > 1;
             dict['useTiles'] = true;
             return dict;
         },
@@ -299,7 +297,6 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     MenuList.GridCaseTileListView = MenuList.CaseTileListView.extend({
         initialize: function (options) {
             MenuList.GridCaseTileListView.__super__.initialize.apply(this, arguments);
-            this.numEntitiesPerRow = options.numEntitiesPerRow;
         },
         childView: MenuList.GridCaseTileViewItem,
     });
