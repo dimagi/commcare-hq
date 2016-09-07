@@ -76,7 +76,6 @@ class ReportDispatcher(View):
     def get_reports(self, domain=None):
         attr_name = self.map_name
         from corehq import reports
-        domain_module = Domain.get_module_by_name(domain)
         if domain:
             project = Domain.get_by_name(domain)
         else:
@@ -90,11 +89,16 @@ class ReportDispatcher(View):
         corehq_reports = process(getattr(reports, attr_name, ()))
 
         module_name = get_domain_module_map().get(domain, domain)
-        module = __import__(module_name, fromlist=['reports'])
-        reports = getattr(module, 'reports')
-        custom_reports = process(getattr(reports, attr_name, ()))
+        try:
+            module = __import__(module_name, fromlist=['reports'])
+            reports = getattr(module, 'reports')
+            custom_reports = process(getattr(reports, attr_name, ()))
+        except ImportError:
+            custom_reports = ()
 
+        # soon to be removed
         if not custom_reports:
+            domain_module = Domain.get_module_by_name(domain)
             custom_reports = process(getattr(domain_module, attr_name, ()))
 
         return corehq_reports + custom_reports
