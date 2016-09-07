@@ -12,6 +12,18 @@ def normalize_id(values):
     return '-'.join(values).replace(' ', '_')
 
 
+class ESAlchemyResults(object):
+
+    def __init__(self, keys, values=dict):
+        self._keys = keys
+        if values:
+            for k in keys:
+                setattr(self, k, values[k])
+
+    def keys(self):
+        return self._keys
+
+
 class ESAlchemy(object):
     def __init__(self, index_name, config):
         self.index_name = index_name
@@ -29,6 +41,7 @@ class ESAlchemy(object):
         def mapping_to_datatype(column, value):
             if not value:
                 return value
+
             datatype = column.datatype
             if datatype == 'datetime':
                 try:
@@ -39,10 +52,10 @@ class ESAlchemy(object):
                 return datetime.datetime.strptime(value, "%Y-%m-%d")
             return value
 
-        return {
+        return ESAlchemyResults(self.column_ordering, {
             col.database_column_name: mapping_to_datatype(col, hit[col.database_column_name])
             for col in self.columns
-        }
+        })
 
     @property
     def columns(self):

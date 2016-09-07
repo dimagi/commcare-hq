@@ -6,7 +6,6 @@ from django.test import TestCase
 from corehq.util.test_utils import TestFileMixin
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
-from corehq.apps.userreports.tests.utils import sql_row_to_dict
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.tasks import rebuild_indicators
@@ -137,10 +136,8 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
         query = self._rebuild_table_get_query_object()
         self.assertEqual(query.count(), 1)
         row = query[0]
-        if not isinstance(row, dict):
-            row = sql_row_to_dict(row)
 
-        self.assertEqual(row['hiv_status'], 'reactive')
+        self.assertEqual(row.hiv_status, 'reactive')
 
     @run_with_all_ucr_backends
     def test_sputum_positive(self):
@@ -148,26 +145,24 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
         query = self._rebuild_table_get_query_object()
         self.assertEqual(query.count(), 1)
         row = query[0]
-        if not isinstance(row, dict):
-            row = sql_row_to_dict(row)
 
-        self.assertEqual(row['male'], 1)
-        self.assertEqual(row['female'], 0)
-        self.assertEqual(row['transgender'], 0)
+        self.assertEqual(row.male, 1)
+        self.assertEqual(row.female, 0)
+        self.assertEqual(row.transgender, 0)
 
-        self.assertEqual(row['disease_classification'], 'pulmonary')
-        self.assertEqual(row['hiv_positive'], 1)
+        self.assertEqual(row.disease_classification, 'pulmonary')
+        self.assertEqual(row.hiv_positive, 1)
 
-        self.assertEqual(row['age_in_days'], 666)
-        self.assertEqual(row['under_15'], 1)
+        self.assertEqual(row.age_in_days, 666)
+        self.assertEqual(row.under_15, 1)
 
-        self.assertEqual(row['new_smear_positive_pulmonary_TB'], 1)
-        self.assertEqual(row['new_smear_positive_pulmonary_TB_male'], 1)
-        self.assertEqual(row['new_smear_positive_pulmonary_TB_female'], 0)
-        self.assertEqual(row['new_smear_positive_pulmonary_TB_transgender'], 0)
+        self.assertEqual(row.new_smear_positive_pulmonary_TB, 1)
+        self.assertEqual(row.new_smear_positive_pulmonary_TB_male, 1)
+        self.assertEqual(row.new_smear_positive_pulmonary_TB_female, 0)
+        self.assertEqual(row.new_smear_positive_pulmonary_TB_transgender, 0)
 
-        self.assertEqual(row['new_smear_positive_pulmonary_TB_under_15'], 1)
-        self.assertEqual(row['new_smear_positive_pulmonary_TB_over_15'], 0)
+        self.assertEqual(row.new_smear_positive_pulmonary_TB_under_15, 1)
+        self.assertEqual(row.new_smear_positive_pulmonary_TB_over_15, 0)
 
     @run_with_all_ucr_backends
     def test_sputum_negative(self):
@@ -175,16 +170,14 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
         query = self._rebuild_table_get_query_object()
         self.assertEqual(query.count(), 1)
         row = query[0]
-        if not isinstance(row, dict):
-            row = sql_row_to_dict(row)
 
-        self.assertEqual(row['new_smear_negative_pulmonary_TB'], 1)
-        self.assertEqual(row['new_smear_negative_pulmonary_TB_male'], 1)
-        self.assertEqual(row['new_smear_negative_pulmonary_TB_female'], 0)
-        self.assertEqual(row['new_smear_negative_pulmonary_TB_transgender'], 0)
+        self.assertEqual(row.new_smear_negative_pulmonary_TB, 1)
+        self.assertEqual(row.new_smear_negative_pulmonary_TB_male, 1)
+        self.assertEqual(row.new_smear_negative_pulmonary_TB_female, 0)
+        self.assertEqual(row.new_smear_negative_pulmonary_TB_transgender, 0)
 
-        self.assertEqual(row['new_smear_negative_pulmonary_TB_under_15'], 1)
-        self.assertEqual(row['new_smear_negative_pulmonary_TB_over_15'], 0)
+        self.assertEqual(row.new_smear_negative_pulmonary_TB_under_15, 1)
+        self.assertEqual(row.new_smear_negative_pulmonary_TB_over_15, 0)
 
     @run_with_all_ucr_backends
     def test_extra_pulmonary(self):
@@ -192,13 +185,11 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
         query = self._rebuild_table_get_query_object()
         self.assertEqual(query.count(), 1)
         row = query[0]
-        if not isinstance(row, dict):
-            row = sql_row_to_dict(row)
 
-        self.assertEqual(row['new_smear_positive_extra_pulmonary_TB'], 1)
-        self.assertEqual(row['new_smear_positive_extra_pulmonary_TB_male'], 1)
-        self.assertEqual(row['new_smear_positive_extra_pulmonary_TB_female'], 0)
-        self.assertEqual(row['new_smear_positive_extra_pulmonary_TB_transgender'], 0)
+        self.assertEqual(row.new_smear_positive_extra_pulmonary_TB, 1)
+        self.assertEqual(row.new_smear_positive_extra_pulmonary_TB_male, 1)
+        self.assertEqual(row.new_smear_positive_extra_pulmonary_TB_female, 0)
+        self.assertEqual(row.new_smear_positive_extra_pulmonary_TB_transgender, 0)
 
-        self.assertEqual(row['new_smear_positive_extra_pulmonary_TB_under_15'], 1)
-        self.assertEqual(row['new_smear_positive_extra_pulmonary_TB_over_15'], 0)
+        self.assertEqual(row.new_smear_positive_extra_pulmonary_TB_under_15, 1)
+        self.assertEqual(row.new_smear_positive_extra_pulmonary_TB_over_15, 0)
