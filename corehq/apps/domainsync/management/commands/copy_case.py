@@ -1,5 +1,5 @@
 from optparse import make_option
-from django.core.management.base import LabelCommand, CommandError
+from django.core.management.base import BaseCommand, CommandError
 from casexml.apps.case.dbaccessors import get_reverse_indices
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domainsync.management.commands.copy_utils import copy_postgres_data_for_docs
@@ -9,10 +9,10 @@ from corehq.util.couchdb_management import CouchConfig
 from couchforms.models import XFormInstance
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Copy a case and all related forms"
     args = '<sourcedb> <case_id> <domain>'
-    option_list = LabelCommand.option_list + (
+    option_list = BaseCommand.option_list + (
         make_option('--postgres-db',
                     action='store',
                     dest='postgres_db',

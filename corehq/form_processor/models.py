@@ -25,7 +25,7 @@ from corehq.form_processor import signals
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionType
 from corehq.form_processor.track_related import TrackRelatedChanges
-from corehq.apps.tzmigration import force_phone_timezones_should_be_processed
+from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
 from corehq.sql_db.routers import db_for_read_write
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
@@ -1294,9 +1294,22 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     def ledger_id(self):
         return self.ledger_reference.as_id()
 
-    def to_json(self):
+    @property
+    @memoized
+    def location(self):
+        from corehq.apps.locations.models import SQLLocation
+        try:
+            return SQLLocation.objects.get(supply_point_id=self.case_id)
+        except SQLLocation.DoesNotExist:
+            return None
+
+    @property
+    def location_id(self):
+        return self.location.location_id if self.location else None
+
+    def to_json(self, include_location_id=True):
         from .serializers import LedgerValueSerializer
-        serializer = LedgerValueSerializer(self)
+        serializer = LedgerValueSerializer(self, include_location_id=include_location_id)
         return dict(serializer.data)
 
     class Meta:

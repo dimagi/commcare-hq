@@ -188,7 +188,6 @@ FormplayerFrontend.on("start", function (options) {
     user.apps = options.apps;
     user.domain = options.domain;
     user.formplayer_url = options.formplayer_url;
-    user.clearUserDataUrl = options.clearUserDataUrl;
     if (Backbone.history) {
         Backbone.history.start();
         // will be the same for every domain. TODO: get domain/username/pass from django
@@ -250,26 +249,6 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
     resp = $.ajax(options);
     resp.fail(function () {
         tfLoadingComplete(true);
-    }).done(function() {
-        tfLoadingComplete();
-        FormplayerFrontend.trigger('navigateHome', appId);
-    });
-});
-
-FormplayerFrontend.on('clearUserData', function(appId) {
-    var user = FormplayerFrontend.request('currentUser');
-    var resp = $.ajax({
-        url: user.clearUserDataUrl,
-        type: 'POST',
-        dataType: "json",
-        xhrFields: { withCredentials: true },
-    });
-    resp.fail(function (jqXHR) {
-        if (jqXHR.status === 400) {
-            tfLoadingComplete(true, gettext('Unable to clear user data for mobile worker'));
-        } else {
-            tfLoadingComplete(true, gettext('Unabled to clear user data'));
-        }
     }).done(function() {
         tfLoadingComplete();
         FormplayerFrontend.trigger('navigateHome', appId);

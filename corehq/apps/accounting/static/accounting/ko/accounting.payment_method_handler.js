@@ -203,6 +203,7 @@ hqDefine('accounting/ko/accounting.payment_method_handler.js', function () {
             errorThrown = errorThrown || 500;
             self.serverErrorMsg(self.errorMessages[errorThrown]);
             self.selectedCard().isProcessing(false);
+            self.paymentProcessing(false);
         };
 
         self.handleProcessingErrors = function (response) {
@@ -227,8 +228,8 @@ hqDefine('accounting/ko/accounting.payment_method_handler.js', function () {
                     }
                 }
                 self.paymentIsComplete(true);
-                self.paymentProcessing(false);
             }
+            self.paymentProcessing(false);
             self.handleProcessingErrors(response);
         };
 
