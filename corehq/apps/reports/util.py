@@ -457,7 +457,7 @@ def get_INFilter_bindparams(base_name, values):
     return tuple(get_INFilter_element_bindparam(base_name, i) for i, val in enumerate(values))
 
 
-def safe_filename(filename):
+def safe_for_fs(filename):
     """
     Returns a filename with FAT32-, NTFS- and HFS+-illegal characters removed.
 
