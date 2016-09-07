@@ -2309,7 +2309,11 @@ class AddRepeaterView(BaseAdminProjectSettingsView):
         try:
             return get_all_repeater_types()[self.repeater_type]
         except KeyError:
-            raise Http404("No such repeater {}. Valid types: {}".format(self.repeater_type, get_all_repeater_types.keys()))
+            raise Http404(
+                "No such repeater {}. Valid types: {}".format(
+                    self.repeater_type, get_all_repeater_types.keys()
+                )
+            )
 
     @property
     @memoized
