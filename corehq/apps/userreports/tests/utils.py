@@ -95,7 +95,7 @@ def pre_run_with_es_backend(fn, *args, **kwargs):
     fn.setUp()
 
 
-run_with_all_backends = functools.partial(
+run_with_all_ucr_backends = functools.partial(
     run_with_multiple_configs,
     run_configs=[
         RunConfig(
