@@ -82,33 +82,6 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
     });
 
-    MenuList.CaseView = Marionette.ItemView.extend({
-        tagName: "tr",
-        template: "#case-view-item-template",
-
-        className: "formplayer-request",
-
-        events: {
-            "click": "rowClick",
-        },
-
-        rowClick: function (e) {
-            e.preventDefault();
-            FormplayerFrontend.trigger("menu:show:detail", this, 0);
-        },
-
-        templateHelpers: function () {
-            var appId = Util.currentUrlToObject().appId;
-            return {
-                data: this.options.model.get('data'),
-                styles: this.options.styles,
-                resolveUri: function (uri) {
-                    return FormplayerFrontend.request('resourceMap', uri, appId);
-                },
-            };
-        },
-    });
-
     // return the string grid-area attribute
     // takes the form of  [x-coord] / [y-Coord] / [width] / [height]
     var getGridAttributes = function (tile) {
@@ -211,10 +184,19 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         }
     };
 
-    MenuList.CaseTileView = MenuList.CaseView.extend({
+    MenuList.CaseView = Marionette.ItemView.extend({
         tagName: "tr",
-        template: "#case-tile-view-item-template",
+        template: "#case-view-item-template",
         className: "formplayer-request",
+
+        events: {
+            "click": "rowClick",
+        },
+
+        rowClick: function (e) {
+            e.preventDefault();
+            FormplayerFrontend.trigger("menu:show:detail", this, 0);
+        },
 
         templateHelpers: function () {
             var appId = Util.currentUrlToObject().appId;
@@ -226,6 +208,10 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 },
             };
         },
+    });
+
+    MenuList.CaseTileView = MenuList.CaseView.extend({
+        template: "#case-tile-view-item-template",
     });
 
     MenuList.CaseListView = Marionette.CompositeView.extend({
@@ -289,15 +275,9 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         template: "#case-view-tile-list-template",
         childView: MenuList.CaseTileView,
         initialize: function (options) {
-            this.styles = options.styles;
+            MenuList.CaseTileListView.__super__.initialize.apply(this, arguments);
             generateCaseTileStyles(options.tiles);
             makeInnerGridStyle(options.maxHeight, options.maxWidth, options.numEntitiesPerRow);
-        },
-
-        childViewOptions: function () {
-            return {
-                styles: this.options.styles,
-            };
         },
 
         templateHelpers: function () {
