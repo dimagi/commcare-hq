@@ -90,7 +90,7 @@
         </div>
     </div>
         <% if (numEntitiesPerRow > 1) { %>
-            <div class="wrapper case-container case-container-grid container-fluid"></div>
+            <section class="case-container"></section>
         <% } else { %>
             <table class="table table-hover table-striped table-bordered">
             <tbody class="wrapper case-container">
@@ -172,12 +172,12 @@
 </script>
 
 <script type="text/template" id="case-tile-grid-view-item-template">
-    <div>
+    <div class="grid-wrapper">
     <% _.each(data, function(datum, index) { %>
     <div class="grid-style-<%= index %> box">
         <% if (styles[index].displayFormat === 'Image') {
         if(resolveUri(datum)) { %>
-        <img class="module-icon" style="max-width:25%; height: auto;" src="<%= resolveUri(datum) %>"/>
+        <img class="module-icon" style="max-width:50%; height: auto;" src="<%= resolveUri(datum) %>"/>
         <% } %>
         <% } else { %>
         <div><%= datum %></div>
@@ -187,6 +187,10 @@
     </div>
 </script>
 
+<script type="text/template" id="case-tile-grid-view-row-template">
+    <div class="row-fluid"></div>
+</script>
+
 <script type="text/template" id="case-tile-style-template">
     <% _.each(models, function(model){ %>
         .<%= model.id %> {
@@ -194,12 +198,4 @@
             font-size: <%= model.fontStyle %>;
         }
     <% }); %>
-</script>
-
-<script type="text/template" id="case-tile-container-style-template">
-    .case-container-grid {
-        display: grid;
-        grid-template-columns: repeat(<%= model.numCasesPerRow %>, 100px);
-        grid-template-rows: repeat(<%= model.numRows %>, 100px);
-    }
 </script>

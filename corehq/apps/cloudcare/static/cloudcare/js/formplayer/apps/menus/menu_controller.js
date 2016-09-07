@@ -70,7 +70,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                     menuListView = new MenuList.CaseListView(menuData);
                 } else {
                     if (menuResponse.numEntitiesPerRow > 1) {
-                        menuListView = new MenuList.CaseTileGridView(menuData);
+                        menuListView = new MenuList.GridCaseTileListView(menuData);
                     } else {
                         menuListView = new MenuList.CaseTileListView(menuData);
                     }
