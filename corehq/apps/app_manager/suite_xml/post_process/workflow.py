@@ -448,9 +448,11 @@ class StackFrameMeta(object):
         if not self.children and not self.allow_empty_frame:
             return
 
+        children = _replace_session_references_in_stack(self.children)
+
         frame = CreateFrame(if_clause=self.if_clause)
 
-        for child in self.children:
+        for child in children:
             if isinstance(child, CommandId):
                 frame.add_command(XPath.string(child.id))
             elif isinstance(child, StackDatum):
@@ -529,4 +531,39 @@ class WorkflowDatumMeta(object):
         return not self == other
 
     def __repr__(self):
-        return 'DatumMeta(id={}, case_type={})'.format(self.id, self.case_type)
+        return 'WorkflowDatumMeta(id={}, case_type={})'.format(self.id, self.case_type)
+
+
+session_var_regex = re.compile(r"instance\('commcaresession'\)/session/data/(\w+)")
+
+
+def _replace_session_references_in_stack(stack_children):
+    """Given a list of stack children (commands and datums)
+    replace any references in the datum to session variables that
+    have already been added to the session.
+
+    e.g.
+    <datum id="case_id_a" value="instance('commcaresession')/session/data/case_id_new_a"/>
+    <datum id="case_id_b" value="instance('commcaresession')/session/data/case_id_a"/>
+                                                                          ^^^^^^^^^
+    In the second datum replace ``case_id_a`` with ``case_id_new_a``.
+
+    We have to do this because stack create blocks do not update the session after each datum
+    is added so items put into the session in one step aren't available to later steps.
+    """
+    clean_children = []
+    child_map = {child.id: child.value for child in stack_children if isinstance(child, StackDatum)}
+    for child in stack_children:
+        if not isinstance(child, StackDatum):
+            clean_children.append(child)
+            continue
+        session_vars = session_var_regex.findall(child.value)
+        new_value = child.value
+        for var in session_vars:
+            if var in child_map:
+                new_value = new_value.replace(session_var(var), child_map[var])
+
+        child_map[child.id] = new_value
+        clean_children.append(StackDatum(id=child.id, value=new_value))
+
+    return clean_children
