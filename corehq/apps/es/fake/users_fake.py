@@ -16,8 +16,7 @@ class UserESFake(HQESQueryFake):
     def mobile_users(self):
         return self.term("doc_type", "CommCareUser")
 
-    @classmethod
-    def save_doc(cls, doc):
+    @staticmethod
+    def transform_doc(doc):
         doc['username.exact'] = doc.get('username', '')
-        doc = transform_user_for_elasticsearch(doc)
-        return super(UserESFake, cls).save_doc(doc)
+        return transform_user_for_elasticsearch(doc)

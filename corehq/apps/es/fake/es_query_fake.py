@@ -46,7 +46,12 @@ class ESQueryFake(object):
     def save_doc(cls, doc):
         if '_id' not in doc:
             doc['_id'] = 'silly-fake-id-{}'.format(uuid.uuid4().hex[:8])
+        doc = cls.transform_doc(doc)
         cls._get_all_docs().append(doc)
+
+    @staticmethod
+    def transform_doc(doc):
+        return doc
 
     @classmethod
     def reset_docs(cls):
