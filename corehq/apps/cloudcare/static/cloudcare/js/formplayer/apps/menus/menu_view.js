@@ -290,10 +290,6 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         childView: MenuList.CaseTileView,
         initialize: function (options) {
             this.styles = options.styles;
-            this.numCases = options.collection.length;
-            this.numEntitiesPerRow = options.numEntitiesPerRow;
-            this.maxWidth = options.maxWidth;
-            this.maxHeight = options.maxHeight;
             generateCaseTileStyles(options.tiles);
             makeInnerGridStyle(options.maxHeight, options.maxWidth, options.numEntitiesPerRow);
         },
@@ -305,16 +301,9 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
 
         templateHelpers: function () {
-            return {
-                title: this.options.title,
-                action: this.options.action,
-                currentPage: this.options.currentPage,
-                pageCount: this.options.pageCount,
-                styles: this.options.styles,
-                breadcrumbs: this.options.breadcrumbs,
-                numEntitiesPerRow: this.options.numEntitiesPerRow,
-                numCases: this.options.numCases,
-            };
+            var dict = MenuList.CaseTileListView.__super__.templateHelpers.apply(this, arguments);
+            dict['numEntitiesPerRow'] = this.options.numEntitiesPerRow;
+            return dict;
         },
     });
 
@@ -325,6 +314,10 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     });
 
     MenuList.GridCaseTileListView = MenuList.CaseTileListView.extend({
+        initialize: function (options) {
+            MenuList.GridCaseTileListView.__super__.initialize.apply(this, arguments);
+            this.numEntitiesPerRow = options.numEntitiesPerRow;
+        },
         childView: MenuList.GridCaseTileViewItem,
     });
 
