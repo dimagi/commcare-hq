@@ -232,7 +232,7 @@ class EndOfFormNavigationWorkflow(object):
                         if child.id not in parent_ids
                     ]
 
-                stack_frames.append(StackFrameMeta(link.xpath, frame_children))
+                stack_frames.append(StackFrameMeta(link.xpath, frame_children, current_session=source_form_datums))
 
         return stack_frames
 
@@ -430,7 +430,18 @@ class StackFrameMeta(object):
     Class used in computing the form workflow.
     """
 
-    def __init__(self, if_clause, children=None, allow_empty_frame=False):
+    def __init__(self, if_clause, children=None, allow_empty_frame=False, current_session=None):
+        """
+        :param if_clause: XPath expression to use in if clause for CreateFrame
+        :type if_clause: string
+        :param children: Child elements for the frame
+        :type children: list
+        :param allow_empty_frame: True if the frame can be empty
+        :type allow_empty_frame: bool
+        :param current_session: List of current session datums
+        :type current_session: list of WorkflowDatumMeta
+        """
+        self.current_session = current_session
         self.if_clause = unescape(if_clause) if if_clause else None
         self.children = []
         self.allow_empty_frame = allow_empty_frame
@@ -448,7 +459,7 @@ class StackFrameMeta(object):
         if not self.children and not self.allow_empty_frame:
             return
 
-        children = _replace_session_references_in_stack(self.children)
+        children = _replace_session_references_in_stack(self.children, current_session=self.current_session)
 
         frame = CreateFrame(if_clause=self.if_clause)
 
@@ -537,7 +548,7 @@ class WorkflowDatumMeta(object):
 session_var_regex = re.compile(r"instance\('commcaresession'\)/session/data/(\w+)")
 
 
-def _replace_session_references_in_stack(stack_children):
+def _replace_session_references_in_stack(stack_children, current_session=None):
     """Given a list of stack children (commands and datums)
     replace any references in the datum to session variables that
     have already been added to the session.
@@ -551,6 +562,7 @@ def _replace_session_references_in_stack(stack_children):
     We have to do this because stack create blocks do not update the session after each datum
     is added so items put into the session in one step aren't available to later steps.
     """
+    current_session_vars = [datum.id for datum in current_session] if current_session else []
     clean_children = []
     child_map = {child.id: child.value for child in stack_children if isinstance(child, StackDatum)}
     for child in stack_children:
@@ -560,7 +572,7 @@ def _replace_session_references_in_stack(stack_children):
         session_vars = session_var_regex.findall(child.value)
         new_value = child.value
         for var in session_vars:
-            if var in child_map:
+            if var in child_map and var not in current_session_vars:
                 new_value = new_value.replace(session_var(var), child_map[var])
 
         child_map[child.id] = new_value
