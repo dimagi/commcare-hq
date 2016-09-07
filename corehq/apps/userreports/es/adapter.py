@@ -20,6 +20,10 @@ class ESAlchemyResults(object):
             for k in keys:
                 setattr(self, k, values[k])
 
+    def __iter__(self):
+        for key in self.keys():
+            yield getattr(self, key)
+
     def keys(self):
         return self._keys
 
