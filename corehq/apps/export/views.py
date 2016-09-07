@@ -1125,7 +1125,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
         """Returns a string that is displayed as the title of the create
         export form below.
         """
-        raise NotImplementedError("must implement create_export_title")
+        raise NotImplementedError("must implement create_export_form_title")
 
     @property
     def create_export_form(self):
@@ -1202,6 +1202,54 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
         return format_angular_success({
             'url': create_url,
         })
+
+
+class DashboardFeedListView(BaseExportListView):
+    urlname = 'list_dashboard_feeds'
+    page_title = ugettext_lazy("Excel Dashboard Integration")
+    form_or_case = "form"  # TODO: This is gonna need to change...
+    allow_bulk_export = False
+
+    @property
+    @memoized
+    def create_export_form(self):
+        return {}
+
+    @property
+    @memoized
+    def create_export_form_title(self):
+        return "Select a model to export"  # could be form or case
+
+    @property
+    def legacy_bulk_download_url(self):
+        return ""
+
+    @property
+    def bulk_download_url(self):
+        return ""
+
+
+    @memoized
+    def get_saved_exports(self):
+        return []
+
+    @property
+    def daily_emailed_exports(self):
+        return []
+
+    def fmt_export_data(self, export):
+        return {}
+
+
+    @allow_remote_invocation
+    def get_app_data_drilldown_values(self, in_data):
+        return {}
+
+    def get_create_export_url(self, form_data):
+        return ""
+
+    def get_emailed_indexes(self, email_group):
+        return []
 
 
 class FormExportListView(BaseExportListView):

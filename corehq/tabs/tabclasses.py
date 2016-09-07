@@ -415,6 +415,11 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
+    def can_view_dashboard_feeds(self):
+        return True  #TODO: write me
+
+    @property
+    @memoized
     def can_only_see_deid_exports(self):
         from corehq.apps.export.views import user_can_view_deid_exports
         return (not self.can_view_form_exports
@@ -465,6 +470,7 @@ class ProjectDataTab(UITab):
                 EditCustomCaseExportView,
                 EditNewCustomFormExportView,
                 EditNewCustomCaseExportView,
+                DashboardFeedListView,
             )
             if use_new_exports(self.domain):
                 create_case_cls = CreateNewCustomCaseExportView
@@ -540,6 +546,14 @@ class ProjectDataTab(UITab):
                             } if self.can_edit_commcare_data else None,
                         ])
                     })
+            if self.can_view_dashboard_feeds:
+                export_data_views.append({
+                    'title': DashboardFeedListView.page_title,
+                    'url': reverse(DashboardFeedListView.urlname, args=(self.domain,)),
+                    'show_in_dropdown': True,
+                    'icon': 'icon icon-share fa fa-share-square-o',  # TODO: Choose a unique icon for this
+                    'subpages': []  # TODO: populate this
+                })
 
         if export_data_views:
             items.append([_("Export Data"), export_data_views])
@@ -580,6 +594,7 @@ class ProjectDataTab(UITab):
         from corehq.apps.export.views import (
             FormExportListView,
             CaseExportListView,
+            DashboardFeedListView
         )
         return filter(None, [
             dropdown_dict(
@@ -590,6 +605,10 @@ class ProjectDataTab(UITab):
                 CaseExportListView.page_title,
                 url=reverse(CaseExportListView.urlname, args=(self.domain,))
             ) if self.can_view_case_exports else None,
+            dropdown_dict(
+                DashboardFeedListView.page_title,
+                url=reverse(DashboardFeedListView.urlname, args=(self.domain,))
+            ) if self.can_view_dashboard_feeds else None,
             dropdown_dict(None, is_divider=True),
             dropdown_dict(_("View All"), url=self.url),
         ])
