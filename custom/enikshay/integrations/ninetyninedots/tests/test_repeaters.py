@@ -1,8 +1,8 @@
 import json
 from datetime import datetime
 from django.test import TestCase
+from django.test.utils import override_settings
 
-from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from casexml.apps.case.mock import CaseStructure
 from corehq.apps.repeaters.models import RepeatRecord
@@ -72,7 +72,7 @@ class TestRegisterPatientRepeater(ENikshayCaseStructureMixin, TestCase):
         )
         self.create_case(dots_registered_case)
 
-    @run_with_all_backends
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_trigger(self):
         # 99dots not enabled
         self.create_case(self.episode)
@@ -96,7 +96,7 @@ class TestRegisterPatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
         super(TestRegisterPatientPayloadGenerator, self).tearDown()
         delete_all_cases()
 
-    @run_with_all_backends
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_get_payload(self):
         payload_generator = RegisterPatientPayloadGenerator(None)
         expected_numbers = u"+91{}, +91{}".format(
@@ -110,7 +110,7 @@ class TestRegisterPatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
         actual_payload = payload_generator.get_payload(None, self.cases[self.episode_id])
         self.assertEqual(expected_payload, actual_payload)
 
-    @run_with_all_backends
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_handle_success(self):
         payload_generator = RegisterPatientPayloadGenerator(None)
         payload_generator.handle_success(MockResponse(201, {"success": "hooray"}), self.cases[self.episode_id])
@@ -124,7 +124,7 @@ class TestRegisterPatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
             ''
         )
 
-    @run_with_all_backends
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_handle_failure(self):
         payload_generator = RegisterPatientPayloadGenerator(None)
         error = {

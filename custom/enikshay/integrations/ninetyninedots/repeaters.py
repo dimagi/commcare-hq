@@ -2,7 +2,6 @@ from corehq.toggles import NINETYNINE_DOTS
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_lazy as _
 
-from casexml.apps.case.models import CommCareCase
 from corehq.form_processor.models import CommCareCaseSQL
 
 from corehq.apps.repeaters.models import CaseRepeater
@@ -44,5 +43,4 @@ class NinetyNineDotsRegisterPatientRepeater(CaseRepeater):
 def create_case_repeat_records(sender, case, **kwargs):
     create_repeat_records(NinetyNineDotsRegisterPatientRepeater, case)
 
-case_post_save.connect(create_case_repeat_records, CommCareCase)
 case_post_save.connect(create_case_repeat_records, CommCareCaseSQL)
