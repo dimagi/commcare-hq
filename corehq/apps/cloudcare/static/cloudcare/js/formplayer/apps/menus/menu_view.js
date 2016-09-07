@@ -295,7 +295,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     });
 
     MenuList.GridCaseTileListView = MenuList.CaseTileListView.extend({
-        initialize: function (options) {
+        initialize: function () {
             MenuList.GridCaseTileListView.__super__.initialize.apply(this, arguments);
         },
         childView: MenuList.GridCaseTileViewItem,
