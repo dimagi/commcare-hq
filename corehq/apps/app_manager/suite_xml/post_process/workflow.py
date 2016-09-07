@@ -564,7 +564,7 @@ def _replace_session_references_in_stack(stack_children, current_session=None):
     """
     current_session_vars = [datum.id for datum in current_session] if current_session else []
     clean_children = []
-    child_map = {child.id: child.value for child in stack_children if isinstance(child, StackDatum)}
+    child_map = {}
     for child in stack_children:
         if not isinstance(child, StackDatum):
             clean_children.append(child)
