@@ -177,7 +177,6 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         });
         // need to remove this attribute so the grid style is re-evaluated
         $("#outer-tiles-container-style").html(outerGridStyle).removeAttr("data-css-polyfilled");
-        $("#case-tiles-style").removeAttr("data-css-polyfilled");
     };
 
     var makeInnerGridStyle = function (numRows, numColumns, numCasesPerRow) {
@@ -203,7 +202,6 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         });
         // need to remove this attribute so the grid style is re-evaluated
         $("#inner-tiles-container-style").html(view).removeAttr("data-css-polyfilled");
-        $("#case-tiles-style").removeAttr("data-css-polyfilled");
 
         if (numCasesPerRow > 1) {
             makeOuterGridStyle(numRows, numColumns, numCasesPerRow);
