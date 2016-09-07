@@ -28,7 +28,7 @@
                         <i class="fa fa-exclamation-triangle"></i>
                         <strong ng-if="formSubmissionError === 'default'">
                             {% blocktrans %}
-                                There was an issue fetching the export data.
+                                There was an issue fetching the {{ export_type }} data.
                                 Please check your internet connection.
                             {% endblocktrans %}
                         </strong>
@@ -108,7 +108,7 @@
                     <p class="lead">
                         <i class="fa fa-spinner fa-spin"></i>
                         {% blocktrans %}
-                            Preparing Export Data...
+                            Preparing {{ Export_type }} Data...
                         {% endblocktrans %}
                     </p>
                     <p>
@@ -148,7 +148,7 @@
                     <p class="lead">
                     {% blocktrans %}
                         It seems as though you haven't submitted any data to CommCare HQ.
-                        Please deploy an Application and submit data before creating any exports.
+                        Please deploy an Application and submit data before creating any {{ exports_type }}.
                     {% endblocktrans %}
                     </p>
                     <a href="https://confluence.dimagi.com/display/commcarepublic/Application+Building"
@@ -166,7 +166,9 @@
                             class="btn btn-success"
                             ng-show="!showNoAppsError && !formLoadError"
                             ng-disabled="!!exportOptionsForm.$invalid || !!isSubmittingForm">
-                        {% trans "Create Export" %}
+                        {% blocktrans %}
+                            Create {{ Export_type }}
+                        {% endblocktrans %}
                     </button>
                 </div>
             </div>

@@ -931,7 +931,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
 
     @property
     def page_context(self):
-        return {
+        context = {
             'create_export_form': self.create_export_form if not self.is_deid else None,
             'create_export_form_title': self.create_export_form_title if not self.is_deid else None,
             'legacy_bulk_download_url': self.legacy_bulk_download_url,
@@ -939,6 +939,17 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
             'allow_bulk_export': self.allow_bulk_export,
             'has_edit_permissions': self.has_edit_permissions,
             'is_deid': self.is_deid,
+        }
+        context.update(self.export_type_context)
+        return context
+
+    @property
+    def export_type_context(self):
+        return {
+            "Export_type": _("Export"),
+            "export_type": _("export"),
+            "Exports_type": _("Exports"),
+            "exports_type": _("exports"),
         }
 
     @property
@@ -1205,10 +1216,20 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
 
 
 class DashboardFeedListView(BaseExportListView):
+    template_name = 'export/dashboard_feed_list.html'
     urlname = 'list_dashboard_feeds'
     page_title = ugettext_lazy("Excel Dashboard Integration")
     form_or_case = "form"  # TODO: This is gonna need to change...
     allow_bulk_export = False
+
+    @property
+    def export_type_context(self):
+        return {
+            "Export_type": _("Dashboard Feed"),
+            "export_type": _("dashboard feed"),
+            "Exports_type": _("Dashboard Feeds"),
+            "exports_type": _("dashboard feeds"),
+        }
 
     @property
     @memoized

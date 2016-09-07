@@ -8,18 +8,20 @@
     {% if is_deid %}
     <p>
         {% blocktrans %}
-            These exports are <strong>De-Identified</strong>, meaning that
+            These {{ exports_type }} are <strong>De-Identified</strong>, meaning that
             the administrator of this domain has removed all personally-identifying
             properties from the exported data.
         {% endblocktrans %}
     </p>
     {% endif %}
     <p>
+        {% block lead_text %}
         {% blocktrans %}
             Exports are a way to download data from CommCare HQ
             in a variety of formats (CSV, Excel, etc.) for use in
             third-party data analysis tools.
         {% endblocktrans %}
+        {% endblock %}
     </p>
     {% if has_edit_permissions %}
     <p ng-show="!_.isEmpty(exports) || !hasLoaded">
@@ -27,46 +29,56 @@
            data-toggle="modal"
            class="btn btn-success new-export-link">
             <i class="fa fa-plus"></i>
-            {% trans "Create New Export" %}
+            {% blocktrans %}
+                Create New {{ Export_type }}
+            {% endblocktrans %}
         </a>
     </p>
     <div class="alert alert-success"
          ng-show="_.isEmpty(exports) && !!hasLoaded">
         <p class="lead"><strong>{% blocktrans %}
-            It seems you haven't created any exports yet!
+            It seems you haven't created any {{ exports_type }} yet!
         {% endblocktrans %}</strong></p>
         <p><a href="#createExportOptionsModal"
               data-toggle="modal"
               class="btn btn-success new-export-link">
             <i class="fa fa-plus"></i>
-            {% trans "Create New Export" %}
+            {% blocktrans %}
+                Create New {{ Export_type }}
+            {% endblocktrans %}
         </a></p>
     </div>
     {% endif %}
     <div class="panel panel-default">
-        <div class="panel-heading">{% trans "Exports" %}</div>
+        <div class="panel-heading">{{ Exports_type }}</div>
         <div class="panel-body">
             <div class="alert alert-info"
                  ng-show="!hasLoaded">
                 <p>
                     <i class="fa fa-spinner fa-spin"></i>
-                    <strong>{% trans 'Fetching List of Exports...' %}</strong>
+                    <strong>{% blocktrans %}Fetching List of {{ Exports_type }}...{% endblocktrans %}</strong>
                 </p>
             </div>
             <div class="alert alert-info"
                  ng-show="_.isEmpty(exports) && !!hasLoaded && !exportsListError">
                 <p>
                     {% if is_deid %}
-                        {% trans "No De-Identified Exports are available at this time." %}
+                        {% blocktrans %}
+                            No De-Identified {{ Exports_type }} are available at this time.
+                        {% endblocktrans %}
                     {% else %}
-                        {% trans 'No Exports Created Yet.' %}
+                        {% blocktrans %}
+                            No {{ Exports_type }} Created Yet.
+                        {% endblocktrans %}
                     {% endif %}
                 </p>
             </div>
             <div class="alert alert-warning"
                  ng-show="!!exportsListError">
                 <strong ng-if="exportsListError === 'default'">
-                    {% trans "Issue fetching list of exports. Please check your Internet connection." %}
+                    {% blocktrans %}
+                        Issue fetching list of {{ exports_type }}. Please check your Internet connection.
+                    {% endblocktrans %}
                 </strong>
                 <strong ng-if="exportsListError !== 'default'">
                     {% angularjs %}{{ exportsListError }}{% endangularjs %}
@@ -84,12 +96,12 @@
                     <tr>
                         <th class="col-sm-6">{% trans 'Name' %}</th>
                         {% if has_edit_permissions %}
-                        <th class="col-sm-1">{% trans 'Edit' %}</th>
+                        <th class="col-sm-1">{% block second_column_header %}{% trans 'Edit' %}{% endblock %}</th>
                         {% endif %}
-                        <th class="col-sm-2">{% trans 'Export' %}</th>
+                        <th class="col-sm-2">{% block third_column_header %}{{ Export_type }}{% endblock %}</th>
                         {%  if allow_bulk_export %}
                         <th class="col-sm-3">
-                            {% trans 'Bulk Export:' %}
+                            {% blocktrans %}Bulk {{ Export_type }}:{% endblocktrans %}
                             <button type="button"
                                     class="btn btn-xs btn-default"
                                     ng-click="selectAll()">
@@ -149,7 +161,7 @@
                                    ng-if="export.emailedExport.hasFile && export.emailedExport.fileData.showExpiredWarning && !export.emailedExport.updateDataTriggered">
                                     <i class="fa fa-exclamation-triangle"></i>
                                     {% blocktrans %}
-                                        This saved export has expired because it has not been used in
+                                        This saved {{ export_type }} has expired because it has not been used in
                                         the last 35 days. To renew daily updates, click the 'Update Data'
                                         button and download the file.
                                     {% endblocktrans %}
@@ -233,14 +245,12 @@
                         </td>
                         {% endangularjs %}
                         {% endif %}
-                        {% angularjs %}
                         <td>
-                            <a href="{{ export.downloadUrl }}"
+                            <a href="{% angularjs %}{{ export.downloadUrl }}{% endangularjs %}"
                                class="btn btn-primary"
                                ng-click="sendExportAnalytics()">
-                                {% trans 'Export' %}</a>
+                                {{ Export_type }}</a>
                         </td>
-                        {% endangularjs %}
                         {% if allow_bulk_export %}
                         {% angularjs %}
                         <td>
