@@ -189,7 +189,8 @@ class CustomDataEditor(object):
             _("Unrecognized Information"),
             Div(
                 HTML(msg),
-                css_class="alert alert-danger",
+                css_class="alert alert-warning",
+                css_id="js-unrecognized-data",
             ),
             *help_div
         ) if len(help_div) else HTML('')
