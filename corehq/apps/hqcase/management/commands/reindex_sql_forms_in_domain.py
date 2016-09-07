@@ -13,7 +13,7 @@ def reindex_sql_forms_in_domain(domain):
         for doc_ids in chunked(all_doc_ids, 100):
             print 'Reindexing doc_ids: {}'.format(','.join(doc_ids))
             reindexer.doc_processor.process_bulk_docs([
-                transform_xform_for_elasticsearch(form.to_json(include_attachments=True))
+                reindexer.reindex_accessor.doc_to_json(form)
                 for form in FormAccessorSQL.get_forms(list(doc_ids))
             ])
 
