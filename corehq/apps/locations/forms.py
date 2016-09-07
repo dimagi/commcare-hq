@@ -267,7 +267,9 @@ class LocationForm(forms.Form):
                 assert False, 'You must select a location type'
         else:
             try:
-                loc_type_obj = LocationType.objects.get(Q(code=loc_type) | Q(name=loc_type))
+                loc_type_obj = (LocationType.objects
+                                .filter(domain=self.domain)
+                                .get(Q(code=loc_type) | Q(name=loc_type)))
             except LocationType.DoesNotExist:
                 assert False, "LocationType '{}' not found".format(loc_type)
             else:
