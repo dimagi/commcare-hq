@@ -27,6 +27,8 @@ class ESAlchemy(object):
 
     def _hit_to_row(self, hit):
         def mapping_to_datatype(column, value):
+            if not value:
+                return value
             datatype = column.datatype
             if datatype == 'datetime':
                 try:

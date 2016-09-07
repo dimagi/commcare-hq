@@ -136,7 +136,7 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
         self._create_case_structure()
         query = self._rebuild_table_get_query_object()
         self.assertEqual(query.count(), 1)
-        row = query.first()
+        row = query[0]
         if not isinstance(row, dict):
             row = sql_row_to_dict(row)
 
