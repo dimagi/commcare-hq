@@ -156,6 +156,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         $("#inner-tiles-container-style").removeAttr("data-css-polyfilled");
     };
 
+    // Dynamically generate the CSS style to display multiple tiles per line
     var makeOuterGridStyle = function (numRows, numColumns, numCasesPerRow) {
         var outerGridTemplateString,
             outerGridStyle,
@@ -179,6 +180,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         $("#outer-tiles-container-style").html(outerGridStyle).removeAttr("data-css-polyfilled");
     };
 
+    // Dynamically generate the CSS style for the grid polyfill to use for the case tile
     var makeInnerGridStyle = function (numRows, numColumns, numCasesPerRow) {
         var templateString,
             view,
@@ -203,6 +205,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         // need to remove this attribute so the grid style is re-evaluated
         $("#inner-tiles-container-style").html(view).removeAttr("data-css-polyfilled");
 
+        // If we have multiple cases per line, need to generate the outer grid style as well
         if (numCasesPerRow > 1) {
             makeOuterGridStyle(numRows, numColumns, numCasesPerRow);
         }
@@ -218,7 +221,6 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
-                tiles: this.options.tiles,
                 resolveUri: function (uri) {
                     return FormplayerFrontend.request('resourceMap', uri, appId);
                 },
@@ -288,7 +290,6 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         childView: MenuList.CaseTileView,
         initialize: function (options) {
             this.styles = options.styles;
-            this.tiles = options.tiles;
             this.numCases = options.collection.length;
             this.numEntitiesPerRow = options.numEntitiesPerRow;
             this.maxWidth = options.maxWidth;
@@ -300,7 +301,6 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
-                tiles: this.options.tiles,
             };
         },
 
@@ -311,7 +311,6 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 currentPage: this.options.currentPage,
                 pageCount: this.options.pageCount,
                 styles: this.options.styles,
-                tiles: this.options.tiles,
                 breadcrumbs: this.options.breadcrumbs,
                 numEntitiesPerRow: this.options.numEntitiesPerRow,
                 numCases: this.options.numCases,
