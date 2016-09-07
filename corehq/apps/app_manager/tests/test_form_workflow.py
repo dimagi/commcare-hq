@@ -7,7 +7,7 @@ from corehq.apps.app_manager.models import (
     WORKFLOW_ROOT,
     WORKFLOW_PARENT_MODULE,
     FormDatum)
-from corehq.apps.app_manager.const import AUTO_SELECT_RAW
+from corehq.apps.app_manager.const import AUTO_SELECT_RAW, AUTO_SELECT_CASE
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.feature_previews import MODULE_FILTER
@@ -135,6 +135,49 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         ]
 
         self.assertXmlPartialEqual(self.get_xml('form_link_tdh'), factory.app.create_suite(), "./entry")
+
+    def test_reference_to_missing_session_variable_in_stack(self):
+        # http://manage.dimagi.com/default.asp?236750
+        #
+        # stack create blocks do not update the session after each datum
+        # so items put into the session in one step aren't available later steps
+        #
+        #      <create if="true()">
+        #          <command value="'m2'"/>
+        #          <datum id="case_id_load_episode_0" value="instance('commcaresession')/session/data/case_id_new_episode_0"/>
+        # -        <datum id="case_id_auto_select_case" value="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_load_episode_0]/index/host"/>
+        # +        <datum id="case_id_auto_select_case" value="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_episode_0]/index/host"/>
+        #          <command value="'m2-f0'"/>
+        #        </create>
+        #      </stack>
+        #
+        # in the above example ``case_id_new_episode_0`` is being added to the session and then
+        # later referenced. However since the session doesn't get updated after the first datum
+        # the value isn't available in the session.
+        #
+        # To fix this we need to replace any references to previous variables with the full xpath which
+        # that session variable references.
+
+        factory = AppFactory(build_version='2.9.0/latest')
+        m0, m0f0 = factory.new_basic_module('person registration', 'person')
+        factory.form_opens_case(m0f0)
+
+        m1, m1f0 = factory.new_advanced_module('episode registration', 'episode')
+        factory.form_requires_case(m1f0, case_type='person')
+        factory.form_opens_case(m1f0, case_type='episode', is_subcase=True, is_extension=True)
+
+        m2, m2f0 = factory.new_advanced_module('tests', 'episode')
+        factory.form_requires_case(m2f0, 'episode')
+        factory.advanced_form_autoloads(m2f0, AUTO_SELECT_CASE, 'host', 'load_episode_0')
+
+        m1f0.post_form_workflow = WORKFLOW_FORM
+        m1f0.form_links = [
+            FormLink(xpath="true()", form_id=m2f0.unique_id, datums=[
+                FormDatum(name='case_id_load_episode_0', xpath="instance('commcaresession')/session/data/case_id_new_episode_0")
+            ]),
+        ]
+
+        self.assertXmlPartialEqual(self.get_xml('form_link_enikshay'), factory.app.create_suite(), "./entry")
 
     def test_return_to_parent_module(self):
         factory = AppFactory(build_version='2.9.0/latest')
