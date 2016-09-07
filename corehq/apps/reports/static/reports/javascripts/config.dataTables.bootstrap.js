@@ -102,7 +102,7 @@ function HQReportDataTables(options) {
                 params.bProcessing = true;
                 params.sAjaxSource = {
                     url: self.ajaxSource,
-                    method: self.ajaxMethod
+                    method: self.ajaxMethod,
                 };
                 params.bFilter = $(this).data('filter') || false;
                 self.fmtParams = function (defParams) {
