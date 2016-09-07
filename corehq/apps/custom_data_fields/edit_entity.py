@@ -178,8 +178,9 @@ class CustomDataEditor(object):
         msg = """
         <strong>Warning!</strong>
         This data is not part of the specified user fields and will be
-        deleted if you save.
-        You can add them <a href="{}">here</a> to prevent this.
+        deleted when you re-save this user.
+        You can add the fields back <a href="{}">here</a> to prevent this
+        deletion.
         """.format(reverse(
             self.field_view.urlname, args=[self.domain]
         ))
