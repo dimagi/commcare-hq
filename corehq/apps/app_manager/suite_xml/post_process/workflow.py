@@ -330,10 +330,15 @@ class CaseListFormWorkflow(object):
             reg_action = form.get_registration_actions(target_module.case_type)[0]
             source_session_var = reg_action.case_session_var
         source_case_id = session_var(source_session_var)
+        source_form_datums = self.helper.get_form_datums(form)
         case_count = CaseIDXPath(source_case_id).case().count()
-        frame_case_created = StackFrameMeta(self.get_if_clause(case_count.gt(0), target_command))
+        frame_case_created = StackFrameMeta(
+            self.get_if_clause(case_count.gt(0), target_command), current_session=source_form_datums
+        )
         stack_frames.append(frame_case_created)
-        frame_case_not_created = StackFrameMeta(self.get_if_clause(case_count.eq(0), target_command))
+        frame_case_not_created = StackFrameMeta(
+            self.get_if_clause(case_count.eq(0), target_command), current_session=source_form_datums
+        )
         stack_frames.append(frame_case_not_created)
 
         def add_datums_for_target(module, source_form_dm, allow_missing=False):
