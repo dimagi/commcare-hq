@@ -5141,7 +5141,7 @@
                     "type": "named",
                     "name": "treatment_outcome"
                 },
-                "property_value": "treatment_completed"
+                "property_value": "treatment_complete"
             },
             "treatment_outcome_failure": {
                 "operator": "eq",
