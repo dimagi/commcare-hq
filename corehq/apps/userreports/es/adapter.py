@@ -28,11 +28,13 @@ class ESAlchemy(object):
     def _hit_to_row(self, hit):
         def mapping_to_datatype(column, value):
             datatype = column.datatype
-            if datatype == 'datetime' or datatype == 'date':
+            if datatype == 'datetime':
                 try:
                     return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
                 except ValueError:
                     return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
+            elif datatype == 'date':
+                return datetime.datetime.strptime(value, "%Y-%m-%d")
             return value
 
         return {
