@@ -153,30 +153,56 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
 
         // need to remove this attribute so the grid style is re-evaluated
         $("#case-tiles-style").html(caseTileStyle).removeAttr("data-css-polyfilled");
+        $("#inner-tiles-container-style").removeAttr("data-css-polyfilled");
     };
 
-    var generateCaseTileContainerStyles = function (numCasesPerRow, maxWidth, maxHeight) {
-        var templateString,
-            caseTileContainerStyle,
-            caseTileContainerStyleTemplate,
-            containerModel;
+    var makeOuterGridStyle = function (numCasesPerRow, maxWidth, maxHeight) {
+        var outerGridTemplateString,
+            outerGridStyle,
+            outerGridStyleTemplate,
+            outerGridModel;
 
         var widthPercentage = 100 / numCasesPerRow;
         var widthHeightRatio = maxHeight / maxWidth;
         var heightPercentage = widthPercentage * widthHeightRatio;
 
-        containerModel = {
+        outerGridModel = {
             widthPercentage: widthPercentage,
             heightPercentage: heightPercentage,
         };
-        templateString = $("#case-grid-style-template").html();
-        caseTileContainerStyleTemplate = _.template(templateString);
-        caseTileContainerStyle = caseTileContainerStyleTemplate({
-            model: containerModel,
+        outerGridTemplateString = $("#case-grid-style-template").html();
+        outerGridStyleTemplate = _.template(outerGridTemplateString);
+        outerGridStyle = outerGridStyleTemplate({
+            model: outerGridModel,
         });
-
         // need to remove this attribute so the grid style is re-evaluated
-        $("#case-tiles-container-style").html(caseTileContainerStyle).removeAttr("data-css-polyfilled");
+        $("#outer-tiles-container-style").html(outerGridStyle).removeAttr("data-css-polyfilled");
+        $("#case-tiles-style").removeAttr("data-css-polyfilled");
+    };
+
+    var makeInnerGridStyle = function (numRows, numColumns) {
+        var templateString,
+            view,
+            template,
+            model;
+
+        var widthPercentage = 100 / numColumns;
+        var widthHeightRatio = numRows / numColumns;
+        var heightPercentage = widthPercentage * widthHeightRatio;
+
+        model = {
+            numRows: numRows,
+            numColumns: numColumns,
+            widthPercentage: widthPercentage,
+            heightPercentage: heightPercentage,
+        };
+        templateString = $("#grid-inner-style-template").html();
+        template = _.template(templateString);
+        view = template({
+            model: model,
+        });
+        // need to remove this attribute so the grid style is re-evaluated
+        $("#inner-tiles-container-style").html(view).removeAttr("data-css-polyfilled");
         $("#case-tiles-style").removeAttr("data-css-polyfilled");
     };
 
@@ -264,6 +290,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             this.numCases = options.collection.length;
             this.numEntitiesPerRow = options.numEntitiesPerRow;
             generateCaseTileStyles(options.tiles);
+            makeInnerGridStyle(options.maxHeight, options.maxWidth);
         },
 
         childViewOptions: function () {
@@ -305,7 +332,8 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             this.maxWidth = options.maxWidth;
             this.maxHeight = options.maxHeight;
             generateCaseTileStyles(options.tiles);
-            generateCaseTileContainerStyles(options.numEntitiesPerRow, options.maxWidth, options.maxHeight);
+            makeInnerGridStyle(options.maxHeight, options.maxWidth);
+            makeOuterGridStyle(options.numEntitiesPerRow, options.maxWidth, options.maxHeight);
         },
     });
 
