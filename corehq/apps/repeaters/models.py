@@ -599,7 +599,7 @@ class RepeatRecord(Document):
             return self.handle_failure(response, post_info, tries)
 
     def handle_success(self, response):
-        """Do something once the repeater succeeds
+        """Do something with the response if the repeater succeeds
         """
         self.last_checked = datetime.utcnow()
         self.next_check = None
