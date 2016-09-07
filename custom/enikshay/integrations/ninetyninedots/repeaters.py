@@ -27,10 +27,11 @@ class NinetyNineDotsRegisterPatientRepeater(CaseRepeater):
     def allowed_to_forward(self, case):
         # checks whitelisted case types and users
         allowed_case_types_and_users = super(NinetyNineDotsRegisterPatientRepeater, self).allowed_to_forward(case)
-        enabled = case.dynamic_case_properties().get('dots_99_enabled') == 'true'
+        case_properties = case.dynamic_case_properties()
+        enabled = case_properties.get('dots_99_enabled') == 'true'
         not_registered = (
-            case.dynamic_case_properties().get('dots_99_registered') == 'false' or
-            case.dynamic_case_properties().get('dots_99_registered') is None
+            case_properties.get('dots_99_registered') == 'false' or
+            case_properties.get('dots_99_registered') is None
         )
         return allowed_case_types_and_users and enabled and not_registered
 
