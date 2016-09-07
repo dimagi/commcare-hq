@@ -80,7 +80,7 @@ class DeidExportReport(FormExportReportBase):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return stale_get_export_count(domain) > 0
+        return domain and stale_get_export_count(domain) > 0
 
     def get_saved_exports(self):
         return filter(lambda export: export.is_safe, super(DeidExportReport, self).get_saved_exports())
