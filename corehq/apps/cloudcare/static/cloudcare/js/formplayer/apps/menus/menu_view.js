@@ -222,6 +222,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
 
         initialize: function (options) {
             this.styles = options.styles;
+            $("#case-placeholder").html($("#case-list-template").html());
         },
 
         childViewOptions: function () {
@@ -267,22 +268,24 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 pageCount: this.options.pageCount,
                 styles: this.options.styles,
                 breadcrumbs: this.options.breadcrumbs,
+                templateName: "case-list-template",
             };
         },
     });
 
     MenuList.CaseTileListView = MenuList.CaseListView.extend({
-        template: "#case-view-tile-list-template",
         childView: MenuList.CaseTileView,
         initialize: function (options) {
             MenuList.CaseTileListView.__super__.initialize.apply(this, arguments);
             generateCaseTileStyles(options.tiles);
             makeInnerGridStyle(options.maxHeight, options.maxWidth, options.numEntitiesPerRow);
+            $("#case-placeholder").html($("#case-tile-template").html());
         },
 
         templateHelpers: function () {
             var dict = MenuList.CaseTileListView.__super__.templateHelpers.apply(this, arguments);
             dict['numEntitiesPerRow'] = this.options.numEntitiesPerRow;
+            dict['useTiles'] = true;
             return dict;
         },
     });
