@@ -88,10 +88,13 @@ class TestRegisterPatientRepeater(ENikshayCaseStructureMixin, TestCase):
 
 
 class TestRegisterPatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def setUp(self):
         super(TestRegisterPatientPayloadGenerator, self).setUp()
         self.cases = self.create_case_structure()
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def tearDown(self):
         super(TestRegisterPatientPayloadGenerator, self).tearDown()
         delete_all_cases()
