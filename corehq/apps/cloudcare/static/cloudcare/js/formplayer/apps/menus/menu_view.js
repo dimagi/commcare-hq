@@ -156,14 +156,14 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         $("#inner-tiles-container-style").removeAttr("data-css-polyfilled");
     };
 
-    var makeOuterGridStyle = function (numCasesPerRow, maxWidth, maxHeight) {
+    var makeOuterGridStyle = function (numRows, numColumns, numCasesPerRow) {
         var outerGridTemplateString,
             outerGridStyle,
             outerGridStyleTemplate,
             outerGridModel;
 
         var widthPercentage = 100 / numCasesPerRow;
-        var widthHeightRatio = maxHeight / maxWidth;
+        var widthHeightRatio = numRows / numColumns;
         var heightPercentage = widthPercentage * widthHeightRatio;
 
         outerGridModel = {
@@ -180,7 +180,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         $("#case-tiles-style").removeAttr("data-css-polyfilled");
     };
 
-    var makeInnerGridStyle = function (numRows, numColumns) {
+    var makeInnerGridStyle = function (numRows, numColumns, numCasesPerRow) {
         var templateString,
             view,
             template,
@@ -204,6 +204,10 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         // need to remove this attribute so the grid style is re-evaluated
         $("#inner-tiles-container-style").html(view).removeAttr("data-css-polyfilled");
         $("#case-tiles-style").removeAttr("data-css-polyfilled");
+
+        if (numCasesPerRow > 1) {
+            makeOuterGridStyle(numRows, numColumns, numCasesPerRow);
+        }
     };
 
     MenuList.CaseTileView = MenuList.CaseView.extend({
@@ -289,8 +293,10 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             this.tiles = options.tiles;
             this.numCases = options.collection.length;
             this.numEntitiesPerRow = options.numEntitiesPerRow;
+            this.maxWidth = options.maxWidth;
+            this.maxHeight = options.maxHeight;
             generateCaseTileStyles(options.tiles);
-            makeInnerGridStyle(options.maxHeight, options.maxWidth);
+            makeInnerGridStyle(options.maxHeight, options.maxWidth, options.numEntitiesPerRow);
         },
 
         childViewOptions: function () {
@@ -317,24 +323,12 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
 
     MenuList.GridCaseTileViewItem = MenuList.CaseTileView.extend({
         tagName: "div",
-        className: "formplayer-request span2 case-tile-grid-item",
+        className: "formplayer-request case-tile-grid-item",
         template: "#case-tile-grid-view-item-template",
     });
 
     MenuList.GridCaseTileListView = MenuList.CaseTileListView.extend({
         childView: MenuList.GridCaseTileViewItem,
-
-        initialize: function (options) {
-            this.styles = options.styles;
-            this.tiles = options.tiles;
-            this.numCases = options.collection.length;
-            this.numEntitiesPerRow = options.numEntitiesPerRow;
-            this.maxWidth = options.maxWidth;
-            this.maxHeight = options.maxHeight;
-            generateCaseTileStyles(options.tiles);
-            makeInnerGridStyle(options.maxHeight, options.maxWidth);
-            makeOuterGridStyle(options.numEntitiesPerRow, options.maxWidth, options.maxHeight);
-        },
     });
 
     MenuList.BreadcrumbView = Marionette.ItemView.extend({
