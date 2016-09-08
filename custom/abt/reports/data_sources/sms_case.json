@@ -284,6 +284,7 @@
                 "milange": 91807,
                 "mocuba": 140365,
                 "molumbo": 44715,
+                "mopeia": 15683,
                 "morrumbala": 97861,
                 "quelimane": 76936
               },
@@ -522,7 +523,10 @@
                 "namanjavira": 15508,
                 "namuinho": 49276,
                 "pinda": 10524,
-                "sabe": 6756
+                "sabe": 6756,
+                "mopeia_sede": 8744,
+                "posto_campo": 3578,
+                "chimuara": 3361
               },
               "type": "switch",
               "switch_on": {
@@ -1350,7 +1354,7 @@
         "expression": {
           "default": 0,
           "cases": {
-            "mozambique": 468239,
+            "mozambique": 483922,
             "Senegal": 220551,
             "Rwanda": 188189,
             "Zambia": 539348,
