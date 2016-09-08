@@ -1,8 +1,12 @@
 from django.test import TestCase
-from corehq.apps.tzmigration import get_migration_complete, \
-    get_migration_status, set_migration_complete
-from corehq.apps.tzmigration.api import set_migration_started, \
-    set_migration_not_started
+
+from corehq.apps.tzmigration.api import (
+    get_migration_complete,
+    get_migration_status,
+    set_migration_complete,
+    set_migration_not_started,
+    set_migration_started,
+)
 from corehq.apps.tzmigration.models import MigrationStatus
 
 
