@@ -88,37 +88,33 @@ class TestNoCouchLocationTypes(TestCase):
         loc_type.save()
         # You need to look up the location from the db again, because the
         # in-memory version stores the location_type it was created with
-        self.assertEqual(Location.get(loc.location_id).location_type, 'new-name')
+        self.assertEqual(Location.get(loc.location_id).location_type_name, 'new-name')
 
     def test_no_location_type(self):
         with self.assertRaises(LocationType.DoesNotExist):
             loc = Location(name="Something")
             loc.save()
 
-    def test_type_set_correctly(self):
-        self.assertEqual(self.loc.location_type, 'test-type')
-        self.assertEqual(self.loc.sql_location.location_type.name, 'test-type')
-
     def test_get_and_save(self):
         # Get a location from the db, wrap it, access location_type, and save
         loc = Location.get(self.loc.location_id)
-        self.assertEqual(loc.location_type, 'test-type')
+        self.assertEqual(loc.location_type_name, 'test-type')
         loc.save()
 
     def test_change_type_later(self):
         new_type = LocationType.objects.create(domain='test-domain',
                                                name='new-type')
-        self.loc.location_type = 'new-type'
+        self.loc.location_type_name = 'new-type'
         self.loc.save()
-        self.assertEqual(self.loc.location_type, 'new-type')
+        self.assertEqual(self.loc.location_type_name, 'new-type')
         self.assertEqual(self.loc.sql_location.location_type, new_type)
         # pull the loc from the db again
-        self.assertEqual(Location.get(self.loc.location_id).location_type, 'new-type')
+        self.assertEqual(Location.get(self.loc.location_id).location_type_name, 'new-type')
         new_type.delete()
 
     def test_change_to_nonexistent_type(self):
         with self.assertRaises(LocationType.DoesNotExist):
-            self.loc.location_type = 'nonexistent-type'
+            self.loc.location_type_name = 'nonexistent-type'
             self.loc.save()
-        self.assertEqual(self.loc.location_type, 'test-type')
+        self.assertEqual(self.loc.location_type_name, 'test-type')
         self.assertEqual(self.loc.sql_location.location_type.name, 'test-type')
