@@ -205,9 +205,9 @@ class RRreport(DetailsReport):
         if config['location_id']:
             data_providers = [RandRSubmissionData(config=config, css_class='row_chart_all')]
             location = Location.get(config['location_id'])
-            if location.location_type in ['REGION', 'MSDZONE', 'MOHSW']:
+            if location.location_type_name in ['REGION', 'MSDZONE', 'MOHSW']:
                 data_providers.append(RRStatus(config=config, css_class='row_chart_all'))
-            elif location.location_type == 'FACILITY':
+            elif location.location_type_name == 'FACILITY':
                 return [
                     InventoryHistoryData(config=config),
                     RandRHistory(config=config),
