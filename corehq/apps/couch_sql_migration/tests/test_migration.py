@@ -197,6 +197,31 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(1, len(self._get_case_ids()))
         self._compare_diffs([])
 
+    def test_basic_case_migration_case_name(self):
+        case_id = uuid.uuid4().hex
+        submit_case_blocks(
+            CaseBlock(
+                case_id,
+                case_type='migrate',
+                create=True,
+                update={'p1': 1},
+            ).as_string(),
+            self.domain_name
+        )
+
+        submit_case_blocks(
+            CaseBlock(
+                case_id,
+                update={'name': 'test21'},
+            ).as_string(),
+            self.domain_name
+        )
+
+        self.assertEqual(1, len(self._get_case_ids()))
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(1, len(self._get_case_ids()))
+        self._compare_diffs([])
+
     def test_case_with_indices_migration(self):
         parent_case_id = uuid.uuid4().hex
         child_case_id = uuid.uuid4().hex
