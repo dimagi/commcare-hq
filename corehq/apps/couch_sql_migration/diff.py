@@ -72,7 +72,9 @@ def _case_ignored_diffs():
         FormJsonDiff(diff_type=u'missing', path=(u'location_',), old_value=[], new_value=Ellipsis),
         FormJsonDiff(diff_type=u'type', path=(u'type',), old_value=None, new_value=u''),
         # this happens for cases where the creation form has been archived but the case still has other forms
-        FormJsonDiff(diff_type=u'type', path=[u'owner_id'], old_value=None, new_value=u'')
+        FormJsonDiff(diff_type=u'type', path=(u'owner_id',), old_value=None, new_value=u''),
+        FormJsonDiff(diff_type=u'missing', path=(u'closed_by',), old_value=Ellipsis, new_value=None),
+        FormJsonDiff(diff_type=u'type', path=(u'external_id',), old_value=u'', new_value=None),
     )
 
 CASE_IGNORED_DIFFS = _case_ignored_diffs()
