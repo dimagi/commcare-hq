@@ -37,7 +37,7 @@ from corehq.apps.app_manager.dbaccessors import (
     wrap_app,
 )
 from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
-from corehq.apps.app_manager.models import Application, ApplicationBase
+from corehq.apps.app_manager.models import Application, ApplicationBase, RemoteApp
 from corehq.apps.app_manager.suite_xml.sections.details import get_instances_for_module
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.util import get_cloudcare_session_data
@@ -134,7 +134,8 @@ class CloudcareMain(View):
                 apps = get_cloudcare_apps(domain)
             else:
                 apps = get_brief_apps_in_domain(domain)
-            apps = [get_app_json(app) for app in apps if app and app.application_version == V2]
+            apps = [get_app_json(app) for app in apps if app and (
+                isinstance(app, RemoteApp) or app.application_version == V2)]
             meta = get_meta(request)
             track_clicked_preview_on_hubspot(request.couch_user, request.COOKIES, meta)
 
