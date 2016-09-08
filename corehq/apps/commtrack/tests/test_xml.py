@@ -389,7 +389,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         self.submit_xml_form(balance_submission(initial_amounts))
 
         # then mark some receipts
-        transfers = [(p._id, float(50 - 10*i)) for i, p in enumerate(self.products)]
+        transfers = [(p._id, float(50 - 10*i + 3)) for i, p in enumerate(self.products)]
         # then set to 50
         final = float(50)
         balance_amounts = [(p._id, final) for p in self.products]
