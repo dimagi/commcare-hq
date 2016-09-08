@@ -7,6 +7,9 @@ from corehq.form_processor.models import CommCareCaseSQL
 from corehq.apps.repeaters.models import CaseRepeater
 from corehq.apps.repeaters.signals import create_repeat_records
 from casexml.apps.case.signals import case_post_save
+from casexml.apps.case.xform import get_case_updates
+
+from custom.enikshay.case_utils import get_open_episode_case_from_person
 
 
 class NinetyNineDotsRegisterPatientRepeater(CaseRepeater):
@@ -41,7 +44,50 @@ class NinetyNineDotsRegisterPatientRepeater(CaseRepeater):
         return False
 
 
+class NinetyNineDotsUpdatePatientRepeater(CaseRepeater):
+    class Meta(object):
+        app_label = 'repeaters'
+
+    friendly_name = _("99DOTS Patient Registration")
+
+    @classmethod
+    def available_for_domain(cls, domain):
+        return NINETYNINE_DOTS.enabled(domain)
+
+    def allowed_to_forward(self, case):
+        # checks whitelisted case types and users
+        allowed_case_types_and_users = super(NinetyNineDotsUpdatePatientRepeater, self).allowed_to_forward(case)
+        if not allowed_case_types_and_users:
+            return False
+
+        return (
+            phone_number_changed(case) and
+            episode_registered_with_99dots(
+                get_open_episode_case_from_person(case.domain, case.case_id)
+            )
+        )
+
+
+def episode_registered_with_99dots(episode):
+    return episode.dynamic_case_properties().get('dots_99_registered', False) == 'true'
+
+
+def phone_number_changed(case):
+    last_case_action = case.actions[-1]
+    if last_case_action.is_case_create:
+        return False
+
+    update_actions = [update.get_update_action() for update in get_case_updates(last_case_action.form)]
+    phone_number_changed = any(
+        action for action in update_actions
+        if 'mobile_number' in action.dynamic_properties or
+        'backup_number' in action.dynamic_properties
+    )
+    return phone_number_changed
+
+
 def create_case_repeat_records(sender, case, **kwargs):
     create_repeat_records(NinetyNineDotsRegisterPatientRepeater, case)
+    create_repeat_records(NinetyNineDotsUpdatePatientRepeater, case)
 
 case_post_save.connect(create_case_repeat_records, CommCareCaseSQL)
