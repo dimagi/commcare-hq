@@ -1,4 +1,5 @@
 import datetime
+from collections import namedtuple
 
 from django.core.urlresolvers import reverse
 
@@ -42,6 +43,9 @@ class FilterValue(object):
         raise NotImplementedError()
 
     def to_sql_values(self):
+        raise NotImplementedError()
+
+    def to_es_filter(self):
         raise NotImplementedError()
 
 
@@ -101,15 +105,22 @@ class DateFilterValue(FilterValue):
             enddate = enddate + datetime.timedelta(days=1) - datetime.timedelta.resolution
         return enddate
 
+    def to_es_filter(self):
+        if self.value is None:
+            return None
+
+        return filters.daterange(self.filter.field, lt=self.value.startdate, gt=self.value.enddate)
+
 
 class NumericFilterValue(FilterValue):
+    DBSpecificFilter = namedtuple('DBSpecificFilter', ['sql', 'es'])
     operators_to_filters = {
-        '=': EQFilter,
-        '!=': NOTEQFilter,
-        '>=': GTEFilter,
-        '>': GTFilter,
-        '<=': LTEFilter,
-        '<': LTFilter,
+        '=': DBSpecificFilter(EQFilter, filters.term),
+        '!=': DBSpecificFilter(NOTEQFilter, filters.not_term),
+        '>=': DBSpecificFilter(GTEFilter, lambda field, val: filters.range_filter(field, gte=val)),
+        '>': DBSpecificFilter(GTFilter, lambda field, val: filters.range_filter(field, gt=val)),
+        '<=': DBSpecificFilter(LTEFilter, lambda field, val: filters.range_filter(field, lte=val)),
+        '<': DBSpecificFilter(LTFilter, lambda field, val: filters.range_filter(field, lt=val)),
     }
 
     def __init__(self, filter, value):
@@ -123,7 +134,7 @@ class NumericFilterValue(FilterValue):
     def to_sql_filter(self):
         if self.value is None:
             return None
-        filter_class = self.operators_to_filters[self.value['operator']]
+        filter_class = self.operators_to_filters[self.value['operator']].sql
         return filter_class(self.filter.field, self.filter.slug)
 
     def to_sql_values(self):
@@ -132,6 +143,13 @@ class NumericFilterValue(FilterValue):
         return {
             self.filter.slug: self.value["operand"],
         }
+
+    def to_es_filter(self):
+        if self.value is None:
+            return None
+
+        filter_class = self.operators_to_filters[self.value['operator']].es
+        return filter_class(self.filter.field, self.filter.value)
 
 
 class BasicBetweenFilter(BasicFilter):
