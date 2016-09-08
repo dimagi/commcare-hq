@@ -715,6 +715,8 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
 
     @property
     def location_type(self):
+        notify_of_deprecation(
+            "You should use either location_type_name or location_type_object")
         return self.location_type_object.name
 
     _sql_location_type = None
