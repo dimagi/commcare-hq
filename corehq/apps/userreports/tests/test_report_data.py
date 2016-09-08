@@ -12,7 +12,6 @@ ReportDataTestRow = namedtuple('ReportDataTestRow', ['name', 'number'])
 
 
 class ReportDataTest(TestCase):
-    dependent_apps = ['pillowtop']
 
     def setUp(self):
         super(ReportDataTest, self).setUp()

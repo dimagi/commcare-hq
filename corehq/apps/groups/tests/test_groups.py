@@ -75,10 +75,6 @@ class GroupTest(TestCase):
 
 
 class TestDeleteAllGroups(TestCase):
-    dependent_apps = [
-        'corehq.couchapps',
-        'corehq.apps.groups',
-    ]
 
     def test_bulk_delete(self):
         domain = 'test-bulk-delete'

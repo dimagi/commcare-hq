@@ -54,14 +54,6 @@ class TestPathLineageAndHierarchy(LocationTestBase):
 
 
 class TestNoCouchLocationTypes(TestCase):
-    dependent_apps = [
-        'corehq.apps.commtrack',
-        'corehq.apps.products',
-        'corehq.couchapps',
-        'custom.logistics',
-        'custom.ilsgateway',
-        'custom.ewsghana',
-    ]
 
     @classmethod
     def setUpClass(cls):

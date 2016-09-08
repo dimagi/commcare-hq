@@ -14,7 +14,6 @@ from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 
 
 class BaseEnikshayDatasourceTest(TestCase, TestFileMixin):
-    dependent_apps = ['corehq.apps.domain', 'corehq.apps.case']
     file_path = ('data_sources', )
     root = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
     _call_center_domain_mock = mock.patch(

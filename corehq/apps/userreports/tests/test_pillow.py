@@ -83,11 +83,6 @@ class IndicatorPillowTestBase(TestCase):
 
 
 class IndicatorPillowTest(IndicatorPillowTestBase):
-    dependent_apps = [
-        'couchforms', 'pillowtop', 'corehq.couchapps', 'corehq.apps.tzmigration',
-        'corehq.form_processor', 'corehq.sql_accessors', 'corehq.sql_proxy_accessors',
-        'casexml.apps.case', 'casexml.apps.phone'
-    ]
 
     @softer_assert
     def setUp(self):
@@ -179,7 +174,6 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
 
 
 class StaticKafkaIndicatorPillowTest(TestCase):
-    dependent_apps = ['pillowtop']
 
     @patch('corehq.apps.callcenter.data_source.get_call_center_domains', MagicMock(return_value=[domain_lite('cc1')]))
     def test_bootstrap_can_be_called(self):
