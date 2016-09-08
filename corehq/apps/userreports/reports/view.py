@@ -279,7 +279,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             'report_table': {'default_rows': 25},
             'filter_context': self.filter_context,
             'url': self.url,
-            'method': 'GET' if not DISABLE_COLUMN_LIMIT_IN_UCR.enabled(self.domain) else 'POST',
+            'method': 'POST',
             'headers': self.headers,
             'can_edit_report': can_edit_report(self.request, self),
             'has_report_builder_trial': has_report_builder_trial(self.request),
