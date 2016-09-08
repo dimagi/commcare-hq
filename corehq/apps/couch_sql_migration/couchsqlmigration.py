@@ -74,7 +74,7 @@ class CouchSqlDomainMigrator(object):
 
         diffs = json_diff(couch_form.to_json(), sql_form.to_json(), track_list_indices=False)
         self.diff_db.add_diffs(
-            'form', couch_form.form_id,
+            couch_form.doc_type, couch_form.form_id,
             filter_form_diffs(couch_form.doc_type, diffs)
         )
 
@@ -100,7 +100,7 @@ class CouchSqlDomainMigrator(object):
             if couch_form.doc_type != 'SubmissionErrorLog':
                 diffs = json_diff(couch_form.to_json(), sql_form.to_json(), track_list_indices=False)
                 self.diff_db.add_diffs(
-                    'form', couch_form.form_id,
+                    couch_form.doc_type, couch_form.form_id,
                     filter_form_diffs(couch_form.doc_type, diffs)
                 )
 

@@ -35,7 +35,8 @@ def _form_ignored_diffs():
             diff_type=u'diff', path=(u'doc_type',),
             old_value=u'HQSubmission', new_value=u'XFormInstance'
         ),
-        FormJsonDiff(diff_type=u'missing', path=(u'deleted_on',), old_value=Ellipsis, new_value=None)
+        FormJsonDiff(diff_type=u'missing', path=(u'deleted_on',), old_value=Ellipsis, new_value=None),
+        FormJsonDiff(diff_type=u'missing', path=(u'location_',), old_value=[], new_value=Ellipsis),
     )
 
 FORM_IGNORED_DIFFS = _form_ignored_diffs()
