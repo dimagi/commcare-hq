@@ -869,6 +869,15 @@ class CommtrackUserForm(forms.Form):
 
         return [location.location_id for location in locations]
 
+    def clean(self):
+        cleaned_data = super(CommtrackUserForm, self).clean()
+
+        primary_location_id = cleaned_data['primary_location']
+        assigned_location_ids = cleaned_data['assigned_locations']
+        if primary_location_id:
+            if primary_location_id not in assigned_location_ids:
+                raise ValidationError(_("Only one of the user's locations can be a primary location"))
+
 
 class DomainRequestForm(forms.Form):
     full_name = forms.CharField(label=ugettext_lazy('Full Name'), required=True,
