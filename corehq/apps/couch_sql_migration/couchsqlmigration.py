@@ -454,6 +454,10 @@ def _filter_form_diffs(doc_type, diffs):
     ]
     filtered = _check_deprecation_date(filtered, doc_type)
     filtered = _check_deletion_fields_date(filtered, doc_type)
+    filtered = [
+        diff for diff in filtered
+        if not (diff.diff_type == 'type' and diff.path == ('openrosa_headers', 'HTTP_X_OPENROSA_VERSION'))
+    ]
     return filtered
 
 
@@ -492,6 +496,10 @@ def _filter_case_diffs(doc_type, diffs):
         if diff.path not in const.CASE_IGNORED_PATHS and diff not in const.CASE_IGNORED_DIFFS
     ]
     filtered_diffs = _check_deletion_fields_date(filtered_diffs, doc_type)
+    filtered_diffs = [
+        diff for diff in filtered_diffs
+        if diff.path[0] == 'owner_id' and diff.old_value is None
+    ]
     return filtered_diffs
 
 

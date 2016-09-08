@@ -33,6 +33,7 @@ def _form_ignored_diffs():
             diff_type=u'diff', path=(u'doc_type',),
             old_value=u'HQSubmission', new_value=u'XFormInstance'
         ),
+        FormJsonDiff(diff_type=u'missing', path=(u'deleted_on',), old_value=Ellipsis, new_value=None)
     )
 
 FORM_IGNORED_DIFFS = _form_ignored_diffs()
@@ -65,6 +66,10 @@ def _case_ignored_diffs():
         FormJsonDiff(
             diff_type=u'missing', path=(u'indices', u'[*]', u'doc_type'),
             old_value=u'CommCareCaseIndex', new_value=Ellipsis),
+        FormJsonDiff(diff_type=u'missing', path=(u'referrals',), old_value=[], new_value=Ellipsis),
+        FormJsonDiff(diff_type=u'missing', path=(u'location_',), old_value=[], new_value=Ellipsis),
+        FormJsonDiff(diff_type=u'type', path=(u'type',), old_value=None, new_value=u''),
+
     )
 
 CASE_IGNORED_DIFFS = _case_ignored_diffs()
