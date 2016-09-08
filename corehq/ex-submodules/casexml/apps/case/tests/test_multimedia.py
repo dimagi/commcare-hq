@@ -13,7 +13,7 @@ from mock import patch
 
 from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 from casexml.apps.case.xml import V2
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime

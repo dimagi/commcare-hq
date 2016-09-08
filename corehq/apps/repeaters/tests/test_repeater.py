@@ -9,7 +9,7 @@ from django.test import TestCase
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException, IgnoreDocument
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.repeaters.tasks import check_repeaters
 from corehq.apps.repeaters.models import (
     CaseRepeater,
