@@ -1780,7 +1780,6 @@ CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
-# mapping of domains to modules for those that aren't identical
 # a DOMAIN_MODULE_CONFIG doc present in your couchdb can override individual
 # items.
 DOMAIN_MODULE_MAP = {
@@ -1789,12 +1788,14 @@ DOMAIN_MODULE_MAP = {
     'care-bihar': 'custom.bihar',
     'bihar': 'custom.bihar',
     'cvsulive': 'custom.apps.cvsu',
+    'ewsghana': 'ewsghana',
     'fri': 'custom.fri.reports',
     'fri-testing': 'custom.fri.reports',
     'gsid': 'custom.apps.gsid',
     'gsid-demo': 'custom.apps.gsid',
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
+    'ilsgateway': 'ilsgateway',
     'mc-inscale': 'custom.reports.mc',
     'mvp-potou': 'mvp',
     'mvp-sauri': 'mvp',
@@ -1807,6 +1808,7 @@ DOMAIN_MODULE_MAP = {
     'mvp-koraro': 'mvp',
     'mvp-pampaida': 'mvp',
     'opm': 'custom.opm',
+    'pact': 'pact',
     'project': 'custom.apps.care_benin',
 
     'ipm-senegal': 'custom.intrahealth',
