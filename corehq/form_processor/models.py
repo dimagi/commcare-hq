@@ -567,7 +567,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     deleted_on = models.DateTimeField(null=True)
     deletion_id = models.CharField(max_length=255, null=True)
 
-    external_id = models.CharField(max_length=255)
+    external_id = models.CharField(max_length=255, null=True)
     location_id = models.CharField(max_length=255, null=True)
 
     case_json = JSONField(default=dict)

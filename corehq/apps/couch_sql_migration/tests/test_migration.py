@@ -5,6 +5,7 @@ from datetime import datetime
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.management import call_command
 from django.test import TestCase
+from django.test import override_settings
 
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.commtrack.helpers import make_product
@@ -59,6 +60,18 @@ class BaseMigrationTestCase(TestCase):
 class MigrationTestCase(BaseMigrationTestCase):
     def test_basic_form_migration(self):
         create_and_save_a_form(self.domain_name)
+        self.assertEqual(1, len(self._get_form_ids()))
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(1, len(self._get_form_ids()))
+        self._compare_diffs([])
+
+    def test_basic_form_migration_with_timezones(self):
+        with open('corehq/apps/tzmigration/tests/data/form.xml') as f:
+            duplicate_form_xml = f.read()
+
+        with override_settings(PHONE_TIMEZONES_HAVE_BEEN_PROCESSED=False,
+                               PHONE_TIMEZONES_SHOULD_BE_PROCESSED=False):
+            submit_form_locally(duplicate_form_xml, self.domain_name)
         self.assertEqual(1, len(self._get_form_ids()))
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(1, len(self._get_form_ids()))
