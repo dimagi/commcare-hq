@@ -78,3 +78,14 @@ CASE_IGNORED_DIFFS = _case_ignored_diffs()
 LEDGER_IGNORED_PATHS = {
     ('_id',),
 }
+
+
+DATE_FIELDS = {
+    'modified_on',
+    'server_modified_on',
+    'opened_on',
+    'closed_on',
+    'timeStart',
+    'timeEnd',
+    '@date_modified',
+}

@@ -8,6 +8,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xform import get_all_extensions_to_close, CaseProcessingResult
 from corehq.apps.domain.models import Domain
 from corehq.apps.tzmigration import force_phone_timezones_should_be_processed
+from corehq.apps.tzmigration.timezonemigration import is_datetime
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, doc_type_to_state, LedgerAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
@@ -458,6 +459,7 @@ def _filter_form_diffs(doc_type, diffs):
         diff for diff in filtered
         if not (diff.diff_type == 'type' and diff.path == ('openrosa_headers', 'HTTP_X_OPENROSA_VERSION'))
     ]
+    filtered = _filter_date_diffs(filtered)
     return filtered
 
 
@@ -500,6 +502,7 @@ def _filter_case_diffs(doc_type, diffs):
         diff for diff in filtered_diffs
         if diff.path[0] == 'owner_id' and diff.old_value is None
     ]
+    filtered_diffs = _filter_date_diffs(filtered_diffs)
     return filtered_diffs
 
 
@@ -507,4 +510,17 @@ def _filter_ledger_diffs(diffs):
     return [
         diff for diff in diffs
         if diff.path not in const.LEDGER_IGNORED_PATHS
+    ]
+
+
+def _filter_date_diffs(diffs):
+    def _both_dates(old, new):
+        return is_datetime(old) and is_datetime(new)
+
+    def _date_diff(diff):
+        return diff.diff_type == 'diff' and diff.path[-1] in const.DATE_FIELDS
+
+    return [
+        diff for diff in diffs
+        if not _date_diff(diff) or not _both_dates(diff.old_value, diff.new_value)
     ]
