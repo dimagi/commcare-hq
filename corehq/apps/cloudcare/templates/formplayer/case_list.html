@@ -1,7 +1,7 @@
 {% load hq_shared_tags %}
 
 <script type="text/template" id="case-view-list-template">
-    <div>
+    <div class="container-fluid">
         <div class="col-sm-8">
             <h2 id="title"><%= title %></h2>
         </div>
@@ -15,22 +15,88 @@
             </div>
         </div>
     </div>
-    <table class="table table-hover table-striped table-bordered">
+        <table class="table table-hover table-striped table-bordered">
+            <thead>
+                <tr>
+                    <% _.each(headers, function(header) { %>
+                    <td> <%= header %></td>
+                    <% }); %>
+                </tr>
+            </thead>
+            <tbody class="case-container">
+            </tbody>
+        </table>
+    <% if (action) { %>
+    <div>
+        <button type="button" class="btn btn-default" id="double-management"><%= action.text %></button>
+    </div>
+    <% } %>
+    <% if (pageCount) { %>
+    <div>
+        <nav>
+            <ul class="pagination">
+                <% if (currentPage > 0) { %>
+                <li class="page-item" id="prev-page">
+                    <a class="page-link" aria-label="Previous" data-id="<%= currentPage - 1 %>">
+                        <span aria-hidden="true">&laquo;</span>
+                        <span class="sr-only">Previous</span>
+                    </a>
+                </li>
+                <% } else { %>
+                <li class="paginate-disabled">
+                    <a class="paginate-disabled">
+                        <span aria-hidden="true">&laquo;</span>
+                        <span class="sr-only">Previous</span>
+                    </a>
+                </li>
+                <% } %>
+                <% for (i = 0; i < pageCount; i++) { %>
+                <li class="page-item"><a class="page-link" data-id="<%= i %>"><%= i + 1 %></a></li>
+                <% } %>
+                <% if (currentPage < pageCount - 1) { %>
+                <li class="page-item" id="next-page">
+                    <a class="page-link" aria-label="Next" data-id="<%= currentPage + 1 %>">
+                        <span aria-hidden="true">&raquo;</span>
+                        <span class="sr-only">Next</span>
+                    </a>
+                </li>
+                <% } else { %>
+                <li class="paginate-disabled">
+                    <a class="paginate-disabled">
+                        <span aria-hidden="true">&raquo;</span>
+                        <span class="sr-only">Next</span>
+                    </a>
+                </li>
+                <% } %>
+            </ul>
+        </nav>
+    </div>
+    <% } %>
+</script>
 
-        <% if (_.isNull(tiles) || !tiles) { %>
-        <thead>
-        <tr>
-            <% _.each(headers, function(header) { %>
-            <td> <%= header %></td>
-            <% }); %>
-        </tr>
-        </thead>
-        <tbody class="case-container">
-        </tbody>
+<script type="text/template" id="case-view-tile-list-template">
+    <div class="container-fluid">
+        <div class="col-sm-8">
+            <h2 id="title"><%= title %></h2>
+        </div>
+        <div class="input-group col-sm-4">
+            <input type="text" class="form-control" placeholder="Search" id="searchText">
+
+            <div class="input-group-btn">
+                <button class="btn btn-default" type="button" id="case-list-search-button">
+                    <i class="fa fa-search fa-4x" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+        <% if (numEntitiesPerRow > 1) { %>
+            <div class="wrapper case-container case-container-grid container-fluid"></div>
         <% } else { %>
-            <tbody class="wrapper case-container"></tbody>
+            <table class="table table-hover table-striped table-bordered">
+            <tbody class="wrapper case-container">
+            </tbody>
+            </table>
         <% } %>
-    </table>
     <% if (action) { %>
     <div>
         <button type="button" class="btn btn-default" id="double-management"><%= action.text %></button>
@@ -91,17 +157,33 @@
 
 <script type="text/template" id="case-tile-view-item-template">
     <div class="grid-wrapper">
-        <% _.each(data, function(datum, index) { %>
-        <div class="grid-style-<%= index %> box">
-            <% if (styles[index].displayFormat === 'Image') {
-            if(resolveUri(datum)) { %>
-            <img class="module-icon" style="max-width:50%; max-height:50%;" src="<%= resolveUri(datum) %>"/>
-            <% } %>
-            <% } else { %>
-            <div><%= datum %></div>
-            <% } %>
-        </div>
-        <% }); %>
+    <% _.each(data, function(datum, index) { %>
+    <div class="grid-style-<%= index %> box">
+        <% if (styles[index].displayFormat === 'Image') {
+        if(resolveUri(datum)) { %>
+        <img class="module-icon" style="max-width:25%; height: auto;" src="<%= resolveUri(datum) %>"/>
+        <% } %>
+        <% } else { %>
+        <div><%= datum %></div>
+        <% } %>
+    </div>
+    <% }); %>
+    </div>
+</script>
+
+<script type="text/template" id="case-tile-grid-view-item-template">
+    <div>
+    <% _.each(data, function(datum, index) { %>
+    <div class="grid-style-<%= index %> box">
+        <% if (styles[index].displayFormat === 'Image') {
+        if(resolveUri(datum)) { %>
+        <img class="module-icon" style="max-width:25%; height: auto;" src="<%= resolveUri(datum) %>"/>
+        <% } %>
+        <% } else { %>
+        <div><%= datum %></div>
+        <% } %>
+    </div>
+    <% }); %>
     </div>
 </script>
 
@@ -112,4 +194,12 @@
             font-size: <%= model.fontStyle %>;
         }
     <% }); %>
+</script>
+
+<script type="text/template" id="case-tile-container-style-template">
+    .case-container-grid {
+        display: grid;
+        grid-template-columns: repeat(<%= model.numCasesPerRow %>, 100px);
+        grid-template-rows: repeat(<%= model.numRows %>, 100px);
+    }
 </script>
