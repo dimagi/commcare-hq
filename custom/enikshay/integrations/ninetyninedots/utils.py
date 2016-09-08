@@ -1,4 +1,6 @@
 import uuid
+from dateutil import parser
+from pytz import timezone
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from casexml.apps.case.const import CASE_INDEX_EXTENSION, UNOWNED_EXTENSION_OWNER_ID
@@ -77,11 +79,17 @@ class AdherenceCaseFactory(object):
             "name": adherence_point["timestamp"],
             "adherence_value": self.DEFAULT_ADHERENCE_VALUE,
             "adherence_source": adherence_source,
-            "adherence_date": adherence_point["timestamp"],
+            "adherence_date": self._parse_adherence_date(adherence_point["timestamp"]),
             "person_name": self._person_case.name,
             "adherence_confidence": self._default_adherence_confidence,
             "shared_number_99_dots": adherence_point["sharedNumber"],
         }
+
+    def _parse_adherence_date(self, iso_datestring):
+        tz = timezone('Asia/Kolkata')
+        datetime_from_adherence = parser.parse(iso_datestring)
+        datetime_in_india = datetime_from_adherence.astimezone(tz)
+        return datetime_in_india.date()
 
     def update_adherence_cases(self, start_date, end_date, confidence_level):
         try:
