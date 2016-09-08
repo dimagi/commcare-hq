@@ -154,6 +154,28 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(1, len(self._get_case_ids()))
         self._compare_diffs([])
 
+    def test_old_form_metadata_migration(self):
+        form_with_old_meta = """<?xml version="1.0" ?>
+            <system uiVersion="1" version="1" xmlns="http://commcarehq.org/case">
+                <meta xmlns="http://openrosa.org/jr/xforms">
+                    <deviceID/>
+                    <timeStart>2013-09-18T11:41:17Z</timeStart>
+                    <timeEnd>2013-09-18T11:41:17Z</timeEnd>
+                    <username>nnestle@dimagi.com</username>
+                    <userID>06d75f978d3370f5b277b2685626b653</userID>
+                    <uid>efe8d4306a7b426681daf33df41da46c</uid>
+                </meta>
+                <data>
+                    <p1>123</p1>
+                </data>
+            </system>
+        """
+        submit_form_locally(form_with_old_meta, self.domain_name)
+        self.assertEqual(1, len(self._get_form_ids()))
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(1, len(self._get_form_ids()))
+        self._compare_diffs([])
+
     def test_deleted_form_migration(self):
         form = create_and_save_a_form(self.domain_name)
         FormAccessors(self.domain.name).soft_delete_forms(
