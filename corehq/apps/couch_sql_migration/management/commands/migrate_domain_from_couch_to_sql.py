@@ -23,7 +23,8 @@ class Command(LabelCommand):
         make_option('--MIGRATE', action='store_true', default=False),
         make_option('--COMMIT', action='store_true', default=False),
         make_option('--blow-away', action='store_true', default=False),
-        make_option('--stats', action='store_true', default=False),
+        make_option('--stats-short', action='store_true', default=False),
+        make_option('--stats-long', action='store_true', default=False),
         make_option('--show-diffs', action='store_true', default=False),
         make_option('--no-input', action='store_true', default=False),
     )
@@ -55,8 +56,8 @@ class Command(LabelCommand):
                 )
             set_migration_not_started(domain)
             _blow_away_migration(domain)
-        if options['stats']:
-            self.print_stats(domain)
+        if options['stats_short'] or options['stats_long']:
+            self.print_stats(domain, short=options['stats_short'])
         if options['show_diffs']:
             self.show_diffs(domain)
         if options['COMMIT']:
@@ -76,39 +77,40 @@ class Command(LabelCommand):
         for diff in db.get_diffs():
             print '[{}({})] {}'.format(diff.kind, diff.doc_id, diff.json_diff)
 
-    def print_stats(self, domain):
+    def print_stats(self, domain, short=True):
         for doc_type in doc_types():
             form_ids_in_couch = set(get_form_ids_by_type(domain, doc_type))
             form_ids_in_sql = set(FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type))
-            self._print_status(doc_type, form_ids_in_couch, form_ids_in_sql)
+            self._print_status(doc_type, form_ids_in_couch, form_ids_in_sql, short)
 
         form_ids_in_couch = set(get_doc_ids_in_domain_by_type(
             domain, "XFormInstance-Deleted", XFormInstance.get_db())
         )
         form_ids_in_sql = set(FormAccessorSQL.get_deleted_form_ids_in_domain(domain))
-        self._print_status("XFormInstance-Deleted", form_ids_in_couch, form_ids_in_sql)
+        self._print_status("XFormInstance-Deleted", form_ids_in_couch, form_ids_in_sql, short)
 
         case_ids_in_couch = set(get_case_ids_in_domain(domain))
         case_ids_in_sql = set(CaseAccessorSQL.get_case_ids_in_domain(domain))
-        self._print_status('CommCareCase', case_ids_in_couch, case_ids_in_sql)
+        self._print_status('CommCareCase', case_ids_in_couch, case_ids_in_sql, short)
 
         case_ids_in_couch = set(get_doc_ids_in_domain_by_type(
             domain, "CommCareCase-Deleted", XFormInstance.get_db())
         )
         case_ids_in_sql = set(CaseAccessorSQL.get_deleted_case_ids_in_domain(domain))
-        self._print_status('CommCareCase-Deleted', case_ids_in_couch, case_ids_in_sql)
+        self._print_status('CommCareCase-Deleted', case_ids_in_couch, case_ids_in_sql, short)
 
-    def _print_status(self, name, ids_in_couch, ids_in_sql):
+    def _print_status(self, name, ids_in_couch, ids_in_sql, short):
         header = ((82 - len(name)) / 2) * '_'
         print '\n{} {} {}'.format(header, name, header)
         row = "{:^40} | {:^40}"
         print row.format('Couch', 'SQL')
         print row.format(len(ids_in_couch), len(ids_in_sql))
-        if ids_in_couch ^ ids_in_sql:
-            couch_only = list(ids_in_couch - ids_in_sql)
-            sql_only = list(ids_in_sql - ids_in_couch)
-            for couch, sql in izip_longest(couch_only, sql_only):
-                print row.format(couch or '', sql or '')
+        if not short:
+            if ids_in_couch ^ ids_in_sql:
+                couch_only = list(ids_in_couch - ids_in_sql)
+                sql_only = list(ids_in_sql - ids_in_couch)
+                for couch, sql in izip_longest(couch_only, sql_only):
+                    print row.format(couch or '', sql or '')
 
 
 def _confirm(message):
