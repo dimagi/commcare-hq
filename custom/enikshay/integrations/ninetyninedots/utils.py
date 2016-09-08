@@ -87,8 +87,13 @@ class AdherenceCaseFactory(object):
 
     def _parse_adherence_date(self, iso_datestring):
         tz = timezone('Asia/Kolkata')
-        datetime_from_adherence = parser.parse(iso_datestring)
-        datetime_in_india = datetime_from_adherence.astimezone(tz)
+        try:
+            datetime_from_adherence = parser.parse(iso_datestring)
+            datetime_in_india = datetime_from_adherence.astimezone(tz)
+        except ValueError:
+            raise AdherenceException(
+                "Adherence date should be an ISO8601 formated string with timezone information."
+            )
         return datetime_in_india.date()
 
     def update_adherence_cases(self, start_date, end_date, confidence_level):
