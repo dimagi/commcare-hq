@@ -109,6 +109,7 @@ FormplayerFrontend.on('startForm', function (data) {
     var user = FormplayerFrontend.request('currentUser');
     data.xform_url = user.formplayer_url;
     data.domain = user.domain;
+    data.username = user.username;
     data.formplayerEnabled = true;
     data.onerror = function (resp) {
         showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
@@ -172,6 +173,8 @@ FormplayerFrontend.on('debugger.formXML', function(sessionId) {
         url: user.formplayer_url + '/get-instance',
         data: JSON.stringify({
             'session-id': sessionId,
+            'domain': user.domain,
+            'username': user.username,
         }),
         success: success,
     };
@@ -241,7 +244,7 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
             data: JSON.stringify({
                 app_id: appId,
                 domain: user.domain,
-                username: user.username.split('@')[0],
+                username: user.username,
             }),
         };
     Util.setCrossDomainAjaxOptions(options);
