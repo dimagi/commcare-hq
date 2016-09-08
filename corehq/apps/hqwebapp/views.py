@@ -230,6 +230,10 @@ def server_up(req):
             "always_check": True,
             "check_func": checks.check_redis,
         },
+        "formplayer": {
+            "always_check": True,
+            "check_func": checks.check_formplayer
+        },
     }
 
     failed = False
