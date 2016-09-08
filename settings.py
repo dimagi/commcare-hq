@@ -388,6 +388,7 @@ HQ_APPS = (
     'custom.common',
 
     'custom.icds_reports',
+    'custom.enikshay.integrations.ninetyninedots'
 )
 
 # DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
@@ -765,6 +766,7 @@ LOCAL_APPS = ()
 LOCAL_COUCHDB_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
 LOCAL_PILLOWTOPS = {}
+LOCAL_REPEATERS = ()
 
 # Prelogin site
 ENABLE_PRELOGIN_SITE = False
@@ -1578,6 +1580,19 @@ PILLOWTOPS = {
         },
     ]
 }
+
+BASE_REPEATERS = (
+    'corehq.apps.repeaters.models.FormRepeater',
+    'corehq.apps.repeaters.models.CaseRepeater',
+    'corehq.apps.repeaters.models.ShortFormRepeater',
+    'corehq.apps.repeaters.models.AppStructureRepeater',
+)
+
+CUSTOM_REPEATERS = (
+    'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsRegisterPatientRepeater',
+)
+
+REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + CUSTOM_REPEATERS
 
 
 STATIC_UCR_REPORTS = [

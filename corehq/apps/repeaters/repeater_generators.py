@@ -48,6 +48,20 @@ class BasePayloadGenerator(object):
             "</data>" % datetime.utcnow()
         )
 
+    def handle_success(self, response, payload_doc):
+        """handle a successful post
+
+        e.g. could be used to store something to the payload_doc once a
+        response is recieved
+
+        """
+        return True
+
+    def handle_failure(self, response, payload_doc):
+        """handle a failed post
+        """
+        return True
+
 
 @RegisterGenerator(FormRepeater, 'form_xml', 'XML', is_default=True)
 class FormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
