@@ -72,6 +72,8 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
                     options.data = JSON.stringify({
                         "sessionId": sessionId,
+                        "username": user.username,
+                        "domain": user.domain,
                     });
 
                     options.url = formplayerUrl + '/incomplete-form';
