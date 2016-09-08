@@ -8,6 +8,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
 
+from corehq.apps.hqwebapp.encoders import LazyEncoder
+
 Base = declarative_base()
 
 
@@ -107,7 +109,7 @@ class DiffDB(BaseDB):
             if val is Ellipsis:
                 return None
             else:
-                return json.dumps(val)
+                return json.dumps(val, cls=LazyEncoder)
 
         for d in doc_diffs:
             session.add(PlanningDiff(
