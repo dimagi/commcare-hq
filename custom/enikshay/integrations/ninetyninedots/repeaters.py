@@ -44,15 +44,13 @@ class NinetyNineDotsRegisterPatientRepeater(CaseRepeater):
         return False
 
 
-class NinetyNineDotsUpdatePatientRepeater(CaseRepeater):
-    class Meta(object):
-        app_label = 'repeaters'
-
-    friendly_name = _("99DOTS Patient Registration")
+class NinetyNineDotsUpdatePatientRepeater(NinetyNineDotsRegisterPatientRepeater):
+    friendly_name = _("99DOTS Patient Update")
 
     @classmethod
-    def available_for_domain(cls, domain):
-        return NINETYNINE_DOTS.enabled(domain)
+    def get_custom_url(cls, domain):
+        from custom.enikshay.integrations.ninetyninedots.views import UpdatePatientRepeaterView
+        return reverse(UpdatePatientRepeaterView.urlname, args=[domain])
 
     def allowed_to_forward(self, case):
         # checks whitelisted case types and users
