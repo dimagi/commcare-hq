@@ -13,6 +13,7 @@ function HQReportDataTables(options) {
     self.customSort = options.customSort || null;
     self.ajaxParams = options.ajaxParams || new Object();
     self.ajaxSource = options.ajaxSource;
+    self.ajaxMethod = options.ajaxMethod || 'GET';
     self.loadingText = options.loadingText || "Loading <img src='/static/hqwebapp/img/ajax-loader.gif' alt='loading indicator' />";
     self.loadingTemplateSelector = options.loadingTemplateSelector;
     if (self.loadingTemplateSelector !== undefined) {
@@ -99,7 +100,10 @@ function HQReportDataTables(options) {
             if(self.ajaxSource) {
                 params.bServerSide = true;
                 params.bProcessing = true;
-                params.sAjaxSource = self.ajaxSource;
+                params.sAjaxSource = {
+                    url: self.ajaxSource,
+                    method: self.ajaxMethod,
+                };
                 params.bFilter = $(this).data('filter') || false;
                 self.fmtParams = function (defParams) {
                     var ajaxParams = $.isFunction(self.ajaxParams) ? self.ajaxParams() : self.ajaxParams;
@@ -143,9 +147,9 @@ function HQReportDataTables(options) {
                         }
                         return result
                     };
-
                     oSettings.jqXHR = $.ajax( {
-                        "url": sSource,
+                        "url": sSource.url,
+                        "method": sSource.method,
                         "data": self.fmtParams(aoData),
                         "success": custom_callback,
                         "error": function(jqXHR, textStatus, errorThrown) {
