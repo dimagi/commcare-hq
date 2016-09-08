@@ -30,9 +30,9 @@ class Command(LabelCommand):
 
     @staticmethod
     def require_only_option(sole_option, options):
-        base_options = {option.dest for option in LabelCommand.option_list}
+        this_command_opts = {'MIGRATE', 'COMMIT', 'blow_away', 'stats', 'show_diffs', 'no_input'}
         assert all(not value for key, value in options.items()
-                   if key not in base_options and key != sole_option)
+                   if key in this_command_opts and key != sole_option)
 
     def handle_label(self, domain, **options):
         if should_use_sql_backend(domain):
