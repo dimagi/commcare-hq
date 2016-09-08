@@ -1,9 +1,9 @@
 import json
 import logging
 import re
+from wsgiref.util import FileWrapper
 from django.db import IntegrityError
 from django.core import cache
-from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, StreamingHttpResponse
 import uuid
