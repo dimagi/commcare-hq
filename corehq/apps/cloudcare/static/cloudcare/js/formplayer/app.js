@@ -28,6 +28,7 @@ FormplayerFrontend.on("before:start", function () {
 
 FormplayerFrontend.navigate = function (route, options) {
     options || (options = {});
+    options = {replace: true};
     Backbone.history.navigate(route, options);
 };
 

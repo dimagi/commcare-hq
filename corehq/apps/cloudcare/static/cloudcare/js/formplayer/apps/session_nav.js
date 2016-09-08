@@ -124,28 +124,24 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         var urlObject = Util.currentUrlToObject();
         urlObject.addStep(index);
         Util.setUrlToObject(urlObject);
-        API.listMenus();
     });
 
     FormplayerFrontend.on("menu:paginate", function (page) {
         var urlObject = Util.currentUrlToObject();
         urlObject.setPage(page);
         Util.setUrlToObject(urlObject);
-        API.listMenus();
     });
 
     FormplayerFrontend.on("menu:search", function (search) {
         var urlObject = Util.currentUrlToObject();
         urlObject.setSearch(search);
         Util.setUrlToObject(urlObject);
-        API.listMenus();
     });
 
     FormplayerFrontend.on("menu:query", function (queryDict) {
         var urlObject = Util.currentUrlToObject();
         urlObject.setQuery(queryDict);
         Util.setUrlToObject(urlObject);
-        API.listMenus();
     });
 
     FormplayerFrontend.on("menu:show:detail", function (model, detailTabIndex) {
