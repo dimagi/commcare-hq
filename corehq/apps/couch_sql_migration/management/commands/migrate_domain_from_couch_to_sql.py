@@ -9,7 +9,7 @@ from corehq.apps.couch_sql_migration.couchsqlmigration import (
     commit_migration)
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
-from corehq.apps.tzmigration import set_migration_started, set_migration_not_started, get_migration_status, \
+from corehq.apps.tzmigration.api import set_migration_started, set_migration_not_started, get_migration_status, \
     MigrationStatus, set_migration_complete
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.utils import should_use_sql_backend

@@ -2,8 +2,7 @@ import uuid
 import json
 import phonenumbers
 import jsonobject
-from corehq.apps.repeaters.models import RegisterGenerator
-from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator
+from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator, RegisterGenerator
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks

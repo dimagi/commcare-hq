@@ -13,9 +13,9 @@ from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
-from corehq.apps.tzmigration import TimezoneMigrationProgress
+from corehq.apps.tzmigration.models import TimezoneMigrationProgress
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors, LedgerAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils

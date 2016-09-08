@@ -8,7 +8,7 @@ from django.conf import settings
 from casexml.apps.case.cleanup import rebuild_case_from_actions
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.xform import get_case_updates
-from corehq.apps.tzmigration import set_migration_started, \
+from corehq.apps.tzmigration.api import set_migration_started, \
     set_migration_complete, force_phone_timezones_should_be_processed
 from corehq.apps.tzmigration.planning import PlanningDB
 from corehq.blobs.mixin import BlobHelper

@@ -1,6 +1,6 @@
 from django.core.files.uploadedfile import UploadedFile
 
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.couchapps.dbaccessors import forms_have_multimedia
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from django.test import TestCase

@@ -2,13 +2,13 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
+from corehq.apps.repeaters.repeater_generators import RegisterGenerator
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 
 from corehq.apps.es.users import UserES
-from corehq.apps.repeaters.models import RegisterGenerator
 from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.users.util import raw_username
 

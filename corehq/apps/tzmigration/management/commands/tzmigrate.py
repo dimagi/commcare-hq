@@ -1,7 +1,7 @@
 from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
-from corehq.apps.tzmigration import set_migration_started, \
+from corehq.apps.tzmigration.api import set_migration_started, \
     set_migration_complete, set_migration_not_started, get_migration_status, \
     MigrationStatus
 from corehq.apps.tzmigration.timezonemigration import prepare_planning_db, \

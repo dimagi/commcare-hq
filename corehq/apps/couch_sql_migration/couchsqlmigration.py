@@ -7,7 +7,7 @@ import settings
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xform import get_all_extensions_to_close, CaseProcessingResult
 from corehq.apps.domain.models import Domain
-from corehq.apps.tzmigration import force_phone_timezones_should_be_processed
+from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, doc_type_to_state, LedgerAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms

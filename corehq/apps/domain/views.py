@@ -39,6 +39,7 @@ from corehq.apps.case_search.models import (
     disable_case_search,
 )
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
+from corehq.apps.repeaters.repeater_generators import RegisterGenerator
 
 from corehq.const import USER_DATE_FORMAT
 from corehq.tabs.tabclasses import ProjectSettingsTab
@@ -116,8 +117,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission
 from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
-from corehq.apps.repeaters.models import Repeater, FormRepeater, CaseRepeater, ShortFormRepeater, \
-    AppStructureRepeater, RepeatRecord, RegisterGenerator
+from corehq.apps.repeaters.models import Repeater, RepeatRecord
 from corehq.apps.repeaters.dbaccessors import (
     get_paged_repeat_records,
     get_repeat_record_count,
