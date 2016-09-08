@@ -735,13 +735,37 @@ class SupplyPointSelectWidget(forms.Widget):
         }))
 
 
+class PrimaryLocationWidget(forms.Widget):
+    """
+    Options for this field are dynamically set in JS depending on what options are selected
+    for 'assigned_locations'. This works in conjunction with SupplyPointSelectWidget.
+    """
+    def __init__(self, css_id, source_css_id, attrs=None):
+        """
+        args:
+            css_id: css_id of primary_location field
+            source_css_id: css_id of assigned_locations field
+        """
+        super(PrimaryLocationWidget, self).__init__(attrs)
+        self.css_id = css_id
+        self.source_css_id = source_css_id
+
+    def render(self, name, value, attrs=None):
+        return get_template('locations/manage/partials/drilldown_location_widget.html').render(Context({
+            'css_id': self.css_id,
+            'source_css_id': self.source_css_id,
+            'name': name,
+            'value': value or ''
+        }))
+
+
 class CommtrackUserForm(forms.Form):
     assigned_locations = forms.CharField(
         label=ugettext_noop("Locations"),
         required=False,
     )
     primary_location = forms.CharField(
-        label=ugettext_noop("Locajtion"),
+        label=ugettext_noop("Primary Location"),
         required=False
     )
     program_id = forms.ChoiceField(
@@ -759,7 +783,10 @@ class CommtrackUserForm(forms.Form):
         self.fields['assigned_locations'].widget = SupplyPointSelectWidget(
             domain=self.domain, multiselect=True, id='id_assigned_locations'
         )
-        self.fields['primary_location'].widget = SupplyPointSelectWidget(domain=self.domain)
+        self.fields['primary_location'].widget = PrimaryLocationWidget(
+            css_id='id_primary_location',
+            source_css_id='id_assigned_locations'
+        )
         if self.commtrack_enabled:
             programs = Program.by_domain(self.domain, wrap=False)
             choices = list((prog['_id'], prog['name']) for prog in programs)
