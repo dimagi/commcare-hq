@@ -9,7 +9,7 @@ from django.db import connections
 from dimagi.utils.logging import notify_exception
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week=7), acks_late=True)
+@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week=6), acks_late=True)
 def move_ucr_data_into_aggregation_tables():
 
     if not hasattr(settings, "ICDS_UCR_DATABASE_ALIAS"):
