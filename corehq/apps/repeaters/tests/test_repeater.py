@@ -15,8 +15,8 @@ from corehq.apps.repeaters.models import (
     CaseRepeater,
     FormRepeater,
     RepeatRecord,
-    RegisterGenerator)
-from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator
+)
+from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator, RegisterGenerator
 from corehq.apps.repeaters.const import MIN_RETRY_WAIT, POST_TIMEOUT
 from corehq.apps.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
