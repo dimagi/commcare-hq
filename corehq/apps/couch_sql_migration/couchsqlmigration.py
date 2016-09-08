@@ -6,6 +6,7 @@ import corehq.apps.couch_sql_migration.constants as const
 import settings
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xform import get_all_extensions_to_close, CaseProcessingResult
+from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.tzmigration import force_phone_timezones_should_be_processed
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, doc_type_to_state, LedgerAccessorSQL
@@ -20,19 +21,25 @@ from corehq.form_processor.utils import adjust_datetimes
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import set_local_domain_sql_backend_override, \
     clear_local_domain_sql_backend_override
-from couchforms.models import XFormInstance, doc_types
+from corehq.util.log import with_progress_bar
+from couchforms.models import XFormInstance, doc_types as form_doc_types, all_known_formlike_doc_types
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from fluff.management.commands.ptop_reindexer_fluff import ReindexEventHandler
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
 
+CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 
-def do_couch_to_sql_migration(domain):
+UNPROCESSED_DOC_TYPES = list(all_known_formlike_doc_types() - {'XFormInstance'})
+
+
+def do_couch_to_sql_migration(domain, with_progress=True):
     set_local_domain_sql_backend_override(domain)
-    CouchSqlDomainMigrator(domain).migrate()
+    CouchSqlDomainMigrator(domain, with_progress=with_progress).migrate()
 
 
 class CouchSqlDomainMigrator(object):
-    def __init__(self, domain):
+    def __init__(self, domain, with_progress=True):
+        self.with_progress = with_progress
         from corehq.apps.tzmigration.planning import DiffDB
 
         assert should_use_sql_backend(domain)
@@ -49,13 +56,13 @@ class CouchSqlDomainMigrator(object):
     def _process_main_forms(self):
         last_received_on = datetime.min
         # process main forms (including cases and ledgers)
-        for change in _get_main_form_iterator(self.domain).iter_all_changes():
+        changes = _get_main_form_iterator(self.domain).iter_all_changes()
+        for change in self._with_progress(['XFormInstance'], changes):
             form = change.get_document()
             wrapped_form = XFormInstance.wrap(form)
             form_received = wrapped_form.received_on
             assert last_received_on <= form_received
             last_received_on = form_received
-            print 'processing form {}: {}'.format(form['_id'], form_received)
             self._migrate_form_and_associated_models(wrapped_form)
 
     def _migrate_form_and_associated_models(self, couch_form):
@@ -77,12 +84,10 @@ class CouchSqlDomainMigrator(object):
     def _copy_unprocessed_forms(self):
         from corehq.apps.tzmigration.timezonemigration import json_diff
 
-        for change in _get_unprocessed_form_iterator(self.domain).iter_all_changes():
+        changes = _get_unprocessed_form_iterator(self.domain).iter_all_changes()
+        for change in self._with_progress(UNPROCESSED_DOC_TYPES, changes):
             couch_form_json = change.get_document()
             couch_form = _wrap_form(couch_form_json)
-            print 'copying unprocessed {} {}: {}'.format(
-                couch_form.doc_type, couch_form.form_id, couch_form.received_on
-            )
             sql_form = XFormInstanceSQL(
                 form_id=couch_form.form_id,
                 xmlns=couch_form.xmlns,
@@ -102,9 +107,10 @@ class CouchSqlDomainMigrator(object):
             _save_migrated_models(sql_form)
 
     def _copy_unprocessed_cases(self):
-        for change in _get_case_iterator(self.domain, doc_types=['CommCareCase-Deleted']).iter_all_changes():
+        doc_types = ['CommCareCase-Deleted']
+        changes = _get_case_iterator(self.domain, doc_types=doc_types).iter_all_changes()
+        for change in self._with_progress(doc_types, changes):
             couch_case = CommCareCase.wrap(change.get_document())
-            print 'copying unprocessed {} {}'.format(couch_case.doc_type, couch_case.case_id)
             sql_case = CommCareCaseSQL(
                 case_id=couch_case.case_id,
                 domain=self.domain,
@@ -132,7 +138,8 @@ class CouchSqlDomainMigrator(object):
 
     def _calculate_case_diffs(self):
         cases = {}
-        for change in _get_case_iterator(self.domain).iter_all_changes():
+        changes = _get_case_iterator(self.domain).iter_all_changes()
+        for change in self._with_progress(CASE_DOC_TYPES, changes, progress_name='Calculating diffs'):
             cases[change.id] = change.get_document()
             if len(cases) == 1000:
                 self._diff_cases(cases)
@@ -171,10 +178,21 @@ class CouchSqlDomainMigrator(object):
                 _filter_ledger_diffs(diffs)
             )
 
+    def _with_progress(self, doc_types, iterable, progress_name='Migrating'):
+        if self.with_progress:
+            doc_count = sum([
+                get_doc_count_in_domain_by_type(self.domain, doc_type, XFormInstance.get_db())
+                for doc_type in doc_types
+            ])
+            prefix = "{} ({})".format(progress_name, ', '.join(doc_types))
+            return with_progress_bar(iterable, doc_count, prefix=prefix, oneline=False)
+        else:
+            return iterable
+
 
 def _wrap_form(doc):
-    if doc['doc_type'] in doc_types():
-        return doc_types()[doc['doc_type']].wrap(doc)
+    if doc['doc_type'] in form_doc_types():
+        return form_doc_types()[doc['doc_type']].wrap(doc)
     if doc['doc_type'] in ("XFormInstance-Deleted", "HQSubmission"):
         return XFormInstance.wrap(doc)
 
@@ -391,22 +409,13 @@ def _get_unprocessed_form_iterator(domain):
     return CouchDomainDocTypeChangeProvider(
         couch_db=XFormInstance.get_db(),
         domains=[domain],
-        doc_types=[
-            'XFormArchived',
-            'XFormError',
-            'XFormDeprecated',
-            'XFormDuplicate',
-            # todo: need to figure out which of these we plan on supporting
-            'XFormInstance-Deleted',
-            'HQSubmission',
-            'SubmissionErrorLog',
-        ],
+        doc_types=UNPROCESSED_DOC_TYPES,
         event_handler=ReindexEventHandler(u'couch to sql migrator ({} unprocessed forms)'.format(domain)),
     )
 
 
 def _get_case_iterator(domain, doc_types=None):
-    doc_types = doc_types or ['CommCareCase', 'CommCareCase-Deleted', ]
+    doc_types = doc_types or CASE_DOC_TYPES
     return CouchDomainDocTypeChangeProvider(
         couch_db=XFormInstance.get_db(),
         domains=[domain],

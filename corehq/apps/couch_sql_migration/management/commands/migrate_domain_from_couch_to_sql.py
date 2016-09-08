@@ -45,7 +45,7 @@ class Command(LabelCommand):
         if options['MIGRATE']:
             self.require_only_option('MIGRATE', options)
             set_migration_started(domain)
-            do_couch_to_sql_migration(domain)
+            do_couch_to_sql_migration(domain, with_progress=not self.no_input)
         if options['blow_away']:
             self.require_only_option('blow_away', options)
             if not self.no_input:
