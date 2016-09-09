@@ -48,15 +48,7 @@ def get_number_of_forms_per_domain():
 
 
 def get_number_of_forms_in_domain(domain):
-    from corehq.apps.reports.util import make_form_couch_key
-    key = make_form_couch_key(domain)
-    row = XFormInstance.get_db().view(
-        "all_forms/view",
-        startkey=key,
-        endkey=key + [{}],
-        stale=stale_ok(),
-    ).one()
-    return row["value"] if row else 0
+    return FormES().domain(domain).size(0).run().total
 
 
 def get_first_form_submission_received(domain):
