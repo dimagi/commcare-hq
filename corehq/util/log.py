@@ -49,6 +49,7 @@ def get_sanitized_request_repr(request):
     """
     if isinstance(request, HttpRequest):
         filter = get_exception_reporter_filter(request)
+        return repr(request)
         return filter.get_request_repr(request)
 
     return request
@@ -121,6 +122,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
         return context
 
     def emit(self, record):
+        print record
         context = self.get_context(record)
 
         message = "\n\n".join(filter(None, [
