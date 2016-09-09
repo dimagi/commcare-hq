@@ -1659,54 +1659,75 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             location.group_id
         })
 
-        self.location_id = location.location_id
         self.update_fixture_status(UserFixtureType.LOCATION)
+        self.location_id = location.location_id
         self.get_domain_membership(self.domain).location_id = location.location_id
         if self.location_id not in self.assigned_location_ids:
-            self.reset_locations(self.assigned_location_ids + [self.location_id])
-        else:
-            self.save()
+            self.assigned_location_ids.append(self.location_id)
+            self.get_domain_membership(self.domain).assigned_location_ids.append(self.location_id)
+            self.user_data['commcare_location_ids'] = ','.join(self.assigned_location_ids)
+        self.save()
 
     def unset_location(self):
         """
-        Unset the primary location and remove all associated user data and cases
+        Resets primary location to next available location from assigned_location_ids.
+            If there are no more locations in assigned_location_ids,
+            then the primary location and user data are cleared
         """
         from corehq.apps.fixtures.models import UserFixtureType
+        from corehq.apps.locations.models import Location
 
-        old_location_id = self.location_id
-        self.user_data.pop('commcare_location_id', None)
-        self.user_data.pop('commtrack-supply-point', None)
-        self.user_data.pop('commcare_primary_case_sharing_id', None)
-        self.location_id = None
-        self.clear_location_delegates()
-        self.update_fixture_status(UserFixtureType.LOCATION)
-        self.get_domain_membership(self.domain).location_id = None
-        if old_location_id in self.assigned_location_ids:
-            self._unset_additional_location(old_location_id)
+        old_primary_location_id = self.location_id
+        self.assigned_location_ids.remove(old_primary_location_id)
+        self.get_domain_membership(self.domain).assigned_location_ids.remove(old_primary_location_id)
+
+        if self.assigned_location_ids:
+            self.user_data['commcare_location_ids'] = ','.join(self.assigned_location_ids)
         else:
+            self.user_data.pop('commcare_location_ids')
+
+        if self.assigned_location_ids:
+            new_primary_location_id = self.assigned_location_ids[0]
+            self.set_location(Location.get(new_primary_location_id))
+        else:
+            self.user_data.pop('commcare_location_id', None)
+            self.user_data.pop('commtrack-supply-point', None)
+            self.user_data.pop('commcare_primary_case_sharing_id', None)
+            self.location_id = None
+            self.clear_location_delegates()
+            self.update_fixture_status(UserFixtureType.LOCATION)
+            self.get_domain_membership(self.domain).location_id = None
             self.save()
 
     def unset_location_by_id(self, location_id):
         """
-        Unset a location that the user is assigned to that may or may not be primary location
+        Unset a location that the user is assigned to that may or may not be primary location.
+            If the location_id is primary-location, then next available location from
+            assigned_location_ids is set as the primary-location
         """
-
         if location_id == self.location_id:
             # check if primary location
             self.unset_location()
         else:
-            self._unset_additional_location(location_id)
+            self.assigned_location_ids.remove(old_primary_location_id)
+            self.get_domain_membership(self.domain).assigned_location_ids.remove(old_primary_location_id)
 
-    def _unset_additional_location(self, location_id):
-        self.assigned_location_ids.remove(location_id)
-        self.get_domain_membership(self.domain).assigned_location_ids.remove(location_id)
-        self.reset_locations(self.assigned_location_ids)
+            if self.assigned_location_ids:
+                self.user_data['commcare_location_ids'] = ','.join(self.assigned_location_ids)
+                print self.user_data, 'dsadsda'
+            else:
+                self.user_data.pop('commcare_location_ids')
+            self.save()
 
     def reset_locations(self, location_ids):
         """
-        reset user's assigned_locations to given location_ids and update user data
+        Reset user's assigned_locations to given location_ids and update user data.
+            If primary-location is not set, then next available location from
+            assigned_location_ids is set as the primary-location
         """
-        self['assigned_location_ids'] = location_ids
+        from corehq.apps.locations.models import Location
+
+        self.assigned_location_ids = location_ids
         self.get_domain_membership(self.domain).assigned_location_ids = location_ids
         if location_ids:
             self.user_data.update({
@@ -1714,7 +1735,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             })
         else:
             self.user_data.pop('commcare_location_ids')
-        self.save()
+
+        # try to set primary-location if not set already
+        if not self.location_id and location_ids:
+            self.set_location(Location.get(location_ids[0]))
+        else:
+            self.save()
 
     @property
     def locations(self):
@@ -2003,45 +2029,45 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             location_id = location_object_or_id
         else:
             location_id = location_object_or_id._id
+
         membership = self.get_domain_membership(domain)
         membership.location_id = location_id
-
         if self.location_id not in membership.assigned_location_ids:
-            self.reset_locations(domain, membership.assigned_location_ids + [membership.location_id])
-        else:
-            self.save()
+            membership.assigned_location_ids.append(location_id)
+        self.save()
 
     def unset_location(self, domain):
         """
-        unset primary location
+        Change primary location to next location from assigned_location_ids,
+        if there are no more locations in assigned_location_ids, primary location is cleared
         """
         membership = self.get_domain_membership(domain)
         old_location_id = membership.location_id
-        membership.location_id = None
-
-        if old_location_id in membership.assigned_location_ids:
-            self._unset_additional_location(domain, old_location_id)
+        membership.assigned_location_ids.remove(old_location_id)
+        if membership.assigned_location_ids:
+            membership.location_id = membership.assigned_location_ids[0]
         else:
-            self.save()
+            membership.location_id = None
+        self.save()
 
     def unset_location_by_id(self, domain, location_id):
         """
         Unset a location that the user is assigned to that may or may not be primary location
         """
-        primary_id = self.get_domain_membership(domain).location_id
+        membership = self.get_domain_membership(domain)
+        primary_id = membership.location_id
         if location_id == primary_id:
             # check if primary location
             self.unset_location(domain)
         else:
-            self._unset_additional_location(domain, location_id)
-
-    def _unset_additional_location(self, domain, location_id):
-        domain_membership = self.get_domain_membership(domain)
-        domain_membership.assigned_location_ids.remove(location_id)
-        self.save()
+            membership.assigned_location_ids.remove(location_id)
+            self.save()
 
     def reset_locations(self, domain, location_ids):
-        self.get_domain_membership(domain).assigned_location_ids = location_ids
+        membership = self.get_domain_membership(domain)
+        membership.assigned_location_ids = location_ids
+        if not membership.location_id and location_ids:
+            membership.location_id = location_ids[0]
         self.save()
 
     def get_location_id(self, domain):
