@@ -2,8 +2,9 @@ from django.test import TestCase
 from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import create_real_cases_from_dummy_cases
-from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
-    get_case_ids_in_domain, get_case_types_for_domain, get_cases_in_domain, \
+from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain_of_type, \
+    get_number_of_cases_in_domain
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain, get_case_types_for_domain, get_cases_in_domain, \
     get_case_ids_in_domain_by_owner, \
     get_all_case_owner_ids, get_case_properties
 from couchforms.models import XFormInstance
@@ -40,7 +41,7 @@ class DBAccessorsTest(TestCase):
 
     def test_get_number_of_cases_in_domain__type(self):
         self.assertEqual(
-            get_number_of_cases_in_domain(self.domain, type='type1'),
+            get_number_of_cases_in_domain_of_type(self.domain, case_type='type1'),
             len([case for case in self.cases
                  if case.domain == self.domain and case.type == 'type1'])
         )
