@@ -4,17 +4,6 @@ from dimagi.utils.couch.database import iter_docs
 from casexml.apps.case.models import CommCareCase
 
 
-def get_number_of_cases_per_domain():
-    return {
-        row["key"][0]: row["value"]
-        for row in CommCareCase.get_db().view(
-            "case_types_by_domain/view",
-            group=True,
-            group_level=1,
-        ).all()
-    }
-
-
 def get_case_ids_in_domain(domain, type=None):
     if type is None:
         type_keys = [[]]

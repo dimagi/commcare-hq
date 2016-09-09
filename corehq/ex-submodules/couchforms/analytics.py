@@ -32,21 +32,6 @@ def domain_has_submission_in_last_30_days(domain):
         return False
 
 
-def get_number_of_forms_per_domain():
-    key = ['submission']
-    return {
-        row["key"][1]: row["value"]
-        for row in XFormInstance.get_db().view(
-            "all_forms/view",
-            group=True,
-            group_level=2,
-            startkey=key,
-            endkey=key + [{}],
-            stale=stale_ok(),
-        ).all()
-    }
-
-
 def get_number_of_forms_in_domain(domain):
     return FormES().domain(domain).size(0).run().total
 
