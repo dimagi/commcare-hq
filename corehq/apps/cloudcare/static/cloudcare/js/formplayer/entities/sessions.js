@@ -27,17 +27,15 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
         getSessions: function () {
 
             var user = FormplayerFrontend.request('currentUser');
-            var username = user.username;
             var domain = user.domain;
             var formplayerUrl = user.formplayer_url;
-            var trimmedUsername = username.substring(0, username.indexOf("@"));
 
             var menus = new Entities.FormEntrySessionCollection({
 
                 fetch: function (options) {
 
                     options.data = JSON.stringify({
-                        "username": trimmedUsername,
+                        "username": user.username,
                         "domain": domain,
                     });
 
