@@ -831,10 +831,7 @@ class CommtrackUserForm(forms.Form):
 
             old_location_ids = user.assigned_location_ids
             if set(location_ids) != set(old_location_ids):
-                if location_ids:
-                    user.assign_to_locations(location_ids)
-                else:
-                    user.unassign_all_locations()
+                user.reset_locations(location_ids)
         else:
             domain_membership = user.get_domain_membership(self.domain)
             old_location_id = domain_membership.location_id
@@ -846,10 +843,7 @@ class CommtrackUserForm(forms.Form):
 
             old_location_ids = domain_membership.assigned_location_ids
             if set(location_ids) != set(old_location_ids):
-                if location_ids:
-                    user.assign_to_locations(self.domain, location_ids)
-                else:
-                    user.unassign_all_locations(self.domain)
+                user.reset_locations(self.domain, location_ids)
 
     def clean_assigned_locations(self):
         # select2 (< 4.0) doesn't format multiselect for remote data as an array
