@@ -75,15 +75,50 @@ class DiffTestCases(SimpleTestCase):
 
     def test_filter_case_deletion_fields(self):
         couch_case = {'doc_type': 'CommCareCase-Deleted'}
-        filtered = filter_case_diffs(couch_case, DELETION_DIFFS + REAL_DIFFS)
+        filtered = filter_case_diffs(couch_case, {}, DELETION_DIFFS + REAL_DIFFS)
         self.assertEqual(filtered, REAL_DIFFS)
 
     def test_filter_case_diffs(self):
         couch_case = {'doc_type': 'CommCareCase'}
         partial_diffs = _get_partial_diffs('CommCareCase')
         diffs = list(CASE_IGNORED_DIFFS) + partial_diffs + DATE_DIFFS + REAL_DIFFS
-        filtered = filter_case_diffs(couch_case, diffs)
+        filtered = filter_case_diffs(couch_case, {}, diffs)
         self.assertEqual(filtered, REAL_DIFFS)
+
+    def test_filter_case_xform_id_diffs_good(self):
+        couch_case = {
+            'doc_type': 'CommCareCase',
+            'xform_ids': ['123', '456']
+        }
+        sql_case = {
+            'doc_type': 'CommCareCase',
+            'xform_ids': ['456', '123']
+        }
+
+        diffs = [
+            FormJsonDiff(diff_type=u'diff', path=('xform_ids', '[*]'), old_value=u'123', new_value=u'456'),
+            FormJsonDiff(diff_type=u'diff', path=('xform_ids', '[*]'), old_value=u'455', new_value=u'123')
+        ]
+
+        filtered = filter_case_diffs(couch_case, sql_case, diffs + REAL_DIFFS)
+        self.assertEqual(filtered, REAL_DIFFS)
+
+    def test_filter_case_xform_id_diffs_bad(self):
+        couch_case = {
+            'doc_type': 'CommCareCase',
+            'xform_ids': ['123', '456']
+        }
+        sql_case = {
+            'doc_type': 'CommCareCase',
+            'xform_ids': ['123', 'abc']
+        }
+
+        diffs = [
+            FormJsonDiff(diff_type=u'diff', path=('xform_ids', '[*]'), old_value=u'456', new_value=u'abc')
+        ]
+
+        filtered = filter_case_diffs(couch_case, sql_case, diffs + REAL_DIFFS)
+        self.assertEqual(filtered, diffs + REAL_DIFFS)
 
     def test_filter_usercase_diff(self):
         couch_case = {
@@ -96,7 +131,7 @@ class DiffTestCases(SimpleTestCase):
         user_case_diffs = [
             FormJsonDiff(diff_type=u'diff', path=(u'external_id',), old_value=u'', new_value=u'123')
         ]
-        filtered = filter_case_diffs(couch_case, user_case_diffs + REAL_DIFFS)
+        filtered = filter_case_diffs(couch_case, {}, user_case_diffs + REAL_DIFFS)
         self.assertEqual(filtered, REAL_DIFFS)
 
     def test_filter_ledger_diffs(self):

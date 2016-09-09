@@ -121,13 +121,14 @@ def filter_form_diffs(doc_type, diffs):
     return filtered
 
 
-def filter_case_diffs(couch_case, diffs):
+def filter_case_diffs(couch_case, sql_case, diffs):
     doc_type = couch_case['doc_type']
     filtered_diffs = _filter_exact_matches(diffs, CASE_IGNORED_DIFFS)
     filtered_diffs = _filter_partial_matches(filtered_diffs, PARTIAL_DIFFS['CommCareCase'])
     filtered_diffs = _filter_renamed_fields(filtered_diffs, doc_type)
     filtered_diffs = _filter_date_diffs(filtered_diffs)
     filtered_diffs = _filter_user_case_diffs(couch_case, filtered_diffs)
+    filtered_diffs = _filter_xform_id_diffs(couch_case, sql_case, filtered_diffs)
     return filtered_diffs
 
 
@@ -207,3 +208,18 @@ def _filter_user_case_diffs(couch_case, diffs):
             diffs.remove(diff)
 
     return diffs
+
+
+def _filter_xform_id_diffs(couch_case, sql_case, diffs):
+    """Some couch docs have the xform ID's out of order so assume that
+    if both docs contain the same set of xform IDs then they are the same"""
+    xform_id_diffs = {
+        diff for diff in diffs if diff.path == ('xform_ids', '[*]')
+    }
+    if not xform_id_diffs:
+        return diffs
+
+    if set(couch_case['xform_ids']) != set(sql_case['xform_ids']):
+        return diffs
+
+    return [diff for diff in diffs if diff not in xform_id_diffs]
