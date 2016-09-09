@@ -761,3 +761,15 @@ class HealthCenter(BasicTabularReport, CustomProjectReport, ProjectReportParamet
                 return fdd(val, val)
 
         return [combine(unwrap(x)) for x in zip(*rows)]
+
+CUSTOM_REPORTS = (
+    ('CARE Benin Special Reports', (
+        MandE,
+        Nurse,
+        Relais,
+        DangerSigns,
+        Referrals,
+        HealthCenter,
+        Outcomes,
+    )),
+)
