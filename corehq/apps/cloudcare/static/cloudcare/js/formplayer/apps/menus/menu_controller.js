@@ -14,7 +14,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             $.when(fetchingNextMenu).done(function (menuResponse) {
 
                 // show any notifications from Formplayer
-                if (menuResponse.notification && !_.isNull(menuResponse.notification.message)){
+                if (menuResponse.notification && !_.isNull(menuResponse.notification.message)) {
                     FormplayerFrontend.request("handleNotification", menuResponse.notification);
                 }
 
@@ -43,40 +43,9 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
 
         showMenu: function (menuResponse) {
-            var menuListView;
-            var menuData = {
-                collection: menuResponse,
-                title: menuResponse.title,
-                headers: menuResponse.headers,
-                widthHints: menuResponse.widthHints,
-                action: menuResponse.action,
-                pageCount: menuResponse.pageCount,
-                currentPage: menuResponse.currentPage,
-                styles: menuResponse.styles,
-                type: menuResponse.type,
-                sessionId: menuResponse.sessionId,
-                tiles: menuResponse.tiles,
-                numEntitiesPerRow: menuResponse.numEntitiesPerRow,
-                maxHeight: menuResponse.maxHeight,
-                maxWidth: menuResponse.maxWidth,
-            };
-            if (menuResponse.type === "commands") {
-                menuListView = new MenuList.MenuListView(menuData);
-                FormplayerFrontend.regions.main.show(menuListView.render());
-            } else if (menuResponse.type === "query") {
-                menuListView = new MenuList.QueryListView(menuData);
-                FormplayerFrontend.regions.main.show(menuListView.render());
-            }
-            else if (menuResponse.type === "entities") {
-                if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
-                    menuListView = new MenuList.CaseListView(menuData);
-                } else {
-                    if (menuResponse.numEntitiesPerRow > 1) {
-                        menuListView = new MenuList.GridCaseTileListView(menuData);
-                    } else {
-                        menuListView = new MenuList.CaseTileListView(menuData);
-                    }
-                }
+            var menuListView = MenuList.Controller.getMenuView(menuResponse);
+
+            if (menuListView) {
                 FormplayerFrontend.regions.main.show(menuListView.render());
             }
 
@@ -112,7 +81,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             var self = this;
             var detailObjects = model.options.model.get('details');
             // If we have no details, just select the entity
-            if(detailObjects === null || detailObjects === undefined){
+            if (detailObjects === null || detailObjects === undefined) {
                 FormplayerFrontend.trigger("menu:select", model.model.get('id'));
                 return;
             }
@@ -153,5 +122,41 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             $('#case-detail-modal').find('.modal-body').html(menuListView.render().el);
             $('#case-detail-modal').modal('show');
         },
-    };
+
+        getMenuView: function (menuResponse) {
+            var menuData = {
+                collection: menuResponse,
+                title: menuResponse.title,
+                headers: menuResponse.headers,
+                widthHints: menuResponse.widthHints,
+                action: menuResponse.action,
+                pageCount: menuResponse.pageCount,
+                currentPage: menuResponse.currentPage,
+                styles: menuResponse.styles,
+                type: menuResponse.type,
+                sessionId: menuResponse.sessionId,
+                tiles: menuResponse.tiles,
+                numEntitiesPerRow: menuResponse.numEntitiesPerRow,
+                maxHeight: menuResponse.maxHeight,
+                maxWidth: menuResponse.maxWidth,
+            };
+            if (menuResponse.type === "commands") {
+                return new MenuList.MenuListView(menuData);
+            } else if (menuResponse.type === "query") {
+                return new MenuList.QueryListView(menuData);
+            }
+            else if (menuResponse.type === "entities") {
+                if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
+                    return new MenuList.CaseListView(menuData);
+                } else {
+                    if (menuResponse.numEntitiesPerRow > 1) {
+                        return new MenuList.GridCaseTileListView(menuData);
+                    } else {
+                        return new MenuList.CaseTileListView(menuData);
+                    }
+                }
+            }
+        },
+}
+    ;
 });
