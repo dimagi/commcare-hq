@@ -79,3 +79,6 @@ submodules:
     branches: []
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
+  deployment/commcare-hq-deploy:
+    branches:
+      - br/errorless-celery-restart
