@@ -141,7 +141,7 @@ class LocationGroupTest(LocationTestBase):
 
         self.assertDictEqual(
             {
-                'commcare_location_type': self.loc.location_type,
+                'commcare_location_type': self.loc.location_type_name,
                 'commcare_location_name': self.loc.name,
                 'commcare_location_foo': 'bar',
                 'commcare_location_fruit': 'banana'
@@ -150,7 +150,7 @@ class LocationGroupTest(LocationTestBase):
         )
         self.assertDictEqual(
             {
-                'commcare_location_type': self.loc.location_type,
+                'commcare_location_type': self.loc.location_type_name,
                 'commcare_location_name': self.loc.name,
                 'commcare_location_foo': 'bar',
                 'commcare_location_fruit': 'banana'
