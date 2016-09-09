@@ -239,13 +239,15 @@ class LocationForm(forms.Form):
                 )
             return site_code
 
-        else:
+    def clean(self):
+        if 'name' in self.cleaned_data and not self.cleaned_data.get('site_code', None):
             all_codes = [
                 code.lower() for code in
-                (SQLLocation.objects.filter(domain=self.domain)
+                (SQLLocation.objects.exclude(location_id=self.location.location_id)
+                                    .filter(domain=self.domain)
                                     .values_list('site_code', flat=True))
             ]
-            return generate_code(self.cleaned_data['name'], all_codes)
+            self.cleaned_data['site_code'] = generate_code(self.cleaned_data['name'], all_codes)
 
     def _get_allowed_types(self, parent):
         parent_type = parent.location_type if parent else None
