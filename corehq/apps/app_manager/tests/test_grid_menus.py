@@ -68,67 +68,51 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
 
     def test_grid_menu_for_none(self):
         factory = AppFactory(build_version='2.24.3')
-        factory.app.use_grid_menus = False
         factory.app.create_profile()
         factory.app.profile['properties'] = {'cc-grid-menus': 'none'}
         factory.new_basic_module('registration', 'patient')
         factory.app.get_module(0).display_style = 'grid'
-        suite = factory.app.create_suite()
+        root_xpath = './menu[@id="root"]'
         m0_xpath = './menu[@id="m0"]'
-        self.assertXmlHasXpath(suite, m0_xpath)
+
+        # with Modules Menu to be list should not render root menu and render module w/o style=grid
+        factory.app.use_grid_menus = False
+        suite = factory.app.create_suite()
+        self.assertXmlDoesNotHaveXpath(suite, root_xpath)
         self.assertXmlPartialEqual(
             '<partial><menu id="m0"><text><locale id="modules.m0"/></text><command id="m0-f0"/></menu></partial>',
             suite,
             m0_xpath
         )
-        # with root menu set to grid
+
+        # with Modules Menu to be grid should render root menu w/ style=grid and render module w/o style=grid
         factory.app.use_grid_menus = True
         suite = factory.app.create_suite()
-        root_xpath = './menu[@id="root"]'
-        self.assertXmlHasXpath(suite, root_xpath)
         self.assertXmlPartialEqual(
             '<partial><menu id="root" style="grid"><text/></menu></partial>',
             suite,
             root_xpath
         )
-
-    def test_grid_menu_for_first(self):
-        factory = AppFactory(build_version='2.24.3')
-        factory.app.use_grid_menus = False
-        factory.app.create_profile()
-        factory.app.profile['properties'] = {'cc-grid-menus': 'first'}
-        factory.new_basic_module('registration', 'patient')
-        # with additional root menu item
-        suite = factory.app.create_suite()
-        root_xpath = './menu[@id="root"]'
-        self.assertXmlHasXpath(suite, root_xpath)
         self.assertXmlPartialEqual(
-            '<partial><menu id="root" style="grid"><text/></menu></partial>',
+            '<partial><menu id="m0"><text><locale id="modules.m0"/></text><command id="m0-f0"/></menu></partial>',
             suite,
-            root_xpath
-        )
-        # with no additional root menu item
-        factory.app.get_module(0).put_in_root = True
-        suite = factory.app.create_suite()
-        self.assertXmlHasXpath(suite, root_xpath)
-        self.assertXmlPartialEqual(
-            '<partial><menu id="root" style="grid"><text><locale id="modules.m0"/>\
-            </text><command id="m0-f0"/></menu></partial>',
-            suite,
-            root_xpath
+            m0_xpath
         )
 
     def test_grid_menu_for_some(self):
         factory = AppFactory(build_version='2.24.3')
-        factory.app.use_grid_menus = False
         factory.app.create_profile()
-        factory.app.profile['properties'] = {'cc-grid-menus': 'all'}
+        factory.app.profile['properties'] = {'cc-grid-menus': 'some'}
         factory.new_basic_module('registration', 'patient')
         factory.new_basic_module('visit', 'patient visit')
-        factory.app.profile['properties'] = {'cc-grid-menus': 'some'}
         factory.app.get_module(1).display_style = 'grid'
-        suite = factory.app.create_suite()
+        root_xpath = './menu[@id="root"]'
         grid_module_xpath = './menu[@id="m1"]'
+
+        # with Modules Menu to be list should not render root menu and render module w/ style=grid
+        factory.app.use_grid_menus = False
+        suite = factory.app.create_suite()
+        self.assertXmlDoesNotHaveXpath(suite, root_xpath)
         self.assertXmlHasXpath(suite, grid_module_xpath)
         self.assertXmlPartialEqual(
             '<partial><menu id="m1" style="grid"><text><locale id="modules.m1"/></text>\
@@ -136,10 +120,10 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
             suite,
             grid_module_xpath
         )
-        # along with root menu also configured for grid
+
+        # with Modules Menu to be grid should render both root menu and module w/ style=grid
         factory.app.use_grid_menus = True
         suite = factory.app.create_suite()
-        root_xpath = './menu[@id="root"]'
         self.assertXmlHasXpath(suite, root_xpath)
         self.assertXmlPartialEqual(
             '<partial><menu id="root" style="grid"><text/></menu></partial>',
@@ -153,35 +137,67 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
             grid_module_xpath
         )
 
+        # with module itself being the root should render root menu style=grid with module content
+        factory.app.get_module(1).put_in_root = True
+        suite = factory.app.create_suite()
+        self.assertXmlPartialEqual(
+            '<partial><menu id="root" style="grid"><text><locale id="modules.m1"/></text>\
+            <command id="m1-f0"/></menu></partial>',
+            suite,
+            root_xpath
+        )
+
     def test_grid_menu_for_all(self):
         factory = AppFactory(build_version='2.24.3')
-        factory.app.use_grid_menus = False
         factory.app.create_profile()
         factory.app.profile['properties'] = {'cc-grid-menus': 'all'}
         factory.new_basic_module('registration', 'patient')
-        # with additional root menu
         suite = factory.app.create_suite()
         root_xpath = './menu[@id="root"]'
-        self.assertXmlHasXpath(suite, root_xpath)
+        grid_module_xpath = './menu[@id="m0"]'
+
+        # with Modules Menu to be list should not render root menu and render module w/ style=grid
+        factory.app.use_grid_menus = False
+        self.assertXmlDoesNotHaveXpath(suite, root_xpath)
+        self.assertXmlPartialEqual(
+            '<partial><menu id="m0" style="grid"><text><locale id="modules.m0"/></text>\
+            <command id="m0-f0"/></menu></partial>',
+            suite,
+            grid_module_xpath
+        )
+
+        # with Modules Menu to be grid should render root menu and module w/ style=grid
+        factory.app.use_grid_menus = True
+        suite = factory.app.create_suite()
         self.assertXmlPartialEqual(
             '<partial><menu id="root" style="grid"><text/></menu></partial>',
             suite,
             root_xpath
         )
-        # with no additional root menu item
+        self.assertXmlPartialEqual(
+            '<partial><menu id="m0" style="grid"><text><locale id="modules.m0"/></text>\
+            <command id="m0-f0"/></menu></partial>',
+            suite,
+            grid_module_xpath
+        )
+
+        # with Modules Menu to be list and module itself being the root should render root w/o style=grid with
+        # module content
+        factory.app.use_grid_menus = False
         factory.app.get_module(0).put_in_root = True
         suite = factory.app.create_suite()
-        self.assertXmlHasXpath(suite, root_xpath)
         self.assertXmlPartialEqual(
-            '<partial><menu id="root" style="grid"><text><locale id="modules.m0"/></text>\
+            '<partial><menu id="root"><text><locale id="modules.m0"/></text>\
             <command id="m0-f0"/></menu></partial>',
             suite,
             root_xpath
         )
-        # even with app config use_grid_menus True
+
+        # with Modules Menu to be grid and module itself being the root should render root w/ style=grid with
+        # module content
+        factory.app.get_module(0).put_in_root = True
         factory.app.use_grid_menus = True
         suite = factory.app.create_suite()
-        self.assertXmlHasXpath(suite, root_xpath)
         self.assertXmlPartialEqual(
             '<partial><menu id="root" style="grid"><text><locale id="modules.m0"/></text>\
             <command id="m0-f0"/></menu></partial>',

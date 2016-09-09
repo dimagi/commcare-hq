@@ -198,6 +198,20 @@
             var setupValidation = hqImport('app_manager/js/app_manager.js').setupValidation;
             setupValidation('{% url "validate_module_for_build" domain app.id module.id %}');
         });
+        $(function() {
+            // show display style options only when module configured to show module and then forms
+            var $menu_mode = $('#put_in_root');
+            var $display_style_container = $('#display_style_container');
+            var update_display_view = function() {
+                if($menu_mode.val() == 'false') {
+                    $display_style_container.show();
+                } else {
+                    $display_style_container.hide();
+                }
+            }
+            update_display_view()
+            $menu_mode.on('change', update_display_view)
+        });
     </script>
 
     <script type="text/html" id="module-forms-template">
@@ -299,7 +313,7 @@
                         {% trans "Menu Mode" %}
                     </label>
                     <div class="col-sm-4">
-                        <select type="text" name="put_in_root" class="form-control">
+                        <select type="text" name="put_in_root" class="form-control" id="put_in_root">
                             <option value="false">{% trans "Display module and then forms" %}</option>
                             <option value="true"{% if module.put_in_root %} selected{% endif %}>{% trans "Display only forms" %}</option>
                         </select>
@@ -307,13 +321,13 @@
                 </div>
 
                 {% if app.grid_display_for_some_modules %}
-                <div class="form-group">
+                <div class="form-group" id="display_style_container">
                     <label class="col-sm-2 control-label">
                         {% trans "Display Style" %}
                     </label>
                     <div class="col-sm-4">
                         <select type="text" name="display_style" class="form-control">
-                            <option value="list">{% trans "list" %}</option>
+                            <option value="list">{% trans "List" %}</option>
                             <option value="grid"{% if module.grid_display_style %} selected{% endif %}>
                                 {% trans "Grid" %}
                             </option>

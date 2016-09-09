@@ -5645,8 +5645,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def grid_display_for_some_modules(self):
         return self.cc_grid_menus_property == 'some'
 
-    def grid_display_for_root_module(self):
-        return self.cc_grid_menus_property == 'first'
 
     def grid_display_for_all_modules(self):
         return self.cc_grid_menus_property == 'all'
@@ -5654,6 +5652,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @property
     def cc_grid_menus_property(self):
         return self.profile.get('properties', {}).get('cc-grid-menus', None)
+
+
 class RemoteApp(ApplicationBase):
     """
     A wrapper for a url pointing to a suite or profile file. This allows you to

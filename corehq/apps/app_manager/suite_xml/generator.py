@@ -70,8 +70,7 @@ class SuiteGenerator(object):
         # post process
         if self.app.enable_post_form_workflow:
             WorkflowHelper(self.suite, self.app, self.modules).update_suite()
-        if self.app.grid_display_for_all_modules() or self.app.grid_display_for_root_module() or \
-                self.app.use_grid_menus:
+        if self.app.use_grid_menus:
             GridMenuHelper(self.suite, self.app, self.modules).update_suite()
 
         EntryInstances(self.suite, self.app, self.modules).update_suite()
