@@ -1,7 +1,6 @@
 from django.test import SimpleTestCase
 from mock import patch
 
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module, CaseSearch, CaseSearchProperty
 from corehq.apps.app_manager.tests.util import TestXmlMixin, SuiteMixin
 
@@ -13,7 +12,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
 
     def setUp(self):
-        self.app = Application.new_app(DOMAIN, "Untitled Application", application_version=APP_V2)
+        self.app = Application.new_app(DOMAIN, "Untitled Application")
         self.module = self.app.add_module(Module.new_module("Untitled Module", None))
         self.app.new_form(0, "Untitled Form", None)
         self.module.case_type = 'case'
