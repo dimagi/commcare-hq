@@ -5,34 +5,47 @@ from elasticsearch.client import SnapshotClient, IndicesClient
 from django.conf import settings
 
 class Command(BaseCommand):
-    help = "Restores ES cluster from snapshot"
-    args = "days_ago"
+    help = "Restores full ES cluster or specific from snapshot"
+    args = "days_ago <index_1> <index_2> ..."
 
     def handle(self, *args, **options):
         print "Restoring ES indices from snapshot"
-        if len(args) != 1:
+        if len(args) < 1:
             raise CommandError('Usage is restore_es_snapshot %s' % self.args)
-        date = self.process_arguments(args)
+        date = self.get_date(args)
+        indices = self.get_indices(args)
         es = get_es_new()
-        self.close_indices(es)
-        self.restore_snapshot(es, date)
-    
+        self.close_indices(es, indices)
+        self.restore_snapshot(es, date, indices)
+
     @staticmethod
-    def process_arguments(args):
-        days_ago = args[0]
+    def get_date(args):
+        days_ago = int(args[0])
         restore_date = (datetime.utcnow() - timedelta(days=days_ago))
         return restore_date
 
     @staticmethod
-    def close_indices(es):
-        indices_client = IndicesClient(es)
-        indices_client.close('_all')
+    def get_indices(args):
+        if len(args) > 1:
+            indices = ','.join(args[1:])
+        else:
+            indices = '_all'
+        return indices
 
     @staticmethod
-    def restore_snapshot(es, date):
+    def close_indices(es, indices):
+        indices_client = IndicesClient(es)
+        indices_client.close(indices)
+
+    @staticmethod
+    def restore_snapshot(es, date, indices):
         snapshot_client = SnapshotClient(es)
         env = settings.SERVER_ENVIRONMENT
         repo_name = '{}_es_snapshot'.format(env)
-        snapshot_client.restore(repo_name, '{repo_name}_{year}_{month}_{day}'.format(
-            repo_name=repo_name, year=date.year, month=date.month, day=date.day)
+        snapshot_client.restore(repo_name,
+                                '{repo_name}_{year}_{month}_{day}'.format(
+                                    repo_name=repo_name, year=date.year,
+                                    month=date.month, day=date.day
+                                ),
+                                body={'indices': indices}
         )
