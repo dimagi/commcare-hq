@@ -245,6 +245,8 @@ class ItextNode(object):
         self.id = itext_node.attrib['id']
         values = itext_node.findall('{f}value')
         self.values_by_form = {value.attrib.get('form'): value for value in values}
+        if 'default' in self.values_by_form:
+            self.values_by_form[None] = self.values_by_form.pop('default')
 
     @property
     @memoized
