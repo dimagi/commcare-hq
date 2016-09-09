@@ -2,7 +2,7 @@ import datetime
 import dateutil.parser
 from django.test import SimpleTestCase
 import pytz
-from corehq.apps.tzmigration import phone_timezones_have_been_processed
+from corehq.apps.tzmigration.api import phone_timezones_have_been_processed
 from corehq.const import USER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime, PhoneTime, \
     UserTime

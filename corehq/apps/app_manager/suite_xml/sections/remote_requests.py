@@ -5,12 +5,11 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Command,
     Display,
     Instance,
-    CreateFrame,
+    PushFrame,
     QueryData,
     QueryPrompt,
     SessionDatum,
     Stack,
-    StackDatum,
     RemoteRequest,
     RemoteRequestPost,
     RemoteRequestQuery,
@@ -18,7 +17,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Text,
 )
 from corehq.apps.app_manager.util import module_offers_search
-from corehq.apps.app_manager.xpath import XPath, CaseTypeXpath, InstanceXpath
+from corehq.apps.app_manager.xpath import CaseTypeXpath, InstanceXpath
 from corehq.util.view_utils import absolute_reverse
 
 
@@ -126,10 +125,8 @@ class RemoteRequestContributor(SuiteContributorByModule):
                 stack=Stack(),
             )
 
-            frame = CreateFrame()
-            # Open first form in module
-            frame.add_command(XPath.string(id_strings.menu_id(module)))
-            frame.add_datum(StackDatum(id='case_id', value=QuerySessionXPath('case_id').instance()))
+            frame = PushFrame()
+            frame.add_rewind(QuerySessionXPath('case_id').instance())
             remote_request.stack.add_frame(frame)
 
             return [remote_request]

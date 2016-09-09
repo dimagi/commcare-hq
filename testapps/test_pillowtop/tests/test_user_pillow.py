@@ -47,10 +47,6 @@ class UserPillowTestBase(TestCase):
 
 
 class UserPillowTest(UserPillowTestBase):
-    dependent_apps = [
-        'auditcare', 'django_digest', 'pillowtop',
-        'corehq.apps.domain', 'corehq.apps.users', 'corehq.apps.tzmigration',
-    ]
 
     def test_kafka_user_pillow(self):
         self._make_and_test_user_kafka_pillow('user-pillow-test-kafka')
@@ -94,18 +90,6 @@ class UserPillowTest(UserPillowTestBase):
 
 
 class UnknownUserPillowTest(UserPillowTestBase):
-    dependent_apps = [
-        'auditcare',
-        'django_digest',
-        'pillowtop',
-        'couchforms',
-        'corehq.apps.domain',
-        'corehq.apps.users',
-        'corehq.apps.tzmigration',
-        'corehq.form_processor',
-        'corehq.sql_accessors',
-        'corehq.sql_proxy_accessors',
-    ]
 
     @run_with_all_backends
     def test_unknown_user_pillow(self):

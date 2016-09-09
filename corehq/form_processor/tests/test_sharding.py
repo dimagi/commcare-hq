@@ -15,7 +15,6 @@ DOMAIN = 'sharding-test'
 @override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
 @skipUnless(settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup')
 class ShardingTests(TestCase):
-    dependent_apps = ['corehq.sql_accessors', 'corehq.sql_proxy_accessors']
 
     @classmethod
     def setUpClass(cls):

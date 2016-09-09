@@ -142,8 +142,10 @@ class ESQuery(object):
     }
 
     def __init__(self, index=None, debug_host=None):
+        from corehq.apps.userreports.util import is_ucr_table
+
         self.index = index if index is not None else self.index
-        if self.index not in ES_META:
+        if self.index not in ES_META and not is_ucr_table(self.index):
             msg = "%s is not a valid ES index.  Available options are: %s" % (
                 index, ', '.join(ES_META.keys()))
             raise IndexError(msg)
@@ -194,10 +196,14 @@ class ESQuery(object):
                 return add_filter
         raise AttributeError("There is no builtin filter named %s" % attr)
 
-    def __getitem__(self, sliced):
-        start = sliced.start or 0
-        size = sliced.stop - start
-        return self.start(start).size(size).run()
+    def __getitem__(self, sliced_or_int):
+        if isinstance(sliced_or_int, (int, long)):
+            start = sliced_or_int
+            size = 1
+        else:
+            start = sliced_or_int.start or 0
+            size = sliced_or_int.stop - start
+        return self.start(start).size(size).run().hits
 
     def run(self):
         """Actually run the query.  Returns an ESQuerySet object."""

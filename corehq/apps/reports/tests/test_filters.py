@@ -60,7 +60,6 @@ class TestEmwfPagination(SimpleTestCase):
 
 
 class FormsByApplicationFilterDbTest(SetupSimpleAppMixin, TestCase):
-    dependent_apps = ['corehq.couchapps']
 
     @classmethod
     def setUpClass(cls):

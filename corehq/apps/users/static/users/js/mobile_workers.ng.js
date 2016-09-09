@@ -341,6 +341,18 @@
         };
     };
 
+    mobileWorkerDirectives.validateLocation = function ($http, $q, djangoRMI) {
+        return {
+            restrict: 'AE',
+            require: 'ngModel',
+            link: function ($scope, $elem, $attr, ctrl) {
+                ctrl.$validators.validateLocation = function (location_id) {
+                    return !!location_id;
+                };
+            },
+        };
+    };
+
     mobileWorkers.directive(mobileWorkerDirectives);
     mobileWorkers.factory(mobileWorkerFactories);
     mobileWorkers.controller(mobileWorkerControllers);

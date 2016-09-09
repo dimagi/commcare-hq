@@ -40,9 +40,8 @@ Util.setCrossDomainAjaxOptions = function (options) {
     options.contentType = "application/json";
 };
 
-Util.CloudcareUrl = function (appId, options) {
-    options = options || {};
-    this.appId = appId;
+Util.CloudcareUrl = function (options) {
+    this.appId = options.appId;
     this.sessionId = options.sessionId;
     this.steps = options.steps;
     this.page = options.page;
@@ -50,6 +49,7 @@ Util.CloudcareUrl = function (appId, options) {
     this.queryDict = options.queryDict;
     this.singleApp = options.singleApp;
     this.previewCommand = options.previewCommand;
+    this.installReference = options.installReference;
 
     this.addStep = function (step) {
         if (!this.steps) {
@@ -125,6 +125,7 @@ Util.CloudcareUrl.prototype.toJson = function () {
         queryDict: self.queryDict,
         singleApp: self.singleApp,
         previewCommand: self.previewCommand,
+        installReference: self.installReference,
     };
     return JSON.stringify(dict);
 };
@@ -132,6 +133,7 @@ Util.CloudcareUrl.prototype.toJson = function () {
 Util.CloudcareUrl.fromJson = function (json) {
     var data = JSON.parse(json);
     var options = {
+        'appId': data.appId,
         'sessionId': data.sessionId,
         'steps': data.steps,
         'page': data.page,
@@ -139,11 +141,9 @@ Util.CloudcareUrl.fromJson = function (json) {
         'queryDict': data.queryDict,
         'singleApp': data.singleApp,
         'previewCommand': data.previewCommand,
+        'installReference': data.installReference,
     };
-    return new Util.CloudcareUrl(
-        data.appId,
-        options
-    );
+    return new Util.CloudcareUrl(options);
 };
 
 if (!String.prototype.startsWith) {

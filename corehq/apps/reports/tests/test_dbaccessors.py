@@ -38,8 +38,6 @@ class HQGroupExportConfigurationDbAccessorsTest(TestCase):
 @override_settings(COUCH_STALE_QUERY=None)
 class SavedExportSchemaDBTest(TestCase):
 
-    dependent_apps = ['couchexport', 'corehq.couchapps']
-
     @classmethod
     def setUpClass(cls):
         super(SavedExportSchemaDBTest, cls).setUpClass()

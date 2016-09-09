@@ -20,11 +20,6 @@ from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class MaltGeneratorTest(TestCase):
-    dependent_apps = [
-        'corehq.apps.tzmigration', 'django_digest', 'auditcare', 'corehq.apps.users',
-        'corehq.couchapps', 'corehq.apps.domain',
-        'corehq.apps.app_manager',
-    ]
 
     DOMAIN_NAME = "test"
     USERNAME = "malt-user"

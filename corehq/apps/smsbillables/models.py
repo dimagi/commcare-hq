@@ -103,10 +103,10 @@ class SmsGatewayFeeCriteria(models.Model):
 class SmsGatewayFee(models.Model):
     """
     The fee for sending or receiving an SMS Message based on gateway.
-    When an SmsBillable is calculated, it will use the most recent SmsFee available from the criteria
+    When an SmsBillable is calculated, it will use the most recent SmsGatewayFee available from the criteria
     to determine the gateway_charge.
 
-    Once an SmsFee is created, it cannot be modified.
+    Once an SmsGatewayFee is created, it cannot be modified.
     """
     criteria = models.ForeignKey(SmsGatewayFeeCriteria, on_delete=models.PROTECT)
     amount = models.DecimalField(max_digits=10, decimal_places=4, null=True)

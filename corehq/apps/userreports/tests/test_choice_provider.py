@@ -133,10 +133,6 @@ class ChoiceProviderTestMixin(object):
 
 
 class LocationChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
-    dependent_apps = [
-        'corehq.apps.commtrack', 'corehq.apps.locations', 'corehq.apps.products',
-        'custom.logistics', 'custom.ilsgateway', 'custom.ewsghana', 'corehq.couchapps'
-    ]
     domain = 'location-choice-provider'
 
     @classmethod
@@ -290,10 +286,6 @@ class GroupChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
 @mock.patch('corehq.apps.userreports.reports.filters.choice_providers.UserES', UserESFake)
 @mock.patch('corehq.apps.userreports.reports.filters.choice_providers.GroupES', GroupESFake)
 class OwnerChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
-    dependent_apps = [
-        'corehq.apps.commtrack', 'corehq.apps.locations', 'corehq.apps.products',
-        'custom.logistics', 'custom.ilsgateway', 'custom.ewsghana', 'corehq.couchapps'
-    ]
     domain = 'owner-choice-provider'
 
     @classmethod

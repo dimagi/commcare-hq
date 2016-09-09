@@ -17,6 +17,9 @@ class IndicatorAdapter(object):
     def drop_table(self):
         raise NotImplementedError
 
+    def refresh_table(self):
+        raise NotImplementedError
+
     def get_query_object(self):
         raise NotImplementedError
 

@@ -484,9 +484,9 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'form_errors': form_errors,
         'xform_validation_errored': xform_validation_errored,
         'allow_cloudcare': isinstance(form, Form),
-        'allow_form_copy': isinstance(form, Form),
-        'allow_form_filtering': module_filter_preview or (
-            not isinstance(form, CareplanForm) and not form_has_schedule),
+        'allow_form_copy': isinstance(form, (Form, AdvancedForm)),
+        'allow_form_filtering': (module_filter_preview or
+            (not isinstance(form, CareplanForm) and not form_has_schedule)),
         'allow_form_workflow': not isinstance(form, CareplanForm),
         'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
         'is_usercase_in_use': is_usercase_in_use(request.domain),

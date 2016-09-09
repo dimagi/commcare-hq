@@ -221,26 +221,12 @@ def _get_test_locations(domain):
            [test_region.couch_location]
 
 
-def populate_report_data(start_date, end_date, domain, runner, locations=None, strict=True):
-    # first populate all the warehouse tables for all facilities
-    # hard coded to know this is the first date with data
-    start_date = max(start_date, default_start_date())
-
-    # For QA purposes generate reporting data for only some small part of data.
-    if not ILSGatewayConfig.for_domain(domain).all_stock_data:
-        if locations is None:
-            locations = _get_test_locations(domain)
-        facilities = filter(lambda location: location.location_type == 'FACILITY', locations)
-        non_facilities_types = ['DISTRICT', 'REGION', 'MSDZONE', 'MOHSW']
-        non_facilities = []
-        for location_type in non_facilities_types:
-            non_facilities.extend(filter(lambda location: location.location_type == location_type, locations))
-    else:
-        facilities = Location.filter_by_type(domain, 'FACILITY')
-        non_facilities = list(Location.filter_by_type(domain, 'DISTRICT'))
-        non_facilities += list(Location.filter_by_type(domain, 'REGION'))
-        non_facilities += list(Location.filter_by_type(domain, 'MSDZONE'))
-        non_facilities += list(Location.filter_by_type(domain, 'MOHSW'))
+def populate_report_data(start_date, end_date, domain, runner, strict=True):
+    facilities = Location.filter_by_type(domain, 'FACILITY')
+    non_facilities = list(Location.filter_by_type(domain, 'DISTRICT'))
+    non_facilities += list(Location.filter_by_type(domain, 'REGION'))
+    non_facilities += list(Location.filter_by_type(domain, 'MSDZONE'))
+    non_facilities += list(Location.filter_by_type(domain, 'MOHSW'))
 
     if runner.location:
         if runner.location.location_type.name.upper() != 'FACILITY':

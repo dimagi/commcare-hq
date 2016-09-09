@@ -3,7 +3,7 @@ import os
 import datetime
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.sql import IndicatorSqlAdapter
+from corehq.apps.userreports.util import get_indicator_adapter
 
 
 DOC_ID = 'repeat-id'
@@ -74,8 +74,7 @@ class RepeatDataSourceConfigurationTest(RepeatDataSourceTestMixin, SimpleTestCas
 class RepeatDataSourceBuildTest(RepeatDataSourceTestMixin, TestCase):
 
     def test_table_population(self):
-
-        adapter = IndicatorSqlAdapter(self.config)
+        adapter = get_indicator_adapter(self.config)
         # Delete and create table
         adapter.rebuild_table()
 

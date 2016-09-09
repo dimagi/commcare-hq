@@ -4,7 +4,7 @@ import iso8601
 import pytz
 
 import xml2json
-from corehq.apps.tzmigration import phone_timezones_should_be_processed
+from corehq.apps.tzmigration.api import phone_timezones_should_be_processed
 from corehq.form_processor.models import Attachment
 from dimagi.ext import jsonobject
 from dimagi.utils.parsing import json_format_datetime
@@ -129,7 +129,7 @@ def adjust_datetimes(data, parent=None, key=None):
 
     to force timezone processing, it can be called as follows
 
-    >>> from corehq.apps.tzmigration import force_phone_timezones_should_be_processed
+    >>> from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
     >>> with force_phone_timezones_should_be_processed():
     >>>     adjust_datetimes(form_json)
     """

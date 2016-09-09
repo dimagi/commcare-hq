@@ -1,10 +1,10 @@
 import csv
 from dimagi.utils.couch.database import iter_docs
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 from couchforms.models import XFormInstance
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Archive MVP Forms"
     args = "filepath archiving_user"
 

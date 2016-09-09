@@ -1,6 +1,6 @@
 import uuid
-import pytz
-from django.utils.dateparse import parse_datetime
+from dateutil import parser
+from pytz import timezone
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from casexml.apps.case.const import CASE_INDEX_EXTENSION, UNOWNED_EXTENSION_OWNER_ID
@@ -9,6 +9,8 @@ from dimagi.utils.decorators.memoized import memoized
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceException
+from custom.enikshay.case_utils import get_open_episode_case_from_person, get_adherence_cases_between_dates
+from custom.enikshay.exceptions import ENikshayCaseNotFound
 
 
 class AdherenceCaseFactory(object):
@@ -34,7 +36,7 @@ class AdherenceCaseFactory(object):
         try:
             return self.case_accessor.get_case(self.person_id)
         except CaseNotFound:
-            raise AdherenceException(message="No patient exists with this beneficiary ID")
+            raise AdherenceException("No patient exists with this beneficiary ID")
 
     @property
     @memoized
@@ -46,7 +48,10 @@ class AdherenceCaseFactory(object):
     @property
     @memoized
     def _episode_case(self):
-        return get_open_episode_case(self.domain, self._person_case.case_id)
+        try:
+            return get_open_episode_case_from_person(self.domain, self._person_case.case_id)
+        except ENikshayCaseNotFound as e:
+            raise AdherenceException(e.message)
 
     def create_adherence_cases(self, adherence_points, adherence_source):
         return self.case_factory.create_or_update_cases([
@@ -74,14 +79,28 @@ class AdherenceCaseFactory(object):
             "name": adherence_point["timestamp"],
             "adherence_value": self.DEFAULT_ADHERENCE_VALUE,
             "adherence_source": adherence_source,
-            "adherence_date": adherence_point["timestamp"],
+            "adherence_date": self._parse_adherence_date(adherence_point["timestamp"]),
             "person_name": self._person_case.name,
             "adherence_confidence": self._default_adherence_confidence,
             "shared_number_99_dots": adherence_point["sharedNumber"],
         }
 
+    def _parse_adherence_date(self, iso_datestring):
+        tz = timezone('Asia/Kolkata')
+        try:
+            datetime_from_adherence = parser.parse(iso_datestring)
+            datetime_in_india = datetime_from_adherence.astimezone(tz)
+        except ValueError:
+            raise AdherenceException(
+                "Adherence date should be an ISO8601 formated string with timezone information."
+            )
+        return datetime_in_india.date()
+
     def update_adherence_cases(self, start_date, end_date, confidence_level):
-        adherence_cases = get_adherence_cases_between_dates(self.domain, self.person_id, start_date, end_date)
+        try:
+            adherence_cases = get_adherence_cases_between_dates(self.domain, self.person_id, start_date, end_date)
+        except ENikshayCaseNotFound as e:
+            raise AdherenceException(e.message)
         adherence_case_ids = [case.case_id for case in adherence_cases]
         return self.case_factory.create_or_update_cases([
             CaseStructure(
@@ -109,50 +128,6 @@ class AdherenceCaseFactory(object):
                 walk_related=False
             )
         ])
-
-
-def get_open_episode_case(domain, person_case_id):
-    """
-    Gets the first open 'episode' case for the person
-
-    Assumes the following case structure:
-    Person <--ext-- Occurrence <--ext-- Episode
-
-    """
-    case_accessor = CaseAccessors(domain)
-    occurrence_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
-    open_occurrence_cases = [case for case in occurrence_cases
-                             if not case.closed and case.type == "occurrence"]
-    if not open_occurrence_cases:
-        raise AdherenceException(
-            message="Person with id: {} exists but has no open occurence cases".format(person_case_id)
-        )
-    occurence_case = open_occurrence_cases[0]
-    episode_cases = case_accessor.get_reverse_indexed_cases([occurence_case.case_id])
-    open_episode_cases = [case for case in episode_cases
-                          if not case.closed and case.type == "episode" and
-                          case.dynamic_case_properties().get('episode_type') == "confirmed_tb"]
-    if open_episode_cases:
-        return open_episode_cases[0]
-    else:
-        raise AdherenceException(
-            message="Person with id: {} exists but has no open episode cases".format(person_case_id)
-        )
-
-
-def get_adherence_cases_between_dates(domain, person_case_id, start_date, end_date):
-    case_accessor = CaseAccessors(domain)
-    episode = get_open_episode_case(domain, person_case_id)
-    indexed_cases = case_accessor.get_reverse_indexed_cases([episode.case_id])
-    open_pertinent_adherence_cases = [
-        case for case in indexed_cases
-        if not case.closed and case.type == "adherence" and
-        (start_date.astimezone(pytz.UTC) <=
-         parse_datetime(case.dynamic_case_properties().get('adherence_date')).astimezone(pytz.UTC) <=
-         end_date.astimezone(pytz.UTC))
-    ]
-
-    return open_pertinent_adherence_cases
 
 
 def create_adherence_cases(domain, person_id, adherence_points, adherence_source="99DOTS"):

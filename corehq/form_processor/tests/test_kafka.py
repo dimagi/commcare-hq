@@ -5,7 +5,7 @@ from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.form_processor.utils import get_simple_form_xml, should_use_sql_backend
@@ -160,7 +160,7 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
             get_single_balance_block(case_id, prod_id, balance)
             for prod_id, balance in balances
         ]
-        form = submit_case_blocks(ledger_blocks, self.domain)
+        form = submit_case_blocks(ledger_blocks, self.domain)[0]
 
         # submit duplicate
         with process_kafka_changes(self.ledger_pillow):
