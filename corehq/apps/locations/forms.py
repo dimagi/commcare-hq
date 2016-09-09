@@ -328,7 +328,7 @@ class UsersAtLocationForm(MultipleSelectionForm):
         user_query = (UserES()
                       .domain(self.domain_object.name)
                       .mobile_users()
-                      .location(self.location.location_id)
+                      .primary_location(self.location.location_id)
                       .fields([]))
         return user_query.run().doc_ids
 
