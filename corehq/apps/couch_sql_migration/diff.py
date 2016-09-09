@@ -107,14 +107,20 @@ DATE_FIELDS = {
 }
 
 
+RENAMED_FIELDS = {
+    'XFormDeprecated': [('deprecated_date', 'edited_on')],
+    'XFormInstance-Deleted': [('-deletion_id', 'deletion_id'), ('-deletion_date', 'deleted_on')],
+    'CommCareCase-Deleted': [('-deletion_id', 'deletion_id'), ('-deletion_date', 'deleted_on')],
+}
+
+
 def filter_form_diffs(doc_type, diffs):
     paths_to_ignore = FORM_IGNORE_PATHS[doc_type]
     filtered = [
         diff for diff in diffs
         if diff.path[0] not in paths_to_ignore and diff not in FORM_IGNORED_DIFFS
     ]
-    filtered = _check_deprecation_date(filtered, doc_type)
-    filtered = _check_deletion_fields_date(filtered, doc_type)
+    filtered = _filter_renamed_fields(filtered, doc_type)
     filtered = _filter_partial_diffs(filtered, FORM_PARTIAL_DIFFS)
     filtered = _filter_date_diffs(filtered)
     return filtered
@@ -138,17 +144,13 @@ def _filter_partial_diffs(diffs, partial_diffs_to_exclude):
     ]
 
 
-def _check_deprecation_date(filtered_diffs, doc_type):
-    if doc_type == 'XFormDeprecated':
-        _check_renamed_fields(filtered_diffs, 'deprecated_date', 'edited_on')
-    return filtered_diffs
+def _filter_renamed_fields(diffs, doc_type):
+    if doc_type in RENAMED_FIELDS:
+        renames = RENAMED_FIELDS[doc_type]
+        for rename in renames:
+            _check_renamed_fields(diffs, *rename)
 
-
-def _check_deletion_fields_date(filtered_diffs, doc_type):
-    if doc_type in ('XFormInstance-Deleted', 'CommCareCase-Deleted'):
-        _check_renamed_fields(filtered_diffs, '-deletion_id', 'deletion_id')
-        _check_renamed_fields(filtered_diffs, '-deletion_date', 'deleted_on')
-    return filtered_diffs
+    return diffs
 
 
 def _check_renamed_fields(filtered_diffs, couch_field_name, sql_field_name):
@@ -172,7 +174,7 @@ def filter_case_diffs(doc_type, diffs):
         diff for diff in diffs
         if diff.path not in CASE_IGNORED_PATHS and diff not in CASE_IGNORED_DIFFS
     ]
-    filtered_diffs = _check_deletion_fields_date(filtered_diffs, doc_type)
+    filtered_diffs = _filter_renamed_fields(filtered_diffs, doc_type)
     filtered_diffs = _filter_partial_diffs(filtered_diffs, CASE_PARTIAL_DIFFS)
     filtered_diffs = _filter_date_diffs(filtered_diffs)
     return filtered_diffs
