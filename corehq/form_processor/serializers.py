@@ -22,8 +22,11 @@ class DeletableModelSerializer(serializers.ModelSerializer):
 
 
 class XFormOperationSQLSerializer(serializers.ModelSerializer):
+    user = serializers.CharField(source="user_id")
+
     class Meta:
         model = XFormOperationSQL
+        exclude = ('id', 'form', 'user_id')
 
 
 class XFormAttachmentSQLSerializer(serializers.ModelSerializer):
@@ -167,7 +170,14 @@ class CommCareCaseSQLAPISerializer(serializers.ModelSerializer):
 
 class LedgerValueSerializer(serializers.ModelSerializer):
     _id = serializers.CharField(source='ledger_id')
+    location_id = serializers.CharField()
     case_id = serializers.CharField()
+
+    def __init__(self, *args, **kwargs):
+        include_location_id = kwargs.pop('include_location_id', False)
+        if not include_location_id:
+            self.fields.pop('location_id')
+        super(LedgerValueSerializer, self).__init__(*args, **kwargs)
 
     class Meta:
         model = LedgerValue
@@ -175,7 +185,7 @@ class LedgerValueSerializer(serializers.ModelSerializer):
 
 
 class StockStateSerializer(serializers.ModelSerializer):
-    _id = serializers.IntegerField(source='id')
+    _id = serializers.CharField(source='id')
     entry_id = serializers.CharField(source='product_id')
     location_id = serializers.CharField(source='sql_location.location_id')
     balance = serializers.IntegerField(source='stock_on_hand')

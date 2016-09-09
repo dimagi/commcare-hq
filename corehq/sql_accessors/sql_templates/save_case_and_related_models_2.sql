@@ -44,6 +44,8 @@ BEGIN
             closed_on = commcarecase.closed_on,
             closed_by = commcarecase.closed_by,
             deleted = commcarecase.deleted,
+            deleted_on = commcarecase.deleted_on,
+            deletion_id = commcarecase.deletion_id,
             external_id = commcarecase.external_id,
             location_id = commcarecase.location_id,
             case_json = commcarecase.case_json
@@ -66,6 +68,8 @@ BEGIN
             closed_on,
             closed_by,
             deleted,
+            deleted_on,
+            deletion_id,
             external_id,
             location_id,
             case_json
@@ -84,6 +88,8 @@ BEGIN
             commcarecase.closed_on,
             commcarecase.closed_by,
             commcarecase.deleted,
+            commcarecase.deleted_on,
+            commcarecase.deletion_id,
             commcarecase.external_id,
             commcarecase.location_id,
             commcarecase.case_json
@@ -148,7 +154,7 @@ BEGIN
         ELSE
             INSERT INTO form_processor_caseattachmentsql (
                 attachment_id, name, content_type, md5, case_id, blob_id, content_length, properties,
-                identifier, attachment_src, attachment_from
+                identifier, attachment_src, attachment_from, blob_bucket
             ) VALUES (
                 attachment.attachment_id,
                 attachment.name,
@@ -160,7 +166,8 @@ BEGIN
                 attachment.properties,
                 attachment.identifier,
                 attachment.attachment_src,
-                attachment.attachment_from
+                attachment.attachment_from,
+                attachment.blob_bucket
             );
         END IF;
     END LOOP;

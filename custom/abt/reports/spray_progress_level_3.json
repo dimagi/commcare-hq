@@ -25,7 +25,7 @@
 
         ],
         "aggregation_columns":[
-            "country",
+            "level_2",
             "level_3",
             "level_3_target_number"
         ],
@@ -46,12 +46,12 @@
                 "show_all":true,
                 "datatype":"string",
                 "required":false,
-                "slug":"country",
-                "field":"country",
+                "slug":"level_2",
+                "field":"level_2",
                 "type":"dynamic_choice_list",
                 "display":{
-                    "fra":"Pays",
-                    "en":"Country"
+                    "fra":"Niveau 2",
+                    "en":"Level 2"
                 }
             },
             {
@@ -71,18 +71,18 @@
         "columns":[
             {
                 "description":null,
-                "field":"country",
+                "field":"level_2",
                 "format":"default",
                 "transform":{
 
                 },
-                "column_id":"country",
+                "column_id":"level_2",
                 "alias":null,
                 "calculate_total":false,
                 "type":"field",
                 "display":{
-                    "fra":"Pays",
-                    "en":"Country"
+                    "fra":"Niveau 2",
+                    "en":"Level 2"
                 },
                 "aggregation":"simple"
             },

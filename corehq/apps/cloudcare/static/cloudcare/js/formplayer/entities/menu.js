@@ -18,6 +18,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             this.clearSession = response.clearSession;
             this.notification = response.notification;
             this.breadcrumbs = response.breadcrumbs;
+            this.appId = response.appId;
 
             if (response.commands) {
                 this.type = "commands";
@@ -31,6 +32,9 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 this.currentPage = response.currentPage;
                 this.pageCount = response.pageCount;
                 this.tiles = response.tiles;
+                this.numEntitiesPerRow = response.numEntitiesPerRow;
+                this.maxWidth = response.maxWidth;
+                this.maxHeight = response.maxHeight;
                 return response.entities;
             }
             else if(response.type === "query") {
@@ -55,7 +59,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
     var API = {
 
-        getMenus: function (appId, sessionId, stepList, page, search, queryDict, previewCommand) {
+        getMenus: function (params) {
 
             var user = FormplayerFrontend.request('currentUser');
             var username = user.username;
@@ -66,7 +70,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
             var menus = new Entities.MenuSelectCollection({
 
-                appId: appId,
+                appId: params.appId,
 
                 fetch: function (options) {
                     var collection = this;
@@ -76,16 +80,17 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                         "domain": domain,
                         "app_id": collection.appId,
                         "locale": language,
-                        "selections": stepList,
-                        "offset": page * 10,
-                        "search_text": search,
-                        "menu_session_id": sessionId,
-                        "query_dictionary": queryDict,
-                        "previewCommand": previewCommand,
+                        "selections": params.steps,
+                        "offset": params.page * 10,
+                        "search_text": params.search,
+                        "menu_session_id": params.sessionId,
+                        "query_dictionary": params.queryDict,
+                        "previewCommand": params.previewCommand,
+                        "installReference": params.installReference,
                     });
 
-                    if (stepList) {
-                        options.data.selections = stepList;
+                    if (options.steps) {
+                        options.data.selections = params.steps;
                     }
 
                     options.url = formplayerUrl + '/navigate_menu';
@@ -113,13 +118,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
         },
     };
 
-    FormplayerFrontend.reqres.setHandler("app:select:menus", function (appId, sessionId, stepList, page, search, queryDict, previewCommand) {
-        return API.getMenus(appId,
-            sessionId,
-            stepList,
-            page,
-            search,
-            queryDict,
-            previewCommand);
+    FormplayerFrontend.reqres.setHandler("app:select:menus", function (options) {
+        return API.getMenus(options);
     });
 });

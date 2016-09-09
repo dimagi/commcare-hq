@@ -17,6 +17,7 @@
       <query url="https://www.example.com/a/test_domain/phone/search/"
              storage-instance="results">
         <data key="case_type" ref="'case'"/>
+        <data key="include_closed" ref="'False'"/>
         <prompt key="name">
           <display>
             <text>
@@ -33,16 +34,15 @@
         </prompt>
       </query>
       <datum id="case_id"
-             nodeset="instance('results')/results/case[@case_type='case'][@status='open']"
+             nodeset="instance('results')/results/case[@case_type='case']"
              value="./@case_id"
              detail-confirm="m0_case_long"
              detail-select="m0_case_short"/>
     </session>
     <stack>
-      <create>
-        <command value="'m0'"/>
-        <datum id="case_id" value="instance('querysession')/session/data/case_id"/>
-      </create>
+      <push>
+        <rewind value="instance('querysession')/session/data/case_id"/>
+      </push>
     </stack>
   </remote-request>
 </partial>

@@ -1,0 +1,102 @@
+{
+    "domains": [
+        "enikshay-test",
+        "enikshay-test-test"
+    ],
+    "data_source_table": "episode",
+    "report_id": "sputum_conversion",
+    "config": {
+        "description": "",
+        "title": "Sputum Conversion",
+        "sort_expression": [],
+        "visible": false,
+        "configured_charts": [],
+        "aggregation_columns": [],
+        "filters": [
+            {
+                "compare_as_string": false,
+                "datatype": "string",
+                "required": false,
+                "display": "Case Open Date",
+                "field": "patient_registration_date",
+                "type": "date",
+                "slug": "patient_registration_date"
+            },
+            {
+                "compare_as_string": false,
+                "datatype": "string",
+                "type": "dynamic_choice_list",
+                "slug": "village",
+                "field": "person_owner_id",
+                "choice_provider": {
+                    "include_descendants": true,
+                    "type": "location"
+                },
+                "display": "Location"
+            }
+        ],
+        "columns": [
+            {
+                "display": "Number of patients registered during given date",
+                "column_id": "person_id",
+                "type": "field",
+                "field": "person_id",
+                "aggregation": "count",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Sputum Positive Cat II Retreatment Patients (excluding ‘Others’)",
+                "type": "field",
+                "field": "positive_patients_cat2",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Cat II patients with negative sputum results at the end of 3 month extended IP",
+                "type": "field",
+                "field": "negative_endofip_patients_cat2",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Cat II patients with positive sputum results at the end of 3 month extended IP",
+                "type": "field",
+                "field": "positive_endofip_patients_cat2",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Cat II patients with N.A. sputum results at the end of 3 month extended IP",
+                "type": "field",
+                "field": "endofip_without_result_patients_cat2",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            }
+        ]
+    }
+}

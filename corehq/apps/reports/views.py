@@ -2,6 +2,7 @@ from copy import copy
 from datetime import datetime, timedelta, date
 import itertools
 import json
+from wsgiref.util import FileWrapper
 
 from django.views.generic.base import TemplateView
 
@@ -27,7 +28,6 @@ from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.base import ContentFile
-from django.core.servers.basehttp import FileWrapper
 from django.http import (
     Http404,
     HttpResponseBadRequest,
@@ -111,7 +111,7 @@ from corehq.apps.hqcase.export import export_cases
 from corehq.apps.hqwebapp.utils import csrf_inline
 from corehq.apps.locations.permissions import can_edit_form_location
 from corehq.apps.products.models import SQLProduct
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.util import default_language as ucr_default_language
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
@@ -158,6 +158,7 @@ from .util import (
     get_group,
     group_filter,
     users_matching_filter,
+    safe_filename,
 )
 from corehq.apps.style.decorators import (
     use_jquery_ui,
@@ -566,10 +567,8 @@ def build_download_saved_export_response(payload, format, filename):
     content_type = Format.from_format(format).mimetype
     response = StreamingHttpResponse(FileWrapper(payload), content_type=content_type)
     if format != 'html':
-        # ht: http://stackoverflow.com/questions/1207457/convert-unicode-to-string-in-python-containing-extra-symbols
-        normalized_filename = unicodedata.normalize(
-            'NFKD', unicode(filename),
-        ).encode('ascii', 'ignore')
+        utf8_filename = unicode(filename).encode('utf8')
+        normalized_filename = safe_filename(utf8_filename)
         response['Content-Disposition'] = 'attachment; filename="%s"' % normalized_filename
     return response
 

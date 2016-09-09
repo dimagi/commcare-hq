@@ -1,20 +1,20 @@
 import collections
-from copy import deepcopy
 import os
+from copy import deepcopy
 
 from couchdbkit import ResourceNotFound
 from django.conf import settings
+
 from casexml.apps.case.cleanup import rebuild_case_from_actions
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.xform import get_case_updates
-
-from corehq.form_processor.utils.metadata import scrub_meta
-from corehq.apps.tzmigration import set_migration_started, \
+from corehq.apps.tzmigration.api import set_migration_started, \
     set_migration_complete, force_phone_timezones_should_be_processed
 from corehq.apps.tzmigration.planning import PlanningDB
 from corehq.blobs.mixin import BlobHelper
 from corehq.form_processor.parsers.ledgers import get_stock_actions
 from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes
+from corehq.form_processor.utils.metadata import scrub_meta
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
@@ -30,7 +30,7 @@ FormJsonDiff = collections.namedtuple('FormJsonDiff', [
     'diff_type', 'path', 'old_value', 'new_value'])
 
 
-def _json_diff(obj1, obj2, path):
+def _json_diff(obj1, obj2, path, track_list_indices=True):
     if isinstance(obj1, str):
         obj1 = unicode(obj1)
     if isinstance(obj2, str):
@@ -51,7 +51,8 @@ def _json_diff(obj1, obj2, path):
         for key in keys:
             for result in _json_diff(value_or_ellipsis(obj1, key),
                                      value_or_ellipsis(obj2, key),
-                                     path=path + (key,)):
+                                     path=path + (key,),
+                                     track_list_indices=track_list_indices):
                 yield result
     elif isinstance(obj1, list):
 
@@ -62,16 +63,18 @@ def _json_diff(obj1, obj2, path):
                 return Ellipsis
 
         for i in range(max(len(obj1), len(obj2))):
+            list_index = i if track_list_indices else '[*]'
             for result in _json_diff(value_or_ellipsis(obj1, i),
                                      value_or_ellipsis(obj2, i),
-                                     path=path + (i,)):
+                                     path=path + (list_index,),
+                                     track_list_indices=track_list_indices):
                 yield result
     else:
         yield FormJsonDiff('diff', path, obj1, obj2)
 
 
-def json_diff(obj1, obj2):
-    return list(_json_diff(obj1, obj2, path=()))
+def json_diff(obj1, obj2, track_list_indices=True):
+    return list(_json_diff(obj1, obj2, path=(), track_list_indices=track_list_indices))
 
 
 def _run_timezone_migration_for_domain(domain):

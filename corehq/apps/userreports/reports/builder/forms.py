@@ -274,7 +274,9 @@ class DataSourceBuilder(object):
                     # For filters and aggregation:
                     ret.append(make_form_question_indicator(prop.source, prop.column_id))
                     # For column display:
-                    ret.append(make_multiselect_question_indicator(prop.source, prop.column_id))
+                    if prop.source['options']:
+                        # A choice list indicator with no choices will throw a BadSpecError
+                        ret.append(make_multiselect_question_indicator(prop.source, prop.column_id))
                 else:
                     indicator = make_form_question_indicator(
                         prop.source, prop.column_id, root_doc=is_multiselect_chart_report
@@ -802,6 +804,8 @@ class ConfigureNewReportBase(forms.Form):
     def create_report(self):
         """
         Creates data source and report config.
+
+        :raises BadSpecError if validation fails when building data source, or report is invalid
         """
         data_source_config_id = self._build_data_source()
         report = ReportConfiguration(

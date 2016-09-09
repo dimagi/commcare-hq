@@ -15,10 +15,6 @@ from pillowtop.es_utils import initialize_index
 
 
 class GroupPillowTest(TestCase):
-    dependent_apps = [
-        'corehq.couchapps',
-        'corehq.apps.groups'
-    ]
 
     def setUp(self):
         self.elasticsearch = get_es_new()

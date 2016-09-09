@@ -291,7 +291,7 @@ class ProjectHealthDashboard(ProjectReport):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return PROJECT_HEALTH_DASHBOARD.enabled(domain)
+        return domain and PROJECT_HEALTH_DASHBOARD.enabled(domain)
 
     @use_nvd3
     def decorator_dispatcher(self, request, *args, **kwargs):

@@ -40,6 +40,10 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         with self.engine.begin() as connection:
             self.get_table().drop(connection, checkfirst=True)
 
+    def refresh_table(self):
+        # SQL is always fresh
+        pass
+
     def get_query_object(self):
         """
         Get a sqlalchemy query object ready to query this table

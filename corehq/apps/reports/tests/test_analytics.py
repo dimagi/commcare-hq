@@ -49,7 +49,6 @@ class SetupSimpleAppMixin(object):
 
 
 class ReportAppAnalyticsTest(SetupSimpleAppMixin, TestCase):
-    dependent_apps = ['corehq.couchapps']
 
     @classmethod
     def setUpClass(cls):

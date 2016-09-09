@@ -141,12 +141,14 @@ class ExportSchema(Document, UnicodeMixIn):
 
     @classmethod
     def get_all_checkpoints(cls, index):
-        return cls.view("couchexport/schema_checkpoints",
+        doc_ids = [result["id"] for result in cls.get_db().view(
+            "couchexport/schema_checkpoints",
             startkey=[json.dumps(index)],
             endkey=[json.dumps(index), {}],
-            include_docs=True,
             reduce=False,
-        )
+        )]
+        for doc in iter_docs(cls.get_db(), doc_ids):
+            yield cls.wrap(doc)
 
     _tables = None
 

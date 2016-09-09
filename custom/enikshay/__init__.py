@@ -1,0 +1,1 @@
+from custom.enikshay.integrations.ninetyninedots.repeater_generators import RegisterPatientPayloadGenerator

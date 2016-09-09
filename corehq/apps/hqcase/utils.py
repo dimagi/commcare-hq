@@ -15,7 +15,7 @@ from corehq.form_processor.interfaces.dbaccessors import get_cached_case_attachm
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.phone.caselogic import get_related_cases
 from corehq.apps.hqcase.exceptions import CaseAssignmentError
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.util import SYSTEM_USER_ID
 from casexml.apps.case import const
 
@@ -29,7 +29,7 @@ ALLOWED_CASE_IDENTIFIER_TYPES = [
 
 def submit_case_blocks(case_blocks, domain, username="system", user_id="",
                        xmlns=SYSTEM_FORM_XMLNS, attachments=None,
-                       form_id=None):
+                       form_id=None, form_extras=None):
     """
     Submits casexml in a manner similar to how they would be submitted from a phone.
 
@@ -48,12 +48,15 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id="",
         'username': username,
         'user_id': user_id,
     })
+    form_extras = form_extras or {}
+
     response, xform, cases = submit_form_locally(
         instance=form_xml,
         domain=domain,
         attachments=attachments,
+        **form_extras
     )
-    return xform
+    return xform, cases
 
 
 def get_case_wrapper(data):

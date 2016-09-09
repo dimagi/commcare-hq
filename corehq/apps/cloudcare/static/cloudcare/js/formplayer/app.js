@@ -115,7 +115,7 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
-            FormplayerFrontend.request("clearForm");
+            FormplayerFrontend.trigger("clearForm");
             showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
 
             // After end of form nav, we want to clear everything except app and sesson id
@@ -125,8 +125,10 @@ FormplayerFrontend.on('startForm', function (data) {
 
             if(resp.nextScreen !== null && resp.nextScreen !== undefined) {
                 FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
-            } else {
+            } else if(urlObject.appId !== null && urlObject.appId !== undefined) {
                 FormplayerFrontend.trigger("apps:currentApp");
+            } else {
+                FormplayerFrontend.navigate('/apps', { trigger: true });
             }
         } else {
             showError(resp.output, $("#cloudcare-notifications"));
@@ -186,7 +188,6 @@ FormplayerFrontend.on("start", function (options) {
     user.apps = options.apps;
     user.domain = options.domain;
     user.formplayer_url = options.formplayer_url;
-    user.clearUserDataUrl = options.clearUserDataUrl;
     if (Backbone.history) {
         Backbone.history.start();
         // will be the same for every domain. TODO: get domain/username/pass from django
@@ -248,26 +249,6 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
     resp = $.ajax(options);
     resp.fail(function () {
         tfLoadingComplete(true);
-    }).done(function() {
-        tfLoadingComplete();
-        FormplayerFrontend.trigger('navigateHome', appId);
-    });
-});
-
-FormplayerFrontend.on('clearUserData', function(appId) {
-    var user = FormplayerFrontend.request('currentUser');
-    var resp = $.ajax({
-        url: user.clearUserDataUrl,
-        type: 'POST',
-        dataType: "json",
-        xhrFields: { withCredentials: true },
-    });
-    resp.fail(function (jqXHR) {
-        if (jqXHR.status === 400) {
-            tfLoadingComplete(true, gettext('Unable to clear user data for mobile worker'));
-        } else {
-            tfLoadingComplete(true, gettext('Unabled to clear user data'));
-        }
     }).done(function() {
         tfLoadingComplete();
         FormplayerFrontend.trigger('navigateHome', appId);

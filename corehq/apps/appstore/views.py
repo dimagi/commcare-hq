@@ -2,6 +2,7 @@ import json
 from datetime import date
 from urllib import urlencode
 
+from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
@@ -212,7 +213,10 @@ class ProjectInformationView(BaseCommCareExchangeSectionView):
     @property
     @memoized
     def project(self):
-        return Domain.get(self.snapshot)
+        try:
+            return Domain.get(self.snapshot)
+        except ResourceNotFound:
+            return Domain.get_by_name(self.snapshot)
 
     def dispatch(self, request, *args, **kwargs):
         if not can_view_app(request, self.project):

@@ -51,10 +51,12 @@ def rebuild_schemas(index):
     all_checkpoints = ExportSchema.get_all_checkpoints(index)
     config = ExportConfiguration(db, index, disable_checkpoints=True)
     latest = config.create_new_checkpoint()
+    counter = 0
     for cp in all_checkpoints:
         cp.schema = latest.schema
         cp.save()
-    return len(all_checkpoints)
+        counter += 1
+    return counter
 
 
 @task

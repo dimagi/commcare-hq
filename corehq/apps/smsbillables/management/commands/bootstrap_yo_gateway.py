@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 
 from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.models import INCOMING, OUTGOING
@@ -35,7 +35,7 @@ def bootstrap_yo_gateway(apps):
     log_smsbillables_info("Updated Yo gateway fees.")
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "bootstrap Yo global SMS backend gateway fees"
     args = ""
     label = ""
