@@ -198,6 +198,7 @@ def _filter_date_diffs(diffs):
 
 
 def _filter_user_case_diffs(couch_case, diffs):
+    """SQL cases store the hq_user_id property in ``external_id`` for easier querying"""
     if 'hq_user_id' not in couch_case:
         return diffs
 
