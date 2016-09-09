@@ -292,6 +292,7 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     def form_data(self):
         from couchforms import XMLSyntaxError
         from .utils import convert_xform_to_json, adjust_datetimes
+        from corehq.form_processor.utils.metadata import scrub_form_meta
         xml = self.get_xml()
         try:
             form_json = convert_xform_to_json(xml)
@@ -300,6 +301,8 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
         # we can assume all sql domains are new timezone domains
         with force_phone_timezones_should_be_processed():
             adjust_datetimes(form_json)
+
+        scrub_form_meta(self.form_id, form_json)
         return form_json
 
     @property
@@ -567,7 +570,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     deleted_on = models.DateTimeField(null=True)
     deletion_id = models.CharField(max_length=255, null=True)
 
-    external_id = models.CharField(max_length=255)
+    external_id = models.CharField(max_length=255, null=True)
     location_id = models.CharField(max_length=255, null=True)
 
     case_json = JSONField(default=dict)

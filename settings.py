@@ -1113,6 +1113,16 @@ LOGGING = {
         'export_migration': {
             'handlers': ['export_migration'],
             'level': 'INFO',
+        },
+        'boto3': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propogate': True
+        },
+        'botocore': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propogate': True
         }
     }
 }
