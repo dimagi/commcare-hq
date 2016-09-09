@@ -111,7 +111,7 @@
                 }
             });
 
-            projectInfoUrl = '<a href="{% url 'domain_internal_settings' '___' %}">domain</a>';
+            var projectInfoUrl = '<a href="{% url 'domain_internal_settings' '___' %}">domain</a>';
             self.getNamespaceHtml = function(namespace, value) {
                 if (namespace === 'domain') {
                     return projectInfoUrl.replace('___', value);
