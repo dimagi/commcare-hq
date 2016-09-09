@@ -268,6 +268,8 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 styles: this.options.styles,
                 breadcrumbs: this.options.breadcrumbs,
                 templateName: "case-list-template",
+                useGrid: this.options.numEntitiesPerRow > 1,
+                useTiles: false,
             };
         },
     });
@@ -282,7 +284,6 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
 
         templateHelpers: function () {
             var dict = MenuList.CaseTileListView.__super__.templateHelpers.apply(this, arguments);
-            dict['useGrid'] = this.options.numEntitiesPerRow > 1;
             dict['useTiles'] = true;
             return dict;
         },
