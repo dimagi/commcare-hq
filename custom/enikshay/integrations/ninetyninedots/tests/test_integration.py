@@ -49,11 +49,13 @@ class NinetyNineDotsCaseTests(ENikshayCaseStructureMixin, TestCase):
                 "timestamp": "2009-03-05T01:00:01-05:00",
                 "numberFromWhichPatientDialled": "+910123456789",
                 "sharedNumber": False,
+                "adherenceSource": "99DOTS",
             },
             {
                 "timestamp": "2016-03-05T02:00:01-05:00",
                 "numberFromWhichPatientDialled": "+910123456787",
                 "sharedNumber": True,
+                "adherenceSource": "MERM",
             },
             {
                 "timestamp": "2016-03-05T19:00:01-05:00",  # next day in india
@@ -61,18 +63,19 @@ class NinetyNineDotsCaseTests(ENikshayCaseStructureMixin, TestCase):
                 "sharedNumber": True,
             }
         ]
-        create_adherence_cases(self.domain, 'person', adherence_values, adherence_source="99DOTS")
+        create_adherence_cases(self.domain, 'person', adherence_values)
         potential_adherence_cases = case_accessor.get_reverse_indexed_cases(['episode'])
         adherence_cases = [case for case in potential_adherence_cases if case.type == 'adherence']
         self.assertEqual(len(adherence_cases), 3)
-        adherence_dates = [case.dynamic_case_properties().get('adherence_date')
-                           for case in adherence_cases]
 
         self.assertItemsEqual(
-            adherence_dates,
+            [case.dynamic_case_properties().get('adherence_date') for case in adherence_cases],
             ['2009-03-05', '2016-03-05', '2016-03-06']
         )
-
+        self.assertItemsEqual(
+            [case.dynamic_case_properties().get('adherence_source') for case in adherence_cases],
+            ['99DOTS', 'MERM', '99DOTS']
+        )
         for adherence_case in adherence_cases:
             self.assertEqual(
                 adherence_case.dynamic_case_properties().get('adherence_confidence'),
