@@ -759,10 +759,10 @@
             "Madagascar": {
               "default": 0,
               "cases": {
-                "Brickaville": 50560,
-                "Fenerive Est": 80604,
-                "Tamatave II": 58982,
+                "Brickaville": 48850,
                 "Farafangana": 81941,
+                "Fenerive Est": 81125,
+                "Tamatave II": 58982,
                 "Vohipeno": 41018
               },
               "type": "switch",
