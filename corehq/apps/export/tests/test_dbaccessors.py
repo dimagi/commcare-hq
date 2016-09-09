@@ -18,7 +18,6 @@ from corehq.apps.export.dbaccessors import (
 
 
 class TestExportDBAccessors(TestCase):
-    dependent_apps = ['corehq.apps.export', 'corehq.couchapps']
     domain = 'my-domain'
     app_id = '1234'
     xmlns = 'http://openthatrose.com'
@@ -96,7 +95,6 @@ class TestExportDBAccessors(TestCase):
 
 
 class TestExportInstanceDBAccessors(TestCase):
-    dependent_apps = ['corehq.apps.export', 'corehq.couchapps']
 
     domain = 'my-domain'
 

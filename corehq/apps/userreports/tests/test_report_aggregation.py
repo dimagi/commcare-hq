@@ -13,14 +13,6 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
     """
     Integration tests for configurable report aggregation
     """
-    dependent_apps = [
-        'corehq.apps.tzmigration',
-        'casexml.apps.case',
-        'casexml.apps.phone',
-        'corehq.couchapps',
-        'corehq.form_processor',
-        'couchforms',
-    ]
 
     @classmethod
     def _create_data(cls):

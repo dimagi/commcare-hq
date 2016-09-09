@@ -10,12 +10,6 @@ from testapps.test_pillowtop.utils import real_pillow_settings
 
 @override_settings(DEBUG=True)
 class PillowtopSettingsTest(TestCase, TestFileMixin):
-    dependent_apps = [
-        'pillowtop',
-        'casexml.apps.case',
-        'corehq.apps.domain',
-        'corehq.apps.app_manager',
-    ]
     file_path = ('data',)
     root = os.path.dirname(__file__)
     maxDiff = None
