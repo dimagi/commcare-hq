@@ -5,7 +5,9 @@ from elasticsearch.client import SnapshotClient, IndicesClient
 from django.conf import settings
 
 class Command(BaseCommand):
-    help = "Restores full ES cluster or specific from snapshot"
+    help = ("Restores full ES cluster or specific index from snapshot. "
+            "Index arguments are optional and it will default to a full "
+            "cluster restore if none are specified")
     args = "days_ago <index_1> <index_2> ..."
 
     def handle(self, *args, **options):
