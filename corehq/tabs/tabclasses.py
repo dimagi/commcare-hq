@@ -44,8 +44,7 @@ class ProjectReportsTab(UITab):
 
     @property
     def view(self):
-        module = Domain.get_module_by_name(self.domain)
-        if hasattr(module, 'DEFAULT_REPORT_CLASS'):
+        if self.domain == 'wvindia2':
             return "corehq.apps.reports.views.default"
         from corehq.apps.reports.views import MySavedReportsView
         return MySavedReportsView.urlname

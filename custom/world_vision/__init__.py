@@ -1,7 +1,4 @@
-from custom.world_vision.reports.mixed_report import MixedTTCReport
 from collections import OrderedDict
-
-DEFAULT_REPORT_CLASS = MixedTTCReport
 
 WORLD_VISION_DOMAINS = ('wvindia2', )
 
