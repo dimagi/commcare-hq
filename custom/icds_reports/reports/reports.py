@@ -72,7 +72,7 @@ class ASRReport(IcdsBaseReport):
 class TableauReport(CustomProjectReport):
 
     slug = 'tableau_dashboard'
-    name = 'Nutrition Dashboard'
+    name = 'ICDS-CAS Dashboard'
 
     @classmethod
     def get_url(cls, domain=None, **kwargs):
