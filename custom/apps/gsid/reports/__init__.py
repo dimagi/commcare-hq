@@ -4,8 +4,13 @@ from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import MultiLocationFilter
 
-from custom.apps.gsid.reports.sql_reports import GSIDSQLPatientReport, GSIDSQLByDayReport, GSIDSQLTestLotsReport, \
-	GSIDSQLByAgeReport, PatientMapReport
+from custom.apps.gsid.reports.sql_reports import (
+    GSIDSQLByAgeReport,
+    GSIDSQLByDayReport,
+    GSIDSQLPatientReport,
+    GSIDSQLTestLotsReport,
+    PatientMapReport,
+)
 from util import get_unique_combinations
 
 
