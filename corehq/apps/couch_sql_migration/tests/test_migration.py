@@ -3,6 +3,8 @@ import uuid
 from datetime import datetime
 
 from couchdbkit.exceptions import ResourceNotFound
+from django.conf import settings
+from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
 from django.test import TestCase
 from django.test import override_settings
@@ -17,18 +19,26 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.tzmigration.models import TimezoneMigrationProgress
+from corehq.blobs import get_blob_db
+from corehq.blobs.mixin import BlobMixin
+from corehq.blobs.tests.util import TemporaryS3BlobDB
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors, LedgerAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import clear_local_domain_sql_backend_override
-from corehq.util.test_utils import create_and_save_a_form, create_and_save_a_case, set_parent_case
+from corehq.util.test_utils import create_and_save_a_form, create_and_save_a_case, set_parent_case, trap_extra_setup
 from couchforms.models import XFormInstance
 
 
 class BaseMigrationTestCase(TestCase):
     def setUp(self):
         super(BaseMigrationTestCase, self).setUp()
+        with trap_extra_setup(AttributeError, msg="S3_BLOB_DB_SETTINGS not configured"):
+            config = settings.S3_BLOB_DB_SETTINGS
+            self.s3db = TemporaryS3BlobDB(config)
+            assert get_blob_db() is self.s3db, (get_blob_db(), self.s3db)
+
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
         self.domain_name = uuid.uuid4().hex
         self.domain = create_domain(self.domain_name)
@@ -210,6 +220,51 @@ class MigrationTestCase(BaseMigrationTestCase):
         ))
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(1, len(self._get_form_ids()))
+        self._compare_diffs([])
+
+    def test_migrate_attachments(self):
+        attachment_source = './corehq/ex-submodules/casexml/apps/case/tests/data/attachments/fruity.jpg'
+        attachment_file = open(attachment_source, 'rb')
+        attachments = {
+            'fruity_file': UploadedFile(attachment_file, 'fruity_file', content_type='image/jpeg')
+        }
+        xml = """<?xml version='1.0' ?>
+        <data uiVersion="1" version="1" name="" xmlns="http://openrosa.org/formdesigner/123">
+            <name>fgg</name>
+            <date>2011-06-07</date>
+            <n0:case case_id="case-123" user_id="user-abc" date_modified="{date}" xmlns:n0="http://commcarehq.org/case/transaction/v2">
+                <n0:create>
+                    <n0:case_type_id>cc_bc_demo</n0:case_type_id>
+                    <n0:case_name>fgg</n0:case_name>
+                </n0:create>
+                <n0:attachment>
+                    <n0:fruity_file src="fruity_file" from="local"/>
+                </n0:attachment>
+            </n0:case>
+            <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+                <n1:deviceID>354957031935664</n1:deviceID>
+                <n1:timeStart>{date}</n1:timeStart>
+                <n1:timeEnd>{date}</n1:timeEnd>
+                <n1:username>bcdemo</n1:username>
+                <n1:userID>user-abc</n1:userID>
+                <n1:instanceID>{form_id}</n1:instanceID>
+            </n1:meta>
+        </data>""".format(
+            date='2016-03-01T12:04:16Z',
+            attachment_source=attachment_source,
+            form_id=uuid.uuid4().hex
+        )
+        submit_form_locally(
+            xml,
+            self.domain_name,
+            attachments=attachments,
+        )
+
+        self.assertEqual(1, len(self._get_form_ids()))
+        self.assertEqual(1, len(self._get_case_ids()))
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(1, len(self._get_form_ids()))
+        self.assertEqual(1, len(self._get_case_ids()))
         self._compare_diffs([])
 
     def test_basic_case_migration(self):
