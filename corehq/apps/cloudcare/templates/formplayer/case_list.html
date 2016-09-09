@@ -15,7 +15,7 @@
             </div>
         </div>
     </div>
-    <% if (useGrid) { %>
+    <% if (!_.isNull(useGrid) && useGrid) { %>
         <section class="case-container"></section>
     <% } else { %>
         <% if(!useTiles) { %>
