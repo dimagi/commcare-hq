@@ -1625,6 +1625,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 pass
         return None
 
+    def add_to_assigned_locations(self, location):
+        if self.location_id:
+            self.assigned_location_ids.append(location.location_id)
+            self.get_domain_membership(self.domain).assigned_location_ids.append(location.location_id)
+            self.user_data['commcare_location_ids'] = ",".join(self.assigned_location_ids)
+            self.save()
+        else:
+            self.set_location(location)
+
     def set_location(self, location):
         """
         Set the primary location, and all important user data, for
@@ -2022,6 +2031,15 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         for user_doc in iter_docs(cls.get_db(), user_ids):
             if user_doc['email'].endswith('@dimagi.com'):
                 yield user_doc['email']
+
+    def add_to_assigned_locations(self, domain, location):
+        membership = self.get_domain_membership(domain)
+
+        if membership.location_id:
+            membership.assigned_location_ids.append(location.location_id)
+            self.save()
+        else:
+            self.set_location(domain, location)
 
     def set_location(self, domain, location_object_or_id):
         # set the primary location for user's domain_membership

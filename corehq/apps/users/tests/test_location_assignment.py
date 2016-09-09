@@ -39,6 +39,15 @@ class CCUserLocationAssignmentTest(TestCase):
         self.assertPrimaryLocation(self.loc1.location_id)
         self.assertAssignedLocations([self.loc1.location_id])
 
+    def test_location_append(self):
+        self.user.add_to_assigned_locations(self.loc1)
+        self.assertPrimaryLocation(self.loc1.location_id)  # first location added becomes primary
+        self.assertAssignedLocations([self.loc1.location_id])
+
+        self.user.add_to_assigned_locations(self.loc2)
+        self.assertNonPrimaryLocation(self.loc2.location_id)  # subsequent additions are not primary
+        self.assertAssignedLocations(self.loc_ids)
+
     def test_reset_locations(self):
         self.user.reset_locations(self.loc_ids)
         self.assertAssignedLocations(self.loc_ids)
@@ -127,6 +136,15 @@ class WebUserLocationAssignmentTest(TestCase):
         self.assertAssignedLocations(self.loc_ids)
         self.assertPrimaryLocation(self.loc1.location_id)
         self.assertNonPrimaryLocation(self.loc2.location_id)
+
+    def test_location_append(self):
+        self.user.add_to_assigned_locations(self.domain, self.loc1)
+        self.assertPrimaryLocation(self.loc1.location_id)  # first location added becomes primary
+        self.assertAssignedLocations([self.loc1.location_id])
+
+        self.user.add_to_assigned_locations(self.domain, self.loc2)
+        self.assertNonPrimaryLocation(self.loc2.location_id)  # subsequent additions are not primary
+        self.assertAssignedLocations(self.loc_ids)
 
     def test_unset_primary_location(self):
         # assigned to only one location
