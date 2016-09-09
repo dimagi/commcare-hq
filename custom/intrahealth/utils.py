@@ -12,7 +12,7 @@ from corehq.apps.products.models import SQLProduct
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.fluff.calculators.xform import FormPropertyFilter, IN
 from corehq.util.translation import localize
-from custom.intrahealth import PRODUCT_MAPPING, PRODUCT_NAMES, report_calcs
+from custom.intrahealth import PRODUCT_MAPPING, PRODUCT_NAMES
 
 
 def get_products(form, property):
