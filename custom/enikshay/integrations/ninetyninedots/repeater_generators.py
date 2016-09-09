@@ -6,14 +6,17 @@ from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator, Regi
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
-from custom.enikshay.integrations.ninetyninedots.repeaters import NinetyNineDotsRegisterPatientRepeater
+from custom.enikshay.integrations.ninetyninedots.repeaters import (
+    NinetyNineDotsRegisterPatientRepeater,
+    NinetyNineDotsUpdatePatientRepeater,
+)
 from custom.enikshay.case_utils import (
     get_occurrence_case_from_episode,
     get_person_case_from_occurrence,
 )
 
 
-class RegisterPatientPayload(jsonobject.JsonObject):
+class PatientPayload(jsonobject.JsonObject):
     beneficiary_id = jsonobject.StringProperty(required=True)
     phone_numbers = jsonobject.StringProperty(required=True)
 
@@ -25,7 +28,7 @@ class RegisterPatientPayloadGenerator(BasePayloadGenerator):
         return 'application/json'
 
     def get_test_payload(self, domain):
-        return json.dumps(RegisterPatientPayload(
+        return json.dumps(PatientPayload(
             beneficiary_id=uuid.uuid4().hex,
             phone_numbers=_format_number(_parse_number("0123456789"))
         ).to_json())
@@ -33,7 +36,7 @@ class RegisterPatientPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record, payload_doc):
         occurence_case = get_occurrence_case_from_episode(payload_doc.domain, payload_doc.case_id)
         person_case = get_person_case_from_occurrence(payload_doc.domain, occurence_case)
-        data = RegisterPatientPayload(
+        data = PatientPayload(
             beneficiary_id=person_case.case_id,
             phone_numbers=_get_phone_numbers(person_case)
         )
@@ -57,6 +60,49 @@ class RegisterPatientPayloadGenerator(BasePayloadGenerator):
                 payload_doc.case_id,
                 {
                     "dots_99_registered": "false",
+                    "dots_99_error": "{}: {}".format(
+                        response.status_code,
+                        response.json().get('error')
+                    ),
+                }
+            )
+
+
+@RegisterGenerator(NinetyNineDotsUpdatePatientRepeater, 'case_json', 'JSON', is_default=True)
+class UpdatePatientPayloadGenerator(BasePayloadGenerator):
+    @property
+    def content_type(self):
+        return 'application/json'
+
+    def get_test_payload(self, domain):
+        return json.dumps(PatientPayload(
+            beneficiary_id=uuid.uuid4().hex,
+            phone_numbers=_format_number(_parse_number("0123456789"))
+        ).to_json())
+
+    def get_payload(self, repeat_record, payload_doc):
+        data = PatientPayload(
+            beneficiary_id=payload_doc,
+            phone_numbers=_get_phone_numbers(payload_doc)
+        )
+        return json.dumps(data.to_json())
+
+    def handle_success(self, response, payload_doc):
+        if response.status_code == 200:
+            _update_episode_case(
+                payload_doc.domain,
+                payload_doc.case_id,
+                {
+                    "dots_99_error": ""
+                }
+            )
+
+    def handle_failure(self, response, payload_doc):
+        if 400 <= response.status_code <= 500:
+            _update_episode_case(
+                payload_doc.domain,
+                payload_doc.case_id,
+                {
                     "dots_99_error": "{}: {}".format(
                         response.status_code,
                         response.json().get('error')

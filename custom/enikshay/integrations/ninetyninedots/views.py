@@ -18,9 +18,15 @@ from custom.enikshay.integrations.ninetyninedots.utils import (
 
 
 class RegisterPatientRepeaterView(AddCaseRepeaterView):
-    urlname = 'add_99dots_repeater'
-    page_title = "99DOTS"
-    page_name = "99DOTS forwarder"
+    urlname = 'register_99dots_patient'
+    page_title = "Register 99DOTS Patients"
+    page_name = "Register 99DOTS Patients"
+
+
+class UpdatePatientRepeaterView(AddCaseRepeaterView):
+    urlname = 'update_99dots_patient'
+    page_title = "Update 99DOTS Patients"
+    page_name = "Update 99DOTS Patients"
 
 
 @toggles.NINETYNINE_DOTS.required_decorator()
