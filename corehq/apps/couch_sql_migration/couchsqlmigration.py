@@ -154,10 +154,11 @@ class CouchSqlDomainMigrator(object):
         sql_cases = CaseAccessorSQL.get_cases(case_ids)
         for sql_case in sql_cases:
             couch_case = couch_cases[sql_case.case_id]
-            diffs = json_diff(couch_case, sql_case.to_json(), track_list_indices=False)
+            sql_case_json = sql_case.to_json()
+            diffs = json_diff(couch_case, sql_case_json, track_list_indices=False)
             self.diff_db.add_diffs(
                 couch_case['doc_type'], sql_case.case_id,
-                filter_case_diffs(couch_case, sql_case, diffs)
+                filter_case_diffs(couch_case, sql_case_json, diffs)
             )
 
         self._diff_ledgers(case_ids)
