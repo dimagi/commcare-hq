@@ -23,6 +23,10 @@ FORM_IGNORE_PATHS = {
     'XFormDeprecated': BASE_IGNORED_FORM_PATHS,
 }
 
+FORM_PARTIAL_DIFFS = (
+    {'diff_type': 'type', 'path': ('openrosa_headers', 'HTTP_X_OPENROSA_VERSION')},
+)
+
 
 def _form_ignored_diffs():
     from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
@@ -58,6 +62,12 @@ CASE_IGNORED_PATHS = {
     ('modified_by',),
     ('indices', '[*]', 'case_id'),
 }
+
+
+CASE_PARTIAL_DIFFS = (
+    {'diff_type': 'diff', 'path': ('owner_id',), 'old_value': ''},
+    {'diff_type': 'diff', 'path': ('owner_id',), 'old_value': None},
+)
 
 
 def _case_ignored_diffs():
@@ -105,12 +115,27 @@ def filter_form_diffs(doc_type, diffs):
     ]
     filtered = _check_deprecation_date(filtered, doc_type)
     filtered = _check_deletion_fields_date(filtered, doc_type)
-    filtered = [
-        diff for diff in filtered
-        if not (diff.diff_type == 'type' and diff.path == ('openrosa_headers', 'HTTP_X_OPENROSA_VERSION'))
-    ]
+    filtered = _filter_partial_diffs(filtered, FORM_PARTIAL_DIFFS)
     filtered = _filter_date_diffs(filtered)
     return filtered
+
+
+def _filter_partial_diffs(diffs, partial_diffs_to_exclude):
+    """Filter out diffs that match a subset of attributes
+    :type partial_diffs_to_exclude: dict([(attr, value)...])
+    """
+    def _partial_match(diff):
+        print diff
+        for partial in partial_diffs_to_exclude:
+            print partial
+            if all(getattr(diff, attr) == val for attr, val in partial.items()):
+                return True
+        return False
+
+    return [
+        diff for diff in diffs
+        if not _partial_match(diff)
+    ]
 
 
 def _check_deprecation_date(filtered_diffs, doc_type):
@@ -148,19 +173,9 @@ def filter_case_diffs(doc_type, diffs):
         if diff.path not in CASE_IGNORED_PATHS and diff not in CASE_IGNORED_DIFFS
     ]
     filtered_diffs = _check_deletion_fields_date(filtered_diffs, doc_type)
-    filtered_diffs = _filter_owner_id_diffs(filtered_diffs)
+    filtered_diffs = _filter_partial_diffs(filtered_diffs, CASE_PARTIAL_DIFFS)
     filtered_diffs = _filter_date_diffs(filtered_diffs)
     return filtered_diffs
-
-
-def _filter_owner_id_diffs(diffs):
-    def _acceptable_owner_diff(diff):
-        return diff.path[0] == 'owner_id' and diff.old_value is None
-
-    return [
-        diff for diff in diffs
-        if not _acceptable_owner_diff(diff)
-        ]
 
 
 def filter_ledger_diffs(diffs):
