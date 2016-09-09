@@ -201,7 +201,7 @@
                     <inline-edit params="
                         value: build_comment,
                         rows: 1,
-                        placeholder: '{% trans "(No Comment)"|escapejs %}',
+                        placeholder: '{% trans "(Click here to add a comment)"|escapejs %}',
                         url: '{% url "update_build_comment" domain app.id %}',
                         saveParams: {'build_id': id},
                         saveValueName: 'comment',
