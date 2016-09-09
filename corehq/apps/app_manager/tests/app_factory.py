@@ -1,4 +1,4 @@
-from corehq.apps.app_manager.const import APP_V2, AUTO_SELECT_USERCASE
+from corehq.apps.app_manager.const import AUTO_SELECT_USERCASE
 from corehq.apps.app_manager.models import AdvancedModule, Module, UpdateCaseAction, LoadUpdateAction, \
     FormActionCondition, OpenSubCaseAction, OpenCaseAction, AdvancedOpenCaseAction, Application, AdvancedForm, \
     AutoSelectCase, CaseIndex, PreloadAction, ShadowModule
@@ -21,8 +21,8 @@ class AppFactory(object):
     >>> factory.form_opens_case(form3, case_type='child', is_subcase=True)
     """
 
-    def __init__(self, domain='test', name='Untitled Application', version=APP_V2, build_version=None):
-        self.app = Application.new_app(domain, name, application_version=version)
+    def __init__(self, domain='test', name='Untitled Application', build_version=None):
+        self.app = Application.new_app(domain, name)
         if build_version:
             self.app.build_spec.version = build_version
 
