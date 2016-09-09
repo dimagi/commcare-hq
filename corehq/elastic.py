@@ -151,7 +151,15 @@ def run_query(index_name, q, debug_host=None):
     else:
         es_instance = get_es_new()
 
-    es_meta = ES_META[index_name]
+    try:
+        es_meta = ES_META[index_name]
+    except KeyError:
+        from corehq.apps.userreports.util import is_ucr_table
+        # todo: figure out if we really need types
+        if is_ucr_table(index_name):
+            es_meta = EsMeta(index_name, 'indicator')
+        else:
+            raise
     try:
         return es_instance.search(es_meta.index, es_meta.type, body=q)
     except RequestError as e:

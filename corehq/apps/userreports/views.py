@@ -1079,7 +1079,7 @@ class PreviewDataSourceView(BaseUserConfigReportsView):
     @property
     def page_context(self):
         config, is_static = get_datasource_config_or_404(self.config_id, self.domain)
-        adapter = IndicatorSqlAdapter(config)
+        adapter = get_indicator_adapter(config)
         q = adapter.get_query_object()
         return {
             'data_source': config,

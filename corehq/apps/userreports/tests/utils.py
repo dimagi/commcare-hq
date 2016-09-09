@@ -1,13 +1,17 @@
 from datetime import datetime
 from decimal import Decimal
+import functools
 import json
 import os
 import uuid
+
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import data_sources
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.feed.interface import Change, ChangeMeta
+
+from corehq.util.test_utils import run_with_multiple_configs, RunConfig
 
 
 def get_sample_report_config():
@@ -80,3 +84,27 @@ def doc_to_change(doc):
 def domain_lite(name):
     from corehq.apps.callcenter.utils import DomainLite
     return DomainLite(name, None, None, True)
+
+
+def post_run_with_sql_backend(fn, *args, **kwargs):
+    fn.doCleanups()
+    fn.tearDown()
+
+
+def pre_run_with_es_backend(fn, *args, **kwargs):
+    fn.setUp()
+
+
+run_with_all_ucr_backends = functools.partial(
+    run_with_multiple_configs,
+    run_configs=[
+        RunConfig(
+            settings={'OVERRIDE_UCR_BACKEND': "SQL"},
+            post_run=post_run_with_sql_backend
+        ),
+        RunConfig(
+            settings={'OVERRIDE_UCR_BACKEND': "ES"},
+            pre_run=pre_run_with_es_backend,
+        ),
+    ]
+)
