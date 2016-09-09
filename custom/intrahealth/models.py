@@ -4,10 +4,29 @@ from couchforms.models import XFormInstance
 from fluff.filters import ORFilter, ANDFilter, CustomFilter
 from casexml.apps.case.models import CommCareCase
 from corehq.fluff.calculators.xform import FormPropertyFilter
-from custom.intrahealth import INTRAHEALTH_DOMAINS, report_calcs, OPERATEUR_XMLNSES, get_real_date, \
-    get_location_id, get_location_id_by_type, COMMANDE_XMLNSES, get_products, IsExistFormPropertyFilter,\
-    RAPTURE_XMLNSES, get_rupture_products, LIVRAISON_XMLNSES, get_pps_name, get_district_name, get_month,\
-    get_region_id, get_district_id, get_products_id, get_rupture_products_ids
+from custom.intrahealth import (
+    COMMANDE_XMLNSES,
+    INTRAHEALTH_DOMAINS,
+    LIVRAISON_XMLNSES,
+    OPERATEUR_XMLNSES,
+    RAPTURE_XMLNSES,
+    report_calcs,
+)
+from custom.intrahealth.utils import (
+    get_district_id,
+    get_district_name,
+    get_location_id,
+    get_location_id_by_type,
+    get_month,
+    get_pps_name,
+    get_products,
+    get_products_id,
+    get_real_date,
+    get_region_id,
+    get_rupture_products,
+    get_rupture_products_ids,
+    IsExistFormPropertyFilter,
+)
 from custom.utils.utils import flat_field
 
 IH_DELETED_TYPES = ('XFormArchived', 'XFormDuplicate', 'XFormDeprecated', 'XFormError')
