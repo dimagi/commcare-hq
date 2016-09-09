@@ -83,6 +83,13 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             if (menuResponse.breadcrumbs) {
                 MenuList.Controller.showBreadcrumbs(menuResponse.breadcrumbs);
             }
+            if (menuResponse.appVersion) {
+                MenuList.Controller.showAppVersion(menuResponse.appVersion);
+            }
+        },
+
+        showAppVersion: function (appVersion) {
+            $("#version-info").text(appVersion);
         },
 
         showBreadcrumbs: function (breadcrumbs) {

@@ -18,6 +18,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             this.clearSession = response.clearSession;
             this.notification = response.notification;
             this.breadcrumbs = response.breadcrumbs;
+            this.appVersion = response.appVersion;
             this.appId = response.appId;
 
             if (response.commands) {
