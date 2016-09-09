@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext_lazy as _, ugettext_noop
 from custom.succeed.utils import CONFIG
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
@@ -283,3 +283,21 @@ class DrilldownReportMixin(object):
     @classmethod
     def show_in_navigation(cls, *args, **kwargs):
         return False
+
+from custom.succeed.reports.all_patients import PatientListReport
+from custom.succeed.reports.patient_Info import PatientInfoReport
+from custom.succeed.reports.patient_interactions import PatientInteractionsReport
+from custom.succeed.reports.patient_status import PatientStatusReport
+from custom.succeed.reports.patient_submissions import PatientSubmissionReport
+from custom.succeed.reports.patient_task_list import PatientTaskListReport
+
+CUSTOM_REPORTS = (
+    (ugettext_noop('Custom Reports'), (
+       PatientListReport,
+       PatientTaskListReport,
+       PatientInfoReport,
+       PatientSubmissionReport,
+       PatientInteractionsReport,
+       PatientStatusReport
+    )),
+)
