@@ -43,7 +43,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
 
         showMenu: function (menuResponse) {
-            var menuListView = MenuList.Controller.getMenuView(menuResponse);
+            var menuListView = MenuList.Util.getMenuView(menuResponse);
 
             if (menuListView) {
                 FormplayerFrontend.regions.main.show(menuListView.render());
@@ -122,7 +122,9 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             $('#case-detail-modal').find('.modal-body').html(menuListView.render().el);
             $('#case-detail-modal').modal('show');
         },
+    };
 
+    MenuList.Util = {
         getMenuView: function (menuResponse) {
             var menuData = {
                 collection: menuResponse,
@@ -157,6 +159,5 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 }
             }
         },
-}
-    ;
+    };
 });

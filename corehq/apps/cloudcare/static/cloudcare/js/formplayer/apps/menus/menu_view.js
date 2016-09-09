@@ -295,7 +295,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         template: "#case-tile-grid-view-item-template",
     });
 
-    MenuList.GridCaseTileListView = MenuList.CaseTileListView.extend({
+        MenuList.GridCaseTileListView = MenuList.CaseTileListView.extend({
         initialize: function () {
             MenuList.GridCaseTileListView.__super__.initialize.apply(this, arguments);
         },
