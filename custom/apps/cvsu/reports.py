@@ -303,3 +303,14 @@ class CVSUPerformanceReportTrend(CVSUPerformanceReport):
             CVSUServicesDataTrend(config=config),
             CVSUIncidentResolutionDataTrend(config=config)
         ]
+
+CUSTOM_REPORTS = (
+    ('Child Protection & Gender based Violence', (
+        ChildProtectionReport,
+        ChildProtectionReportTrend,
+    )),
+    ('Performance Evaluation', (
+        CVSUPerformanceReport,
+        CVSUPerformanceReportTrend,
+    ))
+)
