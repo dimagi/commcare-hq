@@ -7,6 +7,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             "single_app/:id": "singleApp", // Show app in phone mode (SingleAppView)
             "sessions": "listSessions", //list all this user's current sessions (incomplete forms)
             "sessions/:id": "getSession",
+            "local/:path": "localInstall",
             ":session": "listMenus",  // Default route
         },
     });
@@ -20,29 +21,16 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             SessionNavigate.AppList.Controller.singleApp(appId);
         },
         selectApp: function (appId) {
-            SessionNavigate.MenuList.Controller.selectMenu(appId);
+            SessionNavigate.MenuList.Controller.selectMenu({
+                'appId': appId,
+            });
         },
         listMenus: function (sessionObject) {
             FormplayerFrontend.trigger("clearForm");
             var urlObject = Util.CloudcareUrl.fromJson(
                 Util.encodedUrlToObject(sessionObject || Backbone.history.getFragment())
             );
-            var appId = urlObject.appId;
-            var sessionId = urlObject.sessionId;
-            var steps = urlObject.steps;
-            var page = urlObject.page;
-            var search = urlObject.search;
-            var queryDict = urlObject.queryDict;
-            var previewCommand = urlObject.previewCommand;
-            SessionNavigate.MenuList.Controller.selectMenu(
-                appId,
-                sessionId,
-                steps,
-                page,
-                search,
-                queryDict,
-                previewCommand
-            );
+            SessionNavigate.MenuList.Controller.selectMenu(urlObject);
         },
         showDetail: function (model, detailTabIndex) {
             SessionNavigate.MenuList.Controller.showDetail(model, detailTabIndex);
@@ -51,9 +39,11 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             FormplayerFrontend.trigger("clearForm");
             SessionNavigate.SessionList.Controller.listSessions();
         },
-
         getSession: function(sessionId) {
             FormplayerFrontend.request("getSession", sessionId);
+        },
+        localInstall: function(path) {
+            FormplayerFrontend.trigger("localInstall", path);
         },
         /**
          * renderResponse
@@ -90,7 +80,6 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
                 response,
                 { parse: true }
             );
-
             FormplayerFrontend.navigate(encodedUrl);
 
             SessionNavigate.MenuList.Controller.showMenu(menuCollection);
@@ -110,7 +99,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     });
 
     FormplayerFrontend.on("app:select", function (appId) {
-        var urlObject = new Util.CloudcareUrl(appId);
+        var urlObject = new Util.CloudcareUrl({'appId': appId});
         Util.setUrlToObject(urlObject);
         API.selectApp(appId);
     });
@@ -177,8 +166,19 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         var urlObject = Util.currentUrlToObject();
         urlObject.spliceSteps(index);
         Util.setUrlToObject(urlObject);
-        SessionNavigate.MenuList.Controller.selectMenu(urlObject.appId, null, urlObject.steps);
+        var options = {
+            'appId': urlObject.appId,
+            'steps': urlObject.steps,
+        };
+        SessionNavigate.MenuList.Controller.selectMenu(options);
     });
 
 
+    FormplayerFrontend.on("localInstall", function (path) {
+        var urlObject = new Util.CloudcareUrl({
+            'installReference': path,
+        });
+        Util.setUrlToObject(urlObject);
+        SessionNavigate.MenuList.Controller.selectMenu(urlObject);
+    });
 });

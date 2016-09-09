@@ -897,6 +897,7 @@ KAFKA_URL = 'localhost:9092'
 
 MOBILE_INTEGRATION_TEST_TOKEN = None
 
+OVERRIDE_UCR_BACKEND = None
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1112,6 +1113,16 @@ LOGGING = {
         'export_migration': {
             'handlers': ['export_migration'],
             'level': 'INFO',
+        },
+        'boto3': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propogate': True
+        },
+        'botocore': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propogate': True
         }
     }
 }
@@ -1780,7 +1791,6 @@ CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
-# mapping of domains to modules for those that aren't identical
 # a DOMAIN_MODULE_CONFIG doc present in your couchdb can override individual
 # items.
 DOMAIN_MODULE_MAP = {
@@ -1807,6 +1817,7 @@ DOMAIN_MODULE_MAP = {
     'mvp-koraro': 'mvp',
     'mvp-pampaida': 'mvp',
     'opm': 'custom.opm',
+    'pact': 'pact',
     'project': 'custom.apps.care_benin',
 
     'ipm-senegal': 'custom.intrahealth',

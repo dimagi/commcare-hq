@@ -15,7 +15,6 @@ from corehq.apps.repeaters.const import RECORD_PENDING_STATE
 
 
 class TestRepeatRecordDBAccessors(TestCase):
-    dependent_apps = ['corehq.apps.repeaters', 'corehq.couchapps']
     repeater_id = '1234'
     other_id = '5678'
     domain = 'test-domain-2'
@@ -102,7 +101,6 @@ class TestRepeatRecordDBAccessors(TestCase):
 
 
 class TestRepeatersDBAccessors(TestCase):
-    dependent_apps = ['corehq.apps.repeaters', 'corehq.couchapps']
     domain = 'test-domain'
 
     @classmethod

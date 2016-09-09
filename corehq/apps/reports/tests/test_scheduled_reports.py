@@ -40,7 +40,6 @@ class GuessReportingMinuteTest(SimpleTestCase):
 
 
 class ScheduledReportTest(TestCase):
-    dependent_apps = ['corehq.couchapps']
 
     def setUp(self):
         for report in ReportNotification.view(
@@ -163,14 +162,6 @@ class ScheduledReportTest(TestCase):
 
 
 class ScheduledReportSendingTest(TestCase):
-    dependent_apps = [
-        'django_digest', 'auditcare', 'django_prbac',
-        'corehq.apps.accounting',
-        'corehq.apps.domain',
-        'corehq.apps.users',
-        'corehq.apps.tzmigration',
-        'corehq.apps.userreports',
-    ]
 
     domain = 'test-scheduled-reports'
 

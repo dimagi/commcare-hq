@@ -28,36 +28,6 @@ from ..fixtures import _location_to_fixture, LocationSet, should_sync_locations,
     flat_location_fixture_generator
 from ..models import SQLLocation, LocationType, Location
 
-DEPENDENT_APPS = [
-    'auditcare',
-    'couchforms',
-    'phonelog',
-    'django_digest',
-    'casexml.apps.case',
-    'casexml.apps.phone',
-    'casexml.apps.stock',
-    'corehq.couchapps',
-    'corehq.form_processor',
-    'corehq.sql_accessors',
-    'corehq.sql_proxy_accessors',
-    'corehq.apps.commtrack',
-    'corehq.apps.consumption',
-    'corehq.apps.custom_data_fields',
-    'corehq.apps.domain',
-    'corehq.apps.hqcase',
-    'corehq.apps.fixtures',
-    'corehq.apps.groups',
-    'corehq.apps.products',
-    'corehq.apps.reminders',
-    'corehq.apps.sms',
-    'corehq.apps.smsforms',
-    'corehq.apps.tzmigration',
-    'corehq.apps.users',
-    'custom.logistics',
-    'custom.ilsgateway',
-    'custom.ewsghana',
-]
-
 
 class FixtureHasLocationsMixin(TestXmlMixin):
     root = os.path.dirname(__file__)
@@ -82,7 +52,6 @@ class FixtureHasLocationsMixin(TestXmlMixin):
 
 @mock.patch.object(Domain, 'uses_locations', return_value=True)  # removes dependency on accounting
 class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
-    dependent_apps = DEPENDENT_APPS
     location_type_names = ['state', 'county', 'city']
     location_structure = [
         ('Massachusetts', [
@@ -232,7 +201,6 @@ class ForkedHierarchyLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLo
         - Region
             - Town
     """
-    dependent_apps = DEPENDENT_APPS
     location_type_structure = [
         LocationTypeStructure('state', [
             LocationTypeStructure('county', [

@@ -1,7 +1,7 @@
 from datetime import datetime
 import pytz
 from django.test import SimpleTestCase, TestCase
-from django.utils.dateparse import parse_datetime
+
 
 from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
 
@@ -54,18 +54,23 @@ class NinetyNineDotsCaseTests(ENikshayCaseStructureMixin, TestCase):
                 "timestamp": "2016-03-05T02:00:01-05:00",
                 "numberFromWhichPatientDialled": "+910123456787",
                 "sharedNumber": True,
+            },
+            {
+                "timestamp": "2016-03-05T19:00:01-05:00",  # next day in india
+                "numberFromWhichPatientDialled": "+910123456787",
+                "sharedNumber": True,
             }
         ]
         create_adherence_cases(self.domain, 'person', adherence_values, adherence_source="99DOTS")
         potential_adherence_cases = case_accessor.get_reverse_indexed_cases(['episode'])
         adherence_cases = [case for case in potential_adherence_cases if case.type == 'adherence']
-        self.assertEqual(len(adherence_cases), 2)
-        adherence_times = [case.dynamic_case_properties().get('adherence_date')
+        self.assertEqual(len(adherence_cases), 3)
+        adherence_dates = [case.dynamic_case_properties().get('adherence_date')
                            for case in adherence_cases]
 
         self.assertItemsEqual(
-            [parse_datetime(adherence_time) for adherence_time in adherence_times],
-            [parse_datetime(adherence_value['timestamp']) for adherence_value in adherence_values]
+            adherence_dates,
+            ['2009-03-05', '2016-03-05', '2016-03-06']
         )
 
         for adherence_case in adherence_cases:

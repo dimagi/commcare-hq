@@ -20,8 +20,6 @@ from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class CouchformsAnalyticsTest(TestCase, DocTestMixin):
-    dependent_apps = ['corehq.couchapps', 'corehq.apps.domain', 'corehq.form_processor',
-                      'corehq.sql_accessors']
 
     @classmethod
     def setUpClass(cls):
@@ -86,8 +84,6 @@ class CouchformsAnalyticsTest(TestCase, DocTestMixin):
 
 
 class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
-    dependent_apps = ['corehq.couchapps', 'corehq.apps.domain', 'corehq.form_processor',
-                      'corehq.sql_accessors']
     maxDiff = None
 
     @classmethod

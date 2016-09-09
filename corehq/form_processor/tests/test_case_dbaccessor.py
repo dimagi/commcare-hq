@@ -22,7 +22,6 @@ CaseTransactionTrace = namedtuple('CaseTransactionTrace', 'form_id include')
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class CaseAccessorTestsSQL(TestCase):
-    dependent_apps = ['corehq.sql_accessors', 'corehq.sql_proxy_accessors']
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)

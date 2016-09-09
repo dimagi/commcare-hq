@@ -11,7 +11,6 @@ from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class TestExportESAccessors(TestCase):
-    dependent_apps = ['corehq.apps.export', 'corehq.couchapps']
     domain = 'export-es-domain'
 
     @classmethod
