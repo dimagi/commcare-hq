@@ -157,7 +157,7 @@ class CouchSqlDomainMigrator(object):
             diffs = json_diff(couch_case, sql_case.to_json(), track_list_indices=False)
             self.diff_db.add_diffs(
                 couch_case['doc_type'], sql_case.case_id,
-                filter_case_diffs(couch_case['doc_type'], diffs)
+                filter_case_diffs(couch_case, diffs)
             )
 
         self._diff_ledgers(case_ids)

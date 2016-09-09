@@ -91,6 +91,7 @@ CASE_IGNORED_DIFFS = (
     FormJsonDiff(diff_type=u'type', path=(u'owner_id',), old_value=None, new_value=u''),
     FormJsonDiff(diff_type=u'missing', path=(u'closed_by',), old_value=Ellipsis, new_value=None),
     FormJsonDiff(diff_type=u'type', path=(u'external_id',), old_value=u'', new_value=None),
+    FormJsonDiff(diff_type=u'missing', path=(u'deleted_on',), old_value=Ellipsis, new_value=None),
 )
 
 DATE_FIELDS = {
@@ -120,11 +121,13 @@ def filter_form_diffs(doc_type, diffs):
     return filtered
 
 
-def filter_case_diffs(doc_type, diffs):
+def filter_case_diffs(couch_case, diffs):
+    doc_type = couch_case['doc_type']
     filtered_diffs = _filter_exact_matches(diffs, CASE_IGNORED_DIFFS)
     filtered_diffs = _filter_partial_matches(filtered_diffs, PARTIAL_DIFFS['CommCareCase'])
     filtered_diffs = _filter_renamed_fields(filtered_diffs, doc_type)
     filtered_diffs = _filter_date_diffs(filtered_diffs)
+    filtered_diffs = _filter_user_case_diffs(couch_case, filtered_diffs)
     return filtered_diffs
 
 
@@ -191,3 +194,16 @@ def _filter_date_diffs(diffs):
         diff for diff in diffs
         if not _date_diff(diff) or not _both_dates(diff.old_value, diff.new_value)
     ]
+
+
+def _filter_user_case_diffs(couch_case, diffs):
+    if 'hq_user_id' not in couch_case:
+        return diffs
+
+    hq_user_id = couch_case['hq_user_id']
+    external_id_diffs = [diff for diff in diffs if diff.diff_type == 'diff' and diff.path == (u'external_id',)]
+    for diff in external_id_diffs:
+        if diff.old_value in ('', Ellipsis, None) and diff.new_value == hq_user_id:
+            diffs.remove(diff)
+
+    return diffs
