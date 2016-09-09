@@ -17,6 +17,7 @@
 
     // defaults
     app_drilldown.constant('formFieldSlugs', {
+        model_type: 'model_type',
         app_type: 'app_type',
         application: 'application',
         module: 'module',
@@ -24,6 +25,7 @@
         case_type: 'case_type'
     });
     app_drilldown.constant('formDefaults', {
+        model_type: '',
         app_type: 'all',
         application: null,
         module: null,
@@ -40,10 +42,12 @@
     var selectControllers = {};
     selectControllers.DrilldownToFormController = function (
         $scope, djangoRMI, formFieldSlugs, formDefaults, djangoRMICallbackName,
-        processApplicationDataFormSuccessCallback, formModalSelector
+        processApplicationDataFormSuccessCallback, formModalSelector, staticModelType, modelType
     ) {
         var self = this;
         $scope._ = _;  // use underscore.js in templates
+
+        $scope.staticModelType = staticModelType;
 
         $scope.showNoAppsError = false;
         $scope.formLoadError = null;
@@ -56,6 +60,9 @@
         $scope.formSubmissionError = null;
 
         $scope.formData = formDefaults;
+        if (modelType) {
+            $scope.formData['model_type'] = modelType;
+        }
 
         self._placeholders = {};
         self._app_types = [];

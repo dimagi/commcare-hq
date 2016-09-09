@@ -39,18 +39,23 @@ from crispy_forms.layout import Layout
 from dimagi.utils.dates import DateSpan
 
 
-class CreateFormExportTagForm(forms.Form):
-    """The information necessary to create an export tag to begin creating a
-    Form Export. This form interacts with DrilldownToFormController in
-    hq.app_data_drilldown.ng.js
-    """
+class CreateExportTagForm(forms.Form):
+    # common fields
+    model_type = forms.ChoiceField(
+        choices=[("", ugettext_lazy("Select model type")), ('case', ugettext_lazy('case')), ('form', ugettext_lazy('form'))]
+    )
     app_type = forms.CharField()
     application = forms.CharField()
+
+    # Form export fields
     module = forms.CharField()
     form = forms.CharField()
 
+    # Case export fields
+    case_type = forms.CharField()
+
     def __init__(self, *args, **kwargs):
-        super(CreateFormExportTagForm, self).__init__(*args, **kwargs)
+        super(CreateExportTagForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -60,79 +65,63 @@ class CreateFormExportTagForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Div(
                 crispy.Field(
-                    'app_type',
-                    placeholder=_("Select Application Type"),
-                    ng_model="formData.app_type",
-                    ng_change="updateAppChoices()",
+                    'model_type',
+                    placeholder=_('Select model type'),
+                    ng_model='formData.model_type',
                     ng_required="true",
                 ),
-                ng_show="hasSpecialAppTypes",
+                ng_show="!staticModelType" 
             ),
-            crispy.Field(
-                'application',
-                placeholder=_("Select Application"),
-                ng_model="formData.application",
-                ng_change="updateModuleChoices()",
-                ng_required="true",
-            ),
-            crispy.Field(
-                'module',
-                placeholder=_("Select Module"),
-                ng_model="formData.module",
-                ng_disabled="!formData.application",
-                ng_change="updateFormChoices()",
-                ng_required="true",
-            ),
-            crispy.Field(
-                'form',
-                placeholder=_("Select Form"),
-                ng_model="formData.form",
-                ng_disabled="!formData.module",
-                ng_required="true",
-            ),
+            crispy.Div(
+                crispy.Div(
+                    crispy.Field(
+                        'app_type',
+                        placeholder=_("Select Application Type"),
+                        ng_model="formData.app_type",
+                        ng_change="updateAppChoices()",
+                        ng_required="true",
+                    ),
+                    ng_show="hasSpecialAppTypes || formData.model_type === 'case'",
+                ),
+                crispy.Field(
+                    'application',
+                    placeholder=_("Select Application"),
+                    ng_model="formData.application",
+                    ng_change="formData.model_type === 'case' ? updateCaseTypeChoices() : updateModuleChoices()",
+                    ng_required="true",
+                ),
+                crispy.Div(  # Form export fields
+                    crispy.Field(
+                        'module',
+                        placeholder=_("Select Module"),
+                        ng_model="formData.module",
+                        ng_disabled="!formData.application",
+                        ng_change="updateFormChoices()",
+                        ng_required="formData.model_type === 'form'",
+                    ),
+                    crispy.Field(
+                        'form',
+                        placeholder=_("Select Form"),
+                        ng_model="formData.form",
+                        ng_disabled="!formData.module",
+                        ng_required="formData.model_type === 'form'",
+                    ),
+                    ng_show="formData.model_type === 'form'"
+                ),
+                crispy.Div(  # Case export fields
+                    crispy.Field(
+                        'case_type',
+                        placeholder=_("Select Case Type"),
+                        ng_model="formData.case_type",
+                        ng_disabled="!formData.application",
+                        ng_required="formData.model_type === 'case'",
+                    ),
+                    ng_show="formData.model_type === 'case'",
+                ),
+                ng_show="formData.model_type"
+            )
         )
 
-
-class CreateCaseExportTagForm(forms.Form):
-    """The information necessary to create an export tag to begin creating a
-    Case Export. This form interacts with CreateExportController in
-    list_exports.ng.js
-    """
-    app_type = forms.CharField()
-    application = forms.CharField()
-    case_type = forms.CharField()
-
-    def __init__(self, *args, **kwargs):
-        super(CreateCaseExportTagForm, self).__init__(*args, **kwargs)
-
-        self.helper = FormHelper()
-        self.helper.form_tag = False
-        self.helper.label_class = 'col-sm-2'
-        self.helper.field_class = 'col-sm-10'
-
-        self.helper.layout = crispy.Layout(
-            crispy.Field(
-                'app_type',
-                placeholder=_("Select Application Type"),
-                ng_model="formData.app_type",
-                ng_change="updateAppChoices()",
-                ng_required="true",
-            ),
-            crispy.Field(
-                'application',
-                placeholder=_("Select Application"),
-                ng_model="formData.application",
-                ng_change="updateCaseTypeChoices()",
-                ng_required="true",
-            ),
-            crispy.Field(
-                'case_type',
-                placeholder=_("Select Case Type"),
-                ng_model="formData.case_type",
-                ng_disabled="!formData.application",
-                ng_required="true",
-            ),
-        )
 
 
 class BaseFilterExportDownloadForm(forms.Form):

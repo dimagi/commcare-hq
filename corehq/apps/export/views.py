@@ -42,12 +42,11 @@ from corehq.apps.export.exceptions import (
     ExportAsyncException,
 )
 from corehq.apps.export.forms import (
-    CreateFormExportTagForm,
-    CreateCaseExportTagForm,
     FilterFormCouchExportDownloadForm,
     FilterCaseCouchExportDownloadForm,
     FilterFormESExportDownloadForm,
     FilterCaseESExportDownloadForm,
+    CreateExportTagForm,
 )
 from corehq.apps.export.models import (
     FormExportDataSchema,
@@ -931,7 +930,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
 
     @property
     def page_context(self):
-        context = {
+        return {
             'create_export_form': self.create_export_form if not self.is_deid else None,
             'create_export_form_title': self.create_export_form_title if not self.is_deid else None,
             'legacy_bulk_download_url': self.legacy_bulk_download_url,
@@ -939,17 +938,12 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
             'allow_bulk_export': self.allow_bulk_export,
             'has_edit_permissions': self.has_edit_permissions,
             'is_deid': self.is_deid,
-        }
-        context.update(self.export_type_context)
-        return context
-
-    @property
-    def export_type_context(self):
-        return {
             "Export_type": _("Export"),
             "export_type": _("export"),
             "Exports_type": _("Exports"),
             "exports_type": _("exports"),
+            "model_type": self.form_or_case,
+            "static_model_type": True,
         }
 
     @property
@@ -1143,14 +1137,10 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
         """Returns a django form that gets the information necessary to create
         an export tag, which is the first step in creating a new export.
 
-        This is either an instance of:
-        - CreateFormExportTagForm
-        - CreateCaseExportTagForm
-
         This form is what will interact with the DrilldownToFormController in
         hq.app_data_drilldown.ng.js
         """
-        raise NotImplementedError("must implement create_export_form")
+        return CreateExportTagForm()
 
     @allow_remote_invocation
     def get_app_data_drilldown_values(self, in_data):
@@ -1223,18 +1213,17 @@ class DashboardFeedListView(BaseExportListView):
     allow_bulk_export = False
 
     @property
-    def export_type_context(self):
-        return {
+    def page_context(self):
+        context = super(DashboardFeedListView, self).page_context
+        context.update({
             "Export_type": _("Dashboard Feed"),
             "export_type": _("dashboard feed"),
             "Exports_type": _("Dashboard Feeds"),
             "exports_type": _("dashboard feeds"),
-        }
-
-    @property
-    @memoized
-    def create_export_form(self):
-        return {}
+            "model_type": None,
+            "static_model_type": False,
+        })
+        return context
 
     @property
     @memoized
@@ -1264,13 +1253,21 @@ class DashboardFeedListView(BaseExportListView):
 
     @allow_remote_invocation
     def get_app_data_drilldown_values(self, in_data):
-        return {}
+        if self.is_deid:
+            raise Http404()
+        try:
+            rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
+            response = rmi_helper.get_dashboard_feed_rmi_response()
+        except Exception as e:
+            return format_angular_error(
+                _("Problem getting Create Dashbaord Feed Form: {} {}").format(
+                    e.__class__, e
+                ),
+            )
+        return format_angular_success(response)
 
     def get_create_export_url(self, form_data):
         return ""
-
-    def get_emailed_indexes(self, email_group):
-        return []
 
 
 class FormExportListView(BaseExportListView):
@@ -1305,11 +1302,6 @@ class FormExportListView(BaseExportListView):
         for group in self.emailed_export_groups:
             all_form_exports.extend(group.form_exports)
         return all_form_exports
-
-    @property
-    @memoized
-    def create_export_form(self):
-        return CreateFormExportTagForm()
 
     @property
     def create_export_form_title(self):
@@ -1365,7 +1357,7 @@ class FormExportListView(BaseExportListView):
         return format_angular_success(response)
 
     def get_create_export_url(self, form_data):
-        create_form = CreateFormExportTagForm(form_data)
+        create_form = CreateExportTagForm(form_data)
         if not create_form.is_valid():
             raise ExportFormValidationException()
 
@@ -1424,11 +1416,6 @@ class CaseExportListView(BaseExportListView):
         return sorted(exports, key=lambda x: x.name)
 
     @property
-    @memoized
-    def create_export_form(self):
-        return CreateCaseExportTagForm()
-
-    @property
     def create_export_form_title(self):
         return _("Select a Case Type to Export")
 
@@ -1479,7 +1466,7 @@ class CaseExportListView(BaseExportListView):
         return format_angular_success(response)
 
     def get_create_export_url(self, form_data):
-        create_form = CreateCaseExportTagForm(form_data)
+        create_form = CreateExportTagForm(form_data)
         if not create_form.is_valid():
             raise ExportFormValidationException()
         case_type = create_form.cleaned_data['case_type']

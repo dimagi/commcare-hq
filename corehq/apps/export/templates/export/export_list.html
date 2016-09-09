@@ -39,6 +39,8 @@
     });
     listExportsApp.constant('bulk_download_url', "{{ bulk_download_url }}");
     listExportsApp.constant('legacy_bulk_download_url', "{{ legacy_bulk_download_url }}");
+    listExportsApp.constant('modelType', {{ model_type|JSON }});
+    listExportsApp.constant('staticModelType', {{ static_model_type|JSON }});
 }(window.angular));
 </script>
 <script>
