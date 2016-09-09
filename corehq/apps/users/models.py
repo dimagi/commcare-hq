@@ -1628,6 +1628,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def add_to_assigned_locations(self, location):
         if self.location_id:
+            if location.location_id in self.assigned_location_ids:
+                return
             self.assigned_location_ids.append(location.location_id)
             self.get_domain_membership(self.domain).assigned_location_ids.append(location.location_id)
             self.user_data['commcare_location_ids'] = ",".join(self.assigned_location_ids)
@@ -2037,6 +2039,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         membership = self.get_domain_membership(domain)
 
         if membership.location_id:
+            if location.location_id in membership.assigned_location_ids:
+                return
             membership.assigned_location_ids.append(location.location_id)
             self.save()
         else:
