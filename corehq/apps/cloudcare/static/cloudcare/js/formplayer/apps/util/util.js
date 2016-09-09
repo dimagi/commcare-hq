@@ -1,4 +1,4 @@
-/*global Backbone, FormplayerFrontend, MenuList */
+/*global Backbone, FormplayerFrontend */
 
 function Util() {
 }
