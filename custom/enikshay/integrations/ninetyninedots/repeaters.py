@@ -3,6 +3,7 @@ from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_lazy as _
 
 from corehq.form_processor.models import CommCareCaseSQL
+from casexml.apps.case.models import CommCareCase
 
 from corehq.apps.repeaters.models import CaseRepeater
 from corehq.apps.repeaters.signals import create_repeat_records
@@ -89,3 +90,6 @@ def create_case_repeat_records(sender, case, **kwargs):
     create_repeat_records(NinetyNineDotsUpdatePatientRepeater, case)
 
 case_post_save.connect(create_case_repeat_records, CommCareCaseSQL)
+
+# TODO: Remove this when eNikshay gets migrated to SQL
+case_post_save.connect(create_case_repeat_records, CommCareCase)
