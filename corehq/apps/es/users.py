@@ -44,6 +44,7 @@ class UserES(HQESQuery):
             web_users,
             user_ids,
             primary_location,
+            location,
             last_logged_in,
         ] + super(UserES, self).builtin_filters
 
@@ -116,5 +117,16 @@ def primary_location(location_id):
         filters.AND(
             web_users(),
             filters.term('domain_memberships.location_id', location_id)
+        ),
+    )
+
+
+def location(location_id):
+    # by any assigned-location primary or not
+    return filters.OR(
+        filters.AND(mobile_users(), filters.term('assigned_location_ids', location_id)),
+        filters.AND(
+            web_users(),
+            filters.term('domain_memberships.assigned_location_ids', location_id)
         ),
     )
