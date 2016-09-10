@@ -131,7 +131,7 @@ class MenuContributor(SuiteContributorByModule):
                 self.app.grid_display_for_some_modules() and module.grid_display_style():
             self._give_non_root_menus_grid_style(menus)
         if self.app.use_grid_menus:
-                self._give_root_menu_grid_style(menus)
+            self._give_root_menu_grid_style(menus)
 
         return menus
 

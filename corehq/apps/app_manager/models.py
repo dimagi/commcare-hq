@@ -5645,7 +5645,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def grid_display_for_some_modules(self):
         return self.cc_grid_menus_property == 'some'
 
-
     def grid_display_for_all_modules(self):
         return self.cc_grid_menus_property == 'all'
 
