@@ -1690,11 +1690,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.user_data['commcare_location_ids'] = ','.join(self.assigned_location_ids)
         self.save()
 
-    def unset_location(self):
+    def unset_location(self, fall_back_to_next=False):
         """
         Resets primary location to next available location from assigned_location_ids.
             If there are no more locations in assigned_location_ids,
             then the primary location and user data are cleared
+
+            If fall_back_to_next is True, primary location is not set to next but cleared.
+            This option exists only to be backwards compatible when user can only have one location
         """
         from corehq.apps.fixtures.models import UserFixtureType
         from corehq.apps.locations.models import Location
@@ -1708,7 +1711,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             self.user_data.pop('commcare_location_ids')
 
-        if self.assigned_location_ids:
+        if self.assigned_location_ids and fall_back_to_next:
             new_primary_location_id = self.assigned_location_ids[0]
             self.set_location(Location.get(new_primary_location_id))
         else:
@@ -1721,22 +1724,22 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.get_domain_membership(self.domain).location_id = None
             self.save()
 
-    def unset_location_by_id(self, location_id):
+    def unset_location_by_id(self, location_id, fall_back_to_next=False):
         """
         Unset a location that the user is assigned to that may or may not be primary location.
             If the location_id is primary-location, then next available location from
-            assigned_location_ids is set as the primary-location
+            assigned_location_ids is set as the primary-location.
+            If fall_back_to_next is True, primary location is not set to next
         """
         if location_id == self.location_id:
             # check if primary location
-            self.unset_location()
+            self.unset_location(fall_back_to_next)
         else:
-            self.assigned_location_ids.remove(old_primary_location_id)
-            self.get_domain_membership(self.domain).assigned_location_ids.remove(old_primary_location_id)
+            self.assigned_location_ids.remove(location_id)
+            self.get_domain_membership(self.domain).assigned_location_ids.remove(location_id)
 
             if self.assigned_location_ids:
                 self.user_data['commcare_location_ids'] = ','.join(self.assigned_location_ids)
-                print self.user_data, 'dsadsda'
             else:
                 self.user_data.pop('commcare_location_ids')
             self.save()
@@ -2069,7 +2072,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             membership.assigned_location_ids.append(location_id)
         self.save()
 
-    def unset_location(self, domain):
+    def unset_location(self, domain, fall_back_to_next=False):
         """
         Change primary location to next location from assigned_location_ids,
         if there are no more locations in assigned_location_ids, primary location is cleared
@@ -2077,13 +2080,13 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         membership = self.get_domain_membership(domain)
         old_location_id = membership.location_id
         membership.assigned_location_ids.remove(old_location_id)
-        if membership.assigned_location_ids:
+        if membership.assigned_location_ids and fall_back_to_next:
             membership.location_id = membership.assigned_location_ids[0]
         else:
             membership.location_id = None
         self.save()
 
-    def unset_location_by_id(self, domain, location_id):
+    def unset_location_by_id(self, domain, location_id, fall_back_to_next=False):
         """
         Unset a location that the user is assigned to that may or may not be primary location
         """
@@ -2091,7 +2094,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         primary_id = membership.location_id
         if location_id == primary_id:
             # check if primary location
-            self.unset_location(domain)
+            self.unset_location(domain, fall_back_to_next)
         else:
             membership.assigned_location_ids.remove(location_id)
             self.save()

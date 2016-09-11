@@ -342,7 +342,7 @@ class UsersAtLocationForm(MultipleSelectionForm):
         for doc in iter_docs(CommCareUser.get_db(), users):
             # This could probably be sped up by bulk saving, but there's a lot
             # of stuff going on - seems tricky.
-            CommCareUser.wrap(doc).unset_location_by_id(self.location_id)
+            CommCareUser.wrap(doc).unset_location_by_id(self.location_id, fall_back_to_next=True)
 
     def assign_users(self, users):
         for doc in iter_docs(CommCareUser.get_db(), users):
