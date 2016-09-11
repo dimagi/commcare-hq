@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-import copy
 import logging
 import re
 
