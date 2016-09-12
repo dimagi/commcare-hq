@@ -142,7 +142,7 @@ class ConfigurableReportEsDataSource(ReportDataSource):
 
     @memoized
     def _get_query(self, start=None, limit=None):
-        query = HQESQuery(self.table_name)
+        query = HQESQuery(self.table_name).source(self.required_fields)
 
         if start:
             query = query.start(start)
@@ -161,6 +161,11 @@ class ConfigurableReportEsDataSource(ReportDataSource):
     @method_decorator(catch_and_raise_exceptions)
     def get_total_records(self):
         return self._get_query().total
+
+    @property
+    def required_fields(self):
+        ret = [c.field for c in self.column_configs]
+        return ret + [c for c in self.aggregation_columns]
 
     # @method_decorator(catch_and_raise_exceptions)
     # def get_total_row(self):
