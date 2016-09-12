@@ -27,12 +27,12 @@ class ConfigurableReportDataSource(object):
         if self._data_source is None:
             if get_backend_id(self.config) == 'SQL':
                 self._data_source = ConfigurableReportSqlDataSource(
-                    self.domain, self._config_id, self._filters,
+                    self.domain, self.config, self._filters,
                     self._aggregation_columns, self._columns,
                     self._order_by)
             else:
                 self._data_source = ConfigurableReportEsDataSource(
-                    self.domain, self._config_id, self._filters,
+                    self.domain, self.config, self._filters,
                     self._aggregation_columns, self._columns,
                     self._order_by)
         return self._data_source
@@ -46,10 +46,6 @@ class ConfigurableReportDataSource(object):
         self.data_source.lang = lang
 
     @property
-    def aggregation_columns(self):
-        return self.data_source.aggregation_columns
-
-    @property
     def config(self):
         if self._config is None:
             self._config, _ = get_datasource_config(self._config_id, self.domain)
@@ -59,10 +55,6 @@ class ConfigurableReportDataSource(object):
     def top_level_columns(self):
         return self.data_source.top_level_columns
 
-    @property
-    def filters(self):
-        return self.data_source.filters
-
     def set_filter_values(self, filter_values):
         self.data_source.set_filter_values(filter_values)
 
@@ -71,18 +63,6 @@ class ConfigurableReportDataSource(object):
 
     def set_order_by(self, columns):
         self._order_by = columns
-
-    @property
-    def filter_values(self):
-        return self.data_source.filter_values
-
-    @property
-    def group_by(self):
-        return self.data_source.group_by
-
-    @property
-    def order_by(self):
-        return self.data_source.order_by
 
     @property
     def columns(self):
