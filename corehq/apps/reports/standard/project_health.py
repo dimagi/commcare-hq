@@ -301,7 +301,7 @@ class ProjectHealthDashboard(ProjectReport):
         params = filter(None, self.request.GET.getlist('grouplocationfilter'))
         return params
 
-    def parse_params(self, param_ids):
+    def parse_group_location_params(self, param_ids):
         locationids_param = []
         groupids_param = []
 
@@ -332,7 +332,7 @@ class ProjectHealthDashboard(ProjectReport):
             return set(chain(*users_group))
 
     def get_users_by_filter(self):
-        locationids_param, groupids_param = self.parse_params(self.get_group_location_ids())
+        locationids_param, groupids_param = self.parse_group_location_params(self.get_group_location_ids())
         users_list_by_location = self.get_users_by_location_filter(locationids_param)
         users_list_by_group = self.get_users_by_group_filter(groupids_param)
 
