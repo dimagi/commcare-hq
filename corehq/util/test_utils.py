@@ -12,7 +12,6 @@ from contextlib import contextmanager
 
 from functools import wraps
 from django.conf import settings
-from django.test.utils import override_settings
 
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.decorators import ContextDecorator
@@ -232,42 +231,6 @@ def run_with_multiple_configs(fn, run_configs):
         return helper(*args, **kwargs)
 
     return inner
-
-
-class OverridableSettingsTestMixin(object):
-    """Backport of core Django functionality to 1.7. Can be removed
-    once Django >= 1.8
-    https://github.com/django/django/commit/d89f56dc4d03f6bf6602536b8b62602ec0d46d2f
-
-    Usage:
-
-      @override_settings(A_SETTING=True)
-      class SomeTests(TestCase, OverridableSettingsTestMixin):
-
-          @classmethod
-          def setUpClass(cls):
-              super(SomeTests, cls).setUpClass()
-              # settings.A_SETTING is True here
-
-          @classmethod
-          def tearDownClass(cls):
-              # teardown stuff
-              # don't forget to call super to undo override_settings
-              super(SomeTests, cls).tearDownClass()
-    """
-    @classmethod
-    def setUpClass(cls):
-        super(OverridableSettingsTestMixin, cls).setUpClass()
-        if cls._overridden_settings:
-            cls._cls_overridden_context = override_settings(**cls._overridden_settings)
-            cls._cls_overridden_context.enable()
-
-    @classmethod
-    def tearDownClass(cls):
-        if hasattr(cls, '_cls_overridden_context'):
-            cls._cls_overridden_context.disable()
-            delattr(cls, '_cls_overridden_context')
-        super(OverridableSettingsTestMixin, cls).tearDownClass()
 
 
 class log_sql_output(ContextDecorator):
