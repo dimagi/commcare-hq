@@ -10,7 +10,7 @@ from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.userreports.decorators import catch_and_raise_exceptions
 from corehq.apps.userreports.exceptions import InvalidQueryColumn
 from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
-from corehq.apps.userreports.reports.sorting import ASCENDING
+from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
 from corehq.apps.userreports.reports.util import get_expanded_columns
 from corehq.apps.userreports.util import get_table_name
 
@@ -98,13 +98,13 @@ class ConfigurableReportEsDataSource(ReportDataSource):
         # https://www.elastic.co/guide/en/elasticsearch/guide/1.x/multi-fields.html
         if self._order_by:
             return [
-                {col.field: {"order": order}}
+                (col.field, order)
                 for sort_column_id, order in self._order_by
                 for col in [self._column_configs[sort_column_id]]
             ]
         elif self.column_configs:
             col = self.column_configs[0]
-            return [{col.field: {"order": ASCENDING}}]
+            return [(col.field, ASCENDING)]
         return []
 
     @property
@@ -140,7 +140,8 @@ class ConfigurableReportEsDataSource(ReportDataSource):
     @memoized
     def _get_query(self, start=None, limit=None):
         query = HQESQuery(self.table_name).source(self.required_fields)
-        query.es_query['sort'] = self.order_by
+        for column, order in self.order_by:
+            query = query.sort(column, desc=(order == DESCENDING), reset_sort=False)
 
         if start:
             query = query.start(start)
