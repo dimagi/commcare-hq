@@ -152,13 +152,15 @@ class TestRegisterPatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_get_payload(self):
         payload_generator = RegisterPatientPayloadGenerator(None)
+        person = self.cases[self.person_id].dynamic_case_properties()
         expected_numbers = u"+91{}, +91{}".format(
-            self.cases[self.person_id].dynamic_case_properties()['mobile_number'].replace("0", ""),
-            self.cases[self.person_id].dynamic_case_properties()['backup_number'].replace("0", "")
+            person['mobile_number'].replace("0", ""),
+            person['backup_number'].replace("0", "")
         )
         expected_payload = json.dumps({
             'beneficiary_id': self.person_id,
             'phone_numbers': expected_numbers,
+            'merm_id': person['merm_id']
         })
         actual_payload = payload_generator.get_payload(None, self.cases[self.episode_id])
         self.assertEqual(expected_payload, actual_payload)

@@ -45,7 +45,7 @@ def update_patient_adherence(request, domain):
     try:
         validate_beneficiary_id(beneficiary_id)
         validate_adherence_values(adherence_values)
-        create_adherence_cases(domain, beneficiary_id, adherence_values, adherence_source="99DOTS")
+        create_adherence_cases(domain, beneficiary_id, adherence_values)
     except AdherenceException as e:
         return json_response({"error": e.message}, status_code=400)
 

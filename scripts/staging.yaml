@@ -46,14 +46,11 @@ trunk: master
 name: autostaging
 branches:
   - kill-1.x-apps  # Danny 8/23
-  - loc-tests # sravan 8/8
   - vellum-staging # J$ 11/13
   - django-1.8 # nick P 8/25
   - jquery-2-2-0 # Jenny 8/29
   - jquery-2-2-0-switch # Jenny 8/30
-  - br/utf-8-restore  # Ben 8/30
   - ce/domain-list-api # Cal 8/31
-  - ce/addtoblock-exception # Cal 9/1
   - es/locations-to-sql  # Ethan 9/6
   - es/location_type_name  # Ethan 9/8
   - es/deprecate-location_type  # Ethan 9/8
@@ -61,13 +58,11 @@ submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches:
-      - commcare_2.29
+    branches: []
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
-      - commcare_2.29
       - kill-1.x-apps  # Danny 8/23
   submodules/django-digest-src:
     branches: []
@@ -79,3 +74,6 @@ submodules:
     branches: []
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
+  deployment/commcare-hq-deploy:
+    branches:
+      - br/errorless-celery-restart

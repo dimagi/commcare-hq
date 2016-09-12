@@ -23,12 +23,12 @@
 {% block stylesheets %}
     {% compress css %}
     <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
-    <link rel="stylesheet" href="{% static 'jquery-ui/themes/base/jquery-ui.min.css' %}">
     <link type="text/css"
           rel="stylesheet"
           media="all"
           href="{% static 'datatables/media/css/jquery.dataTables.min.css' %}" />
     <link rel="stylesheet" href="{% static 'formplayer/style/webforms.css' %}">
+    <link rel="stylesheet" href="{% static 'datetimepicker/build/jquery.datetimepicker.min.css' %}">
     <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}" />
     {% endcompress %}
 
@@ -60,6 +60,7 @@
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
     <script src="{% static 'nprogress/nprogress.js' %}"></script>
     <script src="{% static 'moment/min/moment.min.js' %}"></script>
+    <script src="{% static 'datetimepicker/build/jquery.datetimepicker.full.js' %}"></script>
 
     <script src="{% static 'style/js/ui-element.js' %}"></script>
     <script src="{% static 'case/js/cheapxml.js' %}"></script>

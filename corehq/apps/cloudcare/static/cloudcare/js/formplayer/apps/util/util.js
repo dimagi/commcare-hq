@@ -17,7 +17,7 @@ Util.currentUrlToObject = function () {
         return Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(url));
     } catch (e) {
         // This means that we're on the homepage
-        return new Util.CloudcareUrl();
+        return new Util.CloudcareUrl({});
     }
 };
 

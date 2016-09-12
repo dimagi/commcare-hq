@@ -53,7 +53,8 @@
     "moment": "2.12.0",
     "jquery-treetable": "^3.2.0",
     "css-grid-polyfill-binaries": "1.1.1",
-    "requirejs": "~2.3.1"
+    "requirejs": "~2.3.1",
+    "datetimepicker": "2.5.4"
   },
   "devDependencies": {
     "chai": "3.3.0",
