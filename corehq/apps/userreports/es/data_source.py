@@ -5,6 +5,7 @@ from django.utils.decorators import method_decorator
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.reports.api import ReportDataSource
+from corehq.apps.userreports.columns import get_expanded_column_config
 from corehq.apps.userreports.decorators import catch_and_raise_exceptions
 from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
@@ -90,16 +91,16 @@ class ConfigurableReportEsDataSource(ReportDataSource):
 
     @property
     def columns(self):
-        db_columns = [c for sql_conf in self.sql_column_configs for c in sql_conf.columns]
+        db_columns = [c for sql_conf in self.es_column_configs for c in sql_conf.columns]
         return db_columns
 
     @property
-    def sql_column_configs(self):
-        return [col.get_sql_column_config(self.config, self.lang) for col in self.column_configs]
+    def es_column_configs(self):
+        return [col.get_column_config(self.config, self.lang) for col in self.column_configs]
 
     @property
     def column_warnings(self):
-        return [w for es_conf in self.sql_column_configs for w in es_conf.warnings]
+        return [w for es_conf in self.es_column_configs for w in es_conf.warnings]
 
     @property
     @memoized
