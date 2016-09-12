@@ -128,6 +128,14 @@ class TestS3BlobDB(TestCase):
         with self.db.get(info.identifier) as fh:
             self.assertEqual(fh.read(), b"content")
 
+    def test_put_from_get_stream(self):
+        name = "form.xml"
+        old = self.db.put(StringIO(b"content"), name, "old_bucket")
+        with self.db.get(old.identifier, "old_bucket") as fh:
+            new = self.db.put(fh, name, "new_bucket")
+        with self.db.get(new.identifier, "new_bucket") as fh:
+            self.assertEqual(fh.read(), b"content")
+
     def test_delete(self):
         name = "test.4"
         bucket = "doc.4"
@@ -217,71 +225,3 @@ class TestS3BlobDB(TestCase):
 def test_bad_name(self, name, bucket=mod.DEFAULT_BUCKET):
     with self.assertRaises(mod.BadName):
         self.db.get(name, bucket)
-
-
-class TestOpenFileChunk(TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        cls.tmp_context = tempdir()
-        tmp = cls.tmp_context.__enter__()
-        cls.filepath = join(tmp, "file.txt")
-        with open(cls.filepath, "wb") as fh:
-            fh.write(b"data")
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.tmp_context.__exit__(None, None, None)
-
-    def get_chunk(self, normal_file, start, length):
-        return mod.OpenFileChunk(normal_file, start, length)
-
-
-@generate_cases([
-    (0, 0, b"data"),
-    (1, 1, b"ata",),
-    (2, 2, b"ta",),
-    (3, 3, b"a"),
-    (4, 4, b""),
-    (5, 5, b""),
-], TestOpenFileChunk)
-def test_seek_tell_read(self, to, expect_tell, expect_read):
-    with open(self.filepath, "rb") as normal_file:
-        normal_file.seek(to)
-
-        with self.get_chunk(normal_file, 0, 4) as chunk:
-            self.assertIn(normal_file, mod.OpenFileChunk.file_locks)
-            # chunk seek/tell/read should not affect normal_file
-            chunk.seek(to)
-            self.assertEqual(chunk.tell(), expect_tell)
-            self.assertEqual(chunk.read(), expect_read)
-
-        self.assertEqual(normal_file.tell(), expect_tell)
-        self.assertEqual(normal_file.read(), expect_read)
-        self.assertNotIn(normal_file, mod.OpenFileChunk.file_locks)
-
-
-@generate_cases([
-    (0, (0, b"data"), (0, b"at")),
-    (1, (1, b"ata"), (1, b"t")),
-    (2, (2, b"ta",), (2, b"")),
-    (3, (3, b"a"), (3, b"")),
-    (4, (4, b""), (4, b"")),
-    (5, (5, b""), (5, b"")),
-], TestOpenFileChunk)
-def test_seek_tell_read_in_sub_chunk(self, to, expect_norm, expect_chunk):
-    with open(self.filepath, "rb") as normal_file:
-        normal_file.seek(to)
-
-        with self.get_chunk(normal_file, 1, 2) as chunk:
-            # chunk seek/tell/read should not affect normal_file
-            chunk.seek(to)
-            self.assertEqual((chunk.tell(), chunk.read()), expect_chunk)
-
-        self.assertEqual((normal_file.tell(), normal_file.read()), expect_norm)
-
-
-class TestReadOpenFileChunk(TestOpenFileChunk):
-
-    def get_chunk(self, normal_file, start, length):
-        return mod.ReadOpenFileChunk(normal_file, start, length, 4)
