@@ -63,6 +63,14 @@ FormplayerFrontend.reqres.setHandler('resourceMap', function (resource_path, app
     }
 });
 
+FormplayerFrontend.reqres.setHandler('gridPolyfillPath', function(path) {
+    if (path) {
+        FormplayerFrontend.gridPolyfillPath = path;
+    } else {
+        return FormplayerFrontend.gridPolyfillPath;
+    }
+});
+
 FormplayerFrontend.reqres.setHandler('currentUser', function () {
     if (!FormplayerFrontend.currentUser) {
         FormplayerFrontend.currentUser = new FormplayerFrontend.Entities.UserModel();
@@ -192,6 +200,7 @@ FormplayerFrontend.on("start", function (options) {
     user.apps = options.apps;
     user.domain = options.domain;
     user.formplayer_url = options.formplayer_url;
+    FormplayerFrontend.request('gridPolyfillPath', options.gridPolyfillPath);
     if (Backbone.history) {
         Backbone.history.start();
         // will be the same for every domain. TODO: get domain/username/pass from django

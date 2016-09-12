@@ -43,40 +43,9 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
 
         showMenu: function (menuResponse) {
-            var menuListView;
-            var menuData = {
-                collection: menuResponse,
-                title: menuResponse.title,
-                headers: menuResponse.headers,
-                widthHints: menuResponse.widthHints,
-                action: menuResponse.action,
-                pageCount: menuResponse.pageCount,
-                currentPage: menuResponse.currentPage,
-                styles: menuResponse.styles,
-                type: menuResponse.type,
-                sessionId: menuResponse.sessionId,
-                tiles: menuResponse.tiles,
-                numEntitiesPerRow: menuResponse.numEntitiesPerRow,
-                maxHeight: menuResponse.maxHeight,
-                maxWidth: menuResponse.maxWidth,
-            };
-            if (menuResponse.type === "commands") {
-                menuListView = new MenuList.MenuListView(menuData);
-                FormplayerFrontend.regions.main.show(menuListView.render());
-            } else if (menuResponse.type === "query") {
-                menuListView = new MenuList.QueryListView(menuData);
-                FormplayerFrontend.regions.main.show(menuListView.render());
-            }
-            else if (menuResponse.type === "entities") {
-                if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
-                    menuListView = new MenuList.CaseListView(menuData);
-                } else {
-                    if (menuResponse.numEntitiesPerRow > 1) {
-                        menuListView = new MenuList.GridCaseTileListView(menuData);
-                    } else {
-                        menuListView = new MenuList.CaseTileListView(menuData);
-                    }
-                }
+            var menuListView = MenuList.Util.getMenuView(menuResponse);
+
+            if (menuListView) {
                 FormplayerFrontend.regions.main.show(menuListView.render());
             }
             if (menuResponse.persistentCaseTile) {
@@ -186,6 +155,43 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 maxWidth: detailObject.maxWidth,
                 maxHeight: detailObject.maxHeight,
             });
+        },
+    };
+
+    MenuList.Util = {
+        getMenuView: function (menuResponse) {
+            var menuData = {
+                collection: menuResponse,
+                title: menuResponse.title,
+                headers: menuResponse.headers,
+                widthHints: menuResponse.widthHints,
+                action: menuResponse.action,
+                pageCount: menuResponse.pageCount,
+                currentPage: menuResponse.currentPage,
+                styles: menuResponse.styles,
+                type: menuResponse.type,
+                sessionId: menuResponse.sessionId,
+                tiles: menuResponse.tiles,
+                numEntitiesPerRow: menuResponse.numEntitiesPerRow,
+                maxHeight: menuResponse.maxHeight,
+                maxWidth: menuResponse.maxWidth,
+            };
+            if (menuResponse.type === "commands") {
+                return new MenuList.MenuListView(menuData);
+            } else if (menuResponse.type === "query") {
+                return new MenuList.QueryListView(menuData);
+            }
+            else if (menuResponse.type === "entities") {
+                if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
+                    return new MenuList.CaseListView(menuData);
+                } else {
+                    if (menuResponse.numEntitiesPerRow > 1) {
+                        return new MenuList.GridCaseTileListView(menuData);
+                    } else {
+                        return new MenuList.CaseTileListView(menuData);
+                    }
+                }
+            }
         },
     };
 });
