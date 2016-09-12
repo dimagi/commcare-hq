@@ -112,7 +112,7 @@ class TestNoCouchLocationTypes(TestCase):
     def test_change_type_later(self):
         new_type = LocationType.objects.create(domain='test-domain',
                                                name='new-type')
-        self.loc.location_type_name = 'new-type'
+        self.loc.set_location_type('new-type')
         self.loc.save()
         self.assertEqual(self.loc.location_type_name, 'new-type')
         self.assertEqual(self.loc.sql_location.location_type, new_type)
@@ -122,7 +122,7 @@ class TestNoCouchLocationTypes(TestCase):
 
     def test_change_to_nonexistent_type(self):
         with self.assertRaises(LocationType.DoesNotExist):
-            self.loc.location_type_name = 'nonexistent-type'
+            self.loc.set_location_type('nonexistent-type')
             self.loc.save()
         self.assertEqual(self.loc.location_type_name, 'test-type')
         self.assertEqual(self.loc.sql_location.location_type.name, 'test-type')

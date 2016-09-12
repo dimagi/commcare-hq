@@ -716,13 +716,16 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
 
     @location_type.setter
     def location_type(self, value):
+        self.set_location_type(value)
+
+    def set_location_type(self, location_type_name):
         msg = "You can't create a location without a real location type"
-        if not value:
+        if not location_type_name:
             raise LocationType.DoesNotExist(msg)
         try:
             self._sql_location_type = LocationType.objects.get(
                 domain=self.domain,
-                name=value,
+                name=location_type_name,
             )
         except LocationType.DoesNotExist:
             raise LocationType.DoesNotExist(msg)
