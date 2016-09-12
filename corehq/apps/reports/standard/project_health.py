@@ -339,7 +339,7 @@ class ProjectHealthDashboard(ProjectReport):
         users_set = self.get_unique_users(users_list_by_location, users_list_by_group)
         return users_set
 
-    def previous_six_months(self):
+    def previous_months_summary(self):
         now = datetime.datetime.utcnow()
         six_month_summary = []
         last_month_summary = None
@@ -377,7 +377,7 @@ class ProjectHealthDashboard(ProjectReport):
 
     @property
     def export_table(self):
-        six_months_reports = self.previous_six_months()
+        six_months_reports = self.previous_months_summary()
         last_month = six_months_reports[-2]
 
         header = ['user_id', 'username', 'last_month_forms', 'delta_last_month',
@@ -400,12 +400,12 @@ class ProjectHealthDashboard(ProjectReport):
 
     @property
     def template_context(self):
-        six_months_reports = self.previous_six_months()
+        prior_months_reports = self.previous_months_summary()
         performance_threshold = get_performance_threshold(self.domain)
         return {
-            'six_months_reports': six_months_reports,
-            'this_month': six_months_reports[-1],
-            'last_month': six_months_reports[-2],
+            'six_months_reports': prior_months_reports,
+            'this_month': prior_months_reports[-1],
+            'last_month': prior_months_reports[-2],
             'threshold': performance_threshold,
             'domain': self.domain,
         }
