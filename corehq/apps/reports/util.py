@@ -463,9 +463,9 @@ def safe_for_fs(filename):
 
     Unicode or bytestring datatype of filename is preserved.
 
-    >>> safe_filename(u'spam*?: 𐍃𐍀𐌰𐌼-&.txt')
+    >>> safe_for_fs(u'spam*?: 𐍃𐍀𐌰𐌼-&.txt')
     u'spam 𐍃𐍀𐌰𐌼-&.txt'
-    >>> safe_filename('spam*?: 𐍃𐍀𐌰𐌼-&.txt')
+    >>> safe_for_fs('spam*?: 𐍃𐍀𐌰𐌼-&.txt')
     'spam 𐍃𐍀𐌰𐌼-&.txt'
     """
     is_unicode = isinstance(filename, unicode)
