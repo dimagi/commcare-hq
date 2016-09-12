@@ -37,8 +37,7 @@ from corehq.apps.analytics.tasks import (
     track_existing_user_accepted_invite_on_hubspot,
 )
 from corehq.apps.analytics.utils import get_meta
-from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required,
-    load_domain)
+from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.es import AppES
@@ -702,7 +701,6 @@ class UserInvitationView(object):
 
 @sensitive_post_parameters('password')
 def accept_invitation(request, domain, invitation_id):
-    load_domain(request, domain)
     return UserInvitationView()(request, invitation_id, domain=domain)
 
 
