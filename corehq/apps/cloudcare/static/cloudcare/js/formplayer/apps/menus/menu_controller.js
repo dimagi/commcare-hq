@@ -175,6 +175,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 numEntitiesPerRow: menuResponse.numEntitiesPerRow,
                 maxHeight: menuResponse.maxHeight,
                 maxWidth: menuResponse.maxWidth,
+                useUniformUnits: menuResponse.useUniformUnits,
             };
             if (menuResponse.type === "commands") {
                 return new MenuList.MenuListView(menuData);

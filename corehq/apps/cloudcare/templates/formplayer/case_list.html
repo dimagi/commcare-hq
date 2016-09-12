@@ -129,8 +129,8 @@
 <script type="text/template" id="grid-inner-style-template">
     .grid-wrapper {
         display: grid;
-        grid-template-columns: repeat(<%= model.numColumns %>, <%= model.entryPixels %>px) min-content 5px;
-        grid-template-rows: repeat(<%= model.numRows %>, <%= model.entryPixels %>px) min-content 5px;
+        grid-template-columns: repeat(<%= model.numColumns %>, <%= model.widthPixels %>px) min-content 5px;
+        grid-template-rows: repeat(<%= model.numRows %>, <%= model.heightPixels %>px) min-content 5px;
         background-color: #fff;
         color: #685c53;
         border-color: #685c53;

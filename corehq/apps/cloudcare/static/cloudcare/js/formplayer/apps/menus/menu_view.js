@@ -154,19 +154,28 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     };
 
     // Dynamically generate the CSS style for the grid polyfill to use for the case tile
-    var makeInnerGridStyle = function (numRows, numColumns, numCasesPerRow) {
+    var makeInnerGridStyle = function (numRows, numColumns, numCasesPerRow, useUniformUnits) {
         var templateString,
             view,
             template,
-            model;
+            model,
+            widthPixels,
+            heightPixels,
+            fullWidth;
 
-        var fullWidth = 800;
-        var entryPixels = ((1 / numColumns) / numCasesPerRow) * fullWidth;
+        fullWidth = 800;
+        widthPixels = ((1 / numColumns) / numCasesPerRow) * fullWidth;
+        if (useUniformUnits) {
+            heightPixels = widthPixels;
+        } else {
+            heightPixels = widthPixels/2;
+        }
 
         model = {
             numRows: numRows,
             numColumns: numColumns,
-            entryPixels: entryPixels,
+            widthPixels: widthPixels,
+            heightPixels: heightPixels,
         };
         templateString = $("#grid-inner-style-template").html();
         template = _.template(templateString);
@@ -278,7 +287,10 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             MenuList.CaseTileListView.__super__.initialize.apply(this, arguments);
             var gridPolyfillPath = FormplayerFrontend.request('gridPolyfillPath');
             generateCaseTileStyles(options.tiles);
-            makeInnerGridStyle(options.maxHeight, options.maxWidth, options.numEntitiesPerRow || 1);
+            makeInnerGridStyle(options.maxHeight,
+                options.maxWidth,
+                options.numEntitiesPerRow || 1,
+                options.useUniformUnits);
             $.getScript(gridPolyfillPath);
         },
 
