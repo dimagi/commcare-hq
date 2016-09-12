@@ -8,6 +8,28 @@ from dimagi.utils.decorators.memoized import memoized
 from pillowtop.es_utils import INDEX_STANDARD_SETTINGS
 
 
+# todo have different settings for rebuilding and indexing esp. refresh_interval
+# These settings tell ES to not tokenize strings
+UCR_INDEX_SETTINGS = {
+    "settings": INDEX_STANDARD_SETTINGS,
+    "mappings": {
+        "indicator": {
+            "dynamic": "true",
+            "dynamic_templates": [{
+                "non_analyzed_string": {
+                    "match": "*",
+                    "match_mapping_type": "string",
+                    "mapping": {
+                        "type": "string",
+                        "index": "not_analyzed"
+                    }
+                }
+            }]
+        }
+    }
+}
+
+
 def normalize_id(values):
     return '-'.join(values).replace(' ', '_')
 
@@ -88,7 +110,7 @@ class IndicatorESAdapter(IndicatorAdapter):
 
     def rebuild_table(self):
         self.drop_table()
-        self.es.indices.create(index=self.table_name, body=INDEX_STANDARD_SETTINGS)
+        self.es.indices.create(index=self.table_name, body=UCR_INDEX_SETTINGS)
 
     def drop_table(self):
         try:
