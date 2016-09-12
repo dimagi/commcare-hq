@@ -1,6 +1,6 @@
 /*global FormplayerFrontend, Util */
 
-FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette) {
+FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette, $) {
     MenuList.MenuView = Marionette.ItemView.extend({
         tagName: "tr",
         className: "formplayer-request",
@@ -278,8 +278,10 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         childView: MenuList.CaseTileView,
         initialize: function (options) {
             MenuList.CaseTileListView.__super__.initialize.apply(this, arguments);
+            var gridPolyfillPath = FormplayerFrontend.request('gridPolyfillPath');
             generateCaseTileStyles(options.tiles);
             makeInnerGridStyle(options.maxHeight, options.maxWidth, options.numEntitiesPerRow);
+            $.getScript(gridPolyfillPath);
         },
 
         templateHelpers: function () {
