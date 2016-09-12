@@ -131,7 +131,19 @@ class ConfigurableReportEsDataSource(ReportDataSource):
     @memoized
     @method_decorator(catch_and_raise_exceptions)
     def get_data(self, start=None, limit=None):
-        return self._get_query().hits
+        hits = self._get_query(start, limit).hits
+        ret = []
+
+        for row in hits:
+            r = {}
+            for report_column in self.column_configs:
+                r[report_column.column_id] = row[report_column.field]
+            ret.append(r)
+
+        for report_column in self.column_configs:
+            report_column.format_data(ret)
+
+        return ret
 
     @memoized
     def _get_query(self, start=None, limit=None):
@@ -147,9 +159,9 @@ class ConfigurableReportEsDataSource(ReportDataSource):
 
         return query.run()
 
-    # @property
-    # def has_total_row(self):
-    #     return any(column_config.calculate_total for column_config in self.column_configs)
+    @property
+    def has_total_row(self):
+        return any(column_config.calculate_total for column_config in self.column_configs)
 
     @method_decorator(catch_and_raise_exceptions)
     def get_total_records(self):
