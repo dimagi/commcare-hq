@@ -44,11 +44,10 @@ class ConfigurableReportEsDataSource(ReportDataSource):
                 )
             self._column_configs[column.column_id] = column
 
-    # @property
-    # def aggregation_columns(self):
-    #     return self._aggregation_columns + [
-    #         deferred_filter.field for deferred_filter in self._deferred_filters.values()
-            # if deferred_filter.field not in self._aggregation_columns]
+    @property
+    def aggregation_columns(self):
+        # TODO add deferred filters to support mobile ucr
+        return self._aggregation_columns
 
     @property
     def config(self):
@@ -56,17 +55,14 @@ class ConfigurableReportEsDataSource(ReportDataSource):
             self._config, _ = get_datasource_config(self._config_id, self.domain)
         return self._config
 
-    # @property
-    # def engine_id(self):
-    #     return get_engine_id(self.config)
-    #
-    # @property
-    # def column_configs(self):
-    #     return self._column_configs.values()
+    @property
+    def column_configs(self):
+        return self._column_configs.values()
 
     @property
     def table_name(self):
-        return get_table_name(self.domain, self.config.table_id)
+        # TODO make this the same function as the adapter
+        return get_table_name(self.domain, self.config.table_id).lower()
     #
     # @property
     # def filters(self):
@@ -75,11 +71,11 @@ class ConfigurableReportEsDataSource(ReportDataSource):
     # def set_filter_values(self, filter_values):
     #     for filter_slug, value in filter_values.items():
     #         self._filter_values[filter_slug] = self._filters[filter_slug].create_filter_value(value)
-    #
-    # def defer_filters(self, filter_slugs):
-    #     self._deferred_filters.update({
-    #         filter_slug: self._filters[filter_slug] for filter_slug in filter_slugs})
-    #
+
+    def defer_filters(self, filter_slugs):
+        self._deferred_filters.update({
+            filter_slug: self._filters[filter_slug] for filter_slug in filter_slugs})
+
     # def set_order_by(self, columns):
     #     self._order_by = columns
     #
