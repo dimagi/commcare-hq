@@ -131,6 +131,7 @@
             util.setCaseTypes();
             $scope.selectedAppData = {};
             $scope.selectedFormData = {};
+            $scope.hasNoCaseTypes = false;
         };
 
         if (formModalSelector) {

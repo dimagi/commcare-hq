@@ -51,7 +51,7 @@
                         {% endblocktrans %}
                      </div>
                     <div class="alert alert-info"
-                         ng-show="!_.isEmpty(selectedFormData)">
+                         ng-show="!_.isEmpty(selectedFormData) && formData.model_type === 'form'">
                         {% angularjs %}
                             {{ selectedFormData.submissions }}
                             {% blocktrans %}form submission<span ng-show="selectedFormData.submissions != 1">s</span> available.{% endblocktrans %}

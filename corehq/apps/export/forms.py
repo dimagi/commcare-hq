@@ -48,11 +48,11 @@ class CreateExportTagForm(forms.Form):
     application = forms.CharField()
 
     # Form export fields
-    module = forms.CharField()
-    form = forms.CharField()
+    module = forms.CharField(required=False)
+    form = forms.CharField(required=False)
 
     # Case export fields
-    case_type = forms.CharField()
+    case_type = forms.CharField(required=False)
 
     def __init__(self, *args, **kwargs):
         super(CreateExportTagForm, self).__init__(*args, **kwargs)
@@ -68,6 +68,7 @@ class CreateExportTagForm(forms.Form):
                     'model_type',
                     placeholder=_('Select model type'),
                     ng_model='formData.model_type',
+                    ng_change='resetForm()',
                     ng_required="true",
                 ),
                 ng_show="!staticModelType" 
