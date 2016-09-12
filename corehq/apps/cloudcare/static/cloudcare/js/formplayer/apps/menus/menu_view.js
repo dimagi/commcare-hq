@@ -161,13 +161,12 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             model;
 
         var fullWidth = 800;
-        var widthPixels = ((1 / numColumns) / numCasesPerRow) * fullWidth;
+        var entryPixels = ((1 / numColumns) / numCasesPerRow) * fullWidth;
 
         model = {
             numRows: numRows,
             numColumns: numColumns,
-            widthPixels: widthPixels,
-            heightPixels: widthPixels,
+            entryPixels: entryPixels,
         };
         templateString = $("#grid-inner-style-template").html();
         template = _.template(templateString);
