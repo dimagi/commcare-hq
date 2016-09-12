@@ -27,6 +27,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         },
         listMenus: function (sessionObject) {
             FormplayerFrontend.trigger("clearForm");
+            FormplayerFrontend.trigger("clearNav");
             var urlObject = Util.CloudcareUrl.fromJson(
                 Util.encodedUrlToObject(sessionObject || Backbone.history.getFragment())
             );

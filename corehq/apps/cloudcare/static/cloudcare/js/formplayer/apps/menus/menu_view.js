@@ -160,15 +160,14 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             template,
             model;
 
-        var widthPercentage = 100 / numColumns;
-        var widthHeightRatio = numRows / numColumns;
-        var heightPercentage = widthPercentage * widthHeightRatio;
+        var fullWidth = 800;
+        var widthPixels = ((1 / numColumns) / numCasesPerRow) * fullWidth;
 
         model = {
             numRows: numRows,
             numColumns: numColumns,
-            widthPercentage: widthPercentage,
-            heightPercentage: heightPercentage,
+            widthPixels: widthPixels,
+            heightPixels: widthPixels,
         };
         templateString = $("#grid-inner-style-template").html();
         template = _.template(templateString);
@@ -279,7 +278,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         initialize: function (options) {
             MenuList.CaseTileListView.__super__.initialize.apply(this, arguments);
             generateCaseTileStyles(options.tiles);
-            makeInnerGridStyle(options.maxHeight, options.maxWidth, options.numEntitiesPerRow);
+            makeInnerGridStyle(options.maxHeight, options.maxWidth, options.numEntitiesPerRow || 1);
         },
 
         templateHelpers: function () {
@@ -292,7 +291,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     MenuList.GridCaseTileViewItem = MenuList.CaseTileView.extend({
         tagName: "div",
         className: "formplayer-request case-tile-grid-item",
-        template: "#case-tile-grid-view-item-template",
+        template: "#case-tile-view-item-template",
     });
 
     MenuList.GridCaseTileListView = MenuList.CaseTileListView.extend({

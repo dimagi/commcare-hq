@@ -81,10 +81,14 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             }
             if (menuResponse.persistentCaseTile) {
                 MenuList.Controller.showPersistentCaseTile(menuResponse.persistentCaseTile);
+            } else {
+                $("#persistent-case-tile").html("");
             }
 
             if (menuResponse.breadcrumbs) {
                 MenuList.Controller.showBreadcrumbs(menuResponse.breadcrumbs);
+            } else {
+                $("#breadcrumb-region").html("");
             }
             if (menuResponse.appVersion) {
                 MenuList.Controller.showAppVersion(menuResponse.appVersion);
@@ -92,8 +96,8 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
 
         showPersistentCaseTile: function (persistentCaseTile) {
-            var detailView = MenuList.Controller.getDetailList(persistentCaseTile);
-            $('#persistent-case-tile').html(detailView.render().el);
+            var detailView = MenuList.Controller.getCaseTile(persistentCaseTile);
+            FormplayerFrontend.regions.persistentCaseTile.show(detailView.render());
         },
 
         showAppVersion: function (appVersion) {
@@ -161,10 +165,27 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             }
             var detailCollection = new Backbone.Collection();
             detailCollection.reset(detailModel);
-            var menuListView = new MenuList.DetailListView({
+            return new MenuList.DetailListView({
                 collection: detailCollection,
             });
-            return menuListView;
-        }
+        },
+
+        // return a case tile from a detail object (for persistent case tile)
+        getCaseTile: function (detailObject) {
+            var detailModel = [];
+            var obj = {};
+            obj.data = detailObject.details;
+            obj.id = 0;
+            detailModel.push(obj);
+            var detailCollection = new Backbone.Collection();
+            detailCollection.reset(detailModel);
+            return new MenuList.CaseTileListView({
+                collection: detailCollection,
+                styles: detailObject.styles,
+                tiles: detailObject.tiles,
+                maxWidth: detailObject.maxWidth,
+                maxHeight: detailObject.maxHeight,
+            });
+        },
     };
 });
