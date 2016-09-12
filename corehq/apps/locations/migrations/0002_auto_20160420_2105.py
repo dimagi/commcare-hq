@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='locationtype',
             name='_expand_from',
-            field=models.ForeignKey(related_name='+', db_column=b'expand_from', to='locations.LocationType', null=True),
+            field=models.ForeignKey(related_name='+', db_column=b'expand_from', to='locations.LocationType', null=True, on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='locationtype',
             name='expand_to',
-            field=models.ForeignKey(related_name='+', to='locations.LocationType', null=True),
+            field=models.ForeignKey(related_name='+', to='locations.LocationType', null=True, on_delete=models.CASCADE),
             preserve_default=True,
         ),
     ]

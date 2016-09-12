@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
                 ('emergency_level', models.DecimalField(default=0.5, max_digits=10, decimal_places=1)),
                 ('understock_threshold', models.DecimalField(default=1.5, max_digits=10, decimal_places=1)),
                 ('overstock_threshold', models.DecimalField(default=3.0, max_digits=10, decimal_places=1)),
-                ('parent_type', models.ForeignKey(to='locations.LocationType', null=True)),
+                ('parent_type', models.ForeignKey(to='locations.LocationType', null=True, on_delete=models.CASCADE)),
             ],
             options={
             },
@@ -55,8 +55,8 @@ class Migration(migrations.Migration):
                 ('tree_id', models.PositiveIntegerField(editable=False, db_index=True)),
                 ('level', models.PositiveIntegerField(editable=False, db_index=True)),
                 ('_products', models.ManyToManyField(to='products.SQLProduct', null=True)),
-                ('location_type', models.ForeignKey(to='locations.LocationType')),
-                ('parent', mptt.fields.TreeForeignKey(related_name='children', blank=True, to='locations.SQLLocation', null=True)),
+                ('location_type', models.ForeignKey(to='locations.LocationType', on_delete=models.CASCADE)),
+                ('parent', mptt.fields.TreeForeignKey(related_name='children', blank=True, to='locations.SQLLocation', null=True, on_delete=models.CASCADE)),
             ],
             options={
             },
