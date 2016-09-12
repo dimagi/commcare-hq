@@ -1,5 +1,5 @@
 from django.test import SimpleTestCase
-from corehq.apps.app_manager.const import APP_V2, AUTO_SELECT_USERCASE
+from corehq.apps.app_manager.const import AUTO_SELECT_USERCASE
 from corehq.apps.app_manager.models import Application, Module, OpenCaseAction, PreloadAction, \
     WORKFLOW_MODULE, AdvancedModule, AdvancedOpenCaseAction, LoadUpdateAction, AutoSelectCase
 from corehq.apps.app_manager.tests.app_factory import AppFactory
@@ -370,7 +370,7 @@ class CaseListFormFormTests(SimpleTestCase, TestXmlMixin):
         self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
         self.is_usercase_in_use_patch.start()
 
-        self.app = Application.new_app('domain', 'New App', APP_V2)
+        self.app = Application.new_app('domain', 'New App')
         self.app.version = 3
 
     def tearDown(self):
