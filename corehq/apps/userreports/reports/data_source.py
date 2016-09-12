@@ -62,7 +62,7 @@ class ConfigurableReportDataSource(object):
         self.data_source.defer_filters(filter_slugs)
 
     def set_order_by(self, columns):
-        self._order_by = columns
+        self.data_source.set_order_by(columns)
 
     @property
     def columns(self):
