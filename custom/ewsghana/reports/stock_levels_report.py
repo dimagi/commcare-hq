@@ -377,7 +377,7 @@ class StockLevelsReport(MultiReport):
             lambda loc_type: not loc_type.administrative,
             Domain.get_by_name(self.domain).location_types
         )]
-        if not self.needs_filters and Location.get(config['location_id']).location_type in location_types:
+        if not self.needs_filters and Location.get(config['location_id']).location_type_name in location_types:
             if self.is_rendered_as_email:
                 return [FacilityReportData(config)]
             else:

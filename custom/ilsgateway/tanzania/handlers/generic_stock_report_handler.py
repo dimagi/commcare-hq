@@ -40,7 +40,7 @@ class GenericStockReportHandler(KeywordHandler):
         if not location_id:
             return False
 
-        if location.location_type == 'FACILITY':
+        if location.location_type_name == 'FACILITY':
             try:
                 data = self.data
                 if not data:
