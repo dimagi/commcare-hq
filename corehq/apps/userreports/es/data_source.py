@@ -93,9 +93,6 @@ class ConfigurableReportEsDataSource(ReportDataSource):
 
     @property
     def order_by(self):
-        # TODO fix
-        # doesn't work as expected for text fields
-        # https://www.elastic.co/guide/en/elasticsearch/guide/1.x/multi-fields.html
         if self._order_by:
             return [
                 (col.field, order)
