@@ -21,6 +21,8 @@ from corehq.apps.export.views import (
     DownloadNewCaseExportView,
     download_daily_saved_export,
     DashboardFeedListView,
+    CreateNewCaseFeedView,
+    CreateNewFormFeedView,
 )
 
 urlpatterns = patterns(
@@ -46,9 +48,15 @@ urlpatterns = patterns(
     url(r"^custom/new/form/create$",
         CreateNewCustomFormExportView.as_view(),
         name=CreateNewCustomFormExportView.urlname),
+    url(r"^custom/new/form_feed/create$",
+        CreateNewFormFeedView.as_view(),
+        name=CreateNewFormFeedView.urlname),
     url(r"^custom/new/case/create$",
         CreateNewCustomCaseExportView.as_view(),
         name=CreateNewCustomCaseExportView.urlname),
+    url(r"^custom/new/case_feed/create$",
+        CreateNewCaseFeedView.as_view(),
+        name=CreateNewCaseFeedView.urlname),
     url(r"^custom/form/download/bulk/$",
         BulkDownloadFormExportView.as_view(),
         name=BulkDownloadFormExportView.urlname),

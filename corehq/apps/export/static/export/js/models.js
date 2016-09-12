@@ -38,6 +38,10 @@ hqDefine('export/js/models.js', function () {
         self.hasExcelDashboardAccess = Boolean(options.hasExcelDashboardAccess);
         self.hasDailySavedAccess = Boolean(options.hasDailySavedAccess);
 
+        self.formatOptions = options.formatOptions !== undefined ? options.formatOptions : _.map(constants.EXPORT_FORMATS, function(format){
+            return format;
+        });
+
         // If any column has a deid transform, show deid column
         self.isDeidColumnVisible = ko.observable(self.is_deidentified() || _.any(self.tables(), function(table) {
             return table.selected() && _.any(table.columns(), function(column) {
@@ -65,7 +69,9 @@ hqDefine('export/js/models.js', function () {
     };
 
     ExportInstance.prototype.getFormatOptionValues = function() {
-        return _.map(constants.EXPORT_FORMATS, function(value) { return value; });
+        return _.filter(constants.EXPORT_FORMATS, function(format) {
+            return this.formatOptions.indexOf(format) !== -1;
+        }, this);
     };
 
     ExportInstance.prototype.getFormatOptionText = function(format) {

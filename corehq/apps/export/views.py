@@ -1267,7 +1267,27 @@ class DashboardFeedListView(BaseExportListView):
         return format_angular_success(response)
 
     def get_create_export_url(self, form_data):
-        return ""
+        create_form = CreateExportTagForm(form_data)
+        if not create_form.is_valid():
+            import ipdb; ipdb.set_trace()
+            raise ExportFormValidationException()
+
+        if create_form.cleaned_data['model_type'] == "case":
+            export_tag = create_form.cleaned_data['case_type']
+            cls = CreateNewCaseFeedView
+        else:
+            export_tag = create_form.cleaned_data['form']
+            cls = CreateNewFormFeedView
+        app_id = create_form.cleaned_data['application']
+        app_id_param = '&app_id={}'.format(app_id) if app_id != ApplicationDataRMIHelper.UNKNOWN_SOURCE else ""
+
+        return reverse(
+            cls.urlname,
+            args=[self.domain],
+        ) + ('?export_tag="{export_tag}"{app_id_param}'.format(
+            app_id_param=app_id_param,
+            export_tag=export_tag,
+        ))
 
 
 class FormExportListView(BaseExportListView):
@@ -1540,11 +1560,20 @@ class BaseModifyNewCustomView(BaseNewExportView):
     def dispatch(self, request, *args, **kwargs):
         return super(BaseModifyNewCustomView, self).dispatch(request, *args, **kwargs)
 
+    @property
+    def page_context(self):
+        context = super(BaseModifyNewCustomView, self).page_context
+        context['format_options'] = ["html", "xls", "xlsx", "csv"]
+        return context
+
 
 class CreateNewCustomFormExportView(BaseModifyNewCustomView):
     urlname = 'new_custom_export_form'
     page_title = ugettext_lazy("Create Form Export")
     export_type = FORM_EXPORT
+
+    def get_export_instance(self, schema):
+        return self.export_instance_cls.generate_instance_from_schema(schema)
 
     def get(self, request, *args, **kwargs):
         app_id = request.GET.get('app_id')
@@ -1555,7 +1584,7 @@ class CreateNewCustomFormExportView(BaseModifyNewCustomView):
             app_id,
             xmlns,
         )
-        self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
+        self.export_instance = self.get_export_instance(schema)
 
         return super(CreateNewCustomFormExportView, self).get(request, *args, **kwargs)
 
@@ -1564,6 +1593,9 @@ class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
     urlname = 'new_custom_export_case'
     page_title = ugettext_lazy("Create Case Export")
     export_type = CASE_EXPORT
+
+    def get_export_instance(self, schema):
+        return self.export_instance_cls.generate_instance_from_schema(schema)
 
     def get(self, request, *args, **kwargs):
         case_type = request.GET.get('export_tag').strip('"')
@@ -1574,9 +1606,34 @@ class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
             app_id,
             case_type,
         )
-        self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
+        self.export_instance = self.get_export_instance(schema)
 
         return super(CreateNewCustomCaseExportView, self).get(request, *args, **kwargs)
+
+
+class DashboardFeedMixin(object):
+
+    def get_export_instance(self, schema):
+        instance = super(DashboardFeedMixin, self).get_export_instance(schema)
+        instance.export_format = "html"
+        instance.is_daily_saved_export = True
+        return instance
+
+    @property
+    def page_context(self):
+        context = super(DashboardFeedMixin, self).page_context
+        context['format_options'] = ["html"]
+        return context
+
+
+class CreateNewCaseFeedView(DashboardFeedMixin, CreateNewCustomCaseExportView):
+    urlname = 'new_case_feed_export'
+    page_title = ugettext_lazy("Create Dashboard Feed")
+
+
+class CreateNewFormFeedView(DashboardFeedMixin, CreateNewCustomFormExportView):
+    urlname = 'new_form_feed_export'
+    page_title = ugettext_lazy("Create Dashboard Feed")
 
 
 class BaseEditNewCustomExportView(BaseModifyNewCustomView):
