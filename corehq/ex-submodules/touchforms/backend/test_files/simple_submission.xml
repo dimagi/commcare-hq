@@ -1,0 +1,22 @@
+<?xml version='1.0' ?>
+<data uiVersion="1" version="10" name="Case Create" xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+      xmlns="http://openrosa.org/formdesigner/6A76177B-44C8-4EE8-9556-75954709946D">
+    <name>William Pride</name>
+    <n0:case case_id="submission_id" date_modified="2015-07-21T17:00:04.349-04"
+             user_id="51cd680c0bd1c21bb5e63dab99748248" xmlns:n0="http://commcarehq.org/case/transaction/v2">
+        <n0:create>
+            <n0:case_name>William Pride</n0:case_name>
+            <n0:owner_id>51cd680c0bd1c21bb5e63dab99748248</n0:owner_id>
+            <n0:case_type>case</n0:case_type>
+        </n0:create>
+    </n0:case>
+    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+        <n1:deviceID>cloudcare</n1:deviceID>
+        <n1:timeStart>2015-07-21T17:00:00.093-04</n1:timeStart>
+        <n1:timeEnd>2015-07-21T17:00:04.349-04</n1:timeEnd>
+        <n1:username>wspride-tc-2</n1:username>
+        <n1:userID>51cd680c0bd1c21bb5e63dab99748248</n1:userID>
+        <n1:instanceID>ba26dd42-fab2-43cd-88c3-27fcdbbfffdc</n1:instanceID>
+        <n2:appVersion xmlns:n2="http://commcarehq.org/xforms">2.0</n2:appVersion>
+    </n1:meta>
+</data>

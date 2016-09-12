@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>XForms Demo</h2>
+{% if notice %}
+<div class="{{ success|yesno:'success,error' }}">
+{{ notice }}
+</div>
+{% endif %}
+<div class="notice">
+<form enctype="multipart/form-data" method="POST" action="">
+{% csrf_token %}
+<b>Upload a new form:</b> &nbsp;&nbsp;&nbsp;<input type="file" name="file" id="id_file" />
+<input type="submit" value="Upload!" style="float:right;"/>
+</form> 
+</div>
+<table>
+{% for namespace, xforms in forms_by_namespace.items %}
+    {% if forloop.first %}
+    <thead>
+        <!--th>Name</th-->
+        <th>Namespace</th>
+        <th>Created</th>
+        <th>Version</th>
+        <th>UI Version</th>
+        <th>File</th>
+        <th colspan="3">Play</th>
+    </thead>
+    {% endif %}
+    {% for xform in xforms %}
+        <tr class="{% cycle "odd" "even" %}">
+            <!--td>{{ xform.name }}</td-->
+            {% if forloop.first %}
+                <td class="namespace" rowspan="{{ xforms|length }}">
+                    {# [<a href="{% url 'xform_download_excel' %}?xmlns={{namespace}}">excel</a>] #}
+                    {{ namespace }}
+                </td>
+            {% endif %}
+            <td>{{ xform.created }}</td>
+            <td>{{ xform.version }}</td>
+            <td>{{ xform.uiversion }}</td>
+            <td><a href="{% url 'xform_download' xform.id %}">download</a></td>
+            <td><a href="{% url 'xform_play' xform.id %}">touch</a></td>
+            <td><a href="{% url 'xform_play_all' xform.id %}">full</a></td>
+            <td><a href="{% url 'xform_play_offline' xform.id %}">full (offline)</a></td>
+        </tr>
+    {% endfor %}
+{% empty %}
+    <tr>Sorry, no forms here.</tr>
+{% endfor %}
+<tr></tr>
+</table>
+{% endblock %} 
