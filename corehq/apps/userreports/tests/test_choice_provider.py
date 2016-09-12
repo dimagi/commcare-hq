@@ -1,12 +1,14 @@
 from abc import ABCMeta, abstractmethod
 from django.test import SimpleTestCase, TestCase
 import mock
+from functools import partial
 from corehq.apps.commtrack.tests.util import bootstrap_location_types, make_loc
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.fake.groups_fake import GroupESFake
 from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.tests.util import delete_all_locations
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceProvider, \
@@ -91,6 +93,7 @@ class ChoiceProviderTestMixin(object):
     __metaclass__ = ABCMeta
     choice_provider = None
     static_choice_provider = None
+    choice_query_context = ChoiceQueryContext
 
     def _test_query(self, query_context):
         self.assertEqual(
@@ -104,13 +107,13 @@ class ChoiceProviderTestMixin(object):
         )
 
     def test_query_no_search_all(self):
-        self._test_query(ChoiceQueryContext('', limit=20, page=0))
+        self._test_query(self.choice_query_context('', limit=20, page=0))
 
     def test_query_no_search_first_short_page(self):
-        self._test_query(ChoiceQueryContext('', 2, page=0))
+        self._test_query(self.choice_query_context('', 2, page=0))
 
     def test_query_no_search_second_short_page(self):
-        self._test_query(ChoiceQueryContext('', 2, page=1))
+        self._test_query(self.choice_query_context('', 2, page=1))
 
     @abstractmethod
     def test_query_search(self):
@@ -143,6 +146,8 @@ class LocationChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
 
     @classmethod
     def setUpClass(cls):
+        delete_all_locations()
+        delete_all_users()
         cls.domain_obj = create_domain(cls.domain)
         report = ReportConfiguration(domain=cls.domain)
         bootstrap_location_types(cls.domain)
@@ -161,8 +166,12 @@ class LocationChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
             choices.append(SearchableChoice(location.location_id, location.sql_location.display_name,
                                             searchable_text=[location_code, location_name]))
         choices.sort(key=lambda choice: choice.display)
+        from corehq.apps.users.models import CommCareUser
+        cls.web_user = WebUser.create(cls.domain, 'blah', 'password')
+        cls.web_user.set_location(cls.domain, cls.locations[1])
         cls.choice_provider = LocationChoiceProvider(report, None)
         cls.static_choice_provider = StaticChoiceProvider(choices)
+        cls.choice_query_context = partial(ChoiceQueryContext, user=cls.web_user)
 
     @classmethod
     def tearDownClass(cls):
@@ -170,8 +179,8 @@ class LocationChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         delete_all_locations()
 
     def test_query_search(self):
-        self._test_query(ChoiceQueryContext('e', 2, page=0))
-        self._test_query(ChoiceQueryContext('e', 2, page=1))
+        self._test_query(self.choice_query_context('e', 2, page=0))
+        self._test_query(self.choice_query_context('e', 2, page=1))
 
     def test_get_choices_for_values(self):
         self._test_get_choices_for_values(
@@ -309,6 +318,7 @@ class OwnerChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         ]
         cls.choice_provider = OwnerChoiceProvider(report, None)
         cls.static_choice_provider = StaticChoiceProvider(cls.choices)
+        cls.choice_query_context = partial(ChoiceQueryContext, user=cls.mobile_worker)
 
     @classmethod
     def tearDownClass(cls):
@@ -318,10 +328,10 @@ class OwnerChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         delete_all_locations()
 
     def test_query_search(self):
-        self._test_query(ChoiceQueryContext('o', limit=10, offset=0))
-        self._test_query(ChoiceQueryContext('l', limit=10, offset=0))
-        self._test_query(ChoiceQueryContext('no-match', limit=10, offset=0))
-        self._test_query(ChoiceQueryContext('o', limit=3, offset=2))
+        self._test_query(self.choice_query_context('o', limit=10, offset=0))
+        self._test_query(self.choice_query_context('l', limit=10, offset=0))
+        self._test_query(self.choice_query_context('no-match', limit=10, offset=0))
+        self._test_query(self.choice_query_context('o', limit=3, offset=2))
 
     def test_get_choices_for_values(self):
         self._test_get_choices_for_values(

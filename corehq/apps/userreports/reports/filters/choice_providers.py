@@ -21,13 +21,14 @@ class ChoiceQueryContext(object):
     Context that will be passed to a choice provider function.
     """
 
-    def __init__(self, query=None, limit=20, offset=None, page=None):
+    def __init__(self, query=None, limit=20, offset=None, page=None, user=None):
         """
         either offset or page (but not both) must be set
         page is just a helper; it is used to calculate offset as page * limit
         """
         self.query = query
         self.limit = limit
+        self.user = user
 
         if page is not None and offset is not None:
             raise TypeError("Only one of page or offset can be passed in")
@@ -147,27 +148,28 @@ class LocationChoiceProvider(ChainableChoiceProvider):
     def configure(self, spec):
         self.include_descendants = spec.get('include_descendants', self.include_descendants)
 
-    def _locations_query(self, query_text):
+    def _locations_query(self, query_text, user):
         if query_text:
             return SQLLocation.active_objects.filter_path_by_user_input(
                 domain=self.domain, user_input=query_text)
         else:
-            return SQLLocation.active_objects.filter(domain=self.domain)
+            return SQLLocation.active_objects.accessible_to_user(self.domain, user).filter(domain=self.domain)
+            # return SQLLocation.active_objects.filter(domain=self.domain)
 
     def query(self, query_context):
         # todo: consider making this an extensions framework similar to custom expressions
         # todo: does this need fancier permission restrictions and what not?
         # see e.g. locations.views.child_locations_for_select2
 
-        locations = self._locations_query(query_context.query).order_by('name')
+        locations = self._locations_query(query_context.query, query_context.user).order_by('name')
 
         return [
             Choice(loc.location_id, loc.display_name) for loc in
             locations[query_context.offset:query_context.offset + query_context.limit]
         ]
 
-    def query_count(self, query):
-        return self._locations_query(query).count()
+    def query_count(self, query, user):
+        return self._locations_query(query, user).count()
 
     def get_choices_for_known_values(self, values):
         selected_locations = SQLLocation.active_objects.filter(location_id__in=values)
@@ -187,7 +189,7 @@ class UserChoiceProvider(ChainableChoiceProvider):
             limit=query_context.limit, offset=query_context.offset)
         return self.get_choices_from_es_query(user_es)
 
-    def query_count(self, query):
+    def query_count(self, query, user=None):
         user_es = get_search_users_in_domain_es_query(self.domain, query, limit=0, offset=0)
         return user_es.run().total
 
@@ -211,7 +213,7 @@ class GroupChoiceProvider(ChainableChoiceProvider):
         )
         return self.get_choices_from_es_query(group_es)
 
-    def query_count(self, query):
+    def query_count(self, query, user=None):
         group_es = (
             GroupES().domain(self.domain).is_case_sharing()
             .search_string_query(query, default_fields=['name'])
@@ -246,18 +248,19 @@ class AbstractMultiProvider(ChoiceProvider):
         limit = query_context.limit
         offset = query_context.offset
         query = query_context.query
+        user = query_context.user
         choices = []
         for choice_provider in self.choice_providers:
             if limit <= 0:
                 break
-            query_context = ChoiceQueryContext(query=query, limit=limit, offset=offset)
+            query_context = ChoiceQueryContext(query=query, limit=limit, offset=offset, user=user)
             new_choices = choice_provider.query(query_context)
             choices.extend(new_choices)
             if len(new_choices):
                 limit -= len(new_choices)
                 offset = 0
             else:
-                offset -= choice_provider.query_count(query)
+                offset -= choice_provider.query_count(query, user=user)
         return choices
 
     def get_choices_for_known_values(self, values):

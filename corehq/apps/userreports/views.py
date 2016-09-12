@@ -1227,7 +1227,8 @@ def choice_list_api(request, domain, report_id, filter_id):
         query_context = ChoiceQueryContext(
             query=request.GET.get('q', None),
             limit=int(request.GET.get('limit', 20)),
-            page=int(request.GET.get('page', 1)) - 1
+            page=int(request.GET.get('page', 1)) - 1,
+            user=request.couch_user
         )
         return json_response([
             choice._asdict() for choice in
