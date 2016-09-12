@@ -104,14 +104,12 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         self.assertXmlEqual(self.get_xml('case-list-form-advanced-autoload'), factory.app.create_suite())
 
     def test_case_list_form_parent_child_advanced(self):
-        """
-        * Register house (case type = house, basic)
-          * Register house form
-        * Register person (case type = person, parent select = 'Register house', advanced)
-          * Register person form
-        * Manager person (case type = person, case list form = 'Register person form', basic)
-          * Manage person form
-        """
+        # * Register house (case type = house, basic)
+        #   * Register house form
+        # * Register person (case type = person, parent select = 'Register house', advanced)
+        #   * Register person form
+        # * Manager person (case type = person, case list form = 'Register person form', basic)
+        #   * Manage person form
         factory = AppFactory(build_version='2.9')
         register_house_module, register_house_form = factory.new_basic_module('register_house', 'house')
         factory.form_opens_case(register_house_form)
@@ -133,14 +131,12 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-advanced'), factory.app.create_suite())
 
     def test_case_list_form_parent_child_basic(self):
-        """
-        * Register house (case type = house, basic)
-          * Register house form
-        * Register person (case type = person, parent select = 'Register house', basic)
-          * Register person form
-        * Manager person (case type = person, case list form = 'Register person form', basic)
-          * Manage person form
-        """
+        # * Register house (case type = house, basic)
+        #   * Register house form
+        # * Register person (case type = person, parent select = 'Register house', basic)
+        #   * Register person form
+        # * Manager person (case type = person, case list form = 'Register person form', basic)
+        #   * Manage person form
         factory = AppFactory(build_version='2.9')
         register_house_module, register_house_form = factory.new_basic_module('register_house', 'house')
 
@@ -161,16 +157,14 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-basic'), factory.app.create_suite())
 
     def test_case_list_form_parent_child_submodule_basic(self):
-        """
-        * Register house (case type = house, basic)
-          * Register house form
-        * Register person (case type = person, parent select = 'Register house', basic)
-          * Register person form
-        * Update house (case type = house, case list form = 'Register house')
-          * Update house form
-          * Update person (case type = person, case list form = 'Register person form', basic, parent module = 'Update house')
-              * Update person form
-        """
+        # * Register house (case type = house, basic)
+        #   * Register house form
+        # * Register person (case type = person, parent select = 'Register house', basic)
+        #   * Register person form
+        # * Update house (case type = house, case list form = 'Register house')
+        #   * Update house form
+        #   * Update person (case type = person, case list form = 'Register person form', basic, parent module = 'Update house')
+        #       * Update person form
         factory = AppFactory(build_version='2.9')
         register_house_module, register_house_form = factory.new_basic_module('register_house', 'house')
         factory.form_opens_case(register_house_form)
@@ -198,16 +192,14 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-submodule-basic'), factory.app.create_suite())
 
     def test_case_list_form_parent_child_submodule_advanced(self):
-        """
-        * Register house (case type = house, basic)
-          * Register house form
-        * Register person (case type = person, parent select = 'Register house', advanced)
-          * Register person form
-        * Update house (case type = house, case list form = 'Register house')
-          * Update house form
-          * Update person (case type = person, case list form = 'Register person form', advanced, parent module = 'Update house')
-              * Update person form
-        """
+        # * Register house (case type = house, basic)
+        #   * Register house form
+        # * Register person (case type = person, parent select = 'Register house', advanced)
+        #   * Register person form
+        # * Update house (case type = house, case list form = 'Register house')
+        #   * Update house form
+        #   * Update person (case type = person, case list form = 'Register person form', advanced, parent module = 'Update house')
+        #       * Update person form
         factory = AppFactory(build_version='2.9')
         register_house_module, register_house_form = factory.new_basic_module('register_house', 'house')
         factory.form_opens_case(register_house_form)
@@ -237,11 +229,10 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-submodule-advanced'), factory.app.create_suite())
 
     def test_case_list_form_parent_child_submodule_advanced_rename_case_var(self):
-        """Test that the session vars in the entries for the submodule get updated
-        to match the parent (and to avoid naming conflicts).
-        m3-f0: 'case_id_load_house' -> 'case_id_load_house_renamed'
-        m3-f0: 'case_id_load_house_renamed' -> 'case_id_load_house_renamed_person'
-        """
+        # Test that the session vars in the entries for the submodule get updated
+        # to match the parent (and to avoid naming conflicts).
+        # m3-f0: 'case_id_load_house' -> 'case_id_load_house_renamed'
+        # m3-f0: 'case_id_load_house_renamed' -> 'case_id_load_house_renamed_person'
         factory = AppFactory(build_version='2.9')
         register_house_module, register_house_form = factory.new_basic_module('register_house', 'house')
         factory.form_opens_case(register_house_form)
@@ -276,16 +267,14 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-submodule-advanced-rename-var'), factory.app.create_suite())
 
     def test_case_list_form_parent_child_submodule_mixed(self):
-        """
-        * Register house (case type = house, basic)
-          * Register house form
-        * Register person (case type = person, parent select = 'Register house', advanced)
-          * Register person form
-        * Update house (case type = house, case list form = 'Register house')
-          * Update house form
-          * Update person (case type = person, case list form = 'Register person form', advanced, parent module = 'Update house')
-              * Update person form
-        """
+        # * Register house (case type = house, basic)
+        #   * Register house form
+        # * Register person (case type = person, parent select = 'Register house', advanced)
+        #   * Register person form
+        # * Update house (case type = house, case list form = 'Register house')
+        #   * Update house form
+        #   * Update person (case type = person, case list form = 'Register person form', advanced, parent module = 'Update house')
+        #       * Update person form
         factory = AppFactory(build_version='2.9')
         register_house_module, register_house_form = factory.new_basic_module('register_house', 'house')
         factory.form_opens_case(register_house_form)
@@ -314,19 +303,16 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-submodule-mixed'), factory.app.create_suite())
 
     def test_target_module_different_datums(self):
-        """
-        * Registration
-          * Register patient form
-            * open case (patient), update user_case
-        * Visits (case type = patient, case list form = 'Register patient')
-          * Visit form
-            * update case, open child case (visit), load from user_case
-          * Record notes
-            * update case, open child case (visit)
-          * Update patient
-            * update case
-        """
-
+        # * Registration
+        #   * Register patient form
+        #     * open case (patient), update user_case
+        # * Visits (case type = patient, case list form = 'Register patient')
+        #   * Visit form
+        #     * update case, open child case (visit), load from user_case
+        #   * Record notes
+        #     * update case, open child case (visit)
+        #   * Update patient
+        #     * update case
         factory = AppFactory(build_version='2.9')
         registration_module, registration_form = factory.new_basic_module('registration', 'patient')
 

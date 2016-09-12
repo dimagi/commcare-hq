@@ -1,0 +1,60 @@
+<partial>
+    <entry>
+        <command id="m0-f0">
+            <text>
+                <locale id="forms.m0f0"/>
+            </text>
+        </command>
+        <session>
+            <datum id="case_id_new_person_0" function="uuid()"/>
+        </session>
+    </entry>
+    <entry>
+        <command id="m1-f0">
+            <text>
+                <locale id="forms.m1f0"/>
+            </text>
+        </command>
+        <instance id="casedb" src="jr://instance/casedb"/>
+        <instance id="commcaresession" src="jr://instance/session"/>
+        <session>
+            <datum id="case_id_load_person_0" nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+            <datum id="case_id_new_episode_0" function="uuid()"/>
+        </session>
+        <stack>
+            <create if="true()">
+                <command value="'m2'"/>
+                <datum id="case_id_load_episode_0" value="instance('commcaresession')/session/data/case_id_new_episode_0"/>
+                <datum id="case_id_auto_select_case" value="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_episode_0]/index/host"/>
+                <command value="'m2-f0'"/>
+            </create>
+        </stack>
+    </entry>
+    <entry>
+        <command id="m2-f0">
+            <text>
+                <locale id="forms.m2f0"/>
+            </text>
+        </command>
+        <instance id="casedb" src="jr://instance/casedb"/>
+        <instance id="commcaresession" src="jr://instance/session"/>
+        <session>
+            <datum id="case_id_load_episode_0" nodeset="instance('casedb')/casedb/case[@case_type='episode'][@status='open']" value="./@case_id" detail-select="m2_case_short" detail-confirm="m2_case_long"/>
+            <datum id="case_id_auto_select_case" function="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_load_episode_0]/index/host"/>
+        </session>
+        <assertions>
+            <assert test="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_load_episode_0]/index/host) = 1">
+                <text>
+                    <locale id="case_autoload.case.property_missing">
+                        <argument>host</argument>
+                    </locale>
+                </text>
+            </assert>
+            <assert test="count(instance('casedb')/casedb/case[@case_id=instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_load_episode_0]/index/host]) = 1">
+                <text>
+                    <locale id="case_autoload.case.case_missing"/>
+                </text>
+            </assert>
+        </assertions>
+    </entry>
+</partial>
