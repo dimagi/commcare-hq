@@ -14,7 +14,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             $.when(fetchingNextMenu).done(function (menuResponse) {
 
                 // show any notifications from Formplayer
-                if (menuResponse.notification && !_.isNull(menuResponse.notification.message)){
+                if (menuResponse.notification && !_.isNull(menuResponse.notification.message)) {
                     FormplayerFrontend.request("handleNotification", menuResponse.notification);
                 }
 
@@ -79,6 +79,9 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 }
                 FormplayerFrontend.regions.main.show(menuListView.render());
             }
+            if (menuResponse.persistentCaseTile) {
+                MenuList.Controller.showPersistentCaseTile(menuResponse.persistentCaseTile);
+            }
 
             if (menuResponse.breadcrumbs) {
                 MenuList.Controller.showBreadcrumbs(menuResponse.breadcrumbs);
@@ -86,6 +89,11 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             if (menuResponse.appVersion) {
                 MenuList.Controller.showAppVersion(menuResponse.appVersion);
             }
+        },
+
+        showPersistentCaseTile: function (persistentCaseTile) {
+            var detailView = MenuList.Controller.getDetailList(persistentCaseTile);
+            $('#persistent-case-tile').html(detailView.render().el);
         },
 
         showAppVersion: function (appVersion) {
@@ -112,27 +120,12 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             var self = this;
             var detailObjects = model.options.model.get('details');
             // If we have no details, just select the entity
-            if(detailObjects === null || detailObjects === undefined){
+            if (detailObjects === null || detailObjects === undefined) {
                 FormplayerFrontend.trigger("menu:select", model.model.get('id'));
                 return;
             }
             var detailObject = detailObjects[detailTabIndex];
-            var headers = detailObject.headers;
-            var details = detailObject.details;
-            var detailModel = [];
-            // we need to map the details and headers JSON to a list for a Backbone Collection
-            for (var i = 0; i < headers.length; i++) {
-                var obj = {};
-                obj.data = details[i];
-                obj.header = headers[i];
-                obj.id = i;
-                detailModel.push(obj);
-            }
-            var detailCollection = new Backbone.Collection();
-            detailCollection.reset(detailModel);
-            var menuListView = new MenuList.DetailListView({
-                collection: detailCollection,
-            });
+            var menuListView = MenuList.Controller.getDetailList(detailObject);
 
             var tabModels = _.map(detailObjects, function (detail, index) {
                 return {title: detail.title, id: index};
@@ -153,5 +146,25 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             $('#case-detail-modal').find('.modal-body').html(menuListView.render().el);
             $('#case-detail-modal').modal('show');
         },
+
+        getDetailList: function (detailObject) {
+            var headers = detailObject.headers;
+            var details = detailObject.details;
+            var detailModel = [];
+            // we need to map the details and headers JSON to a list for a Backbone Collection
+            for (var i = 0; i < headers.length; i++) {
+                var obj = {};
+                obj.data = details[i];
+                obj.header = headers[i];
+                obj.id = i;
+                detailModel.push(obj);
+            }
+            var detailCollection = new Backbone.Collection();
+            detailCollection.reset(detailModel);
+            var menuListView = new MenuList.DetailListView({
+                collection: detailCollection,
+            });
+            return menuListView;
+        }
     };
 });
