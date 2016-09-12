@@ -66,11 +66,11 @@ class ConfigurableReportEsDataSource(ReportDataSource):
 
     @property
     def filters(self):
-        return filter(None, [f.to_es_filter() for f in self._filters.values()])
-    #
-    # def set_filter_values(self, filter_values):
-    #     for filter_slug, value in filter_values.items():
-    #         self._filter_values[filter_slug] = self._filters[filter_slug].create_filter_value(value)
+        return filter(None, [f.to_es_filter() for f in self._filter_values.values()])
+
+    def set_filter_values(self, filter_values):
+        for filter_slug, value in filter_values.items():
+            self._filter_values[filter_slug] = self._filters[filter_slug].create_filter_value(value)
 
     def defer_filters(self, filter_slugs):
         self._deferred_filters.update({
@@ -109,24 +109,19 @@ class ConfigurableReportEsDataSource(ReportDataSource):
     #         except InvalidQueryColumn:
     #             pass
     #     return []
-    #
-    # @property
-    # def columns(self):
-    #     db_columns = [c for sql_conf in self.sql_column_configs for c in sql_conf.columns]
-    #     fields = {c.slug for c in db_columns}
-    #
-    #     return db_columns + [
-    #         DatabaseColumn('', SimpleColumn(deferred_filter.field))
-    #         for deferred_filter in self._deferred_filters.values()
-    #         if deferred_filter.field not in fields]
-    #
-    # @property
-    # def sql_column_configs(self):
-    #     return [col.get_sql_column_config(self.config, self.lang) for col in self.column_configs]
-    #
-    # @property
-    # def column_warnings(self):
-    #     return [w for es_conf in self.es_column_configs for w in es_conf.warnings]
+
+    @property
+    def columns(self):
+        db_columns = [c for sql_conf in self.sql_column_configs for c in sql_conf.columns]
+        return db_columns
+
+    @property
+    def sql_column_configs(self):
+        return [col.get_sql_column_config(self.config, self.lang) for col in self.column_configs]
+
+    @property
+    def column_warnings(self):
+        return [w for es_conf in self.sql_column_configs for w in es_conf.warnings]
 
     @memoized
     @method_decorator(catch_and_raise_exceptions)
