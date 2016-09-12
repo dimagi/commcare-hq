@@ -297,6 +297,12 @@ class ProjectHealthDashboard(ProjectReport):
     def decorator_dispatcher(self, request, *args, **kwargs):
         super(ProjectHealthDashboard, self).decorator_dispatcher(request, *args, **kwargs)
 
+    def get_number_of_months(self):
+        try:
+            return int(self.request.GET.get('months', 6))
+        except ValueError:
+            return 6
+
     def get_group_location_ids(self):
         params = filter(None, self.request.GET.getlist('grouplocationfilter'))
         return params
@@ -339,14 +345,14 @@ class ProjectHealthDashboard(ProjectReport):
         users_set = self.get_unique_users(users_list_by_location, users_list_by_group)
         return users_set
 
-    def previous_months_summary(self):
+    def previous_months_summary(self, months=6):
         now = datetime.datetime.utcnow()
         six_month_summary = []
         last_month_summary = None
         performance_threshold = get_performance_threshold(self.domain)
         filtered_users = self.get_users_by_filter()
         active_not_deleted_users = UserES().domain(self.domain).values_list("_id", flat=True)
-        for i in range(-6, 1):
+        for i in range(-months, 1):
             year, month = add_months(now.year, now.month, i)
             month_as_date = datetime.date(year, month, 1)
             this_month_summary = MonthlyPerformanceSummary(
@@ -377,7 +383,7 @@ class ProjectHealthDashboard(ProjectReport):
 
     @property
     def export_table(self):
-        six_months_reports = self.previous_months_summary()
+        six_months_reports = self.previous_months_summary(self.get_number_of_months())
         last_month = six_months_reports[-2]
 
         header = ['user_id', 'username', 'last_month_forms', 'delta_last_month',
@@ -400,7 +406,7 @@ class ProjectHealthDashboard(ProjectReport):
 
     @property
     def template_context(self):
-        prior_months_reports = self.previous_months_summary()
+        prior_months_reports = self.previous_months_summary(self.get_number_of_months())
         performance_threshold = get_performance_threshold(self.domain)
         return {
             'six_months_reports': prior_months_reports,
