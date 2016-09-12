@@ -63,10 +63,10 @@ class ConfigurableReportEsDataSource(ReportDataSource):
     def table_name(self):
         # TODO make this the same function as the adapter
         return get_table_name(self.domain, self.config.table_id).lower()
-    #
-    # @property
-    # def filters(self):
-    #     return filter(None, [fv.to_sql_filter() for fv in self._filter_values.values()])
+
+    @property
+    def filters(self):
+        return filter(None, [f.to_es_filter() for f in self._filters.values()])
     #
     # def set_filter_values(self, filter_values):
     #     for filter_slug, value in filter_values.items():
@@ -131,6 +131,10 @@ class ConfigurableReportEsDataSource(ReportDataSource):
     @memoized
     @method_decorator(catch_and_raise_exceptions)
     def get_data(self, start=None, limit=None):
+        return self._get_query().hits
+
+    @memoized
+    def _get_query(self, start=None, limit=None):
         query = HQESQuery(self.table_name)
 
         if start:
@@ -138,22 +142,19 @@ class ConfigurableReportEsDataSource(ReportDataSource):
         if limit:
             query = query.size(limit)
 
-        return query.run().hits
+        for filter in self.filters:
+            query = query.filter(filter)
+
+        return query.run()
 
     # @property
     # def has_total_row(self):
     #     return any(column_config.calculate_total for column_config in self.column_configs)
-    #
-    # @method_decorator(catch_and_raise_exceptions)
-    # def get_total_records(self):
-    #     qc = self.query_context()
-    #     for c in self.columns:
-    #         # TODO - don't append columns that are not part of filters or group bys
-    #         qc.append_column(c.view)
-    #
-    #     session = connection_manager.get_scoped_session(self.engine_id)
-    #     return qc.count(session.connection(), self.filter_values)
-    #
+
+    @method_decorator(catch_and_raise_exceptions)
+    def get_total_records(self):
+        return self._get_query().total
+
     # @method_decorator(catch_and_raise_exceptions)
     # def get_total_row(self):
     #     def _clean_total_row(val, col):
