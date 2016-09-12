@@ -33,6 +33,7 @@ from corehq.apps.userreports.sql import get_expanded_column_config, ColumnConfig
 from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.util import localize
 from dimagi.utils.decorators.memoized import memoized
+from corehq.apps.userreports.es.columns import EsColumnConfig, EsColumn
 
 
 SQLAGG_COLUMN_MAP = {
@@ -149,6 +150,16 @@ class FieldColumn(ReportColumn):
             )
         ])
 
+    def get_es_column_config(self, data_source_config, lang):
+        return EsColumnConfig(columns=[
+            EsColumn(
+                header=self.get_header(lang),
+                data_slug=self.column_id,
+                format_fn=self.get_format_fn(),
+                help_text=self.description
+            )
+        ])
+
     def get_query_column_ids(self):
         return [self.column_id]
 
@@ -174,6 +185,16 @@ class LocationColumn(ReportColumn):
                 header=self.get_header(lang),
                 agg_column=SimpleColumn(self.field, alias=self.column_id),
                 sortable=self.sortable,
+                data_slug=self.column_id,
+                format_fn=self.get_format_fn(),
+                help_text=self.description
+            )
+        ])
+
+    def get_es_column_config(self, data_source_config, lang):
+        return EsColumnConfig(columns=[
+            EsColumn(
+                header=self.get_header(lang),
                 data_slug=self.column_id,
                 format_fn=self.get_format_fn(),
                 help_text=self.description
