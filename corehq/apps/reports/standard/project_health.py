@@ -383,8 +383,8 @@ class ProjectHealthDashboard(ProjectReport):
 
     @property
     def export_table(self):
-        six_months_reports = self.previous_months_summary(self.get_number_of_months())
-        last_month = six_months_reports[-2]
+        previous_months_reports = self.previous_months_summary(self.get_number_of_months())
+        last_month = previous_months_reports[-2]
 
         header = ['user_id', 'username', 'last_month_forms', 'delta_last_month',
                   'this_month_forms', 'delta_this_month', 'is_performing']
@@ -395,7 +395,7 @@ class ProjectHealthDashboard(ProjectReport):
                     user.is_performing] for user in user_list]
 
         return [
-            self.export_summary(six_months_reports),
+            self.export_summary(previous_months_reports),
             build_worksheet(title="Inactive Users", headers=header,
                             rows=extract_user_stat(last_month.get_dropouts())),
             build_worksheet(title="Low Performing Users", headers=header,
