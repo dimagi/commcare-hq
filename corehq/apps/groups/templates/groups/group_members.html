@@ -90,14 +90,13 @@
                         message = django.gettext('Successfully saved ') + name.toLowerCase() + '.';
                         unsavedChanges[name] = false;
                     } else {
-                        alertClass = 'alert-error';
+                        alertClass = 'alert-danger';
                         message = django.gettext('Failed to save ') + name.toLowerCase() + '.';
                     }
                     $(id).find(':button').enableButton();
-                    $('.alert').removeClass('alert-error alert-success alert-info').addClass(alertClass);
-                    $('.alert').html(message).show();
+                    $('#save-alert').removeClass('alert-error alert-success alert-info').addClass(alertClass);
+                    $('#save-alert').html(message).show();
                     $('#editGroupSettings').modal('hide');
-
                     if (gaEventLabel){
                         ga_track_event('Editing Group', gaEventLabel, '{{group.get_id|escapejs}}');
                     }
@@ -153,6 +152,8 @@
 {% endblock %}
 
 {% block page_content %}
+    <p id="save-alert" class="alert" hidden="hidden">
+    </p>
     {% if group.is_deleted %}
         <div class="alert alert-info">
             {% blocktrans%}
