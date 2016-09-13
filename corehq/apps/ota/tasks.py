@@ -84,7 +84,7 @@ def _get_cached_payload(restore_config):
     try:
         # must set this to False before attempting to check the cache
         restore_config.overwrite_cache = False
-        payload = restore_config.get_cached_payload()
+        payload = restore_config.get_cached_response()
     finally:
         restore_config.overwrite_cache = original
     return payload

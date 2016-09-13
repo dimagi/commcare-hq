@@ -595,7 +595,7 @@ class RestoreConfig(object):
         self.validate()
         self.delete_cached_payload_if_necessary()
 
-        cached_response = self._get_cached_response()
+        cached_response = self.get_cached_response()
         if cached_response:
             return cached_response
         # Start new sync
@@ -613,7 +613,7 @@ class RestoreConfig(object):
         self.set_cached_payload_if_necessary(response, self.restore_state.duration)
         return response
 
-    def _get_cached_response(self):
+    def get_cached_response(self):
         if self.overwrite_cache:
             return CachedResponse(None)
 
