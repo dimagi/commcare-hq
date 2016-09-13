@@ -51,13 +51,13 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             if (menuResponse.persistentCaseTile) {
                 MenuList.Controller.showPersistentCaseTile(menuResponse.persistentCaseTile);
             } else {
-                $("#persistent-case-tile").html("");
+                FormplayerFrontend.regions.persistentCaseTile.empty();
             }
 
             if (menuResponse.breadcrumbs) {
                 MenuList.Controller.showBreadcrumbs(menuResponse.breadcrumbs);
             } else {
-                $("#breadcrumb-region").html("");
+                FormplayerFrontend.regions.breadcrumb.empty();
             }
             if (menuResponse.appVersion) {
                 MenuList.Controller.showAppVersion(menuResponse.appVersion);

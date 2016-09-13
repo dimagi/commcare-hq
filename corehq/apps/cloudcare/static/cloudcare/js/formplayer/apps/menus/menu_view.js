@@ -154,6 +154,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     };
 
     // Dynamically generate the CSS style for the grid polyfill to use for the case tile
+    // useUniformUnits - tur if the grid's cells should have the same height as width
     var makeInnerGridStyle = function (numRows, numColumns, numCasesPerRow, useUniformUnits) {
         var templateString,
             view,
