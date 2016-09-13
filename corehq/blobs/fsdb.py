@@ -62,6 +62,15 @@ class FilesystemBlobDB(AbstractBlobDB):
         remove(path)
         return True
 
+    def bulk_delete(self, paths):
+        success = True
+        for path in paths:
+            if not exists(path):
+                success = False
+            else:
+                os.remove(path)
+        return success
+
     def copy_blob(self, content, info, bucket):
         raise NotImplementedError
 
