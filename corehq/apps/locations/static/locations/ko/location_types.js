@@ -22,20 +22,24 @@ hqDefine('locations/ko/location_types.js', function(){
             });
         };
 
-        self.loc_types_by_id = _.reduce(self.loc_types(), function(memo, loc_type){
-            memo[loc_type.pk] = loc_type;
-            return memo;
-        }, {});
+        self.loc_types_by_id = function() {
+            return _.reduce(self.loc_types(), function(memo, loc_type){
+                memo[loc_type.pk] = loc_type;
+                return memo;
+            }, {});
+        };
 
-        self.loc_types_by_parent = _.reduce(self.loc_types(), function(memo, loc_type){
-            var parent_type = loc_type.parent_type() || 0;
-            if (memo[parent_type]){
-                memo[parent_type].push(loc_type);
-            } else {
-                memo[parent_type] = [loc_type];
-            }
-            return memo;
-        }, {});
+        self.loc_types_by_parent = function() {
+            return _.reduce(self.loc_types(), function(memo, loc_type){
+                var parent_type = loc_type.parent_type() || 0;
+                if (memo[parent_type]){
+                    memo[parent_type].push(loc_type);
+                } else {
+                    memo[parent_type] = [loc_type];
+                }
+                return memo;
+            }, {});
+        };
 
         self.types_by_index = function(location_types){
             return _.reduce(location_types, function(memo, loc_type){
@@ -178,11 +182,11 @@ hqDefine('locations/ko/location_types.js', function(){
             if (!self.view.has_cycles()){
                 while (to_check.length > 0){
                     var current_loc = to_check.pop(),
-                        children = self.view.loc_types_by_parent[current_loc.pk];
+                        children = self.view.loc_types_by_parent()[current_loc.pk];
                     if (children){
                         children.forEach(function(child){
                             all_children.push(child);
-                            if (self.view.loc_types_by_parent[child.pk]){
+                            if (self.view.loc_types_by_parent()[child.pk]){
                                 to_check.push(child);
                             }
                         }, self);
@@ -199,8 +203,8 @@ hqDefine('locations/ko/location_types.js', function(){
                 while (to_check.length > 0){
                     var current_loc = to_check.pop(),
                         parent_type = current_loc.parent_type();
-                    if (parent_type && self.view.loc_types_by_id[parent_type]){
-                        var parent = self.view.loc_types_by_id[parent_type];
+                    if (parent_type && self.view.loc_types_by_id()[parent_type]){
+                        var parent = self.view.loc_types_by_id()[parent_type];
                         parents.push(parent);
                         if (parent.parent_type()){
                             to_check.push(parent);
