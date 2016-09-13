@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 import uuid
 import os
 import hashlib
-from unittest.case import skip
 
 from django.conf import settings
 from django.template import Template, Context
@@ -304,7 +303,6 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
                                            sync_token=sync_log._id)
 
 
-@skip("Case attachments don't work with S3 API yet")
 class CaseMultimediaS3DBTest(BaseCaseMultimediaTest):
     """
     Tests new attachments for cases and case properties
