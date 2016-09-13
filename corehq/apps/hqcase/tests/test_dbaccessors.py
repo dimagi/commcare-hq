@@ -174,6 +174,11 @@ class DBAccessorsTest(TestCase):
         )
 
 
+TEST_ES_META = {
+    CASE_INDEX_INFO.index: EsMeta(CASE_INDEX_INFO.index, CASE_INDEX_INFO.type)
+}
+
+
 class ESAccessorsTest(TestCase):
     domain = 'hqadmin-es-accessor'
 
@@ -189,8 +194,8 @@ class ESAccessorsTest(TestCase):
         super(ESAccessorsTest, self).tearDown()
 
     @patch('corehq.apps.hqcase.analytics.CaseES.index', CASE_INDEX_INFO.index)
-    @patch('corehq.apps.es.es_query.ES_META', {CASE_INDEX_INFO.index: EsMeta(CASE_INDEX_INFO.index, 'case')})
-    @patch('corehq.elastic.ES_META', {CASE_INDEX_INFO.index: EsMeta(CASE_INDEX_INFO.index, 'case')})
+    @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
+    @patch('corehq.elastic.ES_META', TEST_ES_META)
     def test_get_number_of_cases_in_domain(self):
         cases = [self._create_case_and_sync_to_es() for _ in range(4)]
         self.assertEqual(

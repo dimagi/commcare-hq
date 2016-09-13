@@ -170,6 +170,12 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
                     'my://crazy.xmlns/app']
         }])
 
+
+TEST_ES_META = {
+    XFORM_INDEX_INFO.index: EsMeta(XFORM_INDEX_INFO.index, XFORM_INDEX_INFO.type)
+}
+
+
 class CouchformsESAnalyticsTest(TestCase):
     domain = 'hqadmin-es-accessor'
 
@@ -185,8 +191,8 @@ class CouchformsESAnalyticsTest(TestCase):
         super(CouchformsESAnalyticsTest, self).tearDown()
 
     @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
-    @patch('corehq.apps.es.es_query.ES_META', {XFORM_INDEX_INFO.index: EsMeta(XFORM_INDEX_INFO.index, XFORM_INDEX_INFO.type)})
-    @patch('corehq.elastic.ES_META', {XFORM_INDEX_INFO.index: EsMeta(XFORM_INDEX_INFO.index, XFORM_INDEX_INFO.type)})
+    @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
+    @patch('corehq.elastic.ES_META', TEST_ES_META)
     def test_get_number_of_cases_in_domain(self):
         forms = [self._create_form_and_sync_to_es() for _ in range(4)]
         self.assertEqual(
