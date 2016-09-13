@@ -462,6 +462,19 @@ class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
     )
 
+    def __unicode__(self):
+        return unicode(
+            "XFormAttachmentSQL("
+            "attachment_id='{a.attachment_id}', "
+            "form_id='{a.form_id}', "
+            "name='{a.name}', "
+            "content_type='{a.content_type}', "
+            "content_length='{a.content_length}', "
+            "md5='{a.md5}', "
+            "blob_id='{a.blob_id}', "
+            "properties='{a.properties}', "
+        ).format(a=self)
+
     class Meta:
         db_table = XFormAttachmentSQL_DB_TABLE
         app_label = "form_processor"
