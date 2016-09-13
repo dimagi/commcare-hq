@@ -1,10 +1,27 @@
 from django.conf.urls import *
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
-from corehq.apps.accounting.views import *
+from corehq.apps.accounting.views import (
+    AccountingSingleOptionResponseView,
+    EditSoftwarePlanView,
+    EditSubscriptionView,
+    InvoiceSummaryView,
+    ManageAccountingAdminsView,
+    ManageBillingAccountView,
+    NewBillingAccountView,
+    NewSoftwarePlanView,
+    NewSubscriptionView,
+    NewSubscriptionViewNoDefaultDomain,
+    TestRenewalEmailView,
+    TriggerBookkeeperEmailView,
+    TriggerInvoiceView,
+    ViewSoftwarePlanVersionView,
+    WireInvoiceSummaryView,
+    accounting_default,
+)
 
 
 urlpatterns = patterns('corehq.apps.accounting.views',
-    url(r'^$', 'accounting_default', name='accounting_default'),
+    url(r'^$', accounting_default, name='accounting_default'),
     url(r'^trigger_invoice/$', TriggerInvoiceView.as_view(),
         name=TriggerInvoiceView.urlname),
     url(r'^single_option_filter/$', AccountingSingleOptionResponseView.as_view(),
