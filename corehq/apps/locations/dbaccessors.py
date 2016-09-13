@@ -1,4 +1,4 @@
-from itertools import imap
+from itertools import imap, chain
 
 from dimagi.utils.couch.database import iter_docs
 from corehq.apps.es import UserES
@@ -71,7 +71,8 @@ def get_users_location_ids(domain, user_ids):
     result = (UserES()
               .domain(domain)
               .user_ids(user_ids)
-              .non_null('location_id')
-              .fields(['location_id'])
+              .non_null('assigned_location_ids')
+              .fields(['assigned_location_ids'])
               .run())
-    return [r['location_id'] for r in result.hits if 'location_id' in r]
+    location_ids = [r['assigned_location_ids'] for r in result.hits if 'assigned_location_ids' in r]
+    return list(chain(*location_ids))
