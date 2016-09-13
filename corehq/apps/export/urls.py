@@ -23,6 +23,8 @@ from corehq.apps.export.views import (
     DashboardFeedListView,
     CreateNewCaseFeedView,
     CreateNewFormFeedView,
+    EditCaseFeedView,
+    EditFormFeedView
 )
 
 urlpatterns = patterns(
@@ -72,9 +74,15 @@ urlpatterns = patterns(
     url(r"^custom/new/form/edit/(?P<export_id>[\w\-]+)/$",
         EditNewCustomFormExportView.as_view(),
         name=EditNewCustomFormExportView.urlname),
+    url(r"^custom/form_feed/edit/(?P<export_id>[\w\-]+)/$",
+        EditFormFeedView.as_view(),
+        name=EditFormFeedView.urlname),
     url(r"^custom/new/case/edit/(?P<export_id>[\w\-]+)/$",
         EditNewCustomCaseExportView.as_view(),
         name=EditNewCustomCaseExportView.urlname),
+    url(r"^custom/case_feed/edit/(?P<export_id>[\w\-]+)/$",
+        EditCaseFeedView.as_view(),
+        name=EditCaseFeedView.urlname),
     url(r"^custom/form/edit/(?P<export_id>[\w\-]+)/$",
         EditCustomFormExportView.as_view(),
         name=EditCustomFormExportView.urlname),

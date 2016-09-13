@@ -1741,6 +1741,12 @@ class EditNewCustomCaseExportView(BaseEditNewCustomExportView):
             export_instance.case_type,
         )
 
+class EditCaseFeedView(DashboardFeedMixin, EditNewCustomCaseExportView):
+    urlname = 'edit_case_feed_export'
+
+class EditFormFeedView(DashboardFeedMixin, EditNewCustomFormExportView):
+    urlname = 'edit_form_feed_export'
+
 
 class DeleteNewCustomExportView(BaseModifyNewCustomView):
     urlname = 'delete_new_custom_export'
