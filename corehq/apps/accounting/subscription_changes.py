@@ -1,7 +1,6 @@
 import datetime
 import json
 
-from couchdbkit import ResourceConflict
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ungettext
@@ -209,20 +208,11 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
 
     @staticmethod
     def response_report_builder(project, new_plan_version):
-
-        def clear_paywall_flags(project_):
-            project_.requested_report_builder_trial = []
-            project_.requested_report_builder_subscription = []
-
         if not _has_report_builder_add_on(new_plan_version):
-            clear_paywall_flags(project)
-            try:
-                project.save()
-            except ResourceConflict:
-                # Try again (FB 236568), but don't overwrite changes
-                project = Domain.get_by_name(project.get_id)
-                clear_paywall_flags(project)
-                project.save()
+            # Clear paywall flags
+            project.requested_report_builder_trial = []
+            project.requested_report_builder_subscription = []
+            project.save()
 
             # Deactivate all report builder data sources
             builder_reports = _get_report_builder_reports(project)
