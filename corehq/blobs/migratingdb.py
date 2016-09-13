@@ -26,6 +26,11 @@ class MigratingBlobDB(object):
         old_result = self.old_db.delete(*args, **kw)
         return new_result or old_result
 
+    def bulk_delete(self, paths):
+        new_result = self.new_db.bulk_delete(paths)
+        old_result = self.old_db.bulk_delete(paths)
+        return new_result or old_result
+
     def get_path(self, *args, **kw):
         return self.new_db.get_path(*args, **kw)
 
