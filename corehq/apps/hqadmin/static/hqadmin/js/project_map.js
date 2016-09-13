@@ -1,6 +1,8 @@
 var projectMapInit = function(mapboxAccessToken) {
     // courtesy of http://colorbrewer2.org/
-    var COUNTRY_COLORS = ['#fef0d9','#fdcc8a','#fc8d59','#e34a33','#b30000'];
+    var COUNTRY_COLORS = ['#fef0d9','#fdd49e','#fdbb84','#fc8d59','#e34a33','#b30000'];
+    var PROJECT_COUNTS_THRESHOLD = [10, 20, 30, 40, 50];
+    var USER_COUNTS_THRESHOLD = [10, 100, 500, 1000, 4000];
 
     var selectionModel;
 
@@ -14,11 +16,10 @@ var projectMapInit = function(mapboxAccessToken) {
 
     var dataController = function() {
         var that = {};
-
-        // { countryName : { projectName : { propertyName: propertyValue } } }
-        var projectsByCountryThenName = {};
         var maxNumProjects = 0;
         var maxNumUsers = 0;
+        var totalNumUsers = 0;
+        var totalNumProjects = 0;
         var projects_per_country = {};
         var users_per_country = {};
         var is_project_count_map = true;
@@ -28,38 +29,10 @@ var projectMapInit = function(mapboxAccessToken) {
                 url: '/hq/admin/json/project_map/' + window.location.search,
                 dataType: 'json',
             }).done(function (data) {
-                var tempProjects = {};
-                // data.aaData seems to hold the information. not sure though if this is the best way of getting the data.
-                data.aaData.forEach(function (project) {
-                    var countryNames = project[5];
-                    if (!Array.isArray(countryNames) || countryNames.length < 1) {
-                        // todo: find a way to display projects with no listed deployment country. ignoring for now.
-                    } else {
-                        // this will use only the first listed country
-                        // todo: figure out desired handling of multiple deployment countries
-                        var countryName = countryNames[0].toLowerCase();
-                        if (!tempProjects[countryName]) {
-                            tempProjects[countryName] = {};
-                        }
-                        tempProjects[countryName][project[0]] = {
-                            'Name': project[0],
-                            'Link': project[1],
-                            'Date Created': project[2].substring(0,10),
-                            'Organization': project[3],
-                            'Deployment Date': project[4].substring(0,10),
-                            'Deployment Countries': countryNames.join(', '),
-                            '# Forms Submitted': project[7],
-                            '# Active Mobile Workers': project[6],
-                            'Notes': project[8],
-                            'Sector': project[9],
-                            'Sub-Sector': project[10]
-                        };
-                    }
-                });
 
-                projectsByCountryThenName = tempProjects;
                 projects_per_country = data.country_projs_count;
                 users_per_country = data.users_per_country;
+                totalNumProjects = data.total_num_projects;
 
                 Object.keys(projects_per_country).map(function(country) {
                     if (projects_per_country[country] > maxNumProjects) {
@@ -71,10 +44,10 @@ var projectMapInit = function(mapboxAccessToken) {
                     if (users_per_country[country] > maxNumUsers) {
                         maxNumUsers = users_per_country[country];
                     }
+                    totalNumUsers += users_per_country[country];
                 });
 
                 colorAll();
-
                 callback();
             });
         };
@@ -94,10 +67,14 @@ var projectMapInit = function(mapboxAccessToken) {
 
         that.getUnit = function (count) {
             if (is_project_count_map) {
-                return count > 1 ? 'projects' : 'project';
+                return count > 1 ? 'active projects' : 'active project';
             } else {
-                return count > 1 ? 'users' : 'user';
+                return count > 1 ? 'active users' : 'active user';
             }
+        };
+
+        that.getNumActiveCountries = function () {
+            return Object.keys(projects_per_country).length;
         };
 
         that.getMax = function () {
@@ -108,27 +85,25 @@ var projectMapInit = function(mapboxAccessToken) {
             }
         };
 
+        that.getNumProjects = function () {
+            return totalNumProjects;
+        };
+
+        that.getNumUsers = function () {
+            return totalNumUsers;
+        };
+
+        that.isProjectCountMap = function (){
+            return is_project_count_map;
+        };
+
         var SelectionModel = function () {
             var self = this;
             self.selectedCountry = ko.observable('country name');
             self.selectedProject = ko.observable('project name');
-
-            // for showing a country's projects table
-            self.tableProperties = ['Name', 'Sector', 'Organization', 'Deployment Date'];
-            self.selectedCountryProjectNames = ko.computed(function() {
-                return Object.keys(projectsByCountryThenName[this.selectedCountry().toLowerCase()] || {});
-            }, this);
-            self.getProjectProperty = function(projectName, propertyName) {
-                return ((projectsByCountryThenName[this.selectedCountry().toLowerCase()] || {})[projectName] || {})[propertyName] || '';
-            };
-
-            // for showing info on a single project
-            self.projectPropertiesLeft = ['Sector', 'Sub-Sector', 'Organization', 'Deployment Countries', 'Deployment Date',
-                                          '# Active Mobile Workers', '# Forms Submitted'];
-            self.projectPropertiesRight = ['Notes'];
-            self.getSelectedProjectProperty = function(propertyName) {
-                return self.getProjectProperty(self.selectedProject(), propertyName);
-            };
+            self.internalTableProperties = ['Name', 'Organization', 'Notes', 'Sector', 'Sub-Sector', 'Active Users', 'Countries'];
+            self.externalTableProperties = ['Sector', 'Sub-Sector', 'Active Users', 'Countries'];
+            self.topFiveProjects = ko.observableArray();
         };
 
         selectionModel = new SelectionModel();
@@ -149,31 +124,9 @@ var projectMapInit = function(mapboxAccessToken) {
             window.location.hash = countryName;
         };
 
-        that.showProjectInfo = function(countryName, projectIdentifier) {
-            var modalContent = $('.modal-content');
-            modalContent.removeClass('show-table');
-            modalContent.addClass('show-project-info');
-
-            window.location.hash ='#' + countryName + '#' + projectIdentifier;
-        };
-
         Object.freeze(that);
         return that;
     }();
-
-    $(document).on('click', '.project-row', function(evt) {
-        var projectName = $(this).attr('data-project-name');
-        selectionModel.selectedProject(projectName);
-        modalController.showProjectInfo(selectionModel.selectedCountry(), projectName);
-    });
-
-    $(document).on('click', '.back', function(evt) {
-        modalController.showProjectsTable(selectionModel.selectedCountry());
-    });
-
-    $('#modal').on('hidden.bs.modal', function (e) {
-         window.location.hash = '';
-    });
 
     var countriesGeo;
     // A lot of the styling work here is modeled after http://leafletjs.com/examples/choropleth.html
@@ -199,14 +152,25 @@ var projectMapInit = function(mapboxAccessToken) {
     });
 
     function getColor(featureId) {
+        var thresholdScales;
         var count = dataController.getCount(featureId);
-        if (!count) {
-            return COUNTRY_COLORS[0];
+        var isProjectCountMap = dataController.isProjectCountMap();
+        if (isProjectCountMap) {
+            thresholdScales = PROJECT_COUNTS_THRESHOLD;
+        } else {
+            thresholdScales = USER_COUNTS_THRESHOLD;
         }
-        var pct = count / dataController.getMax();
-        var index = Math.min(Math.floor(pct * COUNTRY_COLORS.length), COUNTRY_COLORS.length - 1);
-
+        var index = getColorScaleIndex(count, thresholdScales);
         return COUNTRY_COLORS[index];
+    }
+
+    function getColorScaleIndex(count, scales) {
+        for (var i = 0; i < scales.length; i++){
+            if (count < scales[i]){
+                return i;
+            }
+        }
+        return scales.length;
     }
 
     function getOpacity(featureId) {
@@ -224,7 +188,7 @@ var projectMapInit = function(mapboxAccessToken) {
             opacity: 1,
             color: 'white',
             dashArray: '3',
-            fillOpacity: getOpacity(feature.properties.name)
+            fillOpacity: getOpacity(feature.properties.name),
         };
     }
 
@@ -234,7 +198,7 @@ var projectMapInit = function(mapboxAccessToken) {
         layer.setStyle({
             weight: 4,
             color: '#002c5f',
-            dashArray: ''
+            dashArray: '',
         });
         if (!L.Browser.ie && !L.Browser.opera) {
             layer.bringToFront();
@@ -247,17 +211,59 @@ var projectMapInit = function(mapboxAccessToken) {
         info.update();
     }
 
+    function formatCountryNames(countries) {
+        return countries.map(function(country) {
+            var formattedCountryName = country.charAt(0).toUpperCase();
+            if (country.indexOf(",") > -1) {
+                formattedCountryName += country.substring(1, country.indexOf(",")).toLowerCase();
+            } else {
+                formattedCountryName += country.substring(1).toLowerCase();
+            }
+            return formattedCountryName;
+        });
+    }
+
     function onEachFeature(feature, layer) {
         layer.on({
             mouseover: highlightFeature,
             mouseout: resetHighlight,
             click: function(e) {
-                selectionModel.selectedCountry(feature.properties.name);
-                modalController.showProjectsTable(selectionModel.selectedCountry());
+                if (dataController.getCount(feature.properties.name)){
+                    selectionModel.selectedCountry(feature.properties.name);
+                    modalController.showProjectsTable(selectionModel.selectedCountry());
+                    var country = (feature.properties.name).toUpperCase();
+                    selectionModel.topFiveProjects.removeAll();
+                    $.ajax({
+                        url: "/hq/admin/top_five_projects_by_country/?country=" + country,
+                        datatype: "json",
+                    }).done(function(data){
+                        if (data.internal) {
+                            data[country].forEach(function(project){
+                                selectionModel.topFiveProjects.push({
+                                    name: project['name'],
+                                    organization: project['organization_name'],
+                                    description: project['internal']['notes'],
+                                    sector: project['internal']['area'],
+                                    sub_sector: project['internal']['sub_area'],
+                                    active_users: project['cp_n_active_cc_users'],
+                                    countries: formatCountryNames(project['deployment']['countries']).join(', '),
+                                });
+                            });
+                        } else {
+                            data[country].forEach(function(project){
+                                selectionModel.topFiveProjects.push({
+                                    sector: project['internal']['area'],
+                                    sub_sector: project['internal']['sub_area'],
+                                    active_users: project['cp_n_active_cc_users'],
+                                    countries: formatCountryNames(project['deployment']['countries']).join(', '),
+                                });
+                            });
+                        }
 
-                // launch the modal
-                $('#modal').modal();
-            }
+                    });
+                    $('#modal').modal();
+                };
+            },
         });
     }
 
@@ -274,7 +280,7 @@ var projectMapInit = function(mapboxAccessToken) {
         function _getInfoContent(countryName) {
             var count = dataController.getCount(countryName);
             var unit = dataController.getUnit(count);
-            var message = count ? count + ' ' + unit : 'no ' + unit;
+            var message = count ? count + ' ' + unit : 'no ' + unit + 's';
             return '<b>' + countryName + '</b>: ' + message;
         }
         this._div.innerHTML = (props ? _getInfoContent(props.name) : 'Hover over a country');
@@ -286,56 +292,54 @@ var projectMapInit = function(mapboxAccessToken) {
 
     legend.onAdd = function (map) {
         var div = L.DomUtil.create('div', 'info legend');
-
-        // get the upper bounds for each bucket
-        var countValues = COUNTRY_COLORS.map(function(e, i) {
-            // tested this extensively
-            var bound = dataController.getMax() * (i+1) / COUNTRY_COLORS.length;
-            return Math.max(0, (i < COUNTRY_COLORS.length - 1 && Math.floor(bound) === bound) ? bound - 1 : Math.floor(bound));
-        });
-
-        // only include legend items that are actually used right now
-        // when there is a low number of max projects (for example, under strict filters), they may not all be included
-        var indicesToRemove = [];
-        var colors = COUNTRY_COLORS.filter(function(elem, index) {
-            if (countValues[index] <= 0 || (index > 0 && countValues[index] == countValues[index-1])) {
-                indicesToRemove.push(index);
-                return false;
-            } else {
-                return true;
-            }
-        });
-
-        countValues = countValues.filter(function(elem, index) {
-            return indicesToRemove.indexOf(index) <= -1;
-        });
-
+        var thresholds;
         div.innerHTML += '<i style="background:' + 'black' + '"></i> ' + '0' + '<br>';
-
-        // loop through our form count intervals and generate a label with a colored square for each interval
-        for (var i = 0; i < countValues.length; i++) {
-            div.innerHTML += '<i style="background:' + colors[i] + '"></i> ';
-            if (countValues[i-1] !==  undefined) {
-                if (countValues[i-1] +1 < countValues[i]) {
-                    div.innerHTML += (countValues[i-1] + 1) + '&ndash;';
+        var is_project_count_map = dataController.isProjectCountMap();
+        if (is_project_count_map) {
+            thresholds = PROJECT_COUNTS_THRESHOLD;
+        } else {
+            thresholds = USER_COUNTS_THRESHOLD;
+        }
+        for (var i = 0; i < thresholds.length; i++) {
+            div.innerHTML += '<i style="background:' + COUNTRY_COLORS[i] + '"></i> ';
+            if (thresholds[i-1] !==  undefined) {
+                if (thresholds[i-1] +1 < thresholds[i]) {
+                    div.innerHTML += (thresholds[i-1] + 1) + '&ndash;';
                 }
-            } else if (countValues[i] > 1) {
+            } else if (thresholds[i] > 1) {
                 div.innerHTML += '1&ndash;';
             }
-            div.innerHTML += countValues[i] + '<br>';
+            div.innerHTML += thresholds[i] + '<br>';
         }
+        div.innerHTML += '<i style="background:' + COUNTRY_COLORS[thresholds.length] + '"></i> '
+                         + (thresholds[thresholds.length-1] + 1)+ '+';
 
         return div;
     };
 
     legend.addTo(map);
 
+
+    var stats = L.control({position: 'bottomright'});
+
+    stats.onAdd = function (map) {
+        var div = L.DomUtil.create('div', 'info legend');
+        div.innerHTML += '<p><b>Statistics</b></p>';
+        div.innerHTML += '<p>Number of Active Countries: ' + dataController.getNumActiveCountries() +  '</p>';
+        div.innerHTML += '<p>Number of Active Mobile Users: ' + dataController.getNumUsers() +  '</p>';
+        div.innerHTML += '<p>Number of Active Projects: ' + dataController.getNumProjects() +  '</p>';
+        div.innerHTML += '<br><p><em> Active: A project or user submitted a form in past 30 days.</em></p>';
+        return div;
+    };
+
     // copied from dimagisphere
     // todo: should probably be getting this from somewhere else and possibly not on every page load.
     $.getJSON('https://raw.githubusercontent.com/dimagi/world.geo.json/master/countries.geo.json', function (data) {
         countriesGeo = L.geoJson(data, {style: style, onEachFeature: onEachFeature}).addTo(map);
         dataController.refreshProjectData({}, function() {
-            // if url contains reference to a project and/or a country, load that project/country
+
+            stats.addTo(map);
+
             var references = window.location.hash.substring(1).split('#');
             if (references.length === 2) {
                 // country, then project

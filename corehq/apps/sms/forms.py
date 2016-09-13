@@ -20,7 +20,7 @@ from django.core.exceptions import ValidationError
 from corehq.apps.reminders.forms import validate_time
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq.apps.sms.util import (validate_phone_number, strip_plus,
-    get_sms_backend_classes)
+    get_sms_backend_classes, ALLOWED_SURVEY_DATE_FORMATS)
 from corehq.apps.domain.models import DayTimeWindow
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
@@ -187,6 +187,15 @@ class SettingsForm(Form):
         choices=ENABLED_DISABLED_CHOICES,
     )
 
+    sms_survey_date_format = ChoiceField(
+        required=False,
+        label=ugettext_lazy("SMS Survey Date Format"),
+        choices=(
+            (df.human_readable_format, ugettext_lazy(df.human_readable_format))
+            for df in ALLOWED_SURVEY_DATE_FORMATS
+        ),
+    )
+
     # Chat Settings
     use_custom_case_username = ChoiceField(
         required=False,
@@ -244,6 +253,8 @@ class SettingsForm(Form):
         required=False,
         label=ugettext_noop("Enter Chat Template Identifier"),
     )
+
+    # Registration settings
     sms_case_registration_enabled = ChoiceField(
         required=False,
         choices=ENABLED_DISABLED_CHOICES,
@@ -326,6 +337,11 @@ class SettingsForm(Form):
                                    "with more than one mobile worker or case. SMS surveys "
                                    "and keywords will still only work for unique phone "
                                    "numbers in your project."),
+            ),
+            FieldWithHelpBubble(
+                'sms_survey_date_format',
+                help_bubble_text=_("Choose the format in which date questions "
+                                   "should be answered in SMS surveys."),
             ),
         ]
         return crispy.Fieldset(

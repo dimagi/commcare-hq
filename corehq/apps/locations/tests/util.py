@@ -32,6 +32,7 @@ def delete_all_locations():
     iter_bulk_delete(SupplyPointCase.get_db(), ids)
     delete_all_docs_by_doc_type(Location.get_db(), ['Location'])
     SQLLocation.objects.all().delete()
+    LocationType.objects.all().delete()
 
 
 def setup_location_types(domain, location_types):

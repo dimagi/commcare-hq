@@ -6,7 +6,6 @@ import sys
 import uuid
 from urlparse import urlparse, parse_qs
 
-import dateutil
 from captcha.fields import CaptchaField
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -19,7 +18,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
 from django.contrib.auth.tokens import default_token_generator
-from django.contrib.sites.models import get_current_site
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
@@ -910,6 +909,14 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                    "Programs that use CommCare data to make programmatic decisions."
                    )
     )
+    data_access_threshold = IntegerField(
+        label=ugettext_noop("Minimum Monthly Data Accesses"),
+        required=False,
+        help_text=ugettext_lazy(
+            "Minimum number of times project staff are expected to access CommCare data each month. "
+            "The default value is 20."
+        )
+    )
 
     def __init__(self, can_edit_eula, *args, **kwargs):
         super(DomainInternalForm, self).__init__(*args, **kwargs)
@@ -953,6 +960,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'experienced_threshold',
                 'amplifies_workers',
                 'amplifies_project',
+                'data_access_threshold',
                 crispy.Div(*additional_fields),
             ),
             crispy.Fieldset(
@@ -995,6 +1003,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             amplifies_workers=self.cleaned_data['amplifies_workers'],
             amplifies_project=self.cleaned_data['amplifies_project'],
             business_unit=self.cleaned_data['business_unit'],
+            data_access_threshold=self.cleaned_data['data_access_threshold'],
             **kwargs
         )
 

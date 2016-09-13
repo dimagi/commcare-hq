@@ -5,7 +5,7 @@ from django.test import TestCase
 from corehq.apps.userreports.app_manager import _clean_table_name
 from corehq.apps.userreports.exceptions import TableNotFoundWarning
 from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.sql import ErrorRaisingIndicatorSqlAdapter
+from corehq.apps.userreports.util import get_indicator_adapter
 
 
 class SaveErrorsTest(TestCase):
@@ -29,7 +29,7 @@ class SaveErrorsTest(TestCase):
         )
 
     def test_raise_error_for_missing_table(self):
-        adapter = ErrorRaisingIndicatorSqlAdapter(self.config)
+        adapter = get_indicator_adapter(self.config, raise_errors=True)
         adapter.drop_table()
 
         doc = {

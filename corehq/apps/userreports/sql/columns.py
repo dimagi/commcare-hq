@@ -22,6 +22,17 @@ class SqlColumnConfig(object):
         self.warnings = warnings if warnings is not None else []
 
 
+class UCRExpandDatabaseSubcolumn(DatabaseColumn):
+    """
+    A light wrapper around DatabaseColumn that stores the expand value that this DatabaseColumn is based on.
+    """
+    def __init__(self, header, agg_column, expand_value, format_fn=None, slug=None, *args, **kwargs):
+        self.expand_value = expand_value
+        super(UCRExpandDatabaseSubcolumn, self).__init__(
+            header, agg_column, format_fn=None, slug=None, *args, **kwargs
+        )
+
+
 def column_to_sql(column):
     # we have to explicitly truncate the column IDs otherwise postgres will do it
     # and will choke on them if there are duplicates: http://manage.dimagi.com/default.asp?175495
@@ -124,9 +135,10 @@ def _expand_column(report_column, distinct_values, lang):
         else:
             sql_agg_col = SumWhen(report_column.field, whens={val: 1}, else_=0, alias=alias)
 
-        columns.append(DatabaseColumn(
+        columns.append(UCRExpandDatabaseSubcolumn(
             u"{}-{}".format(report_column.get_header(lang), val),
             sql_agg_col,
+            val,
             sortable=False,
             data_slug=u"{}-{}".format(report_column.column_id, index),
             format_fn=report_column.get_format_fn(),

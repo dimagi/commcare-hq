@@ -637,12 +637,7 @@ def iter_index_files(app, build_profile_id=None):
                 yield (_get_name(name), data)
     try:
         files = download_index_files(app, build_profile_id)
-    except Exception:
-        errors = _(
-            "We were unable to get your files "
-            "because your Application has errors. "
-            "Please click Make New Version under Deploy "
-            "for feedback on how to fix these errors."
-        )
+    except Exception as e:
+        errors = [unicode(e)]
 
     return _files(files), errors

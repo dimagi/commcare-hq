@@ -18,12 +18,6 @@ from pillowtop.es_utils import initialize_index
 
 
 class DomainPillowTest(TestCase):
-    dependent_apps = [
-        'django_prbac',
-        'corehq.apps.accounting',
-        'corehq.apps.domain',
-        'corehq.apps.tzmigration'
-    ]
 
     def setUp(self):
         super(DomainPillowTest, self).setUp()

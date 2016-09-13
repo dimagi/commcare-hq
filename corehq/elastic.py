@@ -139,10 +139,29 @@ class ESError(Exception):
     pass
 
 
-def run_query(index_name, q):
-    es_meta = ES_META[index_name]
+def run_query(index_name, q, debug_host=None):
+    # the debug_host parameter allows you to query another env for testing purposes
+    if debug_host:
+        if not settings.DEBUG:
+            raise Exception("You can only specify an ES env in DEBUG mode")
+        es_host = settings.ELASTICSEARCH_DEBUG_HOSTS[debug_host]
+        es_instance = Elasticsearch([{'host': es_host,
+                                      'port': settings.ELASTICSEARCH_PORT}],
+                                    timeout=3, max_retries=0)
+    else:
+        es_instance = get_es_new()
+
     try:
-        return get_es_new().search(es_meta.index, es_meta.type, body=q)
+        es_meta = ES_META[index_name]
+    except KeyError:
+        from corehq.apps.userreports.util import is_ucr_table
+        # todo: figure out if we really need types
+        if is_ucr_table(index_name):
+            es_meta = EsMeta(index_name, 'indicator')
+        else:
+            raise
+    try:
+        return es_instance.search(es_meta.index, es_meta.type, body=q)
     except RequestError as e:
         raise ESError(e)
 

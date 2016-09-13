@@ -24,7 +24,6 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup, create_and_save_a_form, create_and_save_a_case, generate_cases
-from pillowtop.checkpoints.manager import DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
 from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.utils import get_pillow_by_name
 from testapps.test_pillowtop.utils import real_pillow_settings
@@ -182,10 +181,6 @@ def test_no_checkpoint_creation(self, reindex_id, pillow_name):
         )
 
 class UserReindexerTest(TestCase):
-    dependent_apps = [
-        'auditcare', 'django_digest', 'pillowtop',
-        'corehq.apps.domain', 'corehq.apps.users', 'corehq.apps.tzmigration',
-    ]
 
     def setUp(self):
         super(UserReindexerTest, self).setUp()
@@ -227,11 +222,6 @@ class UserReindexerTest(TestCase):
 
 
 class GroupReindexerTest(TestCase):
-    dependent_apps = [
-        'pillowtop',
-        'corehq.couchapps',
-        'corehq.apps.groups',
-    ]
 
     def setUp(self):
         super(GroupReindexerTest, self).setUp()

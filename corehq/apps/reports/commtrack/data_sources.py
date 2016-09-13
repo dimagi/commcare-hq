@@ -8,7 +8,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
 from corehq.apps.commtrack.models import SupplyPointCase, SQLLocation
-from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.products.models import Product
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime, timedelta

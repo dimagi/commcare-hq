@@ -141,12 +141,14 @@ class ExportSchema(Document, UnicodeMixIn):
 
     @classmethod
     def get_all_checkpoints(cls, index):
-        return cls.view("couchexport/schema_checkpoints",
+        doc_ids = [result["id"] for result in cls.get_db().view(
+            "couchexport/schema_checkpoints",
             startkey=[json.dumps(index)],
             endkey=[json.dumps(index), {}],
-            include_docs=True,
             reduce=False,
-        )
+        )]
+        for doc in iter_docs(cls.get_db(), doc_ids):
+            yield cls.wrap(doc)
 
     _tables = None
 
@@ -423,6 +425,7 @@ class ExportTable(DocumentSchema):
         # skip first element without copying
         data = islice(data, 1, None)
 
+        rows = []
         for row in data:
             id = None
             cells = []
@@ -443,7 +446,8 @@ class ExportTable(DocumentSchema):
                     cells.append(val)
             id_index = self.id_index if id else 0
             row_id = row.id if id else None
-            yield FormattedRow(cells, row_id, id_index=id_index)
+            rows.append(FormattedRow(cells, row_id, id_index=id_index))
+        return rows
 
 
 class BaseSavedExportSchema(Document):
@@ -491,7 +495,10 @@ class BaseSavedExportSchema(Document):
         return headers
 
     def parse_tables(self, tables):
-        first_row = list(list(tables)[0])[1]
+        """
+        :param tables: [('table_name', [rows...])]
+        """
+        first_row = tables[0][1]
         return [(self.table_name, first_row)]
 
 
@@ -692,12 +699,14 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
         self.schema_id = schema.get_id
 
     def trim(self, document_table, doc, apply_transforms=True):
+        tables = []
         for table_index, data in document_table:
-            if self.tables_by_index.has_key(table_index):
+            if table_index in self.tables_by_index:
                 # todo: currently (index, rows) instead of (display, rows); where best to convert to display?
-                yield (table_index, self.tables_by_index[table_index].trim(
+                tables.append((table_index, self.tables_by_index[table_index].trim(
                     data, doc, apply_transforms, self.global_transform_function
-                ))
+                )))
+        return tables
 
     def get_export_components(self, previous_export_id=None, filter=None):
         from couchexport.export import ExportConfiguration

@@ -7,7 +7,7 @@ from django.template.loader import render_to_string
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.domain.exceptions import DomainDeleteException
-from corehq.apps.tzmigration import set_migration_complete
+from corehq.apps.tzmigration.api import set_migration_complete
 from corehq.dbaccessors.couchapps.all_docs import \
     get_all_doc_ids_for_domain_grouped_by_db
 from corehq.util.soft_assert import soft_assert
@@ -175,6 +175,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
         default=AMPLIFIES_NOT_SET
     )
     business_unit = StringProperty(choices=BUSINESS_UNITS + [""], default="")
+    data_access_threshold = IntegerProperty()
 
 
 class CaseDisplaySettings(DocumentSchema):
@@ -302,6 +303,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     send_to_duplicated_case_numbers = BooleanProperty(default=True)
     enable_registration_welcome_sms_for_case = BooleanProperty(default=False)
     enable_registration_welcome_sms_for_mobile_worker = BooleanProperty(default=False)
+    sms_survey_date_format = StringProperty()
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
@@ -579,8 +581,10 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         generate a new, unique name. Throws exception if it can't figure out
         a name, which shouldn't happen unless max_length is absurdly short.
         '''
-
-        name = name_to_url(hr_name, "project")
+        from corehq.apps.domain.utils import get_domain_url_slug
+        name = get_domain_url_slug(hr_name, max_length=max_length)
+        if not name:
+            raise NameUnavailableException
         if Domain.get_by_name(name):
             prefix = name
             while len(prefix):

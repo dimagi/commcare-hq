@@ -1,4 +1,4 @@
-/*global FormplayerFrontend */
+/*global FormplayerFrontend, Util */
 
 FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette) {
     MenuList.MenuView = Marionette.ItemView.extend({
@@ -6,6 +6,8 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         className: "formplayer-request",
         events: {
             "click": "rowClick",
+            "click .js-module-audio-play": "audioPlay",
+            "click .js-module-audio-pause": "audioPause",
         },
 
         getTemplate: function () {
@@ -18,14 +20,43 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
 
         rowClick: function (e) {
             e.preventDefault();
-            var model = this.model;
-            FormplayerFrontend.trigger("menu:select", model.get('index'));
+            if (!($(e.originalEvent.srcElement).hasClass('js-module-audio-icon')
+                || $(e.originalEvent.srcElement).hasClass('js-module-audio-play')
+                || $(e.originalEvent.srcElement).hasClass('js-module-audio-pause'))
+            ) {
+                var model = this.model;
+                FormplayerFrontend.trigger("menu:select", model.get('index'));
+            }
+        },
+        audioPlay: function (e) {
+            e.preventDefault();
+            var $playBtn = $(e.originalEvent.srcElement).closest('.js-module-audio-play');
+            var $pauseBtn = $playBtn.parent().find('.js-module-audio-pause');
+            $pauseBtn.removeClass('hide');
+            $playBtn.addClass('hide');
+            var $audioElem = $playBtn.parent().find('.js-module-audio');
+            if ($audioElem.data('isFirstPlay') !== 'yes') {
+                $audioElem.data('isFirstPlay', 'yes');
+                $audioElem.one('ended', function () {
+                    $playBtn.removeClass('hide');
+                    $pauseBtn.addClass('hide');
+                    $audioElem.data('isFirstPlay', 'no');
+                });
+            }
+            $audioElem.get(0).play();
+        },
+        audioPause: function (e) {
+            e.preventDefault();
+            var $pauseBtn = $(e.originalEvent.srcElement).closest('.js-module-audio-pause');
+            $pauseBtn.parent().find('.js-module-audio-play').removeClass('hide');
+            $pauseBtn.addClass('hide');
+            $pauseBtn.parent().find('.js-module-audio').get(0).pause();
         },
         templateHelpers: function () {
             var imageUri = this.options.model.get('imageUri');
             var audioUri = this.options.model.get('audioUri');
             var navState = this.options.model.get('navigationState');
-            var appId = this.model.collection.appId;
+            var appId = Util.currentUrlToObject().appId;
             return {
                 navState: navState,
                 imageUrl: imageUri ? FormplayerFrontend.request('resourceMap', imageUri, appId) : "",
@@ -51,39 +82,6 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
     });
 
-    MenuList.CaseView = Marionette.ItemView.extend({
-        tagName: "tr",
-        getTemplate: function () {
-            if (_.isNull(this.options.tiles)) {
-                return "#case-view-item-template";
-            } else {
-                return "#case-tile-view-item-template";
-            }
-        },
-
-        className: "formplayer-request",
-        events: {
-            "click": "rowClick",
-        },
-
-        rowClick: function (e) {
-            e.preventDefault();
-            FormplayerFrontend.trigger("menu:show:detail", this, 0);
-        },
-
-        templateHelpers: function () {
-            var appId = this.model.collection.appId;
-            return {
-                data: this.options.model.get('data'),
-                styles: this.options.styles,
-                tiles: this.options.tiles,
-                resolveUri: function (uri) {
-                    return FormplayerFrontend.request('resourceMap', uri, appId);
-                },
-            };
-        },
-    });
-
     // return the string grid-area attribute
     // takes the form of  [x-coord] / [y-Coord] / [width] / [height]
     var getGridAttributes = function (tile) {
@@ -101,46 +99,134 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     // generate the case tile's style block and insert
     var generateCaseTileStyles = function (tiles) {
         var templateString,
-            tileStyle,
-            tileStyleTemplate,
+            caseTileStyle,
+            caseTileStyleTemplate,
             tileModels;
 
         tileModels = _.chain(tiles || [])
-            .filter(function(tile) { return tile !== null; })
-            .map(function(tile, idx) {
+            .map(function (tile, idx) {
+                if (tile === null || tile === undefined) {
+                    return null;
+                }
                 return {
                     id: 'grid-style-' + idx,
                     gridStyle: getGridAttributes(tile),
                     fontStyle: tile.fontSize,
                 };
+            })
+            .filter(function (tile) {
+                return tile !== null;
             }).value();
 
         templateString = $("#case-tile-style-template").html();
-        tileStyleTemplate = _.template(templateString);
-        tileStyle = tileStyleTemplate({
+        caseTileStyleTemplate = _.template(templateString);
+        caseTileStyle = caseTileStyleTemplate({
             models: tileModels,
         });
 
         // need to remove this attribute so the grid style is re-evaluated
-        $("#case-tiles-style").html(tileStyle).removeAttr("data-css-polyfilled");
+        $("#case-tiles-style").html(caseTileStyle).removeAttr("data-css-polyfilled");
+        $("#inner-tiles-container-style").removeAttr("data-css-polyfilled");
     };
+
+    // Dynamically generate the CSS style to display multiple tiles per line
+    var makeOuterGridStyle = function (numRows, numColumns, numCasesPerRow) {
+        var outerGridTemplateString,
+            outerGridStyle,
+            outerGridStyleTemplate,
+            outerGridModel;
+
+        var widthPercentage = 100 / numCasesPerRow;
+        var widthHeightRatio = numRows / numColumns;
+        var heightPercentage = widthPercentage * widthHeightRatio;
+
+        outerGridModel = {
+            widthPercentage: widthPercentage,
+            heightPercentage: heightPercentage,
+        };
+        outerGridTemplateString = $("#case-grid-style-template").html();
+        outerGridStyleTemplate = _.template(outerGridTemplateString);
+        outerGridStyle = outerGridStyleTemplate({
+            model: outerGridModel,
+        });
+        // need to remove this attribute so the grid style is re-evaluated
+        $("#outer-tiles-container-style").html(outerGridStyle).removeAttr("data-css-polyfilled");
+    };
+
+    // Dynamically generate the CSS style for the grid polyfill to use for the case tile
+    var makeInnerGridStyle = function (numRows, numColumns, numCasesPerRow) {
+        var templateString,
+            view,
+            template,
+            model;
+
+        var widthPercentage = 100 / numColumns;
+        var widthHeightRatio = numRows / numColumns;
+        var heightPercentage = widthPercentage * widthHeightRatio;
+
+        model = {
+            numRows: numRows,
+            numColumns: numColumns,
+            widthPercentage: widthPercentage,
+            heightPercentage: heightPercentage,
+        };
+        templateString = $("#grid-inner-style-template").html();
+        template = _.template(templateString);
+        view = template({
+            model: model,
+        });
+        // need to remove this attribute so the grid style is re-evaluated
+        $("#inner-tiles-container-style").html(view).removeAttr("data-css-polyfilled");
+
+        // If we have multiple cases per line, need to generate the outer grid style as well
+        if (numCasesPerRow > 1) {
+            makeOuterGridStyle(numRows, numColumns, numCasesPerRow);
+        }
+    };
+
+    MenuList.CaseView = Marionette.ItemView.extend({
+        tagName: "tr",
+        template: "#case-view-item-template",
+        className: "formplayer-request",
+
+        events: {
+            "click": "rowClick",
+        },
+
+        rowClick: function (e) {
+            e.preventDefault();
+            FormplayerFrontend.trigger("menu:show:detail", this, 0);
+        },
+
+        templateHelpers: function () {
+            var appId = Util.currentUrlToObject().appId;
+            return {
+                data: this.options.model.get('data'),
+                styles: this.options.styles,
+                resolveUri: function (uri) {
+                    return FormplayerFrontend.request('resourceMap', uri, appId);
+                },
+            };
+        },
+    });
+
+    MenuList.CaseTileView = MenuList.CaseView.extend({
+        template: "#case-tile-view-item-template",
+    });
 
     MenuList.CaseListView = Marionette.CompositeView.extend({
         tagName: "div",
         template: "#case-view-list-template",
-        childView: MenuList.CaseView,
         childViewContainer: ".case-container",
+        childView: MenuList.CaseView,
 
         initialize: function (options) {
-            this.tiles = options.tiles;
             this.styles = options.styles;
-            generateCaseTileStyles(options.tiles);
         },
 
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
-                tiles: this.options.tiles,
             };
         },
 
@@ -180,10 +266,40 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 currentPage: this.options.currentPage,
                 pageCount: this.options.pageCount,
                 styles: this.options.styles,
-                tiles: this.options.tiles,
                 breadcrumbs: this.options.breadcrumbs,
+                templateName: "case-list-template",
+                useGrid: this.options.numEntitiesPerRow > 1,
+                useTiles: false,
             };
         },
+    });
+
+    MenuList.CaseTileListView = MenuList.CaseListView.extend({
+        childView: MenuList.CaseTileView,
+        initialize: function (options) {
+            MenuList.CaseTileListView.__super__.initialize.apply(this, arguments);
+            generateCaseTileStyles(options.tiles);
+            makeInnerGridStyle(options.maxHeight, options.maxWidth, options.numEntitiesPerRow);
+        },
+
+        templateHelpers: function () {
+            var dict = MenuList.CaseTileListView.__super__.templateHelpers.apply(this, arguments);
+            dict['useTiles'] = true;
+            return dict;
+        },
+    });
+
+    MenuList.GridCaseTileViewItem = MenuList.CaseTileView.extend({
+        tagName: "div",
+        className: "formplayer-request case-tile-grid-item",
+        template: "#case-tile-grid-view-item-template",
+    });
+
+    MenuList.GridCaseTileListView = MenuList.CaseTileListView.extend({
+        initialize: function () {
+            MenuList.GridCaseTileListView.__super__.initialize.apply(this, arguments);
+        },
+        childView: MenuList.GridCaseTileViewItem,
     });
 
     MenuList.BreadcrumbView = Marionette.ItemView.extend({

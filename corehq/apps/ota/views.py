@@ -32,10 +32,11 @@ from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCach
 from django.http import HttpResponse
 from soil import MultipleTaskDownload
 
-from .utils import demo_user_restore_response, get_restore_user, is_permitted_to_restore
+from .utils import demo_user_restore_response, get_restore_user, is_permitted_to_restore, handle_401_response
 
 
 @json_error
+@handle_401_response
 @login_or_digest_or_basic_or_apikey()
 def restore(request, domain, app_id=None):
     """
@@ -60,12 +61,18 @@ def search(request, domain):
         case_type = criteria.pop('case_type')
     except KeyError:
         return HttpResponse('Search request must specify case type', status=400)
+    try:
+        include_closed = criteria.pop('include_closed')
+    except KeyError:
+        include_closed = False
 
     search_es = (CaseSearchES()
                  .domain(domain)
                  .case_type(case_type)
-                 .is_closed(False)
                  .size(CASE_SEARCH_MAX_RESULTS))
+
+    if include_closed != 'True':
+        search_es = search_es.is_closed(False)
 
     try:
         config = CaseSearchConfig.objects.get(domain=domain)

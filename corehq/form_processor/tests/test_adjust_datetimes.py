@@ -1,5 +1,5 @@
 from django.test import SimpleTestCase
-from corehq.apps.tzmigration import phone_timezones_should_be_processed
+from corehq.apps.tzmigration.api import phone_timezones_should_be_processed
 from corehq.apps.tzmigration.test_utils import \
     run_pre_and_post_timezone_migration
 from corehq.form_processor.utils import adjust_datetimes

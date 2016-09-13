@@ -18,6 +18,8 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             this.clearSession = response.clearSession;
             this.notification = response.notification;
             this.breadcrumbs = response.breadcrumbs;
+            this.appVersion = response.appVersion;
+            this.appId = response.appId;
 
             if (response.commands) {
                 this.type = "commands";
@@ -31,6 +33,9 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 this.currentPage = response.currentPage;
                 this.pageCount = response.pageCount;
                 this.tiles = response.tiles;
+                this.numEntitiesPerRow = response.numEntitiesPerRow;
+                this.maxWidth = response.maxWidth;
+                this.maxHeight = response.maxHeight;
                 return response.entities;
             }
             else if(response.type === "query") {
@@ -38,7 +43,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             }
             else if(response.tree){
                 // form entry time, doggy
-                FormplayerFrontend.request('startForm', response, this.app_id);
+                FormplayerFrontend.trigger('startForm', response, this.app_id);
             }
             else if(response.exception){
                 FormplayerFrontend.request('showError', response.exception);
@@ -55,7 +60,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
     var API = {
 
-        getMenus: function (appId, sessionId, stepList, page, search, queryDict) {
+        getMenus: function (params) {
 
             var user = FormplayerFrontend.request('currentUser');
             var username = user.username;
@@ -66,7 +71,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
             var menus = new Entities.MenuSelectCollection({
 
-                appId: appId,
+                appId: params.appId,
 
                 fetch: function (options) {
                     var collection = this;
@@ -76,15 +81,17 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                         "domain": domain,
                         "app_id": collection.appId,
                         "locale": language,
-                        "selections": stepList,
-                        "offset": page * 10,
-                        "search_text": search,
-                        "menu_session_id": sessionId,
-                        "query_dictionary": queryDict,
+                        "selections": params.steps,
+                        "offset": params.page * 10,
+                        "search_text": params.search,
+                        "menu_session_id": params.sessionId,
+                        "query_dictionary": params.queryDict,
+                        "previewCommand": params.previewCommand,
+                        "installReference": params.installReference,
                     });
 
-                    if (stepList) {
-                        options.data.selections = stepList;
+                    if (options.steps) {
+                        options.data.selections = params.steps;
                     }
 
                     options.url = formplayerUrl + '/navigate_menu';
@@ -92,11 +99,6 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                     return Backbone.Collection.prototype.fetch.call(this, options);
                 },
 
-                initialize: function (params) {
-                    this.domain = params.domain;
-                    this.appId = params.appId;
-                    this.fetch = params.fetch;
-                },
             });
 
             var defer = $.Deferred();
@@ -106,8 +108,9 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 },
                 error: function (request) {
                     FormplayerFrontend.request(
-                        'error',
-                        gettext('Unable to connect to form playing service')
+                        'showError',
+                        gettext('Unable to connect to form playing service. ' +
+                                'Please report an issue if you continue to see this message.')
                     );
                     defer.resolve(request);
                 },
@@ -116,12 +119,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
         },
     };
 
-    FormplayerFrontend.reqres.setHandler("app:select:menus", function (appId, sessionId, stepList, page, search, queryDict) {
-        return API.getMenus(appId,
-            sessionId,
-            stepList,
-            page,
-            search,
-            queryDict);
+    FormplayerFrontend.reqres.setHandler("app:select:menus", function (options) {
+        return API.getMenus(options);
     });
 });

@@ -24,6 +24,7 @@ from corehq.apps.reports.models import ReportConfig
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports
+from corehq.apps.users.models import Permissions
 from corehq.form_processor.utils import use_new_exports
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
@@ -57,7 +58,7 @@ class ProjectReportsTab(UITab):
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-        sidebar_items = tools + report_builder_nav + project_reports + custom_reports
+        sidebar_items = tools + report_builder_nav + custom_reports + project_reports
         return self._filter_sidebar_items(sidebar_items)
 
     def _get_tools_items(self):
@@ -1102,6 +1103,7 @@ class ProjectSettingsTab(UITab):
 
         items = []
         user_is_admin = self.couch_user.is_domain_admin(self.domain)
+        user_is_billing_admin = self.couch_user.can_edit_billing()
 
         project_info = []
 
@@ -1193,7 +1195,7 @@ class ProjectSettingsTab(UITab):
 
         from corehq.apps.users.models import WebUser
         if isinstance(self.couch_user, WebUser):
-            if user_is_admin or self.couch_user.is_superuser:
+            if user_is_billing_admin or self.couch_user.is_superuser:
                 from corehq.apps.domain.views import (
                     DomainSubscriptionView, EditExistingBillingAccountView,
                     DomainBillingStatementsView, ConfirmSubscriptionRenewalView,
@@ -1473,7 +1475,8 @@ class AdminTab(UITab):
         admin_operations = []
 
         if self.couch_user and self.couch_user.is_staff:
-            from corehq.apps.hqadmin.views import AuthenticateAs, VCMMigrationView
+            from corehq.apps.hqadmin.views import (AuthenticateAs, VCMMigrationView,
+                ReprocessMessagingCaseUpdatesView)
             admin_operations.extend([
                 {'title': _('PillowTop Errors'),
                  'url': reverse('admin_report_dispatcher',
@@ -1486,8 +1489,12 @@ class AdminTab(UITab):
                  'url': reverse('raw_couch')},
                 {'title': _('Check Call Center UCR tables'),
                  'url': reverse('callcenter_ucr_check')},
+                {'title': _('Grant superuser privileges'),
+                 'url': reverse('superuser_management')},
                 {'title': _('Manage VCM Migration'),
                  'url': reverse(VCMMigrationView.urlname)},
+                {'title': _('Reprocess Messaging Case Updates'),
+                 'url': reverse(ReprocessMessagingCaseUpdatesView.urlname)},
             ])
         return [
             (_('Administrative Reports'), [
@@ -1495,6 +1502,8 @@ class AdminTab(UITab):
                  'url': reverse('admin_report_dispatcher', args=('domains',))},
                 {'title': _('Submission Map'),
                  'url': reverse('dimagisphere')},
+                {'title': _('Active Project Map'),
+                 'url': reverse('admin_report_dispatcher', args=('project_map',))},
                 {'title': _('User List'),
                  'url': reverse('admin_report_dispatcher', args=('user_list',))},
                 {'title': _('Application List'),

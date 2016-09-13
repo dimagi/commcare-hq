@@ -3,7 +3,6 @@ from collections import namedtuple
 import os
 from xml.sax.saxutils import escape
 
-from django.utils.translation import ugettext_lazy as _
 from eulxml.xmlmap.core import load_xmlobject_from_string
 
 from corehq.apps.app_manager.const import RETURN_TO
@@ -37,7 +36,7 @@ from corehq.apps.app_manager.suite_xml.features.scheduler import schedule_detail
 from corehq.apps.app_manager.util import create_temp_sort_column, module_offers_search,\
     get_sort_and_sort_only_columns
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
+from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.xpath import session_var, XPath
 from dimagi.utils.decorators.memoized import memoized
 
@@ -254,6 +253,7 @@ class DetailContributor(SectionContributor):
             stack=Stack()
         )
         frame = PushFrame()
+        frame.add_mark()
         frame.add_command(XPath.string(id_strings.search_command(module)))
         action.stack.add_frame(frame)
         return action

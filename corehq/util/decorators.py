@@ -4,6 +4,7 @@ import logging
 import requests
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.util.global_request import get_request
+from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
 from django.conf import settings
@@ -88,7 +89,7 @@ def _get_unique_key(format_str, fn, *args, **kwargs):
 
 
 def serial_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3,
-                queue='background_queue'):
+                queue='background_queue', ignore_result=True):
     """
     Define a task to be executed one at a time.  If another serial_task with
     the same unique_key is currently in process, this will retry after a delay.
@@ -113,13 +114,12 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3,
     """
     def decorator(fn):
         # register task with celery.  Note that this still happens on import
-        @task(bind=True, queue=queue, ignore_result=True,
+        @task(bind=True, queue=queue, ignore_result=ignore_result,
               default_retry_delay=default_retry_delay, max_retries=max_retries)
         @wraps(fn)
         def _inner(self, *args, **kwargs):
             if settings.UNIT_TESTING:  # Don't depend on redis
-                fn(*args, **kwargs)
-                return
+                return fn(*args, **kwargs)
 
             client = get_redis_client()
             key = _get_unique_key(unique_key, fn, *args, **kwargs)
@@ -127,12 +127,14 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3,
             if lock.acquire(blocking=False):
                 try:
                     # Actually call the function
-                    fn(*args, **kwargs)
+                    ret_val = fn(*args, **kwargs)
                 except Exception:
                     # Don't leave the lock around if the task fails
-                    lock.release()
+                    release_lock(lock, True)
                     raise
-                lock.release()
+
+                release_lock(lock, True)
+                return ret_val
             else:
                 msg = "Could not aquire lock '{}' for task '{}'.".format(
                     key, fn.__name__)

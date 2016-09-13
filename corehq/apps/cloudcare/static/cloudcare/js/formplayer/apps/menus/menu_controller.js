@@ -1,16 +1,10 @@
-/*global FormplayerFrontend */
+/*global FormplayerFrontend, Util */
 
 FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette, $) {
     MenuList.Controller = {
-        selectMenu: function (appId, sessionId, stepList, page, search, queryDict) {
+        selectMenu: function (options) {
 
-            var fetchingNextMenu = FormplayerFrontend.request("app:select:menus",
-                appId,
-                sessionId,
-                stepList,
-                page,
-                search,
-                queryDict);
+            var fetchingNextMenu = FormplayerFrontend.request("app:select:menus", options);
 
             /*
              Determine the next screen to display.  Could be
@@ -20,7 +14,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             $.when(fetchingNextMenu).done(function (menuResponse) {
 
                 // show any notifications from Formplayer
-                if(menuResponse.notification && !_.isNull(menuResponse.notification.message)){
+                if (menuResponse.notification && !_.isNull(menuResponse.notification.message)){
                     FormplayerFrontend.request("handleNotification", menuResponse.notification);
                 }
 
@@ -29,6 +23,21 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                     FormplayerFrontend.trigger("apps:currentApp");
                     return;
                 }
+
+                var urlObject = Util.currentUrlToObject();
+                // If we don't have an appId in the URL (usually due to form preview)
+                // then parse the appId from the response.
+                if (urlObject.appId === undefined || urlObject.appId === null) {
+                    if (menuResponse.appId === null || menuResponse.appId === undefined) {
+                        FormplayerFrontend.request('showError', "Response did not contain appId even though it was" +
+                            "required. If this persists, please report an issue to CommCareHQ");
+                        FormplayerFrontend.trigger("apps:list", options.apps);
+                        return;
+                    }
+                    urlObject.appId = menuResponse.appId;
+                    Util.setUrlToObject(urlObject);
+                }
+
                 MenuList.Controller.showMenu(menuResponse);
             });
         },
@@ -47,6 +56,9 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 type: menuResponse.type,
                 sessionId: menuResponse.sessionId,
                 tiles: menuResponse.tiles,
+                numEntitiesPerRow: menuResponse.numEntitiesPerRow,
+                maxHeight: menuResponse.maxHeight,
+                maxWidth: menuResponse.maxWidth,
             };
             if (menuResponse.type === "commands") {
                 menuListView = new MenuList.MenuListView(menuData);
@@ -56,13 +68,28 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 FormplayerFrontend.regions.main.show(menuListView.render());
             }
             else if (menuResponse.type === "entities") {
-                menuListView = new MenuList.CaseListView(menuData);
+                if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
+                    menuListView = new MenuList.CaseListView(menuData);
+                } else {
+                    if (menuResponse.numEntitiesPerRow > 1) {
+                        menuListView = new MenuList.GridCaseTileListView(menuData);
+                    } else {
+                        menuListView = new MenuList.CaseTileListView(menuData);
+                    }
+                }
                 FormplayerFrontend.regions.main.show(menuListView.render());
             }
 
             if (menuResponse.breadcrumbs) {
                 MenuList.Controller.showBreadcrumbs(menuResponse.breadcrumbs);
             }
+            if (menuResponse.appVersion) {
+                MenuList.Controller.showAppVersion(menuResponse.appVersion);
+            }
+        },
+
+        showAppVersion: function (appVersion) {
+            $("#version-info").text(appVersion);
         },
 
         showBreadcrumbs: function (breadcrumbs) {
@@ -81,10 +108,15 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             FormplayerFrontend.regions.breadcrumb.show(breadcrumbView.render());
         },
 
-        showDetail: function (model, index) {
+        showDetail: function (model, detailTabIndex) {
             var self = this;
             var detailObjects = model.options.model.get('details');
-            var detailObject = detailObjects[index];
+            // If we have no details, just select the entity
+            if(detailObjects === null || detailObjects === undefined){
+                FormplayerFrontend.trigger("menu:select", model.model.get('id'));
+                return;
+            }
+            var detailObject = detailObjects[detailTabIndex];
             var headers = detailObject.headers;
             var details = detailObject.details;
             var detailModel = [];
@@ -109,13 +141,13 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             tabCollection.reset(tabModels);
             var tabListView = new MenuList.DetailTabListView({
                 collection: tabCollection,
-                showDetail: function (index) {
-                    self.showDetail(model, index);
+                showDetail: function (detailTabIndex) {
+                    self.showDetail(model, detailTabIndex);
                 },
             });
 
-            $('#select-case').click(function () {
-                FormplayerFrontend.trigger("menu:select", model._index);
+            $('#select-case').unbind('click').click(function () {
+                FormplayerFrontend.trigger("menu:select", model.model.get('id'));
             });
             $('#case-detail-modal').find('.detail-tabs').html(tabListView.render().el);
             $('#case-detail-modal').find('.modal-body').html(menuListView.render().el);

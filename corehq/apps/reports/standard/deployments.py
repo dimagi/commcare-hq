@@ -32,7 +32,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_all_user_ids_submitted,
 )
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
-from corehq.apps.reports.filters.select import SelectApplicationFilter, GroupFilter
+from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
 from corehq.apps.reports.util import format_datatables_data
@@ -46,7 +46,7 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         # for commtrack projects - only show if the user can view apps
-        if project.commtrack_enabled:
+        if project and project.commtrack_enabled:
             return user and (user.is_superuser or user.has_permission(domain, 'edit_apps'))
         return super(DeploymentsReport, cls).show_in_navigation(domain, project, user)
 

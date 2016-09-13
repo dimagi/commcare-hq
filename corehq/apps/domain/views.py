@@ -10,7 +10,9 @@ import pytz
 
 from couchdbkit import ResourceNotFound
 import dateutil
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
+from django.core.validators import validate_email
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.generic import View
 from django.db.models import Sum
@@ -37,6 +39,7 @@ from corehq.apps.case_search.models import (
     disable_case_search,
 )
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
+from corehq.apps.repeaters.repeater_generators import RegisterGenerator
 
 from corehq.const import USER_DATE_FORMAT
 from corehq.tabs.tabclasses import ProjectSettingsTab
@@ -67,7 +70,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
-from corehq.apps.users.models import Invitation, CouchUser
+from corehq.apps.users.models import Invitation, CouchUser, Permissions
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
 from custom.openclinica.forms import OpenClinicaSettingsForm
@@ -112,14 +115,14 @@ from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPa
 from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
-from corehq.apps.users.decorators import require_can_edit_web_users
+from corehq.apps.users.decorators import require_can_edit_web_users, require_permission
 from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
-from corehq.apps.repeaters.models import Repeater, FormRepeater, CaseRepeater, ShortFormRepeater, \
-    AppStructureRepeater, RepeatRecord, repeater_types, RegisterGenerator
+from corehq.apps.repeaters.models import Repeater, RepeatRecord
 from corehq.apps.repeaters.dbaccessors import (
     get_paged_repeat_records,
     get_repeat_record_count,
 )
+from corehq.apps.repeaters.utils import get_all_repeater_types
 from corehq.apps.repeaters.const import (
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
@@ -544,7 +547,7 @@ def test_repeater(request, domain):
     url = request.POST["url"]
     repeater_type = request.POST['repeater_type']
     format = request.POST.get('format', None)
-    repeater_class = repeater_types[repeater_type]
+    repeater_class = get_all_repeater_types()[repeater_type]
     form = GenericRepeaterForm(
         {"url": url, "format": format},
         domain=domain,
@@ -590,9 +593,9 @@ def logo(request, domain):
     return HttpResponse(logo[0], content_type=logo[1])
 
 
-class DomainAccountingSettings(BaseAdminProjectSettingsView):
+class DomainAccountingSettings(BaseProjectSettingsView):
 
-    @method_decorator(login_and_domain_required)
+    @method_decorator(require_permission(Permissions.edit_billing))
     def dispatch(self, request, *args, **kwargs):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
 
@@ -617,7 +620,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
     @property
     def can_purchase_credits(self):
-        return self.request.couch_user.is_domain_admin(self.domain)
+        return self.request.couch_user.can_edit_billing()
 
     @property
     @memoized
@@ -1001,21 +1004,21 @@ class BaseStripePaymentView(DomainAccountingSettings):
 
     @property
     def account(self):
-        raise NotImplementedError("you must impmement the property account")
+        raise NotImplementedError("you must implement the property account")
 
     @property
     @memoized
-    def domain_admin(self):
-        if self.request.couch_user.is_domain_admin(self.domain):
+    def billing_admin(self):
+        if self.request.couch_user.can_edit_billing():
             return self.request.couch_user.username
         else:
             raise PaymentRequestError(
-                "The logged in user was not a domain admin."
+                "The logged in user was not a billing admin."
             )
 
     def get_or_create_payment_method(self):
         return StripePaymentMethod.objects.get_or_create(
-            web_user=self.domain_admin,
+            web_user=self.billing_admin,
             method_type=PaymentMethodType.STRIPE,
         )[0]
 
@@ -1085,6 +1088,16 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
 
     def post(self, request, *args, **kwargs):
         emails = request.POST.get('emails', []).split()
+        invalid_emails = []
+        for email in emails:
+            try:
+                validate_email(email)
+            except ValidationError:
+                invalid_emails.append(email)
+        if invalid_emails:
+            message = (_('The following e-mail addresses contain invalid characters, or are missing required '
+                         'characters: ') + ', '.join(['"{}"'.format(email) for email in invalid_emails]))
+            return json_response({'error': {'message': message}})
         amount = Decimal(request.POST.get('amount', 0))
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
         try:
@@ -1094,7 +1107,8 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
 
         return json_response({'success': True})
 
-    def _get_items(self, request):
+    @staticmethod
+    def _get_items(request):
         features = [{'type': get_feature_name(feature_type[0], SoftwareProductType.COMMCARE),
                      'amount': Decimal(request.POST.get(feature_type[0], 0))}
                     for feature_type in FeatureType.CHOICES
@@ -1152,8 +1166,7 @@ class WireInvoiceView(View):
     http_method_names = ['post']
     urlname = 'domain_wire_invoice'
 
-    @method_decorator(login_and_domain_required)
-    @method_decorator(domain_admin_required)
+    @method_decorator(require_permission(Permissions.edit_billing))
     def dispatch(self, request, *args, **kwargs):
         return super(WireInvoiceView, self).dispatch(request, *args, **kwargs)
 
@@ -1172,8 +1185,7 @@ class WireInvoiceView(View):
 class BillingStatementPdfView(View):
     urlname = 'domain_billing_statement_download'
 
-    @method_decorator(login_and_domain_required)
-    @method_decorator(domain_admin_required)
+    @method_decorator(require_permission(Permissions.edit_billing))
     def dispatch(self, request, *args, **kwargs):
         return super(BillingStatementPdfView, self).dispatch(request, *args, **kwargs)
 
@@ -2125,18 +2137,6 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         }
 
 
-class RepeaterMixin(object):
-
-    @property
-    def friendly_repeater_names(self):
-        return {
-            'FormRepeater': _("Forms"),
-            'CaseRepeater': _("Cases"),
-            'ShortFormRepeater': _("Form Stubs"),
-            'AppStructureRepeater': _("App Schema Changes"),
-        }
-
-
 class DomainForwardingRepeatRecords(GenericTabularReport):
     name = 'Repeat Records'
     base_template = 'domain/repeat_record_report.html'
@@ -2257,7 +2257,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         )
 
 
-class DomainForwardingOptionsView(BaseAdminProjectSettingsView, RepeaterMixin):
+class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
     urlname = 'domain_forwarding'
     page_title = ugettext_lazy("Data Forwarding")
     template_name = 'domain/admin/domain_forwarding.html'
@@ -2268,11 +2268,15 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView, RepeaterMixin):
 
     @property
     def repeaters(self):
-        available_repeaters = [
-            FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater,
+        return [
+            (
+                r.__name__,
+                r.by_domain(self.domain),
+                r.friendly_name,
+                r.get_custom_url(self.domain)
+            )
+            for r in get_all_repeater_types().values() if r.available_for_domain(self.domain)
         ]
-        return [(r.__name__, r.by_domain(self.domain), self.friendly_repeater_names[r.__name__])
-                for r in available_repeaters]
 
     @property
     def page_context(self):
@@ -2282,7 +2286,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView, RepeaterMixin):
         }
 
 
-class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
+class AddRepeaterView(BaseAdminProjectSettingsView):
     urlname = 'add_repeater'
     page_title = ugettext_lazy("Forward Data")
     template_name = 'domain/admin/add_form_repeater.html'
@@ -2309,15 +2313,19 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
 
     @property
     def page_name(self):
-        return "Forward %s" % self.friendly_repeater_names.get(self.repeater_type, "Data")
+        return self.repeater_class.friendly_name
 
     @property
     @memoized
     def repeater_class(self):
         try:
-            return repeater_types[self.repeater_type]
+            return get_all_repeater_types()[self.repeater_type]
         except KeyError:
-            raise Http404()
+            raise Http404(
+                "No such repeater {}. Valid types: {}".format(
+                    self.repeater_type, get_all_repeater_types.keys()
+                )
+            )
 
     @property
     @memoized
@@ -2419,15 +2427,12 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         if self.request.method == 'POST':
             return DomainInternalForm(can_edit_eula, self.request.POST)
         initial = {
-            'deployment_date': self.domain_object.deployment.date.date
-            if self.domain_object.deployment.date else '',
             'countries': self.domain_object.deployment.countries,
             'is_test': self.domain_object.is_test,
         }
         internal_attrs = [
             'sf_contract_id',
             'sf_account_id',
-            'services',
             'initiative',
             'self_started',
             'area',
@@ -2440,6 +2445,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'experienced_threshold',
             'amplifies_workers',
             'amplifies_project',
+            'data_access_threshold',
             'business_unit',
             'workshop_region',
         ]

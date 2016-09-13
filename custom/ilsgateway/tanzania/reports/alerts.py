@@ -27,7 +27,7 @@ class AlertReport(GenericTabularReport, CustomProjectReport, ProjectReportParame
 
     @property
     def sql_location(self):
-        from custom.ilsgateway import ROOT_LOCATION_TYPE
+        from custom.ilsgateway.reports import ROOT_LOCATION_TYPE
         location_id = self.request.GET.get('location_id')
         if location_id:
             return get_object_or_404(SQLLocation, location_id=location_id, domain=self.domain)

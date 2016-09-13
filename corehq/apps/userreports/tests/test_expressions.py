@@ -919,6 +919,21 @@ def test_unsupported_evaluator_statements(self, eq, context):
     self.assertEqual(expression({}), None)
 
 
+@generate_cases([
+    ("a/b", {"a": 5, "b": None}, TypeError),
+    ("a/b", {"a": 5, "b": 0}, ZeroDivisionError),
+])
+def test_errors_in_evaluator_statements(self, eq, context, error_type):
+    with self.assertRaises(error_type):
+        eval_statements(eq, context)
+    expression = ExpressionFactory.from_spec({
+        "type": "evaluator",
+        "statement": eq,
+        "context_variables": context
+    })
+    self.assertEqual(expression({}), None)
+
+
 class TestFormsExpressionSpec(TestCase):
 
     def setUp(self):

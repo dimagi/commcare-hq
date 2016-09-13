@@ -117,7 +117,6 @@ def _create_es_user(es_client, user_id, domain):
 
 
 class GroupToUserPillowDbTest(TestCase):
-    dependent_apps = ['corehq.apps.groups']
 
     def setUp(self):
         ensure_index_deleted(USER_INDEX)
@@ -175,11 +174,6 @@ def _group_to_change_meta(group):
 
 
 class GroupsToUserReindexerTest(TestCase):
-    dependent_apps = [
-        'pillowtop',
-        'corehq.apps.groups',
-        'corehq.couchapps',
-    ]
 
     def setUp(self):
         super(GroupsToUserReindexerTest, self).setUp()

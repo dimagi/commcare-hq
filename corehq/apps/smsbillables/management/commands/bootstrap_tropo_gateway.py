@@ -1,4 +1,4 @@
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 
 from corehq.apps.accounting.models import Currency
 from corehq.apps.smsbillables.utils import log_smsbillables_info
@@ -49,7 +49,7 @@ def bootstrap_tropo_gateway(apps):
     log_smsbillables_info("Updated Tropo gateway fees.")
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "bootstrap Tropo gateway fees"
     args = ""
     label = ""

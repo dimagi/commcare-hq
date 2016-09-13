@@ -9,14 +9,14 @@ from django.test import TestCase
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException, IgnoreDocument
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.repeaters.tasks import check_repeaters
 from corehq.apps.repeaters.models import (
     CaseRepeater,
     FormRepeater,
     RepeatRecord,
-    RegisterGenerator)
-from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator
+)
+from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator, RegisterGenerator
 from corehq.apps.repeaters.const import MIN_RETRY_WAIT, POST_TIMEOUT
 from corehq.apps.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
@@ -159,7 +159,7 @@ class RepeaterTest(BaseRepeaterTest):
         record = RepeatRecord(domain=self.domain, next_check=now)
         self.assertIsNone(record.last_checked)
 
-        record.update_failure()
+        record.set_next_try()
         self.assertTrue(record.last_checked > now)
         self.assertEqual(record.next_check, record.last_checked + MIN_RETRY_WAIT)
 

@@ -158,7 +158,7 @@ def check_couch():
 
 
 def check_formplayer():
-    formplayer_url = '/formplayer' or settings.FORMPLAYER_URL
+    formplayer_url = settings.FORMPLAYER_URL
     if not formplayer_url.startswith('http'):
         formplayer_url = '{}{}'.format(get_url_base(), formplayer_url)
 

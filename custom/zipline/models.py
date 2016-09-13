@@ -41,6 +41,7 @@ class EmergencyOrderStatusUpdate(models.Model):
     )
 
     class Meta:
+        app_label = 'zipline'
         index_together = [
             ['order', 'package_number'],
         ]
@@ -123,6 +124,10 @@ class EmergencyOrderStatusUpdate(models.Model):
 
 
 class EmergencyOrder(models.Model):
+
+    class Meta:
+        app_label = 'zipline'
+
     domain = models.CharField(max_length=126)
 
     # The id of the user who initiated the order
@@ -200,6 +205,8 @@ class EmergencyOrder(models.Model):
 class EmergencyOrderPackage(models.Model):
 
     class Meta:
+        app_label = 'zipline'
+
         index_together = [
             ['order', 'package_number'],
         ]
@@ -287,6 +294,7 @@ class BaseOrderableProduct(models.Model):
 
     class Meta:
         abstract = True
+        app_label = 'zipline'
         unique_together = [
             ['domain', 'code'],
         ]

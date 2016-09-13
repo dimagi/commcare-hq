@@ -14,10 +14,18 @@ FormplayerFrontend.module("SessionNavigate.AppList", function(AppList, Formplaye
                 FormplayerFrontend.regions.main.show(appGridView);
             });
         },
-        previewApp: function(appId) {
+        /**
+         * singleApp
+         *
+         * Renders a SingleAppView.
+         */
+        singleApp: function(appId) {
             var singleAppView = new AppList.SingleAppView({
                 appId: appId,
             });
+            FormplayerFrontend.regions.phoneModeNavigation.show(
+                new FormplayerFrontend.Navigation.PhoneNavigation({ appId: appId })
+            );
             FormplayerFrontend.regions.main.show(singleAppView);
         },
     };

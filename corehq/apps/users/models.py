@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-import copy
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import logging
@@ -39,7 +38,6 @@ from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers
 from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.users.util import (
-    normalize_username,
     user_display_string,
 )
 from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
@@ -84,9 +82,12 @@ class Permissions(DocumentSchema):
     edit_commcare_users = BooleanProperty(default=False)
     edit_data = BooleanProperty(default=False)
     edit_apps = BooleanProperty(default=False)
+    access_all_locations = BooleanProperty(default=True)
 
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
+
+    edit_billing = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -162,6 +163,7 @@ class Permissions(DocumentSchema):
             edit_data=True,
             edit_apps=True,
             view_reports=True,
+            edit_billing=True
         )
 
 
@@ -170,10 +172,12 @@ class UserRolePresets(object):
     APP_EDITOR = "App Editor"
     READ_ONLY = "Read Only"
     FIELD_IMPLEMENTER = "Field Implementer"
+    BILLING_ADMIN = "Billing Admin"
     INITIAL_ROLES = (
         READ_ONLY,
         APP_EDITOR,
         FIELD_IMPLEMENTER,
+        BILLING_ADMIN
     )
 
     @classmethod
@@ -183,6 +187,7 @@ class UserRolePresets(object):
             cls.READ_ONLY: lambda: Permissions(view_reports=True),
             cls.FIELD_IMPLEMENTER: lambda: Permissions(edit_commcare_users=True, view_reports=True),
             cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_reports=True),
+            cls.BILLING_ADMIN: lambda: Permissions(edit_billing=True)
         }
 
     @classmethod
@@ -326,6 +331,19 @@ class UserRole(QuickCachedDocumentMixin, Document):
             assigned_user_ids.append(user['_id'])
 
         return assigned_user_ids
+
+    @classmethod
+    def get_preset_permission_by_name(cls, name):
+        matches = {k for k, v in PERMISSIONS_PRESETS.iteritems() if v['name'] == name}
+        return matches.pop() if matches else None
+
+    @classmethod
+    def preset_and_domain_role_names(cls, domain_name):
+        return cls.preset_permissions_names().union(set([role.name for role in cls.by_domain(domain_name)]))
+
+    @classmethod
+    def preset_permissions_names(cls):
+        return {details['name'] for role, details in PERMISSIONS_PRESETS.iteritems()}
 
 PERMISSIONS_PRESETS = {
     'edit-apps': {'name': 'App Editor', 'permissions': Permissions(edit_apps=True, view_reports=True)},
@@ -1058,12 +1076,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         except User.DoesNotExist:
             django_user = User(username=self.username)
         for attr in DjangoUserMixin.ATTRS:
-            attr_val = getattr(self, attr) or ''
+            attr_val = getattr(self, attr)
+            if not attr_val and attr != 'last_login':
+                attr_val = ''
             # truncate names when saving to django
             if attr == 'first_name' or attr == 'last_name':
                 attr_val = attr_val[:30]
-            if attr == 'last_login' and attr_val == '':
-                attr_val = None
             setattr(django_user, attr, attr_val)
         django_user.DO_NOT_SAVE_COUCH_USER= True
         return django_user
@@ -1135,6 +1153,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             return cls.wrap_correctly(result['doc'])
         else:
             return None
+
 
     def clear_quickcache_for_user(self):
         from corehq.apps.hqwebapp.templatetags.hq_shared_tags import _get_domain_list

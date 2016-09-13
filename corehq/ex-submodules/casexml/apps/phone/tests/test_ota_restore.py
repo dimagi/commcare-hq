@@ -3,7 +3,7 @@ from django.test import TestCase
 import os
 from django.test.utils import override_settings
 from casexml.apps.phone.tests.utils import generate_restore_payload, get_restore_config
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs, \
     delete_all_xforms
 from casexml.apps.phone.restore import RestoreConfig, CachedResponse
@@ -154,6 +154,9 @@ class OtaRestoreTest(BaseOtaRestoreTest):
                 <case_name>test case name</case_name>
                 <external_id>someexternal</external_id>
             </create>
+            <update>
+                <date_opened>2010-06-29</date_opened>
+            </update>
         </case>""".format(user_id=self.restore_user.user_id)
         check_xml_line_by_line(
             self,
@@ -174,6 +177,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
             </create>
             <update>
                 <external_id>someexternal</external_id>
+                <date_opened>2010-06-29</date_opened>
             </update>
         </case>""".format(user_id=self.restore_user.user_id)
         check_xml_line_by_line(

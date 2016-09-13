@@ -72,7 +72,6 @@ from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.quickcache import quickcache
 from django.contrib import messages
 from django.db.models import Q
-from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.utils import get_timezone_for_user
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
@@ -1842,6 +1841,8 @@ class SMSSettingsView(BaseMessagingSectionView):
                     [w.to_json() for w in domain_obj.restricted_sms_times],
                 "send_to_duplicated_case_numbers":
                     enabled_disabled(domain_obj.send_to_duplicated_case_numbers),
+                "sms_survey_date_format":
+                    domain_obj.sms_survey_date_format,
                 "use_custom_case_username":
                     default_custom(domain_obj.custom_case_username),
                 "custom_case_username":
@@ -1905,6 +1906,8 @@ class SMSSettingsView(BaseMessagingSectionView):
                  "custom_case_username"),
                 ("send_to_duplicated_case_numbers",
                  "send_to_duplicated_case_numbers"),
+                ("sms_survey_date_format",
+                 "sms_survey_date_format"),
                 ("sms_conversation_length",
                  "sms_conversation_length"),
                 ("count_messages_as_read_by_anyone",

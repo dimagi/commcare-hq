@@ -32,6 +32,14 @@ def get_all_pillow_instances():
     return [config.get_instance() for config in get_all_pillow_configs()]
 
 
+def get_couch_pillow_instances():
+    from pillowtop.feed.couch import CouchChangeFeed
+    return [
+        pillow for pillow in get_all_pillow_instances()
+        if isinstance(pillow.get_change_feed(), CouchChangeFeed)
+    ]
+
+
 def get_all_pillow_configs():
     return get_pillow_configs_from_settings_dict(getattr(settings, 'PILLOWTOPS', {}))
 

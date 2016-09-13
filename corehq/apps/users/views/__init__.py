@@ -37,15 +37,15 @@ from corehq.apps.analytics.tasks import (
     track_existing_user_accepted_invite_on_hubspot,
 )
 from corehq.apps.analytics.utils import get_meta
-from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
+from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required,
+    load_domain)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.es import AppES
 from corehq.apps.es.queries import search_string_query
 from corehq.apps.hqwebapp.utils import send_confirmation_email
 from corehq.apps.hqwebapp.views import BasePageView, logout
-from corehq.apps.registration.forms import AdminInvitesUserForm, \
-    NewWebUserRegistrationForm
+from corehq.apps.registration.forms import AdminInvitesUserForm, WebUserInvitationForm
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms.verify import (
@@ -640,7 +640,7 @@ class UserInvitationView(object):
                 return render(request, self.template, context)
         else:
             if request.method == "POST":
-                form = NewWebUserRegistrationForm(request.POST)
+                form = WebUserInvitationForm(request.POST)
                 if form.is_valid():
                     # create the new user
                     user = activate_new_user(form, domain=invitation.domain)
@@ -661,7 +661,7 @@ class UserInvitationView(object):
                 if CouchUser.get_by_username(invitation.email):
                     return HttpResponseRedirect(reverse("login") + '?next=' +
                         reverse('domain_accept_invitation', args=[invitation.domain, invitation.get_id]))
-                form = NewWebUserRegistrationForm(initial={
+                form = WebUserInvitationForm(initial={
                     'email': invitation.email,
                     'hr_name': invitation.domain,
                     'create_domain': False,
@@ -702,6 +702,7 @@ class UserInvitationView(object):
 
 @sensitive_post_parameters('password')
 def accept_invitation(request, domain, invitation_id):
+    load_domain(request, domain)
     return UserInvitationView()(request, invitation_id, domain=domain)
 
 

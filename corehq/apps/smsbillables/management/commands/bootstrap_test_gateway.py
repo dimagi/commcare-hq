@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from django.conf import settings
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 
 from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.models import INCOMING, OUTGOING
@@ -38,7 +38,7 @@ def bootstrap_test_gateway(apps):
 bootstrap_test_gateway.__test__ = False
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "bootstrap Test SMS backend gateway fees"
     args = ""
     label = ""

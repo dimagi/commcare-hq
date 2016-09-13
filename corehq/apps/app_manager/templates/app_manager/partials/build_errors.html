@@ -65,6 +65,11 @@
                             Module
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                             has no forms or case list.
+                        {% case "circular case hierarchy" %}
+                            {% url "view_module" domain app.id error.module.id as module_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs %}
+                            The case hierarchy for module <a href="{{ module_url }}">{{ module_name }}</a> contains a circular reference.
+                            {% endblocktrans %}
                         {% case "no case type" %}
                             Module
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
@@ -218,7 +223,9 @@
                             {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
                         {% case "path error" %}
                             {% if error.path %}
-                                The case management in form {% include "app_manager/partials/form_error_message.html" %}
+                                The case management
+                                {% if request|toggle_enabled:"VISIT_SCHEDULER" %} or visit scheduler {% endif %}
+                                in form {% include "app_manager/partials/form_error_message.html" %}
                                 references a question that no longer exists: "{{ error.path }}". It is likely that
                                 this question has been renamed or deleted. Please update or delete this question
                                 reference before you make a new version.

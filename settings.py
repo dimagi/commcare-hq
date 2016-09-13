@@ -156,6 +156,7 @@ MIDDLEWARE_CLASSES = [
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
     'auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
+    'corehq.apps.locations.middleware.LocationAccessMiddleware',
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
@@ -245,6 +246,7 @@ HQ_APPS = (
     'casexml.apps.stock',
     'corehq.apps.cleanup',
     'corehq.apps.cloudcare',
+    'corehq.apps.couch_sql_migration',
     'corehq.apps.smsbillables',
     'corehq.apps.accounting',
     'corehq.apps.appstore',
@@ -356,7 +358,6 @@ HQ_APPS = (
     'a5288',
     'custom.bihar',
     'custom.apps.gsid',
-    'custom.icds',
     'hsph',
     'mvp',
     'mvp_docs',
@@ -387,6 +388,7 @@ HQ_APPS = (
     'custom.common',
 
     'custom.icds_reports',
+    'custom.enikshay.integrations.ninetyninedots'
 )
 
 # DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
@@ -764,6 +766,7 @@ LOCAL_APPS = ()
 LOCAL_COUCHDB_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
 LOCAL_PILLOWTOPS = {}
+LOCAL_REPEATERS = ()
 
 # Prelogin site
 ENABLE_PRELOGIN_SITE = False
@@ -894,6 +897,7 @@ KAFKA_URL = 'localhost:9092'
 
 MOBILE_INTEGRATION_TEST_TOKEN = None
 
+OVERRIDE_UCR_BACKEND = None
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1033,7 +1037,7 @@ LOGGING = {
             'class': 'corehq.util.log.NotifyExceptionEmailer',
         },
         'null': {
-            'class': 'django.utils.log.NullHandler',
+            'class': 'logging.NullHandler',
         },
     },
     'loggers': {
@@ -1109,6 +1113,16 @@ LOGGING = {
         'export_migration': {
             'handlers': ['export_migration'],
             'level': 'INFO',
+        },
+        'boto3': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propogate': True
+        },
+        'botocore': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propogate': True
         }
     }
 }
@@ -1578,6 +1592,20 @@ PILLOWTOPS = {
     ]
 }
 
+BASE_REPEATERS = (
+    'corehq.apps.repeaters.models.FormRepeater',
+    'corehq.apps.repeaters.models.CaseRepeater',
+    'corehq.apps.repeaters.models.ShortFormRepeater',
+    'corehq.apps.repeaters.models.AppStructureRepeater',
+)
+
+CUSTOM_REPEATERS = (
+    'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsRegisterPatientRepeater',
+    'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsUpdatePatientRepeater',
+)
+
+REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + CUSTOM_REPEATERS
+
 
 STATIC_UCR_REPORTS = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'deidentified_va_report.json'),
@@ -1594,6 +1622,12 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_lactating.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_pregnancies.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_4_6_infrastructure.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_individual_issues.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_block.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_by_ticket_level.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_by_type.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_district.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_state.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_10a_person_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_10b_person_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_11_visitor_book_forms.json'),
@@ -1635,8 +1669,12 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_thr_30_days.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_thr_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_timely_home_visits.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_ccs_record_cases.json'),
 
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding.json')
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'sputum_conversion.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'treatment_outcome.json')
 ]
 
 
@@ -1657,9 +1695,11 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_mgt_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_tableau.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_cases_monthly.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_delivery_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases_monthly_tableau.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'daily_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'gm_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'home_visit_forms.json'),
@@ -1670,10 +1710,11 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tasks_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tech_issue_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'thr_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'usage_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
 
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json')
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
@@ -1751,7 +1792,6 @@ CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
-# mapping of domains to modules for those that aren't identical
 # a DOMAIN_MODULE_CONFIG doc present in your couchdb can override individual
 # items.
 DOMAIN_MODULE_MAP = {
@@ -1778,6 +1818,7 @@ DOMAIN_MODULE_MAP = {
     'mvp-koraro': 'mvp',
     'mvp-pampaida': 'mvp',
     'opm': 'custom.opm',
+    'pact': 'pact',
     'project': 'custom.apps.care_benin',
 
     'ipm-senegal': 'custom.intrahealth',

@@ -1,0 +1,2 @@
+class AdherenceException(Exception):
+    pass

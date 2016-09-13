@@ -203,6 +203,7 @@ hqDefine('accounting/ko/accounting.payment_method_handler.js', function () {
             errorThrown = errorThrown || 500;
             self.serverErrorMsg(self.errorMessages[errorThrown]);
             self.selectedCard().isProcessing(false);
+            self.paymentProcessing(false);
         };
 
         self.handleProcessingErrors = function (response) {
@@ -227,8 +228,8 @@ hqDefine('accounting/ko/accounting.payment_method_handler.js', function () {
                     }
                 }
                 self.paymentIsComplete(true);
-                self.paymentProcessing(false);
             }
+            self.paymentProcessing(false);
             self.handleProcessingErrors(response);
         };
 
@@ -348,7 +349,7 @@ hqDefine('accounting/ko/accounting.payment_method_handler.js', function () {
         };
     };
 
-    Invoice.protoptye = Object.create( ChargedCostItem.prototype );
+    Invoice.prototype = Object.create( ChargedCostItem.prototype );
     Invoice.prototype.constructor = Invoice;
 
     /* initData contains totalBalance and paginatedListModel */
@@ -367,7 +368,7 @@ hqDefine('accounting/ko/accounting.payment_method_handler.js', function () {
         };
     };
 
-    TotalCostItem.protoptye = Object.create( ChargedCostItem.prototype );
+    TotalCostItem.prototype = Object.create( ChargedCostItem.prototype );
     TotalCostItem.prototype.constructor = TotalCostItem;
 
     var PrepaymentItems = function(data){
@@ -437,7 +438,7 @@ hqDefine('accounting/ko/accounting.payment_method_handler.js', function () {
         };
     };
 
-    CreditCostItem.ptotoptye = Object.create( BaseCostItem.prototype );
+    CreditCostItem.prototype = Object.create( BaseCostItem.prototype );
     CreditCostItem.prototype.constructor = CreditCostItem;
 
     var StripeCard = function () {

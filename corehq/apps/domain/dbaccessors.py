@@ -5,7 +5,11 @@ from corehq.util.couch_helpers import paginate_view
 
 def get_doc_count_in_domain_by_class(domain, doc_class):
     doc_type = doc_class.__name__
-    row = doc_class.get_db().view(
+    return get_doc_count_in_domain_by_type(domain, doc_type, doc_class.get_db())
+
+
+def get_doc_count_in_domain_by_type(domain, doc_type, db):
+    row = db.view(
         "by_domain_doc_type_date/view",
         startkey=[domain, doc_type],
         endkey=[domain, doc_type, {}],

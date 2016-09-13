@@ -1,5 +1,3 @@
-from itertools import groupby
-
 import sqlalchemy
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn, TableNotFoundException
 from sqlagg.columns import SimpleColumn
@@ -171,7 +169,7 @@ class CareSqlData(SqlData):
         if 'group_leadership' in self.config and self.config['group_leadership']:
             filters.append(EQ('group_leadership', 'group_leadership'))
         if 'cbt_name' in self.config and self.config['cbt_name']:
-            filters.append(EQ('owner_id', 'cbt_name'))
+            filters.append(IN('owner_id', get_INFilter_bindparams('cbt_name', self.config['cbt_name'])))
         if 'real_or_test' in self.config and self.config['real_or_test']:
             filters.append(EQ('real_or_test', 'real_or_test'))
         for column_name in ['domains', 'practices', 'schedule']:
@@ -183,7 +181,7 @@ class CareSqlData(SqlData):
     def filter_values(self):
         filter_values = dict(**super(CareSqlData, self).filter_values)
 
-        for column_name in self.geography_config.keys() + ['domains', 'practices', 'schedule']:
+        for column_name in self.geography_config.keys() + ['domains', 'practices', 'schedule', 'cbt_name']:
             clean_IN_filter_value(filter_values, column_name)
         return filter_values
 

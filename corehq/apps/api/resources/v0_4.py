@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
 from tastypie import fields
@@ -7,14 +5,13 @@ from tastypie.bundle import Bundle
 from tastypie.authentication import Authentication
 from tastypie.exceptions import BadRequest
 
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.models import ESXFormInstance, ESCase
 from corehq.apps.api.resources.auth import DomainAdminAuthentication, RequirePermissionAuthentication
 from corehq.apps.api.resources.v0_1 import _safe_bool
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from couchforms.models import doc_types, XFormInstance
+from couchforms.models import doc_types
 from casexml.apps.case import xform as casexml_xform
 from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
 
@@ -23,7 +20,8 @@ from corehq.apps.api.util import get_object_or_not_exist, object_does_not_exist,
 from corehq.apps.app_manager import util as app_manager_util
 from corehq.apps.app_manager.models import Application, RemoteApp
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.repeaters.models import Repeater, repeater_types
+from corehq.apps.repeaters.models import Repeater
+from corehq.apps.repeaters.utils import get_all_repeater_types
 from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
 from corehq.apps.users.util import format_username
@@ -190,7 +188,7 @@ class RepeaterResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourc
 
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(Repeater, kwargs['pk'], kwargs['domain'],
-                                       additional_doc_types=repeater_types.keys())
+                                       additional_doc_types=get_all_repeater_types().keys())
 
     def obj_create(self, bundle, request=None, **kwargs):
         bundle.obj.domain = kwargs['domain']

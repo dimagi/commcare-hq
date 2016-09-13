@@ -478,7 +478,7 @@ class PendingReportingDataRecalculation(models.Model):
 
 class SLABConfig(models.Model):
     is_pilot = models.BooleanField(default=False)
-    sql_location = models.ForeignKey(SQLLocation, null=False, unique=True)
+    sql_location = models.OneToOneField(SQLLocation, null=False)
     closest_supply_points = models.ManyToManyField(SQLLocation, related_name='+')
 
     class Meta:
