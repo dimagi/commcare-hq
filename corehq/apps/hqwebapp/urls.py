@@ -49,7 +49,7 @@ urlpatterns = patterns(
     url(r'^account/two_factor/new_phone/$', NewPhoneView.as_view(), name=NewPhoneView.urlname)
 )
 
-domain_specific = patterns('corehq.apps.hqwebapp.views',
+domain_specific = [
     url(r'^$', redirect_to_default, name='domain_homepage'),
     url(r'^login/$', domain_login, name='domain_login'),
     url(r'^login/mobile/$', domain_login, name='domain_mobile_login',
@@ -58,4 +58,4 @@ domain_specific = patterns('corehq.apps.hqwebapp.views',
         retrieve_download, {'template': 'style/includes/file_download.html'},
         name='hq_soil_download'),
     url(r'toggles.js$', toggles_js, name='toggles_js'),
-)
+]

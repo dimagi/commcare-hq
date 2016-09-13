@@ -1,7 +1,7 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
 from corehq.apps.hqcouchlog.views import fail
 
-urlpatterns = patterns('corehq.apps.hqcouchlog.views',
+urlpatterns = [
     url(r'^fail/$', fail, name='fail'),
-)
+]

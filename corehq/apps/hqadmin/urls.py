@@ -1,4 +1,4 @@
-from django.conf.urls import *
+from django.conf.urls import include, url
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.utils import new_domain_re
 from corehq.apps.hqadmin.views import (
@@ -35,7 +35,7 @@ from corehq.apps.reports.dispatcher import AdminReportDispatcher
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 
-urlpatterns = patterns('corehq.apps.hqadmin.views',
+urlpatterns = [
     url(r'^$', default, name="default_admin_report"),
     url(r'^system/$', SystemInfoView.as_view(), name=SystemInfoView.urlname),
     url(r'^system/recent_changes/$', RecentCouchChangesView.as_view(),
@@ -78,4 +78,4 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^top_five_projects_by_country/$', 'top_five_projects_by_country', name='top_five_projects_by_country'),
     url(r'^web_user_data', WebUserDataView.as_view(), name=WebUserDataView.urlname),
     AdminReportDispatcher.url_pattern(),
-)
+]

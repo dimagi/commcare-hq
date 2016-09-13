@@ -82,7 +82,7 @@ def api_url_patterns():
     yield url(r'^form/attachment/(?P<form_id>[\w\-]+)/(?P<attachment_id>.*)$', FormAttachmentAPI.as_view(), name="api_form_attachment")
 
 
-urlpatterns = patterns('', *list(api_url_patterns()))
+urlpatterns = list(api_url_patterns())
 
 ADMIN_API_LIST = (
     v0_5.AdminWebUserResource,
@@ -122,4 +122,4 @@ def api_url_patterns():
         api.register(resource())
         yield (r'^', include(api.urls))
 
-admin_urlpatterns = patterns('', *list(api_url_patterns()))
+admin_urlpatterns = list(api_url_patterns())

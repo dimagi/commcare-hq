@@ -1,4 +1,4 @@
-from django.conf.urls import *
+from django.conf.urls import url
 from corehq.apps.hqmedia.views import (
     DownloadMultimediaZip,
     BulkUploadMultimediaView,
@@ -14,13 +14,13 @@ from corehq.apps.hqmedia.views import (
     RemoveLogoView,
 )
 
-urlpatterns = patterns('corehq.apps.hqmedia.views',
+urlpatterns = [
     url(r'^file/(?P<media_type>[\w\-]+)/(?P<doc_id>[\w\-]+)/(.+)?$',
         ViewMultimediaFile.as_view(), name=ViewMultimediaFile.name),
     url(r'^upload_status/$', MultimediaUploadStatusView.as_view(), name=MultimediaUploadStatusView.name)
-)
+]
 
-application_urls = patterns('corehq.apps.hqmedia.views',
+application_urls = [
     url(r'^upload/$', BulkUploadMultimediaView.as_view(), name=BulkUploadMultimediaView.name),
     url(r'^uploaded/bulk/$', ProcessBulkUploadView.as_view(), name=ProcessBulkUploadView.name),
     url(r'^uploaded/image/$', ProcessImageFileUploadView.as_view(), name=ProcessImageFileUploadView.name),
@@ -32,8 +32,8 @@ application_urls = patterns('corehq.apps.hqmedia.views',
         name=ProcessTextFileUploadView.name),
     url(r'^remove_logo/$', RemoveLogoView.as_view(), name=RemoveLogoView.name),
     url(r'^map/$', MultimediaReferencesView.as_view(), name=MultimediaReferencesView.name),
-)
+]
 
-download_urls = patterns('corehq.apps.hqmedia.views',
-                         url(r'^commcare.zip$', DownloadMultimediaZip.as_view(), name=DownloadMultimediaZip.name),
-                         )
+download_urls = [
+    url(r'^commcare.zip$', DownloadMultimediaZip.as_view(), name=DownloadMultimediaZip.name),
+]

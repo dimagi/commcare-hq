@@ -15,7 +15,7 @@ from corehq.apps.data_interfaces.views import (
 from .interfaces import FormManagementMode
 
 
-edit_data_urls = patterns(
+edit_data_urls = [
     'corehq.apps.data_interfaces.views',
     url(r'^archive_forms/$', ArchiveFormView.as_view(), name=ArchiveFormView.urlname),
     url(r'^xform_management/$', XFormManagementView.as_view(), name=XFormManagementView.urlname),
@@ -40,12 +40,11 @@ edit_data_urls = patterns(
     url(r'^automatic_updates/edit/(?P<rule_id>\d+)/$', EditAutomaticUpdateRuleView.as_view(),
         name=EditAutomaticUpdateRuleView.urlname),
     EditDataInterfaceDispatcher.url_pattern(),
-)
+]
 
-urlpatterns = patterns(
-    'corehq.apps.data_interfaces.views',
+urlpatterns = [
     url(r'^$', default, name="data_interfaces_default"),
     (r'^edit/', include(edit_data_urls)),
     (r'^export/', include('corehq.apps.export.urls')),
     DataInterfaceDispatcher.url_pattern(),
-)
+]

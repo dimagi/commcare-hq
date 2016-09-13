@@ -14,7 +14,7 @@ from corehq.apps.appstore.views import (
     project_documentation_file,
 )
 
-urlpatterns = patterns('corehq.apps.appstore.views',
+urlpatterns = [
     url(r'^$', CommCareExchangeHomeView.as_view(), name=CommCareExchangeHomeView.urlname),
 
     url(r'^(?P<snapshot>[\w\.-]+)/info/$', ProjectInformationView.as_view(),
@@ -33,5 +33,5 @@ urlpatterns = patterns('corehq.apps.appstore.views',
         name='appstore_project_documentation_file'),
     url(r'^(?P<snapshot>[\w\.-]+)/multimedia/$',
         MediaFilesView.as_view(), name=MediaFilesView.urlname),
-)
+]
 

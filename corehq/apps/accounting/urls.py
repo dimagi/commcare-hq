@@ -21,7 +21,7 @@ from corehq.apps.accounting.views import (
 )
 
 
-urlpatterns = patterns('corehq.apps.accounting.views',
+urlpatterns = [
     url(r'^$', accounting_default, name='accounting_default'),
     url(r'^trigger_invoice/$', TriggerInvoiceView.as_view(),
         name=TriggerInvoiceView.urlname),
@@ -48,4 +48,4 @@ urlpatterns = patterns('corehq.apps.accounting.views',
         name=AccountingAdminInterfaceDispatcher.name()),
     url(r'^pricing_table/(?P<product>[\w-]+)/(?P<locale>[\w-]+)/$', pricing_table_json,
         name='pricing_table_json'),
-)
+]
