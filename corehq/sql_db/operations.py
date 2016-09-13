@@ -22,6 +22,10 @@ class HqOpMixin(object):
     """
 
     def database_forwards(self, app_label, schema_editor, from_state, to_state):
+        print app_label
+        print schema_editor
+        print from_state
+        print to_state
         db_alias = schema_editor.connection.alias
         if allow_migrate(db_alias, app_label):
             super(HqOpMixin, self).database_forwards(app_label, schema_editor, from_state, to_state)

@@ -9,7 +9,7 @@ from corehq.sql_db.operations import HqRunSQL
 NOOP = 'SELECT 1'
 
 
-def _alter_to_uuid_sql_forawd(model, field):
+def _alter_to_uuid_sql_forawd(model, field): # drop index, build index
     return 'ALTER TABLE "form_processor_{model}" ALTER COLUMN "{field}" TYPE uuid USING {field}::uuid'.format(
         model=model, field=field
     )
@@ -21,7 +21,7 @@ def _alter_to_uuid_sql_reverse(model, field):
     )
 
 
-def migrate_field_to_uuid(model, field, unique=True, db_index=True, null=False):
+def migrate_field_to_uuid(model, field):
     forward = _alter_to_uuid_sql_forawd(model, field)
     reverse = _alter_to_uuid_sql_reverse(model, field)
 
@@ -32,10 +32,10 @@ def migrate_field_to_uuid(model, field, unique=True, db_index=True, null=False):
             model_name=model,
             name=field,
             field=uuidfield.fields.UUIDField(
-                unique=unique,
+                unique=True,
                 max_length=32,
-                db_index=db_index,
-                null=null),
+                db_index=True,
+                null=False),
             preserve_default=True,
         )]
     )
