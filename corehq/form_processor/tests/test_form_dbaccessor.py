@@ -393,7 +393,8 @@ class DeleteAtachmentsS3DBTests(DeleteAttachmentsFSDBTests):
         super(DeleteAtachmentsS3DBTests, self).setUp()
         with trap_extra_setup(AttributeError, msg="S3_BLOB_DB_SETTINGS not configured"):
             config = settings.S3_BLOB_DB_SETTINGS
-            self.s3db = TemporaryS3BlobDB(config)
+
+        self.s3db = TemporaryS3BlobDB(config)
         assert get_blob_db() is self.s3db, (get_blob_db(), self.s3db)
 
     def tearDown(self):
