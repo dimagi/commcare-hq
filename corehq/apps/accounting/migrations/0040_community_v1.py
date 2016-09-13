@@ -28,7 +28,7 @@ def _bootstrap_new_community_role(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounting', '0038_bootstrap_new_user_buckets'),
+        ('accounting', '0039_auto_20160829_0828'),
     ]
 
     operations = [
