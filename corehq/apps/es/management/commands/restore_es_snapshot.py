@@ -18,8 +18,10 @@ class Command(BaseCommand):
         indices = self.get_indices(args)
         es = get_es_new()
         client = self.get_client_and_close_indices(es, indices)
-        self.restore_snapshot(es, date, indices)
-        client.open(indices)
+        try:
+            self.restore_snapshot(es, date, indices)
+        finally:
+            client.open(indices)
 
     @staticmethod
     def get_date(args):
