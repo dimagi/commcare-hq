@@ -1616,7 +1616,8 @@ class SplitExportColumn(ExportColumn):
             return value
 
         if not isinstance(value, basestring):
-            return [None] * len(self.item.options) + [] if self.ignore_unspecified_options else [value]
+            unspecified_options = [] if self.ignore_unspecified_options else [value]
+            return [None] * len(self.item.options) + unspecified_options
 
         selected = OrderedDict((x, 1) for x in value.split(" "))
         row = []
