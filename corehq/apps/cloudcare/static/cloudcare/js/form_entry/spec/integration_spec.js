@@ -80,20 +80,20 @@ describe('Integration', function() {
         this.clock.tick(stringQ1.throttle);
 
         // once we receive signal to answer question, pending answer should be set
-        expect(stringQ1.pendingAnswer()).toBe('ben');
+        assert.equal(stringQ1.pendingAnswer(), 'ben');
 
         // Fire off a change in the other question before we've reconciled first one
         stringQ2.entry.rawAnswer('lisa');
-        expect(stringQ2.pendingAnswer()).toBe('lisa');
+        assert.equal(stringQ2.pendingAnswer(), 'lisa');
 
         // Have server respond to the string question before string changes
         // this would normally fire off another change to multi, but we do not reconcile
         // questions that have pending answers.
         $.publish('session.reconcile', [response1, stringQ1]);
-        expect(stringQ2.pendingAnswer()).toBe('lisa');
-        expect(stringQ2.answer()).toBe('lisa');
-        expect(stringQ1.pendingAnswer()).toBe(Formplayer.Const.NO_PENDING_ANSWER);
-        expect(stringQ1.answer()).toBe('ben');
+        assert.equal(stringQ2.pendingAnswer(), 'lisa');
+        assert.equal(stringQ2.answer(), 'lisa');
+        assert.equal(stringQ1.pendingAnswer(), Formplayer.Const.NO_PENDING_ANSWER);
+        assert.equal(stringQ1.answer(), 'ben');
 
         var response2 = {};
         $.extend(response2, formJSON);
@@ -101,10 +101,10 @@ describe('Integration', function() {
         response2.tree[1].answer = 'lisa';
 
         $.publish('session.reconcile', [response2, stringQ2]);
-        expect(stringQ1.answer()).toBe('ben');
-        expect(stringQ2.answer()).toBe('lisa');
-        expect(stringQ1.pendingAnswer()).toBe(Formplayer.Const.NO_PENDING_ANSWER);
-        expect(stringQ2.pendingAnswer()).toBe(Formplayer.Const.NO_PENDING_ANSWER);
+        assert.equal(stringQ1.answer(), 'ben');
+        assert.equal(stringQ2.answer(), 'lisa');
+        assert.equal(stringQ1.pendingAnswer(), Formplayer.Const.NO_PENDING_ANSWER);
+        assert.equal(stringQ2.pendingAnswer(), Formplayer.Const.NO_PENDING_ANSWER);
     });
 
     it('Should reconcile questions answered at the same time for multi', function() {
@@ -120,20 +120,20 @@ describe('Integration', function() {
         // Fire off a change in the string question
         stringQ.entry.rawAnswer('ben');
         this.clock.tick(stringQ.throttle);
-        expect(stringQ.pendingAnswer()).toBe('ben');
+        assert.equal(stringQ.pendingAnswer(), 'ben');
 
         // Fire off a change in the multi question
         multiQ.entry.rawAnswer(["1"]);
-        expect(multiQ.pendingAnswer()).toEqual([1]);
+        assert.sameMembers(multiQ.pendingAnswer(), [1]);
 
         // Have server respond to the string question before multi changes
         // this would normally fire off another change to multi, but we do not reconcile
         // questions that have pending answers.
         $.publish('session.reconcile', [response1, stringQ]);
-        expect(stringQ.pendingAnswer()).toBe(Formplayer.Const.NO_PENDING_ANSWER);
-        expect(stringQ.answer()).toBe('ben');
-        expect(multiQ.pendingAnswer()).toEqual([1]);
-        expect(multiQ.answer()).toEqual([1]);
+        assert.equal(stringQ.pendingAnswer(), Formplayer.Const.NO_PENDING_ANSWER);
+        assert.equal(stringQ.answer(), 'ben');
+        assert.sameMembers(multiQ.pendingAnswer(), [1]);
+        assert.sameMembers(multiQ.answer(), [1]);
 
         var response2 = {};
         $.extend(response2, formJSON);
@@ -141,10 +141,10 @@ describe('Integration', function() {
         response2.tree[1].answer = 'ben';
 
         $.publish('session.reconcile', [response2, multiQ]);
-        expect(stringQ.answer()).toBe('ben');
-        expect(multiQ.answer()).toEqual([1]);
-        expect(stringQ.pendingAnswer()).toBe(Formplayer.Const.NO_PENDING_ANSWER);
-        expect(multiQ.pendingAnswer()).toBe(Formplayer.Const.NO_PENDING_ANSWER);
+        assert.equal(stringQ.answer(), 'ben');
+        assert.sameMembers(multiQ.answer(), [1]);
+        assert.equal(stringQ.pendingAnswer(), Formplayer.Const.NO_PENDING_ANSWER);
+        assert.equal(multiQ.pendingAnswer(), Formplayer.Const.NO_PENDING_ANSWER);
     });
 
     it('Should properly reconcile Geo', function() {
@@ -201,7 +201,7 @@ describe('Integration', function() {
         var f = new Form(json1);
         var child = f.children()[0]
         $.publish('session.reconcile', [json2, child]);
-        expect(child.answer()[0]).toBe(30.000000000000018)
+        assert.equal(child.answer()[0], 30.000000000000018)
 
 
     });

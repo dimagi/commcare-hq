@@ -3,15 +3,15 @@ describe('Formplayer utils', function() {
         var result;
 
         result = Formplayer.Utils.answersEqual('ben', 'bob');
-        expect(result).toBe(false);
+        assert.isFalse(result);
 
         result = Formplayer.Utils.answersEqual('ben', 'ben');
-        expect(result).toBe(true);
+        assert.isTrue(result);
 
         result = Formplayer.Utils.answersEqual(['b', 'e', 'n'], ['b', 'o', 'b']);
-        expect(result).toBe(false);
+        assert.isFalse(result);
 
         result = Formplayer.Utils.answersEqual(['b', 'e', 'n'], ['b', 'e', 'n']);
-        expect(result).toBe(true);
+        assert.isTrue(result);
     });
 });

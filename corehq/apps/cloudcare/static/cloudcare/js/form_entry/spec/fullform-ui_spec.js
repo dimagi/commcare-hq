@@ -121,42 +121,41 @@ describe('Fullform UI', function() {
         var form = new Form(formJSON),
             newJson = [questionJSON];
 
-        expect(form.children().length).toBe(2);
+        assert.equal(form.children().length, 2);
 
         form.fromJS({ children: newJson });
-        expect(form.children().length).toBe(1);
+        assert.equal(form.children().length, 1);
     });
 
     it('Should render a repeater question', function() {
         formJSON.tree = [repeatJSON];
         var form = new Form(formJSON);
-        expect(form.children().length).toBe(1);
-        expect(form.children()[0].children().length).toBe(0);
+        assert.equal(form.children().length, 1);
+        assert.equal(form.children()[0].children().length, 0);
 
         // Add new repeat
         form.fromJS({ children: [repeatNestJSON] });
-        expect(form.children().length).toBe(1);
+        assert.equal(form.children().length, 1);
         // Each repeat is a group with questions
-        expect(form.children()[0].type()).toBe(Formplayer.Const.REPEAT_TYPE);
-        expect(form.children()[0].children().length).toBe(1);
-        expect(form.children()[0].children()[0].type()).toBe(Formplayer.Const.GROUP_TYPE);
-        expect(form.children()[0].children()[0].isRepetition).toBe(true);
-        expect(form.children()[0].children()[0].children()[0].type())
-            .toBe(Formplayer.Const.QUESTION_TYPE);
+        assert.equal(form.children()[0].type(), Formplayer.Const.REPEAT_TYPE);
+        assert.equal(form.children()[0].children().length, 1);
+        assert.equal(form.children()[0].children()[0].type(), Formplayer.Const.GROUP_TYPE);
+        assert.isTrue(form.children()[0].children()[0].isRepetition);
+        assert.equal(form.children()[0].children()[0].children()[0].type(), Formplayer.Const.QUESTION_TYPE);
     });
 
     it('Should reconcile question choices', function() {
         formJSON.tree = [questionJSON];
         var form = new Form(formJSON),
             question = form.children()[0];
-        expect(form.children().length).toBe(1);
-        expect(question.choices().length).toBe(2);
+        assert.equal(form.children().length, 1);
+        assert.equal(question.choices().length, 2);
 
         questionJSON.choices = ['A new choice'];
         formJSON.tree = [questionJSON];
         form.fromJS(formJSON);
-        expect(form.children().length).toBe(1);
-        expect(question.choices().length).toBe(1);
+        assert.equal(form.children().length, 1);
+        assert.equal(question.choices().length, 1);
     });
 
     it('Should reconcile a GeoPointEntry', function() {
@@ -165,17 +164,18 @@ describe('Fullform UI', function() {
         formJSON.tree = [questionJSON];
         var form = new Form(_.clone(formJSON)),
             question = form.children()[0];
-        expect(question.answer()).toBe(null);
+        assert.equal(question.answer(), null);
 
         questionJSON.answer = [1,2];
         formJSON.tree = [questionJSON];
         $.publish('session.reconcile', [_.clone(formJSON), question]);
-        expect(question.answer()).toEqual([1,2]);
+        assert.sameMembers(question.answer(), [1,2]);
 
         questionJSON.answer = [3,3];
-        formJSON.tree = [questionJSON];
+        form = new Form(_.clone(formJSON)),
+            question = form.children()[0];
         $.publish('session.reconcile', [_.clone(formJSON), question]);
-        expect(question.answer()).toEqual([3,3]);
+        assert.sameMembers(question.answer(), [3,3]);
     });
 
     it('Should only subscribe once', function() {
@@ -193,8 +193,8 @@ describe('Fullform UI', function() {
         sinon.stub(form2, 'fromJS', spy2);
 
         $.publish('session.reconcile', [{}, new Question(questionJSON, form)]);
-        expect(spy.calledOnce).toBe(false);
-        expect(spy2.calledOnce).toBe(true);
+        assert.isFalse(spy.calledOnce);
+        assert.isTrue(spy2.calledOnce);
     });
 
 
@@ -203,13 +203,13 @@ describe('Fullform UI', function() {
         var question = new Question(questionJSON);
         question.answer('abc');
         this.clock.tick(question.throttle);
-        expect(spy.callCount).toBe(1);
+        assert.equal(spy.callCount, 1);
 
         question.answer('abcd');
         this.clock.tick(question.throttle - 10);
-        expect(spy.callCount).toBe(1);
+        assert.equal(spy.callCount, 1);
         this.clock.tick(10);
-        expect(spy.callCount).toBe(2);
+        assert.equal(spy.callCount, 2);
     });
 
     it('Should not be valid if question has serverError', function() {
@@ -217,10 +217,10 @@ describe('Fullform UI', function() {
         var question = new Question(questionJSON);
 
         question.serverError('Answer required');
-        expect(question.isValid()).toBe(false);
+        assert.isFalse(question.isValid());
 
         question.serverError(null);
-        expect(question.isValid()).toBe(true);
+        assert.isTrue(question.isValid());
 
     });
 
@@ -228,7 +228,7 @@ describe('Fullform UI', function() {
         var form = new Form(formJSON);
         var question = new Question(questionJSON, form);
 
-        expect(question.serverError()).toBe(null);
+        assert.equal(question.serverError(), null);
         $.publish('session.reconcile', [{
             "reason": null,
             "type": "constraint",
@@ -236,6 +236,6 @@ describe('Fullform UI', function() {
             "status": "validation-error"
         }, question]);
 
-        expect(question.serverError()).toBeTruthy();
+        assert.isOk(question.serverError());
     });
 });

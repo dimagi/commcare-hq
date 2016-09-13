@@ -14,26 +14,26 @@ describe('WebForm', function() {
 
         it('Executes tasks in order', function() {
             tq.execute()
-            expect(taskOne.calledOnce).toBe(true);
-            expect(taskOne.calledWith(1, 2, 3)).toBe(true);
-            expect(taskTwo.calledOnce).toBe(false);
+            assert.isTrue(taskOne.calledOnce);
+            assert.isTrue(taskOne.calledWith(1, 2, 3));
+            assert.isFalse(taskTwo.calledOnce);
 
             tq.execute()
-            expect(taskTwo.calledOnce).toBe(true);
-            expect(taskTwo.calledWith(5, 6, 7)).toBe(true);
-            expect(tq.queue.length).toBe(0);
+            assert.isTrue(taskTwo.calledOnce);
+            assert.isTrue(taskTwo.calledWith(5, 6, 7));
+            assert.equal(tq.queue.length, 0);
 
             tq.execute() // ensure no hard failure when no tasks in queue
         })
 
         it('Executes tasks by name', function() {
             tq.execute('two');
-            expect(taskOne.calledOnce).toBe(false);
-            expect(taskTwo.calledOnce).toBe(true);
-            expect(tq.queue.length).toBe(1);
+            assert.isFalse(taskOne.calledOnce);
+            assert.isTrue(taskTwo.calledOnce);
+            assert.equal(tq.queue.length, 1);
 
             tq.execute('cannot find me');
-            expect(tq.queue.length).toBe(1);
+            assert.equal(tq.queue.length, 1);
 
             tq.execute()
             tq.execute()
@@ -41,13 +41,13 @@ describe('WebForm', function() {
 
         it('Clears tasks by name', function() {
             tq.addTask('two', taskTwo, [5,6,7]);
-            expect(tq.queue.length).toBe(3);
+            assert.equal(tq.queue.length, 3);
 
             tq.clearTasks('two');
-            expect(tq.queue.length).toBe(1);
+            assert.equal(tq.queue.length, 1);
 
             tq.clearTasks();
-            expect(tq.queue.length).toBe(0);
+            assert.equal(tq.queue.length, 0);
         });
     });
 
@@ -104,11 +104,11 @@ describe('WebForm', function() {
 
             sinon.spy(sess.taskQueue, 'execute');
 
-            expect(!!$('input#submit').attr('disabled')).toBe(false);
-            expect(sess.taskQueue.execute.calledOnce).toBe(false);
+            assert.isFalse(!!$('input#submit').attr('disabled'));
+            assert.isFalse(sess.taskQueue.execute.calledOnce);
             server.respond();
-            expect(!!$('input#submit').attr('disabled')).toBe(false);
-            expect(sess.taskQueue.execute.calledOnce).toBe(true);
+            assert.isFalse(!!$('input#submit').attr('disabled'));
+            assert.isTrue(sess.taskQueue.execute.calledOnce);
         });
 
         it('Should only subscribe once', function() {
@@ -121,8 +121,8 @@ describe('WebForm', function() {
             sinon.stub(sess2, 'newRepeat', spy2);
 
             $.publish('formplayer.' + Formplayer.Const.NEW_REPEAT, {});
-            expect(spy.calledOnce).toBe(false);
-            expect(spy2.calledOnce).toBe(true);
+            assert.isFalse(spy.calledOnce);
+            assert.isTrue(spy2.calledOnce);
         });
 
         it('Should block requests', function() {
@@ -131,16 +131,16 @@ describe('WebForm', function() {
             // First blocking request
             $.publish('formplayer.' + Formplayer.Const.NEW_REPEAT, {});
 
-            expect(sess.blockingRequestInProgress).toBe(true);
+            assert.isTrue(sess.blockingRequestInProgress);
 
             // Attempt another request
             $.publish('formplayer.' + Formplayer.Const.NEW_REPEAT, {});
 
             server.respond();
 
-            expect(sess.blockingRequestInProgress).toBe(false);
+            assert.isFalse(sess.blockingRequestInProgress);
             // One call to new-repeat
-            expect(server.requests.length).toEqual(1);
+            assert.equal(server.requests.length, 1);
         });
 
         it('Should not block requests', function() {
@@ -149,16 +149,16 @@ describe('WebForm', function() {
             // First blocking request
             $.publish('formplayer.' + Formplayer.Const.ANSWER, { answer: sinon.spy() });
 
-            expect(sess.blockingRequestInProgress).toBeFalsy(false);
+            assert.isUndefined(sess.blockingRequestInProgress);
 
             // Attempt another request
             $.publish('formplayer.' + Formplayer.Const.ANSWER, { answer: sinon.spy() });
 
             server.respond();
 
-            expect(sess.blockingRequestInProgress).toBe(false);
+            assert.isFalse(sess.blockingRequestInProgress);
             // two calls to answer
-            expect(server.requests.length).toEqual(2);
+            assert.equal(server.requests.length, 2);
 
         });
 
@@ -167,7 +167,7 @@ describe('WebForm', function() {
 
             sess.handleSuccess({}, sinon.stub().throws());
 
-            expect(sess.onerror.calledOnce).toBe(true);
+            assert.isTrue(sess.onerror.calledOnce);
         });
 
         it('Should handle error in response', function() {
@@ -176,35 +176,35 @@ describe('WebForm', function() {
 
             sess.handleSuccess({ status: 'error' }, cb);
 
-            expect(sess.onerror.calledOnce).toBe(true);
-            expect(cb.calledOnce).toBe(false);
+            assert.isTrue(sess.onerror.calledOnce);
+            assert.isFalse(cb.calledOnce);
         });
 
         it('Should handle failure in ajax call', function() {
             var sess = new WebFormSession(params);
             sess.handleFailure({ responseJSON: { message: 'error' } });
 
-            expect(sess.onerror.calledOnce).toBe(true);
+            assert.isTrue(sess.onerror.calledOnce);
         });
 
         it('Should handle timeout error', function() {
             var sess = new WebFormSession(params);
             sess.handleFailure({}, 'timeout');
 
-            expect(sess.onerror.calledOnce).toBe(true);
-            expect(sess.onerror.calledWith({
+            assert.isTrue(sess.onerror.calledOnce);
+            assert.isTrue(sess.onerror.calledWith({
                 human_readable_message: Formplayer.Errors.TIMEOUT_ERROR
-            })).toBe(true);
+            }));
         });
 
         it('Should ensure session id is set', function() {
             var sess = new WebFormSession(params),
                 spy = sinon.spy(WebFormSession.prototype, 'renderFormXml');
             sess.loadForm($('div'), 'en');
-            expect(sess.session_id).toBe(null);
+            assert.equal(sess.session_id, null);
 
             server.respond();
-            expect(sess.session_id).toBe('my-session');
+            assert.equal(sess.session_id, 'my-session');
             WebFormSession.prototype.renderFormXml.restore();
         });
     });
