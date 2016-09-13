@@ -375,7 +375,7 @@ class FormAccessorSQL(AbstractFormAccessor):
             operation.id = None
             form.track_create(operation)
 
-        deleted = FormAccessorSQL.hard_delete_forms(form.domain, [form.orig_id])
+        deleted = FormAccessorSQL.hard_delete_forms(form.domain, [form.orig_id], delete_attachments=False)
         assert deleted == 1
         FormAccessorSQL.save_new_form(form)
 
