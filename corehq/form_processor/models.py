@@ -462,6 +462,19 @@ class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
     )
 
+    def __unicode__(self):
+        return unicode(
+            "XFormAttachmentSQL("
+            "attachment_id='{a.attachment_id}', "
+            "form_id='{a.form_id}', "
+            "name='{a.name}', "
+            "content_type='{a.content_type}', "
+            "content_length='{a.content_length}', "
+            "md5='{a.md5}', "
+            "blob_id='{a.blob_id}', "
+            "properties='{a.properties}', "
+        ).format(a=self)
+
     class Meta:
         db_table = XFormAttachmentSQL_DB_TABLE
         app_label = "form_processor"
@@ -856,14 +869,15 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
     attachment_src = models.TextField(null=True)
     attachment_from = models.TextField(null=True)
 
-    def update_from_attachment(self, attachment):
+    def from_form_attachment(self, attachment):
         """
-        Update fields in this attachment with fields from anaother attachment
+        Update fields in this attachment with fields from another attachment
 
         :param attachment: XFormAttachmentSQL or CaseAttachmentSQL object
         """
         self.content_length = attachment.content_length
         self.blob_id = attachment.blob_id
+        self.blob_bucket = attachment._blobdb_bucket()
         self.md5 = attachment.md5
         self.content_type = attachment.content_type
         self.properties = attachment.properties
@@ -877,17 +891,6 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
             assert self.identifier == attachment.identifier
             self.attachment_src = attachment.attachment_src
             self.attachment_from = attachment.attachment_from
-
-    def copy_content(self, attachment):
-        if self.is_saved():
-            deleted = self.delete_content()
-            if not deleted:
-                logging.warn(
-                    "Case attachment content not deleted. bucket=%s, blob_id=%s",
-                    self._blobdb_bucket(), self.blob_id
-                )
-        content = attachment.read_content(stream=True)
-        self.write_content(content)
 
     @classmethod
     def from_case_update(cls, attachment):

@@ -14,13 +14,14 @@ from mock import patch
 from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 from casexml.apps.case.xml import V2
 from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.blobs import get_blob_db
+from corehq.blobs.tests.util import TemporaryS3BlobDB
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
-from corehq.util.test_utils import TestFileMixin
-
+from corehq.util.test_utils import TestFileMixin, trap_extra_setup
 
 TEST_CASE_ID = "EOL9FIAKIQWOFXFOH0QAMWU64"
 CREATE_XFORM_ID = "6RGAZTETE3Z2QC0PE2DKM88MO"
@@ -300,3 +301,34 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         # this used to fail before we fixed http://manage.dimagi.com/default.asp?158373
         self._doSubmitUpdateWithMultimedia(new_attachments=['commcare_logo_file'], removes=[],
                                            sync_token=sync_log._id)
+
+
+class CaseMultimediaS3DBTest(BaseCaseMultimediaTest):
+    """
+    Tests new attachments for cases and case properties
+    Spec: https://github.com/dimagi/commcare/wiki/CaseAttachmentAPI
+    """
+
+    def setUp(self):
+        super(CaseMultimediaS3DBTest, self).setUp()
+        with trap_extra_setup(AttributeError, msg="S3_BLOB_DB_SETTINGS not configured"):
+            config = settings.S3_BLOB_DB_SETTINGS
+
+        self.s3db = TemporaryS3BlobDB(config)
+        assert get_blob_db() is self.s3db, (get_blob_db(), self.s3db)
+
+    def tearDown(self):
+        self.s3db.close()
+        super(CaseMultimediaS3DBTest, self).tearDown()
+
+    @run_with_all_backends
+    def test_case_attachment(self):
+        single_attach = 'fruity_file'
+        xform, case = self._doCreateCaseWithMultimedia(attachments=[single_attach])
+
+        self.assertEqual(1, len(case.case_attachments))
+        self.assertTrue(single_attach in case.case_attachments)
+        self.assertEqual(
+            self._calc_file_hash(single_attach),
+            hashlib.md5(case.get_attachment(single_attach)).hexdigest()
+        )
