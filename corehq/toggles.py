@@ -794,7 +794,7 @@ TF_USES_SQLITE_BACKEND = PredictablyRandomToggle(
     'Use a SQLite backend for Touchforms',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    0.1,
+    0.5,
     always_disabled=['hsph-betterbirth'],
 )
 
