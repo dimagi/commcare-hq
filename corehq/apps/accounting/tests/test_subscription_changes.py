@@ -1,14 +1,17 @@
 from django.test import SimpleTestCase
+from mock import patch, Mock
 
 from corehq.apps.accounting.models import (
     Subscription, BillingAccount, DefaultProductPlan, SoftwarePlanEdition,
     Subscriber)
+from corehq.apps.accounting.subscription_changes import DomainDowngradeActionHandler
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import (
     Permissions, UserRole, UserRolePresets, WebUser, CommCareUser,
 )
+from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
 
 
 class TestSubscriptionEmailLogic(SimpleTestCase):
@@ -160,3 +163,34 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         generator.delete_all_subscriptions()
         generator.delete_all_accounts()
         super(TestUserRoleSubscriptionChanges, self).tearDown()
+
+
+class TestSubscriptionChangeResourceConflict(BaseAccountingTest):
+
+    def setUp(self):
+        self.domain_name = 'test-domain-changes'
+        self.domain = Domain(
+            name=self.domain_name,
+            is_active=True,
+            description='spam',
+        )
+        self.domain.save()
+
+    def test_domain_changes(self):
+        role = Mock()
+        role.memberships_granted.all.return_value = []
+        version = Mock()
+        version.role.get_cached_role.return_value = role
+        handler = DomainDowngradeActionHandler(
+            self.domain, new_plan_version=version, changed_privs=REPORT_BUILDER_ADD_ON_PRIVS
+        )
+
+        conflicting_domain = Domain.get_by_name(self.domain_name)
+        conflicting_domain.description = 'eggs'
+        conflicting_domain.save()
+
+        get_by_name_func = Domain.get_by_name
+        with patch('corehq.apps.accounting.subscription_changes.Domain') as Domain_patch:
+            Domain_patch.get_by_name.side_effect = lambda name: get_by_name_func(name)
+            handler.get_response()
+            Domain_patch.get_by_name.assert_called_with(self.domain_name)
