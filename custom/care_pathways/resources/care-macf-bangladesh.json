@@ -5,7 +5,7 @@
             "name": "District"
         },
         "lvl_2": {
-            "prop": "sub_sitrict",
+            "prop": "group_sub_district",
             "name": "Upazila"
         },
         "lvl_3": {
@@ -35,7 +35,7 @@
                             "text": "Which farmers selected right land type for seed bed (high land for aman; medium and low land for boro)?"
                         },
                         {
-                            "val": "ppt1_ils_seed_germination ",
+                            "val": "ppt1_ils_seed_germination",
                             "text": "Which farmers did seed germination test?"
                         },
                         {
