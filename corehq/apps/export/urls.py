@@ -24,11 +24,13 @@ from corehq.apps.export.views import (
     CreateNewCaseFeedView,
     CreateNewFormFeedView,
     EditCaseFeedView,
-    EditFormFeedView
+    EditFormFeedView,
 )
 
 urlpatterns = patterns(
     'corehq.apps.export.views',
+
+    # Export list views
     url(r"^custom/form/$",
         FormExportListView.as_view(),
         name=FormExportListView.urlname),
@@ -41,6 +43,8 @@ urlpatterns = patterns(
     url(r"^custom/dashboard_feed/$",
         DashboardFeedListView.as_view(),
         name=DashboardFeedListView.urlname),
+
+    # New export configuratino views
     url(r"^custom/form/create$",
         CreateCustomFormExportView.as_view(),
         name=CreateCustomFormExportView.urlname),
@@ -59,6 +63,8 @@ urlpatterns = patterns(
     url(r"^custom/new/case_feed/create$",
         CreateNewCaseFeedView.as_view(),
         name=CreateNewCaseFeedView.urlname),
+
+    # Download views
     url(r"^custom/form/download/bulk/$",
         BulkDownloadFormExportView.as_view(),
         name=BulkDownloadFormExportView.urlname),
@@ -71,6 +77,17 @@ urlpatterns = patterns(
     url(r"^custom/new/form/download/(?P<export_id>[\w\-]+)/$",
         DownloadNewFormExportView.as_view(),
         name=DownloadNewFormExportView.urlname),
+    url(r"^custom/case/download/(?P<export_id>[\w\-]+)/$",
+        DownloadCaseExportView.as_view(),
+        name=DownloadCaseExportView.urlname),
+    url(r"^custom/new/case/download/(?P<export_id>[\w\-]+)/$",
+        DownloadNewCaseExportView.as_view(),
+        name=DownloadNewCaseExportView.urlname),
+    url(r"^custom/dailysaved/download/(?P<export_instance_id>[\w\-]+)/$",
+        download_daily_saved_export,
+        name="download_daily_saved_export"),
+
+    # Edit export views
     url(r"^custom/new/form/edit/(?P<export_id>[\w\-]+)/$",
         EditNewCustomFormExportView.as_view(),
         name=EditNewCustomFormExportView.urlname),
@@ -86,22 +103,15 @@ urlpatterns = patterns(
     url(r"^custom/form/edit/(?P<export_id>[\w\-]+)/$",
         EditCustomFormExportView.as_view(),
         name=EditCustomFormExportView.urlname),
-    url(r"^custom/case/download/(?P<export_id>[\w\-]+)/$",
-        DownloadCaseExportView.as_view(),
-        name=DownloadCaseExportView.urlname),
-    url(r"^custom/new/case/download/(?P<export_id>[\w\-]+)/$",
-        DownloadNewCaseExportView.as_view(),
-        name=DownloadNewCaseExportView.urlname),
     url(r"^custom/case/edit/(?P<export_id>[\w\-]+)/$",
         EditCustomCaseExportView.as_view(),
         name=EditCustomCaseExportView.urlname),
+
+    # Delete export views
     url(r"^custom/delete/(?P<export_id>[\w\-]+)/$",
         DeleteCustomExportView.as_view(),
         name=DeleteCustomExportView.urlname),
     url(r"^custom/new/(?P<export_type>[\w\-]+)/delete/(?P<export_id>[\w\-]+)/$",
         DeleteNewCustomExportView.as_view(),
         name=DeleteNewCustomExportView.urlname),
-    url(r"^custom/dailysaved/download/(?P<export_instance_id>[\w\-]+)/$",
-        download_daily_saved_export,
-        name="download_daily_saved_export"),
 )
