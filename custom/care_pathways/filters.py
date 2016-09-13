@@ -145,7 +145,7 @@ class CBTNameFilter(BaseMultipleOptionFilter):
 
     @property
     def label(self):
-        if self.domain == 'care-macf-malawi':
+        if self.domain in ['care-macf-malawi', 'care-macf-bangladesh']:
             return 'FFT Name'
         else:
             return 'CBT NAME'

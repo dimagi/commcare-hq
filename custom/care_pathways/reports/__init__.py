@@ -59,7 +59,7 @@ class CareBaseReport(GetParamsMixin, GenericTabularReport, CustomProjectReport, 
     @property
     def fields(self):
         filters = [GeographyFilter]
-        if self.domain in ('care-macf-malawi', 'care-macf-ghana'):
+        if self.domain in ('care-macf-malawi', 'care-macf-ghana', 'care-macf-bangladesh'):
             filters.append(MalawiPPTYearFilter)
         else:
             filters.append(PPTYearFilter)
@@ -68,7 +68,7 @@ class CareBaseReport(GetParamsMixin, GenericTabularReport, CustomProjectReport, 
             GroupLeadershipFilter,
             CBTNameFilter
         ])
-        if self.domain == 'care-macf-malawi':
+        if self.domain in ['care-macf-malawi', 'care-macf-bangladesh']:
             filters.append(RealOrTestFilter)
         if self.domain == 'pathways-india-mis':
             filters.append(ScheduleFilter)

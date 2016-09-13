@@ -142,6 +142,13 @@ class GeographySqlData(SqlData):
         return columns
 
 
+class IEQ(EQ):
+    def build_expression(self, table):
+        return self.operator(
+            func.lower(get_column(table, self.column_name)), func.lower(bindparam(self.parameter))
+        )
+
+
 class CareSqlData(SqlData):
     no_value = {'sort_key': 0, 'html': 0}
     table_name = 'fluff_FarmerRecordFluff'
@@ -171,7 +178,7 @@ class CareSqlData(SqlData):
         if 'cbt_name' in self.config and self.config['cbt_name']:
             filters.append(IN('owner_id', get_INFilter_bindparams('cbt_name', self.config['cbt_name'])))
         if 'real_or_test' in self.config and self.config['real_or_test']:
-            filters.append(EQ('real_or_test', 'real_or_test'))
+            filters.append(IEQ('real_or_test', 'real_or_test'))
         for column_name in ['domains', 'practices', 'schedule']:
             if column_name in self.config and self.config[column_name] and self.config[column_name] != ('0',):
                 filters.append(IN(column_name, get_INFilter_bindparams(column_name, self.config[column_name])))
@@ -460,12 +467,14 @@ class TableCardReportIndividualPercentSqlData(TableCardSqlData):
         def _get_color(value):
             if 76 <= value <= 100:
                 return 'green'
-            elif 51 <= value <= 75:
+            elif 51 <= value < 76:
                 return 'orange'
-            elif 26 <= value <= 51:
+            elif 26 <= value < 51:
                 return 'yellow'
-            else:
+            elif 0 <= value < 26:
                 return 'red'
+            else:
+                return ''
 
         span = '<span style="display: block; text-align:center;padding:10px;background-color:%s">%s</span>'
         return span % (_get_color(percentage), text)
