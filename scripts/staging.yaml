@@ -48,8 +48,6 @@ branches:
   - kill-1.x-apps  # Danny 8/23
   - vellum-staging # J$ 11/13
   - django-1.8 # nick P 8/25
-  - jquery-2-2-0 # Jenny 8/29
-  - jquery-2-2-0-switch # Jenny 8/30
   - ce/domain-list-api # Cal 8/31
   - es/locations-to-sql  # Ethan 9/6
   - es/location_type_name  # Ethan 9/8
