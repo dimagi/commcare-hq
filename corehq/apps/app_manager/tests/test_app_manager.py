@@ -1,7 +1,6 @@
 # coding: utf-8
 import json
 from mock import patch
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.tests.util import add_build, patch_default_builds
 from corehq.apps.app_manager.util import (add_odk_profile_after_build,
                                           purge_report_from_mobile_ucr)
@@ -46,7 +45,7 @@ class AppManagerTest(TestCase):
 
     def setUp(self):
         super(AppManagerTest, self).setUp()
-        self.app = Application.new_app(self.domain, "TestApp", application_version=APP_V1)
+        self.app = Application.new_app(self.domain, "TestApp")
 
         for i in range(3):
             module = self.app.add_module(Module.new_module("Module%d" % i, "en"))
@@ -215,7 +214,7 @@ class TestReportModule(SimpleTestCase):
         report_config = ReportConfiguration(domain='domain', config_id='foo1')
         report_config._id = "my_report_config"
 
-        app = Application.new_app('domain', "App", application_version=APP_V2)
+        app = Application.new_app('domain', "App")
         report_module = app.add_module(ReportModule.new_module('Reports', None))
         report_module.report_configs = [
             ReportAppConfig(report_id=report_config._id, header={'en': 'CommBugz'}),

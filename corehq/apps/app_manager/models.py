@@ -865,8 +865,7 @@ class FormBase(DocumentSchema):
             form.strip_vellum_ns_attributes()
             try:
                 if form.xml is not None:
-                    validate_xform(etree.tostring(form.xml),
-                                   version=self.get_app().application_version)
+                    validate_xform(etree.tostring(form.xml))
             except XFormValidationError as e:
                 validation_dict = {
                     "fatal_error": e.fatal_error,
@@ -1370,30 +1369,24 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         return '. '.join(messages)
 
     def active_actions(self):
-        if self.get_app().application_version == APP_V1:
+        self.get_app().assert_app_v2()
+        if self.requires == 'none':
             action_types = (
-                'open_case', 'update_case', 'close_case',
-                'open_referral', 'update_referral', 'close_referral',
-                'case_preload', 'referral_preload'
+                'open_case', 'update_case', 'close_case', 'subcases',
+                'usercase_update', 'usercase_preload',
+            )
+        elif self.requires == 'case':
+            action_types = (
+                'update_case', 'close_case', 'case_preload', 'subcases',
+                'usercase_update', 'usercase_preload', 'load_from_form',
             )
         else:
-            if self.requires == 'none':
-                action_types = (
-                    'open_case', 'update_case', 'close_case', 'subcases',
-                    'usercase_update', 'usercase_preload',
-                )
-            elif self.requires == 'case':
-                action_types = (
-                    'update_case', 'close_case', 'case_preload', 'subcases',
-                    'usercase_update', 'usercase_preload', 'load_from_form',
-                )
-            else:
-                # this is left around for legacy migrated apps
-                action_types = (
-                    'open_case', 'update_case', 'close_case',
-                    'case_preload', 'subcases',
-                    'usercase_update', 'usercase_preload',
-                )
+            # this is left around for legacy migrated apps
+            action_types = (
+                'open_case', 'update_case', 'close_case',
+                'case_preload', 'subcases',
+                'usercase_update', 'usercase_preload',
+            )
         return self._get_active_actions(action_types)
 
     def active_non_preloader_actions(self):
@@ -4369,9 +4362,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     # a=Alphanumeric, n=Numeric, x=Neither (not allowed)
     admin_password_charset = StringProperty(choices=['a', 'n', 'x'], default='n')
 
-    # This is here instead of in Application because it needs to be available in stub representation
-    application_version = StringProperty(default=APP_V2, choices=[APP_V1, APP_V2], required=False)
-
     langs = StringListProperty()
 
     secure_submissions = BooleanProperty(default=False)
@@ -4445,8 +4435,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 should_save = True
             del data['build_langs']
 
-
-        if data.has_key('original_doc'):
+        if 'original_doc' in data:
             data['copy_history'] = [data.pop('original_doc')]
             should_save = True
 
@@ -4454,7 +4443,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
         self = super(ApplicationBase, cls).wrap(data)
         if not self.build_spec or self.build_spec.is_null():
-            self.build_spec = get_default_build_spec(self.application_version)
+            self.build_spec = get_default_build_spec()
 
         if should_save:
             self.save()
@@ -5007,6 +4996,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     created_from_template = StringProperty()
     use_grid_menus = BooleanProperty(default=False)
 
+    # legacy property; kept around to be able to identify (deprecated) v1 apps
+    application_version = StringProperty(default=APP_V2, choices=[APP_V1, APP_V2], required=False)
+
+    def assert_app_v2(self):
+        assert self.application_version == APP_V2
+
     @property
     @memoized
     def commtrack_enabled(self):
@@ -5262,15 +5257,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         self.put_attachment(value, 'custom_suite.xml')
 
     def create_suite(self, build_profile_id=None):
-        if self.application_version == APP_V1:
-            template='app_manager/suite-%s.xml' % self.application_version
-            langs = self.get_build_langs(build_profile_id)
-            return render_to_string(template, {
-                'app': self,
-                'langs': ["default"] + langs
-            })
-        else:
-            return SuiteGenerator(self, build_profile_id).generate_suite()
+        self.assert_app_v2()
+        return SuiteGenerator(self, build_profile_id).generate_suite()
 
     def create_media_suite(self, build_profile_id=None):
         return MediaSuiteGenerator(self, build_profile_id).generate_suite()
@@ -5352,9 +5340,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, unique_form_id))
 
     @classmethod
-    def new_app(cls, domain, name, application_version, lang="en"):
+    def new_app(cls, domain, name, lang="en"):
         app = cls(domain=domain, modules=[], name=name, langs=[lang],
-                  application_version=application_version, vellum_case_management=True)
+                  vellum_case_management=True)
         return app
 
     def add_module(self, module):
