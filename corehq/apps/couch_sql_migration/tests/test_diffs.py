@@ -41,6 +41,14 @@ def _get_partial_diffs(doc_type):
 
 
 class DiffTestCases(SimpleTestCase):
+    def setUp(self):
+        super(DiffTestCases, self).setUp()
+        self.softer_assert_context = softer_assert().__enter__()
+
+    def tearDown(self):
+        self.softer_assert_context.__exit__(None, None, None)
+        super(DiffTestCases, self).tearDown()
+
     def _test_form_diff_filter(self, doc_type, diffs, expected):
         filtered = filter_form_diffs(doc_type, diffs)
         self.assertEqual(filtered, expected)
