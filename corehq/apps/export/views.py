@@ -115,6 +115,30 @@ def user_can_view_deid_exports(domain, couch_user):
             ))
 
 
+def _get_saved_exports(domain, has_deid_permissions, old_exports_getter, new_exports_getter):
+    exports = old_exports_getter(domain)
+    new_exports = new_exports_getter(domain)
+    if use_new_exports(domain):
+        exports += new_exports
+    else:
+        exports += revert_new_exports(new_exports)
+    if not has_deid_permissions:
+        exports = filter(lambda x: not x.is_safe, exports)
+    return sorted(exports, key=lambda x: x.name)
+
+
+def _get_case_exports_by_domain(domain, has_deid_permissions):
+    old_exports_getter = CaseExportSchema.get_stale_exports
+    new_exports_getter = get_form_export_instances
+    return _get_saved_exports(domain, has_deid_permissions, old_exports_getter, new_exports_getter)
+
+
+def _get_form_exports_by_domain(domain, has_deid_permissions):
+    old_exports_getter = FormExportSchema.get_stale_exports
+    new_exports_getter = get_case_export_instances
+    return _get_saved_exports(domain, has_deid_permissions, old_exports_getter, new_exports_getter)
+
+
 class ExportsPermissionsMixin(object):
     """For mixing in with a subclass of BaseDomainView
 
@@ -1241,14 +1265,40 @@ class DashboardFeedListView(BaseExportListView):
 
     @memoized
     def get_saved_exports(self):
-        return []
+        form_exports = _get_form_exports_by_domain(self.domain, self.has_deid_view_permissions)
+        case_exports = _get_case_exports_by_domain(self.domain, self.has_deid_view_permissions)
+        combined_exports = sorted(form_exports + case_exports, key=lambda x: x.name)
+        return filter(lambda x: x.is_daily_saved_export, combined_exports)
 
     @property
     def daily_emailed_exports(self):
         return []
 
     def fmt_export_data(self, export):
-        return {}
+
+        if isinstance(export, FormExportInstance):
+            edit_view = EditFormFeedView
+            download_view = DownloadNewFormExportView  # TODO: probably make a new view for feeds
+            formname = export.formname
+        else:
+            edit_view = EditCaseFeedView
+            download_view = DownloadNewCaseExportView
+            formname = None
+
+        emailed_export = self._get_daily_saved_export_metadata(export)
+
+        return {
+            'id': export.get_id,
+            'isDeid': export.is_safe,
+            'isLegacy': False,
+            'name': export.name,
+            'formname': formname,
+            'addedToBulk': False,
+            'exportType': export.type,
+            'emailedExport': emailed_export,
+            'editUrl': reverse(edit_view.urlname, args=(self.domain, export.get_id)),
+            'downloadUrl': reverse(download_view.urlname, args=(self.domain, export.get_id)),
+        }
 
 
     @allow_remote_invocation

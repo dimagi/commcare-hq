@@ -71,7 +71,7 @@ class CreateExportTagForm(forms.Form):
                     ng_change='resetForm()',
                     ng_required="true",
                 ),
-                ng_show="!staticModelType" 
+                ng_show="!staticModelType"
             ),
             crispy.Div(
                 crispy.Div(
@@ -122,7 +122,6 @@ class CreateExportTagForm(forms.Form):
                 ng_show="formData.model_type"
             )
         )
-
 
 
 class BaseFilterExportDownloadForm(forms.Form):
