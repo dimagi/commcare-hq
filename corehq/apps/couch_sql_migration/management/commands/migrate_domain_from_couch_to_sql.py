@@ -3,6 +3,7 @@ from optparse import make_option
 
 from django.conf import settings
 from django.core.management.base import CommandError, LabelCommand
+from sqlalchemy.exc import OperationalError
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
     do_couch_to_sql_migration, delete_diff_db, get_diff_db,
@@ -80,7 +81,11 @@ class Command(LabelCommand):
 
     def print_stats(self, domain, short=True, diffs_only=False):
         db = get_diff_db(domain)
-        diff_stats = db.get_diff_stats()
+        try:
+            diff_stats = db.get_diff_stats()
+        except OperationalError:
+            diff_stats = {}
+
         has_diffs = False
         for doc_type in doc_types():
             form_ids_in_couch = set(get_form_ids_by_type(domain, doc_type))
