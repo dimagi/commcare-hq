@@ -237,6 +237,8 @@ def _migrate_form(domain, couch_form):
         adjust_datetimes(form_data)
     sql_form = interface.new_xform(form_data)
     sql_form.form_id = couch_form.form_id   # some legacy forms don't have ID's so are assigned random ones
+    if sql_form.xmlns is None:
+        sql_form.xmlns = ''
     return _copy_form_properties(domain, sql_form, couch_form)
 
 

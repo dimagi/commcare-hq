@@ -114,6 +114,38 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(couch_form_ids, sql_form_ids)
         self._compare_diffs([])
 
+    def test_form_with_missing_xmlns(self):
+        form_id = uuid.uuid4().hex
+        form_template = """<?xml version='1.0' ?>
+        <data uiVersion="1" version="1" name=""{xmlns}>
+            <name>fgg</name>
+            <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+                <n1:deviceID>354957031935664</n1:deviceID>
+                <n1:timeStart>2016-03-01T12:04:16Z</n1:timeStart>
+                <n1:timeEnd>2016-03-01T12:04:16Z</n1:timeEnd>
+                <n1:username>bcdemo</n1:username>
+                <n1:userID>user-abc</n1:userID>
+                <n1:instanceID>{form_id}</n1:instanceID>
+            </n1:meta>
+        </data>"""
+        xml = form_template.format(
+            form_id=form_id,
+            xmlns=' xmlns="http://openrosa.org/formdesigner/456"'
+        )
+        submit_form_locally(xml, self.domain_name)
+
+        # hack the form to remove XMLNS since it's now validated during form submission
+        form = FormAccessors(self.domain_name).get_form(form_id)
+        form.xmlns = None
+        del form.form_data['@xmlns']
+        xml_no_xmlns = form_template.format(form_id=form_id, xmlns="")
+        form.delete_attachment('form.xml')
+        form.put_attachment(xml_no_xmlns, 'form.xml')
+
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(1, len(self._get_form_ids()))
+        self._compare_diffs([])
+
     def test_archived_form_migration(self):
         form = create_and_save_a_form(self.domain_name)
         form.archive('user1')
