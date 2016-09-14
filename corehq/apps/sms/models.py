@@ -1159,7 +1159,7 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
         (MessagingEvent.RECIPIENT_WEB_USER, ugettext_noop('Web User')),
     )
 
-    parent = models.ForeignKey('MessagingEvent')
+    parent = models.ForeignKey('MessagingEvent', on_delete=models.CASCADE)
     date = models.DateTimeField(null=False, db_index=True)
     recipient_type = models.CharField(max_length=3, choices=RECIPIENT_CHOICES, null=False)
     recipient_id = models.CharField(max_length=126, null=True)
@@ -2089,7 +2089,7 @@ class SQLMobileBackendMapping(models.Model):
     prefix = models.CharField(max_length=25)
 
     # The backend to use for the given phone prefix
-    backend = models.ForeignKey('SQLMobileBackend')
+    backend = models.ForeignKey('SQLMobileBackend', on_delete=models.CASCADE)
 
     @classmethod
     def __set_default_domain_backend(cls, domain, backend_type, backend=None):
@@ -2174,7 +2174,7 @@ class MobileBackendInvitation(models.Model):
     domain = models.CharField(max_length=126, null=True, db_index=True)
 
     # The backend that is being shared
-    backend = models.ForeignKey('SQLMobileBackend')
+    backend = models.ForeignKey('SQLMobileBackend', on_delete=models.CASCADE)
     accepted = models.BooleanField(default=False)
 
 

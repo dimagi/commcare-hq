@@ -201,7 +201,8 @@ function LocationModel(data, root, depth, func, withAllOption) {
         var types = [];
         $.each(root.location_types, function(i, loc_type) {
             $.each(loc_type.allowed_parents, function(i, parent_type) {
-                if (loc.type() === parent_type) {
+                if (loc.type() === parent_type ||
+                    (loc.type() === undefined && parent_type === null)) {
                     types.push(loc_type.type);
                 }
             });

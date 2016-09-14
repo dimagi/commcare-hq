@@ -62,7 +62,7 @@ class IndicatorsFixturesProvider(object):
         if config:
             _assert = soft_assert(['skelly_at_dimagi_dot_com'.replace('_at_', '@').replace('_dot_', '.')])
             _assert(not config.includes_legacy(), 'Domain still using legacy call center indicators', {
-                'domain': domain,
+                'domain': domain.name,
                 'config': config.to_json()
             })
 

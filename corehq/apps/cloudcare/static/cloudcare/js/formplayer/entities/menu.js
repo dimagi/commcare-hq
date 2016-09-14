@@ -20,6 +20,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             this.breadcrumbs = response.breadcrumbs;
             this.appVersion = response.appVersion;
             this.appId = response.appId;
+            this.persistentCaseTile = response.persistentCaseTile;
 
             if (response.commands) {
                 this.type = "commands";

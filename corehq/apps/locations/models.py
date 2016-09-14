@@ -101,7 +101,7 @@ class LocationType(models.Model):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=255)
     code = models.SlugField(db_index=False, null=True)
-    parent_type = models.ForeignKey('self', null=True)
+    parent_type = models.ForeignKey('self', null=True, on_delete=models.CASCADE)
     administrative = models.BooleanField(default=False)
     shares_cases = models.BooleanField(default=False)
     view_descendants = models.BooleanField(default=False)
@@ -110,6 +110,7 @@ class LocationType(models.Model):
         null=True,
         related_name='+',
         db_column='expand_from',
+        on_delete=models.CASCADE,
     )  # levels below this location type that we start expanding from
     _expand_from_root = models.BooleanField(default=False, db_column='expand_from_root')
     expand_to = models.ForeignKey('self', null=True, related_name='+')  # levels above this type that are synced
@@ -339,7 +340,7 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     name = models.CharField(max_length=100, null=True)
     location_id = models.CharField(max_length=100, db_index=True, unique=True)
     _migration_couch_id_name = "location_id"  # Used for SyncSQLToCouchMixin
-    location_type = models.ForeignKey(LocationType)
+    location_type = models.ForeignKey(LocationType, on_delete=models.CASCADE)
     site_code = models.CharField(max_length=255)
     external_id = models.CharField(max_length=255, null=True)
     metadata = jsonfield.JSONField(default=dict)
@@ -348,7 +349,7 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     is_archived = models.BooleanField(default=False)
     latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
     longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
-    parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
+    parent = TreeForeignKey('self', null=True, blank=True, related_name='children', on_delete=models.CASCADE)
 
     # Use getter and setter below to access this value
     # since stocks_all_products can cause an empty list to

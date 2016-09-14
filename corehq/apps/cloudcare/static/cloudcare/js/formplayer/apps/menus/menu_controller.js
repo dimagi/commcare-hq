@@ -48,13 +48,25 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             if (menuListView) {
                 FormplayerFrontend.regions.main.show(menuListView.render());
             }
+            if (menuResponse.persistentCaseTile) {
+                MenuList.Controller.showPersistentCaseTile(menuResponse.persistentCaseTile);
+            } else {
+                FormplayerFrontend.regions.persistentCaseTile.empty();
+            }
 
             if (menuResponse.breadcrumbs) {
                 MenuList.Controller.showBreadcrumbs(menuResponse.breadcrumbs);
+            } else {
+                FormplayerFrontend.regions.breadcrumb.empty();
             }
             if (menuResponse.appVersion) {
                 MenuList.Controller.showAppVersion(menuResponse.appVersion);
             }
+        },
+
+        showPersistentCaseTile: function (persistentCaseTile) {
+            var detailView = MenuList.Controller.getCaseTile(persistentCaseTile);
+            FormplayerFrontend.regions.persistentCaseTile.show(detailView.render());
         },
 
         showAppVersion: function (appVersion) {
@@ -86,22 +98,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 return;
             }
             var detailObject = detailObjects[detailTabIndex];
-            var headers = detailObject.headers;
-            var details = detailObject.details;
-            var detailModel = [];
-            // we need to map the details and headers JSON to a list for a Backbone Collection
-            for (var i = 0; i < headers.length; i++) {
-                var obj = {};
-                obj.data = details[i];
-                obj.header = headers[i];
-                obj.id = i;
-                detailModel.push(obj);
-            }
-            var detailCollection = new Backbone.Collection();
-            detailCollection.reset(detailModel);
-            var menuListView = new MenuList.DetailListView({
-                collection: detailCollection,
-            });
+            var menuListView = MenuList.Controller.getDetailList(detailObject);
 
             var tabModels = _.map(detailObjects, function (detail, index) {
                 return {title: detail.title, id: index};
@@ -122,6 +119,43 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             $('#case-detail-modal').find('.modal-body').html(menuListView.render().el);
             $('#case-detail-modal').modal('show');
         },
+
+        getDetailList: function (detailObject) {
+            var headers = detailObject.headers;
+            var details = detailObject.details;
+            var detailModel = [];
+            // we need to map the details and headers JSON to a list for a Backbone Collection
+            for (var i = 0; i < headers.length; i++) {
+                var obj = {};
+                obj.data = details[i];
+                obj.header = headers[i];
+                obj.id = i;
+                detailModel.push(obj);
+            }
+            var detailCollection = new Backbone.Collection();
+            detailCollection.reset(detailModel);
+            return new MenuList.DetailListView({
+                collection: detailCollection,
+            });
+        },
+
+        // return a case tile from a detail object (for persistent case tile)
+        getCaseTile: function (detailObject) {
+            var detailModel = [];
+            var obj = {};
+            obj.data = detailObject.details;
+            obj.id = 0;
+            detailModel.push(obj);
+            var detailCollection = new Backbone.Collection();
+            detailCollection.reset(detailModel);
+            return new MenuList.CaseTileListView({
+                collection: detailCollection,
+                styles: detailObject.styles,
+                tiles: detailObject.tiles,
+                maxWidth: detailObject.maxWidth,
+                maxHeight: detailObject.maxHeight,
+            });
+        },
     };
 
     MenuList.Util = {
@@ -141,6 +175,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 numEntitiesPerRow: menuResponse.numEntitiesPerRow,
                 maxHeight: menuResponse.maxHeight,
                 maxWidth: menuResponse.maxWidth,
+                useUniformUnits: menuResponse.useUniformUnits,
             };
             if (menuResponse.type === "commands") {
                 return new MenuList.MenuListView(menuData);

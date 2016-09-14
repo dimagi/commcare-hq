@@ -8,6 +8,6 @@ class DocTypeMigration(models.Model):
 
 
 class DocTypeMigrationCheckpoint(models.Model):
-    migration = models.ForeignKey(DocTypeMigration)
+    migration = models.ForeignKey(DocTypeMigration, on_delete=models.CASCADE)
     seq = models.TextField()
     timestamp = models.DateTimeField(auto_now=True)

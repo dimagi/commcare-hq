@@ -19,6 +19,7 @@ FormplayerFrontend.on("before:start", function () {
         regions: {
             main: "#menu-region",
             breadcrumb: "#breadcrumb-region",
+            persistentCaseTile: "#persistent-case-tile",
             phoneModeNavigation: '#phone-mode-navigation',
         },
     });
