@@ -1,17 +1,21 @@
 from django.test import SimpleTestCase
 
 from corehq.apps.couch_sql_migration.diff import (
-    filter_form_diffs, FORM_IGNORED_DIFFS, PARTIAL_DIFFS, DATE_FIELDS,
+    filter_form_diffs, FORM_IGNORED_DIFFS, PARTIAL_DIFFS,
     filter_case_diffs, CASE_IGNORED_DIFFS, filter_ledger_diffs
 )
 from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
+from corehq.util.test_utils import softer_assert
 
 DATE_DIFFS = [
     FormJsonDiff(
-        diff_type='diff', path=('prefix', path,),
+        diff_type='diff', path=('@date_modified',),
         old_value='2016-04-01T15:39:42Z', new_value='2016-04-01T15:39:42.000000Z'
-    )
-    for path in DATE_FIELDS
+    ),
+    FormJsonDiff(
+        diff_type='diff', path=('form', 'date_question'),
+        old_value='2014-07-07T15:59:00.000000Z', new_value="2014-07-07T10:29:00.000000Z"
+    ),
 ]
 
 DELETION_DIFFS = [

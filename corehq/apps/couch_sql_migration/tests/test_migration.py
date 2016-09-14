@@ -1,3 +1,4 @@
+import os
 import uuid
 
 from datetime import datetime
@@ -20,18 +21,23 @@ from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.tzmigration.models import TimezoneMigrationProgress
 from corehq.blobs import get_blob_db
-from corehq.blobs.mixin import BlobMixin
 from corehq.blobs.tests.util import TemporaryS3BlobDB
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors, LedgerAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import clear_local_domain_sql_backend_override
-from corehq.util.test_utils import create_and_save_a_form, create_and_save_a_case, set_parent_case, trap_extra_setup
+from corehq.util.test_utils import (
+    create_and_save_a_form, create_and_save_a_case, set_parent_case,
+    trap_extra_setup, TestFileMixin
+)
 from couchforms.models import XFormInstance
 
 
-class BaseMigrationTestCase(TestCase):
+class BaseMigrationTestCase(TestCase, TestFileMixin):
+    file_path = 'data',
+    root = os.path.dirname(__file__)
+
     def setUp(self):
         super(BaseMigrationTestCase, self).setUp()
         with trap_extra_setup(AttributeError, msg="S3_BLOB_DB_SETTINGS not configured"):
@@ -76,14 +82,14 @@ class MigrationTestCase(BaseMigrationTestCase):
         self._compare_diffs([])
 
     def test_basic_form_migration_with_timezones(self):
-        with open('corehq/apps/tzmigration/tests/data/form.xml') as f:
-            duplicate_form_xml = f.read()
-
+        form_xml = self.get_xml('tz_form')
         with override_settings(PHONE_TIMEZONES_HAVE_BEEN_PROCESSED=False,
                                PHONE_TIMEZONES_SHOULD_BE_PROCESSED=False):
-            submit_form_locally(duplicate_form_xml, self.domain_name)
+            submit_form_locally(form_xml, self.domain_name)
         self.assertEqual(1, len(self._get_form_ids()))
+        self.assertEqual(1, len(self._get_case_ids()))
         self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(1, len(self._get_case_ids()))
         self.assertEqual(1, len(self._get_form_ids()))
         self._compare_diffs([])
 

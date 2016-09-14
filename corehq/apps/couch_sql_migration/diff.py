@@ -1,6 +1,6 @@
 from itertools import groupby
 
-from corehq.apps.tzmigration.timezonemigration import is_datetime, FormJsonDiff
+from corehq.apps.tzmigration.timezonemigration import is_datetime_string, FormJsonDiff
 
 PARTIAL_DIFFS = {
     'XFormInstance*': [
@@ -114,17 +114,6 @@ CASE_IGNORED_DIFFS = (
     )
 )
 
-DATE_FIELDS = {
-    'modified_on',
-    'server_modified_on',
-    'opened_on',
-    'closed_on',
-    'timeStart',
-    'timeEnd',
-    '@date_modified',
-}
-
-
 RENAMED_FIELDS = {
     'XFormDeprecated': [('deprecated_date', 'edited_on')],
     'XFormInstance-Deleted': [('-deletion_id', 'deletion_id'), ('-deletion_date', 'deleted_on')],
@@ -209,14 +198,11 @@ def _check_renamed_fields(filtered_diffs, couch_field_name, sql_field_name):
 
 def _filter_date_diffs(diffs):
     def _both_dates(old, new):
-        return is_datetime(old) and is_datetime(new)
-
-    def _date_diff(diff):
-        return diff.diff_type in ('diff', 'complex') and diff.path[-1] in DATE_FIELDS
+        return is_datetime_string(old) and is_datetime_string(new)
 
     return [
         diff for diff in diffs
-        if not _date_diff(diff) or not _both_dates(diff.old_value, diff.new_value)
+        if diff.diff_type not in ('diff', 'complex') or not _both_dates(diff.old_value, diff.new_value)
     ]
 
 
