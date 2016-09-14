@@ -62,7 +62,33 @@ class PatientDetail(models.Model):
             domain='enikshay-np',
             case_id=self.PregId.strip(),
             case_name=self.pname,
+            # if can be blank (or null) should we skip adding the property?
             case_properties={
                 'name': self.pname,
+                #'aadhaar_number': self.paadharno,
+                'phi': self.PHI,
+                'first_name': self.first_name,
+                'middle_name': self.middle_name,
+                'last_name': self.last_name,
+                'age': self.page,
+                'sex': self.pgender,
+                'current_address': self.paddress,
+                'mobile_number': self.pmob,
             }
         )
+
+    @property
+    def first_name(self):
+        return self._list_of_names[0]
+
+    @property
+    def middle_name(self):
+        return ' '.join(self._list_of_names[1:-1])
+
+    @property
+    def last_name(self):
+        return self._list_of_names[-1]
+
+    @property
+    def _list_of_names(self):
+        return self.pname.split(' ')
