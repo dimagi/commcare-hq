@@ -79,6 +79,14 @@ class CCUserLocationAssignmentTest(TestCase):
         self.user.unset_location_by_id(self.loc2.location_id, fall_back_to_next=True)
         self.assertAssignedLocations([self.loc1.location_id])  # loc2 should be removed
         self.assertPrimaryLocation(self.loc1.location_id)  # loc1 should still be primary location
+        self.user.unset_location_by_id(self.loc1.location_id, fall_back_to_next=True)
+        self.assertAssignedLocations([])
+
+    def test_deleting_location_updates_user(self):
+        self.user.reset_locations(self.loc_ids)
+        self.loc1.full_delete()
+        self.loc2.full_delete()
+        self.assertAssignedLocations(CommCareUser.get(self.user._id).assigned_location_ids)
 
     def assertPrimaryLocation(self, expected):
         self.assertEqual(self.user.location_id, expected)
