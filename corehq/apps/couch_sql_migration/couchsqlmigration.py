@@ -23,6 +23,8 @@ from corehq.form_processor.utils.general import set_local_domain_sql_backend_ove
     clear_local_domain_sql_backend_override
 from corehq.util.log import with_progress_bar
 from couchforms.models import XFormInstance, doc_types as form_doc_types, all_known_formlike_doc_types
+from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from fluff.management.commands.ptop_reindexer_fluff import ReindexEventHandler
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
@@ -48,6 +50,8 @@ class CouchSqlDomainMigrator(object):
         db_filepath = get_diff_db_filepath(domain)
         self.diff_db = DiffDB.init(db_filepath)
 
+        self.errors_with_normal_doc_type = []
+
     def log_debug(self, message):
         if self.debug:
             print '[DEBUG] {}'.format(message)
@@ -65,6 +69,9 @@ class CouchSqlDomainMigrator(object):
         for change in self._with_progress(['XFormInstance'], changes):
             self.log_debug('Processing doc: {}({})'.format('XFormInstance', change.id))
             form = change.get_document()
+            if form.get('problem', None):
+                self.errors_with_normal_doc_type.append(change.id)
+                continue
             wrapped_form = XFormInstance.wrap(form)
             form_received = wrapped_form.received_on
             assert last_received_on <= form_received
@@ -88,30 +95,37 @@ class CouchSqlDomainMigrator(object):
         _save_migrated_models(sql_form, case_stock_result)
 
     def _copy_unprocessed_forms(self):
-        from corehq.apps.tzmigration.timezonemigration import json_diff
+        for couch_form_json in iter_docs(XFormInstance.get_db(), self.errors_with_normal_doc_type, chunksize=1000):
+            assert couch_form_json['problem']
+            couch_form_json['doc_type'] = 'XFormError'
+            self._migrate_unprocessed_form(couch_form_json)
 
         changes = _get_unprocessed_form_iterator(self.domain).iter_all_changes()
         for change in self._with_progress(UNPROCESSED_DOC_TYPES, changes):
             couch_form_json = change.get_document()
-            self.log_debug('Processing doc: {}({})'.format(couch_form_json['doc_type'], change.id))
-            couch_form = _wrap_form(couch_form_json)
-            sql_form = XFormInstanceSQL(
-                form_id=couch_form.form_id,
-                xmlns=couch_form.xmlns,
-                user_id=couch_form.user_id,
+            self._migrate_unprocessed_form(couch_form_json)
+
+    def _migrate_unprocessed_form(self, couch_form_json):
+        from corehq.apps.tzmigration.timezonemigration import json_diff
+        self.log_debug('Processing doc: {}({})'.format(couch_form_json['doc_type'], couch_form_json['_id']))
+        couch_form = _wrap_form(couch_form_json)
+        sql_form = XFormInstanceSQL(
+            form_id=couch_form.form_id,
+            xmlns=couch_form.xmlns,
+            user_id=couch_form.user_id,
+        )
+        _copy_form_properties(self.domain, sql_form, couch_form)
+        _migrate_form_attachments(sql_form, couch_form)
+        _migrate_form_operations(sql_form, couch_form)
+
+        if couch_form.doc_type != 'SubmissionErrorLog':
+            diffs = json_diff(couch_form.to_json(), sql_form.to_json(), track_list_indices=False)
+            self.diff_db.add_diffs(
+                couch_form.doc_type, couch_form.form_id,
+                filter_form_diffs(couch_form.doc_type, diffs)
             )
-            _copy_form_properties(self.domain, sql_form, couch_form)
-            _migrate_form_attachments(sql_form, couch_form)
-            _migrate_form_operations(sql_form, couch_form)
 
-            if couch_form.doc_type != 'SubmissionErrorLog':
-                diffs = json_diff(couch_form.to_json(), sql_form.to_json(), track_list_indices=False)
-                self.diff_db.add_diffs(
-                    couch_form.doc_type, couch_form.form_id,
-                    filter_form_diffs(couch_form.doc_type, diffs)
-                )
-
-            _save_migrated_models(sql_form)
+        _save_migrated_models(sql_form)
 
     def _copy_unprocessed_cases(self):
         doc_types = ['CommCareCase-Deleted']

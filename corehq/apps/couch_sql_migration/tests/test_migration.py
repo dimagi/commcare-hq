@@ -112,6 +112,26 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(1, len(self._get_form_ids('XFormError')))
         self._compare_diffs([])
 
+    def test_error_with_normal_doc_type_migration(self):
+        submit_form_locally(
+            """<data xmlns="example.com/foo">
+                <meta>
+                    <instanceID>im-a-bad-form</instanceID>
+                </meta>
+            <case case_id="" xmlns="http://commcarehq.org/case/transaction/v2">
+                <update><foo>bar</foo></update>
+            </case>
+            </data>""",
+            self.domain_name,
+        )
+        form = FormAccessors(self.domain_name).get_form('im-a-bad-form')
+        form_json = form.to_json()
+        form_json['doc_type'] = 'XFormInstance'
+        XFormInstance.wrap(form_json).save()
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(1, len(self._get_form_ids('XFormError')))
+        self._compare_diffs([])
+
     def test_duplicate_form_migration(self):
         with open('corehq/ex-submodules/couchforms/tests/data/posts/duplicate.xml') as f:
             duplicate_form_xml = f.read()
