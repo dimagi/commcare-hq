@@ -13,23 +13,25 @@ Welcome to CommCareHQ's documentation!
 	Here's a sample well-organized toc:
 	https://github.com/kennethreitz/python-guide/blob/master/docs/contents.rst.inc
 
+..
+  comment comment comment
 
 .. toctree::
    :maxdepth: 2
 
-   reporting
    change_feed
+   reporting
    api
    maps
-   ui_helpers
    class_views
+   ui_helpers
    forms
    management_commands
-   commtrack
    cloudcare
    translations
    profiling
    elasticsearch
+   commtrack
    es_query
    test_coverage
    advanced_app_features
