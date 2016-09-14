@@ -4757,11 +4757,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @absolute_url_property
     def odk_profile_url(self):
-        return reverse('corehq.apps.app_manager.views.download_odk_profile', args=[self.domain, self._id])
+        return reverse('download_odk_profile', args=[self.domain, self._id])
 
     @absolute_url_property
     def odk_media_profile_url(self):
-        return reverse('corehq.apps.app_manager.views.download_odk_media_profile', args=[self.domain, self._id])
+        return reverse('download_odk_media_profile', args=[self.domain, self._id])
 
     @property
     def odk_profile_display_url(self):
