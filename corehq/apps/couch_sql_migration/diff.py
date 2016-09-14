@@ -61,7 +61,7 @@ PARTIAL_DIFFS = {
         {'path': ('modified_by',)},
         {'path': ('indices', '[*]', 'case_id')},
         {'diff_type': 'diff', 'path': ('owner_id',), 'old_value': ''},
-        {'diff_type': 'diff', 'path': ('owner_id',), 'old_value': None},
+        {'diff_type': 'type', 'path': ('owner_id',), 'old_value': None},
     ],
     'LedgerValue': [
         {'path': ('_id',)},
