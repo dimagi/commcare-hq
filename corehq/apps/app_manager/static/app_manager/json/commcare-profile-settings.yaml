@@ -350,7 +350,7 @@
 - name: "Forms Menu Display"
   description: "Configure form menus display"
   id: "cc-grid-menus"
-  values: ["no", "yes", "some"]
+  values: ["none", "all", "some"]
   value_names: ["List", "Grid", " Enable Menu Display Setting Per-Module"]
   default: "none"
   disabled_default: "none"
