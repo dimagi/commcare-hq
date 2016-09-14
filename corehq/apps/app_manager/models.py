@@ -5706,7 +5706,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return self.cc_grid_menus_property == 'some'
 
     def grid_display_for_all_modules(self):
-        return self.cc_grid_menus_property == 'all'
+        return self.cc_grid_menus_property == 'yes'
 
     @property
     def cc_grid_menus_property(self):
