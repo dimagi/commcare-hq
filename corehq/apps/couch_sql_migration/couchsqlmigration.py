@@ -32,20 +32,25 @@ CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 UNPROCESSED_DOC_TYPES = list(all_known_formlike_doc_types() - {'XFormInstance'})
 
 
-def do_couch_to_sql_migration(domain, with_progress=True):
+def do_couch_to_sql_migration(domain, with_progress=True, debug=False):
     set_local_domain_sql_backend_override(domain)
-    CouchSqlDomainMigrator(domain, with_progress=with_progress).migrate()
+    CouchSqlDomainMigrator(domain, with_progress=with_progress, debug=debug).migrate()
 
 
 class CouchSqlDomainMigrator(object):
-    def __init__(self, domain, with_progress=True):
-        self.with_progress = with_progress
+    def __init__(self, domain, with_progress=True, debug=False):
         from corehq.apps.tzmigration.planning import DiffDB
-
         assert should_use_sql_backend(domain)
+
+        self.with_progress = with_progress
+        self.debug = debug
         self.domain = domain
         db_filepath = get_diff_db_filepath(domain)
         self.diff_db = DiffDB.init(db_filepath)
+
+    def log_debug(self, message):
+        if self.debug:
+            print '[DEBUG] {}'.format(message)
 
     def migrate(self):
         self._process_main_forms()
@@ -58,6 +63,7 @@ class CouchSqlDomainMigrator(object):
         # process main forms (including cases and ledgers)
         changes = _get_main_form_iterator(self.domain).iter_all_changes()
         for change in self._with_progress(['XFormInstance'], changes):
+            self.log_debug('Processing doc: {}({})'.format('XFormInstance', change.id))
             form = change.get_document()
             wrapped_form = XFormInstance.wrap(form)
             form_received = wrapped_form.received_on
@@ -87,6 +93,7 @@ class CouchSqlDomainMigrator(object):
         changes = _get_unprocessed_form_iterator(self.domain).iter_all_changes()
         for change in self._with_progress(UNPROCESSED_DOC_TYPES, changes):
             couch_form_json = change.get_document()
+            self.log_debug('Processing doc: {}({})'.format(couch_form_json['doc_type'], change.id))
             couch_form = _wrap_form(couch_form_json)
             sql_form = XFormInstanceSQL(
                 form_id=couch_form.form_id,
@@ -111,6 +118,7 @@ class CouchSqlDomainMigrator(object):
         changes = _get_case_iterator(self.domain, doc_types=doc_types).iter_all_changes()
         for change in self._with_progress(doc_types, changes):
             couch_case = CommCareCase.wrap(change.get_document())
+            self.log_debug('Processing doc: {}({})'.format(couch_case['doc_type'], change.id))
             sql_case = CommCareCaseSQL(
                 case_id=couch_case.case_id,
                 domain=self.domain,
@@ -150,6 +158,7 @@ class CouchSqlDomainMigrator(object):
 
     def _diff_cases(self, couch_cases):
         from corehq.apps.tzmigration.timezonemigration import json_diff
+        self.log_debug('Calculating case diffs for {} cases'.format(len(couch_cases)))
         case_ids = list(couch_cases)
         sql_cases = CaseAccessorSQL.get_cases(case_ids)
         for sql_case in sql_cases:
@@ -170,6 +179,8 @@ class CouchSqlDomainMigrator(object):
             state.ledger_reference: state
             for state in StockState.objects.filter(case_id__in=case_ids)
         }
+
+        self.log_debug('Calculating ledger diffs for {} cases'.format(len(case_ids)))
 
         for ledger_value in LedgerAccessorSQL.get_ledger_values_for_cases(case_ids):
             couch_state = couch_state_map.get(ledger_value.ledger_reference, None)
