@@ -21,12 +21,14 @@
     <script src="{% static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
     <script src="{% static 'datatables/media/js/dataTables.bootstrap.min.js' %}"></script>
     <style id="case-tiles-style"></style>
+    <style id="inner-tiles-container-style"></style>
+    <style id="outer-tiles-container-style"></style>
 {% endblock %}
 
 {% block stylesheets %}
     {% compress css %}
         <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
-        <link rel="stylesheet" href="{% static 'jquery-ui/themes/base/jquery-ui.min.css' %}">
+        <link rel="stylesheet" href="{% static 'datetimepicker/build/jquery.datetimepicker.min.css' %}">
         <link type="text/css"
               rel="stylesheet"
               media="all"
@@ -76,6 +78,7 @@
             "username": username,
             "domain": domain,
             "formplayer_url": formplayer_url,
+            "gridPolyfillPath": "{% static 'css-grid-polyfill-binaries/css-polyfills.js' %}",
         };
         FormplayerFrontend.start(options);
     </script>
@@ -92,9 +95,11 @@
         <section id="cases"></section>
         <div id="menu-container">
             <div id="breadcrumb-region" class="container"></div>
+            <div id="persistent-case-tile" class="container"></div>
             <div id="menu-region" class="container"></div>
         </div>
         <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
+        <small id="version-info"></small>
         {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
             <section id="cloudcare-debugger" data-bind="
             template: {

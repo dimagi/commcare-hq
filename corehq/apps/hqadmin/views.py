@@ -486,12 +486,14 @@ class AdminRestoreView(TemplateView):
         string_payload = ''.join(response.streaming_content)
         xml_payload = etree.fromstring(string_payload)
         restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
+        num_cases = len(xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case'))
         formatted_payload = etree.tostring(xml_payload, pretty_print=True)
         context.update({
             'payload': formatted_payload,
             'restore_id': restore_id_element.text if restore_id_element is not None else None,
             'status_code': response.status_code,
-            'timing_data': timing_context.to_list()
+            'timing_data': timing_context.to_list(),
+            'num_cases': num_cases,
         })
         return context
 

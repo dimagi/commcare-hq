@@ -35,8 +35,6 @@ except ImportError:
 from django.db.utils import OperationalError
 from django_nose.plugin import DatabaseContext
 
-from corehq.tests.optimizer import optimize_apps_for_test_labels
-
 log = logging.getLogger(__name__)
 
 
@@ -171,63 +169,6 @@ class ErrorOnDbAccessContext(object):
         self.db_patch.stop()
 
 
-class AppLabelsPlugin(Plugin):
-    """A plugin that supplies a list of app labels for the migration optimizer
-
-    See `corehq.tests.optimizer`
-    """
-    enabled = True
-    user_specified_test_names = []  # globally referenced singleton
-
-    def options(self, parser, env):
-        parser.add_option('--no-migration-optimizer', action="store_true",
-                          default=env.get('NOSE_NO_MIGRATION_OPTIMIZER'),
-                          help="Disable migration optimizer. "
-                               "[NOSE_NO_MIGRATION_OPTIMIZER]")
-
-    def configure(self, options, conf):
-        type(self).enabled = not options.no_migration_optimizer
-
-    def loadTestsFromNames(self, names, module=None):
-        if names == ['.'] and os.getcwd() == settings.BASE_DIR:
-            # no user specified names
-            return
-        type(self).user_specified_test_names = names
-
-    @classmethod
-    def get_test_labels(cls, tests):
-        """Get a list of app labels and possibly tests for the db app optimizer
-
-        This should be called after `loadTestsFromNames` has been called.
-        """
-        test_apps = set(app.name for app in apps.get_app_configs()
-                        if app.name not in settings.APPS_TO_EXCLUDE_FROM_TESTS
-                        and not app.name.startswith('django.'))
-        if not cls.user_specified_test_names:
-            return [AppConfig.create(app).label for app in test_apps]
-
-        def iter_names(test):
-            # a.b.c -> a.b.c, a.b, a
-            if isinstance(test.context, type):
-                name = test.context.__module__
-            elif isinstance(test.context, types.ModuleType):
-                name = test.context.__name__
-            else:
-                raise RuntimeError("unknown test type: {!r}".format(test))
-            parts = name.split(".")
-            num_parts = len(parts)
-            for i in range(num_parts):
-                yield ".".join(parts[:num_parts - i])
-
-        labels = set()
-        for test in tests:
-            for name in iter_names(test):
-                if name in test_apps:
-                    labels.add((AppConfig.create(name).label, test.context))
-                    break
-        return list(labels)
-
-
 class HqdbContext(DatabaseContext):
     """Database setup/teardown
 
@@ -246,19 +187,14 @@ class HqdbContext(DatabaseContext):
       databses, but do not teardown after running tests. This is
       convenient when the existing databases are outdated and need to be
       rebuilt.
-    - `REUSE_DB=optimize` : same as reset, but use migration optimizer
-      to reduce the number of database migrations.
     - `REUSE_DB=teardown` : skip database setup; do normal teardown after
       running tests.
     """
 
     def __init__(self, tests, runner):
         reuse_db = os.environ.get("REUSE_DB")
-        self.skip_setup_for_reuse_db = reuse_db and reuse_db not in ["reset", "optimize"]
+        self.skip_setup_for_reuse_db = reuse_db and reuse_db != "reset"
         self.skip_teardown_for_reuse_db = reuse_db and reuse_db != "teardown"
-        self.optimize_migrations = AppLabelsPlugin.enabled and reuse_db in [None, "optimize"]
-        if self.optimize_migrations:
-            self.test_labels = AppLabelsPlugin.get_test_labels(tests)
         super(HqdbContext, self).__init__(tests, runner)
 
     @classmethod
@@ -274,10 +210,6 @@ class HqdbContext(DatabaseContext):
     def setup(self):
         if self.should_skip_test_setup():
             return
-
-        if self.optimize_migrations:
-            self.optimizer = optimize_apps_for_test_labels(self.test_labels)
-            self.optimizer.__enter__()
 
         from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
         self.blob_db = TemporaryFilesystemBlobDB()
@@ -314,8 +246,6 @@ class HqdbContext(DatabaseContext):
             return
 
         self.blob_db.close()
-        if self.optimize_migrations:
-            self.optimizer.__exit__(None, None, None)
 
         if self.skip_teardown_for_reuse_db:
             return

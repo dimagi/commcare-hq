@@ -267,7 +267,7 @@ class DetailContributor(SectionContributor):
                 style=Style(
                     horz_align="center",
                     font_size="large",
-                    grid_height=2,
+                    grid_height=1,
                     grid_width=12,
                     grid_x=0,
                     grid_y=0,

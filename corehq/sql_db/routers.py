@@ -5,6 +5,7 @@ from .config import PartitionConfig
 PROXY_APP = 'sql_proxy_accessors'
 FORM_PROCESSOR_APP = 'form_processor'
 SQL_ACCESSORS_APP = 'sql_accessors'
+ICDS_REPORTS_APP = 'icds_reports'
 
 
 class PartitionRouter(object):
@@ -27,6 +28,9 @@ class MonolithRouter(object):
 
 
 def allow_migrate(db, app_label):
+    if app_label == ICDS_REPORTS_APP:
+        return hasattr(settings, "ICDS_UCR_DATABASE_ALIAS") and db == settings.ICDS_UCR_DATABASE_ALIAS
+
     if not settings.USE_PARTITIONED_DATABASE:
         return app_label != PROXY_APP
 

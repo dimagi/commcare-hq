@@ -101,7 +101,6 @@ class TestPartitionConfig(SimpleTestCase):
 
 @override_settings(DATABASES=TEST_DATABASES)
 class PlProxyTests(SimpleTestCase):
-    dependent_apps = []
 
     def test_get_server_option_string(self):
         self.assertEqual(

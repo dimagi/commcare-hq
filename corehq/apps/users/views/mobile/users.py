@@ -149,10 +149,9 @@ class EditCommCareUserView(BaseEditUserView):
             user = CommCareUser.get_by_user_id(self.editable_user_id, self.domain)
         except (ResourceNotFound, CouchUser.AccountTypeError, KeyError):
             raise Http404()
-        else:
-            if not user or not _can_edit_workers_location(self.couch_user, user):
-                raise Http404()
-            return user
+        if not user or not _can_edit_workers_location(self.couch_user, user):
+            raise Http404()
+        return user
 
     @property
     def edit_user_form_title(self):

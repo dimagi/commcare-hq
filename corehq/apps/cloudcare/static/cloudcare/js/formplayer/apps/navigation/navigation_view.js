@@ -11,9 +11,8 @@ FormplayerFrontend.module("Navigation", function (Navigation, FormplayerFrontend
         className: 'formplayer-phone-navigation',
         template: '#formplayer-phone-navigation-template',
         events: {
-            'click .js-formplayer-back': 'onBack',
-            'click .js-formplayer-reload': 'onReload',
-            'click .js-formplayer-clear-user-data': 'onClearUserData',
+            'click .formplayer-back': 'onBack',
+            'click .formplayer-reload': 'onReload',
         },
         initialize: function(options) {
             this.appId = options.appId;
@@ -21,10 +20,6 @@ FormplayerFrontend.module("Navigation", function (Navigation, FormplayerFrontend
         onBack: function(e) {
             e.preventDefault();
             window.history.back();
-        },
-        onClearUserData: function(e) {
-            e.preventDefault();
-            FormplayerFrontend.trigger('clearUserData', this.appId);
         },
         onReload: function(e) {
             e.preventDefault();

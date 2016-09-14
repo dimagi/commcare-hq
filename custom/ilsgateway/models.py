@@ -220,7 +220,7 @@ class GroupSummary(models.Model):
     Warehouse data related to a particular category of reporting
     (e.g. stock on hand summary)
     """
-    org_summary = models.ForeignKey('OrganizationSummary')
+    org_summary = models.ForeignKey('OrganizationSummary', on_delete=models.CASCADE)
     title = models.CharField(max_length=50, blank=True, null=True)  # SOH
     total = models.PositiveIntegerField(default=0)
     responded = models.PositiveIntegerField(default=0)
@@ -468,7 +468,7 @@ class ILSNotes(models.Model):
 
 class PendingReportingDataRecalculation(models.Model):
     domain = models.CharField(max_length=128)
-    sql_location = models.ForeignKey(SQLLocation)
+    sql_location = models.ForeignKey(SQLLocation, on_delete=models.CASCADE)
     type = models.CharField(max_length=128)
     data = jsonfield.JSONField()
 
@@ -478,7 +478,7 @@ class PendingReportingDataRecalculation(models.Model):
 
 class SLABConfig(models.Model):
     is_pilot = models.BooleanField(default=False)
-    sql_location = models.OneToOneField(SQLLocation, null=False)
+    sql_location = models.OneToOneField(SQLLocation, null=False, on_delete=models.CASCADE)
     closest_supply_points = models.ManyToManyField(SQLLocation, related_name='+')
 
     class Meta:

@@ -5,6 +5,7 @@ from datetime import datetime
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.management import call_command
 from django.test import TestCase
+from django.test import override_settings
 
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.commtrack.helpers import make_product
@@ -13,9 +14,9 @@ from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
-from corehq.apps.tzmigration import TimezoneMigrationProgress
+from corehq.apps.tzmigration.models import TimezoneMigrationProgress
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors, LedgerAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -59,6 +60,18 @@ class BaseMigrationTestCase(TestCase):
 class MigrationTestCase(BaseMigrationTestCase):
     def test_basic_form_migration(self):
         create_and_save_a_form(self.domain_name)
+        self.assertEqual(1, len(self._get_form_ids()))
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(1, len(self._get_form_ids()))
+        self._compare_diffs([])
+
+    def test_basic_form_migration_with_timezones(self):
+        with open('corehq/apps/tzmigration/tests/data/form.xml') as f:
+            duplicate_form_xml = f.read()
+
+        with override_settings(PHONE_TIMEZONES_HAVE_BEEN_PROCESSED=False,
+                               PHONE_TIMEZONES_SHOULD_BE_PROCESSED=False):
+            submit_form_locally(duplicate_form_xml, self.domain_name)
         self.assertEqual(1, len(self._get_form_ids()))
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(1, len(self._get_form_ids()))
@@ -141,6 +154,28 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(1, len(self._get_case_ids()))
         self._compare_diffs([])
 
+    def test_old_form_metadata_migration(self):
+        form_with_old_meta = """<?xml version="1.0" ?>
+            <system uiVersion="1" version="1" xmlns="http://commcarehq.org/case">
+                <meta xmlns="http://openrosa.org/jr/xforms">
+                    <deviceID/>
+                    <timeStart>2013-09-18T11:41:17Z</timeStart>
+                    <timeEnd>2013-09-18T11:41:17Z</timeEnd>
+                    <username>nnestle@dimagi.com</username>
+                    <userID>06d75f978d3370f5b277b2685626b653</userID>
+                    <uid>efe8d4306a7b426681daf33df41da46c</uid>
+                </meta>
+                <data>
+                    <p1>123</p1>
+                </data>
+            </system>
+        """
+        submit_form_locally(form_with_old_meta, self.domain_name)
+        self.assertEqual(1, len(self._get_form_ids()))
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(1, len(self._get_form_ids()))
+        self._compare_diffs([])
+
     def test_deleted_form_migration(self):
         form = create_and_save_a_form(self.domain_name)
         FormAccessors(self.domain.name).soft_delete_forms(
@@ -179,6 +214,31 @@ class MigrationTestCase(BaseMigrationTestCase):
 
     def test_basic_case_migration(self):
         create_and_save_a_case(self.domain_name, case_id=uuid.uuid4().hex, case_name='test case')
+        self.assertEqual(1, len(self._get_case_ids()))
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(1, len(self._get_case_ids()))
+        self._compare_diffs([])
+
+    def test_basic_case_migration_case_name(self):
+        case_id = uuid.uuid4().hex
+        submit_case_blocks(
+            CaseBlock(
+                case_id,
+                case_type='migrate',
+                create=True,
+                update={'p1': 1},
+            ).as_string(),
+            self.domain_name
+        )
+
+        submit_case_blocks(
+            CaseBlock(
+                case_id,
+                update={'name': 'test21'},
+            ).as_string(),
+            self.domain_name
+        )
+
         self.assertEqual(1, len(self._get_case_ids()))
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(1, len(self._get_case_ids()))

@@ -56,6 +56,24 @@ class SplitColumnTest(SimpleTestCase):
             [1, None, "b d"]
         )
 
+    def test_get_value_numerical(self):
+        column = SplitExportColumn(
+            item=MultipleChoiceItem(
+                path=[PathNode(name='form'), PathNode(name='q1')],
+                options=[Option(value='1'), Option(value='2')]
+            ),
+            ignore_unspecified_options=False
+        )
+        doc = {"q1": 3}
+        self.assertEqual(column.get_value(
+            'domain',
+            'docid',
+            doc,
+            [PathNode(name='form')],
+            split_column=True),
+            [None, None, 3]
+        )
+
     def test_ignore_extas(self):
         column = SplitExportColumn(
             item=MultipleChoiceItem(

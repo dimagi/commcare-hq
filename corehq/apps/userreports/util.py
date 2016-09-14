@@ -1,6 +1,7 @@
 import collections
 import hashlib
 
+from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from corehq.util.soft_assert import soft_assert
@@ -113,16 +114,12 @@ def get_indicator_adapter(config, raise_errors=False):
     from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter
     from corehq.apps.userreports.es.adapter import IndicatorESAdapter
 
-    if config.backend_id == UCR_SQL_BACKEND:
+    if get_backend_id(config) == UCR_ES_BACKEND:
+        return IndicatorESAdapter(config)
+    else:
         if raise_errors:
             return ErrorRaisingIndicatorSqlAdapter(config)
         return IndicatorSqlAdapter(config)
-    elif config.backend_id == UCR_ES_BACKEND:
-        return IndicatorESAdapter(config)
-    else:
-        _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
-        _soft_assert(False, "Backend id not found in config")
-        raise BadBuilderConfigError(_("The data source was not found"))
 
 
 def get_table_name(domain, table_id):
@@ -133,6 +130,10 @@ def get_table_name(domain, table_id):
         'config_report_{}_{}_{}'.format(domain, table_id, _hash(domain, table_id)),
         from_left=False
     )
+
+
+def is_ucr_table(table_name):
+    return table_name.startswith('config_report_')
 
 
 def truncate_value(value, max_length=63, from_left=True):
@@ -156,3 +157,9 @@ def truncate_value(value, max_length=63, from_left=True):
 def get_ucr_es_indices():
     sources = get_all_es_data_sources()
     return [get_table_name(s.domain, s.table_id) for s in sources]
+
+
+def get_backend_id(config):
+    if settings.OVERRIDE_UCR_BACKEND:
+        return settings.OVERRIDE_UCR_BACKEND
+    return config.backend_id

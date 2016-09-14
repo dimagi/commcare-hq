@@ -24,7 +24,7 @@ from corehq.apps.commtrack import const
 from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml, FIXED_USER, extract_balance_xml, \
     get_single_balance_block, get_single_transfer_block
 from casexml.apps.case.tests.util import check_xml_line_by_line, check_user_has_case
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.commtrack.const import DAYS_IN_MONTH
 from corehq.apps.commtrack.tests.data.balances import (

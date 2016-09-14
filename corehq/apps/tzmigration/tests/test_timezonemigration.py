@@ -7,11 +7,11 @@ from corehq.util.test_utils import TestFileMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
-from corehq.apps.tzmigration import set_migration_complete, \
+from corehq.apps.tzmigration.api import set_migration_complete, \
     set_migration_started, TimezoneMigrationProgress, MigrationStatus
 from corehq.apps.tzmigration.timezonemigration import \
     run_timezone_migration_for_domain, _run_timezone_migration_for_domain
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from couchforms.dbaccessors import get_forms_by_type
 from couchforms.models import XFormInstance
 

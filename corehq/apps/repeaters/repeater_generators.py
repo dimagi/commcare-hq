@@ -7,7 +7,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from casexml.apps.case.xform import cases_referenced_by_xform
 
 from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater, \
-    AppStructureRepeater, RegisterGenerator
+    AppStructureRepeater, GeneratorCollection
 
 from casexml.apps.case.xml import V2
 
@@ -47,6 +47,71 @@ class BasePayloadGenerator(object):
             "<TestString>Test post from CommCareHQ on %s</TestString>"
             "</data>" % datetime.utcnow()
         )
+
+    def handle_success(self, response, payload_doc):
+        """handle a successful post
+
+        e.g. could be used to store something to the payload_doc once a
+        response is recieved
+
+        """
+        return True
+
+    def handle_failure(self, response, payload_doc):
+        """handle a failed post
+        """
+        return True
+
+
+class RegisterGenerator(object):
+    """Decorator to register new formats and Payload generators for Repeaters
+
+    args:
+        repeater_cls: A child class of Repeater for which the new format is being added
+        format_name: unique identifier for the format
+        format_label: description for the format
+
+    kwargs:
+        is_default: whether the format is default to the repeater_cls
+    """
+
+    generators = {}
+
+    def __init__(self, repeater_cls, format_name, format_label, is_default=False):
+        self.format_name = format_name
+        self.format_label = format_label
+        self.repeater_cls = repeater_cls
+        self.label = format_label
+        self.is_default = is_default
+
+    def __call__(self, generator_class):
+        if not self.repeater_cls in RegisterGenerator.generators:
+            RegisterGenerator.generators[self.repeater_cls] = GeneratorCollection(self.repeater_cls)
+        RegisterGenerator.generators[self.repeater_cls].add_new_format(
+            self.format_name,
+            self.format_label,
+            generator_class,
+            is_default=self.is_default
+        )
+        return generator_class
+
+    @classmethod
+    def generator_class_by_repeater_format(cls, repeater_class, format_name):
+        """Return generator class given a Repeater class and format_name"""
+        generator_collection = cls.generators[repeater_class]
+        return generator_collection.get_generator_by_format(format_name)
+
+    @classmethod
+    def all_formats_by_repeater(cls, repeater_class, for_domain=None):
+        """Return all formats for a given Repeater class"""
+        generator_collection = cls.generators[repeater_class]
+        return generator_collection.get_all_formats(for_domain=for_domain)
+
+    @classmethod
+    def default_format_by_repeater(cls, repeater_class):
+        """Return default format_name for a Repeater class"""
+        generator_collection = cls.generators[repeater_class]
+        return generator_collection.get_default_format()
 
 
 @RegisterGenerator(FormRepeater, 'form_xml', 'XML', is_default=True)

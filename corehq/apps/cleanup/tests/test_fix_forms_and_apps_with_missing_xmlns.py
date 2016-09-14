@@ -17,7 +17,7 @@ from corehq.apps.cleanup.management.commands.fix_forms_and_apps_with_missing_xml
     set_xmlns_on_form,
 )
 from corehq.apps.cleanup.tasks import fix_xforms_with_missing_xmlns
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.xform import transform_xform_for_elasticsearch

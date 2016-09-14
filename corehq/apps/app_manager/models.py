@@ -2168,6 +2168,9 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     def uses_usercase(self):
         return False
 
+    def add_insert_form(self, from_module, form, index=None, with_source=False):
+        raise IncompatibleFormTypeException()
+
 
 class ModuleDetailsMixin():
 
@@ -5466,6 +5469,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def _copy_form(self, from_module, form, to_module, *args, **kwargs):
         if not form.source:
             raise BlankXFormError()
+
+        if from_module['case_type'] != to_module['case_type']:
+            raise ConflictingCaseTypeError()
+
         copy_source = deepcopy(form.to_json())
         if 'unique_id' in copy_source:
             del copy_source['unique_id']
@@ -5477,9 +5484,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         copy_form = to_module.add_insert_form(from_module, FormBase.wrap(copy_source))
         save_xform(self, copy_form, form.source)
-
-        if from_module['case_type'] != to_module['case_type']:
-            raise ConflictingCaseTypeError()
 
     @cached_property
     def has_case_management(self):

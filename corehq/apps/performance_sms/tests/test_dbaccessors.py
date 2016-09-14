@@ -6,7 +6,6 @@ from corehq.apps.performance_sms.models import PerformanceConfiguration
 
 
 class TestPerformanceDbaccessors(TestCase):
-    dependent_apps = ['corehq.couchapps']
 
     def test_by_domain(self):
         domain = uuid.uuid4().hex

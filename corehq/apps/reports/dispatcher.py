@@ -1,19 +1,23 @@
-from django.utils.decorators import method_decorator
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponseBadRequest
-from django.views.generic.base import View
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext
-from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.domain.decorators import login_and_domain_required, cls_to_view
+from django.views.generic.base import View
+
 from dimagi.utils.decorators.datespan import datespan_in_request
+
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 
-from corehq.apps.domain.models import Domain
-from corehq.apps.reports.exceptions import BadRequestError
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.domain.decorators import login_and_domain_required, cls_to_view
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.utils import get_domain_module_map
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.reports.exceptions import BadRequestError
+
 
 datespan_default = datespan_in_request(
     from_param="startdate",
@@ -72,7 +76,6 @@ class ReportDispatcher(View):
     def get_reports(self, domain=None):
         attr_name = self.map_name
         from corehq import reports
-        domain_module = Domain.get_module_by_name(domain)
         if domain:
             project = Domain.get_by_name(domain)
         else:
@@ -84,7 +87,22 @@ class ReportDispatcher(View):
             return tuple(reports)
 
         corehq_reports = process(getattr(reports, attr_name, ()))
-        custom_reports = process(getattr(domain_module, attr_name, ()))
+
+        module_name = get_domain_module_map().get(domain)
+        if module_name is None:
+            custom_reports = ()
+        else:
+            module = __import__(module_name, fromlist=['reports'])
+            if hasattr(module, 'reports'):
+                reports = getattr(module, 'reports')
+                custom_reports = process(getattr(reports, attr_name, ()))
+            else:
+                custom_reports = ()
+
+            # soon to be removed
+            if not custom_reports:
+                domain_module = Domain.get_module_by_name(domain)
+                custom_reports = process(getattr(domain_module, attr_name, ()))
 
         return corehq_reports + custom_reports
 

@@ -7,7 +7,7 @@ from django.test.utils import override_settings
 
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml.parser import case_update_from_block
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from casexml.apps.case.tests.util import check_xml_line_by_line, CaseBlock, delete_all_cases
 from datetime import datetime
 from casexml.apps.case.xml import V2, V2_NAMESPACE

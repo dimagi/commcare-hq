@@ -18,7 +18,7 @@ from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, Use
 from casexml.apps.case.xml import V2
 from corehq.toggles import ASYNC_RESTORE
 from corehq.apps.commtrack.exceptions import MissingProductId
-from corehq.apps.tzmigration import timezone_migration_in_progress
+from corehq.apps.tzmigration.api import timezone_migration_in_progress
 from corehq.form_processor.exceptions import CouchSaveAborted
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -118,9 +118,8 @@ class SubmissionPost(object):
 
     def _post_process_form(self, xform):
         self._set_submission_properties(xform)
-        if xform.is_submission_error_log:
-            found_old = scrub_meta(xform)
-            legacy_notification_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
+        found_old = scrub_meta(xform)
+        legacy_notification_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
 
     def run(self):
         failure_result = self._handle_basic_failure_modes()

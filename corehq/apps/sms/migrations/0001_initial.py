@@ -49,7 +49,7 @@ class Migration(migrations.Migration):
                 ('status', models.CharField(max_length=3, choices=[(b'PRG', b'In Progress'), (b'CMP', b'Completed'), (b'NOT', b'Not Completed'), (b'ERR', b'Error')])),
                 ('error_code', models.CharField(max_length=126, null=True)),
                 ('additional_error_text', models.TextField(null=True)),
-                ('parent', models.ForeignKey(to='sms.MessagingEvent')),
+                ('parent', models.ForeignKey(to='sms.MessagingEvent', on_delete=models.CASCADE)),
                 ('xforms_session', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='smsforms.SQLXFormsSession', null=True)),
             ],
             options={

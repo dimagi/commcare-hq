@@ -104,6 +104,7 @@
             {% if headers.custom_sort %}customSort: {{ headers.custom_sort|JSON }},{% endif %}
 
             ajaxSource: '{{ url }}',
+            ajaxMethod: '{{ method }}',
             ajaxParams: function() {
                 return $('#paramSelectorForm').serializeArray();
             },

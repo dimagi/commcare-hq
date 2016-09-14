@@ -32,7 +32,7 @@ class ZiplineDataSource(object):
     @property
     @memoized
     def sql_location(self):
-        from custom.ilsgateway import ROOT_LOCATION_TYPE
+        from custom.ilsgateway.reports import ROOT_LOCATION_TYPE
         if not self.location_id:
             return get_object_or_404(SQLLocation, domain=self.domain, location_type__name=ROOT_LOCATION_TYPE)
         else:

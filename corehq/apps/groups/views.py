@@ -120,7 +120,13 @@ def edit_group(request, domain, group_id):
 def update_group_data(request, domain, group_id):
     group = Group.get(group_id)
     if group.domain == domain:
-        updated_data = json.loads(request.POST["group-data"])
+        try:
+            updated_data = json.loads(request.POST["group-data"])
+        except ValueError:
+            messages.error(request, _(
+                "Unable to update group data. Please check the key-value mappings and try to update again."
+            ))
+            return HttpResponseRedirect(request.META['HTTP_REFERER'])
         group.metadata = updated_data
         group.save()
         messages.success(request, _("Group '%s' data updated!") % group.name)
