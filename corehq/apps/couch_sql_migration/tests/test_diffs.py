@@ -22,7 +22,6 @@ DELETION_DIFFS = [
 ]
 
 REAL_DIFFS = [
-    FormJsonDiff(diff_type='type', path=('@xmlns',), old_value='http://xmlns1', new_value='http://xmlns1'),
     FormJsonDiff(diff_type='diff', path=('name',), old_value='Form1', new_value='Form2'),
     FormJsonDiff(diff_type='missing', path=('random_field',), old_value='legacy value', new_value=Ellipsis),
     FormJsonDiff(diff_type='type', path=('timeStart',), old_value='2016-04-01T15:39:42Z', new_value='not a date'),

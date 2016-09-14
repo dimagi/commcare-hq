@@ -1,3 +1,5 @@
+from itertools import groupby
+
 from corehq.apps.tzmigration.timezonemigration import is_datetime, FormJsonDiff
 
 PARTIAL_DIFFS = {
@@ -44,6 +46,8 @@ PARTIAL_DIFFS = {
         {'path': ('initial_processing_complete',)},
         {'path': ('actions', '[*]')},
         {'path': ('id',)},
+        {'path': ('@xmlns',)},
+        {'path': ('_attachments',)},
         {'path': ('#export_tag',)},
         {'path': ('computed_',)},
         {'path': ('version',)},
@@ -60,6 +64,16 @@ PARTIAL_DIFFS = {
     ],
     'LedgerValue': [
         {'path': ('_id',)},
+    ],
+    'case_attachment': [
+        {'path': ('doc_type',)},
+        {'path': ('attachment_properties',)},
+        {'path': ('attachment_from',)},
+        {'path': ('attachment_src',)},
+        {'path': ('content_type',)},
+        {'path': ('server_mime',)},
+        {'path': ('attachment_name',)},
+        {'path': ('server_md5',)},
     ]
 }
 
@@ -109,6 +123,7 @@ RENAMED_FIELDS = {
     'XFormDeprecated': [('deprecated_date', 'edited_on')],
     'XFormInstance-Deleted': [('-deletion_id', 'deletion_id'), ('-deletion_date', 'deleted_on')],
     'CommCareCase-Deleted': [('-deletion_id', 'deletion_id'), ('-deletion_date', 'deleted_on')],
+    'case_attachment': [('attachment_size', 'content_length'), ('identifier', 'name')],
 }
 
 
@@ -129,6 +144,7 @@ def filter_case_diffs(couch_case, sql_case, diffs):
     filtered_diffs = _filter_date_diffs(filtered_diffs)
     filtered_diffs = _filter_user_case_diffs(couch_case, filtered_diffs)
     filtered_diffs = _filter_xform_id_diffs(couch_case, sql_case, filtered_diffs)
+    filtered_diffs = _filter_case_attachment_diffs(filtered_diffs)
     return filtered_diffs
 
 
@@ -224,3 +240,32 @@ def _filter_xform_id_diffs(couch_case, sql_case, diffs):
         return diffs
 
     return [diff for diff in diffs if diff not in xform_id_diffs]
+
+
+def _filter_case_attachment_diffs(diffs):
+    attachment_diffs = [diff for diff in diffs if diff.path[0] == 'case_attachments']
+    if not attachment_diffs:
+        return diffs
+
+    diffs = [diff for diff in diffs if diff not in attachment_diffs]
+
+    grouped_diffs = groupby(attachment_diffs, lambda diff: diff.path[1])
+    for name, group in grouped_diffs:
+        group = list(group)
+        normalized_diffs = [
+            FormJsonDiff(diff_type=diff.diff_type, path=(diff.path[-1],), old_value=diff.old_value, new_value=diff.new_value)
+            for diff in group
+        ]
+        filtered = _filter_partial_matches(normalized_diffs, PARTIAL_DIFFS['case_attachment'])
+        filtered = _filter_renamed_fields(filtered, 'case_attachment')
+        print filtered
+        if filtered:
+            diffs.extend([
+                FormJsonDiff(
+                    diff_type=diff.diff_type, path=(u'case_attachments', name, diff.path[-1]),
+                    old_value=diff.old_value, new_value=diff.new_value
+                ) for diff in filtered
+            ])
+
+    return diffs
+
