@@ -373,18 +373,21 @@ def _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info, case_
 
     if not (os.path.isfile(fpath) and use_transfer):  # Don't rebuild the file if it is already there
         with open(fpath, 'wb') as zfile:
-            with zipfile.ZipFile(zfile, 'w') as z:
+            with zipfile.ZipFile(zfile, 'w') as multimedia_zipfile:
                 for form_number, form_info in enumerate(forms_info):
-                    f = form_info['form']
-                    for a in form_info['attachments']:
-                        fname = _format_filename(
+                    form = form_info['form']
+                    for attachment in form_info['attachments']:
+                        filename = _format_filename(
                             form_info,
-                            a['question_id'],
-                            a['extension'],
+                            attachment['question_id'],
+                            attachment['extension'],
                             case_id_to_name
                         )
-                        zi = zipfile.ZipInfo(fname, a['timestamp'])
-                        z.writestr(zi, f.get_attachment(a['name']), zipfile.ZIP_STORED)
+                        zip_info = zipfile.ZipInfo(filename, attachment['timestamp'])
+                        multimedia_zipfile.writestr(zip_info, form.get_attachment(
+                            attachment['name']),
+                            zipfile.ZIP_STORED
+                        )
                     DownloadBase.set_progress(build_form_multimedia_zip, form_number + 1, num_forms)
 
 
