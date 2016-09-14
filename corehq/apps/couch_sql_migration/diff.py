@@ -106,6 +106,10 @@ CASE_IGNORED_DIFFS = (
     FormJsonDiff(diff_type=u'missing', path=(u'closed_by',), old_value=Ellipsis, new_value=None),
     FormJsonDiff(diff_type=u'type', path=(u'external_id',), old_value=u'', new_value=None),
     FormJsonDiff(diff_type=u'missing', path=(u'deleted_on',), old_value=Ellipsis, new_value=None),
+    FormJsonDiff(
+        diff_type=u'missing', path=(u'indices', u'[*]', u'relationship'),
+        old_value=Ellipsis, new_value=u'child'
+    )
 )
 
 DATE_FIELDS = {
