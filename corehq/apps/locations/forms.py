@@ -131,7 +131,7 @@ class LocationForm(forms.Form):
             return filter(None, [
                 _("Location Information"),
                 'name',
-                'location_type' if len(self._get_allowed_types(self.location.parent)) > 1 else None,
+                'location_type' if len(self._get_allowed_types(self.domain, self.location.parent)) > 1 else None,
             ])
         else:
             return [
@@ -249,16 +249,17 @@ class LocationForm(forms.Form):
             ]
             self.cleaned_data['site_code'] = generate_code(self.cleaned_data['name'], all_codes)
 
-    def _get_allowed_types(self, parent):
+    @staticmethod
+    def _get_allowed_types(domain, parent):
         parent_type = parent.location_type if parent else None
         return list(LocationType.objects
-                    .filter(domain=self.domain,
+                    .filter(domain=domain,
                             parent_type=parent_type)
                     .all())
 
     def clean_location_type(self):
         loc_type = self.cleaned_data['location_type']
-        allowed_types = self._get_allowed_types(self.cleaned_data.get('parent'))
+        allowed_types = self._get_allowed_types(self.domain, self.cleaned_data.get('parent'))
         if not allowed_types:
             raise forms.ValidationError(_('The selected parent location cannot have child locations!'))
 
