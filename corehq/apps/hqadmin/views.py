@@ -37,6 +37,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.xml import SYNC_XMLNS
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.callcenter.utils import CallCenterCase
+from corehq.apps.domain.auth import basicauth
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
@@ -64,8 +65,8 @@ from corehq.apps.data_analytics.const import GIR_FIELDS
 from corehq.apps.data_analytics.admin import MALTRowAdmin
 from corehq.apps.domain.decorators import (
     require_superuser, require_superuser_or_developer,
-    login_or_basic, domain_admin_required
-)
+    login_or_basic, domain_admin_required,
+    check_lockout)
 from corehq.apps.domain.models import Domain
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
@@ -1208,13 +1209,12 @@ def top_five_projects_by_country(request):
 class WebUserDataView(View):
     urlname = 'web_user_data'
 
-    def dispatch(self, request, *args, **kwargs):
-        return super(WebUserDataView, self).dispatch(request, domain='dummy', *args, **kwargs)
-
-    @method_decorator(login_or_basic)
+    @method_decorator(check_lockout)
+    @method_decorator(basicauth())
     def get(self, request, *args, **kwargs):
-        if request.couch_user.is_web_user():
-            data = {'domains': request.couch_user.domains}
+        couch_user = CouchUser.from_django_user(request.user)
+        if couch_user.is_web_user():
+            data = {'domains': couch_user.domains}
             return JsonResponse(data)
         else:
             return HttpResponse('Only web users can access this endpoint', status=400)
