@@ -126,6 +126,7 @@ DATE_FIELDS = {
 RENAMED_FIELDS = {
     'XFormDeprecated': [('deprecated_date', 'edited_on')],
     'XFormInstance-Deleted': [('-deletion_id', 'deletion_id'), ('-deletion_date', 'deleted_on')],
+    'CommCareCase': [('@case_id', 'case_id'), ('@user_id', 'user_id'), ('@date_modified', 'modified_on')],
     'CommCareCase-Deleted': [('-deletion_id', 'deletion_id'), ('-deletion_date', 'deleted_on')],
     'case_attachment': [('attachment_size', 'content_length'), ('identifier', 'name')],
 }
