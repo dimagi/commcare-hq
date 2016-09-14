@@ -19,7 +19,7 @@ import formtranslate.api
 import re
 
 
-VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline')
+VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'markdown')
 
 
 def parse_xml(string):
