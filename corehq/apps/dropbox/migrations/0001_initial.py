@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                 ('progress', models.DecimalField(default=0, max_digits=3, decimal_places=2)),
                 ('download_id', models.CharField(max_length=255, db_index=True)),
                 ('failure_reason', models.CharField(default=None, max_length=255, null=True)),
-                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
             ],
             options={
             },

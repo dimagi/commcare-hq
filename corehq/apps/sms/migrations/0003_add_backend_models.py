@@ -47,7 +47,7 @@ class Migration(migrations.Migration):
                 ('domain', models.CharField(max_length=126, null=True)),
                 ('backend_type', models.CharField(max_length=3, choices=[(b'SMS', 'SMS'), (b'IVR', 'IVR')])),
                 ('prefix', models.CharField(max_length=25)),
-                ('backend', models.ForeignKey(to='sms.SQLMobileBackend')),
+                ('backend', models.ForeignKey(to='sms.SQLMobileBackend', on_delete=models.CASCADE)),
             ],
             options={
                 'db_table': 'messaging_mobilebackendmapping',
@@ -59,7 +59,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('domain', models.CharField(max_length=126, null=True, db_index=True)),
-                ('backend', models.ForeignKey(to='sms.SQLMobileBackend')),
+                ('backend', models.ForeignKey(to='sms.SQLMobileBackend', on_delete=models.CASCADE)),
                 ('accepted', models.BooleanField(default=False)),
             ],
             options={

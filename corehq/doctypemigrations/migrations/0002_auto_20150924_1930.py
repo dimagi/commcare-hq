@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='doctypemigrationcheckpoint',
             name='migration',
-            field=models.ForeignKey(to='doctypemigrations.DocTypeMigration'),
+            field=models.ForeignKey(to='doctypemigrations.DocTypeMigration', on_delete=models.CASCADE),
             preserve_default=True,
         ),
     ]

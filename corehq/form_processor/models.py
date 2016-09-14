@@ -459,7 +459,8 @@ class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
     name = models.CharField(max_length=255, default=None)
     form = models.ForeignKey(
         XFormInstanceSQL, to_field='form_id', db_index=False,
-        related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
+        related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment",
+        on_delete=models.CASCADE,
     )
 
     def __unicode__(self):
@@ -489,7 +490,7 @@ class XFormOperationSQL(DisabledDbMixin, models.Model):
     ARCHIVE = 'archive'
     UNARCHIVE = 'unarchive'
 
-    form = models.ForeignKey(XFormInstanceSQL, to_field='form_id')
+    form = models.ForeignKey(XFormInstanceSQL, to_field='form_id', on_delete=models.CASCADE)
     user_id = models.CharField(max_length=255, null=True)
     operation = models.CharField(max_length=255, default=None)
     date = models.DateTimeField(auto_now_add=True)
@@ -863,7 +864,8 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
     name = models.CharField(max_length=255, default=None)
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=False,
-        related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
+        related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment",
+        on_delete=models.CASCADE,
     )
     identifier = models.CharField(max_length=255, default=None)
     attachment_src = models.TextField(null=True)
@@ -945,7 +947,8 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
 
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=False,
-        related_name="index_set", related_query_name="index"
+        related_name="index_set", related_query_name="index",
+        on_delete=models.CASCADE,
     )
     domain = models.CharField(max_length=255, default=None)
     identifier = models.CharField(max_length=255, default=None)
@@ -1036,7 +1039,8 @@ class CaseTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
     )
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=False,
-        related_name="transaction_set", related_query_name="transaction"
+        related_name="transaction_set", related_query_name="transaction",
+        on_delete=models.CASCADE,
     )
     form_id = models.CharField(max_length=255, null=True)  # can't be a foreign key due to partitioning
     sync_log_id = models.CharField(max_length=255, null=True)
@@ -1266,7 +1270,7 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
 
     domain = models.CharField(max_length=255, null=False, default=None)
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=False
+        'CommCareCaseSQL', to_field='case_id', db_index=False, on_delete=models.CASCADE
     )
     # can't be a foreign key to products because of sharding.
     # also still unclear whether we plan to support ledgers to non-products
@@ -1337,7 +1341,7 @@ class LedgerTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
     report_date = models.DateTimeField()
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=False
+        'CommCareCaseSQL', to_field='case_id', db_index=False, on_delete=models.CASCADE
     )
     entry_id = models.CharField(max_length=100, default=None)
     section_id = models.CharField(max_length=100, default=None)
