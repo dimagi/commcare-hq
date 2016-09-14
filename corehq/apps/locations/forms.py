@@ -194,10 +194,10 @@ class LocationForm(forms.Form):
                 raise forms.ValidationError(_("Location's parent is itself or a descendant"))
 
             if self.location.get_descendants().exists():
-                raise forms.ValidationError(
+                raise forms.ValidationError(_(
                     'only locations that have no child locations can be '
                     'moved to a different parent'
-                )
+                ))
 
             self.cleaned_data['orig_parent_id'] = self.location.parent_location_id
 
@@ -219,9 +219,9 @@ class LocationForm(forms.Form):
 
         if self.strict:
             if has_siblings_with_name(self.location, name, parent_location_id):
-                raise forms.ValidationError(
+                raise forms.ValidationError(_(
                     'name conflicts with another location with this parent'
-                )
+                ))
 
         return name
 
@@ -234,9 +234,9 @@ class LocationForm(forms.Form):
                                         site_code__iexact=site_code)
                                    .exclude(location_id=self.location.location_id)
                                    .exists()):
-                raise forms.ValidationError(
+                raise forms.ValidationError(_(
                     'another location already uses this site code'
-                )
+                ))
             return site_code
 
     def clean(self):
@@ -267,14 +267,14 @@ class LocationForm(forms.Form):
             if len(allowed_types) == 1:
                 loc_type_obj = allowed_types[0]
             else:
-                assert False, 'You must select a location type'
+                raise forms.ValidationError(_('You must select a location type'))
         else:
             try:
                 loc_type_obj = (LocationType.objects
                                 .filter(domain=self.domain)
                                 .get(Q(code=loc_type) | Q(name=loc_type)))
             except LocationType.DoesNotExist:
-                assert False, "LocationType '{}' not found".format(loc_type)
+                raise forms.ValidationError(_( "LocationType '{}' not found").format(loc_type))
             else:
                 if loc_type_obj not in allowed_types:
                     raise forms.ValidationError(_('Location type not valid for the selected parent.'))
@@ -289,13 +289,13 @@ class LocationForm(forms.Form):
         pieces = re.split('[ ,]+', coords)
 
         if len(pieces) != 2:
-            raise forms.ValidationError('could not understand coordinates')
+            raise forms.ValidationError(_('could not understand coordinates'))
 
         try:
             lat = float(pieces[0])
             lon = float(pieces[1])
         except ValueError:
-            raise forms.ValidationError('could not understand coordinates')
+            raise forms.ValidationError(_('could not understand coordinates'))
 
         return [lat, lon]
 
