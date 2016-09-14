@@ -189,6 +189,16 @@ class _AuthTest(TestCase):
         )
 
     @run_with_all_backends
+    def test_noauth_demomode(self):
+        self._test_post(
+            file_path=self.bare_form,
+            authtype='noauth',
+            expected_status=201,
+            submit_mode='demo',
+            expected_response=SubmissionPost.submission_ignored_response().content,
+        )
+
+    @run_with_all_backends
     def test_noauth_devicelog(self):
         self._test_post(
             file_path=self.device_log,
