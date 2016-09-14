@@ -1,4 +1,4 @@
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 from corehq.apps.indicators.models import (DynamicIndicatorDefinition, CouchIndicatorDef,
                                            CombinedCouchViewIndicatorDefinition,
                                            MedianCouchIndicatorDef,
@@ -61,7 +61,7 @@ SUM_LAST_UNIQUE_INICATORS = [
 ]
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Create the indicator definitions necessary to compute MVP Indicators."
     args = ""
     label = ""

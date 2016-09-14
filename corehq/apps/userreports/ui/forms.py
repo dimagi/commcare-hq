@@ -12,6 +12,7 @@ from corehq.apps.userreports.ui.fields import ReportDataSourceField, JsonField
 from corehq.apps.userreports.util import get_table_name
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND
 
 
 class DocumentFormBase(forms.Form):
@@ -120,6 +121,12 @@ DOC_TYPE_CHOICES = (
 )
 
 
+BACKEND_CHOICES = (
+    (UCR_SQL_BACKEND, 'Postgres'),
+    (UCR_ES_BACKEND, 'ElasticSearch'),
+)
+
+
 class ConfigurableDataSourceEditForm(DocumentFormBase):
 
     table_id = forms.CharField(label=_("Table ID"),
@@ -143,6 +150,11 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
     named_filters = JsonField(required=False, expected_type=dict,
                               label=_("Named filters (optional)"),
                               help_text=help_text.NAMED_FILTER)
+    backend_id = forms.ChoiceField(
+        choices=BACKEND_CHOICES,
+        label=_("Backend"),
+        initial=UCR_SQL_BACKEND
+    )
 
     def __init__(self, domain, *args, **kwargs):
         self.domain = domain
@@ -175,6 +187,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
                 'configured_indicators',
                 'named_expressions',
                 'named_filters',
+                'backend_id',
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
@@ -184,8 +197,6 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
                 ),
             ),
         )
-
-
 
     def clean_table_id(self):
         # todo: validate table_id as [a-z][a-z0-9_]*

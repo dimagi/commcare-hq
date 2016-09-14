@@ -1,6 +1,7 @@
 import logging
+from wsgiref.util import FileWrapper
 from zipfile import ZipFile
-from django.core.servers.basehttp import FileWrapper
+
 from couchexport.files import TempBase
 from couchexport.models import DefaultExportSchema, SavedExportSchema
 from django.http import HttpResponse, HttpResponseNotFound, StreamingHttpResponse

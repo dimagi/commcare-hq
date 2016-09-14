@@ -193,6 +193,60 @@ class SchemaTest(SimpleTestCase):
             },
         })
 
+    def test_get_session_schema_for_child_module(self):
+        # m0 - opens 'gold-fish' case.
+        # m1 - has m0 as root-module, has parent-select, updates 'guppy' case
+        self.module_0, _ = self.factory.new_basic_module('parent', 'gold-fish')
+        self.module_1, _ = self.factory.new_basic_module('child', 'guppy', parent_module=self.module_0)
+        # m0f0 registers gold-fish case and a child case ('guppy')
+        m0f0 = self.module_0.get_form(0)
+        self.factory.form_requires_case(m0f0, update={'name': 'goldilocks'})
+        self.factory.form_opens_case(m0f0, 'guppy', is_subcase=True)
+
+        # m1f0 has parent-select, updates `guppy` case
+        m1f0 = self.module_1.get_form(0)
+        self.factory.form_requires_case(m1f0, parent_case_type='gold-fish')
+
+        casedb_schema = util.get_casedb_schema(m1f0)
+        session_schema = util.get_session_schema(m1f0)
+
+        expected_session_schema_structure = {
+            "case_id_guppy": {
+                "reference": {
+                    "subset": "case",
+                    "source": "casedb",
+                    "key": "@case_id"
+                }
+            }
+        }
+
+        expected_casedb_schema_subsets = [
+            {
+                "structure": {
+                    "case_name": {}
+                },
+                "related": {
+                    "parent": "parent"
+                },
+                "id": "case",
+                "key": "@case_type",
+                "name": "guppy"
+            },
+            {
+                "structure": {
+                    "name": {},
+                    "case_name": {}
+                },
+                "related": None,
+                "id": "parent",
+                "key": "@case_type",
+                "name": "parent (gold-fish)"
+            }
+        ]
+
+        self.assertEqual(casedb_schema['subsets'], expected_casedb_schema_subsets)
+        self.assertEqual(session_schema['structure'], expected_session_schema_structure)
+
     def test_get_case_sharing_hierarchy(self):
         with patch('corehq.apps.app_manager.util.get_case_sharing_apps_in_domain') as mock_sharing:
             mock_sharing.return_value = [self.factory.app, self.factory_2.app]

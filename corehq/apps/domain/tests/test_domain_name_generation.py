@@ -54,7 +54,7 @@ class DomainNameShorteningTest(SimpleTestCase):
 
 
 @generate_cases([
-    ('long name with stop words in it', 50, 'name-stop-words'),
+    ('long name with stop words in it', 30, 'name-stop-words'),
     ('long name with stop words in it', 14, 'name-stop'),
 ], DomainNameShorteningTest)
 def test_shorten_name(self, hr_name, max_length, expected):

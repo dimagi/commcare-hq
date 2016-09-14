@@ -5,7 +5,9 @@ import datetime
 from dateutil import parser
 from jsonobject.exceptions import BadValueError
 
-from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
+from casexml.apps.case.exceptions import PhoneDateValueError
+from casexml.apps.case.xform import extract_case_blocks
+from casexml.apps.case.xml.parser import CaseGenerationException, case_update_from_block
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.apps.receiverwrapper.util import get_app_version_info
@@ -99,21 +101,28 @@ def transform_xform_for_elasticsearch(doc_dict):
     doc_ret['user_type'] = get_user_type(user_id)
     doc_ret['inserted_at'] = datetime.datetime.utcnow().isoformat()
 
-    case_blocks = extract_case_blocks(doc_ret)
-    for case_dict in case_blocks:
-        for date_modified_key in ['date_modified', '@date_modified']:
-            if not is_valid_date(case_dict.get(date_modified_key, None)):
-                if case_dict.get(date_modified_key) == '':
-                    case_dict[date_modified_key] = None
-                else:
-                    case_dict.pop(date_modified_key, None)
+    try:
+        case_blocks = extract_case_blocks(doc_ret)
+    except PhoneDateValueError:
+        pass
+    else:
+        for case_dict in case_blocks:
+            for date_modified_key in ['date_modified', '@date_modified']:
+                if not is_valid_date(case_dict.get(date_modified_key, None)):
+                    if case_dict.get(date_modified_key) == '':
+                        case_dict[date_modified_key] = None
+                    else:
+                        case_dict.pop(date_modified_key, None)
 
-        # convert all mapped dict properties to nulls if they are empty strings
-        for object_key in ['index', 'attachment', 'create', 'update']:
-            if object_key in case_dict and not isinstance(case_dict[object_key], dict):
-                case_dict[object_key] = None
+            # convert all mapped dict properties to nulls if they are empty strings
+            for object_key in ['index', 'attachment', 'create', 'update']:
+                if object_key in case_dict and not isinstance(case_dict[object_key], dict):
+                    case_dict[object_key] = None
 
-    doc_ret["__retrieved_case_ids"] = list(get_case_ids_from_form(doc_dict))
+        try:
+            doc_ret["__retrieved_case_ids"] = list(set(case_update_from_block(cb).id for cb in case_blocks))
+        except CaseGenerationException:
+            doc_ret["__retrieved_case_ids"] = []
     return doc_ret
 
 
@@ -167,5 +176,6 @@ def get_sql_form_reindexer():
         doc_provider,
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
+        doc_filter=xform_pillow_filter,
         doc_transform=transform_xform_for_elasticsearch
     )

@@ -8,14 +8,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-08-23 19:22+0000\n"
+"POT-Creation-Date: 2016-09-13 20:47+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: \n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: corehq/apps/accounting/static/accounting/js/accounting.billing_info_handler.js:85
@@ -40,7 +40,7 @@ msgstr ""
 msgid "Auto-set by "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:526
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:576
 msgid "Select One"
 msgstr ""
 
@@ -49,7 +49,7 @@ msgid "You have unsaved changes to your application profiles"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/language-profiles.js:33
-#: corehq/apps/style/static/style/js/main.js:228
+#: corehq/apps/style/static/style/js/main.js:231
 msgid "There was an error saving"
 msgstr ""
 
@@ -61,12 +61,26 @@ msgstr ""
 msgid "(Default)"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:114
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:129
 msgid "Form successfully saved"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/entities/menu.js:111
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/entities/menu.js:112
 msgid "Unable to connect to form playing service. "
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:126
+msgid "Error saving!"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:134
+msgid ""
+"Could not sync user data. Please try again and report a bug if issue "
+"persists."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:138
+msgid "User Data successfully synced."
 msgstr ""
 
 #: corehq/apps/export/static/export/js/list_exports.ng.js:86
@@ -94,7 +108,7 @@ msgid "Create"
 msgstr ""
 
 #: corehq/apps/export/static/export/js/models.js:67
-#: corehq/apps/style/static/style/js/main.js:224
+#: corehq/apps/style/static/style/js/main.js:227
 msgid "Save"
 msgstr ""
 
@@ -189,33 +203,33 @@ msgstr ""
 msgid "Remove All"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:225
+#: corehq/apps/style/static/style/js/main.js:228
 msgid "Saving..."
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:226
+#: corehq/apps/style/static/style/js/main.js:229
 msgid "Saved"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:227
-#: corehq/apps/style/static/style/js/main.js:235
+#: corehq/apps/style/static/style/js/main.js:230
+#: corehq/apps/style/static/style/js/main.js:238
 msgid "Try Again"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:232
+#: corehq/apps/style/static/style/js/main.js:235
 #: corehq/apps/style/static/style/js/ui-element.js:355
 msgid "Delete"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:233
+#: corehq/apps/style/static/style/js/main.js:236
 msgid "Deleting..."
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:234
+#: corehq/apps/style/static/style/js/main.js:237
 msgid "Deleted"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:236
+#: corehq/apps/style/static/style/js/main.js:239
 msgid "There was an error deleting"
 msgstr ""
 

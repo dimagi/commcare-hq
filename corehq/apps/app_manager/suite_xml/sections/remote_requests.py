@@ -5,12 +5,11 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Command,
     Display,
     Instance,
-    CreateFrame,
+    PushFrame,
     QueryData,
     QueryPrompt,
     SessionDatum,
     Stack,
-    StackDatum,
     RemoteRequest,
     RemoteRequestPost,
     RemoteRequestQuery,
@@ -18,7 +17,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Text,
 )
 from corehq.apps.app_manager.util import module_offers_search
-from corehq.apps.app_manager.xpath import XPath, CaseTypeXpath, InstanceXpath
+from corehq.apps.app_manager.xpath import CaseTypeXpath, InstanceXpath
 from corehq.util.view_utils import absolute_reverse
 
 
@@ -90,12 +89,19 @@ class RemoteRequestContributor(SuiteContributorByModule):
                         RemoteRequestQuery(
                             url=absolute_reverse('remote_search', args=[domain]),
                             storage_instance=RESULTS_INSTANCE,
-                            data=[
+                            data=([
                                 QueryData(
                                     key='case_type',
                                     ref="'{}'".format(module.case_type)
                                 ),
-                            ],
+                                QueryData(
+                                    key='include_closed',
+                                    ref="'{}'".format(module.search_config.include_closed)
+                                )
+                            ] + [
+                                QueryData(key="'{}'".format(c.property), ref="'{}'".format(c.defaultValue))
+                                for c in module.search_config.default_properties
+                            ]),
                             prompts=[
                                 QueryPrompt(
                                     key=p.name,
@@ -109,8 +115,7 @@ class RemoteRequestContributor(SuiteContributorByModule):
                     data=[SessionDatum(
                         id='case_id',
                         nodeset=(CaseTypeXpath(module.case_type)
-                                 .case(instance_name=RESULTS_INSTANCE)
-                                 .select(u'@status', u'open', quote=True)),
+                                 .case(instance_name=RESULTS_INSTANCE)),
                         value='./@case_id',
                         detail_select=details_helper.get_detail_id_safe(module, 'case_short'),
                         detail_confirm=details_helper.get_detail_id_safe(module, 'case_long'),
@@ -120,10 +125,8 @@ class RemoteRequestContributor(SuiteContributorByModule):
                 stack=Stack(),
             )
 
-            frame = CreateFrame()
-            # Open first form in module
-            frame.add_command(XPath.string(id_strings.menu_id(module)))
-            frame.add_datum(StackDatum(id='case_id', value=QuerySessionXPath('case_id').instance()))
+            frame = PushFrame()
+            frame.add_rewind(QuerySessionXPath('case_id').instance())
             remote_request.stack.add_frame(frame)
 
             return [remote_request]

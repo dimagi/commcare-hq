@@ -1216,3 +1216,14 @@ class LongitudinalCMRReport(MetReport):
             self.request_params.get('is_open')
         )
         return redis_key
+
+CUSTOM_REPORTS = (
+    ('Custom Reports', (
+        BeneficiaryPaymentReport,
+        IncentivePaymentReport,
+        NewHealthStatusReport,
+        MetReport,
+        HealthMapReport,
+        LongitudinalCMRReport,
+    )),
+)

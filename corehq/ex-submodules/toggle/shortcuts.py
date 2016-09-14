@@ -51,3 +51,15 @@ def namespaced_item(item, namespace):
     return '{namespace}:{item}'.format(
         namespace=namespace, item=item
     ) if namespace is not None else item
+
+
+def parse_toggle(entry):
+    """
+    Split a toggle entry into the namespace an the item.
+    :return: tuple(namespace, item)
+    """
+    from corehq.toggles import NAMESPACE_DOMAIN
+    namespace = None
+    if entry.startswith(NAMESPACE_DOMAIN):
+        namespace, entry = entry.split(":")
+    return namespace, entry

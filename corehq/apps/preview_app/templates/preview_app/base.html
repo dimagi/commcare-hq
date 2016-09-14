@@ -75,6 +75,8 @@
                   rel="stylesheet"
                   media="all"
                   href="{% static 'preview_app/less/preview_app.less' %}"/>
+            <link rel="stylesheet"
+                  href="{% static 'datetimepicker/build/jquery.datetimepicker.min.css' %}" />
           {% endcompress %}
         {% endif %}
         <link type="text/css"
@@ -175,7 +177,6 @@
                 username: "{{ request.user.username  }}",
                 domain: "{{ request.domain }}",
                 formplayer_url: "{{ formplayer_url }}",
-                clearUserDataUrl: "{% url 'clear_user_data' request.domain %}",
                 phoneMode: true,
             })
         })

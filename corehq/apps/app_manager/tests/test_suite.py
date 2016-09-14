@@ -551,7 +551,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                     </title>
                     <field>
                         <style font-size="large" horz-align="center">
-                            <grid grid-height="2" grid-width="12" grid-x="0" grid-y="0"/>
+                            <grid grid-height="1" grid-width="12" grid-x="0" grid-y="0"/>
                         </style>
                         <header>
                             <text/>

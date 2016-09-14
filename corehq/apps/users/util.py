@@ -35,6 +35,12 @@ def format_username(username, domain):
 
 
 def normalize_username(username, domain=None):
+    """
+    Returns a lower-case username. Checks that it is a valid e-mail
+    address, or a valid "local part" of an e-mail address.
+
+    :raises ValidationError on invalid e-mail
+    """
     from django.core.validators import validate_email
 
     username = re.sub(r'\s+', '.', username).lower()

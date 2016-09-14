@@ -75,7 +75,7 @@ class Notification(models.Model):
 
 
 class LastSeenNotification(models.Model):
-    user = models.ForeignKey(User, unique=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     last_seen_date = models.DateTimeField()
 
     @classmethod

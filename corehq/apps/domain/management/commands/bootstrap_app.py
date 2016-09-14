@@ -1,4 +1,4 @@
-from django.core.management.base import LabelCommand, CommandError
+from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 
 from corehq.apps.domain.models import Domain
@@ -9,7 +9,7 @@ from corehq.util.view_utils import reverse
 from couchdbkit import ResourceNotFound
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Bootstrap an Application with two modules in a given domain."
     args = "<domain> <app-name>"
     label = ""

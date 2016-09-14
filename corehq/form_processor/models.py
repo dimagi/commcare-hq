@@ -25,7 +25,7 @@ from corehq.form_processor import signals
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionType
 from corehq.form_processor.track_related import TrackRelatedChanges
-from corehq.apps.tzmigration import force_phone_timezones_should_be_processed
+from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
 from corehq.sql_db.routers import db_for_read_write
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
@@ -185,7 +185,7 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
 
     domain = models.CharField(max_length=255, default=None)
     app_id = models.CharField(max_length=255, null=True)
-    xmlns = models.CharField(max_length=255)
+    xmlns = models.CharField(max_length=255, default=None)
     user_id = models.CharField(max_length=255, null=True)
 
     # When a form is deprecated, the existing form receives a new id and its original id is stored in orig_id
@@ -290,12 +290,19 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     @property
     @memoized
     def form_data(self):
+        from couchforms import XMLSyntaxError
         from .utils import convert_xform_to_json, adjust_datetimes
+        from corehq.form_processor.utils.metadata import scrub_form_meta
         xml = self.get_xml()
-        form_json = convert_xform_to_json(xml)
+        try:
+            form_json = convert_xform_to_json(xml)
+        except XMLSyntaxError:
+            return {}
         # we can assume all sql domains are new timezone domains
         with force_phone_timezones_should_be_processed():
             adjust_datetimes(form_json)
+
+        scrub_form_meta(self.form_id, form_json)
         return form_json
 
     @property
@@ -321,7 +328,9 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     def to_json(self, include_attachments=False):
         from .serializers import XFormInstanceSQLSerializer
         serializer = XFormInstanceSQLSerializer(self, include_attachments=include_attachments)
-        return serializer.data
+        data = dict(serializer.data)
+        data['history'] = [dict(op) for op in data['history']]
+        return data
 
     def _get_attachment_from_db(self, attachment_name):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
@@ -391,6 +400,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
     content_type = models.CharField(max_length=255, null=True)
     content_length = models.IntegerField(null=True)
     blob_id = models.CharField(max_length=255, default=None)
+    blob_bucket = models.CharField(max_length=255, null=True, default=None)
 
     # RFC-1864-compliant Content-MD5 header value
     md5 = models.CharField(max_length=255, default=None)
@@ -431,6 +441,8 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
         return deleted
 
     def _blobdb_bucket(self):
+        if self.blob_bucket is not None:
+            return self.blob_bucket
         if self.attachment_id is None:
             raise AttachmentNotFound("cannot manipulate attachment on unidentified document")
         return os.path.join(self._attachment_prefix, str(self.attachment_id))
@@ -447,8 +459,22 @@ class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
     name = models.CharField(max_length=255, default=None)
     form = models.ForeignKey(
         XFormInstanceSQL, to_field='form_id', db_index=False,
-        related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
+        related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment",
+        on_delete=models.CASCADE,
     )
+
+    def __unicode__(self):
+        return unicode(
+            "XFormAttachmentSQL("
+            "attachment_id='{a.attachment_id}', "
+            "form_id='{a.form_id}', "
+            "name='{a.name}', "
+            "content_type='{a.content_type}', "
+            "content_length='{a.content_length}', "
+            "md5='{a.md5}', "
+            "blob_id='{a.blob_id}', "
+            "properties='{a.properties}', "
+        ).format(a=self)
 
     class Meta:
         db_table = XFormAttachmentSQL_DB_TABLE
@@ -464,7 +490,7 @@ class XFormOperationSQL(DisabledDbMixin, models.Model):
     ARCHIVE = 'archive'
     UNARCHIVE = 'unarchive'
 
-    form = models.ForeignKey(XFormInstanceSQL, to_field='form_id')
+    form = models.ForeignKey(XFormInstanceSQL, to_field='form_id', on_delete=models.CASCADE)
     user_id = models.CharField(max_length=255, null=True)
     operation = models.CharField(max_length=255, default=None)
     date = models.DateTimeField(auto_now_add=True)
@@ -558,7 +584,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     deleted_on = models.DateTimeField(null=True)
     deletion_id = models.CharField(max_length=255, null=True)
 
-    external_id = models.CharField(max_length=255)
+    external_id = models.CharField(max_length=255, null=True)
     location_id = models.CharField(max_length=255, null=True)
 
     case_json = JSONField(default=dict)
@@ -614,7 +640,8 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def to_json(self):
         from .serializers import CommCareCaseSQLSerializer
         serializer = CommCareCaseSQLSerializer(self)
-        ret = serializer.data
+        ret = dict(serializer.data)
+        ret['indices'] = [dict(index) for index in ret['indices']]
         for key in self.case_json:
             if key not in ret:
                 ret[key] = self.case_json[key]
@@ -837,20 +864,22 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
     name = models.CharField(max_length=255, default=None)
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=False,
-        related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
+        related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment",
+        on_delete=models.CASCADE,
     )
     identifier = models.CharField(max_length=255, default=None)
     attachment_src = models.TextField(null=True)
     attachment_from = models.TextField(null=True)
 
-    def update_from_attachment(self, attachment):
+    def from_form_attachment(self, attachment):
         """
-        Update fields in this attachment with fields from anaother attachment
+        Update fields in this attachment with fields from another attachment
 
         :param attachment: XFormAttachmentSQL or CaseAttachmentSQL object
         """
         self.content_length = attachment.content_length
         self.blob_id = attachment.blob_id
+        self.blob_bucket = attachment._blobdb_bucket()
         self.md5 = attachment.md5
         self.content_type = attachment.content_type
         self.properties = attachment.properties
@@ -864,17 +893,6 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
             assert self.identifier == attachment.identifier
             self.attachment_src = attachment.attachment_src
             self.attachment_from = attachment.attachment_from
-
-    def copy_content(self, attachment):
-        if self.is_saved():
-            deleted = self.delete_content()
-            if not deleted:
-                logging.warn(
-                    "Case attachment content not deleted. bucket=%s, blob_id=%s",
-                    self._blobdb_bucket(), self.blob_id
-                )
-        content = attachment.read_content(stream=True)
-        self.write_content(content)
 
     @classmethod
     def from_case_update(cls, attachment):
@@ -929,7 +947,8 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
 
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=False,
-        related_name="index_set", related_query_name="index"
+        related_name="index_set", related_query_name="index",
+        on_delete=models.CASCADE,
     )
     domain = models.CharField(max_length=255, default=None)
     identifier = models.CharField(max_length=255, default=None)
@@ -1020,7 +1039,8 @@ class CaseTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
     )
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=False,
-        related_name="transaction_set", related_query_name="transaction"
+        related_name="transaction_set", related_query_name="transaction",
+        on_delete=models.CASCADE,
     )
     form_id = models.CharField(max_length=255, null=True)  # can't be a foreign key due to partitioning
     sync_log_id = models.CharField(max_length=255, null=True)
@@ -1250,7 +1270,7 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
 
     domain = models.CharField(max_length=255, null=False, default=None)
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=False
+        'CommCareCaseSQL', to_field='case_id', db_index=False, on_delete=models.CASCADE
     )
     # can't be a foreign key to products because of sharding.
     # also still unclear whether we plan to support ledgers to non-products
@@ -1284,10 +1304,23 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     def ledger_id(self):
         return self.ledger_reference.as_id()
 
-    def to_json(self):
+    @property
+    @memoized
+    def location(self):
+        from corehq.apps.locations.models import SQLLocation
+        try:
+            return SQLLocation.objects.get(supply_point_id=self.case_id)
+        except SQLLocation.DoesNotExist:
+            return None
+
+    @property
+    def location_id(self):
+        return self.location.location_id if self.location else None
+
+    def to_json(self, include_location_id=True):
         from .serializers import LedgerValueSerializer
-        serializer = LedgerValueSerializer(self)
-        return serializer.data
+        serializer = LedgerValueSerializer(self, include_location_id=include_location_id)
+        return dict(serializer.data)
 
     class Meta:
         app_label = "form_processor"
@@ -1308,7 +1341,7 @@ class LedgerTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
     report_date = models.DateTimeField()
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=False
+        'CommCareCaseSQL', to_field='case_id', db_index=False, on_delete=models.CASCADE
     )
     entry_id = models.CharField(max_length=100, default=None)
     section_id = models.CharField(max_length=100, default=None)

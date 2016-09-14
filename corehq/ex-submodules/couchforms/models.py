@@ -199,6 +199,10 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
         return getattr(self, '-deletion_id', None)
 
     @property
+    def deletion_date(self):
+        return getattr(self, '-deletion_date', None)
+
+    @property
     def metadata(self):
         if const.TAG_META in self.form:
             return Metadata.wrap(clean_metadata(self.to_json()[const.TAG_FORM][const.TAG_META]))

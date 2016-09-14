@@ -16,7 +16,6 @@ from mock import patch
 
 @patch('corehq.apps.sms.change_publishers.do_publish')
 class SqlSMSPillowTest(TestCase):
-    dependent_apps = ['corehq.apps.sms', 'corehq.apps.smsforms']
 
     domain = 'sms-pillow-test-domain'
 

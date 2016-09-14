@@ -1,4 +1,5 @@
 from collections import defaultdict
+from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain
 from corehq.util.dates import iso_string_to_datetime
 from datetime import date, datetime, timedelta
 from dateutil.relativedelta import relativedelta
@@ -7,17 +8,15 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
-from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
-    get_number_of_cases_per_domain
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.forms import FormES
 from corehq.apps.hqadmin.reporting.reports import (
     get_mobile_users,
 )
-from couchforms.analytics import get_number_of_forms_per_domain, \
-    get_number_of_forms_in_domain, domain_has_submission_in_last_30_days, \
-    get_first_form_submission_received, get_last_form_submission_received
+from couchforms.analytics import get_number_of_forms_in_domain, \
+    domain_has_submission_in_last_30_days, get_first_form_submission_received, \
+    get_last_form_submission_received
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.models import CaseReminderHandler
@@ -328,9 +327,6 @@ def _all_domain_stats():
             'WebUser': webuser_counts,
             'CommCareUser': commcare_counts
         }[doc_type][domain] = value
-
-    form_counts = get_number_of_forms_per_domain()
-    case_counts = get_number_of_cases_per_domain()
 
     return {"web_users": webuser_counts,
             "commcare_users": commcare_counts,

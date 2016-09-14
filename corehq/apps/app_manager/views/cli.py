@@ -91,7 +91,7 @@ def direct_ccz(request, domain):
 
     app.set_media_versions(None)
     download = DownloadBase()
-    build_application_zip(
+    errors = build_application_zip(
         include_multimedia_files=include_multimedia,
         include_index_files=True,
         app=app,
@@ -99,4 +99,10 @@ def direct_ccz(request, domain):
         compress_zip=True,
         filename='{}.ccz'.format(slugify(app.name)),
     )
+
+    if errors['errors']:
+        return json_response(
+            errors,
+            status_code=400,
+        )
     return DownloadBase.get(download.download_id).toHttpResponse()

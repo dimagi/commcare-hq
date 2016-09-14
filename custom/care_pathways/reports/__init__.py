@@ -1,6 +1,9 @@
+from django.utils.translation import ugettext_noop as _
+
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.style.decorators import use_nvd3_v3
+
 from custom.care_pathways.filters import GeographyFilter, MalawiPPTYearFilter, PPTYearFilter, GenderFilter, \
     GroupLeadershipFilter, CBTNameFilter, RealOrTestFilter, ScheduleFilter
 from custom.care_pathways.utils import get_domain_configuration
@@ -16,7 +19,7 @@ class CareReportMixin(object):
             value_chain=self.request.GET.get('type_value_chain', ''),
             domains=tuple(self.request.GET.getlist('type_domain', [])),
             practices=tuple(self.request.GET.getlist('type_practice', [])),
-            cbt_name=self.request.GET.get('cbt_name', ''),
+            cbt_name=self.request.GET.getlist('cbt_name', []),
             gender=self.request.GET.get('gender', ''),
             group_leadership=self.request.GET.get('group_leadership', ''),
             schedule=self.request.GET.getlist('farmer_social_category', []),
@@ -59,7 +62,7 @@ class CareBaseReport(GetParamsMixin, GenericTabularReport, CustomProjectReport, 
     @property
     def fields(self):
         filters = [GeographyFilter]
-        if self.domain in ('care-macf-malawi', 'care-macf-ghana'):
+        if self.domain in ('care-macf-malawi', 'care-macf-ghana', 'care-macf-bangladesh'):
             filters.append(MalawiPPTYearFilter)
         else:
             filters.append(PPTYearFilter)
@@ -68,8 +71,20 @@ class CareBaseReport(GetParamsMixin, GenericTabularReport, CustomProjectReport, 
             GroupLeadershipFilter,
             CBTNameFilter
         ])
-        if self.domain == 'care-macf-malawi':
+        if self.domain in ['care-macf-malawi', 'care-macf-bangladesh']:
             filters.append(RealOrTestFilter)
         if self.domain == 'pathways-india-mis':
             filters.append(ScheduleFilter)
         return filters
+
+from custom.care_pathways.reports.adoption_bar_char_report import AdoptionBarChartReport
+from custom.care_pathways.reports.adoption_disaggregated_report import AdoptionDisaggregatedReport
+from custom.care_pathways.reports.table_card_report import TableCardReport
+
+CUSTOM_REPORTS = (
+    (_('Custom Reports'), (
+        AdoptionBarChartReport,
+        AdoptionDisaggregatedReport,
+        TableCardReport
+    )),
+)

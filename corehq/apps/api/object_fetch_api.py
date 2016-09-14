@@ -1,15 +1,17 @@
 import urllib
+from wsgiref.util import FileWrapper
 
 from django.core.urlresolvers import reverse
-from django.core.servers.basehttp import FileWrapper
 from django.http import HttpResponse, Http404, StreamingHttpResponse, HttpResponseForbidden
 from django.utils.decorators import method_decorator
 from django.views.generic import View
+
+from dimagi.utils.django.cached_object import IMAGE_SIZE_ORDERING, OBJECT_ORIGINAL
+
+from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
 from corehq.apps.reports.views import can_view_attachments
 from corehq.form_processor.exceptions import CaseNotFound, AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, get_cached_case_attachment, FormAccessors
-from dimagi.utils.django.cached_object import IMAGE_SIZE_ORDERING, OBJECT_ORIGINAL
-from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
 
 
 class CaseAttachmentAPI(View):

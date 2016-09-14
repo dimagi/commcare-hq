@@ -1,7 +1,7 @@
 {% load hq_shared_tags %}
 
 <script type="text/template" id="case-view-list-template">
-    <div>
+    <div class="container-fluid">
         <div class="col-sm-8">
             <h2 id="title"><%= title %></h2>
         </div>
@@ -15,22 +15,23 @@
             </div>
         </div>
     </div>
-    <table class="table table-hover table-striped table-bordered">
-
-        <% if (_.isNull(tiles) || !tiles) { %>
-        <thead>
-        <tr>
-            <% _.each(headers, function(header) { %>
-            <td> <%= header %></td>
-            <% }); %>
-        </tr>
-        </thead>
-        <tbody class="case-container">
-        </tbody>
-        <% } else { %>
-            <tbody class="wrapper case-container"></tbody>
+    <% if (useGrid) { %>
+        <section class="case-container"></section>
+    <% } else { %>
+        <% if(!useTiles) { %>
+            <thead>
+                <tr>
+                    <% _.each(headers, function(header) { %>
+                    <td> <%= header %></td>
+                    <% }); %>
+                </tr>
+            </thead>
         <% } %>
-    </table>
+        <table class="table table-hover table-striped table-bordered">
+        <tbody class="wrapper case-container">
+        </tbody>
+        </table>
+    <% } %>
     <% if (action) { %>
     <div>
         <button type="button" class="btn btn-default" id="double-management"><%= action.text %></button>
@@ -91,17 +92,17 @@
 
 <script type="text/template" id="case-tile-view-item-template">
     <div class="grid-wrapper">
-        <% _.each(data, function(datum, index) { %>
-        <div class="grid-style-<%= index %> box">
-            <% if (styles[index].displayFormat === 'Image') {
-            if(resolveUri(datum)) { %>
-            <img class="module-icon" style="max-width:50%; max-height:50%;" src="<%= resolveUri(datum) %>"/>
-            <% } %>
-            <% } else { %>
-            <div><%= datum %></div>
-            <% } %>
-        </div>
-        <% }); %>
+    <% _.each(data, function(datum, index) { %>
+    <div class="grid-style-<%= index %> box">
+        <% if (styles[index].displayFormat === 'Image') {
+        if(resolveUri(datum)) { %>
+        <img class="module-icon" style="max-width:25%; height: auto;" src="<%= resolveUri(datum) %>"/>
+        <% } %>
+        <% } else { %>
+        <div><%= datum %></div>
+        <% } %>
+    </div>
+    <% }); %>
     </div>
 </script>
 
@@ -112,4 +113,27 @@
             font-size: <%= model.fontStyle %>;
         }
     <% }); %>
+</script>
+
+<script type="text/template" id="case-grid-style-template">
+    .case-tile-grid-item {
+        width: <%= model.widthPercentage %>%;
+        height: 0;
+        padding-bottom: <%= model.heightPercentage %>%;
+        display: inline-block;
+        border: 1px solid black;
+        border-collapse: collapse;
+    }
+</script>
+
+<script type="text/template" id="grid-inner-style-template">
+    .grid-wrapper {
+        display: grid;
+        grid-template-columns: repeat(<%= model.numColumns %>, <%= model.widthPixels %>px) min-content 5px;
+        grid-template-rows: repeat(<%= model.numRows %>, <%= model.heightPixels %>px) min-content 5px;
+        background-color: #fff;
+        color: #685c53;
+        border-color: #685c53;
+        max-height: 400 px;
+    }
 </script>

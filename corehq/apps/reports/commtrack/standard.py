@@ -26,7 +26,7 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, Datespan
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return project.commtrack_enabled
+        return project and project.commtrack_enabled
 
     @property
     @memoized

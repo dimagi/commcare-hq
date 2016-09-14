@@ -16,4 +16,4 @@ def catch_signal(sender, using=None, **kwargs):
         plugin.sync_design_docs()
 
 signals.pre_migrate.connect(catch_signal)
-signals.post_syncdb.disconnect(syncdb)
+signals.post_migrate.disconnect(syncdb)

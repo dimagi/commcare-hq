@@ -14,10 +14,12 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.es import UserES
 from corehq.apps.users.forms import MultipleSelectionForm
+from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import raw_username, user_display_string
 
 from .models import Location, SQLLocation
+from .permissions import user_can_access_location_id
 from .signals import location_edited
 from .util import allowed_child_types, get_lineage_from_location_id
 
@@ -80,11 +82,12 @@ class LocationForm(forms.Form):
     external_id.widget.attrs['readonly'] = True
 
     strict = True  # optimization hack: strict or loose validation
-    # TODO remove user from parameters once all these branches are merged
 
     def __init__(self, location, bound_data=None, is_new=False, user=None,
                  *args, **kwargs):
         self.location = location
+        self.domain = location.domain
+        self.user = user
         self.is_new_location = is_new
 
         # seed form data from couch doc
@@ -103,7 +106,7 @@ class LocationForm(forms.Form):
         self.custom_data.form.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
 
         super(LocationForm, self).__init__(bound_data, *args, **kwargs)
-        self.fields['parent_id'].widget.domain = self.location.domain
+        self.fields['parent_id'].widget.domain = self.domain
         self.fields['parent_id'].widget.user = user
 
         if not self.location.external_id:
@@ -122,7 +125,7 @@ class LocationForm(forms.Form):
         if is_new:
             parent = (Location.get(self.location.parent_location_id)
                       if self.location.parent_location_id else None)
-            child_types = allowed_child_types(self.location.domain, parent)
+            child_types = allowed_child_types(self.domain, parent)
             return filter(None, [
                 _("Location Information"),
                 'name',
@@ -150,7 +153,7 @@ class LocationForm(forms.Form):
 
         return CustomDataEditor(
             field_view=LocationFieldsView,
-            domain=self.location.domain,
+            domain=self.domain,
             # For new locations, only display required fields
             required_only=is_new,
             existing_custom_data=existing,
@@ -174,6 +177,9 @@ class LocationForm(forms.Form):
             parent_id = self.location.parent_location_id
         else:
             parent_id = self.cleaned_data['parent_id'] or None
+        if self.user and not user_can_access_location_id(self.domain, self.user, parent_id):
+            raise forms.ValidationError(LOCATION_ACCESS_DENIED)
+
         parent = Location.get(parent_id) if parent_id else None
         self.cleaned_data['parent'] = parent
 
@@ -181,7 +187,7 @@ class LocationForm(forms.Form):
             # location is being re-parented
 
             if parent and self.location.location_id in parent.path:
-                assert False, 'location being re-parented to self or descendant'
+                raise forms.ValidationError(_("Location's parent is itself or a descendant"))
 
             if self.location.descendants:
                 raise forms.ValidationError(
@@ -198,9 +204,9 @@ class LocationForm(forms.Form):
             qs = SQLLocation.objects.filter(domain=location.domain,
                                             name=name)
             if parent_location_id:
-                qs.filter(parent__location_id=parent_location_id)
+                qs = qs.filter(parent__location_id=parent_location_id)
             else:  # Top level
-                qs.filter(parent=None)
+                qs = qs.filter(parent=None)
             return (qs.exclude(location_id=self.location.location_id)
                       .exists())
 
@@ -221,7 +227,7 @@ class LocationForm(forms.Form):
         if site_code:
             site_code = site_code.lower()
 
-        if (SQLLocation.objects.filter(domain=self.location.domain,
+        if (SQLLocation.objects.filter(domain=self.domain,
                                        site_code__iexact=site_code)
                                .exclude(location_id=self.location.location_id)
                                .exists()):
@@ -234,7 +240,7 @@ class LocationForm(forms.Form):
     def clean_location_type(self):
         loc_type = self.cleaned_data['location_type']
 
-        child_types = allowed_child_types(self.location.domain,
+        child_types = allowed_child_types(self.domain,
                                           self.cleaned_data.get('parent'))
         if not loc_type:
             if len(child_types) == 1:
@@ -242,10 +248,9 @@ class LocationForm(forms.Form):
             assert False, 'You must select a location type'
 
         if not child_types:
-            assert False, \
-                'the selected parent location cannot have child locations!'
+            raise forms.ValidationError(_('The selected parent location cannot have child locations!'))
         elif loc_type not in child_types:
-            assert False, 'not valid for the select parent location'
+            raise forms.ValidationError(_('Location type not valid for the selected parent.'))
 
         return loc_type
 

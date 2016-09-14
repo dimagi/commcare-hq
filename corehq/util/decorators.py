@@ -4,6 +4,7 @@ import logging
 import requests
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.util.global_request import get_request
+from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
 from django.conf import settings
@@ -129,10 +130,10 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3,
                     ret_val = fn(*args, **kwargs)
                 except Exception:
                     # Don't leave the lock around if the task fails
-                    lock.release()
+                    release_lock(lock, True)
                     raise
 
-                lock.release()
+                release_lock(lock, True)
                 return ret_val
             else:
                 msg = "Could not aquire lock '{}' for task '{}'.".format(

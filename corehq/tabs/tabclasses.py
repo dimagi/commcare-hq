@@ -58,7 +58,7 @@ class ProjectReportsTab(UITab):
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-        sidebar_items = tools + report_builder_nav + project_reports + custom_reports
+        sidebar_items = tools + report_builder_nav + custom_reports + project_reports
         return self._filter_sidebar_items(sidebar_items)
 
     def _get_tools_items(self):
@@ -1502,6 +1502,8 @@ class AdminTab(UITab):
                  'url': reverse('admin_report_dispatcher', args=('domains',))},
                 {'title': _('Submission Map'),
                  'url': reverse('dimagisphere')},
+                {'title': _('Active Project Map'),
+                 'url': reverse('admin_report_dispatcher', args=('project_map',))},
                 {'title': _('User List'),
                  'url': reverse('admin_report_dispatcher', args=('user_list',))},
                 {'title': _('Application List'),

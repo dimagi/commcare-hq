@@ -1,10 +1,10 @@
+from collections import OrderedDict
 from functools import partial
 
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.core.urlresolvers import reverse
 from django import template
-from django.utils.datastructures import SortedDict
 from django.utils.html import escape
 from couchdbkit.exceptions import ResourceNotFound
 from corehq import privileges
@@ -216,15 +216,15 @@ def render_form(form, domain, options):
 
 def _top_level_tags(form):
         """
-        Returns a SortedDict of the top level tags found in the xml, in the
+        Returns a OrderedDict of the top level tags found in the xml, in the
         order they are found.
 
         """
-        to_return = SortedDict()
+        to_return = OrderedDict()
 
         element = form.get_xml_element()
         if not element:
-            return SortedDict(sorted(form.form_data.items()))
+            return OrderedDict(sorted(form.form_data.items()))
 
         for child in element:
             # fix {namespace}tag format forced by ElementTree in certain cases (eg, <reg> instead of <n0:reg>)

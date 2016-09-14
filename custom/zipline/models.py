@@ -41,11 +41,12 @@ class EmergencyOrderStatusUpdate(models.Model):
     )
 
     class Meta:
+        app_label = 'zipline'
         index_together = [
             ['order', 'package_number'],
         ]
 
-    order = models.ForeignKey('EmergencyOrder')
+    order = models.ForeignKey('EmergencyOrder', on_delete=models.CASCADE)
 
     # The timestamp in CommCareHQ that the status update was received
     timestamp = models.DateTimeField()
@@ -123,6 +124,10 @@ class EmergencyOrderStatusUpdate(models.Model):
 
 
 class EmergencyOrder(models.Model):
+
+    class Meta:
+        app_label = 'zipline'
+
     domain = models.CharField(max_length=126)
 
     # The id of the user who initiated the order
@@ -200,6 +205,8 @@ class EmergencyOrder(models.Model):
 class EmergencyOrderPackage(models.Model):
 
     class Meta:
+        app_label = 'zipline'
+
         index_together = [
             ['order', 'package_number'],
         ]
@@ -209,7 +216,7 @@ class EmergencyOrderPackage(models.Model):
         ]
 
     # (order, package_number) matches up with the same-named fields on EmergencyOrderStatusUpdate
-    order = models.ForeignKey('EmergencyOrder')
+    order = models.ForeignKey('EmergencyOrder', on_delete=models.CASCADE)
     package_number = models.IntegerField()
 
     # Same format as EmergencyOrder.products_requested; represents products and quantities
@@ -287,6 +294,7 @@ class BaseOrderableProduct(models.Model):
 
     class Meta:
         abstract = True
+        app_label = 'zipline'
         unique_together = [
             ['domain', 'code'],
         ]

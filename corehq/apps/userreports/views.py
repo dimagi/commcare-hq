@@ -37,6 +37,7 @@ from couchexport.files import Temp
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 
 from corehq import toggles
@@ -89,9 +90,14 @@ from corehq.apps.userreports.ui.forms import (
     ConfigurableDataSourceEditForm,
     ConfigurableDataSourceFromAppForm,
 )
-from corehq.apps.userreports.util import has_report_builder_access, \
-    has_report_builder_add_on_privilege, add_event, \
-    allowed_report_builder_reports, number_of_report_builder_reports
+from corehq.apps.userreports.util import (
+    add_event,
+    get_indicator_adapter,
+    has_report_builder_access,
+    has_report_builder_add_on_privilege,
+    allowed_report_builder_reports,
+    number_of_report_builder_reports
+)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.couch import get_document_or_404
@@ -695,7 +701,19 @@ class ConfigureChartReport(ReportBuilderView):
                     return self.get(*args, **kwargs)
             else:
                 self._confirm_report_limit()
-                report_configuration = self.report_form.create_report()
+                try:
+                    report_configuration = self.report_form.create_report()
+                except BadSpecError as err:
+                    messages.error(self.request, str(err))
+                    notify_exception(self.request, str(err), details={
+                        'domain': self.domain,
+                        'report_form_class': self.report_form.__class__.__name__,
+                        'report_type': self.report_form.report_type,
+                        'group_by': getattr(self.report_form, 'group_by', 'Not set'),
+                        'user_filters': getattr(self.report_form, 'user_filters', 'Not set'),
+                        'default_filters': getattr(self.report_form, 'default_filters', 'Not set'),
+                    })
+                    return self.get(*args, **kwargs)
                 self._track_new_report_events()
 
             self._track_valid_form_events(existing_sum_avg_cols, report_configuration)
@@ -972,7 +990,7 @@ def delete_data_source(request, domain, config_id):
 
 def delete_data_source_shared(domain, config_id, request=None):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
-    adapter = IndicatorSqlAdapter(config)
+    adapter = get_indicator_adapter(config)
     adapter.drop_table()
     config.delete()
     if request:
@@ -1061,7 +1079,7 @@ class PreviewDataSourceView(BaseUserConfigReportsView):
     @property
     def page_context(self):
         config, is_static = get_datasource_config_or_404(self.config_id, self.domain)
-        adapter = IndicatorSqlAdapter(config)
+        adapter = get_indicator_adapter(config)
         q = adapter.get_query_object()
         return {
             'data_source': config,

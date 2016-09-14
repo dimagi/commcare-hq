@@ -4,8 +4,7 @@ from functools import wraps
 
 from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
-from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import check_password
+from django.contrib.auth.hashers import check_password, make_password
 from django.http import HttpResponse
 
 from corehq.apps.api.resources import DictObject

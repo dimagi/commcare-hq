@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.test.utils import override_settings
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.util.test_utils import TestFileMixin
 from django.test.client import Client
 from django.core.urlresolvers import reverse

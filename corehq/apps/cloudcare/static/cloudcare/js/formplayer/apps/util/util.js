@@ -17,7 +17,7 @@ Util.currentUrlToObject = function () {
         return Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(url));
     } catch (e) {
         // This means that we're on the homepage
-        return new Util.CloudcareUrl();
+        return new Util.CloudcareUrl({});
     }
 };
 
@@ -26,7 +26,7 @@ Util.setUrlToObject = function (urlObject) {
     FormplayerFrontend.navigate(encodedUrl);
 };
 
-Util.doUrlAction = function(actionCallback) {
+Util.doUrlAction = function (actionCallback) {
     var currentObject = Util.CurrentUrlToObject();
     actionCallback(currentObject);
     Util.setUrlToObject(currentObject);
@@ -40,9 +40,8 @@ Util.setCrossDomainAjaxOptions = function (options) {
     options.contentType = "application/json";
 };
 
-Util.CloudcareUrl = function (appId, options) {
-    options = options || {};
-    this.appId = appId;
+Util.CloudcareUrl = function (options) {
+    this.appId = options.appId;
     this.sessionId = options.sessionId;
     this.steps = options.steps;
     this.page = options.page;
@@ -50,6 +49,7 @@ Util.CloudcareUrl = function (appId, options) {
     this.queryDict = options.queryDict;
     this.singleApp = options.singleApp;
     this.previewCommand = options.previewCommand;
+    this.installReference = options.installReference;
 
     this.addStep = function (step) {
         if (!this.steps) {
@@ -58,7 +58,7 @@ Util.CloudcareUrl = function (appId, options) {
         this.steps.push(step);
         //clear out pagination and search when we take a step
         this.page = null;
-        this.search= null;
+        this.search = null;
     };
 
     this.setPage = function (page) {
@@ -75,10 +75,10 @@ Util.CloudcareUrl = function (appId, options) {
         this.sessionId = sessionId;
         this.steps = null;
         this.page = null;
-        this.search= null;
+        this.search = null;
     };
 
-    this.setQuery = function(queryDict) {
+    this.setQuery = function (queryDict) {
         this.queryDict = queryDict;
     };
 
@@ -86,11 +86,20 @@ Util.CloudcareUrl = function (appId, options) {
         this.sessionId = null;
         this.steps = null;
         this.page = null;
-        this.search= null;
+        this.search = null;
         this.queryDict = null;
+        this.previewCommand = null;
     };
 
-    this.spliceSteps = function(index) {
+    this.onSubmit = function () {
+        this.steps = null;
+        this.page = null;
+        this.search = null;
+        this.queryDict = null;
+        this.previewCommand = null;
+    };
+
+    this.spliceSteps = function (index) {
 
         // null out the session if we clicked the root (home)
         if (index === 0) {
@@ -116,6 +125,7 @@ Util.CloudcareUrl.prototype.toJson = function () {
         queryDict: self.queryDict,
         singleApp: self.singleApp,
         previewCommand: self.previewCommand,
+        installReference: self.installReference,
     };
     return JSON.stringify(dict);
 };
@@ -123,6 +133,7 @@ Util.CloudcareUrl.prototype.toJson = function () {
 Util.CloudcareUrl.fromJson = function (json) {
     var data = JSON.parse(json);
     var options = {
+        'appId': data.appId,
         'sessionId': data.sessionId,
         'steps': data.steps,
         'page': data.page,
@@ -130,15 +141,13 @@ Util.CloudcareUrl.fromJson = function (json) {
         'queryDict': data.queryDict,
         'singleApp': data.singleApp,
         'previewCommand': data.previewCommand,
+        'installReference': data.installReference,
     };
-    return new Util.CloudcareUrl(
-        data.appId,
-        options
-    );
+    return new Util.CloudcareUrl(options);
 };
 
 if (!String.prototype.startsWith) {
-    String.prototype.startsWith = function(searchString, position) {
+    String.prototype.startsWith = function (searchString, position) {
         position = position || 0;
         return this.substr(position, searchString.length) === searchString;
     };

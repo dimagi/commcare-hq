@@ -400,9 +400,9 @@ def create_and_save_a_form(domain):
 
 def _create_case(domain, **kwargs):
     from casexml.apps.case.mock import CaseBlock
-    from casexml.apps.case.util import post_case_blocks
-    return post_case_blocks(
-        [CaseBlock(**kwargs).as_xml()], domain=domain
+    from corehq.apps.hqcase.utils import submit_case_blocks
+    return submit_case_blocks(
+        [CaseBlock(**kwargs).as_string()], domain=domain
     )
 
 

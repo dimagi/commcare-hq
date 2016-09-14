@@ -36,7 +36,7 @@ class OdmExportReport(ProjectReport, CaseListMixin, GenericReportView):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return toggles.OPENCLINICA.enabled(domain)
+        return domain and toggles.OPENCLINICA.enabled(domain)
 
     @property
     def headers(self):

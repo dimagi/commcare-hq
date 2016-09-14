@@ -20,6 +20,12 @@ def set_local_domain_sql_backend_override(domain):
     _thread_local.use_sql_backend = use_sql_backend_dict
 
 
+def clear_local_domain_sql_backend_override(domain):
+    use_sql_backend_dict = getattr(_thread_local, 'use_sql_backend', {})
+    use_sql_backend_dict.pop(domain, None)
+    _thread_local.use_sql_backend = use_sql_backend_dict
+
+
 def should_use_sql_backend(domain_object_or_name):
     domain_name, domain_object = _get_domain_name_and_object(domain_object_or_name)
     local_override = get_local_domain_sql_backend_override(domain_name)

@@ -236,6 +236,7 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
             setting.hasError = ko.computed(function () {
                 return setting.disabledButHasValue() || !setting.valueIsLegal();
             });
+            setting.foot_note = ko.observable(setting.foot_note);
         });
 
         _(self.sections).each(function (section) {

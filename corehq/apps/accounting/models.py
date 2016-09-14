@@ -501,7 +501,7 @@ class BillingAccount(models.Model):
 
 
 class BillingContactInfo(models.Model):
-    account = models.OneToOneField(BillingAccount, primary_key=True, null=False)
+    account = models.OneToOneField(BillingAccount, primary_key=True, null=False, on_delete=models.CASCADE)
     first_name = models.CharField(
         max_length=50, null=True, blank=True, verbose_name=_("First Name")
     )
@@ -774,11 +774,11 @@ class SoftwarePlanVersion(models.Model):
     must be created.
     """
     plan = models.ForeignKey(SoftwarePlan, on_delete=models.PROTECT)
-    product_rate = models.ForeignKey(SoftwareProductRate)
+    product_rate = models.ForeignKey(SoftwareProductRate, on_delete=models.CASCADE)
     feature_rates = models.ManyToManyField(FeatureRate, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
-    role = models.ForeignKey(Role)
+    role = models.ForeignKey(Role, on_delete=models.CASCADE)
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:

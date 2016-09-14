@@ -40,8 +40,7 @@ class SetupProjectPerformanceMixin(object):
     @classmethod
     def make_mobile_worker(cls, username, domain=None):
         domain = domain or cls.domain
-        user = CommCareUser(username=username, domain=domain)
-        user.domain_membership = DomainMembership(domain=domain)
+        user = CommCareUser.create(domain, username, '123')
         doc = user._doc
         doc['username.exact'] = doc['username']
         UserESFake.save_doc(doc)
@@ -186,6 +185,7 @@ class ProjectHealthDashboardTest(SetupProjectPerformanceMixin, TestCase):
     def tearDownClass(cls):
         super(ProjectHealthDashboardTest, cls).tearDownClass()
         cls.class_teardown()
+        cls.web_user.delete()
         GroupESFake.reset_docs()
 
     @classmethod

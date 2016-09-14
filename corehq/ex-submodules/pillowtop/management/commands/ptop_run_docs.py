@@ -1,6 +1,6 @@
 import datetime
 from dimagi.utils.couch.database import iter_docs
-from django.core.management.base import LabelCommand, CommandError, BaseCommand
+from django.core.management.base import CommandError, BaseCommand
 from optparse import make_option
 from pillowtop import get_pillow_by_name
 from pillowtop.feed.interface import Change

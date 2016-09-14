@@ -253,6 +253,7 @@ class DetailContributor(SectionContributor):
             stack=Stack()
         )
         frame = PushFrame()
+        frame.add_mark()
         frame.add_command(XPath.string(id_strings.search_command(module)))
         action.stack.add_frame(frame)
         return action
@@ -266,7 +267,7 @@ class DetailContributor(SectionContributor):
                 style=Style(
                     horz_align="center",
                     font_size="large",
-                    grid_height=2,
+                    grid_height=1,
                     grid_width=12,
                     grid_x=0,
                     grid_y=0,

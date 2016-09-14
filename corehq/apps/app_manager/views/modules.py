@@ -55,7 +55,7 @@ from corehq.apps.app_manager.models import (
     SortElement,
     ReportAppConfig,
     FixtureSelect,
-)
+    DefaultCaseSearchProperty)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 
@@ -149,6 +149,8 @@ def _get_advanced_module_view_context(app, module, lang=None):
         'child_module_enabled': True,
         'is_search_enabled': case_search_enabled_for_domain(app.domain),
         'search_properties': module.search_config.properties if module_offers_search(module) else [],
+        'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
+        'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
         'schedule_phases': [
             {
                 'id': schedule.id,
@@ -183,6 +185,8 @@ def _get_basic_module_view_context(app, module, lang=None):
         ),
         'is_search_enabled': case_search_enabled_for_domain(app.domain),
         'search_properties': module.search_config.properties if module_offers_search(module) else [],
+        'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
+        'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
     }
 
 
@@ -383,6 +387,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         "source_module_id": None,
         "task_list": ('task_list-show', 'task_list-label'),
         "excl_form_ids": None,
+        "display_style": None
     }
 
     if attr not in attributes:
@@ -431,6 +436,8 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             return HttpResponseBadRequest("case type is improperly formatted")
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(request.POST.get("put_in_root"))
+    if should_edit("display_style"):
+        module["display_style"] = request.POST.get("display_style")
     if should_edit("source_module_id"):
         module["source_module_id"] = request.POST.get("source_module_id")
     if should_edit("display_separately"):
@@ -719,7 +726,12 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
                     search_properties.get('relevant')
                     if search_properties.get('relevant') is not None
                     else CLAIM_DEFAULT_RELEVANT_CONDITION
-                )
+                ),
+                include_closed=bool(search_properties.get('include_closed')),
+                default_properties=[
+                    DefaultCaseSearchProperty.wrap(p)
+                    for p in search_properties.get('default_properties')
+                ]
             )
 
     resp = {}
@@ -780,6 +792,7 @@ def validate_module_for_build(request, domain, app_id, module_id, ajax=True):
     lang, langs = get_langs(request, app)
 
     response_html = render_to_string('app_manager/partials/build_errors.html', {
+        'request': request,
         'app': app,
         'build_errors': errors,
         'not_actual_build': True,

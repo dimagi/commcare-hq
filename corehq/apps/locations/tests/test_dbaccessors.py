@@ -14,11 +14,11 @@ class TestUsersByLocation(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        delete_all_locations()
+        delete_all_users()
         cls.domain = 'test-domain'
         cls.domain_obj = create_domain(cls.domain)
         bootstrap_location_types(cls.domain)
-        delete_all_locations()
-        delete_all_users()
 
         def make_user(name, location):
             user = CommCareUser.create(cls.domain, name, 'password')

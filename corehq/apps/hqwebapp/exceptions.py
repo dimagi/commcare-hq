@@ -1,0 +1,2 @@
+class AlreadyRenderedException(Exception):
+    pass

@@ -31,25 +31,6 @@ from corehq.apps.receiverwrapper.util import submit_form_locally
 
 
 class BaseAsyncRestoreTest(TestCase):
-    dependent_apps = [
-        'auditcare',
-        'django_digest',
-        'casexml.apps.phone',
-        'casexml.apps.stock',
-        'corehq.couchapps',
-        'corehq.form_processor',
-        'corehq.sql_accessors',
-        'corehq.sql_proxy_accessors',
-        'corehq.apps.domain',
-        'corehq.apps.hqcase',
-        'corehq.apps.products',
-        'corehq.apps.reminders',
-        'corehq.apps.sms',
-        'corehq.apps.smsforms',
-        'corehq.apps.notifications',
-        'phonelog',
-        'corehq.apps.domain',
-    ]
 
     @classmethod
     def setUpClass(cls):

@@ -284,6 +284,7 @@
                 "milange": 91807,
                 "mocuba": 140365,
                 "molumbo": 44715,
+                "mopeia": 15683,
                 "morrumbala": 97861,
                 "quelimane": 76936
               },
@@ -378,8 +379,8 @@
             "Madagascar": {
               "default": 0,
               "cases": {
-                "Atsinanana": 108361,
-                "Analanjirofo": 80604,
+                "Atsinanana": 107832,
+                "Analanjirofo": 81125,
                 "Vatovavy Fitovinany": 41018,
                 "Atsimo Atsinanana": 81941
               },
@@ -522,7 +523,10 @@
                 "namanjavira": 15508,
                 "namuinho": 49276,
                 "pinda": 10524,
-                "sabe": 6756
+                "sabe": 6756,
+                "mopeia_sede": 8744,
+                "posto_campo": 3578,
+                "chimuara": 3361
               },
               "type": "switch",
               "switch_on": {
@@ -755,10 +759,10 @@
             "Madagascar": {
               "default": 0,
               "cases": {
-                "Brickaville": 50560,
-                "Fenerive Est": 80604,
-                "Tamatave II": 57801,
+                "Brickaville": 48850,
                 "Farafangana": 81941,
+                "Fenerive Est": 81125,
+                "Tamatave II": 58982,
                 "Vohipeno": 41018
               },
               "type": "switch",
@@ -945,27 +949,52 @@
             "Madagascar": {
               "default": 0,
               "cases": {
+                "Ambalarondra": 4916,
                 "Ambalatany": 3032,
                 "Ambalavato Nord": 1027,
                 "Ambalavato Sud": 953,
+                "Ambanja": 3727,
+                "Ambatoharanana": 6660,
+                "Ambinaninony": 3688,
+                "Ambodilazana": 5357,
+                "Ambodimanga II": 6454,
+                "Ambodiriana": 2026,
+                "Amboditandroho": 2728,
                 "Ambohigogo": 2460,
                 "Ambohimandroso": 2891,
                 "Amborobe": 1208,
+                "Ampasimadinika": 2230,
+                "Ampasimbe": 4704,
+                "Ampasimbe Manantsatrana": 4193,
+                "Ampasimbe Onibe": 6683,
+                "Ampasina Maningory": 14805,
                 "Amporoforo": 3683,
                 "Andemaka": 3326,
+                "Andodabe": 6130,
+                "Andovoranto": 5080,
+                "Andranobolaha": 3255,
+                "Anjahamana": 2266,
                 "Ankarana Miraihina": 1853,
                 "Ankarimbary": 1518,
                 "Anoloka": 777,
                 "Anosivelo": 2757,
                 "Anosy Tsararafa": 5901,
                 "Antananabo": 1225,
+                "Antetezambaro": 5359,
+                "Antsampanana": 3700,
                 "Antseranambe": 1299,
+                "Antsiatsiaka": 4416,
+                "Betampona": 2836,
                 "Bevoay Beretra": 2336,
+                "Brickaville Centre": 8835,
                 "Efatsy": 1617,
                 "Etrotroka": 5463,
                 "Evato": 4346,
+                "Fanandrana": 4044,
                 "Farafangana": 7443,
+                "Fenerive Est": 12162,
                 "Fenoarivo": 1618,
+                "Foulpointe": 7021,
                 "Iabohazo": 1423,
                 "Iaborano Namohora": 1250,
                 "Ifatsy": 2136,
@@ -977,17 +1006,25 @@
                 "Mahabo": 1605,
                 "Mahabo Mananivo": 1736,
                 "Mahafasa Centre": 2324,
+                "Mahambo": 11339,
+                "Mahanoro": 2765,
                 "Mahasoabe": 1381,
+                "Mahatsara": 4567,
                 "Mahavelo": 2220,
                 "Mahazoarivo": 6350,
                 "Maheriraty": 1460,
                 "Manambotra Sud": 962,
                 "Marovandrika": 2466,
+                "Miorimivalana": 1060,
                 "Nato": 989,
                 "Onjatsy": 398,
+                "Ranomafana Est": 6844,
                 "Sahalava": 1828,
                 "Sahamadio": 4600,
+                "Sahambala": 7526,
+                "Saranambana": 2003,
                 "Savana": 1089,
+                "Tamatave Suburbaine": 6623,
                 "Tangainony": 2504,
                 "Tovona": 1699,
                 "Vohilany": 250,
@@ -995,7 +1032,8 @@
                 "Vohilengo": {
                   "default": 0,
                   "cases": {
-                    "Farafangana": 4145
+                    "Farafangana": 3451,
+                    "Fenerive Est": 4164
                   },
                   "type": "switch",
                   "switch_on": {
@@ -1019,7 +1057,8 @@
                 "Vohipeno": {
                   "default": 0,
                   "cases": {
-                    "Vohipeno": 4512
+                    "Fenerive Est": 4541,
+                    "Vohipeno": 3919
                   },
                   "type": "switch",
                   "switch_on": {
@@ -1038,6 +1077,7 @@
                     }
                   }
                 },
+                "Vohitranivona": 4250,
                 "Vohitrindry": 2783,
                 "Vohitromby": 1077,
                 "Zafindrafady": 2418
@@ -1315,13 +1355,13 @@
         "expression": {
           "default": 0,
           "cases": {
-            "mozambique": 468239,
+            "mozambique": 483922,
             "Senegal": 220551,
             "Rwanda": 188189,
             "Zambia": 539348,
             "Ethiopia": 708258,
             "Mali": 242684,
-            "Madagascar": 311924,
+            "Madagascar": 311916,
             "Tanzania": 502934,
             "benin": 270141
           },
