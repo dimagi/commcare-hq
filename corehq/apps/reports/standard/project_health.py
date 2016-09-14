@@ -318,7 +318,7 @@ class ProjectHealthDashboard(ProjectReport):
         return locationids_param, groupids_param
 
     def get_users_by_location_filter(self, location_ids):
-        return UserES().domain(self.domain).primary_location(location_ids).values_list('_id', flat=True)
+        return UserES().domain(self.domain).location(location_ids).values_list('_id', flat=True)
 
     def get_users_by_group_filter(self, group_ids):
         return GroupES().domain(self.domain).group_ids(group_ids).values_list("users", flat=True)
