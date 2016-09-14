@@ -346,31 +346,17 @@ class FixtureDataItem(Document):
         return SQLLocation.objects.filter(location_id__in=loc_ids)
 
     @classmethod
-    def by_user(cls, user, wrap=True, domain=None):
+    def by_user(cls, user, wrap=True):
         group_ids = Group.by_user(user, wrap=False)
-
-        if isinstance(user, dict):
-            # Added 2015-07-31, feel free to remove eventually.
-            _assert = soft_assert('@'.join(['esoergel', 'dimagi.com']))
-            _assert(False, "This apparently IS called with a user dict. How?")
-
-            user_id = user.get('user_id')
-            user_domain = domain
-            location = CommCareUser.get(user_id).sql_location
-        else:
-            user_id = user.user_id
-            user_domain = user.domain
-            location = user.sql_location
-
-        loc_ids = location.path if location else []
+        loc_ids = user.sql_location.path if user.sql_location else []
 
         def make_keys(owner_type, ids):
-            return [[user_domain, 'data_item by {}'.format(owner_type), id_]
+            return [[user.domain, 'data_item by {}'.format(owner_type), id_]
                     for id_ in ids]
 
         fixture_ids = set(
             FixtureOwnership.get_db().view('fixtures/ownership',
-                keys=(make_keys('user', [user_id]) +
+                keys=(make_keys('user', [user.user_id]) +
                       make_keys('group', group_ids) +
                       make_keys('location', loc_ids)),
                 reduce=False,
@@ -398,7 +384,7 @@ class FixtureDataItem(Document):
             # fetch and delete ownership documents pointing
             # to deleted or non-existent fixture documents
             # this cleanup is necessary since we used to not do this
-            bad_ownerships = FixtureOwnership.for_all_item_ids(deleted_fixture_ids, user_domain)
+            bad_ownerships = FixtureOwnership.for_all_item_ids(deleted_fixture_ids, user.domain)
             FixtureOwnership.get_db().bulk_delete(bad_ownerships)
 
             return docs
