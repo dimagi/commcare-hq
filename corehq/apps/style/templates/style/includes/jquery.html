@@ -1,0 +1,6 @@
+{% load hq_shared_tags %}
+{% if request.GET.jquery == 'old' %}
+<script src="{% static 'jquery-1.11.1/dist/jquery.min.js' %}"></script>
+{% else %}
+<script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+{% endif %}
