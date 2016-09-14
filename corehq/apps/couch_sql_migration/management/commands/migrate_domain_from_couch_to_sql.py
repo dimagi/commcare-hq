@@ -133,7 +133,7 @@ class Command(LabelCommand):
             return False
 
         def _highlight(text):
-            print red(text) if has_diff else text
+            return red(text) if has_diff else text
 
         row = "{:^40} | {:^40}"
         doc_count_row = row.format(n_couch, n_sql)
