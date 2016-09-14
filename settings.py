@@ -365,6 +365,8 @@ HQ_APPS = (
     # eNikshay / UATBC
     'custom.enikshay',
     'custom.enikshay.integrations.ninetyninedots',
+    'custom.pnlppgi',
+    'custom.enikshay.nikshay_datamigration',
 )
 
 # DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
