@@ -69,7 +69,7 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
     def test_grid_menu_for_none(self):
         factory = AppFactory(build_version='2.24.3')
         factory.app.create_profile()
-        factory.app.profile['properties'] = {'cc-grid-menus': 'none'}
+        factory.app.profile['properties'] = {'cc-grid-menus': 'no'}
         factory.new_basic_module('registration', 'patient')
         factory.app.get_module(0).display_style = 'grid'
         root_xpath = './menu[@id="root"]'
@@ -150,7 +150,7 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
     def test_grid_menu_for_all(self):
         factory = AppFactory(build_version='2.24.3')
         factory.app.create_profile()
-        factory.app.profile['properties'] = {'cc-grid-menus': 'all'}
+        factory.app.profile['properties'] = {'cc-grid-menus': 'yes'}
         factory.new_basic_module('registration', 'patient')
         suite = factory.app.create_suite()
         root_xpath = './menu[@id="root"]'
