@@ -378,6 +378,10 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
         except (ResourceNotFound, KeyError):
             raise Http404()
 
+        for app in (self.first_app, self.second_app):
+            if not self.request.couch_user.is_member_of(app.domain):
+                raise Http404()
+
         return {
             "app": self.first_app,
             "other_app": self.second_app,
