@@ -204,9 +204,9 @@ class LocationForm(forms.Form):
             qs = SQLLocation.objects.filter(domain=location.domain,
                                             name=name)
             if parent_location_id:
-                qs.filter(parent__location_id=parent_location_id)
+                qs = qs.filter(parent__location_id=parent_location_id)
             else:  # Top level
-                qs.filter(parent=None)
+                qs = qs.filter(parent=None)
             return (qs.exclude(location_id=self.location.location_id)
                       .exists())
 
