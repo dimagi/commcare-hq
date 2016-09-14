@@ -211,7 +211,7 @@ def _filter_date_diffs(diffs):
         return is_datetime(old) and is_datetime(new)
 
     def _date_diff(diff):
-        return diff.diff_type == 'diff' and diff.path[-1] in DATE_FIELDS
+        return diff.diff_type in ('diff', 'complex') and diff.path[-1] in DATE_FIELDS
 
     return [
         diff for diff in diffs
@@ -264,7 +264,6 @@ def _filter_case_attachment_diffs(diffs):
         ]
         filtered = _filter_partial_matches(normalized_diffs, PARTIAL_DIFFS['case_attachment'])
         filtered = _filter_renamed_fields(filtered, 'case_attachment')
-        print filtered
         if filtered:
             diffs.extend([
                 FormJsonDiff(

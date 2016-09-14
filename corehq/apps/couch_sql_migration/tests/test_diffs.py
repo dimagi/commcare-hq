@@ -137,3 +137,13 @@ class DiffTestCases(SimpleTestCase):
         partial_diffs = _get_partial_diffs('LedgerValue')
         filtered = filter_ledger_diffs(partial_diffs + REAL_DIFFS)
         self.assertEqual(filtered, REAL_DIFFS)
+
+    def test_filter_combo_fields(self):
+        couch_case = {'doc_type': 'CommCareCase'}
+        rename_date_diffs = [
+            FormJsonDiff(diff_type='missing', path=('@date_modified',), old_value='2015-03-23T14:36:53Z', new_value=Ellipsis),
+            FormJsonDiff(diff_type='missing', path=('modified_on',), old_value=Ellipsis, new_value='2015-03-23T14:36:53.073000Z'),
+        ]
+        diffs = rename_date_diffs + REAL_DIFFS
+        filtered = filter_case_diffs(couch_case, {}, diffs)
+        self.assertEqual(filtered, REAL_DIFFS)
