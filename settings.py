@@ -388,7 +388,8 @@ HQ_APPS = (
     'custom.common',
 
     'custom.icds_reports',
-    'custom.enikshay.integrations.ninetyninedots'
+    'custom.enikshay.integrations.ninetyninedots',
+    'custom.pnlppgi'
 )
 
 # DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
@@ -893,7 +894,7 @@ ZIPLINE_API_URL = ''
 ZIPLINE_API_USER = ''
 ZIPLINE_API_PASSWORD = ''
 
-KAFKA_URL = 'localhost:9092'
+KAFKA_URL = 'localhost:1111'
 
 MOBILE_INTEGRATION_TEST_TOKEN = None
 
@@ -1772,7 +1773,9 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('location_type_name', 'corehq.apps.locations.ucr_expressions.location_type_name'),
     ('location_parent_id', 'corehq.apps.locations.ucr_expressions.location_parent_id'),
     ('cvsu_expression', 'custom.apps.cvsu.expressions.cvsu_expression'),
-    ('eqa_expression', 'custom.eqa.expressions.eqa_expression')
+    ('eqa_expression', 'custom.eqa.expressions.eqa_expression'),
+    ('year_expression', 'custom.pnlppgi.expressions.year_expression'),
+    ('week_expression', 'custom.pnlppgi.expressions.week_expression')
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
@@ -1837,7 +1840,8 @@ DOMAIN_MODULE_MAP = {
     'pathways-tanzania': 'custom.care_pathways',
     'care-macf-malawi': 'custom.care_pathways',
     'care-macf-bangladesh': 'custom.care_pathways',
-    'care-macf-ghana': 'custom.care_pathways'
+    'care-macf-ghana': 'custom.care_pathways',
+    'pnlppgi': 'custom.pnlppgi'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
