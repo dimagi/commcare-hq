@@ -54,13 +54,17 @@
     "jquery-treetable": "^3.2.0",
     "css-grid-polyfill-binaries": "1.1.1",
     "requirejs": "~2.3.1",
-    "datetimepicker": "2.5.4"
+    "datetimepicker": "2.5.4",
+    "DOMPurify": "0.8.3",
+    "jquery-tiny-pubsub": "https://github.com/cowboy/jquery-tiny-pubsub.git#~0.7.0",
+    "markdown-it": "7.0.1"
   },
   "devDependencies": {
     "chai": "3.3.0",
     "mocha": "2.3.3",
     "sinon": "http://sinonjs.org/releases/sinon-1.17.0.js",
-    "angular-mocks": "1.4.4"
+    "angular-mocks": "1.4.4",
+    "jasmine-fixture": "2.0.0"
   },
   "private": true,
   "resolutions": {
