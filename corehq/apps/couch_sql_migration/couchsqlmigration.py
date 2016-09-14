@@ -236,6 +236,7 @@ def _migrate_form(domain, couch_form):
     with force_phone_timezones_should_be_processed():
         adjust_datetimes(form_data)
     sql_form = interface.new_xform(form_data)
+    sql_form.form_id = couch_form.form_id   # some legacy forms don't have ID's so are assigned random ones
     return _copy_form_properties(domain, sql_form, couch_form)
 
 
