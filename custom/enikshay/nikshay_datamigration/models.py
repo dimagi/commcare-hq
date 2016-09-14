@@ -12,7 +12,7 @@ class PatientDetail(models.Model):
     pgender = models.CharField(max_length=255)
     page = models.IntegerField(null=True)
     poccupation = models.IntegerField(null=True)
-    paadharno = models.CharField(max_length=255, null=True) # big ints (scientific notation) and nulls
+    paadharno = models.CharField(max_length=255, null=True) # big ints (scientific notation) and nulls. requires some formatting
     paddress = models.CharField(max_length=255, null=True)
     pmob = models.CharField(max_length=255, null=True)  # contains " ", big ints
     plandline = models.BigIntegerField(null=True)
@@ -64,18 +64,30 @@ class PatientDetail(models.Model):
             case_name=self.pname,
             # if can be blank (or null) should we skip adding the property?
             case_properties={
-                'name': self.pname,
-                #'aadhaar_number': self.paadharno,
-                'phi': self.PHI,
+                'name': self.name,
+                'aadhaar_number': self.aadhaar_number,
+                'phi': self.phi,
                 'first_name': self.first_name,
                 'middle_name': self.middle_name,
                 'last_name': self.last_name,
-                'age': self.page,
-                'sex': self.pgender,
-                'current_address': self.paddress,
-                'mobile_number': self.pmob,
+                'age': self.age,
+                'sex': self.sex,
+                'current_address': self.current_address,
+                'mobile_number': self.mobile_number,
             }
         )
+
+    @property
+    def name(self):
+        return self.pname
+
+    @property
+    def aadhaar_number(self):
+        return self.paadharno
+
+    @property
+    def phi(self):
+        return self.PHI
 
     @property
     def first_name(self):
@@ -92,3 +104,23 @@ class PatientDetail(models.Model):
     @property
     def _list_of_names(self):
         return self.pname.split(' ')
+
+    @property
+    def age(self):
+        return self.page
+
+    @property
+    def sex(self):
+        return {
+            'F': 'female',
+            'M': 'male',
+            'T': 'transgender'
+        }[self.pgender]
+
+    @property
+    def current_address(self):
+        return self.paddress
+
+    @property
+    def mobile_number(self):
+        return self.pmob
