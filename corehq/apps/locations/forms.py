@@ -274,7 +274,7 @@ class LocationForm(forms.Form):
                                 .filter(domain=self.domain)
                                 .get(Q(code=loc_type) | Q(name=loc_type)))
             except LocationType.DoesNotExist:
-                raise forms.ValidationError(_( "LocationType '{}' not found").format(loc_type))
+                raise forms.ValidationError(_("LocationType '{}' not found").format(loc_type))
             else:
                 if loc_type_obj not in allowed_types:
                     raise forms.ValidationError(_('Location type not valid for the selected parent.'))
