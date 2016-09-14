@@ -1,6 +1,7 @@
 import re
 
 from django import forms
+from django.db.models import Q
 from django.template import Context
 from django.template.loader import get_template
 from django.utils.translation import ugettext as _
@@ -11,6 +12,7 @@ from crispy_forms import layout as crispy
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 
+from corehq.apps.commtrack.util import generate_code
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.es import UserES
 from corehq.apps.users.forms import MultipleSelectionForm
@@ -18,10 +20,9 @@ from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import raw_username, user_display_string
 
-from .models import Location, SQLLocation
+from .models import SQLLocation, LocationType
 from .permissions import user_can_access_location_id
 from .signals import location_edited
-from .util import allowed_child_types, get_lineage_from_location_id
 
 
 class ParentLocWidget(forms.Widget):
@@ -90,10 +91,14 @@ class LocationForm(forms.Form):
         self.user = user
         self.is_new_location = is_new
 
-        # seed form data from couch doc
-        kwargs['initial'] = dict(self.location._doc)
+        kwargs['initial'] = {
+            'parent_id': location.parent_location_id,
+            'name': location.name,
+            'site_code': location.site_code,
+            'external_id': location.external_id,
+        }
         if not self.is_new_location:
-            kwargs['initial']['location_type'] = self.location.location_type
+            kwargs['initial']['location_type'] = self.location.location_type.name
         kwargs['initial']['parent_id'] = self.location.parent_location_id
         lat, lon = (getattr(self.location, k, None)
                     for k in ('latitude', 'longitude'))
@@ -123,13 +128,10 @@ class LocationForm(forms.Form):
 
     def get_fields(self, is_new):
         if is_new:
-            parent = (Location.get(self.location.parent_location_id)
-                      if self.location.parent_location_id else None)
-            child_types = allowed_child_types(self.domain, parent)
             return filter(None, [
                 _("Location Information"),
                 'name',
-                'location_type' if len(child_types) > 1 else None,
+                'location_type' if len(self._get_allowed_types(self.domain, self.location.parent)) > 1 else None,
             ])
         else:
             return [
@@ -174,13 +176,15 @@ class LocationForm(forms.Form):
 
     def clean_parent_id(self):
         if self.is_new_location:
+            parent = self.location.parent
             parent_id = self.location.parent_location_id
         else:
             parent_id = self.cleaned_data['parent_id'] or None
+            parent = SQLLocation.objects.get(location_id=parent_id) if parent_id else None
+
         if self.user and not user_can_access_location_id(self.domain, self.user, parent_id):
             raise forms.ValidationError(LOCATION_ACCESS_DENIED)
 
-        parent = Location.get(parent_id) if parent_id else None
         self.cleaned_data['parent'] = parent
 
         if self.location.location_id is not None and self.location.parent_location_id != parent_id:
@@ -189,11 +193,11 @@ class LocationForm(forms.Form):
             if parent and self.location.location_id in parent.path:
                 raise forms.ValidationError(_("Location's parent is itself or a descendant"))
 
-            if self.location.descendants:
-                raise forms.ValidationError(
+            if self.location.get_descendants().exists():
+                raise forms.ValidationError(_(
                     'only locations that have no child locations can be '
                     'moved to a different parent'
-                )
+                ))
 
             self.cleaned_data['orig_parent_id'] = self.location.parent_location_id
 
@@ -215,9 +219,9 @@ class LocationForm(forms.Form):
 
         if self.strict:
             if has_siblings_with_name(self.location, name, parent_location_id):
-                raise forms.ValidationError(
+                raise forms.ValidationError(_(
                     'name conflicts with another location with this parent'
-                )
+                ))
 
         return name
 
@@ -226,33 +230,57 @@ class LocationForm(forms.Form):
 
         if site_code:
             site_code = site_code.lower()
+            if (SQLLocation.objects.filter(domain=self.domain,
+                                        site_code__iexact=site_code)
+                                   .exclude(location_id=self.location.location_id)
+                                   .exists()):
+                raise forms.ValidationError(_(
+                    'another location already uses this site code'
+                ))
+            return site_code
 
-        if (SQLLocation.objects.filter(domain=self.domain,
-                                       site_code__iexact=site_code)
-                               .exclude(location_id=self.location.location_id)
-                               .exists()):
-            raise forms.ValidationError(
-                'another location already uses this site code'
-            )
+    def clean(self):
+        if 'name' in self.cleaned_data and not self.cleaned_data.get('site_code', None):
+            all_codes = [
+                code.lower() for code in
+                (SQLLocation.objects.exclude(location_id=self.location.location_id)
+                                    .filter(domain=self.domain)
+                                    .values_list('site_code', flat=True))
+            ]
+            self.cleaned_data['site_code'] = generate_code(self.cleaned_data['name'], all_codes)
 
-        return site_code
+    @staticmethod
+    def _get_allowed_types(domain, parent):
+        parent_type = parent.location_type if parent else None
+        return list(LocationType.objects
+                    .filter(domain=domain,
+                            parent_type=parent_type)
+                    .all())
 
     def clean_location_type(self):
         loc_type = self.cleaned_data['location_type']
-
-        child_types = allowed_child_types(self.domain,
-                                          self.cleaned_data.get('parent'))
-        if not loc_type:
-            if len(child_types) == 1:
-                return child_types[0]
-            assert False, 'You must select a location type'
-
-        if not child_types:
+        allowed_types = self._get_allowed_types(self.domain, self.cleaned_data.get('parent'))
+        if not allowed_types:
             raise forms.ValidationError(_('The selected parent location cannot have child locations!'))
-        elif loc_type not in child_types:
-            raise forms.ValidationError(_('Location type not valid for the selected parent.'))
 
-        return loc_type
+        if not loc_type:
+            if len(allowed_types) == 1:
+                loc_type_obj = allowed_types[0]
+            else:
+                raise forms.ValidationError(_('You must select a location type'))
+        else:
+            try:
+                loc_type_obj = (LocationType.objects
+                                .filter(domain=self.domain)
+                                .get(Q(code=loc_type) | Q(name=loc_type)))
+            except LocationType.DoesNotExist:
+                raise forms.ValidationError(_( "LocationType '{}' not found").format(loc_type))
+            else:
+                if loc_type_obj not in allowed_types:
+                    raise forms.ValidationError(_('Location type not valid for the selected parent.'))
+
+        self.cleaned_data['location_type_object'] = loc_type_obj
+        return loc_type_obj.name
 
     def clean_coordinates(self):
         coords = self.cleaned_data['coordinates'].strip()
@@ -261,13 +289,13 @@ class LocationForm(forms.Form):
         pieces = re.split('[ ,]+', coords)
 
         if len(pieces) != 2:
-            raise forms.ValidationError('could not understand coordinates')
+            raise forms.ValidationError(_('could not understand coordinates'))
 
         try:
             lat = float(pieces[0])
             lon = float(pieces[1])
         except ValueError:
-            raise forms.ValidationError('could not understand coordinates')
+            raise forms.ValidationError(_('could not understand coordinates'))
 
         return [lat, lon]
 
@@ -278,14 +306,16 @@ class LocationForm(forms.Form):
         location = instance or self.location
         is_new = location.location_id is None
 
-        for field in ('name', 'location_type', 'site_code'):
-            setattr(location, field, self.cleaned_data[field])
-        coords = self.cleaned_data['coordinates']
-        setattr(location, 'latitude', coords[0] if coords else None)
-        setattr(location, 'longitude', coords[1] if coords else None)
-        if self.cleaned_data['parent_id']:
-            location.lineage = get_lineage_from_location_id(self.cleaned_data['parent_id'])
+        location.name = self.cleaned_data['name']
+        location.site_code = self.cleaned_data['site_code']
+        location.location_type = self.cleaned_data['location_type_object']
         location.metadata = self.custom_data.get_data_to_save()
+        location.parent = self.cleaned_data['parent']
+
+        coords = self.cleaned_data['coordinates']
+        if coords:
+            location.latitude = coords[0]
+            location.longitude = coords[1]
 
         for k, v in self.cleaned_data.iteritems():
             if k.startswith('prop:'):
@@ -298,7 +328,7 @@ class LocationForm(forms.Form):
         if not is_new:
             orig_parent_id = self.cleaned_data.get('orig_parent_id')
             reparented = orig_parent_id is not None
-            location_edited.send(sender='loc_mgmt', loc=location,
+            location_edited.send(sender='loc_mgmt', sql_loc=location,
                                  moved=reparented, previous_parent=orig_parent_id)
 
         return location

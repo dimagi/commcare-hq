@@ -543,29 +543,29 @@ def domain_pre_delete_receiver(domain, **kwargs):
 
 
 @receiver(location_edited)
-def location_edited_receiver(sender, loc, moved, previous_parent, **kwargs):
+def location_edited_receiver(sender, sql_loc, moved, previous_parent, **kwargs):
     from custom.ilsgateway.utils import last_location_group
-    config = ILSGatewayConfig.for_domain(loc.domain)
+    config = ILSGatewayConfig.for_domain(sql_loc.domain)
     if not config or not config.enabled:
         return
 
-    last_run = ReportRun.last_success(loc.domain)
+    last_run = ReportRun.last_success(sql_loc.domain)
     if not last_run:
         return
 
     if moved:
         PendingReportingDataRecalculation.objects.create(
-            domain=loc.domain,
+            domain=sql_loc.domain,
             type='parent_change',
-            sql_location=loc.sql_location,
-            data={'previous_parent': previous_parent, 'current_parent': loc.parent_location_id}
+            sql_location=sql_loc,
+            data={'previous_parent': previous_parent, 'current_parent': sql_loc.parent_location_id}
         )
 
-    group = last_location_group(loc)
-    if not loc.sql_location.location_type.administrative and group != loc.metadata['group']:
+    group = last_location_group(sql_loc)
+    if not sql_loc.location_type.administrative and group != sql_loc.metadata['group']:
         PendingReportingDataRecalculation.objects.create(
-            domain=loc.domain,
+            domain=sql_loc.domain,
             type='group_change',
-            sql_location=loc.sql_location,
-            data={'previous_group': group, 'current_group': loc.metadata['group']}
+            sql_location=sql_loc,
+            data={'previous_group': group, 'current_group': sql_loc.metadata['group']}
         )
