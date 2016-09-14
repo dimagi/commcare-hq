@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
                 ('Dtocode', models.CharField(max_length=255, null=True)),
                 ('Tbunitcode', models.IntegerField(null=True)),
                 ('pname', models.CharField(max_length=255, null=True)),
-                ('pgender', models.CharField(max_length=255, null=True)),
+                ('pgender', models.CharField(max_length=255)),
                 ('page', models.IntegerField(null=True)),
                 ('poccupation', models.IntegerField(null=True)),
                 ('paadharno', models.CharField(max_length=255, null=True)),
