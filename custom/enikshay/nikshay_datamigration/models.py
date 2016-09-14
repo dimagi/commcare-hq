@@ -1,5 +1,7 @@
 from django.db import models
 
+from corehq.util.test_utils import create_and_save_a_case
+
 
 class PatientDetail(models.Model):
     PregId = models.CharField(max_length=255, primary_key=True)
@@ -54,3 +56,13 @@ class PatientDetail(models.Model):
     Ptype = models.IntegerField()
     pcategory = models.IntegerField()
     InitiationDate1 = models.CharField(max_length=255, null=True)  # datetimes, look like they're all midnight
+
+    def create_person_case(self):
+        create_and_save_a_case(
+            domain='enikshay-np',
+            case_id=self.PregId.strip(),
+            case_name=self.pname,
+            case_properties={
+                'name': self.pname,
+            }
+        )
