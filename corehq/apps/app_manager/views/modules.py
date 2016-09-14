@@ -77,7 +77,7 @@ def get_module_view_context(app, module, lang=None):
     # shared context
     context = {
         'edit_name_url': reverse(
-            'corehq.apps.app_manager.views.edit_module_attr',
+            'edit_module_attr',
             args=[app.domain, app.id, module.id, 'name']
         )
     }

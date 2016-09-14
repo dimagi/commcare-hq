@@ -4581,7 +4581,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @absolute_url_property
     def jar_url(self):
-        return reverse('corehq.apps.app_manager.views.download_jar', args=[self.domain, self._id])
+        return reverse('download_jar', args=[self.domain, self._id])
 
     def get_jar_path(self):
         spec = {
