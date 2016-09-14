@@ -1,6 +1,8 @@
 CommCare HQ
 ===========
 
+CommCareHQ is a cool project.
+
 [![Join the chat at https://gitter.im/dimagi/commcare-hq](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/dimagi/commcare-hq?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 https://github.com/dimagi/commcare-hq
@@ -58,6 +60,8 @@ and are writeable. If they do not exist, create them.
 Once you have completed the above steps, you can use Docker to build and run all of the service containers. The steps for setting up Docker can be found in the [docker folder](docker/README.md).  
 
 ### Set up your django environment
+
+Here is a tipo.
 
 Before running any of the commands below, you should have all of the following running: couchdb, redis, and elasticsearch.
 
