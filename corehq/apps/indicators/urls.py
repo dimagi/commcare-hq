@@ -5,10 +5,11 @@ from corehq.apps.indicators.views import (
     BulkCopyIndicatorsView,
     BulkExportIndicatorsView,
     BulkImportIndicatorsView,
+    default_admin,
 )
 
 urlpatterns = patterns('corehq.apps.indicators.views',
-   url(r'^$', 'default_admin', name="default_indicator_admin"),
+   url(r'^$', default_admin, name="default_indicator_admin"),
    url(r'^export/$', BulkExportIndicatorsView.as_view(),
        name=BulkExportIndicatorsView.urlname),
    url(r'^import/$', BulkImportIndicatorsView.as_view(),
