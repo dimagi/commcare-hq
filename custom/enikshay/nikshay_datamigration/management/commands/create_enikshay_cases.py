@@ -47,6 +47,7 @@ class CaseFactory(object):
                 case_name=make_uuid(),
                 case_properties={
                     'nikshay_id': outcome.PatientId.PregId,
+                    'hiv_status': outcome.HIVStatus,
                 },
                 case_type='occurrence',
             )
