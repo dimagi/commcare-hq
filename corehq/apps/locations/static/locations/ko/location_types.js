@@ -81,7 +81,10 @@ hqDefine('locations/ko/location_types.js', function(){
             });
 
             // Make sure name and code are unique
-            _.each(['name', 'code'], function (field) {
+            _.each({
+                'name': 'duplicate_name_error',
+                'code': 'duplicate_code_error',
+            }, function (error_fn, field) {
                 var counts_by_value = _.countBy(self.loc_types(), function (loc_type) {
                     return loc_type[field]();
                 });
@@ -93,10 +96,9 @@ hqDefine('locations/ko/location_types.js', function(){
                     }
                 });
                 _.each(self.loc_types(), function (loc_type) {
-                    var has_error = (field === 'name') ? loc_type.duplicate_name_error : loc_type.duplicate_code_error;
-                    has_error(false);
+                    loc_type[error_fn](false);
                     if (_.contains(duplicates, loc_type[field]())) {
-                        has_error(true);
+                        loc_type[error_fn](true);
                     }
                 });
             });
