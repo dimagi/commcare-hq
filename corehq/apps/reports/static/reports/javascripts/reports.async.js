@@ -47,10 +47,6 @@ var HQAsyncReport = function (o) {
 
         self.updateReport(true, window.location.search.substr(1), self.standardReport.filterSet);
 
-        // only update the report if there are actually filters set
-        if (!self.standardReport.needsFilters) {
-            self.standardReport.filterSubmitButton.addClass('disabled');
-        }
         self.filterForm.submit(function () {
             var params = hqImport('reports/javascripts/reports.util.js').urlSerialize(this);
             History.pushState(null,window.location.title,
@@ -115,26 +111,6 @@ var HQAsyncReport = function (o) {
 
                 $('.loading-backdrop').fadeOut();
                 self.hqLoading.fadeOut();
-
-                if (!initial_load || !self.standardReport.needsFilters) {
-                    self.standardReport.filterSubmitButton
-                        .button('reset');
-                    setTimeout(function () {
-                        // Bootstrap clears all btn styles except btn on reset
-                        // This gets around it by waiting 10ms.
-                        self.standardReport.filterSubmitButton
-                            .removeClass('btn-primary')
-                            .addClass('disabled')
-                            .prop('disabled', true);
-
-                    }, 10);
-                } else {
-                    self.standardReport.filterSubmitButton
-                        .button('reset')
-                        .addClass('btn-primary')
-                        .removeClass('disabled')
-                        .prop('disabled', false);
-                }
             },
             error: function (data) {
                 self.reportRequest = null;
@@ -160,7 +136,10 @@ var HQAsyncReport = function (o) {
                     self.hqLoading.fadeIn();
                 }
 
-            }
+            },
+            complete: function() {
+                self.standardReport.filterSubmitButton.button('reset');
+            },
         });
     };
 
