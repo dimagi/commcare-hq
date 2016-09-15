@@ -32,7 +32,7 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
     @use_nvd3
     def decorator_dispatcher(self, request, *args, **kwargs):
         return super(SiteReportingRatesReport, self).decorator_dispatcher(request, *args, **kwargs)
-    
+
     @property
     def fields(self):
         return [WeekFilter, YearFilter]
