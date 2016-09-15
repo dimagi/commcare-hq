@@ -1454,6 +1454,8 @@ class UserDefinedExportColumn(ExportColumn):
     data within the form. It should only be needed for RemoteApps
     """
 
+    is_editable = BooleanProperty(default=True)
+
     # On normal columns, the path is defined on an ExportItem.
     # Since a UserDefinedExportColumn is not associated with the
     # export schema, the path is defined on the column.
