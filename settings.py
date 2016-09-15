@@ -894,7 +894,7 @@ ZIPLINE_API_URL = ''
 ZIPLINE_API_USER = ''
 ZIPLINE_API_PASSWORD = ''
 
-KAFKA_URL = 'localhost:1111'
+KAFKA_URL = 'localhost:9092'
 
 MOBILE_INTEGRATION_TEST_TOKEN = None
 
@@ -1715,7 +1715,8 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
 
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json')
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json'),
+    os.path.join('custom', 'pnlppgi', 'resources', 'site_reporting_rates.json')
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
