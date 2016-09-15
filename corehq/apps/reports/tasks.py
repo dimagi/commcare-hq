@@ -18,7 +18,7 @@ from celery.utils.log import get_task_logger
 
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.export.dbaccessors import get_all_daily_saved_export_instances
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from couchexport.files import Temp
 from couchexport.groupexports import export_for_group, rebuild_export
 from couchexport.tasks import cache_file_to_be_served
