@@ -92,7 +92,7 @@ FORM_IGNORED_DIFFS = (
     FormJsonDiff(diff_type=u'missing', path=(u'location_',), old_value=[], new_value=Ellipsis),
     FormJsonDiff(diff_type=u'missing', path=(u'form', u'case', u'#text'), old_value=u'', new_value=Ellipsis),
     FormJsonDiff(diff_type=u'type', path=(u'xmlns',), old_value=None, new_value=u''),
-    FormJsonDiff(diff_type=u'type', path=[u'initial_processing_complete'], old_value=None, new_value=True),
+    FormJsonDiff(diff_type=u'type', path=(u'initial_processing_complete',), old_value=None, new_value=True),
 )
 
 CASE_IGNORED_DIFFS = (
