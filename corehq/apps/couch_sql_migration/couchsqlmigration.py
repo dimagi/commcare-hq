@@ -92,7 +92,7 @@ class CouchSqlDomainMigrator(object):
         )
 
         case_stock_result = None
-        if couch_form.initial_processing_complete:
+        if sql_form.initial_processing_complete:
             case_stock_result = _get_case_and_ledger_updates(self.domain, sql_form)
         _save_migrated_models(sql_form, case_stock_result)
 
