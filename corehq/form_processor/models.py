@@ -879,7 +879,7 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
         """
         self.content_length = attachment.content_length
         self.blob_id = attachment.blob_id
-        self.blob_bucket = attachment._blobdb_bucket()
+        self.blob_bucket = attachment.blobdb_bucket()
         self.md5 = attachment.md5
         self.content_type = attachment.content_type
         self.properties = attachment.properties
