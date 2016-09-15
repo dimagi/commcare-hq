@@ -170,10 +170,13 @@
                         </thead>
                         <tbody data-bind="foreach: loc_types">
                         <tr data-bind="bind_element: Object()">
-                            <td class="form-group" data-bind="css: { 'has-error': name_error }">
+                            <td class="form-group" data-bind="css: { 'has-error': name_error() || duplicate_name_error() }">
                                 <input class="loctype_name form-control" data-bind="value: name" type="text" />
                                 <div class="help-block" data-bind="visible: name_error">
                                     {% trans "Required" %}
+                                </div>
+                                <div class="help-block" data-bind="visible: duplicate_name_error">
+                                    {% trans "This field must be unique" %}
                                 </div>
                             </td>
                             <td class="form-group">
@@ -185,8 +188,12 @@
                                                    optionsCaption: '\u2013top level\u2013'">
                                 </select>
                             </td>
-                            <td class="form-group" data-bind="visible: $parent.advanced_mode">
+                            <td class="form-group" data-bind="visible: $parent.advanced_mode,
+                                                              css: { 'has-error': duplicate_code_error }">
                                 <input class="form-control typecode" data-bind="value: code" type="text" />
+                                <div class="help-block" data-bind="visible: duplicate_code_error">
+                                    {% trans "This field must be unique" %}
+                                </div>
                             </td>
                             <td class="form-group" data-bind="visible: $parent.advanced_mode">
                                 <select class="form-control"

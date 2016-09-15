@@ -124,6 +124,10 @@ class LocationType(models.Model):
 
     class Meta:
         app_label = 'locations'
+        unique_together = (
+            ('domain', 'code'),
+            ('domain', 'name'),
+        )
 
     def __init__(self, *args, **kwargs):
         super(LocationType, self).__init__(*args, **kwargs)

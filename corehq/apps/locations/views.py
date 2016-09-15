@@ -41,6 +41,7 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from .analytics import users_have_locations
 from .const import ROOT_LOCATION_TYPE
 from .dbaccessors import get_users_assigned_to_locations
+from .exceptions import LocationConsistencyError
 from .permissions import (
     locations_access_required,
     is_locations_admin,
@@ -246,10 +247,16 @@ class LocationTypesView(BaseLocationView):
         for loc_type in loc_types:
             for prop in ['name', 'parent_type', 'administrative',
                          'shares_cases', 'view_descendants', 'pk']:
-                assert prop in loc_type, "Missing an organization level property!"
+                if prop not in loc_type:
+                    raise LocationConsistencyError("Missing an organization level property!")
             pk = loc_type['pk']
             if not _is_fake_pk(pk):
                 pks.append(loc_type['pk'])
+        if not (
+            len(loc_types) == len(set(lt['name'] for lt in loc_types))
+            and len(loc_types) == len(set(lt['code'] for lt in loc_types))
+        ):
+            raise LocationConsistencyError("'name' and 'code' are supposed to be unique")
 
         hierarchy = self.get_hierarchy(loc_types)
 
