@@ -11,7 +11,7 @@ class WeekFilter(BaseSingleOptionFilter):
     @property
     @memoized
     def selected(self):
-        return self.get_value(self.request, self.domain) or datetime.datetime.utcnow().isocalendar()[1]
+        return self.request.GET.get('week', datetime.datetime.utcnow().isocalendar()[1])
 
     @property
     def options(self):

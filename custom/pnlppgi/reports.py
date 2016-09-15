@@ -13,6 +13,7 @@ from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, AggregateColumn, DictDataFormat, \
     DataFormatter
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
+from corehq.apps.style.decorators import use_nvd3
 from corehq.apps.userreports.util import get_table_name
 from corehq.apps.users.models import CommCareUser
 from custom.pnlppgi.filters import WeekFilter
@@ -26,6 +27,12 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
     slug = 'site_reporting_rates_report'
     name = 'Site Reporting Rates Report'
 
+    report_template_path = 'pnlppgi/site_reporting.html'
+
+    @use_nvd3
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        return super(SiteReportingRatesReport, self).decorator_dispatcher(request, *args, **kwargs)
+    
     @property
     def fields(self):
         return [WeekFilter, YearFilter]
@@ -98,6 +105,8 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
     @property
     def charts(self):
         chart = MultiBarChart(None, Axis(_('Sites')), Axis(''))
+        chart.height = 400
+        chart.marginBottom = 100
         chart.data = self.get_data_for_graph()
         return [chart]
 
