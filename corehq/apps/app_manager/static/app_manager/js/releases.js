@@ -340,7 +340,7 @@ hqDefine('app_manager/js/releases.js', function () {
             $.post({
                 url: self.url('delete'),
                 data: {saved_app: savedApp.id()},
-                succss: function () {
+                success: function () {
                     self.savedApps.remove(savedApp);
                     savedApp._deleteState(false);
                 },
