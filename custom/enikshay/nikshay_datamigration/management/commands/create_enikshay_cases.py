@@ -52,6 +52,7 @@ class CaseFactory(object):
                 case_type='occurrence',
             )
 
+
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
