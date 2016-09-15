@@ -54,7 +54,7 @@
             else {
                   $('#{{ chartdiv }}').html("<h4>No data</h4>");
             }
-            $("#{{ chartdiv }}").bind("plothover", pieHover);
+            $("#{{ chartdiv }}").on("plothover", pieHover);
         })
     </script>
     <div class="hq-graphic-report">

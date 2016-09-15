@@ -338,9 +338,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         };
 
         self.initSaveButtonListeners = function($el){
-            $el.find('input[type=text], textarea').bind('textchange', _fireChange);
-            $el.find('input[type=checkbox]').bind('change', _fireChange);
-            $el.find(".case-list-lookup-icon button").bind("click", _fireChange); // Trigger save button when icon upload buttons are clicked
+            $el.find('input[type=text], textarea').on('textchange', _fireChange);
+            $el.find('input[type=checkbox]').on('change', _fireChange);
+            $el.find(".case-list-lookup-icon button").on("click", _fireChange); // Trigger save button when icon upload buttons are clicked
         };
 
         var _remove_empty = function(type){

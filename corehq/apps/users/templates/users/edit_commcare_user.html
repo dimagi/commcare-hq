@@ -106,7 +106,7 @@
             unsavedChanges = true;
         });
 
-        $(window).bind('beforeunload', function () {
+        $(window).on('beforeunload', function () {
             if (unsavedChanges) {
                 return "{% trans "Group membership has changed." %}";
             }

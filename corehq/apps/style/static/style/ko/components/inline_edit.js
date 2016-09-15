@@ -86,7 +86,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                 });
                 data[self.saveValueName] = self.value();
                 self.isSaving(true);
-                $(window).bind("beforeunload", self.beforeUnload);
+                $(window).on("beforeunload", self.beforeUnload);
 
                 $.ajax({
                     url: self.url,
