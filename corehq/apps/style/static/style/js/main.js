@@ -91,7 +91,7 @@ COMMCAREHQ.updateDOM = function (update) {
     var key;
     for (key in update) {
         if (update.hasOwnProperty(key)) {
-            $(key).text(update[key]).val(update[key]);
+            $(key).html(update[key]).val(update[key]);
         }
     }
 };

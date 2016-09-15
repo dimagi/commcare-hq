@@ -251,7 +251,7 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
         if xform.exists():
             xform.set_name(name)
             save_xform(app, form, xform.render())
-        resp['update'] = {'.variable-form_name': form.name[lang]}
+        resp['update'] = {'.variable-form_name': trans(form.name, [lang], use_delim=False)}
     if should_edit('comment'):
         form.comment = request.POST['comment']
     if should_edit("xform") or "xform" in request.FILES:
