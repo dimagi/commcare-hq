@@ -16,7 +16,8 @@ from corehq.apps.receiverwrapper.util import (
     get_app_and_build_ids,
     determine_authtype,
     from_demo_user,
-    should_ignore_submission
+    should_ignore_submission,
+    DEMO_SUBMIT_MODE,
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.submission_post import SubmissionPost
@@ -131,7 +132,8 @@ def _noauth_post(request, domain, app_id=None):
     case_updates = get_case_updates(form_json)
 
     def form_ok(form_json):
-        return from_demo_user(form_json) or is_device_report(form_json) or request.GET.get('submit_mode') == 'demo'
+        return (from_demo_user(form_json) or is_device_report(form_json) or
+                request.GET.get('submit_mode') == DEMO_SUBMIT_MODE)
 
     def case_block_ok(case_updates):
         """
