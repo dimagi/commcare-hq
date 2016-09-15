@@ -214,8 +214,8 @@ hqDefine('app_manager/js/app_manager.js', function () {
         $('select').each(function () {
             var val = $(this).next('div.immutable').text();
             if (val) {
-                $(this).find('option').removeAttr('selected');
-                $(this).find('option[value="' + val + '"]').attr('selected', 'selected');
+                $(this).find('option').prop('selected', false);
+                $(this).find('option[value="' + val + '"]').prop('selected', true);
             }
         });
         $('input[type="text"]').each(function () {

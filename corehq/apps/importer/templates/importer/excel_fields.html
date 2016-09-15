@@ -89,7 +89,7 @@
 
             $('#field_form').submit(function() {
                 $('[disabled]').each(function() {
-                    $(this).removeAttr('disabled');
+                    $(this).prop('disabled', false);
                 });
 
                 $(this).find('input.is_date').each(function() {

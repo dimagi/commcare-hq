@@ -123,7 +123,7 @@ $.fn.disableButton = function () {
 $.fn.enableButton = function () {
     $(this).removeSpinnerFromButton();
     $(this).removeClass('disabled')
-           .removeAttr('disabled');
+           .prop('disabled', false);
 };
 
 
