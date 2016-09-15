@@ -20,6 +20,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.tzmigration.models import TimezoneMigrationProgress
+from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
 from corehq.blobs import get_blob_db
 from corehq.blobs.tests.util import TemporaryS3BlobDB
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
@@ -423,6 +424,38 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(2, len(child_transactions))
         self.assertTrue(child_transactions[0].is_case_create)
         self.assertTrue(child_transactions[1].is_case_index)
+
+    def test_xform_ids_diff(self):
+        case_id = uuid.uuid4().hex
+        submit_case_blocks(
+            CaseBlock(
+                case_id,
+                case_type='migrate',
+                create=True,
+                update={'p1': 1},
+            ).as_string(),
+            self.domain_name
+        )
+
+        submit_case_blocks(
+            CaseBlock(
+                case_id,
+                update={'p2': 2},
+            ).as_string(),
+            self.domain_name
+        )
+        case = CaseAccessors(self.domain_name).get_case(case_id)
+        removed_form_id = case.xform_ids.pop(1)
+        case.save()
+        self.assertEqual(1, len(self._get_case_ids()))
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(1, len(self._get_case_ids()))
+        self._compare_diffs([
+            (u'CommCareCase', FormJsonDiff(
+                diff_type=u'set_mismatch', path=[u'xform_ids', u'[*]'],
+                old_value=u'', new_value=removed_form_id
+            ))
+        ])
 
     def test_commit(self):
         self._do_migration_and_assert_flags(self.domain_name)

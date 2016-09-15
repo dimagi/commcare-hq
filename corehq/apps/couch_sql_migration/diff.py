@@ -231,8 +231,14 @@ def _filter_xform_id_diffs(couch_case, sql_case, diffs):
     if not xform_id_diffs:
         return diffs
 
-    if set(couch_case['xform_ids']) != set(sql_case['xform_ids']):
-        return diffs
+    ids_in_couch = set(couch_case['xform_ids'])
+    ids_in_sql = set(sql_case['xform_ids'])
+    if ids_in_couch ^ ids_in_sql:
+        couch_only = ','.join(list(ids_in_couch - ids_in_sql))
+        sql_only = ','.join(list(ids_in_sql - ids_in_couch))
+        diffs.append(
+            FormJsonDiff(diff_type='set_mismatch', path=('xform_ids', '[*]'), old_value=couch_only, new_value=sql_only)
+        )
 
     return [diff for diff in diffs if diff not in xform_id_diffs]
 
