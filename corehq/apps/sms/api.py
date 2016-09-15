@@ -33,10 +33,6 @@ REGISTRATION_KEYWORDS = ["JOIN"]
 REGISTRATION_MOBILE_WORKER_KEYWORDS = ["WORKER"]
 
 
-class DomainScopeValidationError(Exception):
-    pass
-
-
 class BackendAuthorizationException(Exception):
     pass
 
@@ -443,9 +439,7 @@ def incoming(phone_number, text, backend_api, timestamp=None,
     text - message content
     backend_api - backend API ID of receiving sms backend
     timestamp - message received timestamp; defaults to now (UTC)
-    domain_scope - if present, only messages from phone numbers that can be
-      definitively linked to this domain will be processed; others will be
-      dropped (useful to provide security when simulating incoming sms)
+    domain_scope - set the domain scope for this SMS; see SMSBase.domain_scope for details
     """
     # Log message in message log
     if text is None:
@@ -500,14 +494,6 @@ def process_incoming(msg):
         msg.domain = v.domain
         msg.location_id = get_location_id_by_verified_number(v)
         msg.save()
-
-    if msg.domain_scope:
-        # only process messages for phones known to be associated with this domain
-        if v is None or v.domain != msg.domain_scope:
-            raise DomainScopeValidationError(
-                'Attempted to simulate incoming sms from phone number not ' \
-                'verified with this domain'
-            )
 
     can_receive_sms = PhoneBlacklist.can_receive_sms(msg.phone_number)
     opt_in_keywords, opt_out_keywords = get_opt_keywords(msg)

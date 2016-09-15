@@ -194,7 +194,9 @@ class SMSBase(UUIDGeneratorMixin, Log):
     queued_timestamp = models.DateTimeField(null=True)
     processed_timestamp = models.DateTimeField(null=True)
 
-    # If the message was simulated from a domain, this is the domain
+    # When an SMS is received on a domain-owned backend, we set this to
+    # the domain name. This can be used by the framework to handle domain-specific
+    # processing of unregistered contacts.
     domain_scope = models.CharField(max_length=126, null=True)
 
     # Set to True to send the message regardless of whether the destination
