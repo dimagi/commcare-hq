@@ -388,7 +388,8 @@ HQ_APPS = (
     'custom.common',
 
     'custom.icds_reports',
-    'custom.enikshay.integrations.ninetyninedots'
+    'custom.enikshay.integrations.ninetyninedots',
+    'custom.pnlppgi'
 )
 
 # DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
@@ -1714,7 +1715,9 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
 
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json')
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json'),
+    os.path.join('custom', 'pnlppgi', 'resources', 'site_reporting_rates.json'),
+    os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json')
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
@@ -1772,7 +1775,9 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('location_type_name', 'corehq.apps.locations.ucr_expressions.location_type_name'),
     ('location_parent_id', 'corehq.apps.locations.ucr_expressions.location_parent_id'),
     ('cvsu_expression', 'custom.apps.cvsu.expressions.cvsu_expression'),
-    ('eqa_expression', 'custom.eqa.expressions.eqa_expression')
+    ('eqa_expression', 'custom.eqa.expressions.eqa_expression'),
+    ('year_expression', 'custom.pnlppgi.expressions.year_expression'),
+    ('week_expression', 'custom.pnlppgi.expressions.week_expression')
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
@@ -1837,7 +1842,8 @@ DOMAIN_MODULE_MAP = {
     'pathways-tanzania': 'custom.care_pathways',
     'care-macf-malawi': 'custom.care_pathways',
     'care-macf-bangladesh': 'custom.care_pathways',
-    'care-macf-ghana': 'custom.care_pathways'
+    'care-macf-ghana': 'custom.care_pathways',
+    'pnlppgi': 'custom.pnlppgi'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
