@@ -1,7 +1,5 @@
 from django.db import models
 
-from corehq.util.test_utils import create_and_save_a_case
-
 
 class PatientDetail(models.Model):
     PregId = models.CharField(max_length=255, primary_key=True)
@@ -56,26 +54,6 @@ class PatientDetail(models.Model):
     Ptype = models.IntegerField()
     pcategory = models.IntegerField()
     InitiationDate1 = models.CharField(max_length=255, null=True)  # datetimes, look like they're all midnight
-
-    def create_person_case(self):
-        create_and_save_a_case(
-            domain='enikshay-np',
-            case_id=self.PregId.strip(),
-            case_name=self.pname,
-            # if can be blank (or null) should we skip adding the property?
-            case_properties={
-                'name': self.name,
-                'aadhaar_number': self.aadhaar_number,
-                'phi': self.phi,
-                'first_name': self.first_name,
-                'middle_name': self.middle_name,
-                'last_name': self.last_name,
-                'age': self.age,
-                'sex': self.sex,
-                'current_address': self.current_address,
-                'mobile_number': self.mobile_number,
-            }
-        )
 
     @property
     def name(self):
