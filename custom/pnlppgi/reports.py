@@ -45,7 +45,7 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
 
     @property
     def group_by(self):
-        return ['location_id', 'location_name']
+        return ['location_id']
 
     @property
     def filters(self):
@@ -66,7 +66,6 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
     def columns(self):
         return [
             DatabaseColumn('location_id', SimpleColumn('location_id')),
-            DatabaseColumn('location_name', SimpleColumn('location_name')),
             DatabaseColumn('Completude', CountColumn('doc_id', alias='completude')),
             DatabaseColumn('Promptitude', CountColumn(
                 'doc_id',
@@ -114,7 +113,6 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
                 'html': "%.2f%%" % percent
             }
 
-        data = super(SiteReportingRatesReport, self).rows
         users = CommCareUser.by_domain(self.domain)
         users_dict = {}
         for user in users:
@@ -123,12 +121,19 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
             else:
                 users_dict[user.location_id].append(user.get_id)
 
-        for row in data:
-            all_users = users_dict.get(row[0], [])
+        formatter = DataFormatter(DictDataFormat(self.columns, no_value=self.no_value))
+        data = formatter.format(self.data, keys=self.keys, group_by=self.group_by)
+        locations = SQLLocation.objects.filter(
+            domain=self.domain,
+            location_type__code='centre-de-sante'
+        ).order_by('name')
+        for site in locations:
+            users_for_location = users_dict.get(site.location_id, [])
+            loc_data = data.get(site.location_id, {})
             yield [
-                row[1],
-                cell_format(row[2], all_users),
-                cell_format(row[3], all_users)
+                site.name,
+                cell_format(loc_data.get('completude', EMPTY_CELL), users_for_location),
+                cell_format(loc_data.get('promptitude', EMPTY_CELL), users_for_location),
             ]
 
 
