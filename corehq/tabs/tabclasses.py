@@ -28,6 +28,7 @@ from corehq.apps.users.models import Permissions
 from corehq.form_processor.utils import use_new_exports
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
+from custom.world_vision import WORLD_VISION_DOMAINS
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
 
@@ -44,7 +45,7 @@ class ProjectReportsTab(UITab):
 
     @property
     def view(self):
-        if self.domain == 'wvindia2':
+        if self.domain in WORLD_VISION_DOMAINS:
             return "corehq.apps.reports.views.default"
         from corehq.apps.reports.views import MySavedReportsView
         return MySavedReportsView.urlname
