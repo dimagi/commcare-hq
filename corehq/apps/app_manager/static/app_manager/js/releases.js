@@ -389,7 +389,8 @@ hqDefine('app_manager/js/releases.js', function () {
         };
         self.actuallyMakeBuild = function () {
             self.buildState('pending');
-            $.post(self.url('newBuild'), {
+            $.post({
+                url: self.url('newBuild'),
                 success: function(data) {
                     $('#build-errors-wrapper').html(data.error_html);
                     if (data.saved_app) {
