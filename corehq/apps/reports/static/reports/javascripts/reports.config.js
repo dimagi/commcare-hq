@@ -45,7 +45,7 @@ var HQReport = function (options) {
                     .button('reset')
                     .addClass('btn-primary')
                     .removeClass('disabled')
-                    .removeProp('disabled');
+                    .prop('disabled', false);
             }
             if (self.slug) {
                 if (self.isExportable) {
@@ -164,14 +164,14 @@ var HQReport = function (options) {
                 .button('reset')
                 .addClass('btn-primary')
                 .removeClass('disabled')
-                .removeProp('disabled');
+                .prop('disabled', false);
         });
         $('#paramSelectorForm fieldset').on('change apply', function () {
             $(self.filterSubmitSelector)
                 .button('reset')
                 .addClass('btn-primary')
                 .removeClass('disabled')
-                .removeProp('disabled');
+                .prop('disabled', false);
         });
     };
 
