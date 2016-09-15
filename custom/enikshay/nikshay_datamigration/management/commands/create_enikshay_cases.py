@@ -1,8 +1,10 @@
 from django.core.management import BaseCommand
 
+from dimagi.utils import make_uuid
+
 from corehq.util.test_utils import create_and_save_a_case
 
-from custom.enikshay.nikshay_datamigration.models import PatientDetail
+from custom.enikshay.nikshay_datamigration.models import PatientDetail, Outcome
 
 
 class CaseFactory(object):
@@ -14,6 +16,7 @@ class CaseFactory(object):
 
     def create_cases(self):
         self.create_person_case()
+        self.create_occurrence_cases()
 
     def create_person_case(self):
         create_and_save_a_case(
@@ -32,9 +35,21 @@ class CaseFactory(object):
                 'sex': self.patient_detail.sex,
                 'current_address': self.patient_detail.paddress,
                 'mobile_number': self.patient_detail.pmob,
-            }
+            },
+            case_type='person',
         )
 
+    def create_occurrence_cases(self):
+        for outcome in Outcome.objects.filter(PatientId=self.patient_detail):
+            create_and_save_a_case(
+                domain='enikshay-np',
+                case_id=make_uuid(),
+                case_name=make_uuid(),
+                case_properties={
+                    'nikshay_id': outcome.PatientId.PregId,
+                },
+                case_type='occurrence',
+            )
 
 class Command(BaseCommand):
 
