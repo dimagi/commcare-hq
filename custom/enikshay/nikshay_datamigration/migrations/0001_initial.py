@@ -58,4 +58,24 @@ class Migration(migrations.Migration):
             },
             bases=(models.Model,),
         ),
+        migrations.CreateModel(
+            name='Outcome',
+            fields=[
+                ('PatientId', models.ForeignKey(primary_key=True, serialize=False, to='nikshay_datamigration.PatientDetail')),
+                ('Outcome', models.CharField(max_length=255, null=True)),
+                ('OutcomeDate1', models.CharField(max_length=255, null=True)),
+                ('MO', models.CharField(max_length=255, null=True)),
+                ('XrayEPTests', models.CharField(max_length=255, null=True)),
+                ('MORemark', models.CharField(max_length=255, null=True)),
+                ('HIVStatus', models.CharField(max_length=255, null=True)),
+                ('HIVTestDate', models.CharField(max_length=255, null=True)),
+                ('CPTDeliverDate', models.CharField(max_length=255, null=True)),
+                ('ARTCentreDate', models.CharField(max_length=255, null=True)),
+                ('InitiatedOnART', models.CharField(max_length=255, null=True)),
+                ('InitiatedDate', models.CharField(max_length=255, null=True)),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
     ]
