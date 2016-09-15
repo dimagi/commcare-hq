@@ -884,9 +884,11 @@ class CommtrackUserForm(forms.Form):
         assigned_location_ids = cleaned_data['assigned_locations']
         if primary_location_id:
             if primary_location_id not in assigned_location_ids:
-                raise ValidationError(_("Only one of the user's locations can be a primary location"))
+                self.add_error('primary_location',
+                               _("Primary location can only be one of user's locations"))
         if assigned_location_ids and not primary_location_id:
-            raise ValidationError(_("Primary location can't be empty if user has any locations set"))
+            self.add_error('primary_location',
+                           _("Primary location can't be empty if user has any locations set"))
 
 
 class DomainRequestForm(forms.Form):
