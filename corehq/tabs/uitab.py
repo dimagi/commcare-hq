@@ -152,7 +152,7 @@ class UITab(object):
         # Use self._request.domain instead of self.domain to generate url-prefixes
         # because the latter might have a normalized domain name which might not match the
         # domain name mentioned in the URL. for example domain-name 'hq_test' is normalized to
-        # 'ht-test'
+        # 'hq-test'
         return [url_prefix_format.format(domain=self._request.domain)
                 for url_prefix_format in self.url_prefix_formats]
 
