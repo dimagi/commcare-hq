@@ -567,7 +567,7 @@ class EditLocationView(NewLocationView):
             consumption = get_default_monthly_consumption(
                 self.domain,
                 product._id,
-                self.location.location_type,
+                self.location.location_type_name,
                 # FIXME accessing this value from the sql location
                 # would be faster
                 self.supply_point.case_id if self.supply_point else None,
@@ -622,7 +622,7 @@ class EditLocationView(NewLocationView):
     @property
     def page_name(self):
         return mark_safe(_("Edit {name} <small>{type}</small>").format(
-            name=self.location.name, type=self.location.location_type
+            name=self.location.name, type=self.location.location_type_name
         ))
 
     @property
