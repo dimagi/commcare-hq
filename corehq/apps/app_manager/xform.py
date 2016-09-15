@@ -19,6 +19,9 @@ import formtranslate.api
 import re
 
 
+VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'markdown')
+
+
 def parse_xml(string):
     # Work around: ValueError: Unicode strings with encoding
     # declaration are not supported.
@@ -801,6 +804,13 @@ class XForm(WrappedNode):
         if value_node:
             text = ItextValue.from_node(value_node)
         else:
+            for f in text_node.values_by_form.keys():
+                if f not in VALID_VALUE_FORMS + (None,):
+                    raise XFormException(_(
+                        u'Unrecognized value of "form" attribute in \'<value form="{}">\'. '
+                        u'"form" attribute is optional. Valid values are: "{}".').format(
+                            f, u'", "'.join(VALID_VALUE_FORMS)
+                    ))
             raise XFormException(_(u'<translation lang="{lang}"><text id="{id}"> node has no <value>').format(
                 lang=lang, id=id
             ))
