@@ -86,7 +86,7 @@ class CCUserLocationAssignmentTest(TestCase):
         self.user.reset_locations(self.loc_ids)
         self.loc1.full_delete()
         self.loc2.full_delete()
-        self.assertAssignedLocations(CommCareUser.get(self.user._id).assigned_location_ids)
+        self.assertAssignedLocations([])
 
     def assertPrimaryLocation(self, expected):
         self.assertEqual(self.user.location_id, expected)
@@ -94,8 +94,9 @@ class CCUserLocationAssignmentTest(TestCase):
         self.assertTrue(expected in self.user.assigned_location_ids)
 
     def assertAssignedLocations(self, expected_location_ids):
-        self.assertListEqual(self.user.assigned_location_ids, expected_location_ids)
-        actual_ids = self.user.user_data.get('commcare_location_ids', '')
+        user = CommCareUser.get(self.user._id)
+        self.assertListEqual(user.assigned_location_ids, expected_location_ids)
+        actual_ids = user.user_data.get('commcare_location_ids', '')
         actual_ids = actual_ids.split(',') if actual_ids else []
         self.assertListEqual(actual_ids, expected_location_ids)
 
