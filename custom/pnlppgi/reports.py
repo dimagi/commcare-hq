@@ -286,3 +286,167 @@ class WeeklyMalaria(MalariaReport):
                         row.get('cas_confirmes_total', EMPTY_CELL),
                         row.get('div_teasts_cas', EMPTY_CELL)
                     ]
+
+
+class CumulativeMalaria(MalariaReport):
+    slug = 'cumulative_malaria'
+    name = 'Cumulative Malaria'
+
+    report_template_path = 'pnlppgi/cumulative_malaria.html'
+
+    @property
+    def fields(self):
+        return [YearFilter]
+
+    @property
+    def config(self):
+        year = self.request.GET.get('year')
+        return {
+            'domain': self.domain,
+            'year': year
+        }
+
+    @property
+    def filters(self):
+        return [
+            EQ('year', 'year'),
+        ]
+
+    @property
+    def group_by(self):
+        return ['site_id']
+
+    @property
+    def columns(self):
+        def percent(num, x, y, z, w):
+            denom = (x or 0) + (y or 0) + (z or 0) + (w or 0)
+            if not denom:
+                return {'sort_key': 'NA', 'html': 0}
+            div = (num or 1) / float(denom)
+            return {'sort_key': div, 'html': '%.2f%%' % (div * 100)}
+
+        return [
+            DatabaseColumn('site_id', SimpleColumn('site_id')),
+            DatabaseColumn('cas_vus_5', SumColumn('cas_vus_5')),
+            DatabaseColumn('cas_suspects_5', SumColumn('cas_suspects_5')),
+            DatabaseColumn('cas_confirmes_5', SumColumn('cas_confirmes_5')),
+            DatabaseColumn('cas_vus_5_10', SumColumn('cas_vus_5_10')),
+            DatabaseColumn('cas_suspects_5_10', SumColumn('cas_suspects_5_10')),
+            DatabaseColumn('cas_confirmes_5_10', SumColumn('cas_confirmes_5_10')),
+            DatabaseColumn('cas_vus_10', SumColumn('cas_vus_10')),
+            DatabaseColumn('cas_suspects_10', SumColumn('cas_suspects_10')),
+            DatabaseColumn('cas_confirmes_10', SumColumn('cas_confirmes_10')),
+
+            DatabaseColumn('cas_vus_fe', SumColumn('cas_vus_fe')),
+            DatabaseColumn('cas_suspects_fe', SumColumn('cas_suspects_fe')),
+            DatabaseColumn('cas_confirmes_fe', SumColumn('cas_confirmes_fe')),
+            AggregateColumn('total_cas', lambda x, y, z, w: (x or 0) + (y or 0) + (z or 0) + (w or 0), [
+                AliasColumn('cas_confirmes_5'),
+                AliasColumn('cas_confirmes_5_10'),
+                AliasColumn('cas_confirmes_10'),
+                AliasColumn('cas_confirmes_fe'),
+            ], slug='total_cas'),
+            AggregateColumn('per_cas_5', percent, [
+                AliasColumn('cas_confirmes_5'),
+                AliasColumn('cas_confirmes_5'),
+                AliasColumn('cas_confirmes_5_10'),
+                AliasColumn('cas_confirmes_10'),
+                AliasColumn('cas_confirmes_fe')
+            ], format_fn=lambda x: x),
+            AggregateColumn('per_cas_5_10', percent, [
+                AliasColumn('cas_confirmes_5_10'),
+                AliasColumn('cas_confirmes_5'),
+                AliasColumn('cas_confirmes_5_10'),
+                AliasColumn('cas_confirmes_10'),
+                AliasColumn('cas_confirmes_fe')
+            ], format_fn=lambda x: x),
+            AggregateColumn('per_cas_10', percent, [
+                AliasColumn('cas_confirmes_10'),
+                AliasColumn('cas_confirmes_5'),
+                AliasColumn('cas_confirmes_5_10'),
+                AliasColumn('cas_confirmes_10'),
+                AliasColumn('cas_confirmes_fe')
+            ], format_fn=lambda x: x),
+            AggregateColumn('per_cas_fa', percent, [
+                AliasColumn('cas_confirmes_fe'),
+                AliasColumn('cas_confirmes_5'),
+                AliasColumn('cas_confirmes_5_10'),
+                AliasColumn('cas_confirmes_10'),
+                AliasColumn('cas_confirmes_fe')
+            ], format_fn=lambda x: x)
+        ]
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn('Region', sortable=False),
+            DataTablesColumn('District', sortable=False),
+            DataTablesColumn('Site', sortable=False),
+            DataTablesColumnGroup(
+                u'Patients Agés de - 5 Ans',
+                DataTablesColumn('Nombre Total de cas vus (toutes affections confondues)', sortable=False),
+                DataTablesColumn('Nombre de cas Suspects de paludisme', sortable=False),
+                DataTablesColumn('Nombre de cas de paludisme confirmés', sortable=False)
+            ),
+            DataTablesColumnGroup(
+                u'Patients Agés de 5 - 10 ans',
+                DataTablesColumn('Nombre Total de cas vus (toutes affections confondues)', sortable=False),
+                DataTablesColumn('Nombre de cas Suspects de paludisme', sortable=False),
+                DataTablesColumn('Nombre de cas de paludisme confirmés', sortable=False)
+            ),
+            DataTablesColumnGroup(
+                u'Patients Agés de 10 ans et +',
+                DataTablesColumn('Nombre Total de cas vus (toutes affections confondues)', sortable=False),
+                DataTablesColumn('Nombre de cas Suspects de paludisme', sortable=False),
+                DataTablesColumn('Nombre de cas de paludisme confirmés', sortable=False)
+            ),
+            DataTablesColumnGroup(
+                u'Femmes Enceintes MALADES',
+                DataTablesColumn('Nombre Total de cas vus (toutes affections confondues)', sortable=False),
+                DataTablesColumn('Nombre de cas Suspects de paludisme', sortable=False),
+                DataTablesColumn('Nombre de cas de paludisme confirmés', sortable=False)
+            ),
+            DataTablesColumnGroup(
+                u'Rapport par Catégorie',
+                DataTablesColumn('Total Cas', sortable=False),
+                DataTablesColumn('% des Moins de 5 ans', sortable=False),
+                DataTablesColumn('% des 5 - 10 ans', sortable=False),
+                DataTablesColumn('% des Plus de 10 ans', sortable=False),
+                DataTablesColumn('% des Femmes Enceinte', sortable=False)
+            ),
+            DataTablesColumn('Zones', sortable=False)
+        )
+
+    @property
+    def rows(self):
+        formatter = DataFormatter(DictDataFormat(self.columns, no_value=self.no_value))
+        data = formatter.format(self.data, keys=self.keys, group_by=self.group_by)
+        locations = SQLLocation.objects.filter(domain=self.domain, location_type__code='region').order_by('name')
+        # TODO add zones loop
+        for reg in locations:
+            for dis in reg.children.order_by('name'):
+                for site in dis.children.order_by('name'):
+                    row = data.get(site.location_id, {})
+                    yield [
+                        reg.name,
+                        dis.name,
+                        site.name,
+                        row.get('cas_vus_5', EMPTY_CELL),
+                        row.get('cas_suspects_5', EMPTY_CELL),
+                        row.get('cas_confirmes_5', EMPTY_CELL),
+                        row.get('cas_vus_5_10', EMPTY_CELL),
+                        row.get('cas_suspects_5_10', EMPTY_CELL),
+                        row.get('cas_confirmes_5_10', EMPTY_CELL),
+                        row.get('cas_vus_10', EMPTY_CELL),
+                        row.get('cas_suspects_10', EMPTY_CELL),
+                        row.get('cas_confirmes_10', EMPTY_CELL),
+                        row.get('cas_vus_fe', EMPTY_CELL),
+                        row.get('cas_suspects_fe', EMPTY_CELL),
+                        row.get('cas_confirmes_fe', EMPTY_CELL),
+                        row.get('total_cas', EMPTY_CELL),
+                        row.get('per_cas_5', EMPTY_CELL),
+                        row.get('per_cas_5_10', EMPTY_CELL),
+                        row.get('per_cas_10', EMPTY_CELL),
+                        row.get('per_cas_fa', EMPTY_CELL),
+                        'zone'
+                    ]

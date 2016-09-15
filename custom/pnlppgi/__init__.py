@@ -1,8 +1,9 @@
-from custom.pnlppgi.reports import SiteReportingRatesReport, WeeklyMalaria
+from custom.pnlppgi.reports import SiteReportingRatesReport, WeeklyMalaria, CumulativeMalaria
 
 CUSTOM_REPORTS = (
-    ('Custom Reports', (
+    ['Custom Reports', (
         SiteReportingRatesReport,
-        WeeklyMalaria
-    )),
+        WeeklyMalaria,
+        CumulativeMalaria
+    )],
 )
