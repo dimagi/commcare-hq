@@ -91,7 +91,9 @@ class CouchSqlDomainMigrator(object):
             filter_form_diffs(couch_form.doc_type, diffs)
         )
 
-        case_stock_result = _get_case_and_ledger_updates(self.domain, sql_form)
+        case_stock_result = None
+        if couch_form.initial_processing_complete:
+            case_stock_result = _get_case_and_ledger_updates(self.domain, sql_form)
         _save_migrated_models(sql_form, case_stock_result)
 
     def _copy_unprocessed_forms(self):
@@ -262,7 +264,7 @@ def _copy_form_properties(domain, sql_form, couch_form):
     # export_tag intentionally removed
     # sql_form.export_tag = ["domain", "xmlns"]
     sql_form.partial_submission = couch_form.partial_submission
-    sql_form.initial_processing_complete = couch_form.initial_processing_complete
+    sql_form.initial_processing_complete = couch_form.initial_processing_complete in (None, True)
 
     if couch_form.doc_type.endswith(DELETED_SUFFIX):
         doc_type = couch_form.doc_type[:-len(DELETED_SUFFIX)]
