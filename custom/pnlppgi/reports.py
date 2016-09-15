@@ -1,16 +1,25 @@
+# coding=utf-8
 import datetime
-from sqlagg.columns import SimpleColumn, CountColumn
+from operator import add
+
+from sqlagg import AliasColumn
+from sqlagg.columns import SimpleColumn, CountColumn, SumColumn
 from sqlagg.filters import LT, EQ
 
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.filters.select import YearFilter
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
-from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn
+from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, AggregateColumn, DictDataFormat, \
+    DataFormatter
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from corehq.apps.userreports.util import get_table_name
 from corehq.apps.users.models import CommCareUser
 from custom.pnlppgi.filters import WeekFilter
 from django.utils.translation import ugettext as _
+
+
+EMPTY_CELL = {'sort_key': 0, 'html': '---'}
 
 
 class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
@@ -89,7 +98,6 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
 
     @property
     def charts(self):
-
         chart = MultiBarChart(None, Axis(_('Sites')), Axis(''))
         chart.data = self.get_data_for_graph()
         return [chart]
@@ -122,3 +130,160 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
                 cell_format(row[2], all_users),
                 cell_format(row[3], all_users)
             ]
+
+
+class MalariaReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
+
+    @property
+    def group_by(self):
+        return ['']
+
+    @property
+    def engine_id(self):
+        return 'ucr'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], "malaria")
+
+
+class WeeklyMalaria(MalariaReport):
+    slug = 'weekly_malaria'
+    name = 'Weekly Malaria'
+
+    report_template_path = 'pnlppgi/weekly_malaria.html'
+
+    @property
+    def fields(self):
+        return [WeekFilter, YearFilter]
+
+    @property
+    def config(self):
+        week = self.request.GET.get('week')
+        year = self.request.GET.get('year')
+        return {
+            'domain': self.domain,
+            'week': week,
+            'year': year
+        }
+
+    @property
+    def filters(self):
+        return [
+            EQ('week', 'week'),
+            EQ('year', 'year'),
+        ]
+
+    @property
+    def group_by(self):
+        return ['site_id']
+
+    @property
+    def columns(self):
+
+        def percent(x):
+            return {'sort_key': x, 'html': '%.2f%%' % (x*100)}
+
+        return [
+            DatabaseColumn('site_id', SimpleColumn('site_id')),
+            DatabaseColumn('cas_vus_5', SumColumn('cas_vus_5')),
+            DatabaseColumn('cas_suspects_5', SumColumn('cas_suspects_5')),
+            DatabaseColumn('tests_realises_5', SumColumn('tests_realises_5')),
+            DatabaseColumn('cas_confirmes_5', SumColumn('cas_confirmes_5')),
+            AggregateColumn('cas_vus_5_10', add, [
+                SumColumn('cas_vus_5_10'), SumColumn('cas_vus_10')
+            ]),
+            AggregateColumn('cas_suspects_5_10', add, [
+                SumColumn('cas_suspects_5_10'), SumColumn('cas_suspects_10')
+            ]),
+            AggregateColumn('tests_realises_5_10', add, [
+                SumColumn('tests_realises_5_10'), SumColumn('tests_realises_10')
+            ]),
+            AggregateColumn('cas_confirmes_5_10', add, [
+                SumColumn('cas_confirmes_5_10'), SumColumn('cas_confirmes_10')
+            ]),
+            DatabaseColumn('cas_vus_fe', SumColumn('cas_vus_fe')),
+            DatabaseColumn('cas_suspects_fe', SumColumn('cas_suspects_fe')),
+            DatabaseColumn('tests_realises_fe', SumColumn('tests_realises_fe')),
+            DatabaseColumn('cas_confirmes_fe', SumColumn('cas_confirmes_fe')),
+            DatabaseColumn('cas_vu_total', SumColumn('cas_vu_total')),
+            DatabaseColumn('cas_suspect_total', SumColumn('cas_suspect_total')),
+            DatabaseColumn('tests_realises_total', SumColumn('tests_realises_total')),
+            DatabaseColumn('cas_confirmes_total', SumColumn('cas_confirmes_total')),
+            AggregateColumn(
+                'div_teasts_cas',
+                lambda x, y: (x or 0)/float(y or 1),
+                [AliasColumn('tests_realises_total'), AliasColumn('cas_suspect_total')],
+                format_fn=percent
+            )
+        ]
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn('Region', sortable=False),
+            DataTablesColumn('District', sortable=False),
+            DataTablesColumn('Site', sortable=False),
+            DataTablesColumnGroup(
+                u'Patients Agés de - 5 Ans',
+                DataTablesColumn('Nombre Total de cas vus (toutes affections confondues)', sortable=False),
+                DataTablesColumn('Nombre de cas Suspects de paludisme', sortable=False),
+                DataTablesColumn('Nombre de Tests (TDR) réalisés', sortable=False),
+                DataTablesColumn('Nombre de cas de paludisme confirmés', sortable=False)
+            ),
+            DataTablesColumnGroup(
+                u'Patients Agés de 5 ans et +',
+                DataTablesColumn('Nombre Total de cas vus (toutes affections confondues)', sortable=False),
+                DataTablesColumn('Nombre de cas Suspects de paludisme', sortable=False),
+                DataTablesColumn('Nombre de Tests (TDR) réalisés', sortable=False),
+                DataTablesColumn('Nombre de cas de paludisme confirmés', sortable=False)
+            ),
+            DataTablesColumnGroup(
+                u'Femmes Enceintes MALADES',
+                DataTablesColumn('Nombre Total de cas vus (toutes affections confondues)', sortable=False),
+                DataTablesColumn('Nombre de cas Suspects de paludisme', sortable=False),
+                DataTablesColumn('Nombre de Tests (TDR) réalisés', sortable=False),
+                DataTablesColumn('Nombre de cas de paludisme confirmés', sortable=False)
+            ),
+            DataTablesColumnGroup(
+                u'TOTAL',
+                DataTablesColumn('Nombre Total de cas vus (toutes affections confondues)', sortable=False),
+                DataTablesColumn('Nombre de cas Suspects. de paludisme (A)', sortable=False),
+                DataTablesColumn('Nombre de Tests (TDR) réalisés (B)', sortable=False),
+                DataTablesColumn('Nombre de cas de paludisme confirmés (P)', sortable=False),
+                DataTablesColumn('Taux de Réalisation des TDR (B) / (A)', sortable=False)
+            )
+        )
+
+    @property
+    def rows(self):
+        formatter = DataFormatter(DictDataFormat(self.columns, no_value=self.no_value))
+        data = formatter.format(self.data, keys=self.keys, group_by=self.group_by)
+        locations = SQLLocation.objects.filter(domain=self.domain, location_type__code='region').order_by('name')
+        for reg in locations:
+            for dis in reg.children.order_by('name'):
+                for site in dis.children.order_by('name'):
+                    row = data.get(site.location_id, {})
+                    yield [
+                        reg.name,
+                        dis.name,
+                        site.name,
+                        row.get('cas_vus_5', EMPTY_CELL),
+                        row.get('cas_suspects_5', EMPTY_CELL),
+                        row.get('tests_realises_5', EMPTY_CELL),
+                        row.get('cas_confirmes_5', EMPTY_CELL),
+                        row.get('cas_vus_5_10', EMPTY_CELL),
+                        row.get('cas_suspects_5_10', EMPTY_CELL),
+                        row.get('tests_realises_5_10', EMPTY_CELL),
+                        row.get('cas_confirmes_5_10', EMPTY_CELL),
+                        row.get('cas_vus_fe', EMPTY_CELL),
+                        row.get('cas_suspects_fe', EMPTY_CELL),
+                        row.get('tests_realises_fe', EMPTY_CELL),
+                        row.get('cas_confirmes_fe', EMPTY_CELL),
+                        row.get('cas_vu_total', EMPTY_CELL),
+                        row.get('cas_suspect_total', EMPTY_CELL),
+                        row.get('tests_realises_total', EMPTY_CELL),
+                        row.get('cas_confirmes_total', EMPTY_CELL),
+                        row.get('div_teasts_cas', EMPTY_CELL)
+                    ]
+
