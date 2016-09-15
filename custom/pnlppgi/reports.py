@@ -182,7 +182,7 @@ class WeeklyMalaria(MalariaReport):
     def columns(self):
 
         def percent(x):
-            return {'sort_key': x, 'html': '%.2f%%' % (x*100)}
+            return {'sort_key': x, 'html': '%.2f%%' % (x * 100)}
 
         return [
             DatabaseColumn('site_id', SimpleColumn('site_id')),
@@ -212,7 +212,7 @@ class WeeklyMalaria(MalariaReport):
             DatabaseColumn('cas_confirmes_total', SumColumn('cas_confirmes_total')),
             AggregateColumn(
                 'div_teasts_cas',
-                lambda x, y: (x or 0)/float(y or 1),
+                lambda x, y: (x or 0) / float(y or 1),
                 [AliasColumn('tests_realises_total'), AliasColumn('cas_suspect_total')],
                 format_fn=percent
             )
@@ -286,4 +286,3 @@ class WeeklyMalaria(MalariaReport):
                         row.get('cas_confirmes_total', EMPTY_CELL),
                         row.get('div_teasts_cas', EMPTY_CELL)
                     ]
-
