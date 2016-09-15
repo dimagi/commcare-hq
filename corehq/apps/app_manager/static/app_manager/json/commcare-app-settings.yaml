@@ -149,10 +149,9 @@
   since: '2.14'
 
 - id: use_grid_menus
-  name: Modules Menu Display
-  description: Display root menu as a list or grid.
-  values: [false, true]
-  value_names: ['List', 'Grid']
+  name: Use Menu Grids
+  description: Display root menu as a grid instead of a list.
+  widget: bool
   default: false
   since: "2.24"
   toggle: GRID_MENUS

@@ -108,11 +108,6 @@ def parent_child(domain):
                       data=dict(location_hierarchy_config(domain)).iteritems())
 
 
-def allowed_child_types(domain, parent):
-    parent_type = parent.location_type if parent else None
-    return parent_child(domain).get(parent_type, [])
-
-
 @quickcache(['domain'], timeout=60)
 def get_location_data_model(domain):
     from .views import LocationFieldsView
