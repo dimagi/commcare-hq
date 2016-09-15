@@ -32,7 +32,7 @@ class Notification(models.Model):
 
         After five notifications all notifications should be marked as read.
         """
-        notes = cls.objects.filter(is_active=True)[:limit]
+        notes = cls.objects.filter(is_active=True, activated__gt=user.date_joined)[:limit]
         read_notifications = set(cls.objects.filter(users_read=user).values_list('id', flat=True))
 
         def _fmt_note(note_idx):
