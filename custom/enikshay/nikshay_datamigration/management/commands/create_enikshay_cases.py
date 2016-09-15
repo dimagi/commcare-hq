@@ -22,16 +22,16 @@ class CaseFactory(object):
             case_name=self.patient_detail.pname,
             # if can be blank (or null) should we skip adding the property?
             case_properties={
-                'name': self.patient_detail.name,
-                'aadhaar_number': self.patient_detail.aadhaar_number,
-                'phi': self.patient_detail.phi,
+                'name': self.patient_detail.pname,
+                'aadhaar_number': self.patient_detail.paadharno,
+                'phi': self.patient_detail.PHI,
                 'first_name': self.patient_detail.first_name,
                 'middle_name': self.patient_detail.middle_name,
                 'last_name': self.patient_detail.last_name,
-                'age': self.patient_detail.age,
+                'age': self.patient_detail.page,
                 'sex': self.patient_detail.sex,
-                'current_address': self.patient_detail.current_address,
-                'mobile_number': self.patient_detail.mobile_number,
+                'current_address': self.patient_detail.paddress,
+                'mobile_number': self.patient_detail.pmob,
             }
         )
 

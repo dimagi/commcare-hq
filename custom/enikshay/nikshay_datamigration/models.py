@@ -56,18 +56,6 @@ class PatientDetail(models.Model):
     InitiationDate1 = models.CharField(max_length=255, null=True)  # datetimes, look like they're all midnight
 
     @property
-    def name(self):
-        return self.pname
-
-    @property
-    def aadhaar_number(self):
-        return self.paadharno
-
-    @property
-    def phi(self):
-        return self.PHI
-
-    @property
     def first_name(self):
         return self._list_of_names[0]
 
@@ -84,21 +72,9 @@ class PatientDetail(models.Model):
         return self.pname.split(' ')
 
     @property
-    def age(self):
-        return self.page
-
-    @property
     def sex(self):
         return {
             'F': 'female',
             'M': 'male',
             'T': 'transgender'
         }[self.pgender]
-
-    @property
-    def current_address(self):
-        return self.paddress
-
-    @property
-    def mobile_number(self):
-        return self.pmob
