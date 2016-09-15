@@ -49,7 +49,8 @@ from .analytics.couchaccessors import (
     get_form_ids_having_multimedia as couch_get_form_ids_having_multimedia
 )
 from .analytics.esaccessors import (
-    get_form_ids_having_multimedia as es_get_form_ids_having_multimedia
+    get_form_ids_having_multimedia as es_get_form_ids_having_multimedia,
+    scroll_case_names,
 )
 from .dbaccessors import get_all_hq_group_export_configs
 from .export import save_metadata_export_to_tempfile
@@ -316,9 +317,9 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id,
 
 def _get_case_names(domain, case_ids):
     case_id_to_name = {c: c for c in case_ids}
-    for case in CaseAccessors(domain).iter_cases(case_ids):
-        if case.name:
-            case_id_to_name[case.case_id] = case.name
+    for case in scroll_case_names(domain, case_ids):
+        if case.get('name'):
+            case_id_to_name[case.get('_id')] = case.get('name')
     return case_id_to_name
 
 
