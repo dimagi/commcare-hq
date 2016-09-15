@@ -2152,8 +2152,11 @@ class IncomingBackendView(View):
 
 
 class NewIncomingBackendView(View):
-    domain = None
-    backend_couch_id = None
+
+    def __init__(self, *args, **kwargs):
+        super(NewIncomingBackendView, self).__init__(*args, **kwargs)
+        self.domain = None
+        self.backend_couch_id = None
 
     @property
     def backend_class(self):
