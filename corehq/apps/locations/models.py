@@ -608,6 +608,12 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     def location_type_name(self):
         return self.location_type.name
 
+    @property
+    def sql_location(self):
+        # For backwards compatability
+        notify_of_deprecation("'sql_location' was just called on a sql_location.  That's kinda silly.")
+        return self
+
 
 def filter_for_archived(locations, include_archive_ancestors):
     """
