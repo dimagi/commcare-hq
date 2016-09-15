@@ -2,7 +2,7 @@ from django.db import models
 
 
 class PatientDetail(models.Model):
-    PregId = models.CharField(max_length=255, primary_key=True)
+    PregId = models.CharField(max_length=255, primary_key=True) # need to remove trailing whitespace in Excel
     Stocode = models.CharField(max_length=255, null=True)
     Dtocode = models.CharField(max_length=255, null=True)
     Tbunitcode = models.IntegerField(null=True)
@@ -78,3 +78,18 @@ class PatientDetail(models.Model):
             'M': 'male',
             'T': 'transgender'
         }[self.pgender]
+
+
+class Outcome(models.Model):
+    PatientId = models.ForeignKey(PatientDetail, primary_key=True)
+    Outcome = models.CharField(max_length=255, null=True)
+    OutcomeDate1 = models.CharField(max_length=255, null=True)
+    MO = models.CharField(max_length=255, null=True)
+    XrayEPTests = models.CharField(max_length=255, null=True)
+    MORemark = models.CharField(max_length=255, null=True)
+    HIVStatus = models.CharField(max_length=255, null=True)
+    HIVTestDate = models.CharField(max_length=255, null=True)
+    CPTDeliverDate = models.CharField(max_length=255, null=True)
+    ARTCentreDate = models.CharField(max_length=255, null=True)
+    InitiatedOnART = models.CharField(max_length=255, null=True)
+    InitiatedDate = models.CharField(max_length=255, null=True)
