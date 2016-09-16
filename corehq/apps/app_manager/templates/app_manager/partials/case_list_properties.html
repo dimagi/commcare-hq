@@ -7,12 +7,12 @@
             <tr tabindex="999" data-bind="paste: function (data) { pasteCallback(data, 0); }">
                 <th class="col-sm-1"></th>
                 <th class="col-sm-3" data-bind="text: hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig.message.FIELD"></th>
-                <!-- ko if: useCaseTiles() == "yes" && {{request|toggle_enabled:'CASE_LIST_TILE'|BOOL }}-->
+                <!-- ko if: showCaseTileColumn() -->
                 <th class="col-sm-2" data-bind="text: hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig.message.HEADER"></th>
                 <th class="col-sm-3" data-bind="text: hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig.message.FORMAT"></th>
                 <th class="col-sm-2">{% trans "Case Tile Mapping" %}</th>
                 <!--/ko-->
-                <!-- ko ifnot: useCaseTiles() == "yes" && {{request|toggle_enabled:'CASE_LIST_TILE'|BOOL }}-->
+                <!-- ko ifnot: showCaseTileColumn() -->
                 <th class="col-sm-3" data-bind="text: hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig.message.HEADER"></th>
                 <th class="col-sm-4" data-bind="text: hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig.message.FORMAT"></th>
                 <!-- /ko -->
@@ -53,12 +53,12 @@
                         </div>
                     </td>
                     <td data-bind="jqueryElement: header.ui, css: {
-                            'col-sm-2': $parent.useCaseTiles() == 'yes' && {{request|toggle_enabled:'CASE_LIST_TILE'|BOOL }},
-                            'col-sm-3': $parent.useCaseTiles() != 'yes' || !{{request|toggle_enabled:'CASE_LIST_TILE'|BOOL }},
+                            'col-sm-2': $parent.showCaseTileColumn(),
+                            'col-sm-3': !$parent.showCaseTileColumn(),
                         }"></td>
                     <td data-bind="jqueryElement: $format, css: {
-                            'col-sm-3': $parent.useCaseTiles() == 'yes' && {{request|toggle_enabled:'CASE_LIST_TILE'|BOOL }},
-                            'col-sm-4': $parent.useCaseTiles() != 'yes' || !{{request|toggle_enabled:'CASE_LIST_TILE'|BOOL }},
+                            'col-sm-3': $parent.showCaseTileColumn(),
+                            'col-sm-4': !$parent.showCaseTileColumn(),
                         }"></td>
                 <!--/ko-->
                 <!--ko if: isTab -->
@@ -74,7 +74,7 @@
                         <td class="col-sm-8" colspan="3" data-bind="jqueryElement: header.ui"></td>
                     <!--/ko-->
                 <!--/ko-->
-                <!-- ko if: $parent.useCaseTiles() == "yes" && {{request|toggle_enabled:'CASE_LIST_TILE'|BOOL }}-->
+                <!-- ko if: $parent.showCaseTileColumn() -->
                 <td class="col-sm-2">
                     <select class="form-control" data-bind="value: case_tile_field">
                         <option value=""></option>
