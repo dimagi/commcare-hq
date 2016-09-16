@@ -25,7 +25,9 @@ class Command(BaseCommand):
             include_docs=True,
         )
 
-        logs = [SimplifiedSyncLog.wrap(res['doc']) for res in results]
-        for log in logs:
+        logs = []
+        for res in results:
+            log = SimplifiedSyncLog.wrap(res['doc'])
             log.case_ids_on_phone = {'broken to force 412'}
-            log.save()
+            logs.append(log)
+        SimplifiedSyncLog.bulk_save(logs)
