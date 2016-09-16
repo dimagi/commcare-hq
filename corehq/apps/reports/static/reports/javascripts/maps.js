@@ -205,7 +205,7 @@ function resetTable(data) {
         }
     });
     rows = $(rows);
-    rows.unbind('click').unbind('mouseenter').unbind('mouseleave');
+    rows.off('click').off('mouseenter').off('mouseleave');
     rows.removeClass('inactive-row');
 }
 
