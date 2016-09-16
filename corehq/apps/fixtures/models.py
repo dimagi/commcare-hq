@@ -348,7 +348,7 @@ class FixtureDataItem(Document):
     @classmethod
     def by_user(cls, user, wrap=True):
         group_ids = Group.by_user(user, wrap=False)
-        loc_ids = user.sql_location.path if user.sql_location else []
+        loc_ids = user.sql_location.path_including_self if user.sql_location else []
 
         def make_keys(owner_type, ids):
             return [[user.domain, 'data_item by {}'.format(owner_type), id_]
