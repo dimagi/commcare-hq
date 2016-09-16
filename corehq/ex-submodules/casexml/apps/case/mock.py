@@ -67,7 +67,7 @@ class CaseBlock(dict):
             case_type=undefined,
             case_name=undefined,
             create=False,
-            date_opened=None,
+            date_opened=undefined,
             update=None,
             close=False,
             index=None,
@@ -101,8 +101,8 @@ class CaseBlock(dict):
         self._id = case_id
         now = datetime.utcnow()
         date_modified = date_modified or now
-        date_opened = date_opened or (date_modified.date()\
-            if isinstance(date_modified, datetime) else date_modified)
+        if date_opened == CaseBlock.undefined and create:
+            date_opened = now.date()
         update = copy.copy(update) if update else {}
         index = copy.copy(index) if index else {}
 
@@ -147,6 +147,7 @@ class CaseBlock(dict):
                 if create_or_update[key] is not CaseBlock.undefined and key in self['update']:
                     raise CaseBlockError("Key %r specified twice" % key)
 
+        create_or_update = {key: val for key, val in create_or_update.items() if val is not CaseBlock.undefined}
         if create:
             self['create'].update(create_or_update)
         else:

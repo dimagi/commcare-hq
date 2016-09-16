@@ -17,7 +17,6 @@
 
     var locs = {{ locations|JSON }};
     var can_edit_root = {{ can_edit_root|yesno:"true,false" }};
-    var selected_loc = {{ selected_id|JSON }};
     var hierarchy = {{ hierarchy|JSON }};
     var show_inactive = {{ show_inactive|yesno:"true,false" }};
 
@@ -112,8 +111,14 @@
                         $(button).enableButton();
                     },
                     success: function (response) {
-                        alert_user(delete_success_message({"name": name}), "success");
-                        remove_elements_after_action(button);
+                        if (response.success){
+                            alert_user(delete_success_message({"name": name}), "success");
+                            remove_elements_after_action(button);
+                        }
+                        else {
+                            alert_user(response.message, "warning");
+                            $(button).enableButton();
+                        }
                     }
                 });
                 $(delete_location_modal).modal('hide');
@@ -147,7 +152,7 @@
     $(function() {
         var model = new LocationTreeViewModel(hierarchy);
         $('#location_tree').koApplyBindings(model);
-        model.load(locs, selected_loc);
+        model.load(locs);
     });
 
     gaTrackLink($('#edit-org-levels'), 'Organization Structure', 'Edit Organization Levels');
@@ -189,7 +194,7 @@
     </div>
 </header>
 
-{% if not show_inactive %}
+{% if not show_inactive and request.can_access_all_locations %}
 <div class="row">
     <div class="col-sm-12">
         <div class="btn-toolbar">

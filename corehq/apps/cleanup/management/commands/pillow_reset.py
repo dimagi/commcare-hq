@@ -1,14 +1,14 @@
 import json
 from datetime import datetime
 from couchdbkit import ResourceNotFound
-from django.core.management.base import LabelCommand, CommandError
+from django.core.management.base import BaseCommand, CommandError
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.utils import get_pillow_by_name
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Reset a list of pillow checkpoints based on a specified config file."
     args = "config_file"
     label = "config file"

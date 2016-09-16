@@ -1,4 +1,4 @@
-from django.core.management.base import LabelCommand, CommandError
+from django.core.management.base import BaseCommand, CommandError
 from optparse import make_option
 import simplejson
 from corehq.elastic import get_es_new
@@ -6,12 +6,12 @@ from corehq.pillows.utils import get_all_expected_es_indices
 from pillowtop.es_utils import assume_alias
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "."
     args = ""
     label = ""
 
-    option_list = LabelCommand.option_list + (
+    option_list = BaseCommand.option_list + (
         make_option('--flip_all_aliases',
                     action='store_true',
                     dest='flip_all',

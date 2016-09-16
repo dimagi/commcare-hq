@@ -201,7 +201,7 @@ class TestSendToElasticsearch(SimpleTestCase):
                     'host': 'localhost',
                     'port': '9000',  # bad port
                 }],
-                timeout=0,
+                timeout=0.1,
             )
 
         doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'bar'}

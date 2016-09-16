@@ -1,6 +1,6 @@
-/*global FormplayerFrontend */
+/*global FormplayerFrontend, Util */
 
-FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette) {
+FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette, $) {
     MenuList.MenuView = Marionette.ItemView.extend({
         tagName: "tr",
         className: "formplayer-request",
@@ -56,7 +56,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             var imageUri = this.options.model.get('imageUri');
             var audioUri = this.options.model.get('audioUri');
             var navState = this.options.model.get('navigationState');
-            var appId = this.model.collection.appId;
+            var appId = Util.currentUrlToObject().appId;
             return {
                 navState: navState,
                 imageUrl: imageUri ? FormplayerFrontend.request('resourceMap', imageUri, appId) : "",
@@ -82,39 +82,6 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
     });
 
-    MenuList.CaseView = Marionette.ItemView.extend({
-        tagName: "tr",
-        getTemplate: function () {
-            if (_.isNull(this.options.tiles)) {
-                return "#case-view-item-template";
-            } else {
-                return "#case-tile-view-item-template";
-            }
-        },
-
-        className: "formplayer-request",
-        events: {
-            "click": "rowClick",
-        },
-
-        rowClick: function (e) {
-            e.preventDefault();
-            FormplayerFrontend.trigger("menu:show:detail", this, 0);
-        },
-
-        templateHelpers: function () {
-            var appId = this.model.collection.appId;
-            return {
-                data: this.options.model.get('data'),
-                styles: this.options.styles,
-                tiles: this.options.tiles,
-                resolveUri: function (uri) {
-                    return FormplayerFrontend.request('resourceMap', uri, appId);
-                },
-            };
-        },
-    });
-
     // return the string grid-area attribute
     // takes the form of  [x-coord] / [y-Coord] / [width] / [height]
     var getGridAttributes = function (tile) {
@@ -132,46 +99,142 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     // generate the case tile's style block and insert
     var generateCaseTileStyles = function (tiles) {
         var templateString,
-            tileStyle,
-            tileStyleTemplate,
+            caseTileStyle,
+            caseTileStyleTemplate,
             tileModels;
 
         tileModels = _.chain(tiles || [])
-            .filter(function(tile) { return tile !== null; })
-            .map(function(tile, idx) {
+            .map(function (tile, idx) {
+                if (tile === null || tile === undefined) {
+                    return null;
+                }
                 return {
                     id: 'grid-style-' + idx,
                     gridStyle: getGridAttributes(tile),
                     fontStyle: tile.fontSize,
                 };
+            })
+            .filter(function (tile) {
+                return tile !== null;
             }).value();
 
         templateString = $("#case-tile-style-template").html();
-        tileStyleTemplate = _.template(templateString);
-        tileStyle = tileStyleTemplate({
+        caseTileStyleTemplate = _.template(templateString);
+        caseTileStyle = caseTileStyleTemplate({
             models: tileModels,
         });
 
         // need to remove this attribute so the grid style is re-evaluated
-        $("#case-tiles-style").html(tileStyle).removeAttr("data-css-polyfilled");
+        $("#case-tiles-style").html(caseTileStyle).data("css-polyfilled", false);
+        $("#inner-tiles-container-style").data("css-polyfilled", false);
     };
+
+    // Dynamically generate the CSS style to display multiple tiles per line
+    var makeOuterGridStyle = function (numRows, numColumns, numCasesPerRow) {
+        var outerGridTemplateString,
+            outerGridStyle,
+            outerGridStyleTemplate,
+            outerGridModel;
+
+        var widthPercentage = 100 / numCasesPerRow;
+        var widthHeightRatio = numRows / numColumns;
+        var heightPercentage = widthPercentage * widthHeightRatio;
+
+        outerGridModel = {
+            widthPercentage: widthPercentage,
+            heightPercentage: heightPercentage,
+        };
+        outerGridTemplateString = $("#case-grid-style-template").html();
+        outerGridStyleTemplate = _.template(outerGridTemplateString);
+        outerGridStyle = outerGridStyleTemplate({
+            model: outerGridModel,
+        });
+        // need to remove this attribute so the grid style is re-evaluated
+        $("#outer-tiles-container-style").html(outerGridStyle).data("css-polyfilled", false);
+    };
+
+    // Dynamically generate the CSS style for the grid polyfill to use for the case tile
+    // useUniformUnits - true if the grid's cells should have the same height as width
+    var makeInnerGridStyle = function (numRows, numColumns, numCasesPerRow, useUniformUnits) {
+        var templateString,
+            view,
+            template,
+            model,
+            widthPixels,
+            heightPixels,
+            fullWidth;
+
+        fullWidth = 800;
+        widthPixels = ((1 / numColumns) / numCasesPerRow) * fullWidth;
+        if (useUniformUnits) {
+            heightPixels = widthPixels;
+        } else {
+            heightPixels = widthPixels/2;
+        }
+
+        model = {
+            numRows: numRows,
+            numColumns: numColumns,
+            widthPixels: widthPixels,
+            heightPixels: heightPixels,
+        };
+        templateString = $("#grid-inner-style-template").html();
+        template = _.template(templateString);
+        view = template({
+            model: model,
+        });
+        // need to remove this attribute so the grid style is re-evaluated
+        $("#inner-tiles-container-style").html(view).data("css-polyfilled", false);
+
+        // If we have multiple cases per line, need to generate the outer grid style as well
+        if (numCasesPerRow > 1) {
+            makeOuterGridStyle(numRows, numColumns, numCasesPerRow);
+        }
+    };
+
+    MenuList.CaseView = Marionette.ItemView.extend({
+        tagName: "tr",
+        template: "#case-view-item-template",
+        className: "formplayer-request",
+
+        events: {
+            "click": "rowClick",
+        },
+
+        rowClick: function (e) {
+            e.preventDefault();
+            FormplayerFrontend.trigger("menu:show:detail", this, 0);
+        },
+
+        templateHelpers: function () {
+            var appId = Util.currentUrlToObject().appId;
+            return {
+                data: this.options.model.get('data'),
+                styles: this.options.styles,
+                resolveUri: function (uri) {
+                    return FormplayerFrontend.request('resourceMap', uri, appId);
+                },
+            };
+        },
+    });
+
+    MenuList.CaseTileView = MenuList.CaseView.extend({
+        template: "#case-tile-view-item-template",
+    });
 
     MenuList.CaseListView = Marionette.CompositeView.extend({
         tagName: "div",
         template: "#case-view-list-template",
-        childView: MenuList.CaseView,
         childViewContainer: ".case-container",
+        childView: MenuList.CaseView,
 
         initialize: function (options) {
-            this.tiles = options.tiles;
             this.styles = options.styles;
-            generateCaseTileStyles(options.tiles);
         },
 
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
-                tiles: this.options.tiles,
             };
         },
 
@@ -211,10 +274,45 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 currentPage: this.options.currentPage,
                 pageCount: this.options.pageCount,
                 styles: this.options.styles,
-                tiles: this.options.tiles,
                 breadcrumbs: this.options.breadcrumbs,
+                templateName: "case-list-template",
+                useGrid: this.options.numEntitiesPerRow > 1,
+                useTiles: false,
             };
         },
+    });
+
+    MenuList.CaseTileListView = MenuList.CaseListView.extend({
+        childView: MenuList.CaseTileView,
+        initialize: function (options) {
+            MenuList.CaseTileListView.__super__.initialize.apply(this, arguments);
+            var gridPolyfillPath = FormplayerFrontend.request('gridPolyfillPath');
+            generateCaseTileStyles(options.tiles);
+            makeInnerGridStyle(options.maxHeight,
+                options.maxWidth,
+                options.numEntitiesPerRow || 1,
+                options.useUniformUnits);
+            $.getScript(gridPolyfillPath);
+        },
+
+        templateHelpers: function () {
+            var dict = MenuList.CaseTileListView.__super__.templateHelpers.apply(this, arguments);
+            dict['useTiles'] = true;
+            return dict;
+        },
+    });
+
+    MenuList.GridCaseTileViewItem = MenuList.CaseTileView.extend({
+        tagName: "div",
+        className: "formplayer-request case-tile-grid-item",
+        template: "#case-tile-view-item-template",
+    });
+
+    MenuList.GridCaseTileListView = MenuList.CaseTileListView.extend({
+        initialize: function () {
+            MenuList.GridCaseTileListView.__super__.initialize.apply(this, arguments);
+        },
+        childView: MenuList.GridCaseTileViewItem,
     });
 
     MenuList.BreadcrumbView = Marionette.ItemView.extend({

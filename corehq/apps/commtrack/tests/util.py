@@ -16,7 +16,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import Location, LocationType, SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper

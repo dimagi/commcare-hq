@@ -11,7 +11,7 @@ DOMAIN = 'test-form-accessor'
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class RestrictedSQLAccessTests(SimpleTestCase):
-    dependent_apps = []
+    pass
 
 
 @generate_cases([

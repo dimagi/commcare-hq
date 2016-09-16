@@ -351,7 +351,7 @@ class TestXFormInstanceResource(APIResourceTest):
                 create=True,
             ).as_string(),
             self.domain.name
-        )
+        )[0]
 
         # Fetch the xform through the API
         response = self._assert_auth_get_resource(self.single_endpoint(form.form_id) + "?cases__full=true")

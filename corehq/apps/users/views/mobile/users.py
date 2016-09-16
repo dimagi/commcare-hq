@@ -52,7 +52,8 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.analytics import users_have_locations
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.ota.utils import turn_off_demo_mode, demo_restore_date_created
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
@@ -94,6 +95,15 @@ BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
 DEFAULT_USER_LIST_LIMIT = 10
 
 
+def _can_edit_workers_location(web_user, mobile_worker):
+    if web_user.has_permission(mobile_worker.domain, 'access_all_locations'):
+        return True
+    loc_id = mobile_worker.location_id
+    if not loc_id:
+        return False
+    return user_can_access_location_id(mobile_worker.domain, web_user, loc_id)
+
+
 class EditCommCareUserView(BaseEditUserView):
     urlname = "edit_commcare_user"
     user_update_form_class = UpdateCommCareUserInfoForm
@@ -107,6 +117,7 @@ class EditCommCareUserView(BaseEditUserView):
             return "users/edit_commcare_user.html"
 
     @use_multiselect
+    @location_safe
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, *args, **kwargs):
         return super(EditCommCareUserView, self).dispatch(request, *args, **kwargs)
@@ -136,11 +147,11 @@ class EditCommCareUserView(BaseEditUserView):
     def editable_user(self):
         try:
             user = CommCareUser.get_by_user_id(self.editable_user_id, self.domain)
-            if not user:
-                raise Http404()
-            return user
         except (ResourceNotFound, CouchUser.AccountTypeError, KeyError):
             raise Http404()
+        if not user or not _can_edit_workers_location(self.couch_user, user):
+            raise Http404()
+        return user
 
     @property
     def edit_user_form_title(self):
@@ -376,9 +387,12 @@ def archive_commcare_user(request, domain, user_id, is_active=False):
 
 
 @require_can_edit_commcare_users
+@location_safe
 @require_POST
 def delete_commcare_user(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
+    if not _can_edit_workers_location(request.couch_user, user):
+        raise PermissionDenied()
     user.retire()
     messages.success(request, "User %s has been deleted. All their submissions and cases will be permanently deleted in the next few minutes" % user.username)
     return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[domain]))
@@ -538,9 +552,15 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     @use_select2
     @use_angular_js
+    @location_safe
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, *args, **kwargs):
         return super(MobileWorkerListView, self).dispatch(*args, **kwargs)
+
+    @property
+    @memoized
+    def can_access_all_locations(self):
+        return self.couch_user.has_permission(self.domain, 'access_all_locations')
 
     @property
     def can_bulk_edit_users(self):
@@ -554,8 +574,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     @memoized
     def new_mobile_worker_form(self):
         if self.request.method == "POST":
-            return NewMobileWorkerForm(self.request.project, self.request.POST)
-        return NewMobileWorkerForm(self.request.project)
+            return NewMobileWorkerForm(self.request.project, self.couch_user, self.request.POST)
+        return NewMobileWorkerForm(self.request.project, self.couch_user)
 
     @property
     @memoized
@@ -577,6 +597,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'custom_field_names': [f.label for f in self.custom_data.fields],
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
+            'can_access_all_locations': self.can_access_all_locations,
             'pagination_limit_cookie_name': (
                 'hq.pagination.limit.mobile_workers_list.%s' % self.domain),
             'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain),
@@ -614,6 +635,10 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         user_es = get_search_users_in_domain_es_query(
             domain=self.domain, search_string=search_string,
             offset=page * limit, limit=limit)
+        if not self.can_access_all_locations:
+            loc_ids = (SQLLocation.objects.accessible_to_user(self.domain, self.couch_user)
+                                          .location_ids())
+            user_es = user_es.location(list(loc_ids))
         return user_es.mobile_users()
 
     @allow_remote_invocation
@@ -662,7 +687,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'error': _("Please provide an is_active status."),
             }
         user = CommCareUser.get_by_user_id(user_id, self.domain)
-        if is_active and not self.can_add_extra_users:
+        if (not _can_edit_workers_location(self.couch_user, user)
+                or (is_active and not self.can_add_extra_users)):
             return {
                 'error': _("No Permission."),
             }
@@ -1086,6 +1112,7 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
     def get_context_data(self, **kwargs):
         context = super(CommCareUserSelfRegistrationView, self).get_context_data(**kwargs)
         context.update({
+            'hr_name': self.domain_object.display_name(),
             'form': self.form,
             'invitation': self.invitation,
             'can_add_extra_mobile_workers': can_add_extra_mobile_workers(self.request),

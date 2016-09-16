@@ -127,8 +127,8 @@ class FormAccessors(object):
     def form_exists(self, form_id):
         return self.db_accessor.form_exists(form_id, domain=self.domain)
 
-    def get_all_form_ids_in_domain(self):
-        return self.db_accessor.get_form_ids_in_domain_by_type(self.domain, 'XFormInstance')
+    def get_all_form_ids_in_domain(self, doc_type='XFormInstance'):
+        return self.db_accessor.get_form_ids_in_domain_by_type(self.domain, doc_type)
 
     def get_forms_by_type(self, type_, limit, recent_first=False):
         return self.db_accessor.get_forms_by_type(self.domain, type_, limit, recent_first)

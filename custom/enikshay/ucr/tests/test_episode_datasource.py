@@ -6,15 +6,15 @@ from django.test import TestCase
 from corehq.util.test_utils import TestFileMixin
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
-from corehq.apps.userreports.sql import IndicatorSqlAdapter
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.userreports.tests.utils import run_with_all_ucr_backends
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 
 
 class BaseEnikshayDatasourceTest(TestCase, TestFileMixin):
-    dependent_apps = ['corehq.apps.domain', 'corehq.apps.case']
     file_path = ('data_sources', )
     root = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
     _call_center_domain_mock = mock.patch(
@@ -46,7 +46,8 @@ class BaseEnikshayDatasourceTest(TestCase, TestFileMixin):
 
     def _rebuild_table_get_query_object(self):
         rebuild_indicators(self.datasource._id)
-        adapter = IndicatorSqlAdapter(self.datasource)
+        adapter = get_indicator_adapter(self.datasource)
+        adapter.refresh_table()
         return adapter.get_query_object()
 
 
@@ -71,6 +72,9 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
             attrs={
                 "case_type": "occurrence",
                 "create": True,
+                'update': dict(
+                    hiv_status='reactive'
+                )
             },
             indices=[
                 CaseIndex(
@@ -125,11 +129,21 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
         )
         self.factory.create_or_update_cases([episode, test])
 
+    @run_with_all_ucr_backends
+    def test_hiv_status(self):
+        self._create_case_structure()
+        query = self._rebuild_table_get_query_object()
+        self.assertEqual(query.count(), 1)
+        row = query[0]
+
+        self.assertEqual(row.hiv_status, 'reactive')
+
+    @run_with_all_ucr_backends
     def test_sputum_positive(self):
         self._create_case_structure(lab_result="tb_detected")
         query = self._rebuild_table_get_query_object()
         self.assertEqual(query.count(), 1)
-        row = query.first()
+        row = query[0]
 
         self.assertEqual(row.male, 1)
         self.assertEqual(row.female, 0)
@@ -149,11 +163,12 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
         self.assertEqual(row.new_smear_positive_pulmonary_TB_under_15, 1)
         self.assertEqual(row.new_smear_positive_pulmonary_TB_over_15, 0)
 
+    @run_with_all_ucr_backends
     def test_sputum_negative(self):
         self._create_case_structure(lab_result="tb_not_detected")
         query = self._rebuild_table_get_query_object()
         self.assertEqual(query.count(), 1)
-        row = query.first()
+        row = query[0]
 
         self.assertEqual(row.new_smear_negative_pulmonary_TB, 1)
         self.assertEqual(row.new_smear_negative_pulmonary_TB_male, 1)
@@ -163,11 +178,12 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
         self.assertEqual(row.new_smear_negative_pulmonary_TB_under_15, 1)
         self.assertEqual(row.new_smear_negative_pulmonary_TB_over_15, 0)
 
+    @run_with_all_ucr_backends
     def test_extra_pulmonary(self):
         self._create_case_structure(lab_result="tb_detected", disease_classification="extra_pulmonary")
         query = self._rebuild_table_get_query_object()
         self.assertEqual(query.count(), 1)
-        row = query.first()
+        row = query[0]
 
         self.assertEqual(row.new_smear_positive_extra_pulmonary_TB, 1)
         self.assertEqual(row.new_smear_positive_extra_pulmonary_TB_male, 1)

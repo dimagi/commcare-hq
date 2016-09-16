@@ -1,3 +1,4 @@
+# coding: utf-8
 from collections import namedtuple
 from datetime import datetime, timedelta
 from importlib import import_module
@@ -454,3 +455,22 @@ def get_INFilter_element_bindparam(base_name, index):
 
 def get_INFilter_bindparams(base_name, values):
     return tuple(get_INFilter_element_bindparam(base_name, i) for i, val in enumerate(values))
+
+
+def safe_for_fs(filename):
+    """
+    Returns a filename with FAT32-, NTFS- and HFS+-illegal characters removed.
+
+    Unicode or bytestring datatype of filename is preserved.
+
+    >>> safe_for_fs(u'spam*?: 𐍃𐍀𐌰𐌼-&.txt')
+    u'spam 𐍃𐍀𐌰𐌼-&.txt'
+    >>> safe_for_fs('spam*?: 𐍃𐍀𐌰𐌼-&.txt')
+    'spam 𐍃𐍀𐌰𐌼-&.txt'
+    """
+    is_unicode = isinstance(filename, unicode)
+    unsafe_chars = u':*?"<>|/\\\r\n' if is_unicode else ':*?"<>|/\\\r\n'
+    empty = u'' if is_unicode else ''
+    for c in unsafe_chars:
+        filename = filename.replace(c, empty)
+    return filename

@@ -76,12 +76,21 @@ class PredictablyRandomToggle(StaticToggle):
     It extends StaticToggle, so individual domains/users can also be explicitly added.
     """
 
-    def __init__(self, slug, label, tag, namespaces, randomness, help_link=None, description=None):
+    def __init__(self,
+            slug,
+            label,
+            tag,
+            namespaces,
+            randomness,
+            help_link=None,
+            description=None,
+            always_disabled=None):
         super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
                                                       help_link=help_link, description=description)
         assert namespaces, 'namespaces must be defined!'
         assert 0 <= randomness <= 1, 'randomness must be between 0 and 1!'
         self.randomness = randomness
+        self.always_disabled = always_disabled or []
 
     @property
     def randomness_percent(self):
@@ -91,6 +100,8 @@ class PredictablyRandomToggle(StaticToggle):
         return '{}:{}:{}'.format(self.namespaces, self.slug, item)
 
     def enabled(self, item, **kwargs):
+        if item in self.always_disabled:
+            return False
         return (
             (item and deterministic_random(self._get_identifier(item)) < self.randomness)
             or super(PredictablyRandomToggle, self).enabled(item, **kwargs)
@@ -514,8 +525,15 @@ MOBILE_UCR = StaticToggle(
 
 RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
     'restrict_web_users_by_location',
-    "Allow project to restrict web user permissions by location",
+    "Allow project to restrict web user permissions by location (deprecated)",
     TAG_PRODUCT_CORE,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+LOCATION_BASED_ACCESS_RESTRICTIONS = StaticToggle(
+    'location_based_access_restrictions',
+    "Allow project to restrict web user access by location",
+    TAG_PRODUCT_PATH,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -603,9 +621,9 @@ ICDS_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-ENIKSHAY_INTEGRATIONS = StaticToggle(
-    'enikshay_integrations',
-    'Enable access to eNikshay external integrations',
+NINETYNINE_DOTS = StaticToggle(
+    '99dots_integration',
+    'Enable access to 99DOTS',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
@@ -708,10 +726,10 @@ ABT_REMINDER_RECIPIENT = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-AUTO_CASE_UPDATES = StaticToggle(
+AUTO_CASE_UPDATE_ENHANCEMENTS = StaticToggle(
     'auto_case_updates',
-    'Ability to perform automatic case updates without closing the case.',
-    TAG_ONE_OFF,
+    'Enable enhancements to the Auto Case Update feature.',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
 
@@ -771,11 +789,13 @@ NEW_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-TF_USES_SQLITE_BACKEND = StaticToggle(
+TF_USES_SQLITE_BACKEND = PredictablyRandomToggle(
     'tf_sql_backend',
     'Use a SQLite backend for Touchforms',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    0.5,
+    always_disabled=['hsph-betterbirth'],
 )
 
 
@@ -863,6 +883,15 @@ CUSTOM_CALENDAR_FIXTURE = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
 )
+
+
+NEW_BULK_LOCATION_MANAGEMENT = StaticToggle(
+    'new_bulk_location_management',
+    'Enable advanced features in Bulk Location Upload',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
 
 PREVIEW_APP = StaticToggle(
     'preview_app',

@@ -38,7 +38,7 @@ def close_cases(case_ids, domain, user):
         close=True,
     ).as_xml()) for case_id in case_ids]
 
-    return submit_case_blocks(case_blocks, domain, username, user_id).form_id
+    return submit_case_blocks(case_blocks, domain, username, user_id)[0].form_id
 
 
 def close_case(case_id, domain, user):

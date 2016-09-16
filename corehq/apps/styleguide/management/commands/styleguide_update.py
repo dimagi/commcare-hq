@@ -1,6 +1,6 @@
 from pycco.main import template, parse, highlight, re, destination
 import os
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 from django.conf import settings
 
 EXAMPLES_PATH = 'corehq/apps/styleguide/examples/'
@@ -19,7 +19,7 @@ DJ_TEMPLATES_TO_PYCCO = [
 ]
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Prints the paths of all the static files"
     args = "save or soft"
 

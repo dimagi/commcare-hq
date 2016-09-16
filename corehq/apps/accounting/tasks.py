@@ -100,17 +100,19 @@ def activate_subscriptions(based_on_date=None):
 
 
 @transaction.atomic
-def _deactivate_subscription(subscription, ending_date):
+def _deactivate_subscription(subscription):
     subscription.is_active = False
     subscription.save()
     next_subscription = subscription.next_subscription
-    activate_next_subscription = next_subscription and next_subscription.date_start == ending_date
+    activate_next_subscription = next_subscription and next_subscription.date_start == subscription.date_end
     if activate_next_subscription:
         new_plan_version = next_subscription.plan_version
         next_subscription.is_active = True
         next_subscription.save()
     else:
-        next_subscription = assign_explicit_community_subscription(subscription.subscriber.domain, ending_date)
+        next_subscription = assign_explicit_community_subscription(
+            subscription.subscriber.domain, subscription.date_end
+        )
         new_plan_version = next_subscription.plan_version
     _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
     if next_subscription and subscription.account == next_subscription.account:
@@ -137,7 +139,7 @@ def deactivate_subscriptions(based_on_date=None):
 
     for subscription in ending_subscriptions:
         try:
-            _deactivate_subscription(subscription, based_on_date)
+            _deactivate_subscription(subscription)
         except Exception as e:
             log_accounting_error(
                 'Error deactivating subscription %d: %s' % (subscription.id, e.message),

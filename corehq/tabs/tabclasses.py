@@ -28,6 +28,7 @@ from corehq.apps.users.models import Permissions
 from corehq.form_processor.utils import use_new_exports
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
+from custom.world_vision import WORLD_VISION_DOMAINS
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
 
@@ -44,8 +45,7 @@ class ProjectReportsTab(UITab):
 
     @property
     def view(self):
-        module = Domain.get_module_by_name(self.domain)
-        if hasattr(module, 'DEFAULT_REPORT_CLASS'):
+        if self.domain in WORLD_VISION_DOMAINS:
             return "corehq.apps.reports.views.default"
         from corehq.apps.reports.views import MySavedReportsView
         return MySavedReportsView.urlname
@@ -58,7 +58,7 @@ class ProjectReportsTab(UITab):
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-        sidebar_items = tools + report_builder_nav + project_reports + custom_reports
+        sidebar_items = tools + report_builder_nav + custom_reports + project_reports
         return self._filter_sidebar_items(sidebar_items)
 
     def _get_tools_items(self):

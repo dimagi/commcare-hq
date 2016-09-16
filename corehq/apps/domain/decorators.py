@@ -228,7 +228,8 @@ def two_factor_check(api_key):
     def _outer(fn):
         @wraps(fn)
         def _inner(request, domain, *args, **kwargs):
-            if not api_key and Domain.get_by_name(domain).two_factor_auth:
+            dom = Domain.get_by_name(domain)
+            if not api_key and dom and dom.two_factor_auth:
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
                 if token and match_token(request.user, token):
                     return fn(request, *args, **kwargs)

@@ -1,17 +1,20 @@
 import json
 import logging
-import re
-from django.db import IntegrityError
-from django.core import cache
-from django.core.servers.basehttp import FileWrapper
-from django.core.urlresolvers import reverse
-from django.http import HttpResponse, StreamingHttpResponse
-import uuid
-from django.conf import settings
 import os
+import re
 import stat
-from django_transfer import TransferHttpResponse
+import uuid
 from tempfile import mkstemp
+from wsgiref.util import FileWrapper
+
+from django.conf import settings
+from django.core import cache
+from django.core.urlresolvers import reverse
+from django.db import IntegrityError
+from django.http import HttpResponse, StreamingHttpResponse
+
+from django_transfer import TransferHttpResponse
+
 
 GLOBAL_RW = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH
 

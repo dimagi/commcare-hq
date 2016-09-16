@@ -78,7 +78,11 @@ def restore_cache_key(prefix, user_id, version=None):
 
 def stream_response(payload, headers=None, status=200):
     try:
-        response = StreamingHttpResponse(FileWrapper(payload), content_type="text/xml", status=status)
+        response = StreamingHttpResponse(
+            FileWrapper(payload),
+            content_type="text/xml; charset=utf-8",
+            status=status
+        )
         if headers:
             for header, value in headers.items():
                 response[header] = value
@@ -591,7 +595,7 @@ class RestoreConfig(object):
         self.validate()
         self.delete_cached_payload_if_necessary()
 
-        cached_response = self._get_cached_response()
+        cached_response = self.get_cached_response()
         if cached_response:
             return cached_response
         # Start new sync
@@ -609,7 +613,7 @@ class RestoreConfig(object):
         self.set_cached_payload_if_necessary(response, self.restore_state.duration)
         return response
 
-    def _get_cached_response(self):
+    def get_cached_response(self):
         if self.overwrite_cache:
             return CachedResponse(None)
 
@@ -689,7 +693,7 @@ class RestoreConfig(object):
                 e.message,
                 ResponseNature.OTA_RESTORE_ERROR
             )
-            return HttpResponse(response, content_type="text/xml",
+            return HttpResponse(response, content_type="text/xml; charset=utf-8",
                                 status=412)  # precondition failed
 
     def set_cached_payload_if_necessary(self, resp, duration):

@@ -19,6 +19,7 @@ FormplayerFrontend.on("before:start", function () {
         regions: {
             main: "#menu-region",
             breadcrumb: "#breadcrumb-region",
+            persistentCaseTile: "#persistent-case-tile",
             phoneModeNavigation: '#phone-mode-navigation',
         },
     });
@@ -62,6 +63,14 @@ FormplayerFrontend.reqres.setHandler('resourceMap', function (resource_path, app
     }
 });
 
+FormplayerFrontend.reqres.setHandler('gridPolyfillPath', function(path) {
+    if (path) {
+        FormplayerFrontend.gridPolyfillPath = path;
+    } else {
+        return FormplayerFrontend.gridPolyfillPath;
+    }
+});
+
 FormplayerFrontend.reqres.setHandler('currentUser', function () {
     if (!FormplayerFrontend.currentUser) {
         FormplayerFrontend.currentUser = new FormplayerFrontend.Entities.UserModel();
@@ -71,17 +80,16 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
 
 FormplayerFrontend.on('clearForm', function () {
     $('#webforms').html("");
-    FormplayerFrontend.trigger("webforms:clearForm");
 });
 
 FormplayerFrontend.reqres.setHandler('clearMenu', function () {
     $('#menu-region').html("");
 });
 
-$(document).bind("ajaxStart", function () {
+$(document).on("ajaxStart", function () {
     $(".formplayer-request").addClass('formplayer-requester-disabled');
     tfLoading();
-}).bind("ajaxStop", function () {
+}).on("ajaxStop", function () {
     $(".formplayer-request").removeClass('formplayer-requester-disabled');
     tfLoadingComplete();
 });
@@ -110,13 +118,14 @@ FormplayerFrontend.on('startForm', function (data) {
     var user = FormplayerFrontend.request('currentUser');
     data.xform_url = user.formplayer_url;
     data.domain = user.domain;
+    data.username = user.username;
     data.formplayerEnabled = true;
     data.onerror = function (resp) {
         showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
     };
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
-            FormplayerFrontend.request("clearForm");
+            FormplayerFrontend.trigger("clearForm");
             showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
 
             // After end of form nav, we want to clear everything except app and sesson id
@@ -126,8 +135,10 @@ FormplayerFrontend.on('startForm', function (data) {
 
             if(resp.nextScreen !== null && resp.nextScreen !== undefined) {
                 FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
-            } else {
+            } else if(urlObject.appId !== null && urlObject.appId !== undefined) {
                 FormplayerFrontend.trigger("apps:currentApp");
+            } else {
+                FormplayerFrontend.navigate('/apps', { trigger: true });
             }
         } else {
             showError(resp.output, $("#cloudcare-notifications"));
@@ -171,6 +182,8 @@ FormplayerFrontend.on('debugger.formXML', function(sessionId) {
         url: user.formplayer_url + '/get-instance',
         data: JSON.stringify({
             'session-id': sessionId,
+            'domain': user.domain,
+            'username': user.username,
         }),
         success: success,
     };
@@ -187,7 +200,7 @@ FormplayerFrontend.on("start", function (options) {
     user.apps = options.apps;
     user.domain = options.domain;
     user.formplayer_url = options.formplayer_url;
-    user.clearUserDataUrl = options.clearUserDataUrl;
+    FormplayerFrontend.request('gridPolyfillPath', options.gridPolyfillPath);
     if (Backbone.history) {
         Backbone.history.start();
         // will be the same for every domain. TODO: get domain/username/pass from django
@@ -241,7 +254,7 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
             data: JSON.stringify({
                 app_id: appId,
                 domain: user.domain,
-                username: user.username.split('@')[0],
+                username: user.username,
             }),
         };
     Util.setCrossDomainAjaxOptions(options);
@@ -249,26 +262,6 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
     resp = $.ajax(options);
     resp.fail(function () {
         tfLoadingComplete(true);
-    }).done(function() {
-        tfLoadingComplete();
-        FormplayerFrontend.trigger('navigateHome', appId);
-    });
-});
-
-FormplayerFrontend.on('clearUserData', function(appId) {
-    var user = FormplayerFrontend.request('currentUser');
-    var resp = $.ajax({
-        url: user.clearUserDataUrl,
-        type: 'POST',
-        dataType: "json",
-        xhrFields: { withCredentials: true },
-    });
-    resp.fail(function (jqXHR) {
-        if (jqXHR.status === 400) {
-            tfLoadingComplete(true, gettext('Unable to clear user data for mobile worker'));
-        } else {
-            tfLoadingComplete(true, gettext('Unabled to clear user data'));
-        }
     }).done(function() {
         tfLoadingComplete();
         FormplayerFrontend.trigger('navigateHome', appId);

@@ -1,13 +1,13 @@
 import csv
 
-from django.core.management.base import LabelCommand, CommandError
+from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.domain.dbaccessors import get_domain_ids_by_names
 
 from corehq.util.couch import iter_update, DocUpdate
 from corehq.apps.domain.models import Domain, BUSINESS_UNITS
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = """
     Migrate domain business_unit. Takes a CSV with the following columns:
 

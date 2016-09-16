@@ -1,11 +1,20 @@
 from django.core.cache import cache
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, resolve, Resolver404
 from django.utils.translation import get_language
 from corehq.tabs.exceptions import UrlPrefixFormatError, UrlPrefixFormatsSuggestion
 from corehq.tabs.utils import sidebar_to_dropdown
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cache import make_template_fragment_key
 from django.conf import settings
+
+
+def url_is_location_safe(url):
+    from corehq.apps.locations.permissions import is_location_safe
+    try:
+        match = resolve(url)
+    except Resolver404:
+        return False
+    return is_location_safe(match.func, match.args, match.kwargs)
 
 
 class UITab(object):
@@ -57,9 +66,25 @@ class UITab(object):
         return self._request.get_full_path()
 
     @property
+    def can_access_all_locations(self):
+        """Is this a web user who can access project-wide data?"""
+        return getattr(self._request, 'can_access_all_locations', True)
+
+    @property
     def dropdown_items(self):
         return sidebar_to_dropdown(sidebar_items=self.sidebar_items,
                                    domain=self.domain, current_url=self.url)
+
+    @property
+    def filtered_dropdown_items(self):
+        if self.can_access_all_locations:
+            return self.dropdown_items
+
+        filtered = []
+        for item in self.dropdown_items:
+            if url_is_location_safe(item['url']):
+                filtered.append(item)
+        return filtered
 
     @property
     @memoized
@@ -68,6 +93,19 @@ class UITab(object):
             return self.dispatcher.navigation_sections(request=self._request, domain=self.domain)
         else:
             return []
+
+    @property
+    @memoized
+    def filtered_sidebar_items(self):
+        if self.can_access_all_locations:
+            return self.sidebar_items
+
+        filtered = []
+        for heading, pages in self.sidebar_items:
+            safe_pages = [p for p in pages if url_is_location_safe(p['url'])]
+            if safe_pages:
+                filtered.append((heading, safe_pages))
+        return filtered
 
     @property
     def _is_viewable(self):
@@ -84,6 +122,10 @@ class UITab(object):
     @memoized
     def should_show(self):
         if not self.show_by_default and not self.is_active_tab:
+            return False
+
+        if not self.can_access_all_locations and not self.filtered_dropdown_items:
+            # location-safe filtering makes this whole tab inaccessible
             return False
 
         try:
@@ -107,7 +149,11 @@ class UITab(object):
 
     @property
     def url_prefixes(self):
-        return [url_prefix_format.format(domain=self.domain)
+        # Use self._request.domain instead of self.domain to generate url-prefixes
+        # because the latter might have a normalized domain name which might not match the
+        # domain name mentioned in the URL. for example domain-name 'hq_test' is normalized to
+        # 'hq-test'
+        return [url_prefix_format.format(domain=getattr(self._request, 'domain', None))
                 for url_prefix_format in self.url_prefix_formats]
 
     def get_url_prefix_formats_suggestion(self):

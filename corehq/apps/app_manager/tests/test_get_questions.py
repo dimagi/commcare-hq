@@ -3,7 +3,7 @@ import os
 from django.test.testcases import SimpleTestCase
 
 from corehq.util.test_utils import TestFileMixin
-from corehq.apps.app_manager.models import Application, Module, APP_V2
+from corehq.apps.app_manager.models import Application, Module
 
 QUESTIONS = [
     {
@@ -140,11 +140,7 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
     maxDiff = None
 
     def setUp(self):
-        self.app = Application.new_app(
-            self.domain,
-            "Test",
-            application_version=APP_V2,
-        )
+        self.app = Application.new_app(self.domain, "Test")
         self.app.add_module(Module.new_module("Module", 'en'))
         module = self.app.get_module(0)
         module.case_type = 'test'

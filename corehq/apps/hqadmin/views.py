@@ -19,7 +19,7 @@ from django.contrib.auth import login
 from django.core import management, cache
 from django.shortcuts import render
 from django.template.loader import render_to_string
-from django.views.generic import FormView, TemplateView
+from django.views.generic import FormView, TemplateView, View
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.http import (
@@ -27,6 +27,7 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseNotFound,
+    JsonResponse
 )
 from restkit import Resource
 from restkit.errors import Unauthorized
@@ -485,12 +486,14 @@ class AdminRestoreView(TemplateView):
         string_payload = ''.join(response.streaming_content)
         xml_payload = etree.fromstring(string_payload)
         restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
+        num_cases = len(xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case'))
         formatted_payload = etree.tostring(xml_payload, pretty_print=True)
         context.update({
             'payload': formatted_payload,
             'restore_id': restore_id_element.text if restore_id_element is not None else None,
             'status_code': response.status_code,
-            'timing_data': timing_context.to_list()
+            'timing_data': timing_context.to_list(),
+            'num_cases': num_cases,
         })
         return context
 
@@ -1200,3 +1203,18 @@ def top_five_projects_by_country(request):
         data = {country: projects, 'internal': internalMode}
 
     return json_response(data)
+
+
+class WebUserDataView(View):
+    urlname = 'web_user_data'
+
+    def dispatch(self, request, *args, **kwargs):
+        return super(WebUserDataView, self).dispatch(request, domain='dummy', *args, **kwargs)
+
+    @method_decorator(login_or_basic)
+    def get(self, request, *args, **kwargs):
+        if request.couch_user.is_web_user():
+            data = {'domains': request.couch_user.domains}
+            return JsonResponse(data)
+        else:
+            return HttpResponse('Only web users can access this endpoint', status=400)

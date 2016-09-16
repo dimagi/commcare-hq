@@ -32,7 +32,7 @@
             <link type="text/css"
                   rel="stylesheet"
                   media="all"
-                  href="{% static 'formplayer/style/webforms.css' %}">
+                  href="{% static 'cloudcare/css/webforms.css' %}">
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
@@ -66,7 +66,7 @@
             <link type="text/css"
                   rel="stylesheet"
                   media="all"
-                  href="{% static 'formplayer/style/webforms.css' %}">
+                  href="{% static 'cloudcare/css/webforms.css' %}">
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
@@ -75,6 +75,8 @@
                   rel="stylesheet"
                   media="all"
                   href="{% static 'preview_app/less/preview_app.less' %}"/>
+            <link rel="stylesheet"
+                  href="{% static 'datetimepicker/build/jquery.datetimepicker.min.css' %}" />
           {% endcompress %}
         {% endif %}
         <link type="text/css"
@@ -134,8 +136,6 @@
         <script src="{% static 'jquery-ui/ui/resizable.js' %}"></script>
         <script src="{% static 'jquery-ui/ui/droppable.js' %}"></script>
         <script src="{% static 'jquery-ui/ui/sortable.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/effect.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/effect-slide.js' %}"></script>
         {% endcompress %}
 
         {% compress js %}
@@ -157,14 +157,8 @@
               <div id="menu-region" class="content menu-content"></div>
             </div>
         </div>
-
-        <div id="webforms-navigation"
-             class="webforms-navigation-container"
-             data-bind="template: { name: 'preview-form-navigation-ko-template', afterRender: initNavigation }"></div>
-        <div class="scrollable-container dragscroll webforms-scrollable-container" id="js-webforms-container">
-          <section id="webforms"
-                   class="webforms"
-                   data-bind="template: { name: 'form-fullform-ko-template' }"></section>
+        <div class="scrollable-container dragscroll">
+          <section id="webforms" class="webforms container-fluid" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
           {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
               <section id="cloudcare-debugger" data-bind="
               template: {
@@ -183,12 +177,10 @@
                 username: "{{ request.user.username  }}",
                 domain: "{{ request.domain }}",
                 formplayer_url: "{{ formplayer_url }}",
-                clearUserDataUrl: "{% url 'clear_user_data' request.domain %}",
                 phoneMode: true,
             })
         })
         </script>
-        {% include 'preview_app/ko_templates.html' %}
         {% include 'formplayer/fullform-ui/templates.html' %}
         {% include 'formplayer/grid_view.html' %}
         {% include 'formplayer/case_detail.html' %}

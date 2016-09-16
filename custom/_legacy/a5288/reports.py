@@ -120,3 +120,10 @@ class MissedCallbackReport(CustomProjectReport, GenericTabularReport):
     
     def _fmt_highlight(self, value):
         return self.table_cell(value, '<div style="background-color:#f33; font-weight:bold; text-align:center">%s</div>' % value)
+
+
+CUSTOM_REPORTS = (
+    ('Custom Reports', (
+        MissedCallbackReport,
+    )),
+)

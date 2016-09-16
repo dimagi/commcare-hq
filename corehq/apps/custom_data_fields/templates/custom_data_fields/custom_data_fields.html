@@ -53,7 +53,7 @@
             <legend>{{ view.page_name }}</legend>
             {% if custom_fields_form.data_fields.errors %}
                 {% for error in custom_fields_form.data_fields.errors %}
-                    <div class="alert alert-error">
+                    <div class="alert alert-danger">
                         {{ error|safe }}
                         <button type="button" class="close" data-dismiss="alert">&times;</button>
                     </div>

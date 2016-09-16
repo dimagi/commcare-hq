@@ -37,7 +37,7 @@ from corehq.apps.app_manager.dbaccessors import (
     wrap_app,
 )
 from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
-from corehq.apps.app_manager.models import Application, ApplicationBase
+from corehq.apps.app_manager.models import Application, ApplicationBase, RemoteApp
 from corehq.apps.app_manager.suite_xml.sections.details import get_instances_for_module
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.util import get_cloudcare_session_data
@@ -54,7 +54,6 @@ from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
-from corehq.apps.cloudcare.const import CLOUDCARE_CLOSE_XMLNS
 from corehq.apps.cloudcare.touchforms_api import BaseSessionDataHelper, CaseSessionDataHelper
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
@@ -63,7 +62,6 @@ from corehq.apps.style.decorators import (
     use_datatables,
     use_jquery_ui,
 )
-from corehq.apps.hqcase.utils import update_case
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors, LedgerAccessors
@@ -136,7 +134,8 @@ class CloudcareMain(View):
                 apps = get_cloudcare_apps(domain)
             else:
                 apps = get_brief_apps_in_domain(domain)
-            apps = [get_app_json(app) for app in apps if app and app.application_version == V2]
+            apps = [get_app_json(app) for app in apps if app and (
+                isinstance(app, RemoteApp) or app.application_version == V2)]
             meta = get_meta(request)
             track_clicked_preview_on_hubspot(request.couch_user, request.COOKIES, meta)
 
@@ -228,48 +227,6 @@ class CloudcareMain(View):
             return render(request, "cloudcare/formplayer_home.html", context)
         else:
             return render(request, "cloudcare/cloudcare_home.html", context)
-
-
-class CloudcareClearUserData(View):
-    """
-    This currently closes all cases for a web user when they hit the
-    clear user data button. Note, this is a _work in progress_ and
-    should not be used elsewhere
-    """
-
-    urlname = 'clear_user_data'
-    http_method_names = ['post']
-
-    @method_decorator(require_cloudcare_access)
-    @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
-    def dispatch(self, request, *args, **kwargs):
-        return super(CloudcareClearUserData, self).dispatch(request, *args, **kwargs)
-
-    def post(self, request, domain):
-        couch_user = request.couch_user
-
-        is_toggle_enabled = (
-            toggles.PREVIEW_APP.enabled(domain) or
-            toggles.PREVIEW_APP.enabled(couch_user.username)
-        )
-        if (not couch_user.is_web_user or not is_toggle_enabled):
-            # If this is called by a mobile user, it's most likely a mistake so we should
-            # not close all their cases.
-            return json_response({'status': 'fail'}, status_code=400)
-
-        case_ids = CaseAccessors(domain).get_open_case_ids_for_owner(couch_user.user_id)
-        for case_id in case_ids:
-            update_case(
-                domain,
-                case_id,
-                close=True,
-                xmlns=CLOUDCARE_CLOSE_XMLNS,
-            )
-
-        return json_response({
-            'status': 'ok',
-            'closed_cases_count': len(case_ids),
-        })
 
 
 @login_and_domain_required

@@ -137,19 +137,73 @@
                 }
             },
             {
-                "display_name": "person_name",
+                "display_name": "patient_registration_date",
                 "transform": {
                 },
-                "datatype": "string",
+                "datatype": "datetime",
                 "type": "expression",
                 "is_primary_key": false,
                 "is_nullable": true,
-                "column_id": "person_name",
+                "column_id": "patient_registration_date",
                 "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "person_name"
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "patient_registration"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "received_on"
+                    }
                 }
+            },
+            {
+                "display_name": "person/name",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "name"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "column_id": "person_name"
+            },
+            {
+                "display_name": "person/current_address",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "current_address"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "column_id": "current_address"
             },
             {
                 "display_name": "modified_on",
@@ -210,6 +264,69 @@
                 "column_id": "sex"
             },
             {
+                "display_name": "person/age",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "age"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "column_id": "age"
+            },
+            {
+                "display_name": "weight",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "reg_weight"
+                },
+                "column_id": "weight"
+            },
+            {
+                "display_name": "person/mobile_number",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "mobile_number"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "column_id": "mobile_number"
+            },
+            {
                 "display_name": "patient_type",
                 "datatype": "string",
                 "type": "expression",
@@ -220,7 +337,7 @@
                 "expression": {
                     "datatype": "string",
                     "type": "property_name",
-                    "property_name": "patient_type"
+                    "property_name": "patient_type_choice"
                 },
                 "column_id": "patient_type"
             },
@@ -286,7 +403,319 @@
                 }
             },
             {
-                "display_name": "hiv_status",
+                "display_name": "diagnostic_test_type",
+                "column_id": "diagnostic_test_type",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "test_request_form"
+                    },
+                    "value_expression": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_request_details",
+                                    "purpose_of_testing"
+                                ],
+                                "datatype": "string"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "diagnostic_or_pretreatment"
+                        },
+                        "expression_if_true": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "rpt_referral_details",
+                                "test_type_label"
+                            ]
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": ""
+                        }
+                    }
+                }
+            },
+            {
+                "display_name": "diagnostic_test_requested_date",
+                "column_id": "diagnostic_test_requested_date",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "test_request_form"
+                    },
+                    "value_expression": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_request_details",
+                                    "purpose_of_testing"
+                                ],
+                                "datatype": "string"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "diagnostic_or_pretreatment"
+                        },
+                        "expression_if_true": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "ql_request_details",
+                                "test_requested_date"
+                            ]
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": ""
+                        }
+                    }
+                }
+            },
+            {
+                "display_name": "diagnostic_result",
+                "column_id": "diagnostic_result",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_request_form"
+                            },
+                            "value_expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_request_details",
+                                    "purpose_of_testing"
+                                ],
+                                "datatype": "string"
+                            }
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "diagnostic_or_pretreatment"
+                    },
+                    "expression_if_true": {
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "named",
+                            "name": "test_result_form"
+                        },
+                        "value_expression": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "result_label"
+                            ]
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": ""
+                    }
+                }
+            },
+            {
+                "display_name": "endofip_test_requested_date",
+                "column_id": "endofip_test_requested_date",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "test_request_form"
+                    },
+                    "value_expression": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_request_details",
+                                    "purpose_of_testing"
+                                ],
+                                "datatype": "string"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "end_of_ip"
+                        },
+                        "expression_if_true": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "ql_request_details",
+                                "test_requested_date"
+                            ]
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": ""
+                        }
+                    }
+                }
+            },
+            {
+                "display_name": "endofip_result",
+                "column_id": "endofip_result",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_request_form"
+                            },
+                            "value_expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_request_details",
+                                    "purpose_of_testing"
+                                ],
+                                "datatype": "string"
+                            }
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "end_of_ip"
+                    },
+                    "expression_if_true": {
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "named",
+                            "name": "test_result_form"
+                        },
+                        "value_expression": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "result_label"
+                            ]
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": ""
+                    }
+                }
+            },
+            {
+                "display_name": "endofcp_test_requested_date",
+                "column_id": "endofcp_test_requested_date",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "test_request_form"
+                    },
+                    "value_expression": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_request_details",
+                                    "purpose_of_testing"
+                                ],
+                                "datatype": "string"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "end_of_cp"
+                        },
+                        "expression_if_true": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "ql_request_details",
+                                "test_requested_date"
+                            ]
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": ""
+                        }
+                    }
+                }
+            },
+            {
+                "display_name": "endofcp_result",
+                "column_id": "endofcp_result",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_request_form"
+                            },
+                            "value_expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_request_details",
+                                    "purpose_of_testing"
+                                ],
+                                "datatype": "string"
+                            }
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "end_of_cp"
+                    },
+                    "expression_if_true": {
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "named",
+                            "name": "test_result_form"
+                        },
+                        "value_expression": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "result_label"
+                            ]
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": ""
+                    }
+                }
+            },
+            {
+                "display_name": "diabetes_status",
                 "datatype": "string",
                 "type": "expression",
                 "is_primary_key": false,
@@ -296,9 +725,399 @@
                 "expression": {
                     "datatype": "string",
                     "type": "property_name",
-                    "property_name": "hiv_status"
+                    "property_name": "diabetes_status"
+                },
+                "column_id": "diabetes_status"
+            },
+            {
+                "display_name": "hiv_status",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "type": "named",
+                    "name": "hiv_status"
                 },
                 "column_id": "hiv_status"
+            },
+            {
+                "column_id": "purpose_of_test",
+                "display_name": "purpose_of_test",
+                "type": "expression",
+                "datatype": "string",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "test_case"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "purpose_of_testing"
+                    }
+                }
+            },
+            {
+                "column_id": "result_of_test",
+                "display_name": "result_of_test",
+                "type": "expression",
+                "datatype": "string",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "test_case"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "result"
+                    }
+                }
+            },
+            {
+                "display_name": "ip_initiation_date",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "ip_initiation_date"
+                },
+                "column_id": "ip_initiation_date"
+            },
+            {
+                "display_name": "dosage_frequency",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "dosage_frequency"
+                },
+                "column_id": "dosage_frequency"
+            },
+            {
+                "display_name": "treatment_outcome_date",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "treatment_outcome_date"
+                },
+                "column_id": "treatment_outcome_date"
+            },
+            {
+                "display_name": "treatment_outcome",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "treatment_outcome"
+                },
+                "column_id": "treatment_outcome"
+            },
+            {
+                "display_name": "initiated_on_art",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "initiated_on_art"
+                },
+                "column_id": "initiated_on_art"
+            },
+            {
+                "display_name": "art_initiation_date",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "art_initiation_date"
+                },
+                "column_id": "art_initiation_date"
+            },
+            {
+                "display_name": "treatment_supporter_first_name",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "treatment_supporter_first_name"
+                },
+                "column_id": "treatment_supporter_first_name"
+            },
+            {
+                "display_name": "treatment_supporter_last_name",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "treatment_supporter_last_name"
+                },
+                "column_id": "treatment_supporter_last_name"
+            },
+            {
+                "display_name": "treatment_supporter_designation",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "treatment_supporter_designation"
+                },
+                "column_id": "treatment_supporter_designation"
+            },
+            {
+                "display_name": "post_treatment_6_result",
+                "column_id": "post_treatment_6_result",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_request_form"
+                            },
+                            "value_expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_request_details",
+                                    "purpose_of_testing"
+                                ],
+                                "datatype": "string"
+                            }
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "post_treatment_6_month"
+                    },
+                    "expression_if_true": {
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "named",
+                            "name": "test_result_form"
+                        },
+                        "value_expression": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "result_label"
+                            ]
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": ""
+                    }
+                }
+            },
+            {
+                "display_name": "post_treatment_12_result",
+                "column_id": "post_treatment_12_result",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_request_form"
+                            },
+                            "value_expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_request_details",
+                                    "purpose_of_testing"
+                                ],
+                                "datatype": "string"
+                            }
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "post_treatment_12_month"
+                    },
+                    "expression_if_true": {
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "named",
+                            "name": "test_result_form"
+                        },
+                        "value_expression": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "result_label"
+                            ]
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": ""
+                    }
+                }
+            },
+            {
+                "display_name": "post_treatment_18_result",
+                "column_id": "post_treatment_18_result",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_request_form"
+                            },
+                            "value_expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_request_details",
+                                    "purpose_of_testing"
+                                ],
+                                "datatype": "string"
+                            }
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "post_treatment_18_month"
+                    },
+                    "expression_if_true": {
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "named",
+                            "name": "test_result_form"
+                        },
+                        "value_expression": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "result_label"
+                            ]
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": ""
+                    }
+                }
+            },
+            {
+                "display_name": "post_treatment_24_result",
+                "column_id": "post_treatment_24_result",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_request_form"
+                            },
+                            "value_expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_request_details",
+                                    "purpose_of_testing"
+                                ],
+                                "datatype": "string"
+                            }
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "post_treatment_24_month"
+                    },
+                    "expression_if_true": {
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "named",
+                            "name": "test_result_form"
+                        },
+                        "value_expression": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "result_label"
+                            ]
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": ""
+                    }
+                }
+            },
+            {
+                "display_name": "nikshay_id",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "nikshay_id"
+                },
+                "column_id": "nikshay_id"
             },
             {
                 "display_name": "disease_classification",
@@ -2009,19 +2828,2348 @@
                             "operator": "in",
                             "type": "boolean_expression",
                             "expression": {
-                                "datatype": "string",
-                                "type": "property_name",
-                                "property_name": "hiv_status"
+                                "type": "named",
+                                "name": "hiv_status"
                             },
-                            "property_value": ["reactive", "non_reactive"]
+                            "property_value": [
+                                "reactive",
+                                "non_reactive"
+                            ]
                         }
                     ],
                     "type": "and"
                 },
                 "type": "boolean"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "test_purpose_diagnostic"
+                        }
+                    ]
+                },
+                "display_name": "new_positive_patients",
+                "type": "boolean",
+                "column_id": "new_positive_patients"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "cat2"
+                        },
+                        {
+                            "type": "named",
+                            "name": "test_purpose_diagnostic"
+                        },
+                        {
+                            "type": "named",
+                            "name": "has_patient_type"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "new_patient"
+                            }
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "others_patient"
+                            }
+                        }
+                    ]
+                },
+                "display_name": "positive_patients_cat2",
+                "type": "boolean",
+                "column_id": "positive_patients_cat2"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_negative"
+                        },
+                        {
+                            "type": "named",
+                            "name": "cat2"
+                        },
+                        {
+                            "type": "named",
+                            "name": "test_purpose_diagnostic"
+                        },
+                        {
+                            "type": "named",
+                            "name": "has_patient_type"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "new_patient"
+                            }
+                        }
+                    ]
+                },
+                "display_name": "negative_patients_cat2",
+                "type": "boolean",
+                "column_id": "negative_patients_cat2"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "cat2"
+                        },
+                        {
+                            "type": "named",
+                            "name": "test_purpose_end_of_ip"
+                        },
+                        {
+                            "type": "named",
+                            "name": "has_patient_type"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "new_patient"
+                            }
+                        }
+                    ]
+                },
+                "display_name": "positive_endofip_patients_cat2",
+                "type": "boolean",
+                "column_id": "positive_endofip_patients_cat2"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_negative"
+                        },
+                        {
+                            "type": "named",
+                            "name": "cat2"
+                        },
+                        {
+                            "type": "named",
+                            "name": "test_purpose_end_of_ip"
+                        },
+                        {
+                            "type": "named",
+                            "name": "has_patient_type"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "new_patient"
+                            }
+                        }
+                    ]
+                },
+                "display_name": "negative_endofip_patients_cat2",
+                "type": "boolean",
+                "column_id": "negative_endofip_patients_cat2"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "sputum_positive"
+                            }
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "sputum_negative"
+                            }
+                        },
+                        {
+                            "type": "named",
+                            "name": "cat2"
+                        },
+                        {
+                            "type": "named",
+                            "name": "test_purpose_end_of_ip"
+                        },
+                        {
+                            "type": "named",
+                            "name": "has_patient_type"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "new_patient"
+                            }
+                        }
+                    ]
+                },
+                "display_name": "endofip_without_result_patients_cat2",
+                "type": "boolean",
+                "column_id": "endofip_without_result_patients_cat2"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_cured"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_cases_cured"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_treatment_completed"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_cases_treatment_completed"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_died"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_cases_died"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_failure"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_cases_failure"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_defaulted"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_cases_defaulted"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_transferred"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_cases_transfer_out"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_cases"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_cured"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_positive_cases_cured"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_treatment_completed"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_positive_cases_treatment_completed"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_died"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_positive_cases_died"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_failure"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_positive_cases_failure"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_defaulted"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_positive_cases_defaulted"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_transferred"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_positive_cases_transfer_out"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_positive_cases"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_cured"
+                        },
+                        {
+                            "type": "named",
+                            "name": "male"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_male_positive_cases_cured"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_treatment_completed"
+                        },
+                        {
+                            "type": "named",
+                            "name": "male"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_male_positive_cases_treatment_completed"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_died"
+                        },
+                        {
+                            "type": "named",
+                            "name": "male"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_male_positive_cases_died"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_failure"
+                        },
+                        {
+                            "type": "named",
+                            "name": "male"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_male_positive_cases_failure"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_defaulted"
+                        },
+                        {
+                            "type": "named",
+                            "name": "male"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_male_positive_cases_defaulted"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_transferred"
+                        },
+                        {
+                            "type": "named",
+                            "name": "male"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_male_positive_cases_transfer_out"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "male"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_male_positive_cases"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_cured"
+                        },
+                        {
+                            "type": "named",
+                            "name": "female"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_female_positive_cases_cured"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_treatment_completed"
+                        },
+                        {
+                            "type": "named",
+                            "name": "female"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_female_positive_cases_treatment_completed"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_died"
+                        },
+                        {
+                            "type": "named",
+                            "name": "female"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_female_positive_cases_died"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_failure"
+                        },
+                        {
+                            "type": "named",
+                            "name": "female"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_female_positive_cases_failure"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_defaulted"
+                        },
+                        {
+                            "type": "named",
+                            "name": "female"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_female_positive_cases_defaulted"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_transferred"
+                        },
+                        {
+                            "type": "named",
+                            "name": "female"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_female_positive_cases_transfer_out"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "female"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_female_positive_cases"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_negative"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_cured"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_negative_cases_cured"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_negative"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_treatment_completed"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_negative_cases_treatment_completed"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_negative"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_died"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_negative_cases_died"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_negative"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_failure"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_negative_cases_failure"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_negative"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_defaulted"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_negative_cases_defaulted"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_negative"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_transferred"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_negative_cases_transfer_out"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_negative"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_negative_cases"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "extra_pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_cured"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_extrapulmonary_cases_cured"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "extra_pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_treatment_completed"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_extrapulmonary_cases_treatment_completed"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "extra_pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_died"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_extrapulmonary_cases_died"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "extra_pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_failure"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_extrapulmonary_cases_failure"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "extra_pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_defaulted"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_extrapulmonary_cases_defaulted"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "extra_pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_transferred"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_extrapulmonary_cases_transfer_out"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "extra_pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_extrapulmonary_cases"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "relapse"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_default"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_loss_to_follow_up"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_previously_treated"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_cured"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "retreatment_cases_cured"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "relapse"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_default"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_loss_to_follow_up"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_previously_treated"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_treatment_completed"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "retreatment_cases_treatment_completed"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "relapse"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_default"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_loss_to_follow_up"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_previously_treated"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_died"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "retreatment_cases_died"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "relapse"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_default"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_loss_to_follow_up"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_previously_treated"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_failure"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "retreatment_cases_failure"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "relapse"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_default"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_loss_to_follow_up"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_previously_treated"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_defaulted"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "retreatment_cases_defaulted"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "relapse"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_default"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_loss_to_follow_up"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_previously_treated"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_transferred"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "retreatment_cases_transfer_out"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "relapse"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_default"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_loss_to_follow_up"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_previously_treated"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "retreatment_cases"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "relapse"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_cured"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "positive_relapses_cured"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "relapse"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_treatment_completed"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "positive_relapses_treatment_complete"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "relapse"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_died"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "positive_relapses_died"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "relapse"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_failure"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "positive_relapses_failure"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "relapse"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_defaulted"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "positive_relapses_defaulted"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "relapse"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_transferred"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "positive_relapses_transfer_out"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "relapse"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "positive_relapses"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_failure"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_cured"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "positive_failures_cured"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_failure"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_treatment_completed"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "positive_failures_treatment_complete"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_failure"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_died"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "positive_failures_died"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_failure"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_failure"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "positive_failures_failure"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_failure"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_defaulted"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "positive_failures_defaulted"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_failure"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_transferred"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "positive_failures_transfer_out"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_failure"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "positive_failures"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_default"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_cured"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "positive_treatment_after_default_cured"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_default"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_treatment_completed"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "positive_treatment_after_default_treatment_complete"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_default"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_died"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "positive_treatment_after_default_died"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_default"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_failure"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "positive_treatment_after_default_failure"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_default"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_defaulted"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "positive_treatment_after_default_defaulted"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_default"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_transferred"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "positive_treatment_after_default_transfer_out"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "patient_type_treatment_after_default"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "positive_treatment_after_default"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_cured"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "hiv_new_positive_cases_cured"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_treatment_completed"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "hiv_new_positive_cases_treatment_completed"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_died"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "hiv_new_positive_cases_died"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_failure"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "hiv_new_positive_cases_failure"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_defaulted"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "hiv_new_positive_cases_defaulted"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_transferred"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "hiv_new_positive_cases_transfer_out"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "hiv_new_positive_cases"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_cured"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "hiv_cases_cured"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_treatment_completed"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "hiv_cases_treatment_completed"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_died"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "hiv_cases_died"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_failure"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "hiv_cases_failure"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_defaulted"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "hiv_cases_defaulted"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "treatment_outcome_transferred"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "hiv_cases_transfer_out"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "hiv_cases"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "has_art_number"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "hiv_patients_given_art"
             }
+
         ],
         "named_filters": {
+            "cat1": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "cat1_cat2"
+                },
+                "property_value": "cat1"
+            },
+            "cat2": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "cat1_cat2"
+                },
+                "property_value": "cat1"
+            },
+            "treatment_outcome_cured": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "named",
+                    "name": "treatment_outcome"
+                },
+                "property_value": "cured"
+            },
+            "treatment_outcome_defaulted": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "named",
+                    "name": "treatment_outcome"
+                },
+                "property_value": "defaulted"
+            },
+            "treatment_outcome_transferred": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "named",
+                    "name": "treatment_outcome"
+                },
+                "property_value": "transferred"
+            },
+            "treatment_outcome_treatment_completed": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "named",
+                    "name": "treatment_outcome"
+                },
+                "property_value": "treatment_complete"
+            },
+            "treatment_outcome_failure": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "named",
+                    "name": "treatment_outcome"
+                },
+                "property_value": "failure"
+            },
+            "treatment_outcome_died": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "named",
+                    "name": "treatment_outcome"
+                },
+                "property_value": "died"
+            },
+            "treatment_outcome_previously_treated": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "named",
+                    "name": "treatment_outcome"
+                },
+                "property_value": "previously_treated"
+            },
             "under_15": {
                 "operator": "lt",
                 "type": "boolean_expression",
@@ -2177,6 +5325,16 @@
                 "type": "boolean_expression",
                 "property_value": "new"
             },
+            "others_patient": {
+                "operator": "eq",
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "patient_type"
+                },
+                "type": "boolean_expression",
+                "property_value": "others"
+            },
             "relapse": {
                 "operator": "eq",
                 "expression": {
@@ -2186,6 +5344,36 @@
                 },
                 "type": "boolean_expression",
                 "property_value": "recurrent"
+            },
+            "patient_type_treatment_after_failure": {
+                "operator": "eq",
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "patient_type"
+                },
+                "type": "boolean_expression",
+                "property_value": "treatment_after_failure"
+            },
+            "patient_type_treatment_after_loss_to_follow_up": {
+                "operator": "eq",
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "patient_type"
+                },
+                "type": "boolean_expression",
+                "property_value": "treatment_after_loss_to_follow_up"
+            },
+            "patient_type_treatment_after_default": {
+                "operator": "eq",
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "patient_type"
+                },
+                "type": "boolean_expression",
+                "property_value": "treatment_after_failure"
             },
             "female": {
                 "operator": "eq",
@@ -2265,9 +5453,8 @@
             "hiv_positive": {
                 "operator": "eq",
                 "expression": {
-                    "datatype": "string",
-                    "type": "property_name",
-                    "property_name": "hiv_status"
+                    "type": "named",
+                    "name": "hiv_status"
                 },
                 "type": "boolean_expression",
                 "property_value": "reactive"
@@ -2314,6 +5501,48 @@
                 },
                 "property_value": "tb_detected"
             },
+            "sputum_negative": {
+                "type": "boolean_expression",
+                "operator": "eq",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "reduce_items",
+                        "items_expression": {
+                            "type": "sort_items",
+                            "items_expression": {
+                                "type": "filter_items",
+                                "items_expression": {
+                                    "type": "get_subcases",
+                                    "case_id_expression": {
+                                        "type": "named",
+                                        "name": "occurrence_id"
+                                    }
+                                },
+                                "filter_expression": {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "property_value": "microscopy-zn"
+                                }
+                            },
+                            "sort_expression": {
+                                "type": "property_name",
+                                "property_name": "opened_on"
+                            }
+                        },
+                        "aggregation_fn": "last_item"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "result"
+                    }
+                },
+                "property_value": "tb_not_detected"
+            },
             "test_purpose_diagnostic": {
                 "operator": "eq",
                 "type": "boolean_expression",
@@ -2356,6 +5585,48 @@
                 },
                 "property_value": "diagnostic_or_pretreatment"
             },
+            "test_purpose_end_of_ip": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "reduce_items",
+                        "items_expression": {
+                            "type": "sort_items",
+                            "items_expression": {
+                                "type": "filter_items",
+                                "items_expression": {
+                                    "type": "get_subcases",
+                                    "case_id_expression": {
+                                        "type": "named",
+                                        "name": "occurrence_id"
+                                    }
+                                },
+                                "filter_expression": {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "property_value": "microscopy-zn"
+                                }
+                            },
+                            "sort_expression": {
+                                "type": "property_name",
+                                "property_name": "opened_on"
+                            }
+                        },
+                        "aggregation_fn": "last_item"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "purpose_of_testing"
+                    }
+                },
+                "property_value": "end_of_ip"
+            },
             "has_patient_type": {
                 "type": "not",
                 "filter": {
@@ -2366,7 +5637,26 @@
                         "property_name": "patient_type"
                     },
                     "type": "boolean_expression",
-                    "property_value": ["", null]
+                    "property_value": [
+                        "",
+                        null
+                    ]
+                }
+            },
+            "has_art_number": {
+                "type": "not",
+                "filter": {
+                    "operator": "in",
+                    "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "art_number"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": [
+                        "",
+                        null
+                    ]
                 }
             }
         },
@@ -2434,6 +5724,287 @@
                         }
                     }
                 }
+            },
+            "test_case": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "type"
+                            },
+                            "property_value": "test"
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
+            "test_request_form": {
+                "type": "nested",
+                "argument_expression": {
+                    "type": "reduce_items",
+                    "items_expression": {
+                        "type": "sort_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "sort_expression": {
+                            "type": "property_name",
+                            "property_name": "opened_on"
+                        }
+                    },
+                    "aggregation_fn": "last_item"
+                },
+                "value_expression": {
+                    "type": "reduce_items",
+                    "items_expression": {
+                        "type": "sort_items",
+                        "items_expression": {
+                            "type": "filter_items",
+                            "items_expression": {
+                                "type": "get_case_forms",
+                                "case_id_expression": {
+                                    "type": "property_name",
+                                    "property_name": "_id"
+                                }
+                            },
+                            "filter_expression": {
+                                "type": "boolean_expression",
+                                "operator": "eq",
+                                "expression": {
+                                    "type": "property_name",
+                                    "property_name": "xmlns"
+                                },
+                                "property_value": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F"
+                            }
+                        },
+                        "sort_expression": {
+                            "type": "property_name",
+                            "property_name": "received_on"
+                        }
+                    },
+                    "aggregation_fn": "last_item"
+                }
+            },
+            "test_result_form": {
+                "type": "nested",
+                "argument_expression": {
+                    "type": "reduce_items",
+                    "items_expression": {
+                        "type": "sort_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "sort_expression": {
+                            "type": "property_name",
+                            "property_name": "opened_on"
+                        }
+                    },
+                    "aggregation_fn": "last_item"
+                },
+                "value_expression": {
+                    "type": "reduce_items",
+                    "items_expression": {
+                        "type": "sort_items",
+                        "items_expression": {
+                            "type": "filter_items",
+                            "items_expression": {
+                                "type": "get_case_forms",
+                                "case_id_expression": {
+                                    "type": "property_name",
+                                    "property_name": "_id"
+                                }
+                            },
+                            "filter_expression": {
+                                "type": "boolean_expression",
+                                "operator": "eq",
+                                "expression": {
+                                    "type": "property_name",
+                                    "property_name": "xmlns"
+                                },
+                                "property_value": "http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3"
+                            }
+                        },
+                        "sort_expression": {
+                            "type": "property_name",
+                            "property_name": "received_on"
+                        }
+                    },
+                    "aggregation_fn": "last_item"
+                }
+            },
+            "patient_registration": {
+                "type": "nested",
+                "argument_expression": {
+                    "type": "reduce_items",
+                    "items_expression": {
+                        "type": "sort_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "sort_expression": {
+                            "type": "property_name",
+                            "property_name": "opened_on"
+                        }
+                    },
+                    "aggregation_fn": "last_item"
+                },
+                "value_expression": {
+                    "type": "reduce_items",
+                    "items_expression": {
+                        "type": "sort_items",
+                        "items_expression": {
+                            "type": "filter_items",
+                            "items_expression": {
+                                "type": "get_case_forms",
+                                "case_id_expression": {
+                                    "type": "property_name",
+                                    "property_name": "_id"
+                                }
+                            },
+                            "filter_expression": {
+                                "type": "boolean_expression",
+                                "operator": "eq",
+                                "expression": {
+                                    "type": "property_name",
+                                    "property_name": "xmlns"
+                                },
+                                "property_value": "http://openrosa.org/formdesigner/60B0DB43-CC15-43A0-BFE7-885310AFD6E4"
+                            }
+                        },
+                        "sort_expression": {
+                            "type": "property_name",
+                            "property_name": "received_on"
+                        }
+                    },
+                    "aggregation_fn": "first_item"
+                }
+            },
+            "hiv_status": {
+                "value_expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "hiv_status"
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                    "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "referenced_id"
+                    },
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "array_index",
+                        "array_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "indices"
+                        },
+                        "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    }
+                }
+            },
+            "treatment_outcome": {
+                "datatype": "string",
+                "type": "property_name",
+                "property_name": "treatment_outcome"
             },
             "first_subcase": {
                 "type": "array_index",

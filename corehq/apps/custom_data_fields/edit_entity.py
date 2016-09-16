@@ -127,15 +127,17 @@ class CustomDataEditor(object):
         CustomDataForm.helper.form_tag = False
         CustomDataForm.helper.label_class = 'col-sm-4' if self.angular_model else 'col-sm-3 col-md-2'
         CustomDataForm.helper.field_class = 'col-sm-8' if self.angular_model else 'col-sm-9 col-md-8 col-lg-6'
-        if field_names:  # has custom data
-            CustomDataForm.helper.layout = Layout(
-                Fieldset(_("Additional Information"), *field_names),
-                self.uncategorized_form,
-            )
-        else:
-            CustomDataForm.helper.layout = Layout(self.uncategorized_form)
 
-        CustomDataForm._has_uncategorized = bool(self.uncategorized_form)
+        additional_fields = []
+        if field_names:
+            additional_fields.append(Fieldset(_("Additional Information"), *field_names))
+        if post_dict is None:
+            additional_fields.append(self.uncategorized_form)
+        CustomDataForm.helper.layout = Layout(
+            *additional_fields
+        )
+
+        CustomDataForm._has_uncategorized = bool(self.uncategorized_form) and post_dict is None
 
         if post_dict:
             fields = post_dict
@@ -178,8 +180,9 @@ class CustomDataEditor(object):
         msg = """
         <strong>Warning!</strong>
         This data is not part of the specified user fields and will be
-        deleted if you save.
-        You can add them <a href="{}">here</a> to prevent this.
+        deleted when you re-save this user.
+        You can add the fields back <a href="{}">here</a> to prevent this
+        deletion.
         """.format(reverse(
             self.field_view.urlname, args=[self.domain]
         ))
@@ -188,7 +191,8 @@ class CustomDataEditor(object):
             _("Unrecognized Information"),
             Div(
                 HTML(msg),
-                css_class="alert alert-danger",
+                css_class="alert alert-warning",
+                css_id="js-unrecognized-data",
             ),
             *help_div
         ) if len(help_div) else HTML('')

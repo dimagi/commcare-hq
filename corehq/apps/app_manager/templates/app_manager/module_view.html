@@ -48,6 +48,8 @@
             var parentModules = {{ parent_modules|JSON }};
             var fixture_columns_by_type = {{ fixture_columns_by_type|JSON }};
             var searchProperties = {{ search_properties|JSON }};
+            var includeClosed = {{ include_closed|BOOL }};
+            var defaultProperties = {{ default_properties|JSON }};
 
             for (var i = 0; i < details.length; i++) {
                 var detail = details[i];
@@ -72,6 +74,8 @@
                     contextVariables: state,
                     multimedia: {{multimedia.object_map|JSON}},
                     searchProperties: searchProperties,
+                    includeClosed: includeClosed,
+                    defaultProperties: defaultProperties,
                     contextVariables: state,
                 });
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
@@ -359,15 +363,42 @@
                 {% include "app_manager/partials/module_filter.html" with value=module.module_filter %}
                 <div class="form-group">
                     <label class="col-sm-2 control-label">
-                        {% trans "Menu Mode" %}
+                        {% trans "Case Type" %}
+                        <span class="hq-help-template"
+                              data-title="{% trans "Case Type" %}"
+
+                              data-content="{% trans "The name for the type of case you are tracking (e.g. &quot;pregnancy&quot;, &quot;farm&quot;, &quot;household&quot;, etc.). All cases you register in this module will be this type of case, and only cases of this type will show in the case list. Other modules with the same case type will use the same set of cases." %}"
+                                ></span>
                     </label>
                     <div class="col-sm-4">
-                        <select type="text" name="put_in_root" class="form-control">
-                            <option value="false">{% trans "Display module and then forms" %}</option>
-                            <option value="true"{% if module.put_in_root %} selected{% endif %}>{% trans "Display only forms" %}</option>
-                        </select>
+                        <input class="code form-control" type="text" id="case_type" name="case_type" value="{{ module.case_type }}" />
+                        <span class="help-block" id="case_type_error" style="display: none;">
+                            {% trans "Case types can only include the characters a-z, 0-9, '-' and '_'" %}
+                        </span>
                     </div>
                 </div>
+                <div class="form-group">
+                    <label class="control-label col-sm-2">
+                        {% trans "Label for Cases" %}
+                        <span class="hq-help-template"
+                              data-title="{% trans "Label for Cases" %}"
+                              data-content="{% trans "This label will appear at the top of the phone's case select screen." %}"
+                        ></span>
+                    </label>
+                    <div class="col-sm-4">
+                        <input type="text" name="case_label" value="{{ module.case_label|trans:langs }}" class="form-control" />
+                    </div>
+                </div>
+            </fieldset>
+            <fieldset>
+                <legend>{% trans "Advanced" %}</legend>
+                {% block case_management_advanced_fields %}
+                {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List Menu Item" DESC="An item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
+                {% include 'app_manager/partials/case_list_form_setting.html' %}
+                {% if module.module_type == 'basic' and request.project.survey_management_enabled %}
+                    {% include 'app_manager/partials/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
+                {% endif %}
+                {% endblock case_management_advanced_fields %}
             </fieldset>
         </form>
     </div>

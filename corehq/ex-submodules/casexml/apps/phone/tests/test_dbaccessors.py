@@ -8,7 +8,6 @@ from corehq.util.test_utils import DocTestMixin
 
 
 class DBAccessorsTest(TestCase, DocTestMixin):
-    dependent_apps = []
     maxDiff = None
 
     @classmethod

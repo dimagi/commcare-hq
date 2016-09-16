@@ -1,7 +1,7 @@
 from django.conf.urls import *
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.utils import new_domain_re
-from corehq.apps.hqadmin.views import AdminRestoreView
+from corehq.apps.hqadmin.views import AdminRestoreView, WebUserDataView
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from .views import (
     FlagBrokenBuilds, AuthenticateAs, SystemInfoView,
@@ -58,5 +58,6 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^reprocess_messaging_case_updates/$', ReprocessMessagingCaseUpdatesView.as_view(),
         name=ReprocessMessagingCaseUpdatesView.urlname),
     url(r'^top_five_projects_by_country/$', 'top_five_projects_by_country', name='top_five_projects_by_country'),
+    url(r'^web_user_data', WebUserDataView.as_view(), name=WebUserDataView.urlname),
     AdminReportDispatcher.url_pattern(),
 )

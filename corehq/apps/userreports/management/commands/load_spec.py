@@ -1,17 +1,17 @@
 import json
 from optparse import make_option
 from couchdbkit import ResourceNotFound
-from django.core.management.base import LabelCommand, CommandError
+from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.tasks import rebuild_indicators
 from dimagi.utils.decorators.log_exception import log_exception
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Load a user configurable report data source or report spec from a json file"
     args = '<filename>'
     label = ""
-    option_list = LabelCommand.option_list + (
+    option_list = BaseCommand.option_list + (
         make_option('--rebuild',
                     action='store_true',
                     dest='rebuild',

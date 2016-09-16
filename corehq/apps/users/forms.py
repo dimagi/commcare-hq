@@ -19,6 +19,7 @@ from corehq import toggles
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
+from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username, cc_user_domain
 from corehq.apps.app_manager.models import validate_lang
@@ -538,11 +539,15 @@ class NewMobileWorkerForm(forms.Form):
         label=ugettext_noop("Password"),
     )
 
-    def __init__(self, project, *args, **kwargs):
+    def __init__(self, project, user, *args, **kwargs):
         super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
         email_string = u"@{}.commcarehq.org".format(project.name)
         max_chars_username = 80 - len(email_string)
         self.project = project
+        self.user = user
+        self.can_access_all_locations = user.has_permission(self.project.name, 'access_all_locations')
+        if not self.can_access_all_locations:
+            self.fields['location_id'].required = True
 
         if self.project.strong_mobile_passwords:
             self.fields['password'].widget = forms.TextInput(attrs={
@@ -556,7 +561,8 @@ class NewMobileWorkerForm(forms.Form):
             ))
 
         if project.uses_locations:
-            self.fields['location_id'].widget = AngularLocationSelectWidget()
+            self.fields['location_id'].widget = AngularLocationSelectWidget(
+                require=not self.can_access_all_locations)
             location_field = crispy.Field(
                 'location_id',
                 ng_model='mobileWorker.location_id',
@@ -612,6 +618,12 @@ class NewMobileWorkerForm(forms.Form):
                 ),
             )
         )
+
+    def clean_location_id(self):
+        location_id = self.cleaned_data['location_id']
+        if not user_can_access_location_id(self.project.name, self.user, location_id):
+            raise forms.ValidationError("You do not have access to that location.")
+        return location_id
 
     def clean_username(self):
         username = self.cleaned_data['username']
@@ -701,18 +713,20 @@ class AngularLocationSelectWidget(forms.Widget):
         scope uses availableLocations to search in
     """
 
-    def __init__(self, attrs=None):
+    def __init__(self, require=False, attrs=None):
+        self.require = require
         super(AngularLocationSelectWidget, self).__init__(attrs)
 
     def render(self, name, value, attrs=None):
+        # The .format() means I have to use 4 braces to end up with {{$select.selected.name}}
         return """
-          <ui-select  ng-model="mobileWorker.location_id" theme="select2" style="width: 300px;">
-            <ui-select-match placeholder="Select location...">{{$select.selected.name}}</ui-select-match>
+          <ui-select {validator} ng-model="mobileWorker.location_id" theme="select2" style="width: 300px;">
+            <ui-select-match placeholder="Select location...">{{{{$select.selected.name}}}}</ui-select-match>
             <ui-select-choices refresh="searchLocations($select.search)" refresh-delay="0" repeat="location.id as location in availableLocations | filter:$select.search">
               <div ng-bind-html="location.name | highlight: $select.search"></div>
             </ui-select-choices>
           </ui-select>
-        """
+        """.format(validator='validate-location=""' if self.require else '')
 
 
 class SupplyPointSelectWidget(forms.Widget):
@@ -928,11 +942,11 @@ class SelfRegistrationForm(forms.Form):
 
     username = TrimmedCharField(
         required=True,
-        label=ugettext_lazy('Username (create a username)'),
+        label=ugettext_lazy('Username'),
     )
     password = forms.CharField(
         required=True,
-        label=ugettext_lazy('Password (create a password)'),
+        label=ugettext_lazy('Password'),
         widget=PasswordInput(),
     )
     password2 = forms.CharField(

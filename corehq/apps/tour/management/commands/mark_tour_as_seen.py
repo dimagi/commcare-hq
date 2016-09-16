@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 import sys
 from corehq.apps.tour.models import GuidedTour
 
@@ -10,7 +10,7 @@ CONFIRM_FORM_ALL_USERS = """MARK Tour {tour_slug} as SEEN for ALL USERS?
     Type 'yes' to continue or 'no' to cancel: """
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "marks a tour with tour_slug as seen for all existing users"
     args = "tour_slug"
 

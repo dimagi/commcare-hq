@@ -1,4 +1,4 @@
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 from corehq.apps.indicators.utils import get_indicator_config
 from mvp.models import (
     CLASS_PATH,
@@ -8,7 +8,7 @@ from mvp.models import (
 )
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Resets the class path for the MVP indicator type specified"
     args = ""
 

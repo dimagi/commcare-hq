@@ -54,7 +54,7 @@
         $('#restrict_users').on('change', function () {
             var $saveButton = $('#save_restrict_option');
             $saveButton
-                    .removeAttr('disabled')
+                    .prop('disabled', false)
                     .removeClass('disabled btn-default')
                     .addClass('btn-success')
                     .text('{% trans "Save" %}');
@@ -609,6 +609,22 @@
                                             </div>
                                         </div>
                                     </div>
+                                    {% if request|toggle_enabled:"LOCATION_BASED_ACCESS_RESTRICTIONS" %}
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label">
+                                            {% trans "Full Organization Access" %}
+                                        </label>
+                                        <div class="col-sm-8 controls">
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox"
+                                                           data-bind="checked: permissions.access_all_locations" />
+                                                    {% trans "Allow role to access data from all locations" %}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
                                     <div class="form-group">
                                         <label class="col-sm-4 control-label">
                                             {% trans "View All Reports" %}

@@ -45,30 +45,22 @@
 trunk: master
 name: autostaging
 branches:
-#  - kill-1.x-apps  # Danny 8/23
-  - locations-whitelist+loc-tests  # Ethan 8/29 (trivial conflict)
-  - loc-tests # sravan 8/8
+  - kill-1.x-apps  # Danny 8/23
   - vellum-staging # J$ 11/13
-  - welcome-to-vellum # Jenny 8/3
-#  - welcome-to-vellum+kill-1.x-apps # Jenny 8/24
-#  - django-1.8 # nick P 8/25
-  - jquery-2-2-0 # Jenny 8/29
-  - jquery-2-2-0-switch # Jenny 8/30
-  - locations-whitelist  # Ethan 8/29
-  - br/utf-8-restore  # Ben 8/30
-  - np/djangular-0.7.16 # Nick P 8/31
+  - django-1.8 # nick P 8/25
+  - ce/domain-list-api # Cal 8/31
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
-      - commcare_2.29
+      - commcare_2.30 #wsp 9/14
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
-      - commcare_2.29
-#      - kill-1.x-apps  # Danny 8/23
+      - kill-1.x-apps  # Danny 8/23
+      - commcare_2.30 #wsp 9/14
   submodules/django-digest-src:
     branches: []
   submodules/dimagi-utils-src:
@@ -76,7 +68,8 @@ submodules:
   submodules/django-prbac-src:
     branches: []
   corehq/apps/prelogin:
-    branches: 
-      - welcome-to-vellum # Jenny 8/3
+    branches: []
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
+    branches: []
+  deployment/commcare-hq-deploy:
     branches: []
