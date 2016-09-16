@@ -565,7 +565,7 @@ def scroll_case_names(domain, case_ids):
     query = (CaseES()
             .domain(domain)
             .case_ids(case_ids)
-            .fields(['name', '_id'])
+            .source(['name', '_id'])
             .size(CASE_SCROLL_SIZE))
     return query.scroll()
 
