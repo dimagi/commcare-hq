@@ -26,7 +26,7 @@ def _grandfather_exports(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounting', '0039_auto_20160829_0828'),
+        ('accounting', '0040_community_v1'),
     ]
 
     operations = [
