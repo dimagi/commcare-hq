@@ -79,6 +79,11 @@ ko.bindingHandlers.sortable = {
         list.subscribe(forceUpdate);
         $(element).sortable({
             handle: '.sortable-handle',
+            helper: function(event, element) {
+                // Use a helper element attached directly to body to get
+                // around any overflow styling in the list's ancestors
+                return element.clone().appendTo("body");
+            },
             update: function(event, ui) {
                 var parent = ui.item.parent(),
                     oldPosition = ui.item.data('order');
