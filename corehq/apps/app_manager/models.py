@@ -2977,7 +2977,7 @@ class AdvancedModule(ModuleBase):
         else:
             raise IncompatibleFormTypeException()
 
-        if index:
+        if index is not None:
             self.forms.insert(index, new_form)
         else:
             self.forms.append(new_form)
@@ -3420,7 +3420,7 @@ class CareplanModule(ModuleBase):
 
     def add_insert_form(self, from_module, form, index=None, with_source=False):
         if isinstance(form, CareplanForm):
-            if index:
+            if index is not None:
                 self.forms.insert(index, form)
             else:
                 self.forms.append(form)
