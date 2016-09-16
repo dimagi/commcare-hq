@@ -285,15 +285,18 @@ def ensure_grant(grantee_slug, priv_slug, dry_run=False, verbose=False):
     Adds a parameterless grant between grantee and priv, looked up by slug.
     """
 
+    grantee = Role.objects.get(slug=grantee_slug)
+    priv = Role.objects.get(slug=priv_slug)
     if dry_run:
         grants = Grant.objects.filter(from_role__slug=grantee_slug,
                                       to_role__slug=priv_slug)
         if not grants:
             logger.info('[DRY RUN] Granting privilege: %s => %s', grantee_slug, priv_slug)
-    else:
-        grantee = Role.objects.get(slug=grantee_slug)
-        priv = Role.objects.get(slug=priv_slug)
+        if grantee.has_privilege(priv):
+            if verbose:
+                logger.info('[DRY RUN] Privilege already granted: %s => %s', grantee.slug, priv.slug)
 
+    else:
         Role.get_cache().clear()
         if grantee.has_privilege(priv):
             if verbose:
