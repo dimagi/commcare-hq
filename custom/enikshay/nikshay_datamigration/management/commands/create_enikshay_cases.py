@@ -39,7 +39,11 @@ class EnikshayCaseFactory(object):
             episode_structure.case_id = episode_case.case_id
 
     def create_test_cases(self):
-        tests = [self.test(followup) for followup in Followup.objects.filter(PatientID=self.patient_detail.PregId)]
+        tests = [
+            self.test(followup)
+            for followup in Followup.objects.filter(PatientID=self.patient_detail.PregId)
+            if Outcome.objects.filter(PatientId=PatientDetail.objects.get(PregId=followup.PatientID)).exists()
+        ]
         self.factory.create_or_update_cases(tests)
 
     @property
