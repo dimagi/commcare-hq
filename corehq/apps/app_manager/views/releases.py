@@ -107,6 +107,7 @@ def releases_ajax(request, domain, app_id, template='app_manager/partials/releas
         'build_profile_access': build_profile_access,
         'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
         'vellum_case_management': app.vellum_case_management,
+        'fetchLimit': request.GET.get('limit', 5),
     })
     if not app.is_remote_app():
         # Multimedia is not supported for remote applications at this time.

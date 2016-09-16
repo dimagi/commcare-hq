@@ -215,6 +215,7 @@ def get_app_view_context(request, app):
         )
     })
     context['is_app_view'] = True
+    context['fetchLimit'] = request.GET.get('limit', 5)
     return context
 
 
