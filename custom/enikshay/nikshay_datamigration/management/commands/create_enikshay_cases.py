@@ -33,6 +33,7 @@ class EnikshayCaseFactory(object):
     def person(self):
         return CaseStructure(
             case_id=self.patient_detail.PregId,
+            # owner_id: function of stocode, dtocode, tbunitcode, phi; then decide if dmc
             attrs={
                 'create': True,
                 'case_type': 'person',
