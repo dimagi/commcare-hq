@@ -3,7 +3,8 @@ from django.core.management import BaseCommand
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 
-from custom.enikshay.nikshay_datamigration.models import PatientDetail, Outcome
+from custom.enikshay.nikshay_datamigration.models import PatientDetail, Outcome, Followup
+from dimagi.utils.decorators.memoized import memoized
 
 ENIKSHAY_DOMAIN = 'enikshay-np'
 
@@ -19,17 +20,34 @@ class EnikshayCaseFactory(object):
     def create_cases(self):
         self.create_person_case()
         self.create_occurrence_cases()
+        self.create_episode_cases()
+        self.create_test_cases()
 
     def create_person_case(self):
         self.factory.create_or_update_case(self.person)
 
     def create_occurrence_cases(self):
-        self.factory.create_or_update_cases([
-            self.occurrence(outcome)
-            for outcome in Outcome.objects.filter(PatientId=self.patient_detail)
-        ])
+        occurrences = [self.occurrence(outcome) for outcome in self.outcomes]
+        cases = self.factory.create_or_update_cases(occurrences)
+        for occurrence_structure, occurrence_case in zip(occurrences, cases):
+            occurrence_structure.case_id = occurrence_case.case_id
+
+    def create_episode_cases(self):
+        episodes = [self.episode(outcome) for outcome in self.outcomes]
+        cases = self.factory.create_or_update_cases(episodes)
+        for episode_structure, episode_case in zip(episodes, cases):
+            episode_structure.case_id = episode_case.case_id
+
+    def create_test_cases(self):
+        tests = [self.test(followup) for followup in Followup.objects.filter(PatientID=self.patient_detail.PregId)]
+        self.factory.create_or_update_cases(tests)
 
     @property
+    def outcomes(self):
+        return Outcome.objects.filter(PatientId=self.patient_detail)
+
+    @property
+    @memoized
     def person(self):
         return CaseStructure(
             case_id=self.patient_detail.PregId,
@@ -52,6 +70,7 @@ class EnikshayCaseFactory(object):
             },
         )
 
+    @memoized
     def occurrence(self, outcome):
         return CaseStructure(
             attrs={
@@ -70,8 +89,43 @@ class EnikshayCaseFactory(object):
             )],
         )
 
-    def create_case(self, case_structure):
-        return self.factory.create_or_update_cases([case_structure])
+    @memoized
+    def episode(self, outcome):
+        return CaseStructure(
+            attrs={
+                'create': True,
+                'case_type': 'episode',
+                'update': {
+                    'treatment_supporter_mobile_number': outcome.PatientId.cmob,
+                },
+            },
+            indices=[CaseIndex(
+                self.occurrence(outcome),
+                identifier='host',
+                relationship=CASE_INDEX_EXTENSION,
+                related_type=self.occurrence(outcome).attrs['case_type'],
+            )],
+        )
+
+    def test(self, followup):
+        episode_structure = self.episode(
+            Outcome.objects.get(PatientId=PatientDetail.objects.get(PregId=followup.PatientID))
+        )
+        return CaseStructure(
+            attrs={
+                'create': True,
+                'case_type': 'test',
+                'update': {
+                    'date_tested': followup.TestDate,
+                },
+            },
+            indices=[CaseIndex(
+                episode_structure,
+                identifier='host',
+                relationship=CASE_INDEX_EXTENSION,
+                related_type=episode_structure.attrs['case_type'],
+            )],
+        )
 
 
 class Command(BaseCommand):
