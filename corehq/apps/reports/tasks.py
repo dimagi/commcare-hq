@@ -357,8 +357,8 @@ def _expose_download(fpath, use_transfer, zip_name, download_id, num_forms):
 def _format_filename(form_info, question_id, extension, case_id_to_name):
     filename = u"{}-user_{}-form_{}{}".format(
         unidecode(question_id),
-        form_info['form'].user_id or 'unknown_user',
-        form_info['form'].form_id or 'unknown_form',
+        form_info['form'].user_id or 'unknown',
+        form_info['form'].form_id or 'unknown',
         extension
     )
     if form_info['case_ids']:
