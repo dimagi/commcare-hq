@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 
 from corehq.privileges import MAX_PRIVILEGES
 from corehq.apps.accounting.utils import ensure_grant
-from corehq.apps.accounting.models import Role
+from corehq.apps.accounting.models import SoftwarePlanVersion
 
 
 class Command(BaseCommand):
@@ -43,8 +43,8 @@ class Command(BaseCommand):
         verbose = kwargs.get('verbose')
         noinput = kwargs.get('noinput')
         all_plan_slugs = (
-            set(map(lambda role: role.slug, Role.objects.all())) -
-            set(MAX_PRIVILEGES) -
+            set(map(lambda s: s.role.slug, SoftwarePlanVersion.objects.all())) -
+            set(MAX_PRIVILEGES) -  # no privileges shoudl be in software plan roles, this is just a safeguard
             set(map(lambda plan_slug: plan_slug.strip(), kwargs.get('skip', []).split(',')))
         )
 
