@@ -445,15 +445,15 @@ def is_mobile_worker_with_report_access(couch_user, domain):
     if not couch_user.is_commcare_user():
         return False
 
-    can_view_all_reports = False
-    can_view_some_reports = False
     if domain is not None:
         role = couch_user.get_role(domain)
         if role:
-            can_view_all_reports = role.permissions.view_reports
-            can_view_some_reports = len(role.permissions.view_report_list) > 0
+            return (
+                role.permissions.view_reports or
+                len(role.permissions.view_report_list) > 0
+            )
 
-    return can_view_all_reports or can_view_some_reports
+    return False
 
 
 def get_INFilter_element_bindparam(base_name, index):
