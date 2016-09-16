@@ -96,7 +96,7 @@ class Outcome(models.Model):
 
 
 class Followup(models.Model):
-    PatientID = models.CharField(max_length=255, null=True)
+    PatientID = models.CharField(max_length=255, null=True)  # requires trimming whitespace in excel
     IntervalId = models.CharField(max_length=255, null=True)
     TestDate = models.CharField(max_length=255, null=True)
     DMC = models.CharField(max_length=255, null=True)
