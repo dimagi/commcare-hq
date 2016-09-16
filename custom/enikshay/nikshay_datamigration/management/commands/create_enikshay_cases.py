@@ -21,11 +21,13 @@ class EnikshayCaseFactory(object):
         self.create_occurrence_cases()
 
     def create_person_case(self):
-        self.factory.create_or_update_cases([self.person])
+        self.factory.create_or_update_case(self.person)
 
     def create_occurrence_cases(self):
-        for outcome in Outcome.objects.filter(PatientId=self.patient_detail):
-            self.factory.create_or_update_cases([self.occurrence(outcome)])
+        self.factory.create_or_update_cases([
+            self.occurrence(outcome)
+            for outcome in Outcome.objects.filter(PatientId=self.patient_detail)
+        ])
 
     @property
     def person(self):
