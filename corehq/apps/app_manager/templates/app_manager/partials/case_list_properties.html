@@ -32,7 +32,7 @@
                 copy: function () { return copyCallback(); },
                 paste: function (data) { $parent.pasteCallback(data, $index() + 1); }
             ">
-                <td class="text-center">
+                <td class="text-center col-sm-1">
                     <span class="sort-disabled" data-bind="ifnot: grip"></span>
                     <i class="grip sortable-handle" data-bind="
                         if: grip,
@@ -42,7 +42,7 @@
                     "></i>
                 </td>
                 <!--ko if: !isTab -->
-                    <td data-bind="css: {'has-error': showWarning}">
+                    <td class="col-sm-3" data-bind="css: {'has-error': showWarning}">
                         <div data-bind="html: hqImport('app_manager/js/detail-screen-config.js').CC_DETAIL_SCREEN.getFieldHtml(field.val()), visible: !field.edit"></div>
                         <div data-bind="jqueryElement: field.ui, visible: field.edit"></div>
                         <div data-bind="visible: showWarning">
@@ -52,24 +52,30 @@
                             </span>
                         </div>
                     </td>
-                    <td data-bind="jqueryElement: header.ui"></td>
-                    <td data-bind="jqueryElement: $format"></td>
+                    <td data-bind="jqueryElement: header.ui, css: {
+                            'col-sm-2': $parent.useCaseTiles() == 'yes' && {{request|toggle_enabled:'CASE_LIST_TILE'|BOOL }},
+                            'col-sm-3': $parent.useCaseTiles() != 'yes' || !{{request|toggle_enabled:'CASE_LIST_TILE'|BOOL }},
+                        }"></td>
+                    <td data-bind="jqueryElement: $format, css: {
+                            'col-sm-3': $parent.useCaseTiles() == 'yes' && {{request|toggle_enabled:'CASE_LIST_TILE'|BOOL }},
+                            'col-sm-4': $parent.useCaseTiles() != 'yes' || !{{request|toggle_enabled:'CASE_LIST_TILE'|BOOL }},
+                        }"></td>
                 <!--/ko-->
                 <!--ko if: isTab -->
                     <!--ko if: $data.hasNodeset -->
-                        <td data-bind="jqueryElement: header.ui"></td>
-                        <td class="form-group" colspan="2" data-bind="css: {'has-error': showWarning}">
+                        <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
+                        <td class="col-sm-5 form-group" colspan="2" data-bind="css: {'has-error': showWarning}">
                             <div data-bind="jqueryElement: nodeset.ui"></div>
                             <span class="help-block"
                                   data-bind="text: 'A nodeset must be specified.', visible: showWarning"></span>
                         </td>
                     <!--/ko-->
                     <!--ko ifnot: $data.hasNodeset -->
-                        <td colspan="3" data-bind="jqueryElement: header.ui"></td>
+                        <td class="col-sm-8" colspan="3" data-bind="jqueryElement: header.ui"></td>
                     <!--/ko-->
                 <!--/ko-->
                 <!-- ko if: $parent.useCaseTiles() == "yes" && {{request|toggle_enabled:'CASE_LIST_TILE'|BOOL }}-->
-                <td>
+                <td class="col-sm-2">
                     <select class="form-control" data-bind="value: case_tile_field">
                         <option value=""></option>
                         <option value="header">header</option>
@@ -80,7 +86,7 @@
                     </select>
                 </td>
                 <!-- /ko -->
-                <td class="text-center">
+                <td class="col-sm-1 text-center">
                     <i style="cursor: pointer;"
                        data-bind="
                         visible: ($parent.columns().length > 1 || $parent.allowsEmptyColumns),
