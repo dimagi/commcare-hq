@@ -64,7 +64,7 @@ class SelfRegistrationInfo(object):
         self.users.append(user_info)
 
 
-class UserSelfRegistrationValidation(Validation):
+class BaseUserSelfRegistrationValidation(Validation):
 
     def _validate_toplevel_fields(self, data, field_defs):
         """
@@ -111,6 +111,12 @@ class UserSelfRegistrationValidation(Validation):
             phone_numbers.add(phone_number)
 
     def is_valid(self, bundle, request=None):
+        raise NotImplementedError()
+
+
+class UserSelfRegistrationValidation(BaseUserSelfRegistrationValidation):
+
+    def is_valid(self, bundle, request=None):
         if not request:
             raise SelfRegistrationApiException('Expected request to be present')
 
@@ -131,14 +137,7 @@ class UserSelfRegistrationValidation(Validation):
         return {}
 
 
-class UserSelfRegistrationResource(HqBaseResource):
-    registration_result = None
-
-    class Meta:
-        authentication = RequirePermissionAuthentication(Permissions.edit_data)
-        resource_name = 'sms_user_registration'
-        allowed_methods = ['post']
-        validation = UserSelfRegistrationValidation()
+class BaseUserSelfRegistrationResource(HqBaseResource):
 
     def dispatch(self, request_type, request, **kwargs):
         domain_obj = Domain.get_by_name(request.domain)
@@ -160,7 +159,23 @@ class UserSelfRegistrationResource(HqBaseResource):
                 )
             )
         else:
-            return super(UserSelfRegistrationResource, self).dispatch(request_type, request, **kwargs)
+            return super(BaseUserSelfRegistrationResource, self).dispatch(request_type, request, **kwargs)
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {}
+
+
+class UserSelfRegistrationResource(BaseUserSelfRegistrationResource):
+
+    def __init__(self, *args, **kwargs):
+        super(UserSelfRegistrationResource, self).__init__(*args, **kwargs)
+        self.registration_result = None
+
+    class Meta:
+        authentication = RequirePermissionAuthentication(Permissions.edit_data)
+        resource_name = 'sms_user_registration'
+        allowed_methods = ['post']
+        validation = UserSelfRegistrationValidation()
 
     def full_hydrate(self, bundle):
         if not self.is_valid(bundle):
@@ -212,6 +227,3 @@ class UserSelfRegistrationResource(HqBaseResource):
             }),
             content_type='application/json',
         )
-
-    def detail_uri_kwargs(self, bundle_or_obj):
-        return {}
