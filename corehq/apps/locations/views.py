@@ -502,14 +502,11 @@ def location_descendants_count(request, domain, loc_id):
 @can_edit_location
 @location_safe
 def unarchive_location(request, domain, loc_id):
-    # hack for circumventing cache
-    # which was found to be out of date, at least in one case
-    # http://manage.dimagi.com/default.asp?161454
-    # todo: find the deeper reason for invalid cache
-    loc = Location.get(loc_id, db=Location.get_db())
-    if loc.domain != domain:
+    try:
+        loc = SQLLocation.objects.get(domain=domain, location_id=loc_id)
+    except SQLLocation.DoesNotExist:
         raise Http404()
-    loc.unarchive()
+    loc.couch_location.unarchive()
     return json_response({
         'success': True,
         'message': _("Location '{location_name}' has successfully been {action}.").format(

@@ -832,10 +832,6 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
             password = self.new_commcare_user_form.cleaned_data['password']
             phone_number = self.new_commcare_user_form.cleaned_data['phone_number']
 
-            if 'location_id' in request.GET:
-                loc = get_document_or_404(Location, self.domain,
-                                          request.GET.get('location_id'))
-
             user = CommCareUser.create(
                 self.domain,
                 username,
@@ -846,6 +842,12 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
             )
 
             if 'location_id' in request.GET:
+                try:
+                    loc = Location.get(request['location_id'])
+                except ResourceNotFound:
+                    raise Http404()
+                if loc.domain != self.domain:
+                    raise Http404()
                 user.set_location(loc)
 
             if phone_number:

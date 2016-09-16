@@ -26,17 +26,21 @@ def get_wrapped_owner(owner_id):
             'CommCareUser': CommCareUser,
             'WebUser': WebUser,
             'Group': Group,
-            'Location': Location,
         }.get(doc_type)
 
-    for db in [user_db(), Location.get_db()]:
-        try:
-            owner_doc = db.get(owner_id)
-        except ResourceNotFound:
-            continue
-        else:
-            cls = _get_class(owner_doc['doc_type'])
-            return cls.wrap(owner_doc) if cls else None
+    try:
+        return Location.get(owner_id)
+    except ResourceNotFound:
+        pass
+
+    try:
+        owner_doc = user_db().get(owner_id)
+    except ResourceNotFound:
+        pass
+    else:
+        cls = _get_class(owner_doc['doc_type'])
+        return cls.wrap(owner_doc) if cls else None
+
     return None
 
 
