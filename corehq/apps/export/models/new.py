@@ -51,6 +51,8 @@ from corehq.apps.export.const import (
     USER_DEFINED_SPLIT_TYPES,
     PLAIN_USER_DEFINED_SPLIT_TYPE,
     DATA_SCHEMA_VERSION,
+    MISSING_VALUE,
+    EMPTY_VALUE,
 )
 from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.export.dbaccessors import (
@@ -206,6 +208,8 @@ class ExportColumn(DocumentSchema):
             except ValueError:
                 # Unable to convert the string to a date
                 pass
+        if value is None:
+            value = MISSING_VALUE
         return value
 
     @staticmethod
@@ -1530,7 +1534,7 @@ class MultiMediaExportColumn(ExportColumn):
     def get_value(self, domain, doc_id, doc, base_path, transform_dates=False, **kwargs):
         value = super(MultiMediaExportColumn, self).get_value(domain, doc_id, doc, base_path, **kwargs)
 
-        if not value:
+        if not value or value == MISSING_VALUE:
             return value
 
         download_url = u'{url}?attachment={attachment}'.format(
@@ -1569,7 +1573,10 @@ class SplitGPSExportColumn(ExportColumn):
         if not split_column:
             return value
 
-        values = [None] * 4
+        if value == MISSING_VALUE:
+            return [MISSING_VALUE] * 4
+
+        values = [EMPTY_VALUE] * 4
 
         if not isinstance(value, basestring):
             return values
@@ -1615,14 +1622,20 @@ class SplitExportColumn(ExportColumn):
         if not split_column:
             return value
 
+        if value == MISSING_VALUE:
+            value = [MISSING_VALUE] * len(self.item.options)
+            if not self.ignore_unspecified_options:
+                value.append(MISSING_VALUE)
+            return value
+
         if not isinstance(value, basestring):
             unspecified_options = [] if self.ignore_unspecified_options else [value]
-            return [None] * len(self.item.options) + unspecified_options
+            return [EMPTY_VALUE] * len(self.item.options) + unspecified_options
 
         selected = OrderedDict((x, 1) for x in value.split(" "))
         row = []
         for option in self.item.options:
-            row.append(selected.pop(option.value, None))
+            row.append(selected.pop(option.value, EMPTY_VALUE))
         if not self.ignore_unspecified_options:
             row.append(" ".join(selected.keys()))
         return row
@@ -1729,7 +1742,7 @@ class StockFormExportColumn(ExportColumn):
 
         value = NestedDictGetter(path[:stock_type_path_index + 1])(doc)
         if not value:
-            return None
+            return MISSING_VALUE
 
         new_doc = None
         if isinstance(value, list):
@@ -1745,7 +1758,7 @@ class StockFormExportColumn(ExportColumn):
                 new_doc = value
 
         if not new_doc:
-            return None
+            return MISSING_VALUE
 
         return self._transform(
             NestedDictGetter(path[stock_type_path_index + 1:])(new_doc),
@@ -1791,7 +1804,7 @@ class StockExportColumn(ExportColumn):
 
         # use a list to make sure the stock states end up
         # in the same order as the headers
-        values = [None] * len(self._column_tuples)
+        values = [EMPTY_VALUE] * len(self._column_tuples)
 
         for state in states:
             column_tuple = (state.product_id, state.section_id)
