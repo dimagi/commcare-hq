@@ -39,6 +39,7 @@ from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_sup
 from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.users.util import (
     user_display_string,
+    user_location_data,
 )
 from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
     tag_cases_as_deleted_and_remove_indices
@@ -1641,7 +1642,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 return
             self.assigned_location_ids.append(location.location_id)
             self.get_domain_membership(self.domain).assigned_location_ids.append(location.location_id)
-            self.user_data['commcare_location_ids'] = ",".join(self.assigned_location_ids)
+            self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
             self.save()
         else:
             self.set_location(location)
@@ -1686,7 +1687,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if self.location_id not in self.assigned_location_ids:
             self.assigned_location_ids.append(self.location_id)
             self.get_domain_membership(self.domain).assigned_location_ids.append(self.location_id)
-            self.user_data['commcare_location_ids'] = ','.join(self.assigned_location_ids)
+            self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
         self.save()
 
     def unset_location(self, fall_back_to_next=False):
@@ -1706,7 +1707,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.get_domain_membership(self.domain).assigned_location_ids.remove(old_primary_location_id)
 
         if self.assigned_location_ids:
-            self.user_data['commcare_location_ids'] = ','.join(self.assigned_location_ids)
+            self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
         else:
             self.user_data.pop('commcare_location_ids')
 
@@ -1738,7 +1739,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.get_domain_membership(self.domain).assigned_location_ids.remove(location_id)
 
             if self.assigned_location_ids:
-                self.user_data['commcare_location_ids'] = ','.join(self.assigned_location_ids)
+                self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
             else:
                 self.user_data.pop('commcare_location_ids')
             self.save()
@@ -1755,7 +1756,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.get_domain_membership(self.domain).assigned_location_ids = location_ids
         if location_ids:
             self.user_data.update({
-                'commcare_location_ids': ','.join(location_ids)
+                'commcare_location_ids': user_location_data(location_ids)
             })
         else:
             self.user_data.pop('commcare_location_ids')
