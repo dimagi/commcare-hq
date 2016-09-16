@@ -11,7 +11,6 @@ from django.core.management.base import BaseCommand
 
 # External imports
 from corehq import privileges
-from corehq.apps.accounting.utils import ensure_grant, remove_grant
 from django_prbac.models import Grant, Role
 
 logger = logging.getLogger(__name__)
@@ -58,12 +57,11 @@ class Command(BaseCommand):
 
         for (plan_role_slug, privs) in self.BOOTSTRAP_GRANTS.items():
             for priv_role_slug in privs:
-                ensure_grant(plan_role_slug, priv_role_slug, dry_run=dry_run, verbose=self.verbose)
+                self.ensure_grant(plan_role_slug, priv_role_slug, dry_run=dry_run)
 
         for old_priv in self.OLD_PRIVILEGES:
-            remove_grant(old_priv, dry_run=dry_run)
-            if not dry_run:
-                Role.objects.filter(slug=old_priv).delete()
+            self.remove_grant(old_priv)
+            Role.objects.filter(slug=old_priv).delete()
 
     def flush_roles(self):
         logger.info('Flushing ALL Roles...')
@@ -86,6 +84,42 @@ class Command(BaseCommand):
                 if self.verbose:
                     logger.info('Creating role: %s', role.name)
                 role.save()
+
+    def ensure_grant(self, grantee_slug, priv_slug, dry_run=False):
+        """
+        Adds a parameterless grant between grantee and priv, looked up by slug.
+        """
+
+        if dry_run:
+            grants = Grant.objects.filter(from_role__slug=grantee_slug,
+                                          to_role__slug=priv_slug)
+            if not grants:
+                logger.info('[DRY RUN] Granting privilege: %s => %s', grantee_slug, priv_slug)
+        else:
+            grantee = Role.objects.get(slug=grantee_slug)
+            priv = Role.objects.get(slug=priv_slug)
+
+            Role.get_cache().clear()
+            if grantee.has_privilege(priv):
+                if self.verbose:
+                    logger.info('Privilege already granted: %s => %s', grantee.slug, priv.slug)
+            else:
+                if self.verbose:
+                    logger.info('Granting privilege: %s => %s', grantee.slug, priv.slug)
+                Grant.objects.create(
+                    from_role=grantee,
+                    to_role=priv,
+                )
+
+    def remove_grant(self, priv_slug, dry_run=False):
+        grants = Grant.objects.filter(to_role__slug=priv_slug)
+        if dry_run:
+            if grants:
+                logger.info("[DRY RUN] Removing privilege %s", priv_slug)
+        else:
+            if grants:
+                grants.delete()
+                logger.info("Removing privilege %s", priv_slug)
 
     BOOTSTRAP_PRIVILEGES = [
         Role(slug=privileges.API_ACCESS, name='API Access', description=''),
