@@ -343,7 +343,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     # to be eliminated from projects and related documents when they are copied for the exchange
     _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'countries', 'region', 'customer_type')
 
-    default_mobile_worker_redirect = StringProperty(default=None)
     last_modified = DateTimeProperty(default=datetime(2015, 1, 1))
 
     # when turned on, use SECURE_TIMEOUT for sessions of users who are members of this domain

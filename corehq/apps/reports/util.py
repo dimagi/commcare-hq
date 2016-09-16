@@ -453,11 +453,7 @@ def is_mobile_worker_with_report_access(couch_user, domain):
             can_view_all_reports = role.permissions.view_reports
             can_view_some_reports = len(role.permissions.view_report_list) > 0
 
-    return (
-        can_view_all_reports or
-        can_view_some_reports or
-        Domain.get_by_name(domain).default_mobile_worker_redirect == 'reports'
-    )
+    return can_view_all_reports or can_view_some_reports
 
 
 def get_INFilter_element_bindparam(base_name, index):
