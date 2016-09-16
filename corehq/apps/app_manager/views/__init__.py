@@ -36,7 +36,6 @@ from corehq.apps.app_manager.views.apps import (
     edit_app_ui_translations,
     formdefs,
     get_app_ui_translations,
-    get_commcare_version,
     import_app,
     new_app,
     rearrange,

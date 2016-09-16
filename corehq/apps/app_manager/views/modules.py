@@ -869,31 +869,26 @@ def view_module(request, domain, app_id, module_id):
     return view_generic(request, domain, app_id, module_id)
 
 
-common_module_validations = [
-    (lambda app: app.application_version == APP_V1,
-     _('Please upgrade you app to > 2.0 in order to add this module'))
-]
-
 FN = 'fn'
 VALIDATIONS = 'validations'
 MODULE_TYPE_MAP = {
     'careplan': {
         FN: _new_careplan_module,
-        VALIDATIONS: common_module_validations + [
+        VALIDATIONS: [
             (lambda app: app.has_careplan_module,
              _('This application already has a Careplan module'))
         ]
     },
     'advanced': {
         FN: _new_advanced_module,
-        VALIDATIONS: common_module_validations
+        VALIDATIONS: []
     },
     'report': {
         FN: _new_report_module,
-        VALIDATIONS: common_module_validations
+        VALIDATIONS: []
     },
     'shadow': {
         FN: _new_shadow_module,
-        VALIDATIONS: common_module_validations
+        VALIDATIONS: []
     },
 }
