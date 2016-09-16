@@ -382,7 +382,11 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
             if not self.request.couch_user.is_member_of(app.domain):
                 raise Http404()
 
+        diff_is_of_same_app = (self.first_app.copy_of or self.first_app._id) \
+            == (self.second_app.copy_of or self.second_app._id)
+
         return {
+            "diff_is_of_same_app": diff_is_of_same_app,
             "app": self.first_app,
             "other_app": self.second_app,
             "files": self.app_diffs

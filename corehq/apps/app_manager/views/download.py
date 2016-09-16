@@ -1,4 +1,4 @@
-import json
+# encoding: utf-8
 import logging
 import os
 from StringIO import StringIO
@@ -422,30 +422,28 @@ def source_files(app):
     if not app.copy_of:
         app.set_media_versions(None)
     files = download_index_files(app)
-    # files.append(
-    #     ("app.json", json.dumps(
-    #         app.to_json(), sort_keys=True, indent=4, separators=(',', ': ')
-    #     ))
-    # )
     app_json = app.to_json()
-    for attr in ('_id', '_rev', '_attachments', 'external_blobs'):
+    for attr in ('_id', '_rev', '_attachments', 'external_blobs', 'build_comment',
+                 'built_on', 'built_with', 'comment_from'):
         app_json.pop(attr, None)
 
-    def flatten(o, path=()):
-        if isinstance(o, dict):
-            for key, value in sorted(o.items()):
-                for yield_value in flatten(value, path + (key,)):
-                    yield yield_value
-        elif isinstance(o, list):
-            for i, value in enumerate(o):
-                for yield_value in flatten(value, path + (i,)):
-                    yield yield_value
-        else:
-            yield path, o
+    # def flatten(o, path=()):
+    #     if isinstance(o, dict):
+    #         for key, value in sorted(o.items()):
+    #             for yield_value in flatten(value, path + (key,)):
+    #                 yield yield_value
+    #     elif isinstance(o, list):
+    #         for i, value in enumerate(o):
+    #             for yield_value in flatten(value, path + (u'*',)):
+    #                 yield yield_value
+    #     else:
+    #         yield path, o
+    #
+    # text = u''.join(u'{} → {}\n'.format(u' ≻ '.join(u'{}'.format(p) for p in path), value)
+    #                 for path, value in flatten(app_json) if path[-1] != 'unique_id')
 
-    text = ''.join('{}\n\t{}\n'.format(' > '.join('{}'.format(p) for p in path), value) for path, value in flatten(app_json))
-
+    text = yaml.safe_dump(app_json, default_flow_style=False)
     files.append(
-        ("app.json", text)
+        ("app config", text)
     )
     return sorted(files)
