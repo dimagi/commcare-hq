@@ -30,7 +30,7 @@ class IntraHealthReportConfigMixin(object):
 
     def config_update(self, config):
         if self.request.GET.get('location_id', ''):
-            if self.location.location_type.lower() == 'district':
+            if self.location.location_type_name.lower() == 'district':
                 config.update(dict(district_id=self.location.location_id))
             else:
                 config.update(dict(region_id=self.location.location_id))
@@ -145,3 +145,15 @@ class IntraHealtMixin(IntraHealthLocationMixin, IntraHealthReportConfigMixin):
                     row.extend([self.no_value for p in self.model.col_names])
             rows.append(row)
         return rows
+
+from custom.intrahealth.reports.fiche_consommation_report import FicheConsommationReport
+from custom.intrahealth.reports.recap_passage_report import RecapPassageReport
+from custom.intrahealth.reports.tableu_de_board_report import TableuDeBoardReport
+
+CUSTOM_REPORTS = (
+    ('INFORMED PUSH MODEL REPORTS', (
+        TableuDeBoardReport,
+        FicheConsommationReport,
+        RecapPassageReport
+    )),
+)

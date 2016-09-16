@@ -492,7 +492,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             name = request.POST.get(attribute, None)
             module[attribute][lang] = name
             if should_edit("name"):
-                resp['update'].update({'.variable-module_name': module.name[lang]})
+                resp['update'] = {'.variable-module_name': trans(module.name, [lang], use_delim=False)}
     if should_edit('comment'):
         module.comment = request.POST.get('comment')
     for SLUG in ('case_list', 'task_list'):

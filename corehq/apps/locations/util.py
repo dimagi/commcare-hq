@@ -108,11 +108,6 @@ def parent_child(domain):
                       data=dict(location_hierarchy_config(domain)).iteritems())
 
 
-def allowed_child_types(domain, parent):
-    parent_type = parent.location_type if parent else None
-    return parent_child(domain).get(parent_type, [])
-
-
 @quickcache(['domain'], timeout=60)
 def get_location_data_model(domain):
     from .views import LocationFieldsView
@@ -166,7 +161,7 @@ class LocationExporter(object):
     def get_consumption(self, loc):
         if (
             not self.include_consumption or
-            loc.location_type in self.administrative_types or
+            loc.location_type_name in self.administrative_types or
             not self.consumption_dict
         ):
             return {}
@@ -181,7 +176,7 @@ class LocationExporter(object):
                 self.consumption_dict,
                 self.domain,
                 p._id,
-                loc.location_type,
+                loc.location_type_name,
                 sp_id
             ) or ''
             for p in self.products

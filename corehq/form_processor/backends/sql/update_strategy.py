@@ -157,15 +157,12 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             new_attachment = CaseAttachmentSQL.from_case_update(att)
             if new_attachment.is_present:
                 form_attachment = xform.get_attachment_meta(att.attachment_src)
-                new_attachment.update_from_attachment(form_attachment)
-
                 if identifier in current_attachments:
                     existing_attachment = current_attachments[identifier]
-                    existing_attachment.update_from_attachment(new_attachment)
-                    existing_attachment.copy_content(form_attachment)
+                    existing_attachment.from_form_attachment(form_attachment)
                     self.case.track_update(existing_attachment)
                 else:
-                    new_attachment.copy_content(form_attachment)
+                    new_attachment.from_form_attachment(form_attachment)
                     new_attachment.case = self.case
                     self.case.track_create(new_attachment)
             elif identifier in current_attachments:

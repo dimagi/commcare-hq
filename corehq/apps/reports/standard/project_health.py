@@ -297,11 +297,17 @@ class ProjectHealthDashboard(ProjectReport):
     def decorator_dispatcher(self, request, *args, **kwargs):
         super(ProjectHealthDashboard, self).decorator_dispatcher(request, *args, **kwargs)
 
+    def get_number_of_months(self):
+        try:
+            return int(self.request.GET.get('months', 6))
+        except ValueError:
+            return 6
+
     def get_group_location_ids(self):
         params = filter(None, self.request.GET.getlist('grouplocationfilter'))
         return params
 
-    def parse_params(self, param_ids):
+    def parse_group_location_params(self, param_ids):
         locationids_param = []
         groupids_param = []
 
@@ -332,21 +338,21 @@ class ProjectHealthDashboard(ProjectReport):
             return set(chain(*users_group))
 
     def get_users_by_filter(self):
-        locationids_param, groupids_param = self.parse_params(self.get_group_location_ids())
+        locationids_param, groupids_param = self.parse_group_location_params(self.get_group_location_ids())
         users_list_by_location = self.get_users_by_location_filter(locationids_param)
         users_list_by_group = self.get_users_by_group_filter(groupids_param)
 
         users_set = self.get_unique_users(users_list_by_location, users_list_by_group)
         return users_set
 
-    def previous_six_months(self):
+    def previous_months_summary(self, months=6):
         now = datetime.datetime.utcnow()
         six_month_summary = []
         last_month_summary = None
         performance_threshold = get_performance_threshold(self.domain)
         filtered_users = self.get_users_by_filter()
         active_not_deleted_users = UserES().domain(self.domain).values_list("_id", flat=True)
-        for i in range(-6, 1):
+        for i in range(-months, 1):
             year, month = add_months(now.year, now.month, i)
             month_as_date = datetime.date(year, month, 1)
             this_month_summary = MonthlyPerformanceSummary(
@@ -377,8 +383,8 @@ class ProjectHealthDashboard(ProjectReport):
 
     @property
     def export_table(self):
-        six_months_reports = self.previous_six_months()
-        last_month = six_months_reports[-2]
+        previous_months_reports = self.previous_months_summary(self.get_number_of_months())
+        last_month = previous_months_reports[-2]
 
         header = ['user_id', 'username', 'last_month_forms', 'delta_last_month',
                   'this_month_forms', 'delta_this_month', 'is_performing']
@@ -389,7 +395,7 @@ class ProjectHealthDashboard(ProjectReport):
                     user.is_performing] for user in user_list]
 
         return [
-            self.export_summary(six_months_reports),
+            self.export_summary(previous_months_reports),
             build_worksheet(title="Inactive Users", headers=header,
                             rows=extract_user_stat(last_month.get_dropouts())),
             build_worksheet(title="Low Performing Users", headers=header,
@@ -400,12 +406,12 @@ class ProjectHealthDashboard(ProjectReport):
 
     @property
     def template_context(self):
-        six_months_reports = self.previous_six_months()
+        prior_months_reports = self.previous_months_summary(self.get_number_of_months())
         performance_threshold = get_performance_threshold(self.domain)
         return {
-            'six_months_reports': six_months_reports,
-            'this_month': six_months_reports[-1],
-            'last_month': six_months_reports[-2],
+            'six_months_reports': prior_months_reports,
+            'this_month': prior_months_reports[-1],
+            'last_month': prior_months_reports[-2],
             'threshold': performance_threshold,
             'domain': self.domain,
         }

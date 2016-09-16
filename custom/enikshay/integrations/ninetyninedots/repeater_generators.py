@@ -18,7 +18,8 @@ from custom.enikshay.case_utils import (
 
 class PatientPayload(jsonobject.JsonObject):
     beneficiary_id = jsonobject.StringProperty(required=True)
-    phone_numbers = jsonobject.StringProperty(required=True)
+    phone_numbers = jsonobject.StringProperty(required=False)
+    merm_id = jsonobject.StringProperty(required=False)
 
 
 @RegisterGenerator(NinetyNineDotsRegisterPatientRepeater, 'case_json', 'JSON', is_default=True)
@@ -30,15 +31,18 @@ class RegisterPatientPayloadGenerator(BasePayloadGenerator):
     def get_test_payload(self, domain):
         return json.dumps(PatientPayload(
             beneficiary_id=uuid.uuid4().hex,
-            phone_numbers=_format_number(_parse_number("0123456789"))
+            phone_numbers=_format_number(_parse_number("0123456789")),
+            merm_id=uuid.uuid4().hex,
         ).to_json())
 
     def get_payload(self, repeat_record, payload_doc):
         occurence_case = get_occurrence_case_from_episode(payload_doc.domain, payload_doc.case_id)
         person_case = get_person_case_from_occurrence(payload_doc.domain, occurence_case)
+        person_case_properties = person_case.dynamic_case_properties()
         data = PatientPayload(
             beneficiary_id=person_case.case_id,
-            phone_numbers=_get_phone_numbers(person_case)
+            phone_numbers=_get_phone_numbers(person_case_properties),
+            merm_id=person_case_properties.get('merm_id', None),
         )
         return json.dumps(data.to_json())
 
@@ -121,8 +125,7 @@ def _update_episode_case(domain, case_id, updated_properties):
     )
 
 
-def _get_phone_numbers(payload_doc):
-    case_properties = payload_doc.dynamic_case_properties()
+def _get_phone_numbers(case_properties):
     primary_number = _parse_number(case_properties.get('mobile_number'))
     backup_number = _parse_number(case_properties.get('backup_number'))
     if backup_number is not None:

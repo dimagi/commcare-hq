@@ -44,7 +44,7 @@ class Migration(migrations.Migration):
                 ('vehicle_number', models.IntegerField(null=True)),
                 ('vehicle_id', models.CharField(max_length=126, null=True)),
                 ('products', jsonfield.fields.JSONField(default=dict)),
-                ('order', models.ForeignKey(to='zipline.EmergencyOrder')),
+                ('order', models.ForeignKey(to='zipline.EmergencyOrder', on_delete=models.CASCADE)),
             ],
             options={
             },

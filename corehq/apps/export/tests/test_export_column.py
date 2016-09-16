@@ -6,6 +6,8 @@ from corehq.util.view_utils import absolute_reverse
 from corehq.apps.export.const import (
     PLAIN_USER_DEFINED_SPLIT_TYPE,
     MULTISELCT_USER_DEFINED_SPLIT_TYPE,
+    MISSING_VALUE,
+    EMPTY_VALUE,
 )
 from corehq.apps.export.models import (
     ExportColumn,
@@ -53,7 +55,37 @@ class SplitColumnTest(SimpleTestCase):
             doc,
             [PathNode(name='form')],
             split_column=True),
-            [1, None, "b d"]
+            [1, EMPTY_VALUE, "b d"]
+        )
+
+        doc = {}
+        self.assertEqual(
+            column.get_value(
+                'domain',
+                'docid',
+                doc,
+                [PathNode(name='form')],
+                split_column=True
+            ),
+            [MISSING_VALUE, MISSING_VALUE, MISSING_VALUE]
+        )
+
+    def test_get_value_numerical(self):
+        column = SplitExportColumn(
+            item=MultipleChoiceItem(
+                path=[PathNode(name='form'), PathNode(name='q1')],
+                options=[Option(value='1'), Option(value='2')]
+            ),
+            ignore_unspecified_options=False
+        )
+        doc = {"q1": 3}
+        self.assertEqual(column.get_value(
+            'domain',
+            'docid',
+            doc,
+            [PathNode(name='form')],
+            split_column=True),
+            [EMPTY_VALUE, EMPTY_VALUE, 3]
         )
 
     def test_ignore_extas(self):
@@ -71,7 +103,18 @@ class SplitColumnTest(SimpleTestCase):
             doc,
             [PathNode(name="form")],
             split_column=True),
-            [1, None],
+            [1, EMPTY_VALUE],
+        )
+        doc = {}
+        self.assertEqual(
+            column.get_value(
+                'domain',
+                'docid',
+                doc,
+                [PathNode(name='form')],
+                split_column=True
+            ),
+            [MISSING_VALUE, MISSING_VALUE]
         )
 
     def test_basic_get_headers(self):
@@ -186,8 +229,8 @@ class TestCaseIndexExportColumn(SimpleTestCase):
         item = CaseIndexItem(path=[PathNode(name='indices'), PathNode(name='RegCase')])
         col = CaseIndexExportColumn(item=item)
 
-        self.assertEqual(col.get_value('domain', 'docid', doc, []), '')
-        self.assertEqual(col.get_value('domain', 'docid', doc2, []), '')
+        self.assertEqual(col.get_value('domain', 'docid', doc, []), EMPTY_VALUE)
+        self.assertEqual(col.get_value('domain', 'docid', doc2, []), EMPTY_VALUE)
 
 
 class TestGeopointExportColumn(SimpleTestCase):
@@ -197,13 +240,13 @@ class TestGeopointExportColumn(SimpleTestCase):
             item=GeopointItem(path=[PathNode(name='form'), PathNode(name='geo')])
         )
         result = column.get_value('domain', 'docid', {'form': {'geo': '10 20'}}, [], split_column=True)
-        self.assertEqual(result, ['10', '20', None, None])
+        self.assertEqual(result, ['10', '20', EMPTY_VALUE, EMPTY_VALUE])
 
         result = column.get_value('domain', 'docid', {'form': {'geo': '10 20'}}, [], split_column=False)
         self.assertEqual(result, '10 20')
 
         result = column.get_value('domain', 'docid', {'form': {'geo': None}}, [], split_column=True)
-        self.assertEqual(result, [None, None, None, None])
+        self.assertEqual(result, [MISSING_VALUE] * 4)
 
     def test_get_headers(self):
         column = SplitGPSExportColumn(
@@ -260,7 +303,7 @@ class TestSplitExportColumn(SimpleTestCase):
             ),
         )
         result = column.get_value('domain', 'docid', {'form': {'mc': 'foo extra'}}, [], split_column=True)
-        self.assertEqual(result, [1, None, 'extra'])
+        self.assertEqual(result, [1, EMPTY_VALUE, 'extra'])
 
         result = column.get_value('domain', 'docid', {'form': {'mc': 'foo extra'}}, [], split_column=False)
         self.assertEqual(result, 'foo extra')
@@ -299,6 +342,11 @@ class TestMultiMediaExportColumn(SimpleTestCase):
                 absolute_reverse('download_attachment', args=('my-domain', '1234'))
             )
         )
+        result = column.get_value('my-domain', '1234', {'photo': None}, [PathNode(name='form')])
+        self.assertEqual(result, MISSING_VALUE)
+
+        result = column.get_value('my-domain', '1234', {'photo': ''}, [PathNode(name='form')])
+        self.assertEqual(result, '')
 
     def test_get_value_excel_format(self):
         column = MultiMediaExportColumn(

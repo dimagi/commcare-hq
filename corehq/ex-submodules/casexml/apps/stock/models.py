@@ -42,8 +42,8 @@ class ConsumptionMixin(object):
 
 
 class StockTransaction(models.Model, ConsumptionMixin):
-    report = models.ForeignKey(StockReport)
-    sql_product = models.ForeignKey(SQLProduct)
+    report = models.ForeignKey(StockReport, on_delete=models.CASCADE)
+    sql_product = models.ForeignKey(SQLProduct, on_delete=models.CASCADE)
 
     section_id = models.CharField(max_length=100, db_index=True)
 

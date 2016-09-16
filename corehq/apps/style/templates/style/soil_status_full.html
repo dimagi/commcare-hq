@@ -25,7 +25,7 @@
                     clearInterval(autoRefresh);
                 }
         };
-        $(document).ready(function () {
+        $(function () {
             pollDownloader();
             autoRefresh = setInterval(pollDownloader, 2000);
         });

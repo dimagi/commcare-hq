@@ -1,0 +1,15 @@
+{% extends "mocha/base.html" %}
+{% load hq_shared_tags %}
+
+{% block dependencies %}
+{% include "formplayer/dependencies.html" %}
+<script src="{% static 'cloudcare/js/formplayer/spec/fixtures.js' %}"></script>
+{% endblock %}
+
+{% block mocha_tests %}
+<script src="{% static 'cloudcare/js/formplayer/spec/menu_list_test.js' %}"></script>
+{% endblock %}
+
+{% block fixtures %}
+{% include "formplayer/case_list.html" %}
+{% endblock %}

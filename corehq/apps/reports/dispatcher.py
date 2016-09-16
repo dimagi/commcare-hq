@@ -93,8 +93,11 @@ class ReportDispatcher(View):
             custom_reports = ()
         else:
             module = __import__(module_name, fromlist=['reports'])
-            reports = getattr(module, 'reports')
-            custom_reports = process(getattr(reports, attr_name, ()))
+            if hasattr(module, 'reports'):
+                reports = getattr(module, 'reports')
+                custom_reports = process(getattr(reports, attr_name, ()))
+            else:
+                custom_reports = ()
 
             # soon to be removed
             if not custom_reports:

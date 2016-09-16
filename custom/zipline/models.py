@@ -46,7 +46,7 @@ class EmergencyOrderStatusUpdate(models.Model):
             ['order', 'package_number'],
         ]
 
-    order = models.ForeignKey('EmergencyOrder')
+    order = models.ForeignKey('EmergencyOrder', on_delete=models.CASCADE)
 
     # The timestamp in CommCareHQ that the status update was received
     timestamp = models.DateTimeField()
@@ -216,7 +216,7 @@ class EmergencyOrderPackage(models.Model):
         ]
 
     # (order, package_number) matches up with the same-named fields on EmergencyOrderStatusUpdate
-    order = models.ForeignKey('EmergencyOrder')
+    order = models.ForeignKey('EmergencyOrder', on_delete=models.CASCADE)
     package_number = models.IntegerField()
 
     # Same format as EmergencyOrder.products_requested; represents products and quantities

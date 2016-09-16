@@ -69,7 +69,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('date', models.DateField()),
                 ('group', models.CharField(max_length=1)),
-                ('location_id', models.ForeignKey(to='locations.SQLLocation')),
+                ('location_id', models.ForeignKey(to='locations.SQLLocation', on_delete=models.CASCADE)),
             ],
             options={
             },
@@ -85,7 +85,7 @@ class Migration(migrations.Migration):
                 ('user_phone', models.CharField(max_length=20, null=True)),
                 ('date', models.DateTimeField()),
                 ('text', models.TextField()),
-                ('location', models.ForeignKey(to='locations.SQLLocation')),
+                ('location', models.ForeignKey(to='locations.SQLLocation', on_delete=models.CASCADE)),
             ],
             options={
             },
@@ -139,7 +139,7 @@ class Migration(migrations.Migration):
                 ('complete', models.BooleanField(default=False)),
                 ('has_error', models.BooleanField(default=False)),
                 ('domain', models.CharField(max_length=60)),
-                ('location', models.ForeignKey(to='locations.SQLLocation', null=True)),
+                ('location', models.ForeignKey(to='locations.SQLLocation', null=True, on_delete=models.CASCADE)),
             ],
             options={
             },
@@ -206,7 +206,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='groupsummary',
             name='org_summary',
-            field=models.ForeignKey(to='ilsgateway.OrganizationSummary'),
+            field=models.ForeignKey(to='ilsgateway.OrganizationSummary', on_delete=models.CASCADE),
             preserve_default=True,
         ),
     ]

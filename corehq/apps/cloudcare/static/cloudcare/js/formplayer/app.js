@@ -19,6 +19,7 @@ FormplayerFrontend.on("before:start", function () {
         regions: {
             main: "#menu-region",
             breadcrumb: "#breadcrumb-region",
+            persistentCaseTile: "#persistent-case-tile",
             phoneModeNavigation: '#phone-mode-navigation',
         },
     });
@@ -62,6 +63,14 @@ FormplayerFrontend.reqres.setHandler('resourceMap', function (resource_path, app
     }
 });
 
+FormplayerFrontend.reqres.setHandler('gridPolyfillPath', function(path) {
+    if (path) {
+        FormplayerFrontend.gridPolyfillPath = path;
+    } else {
+        return FormplayerFrontend.gridPolyfillPath;
+    }
+});
+
 FormplayerFrontend.reqres.setHandler('currentUser', function () {
     if (!FormplayerFrontend.currentUser) {
         FormplayerFrontend.currentUser = new FormplayerFrontend.Entities.UserModel();
@@ -77,10 +86,10 @@ FormplayerFrontend.reqres.setHandler('clearMenu', function () {
     $('#menu-region').html("");
 });
 
-$(document).bind("ajaxStart", function () {
+$(document).on("ajaxStart", function () {
     $(".formplayer-request").addClass('formplayer-requester-disabled');
     tfLoading();
-}).bind("ajaxStop", function () {
+}).on("ajaxStop", function () {
     $(".formplayer-request").removeClass('formplayer-requester-disabled');
     tfLoadingComplete();
 });
@@ -109,6 +118,7 @@ FormplayerFrontend.on('startForm', function (data) {
     var user = FormplayerFrontend.request('currentUser');
     data.xform_url = user.formplayer_url;
     data.domain = user.domain;
+    data.username = user.username;
     data.formplayerEnabled = true;
     data.onerror = function (resp) {
         showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
@@ -172,6 +182,8 @@ FormplayerFrontend.on('debugger.formXML', function(sessionId) {
         url: user.formplayer_url + '/get-instance',
         data: JSON.stringify({
             'session-id': sessionId,
+            'domain': user.domain,
+            'username': user.username,
         }),
         success: success,
     };
@@ -188,6 +200,7 @@ FormplayerFrontend.on("start", function (options) {
     user.apps = options.apps;
     user.domain = options.domain;
     user.formplayer_url = options.formplayer_url;
+    FormplayerFrontend.request('gridPolyfillPath', options.gridPolyfillPath);
     if (Backbone.history) {
         Backbone.history.start();
         // will be the same for every domain. TODO: get domain/username/pass from django
@@ -241,7 +254,7 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
             data: JSON.stringify({
                 app_id: appId,
                 domain: user.domain,
-                username: user.username.split('@')[0],
+                username: user.username,
             }),
         };
     Util.setCrossDomainAjaxOptions(options);

@@ -1,6 +1,6 @@
 /*global FormplayerFrontend, Util */
 
-FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette) {
+FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette, $) {
     MenuList.MenuView = Marionette.ItemView.extend({
         tagName: "tr",
         className: "formplayer-request",
@@ -125,8 +125,8 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         });
 
         // need to remove this attribute so the grid style is re-evaluated
-        $("#case-tiles-style").html(caseTileStyle).removeAttr("data-css-polyfilled");
-        $("#inner-tiles-container-style").removeAttr("data-css-polyfilled");
+        $("#case-tiles-style").html(caseTileStyle).data("css-polyfilled", false);
+        $("#inner-tiles-container-style").data("css-polyfilled", false);
     };
 
     // Dynamically generate the CSS style to display multiple tiles per line
@@ -150,25 +150,33 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             model: outerGridModel,
         });
         // need to remove this attribute so the grid style is re-evaluated
-        $("#outer-tiles-container-style").html(outerGridStyle).removeAttr("data-css-polyfilled");
+        $("#outer-tiles-container-style").html(outerGridStyle).data("css-polyfilled", false);
     };
 
     // Dynamically generate the CSS style for the grid polyfill to use for the case tile
-    var makeInnerGridStyle = function (numRows, numColumns, numCasesPerRow) {
+    // useUniformUnits - true if the grid's cells should have the same height as width
+    var makeInnerGridStyle = function (numRows, numColumns, numCasesPerRow, useUniformUnits) {
         var templateString,
             view,
             template,
-            model;
+            model,
+            widthPixels,
+            heightPixels,
+            fullWidth;
 
-        var widthPercentage = 100 / numColumns;
-        var widthHeightRatio = numRows / numColumns;
-        var heightPercentage = widthPercentage * widthHeightRatio;
+        fullWidth = 800;
+        widthPixels = ((1 / numColumns) / numCasesPerRow) * fullWidth;
+        if (useUniformUnits) {
+            heightPixels = widthPixels;
+        } else {
+            heightPixels = widthPixels/2;
+        }
 
         model = {
             numRows: numRows,
             numColumns: numColumns,
-            widthPercentage: widthPercentage,
-            heightPercentage: heightPercentage,
+            widthPixels: widthPixels,
+            heightPixels: heightPixels,
         };
         templateString = $("#grid-inner-style-template").html();
         template = _.template(templateString);
@@ -176,7 +184,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             model: model,
         });
         // need to remove this attribute so the grid style is re-evaluated
-        $("#inner-tiles-container-style").html(view).removeAttr("data-css-polyfilled");
+        $("#inner-tiles-container-style").html(view).data("css-polyfilled", false);
 
         // If we have multiple cases per line, need to generate the outer grid style as well
         if (numCasesPerRow > 1) {
@@ -278,8 +286,13 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         childView: MenuList.CaseTileView,
         initialize: function (options) {
             MenuList.CaseTileListView.__super__.initialize.apply(this, arguments);
+            var gridPolyfillPath = FormplayerFrontend.request('gridPolyfillPath');
             generateCaseTileStyles(options.tiles);
-            makeInnerGridStyle(options.maxHeight, options.maxWidth, options.numEntitiesPerRow);
+            makeInnerGridStyle(options.maxHeight,
+                options.maxWidth,
+                options.numEntitiesPerRow || 1,
+                options.useUniformUnits);
+            $.getScript(gridPolyfillPath);
         },
 
         templateHelpers: function () {
@@ -292,7 +305,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     MenuList.GridCaseTileViewItem = MenuList.CaseTileView.extend({
         tagName: "div",
         className: "formplayer-request case-tile-grid-item",
-        template: "#case-tile-grid-view-item-template",
+        template: "#case-tile-view-item-template",
     });
 
     MenuList.GridCaseTileListView = MenuList.CaseTileListView.extend({

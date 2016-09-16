@@ -26,6 +26,7 @@ class ENikshayCaseStructureMixin(object):
                     aadhaar_number="499118665246",
                     mobile_number="0123456789",
                     backup_number="0999999999",
+                    merm_id="123456789",
                     dob="1987-08-15",
                 )
             },
