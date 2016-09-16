@@ -39,16 +39,8 @@ class EnikshayCaseFactory(object):
             episode_structure.case_id = episode_case.case_id
 
     def create_test_cases(self):
-        tests = [
-            self.test(followup)
-            for followup in Followup.objects.filter(PatientID=self.patient_detail.PregId)
-            if Outcome.objects.filter(PatientId=PatientDetail.objects.get(PregId=followup.PatientID)).exists()
-        ]
+        tests = [self.test(followup) for followup in self.followups]
         self.factory.create_or_update_cases(tests)
-
-    @property
-    def outcomes(self):
-        return Outcome.objects.filter(PatientId=self.patient_detail)
 
     @property
     @memoized
@@ -130,6 +122,18 @@ class EnikshayCaseFactory(object):
                 related_type=episode_structure.attrs['case_type'],
             )],
         )
+
+    @property
+    def outcomes(self):
+        return Outcome.objects.filter(PatientId=self.patient_detail)
+
+    @property
+    def followups(self):
+        return [
+            followup for followup in Followup.objects.filter(PatientID=self.patient_detail.PregId)
+            if Outcome.objects.filter(PatientId=PatientDetail.objects.get(PregId=followup.PatientID)).exists()
+            # how many followup's do not have a corresponding outcome? how should we handle this situation?
+        ]
 
 
 class Command(BaseCommand):
