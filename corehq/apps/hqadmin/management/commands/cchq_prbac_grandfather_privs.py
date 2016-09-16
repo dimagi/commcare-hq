@@ -44,7 +44,7 @@ class Command(BaseCommand):
         noinput = kwargs.get('noinput')
         all_plan_slugs = (
             set(map(lambda s: s.role.slug, SoftwarePlanVersion.objects.all())) -
-            set(MAX_PRIVILEGES) -  # no privileges shoudl be in software plan roles, this is just a safeguard
+            set(MAX_PRIVILEGES) -  # no privileges should be in software plan roles, this is just a safeguard
             set(map(lambda plan_slug: plan_slug.strip(), kwargs.get('skip', []).split(',')))
         )
 
