@@ -11,6 +11,41 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
+            name='Followup',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('PatientID', models.CharField(max_length=255, null=True)),
+                ('IntervalId', models.CharField(max_length=255, null=True)),
+                ('TestDate', models.CharField(max_length=255, null=True)),
+                ('DMC', models.CharField(max_length=255, null=True)),
+                ('LabNo', models.CharField(max_length=255, null=True)),
+                ('SmearResult', models.CharField(max_length=255, null=True)),
+                ('PatientWeight', models.CharField(max_length=255, null=True)),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='Household',
+            fields=[
+                ('id', models.IntegerField(serialize=False, primary_key=True)),
+                ('PatientID', models.CharField(max_length=255, null=True)),
+                ('Name', models.CharField(max_length=255, null=True)),
+                ('Dosage', models.CharField(max_length=255, null=True)),
+                ('Weight', models.CharField(max_length=255, null=True)),
+                ('M1', models.CharField(max_length=255, null=True)),
+                ('M2', models.CharField(max_length=255, null=True)),
+                ('M3', models.CharField(max_length=255, null=True)),
+                ('M4', models.CharField(max_length=255, null=True)),
+                ('M5', models.CharField(max_length=255, null=True)),
+                ('M6', models.CharField(max_length=255, null=True)),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
             name='PatientDetail',
             fields=[
                 ('PregId', models.CharField(max_length=255, serialize=False, primary_key=True)),
