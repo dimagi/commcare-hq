@@ -67,6 +67,7 @@ from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.util.dates import iso_string_to_datetime
+from corehq.util.soft_assert import soft_assert
 from corehq.util.spreadsheets.excel import WorkbookJSONReader
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.quickcache import quickcache
@@ -2119,30 +2120,48 @@ class InvitationAppInfoView(View, DomainViewMixin):
 
     @property
     @memoized
-    def token(self):
-        token = self.kwargs.get('token')
-        if not token:
+    def app_id(self):
+        app_id = self.kwargs.get('app_id')
+        if not app_id:
             raise Http404()
-        return token
+        return app_id
+
+    @property
+    def token(self):
+        return self.app_id
 
     @property
     @memoized
     def invitation(self):
-        invitation = SelfRegistrationInvitation.by_token(self.token)
-        if not invitation:
-            raise Http404()
-        return invitation
+        return SelfRegistrationInvitation.by_token(self.token)
+
+    @property
+    @memoized
+    def odk_url(self):
+        try:
+            odk_url = SelfRegistrationInvitation.get_app_odk_url(self.domain, self.app_id)
+        except Http404:
+            odk_url = None
+
+        if odk_url:
+           return odk_url
+
+        if self.invitation:
+            # There shouldn't be many instances of this. Once we stop getting these asserts,
+            # we can stop supporting the old way of looking up the SelfRegistrationInvitation
+            # by token, and only support the new way of looking up the app by app id.
+            _assert = soft_assert('@'.join(['gcapalbo', 'dimagi.com']), exponential_backoff=False)
+            _assert(False, "InvitationAppInfoView references invitation token")
+            if self.invitation.odk_url:
+                return self.invitation.odk_url
+
+        raise Http404()
 
     def get(self, *args, **kwargs):
-        if not self.invitation.odk_url:
-            raise Http404()
-        url = str(self.invitation.odk_url).strip()
+        url = self.odk_url.strip()
         response = 'ccapp: %s signature: %s' % (url, sign(url))
         response = base64.b64encode(response)
         return HttpResponse(response)
-
-    def post(self, *args, **kwargs):
-        return self.get(*args, **kwargs)
 
 
 class IncomingBackendView(View):

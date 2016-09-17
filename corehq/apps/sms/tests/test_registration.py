@@ -22,7 +22,7 @@ from corehq.apps.users.util import format_username
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from django_prbac.models import Role
 from django.test import Client, TestCase
-from mock import patch
+from mock import patch, Mock
 
 
 DUMMY_APP_ODK_URL = 'http://localhost/testapp'
@@ -126,17 +126,15 @@ class RegistrationTestCase(BaseSMSTest):
         user_data = {'abc': 'def'}
 
         # Initiate Registration Workflow
-        with patch.object(SelfRegistrationInvitation, 'get_app_odk_url', return_value=DUMMY_APP_ODK_URL):
-            SelfRegistrationInvitation.initiate_workflow(
-                self.domain,
-                [SelfRegistrationUserInfo('999123', user_data)],
-                app_id=self.app_id,
-            )
+        SelfRegistrationInvitation.initiate_workflow(
+            self.domain,
+            [SelfRegistrationUserInfo('999123', user_data)],
+            app_id=self.app_id,
+        )
 
         self.assertRegistrationInvitation(
             phone_number='999123',
             app_id=self.app_id,
-            odk_url=DUMMY_APP_ODK_URL,
             phone_type=None,
             android_only=False,
             require_email=False,
@@ -152,7 +150,6 @@ class RegistrationTestCase(BaseSMSTest):
         self.assertRegistrationInvitation(
             phone_number='999123',
             app_id=self.app_id,
-            odk_url=DUMMY_APP_ODK_URL,
             phone_type=SelfRegistrationInvitation.PHONE_TYPE_OTHER,
             android_only=False,
             require_email=False,
@@ -183,17 +180,15 @@ class RegistrationTestCase(BaseSMSTest):
         user_data = {'abc': 'def'}
 
         # Initiate Registration Workflow
-        with patch.object(SelfRegistrationInvitation, 'get_app_odk_url', return_value=DUMMY_APP_ODK_URL):
-            SelfRegistrationInvitation.initiate_workflow(
-                self.domain,
-                [SelfRegistrationUserInfo('999123', user_data)],
-                app_id=self.app_id,
-            )
+        SelfRegistrationInvitation.initiate_workflow(
+            self.domain,
+            [SelfRegistrationUserInfo('999123', user_data)],
+            app_id=self.app_id,
+        )
 
         self.assertRegistrationInvitation(
             phone_number='999123',
             app_id=self.app_id,
-            odk_url=DUMMY_APP_ODK_URL,
             phone_type=None,
             android_only=False,
             require_email=False,
@@ -204,14 +199,15 @@ class RegistrationTestCase(BaseSMSTest):
         self.assertLastOutgoingSMS('+999123', [_MESSAGES[MSG_MOBILE_WORKER_INVITATION_START]])
 
         # Choose phone type 'android'
-        with patch.object(SelfRegistrationInvitation, 'get_user_registration_url', return_value=DUMMY_REGISTRATION_URL), \
+        with patch('corehq.apps.sms.models.SelfRegistrationInvitation.odk_url') as mock_odk_url, \
+                patch.object(SelfRegistrationInvitation, 'get_user_registration_url', return_value=DUMMY_REGISTRATION_URL), \
                 patch.object(SelfRegistrationInvitation, 'get_app_info_url', return_value=DUMMY_APP_INFO_URL):
+            mock_odk_url.__get__ = Mock(return_value=DUMMY_APP_ODK_URL)
             incoming('+999123', '1', self.backend.hq_api_id)
 
         self.assertRegistrationInvitation(
             phone_number='999123',
             app_id=self.app_id,
-            odk_url=DUMMY_APP_ODK_URL,
             phone_type=SelfRegistrationInvitation.PHONE_TYPE_ANDROID,
             android_only=False,
             require_email=False,
@@ -250,9 +246,10 @@ class RegistrationTestCase(BaseSMSTest):
         self.domain_obj.save()
 
         # Initiate Registration Workflow
-        with patch.object(SelfRegistrationInvitation, 'get_app_odk_url', return_value=DUMMY_APP_ODK_URL), \
+        with patch('corehq.apps.sms.models.SelfRegistrationInvitation.odk_url') as mock_odk_url, \
                 patch.object(SelfRegistrationInvitation, 'get_user_registration_url', return_value=DUMMY_REGISTRATION_URL), \
                 patch.object(SelfRegistrationInvitation, 'get_app_info_url', return_value=DUMMY_APP_INFO_URL):
+            mock_odk_url.__get__ = Mock(return_value=DUMMY_APP_ODK_URL)
             SelfRegistrationInvitation.initiate_workflow(
                 self.domain,
                 [SelfRegistrationUserInfo('999123')],
@@ -263,7 +260,6 @@ class RegistrationTestCase(BaseSMSTest):
         self.assertRegistrationInvitation(
             phone_number='999123',
             app_id=self.app_id,
-            odk_url=DUMMY_APP_ODK_URL,
             phone_type=SelfRegistrationInvitation.PHONE_TYPE_ANDROID,
             android_only=True,
             require_email=False,
@@ -302,13 +298,12 @@ class RegistrationTestCase(BaseSMSTest):
         self.domain_obj.save()
 
         # Initiate Registration Workflow
-        with patch.object(SelfRegistrationInvitation, 'get_app_odk_url', return_value=DUMMY_APP_ODK_URL):
-            SelfRegistrationInvitation.initiate_workflow(
-                self.domain,
-                [SelfRegistrationUserInfo('999123')],
-                app_id=self.app_id,
-                custom_first_message='Custom Message',
-            )
+        SelfRegistrationInvitation.initiate_workflow(
+            self.domain,
+            [SelfRegistrationUserInfo('999123')],
+            app_id=self.app_id,
+            custom_first_message='Custom Message',
+        )
 
         self.assertLastOutgoingSMS('+999123', ['Custom Message'])
 
@@ -318,9 +313,10 @@ class RegistrationTestCase(BaseSMSTest):
         self.domain_obj.save()
 
         # Initiate Registration Workflow
-        with patch.object(SelfRegistrationInvitation, 'get_app_odk_url', return_value=DUMMY_APP_ODK_URL), \
+        with patch('corehq.apps.sms.models.SelfRegistrationInvitation.odk_url') as mock_odk_url, \
                 patch.object(SelfRegistrationInvitation, 'get_user_registration_url', return_value=DUMMY_REGISTRATION_URL), \
                 patch.object(SelfRegistrationInvitation, 'get_app_info_url', return_value=DUMMY_APP_INFO_URL):
+            mock_odk_url.__get__ = Mock(return_value=DUMMY_APP_ODK_URL)
             SelfRegistrationInvitation.initiate_workflow(
                 self.domain,
                 [SelfRegistrationUserInfo('999123')],

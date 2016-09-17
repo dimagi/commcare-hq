@@ -5,6 +5,7 @@ from dimagi.ext.couchdbkit import *
 
 from datetime import datetime, timedelta
 from django.db import models, transaction
+from django.http import Http404
 from collections import namedtuple
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form
@@ -20,6 +21,7 @@ from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
     get_message)
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.load_balance import load_balance
 from django.utils.translation import ugettext_noop, ugettext_lazy
 
@@ -1229,7 +1231,6 @@ class SelfRegistrationInvitation(models.Model):
     app_id = models.CharField(max_length=126, null=True)
     expiration_date = models.DateField(null=False)
     created_date = models.DateTimeField(null=False)
-    odk_url = models.CharField(max_length=126, null=True)
     phone_type = models.CharField(max_length=20, null=True, choices=PHONE_TYPE_CHOICES)
     registered_date = models.DateTimeField(null=True)
 
@@ -1245,6 +1246,17 @@ class SelfRegistrationInvitation(models.Model):
 
     class Meta:
         app_label = 'sms'
+
+    @property
+    @memoized
+    def odk_url(self):
+        if not self.app_id:
+            return None
+
+        try:
+            return self.get_app_odk_url(self.domain, self.app_id)
+        except Http404:
+            return None
 
     @property
     def already_registered(self):
@@ -1304,7 +1316,7 @@ class SelfRegistrationInvitation(models.Model):
         from corehq.apps.sms.views import InvitationAppInfoView
         return absolute_reverse(
             InvitationAppInfoView.urlname,
-            args=[self.domain, self.token]
+            args=[self.domain, self.app_id]
         )
 
     def send_step2_android_sms(self, custom_message=None):
@@ -1422,10 +1434,6 @@ class SelfRegistrationInvitation(models.Model):
         invalid_format_numbers = []
         numbers_in_use = []
 
-        odk_url = None
-        if app_id:
-            odk_url = cls.get_app_odk_url(domain, app_id)
-
         for user_info in users:
             phone_number = apply_leniency(user_info.phone_number)
             try:
@@ -1450,7 +1458,6 @@ class SelfRegistrationInvitation(models.Model):
                 app_id=app_id,
                 expiration_date=expiration_date,
                 created_date=datetime.utcnow(),
-                odk_url=odk_url,
                 android_only=android_only,
                 require_email=require_email,
                 custom_user_data=user_info.custom_user_data or {},
