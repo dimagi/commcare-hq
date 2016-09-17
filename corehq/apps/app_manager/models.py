@@ -5717,7 +5717,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         try:
             feature_flag = Toggle.get('grid_menus')
             return self.domain in feature_flag.get_supported_domain_names()
-        except AttributeError:
+        except (AttributeError, ResourceNotFound):
             return False
 
 
