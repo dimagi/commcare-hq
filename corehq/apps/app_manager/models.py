@@ -5714,8 +5714,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     def grid_menu_toggle_enabled(self):
         from toggle.models import Toggle
-        feature_flag = Toggle.get('grid_menus')
-        return self.domain in feature_flag.get_supported_domain_names()
+        try:
+            feature_flag = Toggle.get('grid_menus')
+            return self.domain in feature_flag.get_supported_domain_names()
+        except AttributeError:
+            return False
 
 
 class RemoteApp(ApplicationBase):
