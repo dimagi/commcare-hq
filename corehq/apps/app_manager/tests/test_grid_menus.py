@@ -1,15 +1,27 @@
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
+from mock import patch
+
+
+def mock_toggle(slug, enable_users=None):
+    from toggle.models import Toggle
+    if enable_users is None: enable_users = []
+    return Toggle(slug=slug, enabled_users=enable_users)
 
 
 class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
+    def setUp(self):
+        self.patcher = patch('toggle.models.Toggle.get',
+                             return_value=mock_toggle('grid_menus', enable_users=['domain:test-grid-menu']))
+        self.patcher.start()
+        self.addCleanup(self.patcher.stop)
 
     def test_that_grid_style_is_added(self):
         """
         Confirms that style="grid" is added to the root menu
         """
-        factory = AppFactory(build_version='2.24')
+        factory = AppFactory(build_version='2.24', domain='test-grid-menu')
         factory.app.use_grid_menus = True
         factory.new_basic_module('registration', 'patient registration')
         factory.app.get_module(0).put_in_root = True
@@ -41,7 +53,7 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
         Confirms that a menu is added with id="root" and style="grid"
         when the app normally wouldn't have a menu with id="root".
         """
-        factory = AppFactory(build_version='2.24')
+        factory = AppFactory(build_version='2.24', domain='test-grid-menu')
         factory.app.use_grid_menus = True
         factory.new_basic_module('registration', 'patient')
 
@@ -58,7 +70,7 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
         """
         Confirms that style="grid" is not added to any menus when use_grid_menus is False.
         """
-        factory = AppFactory(build_version='2.24')
+        factory = AppFactory(build_version='2.24', domain='test-grid-menu')
         factory.app.use_grid_menus = False
         factory.new_basic_module('registration', 'patient')
 
@@ -67,9 +79,10 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
         self.assertXmlDoesNotHaveXpath(suite, style_xpath)
 
     def test_grid_menu_for_none(self):
-        factory = AppFactory(build_version='2.24.3')
+        factory = AppFactory(build_version='2.24.3', domain='test-grid-menu')
+        self.assertTrue(factory.app.grid_menu_toggle_enabled())
         factory.app.create_profile()
-        factory.app.profile['properties'] = {'cc-grid-menus': 'none'}
+        factory.app.grid_form_menus = 'none'
         factory.new_basic_module('registration', 'patient')
         factory.app.get_module(0).display_style = 'grid'
         root_xpath = './menu[@id="root"]'
@@ -100,9 +113,10 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
         )
 
     def test_grid_menu_for_some(self):
-        factory = AppFactory(build_version='2.24.3')
+        factory = AppFactory(build_version='2.24.3', domain='test-grid-menu')
+        self.assertTrue(factory.app.grid_menu_toggle_enabled())
         factory.app.create_profile()
-        factory.app.profile['properties'] = {'cc-grid-menus': 'some'}
+        factory.app.grid_form_menus = 'some'
         factory.new_basic_module('registration', 'patient')
         factory.new_basic_module('visit', 'patient visit')
         factory.app.get_module(1).display_style = 'grid'
@@ -148,9 +162,10 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
         )
 
     def test_grid_menu_for_all(self):
-        factory = AppFactory(build_version='2.24.3')
+        factory = AppFactory(build_version='2.24.3', domain='test-grid-menu')
+        self.assertTrue(factory.app.grid_menu_toggle_enabled())
         factory.app.create_profile()
-        factory.app.profile['properties'] = {'cc-grid-menus': 'all'}
+        factory.app.grid_form_menus = 'all'
         factory.new_basic_module('registration', 'patient')
         suite = factory.app.create_suite()
         root_xpath = './menu[@id="root"]'
@@ -204,3 +219,4 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
             suite,
             root_xpath
         )
+

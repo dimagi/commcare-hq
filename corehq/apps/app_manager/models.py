@@ -5006,6 +5006,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     auto_gps_capture = BooleanProperty(default=False)
     created_from_template = StringProperty()
     use_grid_menus = BooleanProperty(default=False)
+    grid_form_menus = StringProperty(default='none',
+                                     choices=['none', 'all', 'some'])
 
     @property
     @memoized
@@ -5702,15 +5704,18 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 if m.case_type == case_type
                 for t in m.get_subcase_types()}
 
+    @memoized
     def grid_display_for_some_modules(self):
-        return self.cc_grid_menus_property == 'some'
+        return self.grid_menu_toggle_enabled() and self.grid_form_menus == 'some'
 
+    @memoized
     def grid_display_for_all_modules(self):
-        return self.cc_grid_menus_property == 'all'
+        return self.grid_menu_toggle_enabled() and self.grid_form_menus == 'all'
 
-    @property
-    def cc_grid_menus_property(self):
-        return self.profile.get('properties', {}).get('cc-grid-menus', None)
+    def grid_menu_toggle_enabled(self):
+        from toggle.models import Toggle
+        feature_flag = Toggle.get('grid_menus')
+        return self.domain in feature_flag.get_supported_domain_names()
 
 
 class RemoteApp(ApplicationBase):
