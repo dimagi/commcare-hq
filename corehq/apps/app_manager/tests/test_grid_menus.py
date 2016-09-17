@@ -6,7 +6,7 @@ from mock import patch
 
 def mock_toggle(slug, enable_users=None):
     from toggle.models import Toggle
-    if enable_users is None: enable_users = []
+    enable_users = enable_users or []
     return Toggle(slug=slug, enabled_users=enable_users)
 
 
@@ -219,4 +219,3 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
             suite,
             root_xpath
         )
-
