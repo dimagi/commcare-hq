@@ -1,8 +1,12 @@
+import copy
+
 from django.test import TestCase
 
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.management.commands.add_multi_location_property import Command
+from corehq.util.test_utils import generate_cases
 
 
 class CCUserLocationAssignmentTest(TestCase):
@@ -194,3 +198,63 @@ class WebUserLocationAssignmentTest(TestCase):
         membership = self.user.get_domain_membership(self.domain)
         self.assertNotEqual(membership.location_id, expected)
         self.assertTrue(expected in membership.assigned_location_ids)
+
+
+def cc_user(location_id=None, assigned_location_ids=None, user_data={}):
+    doc = {
+        'location_id': location_id,
+    }
+    if assigned_location_ids is not None:
+        doc['assigned_location_ids'] = assigned_location_ids
+
+    user = copy.deepcopy(doc)
+    user.update({
+        'doc_type': 'CommCareUser',
+        'user_data': user_data,
+        'domain_membership': doc
+    })
+    return user
+
+
+def user_data(val):
+    return {'commcare_location_ids': val}
+
+
+def web_user(location_id=None, assigned_location_ids=None):
+    user = cc_user(location_id, assigned_location_ids)
+
+    return {
+        'doc_type': 'WebUser',
+        'domain_memberships': [user['domain_membership']]
+    }
+
+
+@generate_cases([
+    (
+        cc_user(),
+        cc_user(assigned_location_ids=[], user_data=user_data(''))
+    ),
+    (
+        cc_user('a'),
+        cc_user('a', ['a'], user_data=user_data('a'))
+    ),
+    (
+        cc_user('a', ['b']),
+        cc_user('a', ['b', 'a'], user_data=user_data('b a'))
+    ),
+    (
+        web_user(),
+        web_user(assigned_location_ids=[])
+    ),
+    (
+        web_user('a'),
+        web_user('a', ['a'])
+    ),
+    (
+        web_user('a', ['b']),
+        web_user('a', ['b', 'a'])
+    ),
+])
+def test_migration(self, user, expected):
+    actual = Command().migrate_user(user).doc
+    self.assertEqual(actual, expected)
