@@ -5,7 +5,7 @@ from django.test import TestCase
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.apps.users.management.commands.add_multi_location_property import Command
+from corehq.apps.users.management.commands import add_multi_location_property
 from corehq.util.test_utils import generate_cases
 
 
@@ -256,5 +256,5 @@ def web_user(location_id=None, assigned_location_ids=None):
     ),
 ])
 def test_migration(self, user, expected):
-    actual = Command().migrate_user(user).doc
+    actual = add_multi_location_property.Command().migrate_user(user).doc
     self.assertEqual(actual, expected)
