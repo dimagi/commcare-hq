@@ -184,6 +184,24 @@ class TestS3BlobDB(TestCase):
             self.assertEqual(fh.read(), b"content")
         self.assertTrue(self.db.delete(bucket=mod.DEFAULT_BUCKET))
 
+    def test_bulk_delete(self):
+        blobs = [
+            ('test.5', 'doc.5'),
+            ('test.6', 'doc.6'),
+        ]
+        infos = [
+            self.db.put(StringIO(b"content-{}".format(blob[0])), blob[0], blob[1])
+            for blob in blobs
+        ]
+
+        blob_infos = zip(blobs, infos)
+        paths = [self.db.get_path(info.identifier, blob[1]) for blob, info in blob_infos]
+        self.assertTrue(self.db.bulk_delete(paths), 'delete failed')
+
+        for blob, info in blob_infos:
+            with self.assertRaises(mod.NotFound):
+                self.db.get(info.identifier, blob[1])
+
     def test_bucket_path(self):
         bucket = join("doctype", "8cd98f0")
         self.db.put(StringIO(b"content"), bucket=bucket)

@@ -79,6 +79,14 @@ class S3BlobDB(AbstractBlobDB):
             return success
         return False
 
+    def bulk_delete(self, paths):
+        objects = [{"Key": path} for path in paths]
+        s3_bucket = self._s3_bucket()
+        resp = s3_bucket.delete_objects(Delete={"Objects": objects})
+        deleted = set(d["Key"] for d in resp.get("Deleted", []))
+        success = all(o["Key"] in deleted for o in objects)
+        return success
+
     def copy_blob(self, content, info, bucket):
         self._s3_bucket(create=True)
         path = self.get_path(info.identifier, bucket)

@@ -170,10 +170,10 @@ def _blow_away_migration(domain):
 
     for doc_type in doc_types():
         sql_form_ids = FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type)
-        FormAccessorSQL.hard_delete_forms(domain, sql_form_ids)
+        FormAccessorSQL.hard_delete_forms(domain, sql_form_ids, delete_attachments=False)
 
     sql_form_ids = FormAccessorSQL.get_deleted_form_ids_in_domain(domain)
-    FormAccessorSQL.hard_delete_forms(domain, sql_form_ids)
+    FormAccessorSQL.hard_delete_forms(domain, sql_form_ids, delete_attachments=False)
 
     sql_case_ids = CaseAccessorSQL.get_case_ids_in_domain(domain)
     CaseAccessorSQL.hard_delete_cases(domain, sql_case_ids)
