@@ -66,7 +66,7 @@ class SelfRegistrationInfo(object):
 
 class SelfRegistrationReinstallInfo(object):
 
-    def __init__(self, app_id, reinstall_message):
+    def __init__(self, app_id, reinstall_message=None):
         self.app_id = app_id
         if isinstance(reinstall_message, basestring):
             self.reinstall_message = reinstall_message.strip()
@@ -293,7 +293,7 @@ class UserSelfRegistrationReinstallResource(BaseUserSelfRegistrationResource):
 
         obj = SelfRegistrationReinstallInfo(
             data.get('app_id'),
-            data.get('resintall_message')
+            data.get('reinstall_message')
         )
         for user_info in data.get('users', []):
             obj.add_user(SelfRegistrationUserInfo(
