@@ -223,6 +223,7 @@ def convert_saved_export_to_export_instance(
                     # just add a user defined column
                     new_column = _create_user_defined_column(column, column_path, transform)
                     new_table.columns.append(new_column)
+                    ordering.append(new_column)
                 else:
                     migration_meta.skipped_columns.append(ConversionMeta(
                         path=column.index,
