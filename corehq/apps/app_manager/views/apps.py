@@ -34,6 +34,7 @@ from corehq.apps.app_manager.const import (
     APP_V2,
     MAJOR_RELEASE_TO_VERSION,
     AUTO_SELECT_USERCASE,
+    DEFAULT_FETCH_LIMIT,
 )
 from corehq.apps.app_manager.util import (
     get_settings_values,
@@ -211,6 +212,11 @@ def get_app_view_context(request, app):
         )
     })
     context['is_app_view'] = True
+    try:
+        context['fetchLimit'] = int(request.GET.get('limit', DEFAULT_FETCH_LIMIT))
+    except ValueError:
+        context['fetchLimit'] = DEFAULT_FETCH_LIMIT
+
     return context
 
 
