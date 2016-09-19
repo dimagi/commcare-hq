@@ -14,7 +14,6 @@ class Migration(migrations.Migration):
             name='Followup',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('PatientID', models.CharField(max_length=255, null=True)),
                 ('IntervalId', models.CharField(max_length=255, null=True)),
                 ('TestDate', models.CharField(max_length=255, null=True)),
                 ('DMC', models.CharField(max_length=255, null=True)),
@@ -114,6 +113,12 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='household',
+            name='PatientID',
+            field=models.ForeignKey(to='nikshay_datamigration.PatientDetail'),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='followup',
             name='PatientID',
             field=models.ForeignKey(to='nikshay_datamigration.PatientDetail'),
             preserve_default=True,
