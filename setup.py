@@ -12,7 +12,7 @@ setup(
     test_suite='dimagi.test_utils',
     test_loader='unittest2:TestLoader',
     install_requires=[
-        'jsonobject-couchdbkit>=0.7.2.0',
+        'jsonobject-couchdbkit>=0.7.4.2',
         'django==1.7.10',
         'django-redis==4.2',
         'mock>=0.8.0',
