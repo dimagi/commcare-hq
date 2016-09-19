@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Household',
             fields=[
-                ('id', models.IntegerField(serialize=False, primary_key=True)),
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('Name', models.CharField(max_length=255, null=True)),
                 ('Dosage', models.CharField(max_length=255, null=True)),
                 ('Weight', models.CharField(max_length=255, null=True)),

@@ -106,7 +106,6 @@ class Followup(models.Model):
 
 
 class Household(models.Model):
-    id = models.IntegerField(primary_key=True)  # have to add since PatientID is not unique
     PatientID = models.ForeignKey(PatientDetail)  # have to move to end of excel CSV
     Name = models.CharField(max_length=255, null=True)
     Dosage = models.CharField(max_length=255, null=True)
