@@ -89,6 +89,11 @@ def paginate_releases(request, domain, app_id):
     return json_response(saved_apps)
 
 
+def release_manager(request, domain, app_id):
+    from corehq.apps.app_manager.views.view_generic import view_generic
+    return view_generic(request, domain, app_id=app_id, release_manager=True)
+
+
 @require_deploy_apps
 def releases_ajax(request, domain, app_id, template='app_manager/partials/releases.html'):
     app = get_app(domain, app_id)

@@ -45,7 +45,7 @@ from django_prbac.utils import has_privilege
 
 @retry_resource(3)
 def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
-                 copy_app_form=None):
+                 copy_app_form=None, release_manager=False):
     """
     This is the main view for the app. All other views redirect to here.
 
@@ -246,6 +246,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             },
         })
 
+    context['release_manager'] = release_manager
     response = render(request, template, context)
 
     response.set_cookie('lang', encode_if_unicode(lang))

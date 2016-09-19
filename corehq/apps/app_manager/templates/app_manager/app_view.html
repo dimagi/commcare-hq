@@ -46,13 +46,15 @@
             }
         };
 
+        {% if not release_manager %}
         $(function () {
             var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
             COMMCAREHQ.appView.settings = new CommcareSettings(COMMCAREHQ.appView.settings);
             $('#commcare-settings').koApplyBindings(COMMCAREHQ.appView.settings);
         });
+        {% endif %}
 
-        {% if not app.is_remote_app %}
+        {% if not app.is_remote_app and not release_manager %}
         $(function () {
             var multimedia_tab = (function () {
                 var self = {};
@@ -85,16 +87,14 @@
         });
         {% endif %}
 
+        {% if release_manager %}
         $(function () {
+            console.log("esaped");
             var state = "",
                 $main = $("#releases"),
                 $loading = $main.find(".hq-loading").remove(),
                 $loadingError = $main.find(".hq-loading-error").remove();
 
-            $('#demand-releases').on('shown.bs.tab', function () {
-                if (state === "loading" || state === "loaded") {
-                    return;
-                }
                 state = "loading";
 
                 // If the content takes a noticeable amount of time to load, show a spinner
@@ -119,10 +119,11 @@
                         $main.html($loadingError.html());
                     },
                 });
-            });
         });
+        {% endif %}
 
     </script>
+    {% if not release_manager %}
     {% include 'hqmedia/partials/multimedia_init.html' %}
     <script>
         var refs = {{ refs|JSON }};
@@ -180,6 +181,7 @@
         });
     </script>
     {% endif %}
+    {% endif %}
     {% if app.doc_type == "Application" %}
         <script>
             $(function () {
@@ -204,6 +206,7 @@
             ga_track_event('App Builder', 'Download Multimedia');
         });
     </script>
+    {% if not release_manager %}
     <script>
         // Set up typeahead for domain names
         $(function(){
@@ -212,6 +215,7 @@
             });
         });
     </script>
+    {% endif %}
 {% endblock %}
 
 {% block title %}
@@ -249,26 +253,29 @@
 "></inline-edit>
 
 <br><br>
+{% if release_manager %}
+    <div class="tab-pane" id="releases">
+        <!-- templates only; will be populated asynchronously -->
+        <script type="text/html" class="hq-loading">
+            <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+            {% trans "Loading..." %}
+        </script>
+        <script type="text/html" class="hq-loading-error">
+            <div class="alert alert-danger">
+                {% trans "Oops, there was a problem loading this section. Please try again." %}
+            </div>
+            <button class="btn btn-primary reload">
+                {% trans "Try again" %}
+            </button>
+        </script>
+    </div>
+{% else %}
     <div class="tab-content">
-        <div class="tab-pane" id="releases">
-            <!-- templates only; will be populated asynchronously -->
-            <script type="text/html" class="hq-loading">
-                <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
-                {% trans "Loading..." %}
-            </script>
-            <script type="text/html" class="hq-loading-error">
-                <div class="alert alert-danger">
-                    {% trans "Oops, there was a problem loading this section. Please try again." %}
-                </div>
-                <button class="btn btn-primary reload">
-                    {% trans "Try again" %}
-                </button>
-            </script>
-        </div>
         <div class="tab-pane{% if not copy_app_form.is_bound %} active{% endif %}" id="app-settings">
             {% include "app_manager/partials/app-settings.html" %}
         </div>
     </div>
+{% endif %}
 {% endblock %}
 
 {% block modals %}{{ block.super }}

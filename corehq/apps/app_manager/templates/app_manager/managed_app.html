@@ -133,13 +133,13 @@
 </div>
 <nav class="appmanager-content">
     <ul class="nav nav-hq-sidebar">
-        <li class="{% if release_manager %}active {% endif %}release-manager-li">
-            <a id="demand-releases" href="{% url "view_app" domain app.id %}releases/#releases" {% if is_app_view %}data-toggle="tab"{% endif %}>
+        <li class="{% if not module %}active {% endif %}release-manager-li">
+            <a id="demand-releases" href="{% url "view_app" domain app.id %}releases/">
                 <i class="fa fa-mobile-phone"></i>
                 {{ app.name }}
             </a>
             <div id="app-settings-gear">
-                <a href="{% url "view_app" domain app.id %}#app-settings" {% if is_app_view %}data-toggle="tab" data-default="1"{% endif %}>
+                <a href="{% url "view_app" domain app.id %}">
                     <i class="fa fa-gear"></i>
                 </a>
             </div>
