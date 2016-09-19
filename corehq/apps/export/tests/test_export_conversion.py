@@ -6,7 +6,7 @@ from django.test import TestCase, SimpleTestCase
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from couchexport.models import SavedExportSchema
-from toggle.shortcuts import toggle_enabled, clear_toggle_cache
+from toggle.shortcuts import toggle_enabled, clear_toggle_cache, set_toggle
 
 from corehq.toggles import NEW_EXPORTS, NAMESPACE_DOMAIN
 from corehq.util.test_utils import TestFileMixin, generate_cases
@@ -62,6 +62,7 @@ class TestMigrateDomain(TestCase):
         self.project = Domain(name=self.domain)
         self.project.save()
         clear_toggle_cache(NEW_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN)
+        set_toggle(NEW_EXPORTS.slug, self.domain, False, namespace=NAMESPACE_DOMAIN)
 
     def tearDown(self):
         self.project.delete()
@@ -147,18 +148,24 @@ class TestConvertBase(TestCase, TestFileMixin):
 
     def _convert_form_export(self, export_file_name):
         saved_export_schema = SavedExportSchema.wrap(self.get_json(export_file_name))
-        with mock.patch(
-                'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
-                return_value=self.schema):
-            instance, meta = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
+
+        with mock.patch.object(SavedExportSchema, 'save', return_value='False Save'):
+            with mock.patch(
+                    'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
+                    return_value=self.schema):
+                instance, meta = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
+
         return instance, meta
 
     def _convert_case_export(self, export_file_name):
         saved_export_schema = SavedExportSchema.wrap(self.get_json(export_file_name))
-        with mock.patch(
-                'corehq.apps.export.models.new.CaseExportDataSchema.generate_schema_from_builds',
-                return_value=self.schema):
-            instance, meta = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
+
+        with mock.patch.object(SavedExportSchema, 'save', return_value='False Save'):
+            with mock.patch(
+                    'corehq.apps.export.models.new.CaseExportDataSchema.generate_schema_from_builds',
+                    return_value=self.schema):
+                instance, meta = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
+
         return instance, meta
 
 
@@ -617,11 +624,7 @@ class TestSingleNodeRepeatConversion(TestConvertBase):
         This test ensures that if a repeat only receives one entry, that the selection
         will still be migrated.
         """
-        saved_export_schema = SavedExportSchema.wrap(self.get_json('single_node_repeat'))
-        with mock.patch(
-                'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
-                return_value=self.schema):
-            instance, _ = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
+        instance, _ = self._convert_form_export('single_node_repeat')
 
         table = instance.get_table([PathNode(name='form'), PathNode(name='repeat', is_repeat=True)])
         index, column = table.get_column(
@@ -689,11 +692,7 @@ class TestConvertStockFormExport(TestConvertBase):
         )
 
     def test_convert_form_export_stock_basic(self, _, __):
-        saved_export_schema = SavedExportSchema.wrap(self.get_json('stock_form_export'))
-        with mock.patch(
-                'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
-                return_value=self.schema):
-            instance, _ = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
+        instance, _ = self._convert_form_export('stock_form_export')
 
         table = instance.get_table(MAIN_TABLE)
         index, column = table.get_column(
@@ -709,12 +708,7 @@ class TestConvertStockFormExport(TestConvertBase):
         self.assertTrue(column.selected)
 
     def test_convert_form_export_stock_in_repeat(self, _, __):
-        saved_export_schema = SavedExportSchema.wrap(self.get_json('stock_form_export_repeat'))
-        with mock.patch(
-                'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
-                return_value=self.schema):
-            instance, _ = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
-
+        instance, _ = self._convert_form_export('stock_form_export_repeat')
         table = instance.get_table([PathNode(name='form'), PathNode(name='repeat', is_repeat=True)])
         index, column = table.get_column(
             [
