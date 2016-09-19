@@ -147,9 +147,9 @@ CASE_SUMMARY_EXPORT_HEADER_NAMES = [
     'form_name',
     'load_question_question',
     'load_question_condition',
-    'load_question_calculate',
     'save_question_question',
-    'save_question_condition'
+    'save_question_condition',
+    'save_question_calculate',
 ]
 PropertyRow = namedtuple('PropertyRow', CASE_SUMMARY_EXPORT_HEADER_NAMES)
 
@@ -216,7 +216,7 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             ) if load_question.condition else "",
             None,
             None,
-            None
+            None,
         )
 
     def _get_save_question_row(self, prop, form, language, save_question):
@@ -226,11 +226,11 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             _get_translated_form_name(self.app, form.form_id, language),
             None,
             None,
-            None,
             save_question.question.value,
             "{} {} {}".format(
                 save_question.condition.question,
                 save_question.condition.operator,
                 save_question.condition.answer
             ) if save_question.condition else "",
+            save_question.question.calculate,
         )
