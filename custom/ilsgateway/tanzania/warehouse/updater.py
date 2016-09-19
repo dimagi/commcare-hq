@@ -474,9 +474,11 @@ def process_facility_transactions(facility_id, transactions, start_date, end_dat
 
 
 def get_non_archived_facilities_below(location):
-    return location.sql_location.get_descendants(include_self=True).filter(
-        is_archived=False, location_type__name='FACILITY'
-    ).values_list('location_id', flat=True).couch_locations()
+    return list(location.sql_location
+                .get_descendants(include_self=True)
+                .filter(is_archived=False,
+                        location_type__name='FACILITY')
+                .couch_locations())
 
 
 @task(queue='logistics_background_queue')

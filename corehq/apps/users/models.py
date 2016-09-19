@@ -1684,6 +1684,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         locations per user flag set. It will error if you try
         to call it on a normal domain.
         """
+        from corehq.apps.locations.models import SQLLocation
         if not self.project.supports_multiple_locations_per_user:
             raise InvalidLocationConfig(
                 "Attempting to access multiple locations for a user in a domain that does not support this."
