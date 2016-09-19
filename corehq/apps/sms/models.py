@@ -1353,7 +1353,7 @@ class SelfRegistrationInvitation(models.Model):
                 self.domain,
                 None,
                 self.phone_number,
-                cls.get_sms_install_link(self.domain, self.app_id),
+                self.get_sms_install_link(self.domain, self.app_id),
             )
 
     def expire(self):
