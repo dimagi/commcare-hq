@@ -160,16 +160,15 @@
             {% endif %}
         </li>
 
-        {% if request|toggle_enabled:"PREVIEW_APP" %}
-        <!-- TODO: where does this fit in? -->
-        <!--li>
+        {#% if request|toggle_enabled:"PREVIEW_APP" %#}
+        <li>
           <a id="js-toggle-app-preview">
               <i class="fa fa-mobile-phone preview-icon"></i>
               <span class="preview-action-show hide">{% trans "Show App Preview" %}</span>
               <span class="preview-action-hide hide">{% trans "Hide App Preview" %}</span>
           </a>
-        </li-->
-        {% endif %}
+        </li>
+        {#% endif %#}
         <!--li class="divider"></li>
         <li {% if not module and not form and not release_manager %}class="app-name-div
                 {% if not copy_app_form or not copy_app_form.is_bound %}active{% endif %}"
