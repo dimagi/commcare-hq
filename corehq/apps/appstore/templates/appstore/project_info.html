@@ -230,10 +230,6 @@
                         <dd>
                             {{ app.has_media|yesno:"Yes,No" }}
                         </dd>
-                        <dt>CommCare</dt>
-                        <dd>
-                            {% trans "Version" %} {{ app.application_version }}
-                        </dd>
                         {% if app.user_type %}
                             <dt>{% trans 'User type' %}</dt>
                             <dd>{{ app.user_type }}</dd>

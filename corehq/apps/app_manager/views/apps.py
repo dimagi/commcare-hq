@@ -31,7 +31,6 @@ from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.tour import tours
 from corehq.apps.translations.models import Translation
 from corehq.apps.app_manager.const import (
-    APP_V1,
     APP_V2,
     MAJOR_RELEASE_TO_VERSION,
     AUTO_SELECT_USERCASE,
@@ -119,17 +118,17 @@ def default_new_app(request, domain):
     if tours.NEW_APP.is_enabled(request.user):
         identify.delay(request.couch_user.username, {'First Template App Chosen': 'blank'})
     lang = 'en'
-    app = Application.new_app(
-        domain, _("Untitled Application"), lang=lang,
-        application_version=APP_V2
-    )
-    module = Module.new_module(_("Untitled Module"), lang)
-    app.add_module(module)
-    form = app.new_form(0, "Untitled Form", lang)
+    app = Application.new_app(domain, _("Untitled Application"), lang=lang)
+    if not toggles.ONBOARDING_PROTOTYPE.enabled(request.domain):
+        module = Module.new_module(_("Untitled Module"), lang)
+        app.add_module(module)
+        form = app.new_form(0, "Untitled Form", lang)
     if request.project.secure_submissions:
         app.secure_submissions = True
     clear_app_cache(request, domain)
     app.save()
+    if toggles.ONBOARDING_PROTOTYPE.enabled(request.domain):
+        return HttpResponseRedirect(reverse('release_manager', args=[domain, app._id]))
     return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, 0, 0]))
 
 
@@ -244,28 +243,18 @@ def get_apps_base_context(request, domain, app):
     }
 
     if app:
-        v2_app = app.application_version == APP_V2
+        app.assert_app_v2()
         context.update({
             'show_care_plan': (
-                v2_app
-                and not app.has_careplan_module
+                not app.has_careplan_module
                 and toggles.APP_BUILDER_CAREPLAN.enabled(request.user.username)
             ),
             'show_advanced': (
-                v2_app
-                and (
-                    toggles.APP_BUILDER_ADVANCED.enabled(domain)
-                    or getattr(app, 'commtrack_enabled', False)
-                )
+                toggles.APP_BUILDER_ADVANCED.enabled(domain)
+                or getattr(app, 'commtrack_enabled', False)
             ),
-            'show_report_modules': (
-                v2_app
-                and toggles.MOBILE_UCR.enabled(domain)
-            ),
-            'show_shadow_modules': (
-                v2_app
-                and toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain)
-            ),
+            'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
+            'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),
         })
 
     return context
@@ -412,11 +401,10 @@ def new_app(request, domain):
     "Adds an app to the database"
     lang = 'en'
     type = request.POST["type"]
-    application_version = request.POST.get('application_version', APP_V1)
     cls = str_to_cls[type]
     form_args = []
     if cls == Application:
-        app = cls.new_app(domain, "Untitled Application", lang=lang, application_version=application_version)
+        app = cls.new_app(domain, "Untitled Application", lang=lang)
         module = Module.new_module("Untitled Module", lang)
         app.add_module(module)
         form = app.new_form(0, "Untitled Form", lang)
@@ -589,7 +577,6 @@ def edit_app_attr(request, domain, app_id, attr):
         'use_j2me_endpoint',
         # Application only
         'cloudcare_enabled',
-        'application_version',
         'case_sharing',
         'translation_strategy',
         'auto_gps_capture',
@@ -605,7 +592,6 @@ def edit_app_attr(request, domain, app_id, attr):
     resp = {"update": {}}
     # For either type of app
     easy_attrs = (
-        ('application_version', None),
         ('build_spec', BuildSpec.from_string),
         ('case_sharing', None),
         ('cloudcare_enabled', None),
@@ -672,12 +658,6 @@ def edit_app_attr(request, domain, app_id, attr):
         app.set_custom_suite(hq_settings['custom_suite'])
 
     return HttpResponse(json.dumps(resp))
-
-
-@require_can_edit_apps
-def get_commcare_version(request, app_id, app_version):
-    options = CommCareBuildConfig.fetch().get_menu(app_version)
-    return json_response(options)
 
 
 @no_conflict_require_POST

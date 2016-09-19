@@ -495,7 +495,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             name = request.POST.get(attribute, None)
             module[attribute][lang] = name
             if should_edit("name"):
-                resp['update'].update({'.variable-module_name': module.name[lang]})
+                resp['update'] = {'.variable-module_name': trans(module.name, [lang], use_delim=False)}
     if should_edit('comment'):
         module.comment = request.POST.get('comment')
     for SLUG in ('case_list', 'task_list'):
@@ -813,10 +813,26 @@ def new_module(request, domain, app_id):
     lang = request.COOKIES.get('lang', app.langs[0])
     name = request.POST.get('name')
     module_type = request.POST.get('module_type', 'case')
-    if module_type == 'case':
+    if module_type == 'case' or module_type == 'survey':
+        if toggles.ONBOARDING_PROTOTYPE.enabled(domain):
+            if module_type == 'case':
+                name = name or 'Record List'
+            else:
+                name = name or 'Surveys'
         module = app.add_module(Module.new_module(name, lang))
         module_id = module.id
-        app.new_form(module_id, "Untitled Form", lang)
+        if toggles.ONBOARDING_PROTOTYPE.enabled(domain):
+            if module_type == 'case':
+                register = app.new_form(module_id, "Register", lang)
+                register.case_action = 'open'   # TODO: this doesn't work
+                followup = app.new_form(module_id, "Followup", lang)
+                followup.case_action = 'update' # TODO: this doesn't work
+                module.case_type = 'case'   # TODO: make unique across domain
+            else:
+                form = app.new_form(module_id, "Survey", lang)
+                form.case_action = 'none'
+        else:
+            app.new_form(module_id, "Untitled Form", lang)
         app.save()
         response = back_to_main(request, domain, app_id=app_id, module_id=module_id)
         response.set_cookie('suppress_build_errors', 'yes')
@@ -872,31 +888,26 @@ def view_module(request, domain, app_id, module_id):
     return view_generic(request, domain, app_id, module_id)
 
 
-common_module_validations = [
-    (lambda app: app.application_version == APP_V1,
-     _('Please upgrade you app to > 2.0 in order to add this module'))
-]
-
 FN = 'fn'
 VALIDATIONS = 'validations'
 MODULE_TYPE_MAP = {
     'careplan': {
         FN: _new_careplan_module,
-        VALIDATIONS: common_module_validations + [
+        VALIDATIONS: [
             (lambda app: app.has_careplan_module,
              _('This application already has a Careplan module'))
         ]
     },
     'advanced': {
         FN: _new_advanced_module,
-        VALIDATIONS: common_module_validations
+        VALIDATIONS: []
     },
     'report': {
         FN: _new_report_module,
-        VALIDATIONS: common_module_validations
+        VALIDATIONS: []
     },
     'shadow': {
         FN: _new_shadow_module,
-        VALIDATIONS: common_module_validations
+        VALIDATIONS: []
     },
 }

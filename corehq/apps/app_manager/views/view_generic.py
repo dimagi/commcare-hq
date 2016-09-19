@@ -2,6 +2,7 @@ from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
+from corehq.apps.app_manager.const import APP_V1
 
 from corehq.apps.app_manager.views.modules import get_module_template, \
     get_module_view_context
@@ -11,6 +12,7 @@ from corehq.apps.app_manager.views.apps import get_apps_base_context, \
     get_app_view_context
 from corehq.apps.app_manager.views.forms import \
     get_form_view_context_and_template
+from corehq.apps.app_manager.views.releases import get_releases_context
 from corehq.apps.app_manager.views.utils import bail, encode_if_unicode
 from corehq.apps.hqmedia.controller import (
     MultimediaImageUploadController,
@@ -44,7 +46,7 @@ from django_prbac.utils import has_privilege
 
 @retry_resource(3)
 def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
-                 copy_app_form=None):
+                 copy_app_form=None, release_manager=False):
     """
     This is the main view for the app. All other views redirect to here.
 
@@ -72,8 +74,8 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     except ModuleNotFoundException:
         return bail(request, domain, app_id)
 
-    if app and app.application_version == '1.0':
-        _assert = soft_assert(to=['droberts' + '@' + 'dimagi.com'])
+    if app and app.application_version == APP_V1:
+        _assert = soft_assert()
         _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
         return render(request, 'app_manager/no_longer_supported.html', {
             'domain': domain,
@@ -245,6 +247,9 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             },
         })
 
+    if release_manager:
+        context['release_manager'] = release_manager
+        context.update(get_releases_context(request, domain, app_id))
     response = render(request, template, context)
 
     response.set_cookie('lang', encode_if_unicode(lang))

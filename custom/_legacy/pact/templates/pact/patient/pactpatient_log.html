@@ -1,13 +1,12 @@
 {% extends "pact/patient/pactpatient_base.html" %}
 {% block extrahead %}
     <script>
-        $(document).ready(
-                function () {
-                    //$("#tbl_issues").tablesorter({ sortList:[ [0, 0] ], });
-                    $("#tbl_issues").tablesorter();
-                    $("abbr.timeago").timeago();
-                }
-        );</script>
+        $(function () {
+            //$("#tbl_issues").tablesorter({ sortList:[ [0, 0] ], });
+            $("#tbl_issues").tablesorter();
+            $("abbr.timeago").timeago();
+        });
+    </script>
 
 {% endblock extrahead %}
 {% block patient-tab-container %}

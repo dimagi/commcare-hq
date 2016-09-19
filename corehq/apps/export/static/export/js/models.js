@@ -107,16 +107,19 @@ hqDefine('export/js/models.js', function () {
 
         self.saveState(constants.SAVE_STATES.SAVING);
         serialized = self.toJS();
-        $.post(self.saveUrl, JSON.stringify(serialized))
-            .success(function(data) {
+        $.post({
+            url: self.saveUrl,
+            data: JSON.stringify(serialized),
+            success: function(data) {
                 self.recordSaveAnalytics(function() {
                     self.saveState(constants.SAVE_STATES.SUCCESS);
                     utils.redirect(data.redirect);
                 });
-            })
-            .fail(function() {
+            },
+            error: function() {
                 self.saveState(constants.SAVE_STATES.ERROR);
-            });
+            },
+        });
     };
 
     /**

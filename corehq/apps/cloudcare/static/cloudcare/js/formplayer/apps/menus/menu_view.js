@@ -125,8 +125,8 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         });
 
         // need to remove this attribute so the grid style is re-evaluated
-        $("#case-tiles-style").html(caseTileStyle).removeAttr("data-css-polyfilled");
-        $("#inner-tiles-container-style").removeAttr("data-css-polyfilled");
+        $("#case-tiles-style").html(caseTileStyle).data("css-polyfilled", false);
+        $("#inner-tiles-container-style").data("css-polyfilled", false);
     };
 
     // Dynamically generate the CSS style to display multiple tiles per line
@@ -150,7 +150,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             model: outerGridModel,
         });
         // need to remove this attribute so the grid style is re-evaluated
-        $("#outer-tiles-container-style").html(outerGridStyle).removeAttr("data-css-polyfilled");
+        $("#outer-tiles-container-style").html(outerGridStyle).data("css-polyfilled", false);
     };
 
     // Dynamically generate the CSS style for the grid polyfill to use for the case tile
@@ -184,7 +184,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             model: model,
         });
         // need to remove this attribute so the grid style is re-evaluated
-        $("#inner-tiles-container-style").html(view).removeAttr("data-css-polyfilled");
+        $("#inner-tiles-container-style").html(view).data("css-polyfilled", false);
 
         // If we have multiple cases per line, need to generate the outer grid style as well
         if (numCasesPerRow > 1) {

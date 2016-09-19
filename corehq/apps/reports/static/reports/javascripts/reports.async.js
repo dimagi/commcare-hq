@@ -133,7 +133,7 @@ var HQAsyncReport = function (o) {
                         .button('reset')
                         .addClass('btn-primary')
                         .removeClass('disabled')
-                        .removeProp('disabled');
+                        .prop('disabled', false);
                 }
             },
             error: function (data) {

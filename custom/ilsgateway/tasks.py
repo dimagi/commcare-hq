@@ -54,8 +54,8 @@ def report_run(domain, strict=True):
     last_run = ReportRun.last_run(domain)
 
     now = datetime.utcnow()
-    first_day_od_current_month = datetime(now.year, now.month, 1)
-    start_date = (first_day_od_current_month if not last_successful_run else last_successful_run.end)
+    first_day_of_current_month = datetime(now.year, now.month, 1)
+    start_date = (first_day_of_current_month if not last_successful_run else last_successful_run.end)
     end_date = now
 
     if last_run and last_run.has_error:

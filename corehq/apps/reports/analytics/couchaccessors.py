@@ -140,7 +140,7 @@ def get_ledger_values_for_case_as_of(domain, case_id, section_id, as_of, program
     results = transactions.exclude(
         report__date__gt=as_of
     ).order_by(
-        'product_id', '-report__date'
+        'product_id', '-report__date', '-report__server_date'
     ).values_list(
         'product_id', 'stock_on_hand'
     ).distinct(

@@ -49,9 +49,6 @@ branches:
   - vellum-staging # J$ 11/13
   - django-1.8 # nick P 8/25
   - ce/domain-list-api # Cal 8/31
-  - es/locations-to-sql  # Ethan 9/6
-  - es/location_type_name  # Ethan 9/8
-  - es/deprecate-location_type  # Ethan 9/8
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

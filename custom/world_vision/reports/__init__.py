@@ -287,3 +287,15 @@ class AccordionTTCReport(TTCReport):
             'title': "%s (%s-%s)" % (self.title, self.report_config.get('strsd', '-'),
                                      self.report_config.get('stred', '-'))
         }
+
+from custom.world_vision.reports.child_report import ChildTTCReport
+from custom.world_vision.reports.mixed_report import MixedTTCReport
+from custom.world_vision.reports.mother_report import MotherTTCReport
+
+CUSTOM_REPORTS = (
+    ('TTC App Reports', (
+        MixedTTCReport,
+        MotherTTCReport,
+        ChildTTCReport
+    )),
+)
