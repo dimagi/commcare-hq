@@ -45,7 +45,6 @@
 trunk: master
 name: autostaging
 branches:
-  - kill-1.x-apps  # Danny 8/23
   - vellum-staging # J$ 11/13
   - django-1.8 # nick P 8/25
   - ce/domain-list-api # Cal 8/31
@@ -54,13 +53,11 @@ submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches:
-      - commcare_2.30 #wsp 9/14
+    branches: []
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
-      - kill-1.x-apps  # Danny 8/23
       - commcare_2.30 #wsp 9/14
   submodules/django-digest-src:
     branches: []
