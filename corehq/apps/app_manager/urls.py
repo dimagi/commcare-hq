@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, url, include
 from corehq.apps.app_manager.view_helpers import DynamicTemplateView
-from corehq.apps.app_manager.views import DownloadCCZ, AppSummaryView, AppDiffView, LanguageProfilesView
+from corehq.apps.app_manager.views import DownloadCCZ, AppSummaryView, AppDiffView, LanguageProfilesView, DownloadCaseSummaryView
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 
@@ -31,6 +31,7 @@ app_urls = patterns('corehq.apps.app_manager.views',
     url(r'^modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/source/$',
         'form_designer', name='form_source'),
     url(r'^summary/$', AppSummaryView.as_view(), name=AppSummaryView.urlname),
+    url(r'^summary/case/download/$', DownloadCaseSummaryView.as_view(), name=DownloadCaseSummaryView.urlname),
     url(r'^update_build_comment/$', 'update_build_comment',
         name='update_build_comment'),
     url(r'^copy/gzip$', 'export_gzip', name='gzip_app')

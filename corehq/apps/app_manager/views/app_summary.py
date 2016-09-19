@@ -1,9 +1,12 @@
 from copy import copy
+from StringIO import StringIO
+from collections import namedtuple
 
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.utils.translation import ugettext_noop, ugettext_lazy as _
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from django.views.generic import View
 
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
@@ -12,6 +15,9 @@ from corehq.apps.domain.views import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.reports.formdetails.readable import FormQuestionResponse
 from corehq.apps.style.decorators import use_angular_js
+from couchexport.export import export_raw
+from couchexport.models import Format
+from couchexport.shortcuts import export_response
 
 
 class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
@@ -36,18 +42,11 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
         if not self.app or self.app.doc_type == 'RemoteApp':
             raise Http404()
 
-        form_name_map = {}
-        for module in self.app.get_modules():
-            for form in module.get_forms():
-                form_name_map[form.unique_id] = {
-                    'module_name': module.name,
-                    'form_name': form.name
-                }
-
         return {
             'VELLUM_TYPES': VELLUM_TYPES,
-            'form_name_map': form_name_map,
+            'form_name_map': _get_form_name_map(self.app),
             'langs': self.app.langs,
+            'app_id': self.app.id,
         }
 
     @property
@@ -117,3 +116,122 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
             'errors': errors,
             'success': True,
         }
+
+
+def _get_form_name_map(app):
+    return {
+        form.unique_id: {
+            'module_name': module.name,
+            'form_name': form.name,
+        } for module in app.get_modules() for form in module.get_forms()
+    }
+
+
+def _translate_name(names, language):
+    if not names:
+        return "[{}]".format(_("Unknown"))
+    try:
+        return names[language]
+    except KeyError:
+        first_name = names.popitem()
+        return "{} [{}]".format(first_name[1], first_name[0])
+
+
+def _get_translated_form_name(app, form_id, language):
+    return _translate_name(_get_form_name_map(app)[form_id]['form_name'], language)
+
+
+CASE_SUMMARY_EXPORT_HEADER_NAMES = [
+    'case_property_name',
+    'form_id',
+    'form_name',
+    'load_question_question',
+    'load_question_condition',
+    'load_question_calculate',
+    'save_question_question',
+    'save_question_condition'
+]
+PropertyRow = namedtuple('PropertyRow', CASE_SUMMARY_EXPORT_HEADER_NAMES)
+
+
+class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
+    urlname = 'download_case_summary'
+    http_method_names = [u'get']
+
+    def get(self, request, domain, app_id):
+        case_metadata = self.app.get_case_metadata()
+        language = request.GET.get('lang', 'en')
+
+        headers = [('All Case Properties', ('case_type', 'case_property'))]
+        headers += list((
+            case_type.name,
+            tuple(CASE_SUMMARY_EXPORT_HEADER_NAMES)
+        )for case_type in case_metadata.case_types)
+
+        data = list((
+            'All Case Properties',
+            self.get_case_type_rows(case_type)
+        ) for case_type in case_metadata.case_types)
+
+        data += list((
+                case_type.name,
+                self.get_case_property_rows(case_type, language)
+            ) for case_type in case_metadata.case_types)
+
+        export_string = StringIO()
+        export_raw(tuple(headers), data, export_string, Format.XLS_2007),
+        return export_response(
+            export_string,
+            Format.XLS_2007,
+            u'{app_name} v.{app_version} - Case Summary ({lang})'.format(
+                app_name=self.app.name,
+                app_version=self.app.version,
+                lang=language
+            ),
+        )
+
+    def get_case_type_rows(self, case_type):
+        return tuple((case_type.name, prop.name) for prop in case_type.properties)
+
+    def get_case_property_rows(self, case_type, language):
+        rows = []
+        for prop in case_type.properties:
+            for form in prop.forms:
+                for load_question in form.load_questions:
+                    rows.append(self._get_load_question_row(prop, form, language, load_question))
+                for save_question in form.save_questions:
+                    rows.append(self._get_save_question_row(prop, form, language, save_question))
+
+        return tuple(rows)
+
+    def _get_load_question_row(self, prop, form, language, load_question):
+        return PropertyRow(
+            prop.name,
+            form.form_id,
+            _get_translated_form_name(self.app, form.form_id, language),
+            load_question.question.value,
+            "{} {} {}".format(
+                load_question.condition.question,
+                load_question.condition.operator,
+                load_question.condition.answer
+            ) if load_question.condition else "",
+            None,
+            None,
+            None
+        )
+
+    def _get_save_question_row(self, prop, form, language, save_question):
+        return PropertyRow(
+            prop.name,
+            form.form_id,
+            _get_translated_form_name(self.app, form.form_id, language),
+            None,
+            None,
+            None,
+            save_question.question.value,
+            "{} {} {}".format(
+                save_question.condition.question,
+                save_question.condition.operator,
+                save_question.condition.answer
+            ) if save_question.condition else "",
+        )
