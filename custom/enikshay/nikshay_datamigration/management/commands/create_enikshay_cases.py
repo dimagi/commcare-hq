@@ -25,7 +25,7 @@ class EnikshayCaseFactory(object):
         self.create_test_cases()
 
     def create_person_case(self):
-        self.factory.create_or_update_case(self.person)
+        self.factory.create_or_update_case(self.person())
 
     def create_occurrence_cases(self):
         occurrences = [self.occurrence(outcome) for outcome in self.outcomes]
@@ -47,7 +47,6 @@ class EnikshayCaseFactory(object):
         ]
         self.factory.create_or_update_cases(tests)
 
-    @property
     @memoized
     def person(self):
         return CaseStructure(
@@ -83,10 +82,10 @@ class EnikshayCaseFactory(object):
                 },
             },
             indices=[CaseIndex(
-                self.person,
+                self.person(),
                 identifier='host',
                 relationship=CASE_INDEX_EXTENSION,
-                related_type=self.person.attrs['case_type'],
+                related_type=self.person().attrs['case_type'],
             )],
         )
 
