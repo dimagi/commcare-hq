@@ -145,8 +145,11 @@ FormplayerFrontend.on('startForm', function (data) {
         }
     };
     data.formplayerEnabled = true;
+    data.debuggerEnabled = user.debuggerEnabled;
     data.answerCallback = function(instanceXml) {
-        FormplayerFrontend.trigger('debugger.formXML', instanceXml);
+        if (user.debuggerEnabled) {
+            FormplayerFrontend.trigger('debugger.formXML', instanceXml);
+        }
     };
     data.resourceMap = function(resource_path) {
         var urlObject = Util.currentUrlToObject();
@@ -159,7 +162,7 @@ FormplayerFrontend.on('startForm', function (data) {
 
 FormplayerFrontend.on('debugger.formXML', function(data) {
     var $instanceTab = $('#debugger-xml-instance-tab'),
-    codeMirror;
+        codeMirror;
 
     codeMirror = CodeMirror(function(el) {
         $('#xml-viewer-pretty').html(el);
@@ -185,6 +188,7 @@ FormplayerFrontend.on("start", function (options) {
     user.apps = options.apps;
     user.domain = options.domain;
     user.formplayer_url = options.formplayer_url;
+    user.debuggerEnabled = options.debuggerEnabled;
     FormplayerFrontend.request('gridPolyfillPath', options.gridPolyfillPath);
     if (Backbone.history) {
         Backbone.history.start();

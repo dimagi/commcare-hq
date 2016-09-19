@@ -1,3 +1,5 @@
+/*global CodeMirror */
+
 // IE compliance
 if (!Array.prototype.indexOf) {
     Array.prototype.indexOf = function (e) {
@@ -61,6 +63,7 @@ function WebFormSession(params) {
     self.domain = params.domain;
     self.username = params.username;
     self.formplayerEnabled = params.formplayerEnabled;
+    self.debuggerEnabled = params.debuggerEnabled;
     self.post_url = params.post_url;
 
     if (params.form_uid) {
@@ -135,7 +138,7 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
     requestParams['session-id'] = self.session_id;
     // stupid hack for now to make up for both being used in different requests
     requestParams['session_id'] = self.session_id;
-    requestParams['debuggerEnabled'] = true;
+    requestParams['debuggerEnabled'] = self.debuggerEnabled;
     if (this.blockingRequestInProgress) {
         return;
     }
@@ -177,6 +180,31 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
     }
 };
 
+WebFormSession.prototype.displayInstanceXml = function(resp) {
+    var $instanceTab = $('#debugger-xml-instance-tab'),
+        self = this,
+        codeMirror;
+
+    if (!self.debuggerEnabled || !resp.instanceXml.output) {
+        return;
+    }
+
+    codeMirror = CodeMirror(function(el) {
+        $('#xml-viewer-pretty').html(el);
+    }, {
+        value: resp.instanceXml.output,
+        mode: 'xml',
+        viewportMargin: Infinity,
+        readOnly: true,
+        lineNumbers: true,
+    });
+
+    $instanceTab.off();
+    $instanceTab.on('shown.bs.tab', function() {
+        codeMirror.refresh();
+    });
+};
+
 /*
  * Handles a successful request to touchforms.
  * @param {Object} response - touchforms response object
@@ -194,6 +222,7 @@ WebFormSession.prototype.handleSuccess = function(resp, callback) {
         self.lastRequestHandled = resp.seq_id;
 
         try {
+            self.displayInstanceXml(resp);
             callback(resp);
         } catch (err) {
             console.error(err);
@@ -300,9 +329,6 @@ WebFormSession.prototype.answerQuestion = function(q) {
         },
         function(resp) {
             $.publish('session.reconcile', [resp, q]);
-            if (self.answerCallback !== undefined && resp.instanceXml !== undefined) {
-                self.answerCallback(resp.instanceXml);
-            }
         });
 };
 
@@ -414,4 +440,5 @@ WebFormSession.prototype.renderFormXml = function (resp, $form) {
     var self = this;
     self.session_id = self.session_id || resp.session_id;
     self.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $form);
+    self.displayInstanceXml(resp);
 };
