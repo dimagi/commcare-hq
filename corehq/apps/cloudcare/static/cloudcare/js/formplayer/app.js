@@ -1,4 +1,4 @@
-/*global Marionette, Backbone, WebFormSession, Util, CodeMirror */
+/*global Marionette, Backbone, WebFormSession, Util */
 
 /**
  * The primary Marionette application managing menu navigation and launching form entry
@@ -146,11 +146,6 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     data.formplayerEnabled = true;
     data.debuggerEnabled = user.debuggerEnabled;
-    data.answerCallback = function(instanceXml) {
-        if (user.debuggerEnabled) {
-            FormplayerFrontend.trigger('debugger.formXML', instanceXml);
-        }
-    };
     data.resourceMap = function(resource_path) {
         var urlObject = Util.currentUrlToObject();
         var appId = urlObject.appId;
@@ -158,26 +153,6 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     var sess = new WebFormSession(data);
     sess.renderFormXml(data, $('#webforms'));
-});
-
-FormplayerFrontend.on('debugger.formXML', function(data) {
-    var $instanceTab = $('#debugger-xml-instance-tab'),
-        codeMirror;
-
-    codeMirror = CodeMirror(function(el) {
-        $('#xml-viewer-pretty').html(el);
-    }, {
-        value: data.output,
-        mode: 'xml',
-        viewportMargin: Infinity,
-        readOnly: true,
-        lineNumbers: true,
-    });
-
-    $instanceTab.off();
-    $instanceTab.on('shown.bs.tab', function() {
-        codeMirror.refresh();
-    });
 });
 
 FormplayerFrontend.on("start", function (options) {

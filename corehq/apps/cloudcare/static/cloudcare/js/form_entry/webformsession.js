@@ -185,7 +185,7 @@ WebFormSession.prototype.displayInstanceXml = function(resp) {
         self = this,
         codeMirror;
 
-    if (!self.debuggerEnabled || !resp.instanceXml.output) {
+    if (!self.debuggerEnabled || !resp.instanceXml || !resp.instanceXml.output) {
         return;
     }
 
