@@ -146,27 +146,37 @@ class TestConvertBase(TestCase, TestFileMixin):
         super(TestConvertBase, self).setUp()
         delete_all_export_instances()
 
-    def _convert_form_export(self, export_file_name):
+    def _convert_form_export(self, export_file_name, force=False):
+        return self._convert_export(
+            'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
+            export_file_name,
+            force=force
+        )
+
+    def _convert_case_export(self, export_file_name, force=False):
+        return self._convert_export(
+            'corehq.apps.export.models.new.CaseExportDataSchema.generate_schema_from_builds',
+            export_file_name,
+            force=force
+        )
+
+    def _convert_export(self, mock_path, export_file_name, force=False):
         saved_export_schema = SavedExportSchema.wrap(self.get_json(export_file_name))
 
         with mock.patch.object(SavedExportSchema, 'save', return_value='False Save'):
             with mock.patch(
-                    'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
+                    mock_path,
                     return_value=self.schema):
-                instance, meta = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
+                instance, meta = convert_saved_export_to_export_instance(
+                    self.domain,
+                    saved_export_schema,
+                    force_convert_columns=force,
+                )
 
         return instance, meta
 
-    def _convert_case_export(self, export_file_name):
-        saved_export_schema = SavedExportSchema.wrap(self.get_json(export_file_name))
 
-        with mock.patch.object(SavedExportSchema, 'save', return_value='False Save'):
-            with mock.patch(
-                    'corehq.apps.export.models.new.CaseExportDataSchema.generate_schema_from_builds',
-                    return_value=self.schema):
-                instance, meta = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
 
-        return instance, meta
 
 
 @mock.patch(
