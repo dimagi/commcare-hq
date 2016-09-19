@@ -285,8 +285,18 @@ def ensure_grant(grantee_slug, priv_slug, dry_run=False, verbose=False):
     Adds a parameterless grant between grantee and priv, looked up by slug.
     """
 
-    grantee = Role.objects.get(slug=grantee_slug)
-    priv = Role.objects.get(slug=priv_slug)
+    try:
+        grantee = Role.objects.get(slug=grantee_slug)
+    except Role.DoesNotExist:
+        logger.info('[DRY RUN] grantee {} does not exist.'.format(grantee_slug))
+        return
+
+    try:
+        priv = Role.objects.get(slug=priv_slug)
+    except Role.DoesNotExist:
+        logger.info('[DRY RUN] privilege {} does not exist.'.format(priv_slug))
+        return
+
     if dry_run:
         grants = Grant.objects.filter(from_role__slug=grantee_slug,
                                       to_role__slug=priv_slug)
