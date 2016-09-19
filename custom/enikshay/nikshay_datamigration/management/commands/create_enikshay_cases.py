@@ -128,14 +128,17 @@ class EnikshayCaseFactory(object):
         )
 
     @property
+    @memoized
     def _outcomes(self):
         return Outcome.objects.filter(PatientId=self.patient_detail)
 
     @property
+    @memoized
     def _followups(self):
         return Followup.objects.filter(PatientID=self.patient_detail)
 
     @property
+    @memoized
     def _location(self):
         for loc in SQLLocation.objects.filter(domain=ENIKSHAY_DOMAIN):
             if loc.metadata.get('nikshay_code') == self._nikshay_code:
