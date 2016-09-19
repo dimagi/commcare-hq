@@ -18,7 +18,7 @@
     <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
     <script src="{% static 'app_manager/js/shadow-module-settings.js' %}"></script>
 
-    {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
+    {% if False and request|toggle_enabled:"CASE_LIST_LOOKUP" %}
         {% for detail in details %}
             {% if detail.type == 'case' %}
                 {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_lookup qualifier='case-list-lookup'|add:detail.type %}

@@ -200,7 +200,7 @@
                 workflow: '{{ form.post_form_workflow }}',
             };
 
-            {% if request|toggle_enabled:"FORM_LINK_WORKFLOW"%}
+            {% if False and request|toggle_enabled:"FORM_LINK_WORKFLOW"%}
             labels[FormWorkflow.Values.FORM] = "{% trans "Link to other form" %}";
             options.forms = {{ linkable_forms|JSON}}
             options.formLinks = {{ form.form_links|JSON }}
@@ -213,7 +213,7 @@
         $('#auto-gps-capture').koApplyBindings({
             auto_gps_capture: ko.observable({{ form.auto_gps_capture|JSON }})
         });
-        {% if request|toggle_enabled:'NO_VELLUM' %}
+        {% if False and request|toggle_enabled:'NO_VELLUM' %}
         $('#no-vellum').koApplyBindings({
             no_vellum: ko.observable({{ form.no_vellum|JSON }})
         });
