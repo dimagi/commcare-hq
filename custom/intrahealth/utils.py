@@ -132,7 +132,7 @@ def get_location_by_type(form, type):
             return loc
     for loc_id in loc.lineage:
         loc = Location.get(loc_id)
-        if unicode(loc.location_type).lower().replace(" ", "") == type:
+        if unicode(loc.location_type_name).lower().replace(" ", "") == type:
             return loc
 
 
