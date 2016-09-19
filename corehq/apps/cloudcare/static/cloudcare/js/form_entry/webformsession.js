@@ -135,6 +135,7 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
     requestParams['session-id'] = self.session_id;
     // stupid hack for now to make up for both being used in different requests
     requestParams['session_id'] = self.session_id;
+    requestParams['debuggerEnabled'] = true;
     if (this.blockingRequestInProgress) {
         return;
     }
@@ -299,8 +300,8 @@ WebFormSession.prototype.answerQuestion = function(q) {
         },
         function(resp) {
             $.publish('session.reconcile', [resp, q]);
-            if (self.answerCallback !== undefined) {
-                self.answerCallback(self.session_id);
+            if (self.answerCallback !== undefined && resp.instanceXml !== undefined) {
+                self.answerCallback(resp.instanceXml);
             }
         });
 };

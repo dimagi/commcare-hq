@@ -145,8 +145,8 @@ FormplayerFrontend.on('startForm', function (data) {
         }
     };
     data.formplayerEnabled = true;
-    data.answerCallback = function(sessionId) {
-        FormplayerFrontend.trigger('debugger.formXML', sessionId);
+    data.answerCallback = function(instanceXml) {
+        FormplayerFrontend.trigger('debugger.formXML', instanceXml);
     };
     data.resourceMap = function(resource_path) {
         var urlObject = Util.currentUrlToObject();
@@ -157,39 +157,24 @@ FormplayerFrontend.on('startForm', function (data) {
     sess.renderFormXml(data, $('#webforms'));
 });
 
-FormplayerFrontend.on('debugger.formXML', function(sessionId) {
-    var user = FormplayerFrontend.request('currentUser');
-    var success = function(data) {
-        var $instanceTab = $('#debugger-xml-instance-tab'),
-            codeMirror;
+FormplayerFrontend.on('debugger.formXML', function(data) {
+    var $instanceTab = $('#debugger-xml-instance-tab'),
+    codeMirror;
 
-        codeMirror = CodeMirror(function(el) {
-            $('#xml-viewer-pretty').html(el);
-        }, {
-            value: data.output,
-            mode: 'xml',
-            viewportMargin: Infinity,
-            readOnly: true,
-            lineNumbers: true,
-        });
+    codeMirror = CodeMirror(function(el) {
+        $('#xml-viewer-pretty').html(el);
+    }, {
+        value: data.output,
+        mode: 'xml',
+        viewportMargin: Infinity,
+        readOnly: true,
+        lineNumbers: true,
+    });
 
-        $instanceTab.off();
-        $instanceTab.on('shown.bs.tab', function() {
-            codeMirror.refresh();
-        });
-    };
-    var options = {
-        url: user.formplayer_url + '/get-instance',
-        data: JSON.stringify({
-            'session-id': sessionId,
-            'domain': user.domain,
-            'username': user.username,
-        }),
-        success: success,
-    };
-    Util.setCrossDomainAjaxOptions(options);
-
-    $.ajax(options);
+    $instanceTab.off();
+    $instanceTab.on('shown.bs.tab', function() {
+        codeMirror.refresh();
+    });
 });
 
 FormplayerFrontend.on("start", function (options) {
