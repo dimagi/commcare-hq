@@ -19,6 +19,7 @@ from corehq.apps.export.views import (
     DownloadNewFormExportView,
     BulkDownloadNewFormExportView,
     DownloadNewCaseExportView,
+    download_daily_saved_export,
 )
 
 urlpatterns = patterns(
@@ -81,6 +82,6 @@ urlpatterns = patterns(
         DeleteNewCustomExportView.as_view(),
         name=DeleteNewCustomExportView.urlname),
     url(r"^custom/dailysaved/download/(?P<export_instance_id>[\w\-]+)/$",
-        "download_daily_saved_export",
+        download_daily_saved_export,
         name="download_daily_saved_export"),
 )
