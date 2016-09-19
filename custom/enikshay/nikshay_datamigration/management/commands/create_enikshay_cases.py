@@ -105,7 +105,7 @@ class EnikshayCaseFactory(object):
 
     def test(self, followup):
         episode_structure = self.episode(
-            Outcome.objects.get(PatientId=PatientDetail.objects.get(PregId=followup.PatientID))
+            Outcome.objects.get(PatientId=followup.PatientID)
         )
         return CaseStructure(
             attrs={
@@ -130,8 +130,8 @@ class EnikshayCaseFactory(object):
     @property
     def followups(self):
         return [
-            followup for followup in Followup.objects.filter(PatientID=self.patient_detail.PregId)
-            if Outcome.objects.filter(PatientId=PatientDetail.objects.get(PregId=followup.PatientID)).exists()
+            followup for followup in Followup.objects.filter(PatientID=self.patient_detail)
+            if Outcome.objects.filter(PatientId=followup.PatientID).exists()
             # how many followup's do not have a corresponding outcome? how should we handle this situation?
         ]
 
