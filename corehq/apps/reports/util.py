@@ -441,21 +441,6 @@ def get_installed_custom_modules():
     return [import_module(module) for module in settings.CUSTOM_MODULES]
 
 
-def is_mobile_worker_with_report_access(couch_user, domain):
-    if not couch_user.is_commcare_user():
-        return False
-
-    if domain is not None:
-        role = couch_user.get_role(domain)
-        if role:
-            return (
-                role.permissions.view_reports or
-                len(role.permissions.view_report_list) > 0
-            )
-
-    return False
-
-
 def get_INFilter_element_bindparam(base_name, index):
     return '%s_%d' % (base_name, index)
 
