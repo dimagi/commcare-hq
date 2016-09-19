@@ -170,11 +170,11 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
 
         data = list((
             'All Case Properties',
-            self.get_case_type_rows(case_type)
+            self.get_case_property_rows(case_type)
         ) for case_type in case_metadata.case_types)
         data += list((
             case_type.name,
-            self.get_case_property_rows(case_type, language)
+            self.get_case_questions_rows(case_type, language)
         ) for case_type in case_metadata.case_types)
 
         export_string = StringIO()
@@ -189,10 +189,10 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             ),
         )
 
-    def get_case_type_rows(self, case_type):
+    def get_case_property_rows(self, case_type):
         return tuple((case_type.name, prop.name) for prop in case_type.properties)
 
-    def get_case_property_rows(self, case_type, language):
+    def get_case_questions_rows(self, case_type, language):
         rows = []
         for prop in case_type.properties:
             for form in prop.forms:
