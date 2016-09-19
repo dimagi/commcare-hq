@@ -18,7 +18,7 @@
     <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
     <script src="{% static 'app_manager/js/shadow-module-settings.js' %}"></script>
 
-    {% if False and request|toggle_enabled:"CASE_LIST_LOOKUP" %}
+    {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
         {% for detail in details %}
             {% if detail.type == 'case' %}
                 {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_lookup qualifier='case-list-lookup'|add:detail.type %}
@@ -35,7 +35,7 @@
     {% include 'app_manager/partials/graph_configuration_modal.html' %}
 
     <script>
-        {% if module.case_type != "" %}
+        {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or module.case_type != "" %}
         $(function () {
             var state = hqImport('app_manager/js/detail-screen-config.js').state;
             var DetailScreenConfig = hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig;
@@ -219,11 +219,13 @@
 {% endblock %}
 
 {% block form-view %}
-    {% include 'app_manager/partials/module_view_heading.html' %}
-    {% if module.case_type == '' %}
-    <h3 style="display: inline-block; margin-right: -5px;"><i class="fa fa-folder-open"></i></h3>
-    {% else %}
-    <h3 style="display: inline-block; margin-right: -5px;"><i class="fa fa-list"></i></h3>
+    {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+        {% include 'app_manager/partials/module_view_heading.html' %}
+        {% if module.case_type == '' %}
+            <h3 style="display: inline-block; margin-right: -5px;"><i class="fa fa-folder-open"></i></h3>
+        {% else %}
+            <h3 style="display: inline-block; margin-right: -5px;"><i class="fa fa-list"></i></h3>
+        {% endif %}
     {% endif %}
     {% inline_edit_trans module.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
     <br />
@@ -237,13 +239,21 @@
         saveValueName: 'comment',
         cols: 50,
     "></inline-edit>
-    <div class="spacer"></div>
+    {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+        <div class="spacer"></div>
+    {% else %}
+        <br>
+        {% include 'app_manager/partials/module_view_heading.html' %}
+    {% endif %}
 <div class="tabbable">
-{% if module.case_type != "" %}
+{% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or module.case_type != "" %}
 <ul class="nav nav-tabs" id="module-view-tabs">
     {% block tab-headers %}
     <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
-    {% if module.case_type != "" %}
+    {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" and module.module_type != 'shadow' %}
+            <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
+    {% endif %}
+    {% not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or module.case_type != "" %}
     {% for detail in details %}
     <li>
         <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">
@@ -272,7 +282,7 @@
             <div class="save-button-holder clearfix"></div>
             <fieldset>
                 {% block settings_fields %}
-                {% if module.case_type != "" %}
+                {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" and module.case_type != "" %}
                 <legend>Basic</legend>
                 <div class="form-group">
                     <label class="col-sm-2 control-label">

@@ -7,7 +7,9 @@
     {% include 'analytics/fullstory.html' %}
 {% endblock %}
 {% block js %}{{ block.super }}
-    <script src="{% static 'app_manager/js/commcaresettings.js' %}"></script>
+    {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or not release_manager %}
+        <script src="{% static 'app_manager/js/commcaresettings.js' %}"></script>
+    {% endif %}
     <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
     <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
     <script src="{% static 'app_manager/js/password_setter.jquery.js' %}"></script>
@@ -30,7 +32,7 @@
             settings: {
                 sections: {{ settings_layout|JSON }},
                 values: {{ settings_values|JSON }},
-                {% if False and request|toggle_enabled:"CUSTOM_PROPERTIES" %}
+                {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" and request|toggle_enabled:"CUSTOM_PROPERTIES" %}
                 customProperties: {{ custom_properties|JSON }},
                 {% endif %}
                 urls: {
@@ -46,7 +48,7 @@
             }
         };
 
-        {% if not release_manager %}
+        {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or not release_manager %}
         $(function () {
             var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
             COMMCAREHQ.appView.settings = new CommcareSettings(COMMCAREHQ.appView.settings);
@@ -54,7 +56,8 @@
         });
         {% endif %}
 
-        {% if not app.is_remote_app and not release_manager %}
+        {% if not app.is_remote_app %}
+        {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or not release_manager %}
         $(function () {
             var multimedia_tab = (function () {
                 var self = {};
@@ -86,15 +89,19 @@
             });
         });
         {% endif %}
+        {% endif %}
 
-        {% if release_manager %}
+        {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
         $(function () {
-            console.log("esaped");
             var state = "",
                 $main = $("#releases"),
                 $loading = $main.find(".hq-loading").remove(),
                 $loadingError = $main.find(".hq-loading-error").remove();
 
+            $('#demand-releases').on('shown.bs.tab', function () {
+                if (state === "loading" || state === "loaded") {
+                    return;
+                }
                 state = "loading";
 
                 // If the content takes a noticeable amount of time to load, show a spinner
@@ -119,11 +126,12 @@
                         $main.html($loadingError.html());
                     },
                 });
+            });
         });
         {% endif %}
 
     </script>
-    {% if not release_manager %}
+    {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or not release_manager %}
     {% include 'hqmedia/partials/multimedia_init.html' %}
     <script>
         var refs = {{ refs|JSON }};
@@ -206,7 +214,7 @@
             ga_track_event('App Builder', 'Download Multimedia');
         });
     </script>
-    {% if not release_manager %}
+    {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or not release_manager %}
     <script>
         // Set up typeahead for domain names
         $(function(){
@@ -228,6 +236,7 @@
 
 {% block form-view %}
 
+{% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
 <a href="{% url "app_summary" domain app.id %}" class="btn btn-default pull-right">
     <i class="fa fa-list-alt"></i>
     App Summary
@@ -255,24 +264,76 @@
 <br><br>
 {% if release_manager %}
     <div class="tab-pane" id="releases">
-        <!-- templates only; will be populated asynchronously -->
-        <script type="text/html" class="hq-loading">
-            <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
-            {% trans "Loading..." %}
-        </script>
-        <script type="text/html" class="hq-loading-error">
-            <div class="alert alert-danger">
-                {% trans "Oops, there was a problem loading this section. Please try again." %}
-            </div>
-            <button class="btn btn-primary reload">
-                {% trans "Try again" %}
-            </button>
-        </script>
+        {% include "app_manager/partials/releases.html" %}
     </div>
 {% else %}
     <div class="tab-content">
         <div class="tab-pane{% if not copy_app_form.is_bound %} active{% endif %}" id="app-settings">
             {% include "app_manager/partials/app-settings.html" %}
+        </div>
+    </div>
+{% endif %}
+{% else %}
+    <div class="tab-content">
+        <div class="tab-pane" id="releases">
+            <!-- templates only; will be populated asynchronously -->
+            <script type="text/html" class="hq-loading">
+                <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                {% trans "Loading..." %}
+            </script>
+            <script type="text/html" class="hq-loading-error">
+                <div class="alert alert-danger">
+                    {% trans "Oops, there was a problem loading this section. Please try again." %}
+                </div>
+                <button class="btn btn-primary reload">
+                    {% trans "Try again" %}
+                </button>
+            </script>
+        </div>
+        <div class="tab-pane{% if not copy_app_form.is_bound %} active{% endif %}" id="app-settings">
+            {% include "app_manager/partials/app-settings.html" %}
+        </div>
+        {% include 'app_manager/languages.html' %}
+
+        {% if app.get_doc_type == "Application" %}
+            <div class="tab-pane multimedia" id="multimedia">
+                <div data-bind="if: load_state() === 'loading'">
+                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                    {% trans "Loading ..." %}
+                </div>
+                <div data-bind="html: multimedia_page_html"></div>
+                <div data-bind="if: load_state() === 'error'">
+                    <button class="btn btn-default" data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
+                </div>
+            </div>
+
+        {% endif %}
+        <div class="tab-pane{% if copy_app_form.is_bound %} active{% endif %}" id="copy">
+            <div>
+                <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
+                    {% crispy copy_app_form %}
+                </form>
+                {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
+                    <h3>Export compressed application</h3>
+                    <form action="{% url "gzip_app" domain app.id %}" method="POST">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa fa-arrow-down"></i>
+                            {% trans "Download" %}
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+        <div class="tab-pane" id="delete">
+            <h3>{% trans "Delete Application" %}</h3>
+            <form action="{% url "corehq.apps.app_manager.views.delete_app" domain app.id %}" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger disable-on-submit">
+                    <i class="fa fa-trash"></i>
+                    {% trans "Delete this application" %}
+                </button>
+            </form>
         </div>
     </div>
 {% endif %}

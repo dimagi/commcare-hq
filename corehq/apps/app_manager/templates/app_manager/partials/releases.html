@@ -58,7 +58,7 @@
         {% endif %}
     });
 
-    analytics.workflow('Visited the Release Manager');
+    //analytics.workflow('Visited the Release Manager');
 </script>
 <script>
     $(function () {
@@ -115,7 +115,7 @@
             <th></th>
             <th></th>
             <th>{% trans "Comments" %}</th>
-            {% if False and request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
+            {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
                 <th>Errors</th>
             {% endif %}
             <th>
@@ -211,7 +211,7 @@
                         saveValueName: 'comment',
                         errorMessage:'{% trans "Error updating comment.  Please try again."|escapejs %}',
                     "></inline-edit>
-                    {% if False and request|toggle_enabled:"VIEW_BUILD_SOURCE" %}
+                    {% if request|toggle_enabled:"VIEW_BUILD_SOURCE" %}
                         <h6>
                             {% blocktrans %}
                                 View
@@ -245,7 +245,7 @@
                         </h6>
                     {% endif %}
                 </td>
-                {% if False and request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
+                {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
                 <td>
                     <a data-bind="text: num_errors,
                                   attr: {href: $root.url('application_errors', version())}" />
