@@ -39,7 +39,11 @@ class EnikshayCaseFactory(object):
             episode_structure.case_id = episode_case.case_id
 
     def create_test_cases(self):
-        tests = [self.test(followup) for followup in self.followups]
+        tests = [
+            self.test(followup) for followup in self.followups
+            if Outcome.objects.filter(PatientId=followup.PatientID).exists()
+            # how many followup's do not have a corresponding outcome? how should we handle this situation?
+        ]
         self.factory.create_or_update_cases(tests)
 
     @property
@@ -129,11 +133,7 @@ class EnikshayCaseFactory(object):
 
     @property
     def followups(self):
-        return [
-            followup for followup in Followup.objects.filter(PatientID=self.patient_detail)
-            if Outcome.objects.filter(PatientId=followup.PatientID).exists()
-            # how many followup's do not have a corresponding outcome? how should we handle this situation?
-        ]
+        return Followup.objects.filter(PatientID=self.patient_detail)
 
 
 class Command(BaseCommand):
