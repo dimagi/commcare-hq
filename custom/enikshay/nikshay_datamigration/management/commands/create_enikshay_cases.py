@@ -2,6 +2,7 @@ from django.core.management import BaseCommand
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
+from corehq.apps.locations.models import SQLLocation
 
 from custom.enikshay.nikshay_datamigration.models import PatientDetail, Outcome, Followup
 from dimagi.utils.decorators.memoized import memoized
@@ -51,10 +52,10 @@ class EnikshayCaseFactory(object):
     def person(self):
         return CaseStructure(
             case_id=self.patient_detail.PregId,
-            # owner_id: function of stocode, dtocode, tbunitcode, phi; then decide if dmc
             attrs={
                 'create': True,
                 'case_type': 'person',
+                'owner_id': self.location.location_id,
                 'update': {
                     'name': self.patient_detail.pname,
                     'aadhaar_number': self.patient_detail.paadharno,
@@ -134,6 +135,17 @@ class EnikshayCaseFactory(object):
     @property
     def followups(self):
         return Followup.objects.filter(PatientID=self.patient_detail)
+
+    @property
+    def location(self):
+        for loc in SQLLocation.objects.filter(domain=ENIKSHAY_DOMAIN):
+            if loc.metadata.get('nikshay_code') == self.nikshay_code:
+                return loc
+        raise Exception
+
+    @property
+    def nikshay_code(self):
+        return '-'.join(self.patient_detail.PregId.split('-')[:4])
 
 
 class Command(BaseCommand):
