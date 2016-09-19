@@ -28,20 +28,20 @@ class EnikshayCaseFactory(object):
         self.factory.create_or_update_case(self.person())
 
     def create_occurrence_cases(self):
-        occurrences = [self.occurrence(outcome) for outcome in self.outcomes]
+        occurrences = [self.occurrence(outcome) for outcome in self._outcomes]
         cases = self.factory.create_or_update_cases(occurrences)
         for occurrence_structure, occurrence_case in zip(occurrences, cases):
             occurrence_structure.case_id = occurrence_case.case_id
 
     def create_episode_cases(self):
-        episodes = [self.episode(outcome) for outcome in self.outcomes]
+        episodes = [self.episode(outcome) for outcome in self._outcomes]
         cases = self.factory.create_or_update_cases(episodes)
         for episode_structure, episode_case in zip(episodes, cases):
             episode_structure.case_id = episode_case.case_id
 
     def create_test_cases(self):
         tests = [
-            self.test(followup) for followup in self.followups
+            self.test(followup) for followup in self._followups
             if Outcome.objects.filter(PatientId=followup.PatientID).exists()
             # how many followup's do not have a corresponding outcome? how should we handle this situation?
         ]
@@ -54,7 +54,7 @@ class EnikshayCaseFactory(object):
             attrs={
                 'create': True,
                 'case_type': 'person',
-                'owner_id': self.location.location_id,
+                'owner_id': self._location.location_id,
                 'update': {
                     'name': self.patient_detail.pname,
                     'aadhaar_number': self.patient_detail.paadharno,
@@ -128,22 +128,22 @@ class EnikshayCaseFactory(object):
         )
 
     @property
-    def outcomes(self):
+    def _outcomes(self):
         return Outcome.objects.filter(PatientId=self.patient_detail)
 
     @property
-    def followups(self):
+    def _followups(self):
         return Followup.objects.filter(PatientID=self.patient_detail)
 
     @property
-    def location(self):
+    def _location(self):
         for loc in SQLLocation.objects.filter(domain=ENIKSHAY_DOMAIN):
-            if loc.metadata.get('nikshay_code') == self.nikshay_code:
+            if loc.metadata.get('nikshay_code') == self._nikshay_code:
                 return loc
         raise Exception
 
     @property
-    def nikshay_code(self):
+    def _nikshay_code(self):
         return '-'.join(self.patient_detail.PregId.split('-')[:4])
 
 
