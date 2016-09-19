@@ -30,7 +30,6 @@ class Migration(migrations.Migration):
             name='Household',
             fields=[
                 ('id', models.IntegerField(serialize=False, primary_key=True)),
-                ('PatientID', models.CharField(max_length=255, null=True)),
                 ('Name', models.CharField(max_length=255, null=True)),
                 ('Dosage', models.CharField(max_length=255, null=True)),
                 ('Weight', models.CharField(max_length=255, null=True)),
@@ -112,5 +111,11 @@ class Migration(migrations.Migration):
             options={
             },
             bases=(models.Model,),
+        ),
+        migrations.AddField(
+            model_name='household',
+            name='PatientID',
+            field=models.ForeignKey(to='nikshay_datamigration.PatientDetail'),
+            preserve_default=True,
         ),
     ]
