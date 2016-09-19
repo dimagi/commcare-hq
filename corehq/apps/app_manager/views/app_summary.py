@@ -172,11 +172,10 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             'All Case Properties',
             self.get_case_type_rows(case_type)
         ) for case_type in case_metadata.case_types)
-
         data += list((
-                case_type.name,
-                self.get_case_property_rows(case_type, language)
-            ) for case_type in case_metadata.case_types)
+            case_type.name,
+            self.get_case_property_rows(case_type, language)
+        ) for case_type in case_metadata.case_types)
 
         export_string = StringIO()
         export_raw(tuple(headers), data, export_string, Format.XLS_2007),
