@@ -23,6 +23,8 @@ from corehq.form_processor.utils.general import set_local_domain_sql_backend_ove
     clear_local_domain_sql_backend_override
 from corehq.util.log import with_progress_bar
 from couchforms.models import XFormInstance, doc_types as form_doc_types, all_known_formlike_doc_types
+from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from fluff.management.commands.ptop_reindexer_fluff import ReindexEventHandler
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
@@ -32,20 +34,27 @@ CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 UNPROCESSED_DOC_TYPES = list(all_known_formlike_doc_types() - {'XFormInstance'})
 
 
-def do_couch_to_sql_migration(domain, with_progress=True):
+def do_couch_to_sql_migration(domain, with_progress=True, debug=False):
     set_local_domain_sql_backend_override(domain)
-    CouchSqlDomainMigrator(domain, with_progress=with_progress).migrate()
+    CouchSqlDomainMigrator(domain, with_progress=with_progress, debug=debug).migrate()
 
 
 class CouchSqlDomainMigrator(object):
-    def __init__(self, domain, with_progress=True):
-        self.with_progress = with_progress
+    def __init__(self, domain, with_progress=True, debug=False):
         from corehq.apps.tzmigration.planning import DiffDB
-
         assert should_use_sql_backend(domain)
+
+        self.with_progress = with_progress
+        self.debug = debug
         self.domain = domain
         db_filepath = get_diff_db_filepath(domain)
         self.diff_db = DiffDB.init(db_filepath)
+
+        self.errors_with_normal_doc_type = []
+
+    def log_debug(self, message):
+        if self.debug:
+            print '[DEBUG] {}'.format(message)
 
     def migrate(self):
         self._process_main_forms()
@@ -58,7 +67,11 @@ class CouchSqlDomainMigrator(object):
         # process main forms (including cases and ledgers)
         changes = _get_main_form_iterator(self.domain).iter_all_changes()
         for change in self._with_progress(['XFormInstance'], changes):
+            self.log_debug('Processing doc: {}({})'.format('XFormInstance', change.id))
             form = change.get_document()
+            if form.get('problem', None):
+                self.errors_with_normal_doc_type.append(change.id)
+                continue
             wrapped_form = XFormInstance.wrap(form)
             form_received = wrapped_form.received_on
             assert last_received_on <= form_received
@@ -78,39 +91,50 @@ class CouchSqlDomainMigrator(object):
             filter_form_diffs(couch_form.doc_type, diffs)
         )
 
-        case_stock_result = _get_case_and_ledger_updates(self.domain, sql_form)
+        case_stock_result = None
+        if sql_form.initial_processing_complete:
+            case_stock_result = _get_case_and_ledger_updates(self.domain, sql_form)
         _save_migrated_models(sql_form, case_stock_result)
 
     def _copy_unprocessed_forms(self):
-        from corehq.apps.tzmigration.timezonemigration import json_diff
+        for couch_form_json in iter_docs(XFormInstance.get_db(), self.errors_with_normal_doc_type, chunksize=1000):
+            assert couch_form_json['problem']
+            couch_form_json['doc_type'] = 'XFormError'
+            self._migrate_unprocessed_form(couch_form_json)
 
         changes = _get_unprocessed_form_iterator(self.domain).iter_all_changes()
         for change in self._with_progress(UNPROCESSED_DOC_TYPES, changes):
             couch_form_json = change.get_document()
-            couch_form = _wrap_form(couch_form_json)
-            sql_form = XFormInstanceSQL(
-                form_id=couch_form.form_id,
-                xmlns=couch_form.xmlns,
-                user_id=couch_form.user_id,
+            self._migrate_unprocessed_form(couch_form_json)
+
+    def _migrate_unprocessed_form(self, couch_form_json):
+        from corehq.apps.tzmigration.timezonemigration import json_diff
+        self.log_debug('Processing doc: {}({})'.format(couch_form_json['doc_type'], couch_form_json['_id']))
+        couch_form = _wrap_form(couch_form_json)
+        sql_form = XFormInstanceSQL(
+            form_id=couch_form.form_id,
+            xmlns=couch_form.xmlns,
+            user_id=couch_form.user_id,
+        )
+        _copy_form_properties(self.domain, sql_form, couch_form)
+        _migrate_form_attachments(sql_form, couch_form)
+        _migrate_form_operations(sql_form, couch_form)
+
+        if couch_form.doc_type != 'SubmissionErrorLog':
+            diffs = json_diff(couch_form.to_json(), sql_form.to_json(), track_list_indices=False)
+            self.diff_db.add_diffs(
+                couch_form.doc_type, couch_form.form_id,
+                filter_form_diffs(couch_form.doc_type, diffs)
             )
-            _copy_form_properties(self.domain, sql_form, couch_form)
-            _migrate_form_attachments(sql_form, couch_form)
-            _migrate_form_operations(sql_form, couch_form)
 
-            if couch_form.doc_type != 'SubmissionErrorLog':
-                diffs = json_diff(couch_form.to_json(), sql_form.to_json(), track_list_indices=False)
-                self.diff_db.add_diffs(
-                    couch_form.doc_type, couch_form.form_id,
-                    filter_form_diffs(couch_form.doc_type, diffs)
-                )
-
-            _save_migrated_models(sql_form)
+        _save_migrated_models(sql_form)
 
     def _copy_unprocessed_cases(self):
         doc_types = ['CommCareCase-Deleted']
         changes = _get_case_iterator(self.domain, doc_types=doc_types).iter_all_changes()
         for change in self._with_progress(doc_types, changes):
             couch_case = CommCareCase.wrap(change.get_document())
+            self.log_debug('Processing doc: {}({})'.format(couch_case['doc_type'], change.id))
             sql_case = CommCareCaseSQL(
                 case_id=couch_case.case_id,
                 domain=self.domain,
@@ -150,14 +174,16 @@ class CouchSqlDomainMigrator(object):
 
     def _diff_cases(self, couch_cases):
         from corehq.apps.tzmigration.timezonemigration import json_diff
+        self.log_debug('Calculating case diffs for {} cases'.format(len(couch_cases)))
         case_ids = list(couch_cases)
         sql_cases = CaseAccessorSQL.get_cases(case_ids)
         for sql_case in sql_cases:
             couch_case = couch_cases[sql_case.case_id]
-            diffs = json_diff(couch_case, sql_case.to_json(), track_list_indices=False)
+            sql_case_json = sql_case.to_json()
+            diffs = json_diff(couch_case, sql_case_json, track_list_indices=False)
             self.diff_db.add_diffs(
                 couch_case['doc_type'], sql_case.case_id,
-                filter_case_diffs(couch_case['doc_type'], diffs)
+                filter_case_diffs(couch_case, sql_case_json, diffs)
             )
 
         self._diff_ledgers(case_ids)
@@ -169,6 +195,8 @@ class CouchSqlDomainMigrator(object):
             state.ledger_reference: state
             for state in StockState.objects.filter(case_id__in=case_ids)
         }
+
+        self.log_debug('Calculating ledger diffs for {} cases'.format(len(case_ids)))
 
         for ledger_value in LedgerAccessorSQL.get_ledger_values_for_cases(case_ids):
             couch_state = couch_state_map.get(ledger_value.ledger_reference, None)
@@ -210,6 +238,9 @@ def _migrate_form(domain, couch_form):
     with force_phone_timezones_should_be_processed():
         adjust_datetimes(form_data)
     sql_form = interface.new_xform(form_data)
+    sql_form.form_id = couch_form.form_id   # some legacy forms don't have ID's so are assigned random ones
+    if sql_form.xmlns is None:
+        sql_form.xmlns = ''
     return _copy_form_properties(domain, sql_form, couch_form)
 
 
@@ -233,7 +264,7 @@ def _copy_form_properties(domain, sql_form, couch_form):
     # export_tag intentionally removed
     # sql_form.export_tag = ["domain", "xmlns"]
     sql_form.partial_submission = couch_form.partial_submission
-    sql_form.initial_processing_complete = couch_form.initial_processing_complete
+    sql_form.initial_processing_complete = couch_form.initial_processing_complete in (None, True)
 
     if couch_form.doc_type.endswith(DELETED_SUFFIX):
         doc_type = couch_form.doc_type[:-len(DELETED_SUFFIX)]

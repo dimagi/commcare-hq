@@ -3,6 +3,7 @@ from optparse import make_option
 
 from django.conf import settings
 from django.core.management.base import CommandError, LabelCommand
+from sqlalchemy.exc import OperationalError
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
     do_couch_to_sql_migration, delete_diff_db, get_diff_db,
@@ -27,11 +28,12 @@ class Command(LabelCommand):
         make_option('--stats-long', action='store_true', default=False),
         make_option('--show-diffs', action='store_true', default=False),
         make_option('--no-input', action='store_true', default=False),
+        make_option('--debug', action='store_true', default=False),
     )
 
     @staticmethod
     def require_only_option(sole_option, options):
-        this_command_opts = {'MIGRATE', 'COMMIT', 'blow_away', 'stats', 'show_diffs', 'no_input'}
+        this_command_opts = {'MIGRATE', 'COMMIT', 'blow_away', 'stats', 'show_diffs', 'no_input', 'debug'}
         assert all(not value for key, value in options.items()
                    if key in this_command_opts and key != sole_option)
 
@@ -40,13 +42,14 @@ class Command(LabelCommand):
             raise CommandError(u'It looks like {} has already been migrated.'.format(domain))
 
         self.no_input = options.pop('no_input', False)
+        self.debug = options.pop('debug', False)
         if self.no_input and not settings.UNIT_TESTING:
             raise CommandError('no-input only allowed for unit testing')
 
         if options['MIGRATE']:
             self.require_only_option('MIGRATE', options)
             set_migration_started(domain)
-            do_couch_to_sql_migration(domain, with_progress=not self.no_input)
+            do_couch_to_sql_migration(domain, with_progress=not self.no_input, debug=self.debug)
             self.print_stats(domain, short=options['stats_short'], diffs_only=True)
         if options['blow_away']:
             self.require_only_option('blow_away', options)
@@ -80,7 +83,11 @@ class Command(LabelCommand):
 
     def print_stats(self, domain, short=True, diffs_only=False):
         db = get_diff_db(domain)
-        diff_stats = db.get_diff_stats()
+        try:
+            diff_stats = db.get_diff_stats()
+        except OperationalError:
+            diff_stats = {}
+
         has_diffs = False
         for doc_type in doc_types():
             form_ids_in_couch = set(get_form_ids_by_type(domain, doc_type))
@@ -133,7 +140,7 @@ class Command(LabelCommand):
             return False
 
         def _highlight(text):
-            print red(text) if has_diff else text
+            return red(text) if has_diff else text
 
         row = "{:^40} | {:^40}"
         doc_count_row = row.format(n_couch, n_sql)

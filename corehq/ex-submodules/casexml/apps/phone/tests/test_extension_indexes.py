@@ -31,7 +31,7 @@ def get_test_name(test_name):
 
 @nottest
 def test_generator(test_name, skip=False):
-    @softer_assert
+    @softer_assert()
     def test(self):
         if skip:
             self.skipTest(skip)
