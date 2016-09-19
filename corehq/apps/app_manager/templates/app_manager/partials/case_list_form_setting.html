@@ -1,6 +1,59 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% load i18n %}
+
+{% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+
+<div id="case-list-form">
+    <div class="form-group">
+        <label class="col-sm-2 control-label">
+            Registration Form Accessible in Menu
+            <span class="hq-help-template"
+                  data-title="{% trans "Registration Form Accessible from Case List" %}"
+                  data-content="{% blocktrans %}Minimize duplicate case registrations by requiring mobile workers
+                  to search the case list before they can enter a form that registers new cases.{% endblocktrans %}"
+            ></span>
+        </label>
+        <div class="col-sm-4">
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" checked/>
+                </label>
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-2 control-label">
+            Registration Form Accessible from Case List
+            <span class="hq-help-template"
+                  data-title="{% trans "Registration Form Accessible from Case List" %}"
+                  data-content="{% blocktrans %}Minimize duplicate case registrations by requiring mobile workers
+                  to search the case list before they can enter a form that registers new cases.{% endblocktrans %}"
+            ></span>
+        </label>
+        <div class="col-sm-4">
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" checked />
+                </label>
+            </div>
+        </div>
+    </div>
+    <div class="form-group" id="case_list_form-label">
+        <label class="col-sm-2 control-label">
+            {% trans "Label for Case List Registration" %}
+        </label>
+        <div class="col-sm-4">
+            {% input_trans module.case_list_form.label langs input_name='case_list_form_label' %}
+        </div>
+    </div>
+</div>
+<div id="case_list_media">
+    {% include "app_manager/partials/nav_menu_media.html" with item=multimedia.case_list_form qualifier='case_list_form_' ICON_LABEL="Registration Form Icon" AUDIO_LABEL="Registration Form Audio" %}
+</div>
+
+{% else %}
+
 <div id="case-list-form">
     <div class="form-group">
         <label class="col-sm-2 control-label">
@@ -72,5 +125,8 @@
     </div>
 </div>
 <div id="case_list_media">
-    {% include "app_manager/partials/nav_menu_media.html" with item=multimedia.case_list_form qualifier='case_list_form_' ICON_LABEL="Registration Form Icon" AUDIO_LABEL="Registration Form Audio" %}
+    {% include "app_manager/partials/nav_menu_media.html" with item=multimedia.case_list_form
+qualifier='case_list_form_' ICON_LABEL="Registration Form Icon" AUDIO_LABEL="Registration Form Audio" %}
 </div>
+
+{% endif %}

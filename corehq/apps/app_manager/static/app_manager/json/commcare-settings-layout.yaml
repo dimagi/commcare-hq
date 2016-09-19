@@ -68,13 +68,15 @@
     - properties.cc-login-duration-seconds
     - properties.cc-log-entity-detail-enabled
     - properties.cc-inflation-target-density
-    - hq.use_grid_menus
     - properties.cc-grid-menus
+    - hq.use_grid_menus
+    - hq.grid_form_menus
 
 - title: 'Advanced'
   id: app-settings-advanced
   collapse: true
   settings:
+    - properties.advanced_app_builder
     - properties.log_prop_weekly  # Weekly Log Sending Frequency
     - properties.log_prop_daily  # Daily Log Sending Frequency
     - hq.secure_submissions

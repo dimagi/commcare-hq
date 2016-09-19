@@ -120,13 +120,16 @@ def default_new_app(request, domain):
         identify.delay(request.couch_user.username, {'First Template App Chosen': 'blank'})
     lang = 'en'
     app = Application.new_app(domain, _("Untitled Application"), lang=lang)
-    module = Module.new_module(_("Untitled Module"), lang)
-    app.add_module(module)
-    form = app.new_form(0, "Untitled Form", lang)
+    if not toggles.ONBOARDING_PROTOTYPE.enabled(request.domain):
+        module = Module.new_module(_("Untitled Module"), lang)
+        app.add_module(module)
+        form = app.new_form(0, "Untitled Form", lang)
     if request.project.secure_submissions:
         app.secure_submissions = True
     clear_app_cache(request, domain)
     app.save()
+    if toggles.ONBOARDING_PROTOTYPE.enabled(request.domain):
+        return HttpResponseRedirect(reverse('release_manager', args=[domain, app._id]))
     return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, 0, 0]))
 
 
@@ -609,6 +612,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('translation_strategy', None),
         ('auto_gps_capture', None),
         ('use_grid_menus', None),
+        ('grid_form_menus', None),
         ('comment', None),
         ('custom_base_url', None),
         ('use_j2me_endpoint', None),
