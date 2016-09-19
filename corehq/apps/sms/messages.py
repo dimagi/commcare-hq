@@ -88,7 +88,8 @@ _MESSAGES = {
         "'join {0} worker [username]', entering your requested username in place of [username]"),
     MSG_REGISTRATION_WELCOME_CASE: ugettext_noop("Thank you for registering with CommCareHQ."),
     MSG_REGISTRATION_WELCOME_MOBILE_WORKER: ugettext_noop("Thank you for registering with CommCareHQ."),
-    MSG_REGISTRATION_INSTALL_COMMCARE: ugettext_noop("To install CommCare, follow this link to the Google Play store: {0}"),
+    MSG_REGISTRATION_INSTALL_COMMCARE:
+        ugettext_noop("To install CommCare, follow this link to the Google Play store: {0}"),
     MSG_UPDATE_UNRECOGNIZED_ACTION: ugettext_noop('Error: Unrecognized update action provided.'),
     MSG_UPDATE: ugettext_noop("Usage: #update <keyword>"),
     MSG_UPDATE_LOCATION_SITE_CODE_NOT_FOUND: ugettext_noop("Location with site code {0} was not found."),

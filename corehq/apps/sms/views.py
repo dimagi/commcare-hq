@@ -2144,7 +2144,7 @@ class InvitationAppInfoView(View, DomainViewMixin):
             odk_url = None
 
         if odk_url:
-           return odk_url
+            return odk_url
 
         if self.invitation:
             # There shouldn't be many instances of this. Once we stop getting these asserts,
