@@ -367,6 +367,7 @@
                                 <li><a href="#" class="new-module" data-type="survey">{% trans "Survey" %}</a></li>
                                 <li><a href="#" class="new-module" data-type="case">{% trans "Record List" %}</a></li>
                             {% else %}
+                                <li><a href="#" class="new-module" data-type="case">{% trans "New Case Module" %}</a></li>
                                 {% if show_care_plan %}
                                 <li><a data-toggle="modal" href="#careplan-module-modal">{% trans "New Care Plan Module" %}</a></li>
                                 {% endif %}
@@ -407,19 +408,21 @@
         </ul>
         </li>
     {% endif %}
-    <li class="text-hq-nav-header">Actions</li>
-    <li class="app-name-div{% if copy_app_form and copy_app_form.is_bound %} active{% endif %}">
-        <a href="{% url "view_app" domain app.id %}copy/#copy" {% if is_app_view %}data-toggle="tab"{% endif %}>
-            <i class="fa fa-copy"></i>
-            {% trans "Copy Application" %}
-        </a>
-    </li>
-    <li>
-        <a href="{% url "view_app" domain app.id %}delete/#delete" {% if is_app_view %}data-toggle="tab"{% endif %}>
-            <i class="fa fa-trash"></i>
-            {% trans "Delete Application" %}
-        </a>
-    </li>
+    {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+        <li class="text-hq-nav-header">Actions</li>
+        <li class="app-name-div{% if copy_app_form and copy_app_form.is_bound %} active{% endif %}">
+            <a href="{% url "view_app" domain app.id %}copy/#copy" {% if is_app_view %}data-toggle="tab"{% endif %}>
+                <i class="fa fa-copy"></i>
+                {% trans "Copy Application" %}
+            </a>
+        </li>
+        <li>
+            <a href="{% url "view_app" domain app.id %}delete/#delete" {% if is_app_view %}data-toggle="tab"{% endif %}>
+                <i class="fa fa-trash"></i>
+                {% trans "Delete Application" %}
+            </a>
+        </li>
+    {% endif %}
     </ul>
 </nav>
 {% endif %}
