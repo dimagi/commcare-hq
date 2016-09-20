@@ -1331,7 +1331,7 @@ class CaseExportDataSchema(ExportDataSchema):
             path=CASE_HISTORY_TABLE,
             last_occurrences={app_id: app_version},
         )
-        unknown_case_properties = set(case_property_mapping.values())
+        unknown_case_properties = set(case_property_mapping[case_property_mapping.keys()[0]])
 
         def _add_to_group_schema(group_schema, path_start, prop, app_id, app_version):
             group_schema.items.append(ScalarItem(
