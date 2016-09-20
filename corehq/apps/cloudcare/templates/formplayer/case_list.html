@@ -16,9 +16,9 @@
         </div>
     </div>
     <% if (useGrid) { %>
-        <section class="case-container"></section>
     <% } else { %>
         <% if(!useTiles) { %>
+        <section class="js-case-container"></section>
             <thead>
                 <tr>
                     <% _.each(headers, function(header) { %>
@@ -28,7 +28,6 @@
             </thead>
         <% } %>
         <table class="table table-hover table-striped table-bordered">
-        <tbody class="wrapper case-container">
         </tbody>
         </table>
     <% } %>
@@ -40,6 +39,7 @@
     <% if (pageCount) { %>
     <div>
         <nav>
+            <tbody class="wrapper js-case-container">
             <ul class="pagination">
                 <% if (currentPage > 0) { %>
                 <li class="page-item" id="prev-page">

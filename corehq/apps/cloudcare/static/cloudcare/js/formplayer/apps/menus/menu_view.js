@@ -225,7 +225,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     MenuList.CaseListView = Marionette.CompositeView.extend({
         tagName: "div",
         template: "#case-view-list-template",
-        childViewContainer: ".case-container",
+        childViewContainer: ".js-case-container",
         childView: MenuList.CaseView,
 
         initialize: function (options) {
