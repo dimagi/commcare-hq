@@ -232,29 +232,47 @@ def web_user(location_id=None, assigned_location_ids=None):
 @generate_cases([
     (
         cc_user(),
-        cc_user(assigned_location_ids=[], user_data=user_data(''))
+        cc_user(),
+        False
     ),
     (
-        cc_user('a'),
-        cc_user('a', ['a'], user_data=user_data('a'))
+        cc_user('ca', ['ca'], user_data=user_data('ca')),
+        cc_user('ca', ['ca'], user_data=user_data('ca')),
+        False
+    ),
+    (
+        cc_user('ab'),
+        cc_user('ab', ['ab'], user_data=user_data('ab')),
+        True
     ),
     (
         cc_user('a', ['b']),
-        cc_user('a', ['b', 'a'], user_data=user_data('b a'))
+        cc_user('a', ['b', 'a'], user_data=user_data('b a')),
+        True
     ),
     (
         web_user(),
-        web_user(assigned_location_ids=[])
+        web_user(),
+        False
+    ),
+    (
+        web_user('a', ['a']),
+        web_user('a', ['a']),
+        False
     ),
     (
         web_user('a'),
-        web_user('a', ['a'])
-    ),
-    (
+        web_user('a', ['a']),
+        True
+    ),    (
         web_user('a', ['b']),
-        web_user('a', ['b', 'a'])
+        web_user('a', ['b', 'a']),
+        True
     ),
 ])
-def test_migration(self, user, expected):
-    actual = add_multi_location_property.Command().migrate_user(user).doc
-    self.assertEqual(actual, expected)
+def test_migration(self, user, expected, should_migrate):
+    migration = add_multi_location_property.Command().migrate_user(user)
+    self.assertEqual(bool(migration), should_migrate)
+    if should_migrate:
+        actual = migration.doc
+        self.assertEqual(actual, expected)

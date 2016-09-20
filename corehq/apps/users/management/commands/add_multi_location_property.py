@@ -24,22 +24,39 @@ class Command(BaseCommand):
 
     def migrate_cc_user(self, doc):
 
-        if is_already_migrated(doc):
+        # skip if doesn't have location
+        if not doc['location_id']:
             return
+
+        # skip if already migrated
+        if doc['location_id'] in doc.get('assigned_location_ids', []):
+            user_data = doc.get('user_data', {})
+            expected = user_location_data(doc['assigned_location_ids'])
+            actual = user_data.get('commcare_location_ids', None)
+            if expected == actual:
+                return
 
         apply_migration(doc)
         apply_migration(doc['domain_membership'])
-        doc['user_data'].update({
-            'commcare_location_ids': user_location_data(doc['assigned_location_ids'])
-        })
+        if doc['assigned_location_ids']:
+            doc['user_data'].update({
+                'commcare_location_ids': user_location_data(doc['assigned_location_ids'])
+            })
         return DocUpdate(doc)
 
     def migrate_web_user(self, doc):
-        if all([is_already_migrated(dm) for dm in doc['domain_memberships']]):
+        def should_skip(dm):
+            if not dm['location_id']:
+                return True
+
+            if dm['location_id'] in dm.get('assigned_location_ids', []):
+                return True
+
+        if all([should_skip(dm) for dm in doc['domain_memberships']]):
             return
 
         for membership in doc['domain_memberships']:
-            if not is_already_migrated(membership):
+            if not should_skip(membership):
                 apply_migration(membership)
 
         return DocUpdate(doc)
@@ -54,14 +71,6 @@ class Command(BaseCommand):
         return list(res.doc_ids)
 
 
-def is_already_migrated(doc):
-    # doc can be a user dict or a domain_membership dict
-    return ('assigned_location_ids' in doc and
-            doc['location_id'] in doc['assigned_location_ids'] and
-            'commcare_location_ids' in doc['user_data'] and
-            doc['user_data']['commcare_location_ids'] == user_location_data('assigned_location_ids'))
-
-
 def apply_migration(doc):
     # doc can be a user dict or a domain_membership dict
     if doc['location_id']:
@@ -69,6 +78,3 @@ def apply_migration(doc):
             doc['assigned_location_ids'].append(doc['location_id'])
         else:
             doc['assigned_location_ids'] = [doc['location_id']]
-    else:
-        if 'assigned_location_ids' not in doc:
-            doc['assigned_location_ids'] = []
