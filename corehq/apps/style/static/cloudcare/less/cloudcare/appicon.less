@@ -116,11 +116,12 @@
 }
 
 .appicon-default {
-  background-color: @cc-bg;
-  color: lighten(@cc-text, 20);
+  background-color: white;
+  color: lighten(@cc-text, 30);
+  .box-shadow(0 0 10px 0 rgba(0, 0, 0, 0.2));
   .appicon-icon { color: @cc-brand-mid; }
   &:hover {
-    background-color: darken(@cc-bg, 10);
+    background-color: darken(white, 5);
   }
 }
 
