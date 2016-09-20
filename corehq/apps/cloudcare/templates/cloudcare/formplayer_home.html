@@ -4,11 +4,7 @@
 {% load compress %}
 
 {% block title %}
-    {% if request.couch_user.is_web_user %}
-        {% trans "Preview Form" %}
-    {% else %}
-        {% trans "Formplayer" %}
-    {% endif %}
+    {% trans "CloudCare" %}
 {% endblock %}
 
 {% block page_title %}{% endblock %}
