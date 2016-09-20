@@ -278,11 +278,11 @@
             <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">
                 {% csrf_token %}
                 <button type="submit" class="disable-on-submit btn btn-danger"
-                    {% if form.get_action_type == 'open' %}disabled="disabled"{% endif %}>
+                    {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" and not app.advanced_app_builder and form.get_action_type == 'open' %}disabled="disabled"{% endif %}>
                     <i class="fa fa-trash"></i>
                     {% trans "Delete Form" %}
                 </button>
-                {% if form.get_action_type == 'open' %}
+                {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" and not app.advanced_app_builder and form.get_action_type == 'open' %}
                     <span class="hq-help-template"
                           data-title="Why can't I delete this?"
                           data-placement="left"
