@@ -15,9 +15,10 @@ class EnikshayCaseFactory(object):
 
     patient_detail = None
 
-    def __init__(self, patient_detail):
+    def __init__(self, patient_detail, nikshay_code_to_location):
         self.patient_detail = patient_detail
         self.factory = CaseFactory(domain=ENIKSHAY_DOMAIN)
+        self.nikshay_code_to_location = nikshay_code_to_location
 
     @transaction.atomic
     def create_cases(self):
@@ -140,12 +141,8 @@ class EnikshayCaseFactory(object):
         return Followup.objects.filter(PatientID=self.patient_detail)
 
     @property
-    @memoized
     def _location(self):
-        for loc in SQLLocation.objects.filter(domain=ENIKSHAY_DOMAIN):
-            if loc.metadata.get('nikshay_code') == self._nikshay_code:
-                return loc
-        raise Exception
+        return self.nikshay_code_to_location[self._nikshay_code]
 
     @property
     def _nikshay_code(self):
@@ -157,8 +154,17 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         counter = 0
         for patient_detail in PatientDetail.objects.all():
-            case_factory = EnikshayCaseFactory(patient_detail)
+            case_factory = EnikshayCaseFactory(patient_detail, self._nikshay_code_to_location)
             case_factory.create_cases()
             counter += 1
             print counter
         print 'All patient cases created'
+
+    @property
+    @memoized
+    def _nikshay_code_to_location(self):
+        return {
+            location.metadata.get('nikshay_code'): location
+            for location in SQLLocation.objects.filter(domain=ENIKSHAY_DOMAIN)
+            if 'nikshay_code' in location.metadata
+        }
