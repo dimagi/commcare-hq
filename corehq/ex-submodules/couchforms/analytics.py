@@ -33,11 +33,20 @@ def domain_has_submission_in_last_30_days(domain):
 
 
 def get_number_of_forms_in_domain(domain):
-    return FormES().domain(domain).size(0).run().total
+    return FormES().domain(domain).count()
+
+
+def _received_on_query(domain, desc=False):
+    return (
+        FormES()
+        .fields(['received_on'])
+        .domain(domain)
+        .sort('received_on', desc=desc)
+    )
 
 
 def get_first_form_submission_received(domain):
-    result = FormES().domain(domain).size(1).sort('received_on').fields(['received_on']).run().hits
+    result = _received_on_query(domain)[0]
 
     if not result:
         return
@@ -46,7 +55,7 @@ def get_first_form_submission_received(domain):
 
 
 def get_last_form_submission_received(domain):
-    result = FormES().domain(domain).size(1).sort('received_on', desc=True).fields(['received_on']).run().hits
+    result = _received_on_query(domain, desc=True)[0]
 
     if not result:
         return
@@ -58,7 +67,7 @@ def app_has_been_submitted_to_in_last_30_days(domain, app_id):
     now = datetime.datetime.utcnow()
     _30_days = datetime.timedelta(days=30)
 
-    result = FormES().domain(domain).app(app_id).size(1).sort('received_on', desc=True).fields(['received_on']).run().hits
+    result = _received_on_query(domain, desc=True).app(app_id)[0]
 
     if not result:
         return
