@@ -3,7 +3,7 @@
 {% load i18n %}
 
 {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
-{% if not module.is_surveys and form.get_action_type == 'open' %}
+{% if not module.is_surveys and form.get_action_type == 'open' and app.advanced_app_builder %}
 
 <div id="case-list-form">
     <div class="form-group">
