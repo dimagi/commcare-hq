@@ -1,4 +1,6 @@
 import re
+from collections import defaultdict
+
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.es.cases import CaseES
 from corehq.form_processor.exceptions import CaseNotFound
@@ -12,6 +14,15 @@ from corehq.form_processor.models import CommCareCaseSQL
 ALLOWED_DATE_REGEX = re.compile('^\d{4}-\d{2}-\d{2}')
 AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
 
+class PropertyTypeChoices(object):
+    EXACT = "Exact"
+    CASE_PROPERTY = "Case Property"
+
+    choices = (
+        (EXACT, EXACT),
+        (CASE_PROPERTY, CASE_PROPERTY)
+    )
+
 
 class AutomaticUpdateRule(models.Model):
     domain = models.CharField(max_length=126, db_index=True)
@@ -20,12 +31,13 @@ class AutomaticUpdateRule(models.Model):
     active = models.BooleanField(default=False)
     deleted = models.BooleanField(default=False)
     last_run = models.DateTimeField(null=True)
+    filter_on_server_modified = models.BooleanField(default=True)
 
     # For performance reasons, the server_modified_boundary is a
     # required part of the criteria and should be set to the minimum
     # number of days old that a case's server_modified_on date must be
     # before we run the rule against it.
-    server_modified_boundary = models.IntegerField()
+    server_modified_boundary = models.IntegerField(null=True)
 
     class Meta:
         app_label = "data_interfaces"
@@ -49,18 +61,26 @@ class AutomaticUpdateRule(models.Model):
 
     @classmethod
     def get_boundary_date(cls, rules, now):
-        min_boundary = min([rule.server_modified_boundary for rule in rules])
+        min_boundary = None
+        for rule in rules:
+            if not rule.server_modified_boundary:
+                return None
+            elif not min_boundary:
+                min_boundary = rule.server_modified_boundary
+            elif rule.server_modified_boundary < min_boundary:
+                min_boundary = rule.server_modified_boundary
         date = now - timedelta(days=min_boundary)
         return date
 
     @classmethod
-    def get_case_ids(cls, domain, boundary_date, case_type):
+    def get_case_ids(cls, domain, case_type, boundary_date=None):
         query = (CaseES()
                  .domain(domain)
                  .case_type(case_type)
-                 .server_modified_range(lte=boundary_date)
                  .is_closed(closed=False)
                  .exclude_source())
+        if boundary_date is not None:
+            query = query.server_modified_range(lte=boundary_date)
         results = query.run()
         return results.doc_ids
 
@@ -76,25 +96,44 @@ class AutomaticUpdateRule(models.Model):
         if case.type != self.case_type:
             return False
 
-        if (case.server_modified_on >
-                (now - timedelta(days=self.server_modified_boundary))):
+        if self.filter_on_server_modified and \
+                (case.server_modified_on > (now - timedelta(days=self.server_modified_boundary))):
             return False
 
         return all([criterion.matches(case, now)
                    for criterion in self.automaticupdaterulecriteria_set.all()])
 
     def apply_actions(self, case):
-        properties = {}
+        cases_to_update = defaultdict(dict)
         close = False
+
+        def _get_case_property_value(current_case, name):
+            return current_case.resolve_case_property(name)[0].value
+
+        def _add_update_property(name, value, current_case):
+            while name.startswith('parent/'):
+                name = name[7:]
+                current_case = current_case.parent
+            cases_to_update[current_case.case_id][name] = value
 
         for action in self.automaticupdateaction_set.all():
             if action.action == AutomaticUpdateAction.ACTION_UPDATE:
-                properties[action.property_name] = action.property_value
+                # break this out as helper function?
+                if action.property_value_type == PropertyTypeChoices.CASE_PROPERTY:
+                    value = _get_case_property_value(case, action.property_value)
+                else:
+                    value = action.property_value
+
+                if value != _get_case_property_value(case, action.property_name):
+                    _add_update_property(action.property_name, value, case)
             elif action.action == AutomaticUpdateAction.ACTION_CLOSE:
                 close = True
 
-        update_case(case.domain, case.case_id, case_properties=properties, close=close,
-            xmlns=AUTO_UPDATE_XMLNS)
+        for id, properties in cases_to_update.items():
+            close_case = close if id == case.case_id else False
+            update_case(case.domain, id, case_properties=properties, close=close_case,
+                xmlns=AUTO_UPDATE_XMLNS)
+
         return close
 
     def apply_rule(self, case, now):
@@ -213,6 +252,7 @@ class AutomaticUpdateAction(models.Model):
         (ACTION_CLOSE, ACTION_CLOSE),
     )
 
+
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
     action = models.CharField(max_length=10, choices=ACTION_CHOICES)
 
@@ -220,5 +260,13 @@ class AutomaticUpdateAction(models.Model):
     property_name = models.CharField(max_length=126, null=True)
     property_value = models.CharField(max_length=126, null=True)
 
+    property_value_type = models.CharField(max_length=15,
+                                           choices=PropertyTypeChoices.choices,
+                                           default=PropertyTypeChoices.EXACT)
+
     class Meta:
         app_label = "data_interfaces"
+
+
+# import signals
+from corehq.apps.data_interfaces import signals

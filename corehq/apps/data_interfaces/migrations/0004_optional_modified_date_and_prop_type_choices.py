@@ -1,0 +1,32 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
+from django.db import models, migrations
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('data_interfaces', '0003_update__automaticupdaterulecriteria__match_type__choices'),
+    ]
+
+    operations = [
+        migrations.AddField(
+            model_name='automaticupdateaction',
+            name='property_value_type',
+            field=models.CharField(default=b'Exact', max_length=15, choices=[(b'Exact', b'Exact'), (b'Case Property', b'Case Property')]),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='automaticupdaterule',
+            name='filter_on_server_modified',
+            field=models.BooleanField(default=True),
+            preserve_default=True,
+        ),
+        migrations.AlterField(
+            model_name='automaticupdaterule',
+            name='server_modified_boundary',
+            field=models.IntegerField(null=True),
+            preserve_default=True,
+        ),
+    ]
