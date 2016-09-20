@@ -22,6 +22,7 @@ def _alter_to_uuid_sql_reverse(model, field):
 
 
 def migrate_field_to_uuid(model, field):
+    print field
     forward = _alter_to_uuid_sql_forawd(model, field)
     reverse = _alter_to_uuid_sql_reverse(model, field)
 
@@ -211,6 +212,10 @@ class Migration(migrations.Migration):
             model_name='xformattachmentsql',
             old_name='attachment_uuid',
             new_name='attachment_id',
+        ),
+        migrations.RunSQL(
+            'ALTER TABLE form_processor_caseattachmentsql DROP CONSTRAINT IF EXISTS '
+            'form_processor_caseattachmentsql_attachment_uuid_8d145664_uniq;'
         ),
         migrate_field_to_uuid('caseattachmentsql', 'attachment_id'),
         migrate_field_to_uuid('xformattachmentsql', 'attachment_id'),
