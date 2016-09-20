@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from corehq.apps.es import UserES, users as user_filters
+from corehq.apps.es import filters, UserES, users as user_filters
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import user_location_data
 from corehq.util.couch import iter_update, DocUpdate
@@ -63,9 +63,8 @@ class Command(BaseCommand):
 
     def get_user_ids(self):
         res = (UserES()
-               .OR(user_filters.web_users(), user_filters.mobile_users())
-               .non_null('location_id')
-               .non_null('domain_memberships.location_id')
+               .OR(filters.AND(user_filters.mobile_users(), filters.non_null('location_id')),
+                   filters.AND(user_filters.web_users(), filters.non_null('domain_memberships.location_id')))
                .exclude_source()
                .run())
         return list(res.doc_ids)
