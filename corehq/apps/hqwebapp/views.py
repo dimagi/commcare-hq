@@ -146,7 +146,7 @@ def redirect_to_default(req, domain=None):
                 couch_user = req.couch_user
 
                 if (couch_user.is_commcare_user() and
-                        couch_user.can_view_any_reports(domain)):
+                        couch_user.can_view_some_reports(domain)):
                     url = reverse("cloudcare_main", args=[domain, ""])
                 else:
                     from corehq.apps.dashboard.views import dashboard_default
