@@ -59,6 +59,7 @@
                             // monkeypatch
                             if (!$(e.srcElement).hasClass('form-control')) {
                                 e.preventDefault();
+                                $('.form-control').blur();
                             }
 
                         }

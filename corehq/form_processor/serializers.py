@@ -5,7 +5,7 @@ from corehq.apps.commtrack.models import StockState
 from corehq.form_processor.models import (
     CommCareCaseIndexSQL, CommCareCaseSQL, CaseTransaction,
     XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL,
-    LedgerValue)
+    LedgerValue, CaseAttachmentSQL)
 
 
 class DeletableModelSerializer(serializers.ModelSerializer):
@@ -117,12 +117,23 @@ class CommCareCaseSQLRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSe
         model = CommCareCaseSQL
 
 
+class CaseAttachmentSQLSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CaseAttachmentSQL
+        fields = (
+            'content_type',
+            'content_length',
+            'name',
+        )
+
+
 class CommCareCaseSQLSerializer(DeletableModelSerializer):
     _id = serializers.CharField(source='case_id')
     doc_type = serializers.CharField()
     user_id = serializers.CharField(source='modified_by')
     indices = CommCareCaseIndexSQLSerializer(many=True, read_only=True)
     actions = CaseTransactionActionSerializer(many=True, read_only=True, source='non_revoked_transactions')
+    case_attachments = serializers.JSONField(source='serialized_attachments')
     case_json = serializers.JSONField()
     xform_ids = serializers.ListField()
 

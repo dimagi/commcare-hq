@@ -412,7 +412,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
             raise InvalidAttachment("cannot save attachment without name")
 
         db = get_blob_db()
-        bucket = self._blobdb_bucket()
+        bucket = self.blobdb_bucket()
         info = db.put(content, self.name, bucket)
         self.md5 = info.md5_hash
         self.content_length = info.length
@@ -421,7 +421,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
     def read_content(self, stream=False):
         db = get_blob_db()
         try:
-            blob = db.get(self.blob_id, self._blobdb_bucket())
+            blob = db.get(self.blob_id, self.blobdb_bucket())
         except (KeyError, NotFound, BadName):
             raise AttachmentNotFound(self.name)
 
@@ -433,14 +433,14 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
 
     def delete_content(self):
         db = get_blob_db()
-        bucket = self._blobdb_bucket()
+        bucket = self.blobdb_bucket()
         deleted = db.delete(self.blob_id, bucket)
         if deleted:
             self.blob_id = None
 
         return deleted
 
-    def _blobdb_bucket(self):
+    def blobdb_bucket(self):
         if self.blob_bucket is not None:
             return self.blob_bucket
         if self.attachment_id is None:
@@ -749,6 +749,15 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def case_attachments(self):
         return {attachment.identifier: attachment for attachment in self.get_attachments()}
 
+    @property
+    @memoized
+    def serialized_attachments(self):
+        from .serializers import CaseAttachmentSQLSerializer
+        return {
+            att.name: dict(CaseAttachmentSQLSerializer(att).data)
+            for att in self.get_attachments()
+            }
+
     @memoized
     def get_closing_transactions(self):
         return self._transactions_by_type(CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_CLOSE)
@@ -879,7 +888,7 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
         """
         self.content_length = attachment.content_length
         self.blob_id = attachment.blob_id
-        self.blob_bucket = attachment._blobdb_bucket()
+        self.blob_bucket = attachment.blobdb_bucket()
         self.md5 = attachment.md5
         self.content_type = attachment.content_type
         self.properties = attachment.properties

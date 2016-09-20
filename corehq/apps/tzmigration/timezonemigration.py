@@ -196,7 +196,7 @@ def prepare_case_json(planning_db):
     return planning_db
 
 
-def is_datetime(string):
+def is_datetime_string(string):
     if not isinstance(string, basestring):
         return False
     try:

@@ -52,6 +52,7 @@ PROPERTY_TAG_STOCK = 'stock'
 FORM_EXPORT = 'form'
 CASE_EXPORT = 'case'
 MAX_EXPORTABLE_ROWS = 100000
+CASE_SCROLL_SIZE = 10000
 
 # When a question is missing completely from a form/case this should be the value
 MISSING_VALUE = '---'
