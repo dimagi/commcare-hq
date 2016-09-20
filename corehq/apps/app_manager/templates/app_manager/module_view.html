@@ -339,7 +339,10 @@
                 {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
                     <legend>{% trans "Multimedia" %}</legend>
                     {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
+                    {% if not module.is_surveys %}
+                    <!-- in the prototype, all advanced settings are case-related -->
                     <legend>Advanced</legend>
+                    {% endif %}
                 {% else %}
                     <div class="form-group">
                         <label class="col-sm-2 control-label">
@@ -384,23 +387,23 @@
                             <div class="save-button-holder clearfix"></div>
                             <fieldset>
                                 <legend>{% trans "Basic" %}</legend>
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label">
+                                        {% trans "Case Type" %}
+                                        <span class="hq-help-template"
+                                              data-title="{% trans "Case Type" %}"
+                
+                                              data-content="{% trans "The name for the type of case you are tracking (e.g. &quot;pregnancy&quot;, &quot;farm&quot;, &quot;household&quot;, etc.). All cases you register in this module will be this type of case, and only cases of this type will show in the case list. Other modules with the same case type will use the same set of cases." %}"
+                                                ></span>
+                                    </label>
+                                    <div class="col-sm-4">
+                                        <input class="code form-control" type="text" id="case_type" name="case_type" value="{{ module.case_type }}" />
+                                        <span class="help-block" id="case_type_error" style="display: none;">
+                                            {% trans "Case types can only include the characters a-z, 0-9, '-' and '_'" %}
+                                        </span>
+                                    </div>
+                                </div>
                 {% endif %}
-                <div class="form-group">
-                    <label class="col-sm-2 control-label">
-                        {% trans "Case Type" %}
-                        <span class="hq-help-template"
-                              data-title="{% trans "Case Type" %}"
-
-                              data-content="{% trans "The name for the type of case you are tracking (e.g. &quot;pregnancy&quot;, &quot;farm&quot;, &quot;household&quot;, etc.). All cases you register in this module will be this type of case, and only cases of this type will show in the case list. Other modules with the same case type will use the same set of cases." %}"
-                                ></span>
-                    </label>
-                    <div class="col-sm-4">
-                        <input class="code form-control" type="text" id="case_type" name="case_type" value="{{ module.case_type }}" />
-                        <span class="help-block" id="case_type_error" style="display: none;">
-                            {% trans "Case types can only include the characters a-z, 0-9, '-' and '_'" %}
-                        </span>
-                    </div>
-                </div>
                 {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
                     <div class="form-group">
                         <label class="control-label col-sm-2">
