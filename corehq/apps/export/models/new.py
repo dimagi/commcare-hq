@@ -1341,12 +1341,12 @@ class CaseExportDataSchema(ExportDataSchema):
                 last_occurrences={app_id: app_version},
             ))
 
-        for prop in unknown_case_properties:
-            path_start = PathNode(name="updated_unknown_properties")
-            _add_to_group_schema(group_schema, path_start, prop, app_id, app_version)
-
         for prop in KNOWN_CASE_PROPERTIES:
             path_start = PathNode(name="updated_known_properties")
+            _add_to_group_schema(group_schema, path_start, prop, app_id, app_version)
+
+        for prop in unknown_case_properties:
+            path_start = PathNode(name="updated_unknown_properties")
             _add_to_group_schema(group_schema, path_start, prop, app_id, app_version)
 
         schema.group_schemas.append(group_schema)
