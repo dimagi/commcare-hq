@@ -14,6 +14,7 @@ from corehq.form_processor.models import CommCareCaseSQL
 ALLOWED_DATE_REGEX = re.compile('^\d{4}-\d{2}-\d{2}')
 AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
 
+
 class PropertyTypeChoices(object):
     EXACT = "Exact"
     CASE_PROPERTY = "Case Property"

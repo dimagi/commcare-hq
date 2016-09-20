@@ -25,7 +25,9 @@ from corehq.apps.data_interfaces.forms import (
     AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm,
     AddAutomaticCaseUpdateRuleForm)
 from corehq.apps.data_interfaces.models import (AutomaticUpdateRule,
-                                                AutomaticUpdateRuleCriteria, AutomaticUpdateAction, PropertyTypeChoices)
+                                                AutomaticUpdateRuleCriteria,
+                                                AutomaticUpdateAction,
+                                                PropertyTypeChoices)
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
