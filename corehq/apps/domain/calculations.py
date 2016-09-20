@@ -328,10 +328,10 @@ def _all_domain_stats():
             'CommCareUser': commcare_counts
         }[doc_type][domain] = value
 
-    return {"web_users": webuser_counts,
-            "commcare_users": commcare_counts,
-            "forms": form_counts,
-            "cases": case_counts}
+    return {
+        "web_users": webuser_counts,
+        "commcare_users": commcare_counts,
+    }
 
 
 def total_distinct_users(domains=None):

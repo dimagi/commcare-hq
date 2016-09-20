@@ -60,3 +60,5 @@ STOCK_QUESTION_TAG_NAMES = [
     'balance',
     'transfer',
 ]
+
+DEFAULT_FETCH_LIMIT = 5

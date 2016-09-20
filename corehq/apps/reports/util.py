@@ -441,14 +441,6 @@ def get_installed_custom_modules():
     return [import_module(module) for module in settings.CUSTOM_MODULES]
 
 
-def is_mobile_worker_with_report_access(couch_user, domain):
-    return (
-        couch_user.is_commcare_user
-        and domain is not None
-        and Domain.get_by_name(domain).default_mobile_worker_redirect == 'reports'
-    )
-
-
 def get_INFilter_element_bindparam(base_name, index):
     return '%s_%d' % (base_name, index)
 

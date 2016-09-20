@@ -47,6 +47,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_all_user_ids_submitted,
     get_username_in_last_form_user_id_submitted,
     get_form_ids_having_multimedia,
+    scroll_case_names,
 )
 from corehq.apps.es.aggregations import MISSING_KEY
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
@@ -895,6 +896,23 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         send_to_elasticsearch('cases', case.to_json())
         self.es.indices.refresh(CASE_INDEX_INFO.index)
         return case
+
+    def test_scroll_case_names(self):
+        case_one = self._send_case_to_es()
+        case_two = self._send_case_to_es()
+
+        self.assertEqual(
+            len(list(scroll_case_names(self.domain, [case_one.case_id, case_two.case_id]))),
+            2
+        )
+        self.assertEqual(
+            len(list(scroll_case_names('wrong-domain', [case_one.case_id, case_two.case_id]))),
+            0
+        )
+        self.assertEqual(
+            len(list(scroll_case_names(self.domain, [case_one.case_id]))),
+            1
+        )
 
     def test_get_active_case_counts(self):
         datespan = DateSpan(datetime(2013, 7, 1), datetime(2013, 7, 30))

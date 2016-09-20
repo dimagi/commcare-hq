@@ -78,8 +78,13 @@
         <div class="help-block" data-bind="visible: !formLink.autoLink()">
             <p>
                 {% trans "This form requires manual linking." %}
-                <button class="btn btn-default btn-sm" data-bind="click: formLink.fetchDatums, visible: !formLink.datumsFetched()">
+                <button class="btn btn-default btn-sm" data-bind="click: formLink.fetchDatums">
+                    <!-- ko if: formLink.datumsFetched() -->
+                    {% trans "Refresh" %}
+                    <!-- /ko -->
+                    <!-- ko if: !formLink.datumsFetched() -->
                     {% trans "Continue" %}
+                    <!-- /ko -->
                 </button>
             </p>
             <p data-bind="visible: formLink.datumsFetched() && formLink.datums().length === 0">

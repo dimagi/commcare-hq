@@ -32,6 +32,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc
 from corehq.apps.app_manager.models import BuildProfile
+from corehq.apps.app_manager.const import DEFAULT_FETCH_LIMIT
 from corehq.apps.users.models import CommCareUser
 from corehq.util.view_utils import reverse
 from corehq.apps.app_manager.decorators import (
@@ -107,6 +108,7 @@ def releases_ajax(request, domain, app_id, template='app_manager/partials/releas
         'build_profile_access': build_profile_access,
         'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
         'vellum_case_management': app.vellum_case_management,
+        'fetchLimit': request.GET.get('limit', DEFAULT_FETCH_LIMIT),
     })
     if not app.is_remote_app():
         # Multimedia is not supported for remote applications at this time.

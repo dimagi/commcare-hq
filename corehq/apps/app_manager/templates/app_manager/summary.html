@@ -45,7 +45,8 @@
                 staticRoot: '{{ STATIC_URL }}',
                 vellumTypes: {{ VELLUM_TYPES|JSON }},
                 formNameMap: {{ form_name_map|JSON }},
-                appLangs: {{ langs|JSON }}
+                appLangs: {{ langs|JSON }},
+                downloadURL: '{% url 'download_case_summary' domain app_id %}',
             });
 
             summaryApp.config(['$routeProvider', function($routeProvider) {
