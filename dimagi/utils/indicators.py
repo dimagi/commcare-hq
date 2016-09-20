@@ -23,7 +23,7 @@ class ComputedDocumentMixin(DocumentSchema):
     computed_modified_on_ = DateTimeProperty()
 
     # a flag for the indicator pillows so that there aren't any Document Update Conflicts
-    initial_processing_complete = BooleanProperty(default=False)
+    initial_processing_complete = BooleanProperty()
 
     def update_indicator(self, indicator_def, save_on_update=True, logger=None):
         existing_indicators = self.computed_.get(indicator_def.namespace, {})
