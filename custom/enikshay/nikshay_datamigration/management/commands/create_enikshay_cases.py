@@ -109,6 +109,7 @@ class EnikshayCaseFactory(object):
             )],
         )
 
+    @memoized
     def test(self, followup):
         episode_structure = self.episode(
             Outcome.objects.get(PatientId=followup.PatientID)
