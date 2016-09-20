@@ -1330,22 +1330,26 @@ class CaseExportDataSchema(ExportDataSchema):
             path=CASE_HISTORY_TABLE,
             last_occurrences={app_id: app_version},
         )
+        unknown_case_properties = set(case_property_mapping.values())
+        # Yeah... let's not hard code this list everywhere
+        # This list comes from casexml.apps.case.xml.parser.CaseActionBase.from_v2
+        known_case_properties = ["type", "name", "external_id", "user_id", "owner_id", "opened_on"]
 
-        for case_type, case_properties in case_property_mapping.iteritems():
-            for prop in case_properties:
-                # Yeah... let's not hard code this list everywhere
-                # This list comes from casexml.apps.case.xml.parser.CaseActionBase.from_v2
-                if prop in ["type", "name", "external_id", "user_id", "owner_id", "opened_on"]:
-                    path_start = PathNode(name="updated_known_properties")
-                else:
-                    path_start = PathNode(name="updated_unknown_properties")
+        def _add_to_group_schema(group_schema, path_start, prop, app_id, app_version):
+            group_schema.items.append(ScalarItem(
+                path=CASE_HISTORY_TABLE + [path_start, PathNode(name=prop)],
+                label=prop,
+                tag=PROPERTY_TAG_UPDATE,
+                last_occurrences={app_id: app_version},
+            ))
 
-                group_schema.items.append(ScalarItem(
-                    path=CASE_HISTORY_TABLE + [path_start, PathNode(name=prop)],
-                    label=prop,
-                    tag=PROPERTY_TAG_UPDATE,
-                    last_occurrences={app_id: app_version},
-                ))
+        for prop in unknown_case_properties:
+            path_start = PathNode(name="updated_unknown_properties")
+            _add_to_group_schema(group_schema, path_start, prop, app_id, app_version)
+
+        for prop in known_case_properties:
+            path_start = PathNode(name="updated_known_properties")
+            _add_to_group_schema(group_schema, path_start, prop, app_id, app_version)
 
         schema.group_schemas.append(group_schema)
         return schema
