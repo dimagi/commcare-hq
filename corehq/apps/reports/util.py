@@ -441,14 +441,6 @@ def get_installed_custom_modules():
     return [import_module(module) for module in settings.CUSTOM_MODULES]
 
 
-def is_mobile_worker_with_report_access(couch_user, domain):
-    return (
-        couch_user.is_commcare_user
-        and domain is not None
-        and Domain.get_by_name(domain).default_mobile_worker_redirect == 'reports'
-    )
-
-
 def get_INFilter_element_bindparam(base_name, index):
     return '%s_%d' % (base_name, index)
 
@@ -457,15 +449,15 @@ def get_INFilter_bindparams(base_name, values):
     return tuple(get_INFilter_element_bindparam(base_name, i) for i, val in enumerate(values))
 
 
-def safe_filename(filename):
+def safe_for_fs(filename):
     """
     Returns a filename with FAT32-, NTFS- and HFS+-illegal characters removed.
 
     Unicode or bytestring datatype of filename is preserved.
 
-    >>> safe_filename(u'spam*?: 𐍃𐍀𐌰𐌼-&.txt')
+    >>> safe_for_fs(u'spam*?: 𐍃𐍀𐌰𐌼-&.txt')
     u'spam 𐍃𐍀𐌰𐌼-&.txt'
-    >>> safe_filename('spam*?: 𐍃𐍀𐌰𐌼-&.txt')
+    >>> safe_for_fs('spam*?: 𐍃𐍀𐌰𐌼-&.txt')
     'spam 𐍃𐍀𐌰𐌼-&.txt'
     """
     is_unicode = isinstance(filename, unicode)

@@ -29,26 +29,27 @@ hqDefine('case_search/js/case_search.js', function(){
 
         self.submit = function(){
             self.results([]);
-            $.post(
-                window.location.href,
-                {q: JSON.stringify({type: self.type(), parameters: self.parameters()})}
-            ).success(function(data){
-                self.results(data.values);
-                var values = JSON.stringify(data.values, null, '    ');
-                if (self.codeMirror === null){
-                    self.codeMirror = CodeMirror( $("#raw-results").get(0), {
-                        value: values,
-                        mode: { name: 'javascript', json: true },
-                        readOnly: true,
-                        lineNumbers: true,
-                        lineWrapping: true,
-                        viewportMargin: Infinity,
-                        foldGutter: true,
-                        gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
-                    });
-                } else {
-                    self.codeMirror.setValue(values);
-                }
+            $.post({
+                url: window.location.href,
+                data: {q: JSON.stringify({type: self.type(), parameters: self.parameters()})},
+                success: function(data){
+                    self.results(data.values);
+                    var values = JSON.stringify(data.values, null, '    ');
+                    if (self.codeMirror === null){
+                        self.codeMirror = CodeMirror( $("#raw-results").get(0), {
+                            value: values,
+                            mode: { name: 'javascript', json: true },
+                            readOnly: true,
+                            lineNumbers: true,
+                            lineWrapping: true,
+                            viewportMargin: Infinity,
+                            foldGutter: true,
+                            gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+                        });
+                    } else {
+                        self.codeMirror.setValue(values);
+                    }
+                },
             });
         };
     };

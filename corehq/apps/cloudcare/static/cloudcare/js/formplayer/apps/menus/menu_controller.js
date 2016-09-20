@@ -112,7 +112,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 },
             });
 
-            $('#select-case').unbind('click').click(function () {
+            $('#select-case').off('click').click(function () {
                 FormplayerFrontend.trigger("menu:select", model.model.get('id'));
             });
             $('#case-detail-modal').find('.detail-tabs').html(tabListView.render().el);

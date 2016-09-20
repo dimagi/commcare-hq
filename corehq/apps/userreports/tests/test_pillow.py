@@ -85,7 +85,7 @@ class IndicatorPillowTestBase(TestCase):
 
 class IndicatorPillowTest(IndicatorPillowTestBase):
 
-    @softer_assert
+    @softer_assert()
     def setUp(self):
         super(IndicatorPillowTest, self).setUp()
         self.pillow = get_kafka_ucr_pillow()

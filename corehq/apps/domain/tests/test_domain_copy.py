@@ -5,7 +5,6 @@ from django.test import TestCase
 from corehq.apps.domain.models import Domain
 
 from corehq.apps.app_manager.models import Application, Module
-from corehq.apps.app_manager.const import APP_V2
 
 
 class DomainCopyTest(TestCase):
@@ -13,10 +12,7 @@ class DomainCopyTest(TestCase):
     def setUp(self):
         self.domain = Domain(name='test')
         self.domain.save()
-        app = Application.new_app(
-            'test', "Test Application", lang='en',
-            application_version=APP_V2
-        )
+        app = Application.new_app('test', "Test Application", lang='en')
         module = Module.new_module("Untitled Module", 'en')
         app.add_module(module)
         app.new_form(0, "Untitled Form", 'en')

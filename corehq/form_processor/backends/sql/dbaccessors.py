@@ -9,6 +9,7 @@ import itertools
 import six
 from django.db import connections, InternalError, transaction
 
+from corehq.blobs import get_blob_db
 from corehq.form_processor.exceptions import (
     XFormNotFound,
     CaseNotFound,
@@ -224,13 +225,52 @@ class FormAccessorSQL(AbstractFormAccessor):
             return result.form_exists
 
     @staticmethod
-    @transaction.atomic
-    def hard_delete_forms(domain, form_ids):
+    def hard_delete_forms(domain, form_ids, delete_attachments=True):
         assert isinstance(form_ids, list)
+
+        if delete_attachments:
+            attachments = list(FormAccessorSQL.get_attachments_for_forms(form_ids))
+
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute('SELECT hard_delete_forms(%s, %s) AS deleted_count', [domain, form_ids])
             results = fetchall_as_namedtuple(cursor)
-            return sum([result.deleted_count for result in results])
+            deleted_count = sum([result.deleted_count for result in results])
+
+        if delete_attachments:
+            attachments_to_delete = attachments
+            if deleted_count != len(form_ids):
+                # in the unlikely event that we didn't delete all forms (because they weren't all
+                # in the specified domain), only delete attachments for forms that were deleted.
+                deleted_forms = set()
+                for form_id in form_ids:
+                    if not FormAccessorSQL.form_exists(form_id):
+                        deleted_forms.add(form_id)
+
+                attachments_to_delete = []
+                for attachment in attachments:
+                    if attachment.form_id in deleted_forms:
+                        attachments_to_delete.append(attachment)
+
+            db = get_blob_db()
+            paths = [
+                db.get_path(attachment.blob_id, attachment.blobdb_bucket())
+                for attachment in attachments_to_delete
+            ]
+            db.bulk_delete(paths)
+
+        return deleted_count
+
+    @staticmethod
+    def get_attachments_for_forms(form_ids, ordered=False):
+        attachments = RawQuerySetWrapper(XFormAttachmentSQL.objects.raw(
+            'SELECT * from get_multiple_forms_attachments(%s)',
+            [form_ids]
+        ))
+
+        if ordered:
+            attachments = _order_list(form_ids, attachments, 'form_id')
+
+        return attachments
 
     @staticmethod
     def archive_form(form, user_id=None):
@@ -335,7 +375,7 @@ class FormAccessorSQL(AbstractFormAccessor):
             operation.id = None
             form.track_create(operation)
 
-        deleted = FormAccessorSQL.hard_delete_forms(form.domain, [form.orig_id])
+        deleted = FormAccessorSQL.hard_delete_forms(form.domain, [form.orig_id], delete_attachments=False)
         assert deleted == 1
         FormAccessorSQL.save_new_form(form)
 

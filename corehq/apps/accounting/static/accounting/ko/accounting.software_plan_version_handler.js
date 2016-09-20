@@ -43,7 +43,7 @@ var RateAsyncManager = function (objClass, options) {
 
     self.init = function () {
         self.select2.init();
-        var currentValue = $.parseJSON(options.currentValue || '[]');
+        var currentValue = JSON.parse(options.currentValue || '[]');
         self.rates(_.map(currentValue, function (data) {
             return new self.objClass(data);
         }));
