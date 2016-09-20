@@ -91,8 +91,13 @@ class Command(BaseCommand):
 
         if hasattr(settings, 'MIA_THE_DEPLOY_BOT_API'):
             link = diff_link(STYLE_SLACK, compare_url)
+            if options['environment'] == 'staging':
+                channel = '#staging'
+            else:
+                channel = '#hq-ops'
             requests.post(settings.MIA_THE_DEPLOY_BOT_API, data=json.dumps({
                 "username": "Igor the Iguana",
+                "channel": channel,
                 "text": deploy_notification_text.format(
                     dashboard_link=dashboard_link(STYLE_SLACK, DASHBOARD_URL),
                     diff_link=link,
