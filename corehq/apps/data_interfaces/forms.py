@@ -212,7 +212,10 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         self.helper.form_method = 'POST'
         self.helper.form_action = '#'
 
-        _update_property_fields = [
+        if self.enhancements_enabled:
+            self.allow_updates_without_closing()
+
+        _update_property_fields = filter(None, [
             Field(
                 'update_property_name',
                 ng_model='update_property_name',
@@ -221,20 +224,14 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
             Field(
                 'property_value_type',
                 ng_model='property_value_type',
-            ),
+            ) if self.enhancements_enabled else None,
             Field(
                 'update_property_value',
                 ng_model='update_property_value',
             )
-        ]
+        ])
 
-        if self.enhancements_enabled:
-            self.allow_updates_without_closing()
-        else:
-            # do not allow them to edit property_value_type
-            _update_property_fields.pop(1)
-
-        _basic_info_fields = [
+        _basic_info_fields = filter(None, [
             Field(
                 'name',
                 ng_model='name',
@@ -246,7 +243,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
             Field(
                 'filter_on_server_modified',
                 ng_model='filter_on_server_modified',
-            ),
+            ) if self.enhancements_enabled else None,
             hqcrispy.B3MultiField(
                 _("Close Case") + '<span class="asteriskField">*</span>',
                 Div(
@@ -277,11 +274,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                 *_update_property_fields,
                 ng_show='showUpdateProperty()'
             )
-        ]
-
-        if not self.enhancements_enabled:
-            # do not allow them to edit filter_on_server_modified
-            _basic_info_fields.pop(2)
+        ])
 
         self.set_case_type_choices(self.initial.get('case_type'))
         self.helper.layout = Layout(
