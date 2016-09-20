@@ -751,6 +751,15 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def case_attachments(self):
         return {attachment.identifier: attachment for attachment in self.get_attachments()}
 
+    @property
+    @memoized
+    def serialized_attachments(self):
+        from .serializers import CaseAttachmentSQLSerializer
+        return {
+            att.name: dict(CaseAttachmentSQLSerializer(att).data)
+            for att in self.get_attachments()
+            }
+
     @memoized
     def get_closing_transactions(self):
         return self._transactions_by_type(CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_CLOSE)

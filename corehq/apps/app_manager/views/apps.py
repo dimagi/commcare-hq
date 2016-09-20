@@ -245,7 +245,7 @@ def get_apps_base_context(request, domain, app):
         'timezone': timezone,
     }
 
-    if app:
+    if app and not app.is_remote_app():
         app.assert_app_v2()
         context.update({
             'show_care_plan': (
