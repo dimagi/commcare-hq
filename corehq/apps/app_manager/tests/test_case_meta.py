@@ -2,7 +2,6 @@ from django.test.testcases import SimpleTestCase
 from mock import patch
 from nose.tools import nottest
 
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module, OpenCaseAction, ParentSelect, OpenSubCaseAction, \
     AdvancedModule, LoadUpdateAction, AdvancedOpenCaseAction, CaseIndex
 
@@ -31,7 +30,7 @@ class CaseMetaTest(SimpleTestCase):
 
     @nottest
     def get_test_app(self):
-        app = Application.new_app('domain', 'New App', APP_V2)
+        app = Application.new_app('domain', 'New App')
         app.version = 1
         m0 = self._make_module(app, 0, 'parent')
         m0.get_form(0).actions.subcases.append(OpenSubCaseAction(

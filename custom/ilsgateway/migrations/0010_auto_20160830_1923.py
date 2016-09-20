@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='slabconfig',
             name='sql_location',
-            field=models.OneToOneField(to='locations.SQLLocation'),
+            field=models.OneToOneField(to='locations.SQLLocation', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AlterField(

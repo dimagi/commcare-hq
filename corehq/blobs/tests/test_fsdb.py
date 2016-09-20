@@ -69,6 +69,26 @@ class TestFilesystemBlobDB(TestCase):
 
         self.assertFalse(self.db.delete(info.identifier, bucket), 'delete should fail')
 
+    def test_bulk_delete(self):
+        blobs = [
+            ('test.5', 'doc.5'),
+            ('test.6', 'doc.6'),
+        ]
+        infos = [
+            self.db.put(StringIO(b"content-{}".format(blob[0])), blob[0], blob[1])
+            for blob in blobs
+        ]
+
+        blob_infos = zip(blobs, infos)
+        paths = [self.db.get_path(info.identifier, blob[1]) for blob, info in blob_infos]
+        self.assertTrue(self.db.bulk_delete(paths), 'delete failed')
+
+        for blob, info in blob_infos:
+            with self.assertRaises(mod.NotFound):
+                self.db.get(info.identifier, blob[1])
+
+        self.assertFalse(self.db.bulk_delete(paths), 'delete should fail')
+
     def test_delete_bucket(self):
         bucket = join("doctype", "ys7v136b")
         self.db.put(StringIO(b"content"), bucket=bucket)

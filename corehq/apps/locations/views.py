@@ -4,7 +4,7 @@ import logging
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.http.response import HttpResponseServerError
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
@@ -34,13 +34,14 @@ from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.toggles import NEW_BULK_LOCATION_MANAGEMENT
 from corehq.apps.locations.permissions import location_safe
-from corehq.util import reverse, get_document_or_404
+from corehq.util import reverse
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from .analytics import users_have_locations
 from .const import ROOT_LOCATION_TYPE
 from .dbaccessors import get_users_assigned_to_locations
+from .exceptions import LocationConsistencyError
 from .permissions import (
     locations_access_required,
     is_locations_admin,
@@ -246,10 +247,16 @@ class LocationTypesView(BaseLocationView):
         for loc_type in loc_types:
             for prop in ['name', 'parent_type', 'administrative',
                          'shares_cases', 'view_descendants', 'pk']:
-                assert prop in loc_type, "Missing an organization level property!"
+                if prop not in loc_type:
+                    raise LocationConsistencyError("Missing an organization level property!")
             pk = loc_type['pk']
             if not _is_fake_pk(pk):
                 pks.append(loc_type['pk'])
+        if not (
+            len(loc_types) == len(set(lt['name'] for lt in loc_types))
+            and len(loc_types) == len(set(lt['code'] for lt in loc_types))
+        ):
+            raise LocationConsistencyError("'name' and 'code' are supposed to be unique")
 
         hierarchy = self.get_hierarchy(loc_types)
 
@@ -372,7 +379,7 @@ class NewLocationView(BaseLocationView):
             )
         }]
         if self.location.parent:
-            sql_parent = self.location.parent.sql_location
+            sql_parent = self.location.parent
             for loc in sql_parent.get_ancestors(include_self=True):
                 breadcrumbs.append({
                     'title': loc.name,
@@ -387,9 +394,9 @@ class NewLocationView(BaseLocationView):
     @memoized
     def location(self):
         parent_id = self.request.GET.get('parent')
-        parent = (get_document_or_404(Location, self.domain, parent_id)
+        parent = (get_object_or_404(SQLLocation, domain=self.domain, location_id=parent_id)
                   if parent_id else None)
-        return Location(domain=self.domain, parent=parent)
+        return SQLLocation(domain=self.domain, parent=parent)
 
     @property
     def consumption(self):
@@ -529,14 +536,8 @@ class EditLocationView(NewLocationView):
     @property
     @memoized
     def location(self):
-        try:
-            location = Location.get(self.location_id)
-            if location.domain != self.domain:
-                raise Http404()
-        except ResourceNotFound:
-            raise Http404()
-        else:
-            return location
+        return get_object_or_404(SQLLocation, domain=self.domain,
+                                 location_id=self.location_id)
 
     @property
     @memoized
@@ -566,7 +567,7 @@ class EditLocationView(NewLocationView):
             consumption = get_default_monthly_consumption(
                 self.domain,
                 product._id,
-                self.location.location_type,
+                self.location.location_type_name,
                 # FIXME accessing this value from the sql location
                 # would be faster
                 self.supply_point.case_id if self.supply_point else None,
@@ -621,7 +622,7 @@ class EditLocationView(NewLocationView):
     @property
     def page_name(self):
         return mark_safe(_("Edit {name} <small>{type}</small>").format(
-            name=self.location.name, type=self.location.location_type
+            name=self.location.name, type=self.location.location_type_name
         ))
 
     @property

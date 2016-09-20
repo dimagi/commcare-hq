@@ -84,6 +84,9 @@ def domain_name_stop_words():
 def get_domain_url_slug(hr_name, max_length=25, separator='-'):
     from dimagi.utils.name_to_url import name_to_url
     name = name_to_url(hr_name, "project")
+    if len(name) <= max_length:
+        return name
+
     stop_words = domain_name_stop_words()
     words = [word for word in name.split('-') if word not in stop_words]
     words = iter(words)

@@ -66,12 +66,9 @@ class UITab(object):
         return self._request.get_full_path()
 
     @property
-    def restrict_access_by_location(self):
-        """Is this a web user who can't access project-wide data?"""
-        return (
-            self.couch_user and self.domain
-            and not self.couch_user.has_permission(self.domain, 'access_all_locations')
-        )
+    def can_access_all_locations(self):
+        """Is this a web user who can access project-wide data?"""
+        return getattr(self._request, 'can_access_all_locations', True)
 
     @property
     def dropdown_items(self):
@@ -80,7 +77,7 @@ class UITab(object):
 
     @property
     def filtered_dropdown_items(self):
-        if not self.restrict_access_by_location:
+        if self.can_access_all_locations:
             return self.dropdown_items
 
         filtered = []
@@ -100,7 +97,7 @@ class UITab(object):
     @property
     @memoized
     def filtered_sidebar_items(self):
-        if not self.restrict_access_by_location:
+        if self.can_access_all_locations:
             return self.sidebar_items
 
         filtered = []
@@ -127,7 +124,8 @@ class UITab(object):
         if not self.show_by_default and not self.is_active_tab:
             return False
 
-        if self.restrict_access_by_location and not self.filtered_dropdown_items:
+        if not self.can_access_all_locations and not self.filtered_dropdown_items:
+            # location-safe filtering makes this whole tab inaccessible
             return False
 
         try:
@@ -151,7 +149,11 @@ class UITab(object):
 
     @property
     def url_prefixes(self):
-        return [url_prefix_format.format(domain=self.domain)
+        # Use self._request.domain instead of self.domain to generate url-prefixes
+        # because the latter might have a normalized domain name which might not match the
+        # domain name mentioned in the URL. for example domain-name 'hq_test' is normalized to
+        # 'hq-test'
+        return [url_prefix_format.format(domain=getattr(self._request, 'domain', None))
                 for url_prefix_format in self.url_prefix_formats]
 
     def get_url_prefix_formats_suggestion(self):

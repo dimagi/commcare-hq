@@ -53,7 +53,7 @@ class AdherenceCaseFactory(object):
         except ENikshayCaseNotFound as e:
             raise AdherenceException(e.message)
 
-    def create_adherence_cases(self, adherence_points, adherence_source):
+    def create_adherence_cases(self, adherence_points):
         return self.case_factory.create_or_update_cases([
             CaseStructure(
                 case_id=uuid.uuid4().hex,
@@ -61,7 +61,7 @@ class AdherenceCaseFactory(object):
                     "case_type": self.ADHERENCE_CASE_TYPE,
                     "owner_id": UNOWNED_EXTENSION_OWNER_ID,
                     "create": True,
-                    "update": self._get_adherence_case_properties(adherence_point, adherence_source),
+                    "update": self._get_adherence_case_properties(adherence_point),
                 },
                 indices=[CaseIndex(
                     CaseStructure(case_id=self._episode_case.case_id, attrs={"create": False}),
@@ -74,11 +74,11 @@ class AdherenceCaseFactory(object):
             for adherence_point in adherence_points
         ])
 
-    def _get_adherence_case_properties(self, adherence_point, adherence_source):
+    def _get_adherence_case_properties(self, adherence_point):
         return {
-            "name": adherence_point["timestamp"],
+            "name": adherence_point.get("timestamp", None),
             "adherence_value": self.DEFAULT_ADHERENCE_VALUE,
-            "adherence_source": adherence_source,
+            "adherence_source": adherence_point.get('adherenceSource', '99DOTS'),
             "adherence_date": self._parse_adherence_date(adherence_point["timestamp"]),
             "person_name": self._person_case.name,
             "adherence_confidence": self._default_adherence_confidence,
@@ -130,8 +130,8 @@ class AdherenceCaseFactory(object):
         ])
 
 
-def create_adherence_cases(domain, person_id, adherence_points, adherence_source="99DOTS"):
-    return AdherenceCaseFactory(domain, person_id).create_adherence_cases(adherence_points, adherence_source)
+def create_adherence_cases(domain, person_id, adherence_points):
+    return AdherenceCaseFactory(domain, person_id).create_adherence_cases(adherence_points)
 
 
 def update_adherence_confidence_level(domain, person_id, start_date, end_date, new_confidence):

@@ -726,10 +726,10 @@ ABT_REMINDER_RECIPIENT = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-AUTO_CASE_UPDATES = StaticToggle(
+AUTO_CASE_UPDATE_ENHANCEMENTS = StaticToggle(
     'auto_case_updates',
-    'Ability to perform automatic case updates without closing the case.',
-    TAG_ONE_OFF,
+    'Enable enhancements to the Auto Case Update feature.',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
 
@@ -794,7 +794,7 @@ TF_USES_SQLITE_BACKEND = PredictablyRandomToggle(
     'Use a SQLite backend for Touchforms',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    0.1,
+    0.5,
     always_disabled=['hsph-betterbirth'],
 )
 

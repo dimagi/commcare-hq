@@ -6,6 +6,7 @@ class GuidedTour(models.Model):
     user = models.ForeignKey(
         User,
         db_index=True,
+        on_delete=models.CASCADE,
     )
     tour_slug = models.CharField(
         max_length=255,

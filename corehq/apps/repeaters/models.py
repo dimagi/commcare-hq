@@ -361,9 +361,13 @@ class CaseRepeater(Repeater):
     friendly_name = _("Forward Cases")
 
     def allowed_to_forward(self, payload):
-        allowed_case_type = not self.white_listed_case_types or payload.type in self.white_listed_case_types
-        allowed_user = self.payload_user_id(payload) not in self.black_listed_users
-        return allowed_case_type and allowed_user
+        return self._allowed_case_type(payload) and self._allowed_user(payload)
+
+    def _allowed_case_type(self, payload):
+        return not self.white_listed_case_types or payload.type in self.white_listed_case_types
+
+    def _allowed_user(self, payload):
+        return self.payload_user_id(payload) not in self.black_listed_users
 
     def payload_user_id(self, payload):
         # get the user_id who submitted the payload, note, it's not the owner_id

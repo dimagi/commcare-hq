@@ -6,7 +6,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
-from django_prbac.models import Role, UserRole
+from django_prbac.models import Role, UserRole, Grant
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import add_months
 
@@ -123,6 +123,12 @@ def domain_has_privilege(domain, privilege_slug, **assignment):
         if privilege is None:
             return False
         if plan_version.role.has_privilege(privilege):
+            return True
+        # temporary until we feel safe changing roles - J$, Noah, Cal
+        elif (plan_version.role.slug != 'community_plan_v1' and
+              (privilege_slug == privileges.EXCEL_DASHBOARD or
+               privilege_slug == privileges.DAILY_SAVED_EXPORT)
+            ):
             return True
     except ProductPlanNotFoundError:
         return False
@@ -272,3 +278,54 @@ def get_default_domain_url(domain):
         DefaultProjectSettingsView.urlname,
         args=[domain],
     )
+
+
+def ensure_grant(grantee_slug, priv_slug, dry_run=False, verbose=False):
+    """
+    Adds a parameterless grant between grantee and priv, looked up by slug.
+    """
+
+    try:
+        grantee = Role.objects.get(slug=grantee_slug)
+    except Role.DoesNotExist:
+        logger.info('[DRY RUN] grantee {} does not exist.'.format(grantee_slug))
+        return
+
+    try:
+        priv = Role.objects.get(slug=priv_slug)
+    except Role.DoesNotExist:
+        logger.info('[DRY RUN] privilege {} does not exist.'.format(priv_slug))
+        return
+
+    if dry_run:
+        grants = Grant.objects.filter(from_role__slug=grantee_slug,
+                                      to_role__slug=priv_slug)
+        if not grants:
+            logger.info('[DRY RUN] Granting privilege: %s => %s', grantee_slug, priv_slug)
+        if grantee.has_privilege(priv):
+            if verbose:
+                logger.info('[DRY RUN] Privilege already granted: %s => %s', grantee.slug, priv.slug)
+
+    else:
+        Role.get_cache().clear()
+        if grantee.has_privilege(priv):
+            if verbose:
+                logger.info('Privilege already granted: %s => %s', grantee.slug, priv.slug)
+        else:
+            if verbose:
+                logger.info('Granting privilege: %s => %s', grantee.slug, priv.slug)
+            Grant.objects.create(
+                from_role=grantee,
+                to_role=priv,
+            )
+
+
+def remove_grant(priv_slug, dry_run=False):
+    grants = Grant.objects.filter(to_role__slug=priv_slug)
+    if dry_run:
+        if grants:
+            logger.info("[DRY RUN] Removing privilege %s", priv_slug)
+    else:
+        if grants:
+            grants.delete()
+            logger.info("Removing privilege %s", priv_slug)

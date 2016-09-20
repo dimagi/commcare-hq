@@ -84,7 +84,7 @@ class TestZapierIntegration(TestCase):
         cls.web_user = WebUser.create(cls.domain, 'test', '******')
         api_key_object, _ = ApiKey.objects.get_or_create(user=cls.web_user.get_django_user())
         cls.api_key = api_key_object.key
-        cls.application = Application.new_app(cls.domain, 'Test App', '1.0')
+        cls.application = Application.new_app(cls.domain, 'Test App')
         cls.application.save()
         module = cls.application.add_module(Module.new_module("Module 1", "en"))
         cls.application.new_form(module.id, name="Form1", attachment=XFORM, lang="en")

@@ -18,9 +18,15 @@ from custom.enikshay.integrations.ninetyninedots.utils import (
 
 
 class RegisterPatientRepeaterView(AddCaseRepeaterView):
-    urlname = 'add_99dots_repeater'
-    page_title = "99DOTS"
-    page_name = "99DOTS forwarder"
+    urlname = 'register_99dots_patient'
+    page_title = "Register 99DOTS Patients"
+    page_name = "Register 99DOTS Patients"
+
+
+class UpdatePatientRepeaterView(AddCaseRepeaterView):
+    urlname = 'update_99dots_patient'
+    page_title = "Update 99DOTS Patients"
+    page_name = "Update 99DOTS Patients"
 
 
 @toggles.NINETYNINE_DOTS.required_decorator()
@@ -39,7 +45,7 @@ def update_patient_adherence(request, domain):
     try:
         validate_beneficiary_id(beneficiary_id)
         validate_adherence_values(adherence_values)
-        create_adherence_cases(domain, beneficiary_id, adherence_values, adherence_source="99DOTS")
+        create_adherence_cases(domain, beneficiary_id, adherence_values)
     except AdherenceException as e:
         return json_response({"error": e.message}, status_code=400)
 

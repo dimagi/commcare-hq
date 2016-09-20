@@ -1,4 +1,6 @@
 from django.test import SimpleTestCase
+
+from corehq.apps.app_manager.const import AUTO_SELECT_RAW, AUTO_SELECT_CASE
 from corehq.apps.app_manager.models import (
     FormLink,
     WORKFLOW_FORM,
@@ -7,9 +9,11 @@ from corehq.apps.app_manager.models import (
     WORKFLOW_ROOT,
     WORKFLOW_PARENT_MODULE,
     FormDatum)
-from corehq.apps.app_manager.const import AUTO_SELECT_RAW
+from corehq.apps.app_manager.suite_xml.post_process.workflow import _replace_session_references_in_stack, CommandId
+from corehq.apps.app_manager.suite_xml.xml_models import StackDatum
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.app_manager.xpath import session_var
 from corehq.feature_previews import MODULE_FILTER
 from corehq.toggles import NAMESPACE_DOMAIN
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
@@ -135,6 +139,46 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         ]
 
         self.assertXmlPartialEqual(self.get_xml('form_link_tdh'), factory.app.create_suite(), "./entry")
+
+    def test_reference_to_missing_session_variable_in_stack(self):
+        # http://manage.dimagi.com/default.asp?236750
+        #
+        # Stack create blocks do not update the session after each datum
+        # so items put into the session in one step aren't available later steps
+        #
+        #    <datum id="case_id_A" value="instance('commcaresession')/session/data/case_id_new_A"/>
+        # -  <datum id="case_id_B" value="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_A]/index/host"/>
+        # +  <datum id="case_id_B" value="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_A]/index/host"/>
+        #
+        # in the above example ``case_id_A`` is being added to the session and then
+        # later referenced. However since the session doesn't get updated
+        # the value isn't available in the session.
+        #
+        # To fix this we need to replace any references to previous variables with the full xpath which
+        # that session variable references.
+        #
+        # See corehq.apps.app_manager.suite_xml.post_process.workflow._replace_session_references_in_stack
+
+        factory = AppFactory(build_version='2.9.0/latest')
+        m0, m0f0 = factory.new_basic_module('person registration', 'person')
+        factory.form_opens_case(m0f0)
+
+        m1, m1f0 = factory.new_advanced_module('episode registration', 'episode')
+        factory.form_requires_case(m1f0, case_type='person')
+        factory.form_opens_case(m1f0, case_type='episode', is_subcase=True, is_extension=True)
+
+        m2, m2f0 = factory.new_advanced_module('tests', 'episode')
+        factory.form_requires_case(m2f0, 'episode')
+        factory.advanced_form_autoloads(m2f0, AUTO_SELECT_CASE, 'host', 'load_episode_0')
+
+        m1f0.post_form_workflow = WORKFLOW_FORM
+        m1f0.form_links = [
+            FormLink(xpath="true()", form_id=m2f0.unique_id, datums=[
+                FormDatum(name='case_id_load_episode_0', xpath="instance('commcaresession')/session/data/case_id_new_episode_0")
+            ]),
+        ]
+
+        self.assertXmlPartialEqual(self.get_xml('form_link_enikshay'), factory.app.create_suite(), "./entry")
 
     def test_return_to_parent_module(self):
         factory = AppFactory(build_version='2.9.0/latest')
@@ -298,3 +342,32 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
     def test_form_workflow_root(self):
         app = self._build_workflow_app(WORKFLOW_ROOT)
         self.assertXmlPartialEqual(self.get_xml('suite-workflow-root'), app.create_suite(), "./entry")
+
+
+class TestReplaceSessionRefs(SimpleTestCase):
+    def test_replace_session_references_in_stack(self):
+        children = [
+            CommandId('m0'),
+            StackDatum(id='a', value=session_var('new_a')),
+            StackDatum(id='b', value=session_var('new_b')),
+            StackDatum(id='c', value="instance('casedb')/case/[@case_id = {a}]/index/parent".format(a=session_var('a'))),
+            StackDatum(id='d', value="if({c}, {c}, {a}]".format(a=session_var('a'), c=session_var('c')))
+        ]
+
+        clean = _replace_session_references_in_stack(children)
+        clean_raw = []
+        for child in clean:
+            if isinstance(child, CommandId):
+                clean_raw.append(child.id)
+            else:
+                clean_raw.append((child.id, child.value))
+
+        new_c = "instance('casedb')/case/[@case_id = {a}]/index/parent".format(a=session_var('new_a'))
+        self.assertEqual(clean_raw, [
+            'm0',
+            ('a', session_var('new_a')),
+            ('b', session_var('new_b')),
+            ('c', new_c),
+            ('d', "if({c}, {c}, {a}]".format(a=session_var('new_a'), c=new_c))
+
+        ])

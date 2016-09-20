@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.contrib.auth.models import User
 from django.test import TestCase
 
@@ -53,3 +55,14 @@ class NotificationTest(TestCase):
     def test_mark_inactive_as_last_seen(self):
         with self.assertRaises(IllegalModelStateException):
             self.note.set_as_last_seen(self.user)
+
+    def test_notification_created_before_user(self):
+        self.note.activate()
+        date_joined = self.user.date_joined
+        notification_activated = date_joined - timedelta(days=1)
+        Notification.objects.create(
+            content="old notification", url="http://dimagi.com", type="info",
+            activated=notification_activated, is_active=True
+        )
+        notes = Notification.get_by_user(self.user)
+        self.assertEqual(len(notes), 1)

@@ -8,6 +8,11 @@ class LocationAccessMiddleware(object):
     middleware blocks access to any non location safe features by users who
     have such a restriction. If these users do not have an assigned location,
     they cannot access anything.
+
+    This middleware also sets the property can_access_all_locations. This
+    property does not imply domain level authentication or access to any
+    particular feature. All it says is that whether or not the user has a role
+    which restricts their data access by location.
     """
 
     def process_view(self, request, view_fn, view_args, view_kwargs):

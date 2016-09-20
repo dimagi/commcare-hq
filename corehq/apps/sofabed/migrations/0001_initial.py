@@ -63,7 +63,7 @@ class Migration(migrations.Migration):
                 ('identifier', models.CharField(max_length=64, db_index=True)),
                 ('referenced_type', models.CharField(max_length=64, db_index=True)),
                 ('referenced_id', models.CharField(max_length=128, db_index=True)),
-                ('case', models.ForeignKey(related_name='indices', to='sofabed.CaseData')),
+                ('case', models.ForeignKey(related_name='indices', to='sofabed.CaseData', on_delete=models.CASCADE)),
             ],
             options={
             },
@@ -92,7 +92,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='caseactiondata',
             name='case',
-            field=models.ForeignKey(related_name='actions', to='sofabed.CaseData'),
+            field=models.ForeignKey(related_name='actions', to='sofabed.CaseData', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AlterUniqueTogether(

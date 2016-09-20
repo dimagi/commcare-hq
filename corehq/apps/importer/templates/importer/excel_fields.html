@@ -72,7 +72,7 @@
                 table.find('tr').last().after(cloned);
             });
 
-            $('.custom_field').bind('change, keypress, keydown, keyup', function() {
+            $('.custom_field').on('change, keypress, keydown, keyup', function() {
                 // check if field is valid for xml
                 // TODO: this method seems pretty sketchy, should cleanup
                 var value = $(this).val();
@@ -89,7 +89,7 @@
 
             $('#field_form').submit(function() {
                 $('[disabled]').each(function() {
-                    $(this).removeAttr('disabled');
+                    $(this).prop('disabled', false);
                 });
 
                 $(this).find('input.is_date').each(function() {

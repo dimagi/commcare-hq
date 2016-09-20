@@ -2,7 +2,6 @@
 import hashlib
 import re
 from django.test import SimpleTestCase
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.models import (
     AdvancedModule,
@@ -121,7 +120,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self._test_generic_suite_partial('app_attached_image', "./detail", 'suite-attached-image')
 
     def test_copy_form(self):
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app = Application.new_app('domain', "Untitled Application")
         module = app.add_module(AdvancedModule.new_module('module', None))
         original_form = app.new_form(module.id, "Untitled Form", None)
         original_form.source = '<source>'
@@ -165,7 +164,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         """
         Ensure module filter gets added correctly
         """
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app = Application.new_app('domain', "Untitled Application")
         app.build_spec.version = '2.20.0'
         module = app.add_module(Module.new_module('m0', None))
         module.new_form('f0', None)
@@ -178,7 +177,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         )
 
     def test_module_filter_with_session(self):
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app = Application.new_app('domain', "Untitled Application")
         app.build_spec.version = '2.20.0'
         module = app.add_module(Module.new_module('m0', None))
         form = module.new_form('f0', None)
@@ -197,7 +196,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         )
 
     def test_usercase_id_added_update(self):
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app = Application.new_app('domain', "Untitled Application")
 
         child_module = app.add_module(Module.new_module("Untitled Module", None))
         child_module.case_type = 'child'
@@ -211,7 +210,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('usercase_entry'), app.create_suite(), "./entry[1]")
 
     def test_usercase_id_added_preload(self):
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app = Application.new_app('domain', "Untitled Application")
 
         child_module = app.add_module(Module.new_module("Untitled Module", None))
         child_module.case_type = 'child'
@@ -225,7 +224,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('usercase_entry'), app.create_suite(), "./entry[1]")
 
     def test_open_case_and_subcase(self):
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app = Application.new_app('domain', "Untitled Application")
 
         module = app.add_module(Module.new_module('parent', None))
         module.case_type = 'phone'
@@ -244,7 +243,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('open_case_and_subcase'), app.create_suite(), "./entry[1]")
 
     def test_update_and_subcase(self):
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app = Application.new_app('domain', "Untitled Application")
 
         module = app.add_module(Module.new_module('parent', None))
         module.case_type = 'phone'
@@ -347,7 +346,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self._test_generic_suite("app_case_tiles", "suite-case-tiles")
 
     def test_case_detail_icon_mapping(self):
-        app = Application.new_app('domain', 'Untitled Application', application_version=APP_V2)
+        app = Application.new_app('domain', 'Untitled Application')
 
         module = app.add_module(Module.new_module('Untitled Module', None))
         module.case_type = 'patient'
@@ -405,7 +404,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         )
 
     def test_case_tile_pull_down(self):
-        app = Application.new_app('domain', 'Untitled Application', application_version=APP_V2)
+        app = Application.new_app('domain', 'Untitled Application')
 
         module = app.add_module(Module.new_module('Untitled Module', None))
         module.case_type = 'patient'
@@ -551,7 +550,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                     </title>
                     <field>
                         <style font-size="large" horz-align="center">
-                            <grid grid-height="2" grid-width="12" grid-x="0" grid-y="0"/>
+                            <grid grid-height="1" grid-width="12" grid-x="0" grid-y="0"/>
                         </style>
                         <header>
                             <text/>
@@ -619,7 +618,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         )
 
     def test_subcase_repeat_mixed(self):
-        app = Application.new_app(None, "Untitled Application", application_version=APP_V2)
+        app = Application.new_app(None, "Untitled Application")
         module_0 = app.add_module(Module.new_module('parent', None))
         module_0.unique_id = 'm0'
         module_0.case_type = 'parent'
@@ -663,7 +662,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_report_module(self):
         from corehq.apps.userreports.tests.utils import get_sample_report_config
 
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app = Application.new_app('domain', "Untitled Application")
 
         report_module = app.add_module(ReportModule.new_module('Reports', None))
         report_module.unique_id = 'report_module'

@@ -42,6 +42,9 @@
                         <li><a href="?{% url_replace 'since' restore_id %}">Next Sync</a></li>
                     </ul>
                     <div>
+                        Number of cases in this restore: <strong>{{num_cases}}</strong>
+                    </div>
+                    <div>
                         <ul class="nav nav-tabs" role="tablist">
                             <li role="presentation" class="active"><a href="#payload-tab" role="tab" data-toggle="tab">Payload</a></li>
                             <li role="presentation"><a href="#timing-tab" role="tab" data-toggle="tab">Timing</a></li>

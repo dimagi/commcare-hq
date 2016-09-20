@@ -106,22 +106,6 @@
     </div>
 </script>
 
-<script type="text/template" id="case-tile-grid-view-item-template">
-    <div class="grid-wrapper">
-    <% _.each(data, function(datum, index) { %>
-    <div class="grid-style-<%= index %> box">
-        <% if (styles[index].displayFormat === 'Image') {
-        if(resolveUri(datum)) { %>
-        <img class="module-icon" style="max-width:25%; height: auto;" src="<%= resolveUri(datum) %>"/>
-        <% } %>
-        <% } else { %>
-        <div><%= datum %></div>
-        <% } %>
-    </div>
-    <% }); %>
-    </div>
-</script>
-
 <script type="text/template" id="case-tile-style-template">
     <% _.each(models, function(model){ %>
         .<%= model.id %> {
@@ -145,8 +129,8 @@
 <script type="text/template" id="grid-inner-style-template">
     .grid-wrapper {
         display: grid;
-        grid-template-columns: repeat(<%= model.numColumns %>, <%= model.widthPercentage %>%) min-content 5px;
-        grid-template-rows: repeat(<%= model.numRows %>, <%= model.heightPercentage %>%) min-content 5px;
+        grid-template-columns: repeat(<%= model.numColumns %>, <%= model.widthPixels %>px) min-content 5px;
+        grid-template-rows: repeat(<%= model.numRows %>, <%= model.heightPixels %>px) min-content 5px;
         background-color: #fff;
         color: #685c53;
         border-color: #685c53;

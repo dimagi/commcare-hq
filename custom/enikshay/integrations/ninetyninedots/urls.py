@@ -1,5 +1,8 @@
 from django.conf.urls import patterns, url
-from custom.enikshay.integrations.ninetyninedots.views import RegisterPatientRepeaterView
+from custom.enikshay.integrations.ninetyninedots.views import (
+    RegisterPatientRepeaterView,
+    UpdatePatientRepeaterView
+)
 
 urlpatterns = patterns(
     'custom.enikshay.integrations.ninetyninedots.views',
@@ -12,5 +15,11 @@ urlpatterns = patterns(
         RegisterPatientRepeaterView.as_view(),
         {'repeater_type': 'NinetyNineDotsRegisterPatientRepeater'},
         name=RegisterPatientRepeaterView.urlname
+    ),
+    url(
+        r'^new_update_patient_repeater$',
+        UpdatePatientRepeaterView.as_view(),
+        {'repeater_type': 'NinetyNineDotsUpdatePatientRepeater'},
+        name=UpdatePatientRepeaterView.urlname
     ),
 )

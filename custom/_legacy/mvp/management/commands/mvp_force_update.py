@@ -1,9 +1,9 @@
 from gevent import monkey; monkey.patch_all()
+from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain_of_type
 from itertools import islice
 from casexml.apps.case.models import CommCareCase
 import time
-from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
-    get_case_ids_in_domain
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 import sys
 from restkit.session import set_session
 set_session("gevent")
@@ -112,7 +112,7 @@ class Command(BaseCommand):
         )
 
         if relevant_indicators:
-            num_cases = get_number_of_cases_in_domain(domain, type=case_type)
+            num_cases = get_number_of_cases_in_domain_of_type(domain, case_type=case_type)
 
             print ("\nFound the following Case Indicator Definitions "
                    "for Case Type %s in Domain %s") % (case_type, domain)

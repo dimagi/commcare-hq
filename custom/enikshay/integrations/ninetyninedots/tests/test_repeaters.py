@@ -11,7 +11,10 @@ from casexml.apps.case.tests.util import delete_all_cases
 
 from custom.enikshay.tests.utils import ENikshayCaseStructureMixin
 from custom.enikshay.integrations.ninetyninedots.repeater_generators import RegisterPatientPayloadGenerator
-from custom.enikshay.integrations.ninetyninedots.repeaters import NinetyNineDotsRegisterPatientRepeater
+from custom.enikshay.integrations.ninetyninedots.repeaters import(
+    NinetyNineDotsRegisterPatientRepeater,
+    NinetyNineDotsUpdatePatientRepeater
+)
 
 
 class MockResponse(object):
@@ -23,23 +26,17 @@ class MockResponse(object):
         return self.json_data
 
 
-class TestRegisterPatientRepeater(ENikshayCaseStructureMixin, TestCase):
+class ENikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
     def setUp(self):
-        super(TestRegisterPatientRepeater, self).setUp()
+        super(ENikshayRepeaterTestBase, self).setUp()
 
         delete_all_repeat_records()
         delete_all_repeaters()
         delete_all_cases()
 
-        self.repeater = NinetyNineDotsRegisterPatientRepeater(
-            domain=self.domain,
-            url='case-repeater-url',
-        )
-        self.repeater.white_listed_case_types = ['episode']
-        self.repeater.save()
-
     def tearDown(self):
-        super(TestRegisterPatientRepeater, self).tearDown()
+        super(ENikshayRepeaterTestBase, self).tearDown()
+
         delete_all_repeat_records()
         delete_all_repeaters()
         delete_all_cases()
@@ -72,6 +69,20 @@ class TestRegisterPatientRepeater(ENikshayCaseStructureMixin, TestCase):
         )
         self.create_case(dots_registered_case)
 
+
+class TestRegisterPatientRepeater(ENikshayRepeaterTestBase):
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def setUp(self):
+        super(TestRegisterPatientRepeater, self).setUp()
+
+        self.repeater = NinetyNineDotsRegisterPatientRepeater(
+            domain=self.domain,
+            url='case-repeater-url',
+        )
+        self.repeater.white_listed_case_types = ['episode']
+        self.repeater.save()
+
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_trigger(self):
         # 99dots not enabled
@@ -84,6 +95,45 @@ class TestRegisterPatientRepeater(ENikshayCaseStructureMixin, TestCase):
 
         # set as registered, shouldn't register a new repeat record
         self._create_99dots_registered_case()
+        self.assertEqual(1, len(self.repeat_records().all()))
+
+
+class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def setUp(self):
+        super(TestUpdatePatientRepeater, self).setUp()
+        self.repeater = NinetyNineDotsUpdatePatientRepeater(
+            domain=self.domain,
+            url='case-repeater-url',
+        )
+        self.repeater.white_listed_case_types = ['person']
+        self.repeater.save()
+        self.create_case_structure()
+
+    def _update_person(self, case_properties):
+        return self.create_case(
+            CaseStructure(
+                case_id=self.person_id,
+                attrs={
+                    "case_type": "person",
+                    "update": case_properties,
+                }
+            )
+        )
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_trigger(self):
+        self._update_person({'mobile_number': '999999999', })
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+        self._create_99dots_registered_case()
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+        self._update_person({'name': 'Elrond', })
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+        self._update_person({'mobile_number': '999999999', })
         self.assertEqual(1, len(self.repeat_records().all()))
 
 
@@ -102,13 +152,15 @@ class TestRegisterPatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_get_payload(self):
         payload_generator = RegisterPatientPayloadGenerator(None)
+        person = self.cases[self.person_id].dynamic_case_properties()
         expected_numbers = u"+91{}, +91{}".format(
-            self.cases[self.person_id].dynamic_case_properties()['mobile_number'].replace("0", ""),
-            self.cases[self.person_id].dynamic_case_properties()['backup_number'].replace("0", "")
+            person['mobile_number'].replace("0", ""),
+            person['backup_number'].replace("0", "")
         )
         expected_payload = json.dumps({
             'beneficiary_id': self.person_id,
             'phone_numbers': expected_numbers,
+            'merm_id': person['merm_id']
         })
         actual_payload = payload_generator.get_payload(None, self.cases[self.episode_id])
         self.assertEqual(expected_payload, actual_payload)

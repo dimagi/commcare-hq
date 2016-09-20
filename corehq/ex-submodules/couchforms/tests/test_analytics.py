@@ -1,22 +1,32 @@
 import datetime
 import uuid
+
 from django.test import TestCase
+from mock import patch
 from requests import ConnectionError
 
-from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import DocTestMixin, trap_extra_setup
 from couchforms.analytics import (
+    app_has_been_submitted_to_in_last_30_days,
     domain_has_submission_in_last_30_days,
-    get_number_of_forms_per_domain, get_number_of_forms_in_domain,
-    get_first_form_submission_received, get_last_form_submission_received,
-    app_has_been_submitted_to_in_last_30_days, update_analytics_indexes,
     get_all_xmlns_app_id_pairs_submitted_to_in_domain,
-    get_form_analytics_metadata, get_exports_by_form,
+    get_exports_by_form,
+    get_first_form_submission_received,
+    get_form_analytics_metadata,
+    get_last_form_submission_received,
+    get_number_of_forms_in_domain,
+    update_analytics_indexes,
 )
 from couchforms.models import XFormInstance, XFormError
 from pillowtop.es_utils import initialize_index_and_mapping
+from testapps.test_pillowtop.utils import process_kafka_changes, process_couch_changes
+
+from corehq.elastic import get_es_new, EsMeta, send_to_elasticsearch
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.form_processor.utils import TestFormMetadata
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
+from corehq.util.elastic import ensure_index_deleted
+from corehq.util.test_utils import DocTestMixin, get_form_ready_to_save, trap_extra_setup
 
 
 class CouchformsAnalyticsTest(TestCase, DocTestMixin):
@@ -54,14 +64,6 @@ class CouchformsAnalyticsTest(TestCase, DocTestMixin):
     def test_domain_has_submission_in_last_30_days(self):
         self.assertEqual(
             domain_has_submission_in_last_30_days(self.domain), True)
-
-    def test_get_number_of_forms_per_domain(self):
-        self.assertEqual(
-            get_number_of_forms_per_domain(), {self.domain: 2})
-
-    def test_get_number_of_forms_in_domain(self):
-        self.assertEqual(
-            get_number_of_forms_in_domain(self.domain), 2)
 
     def test_get_first_form_submission_received(self):
         self.assertEqual(
@@ -167,3 +169,43 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
             'key': ['exports_forms_analytics_domain', self.app_id_2,
                     'my://crazy.xmlns/app']
         }])
+
+
+TEST_ES_META = {
+    XFORM_INDEX_INFO.index: EsMeta(XFORM_INDEX_INFO.index, XFORM_INDEX_INFO.type)
+}
+
+
+class CouchformsESAnalyticsTest(TestCase):
+    domain = 'hqadmin-es-accessor'
+
+    def setUp(self):
+        super(CouchformsESAnalyticsTest, self).setUp()
+        with trap_extra_setup(ConnectionError):
+            self.elasticsearch = get_es_new()
+            initialize_index_and_mapping(self.elasticsearch, XFORM_INDEX_INFO)
+
+    def tearDown(self):
+        ensure_index_deleted(XFORM_INDEX_INFO.index)
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
+        super(CouchformsESAnalyticsTest, self).tearDown()
+
+    @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
+    @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
+    @patch('corehq.elastic.ES_META', TEST_ES_META)
+    def test_get_number_of_cases_in_domain(self):
+        forms = [self._create_form_and_sync_to_es() for _ in range(4)]
+        self.assertEqual(
+            get_number_of_forms_in_domain(self.domain),
+            len(forms)
+        )
+
+    def _create_form_and_sync_to_es(self):
+        with process_kafka_changes('XFormToElasticsearchPillow'):
+            with process_couch_changes('DefaultChangeFeedPillow'):
+                metadata = TestFormMetadata(domain=self.domain)
+                form = get_form_ready_to_save(metadata, is_db_test=True)
+                form_processor = FormProcessorInterface(domain=self.domain)
+                form_processor.save_processed_models([form])
+        self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
+        return form, metadata

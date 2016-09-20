@@ -16,6 +16,10 @@ from corehq.apps.export.export import (
     ExportFile,
     get_export_file,
 )
+from corehq.apps.export.const import (
+    MISSING_VALUE,
+    EMPTY_VALUE,
+)
 from corehq.apps.export.models import (
     TableConfiguration,
     ExportColumn,
@@ -160,7 +164,7 @@ class WriterTest(SimpleTestCase):
                 {
                     u'My table': {
                         u'headers': [u'MC | one', u'MC | two', 'MC | extra'],
-                        u'rows': [[None, 1, 'extra'], [1, 1, '']],
+                        u'rows': [[EMPTY_VALUE, 1, 'extra'], [1, 1, '']],
 
                     }
                 }
@@ -260,8 +264,8 @@ class WriterTest(SimpleTestCase):
                         u'rows': [
                             ['question-id', '2'],
                             ['question-id', '2'],
-                            [None, None],
-                            [None, None],
+                            [MISSING_VALUE, MISSING_VALUE],
+                            [MISSING_VALUE, MISSING_VALUE],
                         ],
                     }
                 }
@@ -299,7 +303,7 @@ class WriterTest(SimpleTestCase):
                 {
                     u'My table': {
                         u'headers': [u'Date'],
-                        u'rows': [[None], [couch_to_excel_datetime('2015-07-22T14:16:49.584880Z', None)]],
+                        u'rows': [[MISSING_VALUE], [couch_to_excel_datetime('2015-07-22T14:16:49.584880Z', None)]],
 
                     }
                 }
@@ -584,7 +588,7 @@ class ExportTest(SimpleTestCase):
                             u'DEID Date Transform column [sensitive]',
                         ],
                         u'rows': [
-                            [None],
+                            [MISSING_VALUE],
                             [u'2016-04-07'],
                             [u'2016-04-27'],  # offset by 3 since that's the mocked random offset
                         ],

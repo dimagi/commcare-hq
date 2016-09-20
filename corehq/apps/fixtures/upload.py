@@ -117,6 +117,23 @@ class FixtureTableDefinition(object):
             else:
                 return []
 
+        def is_number(text):
+            text = unicode(text)
+            try:
+                float(text)
+                return True
+            except ValueError:
+                return False
+
+        for i, field_name in enumerate(field_names):
+            if is_number(field_name):
+                message = _("Error in 'types' sheet for 'field {i}', '{val}'. "
+                            "Field names should be strings, not numbers").format(
+                    i=i,
+                    val=field_name,
+                )
+                raise ExcelMalformatException(message)
+
         fields = [
             FixtureTypeField(
                 field_name=field,

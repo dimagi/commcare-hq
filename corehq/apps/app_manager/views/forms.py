@@ -251,7 +251,7 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
         if xform.exists():
             xform.set_name(name)
             save_xform(app, form, xform.render())
-        resp['update'] = {'.variable-form_name': form.name[lang]}
+        resp['update'] = {'.variable-form_name': trans(form.name, [lang], use_delim=False)}
     if should_edit('comment'):
         form.comment = request.POST['comment']
     if should_edit("xform") or "xform" in request.FILES:
@@ -483,7 +483,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'module_case_types': module_case_types,
         'form_errors': form_errors,
         'xform_validation_errored': xform_validation_errored,
-        'allow_cloudcare': app.application_version == APP_V2 and isinstance(form, Form),
+        'allow_cloudcare': isinstance(form, Form),
         'allow_form_copy': isinstance(form, (Form, AdvancedForm)),
         'allow_form_filtering': (module_filter_preview or
             (not isinstance(form, CareplanForm) and not form_has_schedule)),
@@ -514,7 +514,6 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         modules = filter(lambda m: m.case_type == module.case_type, all_modules)
         if getattr(module, 'root_module_id', None) and module.root_module not in modules:
             modules.append(module.root_module)
-        modules.extend([mod for mod in module.get_child_modules() if mod not in modules])
         auto_linkable_forms = list(itertools.chain.from_iterable(list(m.get_forms()) for m in modules))
 
         def linkable_form(candidate_form):

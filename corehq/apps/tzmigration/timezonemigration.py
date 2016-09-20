@@ -15,6 +15,7 @@ from corehq.blobs.mixin import BlobHelper
 from corehq.form_processor.parsers.ledgers import get_stock_actions
 from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes
 from corehq.form_processor.utils.metadata import scrub_meta
+from corehq.util.dates import iso_string_to_datetime
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
@@ -193,3 +194,14 @@ def prepare_case_json(planning_db):
         planning_db.add_diffs('case', case.case_id, json_diff(case_json, case.to_json()))
 
     return planning_db
+
+
+def is_datetime_string(string):
+    if not isinstance(string, basestring):
+        return False
+    try:
+        iso_string_to_datetime(string)
+    except (ValueError, OverflowError, TypeError):
+        return False
+    else:
+        return True

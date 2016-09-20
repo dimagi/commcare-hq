@@ -21,6 +21,8 @@ module.exports = function(grunt) {
         'reports_core#choiceListUtils',
         'locations',
         'userreports',
+        'cloudcare',
+        'cloudcare#form_entry',
     ];
 
     var mochaConfig = {},

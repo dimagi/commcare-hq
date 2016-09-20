@@ -81,7 +81,7 @@ from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
 from corehq.apps.users.tasks import bulk_upload_async, turn_on_demo_mode_task, reset_demo_user_restore_task
 from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
 from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_domain_languages
-from corehq.const import USER_DATE_FORMAT
+from corehq.const import USER_DATE_FORMAT, GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.util.couch import get_document_or_404
 from corehq.util.spreadsheets.excel import JSONReaderError, HeaderValueError, \
     WorksheetNotFound, WorkbookJSONReader, enforce_string_type, StringTypeRequiredError
@@ -1119,7 +1119,7 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
             'form': self.form,
             'invitation': self.invitation,
             'can_add_extra_mobile_workers': can_add_extra_mobile_workers(self.request),
-            'google_play_store_url': 'https://play.google.com/store/apps/details?id=org.commcare.dalvik&hl=en',
+            'google_play_store_url': GOOGLE_PLAY_STORE_COMMCARE_URL,
         })
         return context
 

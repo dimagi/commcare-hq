@@ -17,7 +17,7 @@ Util.currentUrlToObject = function () {
         return Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(url));
     } catch (e) {
         // This means that we're on the homepage
-        return new Util.CloudcareUrl();
+        return new Util.CloudcareUrl({});
     }
 };
 
@@ -26,7 +26,7 @@ Util.setUrlToObject = function (urlObject) {
     FormplayerFrontend.navigate(encodedUrl);
 };
 
-Util.doUrlAction = function(actionCallback) {
+Util.doUrlAction = function (actionCallback) {
     var currentObject = Util.CurrentUrlToObject();
     actionCallback(currentObject);
     Util.setUrlToObject(currentObject);
@@ -58,7 +58,7 @@ Util.CloudcareUrl = function (options) {
         this.steps.push(step);
         //clear out pagination and search when we take a step
         this.page = null;
-        this.search= null;
+        this.search = null;
     };
 
     this.setPage = function (page) {
@@ -75,10 +75,10 @@ Util.CloudcareUrl = function (options) {
         this.sessionId = sessionId;
         this.steps = null;
         this.page = null;
-        this.search= null;
+        this.search = null;
     };
 
-    this.setQuery = function(queryDict) {
+    this.setQuery = function (queryDict) {
         this.queryDict = queryDict;
     };
 
@@ -86,7 +86,7 @@ Util.CloudcareUrl = function (options) {
         this.sessionId = null;
         this.steps = null;
         this.page = null;
-        this.search= null;
+        this.search = null;
         this.queryDict = null;
         this.previewCommand = null;
     };
@@ -99,7 +99,7 @@ Util.CloudcareUrl = function (options) {
         this.previewCommand = null;
     };
 
-    this.spliceSteps = function(index) {
+    this.spliceSteps = function (index) {
 
         // null out the session if we clicked the root (home)
         if (index === 0) {
@@ -147,7 +147,7 @@ Util.CloudcareUrl.fromJson = function (json) {
 };
 
 if (!String.prototype.startsWith) {
-    String.prototype.startsWith = function(searchString, position) {
+    String.prototype.startsWith = function (searchString, position) {
         position = position || 0;
         return this.substr(position, searchString.length) === searchString;
     };

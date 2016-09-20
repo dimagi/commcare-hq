@@ -50,6 +50,7 @@ SampleExportInstances = {
             }],
             "doc_type": "TableConfiguration"
         }],
+        "export_format": "csv",
         "doc_type": "ExportInstance",
         "is_deidentified": false,
     },
@@ -105,6 +106,7 @@ SampleExportInstances = {
             }],
             "doc_type": "TableConfiguration"
         }],
+        "export_format": "csv",
         "doc_type": "ExportInstance",
         "is_deidentified": false,
     }
