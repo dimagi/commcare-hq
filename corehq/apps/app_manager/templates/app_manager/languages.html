@@ -1,5 +1,68 @@
 {% load i18n %}
 {% load xforms_extras %}
+{% load hq_shared_tags %}
+
+{% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+
+<fieldset>
+    <legend>
+        <a data-toggle="collapse" href="#supported-languages" class="collapsed">
+            <i class="fa fa-angle-double-down"></i> Language List
+        </a>
+    </legend>
+    <div class="collapse" id="supported-languages">
+        {% include "app_manager/partials/supported-languages.html" %}
+        <div class="spacer"></div>
+    </div>
+    {% if not app.is_remote_app %}
+    <legend>
+        <a data-toggle="collapse" href="#commcare-translations" class="collapsed">
+            <i class="fa fa-angle-double-down"></i> CommCare Translations
+        </a>
+    </legend>
+    {% if app.get_doc_type == "Application" %}
+    <div class="collapse" id="commcare-translations">
+            <section id="translations_ui">
+                <p class="help-block">
+                    {% blocktrans %}
+                    For Java Phone (Nokia), refer to
+                    <a target="_blank" href="https://github.com/dimagi/javarosa/blob/master/j2me/shared-resources/resources/messages_default.txt">JavaRosa translations</a>
+                    and <a target="_blank" href="https://github.com/dimagi/commcare/blob/master/application/resources/messages_cc_default.txt">CommCare translations</a>.
+                    {% endblocktrans %}
+                </p>
+                <p class="help-block">
+                    {% blocktrans %}
+                    For Android, refer to
+                    <a target="_blank" href="https://github.com/dimagi/commcare-odk/blob/master/app/assets/locales/messages_ccodk_default.txt">CommCareODK translations</a>
+                    and <a target="_blank" href="https://help.commcarehq.org/display/commcarepublic/CommCare+ODK+Form+Entry+Interface+Strings">ODK Collect translations</a>.
+                    {% endblocktrans %}
+                </p>
+            </section>
+        <div class="spacer"></div>
+    </div>
+    {% endif %}
+    <legend>
+        <a data-toggle="collapse" href="#bulk-commcare-translations" class="collapsed">
+            <i class="fa fa-angle-double-down"></i> Bulk CommCare Translations
+        </a>
+    </legend>
+    <div class="collapse" id="bulk-commcare-translations">
+        {% include "style/partials/bulk_upload.html" with bulk_upload=bulk_ui_translation_upload bulk_upload_form=bulk_ui_translation_form no_header=True %}
+        <div class="spacer"></div>
+    </div>
+    {% endif %}
+    <legend>
+        <a data-toggle="collapse" href="#bulk-application-translations" class="collapsed">
+            <i class="fa fa-angle-double-down"></i> Bulk Application Translations
+        </a>
+    </legend>
+    <div class="collapse" id="bulk-application-translations">
+        {% include "style/partials/bulk_upload.html" with bulk_upload=bulk_app_translation_upload bulk_upload_form=bulk_app_translation_form no_header=True %}
+    </div>
+</fieldset>
+
+{% else %}
+
 <div id="languages-and-translations" class="tab-pane">
     <div class="tabbable">
         <ul class="nav nav-tabs">
@@ -59,3 +122,5 @@
         </div>
     </div>
 </div>
+
+{% endif %}
