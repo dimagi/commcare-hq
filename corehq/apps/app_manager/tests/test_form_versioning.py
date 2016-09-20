@@ -42,7 +42,7 @@ class FormVersioningTest(TestCase):
         domain = 'form-versioning-test'
 
         # set up inital app
-        app = Application.new_app(domain, 'Foo', '2.0')
+        app = Application.new_app(domain, 'Foo')
         app.modules.append(Module(forms=[Form(), Form()]))
         app.build_spec = BuildSpec.from_string('2.7.0/latest')
         app.get_module(0).get_form(0).source = BLANK_TEMPLATE.format(xmlns='xmlns-0.0')
@@ -116,7 +116,7 @@ class FormVersioningTest(TestCase):
 class FormIdTest(SimpleTestCase):
 
     def test_update_form_references_case_list_form(self):
-        app = Application.new_app('domain', 'Foo', '2.0')
+        app = Application.new_app('domain', 'Foo')
         app.modules.append(Module(forms=[Form()]))
         app.modules.append(Module(forms=[Form()]))
         app.build_spec = BuildSpec.from_string('2.7.0/latest')
@@ -132,7 +132,7 @@ class FormIdTest(SimpleTestCase):
         self.assertEqual(new_form_id, copy.get_module(0).case_list_form.form_id)
 
     def test_update_form_references_form_link(self):
-        app = Application.new_app('domain', 'Foo', '2.0')
+        app = Application.new_app('domain', 'Foo')
         app.modules.append(Module(forms=[Form()]))
         app.modules.append(Module(forms=[Form(), Form()]))
         app.build_spec = BuildSpec.from_string('2.7.0/latest')

@@ -60,7 +60,7 @@ urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^translations/upload/$', 'upload_sms_translations', name='upload_sms_translations'),
     url(r'^invitations/$', ManageRegistrationInvitationsView.as_view(),
         name=ManageRegistrationInvitationsView.urlname),
-    url(r'^app_info/(?P<token>[\w-]+)/$', InvitationAppInfoView.as_view(),
+    url(r'^app_info/(?P<app_id>[\w-]+)/$', InvitationAppInfoView.as_view(),
         name=InvitationAppInfoView.urlname),
     url(r'^telerivet/', include(telerivet_urls)),
 )

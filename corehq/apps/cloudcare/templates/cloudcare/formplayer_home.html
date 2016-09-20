@@ -1,14 +1,10 @@
-{% extends 'style/full_screen.html' %}
+{% extends 'style/base.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load compress %}
 
 {% block title %}
-    {% if request.couch_user.is_web_user %}
-        {% trans "Preview Form" %}
-    {% else %}
-        {% trans "Formplayer" %}
-    {% endif %}
+    {% trans "CloudCare" %}
 {% endblock %}
 
 {% block page_title %}{% endblock %}
@@ -25,6 +21,17 @@
     <style id="outer-tiles-container-style"></style>
 {% endblock %}
 
+{% block navigation %}{{ block.super }}
+  <div class="navbar navbar-inverse navbar-cloudcare navbar-static-top">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="{% url 'cloudcare_default' domain %}"><i class="fcc fcc-flower"></i> Cloudcare</a>
+      <ul class="nav navbar-nav navbar-right" >
+        <li><a href="#" id="commcare-menu-toggle">{% trans 'Show Full Menu' %}</a></li>
+      </ul>
+    </div>
+  </div>
+{% endblock navigation %}
+
 {% block stylesheets %}
     {% compress css %}
         <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
@@ -33,7 +40,7 @@
               rel="stylesheet"
               media="all"
               href="{% static 'datatables/media/css/jquery.dataTables.min.css' %}"/>
-        <link rel="stylesheet" href="{% static 'formplayer/style/webforms.css' %}">
+        <link rel="stylesheet" href="{% static 'cloudcare/css/webforms.css' %}">
         <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}"/>
     {% endcompress %}
 
@@ -46,6 +53,10 @@
         rel="stylesheet"
         media="all"
         href="{% static 'cloudcare/less/cloudcare.debug.less' %}" />
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'cloudcare/less/formplayer.debug.less' %}" />
   {% else %}
   {% compress css %}
       <link type="text/less"
@@ -56,6 +67,10 @@
             rel="stylesheet"
             media="all"
             href="{% static 'cloudcare/less/cloudcare.less' %}"/>
+      <link type="text/less"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'cloudcare/less/formplayer.less' %}"/>
   {% endcompress %}
   {% endif %}
 {% endblock %}
@@ -81,24 +96,50 @@
             "gridPolyfillPath": "{% static 'css-grid-polyfill-binaries/css-polyfills.js' %}",
         };
         FormplayerFrontend.start(options);
+        $(function () {
+          // todo cookies to save state
+          var $menuToggle = $('#commcare-menu-toggle'),
+                  $navbar = $('#hq-navigation');
+          // if cookie exists:
+          $menuToggle.data('minimized', 'yes');
+          $navbar.css('margin-top', '-' + $navbar.outerHeight() + 'px');
+          $menuToggle.click(function (e) {
+            if ($menuToggle.data('minimized') === 'yes') {
+              $menuToggle.data('minimized', 'no');
+              $navbar.css('margin-top', '');
+              $menuToggle.text(django.gettext('Hide Full Menu'));
+            } else {
+              $menuToggle.data('minimized', 'yes');
+              $navbar.css('margin-top', '-' + $navbar.outerHeight() + 'px');
+              $menuToggle.text(django.gettext('Show Full Menu'));
+            }
+            e.preventDefault();
+          });
+
+          $(window).on('resize', function () {
+            if ($menuToggle.data('minimized') === 'yes') {
+              $navbar.css('margin-top', '-' + $navbar.outerHeight() + 'px');
+            }
+          });
+        });
     </script>
 {% endblock %}
 
-{% block page_content %}
+
+{% block content %}
 
     <!-- For now we won't touch this since the form entry code is coupled with it  -->
 
-
-    <div id="cloudcare-main">
-        <section id="cloudcare-notifications"></section>
+    <div id="cloudcare-main" class="cloudcare-home-content">
         <section id="case-crumbs" style="width: 800px"></section>
         <section id="cases"></section>
         <div id="menu-container">
-            <div id="breadcrumb-region" class="container"></div>
+            <div id="breadcrumb-region"></div>
             <div id="persistent-case-tile" class="container"></div>
+            <section id="cloudcare-notifications" class="container notifications-container"></section>
             <div id="menu-region" class="container"></div>
         </div>
-        <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
+        <section id="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
         <small id="version-info"></small>
         {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
             <section id="cloudcare-debugger" data-bind="
@@ -110,7 +151,7 @@
         {% endif %}
     </div>
 
-    {% include 'formplayer/fullform-ui/templates.html' %}
+    {% include 'form_entry/templates.html' %}
     {% include 'formplayer/grid_view.html' %}
     {% include 'formplayer/case_detail.html' %}
     {% include 'formplayer/case_list.html' %}

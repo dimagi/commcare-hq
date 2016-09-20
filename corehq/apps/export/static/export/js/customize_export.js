@@ -372,7 +372,7 @@ var CustomExportView = {
                 }
                 redirect();
             }).fail(function (response) {
-                var data = $.parseJSON(response.responseText);
+                var data = JSON.parse(response.responseText);
                 self.save.state('error');
                 alert('There was an error saving: ' + data.error);
             });

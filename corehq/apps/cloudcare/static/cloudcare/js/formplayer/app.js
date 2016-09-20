@@ -86,10 +86,10 @@ FormplayerFrontend.reqres.setHandler('clearMenu', function () {
     $('#menu-region').html("");
 });
 
-$(document).bind("ajaxStart", function () {
+$(document).on("ajaxStart", function () {
     $(".formplayer-request").addClass('formplayer-requester-disabled');
     tfLoading();
-}).bind("ajaxStop", function () {
+}).on("ajaxStop", function () {
     $(".formplayer-request").removeClass('formplayer-requester-disabled');
     tfLoadingComplete();
 });
