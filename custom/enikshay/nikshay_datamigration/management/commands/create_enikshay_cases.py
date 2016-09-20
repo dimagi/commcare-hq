@@ -4,6 +4,7 @@ from django.db import transaction
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.locations.models import SQLLocation
+from corehq.form_processor.models import CommCareCaseSQL
 
 from custom.enikshay.nikshay_datamigration.models import PatientDetail, Outcome, Followup
 from dimagi.utils.decorators.memoized import memoized
@@ -74,8 +75,8 @@ class EnikshayCaseFactory(object):
 
     @memoized
     def occurrence(self, outcome):
-        return CaseStructure(
-            attrs={
+        kwargs = {
+            'attrs': {
                 'create': True,
                 'case_type': 'occurrence',
                 'update': {
@@ -83,13 +84,26 @@ class EnikshayCaseFactory(object):
                     'hiv_status': outcome.HIVStatus,
                 },
             },
-            indices=[CaseIndex(
+            'indices': [CaseIndex(
                 self.person(),
                 identifier='host',
                 relationship=CASE_INDEX_EXTENSION,
                 related_type=self.person().attrs['case_type'],
             )],
-        )
+        }
+
+        for occurrence_case in CommCareCaseSQL.objects.filter(
+            case_id__in=[
+                index.case_id for index in
+                CommCareCaseSQL.objects.get(case_id=self.person().case_id).reverse_indices
+            ]
+        ):
+            if outcome.pk == occurrence_case.case_json['nikshay_id']:
+                kwargs['case_id'] = occurrence_case.case_id
+                kwargs['attrs']['create'] = False
+                break
+
+        return CaseStructure(**kwargs)
 
     @memoized
     def episode(self, outcome):
