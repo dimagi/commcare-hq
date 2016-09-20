@@ -230,6 +230,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
 
         initialize: function (options) {
             this.styles = options.styles;
+            this.hasNoItems = options.collection.length === 0;
         },
 
         childViewOptions: function () {
@@ -278,6 +279,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 templateName: "case-list-template",
                 useGrid: this.options.numEntitiesPerRow > 1,
                 useTiles: false,
+                hasNoItems: this.hasNoItems,
             };
         },
     });

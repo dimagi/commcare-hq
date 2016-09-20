@@ -39,6 +39,15 @@
     <% if (pageCount) { %>
     <div>
         <nav>
+            <% if (hasNoItems) { %>
+            <tbody>
+              <tr>
+                <td class="module-caselist-column module-caselist-column-empty" colspan="<%=headers.length%>">
+                  <div class="alert alert-info">{% trans "List is empty." %}</div>
+                </td>
+              </tr>
+            </tbody>
+            <% } %>
             <tbody class="wrapper js-case-container">
             <ul class="pagination">
                 <% if (currentPage > 0) { %>
