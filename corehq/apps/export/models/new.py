@@ -53,6 +53,7 @@ from corehq.apps.export.const import (
     DATA_SCHEMA_VERSION,
     MISSING_VALUE,
     EMPTY_VALUE,
+    KNOWN_CASE_PROPERTIES,
 )
 from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.export.dbaccessors import (
@@ -1331,9 +1332,6 @@ class CaseExportDataSchema(ExportDataSchema):
             last_occurrences={app_id: app_version},
         )
         unknown_case_properties = set(case_property_mapping.values())
-        # Yeah... let's not hard code this list everywhere
-        # This list comes from casexml.apps.case.xml.parser.CaseActionBase.from_v2
-        known_case_properties = ["type", "name", "external_id", "user_id", "owner_id", "opened_on"]
 
         def _add_to_group_schema(group_schema, path_start, prop, app_id, app_version):
             group_schema.items.append(ScalarItem(
@@ -1347,7 +1345,7 @@ class CaseExportDataSchema(ExportDataSchema):
             path_start = PathNode(name="updated_unknown_properties")
             _add_to_group_schema(group_schema, path_start, prop, app_id, app_version)
 
-        for prop in known_case_properties:
+        for prop in KNOWN_CASE_PROPERTIES:
             path_start = PathNode(name="updated_known_properties")
             _add_to_group_schema(group_schema, path_start, prop, app_id, app_version)
 
