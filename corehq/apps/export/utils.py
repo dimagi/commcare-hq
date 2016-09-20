@@ -42,7 +42,11 @@ def is_occurrence_deleted(last_occurrences, app_ids_and_versions):
     return is_deleted
 
 
-def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
+def convert_saved_export_to_export_instance(
+        domain,
+        saved_export,
+        force_convert_columns=False,
+        dryrun=False):
     from .models import (
         FormExportDataSchema,
         FormExportInstance,
@@ -108,10 +112,11 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
         new_table = instance.get_table(_convert_index_to_path_nodes(old_table.index))
         if not new_table:
             if not is_remote_app_migration:
-                migration_meta.skipped_tables.append(ConversionMeta(
-                    path=old_table.index,
-                    failure_reason='Not found in new export',
-                ))
+                if old_table.index != '#.history.#':
+                    migration_meta.skipped_tables.append(ConversionMeta(
+                        path=old_table.index,
+                        failure_reason='Not found in new export',
+                    ))
                 continue
 
             # Create a user defined TableConfiguration
@@ -214,11 +219,12 @@ def convert_saved_export_to_export_instance(domain, saved_export, dryrun=False):
                     info.append('Column has deid_transform: {}'.format(transform))
                 ordering.append(new_column)
             except SkipConversion, e:
-                if is_remote_app_migration:
+                if is_remote_app_migration or force_convert_columns:
                     # In the event that we skip a column and it's a remote application,
                     # just add a user defined column
                     new_column = _create_user_defined_column(column, column_path, transform)
                     new_table.columns.append(new_column)
+                    ordering.append(new_column)
                 else:
                     migration_meta.skipped_columns.append(ConversionMeta(
                         path=column.index,
@@ -265,6 +271,7 @@ def _create_user_defined_column(old_column, column_path, transform):
         selected=True,
         deid_transform=transform,
         custom_path=column_path,
+        is_editable=False,
     )
     return column
 

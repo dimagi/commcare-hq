@@ -65,6 +65,16 @@ class AbstractBlobDB(object):
         raise NotImplementedError
 
     @abstractmethod
+    def bulk_delete(self, paths):
+        """Delete multiple blobs.
+
+        :param paths: The list of blob paths to delete.
+        :returns: True if all the blobs were deleted else false. None if it is
+        not known if the blob was deleted or not.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def copy_blob(self, content, info, bucket):
         """Copy blob from other blob database
 
