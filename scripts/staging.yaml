@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - dsr-multi-loc # sr 9/20
   - vellum-staging # J$ 11/13
   - django-1.8 # nick P 8/25
   - ce/domain-list-api # Cal 8/31
