@@ -142,12 +142,14 @@ class EnikshayCaseFactory(object):
         episode_structure = self.episode(
             Outcome.objects.get(PatientId=followup.PatientID)
         )
-        return CaseStructure(
+
+        kwargs = dict(
             attrs={
                 'create': True,
                 'case_type': 'test',
                 'update': {
                     'date_tested': followup.TestDate,
+                    'followup_id': followup.id,
                 },
             },
             indices=[CaseIndex(
@@ -157,6 +159,18 @@ class EnikshayCaseFactory(object):
                 related_type=episode_structure.attrs['case_type'],
             )],
         )
+
+        for test_case in CommCareCaseSQL.objects.filter(
+            case_id__in=[
+                index.case_id for index in
+                CommCareCaseSQL.objects.get(case_id=episode_structure.case_id).reverse_indices
+            ]
+        ):
+            if followup.id == int(test_case.case_json.get('followup_id')):
+                kwargs['case_id'] = test_case.case_id
+                kwargs['attrs']['create'] = False
+
+        return CaseStructure(**kwargs)
 
     @property
     @memoized
