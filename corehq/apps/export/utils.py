@@ -112,10 +112,11 @@ def convert_saved_export_to_export_instance(
         new_table = instance.get_table(_convert_index_to_path_nodes(old_table.index))
         if not new_table:
             if not is_remote_app_migration:
-                migration_meta.skipped_tables.append(ConversionMeta(
-                    path=old_table.index,
-                    failure_reason='Not found in new export',
-                ))
+                if old_table.index != '#.history.#':
+                    migration_meta.skipped_tables.append(ConversionMeta(
+                        path=old_table.index,
+                        failure_reason='Not found in new export',
+                    ))
                 continue
 
             # Create a user defined TableConfiguration
