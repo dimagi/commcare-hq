@@ -1,4 +1,4 @@
-from django.conf.urls import *
+from django.conf.urls import url
 
 from corehq.apps.registration.views import (
     RegisterDomainView,
@@ -11,8 +11,7 @@ from corehq.apps.registration.views import (
 )
 
 
-urlpatterns = patterns(
-    'corehq.apps.registration.views',
+urlpatterns = [
     url(r'^$', registration_default, name='registration_default'),
     url(r'^user/?$', UserRegistrationView.as_view(),
         name=UserRegistrationView.urlname),
@@ -24,4 +23,4 @@ urlpatterns = patterns(
     url(r'^resend/$', resend_confirmation,
         name='registration_resend_domain_confirmation'),
     url(r'^eula_agreement/$', eula_agreement, name="agree_to_eula"),
-)
+]

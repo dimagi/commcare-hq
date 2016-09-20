@@ -1,12 +1,11 @@
-from django.conf.urls import url, patterns
+from django.conf.urls import url
 from corehq.apps.products.views import (
     ProductListView, FetchProductListView, NewProductView, EditProductView,
     UploadProductView, ProductImportStatusView, ProductFieldsView,
     product_importer_job_poll, download_products, archive_product, unarchive_product,
 )
 
-settings_urls = patterns(
-    'corehq.apps.products.views',
+settings_urls = [
     url(r'^$', ProductListView.as_view(), name=ProductListView.urlname),
     url(r'^fields/$', ProductFieldsView.as_view(), name=ProductFieldsView.urlname),
     url(r'^list/$', FetchProductListView.as_view(), name=FetchProductListView.urlname),
@@ -20,4 +19,4 @@ settings_urls = patterns(
     url(r'^(?P<prod_id>[\w-]+)/$', EditProductView.as_view(), name=EditProductView.urlname),
     url(r'^archive/(?P<prod_id>[\w-]+)/$', archive_product, name='archive_product'),
     url(r'^unarchive/(?P<prod_id>[\w-]+)/$', unarchive_product, name='unarchive_product'),
-)
+]
