@@ -5178,6 +5178,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return properties.get('cc-content-valid', 'yes')
 
     @property
+    def advanced_app_builder(self):
+        properties = (self.profile or {}).get('properties', {})
+        return properties.get('advanced_app_builder', 'false') == 'true'
+
+    @property
     def jad_settings(self):
         s = super(Application, self).jad_settings
         s.update({
