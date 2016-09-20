@@ -339,10 +339,8 @@
                 {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
                     <legend>{% trans "Multimedia" %}</legend>
                     {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
-                    {% if not module.is_surveys %}
-                    <!-- in the prototype, all advanced settings are case-related -->
                     <legend>Advanced</legend>
-                    {% endif %}
+                        {% include "app_manager/partials/module_filter.html" with value=module.module_filter %}
                 {% else %}
                     <div class="form-group">
                         <label class="col-sm-2 control-label">
@@ -355,6 +353,7 @@
                             </select>
                         </div>
                     </div>
+                    {% include "app_manager/partials/module_filter.html" with value=module.module_filter %}
                     {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
                 {% endif %}
                 {% if child_module_enabled %}
@@ -375,9 +374,7 @@
                 </div>
                 {% endif %}
                 {% endblock %}
-                {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
-                    {% include "app_manager/partials/module_filter.html" with value=module.module_filter %}
-                {% else %}
+                {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
                             </fieldset>
                         </form>
                     </div>
@@ -425,8 +422,8 @@
                 {% block case_management_advanced_fields %}
                 {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
                     {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List Menu Item" DESC="An item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
+                    {% include 'app_manager/partials/case_list_form_setting.html' %}
                 {% endif %}
-                {% include 'app_manager/partials/case_list_form_setting.html' %}
                 {% if module.module_type == 'basic' and request.project.survey_management_enabled %}
                     {% include 'app_manager/partials/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
                 {% endif %}

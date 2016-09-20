@@ -1,6 +1,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
-{% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" and request|feature_preview_enabled:"MODULE_FILTER" %}
+<!-- for prototype, ignore the preview because if module filtering isn't on, the Advanced section shows up blank, which is annoying to work around -->
+{% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" or request|feature_preview_enabled:"MODULE_FILTER" %}
 <div class="form-group" id="module-filter">
     <label class="col-sm-2 control-label">
         {% trans "Module Filter" %}
