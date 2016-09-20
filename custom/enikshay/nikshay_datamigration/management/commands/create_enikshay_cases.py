@@ -107,21 +107,35 @@ class EnikshayCaseFactory(object):
 
     @memoized
     def episode(self, outcome):
-        return CaseStructure(
-            attrs={
+        kwargs = {
+            'attrs': {
                 'create': True,
                 'case_type': 'episode',
                 'update': {
                     'treatment_supporter_mobile_number': outcome.PatientId.cmob,
+                    'pk': outcome.pk,
                 },
             },
-            indices=[CaseIndex(
+            'indices': [CaseIndex(
                 self.occurrence(outcome),
                 identifier='host',
                 relationship=CASE_INDEX_EXTENSION,
                 related_type=self.occurrence(outcome).attrs['case_type'],
             )],
-        )
+        }
+
+        for episode_case in CommCareCaseSQL.objects.filter(
+            case_id__in=[
+                index.case_id for index in
+                CommCareCaseSQL.objects.get(case_id=self.occurrence(outcome).case_id).reverse_indices
+            ]
+        ):
+            if outcome.pk == episode_case.case_json.get('pk'):
+                kwargs['case_id'] = episode_case.case_id
+                kwargs['attrs']['create'] = False
+                break
+
+        return CaseStructure(**kwargs)
 
     @memoized
     def test(self, followup):
