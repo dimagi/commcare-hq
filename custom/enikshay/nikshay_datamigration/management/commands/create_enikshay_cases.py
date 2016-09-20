@@ -160,13 +160,10 @@ class EnikshayCaseFactory(object):
 
 class Command(BaseCommand):
 
-    domain = None
-
     def handle(self, domain, *args, **options):
-        self.domain = domain
         counter = 0
         for patient_detail in PatientDetail.objects.all():
-            case_factory = EnikshayCaseFactory(self.domain, patient_detail)
+            case_factory = EnikshayCaseFactory(domain, patient_detail)
             case_factory.create_cases()
             counter += 1
             print counter
