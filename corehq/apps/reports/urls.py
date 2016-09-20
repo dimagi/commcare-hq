@@ -3,23 +3,20 @@ import logging
 from django.conf.urls import *
 from django.core.exceptions import ImproperlyConfigured
 from corehq.apps.reports.util import get_installed_custom_modules
-from corehq.apps.reports.dispatcher import (ProjectReportDispatcher, 
-        CustomProjectReportDispatcher, BasicReportDispatcher)
-
-# from .filters.urls import urlpatterns as filter_urls
+from corehq.apps.reports.dispatcher import (
+    ProjectReportDispatcher,
+    CustomProjectReportDispatcher,
+    BasicReportDispatcher,
+)
 from corehq.apps.userreports.reports.view import (
     ConfigurableReport,
     CustomConfigurableReportDispatcher,
 )
 from corehq.apps.userreports.views import (
-    ConfigureChartReport,
-    ConfigureListReport,
-    ConfigureTableReport,
-    ConfigureWorkerReport,
+    ConfigureReport,
     ConfigureMapReport,
     EditReportInBuilder,
     ReportBuilderDataSourceSelect,
-    ReportBuilderTypeSelect,
     ReportBuilderPaywallPricing,
     ReportBuilderPaywallActivatingSubscription,
 )
@@ -31,7 +28,8 @@ from .views import (
     CaseDetailsView,
     CaseAttachmentsView,
     MySavedReportsView,
-    ScheduledReportsView)
+    ScheduledReportsView,
+)
 
 
 custom_report_urls = patterns('',
@@ -47,12 +45,8 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'builder/subscribe/activating_subscription/$', ReportBuilderPaywallActivatingSubscription.as_view(),
         name=ReportBuilderPaywallActivatingSubscription.urlname),
 
-    url(r'^builder/select_type/$', ReportBuilderTypeSelect.as_view(), name=ReportBuilderTypeSelect.urlname),
-    url(r'^builder/(?P<report_type>list|chart|table|worker|map)/select_source/$', ReportBuilderDataSourceSelect.as_view(), name='report_builder_select_source'),
-    url(r'^builder/configure/chart/$', ConfigureChartReport.as_view(), name="configure_chart_report"),
-    url(r'^builder/configure/list/$', ConfigureListReport.as_view(), name="configure_list_report"),
-    url(r'^builder/configure/table/$', ConfigureTableReport.as_view(), name="configure_table_report"),
-    url(r'^builder/configure/worker/$', ConfigureWorkerReport.as_view(), name="configure_worker_report"),
+    url(r'^builder/select_source/$', ReportBuilderDataSourceSelect.as_view(), name=ReportBuilderDataSourceSelect.urlname),
+    url(r'^builder/configure/$', ConfigureReport.as_view(), name=ConfigureReport.urlname),
     url(r'^builder/configure/map/$', ConfigureMapReport.as_view(), name="configure_map_report"),
     url(r'^builder/edit/(?P<report_id>[\w\-]+)/$', EditReportInBuilder.as_view(), name='edit_report_in_builder'),
 
