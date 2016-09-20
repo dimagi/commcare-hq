@@ -3,6 +3,7 @@
 {% load i18n %}
 
 {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+{% if not module.is_surveys and form.get_action_type == 'open' and app.advanced_app_builder %}
 
 <div id="case-list-form">
     <div class="form-group">
@@ -17,7 +18,7 @@
         <div class="col-sm-4">
             <div class="checkbox">
                 <label>
-                    <input type="checkbox" checked/>
+                    <input type="checkbox" checked />
                 </label>
             </div>
         </div>
@@ -52,6 +53,7 @@
     {% include "app_manager/partials/nav_menu_media.html" with item=multimedia.case_list_form qualifier='case_list_form_' ICON_LABEL="Registration Form Icon" AUDIO_LABEL="Registration Form Audio" %}
 </div>
 
+{% endif %}
 {% else %}
 
 <div id="case-list-form">

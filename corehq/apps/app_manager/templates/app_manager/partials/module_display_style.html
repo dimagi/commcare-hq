@@ -1,0 +1,19 @@
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% if app.grid_display_for_some_modules %}
+<div class="form-group" id="display_style_container">
+    <label class="col-sm-2 control-label">
+        {% trans "Display Style" %}
+    </label>
+    <div class="col-sm-4">
+        <select type="text" name="display_style" class="form-control">
+            <option value="list">{% trans "List" %}</option>
+            <option value="grid"{% if module.grid_display_style %} selected{% endif %}>
+                {% trans "Grid" %}
+            </option>
+        </select>
+    </div>
+</div>
+{% endif %}

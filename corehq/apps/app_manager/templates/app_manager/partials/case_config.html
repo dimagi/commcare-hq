@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load hq_shared_tags %}
 
 {% include 'app_manager/partials/case_config_shared.html' %}
 
@@ -66,7 +67,6 @@
 <div id="case-config-ko">
     <div data-bind="saveButton: saveButton"></div>
     <div data-bind="with: caseConfigViewModel">
-        <!-- TODO: hide unless advanced mode is turned on -->
         <div class="form-inline container-fluid">
             {% trans "This form " %}
             {% trans "Does not use cases" as no_cases %}
@@ -80,7 +80,13 @@
                          {value: 'open-other', label: '{{ different_module|escapejs }}'}],
                 value: actionType,
                 event: { change: function() { ga_track_event('Case Management', 'Form Level', 'Case Action'); } }
-            "></select>
+            "{% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" and not app.advanced_app_builder %} disabled{% endif %}></select>
+            {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" and not app.advanced_app_builder %}
+            <span data-bind="makeHqHelp: {}"
+              data-title="{% trans "Why can't I change this?" %}"
+              data-content="It's usually not a good idea. If you really must, turn on <b>Advanced App Builder</b> in <a href='{% url "view_app" domain app.id%}'>app settings</a>."
+            ></span>
+            {% endif %}
         </div>
         <div class="spacer"></div>
         <div data-bind="if: actionType() === 'update'">
