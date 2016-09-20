@@ -331,11 +331,10 @@
             "Zambia": {
               "default": 0,
               "cases": {
-                "central": 15750,
-                "eastern": 174841,
-                "luapula": 166161,
-                "muchinga": 65903,
-                "northern": 116693
+                "eastern ": 214302,
+                "luapula ": 153755,
+                "muchinga ": 52525,
+                "northern ": 121602
               },
               "type": "switch",
               "switch_on": {
@@ -343,7 +342,7 @@
                   "type": "property_path",
                   "property_path": [
                     "user_data",
-                    "level_1_data"
+                    "level_1_name"
                   ]
                 },
                 "type": "related_doc",
@@ -626,45 +625,41 @@
             "Zambia": {
               "default": 0,
               "cases": {
-                "chitambo": 1867,
-                "luano": 957,
-                "mkushi": 8424,
-                "serenje": 4502,
-                "chadiza": 14432,
-                "chipata": 40981,
-                "katete": 25407,
-                "lundazi": 26101,
-                "mambwe": 8528,
-                "nyimba": 14168,
-                "petauke": 33123,
-                "sinda": 6639,
-                "vubwi": 5462,
-                "chembe": 5366,
-                "chiengi": 31683,
-                "chipili": 1328,
-                "kawambwa": 16133,
-                "mansa": 23624,
-                "milenge": 2381,
-                "mwansabombwe": 8720,
-                "mwense": 19970,
-                "nchelenge": 26169,
-                "samfya": 30787,
-                "chama": 17293,
-                "chinsali": 7018,
-                "isoka": 6134,
-                "mafinga": 6341,
-                "mpika": 12001,
-                "nakonde": 12115,
-                "shiwangandu": 5001,
-                "chilubi": 17995,
-                "kaputa": 10854,
-                "kasama": 17769,
-                "luwingu": 16127,
-                "mbala": 12895,
-                "mporokoso": 10746,
-                "mpulungu": 9184,
-                "mungwi": 11890,
-                "nsama": 9233
+                "Chadiza": 14969,
+                "Chama": 17724,
+                "Chembe": 5544,
+                "Chiengi": 27035,
+                "Chilubi": 14147,
+                "Chinsali": 11284,
+                "Chipata": 61671,
+                "Chipili": 1556,
+                "Isoka": 5821,
+                "Kaputa": 11385,
+                "Kasama": 23365,
+                "Katete": 24253,
+                "Kawambwa": 11722,
+                "Lundazi": 27423,
+                "Luwingu": 15265,
+                "Mafinga": 5903,
+                "Mambwe": 7855,
+                "Mansa": 24142,
+                "Mbala": 13338,
+                "Milenge": 1933,
+                "Mpika": 12407,
+                "Mporokoso": 11180,
+                "Mpulungu": 9274,
+                "Mungwi": 15504,
+                "Mwansabombwe": 7634,
+                "Mwense": 18910,
+                "Nakonde": 12663,
+                "Nchelenge": 25168,
+                "Nsama": 8144,
+                "Nyimba": 14152,
+                "Petauke": 34023,
+                "Samfya": 30111,
+                "Shiwang'andu": 4447,
+                "Sinda": 6889,
+                "Vubwi": 5343
               },
               "type": "switch",
               "switch_on": {
@@ -672,7 +667,7 @@
                   "type": "property_path",
                   "property_path": [
                     "user_data",
-                    "level_2_data"
+                    "level_2_name"
                   ]
                 },
                 "type": "related_doc",
@@ -1188,6 +1183,78 @@
                   "property_name": "owner_id"
                 }
               }
+            },
+            "Zambia": {
+              "default": 0,
+              "cases": {
+                "Chaka RHC": 12254,
+                "Chalabesa RHC": 7519,
+                "Chama": 17724,
+                "Chembe RHC": 5544,
+                "Chiengi": 15403,
+                "Chifwenge RHC": 6171,
+                "Chilubi Island RHC": 7976,
+                "Chinsali": 11284,
+                "Chipata": 38912,
+                "Chipili": 1556,
+                "Ilondola Mission RHC": 2972,
+                "Isoka": 5821,
+                "Kabole RHC": 11632,
+                "Kaputa": 8082,
+                "Kasama": 23365,
+                "Kasongole": 3303,
+                "Katete": 24253,
+                "Katuta RHC": 3998,
+                "Kawambwa": 7729,
+                "Kazembe RHC": 7634,
+                "Lubwe Mission": 14982,
+                "Lundazi": 14969,
+                "Lundazi": 27423,
+                "Luwingu": 11267,
+                "Lwela RHC": 933,
+                "Mafinga": 5903,
+                "Mambwe": 4362,
+                "Mansa": 24142,
+                "Matumbo": 1475,
+                "Mbala": 8564,
+                "Milenge": 1000,
+                "Mpika": 4888,
+                "Mpororkoso": 5945,
+                "Mpulungu": 9274,
+                "Mukanda RHC": 22759,
+                "Mukupa Kaoma": 5235,
+                "Mungwi": 15504,
+                "Mushota RHC": 3993,
+                "Mwense": 18910,
+                "Nakonde": 8663,
+                "Nchelenge": 25168,
+                "Nsama RHC": 4759,
+                "Ntatumbila RHC": 4000,
+                "Nyanje": 6889,
+                "Nyimba": 14152,
+                "Petauke": 21769,
+                "Samfya": 15129,
+                "Senga RHC": 4774,
+                "St. Luke Msoro": 3493,
+                "Sumbu RHC": 3385,
+                "Vubwi": 5343
+              },
+              "type": "switch",
+              "switch_on": {
+                "value_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "user_data",
+                    "level_3_name"
+                  ]
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareUser",
+                "doc_id_expression": {
+                  "type": "property_name",
+                  "property_name": "owner_id"
+                }
+              }
             }
           },
           "type": "switch",
@@ -1358,7 +1425,7 @@
             "mozambique": 483922,
             "Senegal": 220551,
             "Rwanda": 188189,
-            "Zambia": 539348,
+            "Zambia": 542184,
             "Ethiopia": 708258,
             "Mali": 242684,
             "Madagascar": 311916,
