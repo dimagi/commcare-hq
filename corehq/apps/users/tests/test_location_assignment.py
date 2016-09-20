@@ -264,7 +264,8 @@ def web_user(location_id=None, assigned_location_ids=None):
         web_user('a'),
         web_user('a', ['a']),
         True
-    ),    (
+    ),
+    (
         web_user('a', ['b']),
         web_user('a', ['b', 'a']),
         True
