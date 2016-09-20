@@ -11,12 +11,13 @@ from dimagi.utils.decorators.memoized import memoized
 
 class EnikshayCaseFactory(object):
 
+    domain = None
     patient_detail = None
 
-    def __init__(self, domain, patient_detail, nikshay_code_to_location):
+    def __init__(self, domain, patient_detail):
+        self.domain = domain
         self.patient_detail = patient_detail
         self.factory = CaseFactory(domain=domain)
-        self.nikshay_code_to_location = nikshay_code_to_location
 
     @transaction.atomic
     def create_cases(self):
@@ -140,7 +141,16 @@ class EnikshayCaseFactory(object):
 
     @property
     def _location(self):
-        return self.nikshay_code_to_location[self._nikshay_code]
+        return self.nikshay_code_to_location(self.domain)[self._nikshay_code]
+
+    @classmethod
+    @memoized
+    def nikshay_code_to_location(cls, domain):
+        return {
+            location.metadata.get('nikshay_code'): location
+            for location in SQLLocation.objects.filter(domain=domain)
+            if 'nikshay_code' in location.metadata
+        }
 
     @property
     def _nikshay_code(self):
@@ -155,17 +165,8 @@ class Command(BaseCommand):
         self.domain = domain
         counter = 0
         for patient_detail in PatientDetail.objects.all():
-            case_factory = EnikshayCaseFactory(self.domain, patient_detail, self._nikshay_code_to_location)
+            case_factory = EnikshayCaseFactory(self.domain, patient_detail)
             case_factory.create_cases()
             counter += 1
             print counter
         print 'All patient cases created'
-
-    @property
-    @memoized
-    def _nikshay_code_to_location(self):
-        return {
-            location.metadata.get('nikshay_code'): location
-            for location in SQLLocation.objects.filter(domain=self.domain)
-            if 'nikshay_code' in location.metadata
-        }
