@@ -8,16 +8,14 @@ from corehq.apps.locations.models import SQLLocation
 from custom.enikshay.nikshay_datamigration.models import PatientDetail, Outcome, Followup
 from dimagi.utils.decorators.memoized import memoized
 
-ENIKSHAY_DOMAIN = 'enikshay-np'
-
 
 class EnikshayCaseFactory(object):
 
     patient_detail = None
 
-    def __init__(self, patient_detail, nikshay_code_to_location):
+    def __init__(self, domain, patient_detail, nikshay_code_to_location):
         self.patient_detail = patient_detail
-        self.factory = CaseFactory(domain=ENIKSHAY_DOMAIN)
+        self.factory = CaseFactory(domain=domain)
         self.nikshay_code_to_location = nikshay_code_to_location
 
     @transaction.atomic
@@ -151,10 +149,13 @@ class EnikshayCaseFactory(object):
 
 class Command(BaseCommand):
 
-    def handle(self, *args, **options):
+    domain = None
+
+    def handle(self, domain, *args, **options):
+        self.domain = domain
         counter = 0
         for patient_detail in PatientDetail.objects.all():
-            case_factory = EnikshayCaseFactory(patient_detail, self._nikshay_code_to_location)
+            case_factory = EnikshayCaseFactory(self.domain, patient_detail, self._nikshay_code_to_location)
             case_factory.create_cases()
             counter += 1
             print counter
@@ -165,6 +166,6 @@ class Command(BaseCommand):
     def _nikshay_code_to_location(self):
         return {
             location.metadata.get('nikshay_code'): location
-            for location in SQLLocation.objects.filter(domain=ENIKSHAY_DOMAIN)
+            for location in SQLLocation.objects.filter(domain=self.domain)
             if 'nikshay_code' in location.metadata
         }
