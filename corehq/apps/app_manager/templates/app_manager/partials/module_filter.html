@@ -1,6 +1,6 @@
 {% load hq_shared_tags %}
 {% load i18n %}
-{% if request|feature_preview_enabled:"MODULE_FILTER" %}
+{% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" and request|feature_preview_enabled:"MODULE_FILTER" %}
 <div class="form-group" id="module-filter">
     <label class="col-sm-2 control-label">
         {% trans "Module Filter" %}
