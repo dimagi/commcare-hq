@@ -180,6 +180,10 @@
                 phoneMode: true,
             })
         })
+            });
+            $('.dragscroll').on('scroll', function () {
+              $('.form-control').blur();
+            });
         </script>
         {% include 'formplayer/fullform-ui/templates.html' %}
         {% include 'formplayer/grid_view.html' %}
