@@ -1,6 +1,5 @@
-from django.conf.urls import patterns, include
+from django.conf.urls import include, url
 
-urlpatterns = patterns(
-    '',
-    (r'^99dots/', include("custom.enikshay.integrations.ninetyninedots.urls")),
-)
+urlpatterns = [
+    url(r'^99dots/', include("custom.enikshay.integrations.ninetyninedots.urls")),
+]
