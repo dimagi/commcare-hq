@@ -168,6 +168,7 @@ FormplayerFrontend.on("start", function (options) {
     user.domain = options.domain;
     user.formplayer_url = options.formplayer_url;
     user.debuggerEnabled = options.debuggerEnabled;
+    user.phoneMode = options.phoneMode;
     FormplayerFrontend.request('gridPolyfillPath', options.gridPolyfillPath);
     if (Backbone.history) {
         Backbone.history.start();
