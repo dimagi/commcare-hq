@@ -31,7 +31,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
 
     def get(self, request, domain):
         self.domain = domain
-        self.q = self.request.GET.get('q', None)
+        self.q = self.request.GET.get('q', '')
         try:
             count, options = self.get_options()
             return self.render_json_response({
@@ -118,6 +118,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         return self.user_es_query(query).count()
 
     def get_users(self, query, start, size):
+        print 'getting users'
         users = (self.user_es_query(query)
                  .fields(['_id', 'username', 'first_name', 'last_name', 'doc_type'])
                  .start(start)
@@ -162,6 +163,7 @@ def paginate_options(data_sources, query, start, size):
     options = []
     total = 0
     for get_size, get_objects in data_sources:
+        print get_objects
         count = get_size(query)
         total += count
 

@@ -12,6 +12,7 @@ from corehq.apps.export.filters import (
     OwnerTypeFilter, ModifiedOnRangeFilter
 )
 from corehq.apps.groups.models import Group
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter, NewUserGroupFilter
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import (
     group_filter,
@@ -401,6 +402,25 @@ class FilterFormCouchExportDownloadForm(GenericFilterFormExportDownloadForm):
 
 
 class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
+    def __init__(self, domain_object, *args, **kwargs):
+        self.domain_object = domain_object
+        super(FilterFormESExportDownloadForm, self).__init__(domain_object, *args, **kwargs)
+
+        # if not self.domain_object.uses_locations:
+        #     # don't use CommCare Supply as a user_types choice if the domain
+        #     # is not a CommCare Supply domain.
+        #     self.fields['user_types'].choices = self._USER_TYPES_CHOICES[:-1]
+        #
+        # self.helper = FormHelper()
+        # self.helper.form_tag = False
+        # self.helper.label_class = 'col-sm-3'
+        # self.helper.field_class = 'col-sm-5'
+        del (self.fields['type_or_group'])
+        del (self.fields['user_types'])
+        # del (self.fields['group'])
+        self.helper.layout = Layout(
+            super(FilterFormESExportDownloadForm, self).extra_fields
+        )
 
     def get_edit_url(self, export):
         from corehq.apps.export.views import EditNewCustomFormExportView
@@ -434,6 +454,15 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
         kwargs = super(FilterFormESExportDownloadForm, self).get_multimedia_task_kwargs(export, download_id)
         kwargs['export_is_legacy'] = False
         return kwargs
+
+
+class NewFilterFormESExportDownloadForm(FilterFormESExportDownloadForm):
+    # new_filters = forms.CharField(
+    #     label=ugettext_lazy("New Filter"),
+    #     required=True,
+    #     widget=NewUserGroupFilter(),
+    # )
+    pass
 
 
 class GenericFilterCaseExportDownloadForm(BaseFilterExportDownloadForm):

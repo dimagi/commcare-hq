@@ -11,6 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
 from corehq.apps.export.export import get_export_download, get_export_size
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.views import should_update_export, \
     build_download_saved_export_response, require_form_export_permission
 from corehq.form_processor.utils import use_new_exports
@@ -46,7 +47,7 @@ from corehq.apps.export.forms import (
     CreateCaseExportTagForm,
     FilterFormCouchExportDownloadForm,
     FilterCaseCouchExportDownloadForm,
-    FilterFormESExportDownloadForm,
+    NewFilterFormESExportDownloadForm,
     FilterCaseESExportDownloadForm,
 )
 from corehq.apps.export.models import (
@@ -463,6 +464,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
     @use_angular_js
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
+        self.request = request
         if not (self.has_edit_permissions
                 or self.has_view_permissions
                 or self.has_deid_view_permissions):
@@ -493,6 +495,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
 
     @property
     def page_context(self):
+        print 'calling context in parent class'
         context = {
             'download_export_form': self.download_export_form,
             'export_list': self.export_list,
@@ -730,6 +733,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
             'download_id': '<some uuid>',
         }
         """
+        import pdb; pdb.set_trace()
         try:
             download = self._get_download_task(in_data)
         except ExportAsyncException as e:
@@ -1710,7 +1714,11 @@ class GenericDownloadNewExportMixin(object):
 
 class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExportView):
     urlname = 'new_export_download_forms'
-    filter_form_class = FilterFormESExportDownloadForm
+    filter_form_class = NewFilterFormESExportDownloadForm
+
+    # @property
+    # def filter_form_class(self):
+    #     return ExpandedMobileWorkerFilter(self.request, self.request.domain).render()
 
     def _get_export(self, domain, export_id):
         return FormExportInstance.get(export_id)
@@ -1720,6 +1728,14 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
         form_filters = filter_form.get_form_filter()
         return form_filters
 
+    # @property
+    # def download_export_form(self):
+    #     return ExpandedMobileWorkerFilter(self.request, self.request.domain).render()
+    @property
+    def page_context(self):
+        parent_context = super(DownloadNewFormExportView, self).page_context
+        parent_context['new_export_filters'] = ExpandedMobileWorkerFilter(self.request, self.request.domain).render()
+        return parent_context
 
 class BulkDownloadNewFormExportView(DownloadNewFormExportView):
     urlname = 'new_bulk_download_forms'
