@@ -515,11 +515,25 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
         rebuild_indicators(data_source_config._id, username, count=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
         return data_source_config._id
 
+    @staticmethod
+    def filter_data_source_changes(data_source_config_id):
+        """
+        Add filter to data source to prevent it from being updated by DB changes
+        """
+        # Reload using the ID instead of just passing in the object to avoid ResourceConflicts
+        data_source_config = DataSourceConfiguration.get(data_source_config_id)
+        data_source_config.configured_filter.update({
+            'type': 'constant',
+            'constant': False
+        })
+        data_source_config.save()
+
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
             app_source = self.form.get_selected_source()
-            self._build_data_source(app_source, request.user.username)
-            # TODO: Add filter {"constant", "false"}
+            data_source_config_id = self._build_data_source(app_source, request.user.username)
+            self.filter_data_source_changes(data_source_config_id)
+
             track_workflow(
                 request.user.email,
                 "Successfully submitted the first part of the Report Builder "
