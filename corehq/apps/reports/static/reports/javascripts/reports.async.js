@@ -32,6 +32,7 @@ var HQAsyncReport = function (o) {
 
 
     var loadFilters = function (data) {
+        debugger
         self.filterRequest = null;
         try {
             $('#hq-report-filters').html(data.filters);
