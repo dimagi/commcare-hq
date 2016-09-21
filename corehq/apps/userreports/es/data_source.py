@@ -16,7 +16,6 @@ from corehq.apps.userreports.util import get_table_name
 
 
 class ConfigurableReportEsDataSource(ReportDataSource):
-
     def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns, order_by):
         self.lang = None
         self.domain = domain
@@ -111,6 +110,18 @@ class ConfigurableReportEsDataSource(ReportDataSource):
     @memoized
     @method_decorator(catch_and_raise_exceptions)
     def get_data(self, start=None, limit=None):
+        if self.uses_aggregations:
+            ret = self._get_aggregated_results(start, limit)
+        else:
+            ret = self._get_query_results(start, limit)
+
+        for report_column in self.column_configs:
+            report_column.format_data(ret)
+
+        return ret
+
+    @memoized
+    def _get_query_results(self, start, limit):
         hits = self._get_query(start, limit).hits
         ret = []
 
@@ -119,9 +130,6 @@ class ConfigurableReportEsDataSource(ReportDataSource):
             for report_column in self.column_configs:
                 r[report_column.column_id] = row[report_column.field]
             ret.append(r)
-
-        for report_column in self.column_configs:
-            report_column.format_data(ret)
 
         return ret
 
@@ -142,8 +150,31 @@ class ConfigurableReportEsDataSource(ReportDataSource):
         return query.run()
 
     @memoized
-    def _get_aggregated_query(self, start=None, limit=None):
-        # todo support sorting
+    def _get_aggregated_results(self, start, limit):
+        query = self._get_aggregated_query(start, limit)
+        hits = getattr(query.aggregations, self.aggregation_columns[0]).raw
+        hits = hits[self.aggregation_columns[0]]['buckets']
+        ret = []
+
+        for row in hits:
+            r = {}
+            for report_column in self.column_configs:
+                if report_column.type == 'expanded':
+                    # todo aggregation only supports # of docs matching
+                    for sub_col in get_expanded_es_column_config(self.config, report_column, 'en').columns:
+                        # todo move interpretation of data into column config
+                        r[sub_col.ui_alias] = row[sub_col.es_alias]['doc_count']
+                elif report_column.field == self.aggregation_columns[0]:
+                    r[report_column.column_id] = row['key']
+                else:
+                    r[report_column.column_id] = row[report_column.field]['doc_count']
+            ret.append(r)
+
+        return ret
+
+    @memoized
+    def _get_aggregated_query(self, start, limit):
+        # todo support sorting and sizing
         query = HQESQuery(self.table_name).size(0)
         for filter in self.filters:
             query = query.filter(filter)
@@ -166,25 +197,7 @@ class ConfigurableReportEsDataSource(ReportDataSource):
 
         query = query.aggregation(top_agg)
 
-        hits = getattr(query.run().aggregations, self.aggregation_columns[0]).raw
-        hits = hits[self.aggregation_columns[0]]['buckets']
-        ret = []
-
-        for row in hits:
-            r = {}
-            for report_column in self.column_configs:
-                if report_column.type == 'expanded':
-                    # todo aggregation only supports # of docs matching
-                    for sub_col in get_expanded_es_column_config(self.config, report_column, 'en').columns:
-                        # todo move interpretation of data into column config
-                        r[sub_col.ui_alias] = row[sub_col.es_alias]['doc_count']
-                elif report_column.field == self.aggregation_columns[0]:
-                    r[report_column.column_id] = row['key']
-                else:
-                    r[report_column.column_id] = row[report_column.field]['doc_count']
-            ret.append(r)
-
-        return ret
+        return query.run()
 
     @property
     def has_total_row(self):
