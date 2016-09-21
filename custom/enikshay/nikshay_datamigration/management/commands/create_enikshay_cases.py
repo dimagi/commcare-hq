@@ -100,7 +100,7 @@ class EnikshayCaseFactory(object):
                 CommCareCaseSQL.objects.get(case_id=self.person().case_id).reverse_indices
             ]
         ):
-            if outcome.pk == occurrence_case.dynamic_case_properties()['nikshay_id']:
+            if outcome.pk == occurrence_case.dynamic_case_properties().get('nikshay_id'):
                 kwargs['case_id'] = occurrence_case.case_id
                 kwargs['attrs']['create'] = False
                 break
