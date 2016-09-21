@@ -222,8 +222,8 @@ WebFormSession.prototype.handleSuccess = function(resp, callback) {
         self.lastRequestHandled = resp.seq_id;
 
         try {
-            self.displayInstanceXml(resp);
             callback(resp);
+            self.displayInstanceXml(resp);
         } catch (err) {
             console.error(err);
             self.onerror({message: Formplayer.Utils.touchformsError(err)});
