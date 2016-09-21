@@ -65,6 +65,7 @@ function WebFormSession(params) {
     self.formplayerEnabled = params.formplayerEnabled;
     self.debuggerEnabled = params.debuggerEnabled;
     self.post_url = params.post_url;
+    self.displayOptions = params.displayOptions;
 
     if (params.form_uid) {
         self.formSpec = {type: 'form-name', val: params.form_uid};
@@ -434,14 +435,14 @@ WebFormSession.prototype.serverError = function(q, resp) {
 WebFormSession.prototype.initForm = function(args, $form) {
     var self = this;
     this.serverRequest(args, function(resp) {
-        self.renderFormXml(resp, $form);
+        self.renderFormXml(resp, $form, self.displayOptions);
         self.onload(self, resp);
     });
 };
 
-WebFormSession.prototype.renderFormXml = function (resp, $form) {
+WebFormSession.prototype.renderFormXml = function (resp, $form, displayOptions) {
     var self = this;
     self.session_id = self.session_id || resp.session_id;
-    self.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $form);
+    self.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $form, displayOptions);
     self.displayInstanceXml(resp);
 };

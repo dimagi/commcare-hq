@@ -125,6 +125,7 @@ FormplayerFrontend.on('startForm', function (data) {
     data.domain = user.domain;
     data.username = user.username;
     data.formplayerEnabled = true;
+    data.displayOptions = user.displayOptions;
     data.onerror = function (resp) {
         showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
     };
@@ -169,6 +170,11 @@ FormplayerFrontend.on("start", function (options) {
     user.formplayer_url = options.formplayer_url;
     user.debuggerEnabled = options.debuggerEnabled;
     user.phoneMode = options.phoneMode;
+    user.displayOptions = {
+        phoneMode: options.phoneMode,
+        oneQuestionPerScreen: options.oneQuestionPerScreen,
+    };
+    
     FormplayerFrontend.request('gridPolyfillPath', options.gridPolyfillPath);
     if (Backbone.history) {
         Backbone.history.start();

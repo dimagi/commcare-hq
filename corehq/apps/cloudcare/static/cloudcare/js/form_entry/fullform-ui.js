@@ -174,9 +174,11 @@ Container.prototype.fromJS = function(json) {
 /**
  * Represents the entire form. There is only one of these on a page.
  * @param {Object} json - The JSON returned from touchforms to represent a Form
+ * @param {Object} displayOptions - Dict of what display options are available to the Form
  */
-function Form(json) {
+function Form(json, displayOptions) {
     var self = this;
+    self.displayOptions = displayOptions || {};
     json.children = json.tree;
     delete json.tree;
     Container.call(self, json);
@@ -531,9 +533,10 @@ Formplayer.Utils.answersEqual = function(answer1, answer2) {
  * @param {Object} formJSON - The json representation of the form
  * @param {Object} resourceMap - Function for resolving multimedia paths
  * @param {Object} $div - The jquery element that the form will be rendered in.
+ * @param {Object} displayOptions - A dictionary detailing various modes or options formplayer might be in.
  */
-Formplayer.Utils.initialRender = function(formJSON, resourceMap, $div) {
-    var form = new Form(formJSON),
+Formplayer.Utils.initialRender = function(formJSON, resourceMap, $div, displayOptions) {
+    var form = new Form(formJSON, displayOptions),
         $debug = $('#cloudcare-debugger'),
         cloudCareDebugger;
     Formplayer.resourceMap = resourceMap;
