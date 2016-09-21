@@ -100,7 +100,7 @@ class EnikshayCaseFactory(object):
                 CommCareCaseSQL.objects.get(case_id=self.person().case_id).reverse_indices
             ]
         ):
-            if outcome.pk == occurrence_case.case_json['nikshay_id']:
+            if outcome.pk == occurrence_case.dynamic_case_properties()['nikshay_id']:
                 kwargs['case_id'] = occurrence_case.case_id
                 kwargs['attrs']['create'] = False
                 break
@@ -132,7 +132,7 @@ class EnikshayCaseFactory(object):
                 CommCareCaseSQL.objects.get(case_id=self.occurrence(outcome).case_id).reverse_indices
             ]
         ):
-            if episode_case.case_json.get('migration_created_case'):
+            if episode_case.dynamic_case_properties().get('migration_created_case'):
                 kwargs['case_id'] = episode_case.case_id
                 kwargs['attrs']['create'] = False
                 break
@@ -169,7 +169,7 @@ class EnikshayCaseFactory(object):
                 CommCareCaseSQL.objects.get(case_id=episode_structure.case_id).reverse_indices
             ]
         ):
-            if followup.id == int(test_case.case_json.get('migration_followup_id')):
+            if followup.id == int(test_case.dynamic_case_properties().get('migration_followup_id')):
                 kwargs['case_id'] = test_case.case_id
                 kwargs['attrs']['create'] = False
 
