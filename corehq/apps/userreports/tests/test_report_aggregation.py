@@ -7,6 +7,8 @@ from corehq.apps.userreports.models import DataSourceConfiguration, \
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.test_view import ConfigurableReportTestMixin
+from corehq.apps.userreports.tests.utils import run_with_all_ucr_backends
+from corehq.apps.userreports.util import get_indicator_adapter
 
 
 class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
@@ -64,15 +66,68 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
                 },
             ],
         )
+        # this is a hack to have both sql and es backends created in a class
+        # method. alternative would be to have these created on each test run
+        es_data_source_config = DataSourceConfiguration(
+            backend_id='ES',
+            domain=cls.domain,
+            display_name=cls.domain,
+            referenced_doc_type='CommCareCase',
+            table_id="foo",
+            configured_filter={
+                "type": "boolean_expression",
+                "operator": "eq",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "type"
+                },
+                "property_value": cls.case_type,
+            },
+            configured_indicators=[
+                {
+                    "type": "expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": 'first_name'
+                    },
+                    "column_id": 'indicator_col_id_first_name',
+                    "display_name": 'indicator_display_name_first_name',
+                    "datatype": "string"
+                },
+                {
+                    "type": "expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": 'number'
+                    },
+                    "column_id": 'indicator_col_id_number',
+                    "datatype": "integer"
+                },
+            ],
+        )
         cls.data_source_config.validate()
         cls.data_source_config.save()
+        es_data_source_config.validate()
+        es_data_source_config.save()
         rebuild_indicators(cls.data_source_config._id)
+        rebuild_indicators(es_data_source_config._id)
+        cls.adapter = get_indicator_adapter(cls.data_source_config)
+        cls.adapter.refresh_table()
+        cls.es_adapter = get_indicator_adapter(es_data_source_config)
+        cls.es_adapter.refresh_table()
 
     @classmethod
     def setUpClass(cls):
         super(TestReportAggregation, cls).setUpClass()
         cls._create_data()
         cls._create_data_source()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.adapter.drop_table()
+        cls.es_adapter.drop_table()
+        cls._delete_everything()
+        super(TestReportAggregation, cls).tearDownClass()
 
     def _create_report(self, aggregation_columns, columns):
         report_config = ReportConfiguration(
@@ -234,6 +289,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
+    @run_with_all_ucr_backends
     def test_sort_expression(self):
         report_config = self._create_report(
             aggregation_columns=['indicator_col_id_first_name'],

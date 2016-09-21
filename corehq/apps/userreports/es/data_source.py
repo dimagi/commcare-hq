@@ -195,6 +195,13 @@ class ConfigurableReportEsDataSource(ReportDataSource):
         for agg in aggregations:
             top_agg = top_agg.aggregation(agg)
 
+        if self.order_by:
+            # todo sort by more than one column
+            # todo sort by by something other than the first aggregate column
+            col, desc = self.order_by[0]
+            if col == self.aggregation_columns[0]:
+                top_agg = top_agg.order('_count', desc)
+
         query = query.aggregation(top_agg)
 
         return query.run()
