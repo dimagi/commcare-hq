@@ -329,6 +329,9 @@ WebFormSession.prototype.answerQuestion = function(q) {
         },
         function(resp) {
             $.publish('session.reconcile', [resp, q]);
+            if (self.answerCallback !== undefined) {
+                self.answerCallback(self.session_id);
+            }
         });
 };
 
