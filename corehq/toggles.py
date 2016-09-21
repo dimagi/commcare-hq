@@ -552,6 +552,13 @@ API_THROTTLE_WHITELIST = StaticToggle(
     namespaces=[NAMESPACE_USER],
 )
 
+API_BLACKLIST = StaticToggle(
+    'API_BLACKLIST',
+    ("Blacklist API access to a user or domain that spams us"),
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
 
 def _commtrackify(domain_name, toggle_is_enabled):
     from corehq.apps.domain.models import Domain
