@@ -216,6 +216,12 @@ class ConfigurableReportEsDataSource(ReportDataSource):
 
     @method_decorator(catch_and_raise_exceptions)
     def get_total_records(self):
+        if self.uses_aggregations:
+            # this can probably be done better with cardinality aggregation
+            query = self._get_aggregated_query(0, 0)
+            hits = getattr(query.aggregations, self.aggregation_columns[0]).raw
+            return len(hits[self.aggregation_columns[0]]['buckets'])
+
         return self._get_query().total
 
     @property
