@@ -4,6 +4,7 @@ import functools
 import json
 import os
 import tempfile
+import uuid
 
 from django.conf import settings
 from django.contrib import messages
@@ -27,7 +28,6 @@ from corehq.apps.analytics.tasks import update_hubspot_properties
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.util import reverse
@@ -54,8 +54,9 @@ from corehq.apps.style.decorators import (
     use_daterangepicker,
     use_datatables,
     use_jquery_ui,
-    use_angular_js)
-from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
+    use_angular_js,
+)
+from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source, _clean_table_name
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
     BadSpecError,
@@ -72,15 +73,14 @@ from corehq.apps.userreports.models import (
     get_report_config,
     report_config_id_is_static,
     id_is_static,
+    DataSourceMeta,
+    DataSourceBuildInformation,
 )
 from corehq.apps.userreports.reports.builder.forms import (
-    ConfigurePieChartReportForm,
-    ConfigureTableReportForm,
     DataSourceForm,
-    ConfigureBarChartReportForm,
-    ConfigureListReportForm,
-    ConfigureWorkerReportForm,
-    ConfigureMapReportForm)
+    ConfigureMapReportForm,
+    DataSourceBuilder,
+)
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceQueryContext
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
@@ -101,6 +101,9 @@ from corehq.apps.userreports.util import (
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.couch import get_document_or_404
+
+
+SAMPLE_DATA_MAX_ROWS = 100
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -253,7 +256,7 @@ class ReportBuilderView(BaseDomainView):
 
     @property
     def section_url(self):
-        return reverse(ReportBuilderTypeSelect.urlname, args=[self.domain])
+        return reverse(ReportBuilderDataSourceSelect.urlname, args=[self.domain])
 
 
 @quickcache(["domain"], timeout=0, memoize_timeout=4)
@@ -463,10 +466,7 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
 class ReportBuilderDataSourceSelect(ReportBuilderView):
     template_name = 'userreports/reportbuilder/data_source_select.html'
     page_title = ugettext_lazy('Create Report')
-
-    @property
-    def report_type(self):
-        return self.kwargs['report_type']
+    urlname = 'report_builder_select_source'
 
     @property
     def page_context(self):
@@ -483,27 +483,43 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
     def form(self):
         max_allowed_reports = allowed_report_builder_reports(self.request)
         if self.request.method == 'POST':
-            return DataSourceForm(self.domain, self.report_type, max_allowed_reports, self.request.POST)
-        return DataSourceForm(self.domain, self.report_type, max_allowed_reports)
+            return DataSourceForm(self.domain, max_allowed_reports, self.request.POST)
+        return DataSourceForm(self.domain, max_allowed_reports)
+
+    def _get_config_kwargs(self, app_source):
+        app = Application.get(app_source.application)
+        builder = DataSourceBuilder(self.domain, app, app_source.source_type, app_source.source)
+        return {
+            'display_name': builder.data_source_name,
+            'referenced_doc_type': builder.source_doc_type,
+            'configured_filter': builder.filter,
+            'configured_indicators': builder.indicators(),
+            'base_item_expression': builder.base_item_expression(False),
+            'meta': DataSourceMeta(
+                build=DataSourceBuildInformation(
+                    source_id=app_source.source,
+                    app_id=app._id,
+                    app_version=app.version,
+                )
+            )
+        }
+
+    def _build_data_source(self, app_source, username):
+        data_source_config = DataSourceConfiguration(
+            domain=self.domain,
+            table_id=_clean_table_name(self.domain, uuid.uuid4().hex),
+            **self._get_config_kwargs(app_source)
+        )
+        data_source_config.validate()
+        data_source_config.save()
+        rebuild_indicators(data_source_config._id, username, count=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
+        return data_source_config._id
 
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
             app_source = self.form.get_selected_source()
-            url_names_map = {
-                'list': 'configure_list_report',
-                'chart': 'configure_chart_report',
-                'table': 'configure_table_report',
-                'worker': 'configure_worker_report',
-                'map': 'configure_map_report',
-            }
-            url_name = url_names_map[self.report_type]
-            get_params = {
-                'report_name': self.form.cleaned_data['report_name'],
-                'chart_type': self.form.cleaned_data['chart_type'],
-                'application': app_source.application,
-                'source_type': app_source.source_type,
-                'source': app_source.source,
-            }
+            self._build_data_source(app_source, request.user.username)
+            # TODO: Add filter {"constant", "false"}
             track_workflow(
                 request.user.email,
                 "Successfully submitted the first part of the Report Builder "
@@ -516,8 +532,14 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 app_source.source_type,
             ])
 
+            get_params = {
+                'report_name': self.form.cleaned_data['report_name'],
+                'application': app_source.application,
+                'source_type': app_source.source_type,
+                'source': app_source.source,
+            }
             return HttpResponseRedirect(
-                reverse(url_name, args=[self.domain], params=get_params)
+                reverse(ConfigureReport.urlname, args=[self.domain], params=get_params)
             )
         else:
             return self.get(request, *args, **kwargs)
@@ -529,32 +551,25 @@ class EditReportInBuilder(View):
         report_id = kwargs['report_id']
         report = get_document_or_404(ReportConfiguration, request.domain, report_id)
         if report.report_meta.created_by_builder:
-            view_class = {
-                'chart': ConfigureChartReport,
-                'list': ConfigureListReport,
-                'worker': ConfigureWorkerReport,
-                'table': ConfigureTableReport,
-                'map': ConfigureMapReport,
-            }[report.report_meta.builder_report_type]
             try:
-                return view_class.as_view(existing_report=report)(request, *args, **kwargs)
+                return ConfigureReport.as_view(existing_report=report)(request, *args, **kwargs)
             except BadBuilderConfigError as e:
                 messages.error(request, e.message)
                 return HttpResponseRedirect(reverse(ConfigurableReport.slug, args=[request.domain, report_id]))
         raise Http404("Report was not created by the report builder")
 
 
-class ConfigureChartReport(ReportBuilderView):
+class ConfigureReport(ReportBuilderView):
+    urlname = 'configure_report'
     page_title = ugettext_lazy("Configure Report")
     template_name = "userreports/reportbuilder/configure_report.html"
     url_args = ['report_name', 'application', 'source_type', 'source']
     report_title = ugettext_lazy("Chart Report: {}")
-    report_type = 'chart'
     existing_report = None
 
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
-        return super(ConfigureChartReport, self).dispatch(request, *args, **kwargs)
+        return super(ConfigureReport, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_name(self):
@@ -563,36 +578,22 @@ class ConfigureChartReport(ReportBuilderView):
             title = self.existing_report.title
         return _(self.report_title).format(title)
 
+    def get_data_source_properties(self):
+        builder = DataSourceBuilder(
+            self.domain,
+            Application.get(self.request.GET['application']),
+            self.request.GET['source_type'],
+            self.request.GET['source']
+        )
+        return builder.data_source_properties  # TODO: Massage for Knockout when we do front-end
+
     @property
     def page_context(self):
-        try:
-            report_form = self.report_form
-        except Exception as e:
-            self.template_name = 'userreports/report_error.html'
-            error_response = {
-                'report_id': self.existing_report.get_id,
-                'is_static': self.existing_report.is_static,
-                'error_message': '',
-                'details': unicode(e)
-            }
-            return self._handle_exception(error_response, e)
-
         return {
             'report': {
                 "title": self.page_name
             },
-            'report_type': self.report_type,
-            'form': report_form,
-            'editing_existing_report': bool(self.existing_report),
-            'report_column_options': [p.to_dict() for p in report_form.report_column_options.values()],
-            'data_source_indicators': [p._asdict() for p in report_form.data_source_properties.values()],
-            # For now only use date ranges that don't require additional parameters
-            'date_range_options': [r._asdict() for r in get_simple_dateranges()],
-            'initial_user_filters': [f._asdict() for f in report_form.initial_user_filters],
-            'initial_default_filters': [f._asdict() for f in report_form.initial_default_filters],
-            'initial_columns': [
-                c._asdict() for c in getattr(report_form, 'initial_columns', [])
-            ],
+            'data_source_properties': self.get_data_source_properties(),
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, [])
         }
 
@@ -623,78 +624,10 @@ class ConfigureChartReport(ReportBuilderView):
         else:
             raise
 
-    @property
-    @memoized
-    def configuration_form_class(self):
-        if self.existing_report:
-            type_ = self.existing_report.configured_charts[0]['type']
-        else:
-            type_ = self.request.GET.get('chart_type')
-        return {
-            'multibar': ConfigureBarChartReportForm,
-            'bar': ConfigureBarChartReportForm,
-            'pie': ConfigurePieChartReportForm,
-        }[type_]
-
-    @property
-    @memoized
-    def report_form(self):
-        args = [self.request.GET.get(f, '') for f in self.url_args] + [self.existing_report]
-        if self.request.method == 'POST':
-            args.append(self.request.POST)
-        return self.configuration_form_class(*args)
-
-    def _get_sum_avg_columns(self, columns):
-        """
-        Return a list of columns that have either sum or average aggregation types.
-        Items in the list are tuples of (column['field'], column['aggregation']).
-        """
-        return [
-            (col.get('field', None), col['aggregation'])
-            for col in columns
-            if col.get('aggregation', None) in ("sum", "average")
-        ]
-
-    def _track_invalid_form_events(self):
-        group_by_errors = self.report_form.errors.as_data().get('group_by', [])
-        if "required" in [e.code for e in group_by_errors]:
-            add_event(self.request, [
-                "Report Builder",
-                "Click on Done (No Group By Chosen)",
-                self.report_type,
-            ])
-
-    def _track_valid_form_events(self, existing_sum_avg_cols, report_configuration):
-        if self.report_type != "chart":
-            sum_avg_cols = self._get_sum_avg_columns(
-                report_configuration.columns)
-            # A column is "new" if there are no columns with the (property, agg) combo in the previous report
-            if not set(sum_avg_cols).issubset(set(existing_sum_avg_cols)):
-                add_event(self.request, [
-                    "Report Builder",
-                    "Changed Column Format to Sum or Average",
-                    self.report_type,
-                ])
-
-    def _track_new_report_events(self):
-        track_workflow(
-            self.request.user.email,
-            "Successfully created a new report in the Report Builder"
-        )
-        add_event(self.request, [
-            "Report Builder",
-            "Click On Done On New Report (Successfully)",
-            self.report_type,
-        ])
-
     def post(self, *args, **kwargs):
         if self.report_form.is_valid():
-            existing_sum_avg_cols = []
             if self.report_form.existing_report:
                 try:
-                    existing_sum_avg_cols = self._get_sum_avg_columns(
-                        self.report_form.existing_report.columns
-                    )
                     report_configuration = self.report_form.update_report()
                 except ValidationError as e:
                     messages.error(self.request, e.message)
@@ -714,15 +647,9 @@ class ConfigureChartReport(ReportBuilderView):
                         'default_filters': getattr(self.report_form, 'default_filters', 'Not set'),
                     })
                     return self.get(*args, **kwargs)
-                self._track_new_report_events()
-
-            self._track_valid_form_events(existing_sum_avg_cols, report_configuration)
             return HttpResponseRedirect(
                 reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id])
             )
-        else:
-            self._track_invalid_form_events()
-
         return self.get(*args, **kwargs)
 
     def _confirm_report_limit(self):
@@ -738,37 +665,8 @@ class ConfigureChartReport(ReportBuilderView):
             raise Http404()
 
 
-class ConfigureListReport(ConfigureChartReport):
-    report_title = ugettext_lazy("List Report: {}")
-    report_type = 'list'
-
-    @property
-    @memoized
-    def configuration_form_class(self):
-        return ConfigureListReportForm
-
-
-class ConfigureTableReport(ConfigureChartReport):
-    report_title = ugettext_lazy("Table Report: {}")
-    report_type = 'table'
-
-    @property
-    @memoized
-    def configuration_form_class(self):
-        return ConfigureTableReportForm
-
-
-class ConfigureWorkerReport(ConfigureChartReport):
-    report_title = ugettext_lazy("Worker Report: {}")
-    report_type = 'worker'
-
-    @property
-    @memoized
-    def configuration_form_class(self):
-        return ConfigureWorkerReportForm
-
-
-class ConfigureMapReport(ConfigureChartReport):
+class ConfigureMapReport(ConfigureReport):
+    urlname = 'configure_map_report'
     report_title = ugettext_lazy("Map Report: {}")
     report_type = 'map'
 

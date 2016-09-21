@@ -12,8 +12,12 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 
-from corehq.apps.userreports.reports.builder.columns import \
-    QuestionColumnOption, ColumnOption, CountColumn, MultiselectQuestionColumnOption
+from corehq.apps.userreports.reports.builder.columns import (
+    QuestionColumnOption,
+    ColumnOption,
+    CountColumn,
+    MultiselectQuestionColumnOption,
+)
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
@@ -46,7 +50,9 @@ from corehq.apps.userreports.reports.builder import (
     make_form_question_indicator,
     make_owner_name_indicator,
     get_filter_format_from_question_type,
-    make_user_name_indicator, make_multiselect_question_indicator)
+    make_user_name_indicator,
+    make_multiselect_question_indicator,
+)
 from corehq.apps.userreports.exceptions import BadBuilderConfigError
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
@@ -467,19 +473,13 @@ def _legend(title, subtext):
 
 class DataSourceForm(forms.Form):
     report_name = forms.CharField()
-    chart_type = forms.ChoiceField(
-        choices=[
-            ('bar', _('Bar')),
-            ('pie', _("Pie")),
-        ],
-    )
 
-    def __init__(self, domain, report_type, max_allowed_reports, *args, **kwargs):
+    def __init__(self, domain, max_allowed_reports, *args, **kwargs):
         super(DataSourceForm, self).__init__(*args, **kwargs)
         self.domain = domain
-        self.report_type = report_type
         self.max_allowed_reports = max_allowed_reports
 
+        # TODO: Map reports.
         self.app_source_helper = ApplicationDataSourceUIHelper()
         self.app_source_helper.source_type_field.label = _('Forms or Cases')
         self.app_source_helper.source_type_field.choices = [("case", _("Cases")), ("form", _("Forms"))]
@@ -487,13 +487,14 @@ class DataSourceForm(forms.Form):
         self.app_source_helper.bootstrap(self.domain)
         report_source_fields = self.app_source_helper.get_fields()
         report_source_help_texts = {
-            "source_type": _("<strong>Form</strong>: display data from form submissions.<br/><strong>Case</strong>: display data from your cases. You must be using case management for this option."),
+            "source_type": _(
+                "<strong>Form</strong>: Display data from form submissions.<br/>"
+                "<strong>Case</strong>: Display data from your cases. You must be using case management for this "
+                "option."),
             "application": _("Which application should the data come from?"),
             "source": _("Choose the case type or form from which to retrieve data for this report."),
         }
         self.fields.update(report_source_fields)
-
-        self.fields['chart_type'].required = self.report_type == "chart"
 
         self.helper = FormHelper()
         self.helper.form_class = "form form-horizontal"
@@ -501,9 +502,6 @@ class DataSourceForm(forms.Form):
         self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
-        chart_type_crispy_field = None
-        if self.report_type == 'chart':
-            chart_type_crispy_field = FieldWithHelpBubble('chart_type', help_bubble_text=_("<strong>Bar</strong> shows one vertical bar for each value in your case or form. <strong>Pie</strong> shows what percentage of the total each value is."))
         report_source_crispy_fields = []
         for k in report_source_fields.keys():
             if k in report_source_help_texts:
@@ -513,18 +511,16 @@ class DataSourceForm(forms.Form):
             else:
                 report_source_crispy_fields.append(k)
 
-        top_fields = [
-            FieldWithHelpBubble(
-                'report_name',
-                help_bubble_text=_('Web users will see this name in the "Reports" section of CommCareHQ and can click to view the report'))
-        ]
-        if chart_type_crispy_field:
-            top_fields.append(chart_type_crispy_field)
-
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                _('{} Report'.format(self.report_type.capitalize())),
-                *top_fields
+                _('Report'),
+                FieldWithHelpBubble(
+                    'report_name',
+                    help_bubble_text=_(
+                        'Web users will see this name in the "Reports" section of CommCareHQ and can click to '
+                        'view the report'
+                    )
+                )
             ),
             crispy.Fieldset(
                 _('Data'), *report_source_crispy_fields
@@ -558,7 +554,7 @@ class DataSourceForm(forms.Form):
             raise forms.ValidationError(_(
                 "Too many reports!\n"
                 "Creating this report would cause you to go over the maximum "
-                "number of report builder reports allowed in this domain. Your"
+                "number of report builder reports allowed in this domain. Your "
                 "limit is {number}. "
                 "To continue, delete another report and try again. "
             ).format(number=self.max_allowed_reports))
