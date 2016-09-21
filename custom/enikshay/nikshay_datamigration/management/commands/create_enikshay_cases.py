@@ -152,7 +152,7 @@ class EnikshayCaseFactory(object):
                 'case_type': 'test',
                 'update': {
                     'date_tested': followup.TestDate,
-                    'followup_id': followup.id,
+                    'migration_followup_id': followup.id,
                     'migration_created_case': True,
                 },
             },
@@ -170,7 +170,7 @@ class EnikshayCaseFactory(object):
                 CommCareCaseSQL.objects.get(case_id=episode_structure.case_id).reverse_indices
             ]
         ):
-            if followup.id == int(test_case.case_json.get('followup_id')):
+            if followup.id == int(test_case.case_json.get('migration_followup_id')):
                 kwargs['case_id'] = test_case.case_id
                 kwargs['attrs']['create'] = False
 
