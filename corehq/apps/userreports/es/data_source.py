@@ -4,7 +4,7 @@ from django.utils.decorators import method_decorator
 
 from dimagi.utils.decorators.memoized import memoized
 
-from corehq.apps.es.aggregations import TermsAggregation
+from corehq.apps.es.aggregations import SumAggregation, TermsAggregation
 from corehq.apps.es.es_query import HQESQuery
 
 from corehq.apps.reports.api import ReportDataSource
@@ -166,6 +166,8 @@ class ConfigurableReportEsDataSource(ReportDataSource):
                         r[sub_col.ui_alias] = row[sub_col.es_alias]['doc_count']
                 elif report_column.field == self.aggregation_columns[0]:
                     r[report_column.column_id] = row['key']
+                elif report_column.aggregation == 'sum':
+                    r[report_column.column_id] = int(row[report_column.field]['value'])
                 else:
                     r[report_column.column_id] = row[report_column.field]['doc_count']
             ret.append(r)
@@ -186,11 +188,13 @@ class ConfigurableReportEsDataSource(ReportDataSource):
 
         aggregations = []
         for col in self.column_configs:
-            if col.type != 'expanded':
-                continue
-
-            for sub_col in get_expanded_es_column_config(self.config, col, 'en').columns:
-                aggregations.append(sub_col.aggregation)
+            if col.type == 'expanded':
+                for sub_col in get_expanded_es_column_config(self.config, col, 'en').columns:
+                    aggregations.append(sub_col.aggregation)
+            elif col.type == 'field':
+                if col.aggregation == 'sum':
+                    # todo push this to the column
+                    aggregations.append(SumAggregation(col.field, col.field))
 
         for agg in aggregations:
             top_agg = top_agg.aggregation(agg)
@@ -199,7 +203,7 @@ class ConfigurableReportEsDataSource(ReportDataSource):
             # todo sort by more than one column
             # todo sort by by something other than the first aggregate column
             col, desc = self.order_by[0]
-            if col == self.aggregation_columns[0]:
+            if col == self.aggregation_columns[0] or col == self.column_configs[0].field:
                 top_agg = top_agg.order('_count', desc)
 
         query = query.aggregation(top_agg)

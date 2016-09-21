@@ -147,6 +147,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
         view._report_config_id = report_config._id
         return view
 
+    @run_with_all_ucr_backends
     def test_aggregation_by_column_not_in_report(self):
         """
         Confirm that aggregation works when the aggregated by column does
@@ -176,6 +177,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
+    @run_with_all_ucr_backends
     def test_aggregation_by_column_in_report(self):
         """
         Confirm that aggregation works when the aggregated by column appears in
@@ -250,6 +252,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
+    @run_with_all_ucr_backends
     def test_aggregation_by_column_with_new_id(self):
         """
         Confirm that aggregation works when the aggregated by column appears in
