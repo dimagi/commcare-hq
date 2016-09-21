@@ -104,6 +104,15 @@
                 if (value !== valueNoSpaces) {
                     $(this).val(valueNoSpaces);
                 }
+                {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+                    if (!valueNoSpaces) {
+                        $(this).closest('.form-group').addClass('has-error');
+                        showCaseTypeError(
+                            gettext("Case type is required.")
+                        );
+                        return;
+                    }
+                {% endif %}
                 if (!valueNoSpaces.match(/^[\w-]+$/g)) {
                     $(this).closest('.form-group').addClass('has-error');
                     showCaseTypeError(
@@ -114,7 +123,6 @@
                     showCaseTypeError(
                         gettext("'commcare-user' is a reserved case type. Please change the case type")
                     );
-
                 } else {
                     $(this).closest('.form-group').removeClass('has-error');
                     hideCaseTypeError();

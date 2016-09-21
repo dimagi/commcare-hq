@@ -20,7 +20,8 @@
                         ></span>
             </label>
             <div class="col-sm-4">
-                <input class="form-control" value="record" />
+                <input class="code form-control" type="text" id="case_type" name="case_type" value="{{ module.case_type }}" />
+                <span class="help-block" id="case_type_error" style="display: none;"></span>
             </div>
         </div>
         {% endif %}
