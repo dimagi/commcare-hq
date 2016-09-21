@@ -69,6 +69,7 @@ class EnikshayCaseFactory(object):
                     'sex': self.patient_detail.sex,
                     'current_address': self.patient_detail.paddress,
                     'mobile_number': self.patient_detail.pmob,
+                    'migration_created_case': True,
                 },
             },
         )
@@ -82,6 +83,7 @@ class EnikshayCaseFactory(object):
                 'update': {
                     'nikshay_id': outcome.PatientId.PregId,
                     'hiv_status': outcome.HIVStatus,
+                    'migration_created_case': True,
                 },
             },
             'indices': [CaseIndex(
@@ -113,6 +115,7 @@ class EnikshayCaseFactory(object):
                 'case_type': 'episode',
                 'update': {
                     'treatment_supporter_mobile_number': outcome.PatientId.cmob,
+                    'migration_created_case': True,
                     'pk': outcome.pk,
                 },
             },
@@ -150,6 +153,7 @@ class EnikshayCaseFactory(object):
                 'update': {
                     'date_tested': followup.TestDate,
                     'followup_id': followup.id,
+                    'migration_created_case': True,
                 },
             },
             'indices': [CaseIndex(
