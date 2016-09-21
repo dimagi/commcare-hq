@@ -267,7 +267,3 @@ class AutomaticUpdateAction(models.Model):
 
     class Meta:
         app_label = "data_interfaces"
-
-
-# import signals
-from corehq.apps.data_interfaces import signals
