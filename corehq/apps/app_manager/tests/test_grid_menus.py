@@ -1,7 +1,7 @@
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from mock import patch
+from corehq.util.test_utils import flag_enabled
 
 
 def mock_toggle(slug, enable_users=None):
@@ -10,13 +10,8 @@ def mock_toggle(slug, enable_users=None):
     return Toggle(slug=slug, enabled_users=enable_users)
 
 
+@flag_enabled('GRID_MENUS')
 class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
-    def setUp(self):
-        self.patcher = patch('toggle.models.Toggle.get',
-                             return_value=mock_toggle('grid_menus', enable_users=['domain:test-grid-menu']))
-        self.patcher.start()
-        self.addCleanup(self.patcher.stop)
-
     def test_that_grid_style_is_added(self):
         """
         Confirms that style="grid" is added to the root menu
