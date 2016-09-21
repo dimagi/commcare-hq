@@ -4,12 +4,6 @@ from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.util.test_utils import flag_enabled
 
 
-def mock_toggle(slug, enable_users=None):
-    from toggle.models import Toggle
-    enable_users = enable_users or []
-    return Toggle(slug=slug, enabled_users=enable_users)
-
-
 @flag_enabled('GRID_MENUS')
 class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
     def test_that_grid_style_is_added(self):
