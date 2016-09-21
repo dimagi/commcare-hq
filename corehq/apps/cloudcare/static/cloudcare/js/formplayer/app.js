@@ -149,7 +149,6 @@ FormplayerFrontend.on('startForm', function (data) {
             showError(resp.output, $("#cloudcare-notifications"));
         }
     };
-    data.formplayerEnabled = true;
     data.debuggerEnabled = user.debuggerEnabled;
     data.resourceMap = function(resource_path) {
         var urlObject = Util.currentUrlToObject();
