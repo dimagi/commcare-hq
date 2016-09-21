@@ -153,7 +153,7 @@ class ConfigurableReportEsDataSource(ReportDataSource):
     def _get_aggregated_results(self, start, limit):
         query = self._get_aggregated_query(start, limit)
         hits = getattr(query.aggregations, self.aggregation_columns[0]).raw
-        hits = hits[self.aggregation_columns[0]]['buckets']
+        hits = hits[self.aggregation_columns[0]]['buckets'][start:]
         ret = []
 
         for row in hits:
@@ -176,12 +176,12 @@ class ConfigurableReportEsDataSource(ReportDataSource):
 
     @memoized
     def _get_aggregated_query(self, start, limit):
-        # todo support sorting and sizing
+        max_size = (start or 0) + (limit or 0)
         query = HQESQuery(self.table_name).size(0)
         for filter in self.filters:
             query = query.filter(filter)
 
-        top_agg = TermsAggregation(self.aggregation_columns[0], self.aggregation_columns[0])
+        top_agg = TermsAggregation(self.aggregation_columns[0], self.aggregation_columns[0], size=max_size)
         for agg_column in self.aggregation_columns[1:]:
             # todo support multiple aggregations
             pass
