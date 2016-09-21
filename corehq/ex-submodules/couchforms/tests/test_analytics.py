@@ -136,6 +136,7 @@ class CouchformsESAnalyticsTest(TestCase):
                     form = get_form_ready_to_save(metadata, is_db_test=True)
                     form_processor = FormProcessorInterface(domain=cls.domain)
                     form_processor.save_processed_models([form])
+            return form
 
         from casexml.apps.case.tests.util import delete_all_xforms
         delete_all_xforms()
@@ -202,16 +203,3 @@ class CouchformsESAnalyticsTest(TestCase):
         self.assertEqual(
             get_all_xmlns_app_id_pairs_submitted_to_in_domain(self.domain),
             {(self.xmlns, self.app_id)})
-
-    @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
-    @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
-    @patch('corehq.elastic.ES_META', TEST_ES_META)
-    def _create_form_and_sync_to_es(self):
-        with process_kafka_changes('XFormToElasticsearchPillow'):
-            with process_couch_changes('DefaultChangeFeedPillow'):
-                metadata = TestFormMetadata(domain=self.domain, app_id=self.app_id, xmlns=self.xmlns)
-                form = get_form_ready_to_save(metadata, is_db_test=True)
-                form_processor = FormProcessorInterface(domain=self.domain)
-                form_processor.save_processed_models([form])
-        self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
-        return form, metadata
