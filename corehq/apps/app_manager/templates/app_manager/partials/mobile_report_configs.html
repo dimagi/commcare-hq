@@ -16,12 +16,6 @@
     <div class="tab-pane active" id="settings">
         <div class="form-horizontal">
             <fieldset>
-                <div class="form-group" id="module-name">
-                    <label class="control-label col-sm-2">{% trans "Module Name" %}</label>
-                    <div class="col-sm-4">
-                        <input type="text" class="form-control" data-bind="value: currentModuleName">
-                    </div>
-                </div>
                 {% include "app_manager/partials/module_filter.html" with ko_value="currentModuleFilter" %}
                 {% include 'app_manager/partials/nav_menu_media.html' with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
             </fieldset>
