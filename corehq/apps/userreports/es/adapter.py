@@ -100,6 +100,11 @@ class ESAlchemy(object):
     def count(self):
         return self.es.count()
 
+    def distinct_values(self, column, size):
+        query = self.es.terms_aggregation(column, column, size=size).size(0)
+        results = query.run()
+        return getattr(results.aggregations, column).keys
+
 
 class IndicatorESAdapter(IndicatorAdapter):
 
