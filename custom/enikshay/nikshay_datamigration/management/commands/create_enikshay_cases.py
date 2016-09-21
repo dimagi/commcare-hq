@@ -4,6 +4,7 @@ from django.db import transaction
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.locations.models import SQLLocation
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
 
 from custom.enikshay.nikshay_datamigration.models import PatientDetail, Outcome, Followup
@@ -19,6 +20,7 @@ class EnikshayCaseFactory(object):
         self.domain = domain
         self.patient_detail = patient_detail
         self.factory = CaseFactory(domain=domain)
+        self.case_accessor = CaseAccessors(domain)
 
     @transaction.atomic
     def create_cases(self):
@@ -94,12 +96,10 @@ class EnikshayCaseFactory(object):
             )],
         }
 
-        for occurrence_case in CommCareCaseSQL.objects.filter(
-            case_id__in=[
-                index.case_id for index in
-                CommCareCaseSQL.objects.get(case_id=self.person().case_id).reverse_indices
-            ]
-        ):
+        for occurrence_case in self.case_accessor.get_cases([
+            index.case_id for index in
+            self.case_accessor.get_case(self.person().case_id).reverse_indices
+        ]):
             if outcome.pk == occurrence_case.dynamic_case_properties().get('nikshay_id'):
                 kwargs['case_id'] = occurrence_case.case_id
                 kwargs['attrs']['create'] = False
@@ -126,12 +126,10 @@ class EnikshayCaseFactory(object):
             )],
         }
 
-        for episode_case in CommCareCaseSQL.objects.filter(
-            case_id__in=[
-                index.case_id for index in
-                CommCareCaseSQL.objects.get(case_id=self.occurrence(outcome).case_id).reverse_indices
-            ]
-        ):
+        for episode_case in self.case_accessor.get_cases([
+            index.case_id for index in
+            self.case_accessor.get_case(self.occurrence(outcome).case_id).reverse_indices
+        ]):
             if episode_case.dynamic_case_properties().get('migration_created_case'):
                 kwargs['case_id'] = episode_case.case_id
                 kwargs['attrs']['create'] = False
@@ -163,12 +161,10 @@ class EnikshayCaseFactory(object):
             )],
         }
 
-        for test_case in CommCareCaseSQL.objects.filter(
-            case_id__in=[
-                index.case_id for index in
-                CommCareCaseSQL.objects.get(case_id=episode_structure.case_id).reverse_indices
-            ]
-        ):
+        for test_case in self.case_accessor.get_cases([
+            index.case_id for index in
+            self.case_accessor.get_case(episode_structure.case_id).reverse_indices
+        ]):
             if followup.id == int(test_case.dynamic_case_properties().get('migration_followup_id')):
                 kwargs['case_id'] = test_case.case_id
                 kwargs['attrs']['create'] = False
