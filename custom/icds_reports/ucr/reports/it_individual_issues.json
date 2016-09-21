@@ -9,7 +9,7 @@
   "config": {
     "title": "Issue Tracker - Individual Issues",
     "description": "",
-    "visible": false,
+    "visible": true,
     "aggregation_columns": [
       "doc_id"
     ],
