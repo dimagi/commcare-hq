@@ -10,7 +10,7 @@ from corehq.apps.data_interfaces.signals import case_changed_receiver
 
 
 class DataInterfacesAppConfig(AppConfig):
-    name = 'data_interfaces'
+    name = 'corehq.apps.data_interfaces'
 
     def ready(self):
         case_post_save.connect(case_changed_receiver, CommCareCase)
