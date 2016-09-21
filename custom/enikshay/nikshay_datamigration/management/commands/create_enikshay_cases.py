@@ -116,7 +116,6 @@ class EnikshayCaseFactory(object):
                 'update': {
                     'treatment_supporter_mobile_number': outcome.PatientId.cmob,
                     'migration_created_case': True,
-                    'pk': outcome.pk,
                 },
             },
             'indices': [CaseIndex(
@@ -133,7 +132,7 @@ class EnikshayCaseFactory(object):
                 CommCareCaseSQL.objects.get(case_id=self.occurrence(outcome).case_id).reverse_indices
             ]
         ):
-            if outcome.pk == episode_case.case_json.get('pk'):
+            if episode_case.case_json.get('migration_created_case'):
                 kwargs['case_id'] = episode_case.case_id
                 kwargs['attrs']['create'] = False
                 break
