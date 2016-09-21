@@ -349,6 +349,10 @@ function DateTimeEntryBase(question, options) {
 
                 $dt.find('.xdsoft_label i').addClass('fa fa-caret-down');
 
+                if (phoneMode && !self.datepicker && self.timepicker) {
+                    $dt.find('.xdsoft_time_box').addClass('time-box-full');
+                }
+
                 if (phoneMode && self.timepicker && self.datepicker) {
                     $dt.find('.xdsoft_save_selected')
                         .show().text(django.gettext('Save'))

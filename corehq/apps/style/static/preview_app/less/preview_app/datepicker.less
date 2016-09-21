@@ -1,12 +1,16 @@
+
+@new-datepicker-width: 228px;
+
 .xdsoft_datetimepicker {
   top: 40px !important;
   left: 0px !important;
   padding-bottom: 15px !important;
+  min-height: 404px !important;
 }
 
 
 .xdsoft_datetimepicker .xdsoft_datepicker {
-  width: 230px !important;
+  width: @new-datepicker-width !important;
   margin-left: 10px !important;
   margin-right: 2px !important;
 }
@@ -18,11 +22,13 @@
 }
 
 .xdsoft_datetimepicker .xdsoft_timepicker {
-  width: 230px !important;
+  width: @new-datepicker-width !important;
+  margin-left: 10px !important;
+  margin-right: 10px !important;
 }
 .xdsoft_datetimepicker .xdsoft_timepicker .xdsoft_prev,
 .xdsoft_datetimepicker .xdsoft_timepicker .xdsoft_next {
-  width: 230px !important;
+  width: @new-datepicker-width !important;
   text-align: center;
   margin-left: 0 !important;
 }
@@ -31,9 +37,13 @@
   height: 80px !important;
 }
 
+.xdsoft_timepicker .xdsoft_time_box.time-box-full {
+  height: 335px !important;
+}
+
 .xdsoft_datetimepicker .xdsoft_save_selected {
   margin-left: 8px !important;
-  width: 230px !important;
+  width: @new-datepicker-width !important;
   box-sizing: border-box;
 }
 
