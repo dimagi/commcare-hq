@@ -5,7 +5,6 @@ from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import CommCareCaseSQL
 
 from custom.enikshay.nikshay_datamigration.models import PatientDetail, Outcome, Followup
 from dimagi.utils.decorators.memoized import memoized
