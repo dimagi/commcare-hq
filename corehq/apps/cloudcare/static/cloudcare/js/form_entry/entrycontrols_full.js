@@ -349,7 +349,7 @@ function DateTimeEntryBase(question, options) {
 
                 $dt.find('.xdsoft_label i').addClass('fa fa-caret-down');
 
-                if (phoneMode) {
+                if (phoneMode && self.timepicker && self.datepicker) {
                     $dt.find('.xdsoft_save_selected')
                         .show().text(django.gettext('Save'))
                         .addClass('btn btn-primary')
