@@ -300,17 +300,18 @@ function DateTimeEntryBase(question, options) {
     var self = this,
         thisYear = new Date().getFullYear(),
         minDate,
-        maxDate;
+        maxDate,
+        displayOpts = _getDisplayOptions(question);
 
     EntrySingleAnswer.call(self, question, options);
     // Set max date to 10 years in the future
     maxDate = moment(thisYear + 10, 'YYYY').toDate();
     // Set min date to 100 years in the past
     minDate = moment(thisYear - 100, 'YYYY').toDate();
-    var phoneMode = FormplayerFrontend.request('currentUser').phoneMode;
+
     self.afterRender = function() {
         self.$picker = $('#' + self.entryId);
-        var options = {
+        var datepickerOpts = {
             timepicker: self.timepicker,
             datepicker: self.datepicker,
             format: self.clientFormat,
@@ -327,7 +328,7 @@ function DateTimeEntryBase(question, options) {
                 }
                 self.answer(moment(newDate).format(self.serverFormat));
             },
-            onGenerate: function (ct) {
+            onGenerate: function () {
                 var $dt = $(this);
                 if ($dt.find('.xdsoft_mounthpicker .xdsoft_prev .fa').length < 1) {
                     $dt.find('.xdsoft_mounthpicker .xdsoft_prev').append($('<i class="fa fa-chevron-left" />'));
@@ -349,11 +350,11 @@ function DateTimeEntryBase(question, options) {
 
                 $dt.find('.xdsoft_label i').addClass('fa fa-caret-down');
 
-                if (phoneMode && !self.datepicker && self.timepicker) {
+                if (displayOpts.phoneMode && !self.datepicker && self.timepicker) {
                     $dt.find('.xdsoft_time_box').addClass('time-box-full');
                 }
 
-                if (phoneMode && self.timepicker && self.datepicker) {
+                if (displayOpts.phoneMode && self.timepicker && self.datepicker) {
                     $dt.find('.xdsoft_save_selected')
                         .show().text(django.gettext('Save'))
                         .addClass('btn btn-primary')
@@ -362,7 +363,7 @@ function DateTimeEntryBase(question, options) {
                 }
             },
         };
-        self.$picker.datetimepicker(options)
+        self.$picker.datetimepicker(datepickerOpts)
             .val(self.answer() ? moment(self.answer()).format(self.clientFormat) : self.answer());
     };
 }
