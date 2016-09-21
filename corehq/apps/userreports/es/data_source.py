@@ -117,6 +117,11 @@ class ConfigurableReportEsDataSource(ReportDataSource):
     def column_warnings(self):
         return [w for es_conf in self.es_column_configs for w in es_conf.warnings]
 
+    @property
+    @memoized
+    def uses_aggregations(self):
+        return not(len(self.aggregation_columns) == 1 and self.aggregation_columns[0] == 'doc_id')
+
     @memoized
     @method_decorator(catch_and_raise_exceptions)
     def get_data(self, start=None, limit=None):
