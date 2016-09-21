@@ -307,9 +307,10 @@ function DateTimeEntryBase(question, options) {
     maxDate = moment(thisYear + 10, 'YYYY').toDate();
     // Set min date to 100 years in the past
     minDate = moment(thisYear - 100, 'YYYY').toDate();
+    var phoneMode = FormplayerFrontend.request('currentUser').phoneMode;
     self.afterRender = function() {
         self.$picker = $('#' + self.entryId);
-        self.$picker.datetimepicker({
+        var options = {
             timepicker: self.timepicker,
             datepicker: self.datepicker,
             format: self.clientFormat,
@@ -325,8 +326,40 @@ function DateTimeEntryBase(question, options) {
                     return;
                 }
                 self.answer(moment(newDate).format(self.serverFormat));
-            }
-        });
+            },
+            onGenerate: function (ct) {
+                var $dt = $(this);
+                if ($dt.find('.xdsoft_mounthpicker .xdsoft_prev .fa').length < 1) {
+                    $dt.find('.xdsoft_mounthpicker .xdsoft_prev').append($('<i class="fa fa-chevron-left" />'));
+                }
+                if ($dt.find('.xdsoft_mounthpicker .xdsoft_next .fa').length < 1) {
+                    $dt.find('.xdsoft_mounthpicker .xdsoft_next').append($('<i class="fa fa-chevron-right" />'));
+                }
+
+                if ($dt.find('.xdsoft_timepicker .xdsoft_prev .fa').length < 1) {
+                    $dt.find('.xdsoft_timepicker .xdsoft_prev').append($('<i class="fa fa-chevron-up" />'));
+                }
+                if ($dt.find('.xdsoft_timepicker .xdsoft_next .fa').length < 1) {
+                    $dt.find('.xdsoft_timepicker .xdsoft_next').append($('<i class="fa fa-chevron-down" />'));
+                }
+
+                if ($dt.find('.xdsoft_today_button .fa').length < 1) {
+                    $dt.find('.xdsoft_today_button').append($('<i class="fa fa-home" />'));
+                }
+
+                $dt.find('.xdsoft_label i').addClass('fa fa-caret-down');
+
+                if (phoneMode) {
+                    $dt.find('.xdsoft_save_selected')
+                        .show().text(django.gettext('Save'))
+                        .addClass('btn btn-primary')
+                        .removeClass('blue-gradient-button');
+                    $dt.find('.xdsoft_save_selected').appendTo($dt);
+                }
+            },
+        };
+        self.$picker.datetimepicker(options)
+            .val(self.answer() ? moment(self.answer()).format(self.clientFormat) : self.answer());
     };
 }
 DateTimeEntryBase.prototype = Object.create(EntrySingleAnswer.prototype);
