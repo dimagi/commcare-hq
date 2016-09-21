@@ -143,8 +143,8 @@ class EnikshayCaseFactory(object):
             Outcome.objects.get(PatientId=followup.PatientID)
         )
 
-        kwargs = dict(
-            attrs={
+        kwargs = {
+            'attrs': {
                 'create': True,
                 'case_type': 'test',
                 'update': {
@@ -152,13 +152,13 @@ class EnikshayCaseFactory(object):
                     'followup_id': followup.id,
                 },
             },
-            indices=[CaseIndex(
+            'indices': [CaseIndex(
                 episode_structure,
                 identifier='host',
                 relationship=CASE_INDEX_EXTENSION,
                 related_type=episode_structure.attrs['case_type'],
             )],
-        )
+        }
 
         for test_case in CommCareCaseSQL.objects.filter(
             case_id__in=[
