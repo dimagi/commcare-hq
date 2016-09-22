@@ -571,4 +571,3 @@ def url_replace(context, field, value):
 def view_pdb(element):
     import ipdb; ipdb.set_trace()
     return element
-

@@ -401,6 +401,7 @@ class FilterFormCouchExportDownloadForm(GenericFilterFormExportDownloadForm):
 
 
 class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
+
     def get_edit_url(self, export):
         from corehq.apps.export.views import EditNewCustomFormExportView
         return reverse(EditNewCustomFormExportView.urlname,
@@ -440,7 +441,7 @@ class NewFilterFormESExportDownloadForm(FilterFormESExportDownloadForm):
         self.domain_object = domain_object
         super(NewFilterFormESExportDownloadForm, self).__init__(domain_object, *args, **kwargs)
 
-        # remove the two filters. Rendered directly in view
+        # remove the three filters. Rendered directly in view
         del (self.fields['type_or_group'])
         del (self.fields['user_types'])
         del (self.fields['group'])
