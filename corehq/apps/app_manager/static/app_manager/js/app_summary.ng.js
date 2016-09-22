@@ -118,6 +118,7 @@
         $scope.showRelevance = false;
         $scope.showComments = false;
         $scope.appLangs = summaryConfig.appLangs;
+        $scope.appDownloadURL = summaryConfig.appDownloadURL;
 
         self.init = function () {
             $scope.loading = true;
@@ -182,7 +183,8 @@
         $scope.showCalculations = true;
         $scope.showLabels = true;
         $scope.appLangs = summaryConfig.appLangs;
-        $scope.downloadURL = summaryConfig.downloadURL;
+        $scope.caseDownloadURL = summaryConfig.caseDownloadURL;
+        $scope.appDownloadURL = summaryConfig.appDownloadURL;
 
         $scope.filterCaseTypes = function (caseType) {
             $scope.typeSearch = caseType ? {'name': caseType} : null;
