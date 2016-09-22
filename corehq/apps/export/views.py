@@ -464,7 +464,6 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
     @use_angular_js
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
-        self.request = request
         if not (self.has_edit_permissions
                 or self.has_view_permissions
                 or self.has_deid_view_permissions):
@@ -495,7 +494,6 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
 
     @property
     def page_context(self):
-        print 'calling context in parent class'
         context = {
             'download_export_form': self.download_export_form,
             'export_list': self.export_list,
@@ -733,7 +731,6 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
             'download_id': '<some uuid>',
         }
         """
-        print 'prepaing custom export'
         try:
             download = self._get_download_task(in_data)
         except ExportAsyncException as e:

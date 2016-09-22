@@ -185,7 +185,6 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
     @staticmethod
     def selected_user_ids(mobile_user_and_group_slugs):
-        print 'selected user ids'
         return [u[3:] for u in mobile_user_and_group_slugs if u.startswith("u__")]
 
     @staticmethod
@@ -311,7 +310,6 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     @classmethod
     def pull_users_and_groups(cls, domain, mobile_user_and_group_slugs,
                               include_inactive=False, limit_user_ids=None):
-        print 'INfo %s' % mobile_user_and_group_slugs
         user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
         user_types = cls.selected_user_types(mobile_user_and_group_slugs)
         group_ids = cls.selected_group_ids(mobile_user_and_group_slugs)
