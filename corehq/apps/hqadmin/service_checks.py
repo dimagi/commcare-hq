@@ -141,7 +141,7 @@ def check_heartbeat():
                 bad_workers.append('* {} celery worker down'.format(hostname))
 
         for hostname in expected_stopped:
-            if not all_workers[hostname]:
+            if all_workers[hostname]:
                 bad_workers.append(
                     '* {} celery worker is running when we expect it to be stopped.'.format(hostname)
                 )
