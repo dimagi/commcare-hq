@@ -361,11 +361,10 @@ HQ_APPS = (
     'custom.icds',
     'custom.icds_reports',
     'custom.pnlppgi',
+)
 
-    # eNikshay / UATBC
-    'custom.enikshay',
+ENIKSHAY_APPS = (
     'custom.enikshay.integrations.ninetyninedots',
-    'custom.pnlppgi',
     'custom.enikshay.nikshay_datamigration',
 )
 
@@ -406,7 +405,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'dimagi.utils',
 )
 
-INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
+INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
 
 
 # after login, django redirects to this URL
