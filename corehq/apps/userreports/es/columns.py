@@ -4,6 +4,8 @@ from corehq.apps.es import filters
 from corehq.apps.es.aggregations import FilterAggregation
 from corehq.apps.reports.datatables import DataTablesColumn
 
+from corehq.apps.userreports.const import DEFAULT_MAXIMUM_EXPANSION
+
 
 class EsColumnConfig(object):
     """
@@ -63,9 +65,6 @@ def get_expanded_es_column_config(data_source_configuration, column_config, lang
             max=column_config.max_expansion,
         ))
     return EsColumnConfig(_expand_column(column_config, vals, lang), warnings=column_warnings)
-
-
-DEFAULT_MAXIMUM_EXPANSION = 10
 
 
 def _get_distinct_values(data_source_configuration, column_config, expansion_limit=DEFAULT_MAXIMUM_EXPANSION):
