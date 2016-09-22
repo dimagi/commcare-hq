@@ -6,6 +6,7 @@ from django.test import SimpleTestCase, TestCase
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager import _clean_table_name
+from corehq.apps.userreports.const import DEFAULT_MAXIMUM_EXPANSION
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
@@ -16,7 +17,6 @@ from corehq.apps.userreports.reports.specs import FieldColumn, PercentageColumn,
 from corehq.apps.userreports.sql.columns import (
     _expand_column,
     _get_distinct_values,
-    DEFAULT_MAXIMUM_EXPANSION,
 )
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager, UCR_ENGINE_ID
