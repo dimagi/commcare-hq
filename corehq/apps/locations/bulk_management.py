@@ -207,6 +207,7 @@ class LocationStub(object):
     @property
     @memoized
     def custom_location_data(self):
+        # This just compiles the custom location data, the validation is done in _custom_data_errors()
         if self.custom_data is self.NOT_PROVIDED or self.uncategorized_data is self.NOT_PROVIDED:
             # if either of these are not provided, then existing data should be updated, not overridden
             metadata = copy.copy(self.db_object.metadata)
