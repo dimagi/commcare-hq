@@ -80,8 +80,7 @@ class BaseUnshardedAccessorMixin(object):
         self.assertEqual(self._get_doc_ids(docs), self.second_batch[:2])
 
         last_doc = self.accessor_class().get_doc(self.second_batch[0])
-
-        docs = self._get_docs(self.middle, last_doc_pk=last_doc.pk, limit=2)
+        docs = self._get_docs(self._get_last_modified_date(last_doc), last_doc_pk=last_doc.pk, limit=2)
         self.assertEqual(self._get_doc_ids(docs), self.second_batch[1:3])
 
 
@@ -114,6 +113,10 @@ class BaseCaseReindexAccessorTest(BaseReindexAccessorTest):
     @classmethod
     def _get_doc_ids(cls, docs):
         return [doc.case_id for doc in docs]
+
+    @classmethod
+    def _get_last_modified_date(cls, doc):
+        return doc.server_modified_on
 
 
 class UnshardedCaseReindexAccessorTests(BaseUnshardedAccessorMixin, BaseCaseReindexAccessorTest, TestCase):
@@ -153,6 +156,10 @@ class BaseFormReindexAccessorTest(BaseReindexAccessorTest):
     def _get_doc_ids(cls, docs):
         return [doc.form_id for doc in docs]
 
+    @classmethod
+    def _get_last_modified_date(cls, doc):
+        return doc.received_on
+
 
 class UnshardedFormReindexAccessorTests(BaseUnshardedAccessorMixin, BaseFormReindexAccessorTest, TestCase):
 
@@ -191,6 +198,10 @@ class BaseLedgerReindexAccessorTest(BaseReindexAccessorTest):
     @classmethod
     def _get_doc_ids(cls, docs):
         return [doc.ledger_reference.as_id() for doc in docs]
+
+    @classmethod
+    def _get_last_modified_date(cls, doc):
+        return doc.last_modified
 
 
 class UnshardedLedgerReindexAccessorTests(BaseUnshardedAccessorMixin, BaseLedgerReindexAccessorTest, TestCase):
