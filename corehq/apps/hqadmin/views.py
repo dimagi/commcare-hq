@@ -63,7 +63,7 @@ from corehq.apps.data_analytics.models import MALTRow, GIRRow
 from corehq.apps.data_analytics.const import GIR_FIELDS
 from corehq.apps.data_analytics.admin import MALTRowAdmin
 from corehq.apps.domain.decorators import (
-    require_superuser, require_superuser_or_developer,
+    require_superuser, require_developer,
     login_or_basic, domain_admin_required
 )
 from corehq.apps.domain.models import Domain
@@ -212,7 +212,7 @@ class RecentCouchChangesView(BaseAdminSectionView):
     @use_nvd3_v3
     @use_datatables
     @use_jquery_ui
-    @method_decorator(require_superuser_or_developer)
+    @method_decorator(require_developer)
     def dispatch(self, *args, **kwargs):
         return super(RecentCouchChangesView, self).dispatch(*args, **kwargs)
 
@@ -239,7 +239,7 @@ class RecentCouchChangesView(BaseAdminSectionView):
         }
 
 
-@require_superuser_or_developer
+@require_developer
 def download_recent_changes(request):
     count = int(request.GET.get('changes', 10000))
     resp = HttpResponse(content_type='text/csv')
@@ -248,7 +248,7 @@ def download_recent_changes(request):
     return resp
 
 
-@require_superuser_or_developer
+@require_developer
 def system_ajax(request):
     """
     Utility ajax functions for polling couch and celerymon
@@ -324,7 +324,7 @@ def system_ajax(request):
     return HttpResponse('{}', content_type='application/json')
 
 
-@require_superuser_or_developer
+@require_developer
 def check_services(request):
 
     def run_test(test):
@@ -348,7 +348,7 @@ class SystemInfoView(BaseAdminSectionView):
 
     @use_datatables
     @use_jquery_ui
-    @method_decorator(require_superuser_or_developer)
+    @method_decorator(require_developer)
     def dispatch(self, request, *args, **kwargs):
         return super(SystemInfoView, self).dispatch(request, *args, **kwargs)
 
@@ -381,7 +381,7 @@ class SystemInfoView(BaseAdminSectionView):
 
 
 @require_POST
-@require_superuser_or_developer
+@require_developer
 def pillow_operation_api(request):
     pillow_name = request.POST["pillow_name"]
     operation = request.POST["operation"]

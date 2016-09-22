@@ -161,7 +161,7 @@ def _superuser_or_developer_auth_decorator(challenge_fn):
 
             @check_lockout
             @challenge_fn
-            @require_superuser_or_developer
+            @require_developer
             def _authenticate_fn(request, *args, **kwargs):
                 request.couch_user = couch_user = CouchUser.from_django_user(request.user)
                 if couch_user:
@@ -383,7 +383,7 @@ def domain_admin_required_ex(redirect_page_name=None):
     return _outer
 
 
-def require_superuser_or_developer(view_func):
+def require_developer(view_func):
     @wraps(view_func)
     def _inner(request, *args, **kwargs):
         user = request.user
@@ -404,7 +404,7 @@ cls_domain_admin_required = cls_to_view(additional_decorator=domain_admin_requir
 require_superuser = permission_required("is_superuser", login_url='/no_permissions/')
 cls_require_superusers = cls_to_view(additional_decorator=require_superuser)
 
-cls_require_superuser_or_developer = cls_to_view(additional_decorator=require_superuser_or_developer)
+cls_require_developer = cls_to_view(additional_decorator=require_developer)
 
 
 def require_previewer(view_func):

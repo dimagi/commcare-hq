@@ -8,7 +8,7 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_ca
     toggle_js_user_cachebuster
 from couchforms.analytics import get_last_form_submission_received
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.decorators import require_superuser_or_developer
+from corehq.apps.domain.decorators import require_developer
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.users.models import CouchUser
 from corehq.apps.style.decorators import use_datatables
@@ -21,7 +21,7 @@ NOT_FOUND = "Not Found"
 
 class ToggleBaseView(BasePageView):
 
-    @method_decorator(require_superuser_or_developer)
+    @method_decorator(require_developer)
     def dispatch(self, request, *args, **kwargs):
         return super(ToggleBaseView, self).dispatch(request, *args, **kwargs)
 
@@ -90,7 +90,7 @@ class ToggleEditView(ToggleBaseView):
     urlname = 'edit_toggle'
     template_name = 'toggle/edit_flag.html'
 
-    @method_decorator(require_superuser_or_developer)
+    @method_decorator(require_developer)
     def dispatch(self, request, *args, **kwargs):
         return super(ToggleEditView, self).dispatch(request, *args, **kwargs)
 
