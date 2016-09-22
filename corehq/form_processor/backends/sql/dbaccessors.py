@@ -117,7 +117,7 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         db_cursor = connections[from_db].cursor()
         with db_cursor as cursor:
             cursor.execute(sql_query.format(self.model_class._meta.db_table))
-            return fetchone_as_namedtuple(cursor).reltuples
+            return int(fetchone_as_namedtuple(cursor).reltuples)
 
 
 class FormReindexAccessor(ReindexAccessor):
