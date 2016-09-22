@@ -5721,12 +5721,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return self.grid_menu_toggle_enabled() and self.grid_form_menus == 'all'
 
     def grid_menu_toggle_enabled(self):
-        from toggle.models import Toggle
-        try:
-            feature_flag = Toggle.get('grid_menus')
-            return self.domain in feature_flag.get_supported_domain_names()
-        except (AttributeError, ResourceNotFound):
-            return False
+        return toggles.GRID_MENUS.enabled(self.domain)
 
 
 class RemoteApp(ApplicationBase):

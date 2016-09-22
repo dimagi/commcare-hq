@@ -156,18 +156,16 @@
   default: false
   since: "2.24"
   toggle: GRID_MENUS
-  foot_note: "Set Grid Menus as No for this to be active"
 
 - id: grid_form_menus
   name: Forms Menu Display
-  description: Configure form menus display
+  description: "Configure form menus display. For per-module option turn on grid view for the forms
+  menu in a module under module's settings page."
   values: ['none', 'all', 'some']
   value_names: ['List', 'Grid', 'Enable Menu Display Setting Per-Module']
   default: 'none'
   since: '2.24'
   toggle: GRID_MENUS
-  foot_note: "Set Grid Menus as No for this to be active. For per-module option turn on grid view for the forms
-  menu in a module under module's settings page"
 
 - id: comment
   name: 'Comment'
