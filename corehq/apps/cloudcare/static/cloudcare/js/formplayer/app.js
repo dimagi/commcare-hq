@@ -208,7 +208,7 @@ FormplayerFrontend.on("start", function (options) {
             if (options.phoneMode) {
                 appId = options.apps[0]['_id'];
 
-                FormplayerFrontend.trigger('setAppDisplayProperties', options.apps[0])
+                FormplayerFrontend.trigger('setAppDisplayProperties', options.apps[0]);
                 FormplayerFrontend.trigger("app:singleApp", appId);
             } else {
                 FormplayerFrontend.trigger("apps:list", options.apps);

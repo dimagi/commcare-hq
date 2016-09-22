@@ -66,7 +66,7 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
                     return FormplayerFrontend
                         .request('getAppDisplayProperties')['cc-show-incomplete'] === 'yes';
                 },
-            }
+            };
         },
         startApp: function(e) {
             e.preventDefault();
