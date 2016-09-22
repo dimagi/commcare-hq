@@ -87,7 +87,7 @@ class SqlDocumentProvider(DocumentProvider):
     def get_total_document_count(self):
         return sum(
             self.reindex_accessor.get_doc_count(from_db)
-            for from_db or 'default' in _get_db_aliases_to_query()
+            for from_db in _get_db_aliases_to_query()
         )
 
 

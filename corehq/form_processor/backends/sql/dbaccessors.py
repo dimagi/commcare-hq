@@ -112,6 +112,7 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         """Get the doc count from the given DB
         :param from_db: The DB alias to query
         """
+        from_db = 'default' if from_db is None else from_db
         sql_query = "SELECT reltuples FROM pg_class WHERE oid = '{}'::regclass"
         db_cursor = connections[from_db].cursor()
         with db_cursor as cursor:
