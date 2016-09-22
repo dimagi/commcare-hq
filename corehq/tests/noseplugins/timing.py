@@ -48,6 +48,8 @@ class TimingPlugin(Plugin):
             self.csv = csv.writer(self.output)
             self.csv.writerow(["event", "name", "elapsed time", "start time"])
         self.event_start = time.time()
+        global PLUGIN_INSTANCE
+        PLUGIN_INSTANCE = self
 
     def finalize(self, result):
         if self.output is not None:
@@ -86,3 +88,17 @@ class TimingPlugin(Plugin):
     def stopContext(self, context):
         # called after context teardown
         self.end_event("teardown", context)
+
+
+PLUGIN_INSTANCE = None
+
+
+def end_event(name, context):
+    """Signal the end of a custom timing event
+
+    Use to add arbitrary "events" anywhere in the code to isolate
+    sources of slowness during profiling. This function terminates the
+    given event name and immediately begins the next (as yet unnamed)
+    event. Requires the `TimingPlugin` must to be enabled.
+    """
+    PLUGIN_INSTANCE.end_event(name, context)
