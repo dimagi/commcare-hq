@@ -68,7 +68,6 @@
     - properties.cc-login-duration-seconds
     - properties.cc-log-entity-detail-enabled
     - properties.cc-inflation-target-density
-    - properties.cc-grid-menus
     - hq.use_grid_menus
     - hq.grid_form_menus
 
