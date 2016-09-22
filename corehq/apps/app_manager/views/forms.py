@@ -70,11 +70,13 @@ from corehq.apps.app_manager.models import (
     DeleteFormRecord,
     Form,
     FormActions,
+    FormActionCondition,
     FormDatum,
     FormLink,
     IncompatibleFormTypeException,
     ModuleNotFoundException,
     PreloadAction,
+    UpdateCaseAction,
     load_case_reserved_words,
 )
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
@@ -340,12 +342,9 @@ def new_form(request, domain, app_id, module_id):
     form = app.new_form(module_id, name, lang)
     if toggles.ONBOARDING_PROTOTYPE.enabled(domain):
         case_action = request.POST.get('case_action', 'none')
-        if case_action != 'none':
+        if case_action == 'update':
             form.requires = 'case'
-            if case_action == 'open':
-                pass    # TODO
-            else:
-                pass    # TODO
+            form.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
     app.save()
     # add form_id to locals()
     form_id = form.id

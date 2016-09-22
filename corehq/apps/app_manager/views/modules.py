@@ -842,7 +842,6 @@ def new_module(request, domain, app_id):
                     module.case_type = 'record-{}'.format(suffix)
             else:
                 form = app.new_form(module_id, "Survey", lang)
-                form.case_action = 'none'
         else:
             app.new_form(module_id, "Untitled Form", lang)
         app.save()
