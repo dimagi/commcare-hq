@@ -123,6 +123,9 @@ def transform_xform_for_elasticsearch(doc_dict):
             doc_ret["__retrieved_case_ids"] = list(set(case_update_from_block(cb).id for cb in case_blocks))
         except CaseGenerationException:
             doc_ret["__retrieved_case_ids"] = []
+
+    if 'backend_id' not in doc_ret:
+        doc_ret['backend_id'] = 'couch'
     return doc_ret
 
 
