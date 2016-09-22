@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from datetime import datetime
 from dimagi.ext.couchdbkit import *
-from dimagi.utils.decorators.memoized import memoized
 
 
 TOGGLE_ID_PREFIX = 'hqFeatureToggle'
@@ -43,11 +42,6 @@ class Toggle(Document):
         if item in self.enabled_users:
             self.enabled_users.remove(item)
             self.save()
-
-    @memoized
-    def get_supported_domain_names(self):
-        return [user.split(':')[1] for user in self.enabled_users
-                if user.split(':')[0] == 'domain' and user.split(':')[1]]
 
 
 def generate_toggle_id(slug):
