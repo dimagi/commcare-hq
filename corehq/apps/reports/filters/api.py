@@ -30,9 +30,8 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         return EmwfUtils(self.domain)
 
     def get(self, request, domain):
-        self.request = request
         self.domain = domain
-        self.q = self.request.GET.get('q', '')
+        self.q = self.request.GET.get('q', None)
         try:
             count, options = self.get_options()
             return self.render_json_response({
@@ -119,7 +118,6 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         return self.user_es_query(query).count()
 
     def get_users(self, query, start, size):
-        print 'getting users'
         users = (self.user_es_query(query)
                  .fields(['_id', 'username', 'first_name', 'last_name', 'doc_type'])
                  .start(start)
@@ -155,8 +153,8 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
 
 class LocationRestrictedEmwfOptionsView(EmwfOptionsView):
     def get_locations_query(self, query):
+        # return SQLLocation.active_objects.filter_path_by_user_input(self.domain, query)
         return SQLLocation.objects.accessible_to_user(self.request.domain, self.request.couch_user)
-            #.filter_path_by_user_input(self.domain, query)
 
 
 def paginate_options(data_sources, query, start, size):
@@ -170,7 +168,6 @@ def paginate_options(data_sources, query, start, size):
     options = []
     total = 0
     for get_size, get_objects in data_sources:
-        print get_objects
         count = get_size(query)
         total += count
 
