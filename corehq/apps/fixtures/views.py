@@ -128,8 +128,8 @@ def update_tables(request, domain, data_type_id, test_patch=None):
                 field_name = options['update']
             if is_identifier_invalid(field_name) and 'remove' not in method:
                 validation_errors.append(field_name)
-        validation_errors = map(lambda e: _("\"%s\" cannot include special characters "
-                                            "or begin with \"xml\".") % e, validation_errors)
+        validation_errors = map(lambda e: _("\"%s\" cannot include special characters or "
+                                            "begin with \"xml\" or a number.") % e, validation_errors)
         if validation_errors:
             return json_response({
                 'validation_errors': validation_errors,
@@ -367,7 +367,7 @@ class FixtureUploadStatusView(FixtureViewMixIn, BaseDomainView):
 @require_can_edit_fixtures
 def fixture_upload_job_poll(request, domain, download_id, template="fixtures/partials/fixture_upload_status.html"):
     try:
-        context = get_download_context(download_id, check_state=True)
+        context = get_download_context(download_id, check_state=True, require_result=True)
     except TaskFailedError:
         return HttpResponseServerError()
 

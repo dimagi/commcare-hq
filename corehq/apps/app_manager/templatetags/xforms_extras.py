@@ -3,9 +3,6 @@ from django.utils import html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 
-import json
-import re
-
 register = template.Library()
 
 EMPTY_LABEL = '<span class="label label-info">Empty</span>'
@@ -69,7 +66,7 @@ def inline_edit_trans(name, langs=None, url='', saveValueName='', readOnlyClass=
             name: 'name',
             value: '%(value)s',
             placeholder: '%(placeholder)s',
-            rows: 1,
+            nodeName: 'input',
             lang: '%(lang)s',
             url: '{}',
             saveValueName: '{}',

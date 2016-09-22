@@ -35,10 +35,10 @@
                    "index": "age",
                    "show": false,
                    "is_sensitive": false,
-                   "transform": null,
+                   "transform": "couchexport.deid.deid_ID",
                    "doc_type": "ExportColumn",
                    "tag": null,
-                   "display": "age"
+                   "display": "Age Label"
                },
                {
                    "index": "balding",

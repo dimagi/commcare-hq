@@ -3,6 +3,11 @@
 {% block page_content %}
     {% if is_commtrack_enabled %}
         {{ block.super }}
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="submit" class="btn btn-default" value="Save"/>
+        </form>
     {% else %}
         You have to enable commtrack in order to use ILSGateway migration.
     {% endif %}
@@ -86,24 +91,6 @@
                 </div>
             </div>
         {% endif %}
-            <div class="row">
-                <div class="col-sm-12">
-                    <div class="btn-toolbar">
-                        <button class="btn btn-default" id="recalculate_moshi_rural">
-                            {% trans "Recalculate Moshi Rural" %}
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-12">
-                    <div class="btn-toolbar">
-                        <button class="btn btn-default" id="recalculate_non_facilities">
-                            {% trans "Recalculate non facilities" %}
-                        </button>
-                    </div>
-                </div>
-            </div>
 {% endblock %}
 
 {% block js-inline %}
@@ -130,16 +117,6 @@
 
         $("#run_reports").click(function() {
             var url = '{% url 'run_reports' domain %}';
-            var successMessage = "{% trans "Sync started" %}";
-            _post(this, url, {success: successMessage});
-        });
-        $("#recalculate_moshi_rural").click(function() {
-            var url = '{% url 'recalculate_moshi_rural' domain %}';
-            var successMessage = "{% trans "Sync started" %}";
-            _post(this, url, {success: successMessage});
-        });
-        $("#recalculate_non_facilities").click(function() {
-            var url = '{% url 'recalculate_non_facilities' domain %}';
             var successMessage = "{% trans "Sync started" %}";
             _post(this, url, {success: successMessage});
         });

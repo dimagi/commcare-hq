@@ -1,0 +1,8 @@
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+{% block reportcontent %}
+    {% include "reports/project_health/partials/last_month_stats.html" %}
+    {% include "reports/project_health/partials/users_tables.html"%}
+{% endblock %}

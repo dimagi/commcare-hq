@@ -6,7 +6,7 @@
 {% block js-inline %}{{ block.super }}
     {% include 'domain/admin/partials/case_search_templates.html' %}
     <script src="{% static 'domain/js/case-search-config.js' %}"></script>
-    <script type="text/javascript">
+    <script>
     (function () {
         var CaseSearchConfig = hqImport('domain/js/case-search-config.js').CaseSearchConfig;
         var viewModel = new CaseSearchConfig({

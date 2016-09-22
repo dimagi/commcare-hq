@@ -42,7 +42,8 @@
             urls: urls,
             currentAppVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
             recipient_contacts: {{ sms_contacts|JSON }},
-            download_modal_id: '#download-zip-modal'
+            download_modal_id: '#download-zip-modal',
+            fetchLimit: {{ fetchLimit }},
         };
         var el = $('#releases-table');
         var releasesMain = new ReleasesMain(o);
@@ -61,9 +62,6 @@
     analytics.workflow('Visited the Release Manager');
 </script>
 <script>
-    function track_deploy_type(type) {
-        ga_track_event('App Manager', 'Deploy Type', type);
-    }
     $(function () {
         gaTrackLink('a.view-source-files-link', 'App Manager', 'Deploy Type', 'View Source Files');
     });
@@ -204,7 +202,7 @@
                     <inline-edit params="
                         value: build_comment,
                         rows: 1,
-                        placeholder: '{% trans "(No Comment)"|escapejs %}',
+                        placeholder: '{% trans "(Click here to add a comment)"|escapejs %}',
                         url: '{% url "update_build_comment" domain app.id %}',
                         saveParams: {'build_id': id},
                         saveValueName: 'comment',

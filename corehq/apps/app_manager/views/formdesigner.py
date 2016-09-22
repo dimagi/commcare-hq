@@ -44,6 +44,9 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
     def _form_uses_case(module, form):
         return module and module.case_type and form.requires_case()
 
+    def _form_is_basic(form):
+        return form.doc_type == 'Form'
+
     def _form_too_large(app, form):
         # form less than 0.1MB, anything larger starts to have
         # performance issues with fullstory
@@ -80,8 +83,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         vellum_plugins.append("commtrack")
     if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
         vellum_plugins.append("saveToCase")
-    if ((app.vellum_case_management or toggles.VELLUM_EXPERIMENTAL_UI.enabled(domain)) and
-            _form_uses_case(module, form)):
+    if (app.vellum_case_management and _form_uses_case(module, form) and _form_is_basic(form)):
         vellum_plugins.append("databrowser")
 
     vellum_features = toggles.toggles_dict(username=request.user.username,
@@ -95,7 +97,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'lookup_tables': domain_has_privilege(domain, privileges.LOOKUP_TABLES),
         'templated_intents': domain_has_privilege(domain, privileges.TEMPLATED_INTENTS),
         'custom_intents': domain_has_privilege(domain, privileges.CUSTOM_INTENTS),
-        'rich_text': app.vellum_case_management or toggles.VELLUM_RICH_TEXT.enabled(domain)
+        'rich_text': app.vellum_case_management,
     })
 
     has_schedule = (

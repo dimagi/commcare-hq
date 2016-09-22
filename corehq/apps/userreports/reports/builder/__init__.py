@@ -158,27 +158,41 @@ def make_owner_name_indicator(column_id):
     return _make_user_group_or_location_indicator("owner_id", column_id)
 
 
-def make_form_question_indicator(question, column_id=None):
+def make_form_question_indicator(question, column_id=None, root_doc=False):
     """
     Return a data source indicator configuration (a dict) for the given form
     question.
     """
     path = question['value'].split('/')
     data_type = question['type']
+    expression = {
+        "type": "property_path",
+        'property_path': ['form'] + path[2:],
+    }
+    if root_doc:
+        expression = {"type": "root_doc", "expression": expression}
     return {
         "type": "expression",
         "column_id": column_id or question['value'],
         "display_name": path[-1],
         "datatype": get_form_indicator_data_type(data_type),
-        "expression": {
-            "type": "property_path",
-            'property_path': ['form'] + path[2:],
-        },
-
+        "expression": expression
     }
 
 
-def make_form_meta_block_indicator(spec, column_id=None):
+def make_multiselect_question_indicator(question, column_id=None):
+    path = question['value'].split('/')
+    return {
+        "type": "choice_list",
+        "column_id": column_id or question['value'],
+        "display_name": path[-1],
+        "property_path": ['form'] + path[2:],
+        "select_style": "multiple",
+        "choices": [o['value'] for o in question['options']],
+    }
+
+
+def make_form_meta_block_indicator(spec, column_id=None, root_doc=False):
     """
     Return a data source indicator configuration (a dict) for the given
     form meta field and data type.
@@ -188,15 +202,18 @@ def make_form_meta_block_indicator(spec, column_id=None):
         field_name = [field_name]
     data_type = spec[1]
     column_id = column_id or field_name[0]
+    expression = {
+        "type": "property_path",
+        "property_path": ['form', 'meta'] + field_name,
+    }
+    if root_doc:
+        expression = {"type": "root_doc", "expression": expression}
     return {
         "type": "expression",
         "column_id": column_id,
         "display_name": field_name[0],
         "datatype": get_form_indicator_data_type(data_type),
-        "expression": {
-            "type": "property_path",
-            "property_path": ['form', 'meta'] + field_name,
-        }
+        "expression": expression
     }
 
 

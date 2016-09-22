@@ -9,16 +9,17 @@ from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
-from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.decorators.memoized import memoized
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
 from corehq import feature_previews
 from corehq.apps.userreports.expressions.getters import NestedDictGetter
+from corehq.apps.app_manager.const import STOCK_QUESTION_TAG_NAMES
 from corehq.apps.app_manager.dbaccessors import (
-    get_built_app_ids_for_app_id,
+    get_built_app_ids_with_submissions_for_app_id,
     get_all_built_app_ids_and_versions,
     get_latest_app_ids_and_versions,
+    get_app_ids_in_domain,
 )
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_case_properties, ParentCasePropertyBuilder
@@ -50,7 +51,10 @@ from corehq.apps.export.const import (
     USER_DEFINED_SPLIT_TYPES,
     PLAIN_USER_DEFINED_SPLIT_TYPE,
     DATA_SCHEMA_VERSION,
+    MISSING_VALUE,
+    EMPTY_VALUE,
 )
+from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
@@ -62,8 +66,28 @@ DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
 
 class PathNode(DocumentSchema):
+    """
+    A PathNode represents a portion of a path to value in a document.
+
+    For example, if a document looked like:
+
+    {
+        'form': {
+            'question': 'one'
+        }
+
+    }
+
+    A path to the data 'one' would be ['form']['question']. A PathNode represents
+    one step in that path. In this example, a list of PathNodes would represent
+    fetching the 'one':
+
+    [PathNode(name='form'), PathNode(name='question')]
+    """
 
     name = StringProperty(required=True)
+
+    # This is true if this step in the path corresponds with an array (such as a repeat group)
     is_repeat = BooleanProperty(default=False)
 
     def __eq__(self, other):
@@ -106,6 +130,8 @@ class ExportItem(DocumentSchema):
                 return CaseIndexItem.wrap(data)
             elif doc_type == 'MultiMediaItem':
                 return MultiMediaItem.wrap(data)
+            elif doc_type == 'StockItem':
+                return StockItem.wrap(data)
             else:
                 raise ValueError('Unexpected doc_type for export item', doc_type)
         else:
@@ -131,6 +157,11 @@ class ExportItem(DocumentSchema):
 
 
 class ExportColumn(DocumentSchema):
+    """
+    The model that represents a column in an export. Each column has a one-to-one
+    mapping with an ExportItem. The column controls the presentation of that item.
+    """
+
     item = SchemaProperty(ExportItem)
     label = StringProperty()
     # Determines whether or not to show the column in the UI Config without clicking advanced
@@ -177,6 +208,8 @@ class ExportColumn(DocumentSchema):
             except ValueError:
                 # Unable to convert the string to a date
                 pass
+        if value is None:
+            value = MISSING_VALUE
         return value
 
     @staticmethod
@@ -202,6 +235,8 @@ class ExportColumn(DocumentSchema):
             column = SplitGPSExportColumn(**constructor_args)
         elif isinstance(item, MultiMediaItem):
             column = MultiMediaExportColumn(**constructor_args)
+        elif isinstance(item, StockItem):
+            column = StockFormExportColumn(**constructor_args)
         elif isinstance(item, MultipleChoiceItem):
             column = SplitExportColumn(**constructor_args)
         elif isinstance(item, CaseIndexItem):
@@ -209,7 +244,7 @@ class ExportColumn(DocumentSchema):
                 help_text=_(u'The ID of the associated {} case type').format(item.case_type),
                 **constructor_args
             )
-        elif feature_previews.SPLIT_MULTISELECT_CASE_EXPORT.enabled(get_request().domain):
+        elif get_request() and feature_previews.SPLIT_MULTISELECT_CASE_EXPORT.enabled(get_request().domain):
             column = SplitUserDefinedExportColumn(**constructor_args)
         else:
             column = ExportColumn(**constructor_args)
@@ -267,10 +302,14 @@ class ExportColumn(DocumentSchema):
                 return CaseIndexExportColumn.wrap(data)
             elif doc_type == 'SplitUserDefinedExportColumn':
                 return SplitUserDefinedExportColumn.wrap(data)
+            elif doc_type == 'UserDefinedExportColumn':
+                return UserDefinedExportColumn.wrap(data)
             elif doc_type == 'SplitGPSExportColumn':
                 return SplitGPSExportColumn.wrap(data)
             elif doc_type == 'MultiMediaExportColumn':
                 return MultiMediaExportColumn.wrap(data)
+            elif doc_type == 'StockFormExportColumn':
+                return StockFormExportColumn.wrap(data)
             else:
                 raise ValueError('Unexpected doc_type for export column', doc_type)
         else:
@@ -290,12 +329,17 @@ class DocRow(namedtuple("DocRow", ["doc", "row"])):
 
 
 class TableConfiguration(DocumentSchema):
+    """
+    The TableConfiguration represents one excel sheet in an export.
+    It contains a list of columns and other presentation properties
+    """
     # label saves the user's decision for the table name
     label = StringProperty()
     path = ListProperty(PathNode)
     columns = ListProperty(ExportColumn)
     selected = BooleanProperty(default=False)
     is_deleted = BooleanProperty(default=False)
+    is_user_defined = BooleanProperty(default=False)
 
     def __hash__(self):
         return hash(tuple(self.path))
@@ -357,7 +401,8 @@ class TableConfiguration(DocumentSchema):
         return None, None
 
         :param item_path: A list of path nodes that identify a column
-        :param item_doc_type: The doc type of the item (often just ExportItem)
+        :param item_doc_type: The doc type of the item (often just ExportItem). If getting
+                UserDefinedExportColumn, set this to None
         :param column_transform: A transform that is applied on the column
         :returns index, column: The index of the column in the list and an ExportColumn
         """
@@ -365,6 +410,11 @@ class TableConfiguration(DocumentSchema):
             if (column.item.path == item_path and
                     column.item.transform == column_transform and
                     column.item.doc_type == item_doc_type):
+                return index, column
+            # No item doc type searches for a UserDefinedExportColumn
+            elif (isinstance(column, UserDefinedExportColumn) and
+                    column.custom_path == item_path and
+                    item_doc_type is None):
                 return index, column
         return None, None
 
@@ -401,12 +451,17 @@ class TableConfiguration(DocumentSchema):
                     DocRow(row=row_index + (new_doc_index,), doc=new_doc)
                     for new_doc_index, new_doc in enumerate(next_doc)
                 ])
-            else:
+            elif next_doc:
                 new_docs.append(DocRow(row=row_index, doc=next_doc))
         return TableConfiguration._get_sub_documents_helper(path[1:], new_docs)
 
 
 class ExportInstance(BlobMixin, Document):
+    """
+    This is an instance of an export. It contains the tables to export and
+    other presentation properties.
+    """
+
     name = StringProperty()
     domain = StringProperty()
     tables = ListProperty(TableConfiguration)
@@ -713,7 +768,14 @@ class FormExportInstanceDefaults(ExportInstanceDefaults):
         if table_path == MAIN_TABLE:
             return _('Forms')
         else:
-            return _('Repeat: {}').format((table_path[-1].name if len(table_path) else None) or "")
+            if not len(table_path):
+                return _('Repeat')
+
+            default_table_name = table_path[-1].name
+            # We are probably exporting a model iteration question
+            if default_table_name == 'item' and len(table_path) > 1:
+                default_table_name = '{}.{}'.format(table_path[-2].name, default_table_name)
+            return _('Repeat: {}').format(default_table_name)
 
 
 class CaseExportInstanceDefaults(ExportInstanceDefaults):
@@ -766,6 +828,24 @@ class MultiMediaItem(ExportItem):
     """
     An item that references multimedia
     """
+
+
+class StockItem(ExportItem):
+    """
+    An item that references a stock question (balance, transfer, dispense, receive)
+    """
+
+    @classmethod
+    def create_from_question(cls, question, path, app_id, app_version, repeats):
+        """
+        Overrides ExportItem's create_from_question, by allowing an explicit path
+        that may not match the question's value key
+        """
+        return cls(
+            path=_question_path_to_path_nodes(path, repeats),
+            label=question['label'],
+            last_occurrences={app_id: app_version},
+        )
 
 
 class Option(DocumentSchema):
@@ -868,10 +948,11 @@ class ExportDataSchema(Document):
         )
         if app_id:
             app_build_ids.append(app_id)
+        else:
+            app_build_ids.extend(cls._get_current_app_ids_for_domain(domain))
+
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
-            # TODO: Remove this when we mark applications that have been submitted
-            if (should_use_sql_backend(domain) and
-                    not app_doc.get('is_released', False) and
+            if (not app_doc.get('has_submissions', False) and
                     app_doc.get('copy_of')):
                 continue
 
@@ -882,7 +963,7 @@ class ExportDataSchema(Document):
                 identifier,
             )
 
-            current_schema.record_update(app_id, app.version)
+            current_schema.record_update(app.copy_of or app._id, app.version)
 
         current_schema.domain = domain
         current_schema.app_id = app_id
@@ -934,6 +1015,7 @@ class ExportDataSchema(Document):
             return group_schema
 
         previous_group_schemas = schemas[0].group_schemas
+        last_app_versions = schemas[0].last_app_versions
         for current_schema in schemas[1:]:
             group_schemas = _merge_lists(
                 previous_group_schemas,
@@ -943,8 +1025,14 @@ class ExportDataSchema(Document):
                 copyfn=lambda group_schema: ExportGroupSchema(group_schema.to_json())
             )
             previous_group_schemas = group_schemas
+            last_app_versions = _merge_dicts(
+                last_app_versions,
+                current_schema.last_app_versions,
+                max,
+            )
 
         schema.group_schemas = group_schemas
+        schema.last_app_versions = last_app_versions
 
         return schema
 
@@ -994,9 +1082,13 @@ class FormExportDataSchema(ExportDataSchema):
     def _set_identifier(self, form_xmlns):
         self.xmlns = form_xmlns
 
+    @classmethod
+    def _get_current_app_ids_for_domain(cls, domain):
+        raise BadExportConfiguration('Form exports should only use one app_id and this should not be called')
+
     @staticmethod
     def _get_app_build_ids_to_process(domain, app_id, last_app_versions):
-        return get_built_app_ids_for_app_id(
+        return get_built_app_ids_with_submissions_for_app_id(
             domain,
             app_id,
             last_app_versions.get(app_id)
@@ -1049,13 +1141,22 @@ class FormExportDataSchema(ExportDataSchema):
             )
             for question in group_questions:
                 # Create ExportItem based on the question type
-                item = FormExportDataSchema.datatype_mapping[question['type']].create_from_question(
-                    question,
-                    app_id,
-                    app_version,
-                    repeats,
-                )
-                group_schema.items.append(item)
+                if 'stock_type_attributes' in question:
+                    items = FormExportDataSchema._get_stock_items_from_question(
+                        question,
+                        app_id,
+                        app_version,
+                        repeats,
+                    )
+                    group_schema.items.extend(items)
+                else:
+                    item = FormExportDataSchema.datatype_mapping[question['type']].create_from_question(
+                        question,
+                        app_id,
+                        app_version,
+                        repeats,
+                    )
+                    group_schema.items.append(item)
 
             if group_path is None:
                 for case_update_field in case_updates:
@@ -1077,6 +1178,40 @@ class FormExportDataSchema(ExportDataSchema):
 
         return schema
 
+    @staticmethod
+    def _get_stock_items_from_question(question, app_id, app_version, repeats):
+        """
+        Creates a list of items from a stock type question
+        """
+        items = []
+
+        # Strips the last value in the path
+        # E.G. /data/balance/entry --> /data/balance
+        parent_path = question['value'][:question['value'].rfind('/')]
+        question_id = question['stock_type_attributes']['type']
+
+        parent_path_and_question_id = '{}:{}'.format(parent_path, question_id)
+
+        for attribute in question['stock_type_attributes']:
+            items.append(StockItem.create_from_question(
+                question,
+                '{}/@{}'.format(parent_path_and_question_id, attribute),
+                app_id,
+                app_version,
+                repeats,
+            ))
+
+        for attribute in question['stock_entry_attributes']:
+            items.append(StockItem.create_from_question(
+                question,
+                '{}/{}/@{}'.format(parent_path_and_question_id, 'entry', attribute),
+                app_id,
+                app_version,
+                repeats,
+            ))
+
+        return items
+
 
 class CaseExportDataSchema(ExportDataSchema):
 
@@ -1088,6 +1223,10 @@ class CaseExportDataSchema(ExportDataSchema):
 
     def _set_identifier(self, case_type):
         self.case_type = case_type
+
+    @classmethod
+    def _get_current_app_ids_for_domain(cls, domain):
+        return get_app_ids_in_domain(domain)
 
     @staticmethod
     def _get_app_build_ids_to_process(domain, app_id, last_app_versions):
@@ -1237,7 +1376,6 @@ def _question_path_to_path_nodes(string_path, repeats):
         repeat_test_string += "/" + part
         path.append(PathNode(name=part, is_repeat=repeat_test_string in repeats))
 
-    assert path[0] == PathNode(name="data"), 'First node should be "data"'
     path[0].name = "form"
     return path
 
@@ -1314,6 +1452,24 @@ def _merge_dicts(one, two, resolvefn):
     return merged
 
 
+class UserDefinedExportColumn(ExportColumn):
+    """
+    This model represents a column that a user has defined the path to the
+    data within the form. It should only be needed for RemoteApps
+    """
+
+    is_editable = BooleanProperty(default=True)
+
+    # On normal columns, the path is defined on an ExportItem.
+    # Since a UserDefinedExportColumn is not associated with the
+    # export schema, the path is defined on the column.
+    custom_path = SchemaListProperty(PathNode)
+
+    def get_value(self, domain, doc_id, doc, base_path, **kwargs):
+        path = [x.name for x in self.custom_path[len(base_path):]]
+        return NestedDictGetter(path)(doc)
+
+
 class SplitUserDefinedExportColumn(ExportColumn):
     split_type = StringProperty(
         choices=USER_DEFINED_SPLIT_TYPES,
@@ -1380,7 +1536,7 @@ class MultiMediaExportColumn(ExportColumn):
     def get_value(self, domain, doc_id, doc, base_path, transform_dates=False, **kwargs):
         value = super(MultiMediaExportColumn, self).get_value(domain, doc_id, doc, base_path, **kwargs)
 
-        if not value:
+        if not value or value == MISSING_VALUE:
             return value
 
         download_url = u'{url}?attachment={attachment}'.format(
@@ -1418,7 +1574,15 @@ class SplitGPSExportColumn(ExportColumn):
         )
         if not split_column:
             return value
-        values = [None] * 4
+
+        if value == MISSING_VALUE:
+            return [MISSING_VALUE] * 4
+
+        values = [EMPTY_VALUE] * 4
+
+        if not isinstance(value, basestring):
+            return values
+
         for index, coordinate in enumerate(value.split(' ')):
             values[index] = coordinate
         return values
@@ -1460,13 +1624,20 @@ class SplitExportColumn(ExportColumn):
         if not split_column:
             return value
 
+        if value == MISSING_VALUE:
+            value = [MISSING_VALUE] * len(self.item.options)
+            if not self.ignore_unspecified_options:
+                value.append(MISSING_VALUE)
+            return value
+
         if not isinstance(value, basestring):
-            return [None] * len(self.item.options) + [] if self.ignore_unspecified_options else [value]
+            unspecified_options = [] if self.ignore_unspecified_options else [value]
+            return [EMPTY_VALUE] * len(self.item.options) + unspecified_options
 
         selected = OrderedDict((x, 1) for x in value.split(" "))
         row = []
         for option in self.item.options:
-            row.append(selected.pop(option.value, None))
+            row.append(selected.pop(option.value, EMPTY_VALUE))
         if not self.ignore_unspecified_options:
             row.append(" ".join(selected.keys()))
         return row
@@ -1495,6 +1666,9 @@ class SplitExportColumn(ExportColumn):
 
 
 class RowNumberColumn(ExportColumn):
+    """
+    This column represents the `number` column.
+    """
     repeat = IntegerProperty(default=0)
 
     def get_headers(self, **kwargs):
@@ -1515,6 +1689,9 @@ class RowNumberColumn(ExportColumn):
 
 
 class CaseIndexExportColumn(ExportColumn):
+    """
+    A column that exports a case index's referenced ids
+    """
 
     def get_value(self, domain, doc_id, doc, base_path, **kwargs):
         path = [self.item.path[0].name]  # Index columns always are just a reference to 'indices'
@@ -1526,6 +1703,70 @@ class CaseIndexExportColumn(ExportColumn):
             filter(lambda index: index.get('referenced_type') == case_type, indices)
         )
         return ' '.join(case_ids)
+
+
+class StockFormExportColumn(ExportColumn):
+    """
+    A column type for stock question types in form exports. This will export a column
+    for a StockItem
+    """
+
+    def get_value(self, domain, doc_id, doc, base_path, transform_dates=False, **kwargs):
+
+        stock_type_path_index = -1
+        path = [path_node.name for path_node in self.item.path[len(base_path):]]
+        # Hacky, but the question_id is encoded in the path of the StockItem.
+        # Normally, stock questions (balance, transfer, receive, dispense) do
+        # not include the question id in the form xml path. For example the defintion
+        # of a stock question can look like this:
+        #
+        # <transfer date="2016-08-08" dest="xxxx" section-id="xxxx" type="question-id">
+        #     <n0:entry id="xxxx" quantity="1"/>
+        # </transfer>
+        #
+        # Notice that the question id is stored in the type attribute. If multiple
+        # stock questions are defined at the same level in the tree, the form processing
+        # code will interpret this as a "repeat" leading to confusion for the user in the
+        # export code.
+        #
+        # In order to mitigate this, we encode the question id into the path so we do not
+        # have to create a new TableConfiguration for the edge case mentioned above.
+        for idx, path_name in enumerate(path):
+            is_stock_question_element = any(map(
+                lambda tag_name: path_name.startswith('{}:'.format(tag_name)),
+                STOCK_QUESTION_TAG_NAMES
+            ))
+            if is_stock_question_element:
+                question_path, question_id = path_name.split(':')
+                path[idx] = question_path
+                stock_type_path_index = idx
+                break
+
+        value = NestedDictGetter(path[:stock_type_path_index + 1])(doc)
+        if not value:
+            return MISSING_VALUE
+
+        new_doc = None
+        if isinstance(value, list):
+            try:
+                new_doc = filter(
+                    lambda node: node.get('@type') == question_id,
+                    value,
+                )[0]
+            except IndexError:
+                new_doc = None
+        else:
+            if value.get('@type') == question_id:
+                new_doc = value
+
+        if not new_doc:
+            return MISSING_VALUE
+
+        return self._transform(
+            NestedDictGetter(path[stock_type_path_index + 1:])(new_doc),
+            new_doc,
+            transform_dates
+        )
 
 
 class StockExportColumn(ExportColumn):
@@ -1565,7 +1806,7 @@ class StockExportColumn(ExportColumn):
 
         # use a list to make sure the stock states end up
         # in the same order as the headers
-        values = [None] * len(self._column_tuples)
+        values = [EMPTY_VALUE] * len(self._column_tuples)
 
         for state in states:
             column_tuple = (state.product_id, state.section_id)
@@ -1573,6 +1814,38 @@ class StockExportColumn(ExportColumn):
                 state_index = self._column_tuples.index(column_tuple)
                 values[state_index] = state.stock_on_hand
         return values
+
+
+class ConversionMeta(DocumentSchema):
+    path = StringProperty()
+    failure_reason = StringProperty()
+    info = ListProperty()
+
+    def pretty_print(self):
+        print '---' * 15
+        print '{:<20}| {}'.format('Original Path', self.path)
+        print '{:<20}| {}'.format('Failure Reason', self.failure_reason)
+        print '{:<20}| {}'.format('Info', self.info)
+
+
+class ExportMigrationMeta(Document):
+    saved_export_id = StringProperty()
+    domain = StringProperty()
+    export_type = StringProperty(choices=[FORM_EXPORT, CASE_EXPORT])
+
+    skipped_tables = SchemaListProperty(ConversionMeta)
+    skipped_columns = SchemaListProperty(ConversionMeta)
+
+    converted_tables = SchemaListProperty(ConversionMeta)
+    converted_columns = SchemaListProperty(ConversionMeta)
+
+    is_remote_app_migration = BooleanProperty(default=False)
+
+    migration_date = DateTimeProperty()
+
+    class Meta:
+        app_label = 'export'
+
 
 # These must match the constants in corehq/apps/export/static/export/js/const.js
 MAIN_TABLE = []

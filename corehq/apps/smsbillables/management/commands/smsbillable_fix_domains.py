@@ -1,10 +1,10 @@
 from django.db.models import Q
 from corehq.apps.smsbillables.models import SmsBillable
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 from corehq.apps.sms.models import SMS
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = ("Make sure domain is filled in for SMSBillable where domain is "
             "None. This retro-fixes an issue where domains weren't stored "
             "in the billable during its creation. September 2014.")

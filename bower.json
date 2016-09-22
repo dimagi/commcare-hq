@@ -2,9 +2,8 @@
   "name": "CommCareHQ",
   "version": "0.0.1",
   "dependencies": {
-    "jquery": "1.11.1",
-    "underscore": "1.6.0",
-    "underscore-1.8.3": "underscore#1.8.3",
+    "jquery": "2.2.4",
+    "underscore": "1.8.3",
     "jquery-form": "3.45.0",
     "jquery.cookie": "dimagi/jquery-cookie#1.4.1",
     "jquery-timeago": "1.2.0",
@@ -14,6 +13,7 @@
     "leaflet": "0.7.7",
     "jquery-color": "2.1.2",
     "jquery.rmi": "dimagi/jquery.rmi#8c34f32817",
+    "intl-tel-input": "9.0.7",
     "angular": "1.4.4",
     "angular-route": "1.4.4",
     "angular-resource": "1.4.4",
@@ -46,25 +46,31 @@
     "bootstrap-tour": "0.10.2",
     "jquery.caret": "~1.5.2",
     "syntaxhighlighter": "alexgorbatchev/syntaxhighlighter#3.0.83",
-    "bootstrap": "3.3.6",
+    "bootstrap": "3.3.7",
     "font-awesome": "fontawesome#4.5.0",
     "ui-select": "angular-ui/ui-select#v0.13.2",
     "jquery-migrate": "1.2.1",
     "moment": "2.12.0",
-    "jquery-treetable": "^3.2.0"
+    "jquery-treetable": "^3.2.0",
+    "css-grid-polyfill-binaries": "1.1.1",
+    "requirejs": "~2.3.1",
+    "datetimepicker": "2.5.4",
+    "DOMPurify": "0.8.3",
+    "jquery-tiny-pubsub": "https://github.com/cowboy/jquery-tiny-pubsub.git#~0.7.0",
+    "markdown-it": "7.0.1"
   },
   "devDependencies": {
     "chai": "3.3.0",
     "mocha": "2.3.3",
     "sinon": "http://sinonjs.org/releases/sinon-1.17.0.js",
-    "angular-mocks": "1.4.4"
+    "angular-mocks": "1.4.4",
+    "jasmine-fixture": "2.0.0"
   },
   "private": true,
   "resolutions": {
-    "jquery": "1.11.1",
-    "bootstrap": "3.3.6",
+    "jquery": "2.2.4",
+    "bootstrap": "3.3.7",
     "select2": "4.0.0",
-    "underscore": "1.6.0",
     "backbone": "0.9.1"
   }
 }

@@ -34,6 +34,7 @@ class ExportViewTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.user.delete()
+        cls.domain.delete()
 
     def setUp(self):
         self.client.login(username=self.username, password=self.password)
@@ -44,7 +45,7 @@ class ExportViewTest(TestCase):
     def test_create_form_export(self):
         resp = self.client.get(
             reverse(CreateNewCustomFormExportView.urlname, args=[self.domain.name]),
-            {'export_tag': 'my_sweet_xmlns'}
+            {'export_tag': 'my_sweet_xmlns', 'app_id': 'r2d2'}
         )
         self.assertEqual(resp.status_code, 200)
 

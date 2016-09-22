@@ -6,6 +6,8 @@ from couchexport.files import Temp
 from couchexport.models import Format, ExportSchema, GroupExportConfiguration
 import tempfile
 import os
+
+from soil import DownloadBase
 from soil.util import expose_cached_download
 from couchexport.export import SchemaMismatchException, ExportConfiguration
 
@@ -49,26 +51,35 @@ def rebuild_schemas(index):
     all_checkpoints = ExportSchema.get_all_checkpoints(index)
     config = ExportConfiguration(db, index, disable_checkpoints=True)
     latest = config.create_new_checkpoint()
+    counter = 0
     for cp in all_checkpoints:
         cp.schema = latest.schema
         cp.save()
-    return len(all_checkpoints)
+        counter += 1
+    return counter
 
 
 @task
 def bulk_export_async(bulk_export_helper, download_id,
                       filename="bulk_export", expiry=10*60*60, domain=None):
 
+    total = sum([len(file.export_objects) for file in bulk_export_helper.bulk_files]) + 1
+
+    def _update_progress(progress):
+        DownloadBase.set_progress(bulk_export_async, progress, total)
+
+    _update_progress(1)  # give the user some feedback that something is happening
+
     if bulk_export_helper.zip_export:
-        filename = "%s_%s"% (domain, filename) if domain else filename
+        filename = "%s_%s" % (domain, filename) if domain else filename
         _, path = tempfile.mkstemp()
         os.close(_)
         zf = zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED)
         try:
-            for file in bulk_export_helper.bulk_files:
+            for i, file in enumerate(bulk_export_helper.bulk_files):
                 try:
-                    bulk = Temp(file.generate_bulk_file())
-                    zf.write(bulk.path, "%s/%s" %(filename, file.filename))
+                    bulk = Temp(file.generate_bulk_file(update_progress=_update_progress))
+                    zf.write(bulk.path, "%s/%s" % (filename, file.filename))
                 except Exception as e:
                     logging.exception("FAILED to add file to bulk export archive. %s" % e)
         finally:
@@ -93,7 +104,7 @@ def bulk_export_async(bulk_export_helper, download_id,
     else:
         export_object = bulk_export_helper.bulk_files[0]
         return cache_file_to_be_served(
-            tmp=Temp(export_object.generate_bulk_file()),
+            tmp=Temp(export_object.generate_bulk_file(update_progress=_update_progress)),
             checkpoint=bulk_export_helper,
             download_id=download_id,
             filename=export_object.filename,

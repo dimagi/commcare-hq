@@ -23,7 +23,7 @@
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
-<script type="text/javascript">
+<script>
     $(function() {
         $('#my-project-settings-form').koApplyBindings(new HQTimezoneHandler({
             override: {{ override_global_tz|BOOL }}

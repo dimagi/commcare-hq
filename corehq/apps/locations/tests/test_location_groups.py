@@ -6,6 +6,7 @@ from corehq.apps.locations.tests.test_locations import LocationTestBase
 from corehq import toggles
 from corehq.apps.groups.exceptions import CantSaveException
 from corehq.apps.users.models import CommCareUser
+from corehq.toggles import NAMESPACE_DOMAIN
 
 
 class LocationGroupTest(LocationTestBase):
@@ -30,7 +31,7 @@ class LocationGroupTest(LocationTestBase):
             domain=self.domain.name
         )
 
-        toggles.MULTIPLE_LOCATIONS_PER_USER.set("domain:{}".format(self.domain.name), True)
+        toggles.MULTIPLE_LOCATIONS_PER_USER.set(self.domain.name, True, NAMESPACE_DOMAIN)
 
     def test_group_name(self):
         # just location name for top level
@@ -140,7 +141,7 @@ class LocationGroupTest(LocationTestBase):
 
         self.assertDictEqual(
             {
-                'commcare_location_type': self.loc.location_type,
+                'commcare_location_type': self.loc.location_type_name,
                 'commcare_location_name': self.loc.name,
                 'commcare_location_foo': 'bar',
                 'commcare_location_fruit': 'banana'
@@ -149,7 +150,7 @@ class LocationGroupTest(LocationTestBase):
         )
         self.assertDictEqual(
             {
-                'commcare_location_type': self.loc.location_type,
+                'commcare_location_type': self.loc.location_type_name,
                 'commcare_location_name': self.loc.name,
                 'commcare_location_foo': 'bar',
                 'commcare_location_fruit': 'banana'

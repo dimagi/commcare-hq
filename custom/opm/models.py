@@ -1,7 +1,6 @@
 """
 Fluff IndicatorDocument definitions for the OPM reports.
 """
-from corehq.apps.change_feed import topics
 from fluff.filters import CustomFilter
 from corehq.apps.users.models import CommCareUser
 import fluff
@@ -41,8 +40,6 @@ class OpmUserFluff(fluff.IndicatorDocument):
     group_by = ('domain', )
     # Only consider active users
     document_filter = CustomFilter(is_valid_user)
-
-    kafka_topic = topics.META
 
     name = flat_field(lambda user: user.name)
 

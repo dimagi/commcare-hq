@@ -220,7 +220,7 @@ class GroupSummary(models.Model):
     Warehouse data related to a particular category of reporting
     (e.g. stock on hand summary)
     """
-    org_summary = models.ForeignKey('OrganizationSummary')
+    org_summary = models.ForeignKey('OrganizationSummary', on_delete=models.CASCADE)
     title = models.CharField(max_length=50, blank=True, null=True)  # SOH
     total = models.PositiveIntegerField(default=0)
     responded = models.PositiveIntegerField(default=0)
@@ -468,7 +468,7 @@ class ILSNotes(models.Model):
 
 class PendingReportingDataRecalculation(models.Model):
     domain = models.CharField(max_length=128)
-    sql_location = models.ForeignKey(SQLLocation)
+    sql_location = models.ForeignKey(SQLLocation, on_delete=models.CASCADE)
     type = models.CharField(max_length=128)
     data = jsonfield.JSONField()
 
@@ -478,7 +478,7 @@ class PendingReportingDataRecalculation(models.Model):
 
 class SLABConfig(models.Model):
     is_pilot = models.BooleanField(default=False)
-    sql_location = models.ForeignKey(SQLLocation, null=False, unique=True)
+    sql_location = models.OneToOneField(SQLLocation, null=False, on_delete=models.CASCADE)
     closest_supply_points = models.ManyToManyField(SQLLocation, related_name='+')
 
     class Meta:
@@ -543,29 +543,29 @@ def domain_pre_delete_receiver(domain, **kwargs):
 
 
 @receiver(location_edited)
-def location_edited_receiver(sender, loc, moved, **kwargs):
+def location_edited_receiver(sender, sql_loc, moved, previous_parent, **kwargs):
     from custom.ilsgateway.utils import last_location_group
-    config = ILSGatewayConfig.for_domain(loc.domain)
+    config = ILSGatewayConfig.for_domain(sql_loc.domain)
     if not config or not config.enabled:
         return
 
-    last_run = ReportRun.last_success(loc.domain)
+    last_run = ReportRun.last_success(sql_loc.domain)
     if not last_run:
         return
 
     if moved:
         PendingReportingDataRecalculation.objects.create(
-            domain=loc.domain,
+            domain=sql_loc.domain,
             type='parent_change',
-            sql_location=loc.sql_location,
-            data={'previous_parent': loc.previous_parents[-1], 'current_parent': loc.parent_id}
+            sql_location=sql_loc,
+            data={'previous_parent': previous_parent, 'current_parent': sql_loc.parent_location_id}
         )
 
-    group = last_location_group(loc)
-    if not loc.sql_location.location_type.administrative and group != loc.metadata['group']:
+    group = last_location_group(sql_loc)
+    if not sql_loc.location_type.administrative and group != sql_loc.metadata['group']:
         PendingReportingDataRecalculation.objects.create(
-            domain=loc.domain,
+            domain=sql_loc.domain,
             type='group_change',
-            sql_location=loc.sql_location,
-            data={'previous_group': group, 'current_group': loc.metadata['group']}
+            sql_location=sql_loc,
+            data={'previous_group': group, 'current_group': sql_loc.metadata['group']}
         )

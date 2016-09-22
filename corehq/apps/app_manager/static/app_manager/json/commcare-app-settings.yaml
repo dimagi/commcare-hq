@@ -125,6 +125,7 @@
   default: false
   since: '2.8'
   preview: true
+  disable_if_true: true
 
 - id: translation_strategy
   name: 'Translations Strategy'

@@ -9,7 +9,7 @@
         {% compress css %}
         <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/style.less' %}"/>
         {% endcompress %}
-        <script type="text/javascript" src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
         {% include 'style/includes/core_libraries.html' %}
         {% include "style/includes/ko.html" %}
         <style>
@@ -431,7 +431,7 @@
                 $(window).blur(chat_window_view_model.leave_focus);
                 chat_window_view_model.update_last_read_message();
                 chat_window_view_model.update_messages_timeout();
-                $("#text_box").bind("paste", chat_window_view_model.update_message_length);
+                $("#text_box").on("paste", chat_window_view_model.update_message_length);
                 $("#text_box").keyup(chat_window_view_model.update_message_length);
                 resize_messages();
             });

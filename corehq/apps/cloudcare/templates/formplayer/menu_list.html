@@ -1,49 +1,62 @@
 {% load hq_shared_tags %}
 
 <script type="text/template" id="menu-view-list-template">
-    <p><h2><%- title %></h2></p>
-    <table class="table table-hover table-striped table-bordered">
-        <tbody>
-        </tbody>
+  <div class="module-menu-container">
+    <div class="page-header menu-header">
+      <h1 class="page-title"><%- title %></h1>
+    </div>
+    <table class="table module-table">
+      <tbody>
+      </tbody>
     </table>
+  </div>
 </script>
 
 <script type="text/template" id="menu-view-item-audio-template">
-    <td class="col-sm-2">
+    <td class="module-column module-column-icon">
         <% if (imageUrl) { %>
-        <img class="module-icon" src="<%- imageUrl %>"/>
+          <div class="module-icon-image" style="background-image: url('<%- imageUrl %>');"></div>
         <% } else { %>
-        <i class="fa fa-pencil fa-4x"></i>
+          <div class="module-icon-container">
+            <i class="fa fa-pencil module-icon" aria-hidden="true"></i>
+          </div>
         <% } %>
     </td>
-    <td class="col-sm-10">
-        <div class="row">
-            <div class="col-sm-6">
-                <h3>
-                    <%- displayText ? displayText : "" %>
-                </h3>
-            </div>
-            <div class="col-sm-6">
-                <audio controls>
-                    <source src="<%- audioUrl %>" type="audio/mpeg">
-                </audio>
-            </div>
+    <td class="module-column module-column-name module-column-name-audio">
+        <h3><%- displayText ? displayText : "" %></h3>
+        <div class="module-audio-controls-container">
+          <audio class="js-module-audio">
+              <source src="<%- audioUrl %>" type="audio/mpeg">
+          </audio>
+          <div class="module-audio-control module-audio-play js-module-audio-play"><i class="fa fa-volume-up module-audio-icon js-module-audio-icon"></i></div>
+          <div class="module-audio-control module-audio-pause js-module-audio-pause hide"><i class="fa fa-pause module-audio-icon js-module-audio-icon"></i></div>
         </div>
     </td>
 </script>
 
 <script type="text/template" id="menu-view-item-template">
-    <td class="col-sm-2">
+    <td class="module-column module-column-icon">
         <% if (imageUrl) { %>
-        <img class="module-icon" src="<%- imageUrl %>"/>
+        <div class="module-icon-image" style="background-image: url('<%- imageUrl %>');"></div>
         <% } else { %>
+          <div class="module-icon-container">
             <% if (navState === "JUMP") { %>
-                <i class="fa fa-pencil fa-4x"></i>
+                <i class="fa fa-pencil module-icon" aria-hidden="true"></i>
             <% } else { %>
-                <i class="fa fa-folder-open fa-4x" aria-hidden="true"></i>
+                <i class="fa fa-folder module-icon" aria-hidden="true"></i>
             <% } %>
+          </div>
         <% } %>
     </td>
-    <td class="col-sm-10">
-        <h3><%- displayText ? displayText : "" %></h3></td>
+    <td class="module-column module-column-name">
+        <h3><%- displayText ? displayText : "" %></h3>
+    </td>
+</script>
+
+<script type="text/template" id="breadcrumb-item-template">
+    <%= data %>
+</script>
+
+<script type="text/template" id="breadcrumb-list-template">
+    <ol class="breadcrumb"></ol>
 </script>

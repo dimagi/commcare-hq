@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from django.conf import settings
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 
 from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.models import INCOMING, OUTGOING
@@ -36,7 +36,7 @@ def bootstrap_smsgh_gateway(apps=None):
     log_smsbillables_info("Updated SMSGH gateway fees.")
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "bootstrap SMSGH backend gateway fees"
     args = ""
     label = ""

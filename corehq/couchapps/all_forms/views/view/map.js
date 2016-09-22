@@ -40,23 +40,13 @@ function(doc) {
             username: get_username(doc)
         };
 
-        var times = {
-            completion: completion_time,
-            submission: submission_time
-        };
         if (xmlns) {
-            for (var status in times) {
-                if (times.hasOwnProperty(status)) {
-                    emit([status,                   doc.domain, times[status]], emit_entry);
-                    emit([status+" xmlns",          doc.domain, xmlns,      times[status]], emit_entry);
-                    emit([status+" app",            doc.domain, app_id,     times[status]], emit_entry);
-                    emit([status+" user",           doc.domain, user_id,    times[status]], emit_entry);
-                    emit([status+" app user",       doc.domain, app_id, user_id, times[status]], emit_entry);
-                    emit([status+" xmlns app",      doc.domain, xmlns, app_id,  times[status]], emit_entry);
-                    emit([status+" xmlns user",     doc.domain, xmlns, user_id, times[status]], emit_entry);
-                    emit([status+" xmlns app user", doc.domain, xmlns, app_id, user_id, times[status]], emit_entry);
-                }
-            }
+            emit(['submission', doc.domain, submission_time], emit_entry);
+            emit(['submission xmlns', doc.domain, xmlns, submission_time], emit_entry);
+            emit(['submission app', doc.domain, app_id, submission_time], emit_entry);
+            emit(['submission user', doc.domain, user_id, submission_time], emit_entry);
+            emit(['submission xmlns app', doc.domain, xmlns, app_id, submission_time], emit_entry);
+            emit(['submission xmlns user', doc.domain, xmlns, user_id, submission_time], emit_entry);
         }
     }
 }

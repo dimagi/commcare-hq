@@ -25,7 +25,7 @@ Ideally, you should *avoid* heavily subclassing `StaticGuidedTour`, as that will
 **2) Create the config for the tour in `tour/config/my_tour.html`**
 
 ```
-<script type="text/javascript">
+<script>
     $(function () {
         var form_tour = new Tour({
             name: '{{ request.guided_tour.slug }}',

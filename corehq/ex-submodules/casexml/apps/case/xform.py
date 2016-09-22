@@ -103,21 +103,7 @@ def process_cases_with_casedb(xforms, case_db, config=None):
     cases = case_processing_result.cases
     xform = xforms[0]
 
-    # handle updating the sync records for apps that use sync mode
-    try:
-        relevant_log = xform.get_sync_token()
-    except ResourceNotFound:
-        if LOOSE_SYNC_TOKEN_VALIDATION.enabled(xform.domain):
-            relevant_log = None
-        else:
-            raise
-
-    if relevant_log:
-        # in reconciliation mode, things can be unexpected
-        relevant_log.strict = config.strict_asserts
-        from casexml.apps.case.util import update_sync_log_with_checks
-        update_sync_log_with_checks(relevant_log, xform, cases, case_db,
-                                    case_id_blacklist=config.case_id_blacklist)
+    _update_sync_logs(xform, case_db, config, cases)
 
     try:
         cases_received.send(sender=None, xform=xform, cases=cases)
@@ -135,6 +121,24 @@ def process_cases_with_casedb(xforms, case_db, config=None):
 
     case_processing_result.set_cases(cases)
     return case_processing_result
+
+
+def _update_sync_logs(xform, case_db, config, cases):
+    # handle updating the sync records for apps that use sync mode
+    try:
+        relevant_log = xform.get_sync_token()
+    except ResourceNotFound:
+        if LOOSE_SYNC_TOKEN_VALIDATION.enabled(xform.domain):
+            relevant_log = None
+        else:
+            raise
+
+    if relevant_log:
+        # in reconciliation mode, things can be unexpected
+        relevant_log.strict = config.strict_asserts
+        from casexml.apps.case.util import update_sync_log_with_checks
+        update_sync_log_with_checks(relevant_log, xform, cases, case_db,
+                                    case_id_blacklist=config.case_id_blacklist)
 
 
 class CaseProcessingConfig(object):
@@ -170,10 +174,89 @@ def _get_or_update_cases(xforms, case_db):
     """
     domain = getattr(case_db, 'domain', None)
     touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, xforms)
+    _validate_indices(case_db, [case_update_meta.case for case_update_meta in touched_cases.values()])
+    dirtiness_flags = _get_all_dirtiness_flags_from_cases(case_db, touched_cases)
+    extensions_to_close = get_all_extensions_to_close(domain, touched_cases.values())
+    return CaseProcessingResult(
+        domain,
+        [update.case for update in touched_cases.values()],
+        dirtiness_flags,
+        extensions_to_close
+    )
 
-    # once we've gotten through everything, validate all indices
-    # and check for new dirtiness flags
-    def _validate_indices(case):
+
+def _get_all_dirtiness_flags_from_cases(case_db, touched_cases):
+    # process the temporary dirtiness flags first so that any hints for real dirtiness get overridden
+    dirtiness_flags = list(_get_dirtiness_flags_for_reassigned_case(touched_cases.values()))
+    for case_update_meta in touched_cases.values():
+        dirtiness_flags += list(_get_dirtiness_flags_for_outgoing_indices(case_db, case_update_meta.case))
+    dirtiness_flags += list(_get_dirtiness_flags_for_child_cases(
+        case_db, [meta.case for meta in touched_cases.values()])
+    )
+    return dirtiness_flags
+
+
+def _get_dirtiness_flags_for_outgoing_indices(case_db, case, tree_owners=None):
+    """ if the outgoing indices touch cases owned by another user this cases owner is dirty """
+    if tree_owners is None:
+        tree_owners = set()
+
+    extension_indices = [index for index in case.indices if index.relationship == CASE_INDEX_EXTENSION]
+
+    unowned_host_cases = []
+    for index in extension_indices:
+        host_case = case_db.get(index.referenced_id)
+        if (
+            host_case
+            and host_case.owner_id == UNOWNED_EXTENSION_OWNER_ID
+            and host_case not in unowned_host_cases
+        ):
+            unowned_host_cases.append(host_case)
+
+    owner_ids = {case_db.get(index.referenced_id).owner_id
+                 for index in case.indices if case_db.get(index.referenced_id)} | tree_owners
+    potential_clean_owner_ids = owner_ids | set([UNOWNED_EXTENSION_OWNER_ID])
+    more_than_one_owner_touched = len(owner_ids) > 1
+    touches_different_owner = len(owner_ids) == 1 and case.owner_id not in potential_clean_owner_ids
+
+    if (more_than_one_owner_touched or touches_different_owner):
+        yield DirtinessFlag(case.case_id, case.owner_id)
+        if extension_indices:
+            # If this case is an extension, each of the touched cases is also dirty
+            for index in case.indices:
+                referenced_case = case_db.get(index.referenced_id)
+                yield DirtinessFlag(referenced_case.case_id, referenced_case.owner_id)
+
+    if case.owner_id != UNOWNED_EXTENSION_OWNER_ID:
+        tree_owners.add(case.owner_id)
+    for unowned_host_case in unowned_host_cases:
+        # A host case of this extension is unowned, which means it could potentially touch an owned case
+        # Check these unowned cases' outgoing indices and mark dirty if appropriate
+        for dirtiness_flag in _get_dirtiness_flags_for_outgoing_indices(case_db, unowned_host_case,
+                                                                        tree_owners=tree_owners):
+            yield dirtiness_flag
+
+
+def _get_dirtiness_flags_for_child_cases(case_db, cases):
+    child_cases = case_db.get_reverse_indexed_cases([c.case_id for c in cases])
+    case_owner_map = dict((case.case_id, case.owner_id) for case in cases)
+    for child_case in child_cases:
+        for index in child_case.indices:
+            if (index.referenced_id in case_owner_map
+                    and child_case.owner_id != case_owner_map[index.referenced_id]):
+                yield DirtinessFlag(child_case.case_id, child_case.owner_id)
+
+
+def _get_dirtiness_flags_for_reassigned_case(case_metas):
+    # for reassigned cases, we mark them temporarily dirty to allow phones to sync
+    # the latest changes. these will get cleaned up when the weekly rebuild triggers
+    for case_update_meta in case_metas:
+        if _is_change_of_ownership(case_update_meta.previous_owner_id, case_update_meta.case.owner_id):
+            yield DirtinessFlag(case_update_meta.case.case_id, case_update_meta.previous_owner_id)
+
+
+def _validate_indices(case_db, cases):
+    for case in cases:
         if case.indices:
             for index in case.indices:
                 # call get and not doc_exists to force domain checking
@@ -187,80 +270,6 @@ def _get_or_update_cases(xforms, case_db):
                         index.referenced_id,
                     )
 
-    def _get_dirtiness_flags_for_outgoing_indices(case, tree_owners=None):
-        """ if the outgoing indices touch cases owned by another user this cases owner is dirty """
-        if tree_owners is None:
-            tree_owners = set()
-
-        extension_indices = [index for index in case.indices if index.relationship == CASE_INDEX_EXTENSION]
-
-        unowned_host_cases = []
-        for index in extension_indices:
-            host_case = case_db.get(index.referenced_id)
-            if (
-                host_case
-                and host_case.owner_id == UNOWNED_EXTENSION_OWNER_ID
-                and host_case not in unowned_host_cases
-            ):
-                unowned_host_cases.append(host_case)
-
-        owner_ids = {case_db.get(index.referenced_id).owner_id
-                     for index in case.indices if case_db.get(index.referenced_id)} | tree_owners
-        potential_clean_owner_ids = owner_ids | set([UNOWNED_EXTENSION_OWNER_ID])
-        more_than_one_owner_touched = len(owner_ids) > 1
-        touches_different_owner = len(owner_ids) == 1 and case.owner_id not in potential_clean_owner_ids
-
-        if (more_than_one_owner_touched or touches_different_owner):
-            yield DirtinessFlag(case.case_id, case.owner_id)
-            if extension_indices:
-                # If this case is an extension, each of the touched cases is also dirty
-                for index in case.indices:
-                    referenced_case = case_db.get(index.referenced_id)
-                    yield DirtinessFlag(referenced_case.case_id, referenced_case.owner_id)
-
-        if case.owner_id != UNOWNED_EXTENSION_OWNER_ID:
-            tree_owners.add(case.owner_id)
-        for unowned_host_case in unowned_host_cases:
-            # A host case of this extension is unowned, which means it could potentially touch an owned case
-            # Check these unowned cases' outgoing indices and mark dirty if appropriate
-            for dirtiness_flag in _get_dirtiness_flags_for_outgoing_indices(unowned_host_case,
-                                                                            tree_owners=tree_owners):
-                yield dirtiness_flag
-
-    def _get_dirtiness_flags_for_child_cases(cases):
-        child_cases = case_db.get_reverse_indexed_cases([c.case_id for c in cases])
-        case_owner_map = dict((case.case_id, case.owner_id) for case in cases)
-        for child_case in child_cases:
-            for index in child_case.indices:
-                if (index.referenced_id in case_owner_map
-                        and child_case.owner_id != case_owner_map[index.referenced_id]):
-                    yield DirtinessFlag(child_case.case_id, child_case.owner_id)
-
-    def _get_dirtiness_flags_for_reassigned_case(case_metas):
-        # for reassigned cases, we mark them temporarily dirty to allow phones to sync
-        # the latest changes. these will get cleaned up when the weekly rebuild triggers
-        for case_update_meta in case_metas:
-            if _is_change_of_ownership(case_update_meta.previous_owner_id, case_update_meta.case.owner_id):
-                yield DirtinessFlag(case_update_meta.case.case_id, case_update_meta.previous_owner_id)
-
-    dirtiness_flags = []
-    extensions_to_close = set()
-
-    # process the temporary dirtiness flags first so that any hints for real dirtiness get overridden
-    dirtiness_flags += list(_get_dirtiness_flags_for_reassigned_case(touched_cases.values()))
-    for case_update_meta in touched_cases.values():
-        _validate_indices(case_update_meta.case)
-        extensions_to_close = extensions_to_close | get_extensions_to_close(case_update_meta.case, domain)
-        dirtiness_flags += list(_get_dirtiness_flags_for_outgoing_indices(case_update_meta.case))
-    dirtiness_flags += list(_get_dirtiness_flags_for_child_cases([meta.case for meta in touched_cases.values()]))
-
-    return CaseProcessingResult(
-        domain,
-        [update.case for update in touched_cases.values()],
-        dirtiness_flags,
-        extensions_to_close
-    )
-
 
 def _is_change_of_ownership(previous_owner_id, next_owner_id):
     return (
@@ -268,6 +277,13 @@ def _is_change_of_ownership(previous_owner_id, next_owner_id):
         and previous_owner_id != UNOWNED_EXTENSION_OWNER_ID
         and previous_owner_id != next_owner_id
     )
+
+
+def get_all_extensions_to_close(domain, case_updates):
+    extensions_to_close = set()
+    for case_update_meta in case_updates:
+        extensions_to_close = extensions_to_close | get_extensions_to_close(case_update_meta.case, domain)
+    return extensions_to_close
 
 
 def get_extensions_to_close(case, domain):
@@ -327,16 +343,20 @@ def extract_case_blocks(doc, include_path=False):
     return [struct if include_path else struct.caseblock for struct in _extract_case_blocks(form)]
 
 
-def _extract_case_blocks(data, path=None):
+def _extract_case_blocks(data, path=None, form_id=Ellipsis):
     """
     helper for extract_case_blocks
 
     data must be json representing a node in an xform submission
     """
+    from corehq.form_processor.utils import extract_meta_instance_id
+    if form_id is Ellipsis:
+        form_id = extract_meta_instance_id(data)
+
     path = path or []
     if isinstance(data, list):
         for item in data:
-            for case_block in _extract_case_blocks(item, path=path):
+            for case_block in _extract_case_blocks(item, path=path, form_id=form_id):
                 yield case_block
     elif isinstance(data, dict) and not is_device_report(data):
         for key, value in data.items():
@@ -351,10 +371,11 @@ def _extract_case_blocks(data, path=None):
                 for case_block in case_blocks:
                     if has_case_id(case_block):
                         validate_phone_datetime(
-                            case_block.get('@date_modified'), none_ok=True)
+                            case_block.get('@date_modified'), none_ok=True, form_id=form_id
+                        )
                         yield CaseBlockWithPath(caseblock=case_block, path=path)
             else:
-                for case_block in _extract_case_blocks(value, path=new_path):
+                for case_block in _extract_case_blocks(value, path=new_path, form_id=form_id):
                     yield case_block
 
 

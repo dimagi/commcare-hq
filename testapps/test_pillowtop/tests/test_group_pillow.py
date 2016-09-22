@@ -3,7 +3,7 @@ from django.test import TestCase
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed.document_types import GROUP, change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
-from corehq.apps.change_feed.tests.utils import get_current_kafka_seq
+from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.es import GroupES
 from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests.test_utils import delete_all_groups
@@ -15,10 +15,6 @@ from pillowtop.es_utils import initialize_index
 
 
 class GroupPillowTest(TestCase):
-    dependent_apps = [
-        'corehq.couchapps',
-        'corehq.apps.groups'
-    ]
 
     def setUp(self):
         self.elasticsearch = get_es_new()
@@ -38,7 +34,7 @@ class GroupPillowTest(TestCase):
         group.save()
 
         # send to kafka
-        since = get_current_kafka_seq(GROUP)
+        since = get_topic_offset(GROUP)
         change_meta = change_meta_from_doc(
             document=group.to_json(),
             data_source_type=data_sources.COUCH,

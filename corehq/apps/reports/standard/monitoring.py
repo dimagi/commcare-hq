@@ -10,8 +10,6 @@ from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
 from corehq.apps.es.aggregations import (
     TermsAggregation,
-    RangeAggregation,
-    AggregationRange,
     FilterAggregation,
     MissingAggregation,
 )
@@ -34,6 +32,7 @@ from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport
 from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter
+from corehq.apps.reports.filters.select import CaseTypeFilter
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.models import HQUserType
@@ -43,6 +42,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
+from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
@@ -152,6 +152,27 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     emailable = True
     description = ugettext_noop("Followup rates on active cases.")
     is_cacheable = True
+    ajax_pagination = True
+
+    @property
+    def shared_pagination_GET_params(self):
+        params = [
+            dict(
+                name=EMWF.slug,
+                value=EMWF.get_value(self.request, self.domain)),
+            dict(
+                name=CaseTypeFilter.slug,
+                value=CaseTypeFilter.get_value(self.request, self.domain)),
+            dict(
+                name='milestone',
+                value=self.request.GET.get('milestone')
+            ),
+            dict(
+                name='landmark',
+                value=self.request.GET.get('landmark')
+            )
+        ]
+        return params
 
     @property
     def landmark_columns(self):
@@ -196,7 +217,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         landmarks_param = landmarks_param if isinstance(landmarks_param, list) else []
         landmarks_param = [param for param in landmarks_param if isinstance(param, int)]
         landmarks = landmarks_param if landmarks_param else self._default_landmarks
-        return [datetime.timedelta(days=l) for l in landmarks]
+        return [('landmark_' + str(idx), datetime.timedelta(days=l)) for idx, l in enumerate(landmarks)]
 
     _default_milestone = 120
 
@@ -224,15 +245,21 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         return datetime.datetime.utcnow()
 
     @property
+    def total_records(self):
+        return len(self.user_ids)
+
+    @property
     def headers(self):
 
         def make_column(title, help_text, num_days):
             return DataTablesColumn(title, sort_type=DTSortType.NUMERIC,
-                                    help_text=help_text.format(num_days))
+                                    help_text=help_text.format(num_days),
+                                    sortable=False if title == "Proportion" else True)
+
 
         columns = [DataTablesColumn(_("Users"))]
 
-        for landmark in self.landmarks:
+        for __, landmark in self.landmarks:
             columns.append(DataTablesColumnGroup(
                 _("Cases in Last {} Days").format(landmark.days) if landmark else _("Ever"),
                 *[make_column(title, help_text, landmark.days)
@@ -265,94 +292,135 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         return self.users_by_id.keys()
 
     @property
-    def rows(self):
-        es_results = self.es_queryset()
-        buckets = {user_id: bucket for user_id, bucket in es_results.aggregations.users.buckets_dict.items()}
-        if self.missing_users:
-            buckets[None] = es_results.aggregations.missing_users.bucket
-        rows = []
-        for user_id, user in self.users_by_id.items():
-            bucket = buckets.get(user_id, None)
-            rows.append(self.Row(self, user, bucket))
-
-        def format_row(row):
-            cells = [row.header()]
-            total_touched = row.total_touched_count()
-
-            def add_numeric_cell(text, value=None):
-                if value is None:
-                    try:
-                        value = int(text)
-                    except ValueError:
-                        value = text
-                cells.append(util.format_datatables_data(text=text, sort_key=value))
-
-            for landmark in self.landmarks:
-                landmark_key = unicode(landmark.days)
-
-                modified = row.modified_count(landmark_key)
-                active = row.active_count(landmark_key)
-                closed = row.closed_count(landmark_key)
-
-                try:
-                    p_val = float(modified) * 100. / float(total_touched)
-                    proportion = '%.f%%' % p_val
-                except ZeroDivisionError:
-                    p_val = None
-                    proportion = '--'
-
-                add_numeric_cell(modified, modified)
-                add_numeric_cell(active, active)
-                add_numeric_cell(closed, closed)
-                add_numeric_cell(proportion, p_val)
-
-            add_numeric_cell(row.total_active_count())
-            add_numeric_cell(row.total_inactive_count())
-            return cells
-
-        self.total_row = format_row(self.TotalRow(rows, _("All Users")))
-        return map(format_row, rows)
+    @memoized
+    def paginated_users(self):
+        if self.sort_column is None:
+            return sorted(
+                self.all_users, key=lambda u: u.raw_username, reverse=self.pagination.desc
+            )[self.pagination.start:self.pagination.start + self.pagination.count]
+        return self.all_users
 
     @property
     @memoized
-    def missing_users(self):
-        return None in self.user_ids
+    def paginated_users_by_id(self):
+        return [(user.user_id, user) for user in self.paginated_users]
 
-    def es_queryset(self):
-        end_date = ServerTime(self.utc_now).phone_time(self.timezone).done()
-        milestone_start = ServerTime(self.utc_now - self.milestone).phone_time(self.timezone).done()
+    @property
+    @memoized
+    def paginated_user_ids(self):
+        return [user.user_id for user in self.paginated_users]
 
-        touched_total_aggregation = FilterAggregation(
-            'touched_total',
-            filters.AND(
-                filters.date_range('modified_on', gte=milestone_start, lt=end_date),
-            )
+    @property
+    def sort_column(self):
+        column_num = self.request_params.get('iSortCol_0', 0)
+        num_columns = self.request_params.get('iColumns', 15)
+        if column_num == 0:
+            return None  # user
+        elif column_num == (num_columns - 2):
+            return "active_total"
+        elif column_num == (num_columns - 1):
+            return "inactive_total"
+        else:
+            landmark = column_num // 4
+            sub_col = column_num % 4
+            if sub_col == 1:
+                column = ""  # this will sort by doc_count
+            elif sub_col == 2:
+                column = "active"
+            elif sub_col == 3:
+                column = "closed"
+            else:
+                return None  # Can't actually select this in the UI
+
+        if column:
+            return "landmark_%d>%s" % (landmark, column)
+        else:
+            return "landmark_%d" % (landmark,)
+
+    @property
+    def should_sort_by_username(self):
+        return self.request_params.get('iSortCol_0', 0) == 0
+
+    def _format_row(self, row):
+        cells = [row.header()]
+        total_touched = row.total_touched_count()
+
+        for landmark_key, landmark in self.landmarks:
+            modified = row.modified_count(landmark_key)
+            active = row.active_count(landmark_key)
+            closed = row.closed_count(landmark_key)
+
+            try:
+                p_val = float(modified) * 100. / float(total_touched)
+                proportion = '%.f%%' % p_val
+            except ZeroDivisionError:
+                p_val = None
+                proportion = '--'
+
+            cells.append(modified)
+            cells.append(active)
+            cells.append(closed)
+            cells.append(proportion)
+
+        cells.append(row.total_active_count())
+        cells.append(row.total_inactive_count())
+        return cells
+
+    @property
+    def rows(self):
+        es_results = self.es_queryset(
+            user_ids=self.paginated_user_ids,
+            size=self.pagination.start + self.pagination.count
         )
+        buckets = es_results.aggregations.users.buckets_list
+        if self.missing_users:
+            buckets[None] = es_results.aggregations.missing_users.bucket
+        rows = []
+        for bucket in buckets:
+            user = self.users_by_id[bucket.key]
+            rows.append(self.Row(self, user, bucket))
 
-        active_total_aggregation = FilterAggregation(
-            'active_total',
-            filters.AND(
-                filters.date_range('modified_on', gte=milestone_start, lt=end_date),
-                filters.term('closed', False))
-        )
+        if self.should_sort_by_username:
+            # ES handles sorting for all other columns
+            rows.sort(key=lambda row: row.user)
 
-        inactive_total_aggregation = FilterAggregation(
-            'inactive_total',
-            filters.AND(
-                filters.date_range('modified_on', lt=milestone_start),
-                filters.term('closed', False))
-        )
+        self.total_row = self._total_row
+        if len(rows) == self.pagination.count:
+            return map(self._format_row, rows)
+        else:
+            start = self.pagination.start
+            end = start + self.pagination.count
+            paginated_rows = rows[start:end]
+            return map(self._format_row, paginated_rows)
 
-        landmarks_aggregation = self._landmarks_aggregation(end_date)
+    @property
+    def get_all_rows(self):
+        es_results = self.es_queryset(user_ids=self.user_ids)
+        buckets = es_results.aggregations.users.buckets_list
+        if self.missing_users:
+            buckets[None] = es_results.aggregations.missing_users.bucket
+        rows = []
+        for bucket in buckets:
+            user = self.users_by_id[bucket.key]
+            rows.append(self.Row(self, user, bucket))
 
-        top_level_aggregation = (
-            TermsAggregation('users', 'user_id')
-            .aggregation(landmarks_aggregation)
-            .aggregation(touched_total_aggregation)
-            .aggregation(active_total_aggregation)
-            .aggregation(inactive_total_aggregation)
-        )
+        self.total_row = self._total_row
+        return map(self._format_row, rows)
 
+    @property
+    def _touched_total_aggregation(self):
+        return case_es.touched_total_aggregation(gte=self.milestone_start, lt=self.end_date)
+
+    @property
+    def _active_total_aggregation(self):
+        return case_es.open_case_aggregation(name='active_total', gte=self.milestone_start, lt=self.end_date)
+
+    @property
+    def _inactive_total_aggregation(self):
+        return case_es.open_case_aggregation(name='inactive_total', lt=self.milestone_start)
+
+    @property
+    def _total_row(self):
         query = (
             case_es.CaseES()
             .domain(self.domain)
@@ -364,27 +432,88 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         else:
             query = query.filter(filters.NOT(case_es.case_type('commcare-user')))
 
+        query = (
+            query
+            .aggregation(self._touched_total_aggregation)
+            .aggregation(self._active_total_aggregation)
+            .aggregation(self._inactive_total_aggregation)
+        )
+
+        query = self.add_landmark_aggregations(query, self.end_date)
+
+        return self._format_row(self.TotalRow(query.run(), _("All Users")))
+
+    @property
+    @memoized
+    def missing_users(self):
+        return None in self.user_ids
+
+    @property
+    def end_date(self):
+        return ServerTime(self.utc_now).phone_time(self.timezone).done()
+
+    @property
+    def milestone_start(self):
+        return ServerTime(self.utc_now - self.milestone).phone_time(self.timezone).done()
+
+    def es_queryset(self, user_ids, size=None):
+        top_level_aggregation = (
+            TermsAggregation('users', 'user_id')
+            .aggregation(self._touched_total_aggregation)
+            .aggregation(self._active_total_aggregation)
+            .aggregation(self._inactive_total_aggregation)
+        )
+
+        top_level_aggregation = self.add_landmark_aggregations(top_level_aggregation, self.end_date)
+
+        if size:
+            top_level_aggregation.size(size)
+
+        if self.sort_column:
+            order = "desc" if self.pagination.desc else "asc"
+            top_level_aggregation = top_level_aggregation.order(self.sort_column, order)
+
+        query = (
+            case_es.CaseES()
+            .domain(self.domain)
+            .user_ids_handle_unknown(user_ids)
+            .size(0)
+        )
+        if self.case_type:
+            query = query.case_type(self.case_type)
+        else:
+            query = query.filter(filters.NOT(case_es.case_type('commcare-user')))
+
         query = query.aggregation(top_level_aggregation)
 
         if self.missing_users:
-            query = query.aggregation(
+            missing_aggregation = (
                 MissingAggregation('missing_users', 'user_id')
-                .aggregation(landmarks_aggregation)
-                .aggregation(touched_total_aggregation)
-                .aggregation(active_total_aggregation)
-                .aggregation(inactive_total_aggregation)
+                .aggregation(self._touched_total_aggregation)
+                .aggregation(self._active_total_aggregation)
+                .aggregation(self._inactive_total_aggregation)
             )
+            missing_aggregation = self.add_landmark_aggregations(missing_aggregation, self.end_date)
+            query = query.aggregation(missing_aggregation)
 
         return query.run()
 
-    def _landmarks_aggregation(self, end_date):
-        landmarks_aggregation = RangeAggregation('landmarks', 'modified_on')
-        for landmark in self.landmarks:
-            start_date = ServerTime(self.utc_now - landmark).phone_time(self.timezone).done()
-            landmarks_aggregation.add_range(AggregationRange(start_date, end_date, key=landmark.days))
-        landmarks_aggregation.aggregation(FilterAggregation('active', filters.term('closed', False)))
-        landmarks_aggregation.aggregation(FilterAggregation('closed', filters.term('closed', True)))
-        return landmarks_aggregation
+    def add_landmark_aggregations(self, aggregation, end_date):
+        for key, landmark in self.landmarks:
+            aggregation = aggregation.aggregation(self.landmark_aggregation(key, landmark, end_date))
+        return aggregation
+
+    def landmark_aggregation(self, key, landmark, end_date):
+        start_date = ServerTime(self.utc_now - landmark).phone_time(self.timezone).done()
+        return (
+            FilterAggregation(key,
+                filters.AND(
+                    case_es.modified_range(gte=start_date, lt=end_date),
+                )
+            )
+            .aggregation(FilterAggregation('active', case_es.is_closed(False)))
+            .aggregation(FilterAggregation('closed', case_es.is_closed()))
+        )
 
     class Row(object):
 
@@ -392,53 +521,90 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             self.report = report
             self.user = user
             self.bucket = bucket
-            if bucket:
-                self.landmarks = bucket.landmarks.buckets_dict
 
         def active_count(self, landmark_key):
-            return 0 if not self.bucket else self.landmarks[landmark_key].active.doc_count
+            if not self.bucket:
+                return 0
+            else:
+                landmark = self.bucket.result.get(landmark_key, None)
+                if landmark:
+                    return landmark['active']['doc_count']
+                return 0
 
         def modified_count(self, landmark_key):
-            return 0 if not self.bucket else self.landmarks[landmark_key].doc_count
+            if not self.bucket:
+                return 0
+            else:
+                landmark = self.bucket.result.get(landmark_key, None)
+                if landmark:
+                    return landmark['doc_count']
+                return 0
 
         def closed_count(self, landmark_key):
-            return 0 if not self.bucket else self.landmarks[landmark_key].closed.doc_count
+            if not self.bucket:
+                return 0
+            else:
+                landmark = self.bucket.result.get(landmark_key, None)
+                if landmark:
+                    return landmark['closed']['doc_count']
+                return 0
 
         def total_touched_count(self):
-            return 0 if not self.bucket else self.bucket.touched_total.doc_count
+            if not self.bucket:
+                return 0
+            else:
+                landmark = self.bucket.result.get('touched_total', None)
+                if landmark:
+                    return landmark['doc_count']
+                return 0
 
         def total_inactive_count(self):
-            return 0 if not self.bucket else self.bucket.inactive_total.doc_count
+            if not self.bucket:
+                return 0
+            else:
+                landmark = self.bucket.result.get('inactive_total', None)
+                if landmark:
+                    return landmark['doc_count']
+                return 0
 
         def total_active_count(self):
-            return 0 if not self.bucket else self.bucket.active_total.doc_count
+            if not self.bucket:
+                return 0
+            else:
+                landmark = self.bucket.result.get('active_total', None)
+                if landmark:
+                    return landmark['doc_count']
+                return 0
 
         def header(self):
-            return self.report.get_user_link(self.user)
+            return self.report.get_user_link(self.user)['html']
 
     class TotalRow(object):
 
-        def __init__(self, rows, header):
-            self.rows = rows
+        def __init__(self, es_results, header):
             self._header = header
-
-        def active_count(self, landmark_key):
-            return sum([row.active_count(landmark_key) for row in self.rows])
+            self.total_touched_bucket = es_results.aggregations.touched_total
+            self.total_active_bucket = es_results.aggregations.active_total
+            self.total_inactive_bucket = es_results.aggregations.inactive_total
+            self.aggregations = es_results.aggregations
 
         def total_touched_count(self):
-            return sum([row.total_touched_count() for row in self.rows])
+            return self.total_touched_bucket.doc_count
 
         def total_inactive_count(self):
-            return sum([row.total_inactive_count() for row in self.rows])
+            return self.total_inactive_bucket.doc_count
 
         def total_active_count(self):
-            return sum([row.total_active_count() for row in self.rows])
+            return self.total_active_bucket.doc_count
+
+        def active_count(self, landmark_key):
+            return getattr(self.aggregations, landmark_key).result['active']['doc_count']
 
         def modified_count(self, landmark_key):
-            return sum([row.modified_count(landmark_key) for row in self.rows])
+            return getattr(self.aggregations, landmark_key).doc_count
 
         def closed_count(self, landmark_key):
-            return sum([row.closed_count(landmark_key) for row in self.rows])
+            return getattr(self.aggregations, landmark_key).result['closed']['doc_count']
 
         def header(self):
             return self._header
@@ -1074,7 +1240,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
             else:
                 all_times.append(
                     PhoneTime(
-                        string_to_utc_datetime(form['received_on']),
+                        string_to_utc_datetime(safe_index(form, ['form', 'meta', 'timeEnd'])),
                         self.timezone,
                     )
                     .user_time(self.timezone)

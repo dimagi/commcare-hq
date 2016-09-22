@@ -110,6 +110,7 @@ def get_product_id_name_mapping(domain):
 
 
 def get_product_ids_for_program(domain, program_id):
-    return SQLProduct.objects.filter(
+    qs = SQLProduct.objects.filter(
         domain=domain, program_id=program_id
     ).values_list('product_id', flat=True)
+    return list(qs)

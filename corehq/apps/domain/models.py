@@ -7,7 +7,7 @@ from django.template.loader import render_to_string
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.domain.exceptions import DomainDeleteException
-from corehq.apps.tzmigration import set_migration_complete
+from corehq.apps.tzmigration.api import set_migration_complete
 from corehq.dbaccessors.couchapps.all_docs import \
     get_all_doc_ids_for_domain_grouped_by_db
 from corehq.util.soft_assert import soft_assert
@@ -102,7 +102,6 @@ class UpdatableSchema():
 
 
 class Deployment(DocumentSchema, UpdatableSchema):
-    date = DateTimeProperty()
     city = StringProperty()
     countries = StringListProperty()
     region = StringProperty()  # e.g. US, LAC, SA, Sub-saharn Africa, East Africa, West Africa, Southeast Asia)
@@ -146,7 +145,6 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
         choices=['', "plus", "community", "standard", "pro", "advanced", "enterprise"],
         default="community"
     )
-    services = StringProperty(choices=["", "basic", "plus", "full", "custom"], default="")
     initiative = StringListProperty()
     workshop_region = StringProperty()
     project_state = StringProperty(choices=["", "POC", "transition", "at-scale"], default="")
@@ -177,6 +175,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
         default=AMPLIFIES_NOT_SET
     )
     business_unit = StringProperty(choices=BUSINESS_UNITS + [""], default="")
+    data_access_threshold = IntegerProperty()
 
 
 class CaseDisplaySettings(DocumentSchema):
@@ -304,6 +303,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     send_to_duplicated_case_numbers = BooleanProperty(default=True)
     enable_registration_welcome_sms_for_case = BooleanProperty(default=False)
     enable_registration_welcome_sms_for_mobile_worker = BooleanProperty(default=False)
+    sms_survey_date_format = StringProperty()
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
@@ -321,6 +321,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     attribution_notes = StringProperty()
     publisher = StringProperty(choices=["organization", "user"], default="user")
     yt_id = StringProperty()
+    snapshot_head = BooleanProperty(default=False)
 
     deployment = SchemaProperty(Deployment)
 
@@ -342,14 +343,16 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     # to be eliminated from projects and related documents when they are copied for the exchange
     _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'countries', 'region', 'customer_type')
 
-    default_mobile_worker_redirect = StringProperty(default=None)
     last_modified = DateTimeProperty(default=datetime(2015, 1, 1))
 
     # when turned on, use SECURE_TIMEOUT for sessions of users who are members of this domain
     secure_sessions = BooleanProperty(default=False)
 
     two_factor_auth = BooleanProperty(default=False)
+    strong_mobile_passwords = BooleanProperty(default=False)
 
+    # There is no longer a way to request a report builder trial, so this property should be removed in the near
+    # future. (Keeping it for now in case a user has requested a trial and but has not yet been granted it)
     requested_report_builder_trial = StringListProperty()
     requested_report_builder_subscription = StringListProperty()
 
@@ -577,8 +580,10 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         generate a new, unique name. Throws exception if it can't figure out
         a name, which shouldn't happen unless max_length is absurdly short.
         '''
-
-        name = name_to_url(hr_name, "project")
+        from corehq.apps.domain.utils import get_domain_url_slug
+        name = get_domain_url_slug(hr_name, max_length=max_length)
+        if not name:
+            raise NameUnavailableException
         if Domain.get_by_name(name):
             prefix = name
             while len(prefix):
@@ -675,6 +680,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
             new_domain.is_test = "none"
             new_domain.internal = InternalProperties()
             new_domain.creating_user = user.username if user else None
+            new_domain.date_created = datetime.utcnow()
 
             for field in self._dirty_fields:
                 if hasattr(new_domain, field):
@@ -822,18 +828,24 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
             except NameUnavailableException:
                 return None
             copy.is_snapshot = True
+            head = self.snapshots(limit=1).first()
+            if head and head.snapshot_head:
+                head.snapshot_head = False
+                head.save()
+            copy.snapshot_head = True
             copy.snapshot_time = datetime.utcnow()
             del copy.deployment
             copy.save()
             return copy
 
-    def snapshots(self):
+    def snapshots(self, **view_kwargs):
         return Domain.view('domain/snapshots',
             startkey=[self._id, {}],
             endkey=[self._id],
             include_docs=True,
             reduce=False,
-            descending=True
+            descending=True,
+            **view_kwargs
         )
 
     @memoized

@@ -47,6 +47,8 @@
             var parentModules = {{ parent_modules|JSON }};
             var fixture_columns_by_type = {{ fixture_columns_by_type|JSON }};
             var searchProperties = {{ search_properties|JSON }};
+            var includeClosed = {{ include_closed|BOOL }};
+            var defaultProperties = {{ default_properties|JSON }};
 
             for (var i = 0; i < details.length; i++) {
                 var detail = details[i];
@@ -71,6 +73,8 @@
                     contextVariables: state,
                     multimedia: {{multimedia.object_map|JSON}},
                     searchProperties: searchProperties,
+                    includeClosed: includeClosed,
+                    defaultProperties: defaultProperties,
                     contextVariables: state,
                 });
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
@@ -213,19 +217,6 @@
 {% endblock %}
 
 {% block form-view %}
-    {% inline_edit_trans module.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
-    <br />
-    <inline-edit params="
-        name: 'comment',
-        id:'comment-id',
-        readOnlyClass: 'app-comment',
-        value: '{{ module.comment|escapejs }}',
-        placeholder: '{% trans "Enter module description here"|escapejs %}',
-        url: '{% url "corehq.apps.app_manager.views.edit_module_attr" domain app.id module.id 'comment' %}',
-        saveValueName: 'comment',
-        cols: 50,
-    "></inline-edit>
-    <br />
     {% include 'app_manager/partials/module_view_heading.html' %}
 <div class="tabbable">
 <ul class="nav nav-tabs" id="module-view-tabs">
@@ -362,23 +353,13 @@
                         <input type="text" name="case_label" value="{{ module.case_label|trans:langs }}" class="form-control" />
                     </div>
                 </div>
-                {% if app.application_version == '1.0' %}
-                <div class="form-group">
-                    <label class="control-label col-sm-2">
-                        {% trans "Label for Referrals" %}
-                    </label>
-                    <div class="col-sm-4">
-                        <input type="text" name="referral_label" value="{{ module.referral_label|trans:langs }}" class="form-control" />
-                    </div>
-                </div>
-                {% endif %}
             </fieldset>
             <fieldset>
                 <legend>{% trans "Advanced" %}</legend>
                 {% block case_management_advanced_fields %}
                 {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List Menu Item" DESC="An item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
                 {% include 'app_manager/partials/case_list_form_setting.html' %}
-                {% if app.application_version == '2.0' and module.module_type == 'basic' and request.project.survey_management_enabled %}
+                {% if module.module_type == 'basic' and request.project.survey_management_enabled %}
                     {% include 'app_manager/partials/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
                 {% endif %}
                 {% endblock case_management_advanced_fields %}

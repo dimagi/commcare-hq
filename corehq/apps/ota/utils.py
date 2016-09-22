@@ -8,6 +8,9 @@ from corehq.apps.users.models import CommCareUser, WebUser
 
 from .models import DemoUserRestore
 
+from dimagi.utils.web import json_response
+from corehq.apps.domain.auth import get_username_and_password_from_request, determine_authtype_from_request
+from corehq.apps.users.decorators import ensure_active_user_by_username
 
 def turn_off_demo_mode(commcare_user):
     """
@@ -157,7 +160,7 @@ def get_restore_user(domain, couch_user, as_user):
             user = WebUser.get_by_username(as_user)
             if not user:
                 return None
-            elif domain not in user.domains:
+            elif not user.is_member_of(domain):
                 return None
             restore_user = user.to_ota_restore_user(domain)
 
@@ -165,3 +168,28 @@ def get_restore_user(domain, couch_user, as_user):
         restore_user = couch_user.to_ota_restore_user(domain)
 
     return restore_user
+
+
+def handle_401_response(f):
+    """
+    Generic decorator to return better notice/message about why the authentication failed. Currently taking care of
+    only basic auth for inactive or deleted mobile user but should/can be extended for other auth methods and cases
+    :return json response with apt error_code in app_string and default response in english for missing
+    translations and status_code as 406(unacceptable), similar code needed different from 401
+    """
+    def _inner(request, domain, *args, **kwargs):
+        response = f(request, domain, *args, **kwargs)
+        if response.status_code == 401:
+            auth_type = determine_authtype_from_request(request)
+            if auth_type and auth_type == 'basic':
+                username, password = get_username_and_password_from_request(request)
+                if username:
+                    valid, message, error_code = ensure_active_user_by_username(username)
+                    if not valid:
+                        return json_response({
+                            "error": error_code,
+                            "default_response": message
+                        }, status_code=406)
+
+        return response
+    return _inner

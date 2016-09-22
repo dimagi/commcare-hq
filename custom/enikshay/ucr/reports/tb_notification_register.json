@@ -1,0 +1,412 @@
+{
+    "domains": [
+        "enikshay-test",
+        "enikshay-test-test"
+    ],
+    "data_source_table": "episode",
+    "report_id": "tb_notification_register",
+    "config": {
+        "description": "",
+        "title": "TB Notification Register (Patient Case List)",
+        "sort_expression": [],
+        "visible": false,
+        "configured_charts": [],
+        "aggregation_columns": ["doc_id"],
+        "filters": [
+            {
+                "compare_as_string": false,
+                "datatype": "string",
+                "required": false,
+                "display": "Case Open Date",
+                "field": "opened_on",
+                "type": "date",
+                "slug": "opened_on"
+            },
+            {
+                "compare_as_string": false,
+                "datatype": "string",
+                "type": "dynamic_choice_list",
+                "slug": "village",
+                "field": "person_owner_id",
+                "choice_provider": {
+                    "include_descendants": true,
+                    "type": "location"
+                },
+                "display": "Location"
+            }
+        ],
+        "columns": [
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "nikshay_id",
+                "calculate_total": false,
+                "type": "field",
+                "display": "TB Notification number/ Nikshay ID"
+            },
+            {
+                "display": "Name",
+                "type": "field",
+                "field": "person_name",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Age",
+                "type": "field",
+                "field": "age",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Sex",
+                "type": "field",
+                "field": "sex",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Complete Address",
+                "type": "field",
+                "field": "current_address",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Mobile/Landline number",
+                "type": "field",
+                "field": "mobile_number",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Type of Patient",
+                "type": "field",
+                "field": "patient_type",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Site",
+                "type": "field",
+                "field": "disease_classification",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Weight at beginning of treatment",
+                "type": "field",
+                "field": "weight",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Microbiological Confirmation Test Results - Date",
+                "type": "field",
+                "field": "diagnostic_test_requested_date",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Microbiological Confirmation Test Results - Test",
+                "type": "field",
+                "field": "diagnostic_test_type",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Microbiological Confirmation Test Results - Result",
+                "type": "field",
+                "field": "diagnostic_result",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "HIV Status",
+                "type": "field",
+                "field": "hiv_status",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Diabetes status",
+                "type": "field",
+                "field": "diabetes_status",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Date of Treatment Initiation",
+                "type": "field",
+                "field": "ip_initiation_date",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Dosage Frequency",
+                "type": "field",
+                "field": "dosage_frequency",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Follow up Smear Examinations (End of IP) - Date",
+                "type": "field",
+                "field": "endofip_test_requested_date",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Follow up Smear Examinations (End of IP) - Result",
+                "type": "field",
+                "field": "endofip_result",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Follow up Smear Examinations (End of CP) - Date",
+                "type": "field",
+                "field": "endofcp_test_requested_date",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Follow up Smear Examinations (End of CP) - Result",
+                "type": "field",
+                "field": "endofcp_result",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Treatment Outcome - Date",
+                "type": "field",
+                "field": "treatment_outcome_date",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Treatment Outcome - Result",
+                "type": "field",
+                "field": "treatment_outcome",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "ART (y/n)",
+                "type": "field",
+                "field": "initiated_on_art",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "ART Date",
+                "type": "field",
+                "field": "art_initiation_date",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Post treatment follow-up (at 6 months) - Smear",
+                "type": "field",
+                "field": "post_treatment_6_result",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Post treatment follow-up (at 12 months) - Smear",
+                "type": "field",
+                "field": "post_treatment_12_result",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Post treatment follow-up (at 18 months) - Smear",
+                "type": "field",
+                "field": "post_treatment_18_result",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Post treatment follow-up (at 24 months) - Smear",
+                "type": "field",
+                "field": "post_treatment_24_result",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Treatment Supporter Details - First Name",
+                "type": "field",
+                "field": "treatment_supporter_first_name",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Treatment Supporter Details - Last Name",
+                "type": "field",
+                "field": "treatment_supporter_last_name",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Treatment Supporter Details - Designation",
+                "type": "field",
+                "field": "treatment_supporter_designation",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            }
+        ]
+    }
+}

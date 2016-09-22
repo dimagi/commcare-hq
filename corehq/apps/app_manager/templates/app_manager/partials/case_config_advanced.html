@@ -245,7 +245,6 @@
 
 <script type="text/html" id="auto-select:usercase">
 </script>
-
 <script type="text/html" id="case-config:case-action-auto-select">
     <div class="panel-heading clickable" data-toggle="collapse"
          data-bind="attr: {href: '#' + actionType + $index()}">
@@ -288,13 +287,96 @@
     </div>
 </script>
 
+<script type="text/html" id="case-config:case-action-load-case-from-fixture">
+    <div class="panel-heading clickable" data-toggle="collapse"
+         data-bind="attr: {href: '#' + actionType + $index()}">
+        <h3 class="panel-title" data-bind="html: header"></h3>
+    </div>
+    <div class="panel-collapse collapse" data-bind="attr: {id: actionType + $index()}">
+        <div class="panel-body">
+            <button class="pull-right btn btn-danger"
+                    data-bind="openModal: 'remove-action-modal-template', visible: true">
+                <i class="fa fa-trash"></i>
+                {% trans "Remove action" %}
+            </button>
+            <div class="form-inline" data-bind="css: {'has-warning': validate()}">
+                <div class="form-group">
+                    <label>{% trans "Case Type" %}</label>
+                    <select class="form-control" data-bind="
+                        options: config.caseTypes,
+                        value: case_type,
+                        optionsCaption: 'Choose a Case Type...'
+                    "></select>
+                </div>
+                <!-- ko if: actionType == 'load'-->
+                <div class="form-group">
+                    &nbsp;
+                    <label>{% trans "Case List" %}</label>
+                    <select class="form-control" data-bind="optstr: available_modules,
+                        optstrValue: 'id',
+                        optstrText: 'module_name',
+                        value: details_module">
+                    </select>
+                </div>
+                <!-- /ko -->
+                <div class="form-group">
+                    &nbsp;
+                    <label>{% trans "Case Tag" %}</label>
+                    <input type="text" class="form-control" data-bind="value: case_tag, disable: disable_tag" />
+                </div>
+                <span class="help-block" data-bind="text: validate"></span>
+            </div>
+            <div class="help-block" data-bind="visible: !case_type">
+                {% trans "Please select a case type." %}
+            </div>
+            <div class="form-inline">
+                <div class="form-group">
+                    <label>{% trans "Case Property" %}</label>
+                    <input type="text" class="form-control" data-bind="value: load_case_from_fixture.case_property" />
+                </div>
+                <div class="form-group">
+                    <label>{% trans "Autoselect If Only One Case" %}</label>
+                    <input type="checkbox" class="form-control" data-bind="checked: load_case_from_fixture.auto_select" />
+                </div>
+            </div>
+            <div class="form-inline">
+                <div class="form-group">
+                    <label>{% trans "Fixture Nodeset" %}</label>
+                    <input type="text" class="form-control nodeset" data-bind="value: load_case_from_fixture.fixture_nodeset" />
+                </div>
+                <div class="form-group">
+                    <label>{% trans "Fixture Tag" %}</label>
+                    <input type="text" class="form-control" data-bind="value: load_case_from_fixture.fixture_tag" />
+                </div>
+                <div class="form-group">
+                    <label>{% trans "Fixture Variable" %}</label>
+                    <input type="text" class="form-control" data-bind="value: load_case_from_fixture.fixture_variable" />
+                </div>
+            </div>
+            <div class="form-inline">
+                <div class="form-group">
+                    <label>{% trans "Arbitrary Datum Function" %}</label>
+                    <input type="text" class="form-control nodeset" data-bind="value: load_case_from_fixture.arbitrary_datum_function" />
+                </div>
+                <div class="form-group">
+                    <label>{% trans "Arbitrary Datum id" %}</label>
+                    <input type="text" class="form-control" data-bind="value: load_case_from_fixture.arbitrary_datum_id" />
+                </div>
+            </div>
+            <div data-bind="visible: case_type">
+                <!-- ko template: {name: 'case-config:case-action:body'} --><!-- /ko -->
+            </div>
+        </div>
+    </div>
+</script>
+
 <div id="case-config-ko">
     <div data-bind="saveButton: saveButton"></div>
     <div data-bind="with: caseConfigViewModel">
         <div class="btn-group" data-bind="visible: actionOptions().length">
             <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <i class="fa fa-plus"></i>
-                <span>{% trans "Add Action" %}</span><span class="caret"></span>
+                <span>{% trans "Add Action" %}</span> <span class="caret"></span>
             </button>
             <ul class="dropdown-menu" role="menu" data-bind="foreach: actionOptions">
                 <!-- ko if: value === 'separator' -->
@@ -318,7 +400,10 @@
                 <!-- ko if: auto_select -->
                 <div class="panel panel-default" data-bind="template: {name: 'case-config:case-action-auto-select'}"></div>
                 <!-- /ko -->
-                <!-- ko ifnot: auto_select -->
+                <!-- ko if: load_case_from_fixture -->
+                <div class="panel panel-default" data-bind="template: {name: 'case-config:case-action-load-case-from-fixture'}"></div>
+                <!-- /ko -->
+                <!-- ko ifnot: auto_select || load_case_from_fixture -->
                 <div class="panel panel-default" data-bind="template: {name: 'case-config:case-action'}"></div>
                 <!-- /ko -->
             </div>

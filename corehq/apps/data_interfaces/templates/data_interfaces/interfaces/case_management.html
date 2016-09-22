@@ -4,7 +4,7 @@
 {% load i18n %}
 
 {% block js-inline %} {{ block.super }}
-    <script type="text/javascript">
+    <script>
     $.when(
         $.getScript("{% static 'case/js/cheapxml.js' %}"),
         $.getScript("{% static 'case/js/casexml.js' %}"),

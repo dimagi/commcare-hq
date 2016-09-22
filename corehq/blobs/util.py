@@ -11,8 +11,11 @@ class ClosingContextProxy(object):
     def __getattr__(self, name):
         return getattr(self._obj, name)
 
+    def __iter__(self):
+        return iter(self._obj)
+
     def __enter__(self):
-        return self._obj
+        return self
 
     def __exit__(self, *args):
         self._obj.close()

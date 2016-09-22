@@ -1,13 +1,16 @@
 from __future__ import absolute_import
+import re
 import sys
+from collections import defaultdict
+from contextlib import contextmanager, nested
 from cStringIO import StringIO
+from hashlib import sha1
 from itertools import chain
 from os.path import join
-from collections import defaultdict
-from contextlib import contextmanager
 
 from corehq.blobs import BlobInfo, get_blob_db
 from corehq.blobs.exceptions import AmbiguousBlobStorageError, NotFound
+from corehq.blobs.interface import SAFENAME
 from corehq.blobs.util import ClosingContextProxy, document_method
 from couchdbkit.exceptions import InvalidAttachment, ResourceNotFound
 from dimagi.ext.couchdbkit import (
@@ -50,7 +53,7 @@ class BlobMixin(Document):
         if self._id is None:
             raise ResourceNotFound(
                 "cannot manipulate attachment on unidentified document")
-        return join(_get_couchdb_name(type(self)), self._id)
+        return join(_get_couchdb_name(type(self)), safe_id(self._id))
 
     @property
     def blobs(self):
@@ -261,7 +264,7 @@ class BlobHelper(object):
         return BlobMixin.blobs.fget(self)
 
     def _blobdb_bucket(self):
-        return join(self.database.dbname, self._id)
+        return join(self.database.dbname, safe_id(self._id))
 
     def put_attachment(self, content, name=None, *args, **kw):
         if self._attachments is None and self.couch_only:
@@ -354,6 +357,16 @@ class DeferredBlobMixin(BlobMixin):
             )) for name, info in self._deferred_blobs.iteritems())
         return value
 
+    @property
+    def persistent_blobs(self):
+        """Get a dict like `blobs` containing only non-deferred items"""
+        value = super(DeferredBlobMixin, self).blobs
+        if self._deferred_blobs:
+            value = value.copy()
+            for name in self._deferred_blobs:
+                value.pop(name, None)
+        return value
+
     def put_attachment(self, content, name=None, *args, **kw):
         if self._deferred_blobs:
             self._deferred_blobs.pop(name, None)
@@ -420,6 +433,42 @@ class DeferredBlobMixin(BlobMixin):
             super(DeferredBlobMixin, self).save()
 
 
+@contextmanager
+def bulk_atomic_blobs(docs):
+    """Atomic blobs persistence to be used with ``db.bulk_save(docs)``
+
+    Blobs may be added to or deleted from objects within the context
+    body. Blobs previously added with
+    ``DeferredBlobMixin.deferred_put_attachment`` will be persisted
+    automatically. NOTE this method will persist attachments, but it
+    does not save the documents to couch. Call `db.bulk_save(docs)`
+    within the context to do that.
+
+    :param docs: A list of model objects.
+    """
+    save = lambda: None
+    contexts = [d.atomic_blobs(save) for d in docs if hasattr(d, "atomic_blobs")]
+    with nested(*contexts):
+        for doc in docs:
+            if isinstance(doc, DeferredBlobMixin) and doc._deferred_blobs:
+                for name, info in list(doc._deferred_blobs.iteritems()):
+                    doc.put_attachment(name=name, **info)
+                assert not doc._deferred_blobs, doc._deferred_blobs
+        yield
+
+
 @memoized
 def _get_couchdb_name(doc_class):
     return doc_class.get_db().dbname
+
+
+def safe_id(identifier):
+    if not SAFENAME.match(identifier):
+        identifier = u'sha1-' + sha1(identifier.encode('utf-8')).hexdigest()
+    elif SHA1_ID.match(identifier):
+        # could collide with "safe" id and should never happen anyway
+        raise ValueError("illegal doc id: {!r}".format(identifier))
+    return identifier
+
+
+SHA1_ID = re.compile("sha1-[0-9a-f]{40}$")

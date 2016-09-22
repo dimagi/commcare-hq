@@ -24,52 +24,25 @@ from .util import (
     LocationStructure,
     LocationTypeStructure,
 )
-from ..fixtures import _location_to_fixture, LocationSet, should_sync_locations, location_fixture_generator
+from ..fixtures import _location_to_fixture, LocationSet, should_sync_locations, location_fixture_generator, \
+    flat_location_fixture_generator
 from ..models import SQLLocation, LocationType, Location
-
-DEPENDENT_APPS = [
-    'auditcare',
-    'couchforms',
-    'phonelog',
-    'django_digest',
-    'casexml.apps.case',
-    'casexml.apps.phone',
-    'casexml.apps.stock',
-    'corehq.couchapps',
-    'corehq.form_processor',
-    'corehq.sql_accessors',
-    'corehq.sql_proxy_accessors',
-    'corehq.apps.commtrack',
-    'corehq.apps.consumption',
-    'corehq.apps.custom_data_fields',
-    'corehq.apps.domain',
-    'corehq.apps.hqcase',
-    'corehq.apps.fixtures',
-    'corehq.apps.groups',
-    'corehq.apps.products',
-    'corehq.apps.reminders',
-    'corehq.apps.sms',
-    'corehq.apps.smsforms',
-    'corehq.apps.tzmigration',
-    'corehq.apps.users',
-    'custom.logistics',
-    'custom.ilsgateway',
-    'custom.ewsghana',
-]
 
 
 class FixtureHasLocationsMixin(TestXmlMixin):
     root = os.path.dirname(__file__)
     file_path = ['data']
 
-    def _assert_fixture_has_locations(self, xml_name, desired_locations):
+    def _assert_fixture_has_locations(self, xml_name, desired_locations, flat=False):
         ids = {
             "{}_id".format(desired_location.lower().replace(" ", "_")): (
                 self.locations[desired_location].location_id
             )
             for desired_location in desired_locations
         }  # eg: {"massachusetts_id" = self.locations["Massachusetts"].location_id}
-        fixture = ElementTree.tostring(location_fixture_generator(self.user, V2)[0])
+
+        generator = flat_location_fixture_generator if flat else location_fixture_generator
+        fixture = ElementTree.tostring(generator(self.user, V2)[0])
         desired_fixture = self.get_xml(xml_name).format(
             user_id=self.user.user_id,
             **ids
@@ -79,7 +52,6 @@ class FixtureHasLocationsMixin(TestXmlMixin):
 
 @mock.patch.object(Domain, 'uses_locations', return_value=True)  # removes dependency on accounting
 class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
-    dependent_apps = DEPENDENT_APPS
     location_type_names = ['state', 'county', 'city']
     location_structure = [
         ('Massachusetts', [
@@ -209,6 +181,16 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
             ['Massachusetts', 'Suffolk', 'Middlesex', 'New York', 'New York City']
         )
 
+    def test_flat_sync_format(self, uses_locations):
+        with flag_enabled('SYNC_ALL_LOCATIONS'):
+            with flag_enabled('FLAT_LOCATION_FIXTURE'):
+                self._assert_fixture_has_locations(
+                    'expand_from_root_flat',
+                    ['Massachusetts', 'Suffolk', 'Middlesex', 'Boston', 'Revere', 'Cambridge',
+                     'Somerville', 'New York', 'New York City', 'Manhattan', 'Queens', 'Brooklyn'],
+                    flat=True,
+                )
+
 
 @mock.patch.object(Domain, 'uses_locations', return_value=True)  # removes dependency on accounting
 class ForkedHierarchyLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
@@ -219,7 +201,6 @@ class ForkedHierarchyLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLo
         - Region
             - Town
     """
-    dependent_apps = DEPENDENT_APPS
     location_type_structure = [
         LocationTypeStructure('state', [
             LocationTypeStructure('county', [

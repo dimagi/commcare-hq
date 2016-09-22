@@ -1,16 +1,19 @@
 import re
 from corehq.apps.sms.api import send_sms_to_verified_number
+from corehq.toggles import EMG_AND_REC_SMS_HANDLERS
 from corehq.util.translation import localize
 from custom.ilsgateway.slab.handlers.transfer import TransferHandler
 
 from custom.ilsgateway.tanzania.handlers.arrived import ArrivedHandler
 from custom.ilsgateway.tanzania.handlers.delivered import DeliveredHandler
+from custom.ilsgateway.tanzania.handlers.emg import EmergencyHandler
 from custom.ilsgateway.tanzania.handlers.help import HelpHandler
 from custom.ilsgateway.tanzania.handlers.la import LossAndAdjustment
 from custom.ilsgateway.tanzania.handlers.language import LanguageHandler
 from custom.ilsgateway.tanzania.handlers.messageinitiator import MessageInitiatior
 from custom.ilsgateway.tanzania.handlers.notdelivered import NotDeliveredHandler
 from custom.ilsgateway.tanzania.handlers.notsubmitted import NotSubmittedHandler
+from custom.ilsgateway.tanzania.handlers.rec import ReceiptHandler
 from custom.ilsgateway.tanzania.handlers.register import RegisterHandler
 from custom.ilsgateway.tanzania.handlers.soh import SOHHandler
 from custom.ilsgateway.tanzania.handlers.stockout import StockoutHandler
@@ -84,6 +87,10 @@ def handle(verified_contact, text, msg=None):
         ('trans',): TransferHandler
     }
 
+    if EMG_AND_REC_SMS_HANDLERS.enabled(domain):
+        location_needed_handlers[('emg', )] = EmergencyHandler
+        location_needed_handlers[('rec',)] = ReceiptHandler
+
     handler_class = choose_handler(keyword, location_needed_handlers)
     if handler_class and not user.location_id:
         return True
@@ -92,7 +99,6 @@ def handle(verified_contact, text, msg=None):
         handler_class = choose_handler(keyword, handlers)
 
     handler = handler_class(**params) if handler_class else None
-
     if handler:
         if args:
             return handler.handle()

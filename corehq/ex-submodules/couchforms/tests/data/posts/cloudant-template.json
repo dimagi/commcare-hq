@@ -98,7 +98,7 @@
         }
     },
     "history": [],
-    "initial_processing_complete": false,
+    "initial_processing_complete": null,
     "partial_submission": false,
     "received_on": "2013-09-21T03:52:24Z",
     "xmlns": "http://openrosa.org/formdesigner/266AD1A0-9EAE-483E-B4B2-4E85D6CA8D4B",

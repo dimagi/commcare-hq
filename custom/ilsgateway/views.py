@@ -22,8 +22,8 @@ from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST
 from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
-from custom.ilsgateway import DashboardReport
-from custom.ilsgateway.forms import SupervisionDocumentForm
+from custom.ilsgateway.tanzania.reports.dashboard_report import DashboardReport
+from custom.ilsgateway.forms import SupervisionDocumentForm, ILSConfigForm
 from custom.ilsgateway.oneoff import recalculate_moshi_rural_task, recalculate_non_facilities_task
 from custom.ilsgateway.tanzania import make_url
 from custom.ilsgateway.tanzania.reports.delivery import DeliveryReport
@@ -113,7 +113,27 @@ class ILSConfigView(BaseConfigView):
     def page_context(self):
         context = super(ILSConfigView, self).page_context
         context['oneoff_tasks'] = OneOffTaskProgress.objects.filter(domain=self.domain)
+        ils_config = ILSGatewayConfig.for_domain(self.domain)
+        enabled = False
+        if ils_config:
+            enabled = ils_config.enabled
+        context['form'] = ILSConfigForm(initial={'enabled': enabled})
         return context
+
+    def post(self, request, *args, **kwargs):
+        ils_config = ILSGatewayConfig.for_domain(self.domain)
+        ils_config_form = ILSConfigForm(request.POST)
+        if not ils_config_form.is_valid():
+            return self.get(request, *args, **kwargs)
+
+        enabled = ils_config_form.cleaned_data['enabled']
+        if not ils_config and enabled:
+            ils_config = ILSGatewayConfig(enabled=True, domain=self.domain)
+            ils_config.save()
+        elif ils_config and ils_config.enabled != enabled:
+            ils_config.enabled = enabled
+            ils_config.save()
+        return self.get(request, *args, **kwargs)
 
 
 class SupervisionDocumentListView(BaseDomainView):
@@ -306,8 +326,11 @@ class ReportRunDeleteView(DeleteView, DomainViewMixin):
 
 class DashboardPageRedirect(RedirectView):
 
-    def get_redirect_url(self, *args, **kwargs):
-        domain = kwargs['domain']
+    @method_decorator(login_and_domain_required)
+    def dispatch(self, request, domain, *args, **kwargs):
+        return super(DashboardPageRedirect, self).dispatch(request, domain, *args, **kwargs)
+
+    def get_redirect_url(self, domain, *args, **kwargs):
         user = self.request.couch_user
         dm = user.get_domain_membership(domain)
         url = DashboardReport.get_url(domain)

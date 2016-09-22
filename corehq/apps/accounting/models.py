@@ -63,6 +63,7 @@ from corehq.const import USER_DATE_FORMAT
 from corehq.util.dates import get_first_last_days
 from corehq.util.mixin import ValidateModelMixin
 from corehq.util.quickcache import quickcache
+from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
@@ -73,6 +74,11 @@ MAX_INVOICE_COMMUNICATIONS = 5
 SMALL_INVOICE_THRESHOLD = 100
 
 UNLIMITED_FEATURE_USAGE = -1
+
+_soft_assert_domain_not_loaded = soft_assert(
+    to='{}@{}'.format('npellegrino', 'dimagi.com'),
+    exponential_backoff=False,
+)
 
 
 class BillingAccountType(object):
@@ -495,7 +501,7 @@ class BillingAccount(models.Model):
 
 
 class BillingContactInfo(models.Model):
-    account = models.OneToOneField(BillingAccount, primary_key=True, null=False)
+    account = models.OneToOneField(BillingAccount, primary_key=True, null=False, on_delete=models.CASCADE)
     first_name = models.CharField(
         max_length=50, null=True, blank=True, verbose_name=_("First Name")
     )
@@ -768,11 +774,11 @@ class SoftwarePlanVersion(models.Model):
     must be created.
     """
     plan = models.ForeignKey(SoftwarePlan, on_delete=models.PROTECT)
-    product_rate = models.ForeignKey(SoftwareProductRate)
+    product_rate = models.ForeignKey(SoftwareProductRate, on_delete=models.CASCADE)
     feature_rates = models.ManyToManyField(FeatureRate, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
-    role = models.ForeignKey(Role)
+    role = models.ForeignKey(Role, on_delete=models.CASCADE)
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -947,6 +953,9 @@ class Subscriber(models.Model):
         downgraded_privileges is the list of privileges that should be removed
         upgraded_privileges is the list of privileges that should be added
         """
+        _soft_assert_domain_not_loaded(isinstance(self.domain, basestring), "domain is object")
+
+
         if new_plan_version is None:
             new_plan_version = DefaultProductPlan.get_default_plan()
 
@@ -1313,6 +1322,10 @@ class Subscription(models.Model):
             self, method=adjustment_method, note=note, web_user=web_user,
             reason=change_status_result.adjustment_reason, related_subscription=new_subscription
         )
+        SubscriptionAdjustment.record_adjustment(
+            new_subscription, method=adjustment_method, note=note, web_user=web_user,
+            reason=SubscriptionAdjustmentReason.CREATE
+        )
 
         upgrade_reasons = [SubscriptionAdjustmentReason.UPGRADE, SubscriptionAdjustmentReason.CREATE]
         if web_user and adjustment_method == SubscriptionAdjustmentMethod.USER:
@@ -1394,9 +1407,6 @@ class Subscription(models.Model):
             renewed_subscription.is_active = True
         renewed_subscription.save()
 
-        # transfer existing credit lines to the renewed subscription
-        self.transfer_credits(renewed_subscription)
-
         # record renewal from old subscription
         SubscriptionAdjustment.record_adjustment(
             self, method=adjustment_method, note=note, web_user=web_user,
@@ -1452,8 +1462,6 @@ class Subscription(models.Model):
         user_desc = self.plan_version.user_facing_description
         plan_name = user_desc['name']
         domain_name = self.subscriber.domain
-        emails = {a.username for a in WebUser.get_admins_by_domain(domain_name)}
-        emails |= {e for e in WebUser.get_dimagi_emails_by_domain(domain_name)}
         if self.is_trial:
             subject = _("CommCare Alert: 30 day trial for '%(domain)s' "
                         "ends %(ending_on)s") % {
@@ -1471,13 +1479,6 @@ class Subscription(models.Model):
                 'domain': domain_name,
                 'ending_on': ending_on,
             }
-
-            billing_contact_emails = self.account.billingcontactinfo.email_list
-            if not billing_contact_emails:
-                log_accounting_error(
-                    "Billing account %d doesn't have any contact emails" % self.account.id
-                )
-            emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
 
             template = 'accounting/subscription_ending_reminder_email.html'
             template_plaintext = 'accounting/subscription_ending_reminder_email_plaintext.html'
@@ -1497,7 +1498,7 @@ class Subscription(models.Model):
         bcc = [settings.ACCOUNTS_EMAIL] if not self.is_trial else []
         if self.account.dimagi_contact is not None:
             bcc.append(self.account.dimagi_contact)
-        for email in emails:
+        for email in self._reminder_email_contacts(domain_name):
             send_html_email_async.delay(
                 subject, email, email_html,
                 text_content=email_plaintext,
@@ -1534,7 +1535,7 @@ class Subscription(models.Model):
         context = {
             'domain': domain,
             'end_date': end_date,
-            'contacts': ', '.join(self.account.billingcontactinfo.email_list),
+            'contacts': ', '.join(self._reminder_email_contacts(domain)),
             'dimagi_contact': email,
         }
         email_html = render_to_string(template, context)
@@ -1544,6 +1545,21 @@ class Subscription(models.Model):
             text_content=email_plaintext,
             email_from=settings.DEFAULT_FROM_EMAIL,
         )
+
+    def _reminder_email_contacts(self, domain_name):
+        emails = {a.username for a in WebUser.get_admins_by_domain(domain_name)}
+        emails |= {e for e in WebUser.get_dimagi_emails_by_domain(domain_name)}
+        if not self.is_trial:
+            billing_contact_emails = (
+                self.account.billingcontactinfo.email_list
+                if BillingContactInfo.objects.filter(account=self.account).exists() else []
+            )
+            if not billing_contact_emails:
+                log_accounting_error(
+                    "Billing account %d doesn't have any contact emails" % self.account.id
+                )
+            emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
+        return emails
 
     def set_billing_account_entry_point(self):
         no_current_entry_point = self.account.entry_point == EntryPoint.NOT_SET
@@ -1746,7 +1762,7 @@ class InvoiceBase(models.Model):
 
 class WireInvoice(InvoiceBase):
     # WireInvoice is tied to a domain, rather than a subscription
-    domain = models.CharField(max_length=80)
+    domain = models.CharField(max_length=100)
 
     class Meta:
         app_label = 'accounting'
@@ -2945,7 +2961,7 @@ class StripePaymentMethod(PaymentMethod):
         return 'auto_pay_{billing_account_id}'.format(billing_account_id=billing_account.id)
 
     def create_charge(self, card, amount_in_dollars, description=None):
-        """ Charges a stripe card and returns a payment record """
+        """ Charges a stripe card and returns a transaction id """
         amount_in_cents = int((amount_in_dollars * Decimal('100')).quantize(Decimal(10)))
         transaction_record = stripe.Charge.create(
             card=card,
@@ -2954,7 +2970,7 @@ class StripePaymentMethod(PaymentMethod):
             currency=settings.DEFAULT_CURRENCY,
             description=description if description else '',
         )
-        return PaymentRecord.create_record(self, transaction_record.id, amount_in_dollars)
+        return transaction_record.id
 
 
 class PaymentRecord(models.Model):

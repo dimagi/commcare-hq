@@ -32,7 +32,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_all_user_ids_submitted,
 )
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
-from corehq.apps.reports.filters.select import SelectApplicationFilter, GroupFilter
+from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
 from corehq.apps.reports.util import format_datatables_data
@@ -46,7 +46,7 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         # for commtrack projects - only show if the user can view apps
-        if project.commtrack_enabled:
+        if project and project.commtrack_enabled:
             return user and (user.is_superuser or user.has_permission(domain, 'edit_apps'))
         return super(DeploymentsReport, cls).show_in_navigation(domain, project, user)
 
@@ -106,22 +106,32 @@ class ApplicationStatusReport(DeploymentsReport):
 
     @property
     @memoized
+    def selected_app_id(self):
+        return self.request_params.get(SelectApplicationFilter.slug, None)
+
+    @property
+    @memoized
     def users(self):
         mobile_user_and_group_slugs = self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+
+        limit_user_ids = []
+        if self.selected_app_id:
+            limit_user_ids = get_all_user_ids_submitted(self.domain, self.selected_app_id)
+
         users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
             self.domain,
             mobile_user_and_group_slugs,
-            include_inactive=False
+            include_inactive=False,
+            limit_user_ids=limit_user_ids,
         )
         return users_data.combined_users
 
     @property
     def rows(self):
         rows = []
-        selected_app = self.request_params.get(SelectApplicationFilter.slug, None)
 
         user_ids = map(lambda user: user.user_id, self.users)
-        user_xform_dicts_map = get_last_form_submissions_by_user(self.domain, user_ids, selected_app)
+        user_xform_dicts_map = get_last_form_submissions_by_user(self.domain, user_ids, self.selected_app_id)
 
         for user in self.users:
             xform_dict = last_seen = last_sync = app_name = None
@@ -162,7 +172,7 @@ class ApplicationStatusReport(DeploymentsReport):
                     u'{} {} {}', app_name, mark_safe(build_html), commcare_version_html
                 )
 
-            if app_name is None and selected_app:
+            if app_name is None and self.selected_app_id:
                 continue
 
             last_sync_log = SyncLog.last_for_user(user.user_id)

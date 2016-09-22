@@ -310,10 +310,12 @@ class TestReminders(EWSTestCase):
         self.assertEqual(smses.count(), 2)
 
     def test_visit_reminder(self):
+        now = datetime.utcnow()
+        self.web_user2.last_login = now - timedelta(weeks=1)
+        self.web_user2.save()
         reminder_to_visit_website()
         smses = SMS.objects.all()
         self.assertEqual(smses.count(), 0)
-        now = datetime.utcnow()
         self.web_user2.last_login = now - timedelta(weeks=14)
         self.web_user2.save()
 

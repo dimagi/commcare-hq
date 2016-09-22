@@ -45,3 +45,19 @@ def get_obj(bundle_or_obj):
         return bundle_or_obj.obj
     else:
         return bundle_or_obj
+
+
+def form_to_es_form(xform_instance):
+    from corehq.pillows.xform import transform_xform_for_elasticsearch, xform_pillow_filter
+    from corehq.apps.api.models import ESXFormInstance
+
+    json_form = xform_instance.to_json()
+    if not xform_pillow_filter(json_form):
+        es_form = transform_xform_for_elasticsearch(json_form)
+        return ESXFormInstance(es_form)
+
+
+def case_to_es_case(case):
+    from corehq.pillows.case import transform_case_for_elasticsearch
+    from corehq.apps.api.models import ESCase
+    return ESCase(transform_case_for_elasticsearch(case.to_json()))

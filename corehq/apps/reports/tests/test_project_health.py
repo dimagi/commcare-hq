@@ -40,8 +40,7 @@ class SetupProjectPerformanceMixin(object):
     @classmethod
     def make_mobile_worker(cls, username, domain=None):
         domain = domain or cls.domain
-        user = CommCareUser(username=username, domain=domain)
-        user.domain_membership = DomainMembership(domain=domain)
+        user = CommCareUser.create(domain, username, '123')
         doc = user._doc
         doc['username.exact'] = doc['username']
         UserESFake.save_doc(doc)
@@ -99,21 +98,22 @@ class MonthlyPerformanceSummaryTests(SetupProjectPerformanceMixin, TestCase):
         super(MonthlyPerformanceSummaryTests, cls).setUpClass()
         cls.class_setup()
         users_in_group = []
+        active_not_deleted_users = [cls.user._id, cls.user1._id, cls.user2._id]
         cls.prev_month = MonthlyPerformanceSummary(
             domain=cls.DOMAIN_NAME,
             performance_threshold=15,
             month=cls.prev_month_as_date,
             previous_summary=None,
-            users=users_in_group,
-            has_filter=False,
+            selected_users=users_in_group,
+            active_not_deleted_users=active_not_deleted_users,
         )
         cls.month = MonthlyPerformanceSummary(
             domain=cls.DOMAIN_NAME,
             performance_threshold=15,
             month=cls.month_as_date,
             previous_summary=cls.prev_month,
-            users=users_in_group,
-            has_filter=False,
+            selected_users=users_in_group,
+            active_not_deleted_users=active_not_deleted_users,
         )
 
     @classmethod
@@ -148,21 +148,22 @@ class MonthlyPerformanceSummaryTests(SetupProjectPerformanceMixin, TestCase):
 
     def test_delta_performing_additional_user(self):
         """
-        delta_performing() should return 1 when there is one more performing user
+        delta_high_performing() should return 1 when there is one more performing user
         """
-        self.assertEqual(self.month.delta_performing, 1)
+        self.assertEqual(self.month.delta_high_performing, 1)
 
     def test_delta_performing_no_user(self):
         """
-        delta_performing() should return this month's performing user1 when there is no summary from previous month
+        delta_high_performing() should return this month's
+        performing user1 when there is no summary from previous month
         """
-        self.assertEqual(self.prev_month.delta_performing, 1)
+        self.assertEqual(self.prev_month.delta_high_performing, 1)
 
-    def test_get_all_user_stubs(self):
+    def test_helper_get_all_user_stubs(self):
         """
-        get_all_user_stubs() should contain two users from this month
+        _get_all_user_stubs() should contain two users from this month
         """
-        self.assertEqual(len(self.month.get_all_user_stubs().keys()), 2)
+        self.assertEqual(len(self.month._get_all_user_stubs().keys()), 2)
 
 
 @mock.patch('corehq.apps.reports.standard.project_health.GroupES', GroupESFake)
@@ -184,6 +185,7 @@ class ProjectHealthDashboardTest(SetupProjectPerformanceMixin, TestCase):
     def tearDownClass(cls):
         super(ProjectHealthDashboardTest, cls).tearDownClass()
         cls.class_teardown()
+        cls.web_user.delete()
         GroupESFake.reset_docs()
 
     @classmethod

@@ -17,7 +17,7 @@
 
 {% block js-inline %}{{ block.super }}
     <script>
-    $(document).ready(function() {
+    $(function() {
         // this adds clickable links to our form and case elements
         var form_lookup_dict = {{ form_lookups|JSON }};
         var urlBase = "{% url "render_form_data" domain 'placeholder-formid' %}";
@@ -44,7 +44,7 @@
     });
     </script>
 
-    <script type="text/javascript">
+    <script>
     $('#close_case').submit(function() {
         ga_track_event('Edit Data', 'Close Case', '-', {
             'hitCallback': function () {

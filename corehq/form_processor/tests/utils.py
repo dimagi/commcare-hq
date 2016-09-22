@@ -1,4 +1,5 @@
 import functools
+import logging
 from datetime import datetime
 from uuid import uuid4
 
@@ -21,6 +22,8 @@ from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs,
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import safe_delete
 
+logger = logging.getLogger(__name__)
+
 
 class FormProcessorTestUtils(object):
 
@@ -34,6 +37,7 @@ class FormProcessorTestUtils(object):
     @classmethod
     @unit_testing_only
     def delete_all_cases(cls, domain=None):
+        logger.debug("Deleting all Couch cases for domain %s", domain)
         assert CommCareCase.get_db().dbname.startswith('test_')
         view_kwargs = {}
         if domain:
@@ -53,18 +57,18 @@ class FormProcessorTestUtils(object):
     @staticmethod
     @unit_testing_only
     def delete_all_sql_cases(domain=None):
+        logger.debug("Deleting all SQL cases for domain %s", domain)
         CaseAccessorSQL.delete_all_cases(domain)
 
     @staticmethod
     def delete_all_ledgers(domain=None):
-        if should_use_sql_backend(domain):
-            FormProcessorTestUtils.delete_all_v2_ledgers(domain)
-        else:
-            FormProcessorTestUtils.delete_all_v1_ledgers(domain)
+        FormProcessorTestUtils.delete_all_v2_ledgers(domain)
+        FormProcessorTestUtils.delete_all_v1_ledgers(domain)
 
     @staticmethod
     @unit_testing_only
     def delete_all_v1_ledgers(domain=None):
+        logger.debug("Deleting all V1 ledgers for domain %s", domain)
         from casexml.apps.stock.models import StockReport
         from casexml.apps.stock.models import StockTransaction
         stock_report_ids = StockReport.objects.filter(domain=domain).values_list('id', flat=True)
@@ -74,6 +78,8 @@ class FormProcessorTestUtils(object):
     @staticmethod
     @unit_testing_only
     def delete_all_v2_ledgers(domain=None):
+        logger.debug("Deleting all V2 ledgers for domain %s", domain)
+
         def _delete_ledgers_for_case(case_id):
             transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case_id)
             form_ids = {tx.form_id for tx in transactions}
@@ -92,6 +98,7 @@ class FormProcessorTestUtils(object):
     @classmethod
     @unit_testing_only
     def delete_all_xforms(cls, domain=None, user_id=None):
+        logger.debug("Deleting all Couch xforms for domain %s", domain)
         view = 'couchforms/all_submissions_by_domain'
         view_kwargs = {}
         if domain and user_id:
@@ -118,11 +125,13 @@ class FormProcessorTestUtils(object):
     @staticmethod
     @unit_testing_only
     def delete_all_sql_forms(domain=None, user_id=None):
+        logger.debug("Deleting all SQL xforms for domain %s", domain)
         FormAccessorSQL.delete_all_forms(domain, user_id)
 
     @classmethod
     @unit_testing_only
     def delete_all_sync_logs(cls):
+        logger.debug("Deleting all synclogs")
         cls._delete_all(SyncLog.get_db(), 'phone/sync_logs_by_user')
 
     @staticmethod
@@ -131,7 +140,7 @@ class FormProcessorTestUtils(object):
         deleted = set()
         for row in db.view(viewname, reduce=False, **view_kwargs):
             doc_id = row['id']
-            if id not in deleted:
+            if doc_id not in deleted:
                 try:
                     safe_delete(db, doc_id)
                     deleted.add(doc_id)

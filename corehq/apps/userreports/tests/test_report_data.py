@@ -4,15 +4,14 @@ from django.test import TestCase
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.pillow import get_kafka_ucr_pillow
 from corehq.apps.userreports.reports.factory import ReportFactory
-from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tests.utils import doc_to_change
+from corehq.apps.userreports.util import get_indicator_adapter
 
 
 ReportDataTestRow = namedtuple('ReportDataTestRow', ['name', 'number'])
 
 
 class ReportDataTest(TestCase):
-    dependent_apps = ['pillowtop']
 
     def setUp(self):
         super(ReportDataTest, self).setUp()
@@ -48,7 +47,7 @@ class ReportDataTest(TestCase):
         )
         self.data_source.validate()
         self.data_source.save()
-        IndicatorSqlAdapter(self.data_source).rebuild_table()
+        get_indicator_adapter(self.data_source).rebuild_table()
         self.addCleanup(self.data_source.delete)
 
         # initialize a report on the data

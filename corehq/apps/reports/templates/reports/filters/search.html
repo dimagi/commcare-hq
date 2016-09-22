@@ -30,7 +30,7 @@
 
 {% if search_help_title and search_help_content %}
 {% block filter_js %} {{ block.super }}
-<script type="text/javascript">
+<script>
     $(function () {
         $('.hq-help-template').each(function () {
             COMMCAREHQ.transformHelpTemplate($(this), true);

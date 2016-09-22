@@ -32,10 +32,7 @@ from corehq.apps.reports.generic import ElasticTabularReport, GetParamsMixin
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
 from corehq.apps.reports.standard.maps import GenericMapReport
-from corehq.apps.reports.util import (
-    get_INFilter_bindparams,
-    make_form_couch_key,
-)
+from corehq.apps.reports.util import get_INFilter_bindparams
 from corehq.apps.users.models import CouchUser
 from corehq.util.translation import localize
 from dimagi.utils.couch import get_redis_client
@@ -72,7 +69,7 @@ class SharedDataProvider(object):
         self.cases = cases
 
     def get_all_vhnd_forms(self):
-        key = make_form_couch_key(DOMAIN, xmlns=VHND_XMLNS)
+        key = ['submission xmlns', DOMAIN, VHND_XMLNS]
         return XFormInstance.get_db().view(
             'all_forms/view',
             startkey=key,
@@ -1219,3 +1216,14 @@ class LongitudinalCMRReport(MetReport):
             self.request_params.get('is_open')
         )
         return redis_key
+
+CUSTOM_REPORTS = (
+    ('Custom Reports', (
+        BeneficiaryPaymentReport,
+        IncentivePaymentReport,
+        NewHealthStatusReport,
+        MetReport,
+        HealthMapReport,
+        LongitudinalCMRReport,
+    )),
+)

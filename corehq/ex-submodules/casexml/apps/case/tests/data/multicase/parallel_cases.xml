@@ -1,4 +1,7 @@
-<parent>
+<?xml version='1.0' ?>
+<data uiVersion="1" version="1" name="New Form1"
+	xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+	xmlns="http://openrosa.org/formdesigner/parent">
 	<case>
 		<case_id>0bd56681dce2b7a5160f75266d1e436e</case_id>
 		<date_modified>2010-10-06T07:23:23.000</date_modified>
@@ -91,4 +94,4 @@
 			<last_dot></last_dot>
 		</update>
 	</case>
-</parent>
+</data>

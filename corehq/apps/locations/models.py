@@ -1,5 +1,8 @@
 import warnings
 from functools import partial
+
+from bulk_update.helper import bulk_update as bulk_update_helper
+
 from couchdbkit import ResourceNotFound
 from dimagi.ext.couchdbkit import *
 import itertools
@@ -17,10 +20,17 @@ from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
+from corehq.util.soft_assert import soft_assert
 from mptt.models import MPTTModel, TreeForeignKey, TreeManager
 
 
 LOCATION_REPORTING_PREFIX = 'locationreportinggroup-'
+
+
+def notify_of_deprecation(msg):
+    _assert = soft_assert(notify_admins=True, fail_if_debug=True)
+    message = "Deprecated Locations feature used: {}".format(msg)
+    _assert(False, message)
 
 
 class LocationTypeManager(models.Manager):
@@ -73,11 +83,25 @@ class LocationTypeManager(models.Manager):
 StockLevelField = partial(models.DecimalField, max_digits=10, decimal_places=1)
 
 
+@memoized
+def stock_level_config_for_domain(domain, commtrack_enabled):
+    from corehq.apps.commtrack.models import CommtrackConfig
+    ct_config = CommtrackConfig.for_domain(domain)
+    if (
+        (ct_config is None) or
+        (not commtrack_enabled) or
+        LOCATION_TYPE_STOCK_RATES.enabled(domain)
+    ):
+        return None
+    else:
+        return ct_config.stock_levels_config
+
+
 class LocationType(models.Model):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=255)
     code = models.SlugField(db_index=False, null=True)
-    parent_type = models.ForeignKey('self', null=True)
+    parent_type = models.ForeignKey('self', null=True, on_delete=models.CASCADE)
     administrative = models.BooleanField(default=False)
     shares_cases = models.BooleanField(default=False)
     view_descendants = models.BooleanField(default=False)
@@ -86,6 +110,7 @@ class LocationType(models.Model):
         null=True,
         related_name='+',
         db_column='expand_from',
+        on_delete=models.CASCADE,
     )  # levels below this location type that we start expanding from
     _expand_from_root = models.BooleanField(default=False, db_column='expand_from_root')
     expand_to = models.ForeignKey('self', null=True, related_name='+')  # levels above this type that are synced
@@ -99,6 +124,10 @@ class LocationType(models.Model):
 
     class Meta:
         app_label = 'locations'
+        unique_together = (
+            ('domain', 'code'),
+            ('domain', 'name'),
+        )
 
     def __init__(self, *args, **kwargs):
         super(LocationType, self).__init__(*args, **kwargs)
@@ -129,36 +158,35 @@ class LocationType(models.Model):
     def commtrack_enabled(self):
         return Domain.get_by_name(self.domain).commtrack_enabled
 
-    def _populate_stock_levels(self):
-        from corehq.apps.commtrack.models import CommtrackConfig
-        ct_config = CommtrackConfig.for_domain(self.domain)
-        if (
-            (ct_config is None)
-            or (not self.commtrack_enabled)
-            or LOCATION_TYPE_STOCK_RATES.enabled(self.domain)
-        ):
-            return
-        config = ct_config.stock_levels_config
+    def _populate_stock_levels(self, config):
         self.emergency_level = config.emergency_level
         self.understock_threshold = config.understock_threshold
         self.overstock_threshold = config.overstock_threshold
 
     def save(self, *args, **kwargs):
-        from .tasks import sync_administrative_status
         if not self.code:
             from corehq.apps.commtrack.util import unicode_slug
             self.code = unicode_slug(self.name)
         if not self.commtrack_enabled:
             self.administrative = True
-        self._populate_stock_levels()
+
+        config = stock_level_config_for_domain(self.domain, self.commtrack_enabled)
+        if config:
+            self._populate_stock_levels(config)
+
         is_not_first_save = self.pk is not None
         saved = super(LocationType, self).save(*args, **kwargs)
 
-        if is_not_first_save and self._administrative_old != self.administrative:
-            sync_administrative_status.delay(self)
-            self._administrative_old = self.administrative
+        if is_not_first_save:
+            self.sync_administrative_status()
 
         return saved
+
+    def sync_administrative_status(self, sync_supply_points=True):
+        from .tasks import sync_administrative_status
+        if self._administrative_old != self.administrative:
+            sync_administrative_status.delay(self, sync_supply_points=sync_supply_points)
+            self._administrative_old = self.administrative
 
     def __unicode__(self):
         return self.name
@@ -174,6 +202,56 @@ class LocationType(models.Model):
     @memoized
     def can_have_children(self):
         return LocationType.objects.filter(parent_type=self).exists()
+
+    @classmethod
+    def _pre_bulk_save(cls, objects):
+        if not objects:
+            return
+
+        commtrack_enabled = objects[0].commtrack_enabled
+        if not commtrack_enabled:
+            for o in objects:
+                o.administrative = True
+
+        domain = objects[0].domain
+        stock_config = stock_level_config_for_domain(domain, commtrack_enabled)
+        if stock_config:
+            for o in objects:
+                o._populate_stock_levels(stock_config)
+
+    @classmethod
+    def bulk_create(cls, objects):
+        # 'objects' is a list of new LocationType objects to be created
+        if not objects:
+            return []
+
+        cls._pre_bulk_save(objects)
+        domain = objects[0].domain
+        names = [o.name for o in objects]
+        cls.objects.bulk_create(objects)
+        # we can return 'objects' directly without the below extra DB call after django 1.10,
+        # which autosets 'id' attribute of all objects that are bulk created
+        return list(cls.objects.filter(domain=domain, name__in=names))
+
+    @classmethod
+    def bulk_update(cls, objects):
+        # 'objects' is a list of existing LocationType objects to be updated
+        # Note: this is tightly coupled with .bulk_management.NewLocationImporter.bulk_commit()
+        #       so it can't be used on its own
+        cls._pre_bulk_save(objects)
+        now = datetime.utcnow()
+        for o in objects:
+            o.last_modified = now
+        # the caller should call 'sync_administrative_status' for individual objects
+        bulk_update_helper(objects)
+
+    @classmethod
+    def bulk_delete(cls, objects):
+        # Given a list of existing SQL objects, bulk delete them
+        if not objects:
+            return
+        ids = [o.id for o in objects]
+        cls.objects.filter(id__in=ids).delete()
 
 
 class LocationQueriesMixin(object):
@@ -202,6 +280,12 @@ class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
 
 
 class LocationManager(LocationQueriesMixin, TreeManager):
+
+    def get_or_None(self, **kwargs):
+        try:
+            return self.get(**kwargs)
+        except SQLLocation.DoesNotExist:
+            return None
 
     def _get_base_queryset(self):
         return LocationQuerySet(self.model, using=self._db)
@@ -240,6 +324,13 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         direct_matches = self.filter_by_user_input(domain, user_input)
         return self.get_queryset_descendants(direct_matches, include_self=True)
 
+    def accessible_to_user(self, domain, user):
+        if user.has_permission(domain, 'access_all_locations'):
+            return self.get_queryset()
+
+        users_location = user.get_sql_location(domain)
+        return users_location.get_descendants(include_self=True)
+
 
 class OnlyUnarchivedLocationManager(LocationManager):
 
@@ -253,7 +344,7 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     name = models.CharField(max_length=100, null=True)
     location_id = models.CharField(max_length=100, db_index=True, unique=True)
     _migration_couch_id_name = "location_id"  # Used for SyncSQLToCouchMixin
-    location_type = models.ForeignKey(LocationType)
+    location_type = models.ForeignKey(LocationType, on_delete=models.CASCADE)
     site_code = models.CharField(max_length=255)
     external_id = models.CharField(max_length=255, null=True)
     metadata = jsonfield.JSONField(default=dict)
@@ -262,13 +353,13 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     is_archived = models.BooleanField(default=False)
     latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
     longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
-    parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
+    parent = TreeForeignKey('self', null=True, blank=True, related_name='children', on_delete=models.CASCADE)
 
     # Use getter and setter below to access this value
     # since stocks_all_products can cause an empty list to
     # be what is stored for a location that actually has
     # all products available.
-    _products = models.ManyToManyField(SQLProduct, null=True)
+    _products = models.ManyToManyField(SQLProduct)
     stocks_all_products = models.BooleanField(default=True)
 
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
@@ -308,9 +399,10 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     def lineage(self):
         return list(self.get_ancestors(ascending=True).location_ids())
 
-    @property
-    def get_id(self):
-        return self.location_id
+    # # A few aliases for location_id to be compatible with couch locs
+    _id = property(lambda self: self.location_id)
+    get_id = property(lambda self: self.location_id)
+    group_id = property(lambda self: self.location_id)
 
     @property
     def products(self):
@@ -331,6 +423,38 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
                                     set(SQLProduct.by_domain(self.domain)))
 
         self._products = value
+
+    def sql_full_delete(self):
+        """
+        SQL ONLY FULL DELETE
+        Delete this location and it's descendants.
+        """
+        ids_to_delete = self.get_descendants(include_self=True).location_ids()
+
+        for loc_id in ids_to_delete:
+            loc = SQLLocation.objects.prefetch_related(
+                'location_type').get(location_id=loc_id)
+            loc._sql_close_case_and_remove_users()
+
+        self.get_descendants(include_self=True).delete()
+
+    def _sql_close_case_and_remove_users(self):
+        """
+        SQL ONLY VERSION
+        Closes linked supply point cases for a location and unassigns the users
+        assigned to that location.
+
+        Used by both archive and delete methods
+        """
+
+        sp = self.linked_supply_point()
+        # sanity check that the supply point exists and is still open.
+        # this is important because if you archive a child, then try
+        # to archive the parent, we don't want to try to close again
+        if sp and not sp.closed:
+            close_case(sp.case_id, self.domain, COMMTRACK_USERNAME)
+
+        _unassign_users_from_location(self.domain, self.location_id)
 
     class Meta:
         app_label = 'locations'
@@ -361,12 +485,12 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         Returns a list of this location's children.
         """
         children = self.get_children()
-        return _filter_for_archived(children, include_archive_ancestors)
+        return filter_for_archived(children, include_archive_ancestors)
 
     @classmethod
     def root_locations(cls, domain, include_archive_ancestors=False):
         roots = cls.objects.root_nodes().filter(domain=domain)
-        return _filter_for_archived(roots, include_archive_ancestors)
+        return filter_for_archived(roots, include_archive_ancestors)
 
     def get_path_display(self):
         return '/'.join(self.get_ancestors(include_self=True)
@@ -450,15 +574,8 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
 
     @property
     def path(self):
-        # todo: this is inconsistent with couch Location.path in that it
-        # doesn't include its own ID. Should look into adding the ID
-        # and removing the `path_including_self` function below
-        return list(reversed(self.lineage))
-
-    @property
-    def path_including_self(self):
-        _path = self.path
-        _path.append(self.location_id)
+        _path = list(reversed(self.lineage))
+        _path.append(self._id)
         return _path
 
     @classmethod
@@ -477,6 +594,10 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
             return None
 
     @property
+    def parent_location_id(self):
+        return self.parent.location_id if self.parent else None
+
+    @property
     def location_type_object(self):
         return self.location_type
 
@@ -484,8 +605,14 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     def location_type_name(self):
         return self.location_type.name
 
+    @property
+    def sql_location(self):
+        # For backwards compatability
+        notify_of_deprecation("'sql_location' was just called on a sql_location.  That's kinda silly.")
+        return self
 
-def _filter_for_archived(locations, include_archive_ancestors):
+
+def filter_for_archived(locations, include_archive_ancestors):
     """
     Perform filtering on a location queryset.
 
@@ -518,7 +645,6 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
     # a list of doc ids, referring to the parent location, then the
     # grand-parent, and so on up to the root location in the hierarchy
     lineage = StringListProperty()
-    previous_parents = StringListProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -582,19 +708,24 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
 
     @property
     def location_type(self):
+        notify_of_deprecation(
+            "You should use either location_type_name or location_type_object")
         return self.location_type_object.name
 
     _sql_location_type = None
 
     @location_type.setter
     def location_type(self, value):
+        self.set_location_type(value)
+
+    def set_location_type(self, location_type_name):
         msg = "You can't create a location without a real location type"
-        if not value:
+        if not location_type_name:
             raise LocationType.DoesNotExist(msg)
         try:
             self._sql_location_type = LocationType.objects.get(
                 domain=self.domain,
-                name=value,
+                name=location_type_name,
             )
         except LocationType.DoesNotExist:
             raise LocationType.DoesNotExist(msg)
@@ -674,13 +805,9 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         This also unassigns users assigned to the location.
         """
         to_delete = [self] + self.descendants
-
         # if there are errors deleting couch locations, roll back sql delete
         with transaction.atomic():
-            for loc in to_delete:
-                loc._close_case_and_remove_users()
-            # delete all SQLLocations without calling their `delete` methods
-            self.sql_location.get_descendants(include_self=True).delete()
+            self.sql_location.sql_full_delete()
             Location.get_db().bulk_delete(to_delete)
 
     @classmethod
@@ -698,8 +825,8 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         location_type = self._sql_location_type or sql_location.location_type
         sql_location.location_type = location_type
         # sync parent connection
-        sql_location.parent = (SQLLocation.objects.get(location_id=self.parent_id)
-                               if self.parent_id else None)
+        sql_location.parent = (SQLLocation.objects.get(location_id=self.parent_location_id)
+                               if self.parent_location_id else None)
 
         self._migration_sync_to_sql(sql_location)
 
@@ -767,7 +894,7 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
             return (SQLLocation.objects.get(domain=domain,
                                             site_code__iexact=site_code)
                     .couch_location)
-        except SQLLocation.DoesNotExist:
+        except (SQLLocation.DoesNotExist, ResourceNotFound):
             return None
 
     @classmethod
@@ -793,21 +920,25 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         return not self.lineage
 
     @property
-    def parent_id(self):
+    def parent_location_id(self):
         if self.is_root:
             return None
         return self.lineage[0]
 
     @property
-    def parent(self):
-        parent_id = self.parent_id
-        return Location.get(parent_id) if parent_id else None
+    def parent_id(self):
+        # TODO this is deprecated as of 2016-07-19
+        # delete after we're sure this isn't called dynamically
+        # Django automagically reserves field_name+_id for foreign key fields,
+        # so because we have SQLLocation.parent, SQLLocation.parent_id refers
+        # to the Django primary key
+        notify_of_deprecation("parent_id should be replaced by parent_location_id")
+        return self.parent_location_id
 
-    def siblings(self, parent=None):
-        if not parent:
-            parent = self.parent
-        locs = (parent.children if parent else self.root_locations(self.domain))
-        return [loc for loc in locs if loc.location_id != self._id]
+    @property
+    def parent(self):
+        parent_id = self.parent_location_id
+        return Location.get(parent_id) if parent_id else None
 
     @property
     def path(self):
@@ -820,11 +951,9 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         """return list of all locations that have this location as an ancestor"""
         return list(self.sql_location.get_descendants().couch_locations())
 
-    @property
-    def children(self):
+    def get_children(self):
         """return list of immediate children of this location"""
-        return list(SQLLocation.objects.filter(parent=self.sql_location)
-                                       .couch_locations())
+        return self.sql_location.get_children().couch_locations()
 
     def linked_supply_point(self):
         return self.sql_location.linked_supply_point()
@@ -835,7 +964,7 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         This just returns the location's id. It used to add
         a prefix.
         """
-        return self._id
+        return self.location_id
 
     @property
     def location_type_object(self):

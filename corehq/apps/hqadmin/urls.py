@@ -1,16 +1,19 @@
 from django.conf.urls import *
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.utils import new_domain_re
-from corehq.apps.hqadmin.views import AdminRestoreView
+from corehq.apps.hqadmin.views import AdminRestoreView, WebUserDataView
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from .views import (
     FlagBrokenBuilds, AuthenticateAs, SystemInfoView,
+    SuperuserManagement,
     DownloadMALTView,
     RecentCouchChangesView,
     ManagementCommandsView,
     CallcenterUCRCheck,
     DimagisphereView,
-    DownloadGIRView)
+    DownloadGIRView,
+    VCMMigrationView,
+    ReprocessMessagingCaseUpdatesView)
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 
@@ -29,7 +32,9 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
         AuthenticateAs.as_view(), name=AuthenticateAs.urlname),
     url(r'^management_commands/$', ManagementCommandsView.as_view(),
         name=ManagementCommandsView.urlname),
+    url(r'^superuser_management/$', SuperuserManagement.as_view(), name=SuperuserManagement.urlname),
     url(r'^run_command/$', 'run_command', name="run_management_command"),
+    url(r'^vcm_migration/$', VCMMigrationView.as_view(), name=VCMMigrationView.urlname),
     url(r'^phone/restore/$', AdminRestoreView.as_view(), name="admin_restore"),
     url(r'^phone/restore/(?P<app_id>[\w-]+)/$', AdminRestoreView.as_view(), name='app_aware_admin_restore'),
     url(r'^flag_broken_builds/$', FlagBrokenBuilds.as_view(), name="flag_broken_builds"),
@@ -50,5 +55,9 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^dimagisphere/$',
         require_superuser(DimagisphereView.as_view(template_name='hqadmin/dimagisphere/form_feed.html')),
         name='dimagisphere'),
+    url(r'^reprocess_messaging_case_updates/$', ReprocessMessagingCaseUpdatesView.as_view(),
+        name=ReprocessMessagingCaseUpdatesView.urlname),
+    url(r'^top_five_projects_by_country/$', 'top_five_projects_by_country', name='top_five_projects_by_country'),
+    url(r'^web_user_data', WebUserDataView.as_view(), name=WebUserDataView.urlname),
     AdminReportDispatcher.url_pattern(),
 )

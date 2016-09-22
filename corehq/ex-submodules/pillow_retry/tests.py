@@ -1,18 +1,17 @@
 import sys
 import uuid
 from datetime import datetime
+
 from dateutil.parser import parse
 from django.conf import settings
+from django.test import TestCase
 from mock import MagicMock
 
-from pillow_retry.models import PillowError, Stub
-from django.test import TestCase
+from pillow_retry.models import PillowError
 from pillow_retry.tasks import process_pillow_retry
-from dimagi.utils.decorators.memoized import memoized
 from pillowtop import get_all_pillow_configs
-from pillowtop.couchdb import CachedCouchDB
 from pillowtop.feed.interface import Change
-from pillowtop.listener import BasicPillow, AliasedElasticPillow
+from pillowtop.tests.utils import make_fake_constructed_pillow
 
 
 def get_ex_tb(message, ex_class=None):
@@ -21,6 +20,10 @@ def get_ex_tb(message, ex_class=None):
         raise ex_class(message)
     except Exception as e:
         return e, sys.exc_info()[2]
+
+
+def FakePillow():
+    return make_fake_constructed_pillow('FakePillow', 'fake-checkpoint')
 
 
 def create_error(change, message='message', attempts=0, pillow=None, ex_class=None):
@@ -78,7 +81,8 @@ class PillowRetryTestCase(TestCase):
         self.assertEqual(get.current_attempt, 2)
         self.assertTrue(message in error.error_traceback)
 
-        new = PillowError.get_or_create({'id': id}, FakePillow1())
+        another_pillow = make_fake_constructed_pillow('FakePillow1', '')
+        new = PillowError.get_or_create({'id': id}, another_pillow)
         self.assertIsNone(new.id)
         self.assertEqual(new.current_attempt, 0)
 
@@ -205,21 +209,6 @@ class PillowRetryTestCase(TestCase):
         docs_to_process = {e.doc_id for e in errors}
         self.assertEqual({'to-process1', 'to-process2'}, docs_to_process)
 
-    def test_include_doc(self):
-        """
-        see FakePillow.process_change
-        """
-        id = 'test_doc'
-        FakePillow.get_couch_db()._docs[id] = {'id': id, 'property': 'value'}
-        change_dict = {'id': id, 'seq': 54321}
-        error = create_error(change_dict)
-        error.save()
-        process_pillow_retry(error.id)
-
-        #  if processing is successful the record will be deleted
-        with self.assertRaises(PillowError.DoesNotExist):
-            PillowError.objects.get(id=error.id)
-
     def test_deleted_doc(self):
         id = 'test_doc'
         change_dict = {'id': id, 'seq': 54321}
@@ -271,27 +260,6 @@ class PillowRetryTestCase(TestCase):
         self.assertTrue(PillowError.objects.get(pk=error.pk).total_attempts > PillowError.multi_attempts_cutoff())
 
 
-class FakePillow(BasicPillow):
-
-    @staticmethod
-    @memoized
-    def get_couch_db():
-        return CachedCouchDB(Stub.get_db().uri, readonly=True)
-
-    def process_change(self, change, is_retry_attempt=False):
-        #  see test_include_doc
-        if not change.get('deleted') and 'doc' not in change:
-            raise Exception('missing doc in change')
-
-
-class FakePillow1(BasicPillow):
-
-    @staticmethod
-    @memoized
-    def get_couch_db(self):
-        return CachedCouchDB(Stub.get_db().uri, readonly=True)
-
-
 class ExceptionA(Exception):
     pass
 
@@ -339,10 +307,8 @@ class PillowtopRetryAllPillowsTests(TestCase):
 
 def _pillow_instance_from_config_with_mock_process_change(pillow_config):
     pillow_class = pillow_config.get_class()
-    is_elastic = issubclass(pillow_class, AliasedElasticPillow)
     if pillow_config.instance_generator is None:
-        kwargs = {'online': False} if is_elastic else {}
-        instance = pillow_class(**kwargs)
+        instance = pillow_class()
     else:
         instance = pillow_config.get_instance()
 

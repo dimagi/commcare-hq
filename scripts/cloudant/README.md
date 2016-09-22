@@ -9,7 +9,7 @@ Create all necessary databases
 python scripts/cloudant/create_databases.py --databases `./manage.py list_couchdbs` --username <myuser>
 ```
 
-Generate a new api key and add it to all necessary dbs
+Generate a new api key and add it to all necessary dbs (read-only unless `--admin` is used)
 ```
 python scripts/cloudant/generate_api_key.py --databases `./manage.py list_couchdbs` --username <myuser>
 ```
@@ -19,7 +19,8 @@ Revoke a api key from all necessary dbs
 python scripts/cloudant/revoke_api_key.py mynolongernecessaryapikey --databases `./manage.py list_couchdbs` --username <myuser>
 ```
 
-And for completeness, if you already have an API (and don't want to create a new one), add it to all necessary dbs
+And for completeness, if you already have an API (and don't want to create a new one),
+add it to all necessary dbs (read-only unless `--admin` is used)
 ```
 python scripts/cloudant/grant_api_key.py myexistingapikey --databases `./manage.py list_couchdbs` --username <myuser>
 ```

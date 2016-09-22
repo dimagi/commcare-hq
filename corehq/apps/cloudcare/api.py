@@ -25,7 +25,6 @@ from corehq.apps.hqcase.dbaccessors import (
 )
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import get_es_new, ES_META
-from corehq.util.soft_assert import soft_assert
 
 
 CLOUDCARE_API_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'  # todo: add '.%fZ'?
@@ -154,16 +153,6 @@ class CaseAPIHelper(object):
             case_ids = get_case_ids_in_domain(self.domain, type=self.case_type)
         elif status == CASE_STATUS_OPEN:
             case_ids = get_open_case_ids_in_domain(self.domain, type=self.case_type)
-        elif status == CASE_STATUS_CLOSED:
-            _assert = soft_assert('@'.join(['droberts', 'dimagi.com']))
-            _assert(False, "I'm surprised CaseAPIHelper "
-                           "ever gets called with status=closed")
-            # this is rare so we don't care if it requires two calls to get
-            # all the ids
-            case_ids = (
-                set(get_case_ids_in_domain(self.domain, type=self.case_type))
-                - set(get_open_case_ids_in_domain(self.domain, type=self.case_type))
-            )
         else:
             raise ValueError("Invalid value for 'status': '%s'" % status)
 

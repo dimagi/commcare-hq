@@ -1,10 +1,11 @@
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from elasticsearch.exceptions import ConnectionError
 
 from casexml.apps.case.mock import CaseFactory
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
+from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.elastic import get_es_new
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
@@ -48,9 +49,9 @@ class LedgerPillowTest(TestCase):
 
         consumer = get_test_kafka_consumer(topics.LEDGER)
         # have to get the seq id before the change is processed
-        kafka_seq = consumer.offsets()['fetch'][(topics.LEDGER, 0)]
+        kafka_seq = get_topic_offset(topics.LEDGER)
 
-        from corehq.apps.commtrack.tests import get_single_balance_block
+        from corehq.apps.commtrack.tests.util import get_single_balance_block
         from corehq.apps.hqcase.utils import submit_case_blocks
         submit_case_blocks([
             get_single_balance_block(case.case_id, self.product_id, 100)],

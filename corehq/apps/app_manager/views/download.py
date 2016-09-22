@@ -373,6 +373,7 @@ def validate_form_for_build(request, domain, app_id, unique_form_id, ajax=True):
         response_html = render_to_string('app_manager/partials/create_form_prompt.html')
     else:
         response_html = render_to_string('app_manager/partials/build_errors.html', {
+            'request': request,
             'app': app,
             'form': form,
             'build_errors': errors,

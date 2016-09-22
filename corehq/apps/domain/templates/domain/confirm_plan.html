@@ -8,7 +8,7 @@
                 var $submit = $('#submit-button-pa'),
                     $helpText = $('#submit-button-help-qa');
                 if ($(this).prop('checked')) {
-                    $submit.removeProp('disabled');
+                    $submit.prop('disabled', false);
                     $submit.removeClass('disabled');
                     $helpText.addClass('hide');
                 } else {

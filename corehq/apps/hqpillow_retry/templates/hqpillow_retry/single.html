@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load compress %}
 {% block js-inline %}{{ block.super }}
-    <script type="text/javascript">
+    <script>
      function performAction(action) {
          if (action === 'delete') {
              var r=confirm("Are you sure you want to delete this error log?");

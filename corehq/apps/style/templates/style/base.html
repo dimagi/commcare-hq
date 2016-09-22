@@ -178,15 +178,15 @@
         {% endcompress %}
         {% endif %}
 
-        <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+        <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
 
         {# Up here because if daterangepicker is called from within a form widget, #}
         {# the javascript requiring the config file is run before js-inline #}
         {% if request.use_daterangepicker %}
         {% compress js %}
-        <script type="text/javascript" src="{% static 'moment/moment.js' %}"></script>
-        <script type="text/javascript" src="{% static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
-        <script type="text/javascript" src="{% static 'style/js/daterangepicker.config.js' %}"></script>
+        <script src="{% static 'moment/moment.js' %}"></script>
+        <script src="{% static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
+        <script src="{% static 'style/js/daterangepicker.config.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
@@ -219,10 +219,20 @@
         {% maintenance_alert %}
         <!-- .hide used for A/B test of account creation page -->
         <div class="hq-container{% if is_register_user %} molly{% endif %}">
+            {% block navigation %}
             <div id="hq-navigation"
                  class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
                 <div class="container-fluid">
-                    <div class="navbar-header">
+                    <ul class="nav navbar-nav collapse-fullmenu-toggle" id="hq-fullmenu-responsive" role="menu">
+                        <li>
+                            <a href="#hq-full-menu" data-toggle="collapse">
+                                <i class="fa fa-bars"></i>
+                                {% trans "Menu" %}
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="navbar-header hq-header">
                         <a href="{% url "homepage" %}" class="navbar-brand">
                             {% if CUSTOM_LOGO_URL %}
                                 <img src="{{ CUSTOM_LOGO_URL }}" alt="CommCare HQ Logo" />
@@ -232,10 +242,17 @@
                             {% endif %}
                         </a>
                     </div>
-                    <nav class="collapse navbar-collapse" role="navigation">
-                        {% block tabs %}
-                            {% format_main_menu %}
-                        {% endblock %}
+
+                    <ul class="nav navbar-nav collapse-mainmenu-toggle" id="hq-mainmenu-responsive" role="menu">
+                        <li>
+                            <a href="#hq-main-tabs" data-toggle="collapse">
+                                <i class="fa fa-bars"></i>
+                                {% trans "Menu" %}
+                            </a>
+                        </li>
+                    </ul>
+
+                    <nav class="navbar-menus fullmenu collapse" id="hq-full-menu" role="navigation">
                         <div class="nav-settings-bar pull-right">
                         {% if request.user.is_authenticated %}
                             {% include 'style/includes/global_navigation_bar.html' %}
@@ -243,16 +260,20 @@
                             <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
                         {% endif %}
                         </div>
+                        {% block tabs %}
+                            {% format_main_menu %}
+                        {% endblock %}
                     </nav>
                 </div>
             </div>
+            {% endblock navigation %}
             {% if request.project.is_snapshot %}
                 <div class="alert alert-info">
                     {% trans "This is a snapshot of " %}{{ request.project.copied_from.display_name }}
                 </div>
             {% endif %}
 
-            {% if not no_header %}
+            {% if not no_header or messages %}
                 <!--[if IE]>
                     <div id="unsupported-browser" class="alert alert-error alert-block alert-full">
                         <p><i class="fa fa-warning-sign"></i><strong>{% trans 'CommCare HQ does not work well with Internet Explorer.'%}</strong></p>
@@ -265,6 +286,7 @@
                         </p>
                     </div>
                 <![endif]-->
+                {% block messages %}
                 <div class="container-fluid">
                     <div class="row">
                         <div class="col-sm-12">
@@ -276,7 +298,7 @@
                                     </div>
                                 {% endfor %}
                             {% endif %}
-                            <div id="message-alerts" data-bind="foreach: alerts">
+                            <div id="message-alerts" class="ko-template" data-bind="foreach: alerts">
                                 <div data-bind="attr: {'class': alert_class}">
                                     <a class="close" data-dismiss="alert" href="#">&times;</a>
                                     <span data-bind="text: message"></span>
@@ -285,6 +307,7 @@
                         </div>
                     </div>
                 </div>
+                {% endblock messages %}
             {% endif %}
             {% block content %}{% endblock content %}
         </div>
@@ -336,31 +359,30 @@
         <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
         {% compress js %}
         <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
-        <script type="text/javascript" src="{% static 'style/js/hq-bug-report.js' %}"></script>
-        <script type="text/javascript" src="{% static 'style/js/layout.js' %}"></script>
-        <script type="text/javascript" src="{% static 'style/js/form_tools.js' %}"></script>
-        <script type="text/javascript" src="{% static 'style/js/hq.helpers.js' %}"></script>
-        <script type="text/javascript" src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
-        <script type="text/javascript" src="{% static 'hqwebapp/js/toggles.js' %}"></script>
-        <script type="text/javascript" src="{% static 'style/js/main.js' %}"></script>
+        <script src="{% static 'style/js/hq-bug-report.js' %}"></script>
+        <script src="{% static 'style/js/layout.js' %}"></script>
+        <script src="{% static 'style/js/form_tools.js' %}"></script>
+        <script src="{% static 'style/js/hq.helpers.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
+        <script src="{% static 'style/js/main.js' %}"></script>
         {% endcompress %}
 
-        {% if request.domain and request.user.username %}
-            <script type="text/javascript" src="{% toggle_js_url request.domain request.user.username %}"></script>
-        {% endif %}
-
-        <script type="text/javascript">
+        {% addtoblock js-inline %}
+        <script>
             $(function(){
                 $('.hq-help-template').each(function () {
                     COMMCAREHQ.transformHelpTemplate($(this), true);
                 });
             });
         </script>
+        {% endaddtoblock %}
         {# JavaScript Display Logic Libaries #}
 
         {% if request.couch_user %}
-        <script type="text/javascript" src="{% static 'notifications/js/NotificationsService.ko.js' %}"></script>
-        <script type="text/javascript">
+        <script src="{% static 'notifications/js/NotificationsService.ko.js' %}"></script>
+        {% addtoblock js-inline %}
+        <script>
             $(function () {
                 var $notificationsMenu = $('#js-settingsmenu-notifications');
                 if ($notificationsMenu.length > 0) {
@@ -368,11 +390,12 @@
                 }
             });
         </script>
+        {% endaddtoblock %}
         {% endif %}
 
         {% include "style/includes/ko.html" %}
-
-        <script type="text/javascript">
+        {% addtoblock js-inline %}
+        <script>
             /*
                 This is the knockout-based, javascript analog of messages in Django.
 
@@ -408,6 +431,7 @@
             }
 
         </script>
+        {% endaddtoblock %}
 
         {% if request.use_angular_js %}
         {% compress js %}
@@ -417,13 +441,13 @@
 
         {% if request.use_select2 %}
         {% compress js %}
-        <script type="text/javascript" src="{% static 'select2-3.5.2-legacy/select2.js' %}"></script>
+        <script src="{% static 'select2-3.5.2-legacy/select2.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
         {% if request.use_select2_v4 %}
         {% compress js %}
-        <script type="text/javascript" src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
+        <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
@@ -431,16 +455,16 @@
         {% compress js %}
         <script src="{% static 'nvd3/lib/d3.v2.js' %}"></script>
         <script src="{% static 'nvd3/lib/fisheye.js' %}"></script>
-        <script type="text/javascript" src="{% static 'd3/d3.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'nvd3/nv.d3.min.js' %}"></script>
+        <script src="{% static 'd3/d3.min.js' %}"></script>
+        <script src="{% static 'nvd3/nv.d3.min.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
         {% if request.use_nvd3_v3 %}
         {% compress js %}
         <script src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
-        <script type="text/javascript" src="{% static 'd3/d3.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'nvd3/nv.d3.min.js' %}"></script>
+        <script src="{% static 'd3/d3.min.js' %}"></script>
+        <script src="{% static 'nvd3/nv.d3.min.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
@@ -461,27 +485,29 @@
 
         {% if request.use_timepicker %}
         {% compress js %}
-        <script type="text/javascript" src="{% static 'bootstrap-timepicker/js/bootstrap-timepicker.js' %}"></script>
+        <script src="{% static 'bootstrap-timepicker/js/bootstrap-timepicker.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
         {% if request.guided_tour %}
         {% compress js %}
         <script src="{% static 'tour/js/tour.utils.js' %}"></script>
-        <script type="text/javascript" src="{% static 'bootstrap-tour/build/js/bootstrap-tour.min.js' %}"></script>
+        <script src="{% static 'bootstrap-tour/build/js/bootstrap-tour.min.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
 
         {% if request.use_maps or request.use_maps_async %}
         {% compress js %}
-        <script type="text/javascript" src="{% static 'jquery-color/jquery.color.js' %}"></script>
-        <script type="text/javascript" src="{% static 'leaflet/dist/leaflet.js' %}"></script>
+        <script src="{% static 'jquery-color/jquery.color.js' %}"></script>
+        <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
         {% if reqeust.maps_prefer_canvas %}
+        {% addtoblock js-inline %}
         <script>L_PREFER_CANVAS = true;</script>
+        {% endaddtoblock %}
         {% endif %}
 
         {% if request.use_maps %}
@@ -500,12 +526,14 @@
 
         {% if request.use_timeago %}
         <script src="{% static 'jquery-timeago/jquery.timeago.js' %}"></script>
+        {% addtoblock js-inline %}
         <script>
             $(function () {
                 $.timeago.settings.allowFuture = true;
                 $(".timeago").timeago();
             });
         </script>
+        {% endaddtoblock %}
         {% endif %}
 
         {% if request.use_multiselect %}
@@ -519,20 +547,27 @@
         {% if request.use_blazy %}
         {# Blazy for async loading images #}
         {% compress js %}
-            <script type="text/javascript" src="{% static 'blazy/blazy.js' %}"></script>
+            <script src="{% static 'blazy/blazy.js' %}"></script>
         {% endcompress %}
-        <script type="text/javascript">
+        {% addtoblock js-inline %}
+        <script>
           var hqLazy = new Blazy({
             container: 'body',
           });
         </script>
+        {% endaddtoblock %}
         {% endif %}
 
         {% if request.use_ko_validation %}
-          <script type="text/javascript" src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
-          <script type="text/javascript" src="{% static 'style/ko/validators.ko.js' %}"></script>
+          <script src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
+          <script src="{% static 'style/ko/validators.ko.js' %}"></script>
         {% endif %}
 
+        {# This should be loaded relatively late, because as a non-static import it takes longer to load #}
+        {# If it's loaded early, then execution of all following scripts block on it #}
+        {% if request.domain and request.user.username %}
+            <script src="{% toggle_js_url request.domain request.user.username %}"></script>
+        {% endif %}
         {% block js %}{% endblock js %}
 
         {# Report Issue #}

@@ -55,7 +55,7 @@ class XFormPillowTest(TestCase):
         results = FormES().run()
         self.assertEqual(1, results.total)
 
-        # soft delete the case
+        # soft delete the form
         with process_kafka_changes('XFormToElasticsearchPillow'):
             with process_couch_changes('DefaultChangeFeedPillow'):
                 FormAccessors(self.domain).soft_delete_forms([form.form_id])
@@ -137,3 +137,31 @@ class TransformXformForESTest(SimpleTestCase):
         }
         doc_ret = transform_xform_for_elasticsearch(doc_dict)
         self.assertEqual(doc_ret['form']['meta']['geo_point'], None)
+
+    def test_transform_xform_base_case_dates(self):
+        doc_dict = {
+            'domain': 'demo',
+            'form': {
+                "case": {
+                    "@case_id": "123",
+                    "@date_modified": "13:54Z",
+                },
+            }
+        }
+        # previously raised an error
+        doc_ret = transform_xform_for_elasticsearch(doc_dict)
+        self.assertIsNotNone(doc_ret)
+
+    def test_transform_xform_base_case_xmlns(self):
+        doc_dict = {
+            'domain': 'demo',
+            'form': {
+                "case": {
+                    "@case_id": "123",
+                    "@xmlns": "ZZZ"
+                },
+            }
+        }
+        # previously raised an error
+        doc_ret = transform_xform_for_elasticsearch(doc_dict)
+        self.assertIsNotNone(doc_ret)

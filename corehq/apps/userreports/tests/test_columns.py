@@ -13,12 +13,12 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.factory import ReportFactory, ReportColumnFactory
 from corehq.apps.userreports.reports.specs import FieldColumn, PercentageColumn, AggregateDateColumn
-from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.sql.columns import (
     _expand_column,
     _get_distinct_values,
     DEFAULT_MAXIMUM_EXPANSION,
 )
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager, UCR_ENGINE_ID
 
 from casexml.apps.case.mock import CaseBlock
@@ -100,7 +100,7 @@ class ChoiceListColumnDbTest(TestCase):
             configured_filter={},
             configured_indicators=[problem_spec],
         )
-        adapter = IndicatorSqlAdapter(data_source_config)
+        adapter = get_indicator_adapter(data_source_config)
         adapter.rebuild_table()
         # ensure we can save data to the table.
         adapter.save({
@@ -312,6 +312,11 @@ class TestAggregateDateColumn(SimpleTestCase):
     def test_format(self):
         wrapped = ReportColumnFactory.from_spec(self._spec)
         self.assertEqual('2015-03', wrapped.get_format_fn()({'year': 2015, 'month': 3}))
+
+    def test_custom_format(self):
+        self._spec.update({'format': '%b %Y'})
+        wrapped = ReportColumnFactory.from_spec(self._spec)
+        self.assertEqual('Mar 2015', wrapped.get_format_fn()({'year': 2015, 'month': 3}))
 
     def test_format_missing(self):
         wrapped = ReportColumnFactory.from_spec(self._spec)

@@ -1,15 +1,13 @@
-{% extends "cloudcare/base.html" %}
+{% extends 'style/base.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load compress %}
 
 {% block title %}
-    {% if request.couch_user.is_web_user %}
-        {% trans "Preview Form" %}
-    {% else %}
-        {% trans "Formplayer" %}
-    {% endif %}
+    {% trans "CloudCare" %}
 {% endblock %}
+
+{% block page_title %}{% endblock %}
 
 {% block head %}
     {{ block.super }}
@@ -18,60 +16,72 @@
 
     <script src="{% static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
     <script src="{% static 'datatables/media/js/dataTables.bootstrap.min.js' %}"></script>
-
+    <style id="case-tiles-style"></style>
+    <style id="inner-tiles-container-style"></style>
+    <style id="outer-tiles-container-style"></style>
 {% endblock %}
+
+{% block navigation %}{{ block.super }}
+  <div class="navbar navbar-inverse navbar-cloudcare navbar-static-top">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="{% url 'cloudcare_default' domain %}"><i class="fcc fcc-flower"></i> Cloudcare</a>
+      <ul class="nav navbar-nav navbar-right" >
+        <li><a href="#" id="commcare-menu-toggle">{% trans 'Show Full Menu' %}</a></li>
+      </ul>
+    </div>
+  </div>
+{% endblock navigation %}
 
 {% block stylesheets %}
     {% compress css %}
         <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
-        <link rel="stylesheet" href="{% static 'jquery-ui/themes/base/jquery-ui.min.css' %}">
+        <link rel="stylesheet" href="{% static 'datetimepicker/build/jquery.datetimepicker.min.css' %}">
         <link type="text/css"
               rel="stylesheet"
               media="all"
               href="{% static 'datatables/media/css/jquery.dataTables.min.css' %}"/>
-        <link rel="stylesheet" href="{% static 'formplayer/style/webforms.css' %}">
-        <link rel="stylesheet" href="{% static 'cloudcare/css/cloudcare.css' %}">
-        <link rel="stylesheet" href="{% static 'cloudcare/css/formplayer.css' %}">
+        <link rel="stylesheet" href="{% static 'cloudcare/css/webforms.css' %}">
         <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}"/>
     {% endcompress %}
+
+  {% if less_debug %}
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'cloudcare/less/font-formplayer.less' %}" />
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'cloudcare/less/cloudcare.debug.less' %}" />
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'cloudcare/less/formplayer.debug.less' %}" />
+  {% else %}
+  {% compress css %}
+      <link type="text/less"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'cloudcare/less/font-formplayer.less' %}" />
+      <link type="text/less"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'cloudcare/less/cloudcare.less' %}"/>
+      <link type="text/less"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'cloudcare/less/formplayer.less' %}"/>
+  {% endcompress %}
+  {% endif %}
 {% endblock %}
 
 {% block js %} {{ block.super }}
-    {% compress js %}
-        <script src="{% static 'underscore-1.8.3/underscore.js' %}"></script>
-        <script src="{% static 'backbone-1.3.2/backbone.js' %}"></script>
-        <script src="{% static 'backbone.marionette/lib/backbone.marionette.js' %}"></script>
-        <script src="{% static 'nprogress/nprogress.js' %}"></script>
-        <script src="{% static 'moment/min/moment.min.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
-        <script src="{% static 'cloudcare/js/util.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/js/apps/util/util.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/app.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/js/entities/cc_app.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/js/entities/menu.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/js/entities/globals.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/js/entities/sessions.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/js/apps/list/list_controller.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/js/apps/list/list_view.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/js/apps/menus/menu_view.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/js/apps/menus/menu_controller.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/js/apps/sessions/session_view.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/js/apps/sessions/session_controller.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/js/apps/session_nav.js' %}"></script>
-        <script src="{% static 'style/js/ui-element.js' %}"></script>
-        <script src="{% static 'formplayer/script/vendor/markdown-it-4.2.0.min.js' %}"></script>
-        <script src="{% static 'formplayer/script/vendor/purify.js' %}"></script>
-        <script src="{% static 'formplayer/script/vendor/ba-tiny-pubsub.min.js' %}"></script>
-        <script src="{% static 'formplayer/script/vendor/shortcut.js' %}"></script>
-        <script src="{% static 'formplayer/script/webformsession.js' %}"></script>
-        <script src="{% static 'formplayer/script/formnav-all.js' %}"></script>
-        <script src="{% static 'formplayer/script/entrycontrols_full.js' %}"></script>
-        <script src="{% static 'formplayer/script/fullform-ui.js' %}"></script>
-    {% endcompress %}
+    {% include "formplayer/dependencies.html" %}
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
     <script>
+        window.GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is loaded on-demand
         var apps = {{ apps|JSON }};
         var language = "{{ language }}";
         var username = "{{ username  }}";
@@ -83,27 +93,54 @@
             "username": username,
             "domain": domain,
             "formplayer_url": formplayer_url,
+            "gridPolyfillPath": "{% static 'css-grid-polyfill-binaries/css-polyfills.js' %}",
         };
         FormplayerFrontend.start(options);
+        $(function () {
+          // todo cookies to save state
+          var $menuToggle = $('#commcare-menu-toggle'),
+                  $navbar = $('#hq-navigation');
+          // if cookie exists:
+          $menuToggle.data('minimized', 'yes');
+          $navbar.css('margin-top', '-' + $navbar.outerHeight() + 'px');
+          $menuToggle.click(function (e) {
+            if ($menuToggle.data('minimized') === 'yes') {
+              $menuToggle.data('minimized', 'no');
+              $navbar.css('margin-top', '');
+              $menuToggle.text(django.gettext('Hide Full Menu'));
+            } else {
+              $menuToggle.data('minimized', 'yes');
+              $navbar.css('margin-top', '-' + $navbar.outerHeight() + 'px');
+              $menuToggle.text(django.gettext('Show Full Menu'));
+            }
+            e.preventDefault();
+          });
+
+          $(window).on('resize', function () {
+            if ($menuToggle.data('minimized') === 'yes') {
+              $navbar.css('margin-top', '-' + $navbar.outerHeight() + 'px');
+            }
+          });
+        });
     </script>
 {% endblock %}
 
-{% block page_content %}
 
-    <div id="menu-container">
-        <div id="menu-region" class="container">
-            <p>Here is static content in the web page. You'll notice that it gets replaced by our app as soon as we
-                start
-                it.</p>
-        </div>
-    </div>
+{% block content %}
 
     <!-- For now we won't touch this since the form entry code is coupled with it  -->
-    <div id="cloudcare-main">
-        <section id="cloudcare-notifications"></section>
+
+    <div id="cloudcare-main" class="cloudcare-home-content">
         <section id="case-crumbs" style="width: 800px"></section>
         <section id="cases"></section>
-        <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
+        <div id="menu-container">
+            <div id="breadcrumb-region"></div>
+            <div id="persistent-case-tile" class="container"></div>
+            <section id="cloudcare-notifications" class="container notifications-container"></section>
+            <div id="menu-region" class="container"></div>
+        </div>
+        <section id="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
+        <small id="version-info"></small>
         {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
             <section id="cloudcare-debugger" data-bind="
             template: {
@@ -114,11 +151,12 @@
         {% endif %}
     </div>
 
-    {% include 'formplayer/fullform-ui/templates.html' %}
+    {% include 'form_entry/templates.html' %}
     {% include 'formplayer/grid_view.html' %}
     {% include 'formplayer/case_detail.html' %}
     {% include 'formplayer/case_list.html' %}
     {% include 'formplayer/menu_list.html' %}
     {% include 'formplayer/session_list.html' %}
+    {% include 'formplayer/query_view.html' %}
 
 {% endblock %}

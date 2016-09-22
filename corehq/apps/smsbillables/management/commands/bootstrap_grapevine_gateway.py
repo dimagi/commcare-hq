@@ -1,5 +1,5 @@
 from decimal import Decimal
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 from corehq.apps.accounting.models import Currency
 from corehq.apps.smsbillables.utils import log_smsbillables_info
 
@@ -43,7 +43,7 @@ def bootstrap_grapevine_gateway(apps):
         log_smsbillables_info("Updated Grapevine fees for backend %s" % backend.name)
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "bootstrap Grapevine gateway fees"
     args = ""
     label = ""

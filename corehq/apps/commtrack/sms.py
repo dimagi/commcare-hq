@@ -11,6 +11,7 @@ from lxml import etree
 import logging
 
 from corehq.form_processor.interfaces.supply import SupplyInterface
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils.parsing import json_format_datetime
 from datetime import datetime
@@ -18,7 +19,7 @@ from corehq.apps.commtrack.util import get_supply_point_and_location
 from corehq.apps.commtrack.xmlutil import XML
 from corehq.apps.products.models import Product
 from corehq.apps.users.models import CouchUser
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from xml.etree import ElementTree
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.commtrack.exceptions import (
@@ -41,7 +42,7 @@ def handle(verified_contact, text, msg=None):
         return False
 
     try:
-        if toggles.STOCK_AND_RECEIPT_SMS_HANDLER.enabled(domain):
+        if toggles.STOCK_AND_RECEIPT_SMS_HANDLER.enabled(domain.name):
             # handle special stock parser for custom domain logic
             data = StockAndReceiptParser(domain, verified_contact).parse(text.lower())
         else:
@@ -102,6 +103,8 @@ class StockReportParser(object):
 
     def parse(self, text):
         """take in a text and return the parsed stock transactions"""
+        _assert = soft_assert('@'.join(['droberts', 'dimagi.com']))
+
         args = text.split()
 
         if len(args) == 0:
@@ -131,6 +134,10 @@ class StockReportParser(object):
             RequisitionActions.FULFILL,
             RequisitionActions.RECEIPTS
         ]:
+            _assert(False, 'Someone is actually using requisition actions', {
+                'domain': self.domain,
+                'action': action.action,
+            })
             # dropped support for this
             raise SMSError(_(
                 "You can no longer use requisitions! Please contact your project supervisor for help"
@@ -138,6 +145,10 @@ class StockReportParser(object):
 
         elif (self.commtrack_settings.multiaction_enabled
               and action_keyword == self.commtrack_settings.multiaction_keyword):
+            _assert(False, 'Someone is actually using multiaction_keyword', {
+                'domain': self.domain,
+                'commtrack_settings': self.commtrack_settings,
+            })
             # multiple action stock report
             _tx = self.multiple_action_transactions(args)
         else:
@@ -409,9 +420,11 @@ def process_transactions(E, transactions):
         if tx.action in (
             const.StockActions.STOCKONHAND,
             const.StockActions.STOCKOUT,
+            # todo: remove?
             const.RequisitionActions.REQUEST
         ):
             balances.append(tx)
+        # todo: remove?
         elif tx.action == const.RequisitionActions.FULFILL:
             balances.append(tx)
             transfers.append(tx)
@@ -422,6 +435,7 @@ def process_transactions(E, transactions):
 
 
 def process_balances(E, balances):
+    # todo: remove checks for requisition actions
     if balances:
         if balances[0].action == const.RequisitionActions.REQUEST:
             section_id = 'ct-requested'
@@ -451,6 +465,7 @@ def process_transfers(E, transfers):
 
         if transfers[0].action in [
             const.StockActions.RECEIPTS,
+            # todo: remove?
             const.RequisitionActions.FULFILL
         ]:
             here, there = ('dest', 'src')
@@ -586,6 +601,7 @@ def to_instance(data):
             *stock_blocks
         )
         return etree.tostring(root, encoding='utf-8', pretty_print=True)
+    # todo: remove?
     else:
         return requisition_case_xml(data, stock_blocks)
 

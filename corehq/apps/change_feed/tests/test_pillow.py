@@ -20,7 +20,7 @@ class ChangeFeedPillowTest(SimpleTestCase):
         # use a 'real' db name here so that we don't cause other
         # tests down the line to fail.
         # Specifically KafkaChangeFeedTest.test_multiple_topics_with_partial_checkpoint
-        self._fake_couch.dbname = 'test-commcarehq'
+        self._fake_couch.dbname = 'test_commcarehq'
         with trap_extra_setup(KafkaUnavailableError):
             self.consumer = KafkaConsumer(
                 topics.CASE,

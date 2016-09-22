@@ -1213,7 +1213,7 @@ class LoadBalancingAndRateLimitingTestCase(BaseSMSTest):
         self.delete_load_balancing_keys(backend)
 
         for i in range(5):
-            with patch('corehq.apps.sms.tests.LoadBalanceBackend.send') as mock_send:
+            with patch('corehq.apps.sms.tests.test_backends.LoadBalanceBackend.send') as mock_send:
                 self.assertNotRequeue(backend)
                 self.assertTrue(mock_send.called)
                 self.assertEqual(mock_send.call_args[1]['orig_phone_number'], '9990001')
@@ -1237,12 +1237,12 @@ class LoadBalancingAndRateLimitingTestCase(BaseSMSTest):
 
         # Requeue flag should be False until we hit the limit
         for i in range(backend.get_sms_rate_limit()):
-            with patch('corehq.apps.sms.tests.RateLimitBackend.send') as mock_send:
+            with patch('corehq.apps.sms.tests.test_backends.RateLimitBackend.send') as mock_send:
                 self.assertNotRequeue(backend)
                 self.assertTrue(mock_send.called)
 
         # Requeue flag should be True after hitting the limit
-        with patch('corehq.apps.sms.tests.RateLimitBackend.send') as mock_send:
+        with patch('corehq.apps.sms.tests.test_backends.RateLimitBackend.send') as mock_send:
             self.assertRequeue(backend)
             self.assertFalse(mock_send.called)
 
@@ -1258,7 +1258,7 @@ class LoadBalancingAndRateLimitingTestCase(BaseSMSTest):
         self.delete_load_balancing_keys(backend)
 
         for i in range(backend.get_sms_rate_limit()):
-            with patch('corehq.apps.sms.tests.LoadBalanceAndRateLimitBackend.send') as mock_send:
+            with patch('corehq.apps.sms.tests.test_backends.LoadBalanceAndRateLimitBackend.send') as mock_send:
                 self.assertNotRequeue(backend)
                 self.assertTrue(mock_send.called)
                 self.assertEqual(mock_send.call_args[1]['orig_phone_number'], '9990001')
@@ -1271,7 +1271,7 @@ class LoadBalancingAndRateLimitingTestCase(BaseSMSTest):
                 self.assertTrue(mock_send.called)
                 self.assertEqual(mock_send.call_args[1]['orig_phone_number'], '9990003')
 
-        with patch('corehq.apps.sms.tests.LoadBalanceAndRateLimitBackend.send') as mock_send:
+        with patch('corehq.apps.sms.tests.test_backends.LoadBalanceAndRateLimitBackend.send') as mock_send:
             self.assertRequeue(backend)
             self.assertFalse(mock_send.called)
 

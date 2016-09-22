@@ -7,7 +7,7 @@ from uuid import uuid4
 from corehq.blobs import DEFAULT_BUCKET
 from corehq.blobs.exceptions import ArgumentError
 
-SAFENAME = re.compile("^[a-z0-9_./-]+$", re.IGNORECASE)
+SAFENAME = re.compile("^[a-z0-9_./{}-]+$", re.IGNORECASE)
 NOT_SET = object()
 
 
@@ -60,6 +60,16 @@ class AbstractBlobDB(object):
         Pass this parameter alone as a keyword argument to delete the
         entire bucket.
         :returns: True if the blob was deleted else false. None if it is
+        not known if the blob was deleted or not.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def bulk_delete(self, paths):
+        """Delete multiple blobs.
+
+        :param paths: The list of blob paths to delete.
+        :returns: True if all the blobs were deleted else false. None if it is
         not known if the blob was deleted or not.
         """
         raise NotImplementedError

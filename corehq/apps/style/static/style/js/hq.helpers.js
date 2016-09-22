@@ -5,7 +5,7 @@ $(function() {
         });
     };
 
-    $('.page-level-alert').bind('closed', function () {
+    $('.page-level-alert').on('closed', function () {
         var announcement_id = $('.page-level-alert').find('.announcement-control').data('announcementid');
         if (announcement_id) {
             clearAnnouncement(announcement_id);
@@ -123,7 +123,7 @@ $.fn.disableButton = function () {
 $.fn.enableButton = function () {
     $(this).removeSpinnerFromButton();
     $(this).removeClass('disabled')
-           .removeAttr('disabled');
+           .prop('disabled', false);
 };
 
 
@@ -134,5 +134,6 @@ $.fn.koApplyBindings = function (context) {
     if (this.length > 1) {
         throw new Error("Multiple elements passed to koApplyBindings");
     }
-    return ko.applyBindings(context, this.get(0));
+    ko.applyBindings(context, this.get(0));
+    this.removeClass('ko-template');
 };

@@ -8,7 +8,7 @@ from django.views.decorators.http import require_POST
 from corehq import toggles
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.performance_sms import dbaccessors
-from corehq.apps.performance_sms.forms import PerformanceMessageEditForm
+from corehq.apps.performance_sms.forms import PerformanceMessageEditForm, AdvancedPerformanceMessageEditForm
 from corehq.apps.performance_sms.message_sender import send_messages_for_config
 from corehq.apps.performance_sms.models import PerformanceConfiguration
 from corehq.apps.reminders.views import reminders_framework_permission
@@ -107,6 +107,30 @@ class EditPerformanceConfig(BasePerformanceConfigView):
         return get_document_or_404(
             PerformanceConfiguration, self.domain, self.config_id
         )
+
+
+class EditPerformanceConfigAdvanced(EditPerformanceConfig):
+    urlname = 'performance_sms.edit_performance_config_advanced'
+    page_title = ugettext_lazy("Edit Performance Message (advanced mode)")
+
+    @property
+    @memoized
+    def performance_sms_form(self):
+        if self.request.method == 'POST':
+            return AdvancedPerformanceMessageEditForm(
+                self.domain,
+                config=self.performance_config,
+                data=self.request.POST
+            )
+        return AdvancedPerformanceMessageEditForm(
+            self.domain, config=self.performance_config
+        )
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.performance_sms_form,
+        }
 
 
 @reminders_framework_permission

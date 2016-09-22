@@ -9,6 +9,10 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
     <script src="{% static 'style/js/ui-element.js' %}"></script>
+{% if strong_mobile_passwords %}
+    <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
+    <script src="{% static 'registration/js/password.js' %}"></script>
+{% endif %}
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -42,6 +46,8 @@
 
                         alert_user("{% trans 'Password changed successfully' %}", 'success');
                         ga_track_event("Edit Mobile Worker", "Reset password", "{{couch_user_id|escapejs}}");
+                    } else {
+                        alert_user("{% trans 'Password was not changed' %}", 'danger');
                     }
                 },
                 error: function (response) {
@@ -100,7 +106,7 @@
             unsavedChanges = true;
         });
 
-        $(window).bind('beforeunload', function () {
+        $(window).on('beforeunload', function () {
             if (unsavedChanges) {
                 return "{% trans "Group membership has changed." %}";
             }
@@ -121,9 +127,7 @@
     <ul class="nav nav-tabs" id="user-settings-tabs" style="margin-bottom: 10px;">
         <li><a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a></li>
         <li><a href="#groups" data-toggle="tab">{% trans "Groups" %}</a></li>
-        {% if commtrack_enabled %}
-        <li><a href="#commtrack-data" data-toggle="tab">{% trans "CommCare Supply" %}</a></li>
-        {% elif uses_locations %}
+        {% if commtrack_enabled or uses_locations %}
         <li><a href="#commtrack-data" data-toggle="tab">{% trans "Locations" %}</a></li>
         {% endif %}
         <li><a href="#user-password" data-toggle="tab">{% trans "Password" %}</a></li>
@@ -271,7 +275,7 @@
                         <p>
                             {% blocktrans with couch_user.human_friendly_name as friendly_name %}
                             If you ever want to use {{ friendly_name }}'s data in the future, we suggest that you use the <strong>Deactivate User</strong> option
-                            <a href="{{ archive_url }}">here</a>.
+                                <a href="https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-D.Deactivate(Formerly%22Archive%22)andDeleteMobileWorkers" target="_blank">described here</a>.
                             {% endblocktrans %}
                         </p>
                         <p>

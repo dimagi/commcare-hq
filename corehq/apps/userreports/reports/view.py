@@ -15,6 +15,8 @@ from corehq.apps.style.decorators import (
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, \
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
 from couchexport.shortcuts import export_response
+
+from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR
 from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib import messages
@@ -167,14 +169,17 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def data_source(self):
-        report = ReportFactory.from_spec(self.spec)
+        report = ReportFactory.from_spec(self.spec, include_prefilters=True)
         report.lang = self.lang
         return report
 
     @property
     @memoized
     def request_dict(self):
-        return query_dict_to_dict(self.request.GET, self.domain)
+        if self.request.method == 'GET':
+            return query_dict_to_dict(self.request.GET, self.domain)
+        elif self.request.method == 'POST':
+            return query_dict_to_dict(self.request.POST, self.domain)
 
     @property
     @memoized
@@ -222,7 +227,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             elif request.GET.get('format', None) == 'export_size_check':
                 return self.export_size_check_response
             elif request.is_ajax() or request.GET.get('format', None) == 'json':
-                return self.get_ajax(self.request)
+                return self.get_ajax(self.request.GET)
             self.content_type = None
             try:
                 self.add_warnings(self.request)
@@ -250,6 +255,16 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         else:
             raise Http403()
 
+    def post(self, request, *args, **kwargs):
+        if self.has_permissions(self.domain, request.couch_user):
+            self.get_spec_or_404()
+            if request.is_ajax():
+                return self.get_ajax(self.request.POST)
+            else:
+                return HttpResponseBadRequest()
+        else:
+            raise Http403()
+
     def has_permissions(self, domain, user):
         return True
 
@@ -264,6 +279,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             'report_table': {'default_rows': 25},
             'filter_context': self.filter_context,
             'url': self.url,
+            'method': 'POST',
             'headers': self.headers,
             'can_edit_report': can_edit_report(self.request, self),
             'has_report_builder_trial': has_report_builder_trial(self.request),
@@ -271,6 +287,8 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         }
         context.update(self.saved_report_context_data)
         context.update(self.pop_report_builder_context_data())
+        if isinstance(self.spec, ReportConfiguration) and self.spec.report_meta.builder_report_type == 'map':
+            context['report_table']['default_rows'] = 100
         return context
 
     def pop_report_builder_context_data(self):
@@ -322,22 +340,22 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     def headers(self):
         return DataTablesHeader(*[col.data_tables_column for col in self.data_source.columns])
 
-    def get_ajax(self, request):
+    def get_ajax(self, params):
         try:
             data_source = self.data_source
-            if len(data_source.columns) > 50:
+            if len(data_source.columns) > 50 and not DISABLE_COLUMN_LIMIT_IN_UCR.enabled(self.domain):
                 raise UserReportsError(_("This report has too many columns to be displayed"))
             data_source.set_filter_values(self.filter_values)
 
-            sort_column = request.GET.get('iSortCol_0')
-            sort_order = request.GET.get('sSortDir_0', 'ASC')
-            echo = int(request.GET.get('sEcho', 1))
+            sort_column = params.get('iSortCol_0')
+            sort_order = params.get('sSortDir_0', 'ASC')
+            echo = int(params.get('sEcho', 1))
             if sort_column and echo != 1:
                 data_source.set_order_by(
                     [(data_source.column_configs[int(sort_column)].column_id, sort_order.upper())]
                 )
 
-            datatables_params = DatatablesParams.from_request_dict(request.GET)
+            datatables_params = DatatablesParams.from_request_dict(params)
             page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
 
             total_records = data_source.get_total_records()
@@ -368,7 +386,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
         json_response = {
             'aaData': page,
-            "sEcho": self.request_dict.get('sEcho', 0),
+            "sEcho": params.get('sEcho', 0),
             "iTotalRecords": total_records,
             "iTotalDisplayRecords": total_records,
         }

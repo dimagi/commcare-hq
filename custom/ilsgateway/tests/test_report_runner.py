@@ -25,12 +25,13 @@ class TestReportRunner(TestCase):
         StockTransaction.objects.all().delete()
         StockReport.objects.all().delete()
         generator.delete_all_subscriptions()
+        cls.domain.delete()
         super(TestReportRunner, cls).tearDownClass()
 
     @classmethod
     def setUpClass(cls):
         super(TestReportRunner, cls).setUpClass()
-        prepare_domain(TEST_DOMAIN)
+        cls.domain = prepare_domain(TEST_DOMAIN)
 
         cls.mohsw = make_loc(code='mohsw', name='mohsw', domain=TEST_DOMAIN, type='MOHSW')
 
@@ -71,11 +72,11 @@ class TestReportRunner(TestCase):
 
     def _move_location(self, location, new_parent_id):
         form = LocationForm(
-            location,
+            location.sql_location,
             bound_data={
                 'name': location.name,
                 'parent_id': new_parent_id,
-                'location_type': location.location_type,
+                'location_type': location.location_type_object,
                 'data-field-group': location.metadata['group']
             }
         )
@@ -83,12 +84,12 @@ class TestReportRunner(TestCase):
 
     def _change_group(self, location, group):
         form = LocationForm(
-            location,
+            location.sql_location,
             bound_data={
                 'name': location.name,
                 'data-field-group': group,
-                'location_type': location.location_type,
-                'parent_id': location.parent_id
+                'location_type': location.location_type_object,
+                'parent_id': location.parent_location_id
             }
         )
         form.save()

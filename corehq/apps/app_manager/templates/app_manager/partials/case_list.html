@@ -55,7 +55,13 @@
         <div class="checkbox">
             <label>
                 <input type="checkbox" data-bind="checked: persistCaseContext">
-                {% trans "Show the case name at the top of the screen when filling out forms" %}
+                {% trans "Show some information about the case at the top of the screen when filling out forms" %}
+            </label>
+        </div>
+        <div class="" data-bind="visible: persistCaseContext">
+            <label>
+                {% trans "Case property to show:" %}
+                <input type="text" data-bind="value: persistentCaseContextXML" placeholder="e.g. case_name" />
             </label>
         </div>
     </div>
@@ -113,6 +119,22 @@
                     </th>
                     <th>{% trans "Direction" %}</th>
                     <th>{% trans "Format" %}</th>
+                    <th>
+                        {% trans "Display Text" %}
+                        <span style="font-size: 13px">
+                            <span class="hq-help-template"
+                                  data-title="{% trans "Display Text" %}"
+                                  data-content=
+                                      "{% blocktrans %}
+                                          The 'Display Text' is used for properties that are only listed as
+                                          Sort Properties and not as Display Properties above. The text appears
+                                          in the 'Sort By' menu on the mobile to allow the user to change the
+                                          sort ordering. If the display text is left blank then the option
+                                          for that sort property will not appear in the 'Sort By' menu.
+                                      {% endblocktrans %}" >
+                            </span>
+                        </span>
+                    </th>
                     <th></th>
                 </tr>
             </thead>
@@ -168,7 +190,9 @@
                             {% endif %}
                         </select>
                     </td>
-
+                    <td>
+                        <input class="form-control" type='text' data-bind='value: display'/>
+                    </td>
                     <td>
                         <a data-bind="click: $root.sortRows.removeSortRow">
                             <i class="fa fa-remove icon-blue"></i>
@@ -181,7 +205,7 @@
 
     <div class="form-group">
         <button class="btn btn-default btn-sm" data-bind="
-            click: function(data){data.addSortRow('', '', '', true);}"
+            click: function(data){data.addSortRow('', '', '', '', true);}"
         >
             <i class="fa fa-plus"></i>
             {% trans "Add sort property" %}

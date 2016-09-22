@@ -24,6 +24,7 @@ from corehq.apps.sms.api import (
     DomainScopeValidationError,
     MessageMetadata,
 )
+from corehq.apps.sms.resources.v0_5 import SelfRegistrationUserInfo
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
@@ -48,7 +49,7 @@ from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
                                    InitiateAddSMSBackendForm, SubscribeSMSForm,
                                    SettingsForm, SHOW_ALL, SHOW_INVALID, HIDE_ALL, ENABLED, DISABLED,
-                                   DEFAULT, CUSTOM, SendRegistrationInviationsForm,
+                                   DEFAULT, CUSTOM, SendRegistrationInvitationsForm,
                                    WELCOME_RECIPIENT_NONE, WELCOME_RECIPIENT_CASE,
                                    WELCOME_RECIPIENT_MOBILE_WORKER, WELCOME_RECIPIENT_ALL, ComposeMessageForm)
 from corehq.apps.sms.util import get_contact, get_sms_backend_classes, ContactNotFoundException
@@ -66,12 +67,12 @@ from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.util.dates import iso_string_to_datetime
+from corehq.util.soft_assert import soft_assert
 from corehq.util.spreadsheets.excel import WorkbookJSONReader
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.quickcache import quickcache
 from django.contrib import messages
 from django.db.models import Q
-from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.utils import get_timezone_for_user
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
@@ -150,17 +151,6 @@ class ComposeMessageView(BaseMessagingSectionView):
     @use_typeahead
     def dispatch(self, *args, **kwargs):
         return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
-
-
-@csrf_exempt
-def post(request, domain):
-    """
-    I don't know of anywhere this is being invoked from. If the soft asserts
-    don't produce any results then I'll remove it.
-    """
-    _assert = soft_assert('@'.join(['gcapalbo', 'dimagi.com']), exponential_backoff=False)
-    _assert(False, "sms post invoked")
-    return HttpResponse('OK')
 
 
 @require_api_user_permission(PERMISSION_POST_SMS)
@@ -1852,6 +1842,8 @@ class SMSSettingsView(BaseMessagingSectionView):
                     [w.to_json() for w in domain_obj.restricted_sms_times],
                 "send_to_duplicated_case_numbers":
                     enabled_disabled(domain_obj.send_to_duplicated_case_numbers),
+                "sms_survey_date_format":
+                    domain_obj.sms_survey_date_format,
                 "use_custom_case_username":
                     default_custom(domain_obj.custom_case_username),
                 "custom_case_username":
@@ -1915,6 +1907,8 @@ class SMSSettingsView(BaseMessagingSectionView):
                  "custom_case_username"),
                 ("send_to_duplicated_case_numbers",
                  "send_to_duplicated_case_numbers"),
+                ("sms_survey_date_format",
+                 "sms_survey_date_format"),
                 ("sms_conversation_length",
                  "sms_conversation_length"),
                 ("count_messages_as_read_by_anyone",
@@ -1986,13 +1980,17 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
     loading_message = ugettext_noop("Loading invitations...")
     strict_domain_fetching = True
 
+    @method_decorator(require_permission(Permissions.edit_data))
+    def dispatch(self, request, *args, **kwargs):
+        return super(ManageRegistrationInvitationsView, self).dispatch(request, *args, **kwargs)
+
     @property
     @memoized
     def invitations_form(self):
         if self.request.method == 'POST':
-            return SendRegistrationInviationsForm(self.request.POST, domain=self.domain)
+            return SendRegistrationInvitationsForm(self.request.POST, domain=self.domain)
         else:
-            return SendRegistrationInviationsForm(domain=self.domain)
+            return SendRegistrationInvitationsForm(domain=self.domain)
 
     @property
     @memoized
@@ -2077,10 +2075,14 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
             if self.invitations_form.is_valid():
                 phone_numbers = self.invitations_form.cleaned_data.get('phone_numbers')
                 app_id = self.invitations_form.cleaned_data.get('app_id')
+                custom_registration_message = self.invitations_form.cleaned_data.get('custom_registration_message')
                 result = SelfRegistrationInvitation.initiate_workflow(
                     self.domain,
-                    phone_numbers,
-                    app_id=app_id
+                    [SelfRegistrationUserInfo(p) for p in phone_numbers],
+                    app_id=app_id,
+                    custom_first_message=custom_registration_message,
+                    android_only=self.invitations_form.android_only,
+                    require_email=self.invitations_form.require_email,
                 )
                 success_numbers, invalid_format_numbers, numbers_in_use = result
                 if success_numbers:
@@ -2118,30 +2120,48 @@ class InvitationAppInfoView(View, DomainViewMixin):
 
     @property
     @memoized
-    def token(self):
-        token = self.kwargs.get('token')
-        if not token:
+    def app_id(self):
+        app_id = self.kwargs.get('app_id')
+        if not app_id:
             raise Http404()
-        return token
+        return app_id
+
+    @property
+    def token(self):
+        return self.app_id
 
     @property
     @memoized
     def invitation(self):
-        invitation = SelfRegistrationInvitation.by_token(self.token)
-        if not invitation:
-            raise Http404()
-        return invitation
+        return SelfRegistrationInvitation.by_token(self.token)
+
+    @property
+    @memoized
+    def odk_url(self):
+        try:
+            odk_url = SelfRegistrationInvitation.get_app_odk_url(self.domain, self.app_id)
+        except Http404:
+            odk_url = None
+
+        if odk_url:
+            return odk_url
+
+        if self.invitation:
+            # There shouldn't be many instances of this. Once we stop getting these asserts,
+            # we can stop supporting the old way of looking up the SelfRegistrationInvitation
+            # by token, and only support the new way of looking up the app by app id.
+            _assert = soft_assert('@'.join(['gcapalbo', 'dimagi.com']), exponential_backoff=False)
+            _assert(False, "InvitationAppInfoView references invitation token")
+            if self.invitation.odk_url:
+                return self.invitation.odk_url
+
+        raise Http404()
 
     def get(self, *args, **kwargs):
-        if not self.invitation.odk_url:
-            raise Http404()
-        url = str(self.invitation.odk_url).strip()
+        url = str(self.odk_url).strip()
         response = 'ccapp: %s signature: %s' % (url, sign(url))
         response = base64.b64encode(response)
         return HttpResponse(response)
-
-    def post(self, *args, **kwargs):
-        return self.get(*args, **kwargs)
 
 
 class IncomingBackendView(View):

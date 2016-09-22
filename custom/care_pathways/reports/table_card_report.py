@@ -1,7 +1,6 @@
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from custom.care_pathways.reports import CareBaseReport
-from custom.care_pathways.filters import GeographyFilter, GenderFilter, GroupLeadershipFilter, CBTNameFilter, PPTYearFilter, ScheduleFilter, TableCardGroupByFilter, TableCardTypeFilter, \
-    MalawiPPTYearFilter, RealOrTestFilter
+from custom.care_pathways.filters import TableCardGroupByFilter, TableCardTypeFilter
 from dimagi.utils.decorators.memoized import memoized
 from custom.care_pathways.sqldata import TableCardReportIndividualPercentSqlData, TableCardReportGrouppedPercentSqlData, TableCardSqlData
 
@@ -77,20 +76,7 @@ class TableCardReport(CareBaseReport):
 
     @property
     def fields(self):
-        filters = [GeographyFilter]
-        if self.domain == 'care-macf-malawi':
-            filters.append(MalawiPPTYearFilter)
-        else:
-            filters.append(PPTYearFilter)
-        filters.extend([
-            GenderFilter,
-            GroupLeadershipFilter,
-            CBTNameFilter
-        ])
-        if self.domain == 'care-macf-malawi':
-            filters.append(RealOrTestFilter)
-        if self.domain == 'pathways-india-mis':
-            filters.append(ScheduleFilter)
+        filters = super(TableCardReport, self).fields
         filters.append(TableCardTypeFilter)
         filters.append(TableCardGroupByFilter)
         return filters

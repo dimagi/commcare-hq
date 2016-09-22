@@ -28,7 +28,7 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    <script type="text/javascript">
+    <script>
         var base_url = "{{ url }}";
         function get_report_url() {
             return base_url;
@@ -55,6 +55,21 @@
                 mapSpec.mapboxAccessToken = '{{ MAPBOX_ACCESS_TOKEN }}';
                 var render_map = hqImport('reports_core/js/maps.js').render;
                 render_map(mapSpec, data.aaData, $("#map-container"));
+            }
+        };
+
+        var paginationNotice = function (data) {
+            if (mapSpec) {  // Only show warning for map reports
+                if (data.aaData !== undefined && data.iTotalRecords !== undefined) {
+                    if (data.aaData.length < data.iTotalRecords) {
+                        $('#info-message').html(
+                            "{% trans 'Showing the current page of data. Switch pages to see more data.' %}"
+                        );
+                        $('#report-info').removeClass('hide');
+                    } else {
+                        $('#report-info').addClass('hide');
+                    }
+                }
             }
         };
 
@@ -89,6 +104,7 @@
             {% if headers.custom_sort %}customSort: {{ headers.custom_sort|JSON }},{% endif %}
 
             ajaxSource: '{{ url }}',
+            ajaxMethod: '{{ method }}',
             ajaxParams: function() {
                 return $('#paramSelectorForm').serializeArray();
             },
@@ -97,7 +113,7 @@
                 fixColsNumLeft: {{ report_table.left_col.fixed.num }},
                 fixColsWidth: {{ report_table.left_col.fixed.width }},
             {% endif %}
-            successCallbacks: [successCallback, updateCharts, updateMap],
+            successCallbacks: [successCallback, updateCharts, updateMap, paginationNotice],
             errorCallbacks: [errorCallback]
         });
         $('#paramSelectorForm').submit(function(event) {
@@ -173,6 +189,13 @@
         </section>
         <div id="zoomtofit" class="leaflet-control-layers" style="display: none;">
             <div id="zoomtofit-target" class="zoomtofit leaflet-control-layers-toggle" title="{% trans "Fit all data into view" %}"></div>
+        </div>
+
+        <div id="report-info" class="alert alert-info hide">
+            {% blocktrans %}
+            Note:
+            {% endblocktrans %}
+            <span id="info-message"></span>
         </div>
         {% endblock %}
         {% block reporttable %}

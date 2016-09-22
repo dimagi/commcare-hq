@@ -14,13 +14,14 @@ from casexml.apps.phone.cache_utils import copy_payload_and_synclog_and_get_new_
 from casexml.apps.phone.data_providers import get_element_providers, get_full_response_providers
 from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
-    BadStateException, RestoreException,
+    BadStateException, RestoreException, DateOpenedBugException,
 )
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.phone.models import (
     SyncLog,
     get_properly_wrapped_sync_log,
@@ -77,7 +78,11 @@ def restore_cache_key(prefix, user_id, version=None):
 
 def stream_response(payload, headers=None, status=200):
     try:
-        response = StreamingHttpResponse(FileWrapper(payload), content_type="text/xml", status=status)
+        response = StreamingHttpResponse(
+            FileWrapper(payload),
+            content_type="text/xml; charset=utf-8",
+            status=status
+        )
         if headers:
             for header, value in headers.items():
                 response[header] = value
@@ -230,7 +235,7 @@ class AsyncRestoreResponse(object):
         self.task = task
         self.username = username
 
-        task_info = self.task.info if self.task.info else {}
+        task_info = self.task.info if self.task.info and isinstance(self.task.info, dict) else {}
         self.progress = {
             'done': task_info.get('done', 0),
             'total': task_info.get('total', 0),
@@ -416,6 +421,8 @@ class RestoreState(object):
         if self.params.sync_log_id:
             try:
                 sync_log = get_properly_wrapped_sync_log(self.params.sync_log_id)
+                if settings.SERVER_ENVIRONMENT == "production":
+                    self._check_for_date_opened_bug(sync_log)
             except ResourceNotFound:
                 # if we are in loose mode, return an HTTP 412 so that the phone will
                 # just force a fresh sync
@@ -434,6 +441,26 @@ class RestoreState(object):
             return sync_log
         else:
             return None
+
+    def _check_for_date_opened_bug(self, sync_log):
+        introduced_date = datetime(2016, 7, 19, 19, 15)
+        reverted_date = datetime(2016, 7, 20, 9, 15)  # date bug was reverted on HQ
+        resolved_date = datetime(2016, 7, 21, 0, 0)  # approximate date this fix was deployed
+
+        if introduced_date < sync_log.date < reverted_date:
+            raise DateOpenedBugException(self.restore_user, sync_log._id)
+
+        # if the last synclog was before the time we pushed out this resolution,
+        # we also need to check that they don't have a bad sync
+        if reverted_date <= sync_log.date < resolved_date:
+            synclogs = SyncLog.view(
+                "phone/sync_logs_by_user",
+                reduce=True,
+                startkey=[sync_log.user_id, json_format_datetime(introduced_date), None],
+                endkey=[sync_log.user_id, json_format_datetime(reverted_date), {}],
+            ).first()
+            if synclogs and synclogs.get('value') != 0:
+                raise DateOpenedBugException(self.restore_user, sync_log._id)
 
     @property
     def is_initial(self):
@@ -566,8 +593,9 @@ class RestoreConfig(object):
 
     def get_payload(self):
         self.validate()
+        self.delete_cached_payload_if_necessary()
 
-        cached_response = self._get_cached_payload()
+        cached_response = self.get_cached_response()
         if cached_response:
             return cached_response
         # Start new sync
@@ -585,7 +613,7 @@ class RestoreConfig(object):
         self.set_cached_payload_if_necessary(response, self.restore_state.duration)
         return response
 
-    def _get_cached_payload(self):
+    def get_cached_response(self):
         if self.overwrite_cache:
             return CachedResponse(None)
 
@@ -608,20 +636,21 @@ class RestoreConfig(object):
             # start a new task
             task = get_async_restore_payload.delay(self)
             new_task = True
-
             # store the task id in cache
-            self.cache.set(self.async_cache_key, task.id, timeout=None)
-
+            self.cache.set(self.async_cache_key, task.id, timeout=24 * 60 * 60)
         try:
-            # if this is a new task, wait for INITIAL_ASYNC_TIMEOUT in case
-            # this restore completes quickly. otherwise, only wait 1 second for
-            # a response
-            response = task.get(timeout=INITIAL_ASYNC_TIMEOUT_THRESHOLD if new_task else 1)
+            response = task.get(timeout=self._get_task_timeout(new_task))
         except TimeoutError:
             # return a 202 with progress
             response = AsyncRestoreResponse(task, self.restore_user.username)
 
         return response
+
+    def _get_task_timeout(self, new_task):
+        # if this is a new task, wait for INITIAL_ASYNC_TIMEOUT in case
+        # this restore completes quickly. otherwise, only wait 1 second for
+        # a response.
+        return INITIAL_ASYNC_TIMEOUT_THRESHOLD if new_task else 1
 
     def _generate_restore_response(self, async_task=None):
         """
@@ -664,7 +693,7 @@ class RestoreConfig(object):
                 e.message,
                 ResponseNature.OTA_RESTORE_ERROR
             )
-            return HttpResponse(response, content_type="text/xml",
+            return HttpResponse(response, content_type="text/xml; charset=utf-8",
                                 status=412)  # precondition failed
 
     def set_cached_payload_if_necessary(self, resp, duration):
@@ -696,3 +725,7 @@ class RestoreConfig(object):
 
     def _set_cache_in_redis(self, cache_payload):
         self.cache.set(self._initial_cache_key, cache_payload, self.cache_timeout)
+
+    def delete_cached_payload_if_necessary(self):
+        if self.overwrite_cache and self.cache.get(self._initial_cache_key):
+            self.cache.delete(self._initial_cache_key)

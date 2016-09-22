@@ -30,13 +30,6 @@ from corehq.apps.accounting.models import (
     SoftwareProductRate,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.smsbillables.models import (
-    SmsBillable,
-    SmsGatewayFee,
-    SmsGatewayFeeCriteria,
-    SmsUsageFee,
-    SmsUsageFeeCriteria,
-)
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.util.test_utils import unit_testing_only
 
@@ -124,12 +117,6 @@ def arbitrary_contact_info(account, web_user_creator):
 def delete_all_accounts():
     BillingContactInfo.objects.all().delete()
     BillingAccount.objects.all().delete()
-    SmsBillable.objects.all().delete()
-    SmsGatewayFee.objects.all().delete()
-    SmsGatewayFeeCriteria.objects.all().delete()
-    SmsUsageFee.objects.all().delete()
-    SmsUsageFeeCriteria.objects.all().delete()
-    Currency.objects.all().delete()
 
 
 @unit_testing_only

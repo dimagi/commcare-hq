@@ -1,3 +1,4 @@
+# coding: utf-8
 from collections import namedtuple
 from datetime import datetime, timedelta
 from importlib import import_module
@@ -37,32 +38,20 @@ DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER = (
 )
 
 
-def make_form_couch_key(domain, by_submission_time=True,
-                   xmlns=None, user_id=Ellipsis, app_id=None):
+def make_form_couch_key(domain, user_id=Ellipsis):
     """
         This sets up the appropriate query for couch based on common report parameters.
 
         Note: Ellipsis is used as the default for user_id because
         None is actually emitted as a user_id on occasion in couch
     """
-    prefix = ["submission"] if by_submission_time else ["completion"]
+    prefix = ["submission"]
     key = [domain] if domain is not None else []
-    if xmlns == "":
-        prefix.append('xmlns')
-    elif app_id == "":
-        prefix.append('app')
-    elif user_id == "":
+    if user_id == "":
         prefix.append('user')
-    else:
-        if xmlns:
-            prefix.append('xmlns')
-            key.append(xmlns)
-        if app_id:
-            prefix.append('app')
-            key.append(app_id)
-        if user_id is not Ellipsis:
-            prefix.append('user')
-            key.append(user_id)
+    elif user_id is not Ellipsis:
+        prefix.append('user')
+        key.append(user_id)
     return [" ".join(prefix)] + key
 
 
@@ -96,7 +85,8 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
             return temp_user
         return None
 
-    user_ids = user_ids if user_ids and user_ids[0] else None
+    user_ids = user_ids or []
+    user_ids = filter(None, user_ids)  # remove empty strings if any
     if not CommCareUser:
         from corehq.apps.users.models import CommCareUser
 
@@ -105,7 +95,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         if not isinstance(group, Group):
             group = Group.get(group)
         users = group.get_users(is_active=(not include_inactive), only_commcare=True)
-    elif user_ids is not None:
+    elif user_ids:
         try:
             users = []
             for id in user_ids:
@@ -451,17 +441,28 @@ def get_installed_custom_modules():
     return [import_module(module) for module in settings.CUSTOM_MODULES]
 
 
-def is_mobile_worker_with_report_access(couch_user, domain):
-    return (
-        couch_user.is_commcare_user
-        and domain is not None
-        and Domain.get_by_name(domain).default_mobile_worker_redirect == 'reports'
-    )
-
-
 def get_INFilter_element_bindparam(base_name, index):
     return '%s_%d' % (base_name, index)
 
 
 def get_INFilter_bindparams(base_name, values):
     return tuple(get_INFilter_element_bindparam(base_name, i) for i, val in enumerate(values))
+
+
+def safe_for_fs(filename):
+    """
+    Returns a filename with FAT32-, NTFS- and HFS+-illegal characters removed.
+
+    Unicode or bytestring datatype of filename is preserved.
+
+    >>> safe_for_fs(u'spam*?: 𐍃𐍀𐌰𐌼-&.txt')
+    u'spam 𐍃𐍀𐌰𐌼-&.txt'
+    >>> safe_for_fs('spam*?: 𐍃𐍀𐌰𐌼-&.txt')
+    'spam 𐍃𐍀𐌰𐌼-&.txt'
+    """
+    is_unicode = isinstance(filename, unicode)
+    unsafe_chars = u':*?"<>|/\\\r\n' if is_unicode else ':*?"<>|/\\\r\n'
+    empty = u'' if is_unicode else ''
+    for c in unsafe_chars:
+        filename = filename.replace(c, empty)
+    return filename

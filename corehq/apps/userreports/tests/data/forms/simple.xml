@@ -9,12 +9,14 @@
 					<last_name />
 					<children />
 					<dob />
+                    <state />
 				</data>
 			</instance>
 			<bind nodeset="/data/first_name" type="xsd:string" />
 			<bind nodeset="/data/last_name" type="xsd:string" />
 			<bind nodeset="/data/children" type="xsd:int" />
 			<bind nodeset="/data/dob" type="xsd:date" />
+            <bind nodeset="/data/state" />
 			<itext>
 				<translation lang="en" default="">
 					<text id="first_name-label">
@@ -29,6 +31,18 @@
 					<text id="dob-label">
 						<value>Date of Birth</value>
 					</text>
+                    <text id="state-label">
+                        <value>state</value>
+                    </text>
+                    <text id="state-MA-label">
+                        <value>MA</value>
+                    </text>
+                    <text id="state-MN-label">
+                        <value>MN</value>
+                    </text>
+                    <text id="state-VT-label">
+                        <value>VT</value>
+                    </text>
 				</translation>
 			</itext>
 		</model>
@@ -46,5 +60,20 @@
 		<input ref="/data/dob">
 			<label ref="jr:itext('dob-label')" />
 		</input>
+        <select ref="/data/state">
+            <label ref="jr:itext('state-label')" />
+            <item>
+                <label ref="jr:itext('state-MA-label')" />
+                <value>MA</value>
+            </item>
+            <item>
+                <label ref="jr:itext('state-MN-label')" />
+                <value>MN</value>
+            </item>
+            <item>
+                <label ref="jr:itext('state-VT-label')" />
+                <value>VT</value>
+            </item>
+        </select>
 	</h:body>
 </h:html>

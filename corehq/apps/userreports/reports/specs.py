@@ -1,4 +1,6 @@
 import json
+
+from datetime import date
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import InvalidQueryColumn
@@ -194,6 +196,7 @@ class AggregateDateColumn(ReportColumn):
     """
     type = TypeProperty('aggregate_date')
     field = StringProperty(required=True)
+    format = StringProperty(required=False)
 
     def get_sql_column_config(self, data_source_config, lang):
         return SqlColumnConfig(columns=[
@@ -217,11 +220,11 @@ class AggregateDateColumn(ReportColumn):
         return '{}_month'.format(self.column_id)
 
     def get_format_fn(self):
-        # todo: support more aggregation/more formats
         def _format(data):
             if not data.get('year', None) or not data.get('month', None):
                 return _('Unknown Date')
-            return '{}-{:02d}'.format(int(data['year']), int(data['month']))
+            format_ = self.format or '%Y-%m'
+            return date(year=int(data['year']), month=int(data['month']), day=1).strftime(format_)
         return _format
 
     def get_query_column_ids(self):

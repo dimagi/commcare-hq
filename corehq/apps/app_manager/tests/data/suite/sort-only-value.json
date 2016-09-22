@@ -76,7 +76,8 @@
                             "direction": "ascending",
                             "doc_type": "SortElement",
                             "field": "name",
-                            "type": "plain"
+                            "type": "plain",
+                            "display": { "en": "Name" }
                         },
                         {
                             "direction": "ascending",

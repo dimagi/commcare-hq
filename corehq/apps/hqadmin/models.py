@@ -2,8 +2,11 @@ from django.db import models
 
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.decorators.memoized import memoized
 from pillowtop.utils import get_pillow_by_name
 from pillowtop.exceptions import PillowNotFoundError
+
+from corehq.apps.users.models import WebUser
 
 
 class HqDeploy(Document):
@@ -60,3 +63,15 @@ class PillowCheckpointSeqStore(models.Model):
             return None
 
         return store
+
+
+class VCMMigration(models.Model):
+    domain = models.CharField(max_length=255, null=False, unique=True)
+    emailed = models.DateTimeField(null=True)
+    migrated = models.DateTimeField(null=True)
+    notes = models.TextField(null=True)
+
+    @property
+    @memoized
+    def admins(self):
+        return [admin.email or admin.username for admin in WebUser.get_admins_by_domain(self.domain)]

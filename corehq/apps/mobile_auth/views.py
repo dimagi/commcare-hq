@@ -1,9 +1,10 @@
 import datetime
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseNotFound
 from django.views.decorators.http import require_GET
-from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
+from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey, domain_admin_required
 from corehq.apps.mobile_auth.utils import new_key_record, get_mobile_auth_payload, bump_expiry
 from corehq.apps.mobile_auth.models import MobileAuthKeyRecord
+from corehq.apps.users.models import CommCareUser
 from dimagi.utils.parsing import string_to_datetime
 
 
@@ -63,4 +64,19 @@ def fetch_key_records(request, domain):
         last_issued = string_to_datetime(last_issued).replace(tzinfo=None)
     user_id = request.couch_user.user_id
     payload = FetchKeyRecords(domain, user_id, last_issued).get_payload()
+    return HttpResponse(payload)
+
+
+@login_or_digest_or_basic_or_apikey()
+@domain_admin_required
+@require_GET
+def admin_fetch_key_records(request, domain):
+    last_issued = request.GET.get('last_issued')
+    if last_issued:
+        last_issued = string_to_datetime(last_issued).replace(tzinfo=None)
+    username = request.GET.get('as', '')
+    key_user = CommCareUser.get_by_username(username)
+    if not key_user:
+        return HttpResponseNotFound('User %s not found.' % username)
+    payload = FetchKeyRecords(domain, key_user._id, last_issued).get_payload()
     return HttpResponse(payload)

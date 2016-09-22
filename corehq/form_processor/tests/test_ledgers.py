@@ -12,7 +12,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import LedgerTransaction
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
-from corehq.form_processor.tests import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.form_processor.utils.general import should_use_sql_backend
 
 DOMAIN = 'ledger-tests'
@@ -45,10 +45,10 @@ class LedgerTests(TestCase):
         self.case = self.factory.create_case()
 
     def _submit_ledgers(self, ledger_blocks):
-        return submit_case_blocks(ledger_blocks, DOMAIN).form_id
+        return submit_case_blocks(ledger_blocks, DOMAIN)[0].form_id
 
     def _set_balance(self, balance):
-        from corehq.apps.commtrack.tests import get_single_balance_block
+        from corehq.apps.commtrack.tests.util import get_single_balance_block
         self._submit_ledgers([
             get_single_balance_block(self.case.case_id, self.product_a._id, balance)
         ])
@@ -78,7 +78,7 @@ class LedgerTests(TestCase):
 
     @run_with_all_backends
     def test_balance_submission_multiple(self):
-        from corehq.apps.commtrack.tests import get_single_balance_block
+        from corehq.apps.commtrack.tests.util import get_single_balance_block
         balances = {
             self.product_a._id: 100,
             self.product_b._id: 50,
@@ -164,7 +164,7 @@ class LedgerTests(TestCase):
 
     @run_with_all_backends
     def test_ledger_update_with_case_update(self):
-        from corehq.apps.commtrack.tests import get_single_balance_block
+        from corehq.apps.commtrack.tests.util import get_single_balance_block
         submit_case_blocks([
             CaseBlock(case_id=self.case.case_id, update={'a': "1"}).as_string(),
             get_single_balance_block(self.case.case_id, self.product_a._id, 100)],

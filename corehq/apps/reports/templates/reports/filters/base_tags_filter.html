@@ -8,7 +8,7 @@
            value="{{ selected }}" />
 {% endblock %}
 {% block filter_js %}
-<script type="text/javascript">
+<script>
     $('#{{ css_id }}').select2({tags:{{ tags|JSON }}, allowClear: true});
 </script>
 {% endblock %}

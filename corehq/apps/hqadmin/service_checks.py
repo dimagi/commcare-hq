@@ -14,6 +14,7 @@ from django.contrib.auth.models import User
 from restkit import Resource
 import requests
 from soil import heartbeat
+from dimagi.utils.web import get_url_base
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
@@ -156,6 +157,22 @@ def check_couch():
     return ServiceStatus(True, "Successfully queried an arbitrary couch view")
 
 
+def check_formplayer():
+    formplayer_url = settings.FORMPLAYER_URL
+    if not formplayer_url.startswith('http'):
+        formplayer_url = '{}{}'.format(get_url_base(), formplayer_url)
+
+    try:
+        res = requests.get('{}/serverup'.format(formplayer_url), timeout=5)
+    except requests.exceptions.ConnectTimeout:
+        return ServiceStatus(False, "Could not establish a connection in time")
+    except requests.ConnectionError:
+        return ServiceStatus(False, "Could not connect to formplayer")
+    else:
+        msg = "Formplayer returned a {} status code".format(res.status_code)
+        return ServiceStatus(res.ok, msg)
+
+
 checks = (
     check_pillowtop,
     check_kafka,
@@ -168,4 +185,5 @@ checks = (
     check_elasticsearch,
     check_shared_dir,
     check_blobdb,
+    check_formplayer,
 )

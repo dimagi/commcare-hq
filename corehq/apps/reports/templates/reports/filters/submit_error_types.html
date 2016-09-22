@@ -10,8 +10,8 @@
     {% for type in submission_types %}
        <input type="checkbox" name="{{ slug }}" value="{{ type.type }}" class="hide" id="submission-filter-{{ forloop.counter }}" {% if type.show %}checked="checked"{% endif %}/>
     {% endfor %}
-<script type="text/javascript" src="{% static 'reports/javascripts/field.filter_buttons.js' %}"></script>
-<script type="text/javascript">
+<script src="{% static 'reports/javascripts/field.filter_buttons.js' %}"></script>
+<script>
     $(function() {
         linkButtonGroup("{{ css_id }}");
     });

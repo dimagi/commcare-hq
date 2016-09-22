@@ -8,12 +8,10 @@ from corehq.sql_db.operations import HqRunPython
 
 def migrate_es_pillows(apps, schema_editor):
     pillow_names = [
-        'CasePillow',
         'DomainPillow',
         'GroupPillow',
         'SMSPillow',
         'UserPillow',
-        'XFormPillow',
     ]
     migrate_legacy_pillows(apps, pillow_names)
 

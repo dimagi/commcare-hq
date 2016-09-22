@@ -214,6 +214,8 @@ if [ "$CMD" == "test" ]; then
     docker-compose run --rm web run_tests "${TEST:-python}" "$@"
 elif [ "$CMD" == "shell" ]; then
     docker-compose run --rm web ./manage.py $CMD "$@"
+elif [ "$CMD" == "bootstrap" ]; then
+    docker-compose run --rm web bootstrap
 elif [ "$CMD" == "bash" ]; then
     SERVICE_NAME="${1:-web}"
     shift

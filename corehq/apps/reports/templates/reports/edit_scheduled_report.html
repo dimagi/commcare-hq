@@ -73,7 +73,7 @@ $(function(){
     updateUcrElements($("#id_config_ids").val());
 });
 </script>
-<script type="text/javascript">
+<script>
     var scheduled_report_form_helper = new ScheduledReportFormHelper({
         weekly_options: {{ weekly_day_options|JSON }},
         monthly_options: {{ monthly_day_options|JSON }},
@@ -81,7 +81,7 @@ $(function(){
     });
     scheduled_report_form_helper.init();
 </script>
-<script type="text/javascript">
+<script>
     $('#id-scheduledReportForm').submit(function() {
         ga_track_event('Scheduled Reports', 'Create a scheduled report', '-', {
             'hitCallback': function () {

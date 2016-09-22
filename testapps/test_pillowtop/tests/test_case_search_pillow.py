@@ -6,7 +6,8 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import \
     change_meta_from_kafka_message
 from corehq.apps.change_feed.producer import producer
-from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer, get_current_kafka_seq
+from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
+from corehq.apps.change_feed.topics import get_multi_topic_offset
 from corehq.apps.es import CaseSearchES
 from corehq.apps.userreports.tests.utils import doc_to_change
 from corehq.elastic import get_es_new
@@ -26,6 +27,7 @@ class CaseSearchPillowTest(TestCase):
     domain = 'meereen'
 
     def setUp(self):
+        super(CaseSearchPillowTest, self).setUp()
         FormProcessorTestUtils.delete_all_cases()
         self.elasticsearch = get_es_new()
         self.pillow = get_case_search_to_elasticsearch_pillow()
@@ -37,6 +39,7 @@ class CaseSearchPillowTest(TestCase):
     def tearDown(self):
         ensure_index_deleted(CASE_SEARCH_INDEX)
         CaseSearchConfig.objects.all().delete()
+        super(CaseSearchPillowTest, self).tearDown()
 
     def test_case_search_pillow(self):
         consumer = get_test_kafka_consumer(topics.CASE)
@@ -125,10 +128,7 @@ class CaseSearchPillowTest(TestCase):
     def _get_kafka_seq(self):
         # KafkaChangeFeed listens for multiple topics (case, case-sql) in the case search pillow,
         # so we need to provide a dict of seqs to kafka
-        return {
-            topics.CASE_SQL: get_current_kafka_seq(topics.CASE_SQL),
-            topics.CASE: get_current_kafka_seq(topics.CASE)
-        }
+        return get_multi_topic_offset([topics.CASE, topics.CASE_SQL])
 
     def _make_case(self, domain=None, case_properties=None):
         # make a case

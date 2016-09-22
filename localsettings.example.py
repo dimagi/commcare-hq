@@ -80,16 +80,8 @@ COUCH_USERNAME = 'commcarehq'
 COUCH_PASSWORD = 'commcarehq'
 COUCH_DATABASE_NAME = 'commcarehq'
 
-### Staging Replication Setup for Production/Staging
-
-#Staging domains you want to replicate
-STAGING_DOMAINS = []
-
 ### Public / Pre-login Site information
 ENABLE_PRELOGIN_SITE = False
-
-#COUCHDB URI {http|https}://username:password@host:optionalport/dbname
-PRODUCTION_COUCHDB_URI = ""
 
 ####### # Email setup ########
 # email settings: these ones are the custom hq ones
@@ -242,11 +234,6 @@ LOCAL_PILLOWTOPS = {
 #    'my_pillows': ['some.pillow.Class', ],
 #    'and_more': []
 }
-
-# If there are existing doc_ids and case_ids you want to check directly - they are referenced
-# in your localsettings for more accurate direct checks, otherwise use view based which can be inaccurate.
-ES_CASE_CHECK_DIRECT_DOC_ID = None
-ES_XFORM_CHECK_DIRECT_DOC_ID = None
 
 ####### API throttling #####
 

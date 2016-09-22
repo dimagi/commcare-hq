@@ -1,5 +1,6 @@
 from copy import copy
-from corehq.util.couch_helpers import paginate_view
+from corehq.util.couch_helpers import paginate_view, MultiKeyViewArgsProvider
+from corehq.util.pagination import paginate_function
 from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.feed.interface import Change
 from pillowtop.reindexer.change_providers.interface import ChangeProvider
@@ -32,3 +33,35 @@ class CouchViewChangeProvider(ChangeProvider):
             # to get the documents. In the future we will likely need to add chunking
             yield Change(id=row['id'], sequence_id=None, document=row.get('doc'), deleted=False,
                          document_store=CouchDocumentStore(self._couch_db))
+
+
+class CouchDomainDocTypeChangeProvider(ChangeProvider):
+    def __init__(self, couch_db, domains, doc_types, chunk_size=1000, event_handler=None):
+        self.domains = domains
+        self.doc_types = doc_types
+        self.chunk_size = chunk_size
+        self.couch_db = couch_db
+        self.event_handler = event_handler
+
+    def iter_all_changes(self, start_from=None):
+        if not self.domains:
+            return
+
+        def data_function(**view_kwargs):
+            return self.couch_db.view('by_domain_doc_type_date/view', **view_kwargs)
+
+        keys = []
+        for domain in self.domains:
+            for doc_type in self.doc_types:
+                keys.append([domain, doc_type])
+
+        args_provider = MultiKeyViewArgsProvider(keys, include_docs=True, chunk_size=self.chunk_size)
+
+        for row in paginate_function(data_function, args_provider, event_handler=self.event_handler):
+            yield Change(
+                id=row['id'],
+                sequence_id=None,
+                document=row.get('doc'),
+                deleted=False,
+                document_store=None
+            )

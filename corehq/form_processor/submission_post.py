@@ -15,15 +15,16 @@ from django.http import (
 import sys
 import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals
+from casexml.apps.case.xml import V2
 from corehq.toggles import ASYNC_RESTORE
 from corehq.apps.commtrack.exceptions import MissingProductId
-from corehq.apps.tzmigration import timezone_migration_in_progress
+from corehq.apps.tzmigration.api import timezone_migration_in_progress
 from corehq.form_processor.exceptions import CouchSaveAborted
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.metadata import scrub_meta
-from casexml.apps.phone.const import ASYNC_RESTORE_CACHE_KEY_PREFIX
+from casexml.apps.phone.const import ASYNC_RESTORE_CACHE_KEY_PREFIX, RESTORE_CACHE_KEY_PREFIX
 from couchforms.const import BadRequest, DEVICE_LOG_XMLNS
 from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub
 from couchforms.signals import successful_form_received
@@ -117,32 +118,19 @@ class SubmissionPost(object):
 
     def _post_process_form(self, xform):
         self._set_submission_properties(xform)
-        if xform.is_submission_error_log:
-            found_old = scrub_meta(xform)
-            legacy_notification_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
-
-    def _invalidate_async_tasks(self, user_id):
-        from casexml.apps.phone.restore import restore_cache_key
-        cache = get_redis_default_cache()
-        cache_key = restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, user_id)
-        task_id = cache.get(cache_key)
-
-        if task_id is not None:
-            revoke_celery_task(task_id)
-            cache.delete(cache_key)
+        found_old = scrub_meta(xform)
+        legacy_notification_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
 
     def run(self):
         failure_result = self._handle_basic_failure_modes()
         if failure_result:
             return failure_result
 
-        if ASYNC_RESTORE.enabled(self.domain):
-            self._invalidate_async_tasks(self.auth_context.user_id)
-
         result = process_xform_xml(self.domain, self.instance, self.attachments)
         submitted_form = result.submitted_form
 
         self._post_process_form(submitted_form)
+        self._invalidate_caches(submitted_form.user_id)
 
         if submitted_form.is_submission_error_log:
             self.formdb.save_new_form(submitted_form)
@@ -184,6 +172,31 @@ class SubmissionPost(object):
             errors = self.process_signals(instance)
             response = self._get_open_rosa_response(instance, errors)
             return response, instance, cases
+
+    @property
+    def _cache(self):
+        return get_redis_default_cache()
+
+    @property
+    def _restore_cache_key(self):
+        from casexml.apps.phone.restore import restore_cache_key
+        return restore_cache_key
+
+    def _invalidate_caches(self, user_id):
+        """invalidate cached initial restores"""
+        initial_restore_cache_key = self._restore_cache_key(RESTORE_CACHE_KEY_PREFIX, user_id, version=V2)
+        self._cache.delete(initial_restore_cache_key)
+
+        if ASYNC_RESTORE.enabled(self.domain):
+            self._invalidate_async_caches(user_id)
+
+    def _invalidate_async_caches(self, user_id):
+        cache_key = self._restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, user_id)
+        task_id = self._cache.get(cache_key)
+
+        if task_id is not None:
+            revoke_celery_task(task_id)
+            self._cache.delete(cache_key)
 
     def save_processed_models(self, xforms, case_stock_result):
         from casexml.apps.case.signals import case_post_save
@@ -309,8 +322,7 @@ class SubmissionPost(object):
             )
         )
         return OpenRosaResponse(
-            message=("The sever got itself into big trouble! "
-                     "Details: %s" % error_instance.problem),
+            message="There was an error processing the form: %s" % error_instance.problem,
             nature=ResponseNature.SUBMIT_ERROR,
             status=500,
         ).response()
@@ -326,30 +338,30 @@ def _transform_instance_to_error(interface, e, instance):
     return interface.xformerror_from_xform_instance(instance, error_message)
 
 
-def handle_unexpected_error(interface, instance, e):
+def handle_unexpected_error(interface, instance, exception, message=None):
     # The following code saves the xform instance
     # as an XFormError, with a different ID.
     # That's because if you save with the original ID
     # and then resubmit, the new submission never has a
     # chance to get reprocessed; it'll just get saved as
     # a duplicate.
-    _notify_submission_error(interface, instance, e)
+    _notify_submission_error(interface, instance, exception, message=message)
     FormAccessors(interface.domain).save_new_form(instance)
 
 
-def _notify_submission_error(interface, instance, e):
+def _notify_submission_error(interface, instance, exception, message=None):
     from corehq.util.global_request.api import get_request
     request = get_request()
-    error_message = u'{}: {}'.format(type(e).__name__, unicode(e))
+    error_message = u'{}: {}'.format(type(exception).__name__, unicode(exception))
     instance = interface.xformerror_from_xform_instance(instance, error_message, with_new_id=True)
     domain = getattr(instance, 'domain', '---')
-    message = u"Error in case or stock processing for domain: {}".format(domain)
+    message = message or u"Error in case or stock processing"
     details = {
+        'domain': domain,
         'original form ID': instance.orig_id,
         'error form ID': instance.form_id,
-        'error message': error_message
     }
-    should_email = not isinstance(e, CouchSaveAborted)  # intentionally don't double-email these
+    should_email = not isinstance(exception, CouchSaveAborted)  # intentionally don't double-email these
     if should_email:
         notify_exception(request, message, details=details)
     else:

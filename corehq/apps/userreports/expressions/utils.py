@@ -1,6 +1,7 @@
 import copy
 import ast
 from datetime import date, datetime, timedelta
+from types import NoneType
 
 from simpleeval import SimpleEval, DEFAULT_OPERATORS, InvalidExpression, DEFAULT_FUNCTIONS
 
@@ -35,7 +36,7 @@ def eval_statements(statement, variable_context):
     """
     # variable values should be numbers
     var_types = set(type(value) for value in variable_context.values())
-    if not var_types.issubset(set([int, float, long, date, datetime])):
+    if not var_types.issubset({int, float, long, date, datetime, NoneType, bool}):
         raise InvalidExpression
 
     evaluator = SimpleEval(operators=SAFE_OPERATORS, names=variable_context, functions=FUNCTIONS)

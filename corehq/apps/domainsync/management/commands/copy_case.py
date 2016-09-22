@@ -1,17 +1,18 @@
 from optparse import make_option
-from django.core.management.base import LabelCommand, CommandError
+from django.core.management.base import BaseCommand, CommandError
 from casexml.apps.case.dbaccessors import get_reverse_indices
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domainsync.management.commands.copy_utils import copy_postgres_data_for_docs
+from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.couch_helpers import OverrideDB
 from corehq.util.couchdb_management import CouchConfig
 from couchforms.models import XFormInstance
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Copy a case and all related forms"
     args = '<sourcedb> <case_id> <domain>'
-    option_list = LabelCommand.option_list + (
+    option_list = BaseCommand.option_list + (
         make_option('--postgres-db',
                     action='store',
                     dest='postgres_db',
@@ -29,6 +30,8 @@ class Command(LabelCommand):
         doc_ids = [case_id]
 
         domain = args[2] if len(args) > 2 else None
+        if should_use_sql_backend(domain):
+            raise CommandError('This command only works for couch-based domains.')
 
         def _migrate_case(case_id):
             print 'getting case %s' % case_id
@@ -59,6 +62,7 @@ class Command(LabelCommand):
         def form_wrapper(row):
             doc = row['doc']
             doc.pop('_attachments', None)
+            doc.pop('external_blobs', None)
             return XFormInstance.wrap(doc)
 
         xforms = source_couch.get_db_for_class(XFormInstance).all_docs(

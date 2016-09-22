@@ -63,6 +63,8 @@ class CallCenterIndicatorConfig(JsonObject):
     legacy_cases_total = BooleanProperty(False)
     legacy_cases_active = BooleanProperty(False)
 
+    custom_form = ListProperty(TypedIndicator)
+
     def includes_legacy(self):
         return (
             self.legacy_forms_submitted or
@@ -71,7 +73,7 @@ class CallCenterIndicatorConfig(JsonObject):
         )
 
     @classmethod
-    def default_config(cls, include_legacy=True):
+    def default_config(cls, domain_name=None, include_legacy=True):
         def default_basic():
             return BasicIndicator(enabled=True, date_ranges=set(const.DATE_RANGES))
 
@@ -90,6 +92,10 @@ class CallCenterIndicatorConfig(JsonObject):
         config.legacy_cases_total = include_legacy
         config.legacy_cases_active = include_legacy
 
+        for slug in const.PER_DOMAIN_FORM_INDICATORS.get(domain_name, {}):
+            for range in const.DATE_RANGES:
+                config.custom_form.append(TypedIndicator(type=slug, date_range=range))
+
         return config
 
     def set_indicator(self, parsed_indicator):
@@ -102,6 +108,14 @@ class CallCenterIndicatorConfig(JsonObject):
                     indicator.totals.date_ranges.add(date_range)
                 else:
                     indicator.date_ranges.add(date_range)
+        elif parsed_indicator.category == const.CUSTOM_FORM:
+            self.custom_form.append(
+                TypedIndicator(
+                    enabled=True,
+                    date_range=parsed_indicator.date_range,
+                    type=parsed_indicator.type
+                )
+            )
         elif parsed_indicator.category == const.FORMS_SUBMITTED:
             self.forms_submitted.enabled = True
             if parsed_indicator.date_range:

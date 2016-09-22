@@ -22,7 +22,7 @@ install:
 before_script:
   - docker version
   - docker-compose version
-script: "scripts/docker test --noinput --stop --verbosity=2 --no-migration-optimizer --divide-depth=1"
+script: "scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1"
 after_success:
   # create symlink so coverage report can find source files
   - sudo ln -s $(pwd) /mnt/commcare-hq-ro

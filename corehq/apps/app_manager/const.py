@@ -53,3 +53,12 @@ AMPLIFIES_NO = 'no'
 AMPLIFIES_NOT_SET = 'not_set'
 
 DEFAULT_MONTH_FILTER_PERIOD_LENGTH = 0
+
+CLAIM_DEFAULT_RELEVANT_CONDITION = "count(instance('casedb')/casedb/case[@case_id=instance('querysession')/session/data/case_id]) = 0"
+
+STOCK_QUESTION_TAG_NAMES = [
+    'balance',
+    'transfer',
+]
+
+DEFAULT_FETCH_LIMIT = 5

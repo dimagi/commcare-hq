@@ -29,6 +29,9 @@ hqDefine('registration/js/new_user.ko.js', function () {
     _private.submitSuccessFn = function () {
         // useful for off-module analytics
     };
+    _private.getPhoneNumberFn = function () {
+        // number to return phone number
+    };
 
     module.setResetEmailFeedbackFn = function (callback) {
         // use this function to reset the form-control-feedback ui
@@ -43,6 +46,10 @@ hqDefine('registration/js/new_user.ko.js', function () {
 
     module.setSubmitSuccessFn = function (callback) {
         _private.submitSuccessFn = callback;
+    };
+
+    module.setGetPhoneNumberFn = function (callback) {
+        _private.getPhoneNumberFn = callback;
     };
 
     module.initRMI = function (rmiUrl) {
@@ -143,6 +150,10 @@ hqDefine('registration/js/new_user.ko.js', function () {
                 zxcvbnPassword: 2,
             });
 
+
+        // --- Optional for test ----
+        self.phoneNumber = ko.observable();
+
         // ---------------------------------------------------------------------
         // Step 2
         // ---------------------------------------------------------------------
@@ -173,6 +184,8 @@ hqDefine('registration/js/new_user.ko.js', function () {
                 password: self.password(),
                 project_name: self.projectName(),
                 eula_confirmed: self.eulaConfirmed(),
+                phone_number: _private.getPhoneNumberFn() || self.phoneNumber(),
+                xform: defaults.xform,
             };
         };
 

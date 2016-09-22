@@ -7,11 +7,11 @@
 {% block title %}{% trans "Create an Account" %}{% endblock title %}
 
 {% block js-inline  %}{{ block.super }}
-  <script type="text/javascript">
+  <script>
     $(function () {
       $(window).on('resize load', function () {
         var newHeight = $(window).height() - $('#hq-navigation').outerHeight() - $('#hq-footer').outerHeight() - 1;  // -1 for rounding errors
-        $('.reg-form-column').css('min-height', Math.max(newHeight, 450) + 'px');
+        $('.reg-form-column').css('min-height', Math.max(newHeight, {% if show_number %}600{% else %}450{% endif %}) + 'px');
       });
     });
   </script>
@@ -20,9 +20,10 @@
   <script src="{% static 'jquery-ui/ui/effect.js' %}"></script>
   <script src="{% static 'jquery-ui/ui/effect-slide.js' %}"></script>
   <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
+  <script src="{% static 'intl-tel-input/build/js/intlTelInput.min.js' %}"></script>
   <script src="{% static 'style/ko/password_validators.ko.js' %}"></script>
-  <script type="text/javascript" src="{% static 'registration/js/new_user.ko.js' %}"></script>
-  <script type="text/javascript">
+  <script src="{% static 'registration/js/new_user.ko.js' %}"></script>
+  <script>
     $(function () {
       var reg = hqImport('registration/js/new_user.ko.js');
       reg.onModuleLoad = function () {
@@ -57,18 +58,62 @@
       });
 
       reg.setSubmitAttemptFn(function () {
-        _kmq.push(["trackClick", "create_account_clicked", "Clicked Create Account (new)"]);
+        _kmq.push(["trackClick", "create_account_clicked", "Clicked Create Account"]);
       });
 
       reg.setSubmitSuccessFn(function () {
-        _kmq.push(["trackClick", "create_account_success", "Account Creation was Successful (new)"]);
+        _kmq.push(["trackClick", "create_account_success", "Account Creation was Successful"]);
       });
+
+      {% if show_number %}
+        var $number = $('#id_phone_number');
+        $number.intlTelInput({
+          nationalMode: true,
+          utilsScript: "{% static 'intl-tel-input/build/js/utils.js' %}"
+        });
+        $number.keydown(function (e) {
+          // prevents non-numeric numbers from being entered.
+          // from http://stackoverflow.com/questions/995183/how-to-allow-only-numeric-0-9-in-html-inputbox-using-jquery
+          // Allow: backspace, delete, tab, escape, enter and .
+          if ($.inArray(e.keyCode, [46, 8, 9, 27, 13, 110, 190]) !== -1 ||
+               // Allow: Ctrl+A, Command+A
+              (e.keyCode === 65 && (e.ctrlKey === true || e.metaKey === true)) ||
+               // Allow: home, end, left, right, down, up
+              (e.keyCode >= 35 && e.keyCode <= 40)) {
+                   // let it happen, don't do anything
+                   return;
+          }
+          // Ensure that it is a number and stop the keypress
+          if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+              e.preventDefault();
+          }
+        });
+        reg.setGetPhoneNumberFn(function () {
+          var phoneNumber = $number.intlTelInput("getNumber");
+          if (phoneNumber) {
+            _kmq.push(["trackClick", "submitted_phone_number", "Phone Number Field Filled Out"]);
+          }
+          return phoneNumber;
+        });
+      {% endif %}
 
     });
   </script>
+  {% if ab_test %}
+    <script>
+      $(function () {
+        _kmq.push(["set", {"{{ ab_test.name }}": "{{ ab_test.version }}"}]);
+      })
+    </script>
+  {% endif %}
 {% endblock %}
 
 {% block stylesheets %}
+<link type="text/css"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'intl-tel-input/build/css/intlTelInput.css' %}" />
+
 {% if less_debug %}
 <link type="text/less"
       rel="stylesheet"
@@ -95,7 +140,7 @@
 <div class="container">
   <div class="row">
     <div class="col-xs-8 col-xs-offset-4 col-md-7 col-md-offset-5 reg-form-column animate-height" style="min-height: 450px">
-      <div id="registration-form-container">
+      <div id="registration-form-container" {% if show_number %}class="has-phonenumber"{% endif %}>
         <ul class="form-step-progress">
           <li class="active">{% trans "Create Account" %}</li>
           <li data-bind="css: { active: currentStep() > 0 }">{% trans "Name Project" %}</li>

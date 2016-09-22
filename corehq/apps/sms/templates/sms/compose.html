@@ -5,12 +5,12 @@
 {% load crispy_forms_tags %}
 
 {% block js-inline %}
-    <script type="text/javascript">
+    <script>
 
         $(function(){
             $("#hint_id_recipients").addClass("alert alert-info");
             $("#hint_id_message").addClass("alert alert-info");
-            $("#id_message").bind('keyup', function () {
+            $("#id_message").on('keyup', function () {
                 var max_char = 160,
                         current_count = $(this).val().length,
                         cc_message = "";

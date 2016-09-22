@@ -4,11 +4,7 @@ from corehq.pillows.mappings import NULL_VALUE
 from corehq.util.elastic import es_index
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
-##################
-# NOTE to the next person who updates this name:
-#    You should also remove the CasePillow.get_unique_id method
 CASE_INDEX = es_index("hqcases_2016-03-04")
-##################
 CASE_ES_TYPE = 'case'
 
 CASE_MAPPING = {
@@ -102,6 +98,7 @@ CASE_MAPPING = {
                       'type': 'string'},
         'contact_phone_number': {'index': 'not_analyzed',
                                  'type': 'string'},
+        'backend_id': {'type': 'string', 'index': 'not_analyzed'},
     }
 }
 

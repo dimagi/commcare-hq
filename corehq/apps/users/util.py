@@ -35,6 +35,12 @@ def format_username(username, domain):
 
 
 def normalize_username(username, domain=None):
+    """
+    Returns a lower-case username. Checks that it is a valid e-mail
+    address, or a valid "local part" of an e-mail address.
+
+    :raises ValidationError on invalid e-mail
+    """
     from django.core.validators import validate_email
 
     username = re.sub(r'\s+', '.', username).lower()
@@ -140,21 +146,6 @@ def doc_value_wrapper(doc_cls, value_cls):
         doc_inst = doc_cls.wrap(doc)
         return doc_inst, value_inst
     return wrapper
-
-
-def user_data_from_registration_form(xform):
-    """
-    Helper function for create_or_update_from_xform
-    """
-    user_data = {}
-    form_data = xform.form_data
-    if "user_data" in form_data and "data" in form_data["user_data"]:
-        items = form_data["user_data"]["data"]
-        if not isinstance(items, list):
-            items = [items]
-        for item in items:
-            user_data[item["@key"]] = item["#text"]
-    return user_data
 
 
 def can_add_extra_mobile_workers(request):

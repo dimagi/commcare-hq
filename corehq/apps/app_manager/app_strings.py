@@ -4,7 +4,8 @@ from django.utils.translation import ugettext
 
 from corehq.apps.app_manager import id_strings
 from dimagi.utils.decorators.memoized import memoized
-from corehq.apps.app_manager.util import is_sort_only_column, module_offers_search
+from corehq.apps.app_manager.util import module_offers_search,\
+    create_temp_sort_column, get_sort_and_sort_only_columns
 import langcodes
 import commcare_translations
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
@@ -71,8 +72,7 @@ def _create_custom_app_strings(app, lang, for_default=False):
                 yield id_strings.detail_title_locale(module, detail_type), label
 
             for column in detail.get_columns():
-                if not is_sort_only_column(column):
-                    yield id_strings.detail_column_header_locale(module, detail_type, column), trans(column.header)
+                yield id_strings.detail_column_header_locale(module, detail_type, column), trans(column.header)
 
                 if column.format in ('enum', 'enum-image'):
                     for item in column.enum:
@@ -89,6 +89,15 @@ def _create_custom_app_strings(app, lang, for_default=False):
                             yield id_strings.graph_series_configuration(
                                 module, detail_type, column, index, property
                             ), trans(values)
+
+            # To list app strings for properties used as sorting properties only
+            if detail.sort_elements:
+                sort_only, sort_columns = get_sort_and_sort_only_columns(detail, detail.sort_elements)
+                for field, sort_element, order in sort_only:
+                    if sort_element.has_display_values():
+                        column = create_temp_sort_column(sort_element, order)
+                        yield id_strings.detail_column_header_locale(module, detail_type, column), \
+                            trans(column.header)
 
             for tab in detail.get_tabs():
                 yield id_strings.detail_tab_title_locale(module, detail_type, tab), trans(tab.header)

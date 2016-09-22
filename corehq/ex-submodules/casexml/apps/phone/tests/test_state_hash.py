@@ -16,7 +16,7 @@ from casexml.apps.phone.tests.utils import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.form_processor.tests import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)

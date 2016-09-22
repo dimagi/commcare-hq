@@ -15,8 +15,8 @@ class MobileAuthKeyRecord(Document):
     domain = StringProperty()
     user_id = StringProperty()
 
-    valid = DateTimeProperty()
-    expires = DateTimeProperty()
+    valid = DateTimeProperty()  # initialized with 30 days before the date created
+    expires = DateTimeProperty()  # just bumped up by multiple of 30 days when expired
     type = StringProperty(choices=['AES256'], default='AES256')
     key = StringProperty()
 

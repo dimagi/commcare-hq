@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-07-12 15:21+0000\n"
+"POT-Creation-Date: 2016-09-20 20:25+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -40,7 +40,7 @@ msgstr ""
 msgid "Auto-set by "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:500
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:576
 msgid "Select One"
 msgstr ""
 
@@ -49,7 +49,7 @@ msgid "You have unsaved changes to your application profiles"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/language-profiles.js:33
-#: corehq/apps/style/static/style/js/main.js:228
+#: corehq/apps/style/static/style/js/main.js:231
 msgid "There was an error saving"
 msgstr ""
 
@@ -57,62 +57,74 @@ msgstr ""
 msgid "Reset"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases.js:27
+#: corehq/apps/app_manager/static/app_manager/js/releases.js:28
 msgid "(Default)"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:94
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:129
 msgid "Form successfully saved"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:98
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/entities/menu.js:112
+msgid "Unable to connect to form playing service. "
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:126
 msgid "Error saving!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:100
-msgid "Unknown error: "
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:103
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:134
 msgid ""
-"This can happen if you loaded CloudCare from a different address than the "
-"server address"
+"Could not sync user data. Please try again and report a bug if issue "
+"persists."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:27
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:138
+msgid "User Data successfully synced."
+msgstr ""
+
+#: corehq/apps/export/static/export/js/list_exports.ng.js:86
+msgid "Download Requested"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/models.js:73
 msgid "Web Page (Excel Dashboards)"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:29
+#: corehq/apps/export/static/export/js/models.js:75
 msgid "CSV (Zip file)"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:31
+#: corehq/apps/export/static/export/js/models.js:77
 msgid "Excel (older versions)"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:33
+#: corehq/apps/export/static/export/js/models.js:79
 msgid "Excel 2007"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:42
+#: corehq/apps/export/static/export/js/models.js:95
 msgid "Create"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:42
-#: corehq/apps/style/static/style/js/main.js:224
+#: corehq/apps/export/static/export/js/models.js:95
+#: corehq/apps/style/static/style/js/main.js:227
 msgid "Save"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:215
+#: corehq/apps/export/static/export/js/models.js:376
+msgid "The table path should end with []"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/models.js:485
 msgid "Sensitive ID"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:217
+#: corehq/apps/export/static/export/js/models.js:487
 msgid "Sensitive Date"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:219
+#: corehq/apps/export/static/export/js/models.js:489
 msgid "None"
 msgstr ""
 
@@ -132,39 +144,42 @@ msgstr ""
 msgid "Upload "
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:82
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:89
 msgid "Please enter your name."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:91
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:98
 msgid "Please specify an email."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:118
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:125
 msgid "There is already a user with this email."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:126
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:133
 msgid "Checking email..."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:136
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:143
 msgid "Please specify a password."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:152
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:163
 msgid "Please specify a project name."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:22
+#: corehq/apps/registration/static/registration/js/password.js:25
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:67
 msgid "Your password is too weak! Try adding numbers or symbols!"
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:24
+#: corehq/apps/registration/static/registration/js/password.js:27
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:58
 msgid "Your password is almost strong enough!"
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:26
+#: corehq/apps/registration/static/registration/js/password.js:29
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:49
 msgid "Good Job! Your password is strong!"
 msgstr ""
 
@@ -188,69 +203,69 @@ msgstr ""
 msgid "Remove All"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:225
+#: corehq/apps/style/static/style/js/main.js:228
 msgid "Saving..."
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:226
+#: corehq/apps/style/static/style/js/main.js:229
 msgid "Saved"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:227
-#: corehq/apps/style/static/style/js/main.js:235
+#: corehq/apps/style/static/style/js/main.js:230
+#: corehq/apps/style/static/style/js/main.js:238
 msgid "Try Again"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:232
-#: corehq/apps/style/static/style/js/ui-element.js:354
+#: corehq/apps/style/static/style/js/main.js:235
+#: corehq/apps/style/static/style/js/ui-element.js:355
 msgid "Delete"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:233
+#: corehq/apps/style/static/style/js/main.js:236
 msgid "Deleting..."
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:234
+#: corehq/apps/style/static/style/js/main.js:237
 msgid "Deleted"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:236
+#: corehq/apps/style/static/style/js/main.js:239
 msgid "There was an error deleting"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/ui-element.js:228
+#: corehq/apps/style/static/style/js/ui-element.js:229
 msgid "Edit"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/ui-element.js:236
+#: corehq/apps/style/static/style/js/ui-element.js:237
 msgid "Edit Mapping for "
 msgstr ""
 
-#: corehq/apps/style/static/style/js/ui-element.js:241
+#: corehq/apps/style/static/style/js/ui-element.js:242
 msgid "Add Key &rarr; Value Mapping"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/ui-element.js:245
+#: corehq/apps/style/static/style/js/ui-element.js:246
 msgid "Done"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/ui-element.js:286
+#: corehq/apps/style/static/style/js/ui-element.js:287
 msgid "Click <strong>Edit</strong> below to add mappings"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/ui-element.js:341
+#: corehq/apps/style/static/style/js/ui-element.js:342
 msgid "key"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/ui-element.js:342
+#: corehq/apps/style/static/style/js/ui-element.js:343
 msgid "value"
 msgstr ""
 
-#: corehq/apps/style/static/style/ko/components/inline_edit.js:53
+#: corehq/apps/style/static/style/ko/components/inline_edit.js:55
 msgid "Error saving, please try again."
 msgstr ""
 
-#: corehq/apps/style/static/style/ko/components/inline_edit.js:66
+#: corehq/apps/style/static/style/ko/components/inline_edit.js:68
 msgid "You have unsaved changes."
 msgstr ""
 
@@ -262,24 +277,42 @@ msgstr ""
 msgid "Not a valid email"
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:229
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:357
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:372
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:230
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:358
 msgid ""
 "Web users viewing the report will see this display text instead of the "
 "property name. Name your filter something easy for users to understand."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:231
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:359
 msgid ""
-"What type of property is this filter?<br/><br/><strong>Date</strong>: select "
-"this if the property is a date.<br/><strong>Choice</strong>: select this if "
+"What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
+"this if the property is a date.<br/><strong>Choice</strong>: Select this if "
 "the property is text or multiple choice."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:240
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:373
+msgid ""
+"What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
+"this to filter the property by a date range.<br/><strong>Value</strong>: "
+"Select this to filter the property by a single value."
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:374
+msgid "What value or date range must the property be equal to?"
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:385
 msgid ""
 "Column format selection will determine how each row's value is calculated."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:76
+msgid ""
+"This password is automatically generated. Please copy it or create your own. "
+"It will not be shown again."
 msgstr ""

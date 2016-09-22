@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 
 from corehq.apps.accounting.models import Currency
 from corehq.apps.smsbillables.utils import log_smsbillables_info
@@ -39,7 +39,7 @@ def add_moz_zero_charge(apps):
     log_smsbillables_info("Updated Moz gateway default fees.")
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "bootstrap MOZ global SMS backend gateway default fees"
     args = ""
     label = ""

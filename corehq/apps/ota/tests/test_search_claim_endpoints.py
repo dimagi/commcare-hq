@@ -12,12 +12,11 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.case_search import get_case_search_reindexer
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO, CASE_SEARCH_INDEX
 from corehq.util.elastic import ensure_index_deleted
 from pillowtop.es_utils import initialize_index_and_mapping
-
 
 DOMAIN = 'test-domain'
 USERNAME = 'testy_mctestface'
@@ -26,12 +25,14 @@ CASE_NAME = 'Jamie Hand'
 CASE_TYPE = 'case'
 OWNER_ID = 'nerc'
 TIMESTAMP = '2016-04-17T10:13:06.588694Z'
+FIXED_DATESTAMP = '2016-04-17'
 PATTERN = r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z'
+DATE_PATTERN = r'\d{4}-\d{2}-\d{2}'
+
 # cf. http://www.theguardian.com/environment/2016/apr/17/boaty-mcboatface-wins-poll-to-name-polar-research-vessel
 
 
 class CaseClaimEndpointTests(TestCase):
-
     def setUp(self):
         self.domain = create_domain(DOMAIN)
         self.user = CommCareUser.create(DOMAIN, USERNAME, PASSWORD)
@@ -114,17 +115,17 @@ class CaseClaimEndpointTests(TestCase):
     def test_search_endpoint(self):
         known_result = (
             '<results id="case">'  # ("case" is not the case type)
-                '<case case_id="{case_id}" '
-                      'case_type="{case_type}" '
-                      'owner_id="{owner_id}" '
-                      'status="open">'
-                    '<case_name>{case_name}</case_name>'
-                    '<date_opened>2016-04-17T10:13:06.588694Z</date_opened>'
-                    '<last_modified>2016-04-17T10:13:06.588694Z</last_modified>'
-                    '<external_id>Jamie Hand</external_id>'
-                    '<location_id>None</location_id>'
-                    '<referrals>None</referrals>'
-                '</case>'
+            '<case case_id="{case_id}" '
+            'case_type="{case_type}" '
+            'owner_id="{owner_id}" '
+            'status="open">'
+            '<case_name>{case_name}</case_name>'
+            '<last_modified>2016-04-17T10:13:06.588694Z</last_modified>'
+            '<external_id>Jamie Hand</external_id>'
+            '<date_opened>2016-04-17</date_opened>'
+            '<location_id>None</location_id>'
+            '<referrals>None</referrals>'
+            '</case>'
             '</results>'.format(
                 case_id=self.case_id,
                 case_name=CASE_NAME,
@@ -134,7 +135,7 @@ class CaseClaimEndpointTests(TestCase):
 
         client = Client()
         client.login(username=USERNAME, password=PASSWORD)
-        url = reverse('sync_search', kwargs={'domain': DOMAIN})
+        url = reverse('remote_search', kwargs={'domain': DOMAIN})
         response = client.get(url, {'name': 'Jamie Hand', 'case_type': CASE_TYPE})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(re.sub(PATTERN, TIMESTAMP, response.content), known_result)
+        self.assertEqual(re.sub(DATE_PATTERN, FIXED_DATESTAMP, re.sub(PATTERN, TIMESTAMP, response.content)), known_result)

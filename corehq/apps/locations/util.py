@@ -1,8 +1,10 @@
 from corehq.apps.commtrack.dbaccessors import get_supply_point_ids_in_domain_by_location
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.const import LOCATION_TYPE_SHEET_HEADERS, LOCATION_SHEET_HEADERS
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.interfaces.supply import SupplyInterface
+from corehq.toggles import NEW_BULK_LOCATION_MANAGEMENT
 from corehq.util.quickcache import quickcache
 from corehq.util.spreadsheets.excel import flatten_json, json_to_headers
 from dimagi.utils.decorators.memoized import memoized
@@ -26,7 +28,8 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
     only_administrative - if False get all locations
                           if True get only administrative locations
     """
-    from .permissions import user_can_edit_location, user_can_view_location
+    from .permissions import (user_can_edit_location, user_can_view_location,
+        user_can_access_location_id)
 
     def loc_to_json(loc, project):
         ret = {
@@ -37,7 +40,10 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
             'can_edit': True
         }
         if user:
-            ret['can_edit'] = user_can_edit_location(user, loc, project)
+            if user.has_permission(domain, 'access_all_locations'):
+                ret['can_edit'] = user_can_edit_location(user, loc, project)
+            else:
+                ret['can_edit'] = user_can_access_location_id(domain, user, loc.location_id)
         return ret
 
     project = Domain.get_by_name(domain)
@@ -102,11 +108,6 @@ def parent_child(domain):
                       data=dict(location_hierarchy_config(domain)).iteritems())
 
 
-def allowed_child_types(domain, parent):
-    parent_type = parent.location_type if parent else None
-    return parent_child(domain).get(parent_type, [])
-
-
 @quickcache(['domain'], timeout=60)
 def get_location_data_model(domain):
     from .views import LocationFieldsView
@@ -152,10 +153,15 @@ class LocationExporter(object):
             return True
         return False
 
+    @property
+    @memoized
+    def new_bulk_management_enabled(self):
+        return NEW_BULK_LOCATION_MANAGEMENT.enabled(self.domain)
+
     def get_consumption(self, loc):
         if (
             not self.include_consumption or
-            loc.location_type in self.administrative_types or
+            loc.location_type_name in self.administrative_types or
             not self.consumption_dict
         ):
             return {}
@@ -170,16 +176,17 @@ class LocationExporter(object):
                 self.consumption_dict,
                 self.domain,
                 p._id,
-                loc.location_type,
+                loc.location_type_name,
                 sp_id
             ) or ''
             for p in self.products
         }
 
     def _loc_type_dict(self, loc_type):
+
         uncategorized_keys = set()
         tab_rows = []
-        for loc in Location.filter_by_type(self.domain, loc_type):
+        for loc in Location.filter_by_type(self.domain, loc_type.name):
 
             model_data, uncategorized_data = \
                 self.data_model.get_model_and_uncategorized(loc.metadata)
@@ -197,12 +204,20 @@ class LocationExporter(object):
                 'uncategorized_data': uncategorized_data,
                 'consumption': self.get_consumption(loc),
             }
-
+            if self.new_bulk_management_enabled:
+                loc_dict.update({
+                    LOCATION_SHEET_HEADERS['external_id']: loc.external_id,
+                    LOCATION_SHEET_HEADERS['do_delete']: ''
+                })
             tab_rows.append(dict(flatten_json(loc_dict)))
 
         tab_headers = ['site_code', 'name', 'parent_site_code', 'latitude', 'longitude']
         if self.include_ids:
             tab_headers = ['location_id'] + tab_headers
+        if self.new_bulk_management_enabled:
+            tab_headers = ['location_id', 'site_code', 'name', 'parent_code',
+                           'latitude', 'longitude', 'external_id', 'do_delete']
+            tab_headers = [LOCATION_SHEET_HEADERS[h] for h in tab_headers]
 
         def _extend_headers(prefix, headers):
             tab_headers.extend(json_to_headers(
@@ -210,17 +225,59 @@ class LocationExporter(object):
             ))
         _extend_headers('data', (f.slug for f in self.data_model.fields))
         _extend_headers('uncategorized_data', uncategorized_keys)
-        if self.include_consumption_flag and loc_type not in self.administrative_types:
+        if self.include_consumption_flag and loc_type.name not in self.administrative_types:
             _extend_headers('consumption', self.product_codes)
 
-        return (loc_type, {
+        if self.new_bulk_management_enabled:
+            sheet_title = loc_type.code
+        else:
+            sheet_title = loc_type.name
+
+        return (sheet_title, {
             'headers': tab_headers,
             'rows': tab_rows,
         })
 
+    def type_sheet(self, location_types):
+        headers = LOCATION_TYPE_SHEET_HEADERS
+
+        def foreign_code(lt, attr):
+            val = getattr(lt, attr, None)
+            if val:
+                return val.code
+            else:
+                return None
+
+        rows = []
+        for lt in location_types:
+            type_row = {
+                headers['code']: lt.code,
+                headers['name']: lt.name,
+                headers['parent_code']: foreign_code(lt, 'parent_type'),
+                headers['do_delete']: '',
+                headers['shares_cases']: lt.shares_cases,
+                headers['view_descendants']: lt.view_descendants,
+                headers['expand_from']: foreign_code(lt, 'expand_from'),
+                headers['expand_to']: foreign_code(lt, 'expand_to'),
+            }
+            rows.append(dict(flatten_json(type_row)))
+
+        return ('types', {
+            'headers': [headers[header] for header in ['code', 'name', 'parent_code', 'do_delete',
+                        'shares_cases', 'view_descendants', 'expand_from', 'expand_to']],
+            'rows': rows
+        })
+
     def get_export_dict(self):
-        return [self._loc_type_dict(loc_type.name)
-                for loc_type in self.domain_obj.location_types]
+        location_types = self.domain_obj.location_types
+        sheets = []
+        if self.new_bulk_management_enabled:
+            sheets.extend([self.type_sheet(location_types)])
+        sheets.extend([
+            self._loc_type_dict(loc_type)
+            for loc_type in location_types
+        ])
+        return sheets
 
 
 def dump_locations(response, domain, include_consumption=False, include_ids=False):
@@ -247,13 +304,13 @@ def write_to_file(locations):
     """
     outfile = StringIO()
     writer = Excel2007ExportWriter()
-    header_table = [(loc_type, [tab['headers']]) for loc_type, tab in locations]
+    header_table = [(tab_name, [tab['headers']]) for tab_name, tab in locations]
     writer.open(header_table=header_table, file=outfile)
-    for loc_type, tab in locations:
+    for tab_name, tab in locations:
         headers = tab['headers']
         tab_rows = [[row.get(header, '') for header in headers]
                     for row in tab['rows']]
-        writer.write([(loc_type, tab_rows)])
+        writer.write([(tab_name, tab_rows)])
     writer.close()
     return outfile.getvalue()
 
@@ -286,17 +343,20 @@ def get_locations_and_children(location_ids):
     )
 
 
-def get_locations_from_ids(location_ids, domain):
+def get_locations_from_ids(location_ids, domain, base_queryset=None):
     """
     Returns the SQLLocations with the given location_ids, ensuring
     that they belong to the given domain. Raises SQLLocation.DoesNotExist
     if any of the locations do not match the given domain or are not
     found.
     """
+    if not base_queryset:
+        base_queryset = SQLLocation.objects
+
     location_ids = list(set(location_ids))
     expected_count = len(location_ids)
 
-    locations = SQLLocation.objects.filter(
+    locations = base_queryset.filter(
         domain=domain,
         is_archived=False,
         location_id__in=location_ids,

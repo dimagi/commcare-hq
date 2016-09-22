@@ -5,7 +5,9 @@ import datetime
 from dateutil import parser
 from jsonobject.exceptions import BadValueError
 
-from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
+from casexml.apps.case.exceptions import PhoneDateValueError
+from casexml.apps.case.xform import extract_case_blocks
+from casexml.apps.case.xml.parser import CaseGenerationException, case_update_from_block
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.apps.receiverwrapper.util import get_app_version_info
@@ -19,14 +21,10 @@ from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDeprecated, \
     XFormDuplicate, SubmissionErrorLog
-from pillowtop.checkpoints.manager import PillowCheckpoint
+from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
-from .base import HQPillow
-
-UNKNOWN_VERSION = 'XXX'
-UNKNOWN_UIVERSION = 'XXX'
 
 
 def is_valid_date(txt):
@@ -50,23 +48,6 @@ def flatten(d, parent_key='', delimiter='/'):
         elif not isinstance(v, list):
             items.append((new_key, v))
     return dict(items)
-
-
-class XFormPillow(HQPillow):
-    document_class = XFormInstance
-    couch_filter = "couchforms/xforms"
-    es_alias = "xforms"
-    es_type = XFORM_INDEX_INFO.type
-    es_index = XFORM_INDEX_INFO.index
-    include_docs = False
-
-    # for simplicity, the handlers are managed on the domain level
-    handler_domain_map = {}
-    default_mapping = XFORM_INDEX_INFO.mapping
-
-    def change_transform(self, doc_dict):
-        if not xform_pillow_filter(doc_dict):
-            return transform_xform_for_elasticsearch(doc_dict)
 
 
 def xform_pillow_filter(doc_dict):
@@ -120,32 +101,42 @@ def transform_xform_for_elasticsearch(doc_dict):
     doc_ret['user_type'] = get_user_type(user_id)
     doc_ret['inserted_at'] = datetime.datetime.utcnow().isoformat()
 
-    case_blocks = extract_case_blocks(doc_ret)
-    for case_dict in case_blocks:
-        for date_modified_key in ['date_modified', '@date_modified']:
-            if not is_valid_date(case_dict.get(date_modified_key, None)):
-                if case_dict.get(date_modified_key) == '':
-                    case_dict[date_modified_key] = None
-                else:
-                    case_dict.pop(date_modified_key, None)
+    try:
+        case_blocks = extract_case_blocks(doc_ret)
+    except PhoneDateValueError:
+        pass
+    else:
+        for case_dict in case_blocks:
+            for date_modified_key in ['date_modified', '@date_modified']:
+                if not is_valid_date(case_dict.get(date_modified_key, None)):
+                    if case_dict.get(date_modified_key) == '':
+                        case_dict[date_modified_key] = None
+                    else:
+                        case_dict.pop(date_modified_key, None)
 
-        # convert all mapped dict properties to nulls if they are empty strings
-        for object_key in ['index', 'attachment', 'create', 'update']:
-            if object_key in case_dict and not isinstance(case_dict[object_key], dict):
-                case_dict[object_key] = None
+            # convert all mapped dict properties to nulls if they are empty strings
+            for object_key in ['index', 'attachment', 'create', 'update']:
+                if object_key in case_dict and not isinstance(case_dict[object_key], dict):
+                    case_dict[object_key] = None
 
-    doc_ret["__retrieved_case_ids"] = list(get_case_ids_from_form(doc_dict))
+        try:
+            doc_ret["__retrieved_case_ids"] = list(set(case_update_from_block(cb).id for cb in case_blocks))
+        except CaseGenerationException:
+            doc_ret["__retrieved_case_ids"] = []
+
+    if 'backend_id' not in doc_ret:
+        doc_ret['backend_id'] = 'couch'
     return doc_ret
 
 
 def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow'):
-    checkpoint = PillowCheckpoint(
-        'all-xforms-to-elasticsearch',
-    )
+    assert pillow_id == 'XFormToElasticsearchPillow', 'Pillow ID is not allowed to change'
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, XFORM_INDEX_INFO)
     form_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
-        doc_prep_fn=transform_xform_for_elasticsearch
+        doc_prep_fn=transform_xform_for_elasticsearch,
+        doc_filter_fn=xform_pillow_filter,
     )
     kafka_change_feed = KafkaChangeFeed(topics=[topics.FORM, topics.FORM_SQL], group_id='forms-to-es')
     return ConstructedPillow(
@@ -176,7 +167,8 @@ def get_couch_form_reindexer():
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
         doc_filter=xform_pillow_filter,
-        doc_transform=transform_xform_for_elasticsearch
+        doc_transform=transform_xform_for_elasticsearch,
+        pillow=get_xform_to_elasticsearch_pillow(),
     )
 
 
@@ -187,5 +179,6 @@ def get_sql_form_reindexer():
         doc_provider,
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
+        doc_filter=xform_pillow_filter,
         doc_transform=transform_xform_for_elasticsearch
     )

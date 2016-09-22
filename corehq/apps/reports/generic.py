@@ -435,10 +435,11 @@ class GenericReportView(object):
         current_config_id = self.request.GET.get('config_id', '')
         default_config = ReportConfig.default()
 
-        def is_datespan(field):
+        def is_editable_datespan(field):
             field_fn = to_function(field) if isinstance(field, basestring) else field
-            return issubclass(field_fn, DatespanFilter)
-        has_datespan = any([is_datespan(field) for field in self.fields])
+            return issubclass(field_fn, DatespanFilter) and field_fn.is_editable
+
+        has_datespan = any([is_editable_datespan(field) for field in self.fields])
 
         self.context.update(
             report=dict(
@@ -457,8 +458,7 @@ class GenericReportView(object):
                 has_datespan=has_datespan,
                 show=(
                     self.override_permissions_check
-                    or self.request.couch_user.can_view_reports()
-                    or self.request.couch_user.get_viewable_reports()
+                    or self.request.couch_user.can_view_some_reports(self.domain)
                 ),
                 is_emailable=self.emailable,
                 is_export_all = self.exportable_all,
@@ -560,7 +560,7 @@ class GenericReportView(object):
     @property
     def email_response(self):
         """
-        This renders a json object containing a pointer to the static html 
+        This renders a json object containing a pointer to the static html
         content of the report. It is intended for use by the report scheduler.
         """
         self.is_rendered_as_email = True
@@ -666,7 +666,7 @@ class GenericReportView(object):
     @classmethod
     def get_url(cls, domain=None, render_as=None, **kwargs):
         # NOTE: I'm pretty sure this doesn't work if you ever pass in render_as
-        # but leaving as is for now, as it should be obvious as soon as that 
+        # but leaving as is for now, as it should be obvious as soon as that
         # breaks something
 
         if isinstance(cls, cls):
@@ -780,8 +780,8 @@ class GenericTabularReport(GenericReportView):
     report_template_path = "reports/async/tabular.html"
     flush_layout = True
 
-    # set to a list of functions that take in a report object 
-    # and return a dictionary of items that will show up in 
+    # set to a list of functions that take in a report object
+    # and return a dictionary of items that will show up in
     # the report context
     extra_context_providers = []
 

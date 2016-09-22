@@ -1,16 +1,18 @@
 import uuid
 from django.test import TestCase, override_settings
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
-from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.apps.commtrack.helpers import make_product
-from corehq.apps.commtrack.tests import get_single_balance_block
+from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
-from corehq.form_processor.tests import FormProcessorTestUtils
-from corehq.form_processor.utils import get_simple_form_xml
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.utils import get_simple_form_xml, should_use_sql_backend
 from corehq.util.test_utils import OverridableSettingsTestMixin, create_and_save_a_case, create_and_save_a_form
+from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.processors.sample import TestProcessor
+from testapps.test_pillowtop.utils import process_kafka_changes, process_couch_changes
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -20,25 +22,43 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
 
     def setUp(self):
         super(KafkaPublishingTest, self).setUp()
-        FormProcessorTestUtils.delete_all_sql_forms()
-        FormProcessorTestUtils.delete_all_sql_cases()
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
         self.form_accessors = FormAccessors(domain=self.domain)
+        self.processor = TestProcessor()
+        self.form_pillow = ConstructedPillow(
+            name='test-kafka-form-feed',
+            checkpoint=None,
+            change_feed=KafkaChangeFeed(topics=[topics.FORM, topics.FORM_SQL], group_id='test-kafka-form-feed'),
+            processor=self.processor
+        )
+        self.case_pillow = ConstructedPillow(
+            name='test-kafka-case-feed',
+            checkpoint=None,
+            change_feed=KafkaChangeFeed(topics=[topics.CASE, topics.CASE_SQL], group_id='test-kafka-case-feed'),
+            processor=self.processor
+        )
+        self.ledger_pillow = ConstructedPillow(
+            name='test-kafka-ledger-feed',
+            checkpoint=None,
+            change_feed=KafkaChangeFeed(topics=[topics.LEDGER], group_id='test-kafka-ledger-feed'),
+            processor=self.processor
+        )
 
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+
+    @run_with_all_backends
     def test_form_is_published(self):
-        kafka_consumer = get_test_kafka_consumer(topics.FORM_SQL)
-        form = create_and_save_a_form(self.domain)
-        message = kafka_consumer.next()
-        change_meta = change_meta_from_kafka_message(message.value)
+        with process_kafka_changes(self.form_pillow):
+            with process_couch_changes('DefaultChangeFeedPillow'):
+                form = create_and_save_a_form(self.domain)
+
+        self.assertEqual(1, len(self.processor.changes_seen))
+        change_meta = self.processor.changes_seen[0].metadata
         self.assertEqual(form.form_id, change_meta.document_id)
         self.assertEqual(self.domain, change_meta.domain)
 
-    def test_case_is_published(self):
-        kafka_consumer = get_test_kafka_consumer(topics.CASE_SQL)
-        case = create_and_save_a_case(self.domain, case_id=uuid.uuid4().hex, case_name='test case')
-        change_meta = change_meta_from_kafka_message(kafka_consumer.next().value)
-        self.assertEqual(case.case_id, change_meta.document_id)
-        self.assertEqual(self.domain, change_meta.domain)
-
+    @run_with_all_backends
     def test_duplicate_form_published(self):
         form_id = uuid.uuid4().hex
         form_xml = get_simple_form_xml(form_id)
@@ -46,39 +66,84 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
         self.assertEqual(form_id, orig_form.form_id)
         self.assertEqual(1, len(self.form_accessors.get_all_form_ids_in_domain()))
 
-        form_consumer = get_test_kafka_consumer(topics.FORM_SQL)
-
-        # post an exact duplicate
-        dupe_form = submit_form_locally(form_xml, domain=self.domain)[1]
-        self.assertTrue(dupe_form.is_duplicate)
-        self.assertNotEqual(form_id, dupe_form.form_id)
-        self.assertEqual(form_id, dupe_form.orig_id)
+        with process_kafka_changes(self.form_pillow):
+            with process_couch_changes('DefaultChangeFeedPillow'):
+                # post an exact duplicate
+                dupe_form = submit_form_locally(form_xml, domain=self.domain)[1]
+                self.assertTrue(dupe_form.is_duplicate)
+                self.assertNotEqual(form_id, dupe_form.form_id)
+                if should_use_sql_backend(self.domain):
+                    self.assertEqual(form_id, dupe_form.orig_id)
 
         # make sure changes made it to kafka
-        # first the dupe
-        dupe_form_meta = change_meta_from_kafka_message(form_consumer.next().value)
+        dupe_form_meta = self.processor.changes_seen[0].metadata
         self.assertEqual(dupe_form.form_id, dupe_form_meta.document_id)
-        # then the original form
-        orig_form_meta = change_meta_from_kafka_message(form_consumer.next().value)
-        self.assertEqual(orig_form.form_id, orig_form_meta.document_id)
-        self.assertEqual(self.domain, orig_form_meta.domain)
+        self.assertEqual(dupe_form.domain, dupe_form.domain)
+        if should_use_sql_backend(self.domain):
+            # sql domains also republish the original form to ensure that if the server crashed
+            # in the processing of the form the first time that it is still sent to kafka
+            orig_form_meta = self.processor.changes_seen[1].metadata
+            self.assertEqual(orig_form.form_id, orig_form_meta.document_id)
+            self.assertEqual(self.domain, orig_form_meta.domain)
+            self.assertEqual(dupe_form.domain, dupe_form.domain)
+
+    @run_with_all_backends
+    def test_form_soft_deletions(self):
+        form = create_and_save_a_form(self.domain)
+        with process_kafka_changes(self.form_pillow):
+            with process_couch_changes('DefaultChangeFeedPillow'):
+                form.soft_delete()
+
+        self.assertEqual(1, len(self.processor.changes_seen))
+        change_meta = self.processor.changes_seen[0].metadata
+        self.assertEqual(form.form_id, change_meta.document_id)
+        self.assertTrue(change_meta.is_deletion)
+
+    @run_with_all_backends
+    def test_case_is_published(self):
+        with process_kafka_changes(self.case_pillow):
+            with process_couch_changes('DefaultChangeFeedPillow'):
+                case = create_and_save_a_case(self.domain, case_id=uuid.uuid4().hex, case_name='test case')
+
+        self.assertEqual(1, len(self.processor.changes_seen))
+        change_meta = self.processor.changes_seen[0].metadata
+        self.assertEqual(case.case_id, change_meta.document_id)
+        self.assertEqual(self.domain, change_meta.domain)
+
+    @run_with_all_backends
+    def test_case_deletions(self):
+        case = create_and_save_a_case(self.domain, case_id=uuid.uuid4().hex, case_name='test case')
+        with process_kafka_changes(self.case_pillow):
+            with process_couch_changes('DefaultChangeFeedPillow'):
+                case.soft_delete()
+
+        self.assertEqual(1, len(self.processor.changes_seen))
+        change_meta = self.processor.changes_seen[0].metadata
+        self.assertEqual(case.case_id, change_meta.document_id)
+        self.assertTrue(change_meta.is_deletion)
 
     def test_duplicate_case_published(self):
+        # this test only runs on sql because it's handling a sql-specific edge case where duplicate
+        # form submissions should cause cases to be resubmitted.
+        # see: http://manage.dimagi.com/default.asp?228463 for context
         case_id = uuid.uuid4().hex
         form_xml = get_simple_form_xml(uuid.uuid4().hex, case_id)
         submit_form_locally(form_xml, domain=self.domain)[1]
         self.assertEqual(1, len(CaseAccessors(self.domain).get_case_ids_in_domain()))
 
-        case_consumer = get_test_kafka_consumer(topics.CASE_SQL)
-        dupe_form = submit_form_locally(form_xml, domain=self.domain)[1]
-        self.assertTrue(dupe_form.is_duplicate)
+        with process_kafka_changes(self.case_pillow):
+            with process_couch_changes('DefaultChangeFeedPillow'):
+                dupe_form = submit_form_locally(form_xml, domain=self.domain)[1]
+                self.assertTrue(dupe_form.is_duplicate)
 
         # check the case was republished
-        case_meta = change_meta_from_kafka_message(case_consumer.next().value)
+        self.assertEqual(1, len(self.processor.changes_seen))
+        case_meta = self.processor.changes_seen[0].metadata
         self.assertEqual(case_id, case_meta.document_id)
         self.assertEqual(self.domain, case_meta.domain)
 
     def test_duplicate_ledger_published(self):
+        # this test also only runs on the sql backend for reasons described in test_duplicate_case_published
         # setup products and case
         product_a = make_product(self.domain, 'A Product', 'prodcode_a')
         product_b = make_product(self.domain, 'B Product', 'prodcode_b')
@@ -95,16 +160,18 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
             get_single_balance_block(case_id, prod_id, balance)
             for prod_id, balance in balances
         ]
-        form = submit_case_blocks(ledger_blocks, self.domain)
+        form = submit_case_blocks(ledger_blocks, self.domain)[0]
 
         # submit duplicate
-        ledger_consumer = get_test_kafka_consumer(topics.LEDGER)
-        dupe_form = submit_form_locally(form.get_xml(), domain=self.domain)[1]
-        self.assertTrue(dupe_form.is_duplicate)
+        with process_kafka_changes(self.ledger_pillow):
+            with process_couch_changes('DefaultChangeFeedPillow'):
+                dupe_form = submit_form_locally(form.get_xml(), domain=self.domain)[1]
+                self.assertTrue(dupe_form.is_duplicate)
+
 
         # confirm republished
-        ledger_meta_a = change_meta_from_kafka_message(ledger_consumer.next().value)
-        ledger_meta_b = change_meta_from_kafka_message(ledger_consumer.next().value)
+        ledger_meta_a = self.processor.changes_seen[0].metadata
+        ledger_meta_b = self.processor.changes_seen[1].metadata
         format_id = lambda product_id: '{}/{}/{}'.format(case_id, 'stock', product_id)
         expected_ids = {format_id(product_a._id), format_id(product_b._id)}
         for meta in [ledger_meta_a, ledger_meta_b]:

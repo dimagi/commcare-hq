@@ -1,24 +1,29 @@
 from django.test import TestCase, override_settings
-from pillowtop.listener import BasicPillow
-from corehq.apps.domain.models import Domain
+from mock import patch
 
-from ..utils import pillow_seq_store, EPSILON
 from ..models import PillowCheckpointSeqStore
+from ..utils import pillow_seq_store, EPSILON
 
 
-class DummyPillow(BasicPillow):
-    document_class = Domain
+def _get_dummy_pillow():
+    from pillowtop.tests.utils import make_fake_constructed_pillow
+    return make_fake_constructed_pillow('dummy pillow', 'test_checkpoint_seq_store')
 
-    def run(self):
-        pass
+DummyPillow = _get_dummy_pillow
 
 
 @override_settings(PILLOWTOPS={'test': ['corehq.apps.hqadmin.tests.test_utils.DummyPillow']})
 class TestPillowCheckpointSeqStore(TestCase):
-    dependent_apps = ['pillowtop']
 
     def setUp(self):
+        super(TestPillowCheckpointSeqStore, self).setUp()
         self.pillow = DummyPillow()
+        self.pillow_patch = patch("corehq.apps.hqadmin.utils.get_couch_pillow_instances", return_value=[DummyPillow()])
+        self.pillow_patch.start()
+
+    def tearDown(self):
+        self.pillow_patch.stop()
+        super(TestPillowCheckpointSeqStore, self).tearDown()
 
     def test_basic_cloudant_seq(self):
         seq = '1-blahblah'

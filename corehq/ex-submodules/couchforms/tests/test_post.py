@@ -2,7 +2,7 @@ import json
 from django.test import TestCase
 from django.conf import settings
 import os
-from corehq.apps.tzmigration import phone_timezones_should_be_processed
+from corehq.apps.tzmigration.api import phone_timezones_should_be_processed
 from corehq.apps.tzmigration.test_utils import \
     run_pre_and_post_timezone_migration
 
@@ -29,8 +29,9 @@ class PostTest(TestCase, TestFileMixin):
     def _process_couch_json(self, expected, xform_json, any_id_ok):
         expected['received_on'] = xform_json['received_on']
         expected['_rev'] = xform_json['_rev']
-        expected['_attachments'] = None
-        xform_json['_attachments'] = None
+        for key in ['_attachments', 'external_blobs', 'migrating_blobs_from_couch']:
+            expected.pop(key, None)
+            xform_json.pop(key, None)
         if any_id_ok:
             expected['_id'] = xform_json['_id']
         return expected, xform_json

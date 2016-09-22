@@ -1,11 +1,12 @@
 from datetime import datetime
 from zipfile import ZipFile
-from corehq.apps.app_manager.const import APP_V1, APP_V2
 from couchdbkit.exceptions import ResourceNotFound, BadValueError
+from corehq.apps.app_manager.const import APP_V2
 from dimagi.ext.couchdbkit import *
 from corehq.apps.builds.fixtures import commcare_build_config
 from corehq.apps.builds.jadjar import JadJar
 from corehq.util.quickcache import quickcache
+from itertools import groupby
 
 
 class SemanticVersionProperty(StringProperty):
@@ -32,7 +33,8 @@ class CommCareBuild(Document):
     build_number = IntegerProperty()
     version = SemanticVersionProperty()
     time = DateTimeProperty()
-    
+    j2me_enabled = BooleanProperty(default=True)
+
     def put_file(self, payload, path, filename=None):
         """
         Add an attachment to the build (useful for constructing the build)
@@ -75,6 +77,8 @@ class CommCareBuild(Document):
         """f should be a file-like object or a path to a zipfile"""
         self = cls(build_number=build_number, version=version, time=datetime.utcnow())
         self.save()
+        # Clear cache to have this new build included immediately
+        cls.j2me_enabled_builds.clear(cls)
 
         with ZipFile(f) as z:
             try:
@@ -86,6 +90,16 @@ class CommCareBuild(Document):
             except:
                 self.delete()
                 raise
+        return self
+
+    @classmethod
+    def create_without_artifacts(cls, version, build_number):
+        self = cls(build_number=build_number, version=version,
+                   time=datetime.utcnow(), j2me_enabled=False)
+        self.save()
+        # Clear cache to have this build number excluded immediately if build added
+        # with existing version number but not supporting j2me now
+        cls.j2me_enabled_builds.clear(cls)
         return self
 
     def minor_release(self):
@@ -131,6 +145,21 @@ class CommCareBuild(Document):
     @classmethod
     def all_builds(cls):
         return cls.view('builds/all', include_docs=True, reduce=False)
+
+    @classmethod
+    @quickcache([], timeout=5 * 60)
+    def j2me_enabled_builds(cls):
+        j2me_enabled_builds = []
+        for version_number, group in groupby(cls.all_builds(), lambda x: x['version']):
+            latest_version_build = list(group)[-1]
+            if latest_version_build['j2me_enabled']:
+                j2me_enabled_builds.append(latest_version_build)
+
+        return j2me_enabled_builds
+
+    @classmethod
+    def j2me_enabled_build_versions(cls):
+        return map(lambda x: x.version, cls.j2me_enabled_builds())
 
 
 class BuildSpec(DocumentSchema):
@@ -190,6 +219,7 @@ class BuildMenuItem(DocumentSchema):
     build = SchemaProperty(BuildSpec)
     label = StringProperty(required=False)
     superuser_only = BooleanProperty(default=False)
+    j2me_enabled = BooleanProperty(default=True)
 
     def get_build(self):
         return self.build.get_build()
@@ -225,20 +255,26 @@ class CommCareBuildConfig(Document):
         except ResourceNotFound:
             return cls.bootstrap()
 
-    def get_default(self, application_version):
+    def get_default(self, application_version=APP_V2):
         i = self.application_versions.index(application_version)
         return self.defaults[i]
 
-    def get_menu(self, application_version=None):
-        if application_version:
-            major = {
-                APP_V1: '1',
-                APP_V2: '2',
-            }[application_version]
-            return filter(lambda x: x.build.major_release() == major, self.menu)
-        else:
-            return self.menu
+    def get_menu(self):
+        return self.menu
 
+    @classmethod
+    @quickcache([], timeout=5 * 60)
+    #This seems to be not working.
+    def j2me_enabled_configs(cls):
+        return [build for build in cls.fetch().menu if build.j2me_enabled]
+
+    @classmethod
+    def j2me_enabled_config_labels(cls):
+        return map(lambda x: x.label, cls.j2me_enabled_configs())
+
+    @classmethod
+    def latest_j2me_enabled_config(cls):
+        return cls.j2me_enabled_configs()[-1]
 
 class BuildRecord(BuildSpec):
     signed = BooleanProperty(default=True)

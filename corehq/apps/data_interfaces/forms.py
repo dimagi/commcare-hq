@@ -4,7 +4,7 @@ from corehq.apps.style import crispy as hqcrispy
 from couchdbkit import ResourceNotFound
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.toggles import AUTO_CASE_UPDATES
+from corehq.toggles import AUTO_CASE_UPDATE_ENHANCEMENTS
 from crispy_forms.bootstrap import StrictButton, InlineField, FormActions, FieldWithButtons
 from django import forms
 from crispy_forms.helper import FormHelper
@@ -170,7 +170,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
 
     def allow_updates_without_closing(self):
         """
-        If the AUTO_CASE_UPDATES toggle is enabled for the domain, then
+        If the AUTO_CASE_UPDATE_ENHANCEMENTS toggle is enabled for the domain, then
         we allow updates to happen without closing the case.
         """
         self.fields['action'].choices = (
@@ -192,7 +192,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         self.fields['update_property_name'].label = _("Property") + '<span class="asteriskField">*</span>'
         self.fields['update_property_value'].label = _("Value") + '<span class="asteriskField">*</span>'
 
-        if AUTO_CASE_UPDATES.enabled(self.domain):
+        if AUTO_CASE_UPDATE_ENHANCEMENTS.enabled(self.domain):
             self.allow_updates_without_closing()
 
         self.set_case_type_choices(self.initial.get('case_type'))

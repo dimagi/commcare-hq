@@ -1,9 +1,18 @@
-from .interface import PillowProcessor
-from pillowtop.listener import send_to_elasticsearch
+import math
+import time
+
+from elasticsearch.exceptions import RequestError, ConnectionError, NotFoundError, ConflictError
+
+from pillowtop.exceptions import PillowtopIndexingError
 from pillowtop.logger import pillow_logging
+from .interface import PillowProcessor
 
 
-IDENTITY_FN = lambda x: x
+def identity(x):
+    return x
+
+RETRY_INTERVAL = 2  # seconds, exponentially increasing
+MAX_RETRIES = 4  # exponential factor threshold for alerts
 
 
 class ElasticProcessor(PillowProcessor):
@@ -12,7 +21,7 @@ class ElasticProcessor(PillowProcessor):
         self.doc_filter_fn = doc_filter_fn
         self.elasticsearch = elasticsearch
         self.index_info = index_info
-        self.doc_transform_fn = doc_prep_fn or IDENTITY_FN
+        self.doc_transform_fn = doc_prep_fn or identity
 
     def es_getter(self):
         return self.elasticsearch
@@ -49,3 +58,51 @@ class ElasticProcessor(PillowProcessor):
     def _delete_doc_if_exists(self, doc_id):
         if self._doc_exists(doc_id):
             self.elasticsearch.delete(self.index_info.index, self.index_info.type, doc_id)
+
+
+def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, retries=MAX_RETRIES,
+                          except_on_failure=False, update=False, delete=False):
+    """
+    More fault tolerant es.put method
+    """
+    data = data if data is not None else {}
+    current_tries = 0
+    while current_tries < retries:
+        try:
+            if delete:
+                es_getter().delete(index, doc_type, doc_id)
+            elif update:
+                params = {'retry_on_conflict': 2}
+                es_getter().update(index, doc_type, doc_id, body={"doc": data}, params=params)
+            else:
+                es_getter().create(index, doc_type, body=data, id=doc_id)
+            break
+        except ConnectionError, ex:
+            current_tries += 1
+            pillow_logging.error("[%s] put_robust error %s attempt %d/%d" % (
+                name, ex, current_tries, retries))
+
+            if current_tries == retries:
+                message = "[%s] Max retry error on %s/%s/%s" % (name, index, doc_type, doc_id)
+                if except_on_failure:
+                    raise PillowtopIndexingError(message)
+                else:
+                    pillow_logging.error(message)
+
+            time.sleep(math.pow(RETRY_INTERVAL, current_tries))
+        except RequestError as ex:
+            error_message = "Pillowtop put_robust error [%s]:\n%s\n\tpath: %s/%s/%s\n\t%s" % (
+                name,
+                ex.error or "No error message",
+                index, doc_type, doc_id,
+                data.keys())
+
+            if except_on_failure:
+                raise PillowtopIndexingError(error_message)
+            else:
+                pillow_logging.error(error_message)
+            break
+        except ConflictError:
+            break  # ignore the error if a doc already exists when trying to create it in the index
+        except NotFoundError:
+            break

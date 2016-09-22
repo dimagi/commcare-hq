@@ -1,4 +1,4 @@
-/*global Marionette, Backbone, WebFormSession */
+/*global Marionette, Backbone, WebFormSession, Util, CodeMirror */
 
 /**
  * The primary Marionette application managing menu navigation and launching form entry
@@ -10,6 +10,7 @@ var showError = hqImport('cloudcare/js/util.js').showError;
 var showSuccess = hqImport('cloudcare/js/util.js').showSuccess;
 var tfLoading = hqImport('cloudcare/js/util.js').tfLoading;
 var tfLoadingComplete = hqImport('cloudcare/js/util.js').tfLoadingComplete;
+var tfSyncComplete = hqImport('cloudcare/js/util.js').tfSyncComplete;
 
 FormplayerFrontend.on("before:start", function () {
     var RegionContainer = Marionette.LayoutView.extend({
@@ -17,6 +18,9 @@ FormplayerFrontend.on("before:start", function () {
 
         regions: {
             main: "#menu-region",
+            breadcrumb: "#breadcrumb-region",
+            persistentCaseTile: "#persistent-case-tile",
+            phoneModeNavigation: '#phone-mode-navigation',
         },
     });
 
@@ -39,15 +43,31 @@ FormplayerFrontend.getCurrentRoute = function () {
  */
 FormplayerFrontend.reqres.setHandler('resourceMap', function (resource_path, app_id) {
     var currentApp = FormplayerFrontend.request("appselect:getApp", app_id);
+    if (!currentApp) {
+        console.warn('App is undefined for app_id: ' + app_id);
+        console.warn('Not processing resource: ' + resource_path);
+        return;
+    }
     if (resource_path.substring(0, 7) === 'http://') {
         return resource_path;
-    } else if (currentApp.attributes.hasOwnProperty("multimedia_map") &&
-        currentApp.attributes.multimedia_map.hasOwnProperty(resource_path)) {
-        var resource = currentApp.attributes.multimedia_map[resource_path];
+    } else if (!_.isEmpty(currentApp.get("multimedia_map"))) {
+        var resource = currentApp.get('multimedia_map')[resource_path];
+        if (!resource) {
+            console.warn('Unable to find resource ' + resource_path + 'in multimedia map');
+            return;
+        }
         var id = resource.multimedia_id;
         var media_type = resource.media_type;
         var name = _.last(resource_path.split('/'));
         return '/hq/multimedia/file/' + media_type + '/' + id + '/' + name;
+    }
+});
+
+FormplayerFrontend.reqres.setHandler('gridPolyfillPath', function(path) {
+    if (path) {
+        FormplayerFrontend.gridPolyfillPath = path;
+    } else {
+        return FormplayerFrontend.gridPolyfillPath;
     }
 });
 
@@ -58,7 +78,7 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
     return FormplayerFrontend.currentUser;
 });
 
-FormplayerFrontend.reqres.setHandler('clearForm', function () {
+FormplayerFrontend.on('clearForm', function () {
     $('#webforms').html("");
 });
 
@@ -66,45 +86,192 @@ FormplayerFrontend.reqres.setHandler('clearMenu', function () {
     $('#menu-region').html("");
 });
 
-FormplayerFrontend.reqres.setHandler('startForm', function (data) {
+$(document).on("ajaxStart", function () {
+    $(".formplayer-request").addClass('formplayer-requester-disabled');
+    tfLoading();
+}).on("ajaxStop", function () {
+    $(".formplayer-request").removeClass('formplayer-requester-disabled');
+    tfLoadingComplete();
+});
+
+FormplayerFrontend.reqres.setHandler('showError', function (errorMessage) {
+    showError(errorMessage, $("#cloudcare-notifications"), 10000);
+});
+
+FormplayerFrontend.reqres.setHandler('showSuccess', function(successMessage) {
+    showSuccess(successMessage, $("#cloudcare-notifications"), 10000);
+});
+
+FormplayerFrontend.reqres.setHandler('handleNotification', function(notification) {
+    if(notification.error){
+        FormplayerFrontend.request('showError', notification.message);
+    } else{
+        FormplayerFrontend.request('showSuccess', notification.message);
+    }
+});
+
+FormplayerFrontend.on('startForm', function (data) {
     FormplayerFrontend.request("clearMenu");
 
     data.onLoading = tfLoading;
     data.onLoadingComplete = tfLoadingComplete;
-    data.xform_url = FormplayerFrontend.request('currentUser').formplayer_url;
+    var user = FormplayerFrontend.request('currentUser');
+    data.xform_url = user.formplayer_url;
+    data.domain = user.domain;
+    data.username = user.username;
     data.formplayerEnabled = true;
-    //TODO yeah
-    data.domain = "test";
     data.onerror = function (resp) {
         showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
     };
     data.onsubmit = function (resp) {
-        if(resp.status === "success") {
-            FormplayerFrontend.request("clearForm");
-            FormplayerFrontend.trigger("apps:list");
-            showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 2500);
+        if (resp.status === "success") {
+            FormplayerFrontend.trigger("clearForm");
+            showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
+
+            // After end of form nav, we want to clear everything except app and sesson id
+            var urlObject = Util.currentUrlToObject();
+            urlObject.onSubmit();
+            Util.setUrlToObject(urlObject);
+
+            if(resp.nextScreen !== null && resp.nextScreen !== undefined) {
+                FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
+            } else if(urlObject.appId !== null && urlObject.appId !== undefined) {
+                FormplayerFrontend.trigger("apps:currentApp");
+            } else {
+                FormplayerFrontend.navigate('/apps', { trigger: true });
+            }
         } else {
             showError(resp.output, $("#cloudcare-notifications"));
         }
-        // TODO form linking
     };
     data.formplayerEnabled = true;
+    data.answerCallback = function(sessionId) {
+        FormplayerFrontend.trigger('debugger.formXML', sessionId);
+    };
+    data.resourceMap = function(resource_path) {
+        var urlObject = Util.currentUrlToObject();
+        var appId = urlObject.appId;
+        return FormplayerFrontend.request('resourceMap', resource_path, appId);
+    };
     var sess = new WebFormSession(data);
     sess.renderFormXml(data, $('#webforms'));
 });
 
-FormplayerFrontend.on("start", function (options) {
+FormplayerFrontend.on('debugger.formXML', function(sessionId) {
     var user = FormplayerFrontend.request('currentUser');
+    var success = function(data) {
+        var $instanceTab = $('#debugger-xml-instance-tab'),
+            codeMirror;
+
+        codeMirror = CodeMirror(function(el) {
+            $('#xml-viewer-pretty').html(el);
+        }, {
+            value: data.output,
+            mode: 'xml',
+            viewportMargin: Infinity,
+            readOnly: true,
+            lineNumbers: true,
+        });
+
+        $instanceTab.off();
+        $instanceTab.on('shown.bs.tab', function() {
+            codeMirror.refresh();
+        });
+    };
+    var options = {
+        url: user.formplayer_url + '/get-instance',
+        data: JSON.stringify({
+            'session-id': sessionId,
+            'domain': user.domain,
+            'username': user.username,
+        }),
+        success: success,
+    };
+    Util.setCrossDomainAjaxOptions(options);
+
+    $.ajax(options);
+});
+
+FormplayerFrontend.on("start", function (options) {
+    var user = FormplayerFrontend.request('currentUser'),
+        appId;
     user.username = options.username;
     user.language = options.language;
     user.apps = options.apps;
     user.domain = options.domain;
     user.formplayer_url = options.formplayer_url;
+    FormplayerFrontend.request('gridPolyfillPath', options.gridPolyfillPath);
     if (Backbone.history) {
         Backbone.history.start();
         // will be the same for every domain. TODO: get domain/username/pass from django
         if (this.getCurrentRoute() === "") {
-            FormplayerFrontend.trigger("apps:list", options.apps);
+            if (options.phoneMode) {
+                appId = options.apps[0]['_id'];
+
+                FormplayerFrontend.trigger("app:singleApp", appId);
+            } else {
+                FormplayerFrontend.trigger("apps:list", options.apps);
+            }
         }
     }
+});
+
+FormplayerFrontend.on("sync", function () {
+    var user = FormplayerFrontend.request('currentUser');
+    var username = user.username;
+    var domain = user.domain;
+    var formplayer_url = user.formplayer_url;
+    var options = {
+        url: formplayer_url + "/sync-db",
+        data: JSON.stringify({"username": username, "domain": domain}),
+    };
+    Util.setCrossDomainAjaxOptions(options);
+    var resp = $.ajax(options);
+    resp.done(function () {
+        tfSyncComplete(false);
+    });
+    resp.error(function () {
+        tfSyncComplete(true);
+    });
+});
+
+
+/**
+ * refreshApplication
+ *
+ * This takes an appId and subsequently makes a request to formplayer to
+ * delete the relevant application database so that on next request
+ * it gets reinstalled. On completion, navigates back to the homescreen.
+ *
+ * @param {String} appId - The id of the application to refresh
+ */
+FormplayerFrontend.on('refreshApplication', function(appId) {
+    var user = FormplayerFrontend.request('currentUser'),
+        formplayer_url = user.formplayer_url,
+        resp,
+        options = {
+            url: formplayer_url + "/delete_application_dbs",
+            data: JSON.stringify({
+                app_id: appId,
+                domain: user.domain,
+                username: user.username,
+            }),
+        };
+    Util.setCrossDomainAjaxOptions(options);
+    tfLoading();
+    resp = $.ajax(options);
+    resp.fail(function () {
+        tfLoadingComplete(true);
+    }).done(function() {
+        tfLoadingComplete();
+        FormplayerFrontend.trigger('navigateHome', appId);
+    });
+});
+
+FormplayerFrontend.on('navigateHome', function(appId) {
+    var urlObject = Util.currentUrlToObject();
+    urlObject.clearExceptApp();
+    FormplayerFrontend.trigger("clearForm");
+    FormplayerFrontend.regions.breadcrumb.empty();
+    FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });
 });

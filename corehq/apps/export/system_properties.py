@@ -54,6 +54,15 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_INFO],
+        label='started_time',
+        item=ExportItem(path=[
+            PathNode(name='form'), PathNode(name='meta'), PathNode(name='timeStart')
+        ]),
+        help_text=_('The time at which this form was started'),
+        selected=True,
+    ),
+    ExportColumn(
+        tags=[PROPERTY_TAG_INFO],
         label='username',
         item=ExportItem(path=[
             PathNode(name='form'), PathNode(name='meta'), PathNode(name='username')

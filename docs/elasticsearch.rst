@@ -43,10 +43,6 @@ pillowtop must be running::
 
 You can also run a once-off reindex for a specific index::
 
-    $ ./manage.py ptop_fast_reindex_cases
-
-Or (for more recently updated pillows)::
-
     $ ./manage.py ptop_reindexer_v2 user
 
 Changing a mapping or adding data
@@ -56,11 +52,11 @@ index's mapping file in order to be able to query on that new data.
 
 Adding data to an index
 '''''''''''''''''''''''
-Each pillow has a ``change_transform`` method which you can override to
-perform additional transformations or lookups on the data.  If for example,
+Each pillow has a function or class that takes in the raw document dictionary
+and transforms it into the document that get's sent to ES.  If for example,
 you wanted to store username in addition to user_id on cases in elastic,
 you'd add ``username`` to ``corehq.pillows.mappings.case_mapping``, then
-modify ``corehq.pillows.case.CasePillow.change_transform`` to do the
+modify ``transform_case_for_elasticsearch`` function to do the
 appropriate lookup.  It accepts a ``doc_dict`` for the case doc and is
 expected to return a ``doc_dict``, so just add the ``username`` to that.
 

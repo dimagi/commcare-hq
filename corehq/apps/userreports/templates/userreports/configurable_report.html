@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    <script type="text/javascript">
+    <script>
         $(function(){
             var $editReportButton = $("#edit-report-link");
 
@@ -33,7 +33,7 @@
         });
     </script>
     {% if not report.is_static %}
-    <script type="text/javascript">
+    <script>
         $(function(){
             // Poll the status of the data source
             var retrying = false;
@@ -60,7 +60,7 @@
         });
     </script>
     {% endif %}
-    <script type="text/javascript">
+    <script>
         var urlSerialize = hqImport('reports/javascripts/reports.util.js').urlSerialize;
         var standardHQReport = new HQReport({
             domain: '{{ domain }}',

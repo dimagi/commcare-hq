@@ -1,4 +1,3 @@
-import base64
 import copy
 from functools import cmp_to_key
 import logging
@@ -6,6 +5,7 @@ from PIL import Image
 from StringIO import StringIO
 from couchdbkit import BadValueError
 import sys
+from datetime import date, datetime
 from casexml.apps.case import const
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
 from casexml.apps.case.exceptions import ReconciliationError, MissingServerDate, UsesReferrals
@@ -18,6 +18,22 @@ from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from couchforms.models import XFormInstance
 from dimagi.utils.logging import notify_exception
 from dimagi.ext.couchdbkit import StringProperty
+
+
+def coerce_to_datetime(v):
+    if isinstance(v, date) and not isinstance(v, datetime):
+        return datetime.combine(v, datetime.min.time())
+    else:
+        return v
+
+
+PROPERTY_TYPE_MAPPING = {
+    'opened_on': coerce_to_datetime
+}
+
+
+def _convert_type(property_name, value):
+    return PROPERTY_TYPE_MAPPING.get(property_name, lambda x: x)(value)
 
 
 def _is_override(xform):
@@ -277,7 +293,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
         Note that all unexpected attributes are ignored (thrown away)
         """
         for k, v in create_action.updated_known_properties.items():
-            setattr(self.case, k, v)
+            setattr(self.case, k, _convert_type(k, v))
 
         if not self.case.opened_on:
             self.case.opened_on = create_action.date
@@ -289,7 +305,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
         Applies updates to a case
         """
         for k, v in update_action.updated_known_properties.items():
-            setattr(self.case, k, v)
+            setattr(self.case, k, _convert_type(k, v))
 
         properties = self.case.properties()
         for item in update_action.updated_unknown_properties:
@@ -308,27 +324,23 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
     def _apply_attachments_action(self, attachment_action, xform=None):
         """
 
-        if xform is provided, attachments will be looked for
-        in the xform's _attachments.
-        They should be base64 encoded under _attachments[name]['data']
-
+        if xform is provided it will be used to fetch attachments
         """
-        # the actions and _attachment must be added before the first saves can happen
+        # the actions and attachment must be added before the first saves can happen
         # todo attach cached attachment info
         def fetch_attachment(name):
-            if xform and 'data' in xform._attachments[name]:
-                assert xform.form_id == attachment_action.xform_id
-                return base64.b64decode(xform._attachments[name]['data'])
-            else:
-                return XFormInstance.get_db().fetch_attachment(attachment_action.xform_id, name)
+            if fetch_attachment.form is None:
+                fetch_attachment.form = XFormInstance.get(attachment_action.xform_id)
+            return fetch_attachment.form.fetch_attachment(name)
+        fetch_attachment.form = xform
 
-        stream_dict = {}
+        attach_dict = {}
         # cache all attachment streams from xform
         for k, v in attachment_action.attachments.items():
             if v.is_present:
                 # fetch attachment, update metadata, get the stream
                 attach_data = fetch_attachment(v.attachment_src)
-                stream_dict[k] = attach_data
+                attach_dict[k] = attach_data
                 v.attachment_size = len(attach_data)
 
                 if v.is_image:
@@ -355,7 +367,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
             if v.is_present:
                 #fetch attachment from xform
                 identifier = v.identifier
-                attach = stream_dict[identifier]
+                attach = attach_dict[identifier]
                 attachment_builder.add(name=k, content=attach,
                                        content_type=v.server_mime)
             else:

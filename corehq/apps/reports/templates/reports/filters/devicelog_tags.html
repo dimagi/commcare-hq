@@ -3,7 +3,7 @@
 {% load i18n %}
 {% block filter_content %}
 {% if errors_only %}
-    <script type="text/javascript">
+    <script>
         $(function() {
             $("#{{ errors_css_id }}").change(function() {
                 var multiSelect= $('#{{ css_id }}');
@@ -30,7 +30,7 @@
     </div>
 {% endif %}
 {% if default_on %}
-    <script type="text/javascript">
+    <script>
         $(function() {
             $("#{{ css_id }}").attr("name","");
             $("#{{ css_id }}").change(function () {

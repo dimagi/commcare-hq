@@ -324,3 +324,8 @@ def get_case_types_from_apps(domain):
          .size(0)
          .terms_aggregation('modules.case_type.exact', 'case_types'))
     return set(q.run().aggregations.case_types.keys)
+
+
+def get_case_sharing_apps_in_domain(domain, exclude_app_id=None):
+    apps = get_apps_in_domain(domain, include_remote=False)
+    return [a for a in apps if a.case_sharing and exclude_app_id != a.id]

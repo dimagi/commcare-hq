@@ -10,7 +10,7 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-<script type="text/javascript">
+<script>
 (function (angular, undefined) {
     'use strict';
     var usersApp = angular.module('usersApp', ['hq.web_users']);
@@ -54,7 +54,7 @@
         $('#restrict_users').on('change', function () {
             var $saveButton = $('#save_restrict_option');
             $saveButton
-                    .removeAttr('disabled')
+                    .prop('disabled', false)
                     .removeClass('disabled btn-default')
                     .addClass('btn-success')
                     .text('{% trans "Save" %}');
@@ -436,6 +436,12 @@
                                 data-title="View Reports"
                                 data-content="{% trans "See all CommCareHQ performance reports." %}"></span>
                         </th>
+                        <th>
+                          {% trans "Edit Subscription Info" %}
+                          <span class="hq-help-template"
+                                data-title="Edit Subscription Info"
+                                data-content="{% trans "Edit the subscription information for this domain." %}"></span>
+                        </th>
                         <th data-bind="visible: allowEdit">{% trans "Actions" %}</th>
                     </tr>
                 </thead>
@@ -459,6 +465,7 @@
                             </div>
                             <span data-bind="visible: !reportPermissions.all() && !reportPermissions.specific().length, staticChecked: false"></span>
                         </td>
+                        <td><i data-bind="staticChecked: permissions.edit_billing"></i></td>
                         <td data-bind="visible: $root.allowEdit">
                             <button class="btn btn-default" data-bind="css: {disabled: !$data._id}, click: $data._id ? $root.setRoleBeingEdited : null">
                                 <i class="fa fa-edit"></i>
@@ -588,6 +595,36 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label">
+                                            {% trans "Edit Subscription Info" %}
+                                        </label>
+                                        <div class="col-sm-8 controls">
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox"
+                                                           data-bind="checked: permissions.edit_billing" />
+                                                    {% trans "Allow role to edit subscription information." %}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% if request|toggle_enabled:"LOCATION_BASED_ACCESS_RESTRICTIONS" %}
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label">
+                                            {% trans "Full Organization Access" %}
+                                        </label>
+                                        <div class="col-sm-8 controls">
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox"
+                                                           data-bind="checked: permissions.access_all_locations" />
+                                                    {% trans "Allow role to access data from all locations" %}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
                                     <div class="form-group">
                                         <label class="col-sm-4 control-label">
                                             {% trans "View All Reports" %}

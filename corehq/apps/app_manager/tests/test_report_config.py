@@ -3,15 +3,14 @@ from xml.etree import ElementTree
 from django.test import SimpleTestCase, TestCase
 import mock
 from casexml.apps.phone.tests.utils import create_restore_user
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.fixtures import report_fixture_generator
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
 from corehq.apps.app_manager.models import ReportAppConfig, Application, ReportModule, \
     ReportGraphConfig, MobileSelectFilter
-from corehq.apps.app_manager.tests import TestXmlMixin
 from corehq.apps.app_manager.tests.mocks.mobile_ucr import mock_report_configurations, \
     mock_report_configuration_get, mock_report_data
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import ReportConfiguration, ReportMeta
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceProvider
@@ -106,7 +105,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
         cls.report_configs_by_id = {
             cls.report_id: report_configuration
         }
-        cls.app = Application.new_app(cls.domain, "Report Filter Test App", APP_V2)
+        cls.app = Application.new_app(cls.domain, "Report Filter Test App")
         module = cls.app.add_module(ReportModule.new_module("Report Module", 'en'))
         module.report_configs.append(
             ReportAppConfig(

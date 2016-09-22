@@ -146,7 +146,7 @@ SECRET_KEY = 'secrettravis'
 LOCAL_LOGGING_HANDLERS = {
     'null': {
         'level': 'DEBUG',
-        'class': 'django.utils.log.NullHandler',
+        'class': 'logging.NullHandler',
     },
 }
 

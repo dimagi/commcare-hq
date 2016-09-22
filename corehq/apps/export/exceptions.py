@@ -18,3 +18,7 @@ class ExportFormValidationException(Exception):
 
 class ExportAsyncException(Exception):
     pass
+
+
+class SkipConversion(Exception):
+    """Raised when we need to skip a column during export conversion"""

@@ -4,19 +4,12 @@ from django.test import TestCase, override_settings
 import json
 
 from corehq.util.test_utils import TestFileMixin
-from pillowtop.listener import AliasedElasticPillow, BasicPillow
 from pillowtop.utils import get_all_pillow_configs
 from testapps.test_pillowtop.utils import real_pillow_settings
 
 
 @override_settings(DEBUG=True)
 class PillowtopSettingsTest(TestCase, TestFileMixin):
-    dependent_apps = [
-        'pillowtop',
-        'casexml.apps.case',
-        'corehq.apps.domain',
-        'corehq.apps.app_manager',
-    ]
     file_path = ('data',)
     root = os.path.dirname(__file__)
     maxDiff = None
@@ -54,10 +47,8 @@ class PillowtopSettingsTest(TestCase, TestFileMixin):
 
 def _pillow_meta_from_config(pillow_config):
     pillow_class = pillow_config.get_class()
-    is_elastic = issubclass(pillow_class, AliasedElasticPillow)
     if pillow_config.instance_generator is None:
-        kwargs = {'online': False} if is_elastic else {}
-        pillow_instance = pillow_class(**kwargs)
+        pillow_instance = pillow_class()
     else:
         # if we have a custom instance generator just use it
         pillow_instance = pillow_config.get_instance()
@@ -68,21 +59,4 @@ def _pillow_meta_from_config(pillow_config):
         'checkpoint_id': pillow_instance.checkpoint.checkpoint_id,
         'change_feed_type': type(pillow_instance.get_change_feed()).__name__,
     }
-    if issubclass(pillow_class, BasicPillow):
-        couchdb = pillow_instance.get_couch_db()
-        props.update({
-            'document_class': pillow_instance.document_class.__name__ if pillow_instance.document_class else None,
-            'couch_filter': getattr(pillow_instance, 'couch_filter'),
-            'include_docs': getattr(pillow_instance, 'include_docs'),
-            'extra_args': getattr(pillow_instance, 'extra_args'),
-            'couchdb_type': type(couchdb).__name__,
-            'couchdb_uri': couchdb.uri if couchdb else None
-        })
-    if is_elastic:
-        props.update({
-            'es_alias': pillow_instance.es_alias,
-            'es_type': pillow_instance.es_type,
-            'es_index': pillow_instance.es_index,
-            'unique_id': pillow_instance.get_unique_id(),
-        })
     return props

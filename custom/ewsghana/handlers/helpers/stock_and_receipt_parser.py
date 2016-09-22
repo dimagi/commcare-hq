@@ -1,10 +1,7 @@
 import re
 from decimal import Decimal
 
-from corehq.apps.commtrack.exceptions import NotAUserClassError
 from corehq.apps.commtrack.sms import StockAndReceiptParser, SMSError, const
-from corehq.apps.users.models import CouchUser
-from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.parsers.ledgers import StockTransactionHelper
 from custom.ewsghana.handlers import INVALID_PRODUCT_CODE
 

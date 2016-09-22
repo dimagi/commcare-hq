@@ -27,7 +27,7 @@ from corehq.apps.style import crispy as hqcrispy
 mark_safe_lazy = lazy(mark_safe, six.text_type)
 
 
-class RegisterNewWebUserForm(forms.Form):
+class RegisterWebUserForm(forms.Form):
     # Use: NewUserRegistrationView
     # Not inheriting from other forms to de-obfuscate the role of this form.
 
@@ -36,6 +36,10 @@ class RegisterNewWebUserForm(forms.Form):
     password = forms.CharField(
         label=_("Create Password"),
         widget=forms.PasswordInput(),
+    )
+    phone_number = forms.CharField(
+        label=_("Phone Number (Optional)"),
+        required=False,
     )
     project_name = forms.CharField(label=_("Project Name"))
     eula_confirmed = forms.BooleanField(
@@ -46,9 +50,24 @@ class RegisterNewWebUserForm(forms.Form):
                data-target='#eulaModal'
                href='#eulaModal'>
                CommCare HQ End User License Agreement</a>.""")))
+    xform = forms.CharField(required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
-        super(RegisterNewWebUserForm, self).__init__(*args, **kwargs)
+        self.show_phone_number = kwargs.pop('show_number', False)
+        super(RegisterWebUserForm, self).__init__(*args, **kwargs)
+
+        if not self.show_phone_number:
+            del self.fields['phone_number']
+            phone_number_fields = []
+        else:
+            phone_number_fields = [
+                hqcrispy.InlineField(
+                    'phone_number',
+                    css_class="input-lg",
+                    data_bind="value: phoneNumber, "
+                              "valueUpdate: 'keyup'"
+                ),
+            ]
 
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -93,11 +112,14 @@ class RegisterNewWebUserForm(forms.Form):
                                   "}",
                     ),
                     hqcrispy.ValidationMessage('passwordDelayed'),
+                    crispy.Div(*phone_number_fields),
+                    hqcrispy.InlineField('xform'),
                     twbscrispy.StrictButton(
                         ugettext("Next"),
                         css_class="btn btn-success btn-lg",
                         data_bind="click: nextStep, disable: disableNextStepOne"
-                    )
+                    ),
+                    css_class="check-password",
                 ),
                 css_class="form-step step-1",
                 style="display: none;"
@@ -218,7 +240,7 @@ class DomainRegistrationForm(forms.Form):
         return self.cleaned_data
 
 
-class NewWebUserRegistrationForm(NoAutocompleteMixin, DomainRegistrationForm):
+class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
     """
     Form for a brand new user, before they've created a domain or done anything on CommCare HQ.
     """
@@ -255,7 +277,7 @@ class NewWebUserRegistrationForm(NoAutocompleteMixin, DomainRegistrationForm):
                                                </a>.""")))
 
     def __init__(self, *args, **kwargs):
-        super(NewWebUserRegistrationForm, self).__init__(*args, **kwargs)
+        super(WebUserInvitationForm, self).__init__(*args, **kwargs)
         initial_create_domain = kwargs.get('initial', {}).get('create_domain', True)
         data_create_domain = self.data.get('create_domain', "True")
         if not initial_create_domain or data_create_domain == "False":

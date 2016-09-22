@@ -2,14 +2,14 @@ from decimal import Decimal, InvalidOperation
 
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
-from couchdbkit import ResourceNotFound
 
 from corehq.apps.consumption.shortcuts import get_default_consumption, set_default_consumption_for_supply_point
 from corehq.apps.products.models import Product
 from corehq.apps.custom_data_fields.edit_entity import add_prefix
+from corehq.util.spreadsheets.excel import enforce_string_type, StringTypeRequiredError
 
 from .exceptions import LocationImportError
-from .models import Location, LocationType
+from .models import LocationType, SQLLocation
 from .forms import LocationForm
 from .util import parent_child
 
@@ -127,8 +127,8 @@ class LocationImporter(object):
         parent = parent_id
         if location_id:
             try:
-                existing = Location.get(location_id)
-            except ResourceNotFound:
+                existing = SQLLocation.objects.get(location_id=location_id)
+            except SQLLocation.DoesNotExist:
                 return {
                     'id': None,
                     'message': _('Unable to find location for location_id {}').format(location_id),
@@ -140,10 +140,11 @@ class LocationImporter(object):
                         'message': _('Invalid location_id {}').format(location_id),
                     }
         elif provided_code:
-            existing = Location.by_site_code(self.domain, provided_code)
+            existing = SQLLocation.objects.get_or_None(domain=self.domain,
+                                                       site_code=provided_code)
 
         if existing:
-            if existing.location_type != location_type:
+            if existing.location_type_name != location_type:
                 return {
                     'id': None,
                     'message': _("Existing location type error, type of {0} is not {1}").format(
@@ -151,7 +152,7 @@ class LocationImporter(object):
                     )
                 }
 
-            parent = parent_id or existing.parent_id
+            parent = parent_id or existing.parent_location_id
 
         form_data['site_code'] = provided_code
 
@@ -178,20 +179,29 @@ class LocationImporter(object):
         )
 
     def _process_parent_site_code(self, parent_site_code, location_type, parent_child_map):
-        if not parent_site_code:
+        if not parent_site_code and parent_site_code != 0:
             return None
 
-        parent_obj = Location.by_site_code(self.domain, parent_site_code.lower())
+        try:
+            parent_site_code = enforce_string_type(parent_site_code)
+        except StringTypeRequiredError:
+            raise LocationImportError(
+                _("Parent site code '{0}' should have a 'Text' type in Excel")
+                .format(parent_site_code)
+            )
+
+        parent_obj = SQLLocation.objects.get_or_None(domain=self.domain,
+                                                     site_code=parent_site_code.lower())
         if parent_obj:
             if invalid_location_type(location_type, parent_obj, parent_child_map):
                 raise LocationImportError(
                     _('Invalid parent type of {0} for child type {1}').format(
-                        parent_obj.location_type,
+                        parent_obj.location_type_name,
                         location_type
                     )
                 )
             else:
-                return parent_obj._id
+                return parent_obj.location_id
         else:
             raise LocationImportError(
                 _('Parent with site code {0} does not exist in this project')
@@ -205,31 +215,38 @@ class LocationImporter(object):
     def no_changes_needed(self, existing, form_data, consumption):
         if not existing:
             return False
-        for key, val in form_data.iteritems():
-            if getattr(existing, key, None) != val:
+
+        for prop in ['name', 'coordinates', 'site_code', 'external_id']:
+            if getattr(existing, prop, None) != form_data.get(prop):
                 return False
+        if (
+            form_data.get('location_type') != existing.location_type_name
+            or form_data.get('parent_id') != existing.parent_location_id
+        ):
+            return False
 
         for product_code, val in consumption:
             product = self.get_product(product_code)
             if get_default_consumption(
                 self.domain,
                 product._id,
-                existing.location_type,
-                existing._id
+                existing.location_type_name,
+                existing.location_id
             ) != val:
                 return False
 
         return True
 
-    def submit_form(self, parent, form_data, existing, location_type, consumption):
-        location = existing or Location(domain=self.domain, parent=parent)
+    def submit_form(self, parent_id, form_data, existing, location_type, consumption):
+        parent = SQLLocation.objects.get(location_id=parent_id) if parent_id else None
+        location = existing or SQLLocation(domain=self.domain, parent=parent)
         form = LocationForm(location, form_data, is_new=not bool(existing))
         form.strict = False  # optimization hack to turn off strict validation
         if form.is_valid():
             # don't save if there is nothing to save
             if self.no_changes_needed(existing, form_data, consumption):
                 return {
-                    'id': existing._id,
+                    'id': existing.location_id,
                     'message': 'no changes for %s %s' % (location_type, existing.name)
                 }
 
@@ -295,7 +312,8 @@ def import_locations(domain, excel_importer):
 
 
 def invalid_location_type(location_type, parent_obj, parent_relationships):
+    parent_type = parent_obj.location_type_name
     return (
-        parent_obj.location_type not in parent_relationships or
-        location_type not in parent_relationships[parent_obj.location_type]
+        parent_type not in parent_relationships or
+        location_type not in parent_relationships[parent_type]
     )

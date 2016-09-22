@@ -134,7 +134,7 @@ hqDefine('reports_core/js/charts.js', function() {
                 .transitionDuration(350)
                 .reduceXTicks(true)
                 .rotateLabels(0)
-                .showControls(true)
+                .showControls(config.y_axis_columns.length > 1)
                 .groupSpacing(0.1)
                 .stacked(config.is_stacked || false)
                 .staggerLabels(shouldStaggerXAxis(record))

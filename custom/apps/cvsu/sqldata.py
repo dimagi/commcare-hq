@@ -6,7 +6,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 from corehq.apps.reports.standard import CommCareUserMemoizer
 from corehq.apps.reports.util import format_datatables_data
-from corehq.apps.userreports.sql import get_table_name
+from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import UCR_ENGINE_ID
 from custom.apps.cvsu.mixins import CVSUSqlDataMixin, FilterMixin, DateColumnMixin, combine_month_year, format_date, \
     combine_quarter_year, format_year

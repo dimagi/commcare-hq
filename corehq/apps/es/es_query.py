@@ -71,6 +71,18 @@ like inactive users or deleted docs.
 These things should nearly always be excluded, but if necessary, you can remove
 these with ``remove_default_filters``.
 
+Running against production
+--------------------------
+Since the ESQuery library is read-only, it's mostly safe to run against
+production. You can define alternate elasticsearch hosts in your localsettings
+file in the ``ELASTICSEARCH_DEBUG_HOSTS`` dictionary and pass in this host name
+as the ``debug_host`` to the constructor:
+
+.. code-block:: python
+
+    >>> CaseES(debug_host='prod').domain('dimagi').count()
+    120
+
 Language
 --------
 
@@ -89,16 +101,15 @@ from collections import namedtuple
 from copy import deepcopy
 import json
 
-from corehq.apps.es import aggregations
-from corehq.apps.es.utils import values_list, flatten_field_dict
-
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.elastic import ES_META, ESError, run_query, scroll_query, SIZE_LIMIT, \
     ScanResult
 
+from . import aggregations
 from . import filters
 from . import queries
+from .utils import values_list, flatten_field_dict
 
 
 class ESQuery(object):
@@ -130,12 +141,16 @@ class ESQuery(object):
         "match_all": filters.match_all()
     }
 
-    def __init__(self, index=None):
+    def __init__(self, index=None, debug_host=None):
+        from corehq.apps.userreports.util import is_ucr_table
+
         self.index = index if index is not None else self.index
-        if self.index not in ES_META:
+        if self.index not in ES_META and not is_ucr_table(self.index):
             msg = "%s is not a valid ES index.  Available options are: %s" % (
                 index, ', '.join(ES_META.keys()))
             raise IndexError(msg)
+
+        self.debug_host = debug_host
         self._default_filters = deepcopy(self.default_filters)
         self._facets = []
         self._aggregations = []
@@ -181,9 +196,18 @@ class ESQuery(object):
                 return add_filter
         raise AttributeError("There is no builtin filter named %s" % attr)
 
+    def __getitem__(self, sliced_or_int):
+        if isinstance(sliced_or_int, (int, long)):
+            start = sliced_or_int
+            size = 1
+        else:
+            start = sliced_or_int.start or 0
+            size = sliced_or_int.stop - start
+        return self.start(start).size(size).run().hits
+
     def run(self):
         """Actually run the query.  Returns an ESQuerySet object."""
-        raw = run_query(self.index, self.raw_query)
+        raw = run_query(self.index, self.raw_query, debug_host=self.debug_host)
         return ESQuerySet(raw, deepcopy(self))
 
     def scroll(self):

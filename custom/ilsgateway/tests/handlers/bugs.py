@@ -5,7 +5,7 @@ from django.utils.translation import ugettext as _
 from casexml.apps.stock.models import StockTransaction
 from corehq.util.translation import localize
 from custom.ilsgateway.tanzania.reminders import SOH_CONFIRM
-from custom.ilsgateway.tests import ILSTestScript
+from custom.ilsgateway.tests.handlers.utils import ILSTestScript
 
 
 class TestBugs(ILSTestScript):

@@ -1,4 +1,6 @@
 from casexml.apps.case.exceptions import CommCareCaseError
+from corehq.util.datadog.utils import log_counter
+from corehq.util.datadog.metrics import DATE_OPENED_CASEBLOCK_ERROR_COUNT
 
 
 class RestoreException(ValueError, CommCareCaseError):
@@ -23,6 +25,28 @@ class BadStateException(RestoreException):
     def __str__(self):
         return "Phone state hash mismatch. Server hash: %s, Phone hash: %s. # of cases: [%s]" % \
             (self.server_hash, self.phone_hash, len(self.case_ids))
+
+
+class DateOpenedBugException(RestoreException):
+    """We added a date_opened block to every case being synced on July 19, 2016.
+
+    This caused mobile to crash when accessing the caselist because it was
+    expecting a different date format.
+    http://manage.dimagi.com/default.asp?232602
+
+    This is solved by forcing a 412 for those users.
+    """
+    message = "Cases were sent down with a date_opened block that had bad time information"
+
+    def __init__(self, user, synclog_id, **kwargs):
+        super(DateOpenedBugException, self).__init__(user, **kwargs)
+        details = {
+            "domain": user.domain,
+            "username": user.username,
+            "user_id": user.user_id,
+            "last_synclog_id": synclog_id
+        }
+        log_counter(DATE_OPENED_CASEBLOCK_ERROR_COUNT, details)
 
 
 class BadVersionException(RestoreException):

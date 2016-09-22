@@ -98,7 +98,7 @@ def _get_web_user_template_info(user):
 
 def _get_mobile_user_template_info(user):
     return {
-        'name': user.username,
+        'name': user.raw_username,
         'first_name': user.first_name,
         'last_name': user.last_name,
     }

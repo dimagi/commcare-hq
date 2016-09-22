@@ -69,7 +69,7 @@ class FormProcessorSQL(object):
         publish_case_saved(case)
 
     @classmethod
-    def save_processed_models(cls, processed_forms, cases=None, stock_result=None):
+    def save_processed_models(cls, processed_forms, cases=None, stock_result=None, publish_to_kafka=True):
         with transaction.atomic():
             logging.debug('Beginning atomic commit\n')
             # Save deprecated form first to avoid ID conflicts
@@ -85,7 +85,8 @@ class FormProcessorSQL(object):
                 ledgers_to_save = stock_result.models_to_save
                 LedgerAccessorSQL.save_ledger_values(ledgers_to_save, processed_forms.deprecated)
 
-        cls._publish_changes(processed_forms, cases, stock_result)
+        if publish_to_kafka:
+            cls._publish_changes(processed_forms, cases, stock_result)
 
     @staticmethod
     def _publish_changes(processed_forms, cases, stock_result):
@@ -93,10 +94,11 @@ class FormProcessorSQL(object):
         publish_form_saved(processed_forms.submitted)
         if processed_forms.submitted.is_duplicate:
             # for duplicate forms, also publish changes for the original form since the fact that
-            # we're getting a duplicate indicates that we may not have fully processd/published it
+            # we're getting a duplicate indicates that we may not have fully processed/published it
             # the first time
             republish_all_changes_for_form(
-                processed_forms.submitted.domain, processed_forms.submitted.orig_id)
+                processed_forms.submitted.domain, processed_forms.submitted.orig_id
+            )
 
         cases = cases or []
         for case in cases:
@@ -146,7 +148,8 @@ class FormProcessorSQL(object):
             form_id=uuid.uuid4().hex,
             received_on=datetime.datetime.utcnow(),
             problem=message,
-            state=XFormInstanceSQL.SUBMISSION_ERROR_LOG
+            state=XFormInstanceSQL.SUBMISSION_ERROR_LOG,
+            xmlns=''
         )
         cls.store_attachments(xform, [Attachment(
             name=ATTACHMENT_NAME,

@@ -120,19 +120,22 @@ hqDefine('cloudcare/js/util.js', function () {
         showLoading();
     };
 
-    var tfLoadingComplete = function (isError) {
+    var tfLoadingComplete = function (isError, message) {
         hideLoading();
         if (isError) {
-            showError(translatedStrings.errSaving, $('#cloudcare-notifications'));
+            showError(message || gettext('Error saving!'), $('#cloudcare-notifications'));
         }
     };
 
     var tfSyncComplete = function (isError) {
         hideLoading();
         if (isError) {
-            showError(translatedStrings.errSyncing, $('#cloudcare-notifications'));
+            showError(
+                gettext('Could not sync user data. Please try again and report a bug if issue persists.'),
+                $('#cloudcare-notifications')
+            );
         } else {
-            showSuccess(translatedStrings.synced, $('#cloudcare-notifications'), 5000);
+            showSuccess(gettext('User Data successfully synced.'), $('#cloudcare-notifications'), 5000);
         }
     };
 

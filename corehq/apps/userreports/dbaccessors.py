@@ -50,3 +50,16 @@ def get_all_report_configs():
 def delete_all_report_configs():
     from corehq.apps.userreports.models import ReportConfiguration
     delete_all_docs_by_doc_type(ReportConfiguration.get_db(), ('ReportConfiguration',))
+
+
+def _get_all_data_sources():
+    from corehq.apps.userreports.models import DataSourceConfiguration
+    return DataSourceConfiguration.view(
+        'userreports/data_sources_by_build_info',
+        reduce=False,
+        include_docs=True
+    )
+
+
+def get_all_es_data_sources():
+    return [s for s in _get_all_data_sources() if s.backend_id == 'ES']

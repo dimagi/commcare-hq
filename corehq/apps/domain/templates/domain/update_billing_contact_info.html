@@ -5,8 +5,8 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
-    <script type="text/javascript" src="https://js.stripe.com/v2/"></script>
-    <script type="text/javascript"
+    <script src="https://js.stripe.com/v2/"></script>
+    <script
             src="{% static 'accounting/ko/accounting.stripe_card_manager.js' %}"></script>
 {% endblock %}
 
@@ -14,7 +14,7 @@
     <script>
         hqImport('accounting/js/accounting.billing_info_handler.js').initBillingContactInfoHandler();
     </script>
-    <script type="text/javascript">
+    <script>
      Stripe.setPublishableKey('{{ stripe_public_key }}');
      var cardManager = new StripeCardManager({
          cards: {{ cards|JSON }},

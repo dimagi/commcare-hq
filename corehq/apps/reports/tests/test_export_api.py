@@ -13,7 +13,7 @@ from couchforms.models import XFormInstance
 from couchforms.util import spoof_submission
 
 from corehq.apps.accounting.models import SoftwarePlanEdition
-from corehq.apps.accounting.tests import BaseAccountingTest
+from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain

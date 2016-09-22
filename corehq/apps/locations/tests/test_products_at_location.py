@@ -7,6 +7,8 @@ from ..models import Location, LocationType
 
 class ProductsAtLocationTest(TestCase):
 
+    domain = 'test-products-at-location'
+
     def assertEqualProducts(self, products1, products2):
         self.assertEquals(
             sorted(p.product_id for p in products1),
@@ -14,17 +16,22 @@ class ProductsAtLocationTest(TestCase):
         )
 
     def setUp(self):
-        self.domain = bootstrap_domain()
+        self.project = bootstrap_domain(self.domain)
         self.products = SQLProduct.objects.filter(domain=self.domain)
-        LocationType(domain=self.domain.name, name='type').save()
+        LocationType(domain=self.domain, name='type').save()
+
+    def tearDown(self):
+        self.project.delete()
 
     def test_add_products(self):
         couch_location = Location(
             name="Camelot",
-            domain=self.domain.name,
+            domain=self.domain,
             location_type="type",
         )
         couch_location.save()
+        self.addCleanup(couch_location.delete)
+
         location = couch_location.sql_location
         location.products = self.products
         location.save()

@@ -33,3 +33,15 @@ class CountingProcessor(PillowProcessor):
 
     def process_change(self, pillow_instance, change):
         self.count += 1
+
+
+class TestProcessor(PillowProcessor):
+    """
+    Processor that just keeps the change in an in-memory list for testing
+    """
+
+    def __init__(self):
+        self.changes_seen = []
+
+    def process_change(self, pillow_instance, change):
+        self.changes_seen.append(change)

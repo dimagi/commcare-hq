@@ -1,9 +1,9 @@
-from django.core.management.base import LabelCommand, CommandError
+from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.domain.models import Domain
 from django.conf import settings
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Bootstrap a domain and user who owns it."
     args = "<domain> <email> <password>"
     label = ""

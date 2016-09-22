@@ -207,7 +207,7 @@ class StockAndReceiptTest(SMSTests):
 
     def setUp(self):
         super(StockAndReceiptTest, self).setUp()
-        STOCK_AND_RECEIPT_SMS_HANDLER.set(self.domain, True, NAMESPACE_DOMAIN)
+        STOCK_AND_RECEIPT_SMS_HANDLER.set(self.domain.name, True, NAMESPACE_DOMAIN)
 
     def test_soh_and_receipt(self):
         handled = handle(self.users[0].get_verified_number(), 'pp 20.30')
@@ -216,7 +216,7 @@ class StockAndReceiptTest(SMSTests):
         self.check_stock('pp', Decimal(20))
 
     def tearDown(self):
-        STOCK_AND_RECEIPT_SMS_HANDLER.set(self.domain, False, NAMESPACE_DOMAIN)
+        STOCK_AND_RECEIPT_SMS_HANDLER.set(self.domain.name, False, NAMESPACE_DOMAIN)
         super(StockAndReceiptTest, self).tearDown()
 
 

@@ -16,7 +16,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import Location, LocationType, SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper
@@ -56,7 +56,7 @@ FIXED_USER = {
 }
 
 
-def bootstrap_domain(domain_name=TEST_DOMAIN):
+def bootstrap_domain(domain_name):
     # little test utility that makes a commtrack-enabled domain with
     # a default config and a location
     domain_obj = create_domain(domain_name)
@@ -151,7 +151,7 @@ class CommTrackTest(TestCase):
 
         self.backend, self.backend_mapping = setup_default_sms_test_backend()
 
-        self.domain = bootstrap_domain()
+        self.domain = bootstrap_domain(TEST_DOMAIN)
         bootstrap_location_types(self.domain.name)
         bootstrap_products(self.domain.name)
         self.ct_settings = CommtrackConfig.for_domain(self.domain.name)
@@ -161,6 +161,7 @@ class CommTrackTest(TestCase):
             optimal_window=60,
             min_periods=0,
         )
+        # todo: remove?
         if self.requisitions_enabled:
             self.ct_settings.requisition_config = get_default_requisition_config()
 

@@ -1,6 +1,6 @@
 from casexml.apps.stock import const
 from casexml.apps.stock.models import StockTransaction
-from casexml.apps.stock.tests import StockTestBase
+from casexml.apps.stock.tests.base import StockTestBase
 
 
 class InferredTransactionsTest(StockTestBase):

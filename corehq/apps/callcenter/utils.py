@@ -232,7 +232,6 @@ def get_call_center_domains():
     result = (
         DomainES()
         .is_active()
-        .is_snapshot(False)
         .filter(filters.term('call_center_config.enabled', True))
         .source([
             'name',
