@@ -824,7 +824,14 @@ def new_module(request, domain, app_id):
                 register.case_action = 'open'   # TODO: this doesn't work
                 followup = app.new_form(module_id, "Followup", lang)
                 followup.case_action = 'update' # TODO: this doesn't work
-                module.case_type = 'case'   # TODO: make unique across domain
+
+                # make case type unique across app
+                app_case_types = set([module.case_type for module in app.modules if module.case_type])
+                module.case_type = 'record'
+                suffix = 0
+                while module.case_type in app_case_types:
+                    suffix = suffix + 1
+                    module.case_type = 'record-{}'.format(suffix)
             else:
                 form = app.new_form(module_id, "Survey", lang)
                 form.case_action = 'none'
