@@ -2,10 +2,12 @@
 import datetime
 from operator import add
 
+from couchdbkit import ResourceNotFound
 from sqlagg import AliasColumn
 from sqlagg.columns import SimpleColumn, CountColumn, SumColumn
-from sqlagg.filters import LT, EQ
+from sqlagg.filters import LT, EQ, IN
 
+from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.filters.select import YearFilter
@@ -13,6 +15,7 @@ from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, AggregateColumn, DictDataFormat, \
     DataFormatter
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
+from corehq.apps.reports.util import get_INFilter_bindparams, get_INFilter_element_bindparam
 from corehq.apps.style.decorators import use_nvd3
 from corehq.apps.userreports.util import get_table_name
 from corehq.apps.users.models import CommCareUser
@@ -21,6 +24,16 @@ from django.utils.translation import ugettext as _
 
 
 EMPTY_CELL = {'sort_key': 0, 'html': '---'}
+
+
+def update_config(config):
+    try:
+        group = Group.get('daa2641cf722f8397207c9041bfe5cb3')
+        users = group.users
+    except ResourceNotFound:
+        users = []
+    config.update({'users': users})
+    config.update(dict({get_INFilter_element_bindparam('owner_id', idx): val for idx, val in enumerate(users, 0)}))
 
 
 class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
@@ -43,12 +56,15 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
         year = self.request.GET.get('year')
         date = "%s-W%s-1" % (year, week)
         monday = datetime.datetime.strptime(date, "%Y-W%W-%w")
-        return {
+
+        params = {
             'domain': self.domain,
             'week': week,
             'year': year,
             'monday': monday.replace(hour=16)
         }
+        update_config(params)
+        return params
 
     @property
     def group_by(self):
@@ -59,6 +75,7 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
         return [
             EQ('week', 'week'),
             EQ('year', 'year'),
+            IN('owner_id', get_INFilter_bindparams('owner_id', self.config['users']))
         ]
 
     @property
@@ -175,17 +192,20 @@ class WeeklyMalaria(MalariaReport):
     def config(self):
         week = self.request.GET.get('week')
         year = self.request.GET.get('year')
-        return {
+        params = {
             'domain': self.domain,
             'week': week,
             'year': year
         }
+        update_config(params)
+        return params
 
     @property
     def filters(self):
         return [
             EQ('week', 'week'),
             EQ('year', 'year'),
+            IN('owner_id', get_INFilter_bindparams('owner_id', self.config['users']))
         ]
 
     @property
@@ -315,15 +335,18 @@ class CumulativeMalaria(MalariaReport):
     @property
     def config(self):
         year = self.request.GET.get('year')
-        return {
+        params = {
             'domain': self.domain,
             'year': year
         }
+        update_config(params)
+        return params
 
     @property
     def filters(self):
         return [
             EQ('year', 'year'),
+            IN('owner_id', get_INFilter_bindparams('owner_id', self.config['users']))
         ]
 
     @property
