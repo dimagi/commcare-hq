@@ -196,13 +196,16 @@ def from_demo_user(form_json):
     except (KeyError, ValueError):
         return False
 
+# Form-submissions with request.GET['submit_mode'] as 'demo' are ignored, if not from demo-user
+DEMO_SUBMIT_MODE = 'demo'
+
 
 def should_ignore_submission(request):
     """
     If submission request.GET has `submit_mode=demo` and submitting user is not demo_user,
     the submissions should be ignored
     """
-    if not request.GET.get('submit_mode') == 'demo':
+    if not request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
         return False
 
     instance, _ = couchforms.get_instance_and_attachment(request)

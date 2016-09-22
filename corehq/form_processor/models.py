@@ -330,6 +330,7 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
         serializer = XFormInstanceSQLSerializer(self, include_attachments=include_attachments)
         data = dict(serializer.data)
         data['history'] = [dict(op) for op in data['history']]
+        data['backend_id'] = 'sql'
         return data
 
     def _get_attachment_from_db(self, attachment_name):
@@ -645,6 +646,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         for key in self.case_json:
             if key not in ret:
                 ret[key] = self.case_json[key]
+        ret['backend_id'] = 'sql'
         return ret
 
     def dumps(self, pretty=False):
