@@ -370,20 +370,20 @@ def get_case_forms_by_date(spec, context):
         }
     else:
         spec = {
-                "type": "sort_items",
-                "sort_expression": {
-                    "type": "property_path",
-                    "property_path": [
-                        "form",
-                        "meta",
-                        "timeEnd"
-                    ],
-                    "datatype": "date"
-                },
-                "items_expression": {
-                    "type": "get_case_forms",
-                    "case_id_expression": spec['case_id_expression']
-                }
+            "type": "sort_items",
+            "sort_expression": {
+                "type": "property_path",
+                "property_path": [
+                    "form",
+                    "meta",
+                    "timeEnd"
+                ],
+                "datatype": "date"
+            },
+            "items_expression": {
+                "type": "get_case_forms",
+                "case_id_expression": spec['case_id_expression']
+            }
         }
     return ExpressionFactory.from_spec(spec, context)
 
