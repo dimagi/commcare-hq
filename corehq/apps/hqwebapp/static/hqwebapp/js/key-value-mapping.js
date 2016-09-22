@@ -98,6 +98,23 @@ function MapList(o) {
     self.multimedia = o.multimedia;
     self.property_name = o.property_name;
 
+    self.labels = ko.computed(function() {
+        if (this.values_are_icons()) {
+            return {
+                placeholder: 'Calculation',
+                duplicated: 'Calculation is duplicated',
+                addButton: 'Add Image',
+            };
+        }
+        else {
+            return {
+                placeholder: 'Key',
+                duplicated: 'Key is duplicated',
+                addButton: 'Add Key, Value Mapping',
+            };
+        }
+    }, this);
+
     self.setItems = function (items) {
         self.items(_(items).map(function (item, i) {
             return new MapItem(item, i, self);

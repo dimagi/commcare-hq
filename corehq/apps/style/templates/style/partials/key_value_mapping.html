@@ -14,9 +14,9 @@
                         <div class="col-sm-3">
                             <input type="text"
                                    class="enum-key form-control"
-                                   placeholder="key"
-                                   data-bind="value: key"/>
-                            <div class="help-block" data-bind='visible: $parent.isItemDuplicated(ko.utils.unwrapObservable(key))'>
+                                   data-bind="value: key, attr: {placeholder: $parent.labels().placeholder}"/>
+                            <div class="help-block" data-bind='visible: $parent.isItemDuplicated(ko.utils.unwrapObservable(key)),
+                            text: $parent.labels().duplicated'>
                                 Key is duplicated.
                             </div>
                         </div>
@@ -58,7 +58,7 @@
 
         <div class="col-sm-offset-1">
             <a href="#" class="btn btn-success"
-               data-bind="click: addItem">
+               data-bind="click: addItem, text: $data.labels().addButton">
                 <i class="icon-white fa fa-plus"></i>
                 Add Key &rarr; Value Mapping
             </a>
