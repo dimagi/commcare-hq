@@ -39,12 +39,12 @@ class OpenInMonthSpec(JsonObject):
 
 class GetCaseFormsByDateSpec(JsonObject):
     type = TypeProperty('icds_get_case_forms_by_date')
-    case_id_expression = DefaultProperty(required=True)    
+    case_id_expression = DefaultProperty(required=True)
     xmlns = ListProperty(required=False)
     start_date = DefaultProperty(required=False)
     end_date = DefaultProperty(required=False)
     form_filter = DefaultProperty(required=False)
-    
+
 
 class CCSAliveInMonthSpec(JsonObject):
     type = TypeProperty('icds_ccs_alive_in_month')
@@ -220,8 +220,8 @@ def open_in_month(spec, context):
                   'type': 'root_doc'
                 },
                 'to_date_expression': {
-                  'type': 'icds_month_end', 
-                  'offset' : 3
+                  'type': 'icds_month_end',
+                  'offset': 3
                 }
               },
               'property_value': 0
@@ -248,8 +248,8 @@ def open_in_month(spec, context):
                   'expression': {
                     'type': 'diff_days',
                     'from_date_expression': {
-                      'type': 'icds_month_start', 
-                      'offset' : 3
+                      'type': 'icds_month_start',
+                      'offset': 3
                     },
                     'to_date_expression': {
                       'expression': {
@@ -461,7 +461,7 @@ def ccs_pregnant(spec, context):
           'filters': [
             {
               'type': 'boolean_expression',
-              'operator':  'eq',
+              'operator': 'eq',
               'expression': {
                 'type': 'icds_open_in_month'
               },

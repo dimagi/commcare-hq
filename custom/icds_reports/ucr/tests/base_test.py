@@ -9,6 +9,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
+
 def _safe_text(input_value):
     if input_value is None:
         return ''
@@ -16,6 +17,7 @@ def _safe_text(input_value):
         return str(input_value)
     except:
         return ''
+
 
 def create_element_with_value(element_name, value):
     elem = ElementTree.Element(element_name)
