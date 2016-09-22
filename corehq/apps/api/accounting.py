@@ -4,7 +4,7 @@ from corehq.apps.accounting.models import Feature, FeatureRate, SoftwarePlanVers
     BillingAccount, BillingContactInfo, Currency, PaymentRecord, SoftwareProductRate, \
     SoftwareProduct, SoftwarePlan, DefaultProductPlan, CreditAdjustment, Subscription, CreditLine, Subscriber, \
     SubscriptionAdjustment, BillingRecord, Invoice
-from corehq.apps.api.auth import CustomResourceMeta, AdminAuthentication
+from corehq.apps.api.resources.v0_1 import CustomResourceMeta, AdminAuthentication
 from tastypie import fields
 from django_prbac.models import Role
 

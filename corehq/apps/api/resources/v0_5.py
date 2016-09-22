@@ -15,7 +15,7 @@ from django.core.urlresolvers import reverse
 
 from tastypie import fields
 from tastypie.bundle import Bundle
-from corehq.apps.api.auth import (
+from corehq.apps.api.resources.v0_1 import (
     RequirePermissionAuthentication,
     AdminAuthentication,
     CustomResourceMeta,

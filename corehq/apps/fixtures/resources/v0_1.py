@@ -2,7 +2,7 @@ from couchdbkit import ResourceNotFound
 from tastypie import fields as tp_f
 from tastypie.resources import Resource
 from corehq.apps.api.resources import HqBaseResource, CouchResourceMixin
-from corehq.apps.api.auth import (
+from corehq.apps.api.resources.v0_1 import (
     CustomResourceMeta,
     RequirePermissionAuthentication,
 )

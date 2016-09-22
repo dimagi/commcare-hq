@@ -7,7 +7,7 @@ from corehq.apps.api.resources import (
     DomainSpecificResourceMixin,
     HqBaseResource,
 )
-from corehq.apps.api.auth import (
+from corehq.apps.api.resources.v0_1 import (
     CustomResourceMeta,
     RequirePermissionAuthentication,
 )

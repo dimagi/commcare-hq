@@ -3,8 +3,8 @@ from tastypie.bundle import Bundle
 from tastypie.constants import ALL
 from tastypie.resources import ModelResource
 
-from corehq.apps.api.auth import DomainAdminAuthentication
 from corehq.apps.api.resources import HqBaseResource
+from corehq.apps.api.resources.v0_1 import DomainAdminAuthentication
 from corehq.util.view_utils import absolute_reverse
 
 from ..models import SQLLocation, LocationType

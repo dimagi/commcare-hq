@@ -1,20 +1,33 @@
 # Standard library imports
+from functools import wraps
 from itertools import imap
+import json
 
 # Django imports
 import datetime
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.couch import UserQuerySetAdapter
+from corehq.apps.domain.auth import determine_authtype_from_header
 from dimagi.utils.couch.database import iter_docs
+from django.core.exceptions import PermissionDenied
+from django.http import Http404, HttpResponse, HttpResponseForbidden
+from django.conf import settings
 
 # Tastypie imports
 from tastypie import fields
+from tastypie.authentication import Authentication
+from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.exceptions import BadRequest
+from tastypie.throttle import CacheThrottle
 
 # External imports
 from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.es import FormES
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
+from corehq.apps.users.decorators import require_permission, require_permission_raw
+from corehq.toggles import IS_DEVELOPER, API_THROTTLE_WHITELIST
 from couchforms.models import XFormInstance
 
 # CCHQ imports
@@ -29,8 +42,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 
 # API imports
-from corehq.apps.api.auth import CustomResourceMeta, RequirePermissionAuthentication
-from corehq.apps.api.serializers import XFormInstanceSerializer
+from corehq.apps.api.serializers import CustomXMLSerializer, XFormInstanceSerializer
 from corehq.apps.api.util import get_object_or_not_exist, get_obj
 from corehq.apps.api.resources import (
     CouchResourceMixin,
@@ -41,6 +53,155 @@ from dimagi.utils.parsing import string_to_boolean
 
 
 TASTYPIE_RESERVED_GET_PARAMS = ['api_key', 'username']
+
+
+def api_auth(view_func):
+    @wraps(view_func)
+    def _inner(req, domain, *args, **kwargs):
+        try:
+            return view_func(req, domain, *args, **kwargs)
+        except Http404, ex:
+            if ex.message:
+                return HttpResponse(json.dumps({"error": ex.message}),
+                                content_type="application/json",
+                                status=404)
+            return HttpResponse(json.dumps({"error": "not authorized"}),
+                                content_type="application/json",
+                                status=401)
+    return _inner
+
+
+def api_access_allowed(request):
+    # Checks if request.user or request.domain has API access permission
+    return (request.user.is_superuser or
+            (hasattr(request, 'domain') and domain_has_privilege(request.domain, privileges.API_ACCESS)))
+
+
+class LoginAndDomainAuthentication(Authentication):
+
+    def __init__(self, allow_session_auth=False, *args, **kwargs):
+        """
+        allow_session_auth:
+            set this to True to allow session based access to this resource
+        """
+        super(LoginAndDomainAuthentication, self).__init__(*args, **kwargs)
+        self.allow_session_auth = allow_session_auth
+
+    @property
+    def decorator_map(self):
+        if self.allow_session_auth:
+            decorator_map = {
+                'digest': login_or_digest,
+                'basic': login_or_basic,
+                'api_key': login_or_api_key,
+            }
+        else:
+            decorator_map = {
+                'digest': digest_auth,
+                'basic': basic_auth,
+                'api_key': api_key_auth,
+            }
+        return decorator_map
+
+    def is_authenticated(self, request, **kwargs):
+        return self._auth_test(request, wrappers=[self._get_auth_decorator(request), api_auth], **kwargs)
+
+    def _get_auth_decorator(self, request):
+        # the initial digest request doesn't have any authorization, so default to
+        # digest in order to send back
+        return self.decorator_map[determine_authtype_from_header(request, default='digest')]
+
+    def _auth_test(self, request, wrappers, **kwargs):
+        PASSED_AUTH = 'is_authenticated'
+
+        def dummy(request, domain=None, **kwargs):
+            return PASSED_AUTH
+
+        wrapped_dummy = dummy
+        for wrapper in wrappers:
+            wrapped_dummy = wrapper(wrapped_dummy)
+
+        if 'domain' not in kwargs:
+            kwargs['domain'] = getattr(request, 'domain', None)
+
+        try:
+            response = wrapped_dummy(request, **kwargs)
+        except PermissionDenied:
+            response = HttpResponseForbidden()
+
+        if not api_access_allowed(request):
+            response = HttpResponse(
+                json.dumps({"error": "Your current plan does not have access to this feature"}),
+                content_type="application/json",
+                status=401
+            )
+
+        if response == PASSED_AUTH:
+            return True
+        else:
+            return response
+
+    def get_identifier(self, request):
+        return request.couch_user.username
+
+
+class RequirePermissionAuthentication(LoginAndDomainAuthentication):
+
+    def __init__(self, permission, *args, **kwargs):
+        super(RequirePermissionAuthentication, self).__init__(*args, **kwargs)
+        self.permission = permission
+
+    def is_authenticated(self, request, **kwargs):
+        wrappers = [
+            require_permission(self.permission, login_decorator=self._get_auth_decorator(request)),
+            api_auth,
+        ]
+        return self._auth_test(request, wrappers=wrappers, **kwargs)
+
+
+class DomainAdminAuthentication(LoginAndDomainAuthentication):
+
+    def is_authenticated(self, request, **kwargs):
+        permission_check = lambda couch_user, domain: couch_user.is_domain_admin(domain)
+        wrappers = [
+            require_permission_raw(permission_check, login_decorator=self._get_auth_decorator(request)),
+            api_auth,
+        ]
+        return self._auth_test(request, wrappers=wrappers, **kwargs)
+
+
+class AdminAuthentication(LoginAndDomainAuthentication):
+
+    @property
+    def decorator_map(self):
+        return {
+            'digest': superuser_digest_auth,
+            'basic': superuser_basic_auth,
+            'api_key': superuser_apikey_auth,
+        }
+
+    def is_authenticated(self, request, **kwargs):
+        decorator = self._get_auth_decorator(request)
+        wrappers = [decorator]
+        return self._auth_test(request, wrappers=wrappers, **kwargs)
+
+
+class HQThrottle(CacheThrottle):
+
+    def should_be_throttled(self, identifier, **kwargs):
+        if API_THROTTLE_WHITELIST.enabled(identifier):
+            return False
+
+        return super(HQThrottle, self).should_be_throttled(identifier, **kwargs)
+
+
+class CustomResourceMeta(object):
+    authorization = ReadOnlyAuthorization()
+    authentication = LoginAndDomainAuthentication()
+    serializer = CustomXMLSerializer()
+    default_format='application/json'
+    throttle = HQThrottle(throttle_at=getattr(settings, 'CCHQ_API_THROTTLE_REQUESTS', 25),
+                             timeframe=getattr(settings, 'CCHQ_API_THROTTLE_TIMEFRAME', 15))
 
 
 class UserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):

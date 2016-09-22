@@ -2,7 +2,7 @@ import json
 from tastypie import fields
 from tastypie.resources import Resource
 
-from corehq.apps.api.auth import CustomResourceMeta, LoginAndDomainAuthentication
+from corehq.apps.api.resources.v0_1 import CustomResourceMeta, LoginAndDomainAuthentication
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.domain.models import Domain

@@ -4,7 +4,10 @@ from corehq.apps.api.serializers import XFormInstanceSerializer
 from corehq.apps.domain.models import Domain
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.api.resources import HqBaseResource, CouchResourceMixin
-from corehq.apps.api.auth import CustomResourceMeta, AdminAuthentication
+from corehq.apps.api.resources.v0_1 import (
+    CustomResourceMeta,
+    AdminAuthentication,
+)
 from corehq.apps.es.domains import DomainES
 
 from tastypie import fields
