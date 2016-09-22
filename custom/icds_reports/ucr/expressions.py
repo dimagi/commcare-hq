@@ -234,9 +234,9 @@ def open_in_month(spec, context):
                             'operator': 'eq',
                             'expression': {
                                 'expression': {
-                                  'datatype': 'string',
-                                  'type': 'property_name',
-                                  'property_name': 'closed'
+                                    'datatype': 'string',
+                                    'type': 'property_name',
+                                    'property_name': 'closed'
                                 },
                                 'type': 'root_doc'
                             },
@@ -248,16 +248,16 @@ def open_in_month(spec, context):
                             'expression': {
                                 'type': 'diff_days',
                                 'from_date_expression': {
-                                  'type': 'icds_month_start',
-                                  'offset': 3
+                                    'type': 'icds_month_start',
+                                    'offset': 3
                                 },
                                 'to_date_expression': {
-                                  'expression': {
-                                      'datatype': 'date',
-                                      'type': 'property_name',
-                                      'property_name': 'closed_on'
-                                  },
-                                  'type': 'root_doc'
+                                    'expression': {
+                                        'datatype': 'date',
+                                        'type': 'property_name',
+                                        'property_name': 'closed_on'
+                                    },
+                                    'type': 'root_doc'
                                 }
                             },
                             'property_value': 0
@@ -283,90 +283,90 @@ def get_case_forms_by_date(spec, context):
     filters = []
     if spec['start_date'] is not None:
         start_date_filter = {
-                'operator': 'gte',
-                'expression': {
-                    'datatype': 'integer',
-                    'from_date_expression': spec['start_date'],
-                    'type': 'diff_days',
-                    'to_date_expression': {
-                        'datatype': 'date',
-                        'type': 'property_path',
-                        'property_path': [
-                            'form',
-                            'meta',
-                            'timeEnd'
-                        ]
-                    }
-                },
-                'type': 'boolean_expression',
-                'property_value': 0
+            'operator': 'gte',
+            'expression': {
+                'datatype': 'integer',
+                'from_date_expression': spec['start_date'],
+                'type': 'diff_days',
+                'to_date_expression': {
+                    'datatype': 'date',
+                    'type': 'property_path',
+                    'property_path': [
+                        'form',
+                        'meta',
+                        'timeEnd'
+                    ]
+                }
+            },
+            'type': 'boolean_expression',
+            'property_value': 0
         }
         filters.append(start_date_filter)
     if spec['end_date'] is not None:
         end_date_filter = {
-                'operator': 'gte',
-                'expression': {
-                    'datatype': 'integer',
-                    'from_date_expression': {
-                        'datatype': 'date',
-                        'type': 'property_path',
-                        'property_path': [
-                            'form',
-                            'meta',
-                            'timeEnd'
-                        ]
-                    },
-                    'type': 'diff_days',
-                    'to_date_expression': spec['end_date']
+            'operator': 'gte',
+            'expression': {
+                'datatype': 'integer',
+                'from_date_expression': {
+                    'datatype': 'date',
+                    'type': 'property_path',
+                    'property_path': [
+                        'form',
+                        'meta',
+                        'timeEnd'
+                    ]
                 },
-                'type': 'boolean_expression',
-                'property_value': 0
+                'type': 'diff_days',
+                'to_date_expression': spec['end_date']
+            },
+            'type': 'boolean_expression',
+            'property_value': 0
         }
         filters.append(end_date_filter)
     if spec['xmlns'] is not None and len(spec['xmlns']) > 0:
         xmlns_filters = []
         for x in spec['xmlns']:
                 x_filter = {
-                        "operator": "eq",
-                        "type": "boolean_expression",
-                        "expression": {
-                            "datatype": "string",
-                            "type": "property_name",
-                            "property_name": "xmlns"
-                        },
-                        "property_value": x
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "xmlns"
+                    },
+                    "property_value": x
                 }
                 xmlns_filters.append(x_filter)
         xmlns_filter = {
-                "type": "or",
-                "filters": xmlns_filters
+            "type": "or",
+            "filters": xmlns_filters
         }
         filters.append(xmlns_filter)
     if spec['form_filter'] is not None:
         filters.append(spec['form_filter'])
     if len(filters) > 0:
         spec = {
-                "type": "sort_items",
-                "sort_expression": {
-                    "type": "property_path",
-                    "property_path": [
-                        "form",
-                        "meta",
-                        "timeEnd"
-                    ],
-                    "datatype": "date"
+            "type": "sort_items",
+            "sort_expression": {
+                "type": "property_path",
+                "property_path": [
+                    "form",
+                    "meta",
+                    "timeEnd"
+                ],
+                "datatype": "date"
+            },
+            "items_expression": {
+                "filter_expression": {
+                    "type": "and",
+                    "filters": filters
                 },
+                "type": "filter_items",
                 "items_expression": {
-                    "filter_expression": {
-                            "type": "and",
-                            "filters": filters
-                    },
-                    "type": "filter_items",
-                    "items_expression": {
-                            "type": "get_case_forms",
-                            "case_id_expression": spec['case_id_expression']
-                    }
+                    "type": "get_case_forms",
+                    "case_id_expression": spec['case_id_expression']
                 }
+            }
         }
     else:
         spec = {
@@ -484,9 +484,9 @@ def ccs_pregnant(spec, context):
                             'expression': {
                                 'type': 'root_doc',
                                 'expression': {
-                                  'datatype': 'date',
-                                  'type': 'property_name',
-                                  'property_name': 'add'
+                                    'datatype': 'date',
+                                    'type': 'property_name',
+                                    'property_name': 'add'
                                 }
                             },
                             'property_value': [
@@ -501,15 +501,15 @@ def ccs_pregnant(spec, context):
                             'expression': {
                                 'type': 'diff_days',
                                 'to_date_expression': {
-                                  'type': 'root_doc',
-                                  'expression': {
-                                      'datatype': 'date',
-                                      'type': 'property_name',
-                                      'property_name': 'add'
-                                  }
+                                    'type': 'root_doc',
+                                    'expression': {
+                                        'datatype': 'date',
+                                        'type': 'property_name',
+                                        'property_name': 'add'
+                                    }
                                 },
                                 'from_date_expression': {
-                                  'type': 'icds_month_end'
+                                    'type': 'icds_month_end'
                                 }
                             }
                         }
