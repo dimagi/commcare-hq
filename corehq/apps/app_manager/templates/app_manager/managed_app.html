@@ -276,7 +276,9 @@
                                                 href="{% url "view_form" domain app.id module.id form.id %}"
                                             {% endif %}
                                         >
-                                            <i class="drag_handle"></i>
+                                            {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or form.get_action_type != 'open' %}
+                                                <i class="drag_handle"></i>
+                                            {% endif %}
                                             {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" or request|toggle_enabled:"SUPPORT" %}
                                             <i
                                             {% if form.get_action_type == 'open' %}
