@@ -101,7 +101,7 @@ class CCUserLocationAssignmentTest(TestCase):
         user = CommCareUser.get(self.user._id)
         self.assertListEqual(user.assigned_location_ids, expected_location_ids)
         actual_ids = user.user_data.get('commcare_location_ids', '')
-        actual_ids = actual_ids.split(',') if actual_ids else []
+        actual_ids = actual_ids.split(' ') if actual_ids else []
         self.assertListEqual(actual_ids, expected_location_ids)
 
     def assertNonPrimaryLocation(self, expected):
