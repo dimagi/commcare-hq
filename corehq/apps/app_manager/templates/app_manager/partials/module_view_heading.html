@@ -2,9 +2,6 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 
-{% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
-    {% include 'app_manager/partials/module_view_heading.html' %}
-{% endif %}
 {% if module.case_type == '' or not request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
     <h3 style="display: inline-block; margin-right: -5px;"><i class="fa fa-folder-open"></i></h3>
 {% else %}
