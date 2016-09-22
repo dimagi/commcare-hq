@@ -79,6 +79,12 @@ class OTARestoreUser(object):
 
     @property
     def sql_location(self):
+        "User's primary SQLLocation"
+        raise NotImplementedError()
+
+    @property
+    def sql_locations(self):
+        "SQLLocation objects of all locations the user is assigned to"
         raise NotImplementedError()
 
     def get_fixture_data_items(self):
@@ -123,6 +129,10 @@ class OTARestoreWebUser(OTARestoreUser):
     @property
     def sql_location(self):
         return None
+
+    @property
+    def sql_locations(self):
+        return []
 
     @property
     def locations(self):
@@ -170,8 +180,15 @@ class OTARestoreCommCareUser(OTARestoreUser):
         return self._couch_user.sql_location
 
     @property
+    def sql_locations(self):
+        return self._couch_user.sql_locations
+
+    @property
     def locations(self):
         return self._couch_user.locations
+
+    def add_to_assigned_locations(self, location):
+        return self._couch_user.add_to_assigned_locations(location)
 
     def set_location(self, location):
         return self._couch_user.set_location(location)
