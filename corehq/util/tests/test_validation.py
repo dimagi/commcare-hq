@@ -3,6 +3,7 @@ from random import sample
 from corehq.util.validation import is_url_or_host_banned
 from django.test import TestCase
 
+
 def sample_range(start, stop):
     yield start
     num_samples = min(8, stop - start)
