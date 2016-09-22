@@ -64,6 +64,13 @@
 </script>
 
 
+{# this is only for ONBOARDING_PROTOTYPE; otherwise this template isn't included unles form.source exists #}
+{% if not form.source %}
+    <p class="alert alert-warning">
+        {% trans "You have not created a form yet. Create a form in order to set up saving." %}
+    </p>
+{% endif %}
+
 <div id="case-config-ko">
     <div data-bind="saveButton: saveButton"></div>
     <div data-bind="with: caseConfigViewModel">
@@ -140,15 +147,6 @@
                 </a>
             </div>
             <!--/ko-->
-        {% else %}
-            <br>
-            <p class="alert alert-warning">
-                {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
-                    {% trans "You have not created a form yet. Create a form in order to set up saving." %}
-                {% else %}
-                    {% trans "You have not created a form yet. Create a form in order to view and edit Case Management." %}
-                {% endif %}
-            </p>
         {% endif %}
     </div>
 </div>
