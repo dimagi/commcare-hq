@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block case_management_js %}{{ block.super }}
-    {% if form.source %}
+    {% if form.source or request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
     var CaseConfig = hqImport('app_manager/js/case-config-ui-2.js').CaseConfig;
     var caseConfig = new CaseConfig({
         home: $('#casexml_home'),

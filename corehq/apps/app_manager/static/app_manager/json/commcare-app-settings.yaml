@@ -149,12 +149,25 @@
   since: '2.14'
 
 - id: use_grid_menus
-  name: Use Menu Grids
-  description: Display root menu as a grid instead of a list.
-  widget: bool
+  name: Modules Menu Display
+  description: Display root menu as a list or grid.
+  values: [false, true]
+  value_names: ['List', 'Grid']
   default: false
   since: "2.24"
   toggle: GRID_MENUS
+  foot_note: "Set Grid Menus as No for this to be active"
+
+- id: grid_form_menus
+  name: Forms Menu Display
+  description: Configure form menus display
+  values: ['none', 'all', 'some']
+  value_names: ['List', 'Grid', 'Enable Menu Display Setting Per-Module']
+  default: 'none'
+  since: '2.24'
+  toggle: GRID_MENUS
+  foot_note: "Set Grid Menus as No for this to be active. For per-module option turn on grid view for the forms
+  menu in a module under module's settings page"
 
 - id: comment
   name: 'Comment'
