@@ -373,9 +373,9 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         }
 
 
-class NewUserGroupFilter(ExpandedMobileWorkerFilter):
-    def __init__(self):
-        super(ExpandedMobileWorkerFilter, self).__init__(self.request, self.requset.domain)
+class LocationRestrictedMobileWorkerFilter(ExpandedMobileWorkerFilter):
+    options_url = 'new_emwf_options'
+
 
 def get_user_toggle(request):
     ufilter = group = individual = show_commtrack = None

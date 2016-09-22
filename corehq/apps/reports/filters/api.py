@@ -30,6 +30,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         return EmwfUtils(self.domain)
 
     def get(self, request, domain):
+        self.request = request
         self.domain = domain
         self.q = self.request.GET.get('q', '')
         try:
@@ -150,6 +151,12 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
                   .size(size)
                   .sort("name.exact"))
         return [self.utils.reporting_group_tuple(g) for g in groups.run().hits]
+
+
+class LocationRestrictedEmwfOptionsView(EmwfOptionsView):
+    def get_locations_query(self, query):
+        return SQLLocation.objects.accessible_to_user(self.request.domain, self.request.couch_user)
+            #.filter_path_by_user_input(self.domain, query)
 
 
 def paginate_options(data_sources, query, start, size):
