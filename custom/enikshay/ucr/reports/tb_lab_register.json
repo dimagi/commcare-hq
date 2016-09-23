@@ -1,0 +1,272 @@
+{
+    "domains": [
+        "enikshay-test",
+        "enikshay-test-test"
+    ],
+    "data_source_table": "episode",
+    "report_id": "tb_lab_register",
+    "config": {
+        "description": "",
+        "title": "TB Lab Register",
+        "sort_expression": [],
+        "visible": false,
+        "configured_charts": [],
+        "aggregation_columns": ["doc_id"],
+        "filters": [
+            {
+                "compare_as_string": false,
+                "datatype": "string",
+                "required": false,
+                "display": "Case Open Date",
+                "field": "date_reported",
+                "type": "date",
+                "slug": "date_reported"
+            },
+            {
+                "compare_as_string": false,
+                "datatype": "string",
+                "type": "dynamic_choice_list",
+                "slug": "village",
+                "field": "person_owner_id",
+                "choice_provider": {
+                    "include_descendants": true,
+                    "type": "location"
+                },
+                "display": "Location"
+            }
+        ],
+        "columns": [
+            {
+                "display": "Lab serial Number",
+                "column_id": "lab_serial_number",
+                "type": "field",
+                "field": "lab_serial_number",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Date of collection of first specimen",
+                "column_id": "sample_receipt_date",
+                "type": "field",
+                "field": "sample_receipt_date",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Name in full",
+                "type": "field",
+                "field": "person_name",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Sex (M/F/TG)",
+                "type": "field",
+                "field": "sex",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Age",
+                "type": "field",
+                "field": "age",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Complete Address",
+                "type": "field",
+                "field": "current_address",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Phone Number",
+                "type": "field",
+                "field": "mobile_number",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Key population",
+                "type": "field",
+                "field": "known_populations",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Name of Referring Health facility (PHI, ICTC, ART, Medical college, Private, Others, Specify)",
+                "type": "field",
+                "field": "referring_facility_name",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Presumptive TB /RE/  Presumptive NTM",
+                "type": "field",
+                "field": "purpose_of_test",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Predominant symptom duration",
+                "type": "field",
+                "field": "predominant_system_duration",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            
+            {
+                "display": "Nikshay ID",
+                "type": "field",
+                "field": "nikshay_id",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Visual appearance - Sample A",
+                "type": "field",
+                "field": "sample_a_visual_appearance",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Visual appearance - Sample B",
+                "type": "field",
+                "field": "sample_b_visual_appearance",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Results - Sample A",
+                "type": "field",
+                "field": "sample_a_result",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Results - Sample B",
+                "type": "field",
+                "field": "sample_b_result",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Date of result",
+                "type": "field",
+                "field": "date_reported",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "HIV Status (Reactive/ Non reactive/ Unknown)",
+                "type": "field",
+                "field": "hiv_status",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Diabetic status (Diabetic / Non Diabetic / Unknown)",
+                "type": "field",
+                "field": "diabetes_status",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            }
+        ]
+    }
+}
