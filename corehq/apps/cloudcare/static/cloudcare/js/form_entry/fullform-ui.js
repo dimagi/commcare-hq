@@ -537,10 +537,9 @@ Formplayer.Utils.answersEqual = function(answer1, answer2) {
  * @param {Object} formJSON - The json representation of the form
  * @param {Object} resourceMap - Function for resolving multimedia paths
  * @param {Object} $div - The jquery element that the form will be rendered in.
- * @param {Object} displayOptions - A dictionary detailing various modes or options formplayer might be in.
  */
-Formplayer.Utils.initialRender = function(formJSON, resourceMap, $div, displayOptions) {
-    var form = new Form(formJSON, displayOptions),
+Formplayer.Utils.initialRender = function(formJSON, resourceMap, $div) {
+    var form = new Form(formJSON),
         $debug = $('#cloudcare-debugger'),
         cloudCareDebugger;
     Formplayer.resourceMap = resourceMap;
