@@ -295,6 +295,7 @@ WebFormSession.prototype.loadForm = function($form, initLang) {
         'nav': 'fao',
         'uses_sql_backend': this.uses_sql_backend,
         'post_url': this.post_url,
+        'oneQuestionPerScreen': true
     };
 
     args[this.formSpec.type] = this.formSpec.val;
@@ -440,9 +441,9 @@ WebFormSession.prototype.initForm = function(args, $form) {
     });
 };
 
-WebFormSession.prototype.renderFormXml = function (resp, $form, displayOptions) {
+WebFormSession.prototype.renderFormXml = function (resp, $form) {
     var self = this;
     self.session_id = self.session_id || resp.session_id;
-    self.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $form, displayOptions);
+    self.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $form);
     self.displayInstanceXml(resp);
 };

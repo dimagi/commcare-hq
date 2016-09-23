@@ -174,11 +174,10 @@ Container.prototype.fromJS = function(json) {
 /**
  * Represents the entire form. There is only one of these on a page.
  * @param {Object} json - The JSON returned from touchforms to represent a Form
- * @param {Object} displayOptions - Dict of what display options are available to the Form
  */
-function Form(json, displayOptions) {
+function Form(json) {
     var self = this;
-    self.displayOptions = displayOptions || {};
+    self.displayOptions = json.displayOptions || {};
     json.children = json.tree;
     delete json.tree;
     Container.call(self, json);
