@@ -101,16 +101,16 @@ function MapList(o) {
     self.labels = ko.computed(function() {
         if (this.values_are_icons()) {
             return {
-                placeholder: 'Calculation',
-                duplicated: 'Calculation is duplicated',
-                addButton: 'Add Image',
+                placeholder: django.gettext('Calculation'),
+                duplicated: django.gettext('Calculation is duplicated'),
+                addButton: django.gettext('Add Image'),
             };
         }
         else {
             return {
-                placeholder: 'Key',
-                duplicated: 'Key is duplicated',
-                addButton: 'Add Key, Value Mapping',
+                placeholder: django.gettext('Key'),
+                duplicated: django.gettext('Key is duplicated'),
+                addButton: django.gettext('Add Key, Value Mapping'),
             };
         }
     }, this);
