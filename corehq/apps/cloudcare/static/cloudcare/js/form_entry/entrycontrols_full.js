@@ -339,7 +339,7 @@ function DateEntry(question, options) {
 DateEntry.prototype = Object.create(DateTimeEntryBase.prototype);
 DateEntry.prototype.constructor = DateTimeEntryBase;
 // This is format equates to 31/12/2016 and is used by the datetimepicker
-DateEntry.prototype.clientFormat = 'd/m/Y';
+DateEntry.prototype.clientFormat = 'm/d/Y';
 DateEntry.prototype.serverFormat = 'YYYY-MM-DD';
 
 
