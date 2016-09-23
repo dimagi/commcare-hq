@@ -74,13 +74,14 @@ var reportBuilder = function () {
                 // Put the group-by column first in the report
                 var selectedColumnNames = _.map(self.selectedColumns(), function (c) { return c.name; });
                 var index = selectedColumnNames.indexOf(newValue);
+                var column;
                 if (index === -1) {
                     // The column is not in the report. Insert it.
-                    var column = _.find(self.columns, function (c) { return c["name"] === newValue; })
-                    self.selectedColumns.unshift(new reportBuilder.ReportColumn(column, self))
+                    column = _.find(self.columns, function (c) { return c["name"] === newValue; });
+                    self.selectedColumns.unshift(new reportBuilder.ReportColumn(column, self));
                 } else if (index > 0) {
                     // The column is already in the report, but not first. Bump it up.
-                    var column = self.selectedColumns.splice(index, 1)[0];
+                    column = self.selectedColumns.splice(index, 1)[0];
                     self.selectedColumns.unshift(column);
                 }
             }
@@ -143,7 +144,7 @@ var reportBuilder = function () {
 
         self.count = function (array) {
             return array.length;
-        }
+        };
 
         self.refreshPreview = function (columns) {
             columns = typeof columns !== "undefined" ? columns : self.selectedColumns();
@@ -157,7 +158,7 @@ var reportBuilder = function () {
                 contentType: 'application/json; charset=utf-8',
                 data: JSON.stringify({'columns': columns, 'aggregate': self.isFormatEnabled()}),
                 dataType: 'json',
-                success: self.renderChart
+                success: self.renderChart,
             });
         };
 
@@ -182,8 +183,8 @@ var reportBuilder = function () {
                 var aaData = data;
 
                 var aggColumns = _.filter(self.selectedColumns(), function (c) {
-                    return c.isFormatEnabled() && c.data_type === "integer"; // TODO: Not gonna work. use isNumeric
-                })
+                    return c.isFormatEnabled() && c.isNumeric;
+                });
                 var categoryNames = _.map(
                     _.filter(self.selectedColumns(), function (c) { return c.isFormatEnabled() === false; }),
                     function (c) { return c.name; }
@@ -216,7 +217,7 @@ var reportBuilder = function () {
                     charts.render(chartSpecs, aaData, $('#chart'));
                 }
             }
-        }
+        };
 
         self.removeColumn = function (column) {
             self.selectedColumns.remove(column);
