@@ -39,6 +39,47 @@ from crispy_forms.layout import Layout
 from dimagi.utils.dates import DateSpan
 
 
+class UserTypesField(forms.MultipleChoiceField):
+    _USER_MOBILE = 'mobile'
+    _USER_DEMO = 'demo_user'
+    _USER_UNKNOWN = 'unknown'
+    _USER_SUPPLY = 'supply'
+
+    _USER_TYPES_CHOICES = [
+        (_USER_MOBILE, ugettext_lazy("All Mobile Workers")),
+        (_USER_DEMO, ugettext_lazy("Demo User")),
+        (_USER_UNKNOWN, ugettext_lazy("Unknown Users")),
+        (_USER_SUPPLY, ugettext_lazy("CommCare Supply")),
+    ]
+
+    widget = Select2MultipleChoiceWidget
+
+    def __init__(self, *args, **kwargs):
+        if len(args) == 0 and "choices" not in kwargs:  # choices is the first arg, and a kwarg
+            kwargs['choices'] = self._USER_TYPES_CHOICES
+        super(UserTypesField, self).__init__(*args, **kwargs)
+
+    def clean(self, value):
+        """
+        Return a list of elastic search user types (each item in the return list
+        is in corehq.pillows.utils.USER_TYPES) corresponding to the selected
+        export user types.
+        """
+        es_user_types = []
+        export_user_types = super(UserTypesField, self).clean(value)
+        export_to_es_user_types_map = {
+            self._USER_MOBILE: [utils.MOBILE_USER_TYPE],
+            self._USER_DEMO: [utils.DEMO_USER_TYPE],
+            self._USER_UNKNOWN: [
+                utils.UNKNOWN_USER_TYPE, utils.SYSTEM_USER_TYPE, utils.WEB_USER_TYPE
+            ],
+            self._USER_SUPPLY: [utils.COMMCARE_SUPPLY_USER_TYPE]
+        }
+        for type_ in export_user_types:
+            es_user_types.extend(export_to_es_user_types_map[type_])
+        return es_user_types
+
+
 class CreateExportTagForm(forms.Form):
     # common fields
     model_type = forms.ChoiceField(
@@ -127,17 +168,6 @@ class CreateExportTagForm(forms.Form):
 class BaseFilterExportDownloadForm(forms.Form):
     _export_type = 'all'  # should be form or case
 
-    _USER_MOBILE = 'mobile'
-    _USER_DEMO = 'demo_user'
-    _USER_UNKNOWN = 'unknown'
-    _USER_SUPPLY = 'supply'
-
-    _USER_TYPES_CHOICES = [
-        (_USER_MOBILE, ugettext_lazy("All Mobile Workers")),
-        (_USER_DEMO, ugettext_lazy("Demo User")),
-        (_USER_UNKNOWN, ugettext_lazy("Unknown Users")),
-        (_USER_SUPPLY, ugettext_lazy("CommCare Supply")),
-    ]
     type_or_group = forms.ChoiceField(
         label=ugettext_lazy("User Types or Group"),
         required=False,
@@ -146,10 +176,8 @@ class BaseFilterExportDownloadForm(forms.Form):
             ('group', ugettext_lazy("Group")),
         )
     )
-    user_types = forms.MultipleChoiceField(
+    user_types = UserTypesField(
         label=ugettext_lazy("Select User Types"),
-        widget=Select2MultipleChoiceWidget,
-        choices=_USER_TYPES_CHOICES,
         required=False,
     )
     group = forms.CharField(
@@ -164,7 +192,7 @@ class BaseFilterExportDownloadForm(forms.Form):
         if not self.domain_object.uses_locations:
             # don't use CommCare Supply as a user_types choice if the domain
             # is not a CommCare Supply domain.
-            self.fields['user_types'].choices = self._USER_TYPES_CHOICES[:-1]
+            self.fields['user_types'].choices = self.fields['user_types'].choices[:-1]
 
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -233,26 +261,6 @@ class BaseFilterExportDownloadForm(forms.Form):
             user_filter_toggles
         )
         return users_matching_filter(self.domain_object.name, user_filters)
-
-    def _get_es_user_types(self):
-        """
-        Return a list of elastic search user types (each item in the return list
-        is in corehq.pillows.utils.USER_TYPES) corresponding to the selected
-        export user types.
-        """
-        es_user_types = []
-        export_user_types = self.cleaned_data['user_types']
-        export_to_es_user_types_map = {
-            self._USER_MOBILE: [utils.MOBILE_USER_TYPE],
-            self._USER_DEMO: [utils.DEMO_USER_TYPE],
-            self._USER_UNKNOWN: [
-                utils.UNKNOWN_USER_TYPE, utils.SYSTEM_USER_TYPE, utils.WEB_USER_TYPE
-            ],
-            self._USER_SUPPLY: [utils.COMMCARE_SUPPLY_USER_TYPE]
-        }
-        for type_ in export_user_types:
-            es_user_types.extend(export_to_es_user_types_map[type_])
-        return es_user_types
 
     def _get_group(self):
         group = self.cleaned_data['group']
@@ -417,7 +425,7 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
     def _get_user_filter(self):
         group = self.cleaned_data['group']
         if not group:
-            return UserTypeFilter(self._get_es_user_types())
+            return UserTypeFilter(self.cleaned_data['user_types'])
 
     def get_multimedia_task_kwargs(self, export, download_id):
         kwargs = super(FilterFormESExportDownloadForm, self).get_multimedia_task_kwargs(export, download_id)
