@@ -182,9 +182,27 @@ function Form(json) {
     delete json.tree;
     Container.call(self, json);
     self.submitText = ko.observable('Submit');
+    self.debugQIndex = ko.observable(0);
+    self.currentIndex = ko.observable(0);
+
+    var _updateIndexCallback = function (resp) {
+        self.currentIndex(parseInt(resp.tree[0].ix));
+        console.log("current index is "+self.currentIndex());
+    };
 
     self.submitForm = function(form) {
         $.publish('formplayer.' + Formplayer.Const.SUBMIT, self);
+    };
+    self.nextQuestion = function () {
+        $.publish('formplayer.' + Formplayer.Const.NEXT_QUESTION, _updateIndexCallback);
+    };
+
+    self.prevQuestion = function () {
+        $.publish('formplayer.' + Formplayer.Const.PREV_QUESTION, _updateIndexCallback);
+    };
+
+    self.advanceToIndex = function () {
+        $.publish('formplayer.' + Formplayer.Const.QUESTIONS_FOR_INDEX, self.debugQIndex());
     };
 
     $.unsubscribe('session');
