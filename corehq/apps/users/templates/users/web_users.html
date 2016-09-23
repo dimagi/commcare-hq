@@ -75,6 +75,7 @@
         });
 
         $('.resend-invite').click(function (e) {
+console.log("wd");
             $(this).addClass('disabled').attr('disabled', 'disabled');
             var post_url = '{% url "reinvite_web_user" domain %}';
             var doc_id = this.getAttribute('data-invite');
