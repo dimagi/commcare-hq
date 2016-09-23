@@ -151,7 +151,8 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
         data = formatter.format(self.data, keys=self.keys, group_by=self.group_by)
         locations = SQLLocation.objects.filter(
             domain=self.domain,
-            location_type__code='centre-de-sante'
+            location_type__code='centre-de-sante',
+            is_archived=False
         ).order_by('name')
         for site in locations:
             users_for_location = users_dict.get(site.location_id, [])
@@ -293,7 +294,11 @@ class WeeklyMalaria(MalariaReport):
     def rows(self):
         formatter = DataFormatter(DictDataFormat(self.columns, no_value=self.no_value))
         data = formatter.format(self.data, keys=self.keys, group_by=self.group_by)
-        locations = SQLLocation.objects.filter(domain=self.domain, location_type__code='region').order_by('name')
+        locations = SQLLocation.objects.filter(
+            domain=self.domain,
+            location_type__code='region',
+            is_archived=False
+        ).order_by('name')
         for reg in locations:
             for dis in reg.children.order_by('name'):
                 for site in dis.children.order_by('name'):
@@ -458,32 +463,36 @@ class CumulativeMalaria(MalariaReport):
     def rows(self):
         formatter = DataFormatter(DictDataFormat(self.columns, no_value=self.no_value))
         data = formatter.format(self.data, keys=self.keys, group_by=self.group_by)
-        locations = SQLLocation.objects.filter(domain=self.domain, location_type__code='region').order_by('name')
-        # TODO add zones loop
-        for reg in locations:
-            for dis in reg.children.order_by('name'):
-                for site in dis.children.order_by('name'):
-                    row = data.get(site.location_id, {})
-                    yield [
-                        reg.name,
-                        dis.name,
-                        site.name,
-                        row.get('cas_vus_5', EMPTY_CELL),
-                        row.get('cas_suspects_5', EMPTY_CELL),
-                        row.get('cas_confirmes_5', EMPTY_CELL),
-                        row.get('cas_vus_5_10', EMPTY_CELL),
-                        row.get('cas_suspects_5_10', EMPTY_CELL),
-                        row.get('cas_confirmes_5_10', EMPTY_CELL),
-                        row.get('cas_vus_10', EMPTY_CELL),
-                        row.get('cas_suspects_10', EMPTY_CELL),
-                        row.get('cas_confirmes_10', EMPTY_CELL),
-                        row.get('cas_vus_fe', EMPTY_CELL),
-                        row.get('cas_suspects_fe', EMPTY_CELL),
-                        row.get('cas_confirmes_fe', EMPTY_CELL),
-                        row.get('total_cas', EMPTY_CELL),
-                        row.get('per_cas_5', EMPTY_CELL),
-                        row.get('per_cas_5_10', EMPTY_CELL),
-                        row.get('per_cas_10', EMPTY_CELL),
-                        row.get('per_cas_fa', EMPTY_CELL),
-                        'zone'
-                    ]
+        locations = SQLLocation.objects.filter(
+            domain=self.domain,
+            location_type__code='zone',
+            is_archived=False
+        ).order_by('name')
+        for zone in locations:
+            for reg in zone.children.order_by('name'):
+                for dis in reg.children.order_by('name'):
+                    for site in dis.children.order_by('name'):
+                        row = data.get(site.location_id, {})
+                        yield [
+                            reg.name,
+                            dis.name,
+                            site.name,
+                            row.get('cas_vus_5', EMPTY_CELL),
+                            row.get('cas_suspects_5', EMPTY_CELL),
+                            row.get('cas_confirmes_5', EMPTY_CELL),
+                            row.get('cas_vus_5_10', EMPTY_CELL),
+                            row.get('cas_suspects_5_10', EMPTY_CELL),
+                            row.get('cas_confirmes_5_10', EMPTY_CELL),
+                            row.get('cas_vus_10', EMPTY_CELL),
+                            row.get('cas_suspects_10', EMPTY_CELL),
+                            row.get('cas_confirmes_10', EMPTY_CELL),
+                            row.get('cas_vus_fe', EMPTY_CELL),
+                            row.get('cas_suspects_fe', EMPTY_CELL),
+                            row.get('cas_confirmes_fe', EMPTY_CELL),
+                            row.get('total_cas', EMPTY_CELL),
+                            row.get('per_cas_5', EMPTY_CELL),
+                            row.get('per_cas_5_10', EMPTY_CELL),
+                            row.get('per_cas_10', EMPTY_CELL),
+                            row.get('per_cas_fa', EMPTY_CELL),
+                            zone.name
+                        ]
