@@ -50,7 +50,7 @@ def _get_user_location(user, domain):
         location_type_name = loc.location_type.name
         location_site_code = loc.site_code
     except Exception:
-        location_type_name = 'state'
+        location_type_name = 'national'
         location_site_code = ''
     return location_type_name, location_site_code
 
