@@ -472,6 +472,11 @@ Formplayer.Const = {
     LABEL_OFFSET: 'col-sm-offset-4',
     CONTROL_WIDTH: 'col-sm-8',
 
+    // XForm Navigation
+    QUESTIONS_FOR_INDEX: 'questions_for_index',
+    NEXT_QUESTION: 'next_index',
+    PREV_QUESTION: 'prev_index',
+
     // XForm Actions
     NEW_FORM: 'new-form',
     ANSWER: 'answer',
