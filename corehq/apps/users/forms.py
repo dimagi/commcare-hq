@@ -554,7 +554,7 @@ class NewMobileWorkerForm(forms.Form):
             if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
                 validator = "validate_password_draconian"
             else:
-                validator = "validate_password"
+                validator = "validate_password_standard"
             self.fields['password'].widget = forms.TextInput(attrs={
                 validator: "",
                 "ng_keydown": "markNonDefault()",
