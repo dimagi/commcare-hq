@@ -97,7 +97,7 @@
         "is_nullable": true,
         "column_id": "location_name",
         "type": "expression"
-      }
+      },
       {
         "display_name": null,
         "transform": {},
