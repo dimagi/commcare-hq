@@ -5,6 +5,7 @@ from collections import defaultdict
 from datetime import datetime
 from zipfile import BadZipfile
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.urlresolvers import reverse
@@ -216,6 +217,7 @@ class EditCommCareUserView(BaseEditUserView):
                 not has_privilege(self.request, privileges.LOCATIONS)
             ),
             'demo_restore_date': naturaltime(demo_restore_date_created(self.editable_user)),
+            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES
         }
         if self.domain_object.commtrack_enabled or self.domain_object.uses_locations:
             context.update({
