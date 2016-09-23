@@ -19,12 +19,20 @@ class Migration(migrations.Migration):
             NOOP_REVERSE
         ),
         HqRunSQL(
+            'DROP INDEX IF EXISTS form_processor_caseattachmentsql_attachment_uuid_8d145664_like',
+            NOOP_REVERSE
+        ),
+        HqRunSQL(
             'DROP INDEX IF EXISTS form_processor_xforminstancesql_form_uuid_12662b9ceadeeecc_like',
             NOOP_REVERSE
         ),
         HqRunSQL(
             'DROP INDEX IF EXISTS form_processor_xformattac_attachment_uuid_6d1d0a1eff4ada21_like',
             NOOP_REVERSE
+        ),
+        HqRunSQL(
+            'DROP INDEX IF EXISTS form_processor_xformattachmentsql_attachment_uuid_51177a7e_like',
+            NOOP_REVERSE,
         ),
         HqRunSQL(
             'DROP INDEX IF EXISTS form_processor_xformattachmentsql_name_4b9f1b0d840a70bc_like',
