@@ -10,7 +10,7 @@ class BaseDeletion(object):
 
     def is_app_installed(self):
         try:
-            return apps.get_app(self.app_label)
+            return True
         except ImproperlyConfigured:
             return False
 
