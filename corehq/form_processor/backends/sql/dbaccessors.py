@@ -66,8 +66,6 @@ def get_cursor(model):
 
 
 class ReindexAccessor(six.with_metaclass(ABCMeta)):
-    # TODO: implement this https://wiki.postgresql.org/images/3/35/Pagination_Done_the_PostgreSQL_Way.pdf
-
     @abstractproperty
     def model_class(self):
         """
