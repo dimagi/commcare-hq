@@ -19,6 +19,7 @@ from corehq.apps.userreports.views import (
     ReportBuilderDataSourceSelect,
     ReportBuilderPaywallPricing,
     ReportBuilderPaywallActivatingSubscription,
+    ReportPreview,
 )
 from .filters import urls as filter_urls
 from .views import (
@@ -47,6 +48,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
 
     url(r'^builder/select_source/$', ReportBuilderDataSourceSelect.as_view(), name=ReportBuilderDataSourceSelect.urlname),
     url(r'^builder/configure/$', ConfigureReport.as_view(), name=ConfigureReport.urlname),
+    url(r'^builder/preview/(?P<data_source>[\w\-]+)/$', ReportPreview.as_view(), name=ReportPreview.urlname),
     url(r'^builder/configure/map/$', ConfigureMapReport.as_view(), name="configure_map_report"),
     url(r'^builder/edit/(?P<report_id>[\w\-]+)/$', EditReportInBuilder.as_view(), name='edit_report_in_builder'),
 

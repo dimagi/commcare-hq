@@ -1,3 +1,4 @@
+import urllib
 from collections import namedtuple
 import datetime
 import functools
@@ -9,6 +10,7 @@ import uuid
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.http import HttpRequest
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
 from django.shortcuts import redirect
@@ -75,6 +77,7 @@ from corehq.apps.userreports.models import (
     id_is_static,
     DataSourceMeta,
     DataSourceBuildInformation,
+    ReportMeta,
 )
 from corehq.apps.userreports.reports.builder.forms import (
     DataSourceForm,
@@ -340,6 +343,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
         return self.get(request, domain, *args, **kwargs)
 
 
+# TODO: kill
 class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
     template_name = "userreports/reportbuilder/report_type_select.html"
     urlname = 'report_builder_select_type'
@@ -551,6 +555,7 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 'application': app_source.application,
                 'source_type': app_source.source_type,
                 'source': app_source.source,
+                'data_source': data_source_config_id,
             }
             return HttpResponseRedirect(
                 reverse(ConfigureReport.urlname, args=[self.domain], params=get_params)
@@ -592,14 +597,19 @@ class ConfigureReport(ReportBuilderView):
             title = self.existing_report.title
         return _(self.report_title).format(title)
 
-    def get_data_source_properties(self):
+    def get_columns(self):
         builder = DataSourceBuilder(
             self.domain,
             Application.get(self.request.GET['application']),
             self.request.GET['source_type'],
             self.request.GET['source']
         )
-        return builder.data_source_properties  # TODO: Massage for Knockout when we do front-end
+        return [{
+            'column_id': v.column_id,
+            'name': k,
+            'label': v.text,
+            'is_numeric': not v.is_non_numeric,
+        } for k, v in builder.data_source_properties.iteritems()]
 
     @property
     def page_context(self):
@@ -607,7 +617,10 @@ class ConfigureReport(ReportBuilderView):
             'report': {
                 "title": self.page_name
             },
-            'data_source_properties': self.get_data_source_properties(),
+            'columns': self.get_columns(),
+            'source_type': self.request.GET['source_type'],
+            'data_source_url': reverse(ReportPreview.urlname,
+                                       args=[self.domain, self.request.GET['data_source']]),
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, [])
         }
 
@@ -677,6 +690,48 @@ class ConfigureReport(ReportBuilderView):
         if (number_of_report_builder_reports(self.domain) >=
                 allowed_report_builder_reports(self.request)):
             raise Http404()
+
+
+class ReportPreview(BaseDomainView):
+    urlname = 'report_preview'
+
+    def post(self, request, domain, data_source):
+        post_data = json.loads(urllib.unquote(request.body))
+        do_aggregation = post_data['aggregate']
+        columns = [{
+            'type': 'field',
+            'field': c['columnId'],
+            'column_id': c['columnId'],
+            'display': c['label'],
+            'aggregation': c.get('aggregation') or 'simple',
+        } for c in post_data['columns']]
+        # data_source_config = get_datasource_config_or_404(data_source, self.domain)
+        if do_aggregation:
+            aggregation_columns = [c['name'] for c in post_data['columns'] if c['isGroupByColumn']]
+        else:
+            aggregation_columns = []
+        tmp_report_config = ReportConfiguration(
+            domain=self.domain,
+            visible=False,  # TODO: Assuming this determines whether it shows up in the list of reports?
+            config_id=data_source,
+            title='',
+            description='',
+            aggregation_columns=aggregation_columns,
+            columns=columns,
+            report_meta=ReportMeta(created_by_builder=True),
+        )
+        tmp_report_config.save()
+
+        view = ConfigurableReport(request=HttpRequest())  # TODO: Is this really the way to go?
+        view._domain = self.domain
+        view._lang = "en"
+        view._report_config_id = tmp_report_config._id
+        table = view.export_table
+        tmp_report_config.delete()
+
+        headers = table[0][1][0]
+        preview = [dict(zip(headers, row)) for row in table[0][1][1:]]
+        return json_response(preview)
 
 
 class ConfigureMapReport(ConfigureReport):
