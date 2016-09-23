@@ -303,7 +303,6 @@ function DateTimeEntryBase(question, options) {
         self.$picker.datetimepicker({
             timepicker: self.timepicker,
             datepicker: self.datepicker,
-            value: self.answer(),
             format: self.clientFormat,
             maxDate: maxDate,
             minDate: minDate,
@@ -315,7 +314,7 @@ function DateTimeEntryBase(question, options) {
                 }
                 self.answer(moment(newDate).format(self.serverFormat));
             }
-        });
+        }).val(moment(self.answer()).format(self.clientFormat));
     };
 }
 DateTimeEntryBase.prototype = Object.create(EntrySingleAnswer.prototype);
@@ -339,7 +338,7 @@ function DateEntry(question, options) {
 DateEntry.prototype = Object.create(DateTimeEntryBase.prototype);
 DateEntry.prototype.constructor = DateTimeEntryBase;
 // This is format equates to 31/12/2016 and is used by the datetimepicker
-DateEntry.prototype.clientFormat = 'd/m/Y';
+DateEntry.prototype.clientFormat = 'MM/DD/Y';
 DateEntry.prototype.serverFormat = 'YYYY-MM-DD';
 
 
