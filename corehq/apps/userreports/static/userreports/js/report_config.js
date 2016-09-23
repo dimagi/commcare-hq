@@ -2,31 +2,6 @@
 var reportBuilder = function () {
     var self = this;
 
-    self.getColumnSpecs = function (columns, reportType) {
-        var specs = _.map(columns, function (column) {
-            return {
-                "title": column["label"]
-            };
-        });
-        if (reportType === "agg") {
-            specs[0]['className'] = 'last-aggregated-column';
-        }
-        return specs;
-    };
-
-    // TODO: And this. Fetch it from the DataSourceUrl
-    //       This should be the callback after posting user changes to HQ
-    self.getRows = function (data, columns) {
-        var columnNames = _.map(columns, function (column) {
-            return column["name"];
-        });
-        return _.map(data, function (dict) {
-            return _.map(columnNames, function(columnName) {
-                return dict[columnName];
-            });
-        }).sort();
-    };
-
     self.ReportColumn = function (column, parent) {
         var self = this;
 
@@ -172,6 +147,10 @@ var reportBuilder = function () {
 
         self.refreshPreview = function (columns) {
             columns = typeof columns !== "undefined" ? columns : self.selectedColumns();
+            $('#preview').hide();
+            if (columns.length === 0) {
+                return;  // Nothing to do.
+            }
             $.ajax({
                 url: self.dataSourceUrl,
                 type: 'post',
@@ -185,10 +164,6 @@ var reportBuilder = function () {
         self.renderChart = function (data) {
             var charts = hqImport('reports_core/js/charts.js');
 
-            $('#preview').hide();
-            if (columns.length === 0) {
-                return;  // Nothing to do.
-            }
             if (self.dataTable) {
                 self.dataTable.destroy();
             }
@@ -198,8 +173,8 @@ var reportBuilder = function () {
                 "ordering": false,
                 "paging": false,
                 "searching": false,
-                "data": reportBuilder.getRows(data, columns),
-                "columns": reportBuilder.getColumnSpecs(columns, self.reportType()),
+                "columns": _.map(data[0], function(column) { return {"title": column}; }),
+                "data": data.slice(1),
             });
             $('#preview').show();
 

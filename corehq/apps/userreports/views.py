@@ -729,9 +729,9 @@ class ReportPreview(BaseDomainView):
         table = view.export_table
         tmp_report_config.delete()
 
-        headers = table[0][1][0]
-        preview = [dict(zip(headers, row)) for row in table[0][1][1:]]
-        return json_response(preview)
+        # headers = table[0][1][0]
+        # preview = [dict(zip(headers, row)) for row in table[0][1][1:]]
+        return json_response(table[0][1])
 
 
 class ConfigureMapReport(ConfigureReport):
