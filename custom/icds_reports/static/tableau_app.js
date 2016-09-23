@@ -1,11 +1,12 @@
 var viz = {},
     workbook = {},
     LOCATIONS_MAP = {
-        'state': 1,
-        'district': 2,
-        'block': 3,
-        'supervisor': 4,
-        'awc': 5,
+        'national': 1,
+        'state': 2,
+        'district': 3,
+        'block': 4,
+        'supervisor': 5,
+        'awc': 6,
     };
 
 var tableauOptions = {};

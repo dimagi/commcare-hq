@@ -21,10 +21,10 @@ def tableau(request, domain, workbook, worksheet):
 
     # set report view-by level based on user's location level
     couch_user = getattr(request, 'couch_user', None)
-    location_type_name, location_name = _get_user_location(couch_user, domain)
+    location_type_name, location_site_code = _get_user_location(couch_user, domain)
     context.update({
         'view_by': location_type_name,
-        'view_by_value': location_name,
+        'view_by_value': location_site_code,
     })
 
     # the header is added by nginx
@@ -48,11 +48,11 @@ def _get_user_location(user, domain):
         user_location_id = user.get_domain_membership(domain).location_id
         loc = SQLLocation.by_location_id(user_location_id)
         location_type_name = loc.location_type.name
-        location_name = loc.name
+        location_site_code = loc.site_code
     except Exception:
-        location_type_name = 'state'
-        location_name = ''
-    return location_type_name, location_name
+        location_type_name = 'national'
+        location_site_code = ''
+    return location_type_name, location_site_code
 
 
 def get_tableau_trusted_url(client_ip):
