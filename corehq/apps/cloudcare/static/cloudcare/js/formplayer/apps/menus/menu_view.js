@@ -249,7 +249,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             'click @ui.actionButton': 'caseListAction',
             'click @ui.searchButton': 'caseListSearch',
             'click @ui.paginators': 'paginateAction',
-            'keypress': 'keyAction'
+            'keypress': 'keyAction',
         },
 
         caseListAction: function () {
