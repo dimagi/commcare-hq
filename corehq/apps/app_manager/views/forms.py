@@ -507,7 +507,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
 
         def qualified_form_name(form, auto_link):
             module_name = trans(form.get_module().name, langs)
-            form_name = trans(form.name, app.langs)
+            form_name = trans(form.name, langs)
             star = '* ' if auto_link else '  '
             return u"{}{} -> {}".format(star, module_name, form_name)
 
