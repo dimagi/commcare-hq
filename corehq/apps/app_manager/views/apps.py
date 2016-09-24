@@ -280,7 +280,7 @@ def copy_app_check_domain(request, domain, name, app_id_or_source):
 def copy_app(request, domain):
     app_id = request.POST.get('app')
     form = CopyApplicationForm(
-        app_id, request.POST, export_zipped_apps_enabled=toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
+        domain, app_id, request.POST, export_zipped_apps_enabled=toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
     )
     if form.is_valid():
         gzip = request.FILES.get('gzip')
