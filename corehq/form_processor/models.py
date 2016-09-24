@@ -330,6 +330,7 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
         serializer = XFormInstanceSQLSerializer(self, include_attachments=include_attachments)
         data = dict(serializer.data)
         data['history'] = [dict(op) for op in data['history']]
+        data['backend_id'] = 'sql'
         return data
 
     def _get_attachment_from_db(self, attachment_name):
@@ -412,7 +413,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
             raise InvalidAttachment("cannot save attachment without name")
 
         db = get_blob_db()
-        bucket = self._blobdb_bucket()
+        bucket = self.blobdb_bucket()
         info = db.put(content, self.name, bucket)
         self.md5 = info.md5_hash
         self.content_length = info.length
@@ -421,7 +422,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
     def read_content(self, stream=False):
         db = get_blob_db()
         try:
-            blob = db.get(self.blob_id, self._blobdb_bucket())
+            blob = db.get(self.blob_id, self.blobdb_bucket())
         except (KeyError, NotFound, BadName):
             raise AttachmentNotFound(self.name)
 
@@ -433,14 +434,14 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
 
     def delete_content(self):
         db = get_blob_db()
-        bucket = self._blobdb_bucket()
+        bucket = self.blobdb_bucket()
         deleted = db.delete(self.blob_id, bucket)
         if deleted:
             self.blob_id = None
 
         return deleted
 
-    def _blobdb_bucket(self):
+    def blobdb_bucket(self):
         if self.blob_bucket is not None:
             return self.blob_bucket
         if self.attachment_id is None:
@@ -645,6 +646,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         for key in self.case_json:
             if key not in ret:
                 ret[key] = self.case_json[key]
+        ret['backend_id'] = 'sql'
         return ret
 
     def dumps(self, pretty=False):
@@ -748,6 +750,15 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     @memoized
     def case_attachments(self):
         return {attachment.identifier: attachment for attachment in self.get_attachments()}
+
+    @property
+    @memoized
+    def serialized_attachments(self):
+        from .serializers import CaseAttachmentSQLSerializer
+        return {
+            att.name: dict(CaseAttachmentSQLSerializer(att).data)
+            for att in self.get_attachments()
+            }
 
     @memoized
     def get_closing_transactions(self):
@@ -879,7 +890,7 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
         """
         self.content_length = attachment.content_length
         self.blob_id = attachment.blob_id
-        self.blob_bucket = attachment._blobdb_bucket()
+        self.blob_bucket = attachment.blobdb_bucket()
         self.md5 = attachment.md5
         self.content_type = attachment.content_type
         self.properties = attachment.properties

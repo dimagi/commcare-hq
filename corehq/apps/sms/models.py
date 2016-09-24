@@ -5,6 +5,7 @@ from dimagi.ext.couchdbkit import *
 
 from datetime import datetime, timedelta
 from django.db import models, transaction
+from django.http import Http404
 from collections import namedtuple
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form
@@ -17,9 +18,11 @@ from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
 from corehq.apps.sms import util as smsutil
 from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
     MSG_MOBILE_WORKER_ANDROID_INVITATION, MSG_MOBILE_WORKER_JAVA_INVITATION,
-    get_message)
+    MSG_REGISTRATION_INSTALL_COMMCARE, get_message)
+from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.load_balance import load_balance
 from django.utils.translation import ugettext_noop, ugettext_lazy
 
@@ -1229,7 +1232,6 @@ class SelfRegistrationInvitation(models.Model):
     app_id = models.CharField(max_length=126, null=True)
     expiration_date = models.DateField(null=False)
     created_date = models.DateTimeField(null=False)
-    odk_url = models.CharField(max_length=126, null=True)
     phone_type = models.CharField(max_length=20, null=True, choices=PHONE_TYPE_CHOICES)
     registered_date = models.DateTimeField(null=True)
 
@@ -1245,6 +1247,17 @@ class SelfRegistrationInvitation(models.Model):
 
     class Meta:
         app_label = 'sms'
+
+    @property
+    @memoized
+    def odk_url(self):
+        if not self.app_id:
+            return None
+
+        try:
+            return self.get_app_odk_url(self.domain, self.app_id)
+        except Http404:
+            return None
 
     @property
     def already_registered(self):
@@ -1300,12 +1313,22 @@ class SelfRegistrationInvitation(models.Model):
             args=[self.domain, self.token]
         )
 
-    def get_app_info_url(self):
+    @classmethod
+    def get_app_info_url(cls, domain, app_id):
         from corehq.apps.sms.views import InvitationAppInfoView
         return absolute_reverse(
             InvitationAppInfoView.urlname,
-            args=[self.domain, self.token]
+            args=[domain, app_id]
         )
+
+    @classmethod
+    def get_sms_install_link(cls, domain, app_id):
+        """
+        If CommCare detects this SMS on the phone during start up,
+        it gives the user the option to install the given app.
+        """
+        app_info_url = cls.get_app_info_url(domain, app_id)
+        return '[commcare app - do not delete] %s' % app_info_url
 
     def send_step2_android_sms(self, custom_message=None):
         from corehq.apps.sms.api import send_sms
@@ -1326,13 +1349,11 @@ class SelfRegistrationInvitation(models.Model):
         )
 
         if self.odk_url:
-            app_info_url = self.get_app_info_url()
-            message = '[commcare app - do not delete] %s' % app_info_url
             send_sms(
                 self.domain,
                 None,
                 self.phone_number,
-                message,
+                self.get_sms_install_link(self.domain, self.app_id),
             )
 
     def expire(self):
@@ -1422,10 +1443,6 @@ class SelfRegistrationInvitation(models.Model):
         invalid_format_numbers = []
         numbers_in_use = []
 
-        odk_url = None
-        if app_id:
-            odk_url = cls.get_app_odk_url(domain, app_id)
-
         for user_info in users:
             phone_number = apply_leniency(user_info.phone_number)
             try:
@@ -1450,7 +1467,6 @@ class SelfRegistrationInvitation(models.Model):
                 app_id=app_id,
                 expiration_date=expiration_date,
                 created_date=datetime.utcnow(),
-                odk_url=odk_url,
                 android_only=android_only,
                 require_email=require_email,
                 custom_user_data=user_info.custom_user_data or {},
@@ -1464,6 +1480,67 @@ class SelfRegistrationInvitation(models.Model):
             success_numbers.append(phone_number)
 
         return (success_numbers, invalid_format_numbers, numbers_in_use)
+
+    @classmethod
+    def send_install_link(cls, domain, users, app_id, custom_message=None):
+        """
+        This method sends two SMS to each user: 1) an SMS with the link to the
+        Google Play store to install Commcare, and 2) an install SMS for the
+        given app.
+
+        Use this method to reinstall CommCare on a user's phone. The user must
+        already have a mobile worker account. If the user doesn't yet have a
+        mobile worker account, use SelfRegistrationInvitation.initiate_workflow()
+        so that they can set one up as part of the process.
+
+        :param domain: the name of the domain this request is for
+        :param users: a list of SelfRegistrationUserInfo objects
+        :param app_id: the app_id of the app for which to send the install link
+        :param custom_message: (optional) a custom message to use when sending the
+        Google Play URL.
+        """
+        from corehq.apps.sms.api import send_sms, send_sms_to_verified_number
+
+        if custom_message:
+            custom_message = custom_message.format(GOOGLE_PLAY_STORE_COMMCARE_URL)
+
+        domain_translated_message = custom_message or get_message(
+            MSG_REGISTRATION_INSTALL_COMMCARE,
+            domain=domain,
+            context=(GOOGLE_PLAY_STORE_COMMCARE_URL,)
+        )
+        sms_install_link = cls.get_sms_install_link(domain, app_id)
+
+        success_numbers = []
+        invalid_format_numbers = []
+        error_numbers = []
+
+        for user in users:
+            try:
+                CommCareMobileContactMixin.validate_number_format(user.phone_number)
+            except InvalidFormatException:
+                invalid_format_numbers.append(user.phone_number)
+                continue
+
+            phone_number = PhoneNumber.by_phone(user.phone_number)
+            if phone_number:
+                if phone_number.domain != domain:
+                    error_numbers.append(user.phone_number)
+                    continue
+                user_translated_message = custom_message or get_message(
+                    MSG_REGISTRATION_INSTALL_COMMCARE,
+                    verified_number=phone_number,
+                    context=(GOOGLE_PLAY_STORE_COMMCARE_URL,)
+                )
+                send_sms_to_verified_number(phone_number, user_translated_message)
+                send_sms_to_verified_number(phone_number, sms_install_link)
+            else:
+                send_sms(domain, None, user.phone_number, domain_translated_message)
+                send_sms(domain, None, user.phone_number, sms_install_link)
+
+            success_numbers.append(user.phone_number)
+
+        return (success_numbers, invalid_format_numbers, error_numbers)
 
 
 class ActiveMobileBackendManager(models.Manager):

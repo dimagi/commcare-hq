@@ -53,6 +53,7 @@ API_LIST = (
         v0_5.ConfigurableReportDataResource,
         DomainForms,
         sms_v0_5.UserSelfRegistrationResource,
+        sms_v0_5.UserSelfRegistrationReinstallResource,
         locations.v0_1.InternalLocationResource,
     )),
 )

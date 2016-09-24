@@ -9,7 +9,7 @@
   "config": {
     "title": "Issue Tracker - Issues (District)",
     "description": "",
-    "visible": false,
+    "visible": true,
     "aggregation_columns": [
       "state_id",
       "district_id"

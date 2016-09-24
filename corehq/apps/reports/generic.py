@@ -458,7 +458,7 @@ class GenericReportView(object):
                 has_datespan=has_datespan,
                 show=(
                     self.override_permissions_check
-                    or self.request.couch_user.can_view_any_reports(self.domain)
+                    or self.request.couch_user.can_view_some_reports(self.domain)
                 ),
                 is_emailable=self.emailable,
                 is_export_all = self.exportable_all,

@@ -323,6 +323,7 @@ hqDefine('export/js/models.js', function () {
         e.preventDefault();
         table.columns.push(new UserDefinedExportColumn({
             selected: true,
+            is_editable: true,
             deid_transform: null,
             doc_type: 'UserDefinedExportColumn',
             label: '',
@@ -515,6 +516,10 @@ hqDefine('export/js/models.js', function () {
         return gettext(this.help_text);
     };
 
+    ExportColumn.prototype.isEditable = function() {
+        return false;
+    };
+
     ExportColumn.mapping = {
         include: [
             'item',
@@ -556,6 +561,14 @@ hqDefine('export/js/models.js', function () {
         return true;
     };
 
+    UserDefinedExportColumn.prototype.formatProperty = function() {
+        return _.map(this.custom_path(), function(node) { return node.name(); }).join('.');
+    };
+
+    UserDefinedExportColumn.prototype.isEditable = function() {
+        return this.is_editable();
+    };
+
     UserDefinedExportColumn.prototype.customPathToNodes = function() {
         this.custom_path(utils.customPathToNodes(this.customPathString()));
     };
@@ -567,6 +580,7 @@ hqDefine('export/js/models.js', function () {
             'doc_type',
             'custom_path',
             'label',
+            'is_editable',
         ],
         custom_path: {
             create: function(options) {

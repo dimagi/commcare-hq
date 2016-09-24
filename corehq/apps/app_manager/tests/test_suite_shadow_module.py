@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from django.test import SimpleTestCase
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module, ShadowModule
 from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin
 
@@ -18,7 +17,7 @@ class ShadowModuleSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self._test_generic_suite('shadow_module_cases')
 
     def _get_family_app(self):
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app = Application.new_app('domain', "Untitled Application")
 
         parent = app.add_module(Module.new_module('module', None))
         app.new_form(parent.id, "Untitled Form", None)

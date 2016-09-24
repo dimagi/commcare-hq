@@ -29,62 +29,6 @@ from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import DocTestMixin, get_form_ready_to_save, trap_extra_setup
 
 
-class CouchformsAnalyticsTest(TestCase, DocTestMixin):
-
-    @classmethod
-    def setUpClass(cls):
-        from casexml.apps.case.tests.util import delete_all_xforms
-        delete_all_xforms()
-        cls.now = datetime.datetime.utcnow()
-        cls._60_days = datetime.timedelta(days=60)
-        cls.domain = 'my_crazy_analytics_domain'
-        cls.app_id = uuid.uuid4().hex
-        cls.xmlns = 'my://crazy.xmlns/'
-        cls.user_id = uuid.uuid4().hex
-        cls.forms = [
-            XFormInstance(domain=cls.domain, received_on=cls.now,
-                          app_id=cls.app_id, xmlns=cls.xmlns,
-                          form={'meta': {'userID': cls.user_id, 'username': 'francis'}}),
-            XFormInstance(domain=cls.domain, received_on=cls.now - cls._60_days,
-                          app_id=cls.app_id, xmlns=cls.xmlns,
-                          form={'meta': {'userID': cls.user_id, 'username': 'frank'}}),
-        ]
-        cls.error_forms = [XFormError(domain=cls.domain)]
-        cls.all_forms = cls.forms + cls.error_forms
-        for form in cls.all_forms:
-            form.save()
-
-        update_analytics_indexes()
-
-    @classmethod
-    def tearDownClass(cls):
-        for form in cls.all_forms:
-            form.delete()
-
-    def test_domain_has_submission_in_last_30_days(self):
-        self.assertEqual(
-            domain_has_submission_in_last_30_days(self.domain), True)
-
-    def test_get_first_form_submission_received(self):
-        self.assertEqual(
-            get_first_form_submission_received(self.domain),
-            self.now - self._60_days)
-
-    def test_get_last_form_submission_received(self):
-        self.assertEqual(
-            get_last_form_submission_received(self.domain), self.now)
-
-    def test_app_has_been_submitted_to_in_last_30_days(self):
-        self.assertEqual(
-            app_has_been_submitted_to_in_last_30_days(self.domain, self.app_id),
-            True)
-
-    def test_get_all_xmlns_app_id_pairs_submitted_to_in_domain(self):
-        self.assertEqual(
-            get_all_xmlns_app_id_pairs_submitted_to_in_domain(self.domain),
-            {(self.xmlns, self.app_id)})
-
-
 class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
     maxDiff = None
 
@@ -179,33 +123,83 @@ TEST_ES_META = {
 class CouchformsESAnalyticsTest(TestCase):
     domain = 'hqadmin-es-accessor'
 
-    def setUp(self):
-        super(CouchformsESAnalyticsTest, self).setUp()
-        with trap_extra_setup(ConnectionError):
-            self.elasticsearch = get_es_new()
-            initialize_index_and_mapping(self.elasticsearch, XFORM_INDEX_INFO)
+    @classmethod
+    def setUpClass(cls):
+        @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
+        @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
+        @patch('corehq.elastic.ES_META', TEST_ES_META)
+        def create_form_and_sync_to_es(received_on):
+            with process_kafka_changes('XFormToElasticsearchPillow'):
+                with process_couch_changes('DefaultChangeFeedPillow'):
+                    metadata = TestFormMetadata(domain=cls.domain, app_id=cls.app_id,
+                                                xmlns=cls.xmlns, received_on=received_on)
+                    form = get_form_ready_to_save(metadata, is_db_test=True)
+                    form_processor = FormProcessorInterface(domain=cls.domain)
+                    form_processor.save_processed_models([form])
+            return form
 
-    def tearDown(self):
+        from casexml.apps.case.tests.util import delete_all_xforms
+        delete_all_xforms()
+        cls.now = datetime.datetime.utcnow()
+        cls._60_days = datetime.timedelta(days=60)
+        cls.domain = 'my_crazy_analytics_domain'
+        cls.app_id = uuid.uuid4().hex
+        cls.xmlns = 'my://crazy.xmlns/'
+        with trap_extra_setup(ConnectionError):
+            cls.elasticsearch = get_es_new()
+            initialize_index_and_mapping(cls.elasticsearch, XFORM_INDEX_INFO)
+            cls.forms = [create_form_and_sync_to_es(cls.now), create_form_and_sync_to_es(cls.now-cls._60_days)]
+
+        cls.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
+
+    @classmethod
+    def tearDownClass(cls):
         ensure_index_deleted(XFORM_INDEX_INFO.index)
-        FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
-        super(CouchformsESAnalyticsTest, self).tearDown()
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
 
     @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
     @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
     @patch('corehq.elastic.ES_META', TEST_ES_META)
     def test_get_number_of_cases_in_domain(self):
-        forms = [self._create_form_and_sync_to_es() for _ in range(4)]
         self.assertEqual(
             get_number_of_forms_in_domain(self.domain),
-            len(forms)
+            len(self.forms)
         )
 
-    def _create_form_and_sync_to_es(self):
-        with process_kafka_changes('XFormToElasticsearchPillow'):
-            with process_couch_changes('DefaultChangeFeedPillow'):
-                metadata = TestFormMetadata(domain=self.domain)
-                form = get_form_ready_to_save(metadata, is_db_test=True)
-                form_processor = FormProcessorInterface(domain=self.domain)
-                form_processor.save_processed_models([form])
-        self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
-        return form, metadata
+    @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
+    @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
+    @patch('corehq.elastic.ES_META', TEST_ES_META)
+    def test_domain_has_submission_in_last_30_days(self):
+        self.assertEqual(
+            domain_has_submission_in_last_30_days(self.domain), True)
+
+    @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
+    @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
+    @patch('corehq.elastic.ES_META', TEST_ES_META)
+    def test_get_first_form_submission_received(self):
+        self.assertEqual(
+            get_first_form_submission_received(self.domain),
+            self.now - self._60_days)
+
+    @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
+    @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
+    @patch('corehq.elastic.ES_META', TEST_ES_META)
+    def test_get_last_form_submission_received(self):
+        self.assertEqual(
+            get_last_form_submission_received(self.domain), self.now)
+
+    @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
+    @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
+    @patch('corehq.elastic.ES_META', TEST_ES_META)
+    def test_app_has_been_submitted_to_in_last_30_days(self):
+        self.assertEqual(
+            app_has_been_submitted_to_in_last_30_days(self.domain, self.app_id),
+            True)
+
+    @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
+    @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
+    @patch('corehq.elastic.ES_META', TEST_ES_META)
+    def test_get_all_xmlns_app_id_pairs_submitted_to_in_domain(self):
+        self.assertEqual(
+            get_all_xmlns_app_id_pairs_submitted_to_in_domain(self.domain),
+            {(self.xmlns, self.app_id)})

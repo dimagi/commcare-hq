@@ -98,6 +98,7 @@ CASE_MAPPING = {
                       'type': 'string'},
         'contact_phone_number': {'index': 'not_analyzed',
                                  'type': 'string'},
+        'backend_id': {'type': 'string', 'index': 'not_analyzed'},
     }
 }
 

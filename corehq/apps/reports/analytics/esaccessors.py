@@ -9,6 +9,7 @@ from corehq.apps.es.aggregations import (
     MissingAggregation,
     MISSING_KEY,
     AggregationTerm, NestedTermAggregationsHelper, SumAggregation)
+from corehq.apps.export.const import CASE_SCROLL_SIZE
 from corehq.apps.es.forms import (
     submitted as submitted_filter,
     completed as completed_filter,
@@ -558,6 +559,15 @@ def get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate):
         except AttributeError:
             pass
     return form_ids
+
+
+def scroll_case_names(domain, case_ids):
+    query = (CaseES()
+            .domain(domain)
+            .case_ids(case_ids)
+            .source(['name', '_id'])
+            .size(CASE_SCROLL_SIZE))
+    return query.scroll()
 
 
 def _get_attachment_dicts_from_form(form):

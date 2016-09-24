@@ -1,9 +1,15 @@
 import uuid
+from tempfile import mkdtemp
 
 from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
 from django.test.utils import override_settings
+from shutil import rmtree
 
+import settings
+from corehq.blobs import get_blob_db
+from corehq.blobs.fsdb import FilesystemBlobDB
+from corehq.blobs.tests.util import TemporaryS3BlobDB
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, AttachmentNotFound
@@ -17,6 +23,7 @@ from corehq.form_processor.tests.utils import (create_form_for_test,
 from corehq.form_processor.utils import get_simple_form_xml, get_simple_wrapped_form
 from corehq.form_processor.utils.xform import TestFormMetadata
 from corehq.sql_db.routers import db_for_read_write
+from corehq.util.test_utils import trap_extra_setup
 
 DOMAIN = 'test-form-accessor'
 
@@ -339,6 +346,61 @@ class FormAccessorsTests(TestCase):
                 super(DisabledDbMixin, form).delete()
             else:
                 form.delete()
+
+
+class DeleteAttachmentsFSDBTests(TestCase):
+    def setUp(self):
+        super(DeleteAttachmentsFSDBTests, self).setUp()
+        self.rootdir = mkdtemp(prefix="blobdb")
+        self.db = FilesystemBlobDB(self.rootdir)
+
+    def tearDown(self):
+        self.db = None
+        rmtree(self.rootdir)
+        self.rootdir = None
+        super(DeleteAttachmentsFSDBTests, self).tearDown()
+
+    def test_hard_delete_forms_and_attachments(self):
+        forms = [create_form_for_test(DOMAIN) for i in range(3)]
+        form_ids = [form.form_id for form in forms]
+        forms = FormAccessorSQL.get_forms(form_ids)
+        self.assertEqual(3, len(forms))
+
+        other_form = create_form_for_test('other_domain')
+        self.addCleanup(lambda: FormAccessorSQL.hard_delete_forms('other_domain', [other_form.form_id]))
+
+        attachments = list(FormAccessorSQL.get_attachments_for_forms(form_ids, ordered=True))
+        self.assertEqual(3, len(attachments))
+
+        deleted = FormAccessorSQL.hard_delete_forms(DOMAIN, form_ids[1:] + [other_form.form_id])
+        self.assertEqual(2, deleted)
+
+        forms = FormAccessorSQL.get_forms(form_ids)
+        self.assertEqual(1, len(forms))
+        self.assertEqual(form_ids[0], forms[0].form_id)
+
+        for attachment in attachments[1:]:
+            with self.assertRaises(AttachmentNotFound):
+                attachment.read_content()
+
+        self.assertIsNotNone(attachments[0].read_content())
+        other_form = FormAccessorSQL.get_form(other_form.form_id)
+        self.assertIsNotNone(other_form.get_xml())
+
+
+class DeleteAtachmentsS3DBTests(DeleteAttachmentsFSDBTests):
+    def setUp(self):
+        super(DeleteAtachmentsS3DBTests, self).setUp()
+        with trap_extra_setup(AttributeError, msg="S3_BLOB_DB_SETTINGS not configured"):
+            config = settings.S3_BLOB_DB_SETTINGS
+
+        self.s3db = TemporaryS3BlobDB(config)
+        assert get_blob_db() is self.s3db, (get_blob_db(), self.s3db)
+
+    def tearDown(self):
+        self.s3db.close()
+        super(DeleteAtachmentsS3DBTests, self).tearDown()
+
 
 
 def _simulate_form_edit():

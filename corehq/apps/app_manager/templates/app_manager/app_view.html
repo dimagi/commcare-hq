@@ -107,7 +107,7 @@
 
                 // Load the content
                 $.ajax({
-                    url: "{% url 'release_manager_ajax' domain app.get_id %}",
+                    url: "{% url 'release_manager_ajax' domain app.get_id %}?limit={{fetchLimit}}",
                     success: function(content) {
                         state = "loaded";
                         showSpinner = false;

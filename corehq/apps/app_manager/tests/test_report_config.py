@@ -3,7 +3,6 @@ from xml.etree import ElementTree
 from django.test import SimpleTestCase, TestCase
 import mock
 from casexml.apps.phone.tests.utils import create_restore_user
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.fixtures import report_fixture_generator
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
@@ -106,7 +105,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
         cls.report_configs_by_id = {
             cls.report_id: report_configuration
         }
-        cls.app = Application.new_app(cls.domain, "Report Filter Test App", APP_V2)
+        cls.app = Application.new_app(cls.domain, "Report Filter Test App")
         module = cls.app.add_module(ReportModule.new_module("Report Module", 'en'))
         module.report_configs.append(
             ReportAppConfig(

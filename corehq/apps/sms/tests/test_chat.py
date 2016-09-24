@@ -252,7 +252,7 @@ class ChatHistoryTestCase(TestCase):
             'Unknown'
         )
 
-    @softer_assert
+    @softer_assert()
     def test_start_date(self):
         with self.patch_start_date(None):
             self.assertIsNone(self.new_view.start_date)

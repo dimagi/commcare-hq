@@ -307,6 +307,7 @@ function DateTimeEntryBase(question, options) {
             format: self.clientFormat,
             maxDate: maxDate,
             minDate: minDate,
+            scrollInput: false,
             onChangeDateTime: function(newDate) {
                 if (!newDate) {
                     self.answer(Formplayer.Const.NO_ANSWER);

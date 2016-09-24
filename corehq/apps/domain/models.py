@@ -343,7 +343,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     # to be eliminated from projects and related documents when they are copied for the exchange
     _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'countries', 'region', 'customer_type')
 
-    default_mobile_worker_redirect = StringProperty(default=None)
     last_modified = DateTimeProperty(default=datetime(2015, 1, 1))
 
     # when turned on, use SECURE_TIMEOUT for sessions of users who are members of this domain
@@ -681,6 +680,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
             new_domain.is_test = "none"
             new_domain.internal = InternalProperties()
             new_domain.creating_user = user.username if user else None
+            new_domain.date_created = datetime.utcnow()
 
             for field in self._dirty_fields:
                 if hasattr(new_domain, field):

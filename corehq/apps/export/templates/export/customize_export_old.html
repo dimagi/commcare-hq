@@ -32,7 +32,7 @@
                 allow_repeats: {{ helper.allow_repeats|JSON }},
                 default_order: {{ default_order|JSON }},
                 minimal: {{ minimal|JSON }}
-            }, translations);
+            }, translations, {{ has_excel_dashboard_access|JSON }});
 
             var $export = $('#customize-export');
             $export.koApplyBindings(customExportView);

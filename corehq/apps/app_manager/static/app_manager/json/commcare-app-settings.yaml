@@ -68,7 +68,7 @@
 
 - id: case_sharing
   name: "Case Sharing"
-  description: 'Allow mobile workers in the same case sharing group to share case lists.  Read more on the <a href="https://confluence.dimagi.com/display/commcarepublic/Case+Sharing"/>Help Site</a>'
+  description: 'Allow mobile workers in the same case sharing group to share case lists.  Read more on the <a href="https://confluence.dimagi.com/display/commcarepublic/Case+Sharing">Help Site</a>'
   description_format: html
   widget: bool
   default: false
@@ -78,7 +78,7 @@
 
 - id: cloudcare_enabled
   name: "CloudCare"
-  description: 'Allow mobile workers to access the web-based version of your application. Read more on the <a href="https://confluence.dimagi.com/display/commcarepublic/Using+CloudCare"/>Help Site</a>'
+  description: 'Allow mobile workers to access the web-based version of your application. Read more on the <a href="https://confluence.dimagi.com/display/commcarepublic/Using+CloudCare">Help Site</a>'
   description_format: html
   widget: bool
   default: false

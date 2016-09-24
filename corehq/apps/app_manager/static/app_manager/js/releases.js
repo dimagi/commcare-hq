@@ -201,7 +201,7 @@ hqDefine('app_manager/js/releases.js', function () {
         self.buildState = ko.observable('');
         self.fetchState = ko.observable('');
         self.nextVersionToFetch = null;
-        self.fetchLimit = 5;
+        self.fetchLimit = o.fetchLimit || 5;
         self.deployAnyway = {};
         self.currentAppVersion = ko.observable(self.options.currentAppVersion);
         self.lastAppVersion = ko.observable();
@@ -389,8 +389,9 @@ hqDefine('app_manager/js/releases.js', function () {
         };
         self.actuallyMakeBuild = function () {
             self.buildState('pending');
-            $.post(self.url('newBuild'), {
-                success: function (data) {
+            $.post({
+                url: self.url('newBuild'),
+                success: function(data) {
                     $('#build-errors-wrapper').html(data.error_html);
                     if (data.saved_app) {
                         var app = SavedApp(data.saved_app, self);

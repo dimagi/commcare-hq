@@ -219,6 +219,7 @@
         {% maintenance_alert %}
         <!-- .hide used for A/B test of account creation page -->
         <div class="hq-container{% if is_register_user %} molly{% endif %}">
+            {% block navigation %}
             <div id="hq-navigation"
                  class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
                 <div class="container-fluid">
@@ -265,6 +266,7 @@
                     </nav>
                 </div>
             </div>
+            {% endblock navigation %}
             {% if request.project.is_snapshot %}
                 <div class="alert alert-info">
                     {% trans "This is a snapshot of " %}{{ request.project.copied_from.display_name }}
@@ -284,6 +286,7 @@
                         </p>
                     </div>
                 <![endif]-->
+                {% block messages %}
                 <div class="container-fluid">
                     <div class="row">
                         <div class="col-sm-12">
@@ -304,6 +307,7 @@
                         </div>
                     </div>
                 </div>
+                {% endblock messages %}
             {% endif %}
             {% block content %}{% endblock content %}
         </div>

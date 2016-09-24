@@ -100,13 +100,13 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                         if (self.postSave) {
                             self.postSave(data);
                         }
-                        $(window).unbind("beforeunload", self.beforeUnload);
+                        $(window).off("beforeunload", self.beforeUnload);
                     },
                     error: function () {
                         self.isEditing(true);
                         self.isSaving(false);
                         self.hasError(true);
-                        $(window).unbind("beforeunload", self.beforeUnload);
+                        $(window).off("beforeunload", self.beforeUnload);
                     },
                 });
             };

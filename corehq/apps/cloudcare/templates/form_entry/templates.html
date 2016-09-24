@@ -18,28 +18,30 @@
 </script>
 
 <script type="text/html" id="form-fullform-ko-template">
-    <div class="row">
+    <div class="container form-container">
+      <div class="page-header">
+        <h1 class="title" data-bind="text: title"></h1>
+      </div>
+      <div class="row">
         <div class="col-sm-12">
-            <div class="page-header">
-                <h1 class="title" data-bind="text: title"></h1>
-            </div>
-            <form class="form form-horizontal" data-bind="submit: submitForm">
-                <div data-bind="template: { name: childTemplate, foreach: $data.children }"/>
-                <div class="form-actions form-group">
-                    <div data-bind="css: Formplayer.Const.LABEL_OFFSET + ' ' + Formplayer.Const.CONTROL_WIDTH">
-                        <input class="submit btn btn-primary"
-                            type="submit"
-                            value="Submit"
-                            data-bind="
-                                attr: {
-                                    value: submitText
-                                }
-                                "
-                            />
-                    </div>
+          <form class="form form-horizontal" data-bind="submit: submitForm">
+            <div data-bind="template: { name: childTemplate, foreach: $data.children }"/>
+            <div class="form-actions form-group">
+                <div data-bind="css: Formplayer.Const.LABEL_OFFSET + ' ' + Formplayer.Const.CONTROL_WIDTH">
+                    <input class="submit btn btn-primary"
+                        type="submit"
+                        value="Submit"
+                        data-bind="
+                            attr: {
+                                value: submitText
+                            }
+                            "
+                        />
                 </div>
-            </form>
+            </div>
+          </form>
         </div>
+      </div>
     </div>
 </script>
 

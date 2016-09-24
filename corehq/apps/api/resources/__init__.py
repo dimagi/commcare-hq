@@ -6,7 +6,7 @@ from tastypie import http
 from tastypie.resources import Resource
 from tastypie.exceptions import InvalidSortError, ImmediateHttpResponse
 
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.util import get_obj
 
@@ -95,6 +95,13 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
     """
 
     def dispatch(self, request_type, request, **kwargs):
+        if toggles.API_BLACKLIST.enabled_for_request(request):
+            msg = ("API access has been temporarily cut off due to too many "
+                   "requests.  To re-enable, please contact support.")
+            raise ImmediateHttpResponse(HttpResponse(
+                json.dumps({"error": msg}),
+                content_type="application/json",
+                status=401))
         if request.user.is_superuser or domain_has_privilege(request.domain, privileges.API_ACCESS):
             return super(HqBaseResource, self).dispatch(request_type, request, **kwargs)
         else:

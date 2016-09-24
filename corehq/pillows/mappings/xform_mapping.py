@@ -56,6 +56,7 @@ XFORM_MAPPING = {
             'type': 'object'
         },
         '__retrieved_case_ids': {'index': 'not_analyzed', 'type': 'string'},
+        'backend_id': {'type': 'string', 'index': 'not_analyzed'},
         'form': {
             'dynamic': False,
             'properties': {
