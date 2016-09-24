@@ -5,7 +5,7 @@ RETURNS SETOF form_processor_commcarecasesql AS $$
 BEGIN
     RETURN QUERY
     SELECT * FROM form_processor_commcarecasesql as case_table
-        WHERE (case_table.modified_on, case_table.id) > (reference_date, last_id)
+        WHERE (case_table.server_modified_on, case_table.id) > (reference_date, last_id)
         ORDER BY case_table.server_modified_on, case_table.id
         LIMIT query_limit;
 END;

@@ -15,7 +15,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrator.get_migration('get_all_cases_modified_since_2.sql'),
         migrator.get_migration('get_all_forms_received_since_2.sql'),
         migrator.get_migration('get_all_ledger_values_modified_since_2.sql'),
     ]
