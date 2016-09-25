@@ -17,11 +17,11 @@ def notify_form_changed(domain, couch_user, app_id, unique_form_id):
             'timestamp': json_format_datetime(datetime.datetime.utcnow()),
         }
         message = RedisMessage(json.dumps(message))
-        RedisPublisher(facility=get_facility_for_form(app_id, unique_form_id), broadcast=True).publish_message(message)
+        RedisPublisher(facility=get_facility_for_form(domain, app_id, unique_form_id), broadcast=True).publish_message(message)
 
 
-def get_facility_for_form(app_id, unique_form_id):
+def get_facility_for_form(domain, app_id, unique_form_id):
     """
     Gets the websocket facility (topic) for a particular form.
     """
-    return '{}:{}'.format(app_id, unique_form_id)
+    return '{}:{}:{}'.format(domain, app_id, unique_form_id)

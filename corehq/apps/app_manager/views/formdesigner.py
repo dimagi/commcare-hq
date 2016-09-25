@@ -138,7 +138,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'scheduler_data_nodes': scheduler_data_nodes,
         'include_fullstory': include_fullstory,
         'notifications_enabled': APP_BUILDER_NOTIFICATIONS.enabled(domain),
-        'notify_facility': get_facility_for_form(app_id, form.unique_id),
+        'notify_facility': get_facility_for_form(domain, app_id, form.unique_id),
     })
     return render(request, 'app_manager/form_designer.html', context)
 
