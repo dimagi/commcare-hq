@@ -127,6 +127,7 @@
 
                 $('#formdesigner').vellum(VELLUM_OPTIONS);
 
+                {% if notifications_enabled %}
                 function receiveMessage(msg) {
                     // show a notification when the form has been edited
                     var userId = '{{ request.couch_user.get_id }}';
@@ -145,6 +146,7 @@
                     receive_message: receiveMessage,
                     heartbeat_msg: {{ WS4REDIS_HEARTBEAT }},
                 });
+                {% endif %}
             });
         });
         analytics.workflow('Entered the Form Builder');

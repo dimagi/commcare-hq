@@ -35,6 +35,7 @@ from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.analytics.tasks import track_entered_form_builder_on_hubspot
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.tour import tours
+from corehq.toggles import APP_BUILDER_NOTIFICATIONS
 
 
 logger = logging.getLogger(__name__)
@@ -136,6 +137,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'app_callout_templates': next(app_callout_templates),
         'scheduler_data_nodes': scheduler_data_nodes,
         'include_fullstory': include_fullstory,
+        'notifications_enabled': APP_BUILDER_NOTIFICATIONS.enabled(domain),
         'notify_facility': get_facility_for_form(app_id, form.unique_id),
     })
     return render(request, 'app_manager/form_designer.html', context)
