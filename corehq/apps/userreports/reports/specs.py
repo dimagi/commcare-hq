@@ -44,19 +44,32 @@ SQLAGG_COLUMN_MAP = {
 }
 
 
-class ReportColumn(JsonObject):
+class BaseReportColumn(JsonObject):
     type = StringProperty(required=True)
     column_id = StringProperty(required=True)
     display = DefaultProperty()
     description = StringProperty()
-    transform = DictProperty()
-    calculate_total = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, obj):
         if 'display' not in obj and 'column_id' in obj:
             obj['display'] = obj['column_id']
-        return super(ReportColumn, cls).wrap(obj)
+        return super(BaseReportColumn, cls).wrap(obj)
+
+    def get_header(self, lang):
+        return localize(self.display, lang)
+
+    def get_column_ids(self):
+        """
+        Used as an abstraction layer for columns that can contain more than one data column
+        (for example, PercentageColumns).
+        """
+        return [self.column_id]
+
+
+class ReportColumn(BaseReportColumn):
+    transform = DictProperty()
+    calculate_total = BooleanProperty(default=False)
 
     def format_data(self, data):
         """
@@ -82,16 +95,6 @@ class ReportColumn(JsonObject):
         the query (e.g. an aggregate date splitting into year and month)
         """
         raise InvalidQueryColumn(_("You can't query on columns of type {}".format(self.type)))
-
-    def get_header(self, lang):
-        return localize(self.display, lang)
-
-    def get_column_ids(self):
-        """
-        Used as an abstraction layer for columns that can contain more than one data column
-        (for example, PercentageColumns).
-        """
-        return [self.column_id]
 
 
 class FieldColumn(ReportColumn):
