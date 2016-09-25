@@ -9,6 +9,7 @@ from django.views.decorators.http import require_GET
 from django.conf import settings
 from django.contrib import messages
 from corehq.apps.app_manager.views.apps import get_apps_base_context
+from corehq.apps.app_manager.views.notifications import get_facility_for_form
 
 from corehq.apps.app_manager.views.utils import back_to_main, bail
 from corehq import toggles, privileges, feature_previews
@@ -134,7 +135,8 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'plugins': vellum_plugins,
         'app_callout_templates': next(app_callout_templates),
         'scheduler_data_nodes': scheduler_data_nodes,
-        'include_fullstory': include_fullstory
+        'include_fullstory': include_fullstory,
+        'notify_facility': get_facility_for_form(app_id, form.unique_id),
     })
     return render(request, 'app_manager/form_designer.html', context)
 

@@ -16,6 +16,8 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'requirejs/require.js' %}"></script>
+    {# todo: use a proper require/define package for this #}
+    <script src="{% static 'js/ws4redis.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -124,9 +126,29 @@
                 $('#hq-footer').hide();
 
                 $('#formdesigner').vellum(VELLUM_OPTIONS);
+
+                function receiveMessage(msg) {
+                    // show a notification when the form has been edited
+                    var userId = '{{ request.couch_user.get_id }}';
+                    var msgObj = JSON.parse(msg);
+                    if (msgObj.user_id != userId) {
+                        // todo: only show notifcation if timestamp is > than page load time to avoid notification
+                        // on initial page load
+                        var dismissButton = '<button type="button" class="close" data-dismiss="alert">&times;</button>';
+                        $('#notify-bar').removeClass('hidden').html(dismissButton + msgObj.text + '<br> - ' + msgObj.timestamp);
+                    }
+                };
+
+                // initialize redis
+                var ws4redis = WS4Redis({
+                    uri: '{{ WEBSOCKET_URI }}{{ notify_facility }}?subscribe-broadcast',
+                    receive_message: receiveMessage,
+                    heartbeat_msg: {{ WS4REDIS_HEARTBEAT }},
+                });
             });
         });
         analytics.workflow('Entered the Form Builder');
+
 
     </script>
 {% endblock %}
@@ -134,6 +156,7 @@
 {% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
 
 {% block form-view %}
+    <div id="notify-bar" class="hidden alert alert-info"></div>
     <div id="formdesigner" class="clearfix"></div>
 {% endblock %}
 
