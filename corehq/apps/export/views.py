@@ -11,6 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
 from corehq.apps.export.export import get_export_download, get_export_size
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter
 from corehq.apps.reports.views import should_update_export, \
     build_download_saved_export_response, require_form_export_permission
@@ -462,6 +463,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
     @use_daterangepicker
     @use_select2
     @use_angular_js
+    @location_safe
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         if not (self.has_edit_permissions
@@ -723,6 +725,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
 
     @allow_remote_invocation
     def prepare_custom_export(self, in_data):
+        import pdb; pdb.set_trace()
         """Uses the current exports download framework (with some nasty filters)
         to return the current download id to POLL for the download status.
         :param in_data: dict passed by the  angular js controller.
