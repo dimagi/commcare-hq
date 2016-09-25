@@ -10,6 +10,7 @@ from braces.views import JSONResponseMixin
 from corehq import toggles
 from corehq.apps.commtrack.models import SQLLocation
 from corehq.apps.domain.decorators import LoginAndDomainMixin
+from corehq.apps.locations.permissions import location_safe
 from corehq.elastic import ESError
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
@@ -152,9 +153,15 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
 
 
 class LocationRestrictedEmwfOptionsView(EmwfOptionsView):
+    @location_safe
+    def dispatch(self, *args, **kwargs):
+        return super(LocationRestrictedEmwfOptionsView, self).dispatch(*args, **kwargs)
+
     def get_locations_query(self, query):
-        # return SQLLocation.active_objects.filter_path_by_user_input(self.domain, query)
-        return SQLLocation.objects.accessible_to_user(self.request.domain, self.request.couch_user)
+        return SQLLocation.active_objects.filter_path_by_user_input(self.domain, query).\
+            accessible_to_user(self.request.domain, self.request.couch_user)
+        # return SQLLocation.active_objects.filter_path_by_user_input(self.domain, query) & \
+        #     SQLLocation.objects.accessible_to_user(self.request.domain, self.request.couch_user)
 
 
 def paginate_options(data_sources, query, start, size):
