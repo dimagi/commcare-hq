@@ -379,10 +379,10 @@ class FilterFormCouchExportDownloadForm(GenericFilterFormExportDownloadForm):
         return form_filter
 
     def _get_user_or_group_filter(self):
-        group = self._get_group()
-        if group:
+        # group = self._get_group()
+        # if group:
             # filter by groups
-            return SerializableFunction(group_filter, group=group)
+            # return SerializableFunction(group_filter, group=group)
         # filter by users
         return SerializableFunction(users_filter,
                                     users=self._get_filtered_users())
@@ -410,7 +410,7 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
     def get_form_filter(self):
         return filter(None, [
             self._get_datespan_filter(),
-            self._get_group_filter(),
+            # self._get_group_filter(),
             self._get_user_filter()
         ])
 
@@ -426,9 +426,9 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
             return GroupFormSubmittedByFilter(group)
 
     def _get_user_filter(self):
-        group = self.cleaned_data['group']
-        if not group:
-            return UserTypeFilter(self._get_es_user_types())
+        # group = self.cleaned_data['group']
+        # if not group:
+        return UserTypeFilter(self._get_es_user_types())
 
     def get_multimedia_task_kwargs(self, export, download_id):
         kwargs = super(FilterFormESExportDownloadForm, self).get_multimedia_task_kwargs(export, download_id)
