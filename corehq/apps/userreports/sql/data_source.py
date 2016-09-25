@@ -3,6 +3,7 @@ from collections import OrderedDict
 
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext
+from corehq.apps.userreports.reports.specs import ReportColumn, ExpressionColumn
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -68,6 +69,14 @@ class ConfigurableReportSqlDataSource(SqlData):
         return self._column_configs.values()
 
     @property
+    def db_column_configs(self):
+        return [col for col in self._column_configs.values() if isinstance(col, ReportColumn)]
+
+    @property
+    def computed_column_configs(self):
+        return [col for col in self._column_configs.values() if isinstance(col, ExpressionColumn)]
+
+    @property
     def table_name(self):
         return get_table_name(self.domain, self.config.table_id)
 
@@ -129,7 +138,7 @@ class ConfigurableReportSqlDataSource(SqlData):
 
     @property
     def sql_column_configs(self):
-        return [col.get_sql_column_config(self.config, self.lang) for col in self.column_configs]
+        return [col.get_sql_column_config(self.config, self.lang) for col in self.db_column_configs]
 
     @property
     def column_warnings(self):
@@ -140,8 +149,13 @@ class ConfigurableReportSqlDataSource(SqlData):
     def get_data(self, start=None, limit=None):
         ret = super(ConfigurableReportSqlDataSource, self).get_data(start=start, limit=limit)
 
-        for report_column in self.column_configs:
+        for report_column in self.db_column_configs:
             report_column.format_data(ret)
+
+        for computed_column in self.computed_column_configs:
+            for row in ret:
+                row[computed_column.column_id] = computed_column.wrapped_expression(row)
+
         return ret
 
     @property

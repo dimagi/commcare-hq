@@ -4,6 +4,7 @@ from datetime import date
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import InvalidQueryColumn
+from corehq.apps.userreports.expressions import ExpressionFactory
 
 from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
 from corehq.apps.userreports.sql.columns import DEFAULT_MAXIMUM_EXPANSION
@@ -29,6 +30,7 @@ from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.sql import get_expanded_column_config, SqlColumnConfig
 from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.util import localize
+from dimagi.utils.decorators.memoized import memoized
 
 
 SQLAGG_COLUMN_MAP = {
@@ -321,6 +323,15 @@ class PercentageColumn(ReportColumn):
 def _add_column_id_if_missing(obj):
     if obj.get('column_id') is None:
         obj['column_id'] = obj.get('alias') or obj['field']
+
+
+class ExpressionColumn(BaseReportColumn):
+    expression = DefaultProperty(required=True)
+
+    @property
+    @memoized
+    def wrapped_expression(self):
+        return ExpressionFactory.from_spec(self.expression)
 
 
 class ChartSpec(JsonObject):
