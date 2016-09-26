@@ -52,7 +52,9 @@
       <div class="row">
         <div class="col-sm-12">
           <form class="form form-horizontal" data-bind="submit: submitForm">
-            <div data-bind="template: { name: childTemplate, foreach: $data.children }"/>
+            <div class="question-container" data-bind="visible: !atLastIndex()">
+              <div data-bind="template: { name: childTemplate, foreach: $data.children }"/>
+            </div>
             <div class="form-actions form-group" data-bind="visible: showSubmitButton">
                 <div data-bind="css: Formplayer.Const.LABEL_OFFSET + ' ' + Formplayer.Const.CONTROL_WIDTH">
                     <input class="submit btn btn-primary"

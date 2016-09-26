@@ -125,8 +125,9 @@ WebFormSession.prototype.load = function($form, initLang) {
  * @param {Object} requestParams - request parameters to be sent
  * @param {function} callback - function to be called on success
  * @param {boolean} blocking - whether the request should be blocking
+ * @param {boolean} displaySimpleErrorCallback (optional) - callback that returns true if, upon a server error, the default handling is used, and false if the error is handled in a different way. (true is default)
  */
-WebFormSession.prototype.serverRequest = function (requestParams, callback, blocking) {
+WebFormSession.prototype.serverRequest = function (requestParams, callback, blocking, displaySimpleErrorCallback) {
     var self = this;
     var url = self.urls.xform;
     if (requestParams.action === Formplayer.Const.SUBMIT && self.NUM_PENDING_REQUESTS) {
@@ -159,7 +160,7 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
             crossDomain: {crossDomain: true},
             xhrFields: {withCredentials: true},
             success: function(resp) {
-                self.handleSuccess(resp, callback);
+                self.handleSuccess(resp, callback, displaySimpleErrorCallback);
             },
             error: function(resp, textStatus) {
                 self.handleFailure(resp, textStatus);
@@ -172,7 +173,7 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
             data: JSON.stringify(requestParams),
             dataType: "text",  // we don't use JSON because of a weird bug: http://manage.dimagi.com/default.asp?190983
             success: function(resp) {
-                self.handleSuccess(JSON.parse(resp), callback);
+                self.handleSuccess(JSON.parse(resp), callback, displaySimpleErrorCallback);
             },
             error: function(resp, textStatus) {
                 self.handleFailure(JSON.parse(resp), textStatus);
@@ -210,11 +211,15 @@ WebFormSession.prototype.displayInstanceXml = function(resp) {
  * Handles a successful request to touchforms.
  * @param {Object} response - touchforms response object
  * @param {function} callback - callback to be called if no errors occured
+ * @param {function} displaySimpleErrorCallback (optional) - callback to be called if a simple error occurred. return true if a simple error is to be displayed, return false to handle error otherwise
  */
-WebFormSession.prototype.handleSuccess = function(resp, callback) {
+WebFormSession.prototype.handleSuccess = function(resp, callback, displaySimpleErrorCallback) {
     var self = this;
+    displaySimpleErrorCallback = displaySimpleErrorCallback || function (resp) { return true; };
     if (resp.status === 'error' || resp.error) {
-        self.onerror(resp);
+        if (displaySimpleErrorCallback(resp)) {
+            self.onerror(resp);
+        }
     } else {
         // ignore responses older than the most-recently handled
         if (resp.seq_id && resp.seq_id < self.lastRequestHandled) {
@@ -359,7 +364,18 @@ WebFormSession.prototype.nextQuestion = function(opts) {
             opts.callback(parseInt(ix));
             resp.title = opts.title;
             $.publish('session.reconcile', [resp, {}]);
-        });
+        },
+        null,
+        function (resp) {
+            // we currently don't have a way of determining when a form has reached the last index.
+            // if the nextQuestion returns a simple server error, then we assume it's reached the last index.
+            if (resp.status === "error" && resp.exception === null) {
+                opts.showSubmitButtonCallback();
+                return false;
+            }
+            return true;
+        }
+    );
 };
 
 WebFormSession.prototype.prevQuestion = function(opts) {

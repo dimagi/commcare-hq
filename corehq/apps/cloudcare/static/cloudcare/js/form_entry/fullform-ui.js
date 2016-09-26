@@ -184,10 +184,16 @@ function Form(json) {
     self.submitText = ko.observable('Submit');
     self.debugQIndex = ko.observable(0);
     self.currentIndex = ko.observable(0);
+    self.atLastIndex = ko.observable(false);
 
     var _updateIndexCallback = function (ix) {
         self.currentIndex(ix);
     };
+
+    var _updateSubmitStatus = function () {
+        self.atLastIndex(true);
+    };
+
     self.showInFormNavigation = ko.observable(self.displayOptions.oneQuestionPerScreen() === true);
 
     self.isCurrentRequiredSatisfied = ko.computed(function () {
@@ -196,7 +202,7 @@ function Form(json) {
     });
 
     self.enableNextButton = ko.computed(function () {
-        return self.showInFormNavigation() && self.isCurrentRequiredSatisfied() && self.children()[0].isValid();
+        return self.showInFormNavigation() && self.isCurrentRequiredSatisfied() && self.children()[0].isValid() && !self.atLastIndex();
     });
 
     self.enablePreviousButton = ko.computed(function () {
@@ -204,14 +210,18 @@ function Form(json) {
     });
 
     self.showSubmitButton = ko.computed(function () {
-        return !self.displayOptions.oneQuestionPerScreen();
+        return !self.displayOptions.oneQuestionPerScreen() || self.atLastIndex();
     });
 
     self.submitForm = function(form) {
         $.publish('formplayer.' + Formplayer.Const.SUBMIT, self);
     };
     self.nextQuestion = function () {
-        $.publish('formplayer.' + Formplayer.Const.NEXT_QUESTION, { callback: _updateIndexCallback, title: self.title() });
+        $.publish('formplayer.' + Formplayer.Const.NEXT_QUESTION, {
+            callback: _updateIndexCallback,
+            title: self.title(),
+            showSubmitButtonCallback: _updateSubmitStatus
+        });
     };
 
     self.prevQuestion = function () {
