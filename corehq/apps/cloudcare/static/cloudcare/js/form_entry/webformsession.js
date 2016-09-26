@@ -339,7 +339,8 @@ WebFormSession.prototype.answerQuestion = function(q) {
     this.serverRequest({
             'action': Formplayer.Const.ANSWER,
             'ix': ix,
-            'answer': answer
+            'answer': answer,
+            'oneQuestionPerScreen': self.displayOptions.oneQuestionPerScreen(),
         },
         function(resp) {
             $.publish('session.reconcile', [resp, q]);
