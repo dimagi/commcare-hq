@@ -80,6 +80,17 @@ class UserTypesField(forms.MultipleChoiceField):
         return es_user_types
 
 
+class DateSpanField(forms.CharField):
+    widget = DateRangePickerWidget
+
+    def clean(self, value):
+        date_range = super(DateSpanField, self).clean(value)
+        dates = date_range.split(DateRangePickerWidget.separator)
+        startdate = dateutil.parser.parse(dates[0])
+        enddate = dateutil.parser.parse(dates[1])
+        return DateSpan(startdate, enddate)
+
+
 class CreateExportTagForm(forms.Form):
     # common fields
     model_type = forms.ChoiceField(
@@ -290,10 +301,9 @@ class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
     """
     _export_type = 'form'
 
-    date_range = forms.CharField(
+    date_range = DateSpanField(
         label=ugettext_lazy("Date Range"),
         required=True,
-        widget=DateRangePickerWidget(),
     )
 
     def __init__(self, domain_object, timezone, *args, **kwargs):
@@ -323,13 +333,6 @@ class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
             ),
         ]
 
-    def _get_datespan(self):
-        date_range = self.cleaned_data['date_range']
-        dates = date_range.split(DateRangePickerWidget.separator)
-        startdate = dateutil.parser.parse(dates[0])
-        enddate = dateutil.parser.parse(dates[1])
-        return DateSpan(startdate, enddate)
-
     def get_form_filter(self):
         raise NotImplementedError
 
@@ -337,7 +340,7 @@ class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
         """These are the kwargs for the Multimedia Download task,
         specific only to forms.
         """
-        datespan = self._get_datespan()
+        datespan = self.cleaned_data['date_range']
         return {
             'domain': self.domain_object.name,
             'startdate': datespan.startdate.isoformat(),
@@ -385,7 +388,7 @@ class FilterFormCouchExportDownloadForm(GenericFilterFormExportDownloadForm):
                                     users=self._get_filtered_users())
 
     def _get_datespan_filter(self):
-        datespan = self._get_datespan()
+        datespan = self.cleaned_data['date_range']
         if datespan.is_valid():
             datespan.set_timezone(self.timezone)
             return SerializableFunction(datespan_export_filter,
@@ -412,7 +415,7 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
         ])
 
     def _get_datespan_filter(self):
-        datespan = self._get_datespan()
+        datespan = self.cleaned_data['date_range']
         if datespan.is_valid():
             datespan.set_timezone(self.timezone)
             return ReceivedOnRangeFilter(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
@@ -461,10 +464,9 @@ class FilterCaseCouchExportDownloadForm(GenericFilterCaseExportDownloadForm):
 class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
     _export_type = 'case'
 
-    date_range = forms.CharField(
+    date_range = DateSpanField(
         label=ugettext_lazy("Date Range"),
         required=True,
-        widget=DateRangePickerWidget(),
         help_text="Export cases modified in this date range",
     )
 
@@ -485,15 +487,8 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
         return reverse(EditNewCustomCaseExportView.urlname,
                        args=(self.domain_object.name, export.get_id))
 
-    def _get_datespan(self):
-        date_range = self.cleaned_data['date_range']
-        dates = date_range.split(DateRangePickerWidget.separator)
-        startdate = dateutil.parser.parse(dates[0])
-        enddate = dateutil.parser.parse(dates[1])
-        return DateSpan(startdate, enddate)
-
     def _get_datespan_filter(self):
-        datespan = self._get_datespan()
+        datespan = self.cleaned_data['date_range']
         if datespan.is_valid():
             datespan.set_timezone(self.timezone)
             return ModifiedOnRangeFilter(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
