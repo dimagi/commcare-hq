@@ -290,7 +290,7 @@ $.datetimepicker.setDateFormatter({
     },
     formatDate: function (date, format) {
         return moment(date).format(format);
-    }
+    },
 });
 /**
  * Base class for DateEntry, TimeEntry, and DateTimeEntry. Shares the same
@@ -326,14 +326,14 @@ function DateTimeEntryBase(question, options) {
                 }
                 self.answer(moment(newDate).format(self.serverFormat));
             }
-        })
+        });
     };
 }
 DateTimeEntryBase.prototype = Object.create(EntrySingleAnswer.prototype);
 DateTimeEntryBase.prototype.constructor = EntrySingleAnswer;
 DateTimeEntryBase.prototype.convertServerToClientFormat = function(date) {
     return moment(date, this.serverFormat).format(this.clientFormat);
-}
+};
 
 // Format for time or date or datetime for the browser. Defaults to ISO.
 // Formatting string should be in datetimepicker format: http://xdsoft.net/jqplugins/datetimepicker/
