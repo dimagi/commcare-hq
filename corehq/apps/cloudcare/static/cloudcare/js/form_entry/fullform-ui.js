@@ -189,6 +189,24 @@ function Form(json) {
         self.currentIndex(parseInt(resp.tree[0].ix));
         console.log("current index is "+self.currentIndex());
     };
+    self.showInFormNavigation = ko.observable(self.displayOptions.oneQuestionPerScreen() === true);
+
+    self.isCurrentRequiredSatisfied = ko.computed(function () {
+        if (!self.displayOptions.oneQuestionPerScreen()) return true;
+        return self.children()[0].answer() === null && !self.children()[0].required() || self.children()[0].answer() !== null;
+    });
+
+    self.enableNextButton = ko.computed(function () {
+        return self.showInFormNavigation() && self.isCurrentRequiredSatisfied() && self.children()[0].isValid();
+    });
+
+    self.enablePreviousButton = ko.computed(function () {
+        return self.currentIndex() > 0;
+    });
+
+    self.showSubmitButton = ko.computed(function () {
+        return !self.displayOptions.oneQuestionPerScreen();
+    });
 
     self.submitForm = function(form) {
         $.publish('formplayer.' + Formplayer.Const.SUBMIT, self);

@@ -22,25 +22,38 @@
       <div class="page-header">
         <h1 class="title" data-bind="text: title"></h1>
       </div>
-      <div class="form-nav">
-        <button type="button" data-bind="click: prevQuestion">
+      <div class="formnav" data-bind="visible: showInFormNavigation">
+
+        <button type="button"
+                class="btn btn-primary btn-formnav"
+                data-bind="click: prevQuestion, visible: enablePreviousButton">
           <i class="fa fa-chevron-left"></i>
         </button>
-        <div class="input-group">
-          <input type="text" class="form-control" data-bind="value: debugQIndex" />
-          <span class="input-group-btn">
-            <button type="button" class="btn btn-default" data-bind="click: advanceToIndex">GO</button>
-          </span>
-        </div>
-        <button type="button" data-bind="click: nextQuestion">
+        <button type="button"
+                disabled="disabled"
+                class="btn btn-primary btn-formnav disabled"
+                data-bind="visible: !enablePreviousButton()">
+          <i class="fa fa-chevron-left"></i>
+        </button>
+
+        <button type="button"
+                disabled="disabled"
+                class="btn btn-primary btn-formnav disabled"
+                data-bind="visible: !enableNextButton()">
           <i class="fa fa-chevron-right"></i>
         </button>
+        <button type="button"
+                class="btn btn-primary btn-formnav "
+                data-bind="click: nextQuestion, visible: enableNextButton()">
+          <i class="fa fa-chevron-right"></i>
+        </button>
+
       </div>
       <div class="row">
         <div class="col-sm-12">
           <form class="form form-horizontal" data-bind="submit: submitForm">
             <div data-bind="template: { name: childTemplate, foreach: $data.children }"/>
-            <div class="form-actions form-group">
+            <div class="form-actions form-group" data-bind="visible: showSubmitButton">
                 <div data-bind="css: Formplayer.Const.LABEL_OFFSET + ' ' + Formplayer.Const.CONTROL_WIDTH">
                     <input class="submit btn btn-primary"
                         type="submit"
