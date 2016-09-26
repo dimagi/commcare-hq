@@ -385,6 +385,7 @@ WebFormSession.prototype.prevQuestion = function(opts) {
         function(resp) {
             var ix = resp.tree[0].ix;
             opts.callback(parseInt(ix));
+            resp.title = opts.title;
             $.publish('session.reconcile', [resp, {}]);
         });
 };
