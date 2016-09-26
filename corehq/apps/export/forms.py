@@ -9,8 +9,9 @@ from corehq.apps.export.filters import (
     ReceivedOnRangeFilter,
     GroupFormSubmittedByFilter,
     OR, OwnerFilter, LastModifiedByFilter, UserTypeFilter,
-    OwnerTypeFilter, ModifiedOnRangeFilter
+    OwnerTypeFilter, ModifiedOnRangeFilter, FormSubmittedByFilter
 )
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import (
@@ -379,10 +380,10 @@ class FilterFormCouchExportDownloadForm(GenericFilterFormExportDownloadForm):
         return form_filter
 
     def _get_user_or_group_filter(self):
-        # group = self._get_group()
-        # if group:
+        group = self._get_group()
+        if group:
             # filter by groups
-            # return SerializableFunction(group_filter, group=group)
+            return SerializableFunction(group_filter, group=group)
         # filter by users
         return SerializableFunction(users_filter,
                                     users=self._get_filtered_users())
@@ -407,11 +408,12 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
         return reverse(EditNewCustomFormExportView.urlname,
                        args=(self.domain_object.name, export._id))
 
-    def get_form_filter(self):
+    def get_form_filter(self, mobile_user_and_group_slugs):
         return filter(None, [
             self._get_datespan_filter(),
-            # self._get_group_filter(),
-            self._get_user_filter()
+            self._get_group_filter(mobile_user_and_group_slugs),
+            self._get_user_filter(mobile_user_and_group_slugs),
+            self._get_user_ids_filter(mobile_user_and_group_slugs)
         ])
 
     def _get_datespan_filter(self):
@@ -420,15 +422,25 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
             datespan.set_timezone(self.timezone)
             return ReceivedOnRangeFilter(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
 
-    def _get_group_filter(self):
-        group = self.cleaned_data['group']
+    def _get_group_filter(self, mobile_user_and_group_slugs):
+        # change here to get group from emw
+        # group = self.cleaned_data['group']
+        group = ExpandedMobileWorkerFilter.selected_group_ids(mobile_user_and_group_slugs)
         if group:
             return GroupFormSubmittedByFilter(group)
 
-    def _get_user_filter(self):
+    def _get_user_filter(self, mobile_user_and_group_slugs):
         # group = self.cleaned_data['group']
-        # if not group:
-        return UserTypeFilter(self._get_es_user_types())
+        group = ExpandedMobileWorkerFilter.selected_group_ids(mobile_user_and_group_slugs)
+        if not group:
+            users = ExpandedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
+            # return UserTypeFilter(self._get_es_user_types())
+            return UserTypeFilter(users)
+
+    def _get_user_ids_filter(self, mobile_user_and_group_slugs):
+        user_ids = ExpandedMobileWorkerFilter.selected_user_ids(mobile_user_and_group_slugs)
+        if user_ids:
+            return FormSubmittedByFilter(user_ids)
 
     def get_multimedia_task_kwargs(self, export, download_id):
         kwargs = super(FilterFormESExportDownloadForm, self).get_multimedia_task_kwargs(export, download_id)
