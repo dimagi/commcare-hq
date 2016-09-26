@@ -121,6 +121,7 @@
         };
 
         $scope.prepareExport = function () {
+            $scope.formData['emw'] = hqImport('reports/javascripts/reports.util.js').urlSerialize($('form[name="exportFiltersForm"]'));
             $scope.prepareExportError = null;
             $scope.preparingExport = true;
             analytics.workflow("Clicked Prepare Export");

@@ -18,6 +18,7 @@ def _assert_user_types(user_types):
             user_types = [user_types]
 
         for type_ in user_types:
+            # may be use HQUserType
             assert type_ in USER_TYPES, "Expected user type to be in {}, got {}".format(USER_TYPES, type_)
 
 
@@ -192,7 +193,7 @@ class FormSubmittedByFilter(ExportFilter):
 class UserTypeFilter(ExportFilter):
 
     def __init__(self, user_types):
-        _assert_user_types(user_types)
+        # _assert_user_types(user_types)
         self.user_types = user_types
 
     def to_es_filter(self):
