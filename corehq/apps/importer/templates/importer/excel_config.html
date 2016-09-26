@@ -13,7 +13,7 @@
     <script>
         $(function() {
             $('#key_value_columns').change(function() {
-                if ($(this).attr('checked') === 'checked') {
+                if ($(this).prop('checked')) {
                     $('#key_val_selection_fields').show();
                 } else {
                     $('#key_val_selection_fields').hide();

@@ -60,7 +60,7 @@
 
                 cloned.find('input').val('');
                 cloned.find('select').val('');
-                cloned.find('input[type=checkbox]').attr('checked', false)
+                cloned.find('input[type=checkbox]').prop('checked', false)
                 cloned.find('.remove_row').removeClass('hide');
 
                 cloned.find('.case_field').closest('td').removeClass('hide');
