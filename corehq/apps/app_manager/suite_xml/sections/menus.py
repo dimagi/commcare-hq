@@ -127,8 +127,11 @@ class MenuContributor(SuiteContributorByModule):
 
                     menus.append(menu)
 
-        if self.app.use_grid_menus:
-            self._give_root_menus_grid_style(menus)
+        if self.app.grid_display_for_all_modules() or \
+                self.app.grid_display_for_some_modules() and module.grid_display_style():
+            self._give_non_root_menus_grid_style(menus)
+        if self.app.grid_menu_toggle_enabled() and self.app.use_grid_menus:
+            self._give_root_menu_grid_style(menus)
 
         return menus
 
@@ -143,7 +146,18 @@ class MenuContributor(SuiteContributorByModule):
         return relevant
 
     @staticmethod
-    def _give_root_menus_grid_style(menus):
+    def _give_non_root_menus_grid_style(menus):
+        for menu in menus:
+            if not menu.id == id_strings.ROOT:
+                menu.style = "grid"
+
+    @staticmethod
+    def _give_root_menu_grid_style(menus):
         for menu in menus:
             if menu.id == id_strings.ROOT:
                 menu.style = "grid"
+
+    @staticmethod
+    def _give_all_menus_grid_style(menus):
+        for menu in menus:
+            menu.style = "grid"
