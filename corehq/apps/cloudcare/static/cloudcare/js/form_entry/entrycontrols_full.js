@@ -314,7 +314,7 @@ function DateTimeEntryBase(question, options) {
                 }
                 self.answer(moment(newDate).format(self.serverFormat));
             }
-        }).val(moment(self.answer()).format(self.clientFormat));
+        }).val(self.answer() ? moment(self.answer()).format(self.clientFormat) : self.answer());
     };
 }
 DateTimeEntryBase.prototype = Object.create(EntrySingleAnswer.prototype);
