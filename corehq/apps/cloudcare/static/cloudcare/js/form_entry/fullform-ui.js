@@ -185,9 +185,8 @@ function Form(json) {
     self.debugQIndex = ko.observable(0);
     self.currentIndex = ko.observable(0);
 
-    var _updateIndexCallback = function (resp) {
-        self.currentIndex(parseInt(resp.tree[0].ix));
-        console.log("current index is "+self.currentIndex());
+    var _updateIndexCallback = function (ix) {
+        self.currentIndex(ix);
     };
     self.showInFormNavigation = ko.observable(self.displayOptions.oneQuestionPerScreen() === true);
 
@@ -212,11 +211,11 @@ function Form(json) {
         $.publish('formplayer.' + Formplayer.Const.SUBMIT, self);
     };
     self.nextQuestion = function () {
-        $.publish('formplayer.' + Formplayer.Const.NEXT_QUESTION, _updateIndexCallback);
+        $.publish('formplayer.' + Formplayer.Const.NEXT_QUESTION, { callback: _updateIndexCallback, title: self.title() });
     };
 
     self.prevQuestion = function () {
-        $.publish('formplayer.' + Formplayer.Const.PREV_QUESTION, _updateIndexCallback);
+        $.publish('formplayer.' + Formplayer.Const.PREV_QUESTION, { callback: _updateIndexCallback, title: self.title() });
     };
 
     self.advanceToIndex = function () {
