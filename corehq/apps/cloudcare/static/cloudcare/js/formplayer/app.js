@@ -208,12 +208,24 @@ FormplayerFrontend.on("start", function (options) {
             if (options.phoneMode) {
                 appId = options.apps[0]['_id'];
 
+                FormplayerFrontend.trigger('setAppDisplayProperties', options.apps[0]);
                 FormplayerFrontend.trigger("app:singleApp", appId);
             } else {
                 FormplayerFrontend.trigger("apps:list", options.apps);
             }
         }
     }
+});
+
+FormplayerFrontend.on('setAppDisplayProperties', function(app) {
+    FormplayerFrontend.DisplayProperties = app.profile.properties;
+    if (Object.freeze) {
+        Object.freeze(FormplayerFrontend.DisplayProperties);
+    }
+});
+
+FormplayerFrontend.reqres.setHandler('getAppDisplayProperties', function() {
+    return FormplayerFrontend.DisplayProperties || {};
 });
 
 FormplayerFrontend.on("sync", function () {
