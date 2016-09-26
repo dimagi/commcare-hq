@@ -14,9 +14,10 @@
   margin-top: 12px;
   height: 300px;
   height: 335px;
-  padding: 5px;
+  padding: 8px;
   padding-bottom: 0;
 }
+
 
 .debugger.debugger-minimized {
   height: 30px;
@@ -34,15 +35,31 @@
   font-family: monospace;
 }
 
+.debugger-navbar {
+  border-radius: 0px;
+  border: none;
+  background-color: @cc-bg;
+}
+
 .debugger-tab-title {
-  text-transform: uppercase;
-  font-size: 11px;
   line-height: 18px;
   color: white;
-  background-color: #002c5f;
+  background-color: @cc-brand-low;
   border-bottom: #ddd solid 4px;
   padding: 6px;
   cursor: pointer;
+  .debugger-title {
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+  a {
+    color: #9d9d9d;
+    pointer: cursor;
+  }
+  a:hover {
+    color: white;
+    text-decoration: none;
+  }
 
   -webkit-transition: background-color 0.5s;
   transition: background-color 0.5s;
