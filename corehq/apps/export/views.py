@@ -12,7 +12,7 @@ from django.views.decorators.http import require_GET
 
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter
+from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter, ExpandedMobileWorkerFilter
 from corehq.apps.reports.views import should_update_export, \
     build_download_saved_export_response, require_form_export_permission
 from corehq.form_processor.utils import use_new_exports
@@ -714,8 +714,12 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
         """Returns a the export filters and a list of JSON export specs
         """
         filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
+        import re
+        regex = re.compile('(emw=){1}([^&]*)(&){0,1}')
+        matches = regex.findall(filter_form_data['emw'])
+        mobile_user_and_group_slugs = [n[1] for n in matches]
         try:
-            export_filter = self.get_filters(filter_form_data)
+            export_filter = self.get_filters(filter_form_data, mobile_user_and_group_slugs)
         except ExportFormValidationException:
             raise ExportAsyncException(
                 _("Form did not validate.")
@@ -725,7 +729,6 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
 
     @allow_remote_invocation
     def prepare_custom_export(self, in_data):
-        import pdb; pdb.set_trace()
         """Uses the current exports download framework (with some nasty filters)
         to return the current download id to POLL for the download status.
         :param in_data: dict passed by the  angular js controller.
@@ -1719,9 +1722,9 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
     def _get_export(self, domain, export_id):
         return FormExportInstance.get(export_id)
 
-    def get_filters(self, filter_form_data):
+    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
         filter_form = self._get_filter_form(filter_form_data)
-        form_filters = filter_form.get_form_filter()
+        form_filters = filter_form.get_form_filter(mobile_user_and_group_slugs)
         return form_filters
 
     @property
