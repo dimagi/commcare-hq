@@ -6,6 +6,8 @@ from django.conf import settings
 import math
 from django.db import models
 from django.db.models.aggregates import Count
+from jsonfield.fields import JSONField
+
 from pillowtop.feed.couch import change_from_couch_row, force_to_change
 
 ERROR_MESSAGE_LENGTH = 512
@@ -36,15 +38,15 @@ class PillowError(models.Model):
     current_attempt = models.IntegerField(default=0, db_index=True)
     error_type = models.CharField(max_length=255, null=True)
     error_traceback = models.TextField(null=True)
-    change = models.TextField(null=True)
-    domains = models.CharField(max_length=255, db_index=True, null=True)
-    doc_type = models.CharField(max_length=255, db_index=True, null=True)
-    doc_date = models.DateTimeField(null=True)
+    change = JSONField(null=True)
+    change_metadata = JSONField(null=True)
     queued = models.BooleanField(default=False)
 
     @property
     def change_object(self):
-        return change_from_couch_row(json.loads(self.change) if self.change else {'id': self.doc_id})
+        change = change_from_couch_row(self.change if self.change else {'id': self.doc_id})
+        change.metadata = self.change_metadata
+        return change
 
     class Meta:
         app_label = 'pillow_retry'
@@ -75,7 +77,7 @@ class PillowError(models.Model):
         )
 
     @classmethod
-    def get_or_create(cls, change, pillow, change_meta=None):
+    def get_or_create(cls, change, pillow):
         change = force_to_change(change)
         doc_id = change.id
         try:
@@ -88,20 +90,11 @@ class PillowError(models.Model):
                 date_created=now,
                 date_last_attempt=now,
                 date_next_attempt=now,
-                change=json.dumps(change.to_dict())
+                change=change.to_dict()
             )
 
-            if change_meta:
-                date_string = change_meta.get('date')
-                try:
-                    date = parse(date_string) if date_string is not None else None
-                except ValueError:
-                    # date is not mission critical and can be messy data so just blank it out
-                    date = None
-                domains = ','.join(change_meta.get('domains'))
-                error.domains = (domains[:252] + '...') if len(domains) > 255 else domains
-                error.doc_type = change_meta.get('doc_type')
-                error.doc_date = date
+            if change.metadata:
+                error.change_metadata = change.metadata
 
         return error
 
