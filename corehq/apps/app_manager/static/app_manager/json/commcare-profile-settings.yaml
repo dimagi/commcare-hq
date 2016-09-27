@@ -346,14 +346,3 @@
   default: "none"
   since: "2.24"
   force: true
-
-- name: "Grid Menus"
-  description: "If enabled module and form menus will display in a grid view instead of a list."
-  id: "cc-grid-menus"
-  values: ["yes", "no"]
-  value_names: ["Yes", "No"]
-  default: "no"
-  disabled_default: "no"
-  values_txt: "Whether to enable or disable Grid View for menus."
-  since: "2.27"
-  force: true

@@ -1,4 +1,4 @@
-/*global Marionette, Backbone, WebFormSession, Util, CodeMirror */
+/*global Marionette, Backbone, WebFormSession, Util */
 
 /**
  * The primary Marionette application managing menu navigation and launching form entry
@@ -145,9 +145,7 @@ FormplayerFrontend.on('startForm', function (data) {
         }
     };
     data.formplayerEnabled = true;
-    data.answerCallback = function(sessionId) {
-        FormplayerFrontend.trigger('debugger.formXML', sessionId);
-    };
+    data.debuggerEnabled = user.debuggerEnabled;
     data.resourceMap = function(resource_path) {
         var urlObject = Util.currentUrlToObject();
         var appId = urlObject.appId;
@@ -155,41 +153,6 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     var sess = new WebFormSession(data);
     sess.renderFormXml(data, $('#webforms'));
-});
-
-FormplayerFrontend.on('debugger.formXML', function(sessionId) {
-    var user = FormplayerFrontend.request('currentUser');
-    var success = function(data) {
-        var $instanceTab = $('#debugger-xml-instance-tab'),
-            codeMirror;
-
-        codeMirror = CodeMirror(function(el) {
-            $('#xml-viewer-pretty').html(el);
-        }, {
-            value: data.output,
-            mode: 'xml',
-            viewportMargin: Infinity,
-            readOnly: true,
-            lineNumbers: true,
-        });
-
-        $instanceTab.off();
-        $instanceTab.on('shown.bs.tab', function() {
-            codeMirror.refresh();
-        });
-    };
-    var options = {
-        url: user.formplayer_url + '/get-instance',
-        data: JSON.stringify({
-            'session-id': sessionId,
-            'domain': user.domain,
-            'username': user.username,
-        }),
-        success: success,
-    };
-    Util.setCrossDomainAjaxOptions(options);
-
-    $.ajax(options);
 });
 
 FormplayerFrontend.on("start", function (options) {
@@ -200,6 +163,7 @@ FormplayerFrontend.on("start", function (options) {
     user.apps = options.apps;
     user.domain = options.domain;
     user.formplayer_url = options.formplayer_url;
+    user.debuggerEnabled = options.debuggerEnabled;
     FormplayerFrontend.request('gridPolyfillPath', options.gridPolyfillPath);
     if (Backbone.history) {
         Backbone.history.start();
@@ -208,12 +172,24 @@ FormplayerFrontend.on("start", function (options) {
             if (options.phoneMode) {
                 appId = options.apps[0]['_id'];
 
+                FormplayerFrontend.trigger('setAppDisplayProperties', options.apps[0]);
                 FormplayerFrontend.trigger("app:singleApp", appId);
             } else {
                 FormplayerFrontend.trigger("apps:list", options.apps);
             }
         }
     }
+});
+
+FormplayerFrontend.on('setAppDisplayProperties', function(app) {
+    FormplayerFrontend.DisplayProperties = app.profile.properties;
+    if (Object.freeze) {
+        Object.freeze(FormplayerFrontend.DisplayProperties);
+    }
+});
+
+FormplayerFrontend.reqres.setHandler('getAppDisplayProperties', function() {
+    return FormplayerFrontend.DisplayProperties || {};
 });
 
 FormplayerFrontend.on("sync", function () {

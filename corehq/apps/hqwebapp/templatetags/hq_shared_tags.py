@@ -206,10 +206,7 @@ def _toggle_enabled(module, request, toggle_or_toggle_name):
         toggle = getattr(module, toggle_or_toggle_name)
     else:
         toggle = toggle_or_toggle_name
-    return (
-        (hasattr(request, 'user') and toggle.enabled(request.user.username)) or
-        (hasattr(request, 'domain') and toggle.enabled(request.domain))
-    )
+    return toggle.enabled_for_request(request)
 
 
 @register.filter

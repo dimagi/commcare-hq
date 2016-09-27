@@ -4,6 +4,8 @@ from django.core.management.base import CommandError, BaseCommand
 from optparse import make_option
 from pillowtop import get_pillow_by_name
 from pillowtop.feed.interface import Change
+from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import REINDEX_FNS
+from corehq.util.doc_processor.couch import CouchDocumentProvider
 
 
 class Command(BaseCommand):
@@ -14,8 +16,8 @@ class Command(BaseCommand):
         make_option(
             '--pillow',
             action='store',
-            dest='pillow_class',
-            help="Pillow class to run over doc ids",
+            dest='pillow',
+            help="Pillow to run over doc ids",
         ),
         make_option(
             '--docs',
@@ -33,10 +35,14 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
-        if options['pillow_class']:
-            pillow = get_pillow_by_name(options['pillow_class'])
-        else:
-            raise CommandError('--pillow argument is required')
+        pillow = options.get('pillow', 'MISSING')
+        if pillow not in REINDEX_FNS:
+            raise CommandError('--pillow must be specified and must be one of:\n{}'
+                               .format(', '.join(REINDEX_FNS.keys())))
+        reindexer = REINDEX_FNS[pillow]()
+        if not isinstance(reindexer.doc_provider, CouchDocumentProvider):
+            raise CommandError("This command only works with couch pillows,"
+                               "although it shouldn't be too hard to adapt.")
         if options['docs_filename']:
             docs_filename = options['docs_filename']
         else:
@@ -53,7 +59,7 @@ class Command(BaseCommand):
                     if line:
                         yield line
 
-        self.handle_all(pillow, doc_ids())
+        self.handle_all(reindexer, doc_ids())
 
     def log(self, string):
         timestamp = datetime.datetime.utcnow().replace(microsecond=0)
@@ -75,7 +81,7 @@ class Command(BaseCommand):
         # if this ever comes up ever
         return ' ' not in id_string
 
-    def handle_all(self, pillow, doc_ids):
+    def handle_all(self, reindexer, doc_ids):
         def _change_from_couch_doc(couch_doc):
             return Change(
                 id=couch_doc['_id'],
@@ -84,6 +90,6 @@ class Command(BaseCommand):
                 deleted=False,
             )
 
-        for doc in iter_docs(pillow.couch_db, doc_ids):
-            pillow.process_change(_change_from_couch_doc(doc))
+        for doc in iter_docs(reindexer.doc_provider.couchdb, doc_ids):
+            reindexer.pillow.process_change(_change_from_couch_doc(doc))
             self.log('PROCESSED [{}]'.format(doc['_id']))

@@ -60,7 +60,14 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
         initialize: function(options) {
             this.appId = options.appId;
         },
-
+        templateHelpers: function() {
+            return {
+                showIncompleteForms: function () {
+                    return FormplayerFrontend
+                        .request('getAppDisplayProperties')['cc-show-incomplete'] === 'yes';
+                },
+            };
+        },
         startApp: function(e) {
             e.preventDefault();
             FormplayerFrontend.trigger("app:select", this.appId);

@@ -185,7 +185,14 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
 
 class StaticKafkaIndicatorPillowTest(TestCase):
 
-    @patch('corehq.apps.callcenter.data_source.get_call_center_domains', MagicMock(return_value=[domain_lite('cc1')]))
+    @patch(
+        'corehq.apps.userreports.pillow.'
+        'ConfigurableReportTableManagerMixin.get_all_configs',
+        MagicMock(return_value=[]))
+    @patch(
+        'corehq.apps.userreports.pillow.'
+        'ConfigurableReportTableManagerMixin.rebuild_tables_if_necessary',
+        MagicMock(return_value=None))
     def test_bootstrap_can_be_called(self):
         get_kafka_ucr_static_pillow().bootstrap()
 
