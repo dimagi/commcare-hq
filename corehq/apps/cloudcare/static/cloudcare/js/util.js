@@ -96,6 +96,7 @@ hqDefine('cloudcare/js/util.js', function () {
     };
 
     var showHTMLError = function (message, $el, autoHideTime) {
+        message = message || gettext("Sorry, an error occurred while processing that request.");
         _show(message, $el, autoHideTime, "", true);
     };
 
