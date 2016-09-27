@@ -112,6 +112,7 @@ hqDefine('cloudcare/js/util.js', function () {
         $container.addClass(classes)
         if (isHTML) {
             $container.html(message);
+            // HTML errors already have an alert dialog
             $alertDialog = $container.find('.alert');
         } else {
             $container.text(message);
