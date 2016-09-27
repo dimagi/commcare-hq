@@ -1784,6 +1784,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('location_parent_id', 'corehq.apps.locations.ucr_expressions.location_parent_id'),
     ('cvsu_expression', 'custom.apps.cvsu.expressions.cvsu_expression'),
     ('eqa_expression', 'custom.eqa.expressions.eqa_expression'),
+    ('cqi_action_item', 'custom.eqa.expressions.cqi_action_item'),
     ('year_expression', 'custom.pnlppgi.expressions.year_expression'),
     ('week_expression', 'custom.pnlppgi.expressions.week_expression')
 ]

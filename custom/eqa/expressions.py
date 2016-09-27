@@ -79,6 +79,44 @@ class EQAExpressionSpec(JsonObject):
         }
 
 
+class EQAActionItemSpec(JsonObject):
+    type = TypeProperty('cqi_action_item')
+    xmlns = StringProperty()
+    section = StringProperty()
+
+    def __call__(self, item, context=None):
+        xforms_ids = CaseAccessors(item['domain']).get_case_xform_ids(item['_id'])
+        forms = FormAccessors(item['domain']).get_forms(xforms_ids)
+        f_forms = [f for f in forms if f.xmlns == self.xmlns]
+        s_forms = sorted(f_forms, key=lambda x: x.received_on)
+
+        if len(s_forms) > 0:
+            latest_form = s_forms[-1]
+        else:
+            latest_form = None
+        path = 'action_plan/%s/action_plan/%s'
+        incorrect_question = latest_form.get_date(path % (self.section, 'incorrect_questions'))
+        if latest_form:
+            support = ', '.join(
+                [
+                    item.get_case_property(x.strip()) for x in
+                    latest_form.get_date(path % (self.section, 'copy-1-of-responsible')).split(',')
+                ]
+            )
+            return {
+                'gap': latest_form.get_data('code_to_text/%s' % incorrect_question),
+                'intervention_action': latest_form.get_data(path + 'intervention_action'),
+                'support': support,
+                'deadline': latest_form.get_data(path % (self.section, 'DEADLINE')),
+                'notes': latest_form.get_data(path % (self.section, 'notes'))
+            }
+
+
 def eqa_expression(spec, context):
     wrapped = EQAExpressionSpec.wrap(spec)
+    return wrapped
+
+
+def cqi_action_item(spec, context):
+    wrapped = EQAActionItemSpec.wrap(spec)
     return wrapped
