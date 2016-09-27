@@ -2,7 +2,7 @@ function add_options_to_select($select, opt_list, selected_val) {
     for (var i = 0; i < opt_list.length; i++) {
         var $opt = $('<option />').val(opt_list[i][0]).text(opt_list[i][1]);
         if (opt_list[i][0] === selected_val) {
-            $opt.attr("selected", "true");
+            $opt.prop("selected", true);
         }
         $select.append($opt);
     }

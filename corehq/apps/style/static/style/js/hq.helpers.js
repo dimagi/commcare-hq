@@ -109,7 +109,7 @@ $.fn.removeSpinnerFromButton = function () {
 
 
 $.fn.disableButtonNoSpinner = function () {
-    $(this).attr('disabled', 'disabled')
+    $(this).prop('disabled', 'disabled')
            .addClass('disabled');
 };
 

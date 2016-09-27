@@ -16,7 +16,7 @@
             $("#submitForms").prop('disabled', true);
         }
         else {
-            $("#submitForms").removeProp('disabled');
+            $("#submitForms").prop('disabled', false);
         }
     }
 
@@ -29,7 +29,7 @@
 
             // bindings for 'all' button
             $XFormManagement.find('a.select-visible').click(function () {
-                $allFormsButton.removeProp('checked');
+                $allFormsButton.prop('checked', false);
                 $checkboxes.prop('checked', true).change();
                 return false;
             });
@@ -39,8 +39,8 @@
                 selectNone(); return false;
             });
             function selectNone() {
-                $XFormManagement.find('input.xform-checkbox:checked').removeProp('checked').change();
-                $allFormsButton.removeProp('checked');
+                $XFormManagement.find('input.xform-checkbox:checked').prop('checked', false).change();
+                $allFormsButton.prop('checked', false);
             }
 
             // bindings for form checkboxes
@@ -50,7 +50,7 @@
                 $indicator.show();
             });
             $checkboxes.on('click', function(){
-                $allFormsButton.removeProp('checked');
+                $allFormsButton.prop('checked', false);
             });
 
             // bindings for 'Select all' checkboxe

@@ -283,6 +283,15 @@ SingleSelectEntry.prototype.onPreProcess = function(newValue) {
     }
 };
 
+$.datetimepicker.setDateFormatter({
+    parseDate: function (date, format) {
+        var d = moment(date, format);
+        return d.isValid() ? d.toDate() : false;
+    },
+    formatDate: function (date, format) {
+        return moment(date).format(format);
+    },
+});
 /**
  * Base class for DateEntry, TimeEntry, and DateTimeEntry. Shares the same
  * date picker between the three types of Entry.
@@ -303,8 +312,10 @@ function DateTimeEntryBase(question, options) {
         self.$picker.datetimepicker({
             timepicker: self.timepicker,
             datepicker: self.datepicker,
-            value: self.answer(),
             format: self.clientFormat,
+            formatTime: self.clientTimeFormat,
+            formatDate: self.clientDateFormat,
+            value: self.answer() ? self.convertServerToClientFormat(self.answer()) : self.answer(),
             maxDate: maxDate,
             minDate: minDate,
             scrollInput: false,
@@ -320,10 +331,15 @@ function DateTimeEntryBase(question, options) {
 }
 DateTimeEntryBase.prototype = Object.create(EntrySingleAnswer.prototype);
 DateTimeEntryBase.prototype.constructor = EntrySingleAnswer;
+DateTimeEntryBase.prototype.convertServerToClientFormat = function(date) {
+    return moment(date, this.serverFormat).format(this.clientFormat);
+};
 
 // Format for time or date or datetime for the browser. Defaults to ISO.
 // Formatting string should be in datetimepicker format: http://xdsoft.net/jqplugins/datetimepicker/
 DateTimeEntryBase.prototype.clientFormat = undefined;
+DateTimeEntryBase.prototype.clientTimeFormat = undefined;
+DateTimeEntryBase.prototype.clientDateFormat = undefined;
 
 // Format for time or date or datetime for the server. Defaults to ISO.
 // Formatting string should be in momentjs format: http://momentjs.com/docs/#/parsing/string-format/
@@ -338,8 +354,9 @@ function DateEntry(question, options) {
 }
 DateEntry.prototype = Object.create(DateTimeEntryBase.prototype);
 DateEntry.prototype.constructor = DateTimeEntryBase;
-// This is format equates to 31/12/2016 and is used by the datetimepicker
-DateEntry.prototype.clientFormat = 'd/m/Y';
+// This is format equates to 12/31/2016 and is used by the datetimepicker
+DateEntry.prototype.clientFormat = 'MM/DD/YYYY';
+DateEntry.prototype.clientDateFormat = 'MM/DD/YYYY';
 DateEntry.prototype.serverFormat = 'YYYY-MM-DD';
 
 
@@ -351,6 +368,9 @@ function DateTimeEntry(question, options) {
 }
 DateTimeEntry.prototype = Object.create(DateTimeEntryBase.prototype);
 DateTimeEntry.prototype.constructor = DateTimeEntryBase;
+DateTimeEntry.prototype.clientTimeFormat = 'HH:mm';
+DateTimeEntry.prototype.clientDateFormat = 'MM/DD/YYYY';
+DateTimeEntry.prototype.clientFormat = 'MM/DD/YYYY HH:mm';
 
 function TimeEntry(question, options) {
     this.templateType = 'time';
@@ -358,10 +378,11 @@ function TimeEntry(question, options) {
     this.datepicker = false;
     DateTimeEntryBase.call(this, question, options);
 }
-TimeEntry.prototype = Object.create(EntrySingleAnswer.prototype);
-TimeEntry.prototype.constructor = EntrySingleAnswer;
+TimeEntry.prototype = Object.create(DateTimeEntryBase.prototype);
+TimeEntry.prototype.constructor = DateTimeEntryBase;
 
-TimeEntry.prototype.clientFormat = 'H:i';
+TimeEntry.prototype.clientTimeFormat = 'HH:mm';
+TimeEntry.prototype.clientFormat = 'HH:mm';
 TimeEntry.prototype.serverFormat = 'HH:mm';
 
 

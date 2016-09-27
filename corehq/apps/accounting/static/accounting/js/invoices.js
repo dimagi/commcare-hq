@@ -2,7 +2,7 @@
 (function() {
     var InvoiceModel = function () {
         var self = this;
-        var invoice = $('#id_do_not_invoice').attr("checked");
+        var invoice = $('#id_do_not_invoice').prop("checked");
         self.noInvoice = ko.observable(invoice);
     };
     

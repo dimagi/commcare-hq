@@ -25,7 +25,7 @@ $(function(){
         if (showUcrElements){
             $("#ucr-privacy-warning").show();
 
-            // Figure out which options to show in the combobox
+            // Figure out which options to show in the select2
             var languageLists = _.map(selectedConfigs, function(i){return languagesMap[i];});
             var languageSet = _.reduce(languageLists, function(memo, list){
                 _.map(list, function(e){
@@ -40,18 +40,17 @@ $(function(){
                 $id_language.val('en');
                 $('#div_id_language').hide();
             } else {
-                // Update the options of the combobox
+                // Update the options of the select2
                 var current = $id_language.val();
                 $id_language.empty();
 
-                // Populate the select
+                // Populate the select2
                 _.map(currentLanguageOptions, function (l) {
                     $id_language.append(
                         $("<option></option>").attr("value", l).text(languagesForSelect[l][1])
                     );
                 });
                 $id_language.val(current);
-                $id_language.data('combobox').refresh();
                 $("#div_id_language").show();
             }
         } else {

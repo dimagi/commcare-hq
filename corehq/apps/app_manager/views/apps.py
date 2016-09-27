@@ -609,6 +609,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('translation_strategy', None),
         ('auto_gps_capture', None),
         ('use_grid_menus', None),
+        ('grid_form_menus', None),
         ('comment', None),
         ('custom_base_url', None),
         ('use_j2me_endpoint', None),

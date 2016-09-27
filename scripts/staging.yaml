@@ -49,8 +49,6 @@ branches:
   - vellum-staging # J$ 11/13
   - django-1.8 # nick P 8/25
   - ce/domain-list-api # Cal 8/31
-  - revert-13231-revert-13024-mk-235887-configure-menu-grid+onboarding # Jenny 9/19
-  - revert-13231-revert-13024-mk-235887-configure-menu-grid # Manish 9/20
   - onboarding # Jenny 9/19
 submodules:
   submodules/touchforms-src:
@@ -74,4 +72,4 @@ submodules:
     branches: []
   deployment/commcare-hq-deploy:
     branches:
-      - br/celery-bash
+      - revert-122-revert-118-br/celery-bash
