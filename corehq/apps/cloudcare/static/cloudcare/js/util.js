@@ -95,6 +95,10 @@ hqDefine('cloudcare/js/util.js', function () {
         _show(message, location, autoHideTime, "alert alert-danger");
     };
 
+    var showHTMLError = function (message, $el, autoHideTime) {
+        _show(message, $el, autoHideTime, "", true);
+    };
+
     var showSuccess = function (message, location, autoHideTime) {
         if (message === undefined) {
             message = "success";
@@ -102,13 +106,27 @@ hqDefine('cloudcare/js/util.js', function () {
         _show(message, location, autoHideTime, "alert alert-success");
     };
 
-    var _show = function (message, location, autoHideTime, classes) {
-        var alert = $("<div />");
-        alert.addClass(classes).text(message);
-        alert.append($("<a />").addClass("close").attr("data-dismiss", "alert").html("&times;"));
-        location.append(alert);
+    var _show = function (message, location, autoHideTime, classes, isHTML) {
+        var $container = $("<div />"),
+            $alertDialog;
+        $container.addClass(classes)
+        if (isHTML) {
+            $container.html(message);
+            $alertDialog = $container.find('.alert');
+        } else {
+            $container.text(message);
+            $alertDialog = $container;
+        }
+        $alertDialog
+            .prepend(
+                $("<a />")
+                .addClass("close")
+                .attr("data-dismiss", "alert")
+                .html("&times;")
+            );
+        location.append($container);
         if (autoHideTime) {
-            alert.delay(autoHideTime).fadeOut(500);
+            $container.delay(autoHideTime).fadeOut(500);
         }
     };
 
@@ -158,6 +176,7 @@ hqDefine('cloudcare/js/util.js', function () {
         getSessionContextUrl: getSessionContextUrl,
         isParentField: isParentField,
         showError: showError,
+        showHTMLError: showHTMLError,
         showSuccess: showSuccess,
         showLoading: showLoading,
         tfLoading: tfLoading,
