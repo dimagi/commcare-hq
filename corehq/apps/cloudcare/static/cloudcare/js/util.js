@@ -110,7 +110,7 @@ hqDefine('cloudcare/js/util.js', function () {
     var _show = function (message, $el, autoHideTime, classes, isHTML) {
         var $container = $("<div />"),
             $alertDialog;
-        $container.addClass(classes)
+        $container.addClass(classes);
         if (isHTML) {
             $container.html(message);
             // HTML errors already have an alert dialog
