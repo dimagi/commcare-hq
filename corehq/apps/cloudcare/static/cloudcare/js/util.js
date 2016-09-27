@@ -88,25 +88,25 @@ hqDefine('cloudcare/js/util.js', function () {
         return field ? field.startsWith('parent/') : false;
     };
 
-    var showError = function (message, location, autoHideTime) {
+    var showError = function (message, $el, autoHideTime) {
         if (message === undefined) {
             message = gettext("Sorry, an error occurred while processing that request.");
         }
-        _show(message, location, autoHideTime, "alert alert-danger");
+        _show(message, $el, autoHideTime, "alert alert-danger");
     };
 
     var showHTMLError = function (message, $el, autoHideTime) {
         _show(message, $el, autoHideTime, "", true);
     };
 
-    var showSuccess = function (message, location, autoHideTime) {
+    var showSuccess = function (message, $el, autoHideTime) {
         if (message === undefined) {
             message = "Success";
         }
-        _show(message, location, autoHideTime, "alert alert-success");
+        _show(message, $el, autoHideTime, "alert alert-success");
     };
 
-    var _show = function (message, location, autoHideTime, classes, isHTML) {
+    var _show = function (message, $el, autoHideTime, classes, isHTML) {
         var $container = $("<div />"),
             $alertDialog;
         $container.addClass(classes)
@@ -125,7 +125,7 @@ hqDefine('cloudcare/js/util.js', function () {
                 .attr("data-dismiss", "alert")
                 .html("&times;")
             );
-        location.append($container);
+        $el.append($container);
         if (autoHideTime) {
             $container.delay(autoHideTime).fadeOut(500);
         }
