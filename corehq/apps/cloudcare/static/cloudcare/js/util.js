@@ -90,7 +90,7 @@ hqDefine('cloudcare/js/util.js', function () {
 
     var showError = function (message, location, autoHideTime) {
         if (message === undefined) {
-            message = "sorry, there was an error";
+            message = gettext("Sorry, an error occurred while processing that request.");
         }
         _show(message, location, autoHideTime, "alert alert-danger");
     };
@@ -101,7 +101,7 @@ hqDefine('cloudcare/js/util.js', function () {
 
     var showSuccess = function (message, location, autoHideTime) {
         if (message === undefined) {
-            message = "success";
+            message = "Success";
         }
         _show(message, location, autoHideTime, "alert alert-success");
     };
