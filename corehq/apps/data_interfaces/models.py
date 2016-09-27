@@ -3,6 +3,7 @@ from collections import defaultdict
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.es.cases import CaseES
+from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import CaseNotFound
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import date, datetime, time, timedelta
@@ -13,16 +14,6 @@ from corehq.form_processor.models import CommCareCaseSQL
 
 ALLOWED_DATE_REGEX = re.compile('^\d{4}-\d{2}-\d{2}')
 AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
-
-
-class PropertyTypeChoices(object):
-    EXACT = "Exact"
-    CASE_PROPERTY = "Case Property"
-
-    choices = (
-        (EXACT, EXACT),
-        (CASE_PROPERTY, CASE_PROPERTY)
-    )
 
 
 class AutomaticUpdateRule(models.Model):
@@ -60,11 +51,12 @@ class AutomaticUpdateRule(models.Model):
                 rules_by_case_type[rule.case_type].append(rule)
         return rules_by_case_type
 
+    # returns None if any of the rules do not filter on server modified
     @classmethod
     def get_boundary_date(cls, rules, now):
         min_boundary = None
         for rule in rules:
-            if not rule.server_modified_boundary:
+            if not rule.filter_on_server_modified:
                 return None
             elif not min_boundary:
                 min_boundary = rule.server_modified_boundary
@@ -114,13 +106,13 @@ class AutomaticUpdateRule(models.Model):
         def _add_update_property(name, value, current_case):
             while name.startswith('parent/'):
                 name = name[7:]
-                current_case = current_case.parent
+                # uses first parent if there are multiple
+                current_case = current_case.get_parent(identifier=DEFAULT_PARENT_IDENTIFIER)[0]
             cases_to_update[current_case.case_id][name] = value
 
         for action in self.automaticupdateaction_set.all():
             if action.action == AutomaticUpdateAction.ACTION_UPDATE:
-                # break this out as helper function?
-                if action.property_value_type == PropertyTypeChoices.CASE_PROPERTY:
+                if action.property_value_type == AutomaticUpdateAction.CASE_PROPERTY:
                     value = _get_case_property_value(case, action.property_value)
                 else:
                     value = action.property_value
@@ -253,6 +245,14 @@ class AutomaticUpdateAction(models.Model):
         (ACTION_CLOSE, ACTION_CLOSE),
     )
 
+    EXACT = "EXACT"
+    CASE_PROPERTY = "CASE_PROPERTY"
+
+    PROPERTY_TYPE_CHOICES = (
+        (EXACT, EXACT),
+        (CASE_PROPERTY, CASE_PROPERTY)
+    )
+
 
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
     action = models.CharField(max_length=10, choices=ACTION_CHOICES)
@@ -262,8 +262,8 @@ class AutomaticUpdateAction(models.Model):
     property_value = models.CharField(max_length=126, null=True)
 
     property_value_type = models.CharField(max_length=15,
-                                           choices=PropertyTypeChoices.choices,
-                                           default=PropertyTypeChoices.EXACT)
+                                           choices=PROPERTY_TYPE_CHOICES,
+                                           default=EXACT)
 
     class Meta:
         app_label = "data_interfaces"

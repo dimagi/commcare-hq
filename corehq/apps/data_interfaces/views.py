@@ -26,8 +26,7 @@ from corehq.apps.data_interfaces.forms import (
     AddAutomaticCaseUpdateRuleForm)
 from corehq.apps.data_interfaces.models import (AutomaticUpdateRule,
                                                 AutomaticUpdateRuleCriteria,
-                                                AutomaticUpdateAction,
-                                                PropertyTypeChoices)
+                                                AutomaticUpdateAction)
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
@@ -698,7 +697,7 @@ class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
             initial={
                 'action': AddAutomaticCaseUpdateRuleForm.ACTION_CLOSE,
                 'filter_on_server_modified': 'true',
-                'property_value_type': PropertyTypeChoices.EXACT,
+                'property_value_type': AutomaticUpdateAction.EXACT,
             }
         )
 
@@ -817,7 +816,7 @@ class EditAutomaticUpdateRuleView(AddAutomaticUpdateRuleView):
         update_case = False
         update_property_name = None
         update_property_value = None
-        property_value_type = PropertyTypeChoices.EXACT
+        property_value_type = AutomaticUpdateAction.EXACT
         for action in self.rule.automaticupdateaction_set.all():
             if action.action == AutomaticUpdateAction.ACTION_UPDATE:
                 update_case = True

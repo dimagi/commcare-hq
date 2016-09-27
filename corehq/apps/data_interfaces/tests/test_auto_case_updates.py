@@ -3,8 +3,9 @@ from contextlib import contextmanager
 from casexml.apps.case.mock import CaseFactory
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
-from corehq.apps.data_interfaces.models import (AutomaticUpdateRule, AutomaticUpdateRuleCriteria,
-                                                AutomaticUpdateAction, PropertyTypeChoices)
+from corehq.apps.data_interfaces.models import (AutomaticUpdateRule,
+                                                AutomaticUpdateRuleCriteria,
+                                                AutomaticUpdateAction)
 from corehq.apps.data_interfaces.tasks import run_case_update_rules_for_domain
 from datetime import datetime, date
 
@@ -441,7 +442,7 @@ class AutomaticCaseUpdateTest(TestCase):
                     action=AutomaticUpdateAction.ACTION_UPDATE,
                     property_name='parent_name',
                     property_value='parent/name',
-                    property_value_type=PropertyTypeChoices.CASE_PROPERTY
+                    property_value_type=AutomaticUpdateAction.CASE_PROPERTY
                 )
             ]
 

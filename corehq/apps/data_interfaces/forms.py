@@ -1,5 +1,5 @@
 import json
-from corehq.apps.data_interfaces.models import AutomaticUpdateRuleCriteria, PropertyTypeChoices
+from corehq.apps.data_interfaces.models import AutomaticUpdateRuleCriteria, AutomaticUpdateAction
 from corehq.apps.style import crispy as hqcrispy
 from couchdbkit import ResourceNotFound
 
@@ -145,7 +145,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
     )
     property_value_type = forms.ChoiceField(
         label=ugettext_lazy('Value Type'),
-        choices=PropertyTypeChoices.choices,
+        choices=AutomaticUpdateAction.PROPERTY_TYPE_CHOICES,
         required=False
     )
     update_property_value = TrimmedCharField(
@@ -308,6 +308,8 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         if not self._valid_boundary(value):
             raise ValidationError(_("Please enter a whole number greater than "
                                     "or equal to 30."))
+        if not self.cleaned_data.get('filter_on_server_modified'):
+            return None
         return value
 
     def clean_conditions(self):
@@ -395,6 +397,6 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
 
     def clean_property_value_type(self):
         if not self.enhancements_enabled:
-            return PropertyTypeChoices.EXACT
+            return AutomaticUpdateAction.EXACT
         else:
             return self.cleaned_data.get('property_value_type')

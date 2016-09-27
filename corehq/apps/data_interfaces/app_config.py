@@ -13,5 +13,7 @@ class DataInterfacesAppConfig(AppConfig):
     name = 'corehq.apps.data_interfaces'
 
     def ready(self):
-        case_post_save.connect(case_changed_receiver, CommCareCase)
-        sql_case_post_save.connect(case_changed_receiver, CommCareCaseSQL)
+        case_post_save.connect(case_changed_receiver, CommCareCase,
+                               dispatch_uid="data_interfaces_case_receiver")
+        sql_case_post_save.connect(case_changed_receiver, CommCareCaseSQL,
+                                   dispatch_uid="data_interfaces_sql_case_receiver")
