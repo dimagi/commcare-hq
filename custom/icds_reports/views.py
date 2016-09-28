@@ -55,19 +55,19 @@ def _get_user_location(user, domain):
         state_code = 'All'
         district_code = 'All'
         block_code = 'All'
-        if loc.location_type_code == 'state':
+        if location_type_code == 'state':
             state_code = loc.site_code
-        elif loc.location_type_code == 'district':
+        elif location_type_code == 'district':
             state_code = loc.parent.site_code
             district_code = loc.site_code
-        elif loc.location_type_code == 'block':
+        elif location_type_code == 'block':
             state_code = loc.parent.parent.site_code
             district_code = loc.parent.site_code
             block_code = loc.site_code
 
         user_site_code = loc.site_code
     except Exception:
-        location_type_name = 'national'
+        location_type_code = 'national'
         user_site_code = ''
         state_code = 'All'
         district_code = 'All'
