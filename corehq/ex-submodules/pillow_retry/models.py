@@ -9,6 +9,7 @@ from django.db.models.aggregates import Count
 from jsonfield.fields import JSONField
 
 from pillowtop.feed.couch import change_from_couch_row, force_to_change
+from pillowtop.feed.interface import ChangeMeta
 
 ERROR_MESSAGE_LENGTH = 512
 
@@ -45,7 +46,7 @@ class PillowError(models.Model):
     @property
     def change_object(self):
         change = change_from_couch_row(self.change if self.change else {'id': self.doc_id})
-        change.metadata = self.change_metadata
+        change.metadata = ChangeMeta.wrap(self.change_metadata)
         return change
 
     class Meta:
@@ -94,7 +95,7 @@ class PillowError(models.Model):
             )
 
             if change.metadata:
-                error.change_metadata = change.metadata
+                error.change_metadata = change.metadata.to_json()
 
         return error
 
