@@ -1,3 +1,4 @@
+from corehq.apps.app_manager.models import Application
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from dimagi.ext.jsonobject import JsonObject, StringProperty
@@ -95,16 +96,19 @@ class EQAActionItemSpec(JsonObject):
         else:
             latest_form = None
         path = 'action_plan/%s/action_plan/%s'
-        incorrect_question = latest_form.get_date(path % (self.section, 'incorrect_questions'))
+
         if latest_form:
+            incorrect_question = latest_form.get_data(path % (self.section, 'incorrect_questions'))
             support = ', '.join(
                 [
                     item.get_case_property(x.strip()) for x in
-                    latest_form.get_date(path % (self.section, 'copy-1-of-responsible')).split(',')
+                    latest_form.get_data(path % (self.section, 'copy-1-of-responsible')).split(',')
                 ]
             )
+            question_list = Application.get(latest_form.app_id).get_questions(self.xmlns)
+            questions = {x['value']: x for x in question_list}
             return {
-                'gap': latest_form.get_data('code_to_text/%s' % incorrect_question),
+                'gap': questions['data/code_to_text/%s' % incorrect_question].label,
                 'intervention_action': latest_form.get_data(path + 'intervention_action'),
                 'support': support,
                 'deadline': latest_form.get_data(path % (self.section, 'DEADLINE')),
