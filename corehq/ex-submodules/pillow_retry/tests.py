@@ -10,7 +10,8 @@ from mock import MagicMock
 from pillow_retry.models import PillowError
 from pillow_retry.tasks import process_pillow_retry
 from pillowtop import get_all_pillow_configs
-from pillowtop.feed.interface import Change
+from pillowtop.feed.couch import force_to_change
+from pillowtop.feed.interface import Change, ChangeMeta
 from pillowtop.tests.utils import make_fake_constructed_pillow
 
 
@@ -27,6 +28,8 @@ def FakePillow():
 
 
 def create_error(change, message='message', attempts=0, pillow=None, ex_class=None):
+    change = force_to_change(change)
+    change.metadata = ChangeMeta(data_source_type='couch', data_source_name='test_commcarehq', document_id=change.id)
     error = PillowError.get_or_create(change, pillow or FakePillow())
     for n in range(0, attempts):
         error.add_attempt(*get_ex_tb(message, ex_class=ex_class))
