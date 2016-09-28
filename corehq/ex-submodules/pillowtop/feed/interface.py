@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from jsonobject import DefaultProperty
 from dimagi.ext import jsonobject
-from pillowtop.dao.exceptions import DocumentNotFoundError
+from pillowtop.dao.exceptions import DocumentNotFoundError, DocumentStoreMissing
 
 
 class ChangeMeta(jsonobject.JsonObject):
@@ -32,6 +32,7 @@ class Change(object):
     }
 
     def __init__(self, id, sequence_id, document=None, deleted=False, metadata=None, document_store=None):
+        assert document or self.document_store, "One of document or document_store is required"
         self._dict = {}
         self.id = id
         self.sequence_id = sequence_id
