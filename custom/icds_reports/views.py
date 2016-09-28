@@ -21,7 +21,8 @@ def tableau(request, domain, workbook, worksheet):
 
     # set report view-by level based on user's location level
     couch_user = getattr(request, 'couch_user', None)
-    location_type_code, user_site_code, state_code, district_code, block_code = _get_user_location(couch_user, domain)
+    location_type_code, user_site_code, state_code, district_code, block_code = \
+        _get_user_location(couch_user, domain)
     context.update({
         'view_by': location_type_code,
         'view_by_value': user_site_code,
@@ -49,9 +50,9 @@ def _get_user_location(user, domain):
     try:
         user_location_id = user.get_domain_membership(domain).location_id
         loc = SQLLocation.by_location_id(user_location_id)
-        location_type_code = loc.location_type.code        
-       
-        # Assuming no web users below block level 
+        location_type_code = loc.location_type.code
+
+        # Assuming no web users below block level
         state_code = 'All'
         district_code = 'All'
         block_code = 'All'
