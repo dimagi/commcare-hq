@@ -170,7 +170,6 @@ def change_from_kafka_message(message):
         )
     except UnknownDocumentStore:
         document_store = None
-        notify_error("Unknown document store: {}".format(change_meta.data_source_type))
     return Change(
         id=change_meta.document_id,
         sequence_id=message.offset,

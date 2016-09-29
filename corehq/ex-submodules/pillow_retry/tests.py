@@ -10,8 +10,7 @@ from mock import MagicMock
 from pillow_retry.models import PillowError
 from pillow_retry.tasks import process_pillow_retry
 from pillowtop import get_all_pillow_configs
-from pillowtop.feed.couch import force_to_change
-from pillowtop.feed.interface import Change, ChangeMeta
+from pillowtop.feed.interface import Change
 from pillowtop.tests.utils import make_fake_constructed_pillow
 
 
@@ -28,8 +27,6 @@ def FakePillow():
 
 
 def create_error(change, message='message', attempts=0, pillow=None, ex_class=None):
-    change = force_to_change(change)
-    change.metadata = ChangeMeta(data_source_type='couch', data_source_name='test_commcarehq', document_id=change.id)
     error = PillowError.get_or_create(change, pillow or FakePillow())
     for n in range(0, attempts):
         error.add_attempt(*get_ex_tb(message, ex_class=ex_class))
@@ -88,6 +85,30 @@ class PillowRetryTestCase(TestCase):
         new = PillowError.get_or_create({'id': id}, another_pillow)
         self.assertIsNone(new.id)
         self.assertEqual(new.current_attempt, 0)
+
+    def test_get_or_create_meta(self):
+        id = '12335'
+        date = '2013-12-05T08:52:19Z'
+        meta = {
+            'domains': ['a' * 247, '123456789'],
+            'doc_type': 'something',
+            'date': date,
+        }
+        get = PillowError.get_or_create({'id': id}, FakePillow(), meta)
+        self.assertEqual(get.domains, 'a' * 247 + ',1234...')
+        self.assertEqual(get.doc_type, 'something')
+        self.assertEqual(get.doc_date, parse(date))
+        get.save()
+
+    def test_null_meta_date(self):
+        id = '12335'
+        meta = {
+            'domains': ['a' * 247, '123456789'],
+            'doc_type': 'something',
+            'date': None,
+        }
+        get = PillowError.get_or_create({'id': id}, FakePillow(), meta)
+        self.assertEqual(None, get.doc_date)
 
     def test_get_errors_to_process(self):
         # Only re-process errors with
