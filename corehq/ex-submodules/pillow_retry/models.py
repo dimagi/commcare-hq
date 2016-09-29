@@ -46,7 +46,8 @@ class PillowError(models.Model):
     @property
     def change_object(self):
         change = change_from_couch_row(self.change if self.change else {'id': self.doc_id})
-        change.metadata = ChangeMeta.wrap(self.change_metadata)
+        if self.change_metadata:
+            change.metadata = ChangeMeta.wrap(self.change_metadata)
         return change
 
     class Meta:
