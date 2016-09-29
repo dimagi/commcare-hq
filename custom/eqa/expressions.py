@@ -99,11 +99,17 @@ class EQAActionItemSpec(JsonObject):
 
         if latest_form:
             incorrect_question = latest_form.get_data(path % (self.section, 'incorrect_questions'))
+            responsible = ', '.join(
+                [
+                    item.get_case_property(x.strip()) for x in
+                    latest_form.get_data(path % (self.section, 'responsible')).split(',')
+                ]
+            )
             support = ', '.join(
                 [
                     item.get_case_property(x.strip()) for x in
-                    latest_form.get_data(path % (self.section, 'copy-1-of-responsible')).split(',')
-                ]
+                    latest_form.get_data(path % (self.section, 'support')).split(',')
+                    ]
             )
             application = Application.get(latest_form.app_id)
             form = application.get_form_by_xmlns(self.xmlns)
@@ -115,6 +121,7 @@ class EQAActionItemSpec(JsonObject):
                 'timeEnd': latest_form.get_data('meta/timeEnd'),
                 'gap': questions['data/code_to_text/%s' % incorrect_question].label,
                 'intervention_action': latest_form.get_data(path + 'intervention_action'),
+                'responsible': responsible,
                 'support': support,
                 'deadline': latest_form.get_data(path % (self.section, 'DEADLINE')),
                 'notes': latest_form.get_data(path % (self.section, 'notes'))
