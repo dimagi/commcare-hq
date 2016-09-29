@@ -63,12 +63,14 @@ def process_pillow_retry(error_doc_id):
             except ImportError:
                 pass
 
-            document_store = get_document_store(
-                data_source_type=change.metadata.data_source_type,
-                data_source_name=change.metadata.data_source_name,
-                domain=change.metadata.domain
-            )
-            change.document_store = document_store
+            change_metadata = change.metadata
+            if change_metadata:
+                document_store = get_document_store(
+                    data_source_type=change_metadata.data_source_type,
+                    data_source_name=change_metadata.data_source_name,
+                    domain=change_metadata.domain
+                )
+                change.document_store = document_store
             pillow.process_change(change)
         except Exception:
             ex_type, ex_value, ex_tb = sys.exc_info()
