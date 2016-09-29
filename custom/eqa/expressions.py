@@ -109,7 +109,7 @@ class EQAActionItemSpec(JsonObject):
                 [
                     item.get_case_property(x.strip()) for x in
                     latest_form.get_data(path % (self.section, 'support')).split(',')
-                    ]
+                ]
             )
             application = Application.get(latest_form.app_id)
             form = application.get_form_by_xmlns(self.xmlns)
