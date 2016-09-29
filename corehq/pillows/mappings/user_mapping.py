@@ -1,7 +1,7 @@
 from corehq.util.elastic import es_index
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
-USER_INDEX = es_index("hqusers_2016-07-19")
+USER_INDEX = es_index("hqusers_2016-09-29")
 USER_MAPPING={'_all': {'analyzer': 'standard'},
  '_meta': {'created': None},
  'date_detection': False,
