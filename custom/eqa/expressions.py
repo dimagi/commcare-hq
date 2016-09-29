@@ -95,20 +95,20 @@ class EQAActionItemSpec(JsonObject):
             latest_form = s_forms[-1]
         else:
             latest_form = None
-        path = 'action_plan/%s/action_plan/action_plan_input/%s'
+        path = 'action_plan/%s/action_plan/%s'
 
         if latest_form:
             incorrect_question = latest_form.get_data(path % (self.section, 'incorrect_questions'))
             responsible = ', '.join(
                 [
                     item.get_case_property(x.strip()) for x in
-                    latest_form.get_data(path % (self.section, 'responsible')).split(',')
+                    latest_form.get_data(path % (self.section, 'action_plan_input/responsible')).split(',')
                 ]
             )
             support = ', '.join(
                 [
                     item.get_case_property(x.strip()) for x in
-                    latest_form.get_data(path % (self.section, 'support')).split(',')
+                    latest_form.get_data(path % (self.section, 'action_plan_input/support')).split(',')
                 ]
             )
             application = Application.get(latest_form.app_id)
@@ -120,11 +120,11 @@ class EQAActionItemSpec(JsonObject):
                 'section': self.section,
                 'timeEnd': latest_form.get_data('meta/timeEnd'),
                 'gap': questions['data/code_to_text/%s' % incorrect_question].label,
-                'intervention_action': latest_form.get_data(path + 'intervention_action'),
+                'intervention_action': latest_form.get_data(path + 'action_plan_input/intervention_action'),
                 'responsible': responsible,
                 'support': support,
-                'deadline': latest_form.get_data(path % (self.section, 'DEADLINE')),
-                'notes': latest_form.get_data(path % (self.section, 'notes'))
+                'deadline': latest_form.get_data(path % (self.section, 'action_plan_input/DEADLINE')),
+                'notes': latest_form.get_data(path % (self.section, 'action_plan_input/notes'))
             }
 
 
