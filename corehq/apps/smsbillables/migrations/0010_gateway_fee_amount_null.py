@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 from django.db import models, migrations
 
 from corehq.apps.smsbillables.models import add_twilio_gateway_fee
-from corehq.sql_db.operations import HqRunPython
 
 
 def add_twilio_gateway_fee_for_migration(apps, schema_editor):
@@ -24,5 +23,5 @@ class Migration(migrations.Migration):
             field=models.DecimalField(null=True, max_digits=10, decimal_places=4),
             preserve_default=True,
         ),
-        HqRunPython(add_twilio_gateway_fee_for_migration),
+        migrations.RunPython(add_twilio_gateway_fee_for_migration),
     ]

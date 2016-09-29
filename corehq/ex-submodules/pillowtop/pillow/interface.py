@@ -170,8 +170,16 @@ class ConstructedPillow(PillowBase):
 
 
 def handle_pillow_error(pillow, change, exception):
+    from couchdbkit import ResourceNotFound
     from pillow_retry.models import PillowError
-    error = PillowError.get_or_create(change, pillow)
+    meta = None
+    if hasattr(pillow, 'get_couch_db'):
+        try:
+            meta = pillow.get_couch_db().show('domain_shows/domain_date', change['id'])
+        except ResourceNotFound:
+            pass
+
+    error = PillowError.get_or_create(change, pillow, change_meta=meta)
     error.add_attempt(exception, sys.exc_info()[2])
     error.save()
     pillow_logging.exception(
