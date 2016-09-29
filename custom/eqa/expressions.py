@@ -105,9 +105,14 @@ class EQAActionItemSpec(JsonObject):
                     latest_form.get_data(path % (self.section, 'copy-1-of-responsible')).split(',')
                 ]
             )
-            question_list = Application.get(latest_form.app_id).get_questions(self.xmlns)
+            application = Application.get(latest_form.app_id)
+            form = application.get_form_by_xmlns(self.xmlns)
+            question_list = application.get_questions(self.xmlns)
             questions = {x['value']: x for x in question_list}
             return {
+                'form_name': form.name['en'],
+                'section': self.section,
+                'timeEnd': latest_form.get_data('meta/timeEnd'),
                 'gap': questions['data/code_to_text/%s' % incorrect_question].label,
                 'intervention_action': latest_form.get_data(path + 'intervention_action'),
                 'support': support,
