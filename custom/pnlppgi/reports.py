@@ -130,10 +130,10 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
     @property
     def rows(self):
 
-        def cell_format(data, all_users):
+        def cell_format(data):
             percent = 0
             if isinstance(data, dict):
-                percent = data['sort_key'] * 100 / float(len(set(all_users)) or 1)
+                percent = 100
             return {
                 'sort_key': percent,
                 'html': "%.2f%%" % percent
@@ -155,12 +155,11 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
             is_archived=False
         ).order_by('name')
         for site in locations:
-            users_for_location = users_dict.get(site.location_id, [])
             loc_data = data.get(site.location_id, {})
             yield [
                 site.name,
-                cell_format(loc_data.get('completude', EMPTY_CELL), users_for_location),
-                cell_format(loc_data.get('promptitude', EMPTY_CELL), users_for_location),
+                cell_format(loc_data.get('completude', EMPTY_CELL)),
+                cell_format(loc_data.get('promptitude', EMPTY_CELL)),
             ]
 
 
