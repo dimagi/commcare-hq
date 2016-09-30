@@ -1439,7 +1439,7 @@ class Subscription(models.Model):
             )
             credit_line.is_active = False
             credit_line.adjust_credit_balance(
-                credit_line.balance * Decimal('-1.0'),
+                credit_line.balance * Decimal('-1'),
                 related_credit=transferred_credit,
             )
 
