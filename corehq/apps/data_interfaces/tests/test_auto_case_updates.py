@@ -483,7 +483,7 @@ class AutomaticCaseUpdateTest(TestCase):
     @run_with_all_backends
     def test_early_task_exit(self):
         with _with_case(self.domain, 'test-case-type-3', datetime(2016, 1, 1), case_name='signal') as case:
-            with patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.apply_actions') as apply:
+            with patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.apply_rule') as apply:
                 hqcase.utils.update_case(case.domain, case.case_id, case_properties={}, xmlns=AUTO_UPDATE_XMLNS)
                 apply.assert_not_called()
 
