@@ -96,7 +96,7 @@ class EQAActionItemSpec(JsonObject):
             latest_form = s_forms[-1]
         else:
             latest_form = None
-        path_to_action_plan = 'action_plan/%s/action_plan' % self.section
+        path_to_action_plan = 'form/action_plan/%s/action_plan' % self.section
 
         if latest_form:
             action_plans = latest_form.get_data(path_to_action_plan)
@@ -127,7 +127,7 @@ class EQAActionItemSpec(JsonObject):
                     return {
                         'form_name': form.name['en'],
                         'section': self.section,
-                        'timeEnd': latest_form.get_data('meta/timeEnd'),
+                        'timeEnd': latest_form.metadata.timeEnd,
                         'gap': questions['data/code_to_text/%s' % incorrect_question].label,
                         'intervention_action': action_plan_for_question.get('intervention_action', '---'),
                         'responsible': responsible,
