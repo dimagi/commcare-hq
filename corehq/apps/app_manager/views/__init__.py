@@ -21,7 +21,11 @@ from corehq.apps.app_manager.views.download import (
     download_xform,
     DownloadCCZ,
 )
-from corehq.apps.app_manager.views.app_summary import AppSummaryView, DownloadCaseSummaryView
+from corehq.apps.app_manager.views.app_summary import (
+    AppSummaryView,
+    DownloadCaseSummaryView,
+    DownloadAppSummaryView,
+)
 from corehq.apps.app_manager.views.apps import (
     app_from_template,
     app_source,

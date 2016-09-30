@@ -5,7 +5,8 @@ from corehq.apps.app_manager.views import (
     AppSummaryView,
     AppDiffView,
     LanguageProfilesView,
-    DownloadCaseSummaryView
+    DownloadCaseSummaryView,
+    DownloadAppSummaryView,
 )
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
@@ -38,6 +39,7 @@ app_urls = patterns('corehq.apps.app_manager.views',
         'form_designer', name='form_source'),
     url(r'^summary/$', AppSummaryView.as_view(), name=AppSummaryView.urlname),
     url(r'^summary/case/download/$', DownloadCaseSummaryView.as_view(), name=DownloadCaseSummaryView.urlname),
+    url(r'^summary/app/download/$', DownloadAppSummaryView.as_view(), name=DownloadAppSummaryView.urlname),
     url(r'^update_build_comment/$', 'update_build_comment',
         name='update_build_comment'),
     url(r'^copy/gzip$', 'export_gzip', name='gzip_app')

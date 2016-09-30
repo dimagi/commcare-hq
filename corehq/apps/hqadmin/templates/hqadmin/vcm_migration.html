@@ -98,7 +98,7 @@
                     return;
                 }
 
-                $form.find("button").attr("disabled", true).addClass("disabled");
+                $form.find("button").prop("disabled", true).addClass("disabled");
                 $form.find("[name='action']").val(action);
                 $form.find("[name='items']").val(items.join(","));
                 $form.submit();

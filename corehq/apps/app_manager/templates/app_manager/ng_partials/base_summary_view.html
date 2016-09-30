@@ -5,6 +5,13 @@
 <div id="hq-sidebar" class="col-xs-4 col-sm-3 col-lg-2 col-hq-sidebar" role="navigation">
     <nav class="appmanager-content">
         <ul class="nav nav-hq-sidebar">
+            <li role="presentation">
+                <a href="{{ appDownloadURL }}?lang={{ lang }}">
+                    <i class="fa fa-download"></i>
+                    {% trans "High Level Summary" %}
+                </a>
+            </li>
+            <li role="presentation" class="nav-divider"></li>
             <li role="presentation" ng-class="{active: isActive('/forms')}">
                 <a href="#/forms">
                     <i class="fa fa-file-text-o"></i>

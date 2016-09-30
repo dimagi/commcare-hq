@@ -13,59 +13,6 @@
   margin-top: 3px;
 }
 
-.debugger {
-  width: 800px;
-  position: fixed;
-  z-index: 10;
-  bottom: 0;
-  background-color: white;
-
-  -webkit-transition: height 0.5s;
-  transition: height 0.5s;
-}
-
-.debugger .debugger-content {
-  overflow-y: auto;
-  margin-top: 12px;
-  height: 300px;
-  height: 335px;
-  padding: 5px;
-  padding-bottom: 0;
-}
-
-.debugger.debugger-minimized {
-  height: 30px;
-}
-
-.debugger.debugger-maximized {
-  height: 400px;
-}
-
-.debugger .debugger-state {
-  cursor: pointer;
-}
-
-.debugger-code {
-  font-family: monospace;
-}
-
-.debugger-tab-title {
-  font-size: 14px;
-  line-height: 18px;
-  color: white;
-  background-color: #004ebc;
-  border-bottom: #ddd solid 4px;
-  padding: 6px;
-  cursor: pointer;
-
-  -webkit-transition: background-color 0.5s;
-  transition: background-color 0.5s;
-}
-
-.debugger-tab-title:hover {
-  background-color: #0060E6;
-}
-
 /* Override default nprogress bar color to match CommCareHQ */
 #nprogress .bar {
   background: #004ebc;

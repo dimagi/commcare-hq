@@ -2310,6 +2310,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     task_list = SchemaProperty(CaseList)
     parent_select = SchemaProperty(ParentSelect)
     search_config = SchemaProperty(CaseSearch)
+    display_style = StringProperty(default='list')
 
     @classmethod
     def wrap(cls, data):
@@ -2418,6 +2419,8 @@ class Module(ModuleBase, ModuleDetailsMixin):
         """
         return any(form.uses_usercase() for form in self.get_forms())
 
+    def grid_display_style(self):
+        return self.display_style == 'grid'
 
 class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
     form_type = 'advanced_form'
@@ -4996,6 +4999,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     auto_gps_capture = BooleanProperty(default=False)
     created_from_template = StringProperty()
     use_grid_menus = BooleanProperty(default=False)
+    grid_form_menus = StringProperty(default='none',
+                                     choices=['none', 'all', 'some'])
 
     # legacy property; kept around to be able to identify (deprecated) v1 apps
     application_version = StringProperty(default=APP_V2, choices=[APP_V1, APP_V2], required=False)
@@ -5706,6 +5711,17 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return {t for m in self.get_modules()
                 if m.case_type == case_type
                 for t in m.get_subcase_types()}
+
+    @memoized
+    def grid_display_for_some_modules(self):
+        return self.grid_menu_toggle_enabled() and self.grid_form_menus == 'some'
+
+    @memoized
+    def grid_display_for_all_modules(self):
+        return self.grid_menu_toggle_enabled() and self.grid_form_menus == 'all'
+
+    def grid_menu_toggle_enabled(self):
+        return toggles.GRID_MENUS.enabled(self.domain)
 
 
 class RemoteApp(ApplicationBase):

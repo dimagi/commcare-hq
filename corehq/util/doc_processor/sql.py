@@ -9,12 +9,7 @@ from corehq.util.pagination import ResumableFunctionIterator, ArgsProvider
 class SqlModelArgsProvider(ArgsProvider):
     def __init__(self, model_filter_attribute):
         self.model_filter_attribute = model_filter_attribute
-        if not settings.USE_PARTITIONED_DATABASE:
-            self.db_list = [None]  # use the default database
-        else:
-            from corehq.sql_db.config import PartitionConfig
-            partition_config = PartitionConfig()
-            self.db_list = partition_config.get_form_processing_dbs()
+        self.db_list = _get_db_aliases_to_query()
 
     def get_initial_args(self):
         return [self.db_list[0], datetime.min, None], {}
@@ -77,6 +72,9 @@ class SqlDocumentProvider(DocumentProvider):
     :param reindex_accessor: A ``ReindexAccessor`` object
     """
     def __init__(self, iteration_key, reindex_accessor):
+        """
+        :type reindex_accessor: ReindexAccessor
+        """
         self.iteration_key = iteration_key
         self.reindex_accessor = reindex_accessor
 
@@ -87,4 +85,16 @@ class SqlDocumentProvider(DocumentProvider):
         )
 
     def get_total_document_count(self):
-        return -1
+        return sum(
+            self.reindex_accessor.get_doc_count(from_db)
+            for from_db in _get_db_aliases_to_query()
+        )
+
+
+def _get_db_aliases_to_query():
+    if not settings.USE_PARTITIONED_DATABASE:
+        return [None]  # use the default database
+    else:
+        from corehq.sql_db.config import PartitionConfig
+        partition_config = PartitionConfig()
+        return partition_config.get_form_processing_dbs()

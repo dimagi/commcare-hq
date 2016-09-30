@@ -66,7 +66,12 @@ def get_cursor(model):
 
 
 class ReindexAccessor(six.with_metaclass(ABCMeta)):
-    # TODO: implement this https://wiki.postgresql.org/images/3/35/Pagination_Done_the_PostgreSQL_Way.pdf
+    @abstractproperty
+    def model_class(self):
+        """
+        :return: the django model class belonging to this reindexer
+        """
+        raise NotImplementedError
 
     @abstractproperty
     def startkey_attribute_name(self):
@@ -101,11 +106,26 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         """
         raise NotImplementedError
 
+    def get_doc_count(self, from_db):
+        """Get the doc count from the given DB
+        :param from_db: The DB alias to query
+        """
+        from_db = 'default' if from_db is None else from_db
+        sql_query = "SELECT reltuples FROM pg_class WHERE oid = '{}'::regclass"
+        db_cursor = connections[from_db].cursor()
+        with db_cursor as cursor:
+            cursor.execute(sql_query.format(self.model_class._meta.db_table))
+            return int(fetchone_as_namedtuple(cursor).reltuples)
+
 
 class FormReindexAccessor(ReindexAccessor):
 
     def __init__(self, include_attachments=True):
         self.include_attachments = include_attachments
+
+    @property
+    def model_class(self):
+        return XFormInstanceSQL
 
     @property
     def startkey_attribute_name(self):
@@ -443,6 +463,10 @@ class FormAccessorSQL(AbstractFormAccessor):
 
 
 class CaseReindexAccessor(ReindexAccessor):
+    @property
+    def model_class(self):
+        return CommCareCaseSQL
+
     @property
     def startkey_attribute_name(self):
         return 'server_modified_on'
@@ -828,6 +852,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
 
 class LedgerReindexAccessor(ReindexAccessor):
+    @property
+    def model_class(self):
+        return LedgerValue
+
     @property
     def startkey_attribute_name(self):
         return 'last_modified'

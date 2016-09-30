@@ -518,6 +518,20 @@
         "type": "expression"
       },
       {
+        "display_name": "",
+        "transform": {},
+        "datatype": "string",
+        "expression": {
+          "datatype": "string",
+          "type": "property_name",
+          "property_name": "owner_id"
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "owner_id",
+        "type": "expression"
+      },
+      {
         "display_name": null,
         "transform": {},
         "datatype": "integer",
@@ -526,7 +540,7 @@
         "is_nullable": true,
         "column_id": "week",
         "expression": {
-          "property": "opened_on",
+          "property": "date_fin",
           "type": "week_expression"
         }
       },
@@ -539,7 +553,7 @@
         "is_nullable": true,
         "column_id": "year",
         "expression": {
-          "property": "opened_on",
+          "property": "date_fin",
           "type": "year_expression"
         }
       }

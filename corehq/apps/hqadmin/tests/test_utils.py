@@ -1,8 +1,9 @@
-from django.test import TestCase, override_settings
+from django.test import TestCase, override_settings, SimpleTestCase
 from mock import patch
 
+from corehq.util.test_utils import generate_cases
 from ..models import PillowCheckpointSeqStore
-from ..utils import pillow_seq_store, EPSILON
+from ..utils import pillow_seq_store, EPSILON, parse_celery_workers
 
 
 def _get_dummy_pillow():
@@ -79,3 +80,44 @@ class TestPillowCheckpointSeqStore(TestCase):
 
         store = PillowCheckpointSeqStore.get_by_pillow_name('DummyPillowThatDoesNotExist')
         self.assertIsNone(store)
+
+
+class TestParseCeleryWorkers(SimpleTestCase):
+    """
+    Ensures that we parse the hosts returned from flower into
+    workers we expect to be running and workers we don't.
+    """
+
+
+@generate_cases([
+    # Ensures we correctly parse a single regular worker
+    ({'regular_host': True}, (['regular_host'], [])),
+    # Ensures we correctly parse a single timestamped worker
+    ({'main_.20_timestamp': True}, (['main_.20_timestamp'], [])),
+    # Ensures we parse timestamped and regular
+    ({
+        'main_.40_timestamp': True,
+        'regular_host': True,
+    }, (['regular_host', 'main_.40_timestamp'], [])),
+    # Ensures we correctly parse multiple timestamped workers
+    ({
+        'main_.40_timestamp': True,
+        'main_.20_timestamp': True,
+        'main_.30_timestamp': True,
+    }, (['main_.40_timestamp'], ['main_.30_timestamp', 'main_.20_timestamp'])),
+
+    # Ensures we correctly parse multiple timestamped workers
+    ({
+        'main_.40_timestamp': True,
+        'main_.20_timestamp': True,
+        'main_.30_timestamp': True,
+        'secondary_.30_timestamp': True,
+        'secondary_.20_timestamp': True,
+    }, (
+        ['main_.40_timestamp', 'secondary_.30_timestamp'],
+        ['main_.30_timestamp', 'main_.20_timestamp', 'secondary_.20_timestamp'],
+    )),
+
+], TestParseCeleryWorkers)
+def test_parse_celery_workers(self, workers, expected):
+    self.assertEqual(parse_celery_workers(workers), expected)
