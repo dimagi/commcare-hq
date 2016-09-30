@@ -5,7 +5,7 @@
 {% block title %}{% if current_page and section %}{% if current_page.title %}{{ current_page.title }} : {% endif %}{{ section.page_name }} {% else %}{{ report.title }}{% endif %}: Admin Reports{% endblock %}
 
 {% block js %}{{ block.super }}
-    {% if request.use_use_datatables %}
+    {% if request.use_datatables %}
         <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
     {% endif %}
     {% if request.use_jquery_ui %}
