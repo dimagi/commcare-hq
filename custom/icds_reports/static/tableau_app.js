@@ -38,6 +38,9 @@ function setUpInitialTableauParams() {
     var locationKey = 'user_' + tableauOptions.userLocationLevel;
     var params = {
         'view_by': LOCATIONS_MAP[tableauOptions.userLocationLevel],
+        'state': tableauOptions.stateCode,
+        'district': tableauOptions.districtCode,
+        'block': tableauOptions.blockCode,
     };
     params[locationKey] = tableauOptions.userLocation;
     applyParams(workbook, params);
