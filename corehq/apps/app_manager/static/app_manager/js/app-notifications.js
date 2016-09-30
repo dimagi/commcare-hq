@@ -4,7 +4,7 @@ hqDefine('app_manager/js/app-notifications.js', function () {
         return function(msg) {
             var msgObj = JSON.parse(msg);
             // only show notifcations from other users
-            if (msgObj.user_id != userId) {
+            if (msgObj.user_id !== userId) {
                 var $inner;
                 // if nothing in the outer element, add the notification div and populate
                 if (!$element.html()) {
@@ -19,6 +19,6 @@ hqDefine('app_manager/js/app-notifications.js', function () {
             }
         };
 
-    };
+    }
     return {NotifyFunction: NotifyFunction};
 });

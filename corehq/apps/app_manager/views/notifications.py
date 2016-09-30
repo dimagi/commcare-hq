@@ -13,7 +13,9 @@ def notify_form_opened(domain, couch_user, app_id, unique_form_id):
 
 
 def notify_form_changed(domain, couch_user, app_id, unique_form_id):
-    message = _('This form has been updated by {}. Reload the page to see the latest changes.').format(couch_user.username)
+    message = _(
+        'This form has been updated by {}. Reload the page to see the latest changes.'
+    ).format(couch_user.username)
     notify_event(domain, couch_user, app_id, unique_form_id, message)
 
 
@@ -27,7 +29,9 @@ def notify_event(domain, couch_user, app_id, unique_form_id, message):
             'timestamp': json_format_datetime(datetime.datetime.utcnow()),
         }
         message = RedisMessage(json.dumps(message))
-        RedisPublisher(facility=get_facility_for_form(domain, app_id, unique_form_id), broadcast=True).publish_message(message)
+        RedisPublisher(
+            facility=get_facility_for_form(domain, app_id, unique_form_id), broadcast=True
+        ).publish_message(message)
 
 
 def get_facility_for_form(domain, app_id, unique_form_id):
