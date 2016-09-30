@@ -5,11 +5,17 @@ hqDefine('app_manager/js/app-notifications.js', function () {
             // show a notification when the form has been edited
             var msgObj = JSON.parse(msg);
             if (msgObj.user_id != userId) {
-                if ($element.hasClass('hidden')) {
+                var $inner;
+                if (!$element.html()) {
+                    $inner = $('<div />').addClass('alert alert-info');
                     var dismissButton = '<button type="button" class="close" data-dismiss="alert">&times;</button>';
-                    $element.removeClass('hidden').html(dismissButton);
+                    $inner.html(dismissButton);
+                    $element.removeClass('hidden').append($inner);
+                } else {
+                    $inner = $($element.children()[0]);
                 }
-                $element.append(moment(msgObj.timestamp).format('h:mm:ss a') + ': ' + msgObj.text + '<br>');
+                console.log('inner', $inner);
+                $inner.append(moment(msgObj.timestamp).format('h:mm:ss a') + ': ' + msgObj.text + '<br>');
             }
         };
 
