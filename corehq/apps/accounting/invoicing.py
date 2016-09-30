@@ -493,10 +493,13 @@ class UserLineItemFactory(FeatureLineItemFactory):
     @property
     def unit_cost(self):
         non_prorated_unit_cost = super(UserLineItemFactory, self).unit_cost
+        # To ensure that integer division is avoided
+        assert isinstance(non_prorated_unit_cost, Decimal)
+
         if self.is_prorated:
             return Decimal(
                 "%.2f" % round(
-                    1.0 * non_prorated_unit_cost * self.num_prorated_days / self._days_in_billing_period, 2
+                    non_prorated_unit_cost * self.num_prorated_days / self._days_in_billing_period, 2
                 )
             )
         return non_prorated_unit_cost
