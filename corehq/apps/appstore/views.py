@@ -326,7 +326,11 @@ def copy_snapshot(request, snapshot):
         messages.error(request, 'You must agree to our eula to download an app')
         return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
 
-    dom = Domain.get(snapshot)
+    try:
+        dom = Domain.get(snapshot)
+    except ResourceNotFound:
+        dom = Domain.get_by_name(snapshot)
+
     if request.method == "POST" and dom.is_snapshot:
         assert dom.full_applications(include_builds=False), 'Bad attempt to copy project without any apps!'
 
