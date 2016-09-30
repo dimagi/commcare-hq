@@ -117,13 +117,13 @@ def run_case_update_rules_for_domain(domain, now=None):
 
 @task(queue='background_queue', acks_late=True, ignore_result=True)
 def run_case_update_rules_on_save(case):
-    update_case = True
-    if case.xform_ids:
-        last_form = FormAccessors(case.domain).get_form(case.xform_ids[-1])
-        update_case = last_form.xmlns != AUTO_UPDATE_XMLNS
-    if update_case:
-        key = 'case-update-on-save-case-{case}'.format(case=case.case_id)
-        with CriticalSection([key]):
+    key = 'case-update-on-save-case-{case}'.format(case=case.case_id)
+    with CriticalSection([key]):
+        update_case = True
+        if case.xform_ids:
+            last_form = FormAccessors(case.domain).get_form(case.xform_ids[-1])
+            update_case = last_form.xmlns != AUTO_UPDATE_XMLNS
+        if update_case:
             rules = AutomaticUpdateRule.by_domain(case.domain).filter(case_type=case.type)
             now = datetime.utcnow()
             for rule in rules:

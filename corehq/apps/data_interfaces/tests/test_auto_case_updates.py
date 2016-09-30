@@ -5,7 +5,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.data_interfaces.models import (AutomaticUpdateRule,
                                                 AutomaticUpdateRuleCriteria,
-                                                AutomaticUpdateAction)
+                                                AutomaticUpdateAction, AUTO_UPDATE_XMLNS)
 from corehq.apps.data_interfaces.tasks import run_case_update_rules_for_domain
 from datetime import datetime, date
 
@@ -23,6 +23,7 @@ from mock import patch
 from corehq.util.context_managers import drop_connected_signals
 from toggle.shortcuts import update_toggle_cache
 from corehq.toggles import NAMESPACE_DOMAIN, AUTO_CASE_UPDATE_ENHANCEMENTS
+from corehq.apps import hqcase
 
 
 class AutomaticCaseUpdateTest(TestCase):
@@ -474,12 +475,15 @@ class AutomaticCaseUpdateTest(TestCase):
     @run_with_all_backends
     def test_run_on_save(self):
         with _with_case(self.domain, 'test-case-type-3', datetime(2016, 1, 1), case_name='signal') as case:
-            self.assertIsNone(case.get_case_property('after_save'))
+            with patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.apply_actions') as apply:
+                # property is updated after save signal (case update used to force save)
+                update_case(self.domain, case.case_id, {})
+                apply.assert_called_once()
 
-            # property is updated after save signal (case update used to force save)
-            update_case(self.domain, case.case_id, {'saving': 'saved'})
-            updated_case = self.case_db.get_case(case.case_id)
-            self.assertEqual(updated_case.get_case_property('after_save'), 'updated')
+    @run_with_all_backends
+    def test_early_task_exit(self):
+        with _with_case(self.domain, 'test-case-type-3', datetime(2016, 1, 1), case_name='signal') as case:
+            hqcase.utils.update_case(case.domain, case.case_id, case_properties={}, xmlns=AUTO_UPDATE_XMLNS)
 
 
 @contextmanager

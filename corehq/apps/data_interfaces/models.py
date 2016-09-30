@@ -107,7 +107,11 @@ class AutomaticUpdateRule(models.Model):
             while name.startswith('parent/'):
                 name = name[7:]
                 # uses first parent if there are multiple
-                current_case = current_case.get_parent(identifier=DEFAULT_PARENT_IDENTIFIER)[0]
+                parent_cases = current_case.get_parent(identifier=DEFAULT_PARENT_IDENTIFIER)
+                if parent_cases:
+                    current_case = parent_cases[0]
+                else:
+                    return
             cases_to_update[current_case.case_id][name] = value
 
         for action in self.automaticupdateaction_set.all():
