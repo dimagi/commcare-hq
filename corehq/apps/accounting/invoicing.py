@@ -496,7 +496,7 @@ class UserLineItemFactory(FeatureLineItemFactory):
         if self.is_prorated:
             return Decimal(
                 "%.2f" % round(
-                    non_prorated_unit_cost * self.num_prorated_days / self._days_in_billing_period, 2
+                    1.0 * non_prorated_unit_cost * self.num_prorated_days / self._days_in_billing_period, 2
                 )
             )
         return non_prorated_unit_cost
