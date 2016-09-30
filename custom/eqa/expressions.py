@@ -84,6 +84,7 @@ class EQAActionItemSpec(JsonObject):
     type = TypeProperty('cqi_action_item')
     xmlns = StringProperty()
     section = StringProperty()
+    question_id = StringProperty()
 
     def __call__(self, item, context=None):
         xforms_ids = CaseAccessors(item['domain']).get_case_xform_ids(item['_id'])
@@ -95,37 +96,45 @@ class EQAActionItemSpec(JsonObject):
             latest_form = s_forms[-1]
         else:
             latest_form = None
-        path = 'action_plan/%s/action_plan/%s'
+        path_to_action_plan = 'action_plan/%s' % self.section
 
         if latest_form:
-            incorrect_question = latest_form.get_data(path % (self.section, 'incorrect_questions'))
-            responsible = ', '.join(
-                [
-                    item.get_case_property(x.strip()) for x in
-                    latest_form.get_data(path % (self.section, 'action_plan_input/responsible')).split(',')
-                ]
-            )
-            support = ', '.join(
-                [
-                    item.get_case_property(x.strip()) for x in
-                    latest_form.get_data(path % (self.section, 'action_plan_input/support')).split(',')
-                ]
-            )
-            application = Application.get(latest_form.app_id)
-            form = application.get_form_by_xmlns(self.xmlns)
-            question_list = application.get_questions(self.xmlns)
-            questions = {x['value']: x for x in question_list}
-            return {
-                'form_name': form.name['en'],
-                'section': self.section,
-                'timeEnd': latest_form.get_data('meta/timeEnd'),
-                'gap': questions['data/code_to_text/%s' % incorrect_question].label,
-                'intervention_action': latest_form.get_data(path + 'action_plan_input/intervention_action'),
-                'responsible': responsible,
-                'support': support,
-                'deadline': latest_form.get_data(path % (self.section, 'action_plan_input/DEADLINE')),
-                'notes': latest_form.get_data(path % (self.section, 'action_plan_input/notes'))
-            }
+            action_plans = latest_form.get_data(path_to_action_plan)
+            if action_plans:
+                action_plan_for_question = None
+                for action_plan in action_plans:
+                    if action_plan['incorrect_questions'] == self.question_id:
+                        action_plan_for_question = action_plan
+                        break
+                if action_plan_for_question:
+                    incorrect_question = action_plan_for_question.get('incorrect_questions')
+                    responsible = ', '.join(
+                        [
+                            item.get_case_property(x.strip()) for x in
+                            action_plan_for_question.get('action_plan_input', {}).get('responsible', '').split(',')
+                        ]
+                    )
+                    support = ', '.join(
+                        [
+                            item.get_case_property(x.strip()) for x in
+                            action_plan_for_question.get('action_plan_input', {}).get('support', '').split(',')
+                        ]
+                    )
+                    application = Application.get(latest_form.app_id)
+                    form = application.get_form_by_xmlns(self.xmlns)
+                    question_list = application.get_questions(self.xmlns)
+                    questions = {x['value']: x for x in question_list}
+                    return {
+                        'form_name': form.name['en'],
+                        'section': self.section,
+                        'timeEnd': latest_form.get_data('meta/timeEnd'),
+                        'gap': questions['data/code_to_text/%s' % incorrect_question].label,
+                        'intervention_action': action_plan_for_question.get('intervention_action', '---'),
+                        'responsible': responsible,
+                        'support': support,
+                        'deadline': action_plan_for_question.get('DEADLINE', '---'),
+                        'notes': action_plan_for_question.get('notes', '---'),
+                    }
 
 
 def eqa_expression(spec, context):
