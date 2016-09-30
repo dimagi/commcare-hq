@@ -704,33 +704,21 @@ class ReportPreview(BaseDomainView):
             'column_id': c['columnId'],
             'display': c['label'],
             'aggregation': c.get('aggregation') or 'simple',
+            # TODO: It's more complicated than this
         } for c in post_data['columns']]
-        # data_source_config = get_datasource_config_or_404(data_source, self.domain)
         if do_aggregation:
-            aggregation_columns = [c['name'] for c in post_data['columns'] if c['isGroupByColumn']]
+            aggregation_columns = [c['columnId'] for c in post_data['columns'] if c['isGroupByColumn']]
         else:
             aggregation_columns = []
-        tmp_report_config = ReportConfiguration(
-            domain=self.domain,
-            visible=False,  # TODO: Assuming this determines whether it shows up in the list of reports?
+        table = ConfigurableReport.report_config_table(
+            domain=domain,
             config_id=data_source,
-            title='',
+            title='tmp_{}_{}'.format(domain, data_source),
             description='',
             aggregation_columns=aggregation_columns,
             columns=columns,
             report_meta=ReportMeta(created_by_builder=True),
         )
-        tmp_report_config.save()
-
-        view = ConfigurableReport(request=HttpRequest())  # TODO: Is this really the way to go?
-        view._domain = self.domain
-        view._lang = "en"
-        view._report_config_id = tmp_report_config._id
-        table = view.export_table
-        tmp_report_config.delete()
-
-        # headers = table[0][1][0]
-        # preview = [dict(zip(headers, row)) for row in table[0][1][1:]]
         return json_response(table[0][1])
 
 

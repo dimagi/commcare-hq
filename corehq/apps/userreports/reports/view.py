@@ -21,7 +21,7 @@ from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, Http404, HttpResponseBadRequest
+from django.http import HttpRequest, HttpResponse, Http404, HttpResponseBadRequest
 from django.utils.translation import ugettext as _, ugettext_noop
 from braces.views import JSONResponseMixin
 from corehq.apps.reports.dispatcher import (
@@ -524,6 +524,19 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         temp = StringIO()
         export_from_tables(self.export_table, temp, Format.XLS_2007)
         return export_response(temp, Format.XLS_2007, self.title)
+
+    @classmethod
+    def report_config_table(cls, domain, **kwargs):
+        # FIXME: Returning one case of test data, should return two
+        tmp_report_config = ReportConfiguration(domain=domain, **kwargs)
+        tmp_report_config.save()  # TODO: Don't do this
+        view = cls(request=HttpRequest())
+        view._domain = domain
+        view._lang = "en"
+        view._report_config_id = tmp_report_config._id
+        table = view.export_table
+        tmp_report_config.delete()
+        return table
 
 
 # Base class for classes that provide custom rendering for UCRs
