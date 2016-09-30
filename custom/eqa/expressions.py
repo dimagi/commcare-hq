@@ -96,7 +96,7 @@ class EQAActionItemSpec(JsonObject):
             latest_form = s_forms[-1]
         else:
             latest_form = None
-        path_to_action_plan = 'action_plan/%s' % self.section
+        path_to_action_plan = 'action_plan/%s/action_plan' % self.section
 
         if latest_form:
             action_plans = latest_form.get_data(path_to_action_plan)
