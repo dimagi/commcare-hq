@@ -15,8 +15,9 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
+    <script src="{% static 'moment/moment.js' %}"></script>
     <script src="{% static 'requirejs/require.js' %}"></script>
-    {# todo: use a proper require/define package for this #}
+    <script src="{% static 'app_manager/js/app-notifications.js' %}"></script>
     <script src="{% static 'js/ws4redis.js' %}"></script>
 {% endblock %}
 
@@ -120,7 +121,7 @@
 
         {% include 'app_manager/partials/form_designer_requirejs_config.html' with vellum_debug=vellum_debug %}
 
-        require(["jquery", "jquery.vellum"], function ($) {
+        require(["jquery", "jquery.vellum", "moment"], function ($) {
             $(function () {
                 $("#edit").hide();
                 $('#hq-footer').hide();
@@ -128,22 +129,12 @@
                 $('#formdesigner').vellum(VELLUM_OPTIONS);
 
                 {% if notifications_enabled %}
-                function receiveMessage(msg) {
-                    // show a notification when the form has been edited
-                    var userId = '{{ request.couch_user.get_id }}';
-                    var msgObj = JSON.parse(msg);
-                    if (msgObj.user_id != userId) {
-                        // todo: only show notifcation if timestamp is > than page load time to avoid notification
-                        // on initial page load
-                        var dismissButton = '<button type="button" class="close" data-dismiss="alert">&times;</button>';
-                        $('#notify-bar').removeClass('hidden').html(dismissButton + msgObj.text + '<br> - ' + msgObj.timestamp);
-                    }
-                };
-
+                var userId = '{{ request.couch_user.get_id }}';
+                var notifications = hqImport('app_manager/js/app-notifications.js');
                 // initialize redis
                 var ws4redis = WS4Redis({
                     uri: '{{ WEBSOCKET_URI }}{{ notify_facility }}?subscribe-broadcast',
-                    receive_message: receiveMessage,
+                    receive_message: notifications.NotifyFunction(userId, $('#notify-bar')),
                     heartbeat_msg: {{ WS4REDIS_HEARTBEAT }},
                 });
                 {% endif %}
