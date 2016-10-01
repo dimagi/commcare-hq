@@ -1,8 +1,10 @@
+from collections import namedtuple
 import json
 
 from datetime import date
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
+from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.userreports.exceptions import InvalidQueryColumn
 from corehq.apps.userreports.expressions import ExpressionFactory
 
@@ -25,7 +27,7 @@ from sqlagg.columns import (
     SimpleColumn,
     YearColumn,
 )
-from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn, Column
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.sql import get_expanded_column_config, ColumnConfig
 from corehq.apps.userreports.transforms.factory import TransformFactory
@@ -325,6 +327,13 @@ def _add_column_id_if_missing(obj):
         obj['column_id'] = obj.get('alias') or obj['field']
 
 
+class CalculatedColumn(namedtuple('CalculatedColumn', ['header', 'slug'])):
+
+    @property
+    def data_tables_column(self):
+        return DataTablesColumn(self.header, sortable=False, data_slug=self.slug)
+
+
 class ExpressionColumn(BaseReportColumn):
     expression = DefaultProperty(required=True)
 
@@ -332,6 +341,17 @@ class ExpressionColumn(BaseReportColumn):
     @memoized
     def wrapped_expression(self):
         return ExpressionFactory.from_spec(self.expression)
+
+    def get_column_config(self, data_source_config, lang):
+        return ColumnConfig(columns=[
+            CalculatedColumn(
+                header=self.get_header(lang),
+                slug=self.column_id,
+                # todo: are these needed?
+                # format_fn=self.get_format_fn(),
+                # help_text=self.description
+            )
+        ])
 
 
 class ChartSpec(JsonObject):
