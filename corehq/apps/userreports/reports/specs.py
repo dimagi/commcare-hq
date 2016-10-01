@@ -27,7 +27,7 @@ from sqlagg.columns import (
 )
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
 from corehq.apps.userreports.specs import TypeProperty
-from corehq.apps.userreports.sql import get_expanded_column_config, SqlColumnConfig
+from corehq.apps.userreports.sql import get_expanded_column_config, ColumnConfig
 from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.util import localize
 from dimagi.utils.decorators.memoized import memoized
@@ -136,7 +136,7 @@ class FieldColumn(ReportColumn):
                 )
 
     def get_column_config(self, data_source_config, lang):
-        return SqlColumnConfig(columns=[
+        return ColumnConfig(columns=[
             DatabaseColumn(
                 header=self.get_header(lang),
                 agg_column=SQLAGG_COLUMN_MAP[self.aggregation](self.field, alias=self.column_id),
@@ -167,7 +167,7 @@ class LocationColumn(ReportColumn):
                 row[column_name] = '{} ({})'.format(row[column_name], _('Invalid Location'))
 
     def get_column_config(self, data_source_config, lang):
-        return SqlColumnConfig(columns=[
+        return ColumnConfig(columns=[
             DatabaseColumn(
                 header=self.get_header(lang),
                 agg_column=SimpleColumn(self.field, alias=self.column_id),
@@ -204,7 +204,7 @@ class AggregateDateColumn(ReportColumn):
     format = StringProperty(required=False)
 
     def get_column_config(self, data_source_config, lang):
-        return SqlColumnConfig(columns=[
+        return ColumnConfig(columns=[
             AggregateColumn(
                 header=self.get_header(lang),
                 aggregate_fn=lambda year, month: {'year': year, 'month': month},
@@ -249,7 +249,7 @@ class PercentageColumn(ReportColumn):
         # todo: better checks that fields are not expand
         num_config = self.numerator.get_column_config(data_source_config, lang)
         denom_config = self.denominator.get_column_config(data_source_config, lang)
-        return SqlColumnConfig(columns=[
+        return ColumnConfig(columns=[
             AggregateColumn(
                 header=self.get_header(lang),
                 aggregate_fn=lambda n, d: {'num': n, 'denom': d},
