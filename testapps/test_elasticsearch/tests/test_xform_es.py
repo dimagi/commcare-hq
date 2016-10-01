@@ -39,12 +39,12 @@ class XFormESTestCase(SimpleTestCase):
         # have to refresh the index to make sure changes show up
         cls.es.indices.refresh(XFORM_INDEX_INFO.index)
 
-    @classmethod
-    def tearDown(cls):
-        for form in cls.forms:
-            cls.es.delete(XFORM_INDEX_INFO.index, XFORM_INDEX_INFO.type, form.wrapped_form.form_id)
-        cls.es.indices.refresh(XFORM_INDEX_INFO.index)
-        cls.forms = []
+    def tearDown(self):
+        for form in self.forms:
+            self.es.delete(XFORM_INDEX_INFO.index, XFORM_INDEX_INFO.type, form.wrapped_form.form_id)
+        self.es.indices.refresh(XFORM_INDEX_INFO.index)
+        self.forms = []
+        super(XFormESTestCase, self).tearDown()
 
     def test_forms_are_in_index(self):
         for form in self.forms:
