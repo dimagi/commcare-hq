@@ -3,7 +3,7 @@ from collections import OrderedDict
 
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext
-from corehq.apps.userreports.reports.specs import ReportColumn, ExpressionColumn
+from corehq.apps.userreports.reports.specs import ReportColumn, ExpressionColumn, CalculatedColumn
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -68,9 +68,21 @@ class ConfigurableReportSqlDataSource(SqlData):
     def top_level_columns(self):
         """
         This returns a list of BaseReportColumn objects that define the top-level columns
-        in the report.
+        in the report. These top-level columns may resolve to more than one column in the
+        underlying query or report (e.g. percentage columns or expanded columns)
         """
         return self._column_configs.values()
+
+    @property
+    def inner_columns(self):
+        """
+        This returns a list of Column objects that are contained within the top_level_columns
+        above.
+        """
+        return [
+            inner_col for col in self.top_level_columns
+            for inner_col in col.get_column_config(self.config, self.lang).columns
+        ]
 
     @property
     def db_column_configs(self):
@@ -132,7 +144,9 @@ class ConfigurableReportSqlDataSource(SqlData):
 
     @property
     def columns(self):
-        db_columns = [c for sql_conf in self.sql_column_configs for c in sql_conf.columns]
+        # This explicitly only includes columns that resolve to database queries.
+        # The name is a bit confusing but is hard to change due to its dependency in SqlData
+        db_columns = [c for c in self.inner_columns if not isinstance(c, CalculatedColumn)]
         fields = {c.slug for c in db_columns}
 
         return db_columns + [
