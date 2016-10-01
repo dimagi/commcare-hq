@@ -7,6 +7,7 @@
 var FormplayerFrontend = new Marionette.Application();
 
 var showError = hqImport('cloudcare/js/util.js').showError;
+var showHTMLError = hqImport('cloudcare/js/util.js').showHTMLError;
 var showSuccess = hqImport('cloudcare/js/util.js').showSuccess;
 var tfLoading = hqImport('cloudcare/js/util.js').tfLoading;
 var tfLoadingComplete = hqImport('cloudcare/js/util.js').tfLoadingComplete;
@@ -94,8 +95,12 @@ $(document).on("ajaxStart", function () {
     tfLoadingComplete();
 });
 
-FormplayerFrontend.reqres.setHandler('showError', function (errorMessage) {
-    showError(errorMessage, $("#cloudcare-notifications"), 10000);
+FormplayerFrontend.on('showError', function (errorMessage, isHTML) {
+    if (isHTML) {
+        showHTMLError(errorMessage, $("#cloudcare-notifications"), 10000);
+    } else {
+        showError(errorMessage, $("#cloudcare-notifications"), 10000);
+    }
 });
 
 FormplayerFrontend.reqres.setHandler('showSuccess', function(successMessage) {
