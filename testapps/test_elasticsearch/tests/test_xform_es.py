@@ -18,6 +18,7 @@ class XFormESTestCase(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(XFormESTestCase, cls).setUpClass()
         cls.now = datetime.datetime.utcnow()
         cls.forms = []
         with trap_extra_setup(ConnectionError):
@@ -25,6 +26,7 @@ class XFormESTestCase(SimpleTestCase):
             initialize_index_and_mapping(cls.es, XFORM_INDEX_INFO)
 
     def setUp(self):
+        super(XFormESTestCase, self).setUp()
         self.test_id = uuid.uuid4().hex
 
     @classmethod
