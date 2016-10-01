@@ -338,12 +338,12 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
     @property
     def headers(self):
-        return DataTablesHeader(*[col.data_tables_column for col in self.data_source.columns])
+        return DataTablesHeader(*[col.data_tables_column for col in self.data_source.inner_columns])
 
     def get_ajax(self, params):
         try:
             data_source = self.data_source
-            if len(data_source.columns) > 50 and not DISABLE_COLUMN_LIMIT_IN_UCR.enabled(self.domain):
+            if len(data_source.inner_columns) > 50 and not DISABLE_COLUMN_LIMIT_IN_UCR.enabled(self.domain):
                 raise UserReportsError(_("This report has too many columns to be displayed"))
             data_source.set_filter_values(self.filter_values)
 

@@ -82,6 +82,10 @@ class ConfigurableReportDataSource(object):
         return self.data_source.columns
 
     @property
+    def inner_columns(self):
+        return self.data_source.inner_columns
+
+    @property
     def column_warnings(self):
         return self.data_source.column_warnings
 
