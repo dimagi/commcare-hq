@@ -164,7 +164,7 @@ class ConfigurableReportSqlDataSource(SqlData):
 
     @property
     def has_total_row(self):
-        return any(column_config.calculate_total for column_config in self.column_configs)
+        return any(column_config.calculate_total for column_config in self.db_column_configs)
 
     @method_decorator(catch_and_raise_exceptions)
     def get_total_records(self):
