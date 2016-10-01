@@ -1,4 +1,4 @@
-/* globals hqDefine moment message_alert */
+/* globals hqDefine moment alert_user */
 hqDefine('app_manager/js/app-notifications.js', function () {
     function NotifyFunction(userId) {
         return function(msg) {
