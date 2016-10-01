@@ -49,8 +49,8 @@ class ConfigurableReportDataSource(object):
         return self._config
 
     @property
-    def column_configs(self):
-        return self.data_source.column_configs
+    def top_level_columns(self):
+        return self.data_source.top_level_columns
 
     @property
     def filters(self):

@@ -352,12 +352,11 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             echo = int(params.get('sEcho', 1))
             if sort_column and echo != 1:
                 data_source.set_order_by(
-                    [(data_source.column_configs[int(sort_column)].column_id, sort_order.upper())]
+                    [(data_source.top_level_columns[int(sort_column)].column_id, sort_order.upper())]
                 )
 
             datatables_params = DatatablesParams.from_request_dict(params)
             page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
-
             total_records = data_source.get_total_records()
             total_row = data_source.get_total_row() if data_source.has_total_row else None
         except UserReportsError as e:
@@ -446,7 +445,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         raw_rows = list(data.get_data())
         headers = [column.header for column in self.data_source.columns]
 
-        column_id_to_expanded_column_ids = get_expanded_columns(data.column_configs, data.config)
+        column_id_to_expanded_column_ids = get_expanded_columns(data.top_level_columns, data.config)
         column_ids = []
         for column in self.spec.report_columns:
             column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
