@@ -66,6 +66,10 @@ class ConfigurableReportSqlDataSource(SqlData):
 
     @property
     def column_configs(self):
+        """
+        This returns a list of BaseReportColumn objects that define the top-level columns
+        in the report.
+        """
         return self._column_configs.values()
 
     @property
