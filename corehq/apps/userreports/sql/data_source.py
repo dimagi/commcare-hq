@@ -85,12 +85,12 @@ class ConfigurableReportSqlDataSource(SqlData):
         ]
 
     @property
-    def db_column_configs(self):
-        return [col for col in self._column_configs.values() if isinstance(col, ReportColumn)]
+    def top_level_db_columns(self):
+        return [col for col in self.top_level_columns if isinstance(col, ReportColumn)]
 
     @property
-    def computed_column_configs(self):
-        return [col for col in self._column_configs.values() if isinstance(col, ExpressionColumn)]
+    def top_level_computed_columns(self):
+        return [col for col in self.top_level_columns if isinstance(col, ExpressionColumn)]
 
     @property
     def table_name(self):
@@ -156,7 +156,7 @@ class ConfigurableReportSqlDataSource(SqlData):
 
     @property
     def sql_column_configs(self):
-        return [col.get_column_config(self.config, self.lang) for col in self.db_column_configs]
+        return [col.get_column_config(self.config, self.lang) for col in self.top_level_db_columns]
 
     @property
     def column_warnings(self):
@@ -167,10 +167,10 @@ class ConfigurableReportSqlDataSource(SqlData):
     def get_data(self, start=None, limit=None):
         ret = super(ConfigurableReportSqlDataSource, self).get_data(start=start, limit=limit)
 
-        for report_column in self.db_column_configs:
+        for report_column in self.top_level_db_columns:
             report_column.format_data(ret)
 
-        for computed_column in self.computed_column_configs:
+        for computed_column in self.top_level_computed_columns:
             for row in ret:
                 row[computed_column.column_id] = computed_column.wrapped_expression(row)
 
@@ -178,7 +178,7 @@ class ConfigurableReportSqlDataSource(SqlData):
 
     @property
     def has_total_row(self):
-        return any(column_config.calculate_total for column_config in self.db_column_configs)
+        return any(column_config.calculate_total for column_config in self.top_level_db_columns)
 
     @method_decorator(catch_and_raise_exceptions)
     def get_total_records(self):
