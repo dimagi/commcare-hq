@@ -27,7 +27,7 @@ from sqlagg.columns import (
     SimpleColumn,
     YearColumn,
 )
-from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn, Column
+from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.sql import get_expanded_column_config, ColumnConfig
 from corehq.apps.userreports.transforms.factory import TransformFactory
