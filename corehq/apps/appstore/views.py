@@ -327,7 +327,6 @@ def copy_snapshot(request, snapshot):
         return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
 
     dom = Domain.get(snapshot)
-
     if request.method == "POST" and dom.is_snapshot:
         assert dom.full_applications(include_builds=False), 'Bad attempt to copy project without any apps!'
 
