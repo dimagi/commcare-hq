@@ -761,6 +761,7 @@ class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
                 case_type=self.rule_form.cleaned_data['case_type'],
                 active=True,
                 server_modified_boundary=self.rule_form.cleaned_data['server_modified_boundary'],
+                filter_on_server_modified=self.rule_form.cleaned_data['filter_on_server_modified'],
             )
             self.create_criteria(rule)
             self.create_actions(rule)
