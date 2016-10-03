@@ -36,6 +36,20 @@ def update_config(config):
     config.update(dict({get_INFilter_element_bindparam('owner_id', idx): val for idx, val in enumerate(users, 0)}))
 
 
+def users_locations():
+    try:
+        group = Group.get('daa2641cf722f8397207c9041bfe5cb3')
+        users = group.users
+    except ResourceNotFound:
+        users = []
+    location_ids = []
+    for user in users:
+        u = CommCareUser.get(user)
+        location_ids.append(u.location_id)
+    location_ids = set(location_ids)
+    return location_ids
+
+
 class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
     slug = 'site_reporting_rates_report'
     name = 'Site Reporting Rates Report'
@@ -154,13 +168,15 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
             location_type__code='centre-de-sante',
             is_archived=False
         ).order_by('name')
+        user_locations = users_locations()
         for site in locations:
             loc_data = data.get(site.location_id, {})
-            yield [
-                site.name,
-                cell_format(loc_data.get('completude', EMPTY_CELL)),
-                cell_format(loc_data.get('promptitude', EMPTY_CELL)),
-            ]
+            if site.location_id in user_locations:
+                yield [
+                    site.name,
+                    cell_format(loc_data.get('completude', EMPTY_CELL)),
+                    cell_format(loc_data.get('promptitude', EMPTY_CELL)),
+                ]
 
 
 class MalariaReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
@@ -298,32 +314,34 @@ class WeeklyMalaria(MalariaReport):
             location_type__code='region',
             is_archived=False
         ).order_by('name')
+        user_locations = users_locations()
         for reg in locations:
             for dis in reg.children.order_by('name'):
                 for site in dis.children.order_by('name'):
                     row = data.get(site.location_id, {})
-                    yield [
-                        reg.name,
-                        dis.name,
-                        site.name,
-                        row.get('cas_vus_5', EMPTY_CELL),
-                        row.get('cas_suspects_5', EMPTY_CELL),
-                        row.get('tests_realises_5', EMPTY_CELL),
-                        row.get('cas_confirmes_5', EMPTY_CELL),
-                        row.get('cas_vus_5_10', EMPTY_CELL),
-                        row.get('cas_suspects_5_10', EMPTY_CELL),
-                        row.get('tests_realises_5_10', EMPTY_CELL),
-                        row.get('cas_confirmes_5_10', EMPTY_CELL),
-                        row.get('cas_vus_fe', EMPTY_CELL),
-                        row.get('cas_suspects_fe', EMPTY_CELL),
-                        row.get('tests_realises_fe', EMPTY_CELL),
-                        row.get('cas_confirmes_fe', EMPTY_CELL),
-                        row.get('cas_vu_total', EMPTY_CELL),
-                        row.get('cas_suspect_total', EMPTY_CELL),
-                        row.get('tests_realises_total', EMPTY_CELL),
-                        row.get('cas_confirmes_total', EMPTY_CELL),
-                        row.get('div_teasts_cas', EMPTY_CELL)
-                    ]
+                    if site.location_id in user_locations:
+                        yield [
+                            reg.name,
+                            dis.name,
+                            site.name,
+                            row.get('cas_vus_5', EMPTY_CELL),
+                            row.get('cas_suspects_5', EMPTY_CELL),
+                            row.get('tests_realises_5', EMPTY_CELL),
+                            row.get('cas_confirmes_5', EMPTY_CELL),
+                            row.get('cas_vus_5_10', EMPTY_CELL),
+                            row.get('cas_suspects_5_10', EMPTY_CELL),
+                            row.get('tests_realises_5_10', EMPTY_CELL),
+                            row.get('cas_confirmes_5_10', EMPTY_CELL),
+                            row.get('cas_vus_fe', EMPTY_CELL),
+                            row.get('cas_suspects_fe', EMPTY_CELL),
+                            row.get('tests_realises_fe', EMPTY_CELL),
+                            row.get('cas_confirmes_fe', EMPTY_CELL),
+                            row.get('cas_vu_total', EMPTY_CELL),
+                            row.get('cas_suspect_total', EMPTY_CELL),
+                            row.get('tests_realises_total', EMPTY_CELL),
+                            row.get('cas_confirmes_total', EMPTY_CELL),
+                            row.get('div_teasts_cas', EMPTY_CELL)
+                        ]
 
 
 class CumulativeMalaria(MalariaReport):
@@ -467,31 +485,33 @@ class CumulativeMalaria(MalariaReport):
             location_type__code='zone',
             is_archived=False
         ).order_by('name')
+        user_locations = users_locations()
         for zone in locations:
             for reg in zone.children.order_by('name'):
                 for dis in reg.children.order_by('name'):
                     for site in dis.children.order_by('name'):
                         row = data.get(site.location_id, {})
-                        yield [
-                            reg.name,
-                            dis.name,
-                            site.name,
-                            row.get('cas_vus_5', EMPTY_CELL),
-                            row.get('cas_suspects_5', EMPTY_CELL),
-                            row.get('cas_confirmes_5', EMPTY_CELL),
-                            row.get('cas_vus_5_10', EMPTY_CELL),
-                            row.get('cas_suspects_5_10', EMPTY_CELL),
-                            row.get('cas_confirmes_5_10', EMPTY_CELL),
-                            row.get('cas_vus_10', EMPTY_CELL),
-                            row.get('cas_suspects_10', EMPTY_CELL),
-                            row.get('cas_confirmes_10', EMPTY_CELL),
-                            row.get('cas_vus_fe', EMPTY_CELL),
-                            row.get('cas_suspects_fe', EMPTY_CELL),
-                            row.get('cas_confirmes_fe', EMPTY_CELL),
-                            row.get('total_cas', EMPTY_CELL),
-                            row.get('per_cas_5', EMPTY_CELL),
-                            row.get('per_cas_5_10', EMPTY_CELL),
-                            row.get('per_cas_10', EMPTY_CELL),
-                            row.get('per_cas_fa', EMPTY_CELL),
-                            zone.name
-                        ]
+                        if site.location_id in user_locations:
+                            yield [
+                                reg.name,
+                                dis.name,
+                                site.name,
+                                row.get('cas_vus_5', EMPTY_CELL),
+                                row.get('cas_suspects_5', EMPTY_CELL),
+                                row.get('cas_confirmes_5', EMPTY_CELL),
+                                row.get('cas_vus_5_10', EMPTY_CELL),
+                                row.get('cas_suspects_5_10', EMPTY_CELL),
+                                row.get('cas_confirmes_5_10', EMPTY_CELL),
+                                row.get('cas_vus_10', EMPTY_CELL),
+                                row.get('cas_suspects_10', EMPTY_CELL),
+                                row.get('cas_confirmes_10', EMPTY_CELL),
+                                row.get('cas_vus_fe', EMPTY_CELL),
+                                row.get('cas_suspects_fe', EMPTY_CELL),
+                                row.get('cas_confirmes_fe', EMPTY_CELL),
+                                row.get('total_cas', EMPTY_CELL),
+                                row.get('per_cas_5', EMPTY_CELL),
+                                row.get('per_cas_5_10', EMPTY_CELL),
+                                row.get('per_cas_10', EMPTY_CELL),
+                                row.get('per_cas_fa', EMPTY_CELL),
+                                zone.name
+                            ]
