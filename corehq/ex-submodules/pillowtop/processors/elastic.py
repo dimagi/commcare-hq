@@ -36,6 +36,16 @@ class ElasticProcessor(PillowProcessor):
         if doc is None:
             pillow_logging.warning("Unable to get document from change: {}".format(change))
             raise DocumentNotFoundError()  # force a retry
+        if doc and '_rev' in doc and change.metadata.document_rev is not None:
+            if doc['_rev'] != change.metadata.document_rev:
+                pillow_logging.warning(
+                    u"Mismatched revs for {}: Cloudant rev {} vs. Changes feed rev {}".format(
+                        change.id,
+                        doc['_rev'],
+                        change.metadata.document_rev,
+                    )
+                )
+                raise DocumentNotFoundError(u'Mismatched revs')
 
         if self.doc_filter_fn and self.doc_filter_fn(doc):
             return
