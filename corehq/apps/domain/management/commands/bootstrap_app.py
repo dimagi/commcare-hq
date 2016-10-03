@@ -2,7 +2,6 @@ from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module
 from corehq.util.view_utils import reverse
 
@@ -37,7 +36,7 @@ class Command(BaseCommand):
 
     def create_two_module_app(self, domain_name, app_name):
 
-        app = Application.new_app(domain_name, app_name, application_version=APP_V2)
+        app = Application.new_app(domain_name, app_name)
         app.add_module(Module.new_module('Module 1', None))
         app.add_module(Module.new_module('Module 2', None))
 

@@ -865,8 +865,7 @@ class FormBase(DocumentSchema):
             form.strip_vellum_ns_attributes()
             try:
                 if form.xml is not None:
-                    validate_xform(etree.tostring(form.xml),
-                                   version=self.get_app().application_version)
+                    validate_xform(etree.tostring(form.xml))
             except XFormValidationError as e:
                 validation_dict = {
                     "fatal_error": e.fatal_error,
@@ -1370,30 +1369,24 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         return '. '.join(messages)
 
     def active_actions(self):
-        if self.get_app().application_version == APP_V1:
+        self.get_app().assert_app_v2()
+        if self.requires == 'none':
             action_types = (
-                'open_case', 'update_case', 'close_case',
-                'open_referral', 'update_referral', 'close_referral',
-                'case_preload', 'referral_preload'
+                'open_case', 'update_case', 'close_case', 'subcases',
+                'usercase_update', 'usercase_preload',
+            )
+        elif self.requires == 'case':
+            action_types = (
+                'update_case', 'close_case', 'case_preload', 'subcases',
+                'usercase_update', 'usercase_preload', 'load_from_form',
             )
         else:
-            if self.requires == 'none':
-                action_types = (
-                    'open_case', 'update_case', 'close_case', 'subcases',
-                    'usercase_update', 'usercase_preload',
-                )
-            elif self.requires == 'case':
-                action_types = (
-                    'update_case', 'close_case', 'case_preload', 'subcases',
-                    'usercase_update', 'usercase_preload', 'load_from_form',
-                )
-            else:
-                # this is left around for legacy migrated apps
-                action_types = (
-                    'open_case', 'update_case', 'close_case',
-                    'case_preload', 'subcases',
-                    'usercase_update', 'usercase_preload',
-                )
+            # this is left around for legacy migrated apps
+            action_types = (
+                'open_case', 'update_case', 'close_case',
+                'case_preload', 'subcases',
+                'usercase_update', 'usercase_preload',
+            )
         return self._get_active_actions(action_types)
 
     def active_non_preloader_actions(self):
@@ -2168,6 +2161,9 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     def uses_usercase(self):
         return False
 
+    def add_insert_form(self, from_module, form, index=None, with_source=False):
+        raise IncompatibleFormTypeException()
+
 
 class ModuleDetailsMixin():
 
@@ -2310,6 +2306,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     task_list = SchemaProperty(CaseList)
     parent_select = SchemaProperty(ParentSelect)
     search_config = SchemaProperty(CaseSearch)
+    display_style = StringProperty(default='list')
 
     @classmethod
     def wrap(cls, data):
@@ -2418,6 +2415,8 @@ class Module(ModuleBase, ModuleDetailsMixin):
         """
         return any(form.uses_usercase() for form in self.get_forms())
 
+    def grid_display_style(self):
+        return self.display_style == 'grid'
 
 class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
     form_type = 'advanced_form'
@@ -2974,7 +2973,7 @@ class AdvancedModule(ModuleBase):
         else:
             raise IncompatibleFormTypeException()
 
-        if index:
+        if index is not None:
             self.forms.insert(index, new_form)
         else:
             self.forms.append(new_form)
@@ -3417,7 +3416,7 @@ class CareplanModule(ModuleBase):
 
     def add_insert_form(self, from_module, form, index=None, with_source=False):
         if isinstance(form, CareplanForm):
-            if index:
+            if index is not None:
                 self.forms.insert(index, form)
             else:
                 self.forms.append(form)
@@ -4363,9 +4362,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     # a=Alphanumeric, n=Numeric, x=Neither (not allowed)
     admin_password_charset = StringProperty(choices=['a', 'n', 'x'], default='n')
 
-    # This is here instead of in Application because it needs to be available in stub representation
-    application_version = StringProperty(default=APP_V2, choices=[APP_V1, APP_V2], required=False)
-
     langs = StringListProperty()
 
     secure_submissions = BooleanProperty(default=False)
@@ -4439,8 +4435,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 should_save = True
             del data['build_langs']
 
-
-        if data.has_key('original_doc'):
+        if 'original_doc' in data:
             data['copy_history'] = [data.pop('original_doc')]
             should_save = True
 
@@ -4448,7 +4443,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
         self = super(ApplicationBase, cls).wrap(data)
         if not self.build_spec or self.build_spec.is_null():
-            self.build_spec = get_default_build_spec(self.application_version)
+            self.build_spec = get_default_build_spec()
 
         if should_save:
             self.save()
@@ -5000,6 +4995,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     auto_gps_capture = BooleanProperty(default=False)
     created_from_template = StringProperty()
     use_grid_menus = BooleanProperty(default=False)
+    grid_form_menus = StringProperty(default='none',
+                                     choices=['none', 'all', 'some'])
+
+    # legacy property; kept around to be able to identify (deprecated) v1 apps
+    application_version = StringProperty(default=APP_V2, choices=[APP_V1, APP_V2], required=False)
+
+    def assert_app_v2(self):
+        assert self.application_version == APP_V2
 
     @property
     @memoized
@@ -5256,15 +5259,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         self.put_attachment(value, 'custom_suite.xml')
 
     def create_suite(self, build_profile_id=None):
-        if self.application_version == APP_V1:
-            template='app_manager/suite-%s.xml' % self.application_version
-            langs = self.get_build_langs(build_profile_id)
-            return render_to_string(template, {
-                'app': self,
-                'langs': ["default"] + langs
-            })
-        else:
-            return SuiteGenerator(self, build_profile_id).generate_suite()
+        self.assert_app_v2()
+        return SuiteGenerator(self, build_profile_id).generate_suite()
 
     def create_media_suite(self, build_profile_id=None):
         return MediaSuiteGenerator(self, build_profile_id).generate_suite()
@@ -5346,9 +5342,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, unique_form_id))
 
     @classmethod
-    def new_app(cls, domain, name, application_version, lang="en"):
+    def new_app(cls, domain, name, lang="en"):
         app = cls(domain=domain, modules=[], name=name, langs=[lang],
-                  application_version=application_version, vellum_case_management=True)
+                  vellum_case_management=True)
         return app
 
     def add_module(self, module):
@@ -5466,6 +5462,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def _copy_form(self, from_module, form, to_module, *args, **kwargs):
         if not form.source:
             raise BlankXFormError()
+
+        if from_module['case_type'] != to_module['case_type']:
+            raise ConflictingCaseTypeError()
+
         copy_source = deepcopy(form.to_json())
         if 'unique_id' in copy_source:
             del copy_source['unique_id']
@@ -5477,9 +5477,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         copy_form = to_module.add_insert_form(from_module, FormBase.wrap(copy_source))
         save_xform(self, copy_form, form.source)
-
-        if from_module['case_type'] != to_module['case_type']:
-            raise ConflictingCaseTypeError()
 
     @cached_property
     def has_case_management(self):
@@ -5694,6 +5691,17 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return {t for m in self.get_modules()
                 if m.case_type == case_type
                 for t in m.get_subcase_types()}
+
+    @memoized
+    def grid_display_for_some_modules(self):
+        return self.grid_menu_toggle_enabled() and self.grid_form_menus == 'some'
+
+    @memoized
+    def grid_display_for_all_modules(self):
+        return self.grid_menu_toggle_enabled() and self.grid_form_menus == 'all'
+
+    def grid_menu_toggle_enabled(self):
+        return toggles.GRID_MENUS.enabled(self.domain)
 
 
 class RemoteApp(ApplicationBase):

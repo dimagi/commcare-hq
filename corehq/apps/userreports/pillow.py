@@ -8,7 +8,7 @@ from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvi
 from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError
 from corehq.apps.userreports.sql import metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
-from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.apps.userreports.util import get_indicator_adapter, get_backend_id
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
 from fluff.signals import get_migration_context, get_tables_to_rebuild, reformat_alembic_diffs
@@ -55,8 +55,9 @@ class ConfigurableReportTableManagerMixin(object):
         self.last_bootstrapped = datetime.utcnow()
 
     def rebuild_tables_if_necessary(self):
-        self._rebuild_sql_tables(filter(lambda a: a.config.backend_id == UCR_SQL_BACKEND, self.table_adapters))
-        self._rebuild_es_tables(filter(lambda a: a.config.backend_id == UCR_ES_BACKEND, self.table_adapters))
+        self._rebuild_sql_tables(
+            filter(lambda a: get_backend_id(a.config) == UCR_SQL_BACKEND, self.table_adapters))
+        self._rebuild_es_tables(filter(lambda a: get_backend_id(a.config) == UCR_ES_BACKEND, self.table_adapters))
 
     def _rebuild_sql_tables(self, adapters):
         tables_by_engine = defaultdict(dict)
@@ -86,8 +87,8 @@ class ConfigurableReportTableManagerMixin(object):
                     self.rebuild_table(sql_adapter)
 
     def _rebuild_es_tables(self, adapters):
-        # TODO rebuild ES tables if necessary
-        pass
+        for adapter in adapters:
+            adapter.rebuild_table_if_necessary()
 
     def rebuild_table(self, adapter):
         config = adapter.config

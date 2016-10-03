@@ -16,6 +16,7 @@ from corehq.apps.export.models import (
     CaseExportDataSchema,
     PARENT_CASE_TABLE,
 )
+from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
 from corehq.apps.export.const import PROPERTY_TAG_UPDATE, DATA_SCHEMA_VERSION
 
 
@@ -224,7 +225,7 @@ class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
         group_schema = schema.group_schemas[0]
 
         update_items = filter(lambda item: item.tag == PROPERTY_TAG_UPDATE, group_schema.items)
-        self.assertEqual(len(update_items), 2)
+        self.assertEqual(len(update_items), 2 + len(KNOWN_CASE_PROPERTIES))
 
     def test_get_app_build_ids_to_process(self):
         from corehq.apps.app_manager.dbaccessors import AppBuildVersion
@@ -393,7 +394,7 @@ class TestMergingCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(group_schema2.last_occurrences[app_id], 2)
         self.assertEqual(
             len(group_schema2.items),
-            len(case_property_mapping['candy'])
+            len(case_property_mapping['candy']) + len(KNOWN_CASE_PROPERTIES),
         )
 
 

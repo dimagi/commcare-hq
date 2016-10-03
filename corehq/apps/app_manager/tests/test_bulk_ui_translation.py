@@ -1,6 +1,5 @@
 from django.test import SimpleTestCase
 from StringIO import StringIO
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.views.translations import process_ui_translation_upload,\
     get_default_translations_for_download
@@ -11,7 +10,7 @@ class BulkUiTranslation(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.app = Application.new_app("test-domain", "Test App", application_version=APP_V2)
+        cls.app = Application.new_app("test-domain", "Test App")
         cls.app.langs = ["en", "fra"]
 
     def _build_translation_download_file(self, headers, data=None):

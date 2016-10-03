@@ -60,7 +60,6 @@ from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN
 from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
-from corehq.apps.reports.util import is_mobile_worker_with_report_access
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
@@ -144,10 +143,10 @@ def redirect_to_default(req, domain=None):
         elif 1 == len(domains):
             if domains[0]:
                 domain = domains[0].name
+                couch_user = req.couch_user
 
-                if (req.couch_user.is_commcare_user()
-                    and not is_mobile_worker_with_report_access(
-                        req.couch_user, domain)):
+                if (couch_user.is_commcare_user() and
+                        couch_user.can_view_some_reports(domain)):
                     url = reverse("cloudcare_main", args=[domain, ""])
                 else:
                     from corehq.apps.dashboard.views import dashboard_default
@@ -229,6 +228,10 @@ def server_up(req):
         "redis": {
             "always_check": True,
             "check_func": checks.check_redis,
+        },
+        "formplayer": {
+            "always_check": True,
+            "check_func": checks.check_formplayer
         },
     }
 

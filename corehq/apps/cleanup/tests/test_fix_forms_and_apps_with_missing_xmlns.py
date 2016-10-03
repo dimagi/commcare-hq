@@ -8,7 +8,6 @@ from elasticsearch import ConnectionError
 from testil import tempdir
 
 from casexml.apps.case.tests.util import delete_all_xforms
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.util import TestXmlMixin, delete_all_apps
 from corehq.apps.app_manager.util import get_correct_app_class
@@ -17,7 +16,7 @@ from corehq.apps.cleanup.management.commands.fix_forms_and_apps_with_missing_xml
     set_xmlns_on_form,
 )
 from corehq.apps.cleanup.tasks import fix_xforms_with_missing_xmlns
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.xform import transform_xform_for_elasticsearch
@@ -63,7 +62,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
         xmlns = generate_random_xmlns()
         form_name = "Untitled Form"
 
-        app = Application.new_app(DOMAIN, 'Normal App', APP_V2)
+        app = Application.new_app(DOMAIN, 'Normal App')
         module = app.add_module(Module.new_module('New Module', lang='en'))
         form_source = self.get_xml('form_template').format(xmlns=xmlns, name=form_name)
         form = module.new_form(form_name, "en", form_source)
@@ -83,7 +82,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
         good_form_name = "Untitled Form"
         bad_form_name = "Bad Form"
 
-        app = Application.new_app(DOMAIN, 'Normal App', APP_V2)
+        app = Application.new_app(DOMAIN, 'Normal App')
         module = app.add_module(Module.new_module('New Module', lang='en'))
         good_form_source = self.get_xml('form_template').format(xmlns=xmlns, name=good_form_name)
         good_form = module.new_form(good_form_name, "en", good_form_source)
@@ -112,7 +111,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
         """
         form_name = "Untitled Form"
 
-        app = Application.new_app(DOMAIN, 'Normal App', APP_V2)
+        app = Application.new_app(DOMAIN, 'Normal App')
         module = app.add_module(Module.new_module('New Module', lang='en'))
         form_source = self.get_xml('form_template').format(
             xmlns="undefined", name=form_name
@@ -144,7 +143,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
         """
         form_name = "Untitled Form"
 
-        app = Application.new_app(DOMAIN, 'Normal App', APP_V2)
+        app = Application.new_app(DOMAIN, 'Normal App')
         module = app.add_module(Module.new_module('New Module', lang='en'))
         form_source = self.get_xml('form_template').format(
             xmlns="undefined", name=form_name

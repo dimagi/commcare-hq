@@ -335,8 +335,8 @@ class StockState(models.Model):
     daily_consumption = models.DecimalField(max_digits=20, decimal_places=5, null=True)
     last_modified_date = models.DateTimeField()
     last_modified_form_id = models.CharField(max_length=100, null=True)
-    sql_product = models.ForeignKey(SQLProduct)
-    sql_location = models.ForeignKey(SQLLocation, null=True)
+    sql_product = models.ForeignKey(SQLProduct, on_delete=models.CASCADE)
+    sql_location = models.ForeignKey(SQLLocation, null=True, on_delete=models.CASCADE)
 
     # override default model manager to only include unarchived data
     objects = ActiveManager()

@@ -13,6 +13,7 @@ import os
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.views import secure_post
+from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
 
 
 class FakeFile(object):
@@ -39,7 +40,7 @@ class _AuthTest(TestCase):
         except CommCareUser.Inconsistent:
             pass
 
-        self.app = Application.new_app(self.domain, 'My Crazy App', '2.0')
+        self.app = Application.new_app(self.domain, 'My Crazy App')
         self.app.save()
 
         self.url = reverse(secure_post, args=[self.domain, self.app.get_id])
@@ -142,7 +143,7 @@ class _AuthTest(TestCase):
             file_path=self.bare_form,
             client=client,
             authtype='digest',
-            submit_mode='demo',
+            submit_mode=DEMO_SUBMIT_MODE,
             expected_response=ignored_response
         )
 
@@ -150,7 +151,7 @@ class _AuthTest(TestCase):
         self._test_post(
             file_path=self.form_with_demo_case,
             authtype='noauth',
-            submit_mode='demo',
+            submit_mode=DEMO_SUBMIT_MODE,
             expected_response=accepted_response
         )
 
@@ -186,6 +187,16 @@ class _AuthTest(TestCase):
             file_path=self.bare_form,
             authtype='noauth',
             expected_status=403,
+        )
+
+    @run_with_all_backends
+    def test_noauth_demomode(self):
+        self._test_post(
+            file_path=self.bare_form,
+            authtype='noauth',
+            expected_status=201,
+            submit_mode=DEMO_SUBMIT_MODE,
+            expected_response=SubmissionPost.submission_ignored_response().content,
         )
 
     @run_with_all_backends
@@ -236,7 +247,6 @@ class AuthTest(_AuthTest):
     def setUp(self):
         super(AuthTest, self).setUp()
         super(AuthTest, self).set_up_auth_test()
-
 
 
 class InsecureAuthTest(_AuthTest):

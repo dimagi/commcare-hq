@@ -36,6 +36,17 @@ class StaticToggle(object):
     def enabled(self, item, **kwargs):
         return any([toggle_enabled(self.slug, item, namespace=n, **kwargs) for n in self.namespaces])
 
+    def enabled_for_request(self, request):
+        return (
+            None in self.namespaces
+            and hasattr(request, 'user')
+            and toggle_enabled(self.slug, request.user.username, None)
+        ) or (
+            NAMESPACE_DOMAIN in self.namespaces
+            and hasattr(request, 'domain')
+            and toggle_enabled(self.slug, request.domain, NAMESPACE_DOMAIN)
+        )
+
     def set(self, item, enabled, namespace=None):
         set_toggle(self.slug, item, enabled, namespace)
 
@@ -127,10 +138,7 @@ def any_toggle_enabled(*toggles):
         @wraps(view_func)
         def wrapped_view(request, *args, **kwargs):
             for t in toggles:
-                if (
-                    (hasattr(request, 'user') and t.enabled(request.user.username))
-                    or (hasattr(request, 'domain') and t.enabled(request.domain))
-                ):
+                if t.enabled_for_request(request):
                     return view_func(request, *args, **kwargs)
             raise Http404()
         return wrapped_view
@@ -544,6 +552,13 @@ API_THROTTLE_WHITELIST = StaticToggle(
     namespaces=[NAMESPACE_USER],
 )
 
+API_BLACKLIST = StaticToggle(
+    'API_BLACKLIST',
+    ("Blacklist API access to a user or domain that spams us"),
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
 
 def _commtrackify(domain_name, toggle_is_enabled):
     from corehq.apps.domain.models import Domain
@@ -621,9 +636,9 @@ ICDS_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-ENIKSHAY_INTEGRATIONS = StaticToggle(
-    'enikshay_integrations',
-    'Enable access to eNikshay external integrations',
+NINETYNINE_DOTS = StaticToggle(
+    '99dots_integration',
+    'Enable access to 99DOTS',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
@@ -726,10 +741,10 @@ ABT_REMINDER_RECIPIENT = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-AUTO_CASE_UPDATES = StaticToggle(
+AUTO_CASE_UPDATE_ENHANCEMENTS = StaticToggle(
     'auto_case_updates',
-    'Ability to perform automatic case updates without closing the case.',
-    TAG_ONE_OFF,
+    'Enable enhancements to the Auto Case Update feature.',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
 
@@ -794,8 +809,8 @@ TF_USES_SQLITE_BACKEND = PredictablyRandomToggle(
     'Use a SQLite backend for Touchforms',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    0.1,
-    always_disabled=['hsph-betterbirth'],
+    0.8,
+    always_disabled=['hsph-betterbirth', 'iquitos'],
 )
 
 

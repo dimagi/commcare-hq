@@ -1,4 +1,4 @@
-/*global Marionette, Backbone, WebFormSession, Util, CodeMirror */
+/*global Marionette, Backbone, WebFormSession, Util */
 
 /**
  * The primary Marionette application managing menu navigation and launching form entry
@@ -7,6 +7,7 @@
 var FormplayerFrontend = new Marionette.Application();
 
 var showError = hqImport('cloudcare/js/util.js').showError;
+var showHTMLError = hqImport('cloudcare/js/util.js').showHTMLError;
 var showSuccess = hqImport('cloudcare/js/util.js').showSuccess;
 var tfLoading = hqImport('cloudcare/js/util.js').tfLoading;
 var tfLoadingComplete = hqImport('cloudcare/js/util.js').tfLoadingComplete;
@@ -19,6 +20,7 @@ FormplayerFrontend.on("before:start", function () {
         regions: {
             main: "#menu-region",
             breadcrumb: "#breadcrumb-region",
+            persistentCaseTile: "#persistent-case-tile",
             phoneModeNavigation: '#phone-mode-navigation',
         },
     });
@@ -62,6 +64,14 @@ FormplayerFrontend.reqres.setHandler('resourceMap', function (resource_path, app
     }
 });
 
+FormplayerFrontend.reqres.setHandler('gridPolyfillPath', function(path) {
+    if (path) {
+        FormplayerFrontend.gridPolyfillPath = path;
+    } else {
+        return FormplayerFrontend.gridPolyfillPath;
+    }
+});
+
 FormplayerFrontend.reqres.setHandler('currentUser', function () {
     if (!FormplayerFrontend.currentUser) {
         FormplayerFrontend.currentUser = new FormplayerFrontend.Entities.UserModel();
@@ -77,16 +87,20 @@ FormplayerFrontend.reqres.setHandler('clearMenu', function () {
     $('#menu-region').html("");
 });
 
-$(document).bind("ajaxStart", function () {
+$(document).on("ajaxStart", function () {
     $(".formplayer-request").addClass('formplayer-requester-disabled');
     tfLoading();
-}).bind("ajaxStop", function () {
+}).on("ajaxStop", function () {
     $(".formplayer-request").removeClass('formplayer-requester-disabled');
     tfLoadingComplete();
 });
 
-FormplayerFrontend.reqres.setHandler('showError', function (errorMessage) {
-    showError(errorMessage, $("#cloudcare-notifications"), 10000);
+FormplayerFrontend.on('showError', function (errorMessage, isHTML) {
+    if (isHTML) {
+        showHTMLError(errorMessage, $("#cloudcare-notifications"), 10000);
+    } else {
+        showError(errorMessage, $("#cloudcare-notifications"), 10000);
+    }
 });
 
 FormplayerFrontend.reqres.setHandler('showSuccess', function(successMessage) {
@@ -109,6 +123,7 @@ FormplayerFrontend.on('startForm', function (data) {
     var user = FormplayerFrontend.request('currentUser');
     data.xform_url = user.formplayer_url;
     data.domain = user.domain;
+    data.username = user.username;
     data.formplayerEnabled = true;
     data.onerror = function (resp) {
         showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
@@ -135,9 +150,7 @@ FormplayerFrontend.on('startForm', function (data) {
         }
     };
     data.formplayerEnabled = true;
-    data.answerCallback = function(sessionId) {
-        FormplayerFrontend.trigger('debugger.formXML', sessionId);
-    };
+    data.debuggerEnabled = user.debuggerEnabled;
     data.resourceMap = function(resource_path) {
         var urlObject = Util.currentUrlToObject();
         var appId = urlObject.appId;
@@ -145,39 +158,6 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     var sess = new WebFormSession(data);
     sess.renderFormXml(data, $('#webforms'));
-});
-
-FormplayerFrontend.on('debugger.formXML', function(sessionId) {
-    var user = FormplayerFrontend.request('currentUser');
-    var success = function(data) {
-        var $instanceTab = $('#debugger-xml-instance-tab'),
-            codeMirror;
-
-        codeMirror = CodeMirror(function(el) {
-            $('#xml-viewer-pretty').html(el);
-        }, {
-            value: data.output,
-            mode: 'xml',
-            viewportMargin: Infinity,
-            readOnly: true,
-            lineNumbers: true,
-        });
-
-        $instanceTab.off();
-        $instanceTab.on('shown.bs.tab', function() {
-            codeMirror.refresh();
-        });
-    };
-    var options = {
-        url: user.formplayer_url + '/get-instance',
-        data: JSON.stringify({
-            'session-id': sessionId,
-        }),
-        success: success,
-    };
-    Util.setCrossDomainAjaxOptions(options);
-
-    $.ajax(options);
 });
 
 FormplayerFrontend.on("start", function (options) {
@@ -188,6 +168,8 @@ FormplayerFrontend.on("start", function (options) {
     user.apps = options.apps;
     user.domain = options.domain;
     user.formplayer_url = options.formplayer_url;
+    user.debuggerEnabled = options.debuggerEnabled;
+    FormplayerFrontend.request('gridPolyfillPath', options.gridPolyfillPath);
     if (Backbone.history) {
         Backbone.history.start();
         // will be the same for every domain. TODO: get domain/username/pass from django
@@ -195,12 +177,24 @@ FormplayerFrontend.on("start", function (options) {
             if (options.phoneMode) {
                 appId = options.apps[0]['_id'];
 
+                FormplayerFrontend.trigger('setAppDisplayProperties', options.apps[0]);
                 FormplayerFrontend.trigger("app:singleApp", appId);
             } else {
                 FormplayerFrontend.trigger("apps:list", options.apps);
             }
         }
     }
+});
+
+FormplayerFrontend.on('setAppDisplayProperties', function(app) {
+    FormplayerFrontend.DisplayProperties = app.profile.properties;
+    if (Object.freeze) {
+        Object.freeze(FormplayerFrontend.DisplayProperties);
+    }
+});
+
+FormplayerFrontend.reqres.setHandler('getAppDisplayProperties', function() {
+    return FormplayerFrontend.DisplayProperties || {};
 });
 
 FormplayerFrontend.on("sync", function () {
@@ -241,7 +235,7 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
             data: JSON.stringify({
                 app_id: appId,
                 domain: user.domain,
-                username: user.username.split('@')[0],
+                username: user.username,
             }),
         };
     Util.setCrossDomainAjaxOptions(options);

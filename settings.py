@@ -56,6 +56,7 @@ LANGUAGE_CODE = 'en-us'
 
 LANGUAGES = (
     ('en', 'English'),
+    ('es', 'Spanish'),
     ('fra', 'French'),  # we need this alias
     ('hin', 'Hindi'),
     ('sw', 'Swahili'),
@@ -139,9 +140,9 @@ CSRF_SOFT_MODE = True
 
 MIDDLEWARE_CLASSES = [
     'corehq.middleware.NoCacheMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -388,6 +389,8 @@ HQ_APPS = (
     'custom.common',
 
     'custom.icds_reports',
+    'custom.enikshay.integrations.ninetyninedots',
+    'custom.pnlppgi'
 )
 
 # DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
@@ -506,7 +509,7 @@ INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
 INVOICING_CONTACT_EMAIL = 'billing-support@dimagi.com'
 MASTER_LIST_EMAIL = 'master-list@dimagi.com'
-REPORT_BUILDER_ADD_ON_EMAIL = 'rhartford' + '@' + 'dimagi.com'
+REPORT_BUILDER_ADD_ON_EMAIL = 'sales' + '@' + 'dimagi.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@dimagi.com'
 CONTACT_EMAIL = 'info@dimagi.com'
 BOOKKEEPER_CONTACT_EMAILS = []
@@ -591,6 +594,10 @@ CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
 # It's set to the main queue here and can be overridden to put it
 # on its own queue.
 CELERY_REPEAT_RECORD_QUEUE = CELERY_MAIN_QUEUE
+
+# Will cause a celery task to raise a SoftTimeLimitExceeded exception if
+# time limit is exceeded.
+CELERYD_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
 
 # websockets config
 WEBSOCKET_URL = '/ws/'
@@ -765,6 +772,7 @@ LOCAL_APPS = ()
 LOCAL_COUCHDB_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
 LOCAL_PILLOWTOPS = {}
+LOCAL_REPEATERS = ()
 
 # Prelogin site
 ENABLE_PRELOGIN_SITE = False
@@ -895,6 +903,7 @@ KAFKA_URL = 'localhost:9092'
 
 MOBILE_INTEGRATION_TEST_TOKEN = None
 
+OVERRIDE_UCR_BACKEND = None
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1110,6 +1119,16 @@ LOGGING = {
         'export_migration': {
             'handlers': ['export_migration'],
             'level': 'INFO',
+        },
+        'boto3': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propogate': True
+        },
+        'botocore': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propogate': True
         }
     }
 }
@@ -1579,6 +1598,20 @@ PILLOWTOPS = {
     ]
 }
 
+BASE_REPEATERS = (
+    'corehq.apps.repeaters.models.FormRepeater',
+    'corehq.apps.repeaters.models.CaseRepeater',
+    'corehq.apps.repeaters.models.ShortFormRepeater',
+    'corehq.apps.repeaters.models.AppStructureRepeater',
+)
+
+CUSTOM_REPEATERS = (
+    'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsRegisterPatientRepeater',
+    'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsUpdatePatientRepeater',
+)
+
+REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + CUSTOM_REPEATERS
+
 
 STATIC_UCR_REPORTS = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'deidentified_va_report.json'),
@@ -1647,7 +1680,10 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'sputum_conversion.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'treatment_outcome.json')
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'treatment_outcome.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_hiv.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'lab_monthly_summary.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_lab_register.json')
 ]
 
 
@@ -1687,7 +1723,9 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
 
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json')
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json'),
+    os.path.join('custom', 'pnlppgi', 'resources', 'site_reporting_rates.json'),
+    os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json')
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
@@ -1745,11 +1783,15 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('location_type_name', 'corehq.apps.locations.ucr_expressions.location_type_name'),
     ('location_parent_id', 'corehq.apps.locations.ucr_expressions.location_parent_id'),
     ('cvsu_expression', 'custom.apps.cvsu.expressions.cvsu_expression'),
-    ('eqa_expression', 'custom.eqa.expressions.eqa_expression')
+    ('eqa_expression', 'custom.eqa.expressions.eqa_expression'),
+    ('cqi_action_item', 'custom.eqa.expressions.cqi_action_item'),
+    ('year_expression', 'custom.pnlppgi.expressions.year_expression'),
+    ('week_expression', 'custom.pnlppgi.expressions.week_expression')
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
     ('mvp.ucr.reports.expressions.CUSTOM_UCR_EXPRESSIONS'),
+    ('custom.icds_reports.ucr.expressions.CUSTOM_UCR_EXPRESSIONS'),
 ]
 
 CUSTOM_MODULES = [
@@ -1765,7 +1807,6 @@ CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
-# mapping of domains to modules for those that aren't identical
 # a DOMAIN_MODULE_CONFIG doc present in your couchdb can override individual
 # items.
 DOMAIN_MODULE_MAP = {
@@ -1792,6 +1833,7 @@ DOMAIN_MODULE_MAP = {
     'mvp-koraro': 'mvp',
     'mvp-pampaida': 'mvp',
     'opm': 'custom.opm',
+    'pact': 'pact',
     'project': 'custom.apps.care_benin',
 
     'ipm-senegal': 'custom.intrahealth',
@@ -1810,7 +1852,8 @@ DOMAIN_MODULE_MAP = {
     'pathways-tanzania': 'custom.care_pathways',
     'care-macf-malawi': 'custom.care_pathways',
     'care-macf-bangladesh': 'custom.care_pathways',
-    'care-macf-ghana': 'custom.care_pathways'
+    'care-macf-ghana': 'custom.care_pathways',
+    'pnlppgi': 'custom.pnlppgi'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

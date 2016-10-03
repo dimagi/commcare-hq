@@ -8,7 +8,7 @@ from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators, \
     get_sample_report_config, doc_to_change
-from corehq.apps.userreports.sql import IndicatorSqlAdapter
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db import connections
 from corehq.sql_db.tests.utils import temporary_database
 
@@ -46,8 +46,8 @@ class UCRMultiDBTest(TestCase):
         cls.db_context = temporary_database(cls.db2_name)
         cls.db_context.__enter__()
 
-        cls.ds1_adapter = IndicatorSqlAdapter(cls.ds_1)
-        cls.ds2_adapter = IndicatorSqlAdapter(cls.ds_2)
+        cls.ds1_adapter = get_indicator_adapter(cls.ds_1)
+        cls.ds2_adapter = get_indicator_adapter(cls.ds_2)
 
     def setUp(self):
         # initialize the tables

@@ -104,7 +104,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
         $('.drag_handle').addClass(COMMCAREHQ.icons.GRIP);
         $('.sortable').each(function () {
             var min_elem = $(this).hasClass('sortable-forms') ? 1 : 2;
-            if ($(this).children().not('.sort-disabled').size() < min_elem) {
+            if ($(this).children().not('.sort-disabled').length < min_elem) {
                 var $sortable = $(this);
                 $('.drag_handle', this).each(function () {
                     if ($(this).closest('.sortable')[0] === $sortable[0]) {
@@ -117,7 +117,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
             var $sortable = $(this);
             var sorting_forms = $sortable.hasClass('sortable-forms');
             var min_elem = $(this).hasClass('sortable-forms') ? 0 : 1;
-            if ($(this).children().not('.sort-disabled').size() > min_elem) {
+            if ($(this).children().not('.sort-disabled').length > min_elem) {
                 var init_dict = {
                     handle: '.drag_handle ',
                     items: ">*:not(.sort-disabled)",
@@ -214,8 +214,8 @@ hqDefine('app_manager/js/app_manager.js', function () {
         $('select').each(function () {
             var val = $(this).next('div.immutable').text();
             if (val) {
-                $(this).find('option').removeAttr('selected');
-                $(this).find('option[value="' + val + '"]').attr('selected', 'selected');
+                $(this).find('option').prop('selected', false);
+                $(this).find('option[value="' + val + '"]').prop('selected', true);
             }
         });
         $('input[type="text"]').each(function () {

@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
                 ('cancelled_status', models.ForeignKey(related_name='+', on_delete=django.db.models.deletion.PROTECT, to='zipline.EmergencyOrderStatusUpdate', null=True)),
                 ('delivered_status', models.ForeignKey(related_name='+', on_delete=django.db.models.deletion.PROTECT, to='zipline.EmergencyOrderStatusUpdate', null=True)),
                 ('dispatched_status', models.ForeignKey(related_name='+', on_delete=django.db.models.deletion.PROTECT, to='zipline.EmergencyOrderStatusUpdate', null=True)),
-                ('order', models.ForeignKey(to='zipline.EmergencyOrder')),
+                ('order', models.ForeignKey(to='zipline.EmergencyOrder', on_delete=models.CASCADE)),
             ],
             options={
             },

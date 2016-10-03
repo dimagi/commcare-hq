@@ -3,20 +3,23 @@
 {# touchforms includes #}
 <link rel="stylesheet" href="{% static 'jquery-ui/themes/base/jquery-ui.min.css' %}">
 <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
-<link rel="stylesheet" href="{% static 'formplayer/style/webforms.css' %}">
+<link rel="stylesheet" href="{% static 'cloudcare/css/webforms.css' %}">
+<link rel="stylesheet" href="{% static 'datetimepicker/build/jquery.datetimepicker.min.css' %}">
 {% if not exclude_jquery_ui_import %}
 <script src="{% static 'jquery-ui/jquery-ui.min.js' %}"></script>
 {% endif %}
 <script src="{% static 'nprogress/nprogress.js' %}"></script>
 <script src="{% static 'moment/moment.js' %}"></script>
-<script src="{% static 'formplayer/script/vendor/shortcut.js' %}"></script>
-<script src="{% static 'formplayer/script/vendor/markdown-it-4.2.0.min.js' %}"></script>
-<script src="{% static 'formplayer/script/vendor/ba-tiny-pubsub.min.js' %}"></script>
-<script src="{% static 'formplayer/script/vendor/purify.js' %}"></script>
-<script src="{% static 'formplayer/script/webformsession.js' %}"></script>
-<script src="{% static 'formplayer/script/formnav-all.js' %}"></script>
-<script src="{% static 'formplayer/script/entrycontrols_full.js' %}"></script>
-<script src="{% static 'formplayer/script/fullform-ui.js' %}"></script>
+<script src="{% static 'datetimepicker/build/jquery.datetimepicker.full.js' %}"></script>
+
+<script src="{% static 'markdown-it/dist/markdown-it.js' %}"></script>
+<script src="{% static 'DOMPurify/dist/purify.min.js' %}"></script>
+<script src="{% static 'jquery-tiny-pubsub/dist/ba-tiny-pubsub.js' %}"></script>
+<script src="{% static 'cloudcare/js/form_entry/webformsession.js' %}"></script>
+<script src="{% static 'cloudcare/js/form_entry/formnav-all.js' %}"></script>
+<script src="{% static 'cloudcare/js/form_entry/entrycontrols_full.js' %}"></script>
+<script src="{% static 'cloudcare/js/form_entry/fullform-ui.js' %}"></script>
+
 <script src="{% static 'cloudcare/js/touchforms-inline.js' %}"></script>
 
 {% include 'formplayer/fullform-ui/templates.html' %}

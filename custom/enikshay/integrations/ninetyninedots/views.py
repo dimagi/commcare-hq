@@ -8,6 +8,7 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
 from dimagi.utils.web import json_response
 
+from corehq.apps.repeaters.views import AddCaseRepeaterView
 from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceException
 from custom.enikshay.integrations.ninetyninedots.utils import (
     create_adherence_cases,
@@ -16,7 +17,19 @@ from custom.enikshay.integrations.ninetyninedots.utils import (
 )
 
 
-@toggles.ENIKSHAY_INTEGRATIONS.required_decorator()
+class RegisterPatientRepeaterView(AddCaseRepeaterView):
+    urlname = 'register_99dots_patient'
+    page_title = "Register 99DOTS Patients"
+    page_name = "Register 99DOTS Patients"
+
+
+class UpdatePatientRepeaterView(AddCaseRepeaterView):
+    urlname = 'update_99dots_patient'
+    page_title = "Update 99DOTS Patients"
+    page_name = "Update 99DOTS Patients"
+
+
+@toggles.NINETYNINE_DOTS.required_decorator()
 @login_or_digest_or_basic_or_apikey()
 @require_POST
 @csrf_exempt
@@ -32,14 +45,14 @@ def update_patient_adherence(request, domain):
     try:
         validate_beneficiary_id(beneficiary_id)
         validate_adherence_values(adherence_values)
-        create_adherence_cases(domain, beneficiary_id, adherence_values, adherence_source="99DOTS")
+        create_adherence_cases(domain, beneficiary_id, adherence_values)
     except AdherenceException as e:
         return json_response({"error": e.message}, status_code=400)
 
     return json_response({"success": "Patient adherences updated."})
 
 
-@toggles.ENIKSHAY_INTEGRATIONS.required_decorator()
+@toggles.NINETYNINE_DOTS.required_decorator()
 @login_or_digest_or_basic_or_apikey()
 @require_POST
 @csrf_exempt
@@ -70,7 +83,7 @@ def update_adherence_confidence(request, domain):
     return json_response({"success": "Patient adherences updated."})
 
 
-@toggles.ENIKSHAY_INTEGRATIONS.required_decorator()
+@toggles.NINETYNINE_DOTS.required_decorator()
 @login_or_digest_or_basic_or_apikey()
 @require_POST
 @csrf_exempt
@@ -95,26 +108,26 @@ def update_default_confidence(request, domain):
 
 def validate_beneficiary_id(beneficiary_id):
     if beneficiary_id is None:
-        raise AdherenceException(message="Beneficiary ID is null")
+        raise AdherenceException("Beneficiary ID is null")
     if not isinstance(beneficiary_id, basestring):
-        raise AdherenceException(message="Beneficiary ID should be a string")
+        raise AdherenceException("Beneficiary ID should be a string")
 
 
 def validate_dates(start_date, end_date):
     if start_date is None:
-        raise AdherenceException(message="start_date is null")
+        raise AdherenceException("start_date is null")
     if end_date is None:
-        raise AdherenceException(message="end_date is null")
+        raise AdherenceException("end_date is null")
     try:
         parse_datetime(start_date).astimezone(pytz.UTC)
         parse_datetime(end_date).astimezone(pytz.UTC)
     except:
-        raise AdherenceException(message="Malformed Date")
+        raise AdherenceException("Malformed Date")
 
 
 def validate_adherence_values(adherence_values):
     if adherence_values is None or not isinstance(adherence_values, list):
-        raise AdherenceException(message="Adherences invalid")
+        raise AdherenceException("Adherences invalid")
 
 
 def validate_confidence_level(confidence_level):

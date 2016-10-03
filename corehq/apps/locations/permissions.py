@@ -186,10 +186,10 @@ def user_can_access_location_id(domain, user, location_id):
     if user.has_permission(domain, 'access_all_locations'):
         return True
 
-    users_location = user.get_sql_location(domain)
-    return (users_location.get_descendants(include_self=True)
-                          .filter(location_id=location_id)
-                          .exists())
+    return (SQLLocation.objects
+            .accessible_to_user(domain, user)
+            .filter(location_id=location_id)
+            .exists())
 
 
 def can_edit_location(view_fn):

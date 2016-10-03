@@ -15,7 +15,7 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode, ItextValue, ItextOutput
-from corehq.util.spreadsheets.excel import HeaderValueError, WorkbookJSONReader
+from corehq.util.spreadsheets.excel import HeaderValueError, WorkbookJSONReader, JSONReaderError
 
 from django.contrib import messages
 from django.utils.translation import ugettext as _
@@ -69,6 +69,12 @@ def process_bulk_app_translation_upload(app, f):
             ).format(e))
         )
         return msgs
+    except JSONReaderError as e:
+        msgs.append(
+            (messages.error, _(
+                "App Translation Failed! There is an issue with excel columns. Error details: {}."
+            ).format(e))
+        )
 
     for sheet in workbook.worksheets:
         # sheet.__iter__ can only be called once, so cache the result

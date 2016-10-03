@@ -1,9 +1,7 @@
 from __future__ import absolute_import
-from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver, Signal
 from django.contrib.auth.signals import user_logged_in
-from corehq.apps.users.models import CouchUser
 from corehq.elastic import send_to_elasticsearch
 
 
@@ -18,6 +16,7 @@ def set_language(sender, **kwargs):
     to the right language.
     HT: http://mirobetm.blogspot.com/2012/02/django-language-set-in-database-field.html
     """
+    from corehq.apps.users.models import CouchUser
     user = kwargs['user']
     couch_user = CouchUser.from_django_user(user)
     if couch_user and couch_user.language:
@@ -26,6 +25,7 @@ def set_language(sender, **kwargs):
 
 # Signal that syncs django_user => couch_user
 def django_user_post_save_signal(sender, instance, created, **kwargs):
+    from corehq.apps.users.models import CouchUser
     return CouchUser.django_user_post_save_signal(sender, instance, created)
 
 
@@ -39,6 +39,7 @@ def update_user_in_es(sender, couch_user, **kwargs):
 
 # This gets called by UsersAppConfig when the module is set up
 def connect_user_signals():
+    from django.contrib.auth.models import User
     post_save.connect(django_user_post_save_signal, User,
                       dispatch_uid="django_user_post_save_signal")
     couch_user_post_save.connect(update_user_in_es, dispatch_uid="update_user_in_es")

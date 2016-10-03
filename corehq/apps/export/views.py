@@ -14,6 +14,7 @@ from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.reports.views import should_update_export, \
     build_download_saved_export_response, require_form_export_permission
 from corehq.form_processor.utils import use_new_exports
+from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
 from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
 import json
@@ -186,8 +187,11 @@ class BaseExportView(BaseProjectDataView):
         # interaction data. This should probably be rewritten as it's not exactly
         # clear what this view specifically needs to render.
         context = self.export_helper.get_context()
-        context.update({'export_home_url': self.export_home_url})
-
+        context.update({
+            'export_home_url': self.export_home_url,
+            'has_excel_dashboard_access': domain_has_privilege(self.domain, EXCEL_DASHBOARD),
+            'has_daily_saved_export_access': domain_has_privilege(self.domain, DAILY_SAVED_EXPORT),
+        })
         return context
 
     def commit(self, request):
@@ -1448,12 +1452,16 @@ class BaseNewExportView(BaseExportView):
             'export_instance': self.export_instance,
             'export_home_url': self.export_home_url,
             'allow_deid': has_privilege(self.request, privileges.DEIDENTIFIED_DATA),
-            'use_new_exports': use_new_exports(self.domain)
+            'use_new_exports': use_new_exports(self.domain),
+            'has_excel_dashboard_access': domain_has_privilege(self.domain, EXCEL_DASHBOARD),
+            'has_daily_saved_export_access': domain_has_privilege(self.domain, DAILY_SAVED_EXPORT),
         }
 
     def commit(self, request):
         export = self.export_instance_cls.wrap(json.loads(request.body))
-        if self.domain != export.domain:
+        if (self.domain != export.domain
+                or (export.export_format == "html" and not domain_has_privilege(self.domain, EXCEL_DASHBOARD))
+                or (export.is_daily_saved_export and not domain_has_privilege(self.domain, DAILY_SAVED_EXPORT))):
             raise BadExportConfiguration()
 
         export.save()

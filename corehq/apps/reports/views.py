@@ -2,11 +2,14 @@ from copy import copy
 from datetime import datetime, timedelta, date
 import itertools
 import json
+from urllib import quote
 from wsgiref.util import FileWrapper
 
 from django.views.generic.base import TemplateView
+from unidecode import unidecode
 
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+from corehq.apps.domain.utils import get_domain_module_map
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.reports.display import xmlns_to_name
@@ -20,7 +23,6 @@ import pytz
 import re
 from StringIO import StringIO
 import tempfile
-import unicodedata
 from urllib2 import URLError
 
 from django.conf import settings
@@ -77,6 +79,8 @@ from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
 from couchforms.models import XFormDeprecated, XFormInstance
+
+from custom.world_vision import WORLD_VISION_DOMAINS
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -158,7 +162,7 @@ from .util import (
     get_group,
     group_filter,
     users_matching_filter,
-    safe_filename,
+    safe_for_fs,
 )
 from corehq.apps.style.decorators import (
     use_jquery_ui,
@@ -200,9 +204,9 @@ def can_view_attachments(request):
 
 @login_and_domain_required
 def default(request, domain):
-    module = Domain.get_module_by_name(domain)
-    if hasattr(module, 'DEFAULT_REPORT_CLASS'):
-        return HttpResponseRedirect(getattr(module, 'DEFAULT_REPORT_CLASS').get_url(domain))
+    if domain in WORLD_VISION_DOMAINS and get_domain_module_map().get(domain):
+        from custom.world_vision.reports.mixed_report import MixedTTCReport
+        return HttpResponseRedirect(MixedTTCReport.get_url(domain))
     return HttpResponseRedirect(reverse(MySavedReportsView.urlname, args=[domain]))
 
 
@@ -567,9 +571,14 @@ def build_download_saved_export_response(payload, format, filename):
     content_type = Format.from_format(format).mimetype
     response = StreamingHttpResponse(FileWrapper(payload), content_type=content_type)
     if format != 'html':
-        utf8_filename = unicode(filename).encode('utf8')
-        normalized_filename = safe_filename(utf8_filename)
-        response['Content-Disposition'] = 'attachment; filename="%s"' % normalized_filename
+        filename = filename if isinstance(filename, unicode) else filename.decode('utf8')
+        safe_filename = safe_for_fs(filename)
+        ascii_filename = unidecode(safe_filename)
+
+        # See IETF advice https://tools.ietf.org/html/rfc6266#appendix-D
+        # and http://greenbytes.de/tech/tc2231/#attfnboth as a solution to disastrous browser compatibility
+        response['Content-Disposition'] = 'attachment; filename="{}"; filename*=UTF-8\'\'{}'.format(
+            ascii_filename, quote(safe_filename.encode('utf8')))
     return response
 
 

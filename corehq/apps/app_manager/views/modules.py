@@ -387,6 +387,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         "source_module_id": None,
         "task_list": ('task_list-show', 'task_list-label'),
         "excl_form_ids": None,
+        "display_style": None
     }
 
     if attr not in attributes:
@@ -435,6 +436,8 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             return HttpResponseBadRequest("case type is improperly formatted")
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(request.POST.get("put_in_root"))
+    if should_edit("display_style"):
+        module["display_style"] = request.POST.get("display_style")
     if should_edit("source_module_id"):
         module["source_module_id"] = request.POST.get("source_module_id")
     if should_edit("display_separately"):
@@ -492,7 +495,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             name = request.POST.get(attribute, None)
             module[attribute][lang] = name
             if should_edit("name"):
-                resp['update'].update({'.variable-module_name': module.name[lang]})
+                resp['update'] = {'.variable-module_name': trans(module.name, [lang], use_delim=False)}
     if should_edit('comment'):
         module.comment = request.POST.get('comment')
     for SLUG in ('case_list', 'task_list'):
@@ -869,31 +872,26 @@ def view_module(request, domain, app_id, module_id):
     return view_generic(request, domain, app_id, module_id)
 
 
-common_module_validations = [
-    (lambda app: app.application_version == APP_V1,
-     _('Please upgrade you app to > 2.0 in order to add this module'))
-]
-
 FN = 'fn'
 VALIDATIONS = 'validations'
 MODULE_TYPE_MAP = {
     'careplan': {
         FN: _new_careplan_module,
-        VALIDATIONS: common_module_validations + [
+        VALIDATIONS: [
             (lambda app: app.has_careplan_module,
              _('This application already has a Careplan module'))
         ]
     },
     'advanced': {
         FN: _new_advanced_module,
-        VALIDATIONS: common_module_validations
+        VALIDATIONS: []
     },
     'report': {
         FN: _new_report_module,
-        VALIDATIONS: common_module_validations
+        VALIDATIONS: []
     },
     'shadow': {
         FN: _new_shadow_module,
-        VALIDATIONS: common_module_validations
+        VALIDATIONS: []
     },
 }

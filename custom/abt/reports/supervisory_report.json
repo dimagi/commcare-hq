@@ -45,7 +45,8 @@
                 "type": "date",
                 "display": {
                     "fra": "Date soumis",
-                    "en": "Date submitted"
+                    "en": "Date submitted",
+                    "por": "Data de Submiss\u00e3o"
                 }
             },
             {
@@ -58,7 +59,8 @@
                 "type": "dynamic_choice_list",
                 "display": {
                     "fra": "Pays",
-                    "en": "Country"
+                    "en": "Country",
+                    "por": "Pa\u00eds"
                 }
             },
             {
@@ -71,7 +73,8 @@
                 "type": "dynamic_choice_list",
                 "display": {
                     "fra": "Niveau 1",
-                    "en": "Level 1"
+                    "en": "Level 1",
+                    "por": "N\u00edvel 1"
                 }
             },
             {
@@ -84,7 +87,8 @@
                 "type": "dynamic_choice_list",
                 "display": {
                     "fra": "Niveau 2",
-                    "en": "Level 2"
+                    "en": "Level 2",
+                    "por": "N\u00edvel 2"
                 }
             },
             {
@@ -97,7 +101,8 @@
                 "type": "dynamic_choice_list",
                 "display": {
                     "fra": "Niveau 3",
-                    "en": "Level 3"
+                    "en": "Level 3",
+                    "por": "N\u00edvel 3"
                 }
             },
             {
@@ -110,7 +115,8 @@
                 "type": "dynamic_choice_list",
                 "display": {
                     "fra": "Niveau 4",
-                    "en": "Level 4"
+                    "en": "Level 4",
+                    "por": "N\u00edvel 4"
                 }
             }
         ],
@@ -143,7 +149,8 @@
                 "type": "field",
                 "display": {
                     "fra": "Date et heure soumis",
-                    "en": "Date and Time Submitted"
+                    "en": "Date and Time Submitted",
+                    "por": "Data e Hora de Submiss\u00e3o"
                 },
                 "aggregation": "simple"
             },
@@ -160,7 +167,8 @@
                 "type": "field",
                 "display": {
                     "fra": "Nom d'utilisateur",
-                    "en": "Username"
+                    "en": "Username",
+                    "por": "Utilizador"
                 },
                 "aggregation": "simple"
             },
@@ -177,7 +185,8 @@
                 "type": "field",
                 "display": {
                     "fra": "Pays",
-                    "en": "Country"
+                    "en": "Country",
+                    "por": "Pa\u00eds"
                 },
                 "aggregation": "simple"
             },
@@ -194,7 +203,8 @@
                 "type": "field",
                 "display": {
                     "fra": "Niveau 1",
-                    "en": "Level 1"
+                    "en": "Level 1",
+                    "por": "N\u00edvel 1"
                 },
                 "aggregation": "simple"
             },
@@ -211,7 +221,8 @@
                 "type": "field",
                 "display": {
                     "fra": "Niveau 2",
-                    "en": "Level 2"
+                    "en": "Level 2",
+                    "por": "N\u00edvel 2"
                 },
                 "aggregation": "simple"
             },
@@ -228,7 +239,8 @@
                 "type": "field",
                 "display": {
                     "fra": "Niveau 3",
-                    "en": "Level 3"
+                    "en": "Level 3",
+                    "por": "N\u00edvel 3"
                 },
                 "aggregation": "simple"
             },
@@ -245,7 +257,8 @@
                 "type": "field",
                 "display": {
                     "fra": "Niveau 4",
-                    "en": "Level 4"
+                    "en": "Level 4",
+                    "por": "N\u00edvel 4"
                 },
                 "aggregation": "simple"
             },
@@ -262,7 +275,8 @@
                 "type": "field",
                 "display": {
                     "fra": "Noms de Inspecteurs/Superviseurs",
-                    "en": "Inspector names"
+                    "en": "Inspector names",
+                    "por": "Nome do Supervisor"
                 },
                 "aggregation": "simple"
             },
@@ -279,7 +293,8 @@
                 "type": "field",
                 "display": {
                     "fra": "Nom du formulaire",
-                    "en": "Form Name"
+                    "en": "Form Name",
+                    "por": "Nome do formulario"
                 },
                 "aggregation": "simple"
             },
@@ -296,7 +311,8 @@
                 "type": "field",
                 "display": {
                     "fra": "Question",
-                    "en": "Form Question"
+                    "en": "Form Question",
+                    "por": "Quest\u00E3o do formulario"
                 },
                 "aggregation": "simple"
             },
@@ -313,7 +329,8 @@
                 "type": "field",
                 "display": {
                     "fra": "Avertissement",
-                    "en": "Red Flag Warning"
+                    "en": "Red Flag Warning",
+                    "por": "Aviso de Alerta Vermelho"
                 },
                 "aggregation": "simple"
             },
@@ -330,7 +347,8 @@
                 "type": "field",
                 "display": {
                     "fra": "Commentaires",
-                    "en": "Comments"
+                    "en": "Comments",
+                    "por": "Coment\u00E1rio"
                 },
                 "aggregation": "simple"
             }

@@ -2,13 +2,13 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
+from corehq.apps.repeaters.repeater_generators import RegisterGenerator
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 
 from corehq.apps.es.users import UserES
-from corehq.apps.repeaters.models import RegisterGenerator
 from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.users.util import raw_username
 
@@ -176,7 +176,7 @@ class CaseRepeaterForm(GenericRepeaterForm):
         return ['white_listed_case_types'] + ['black_listed_users'] + fields
 
     def clean(self):
-        cleaned_data = super(GenericRepeaterForm, self).clean()
+        cleaned_data = super(CaseRepeaterForm, self).clean()
         white_listed_case_types = cleaned_data['white_listed_case_types']
         black_listed_users = cleaned_data['black_listed_users']
         if not set(white_listed_case_types).issubset([t[0] for t in self.case_type_choices]):

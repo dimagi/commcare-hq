@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-09-06 19:30+0000\n"
+"POT-Creation-Date: 2016-09-20 20:25+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -61,19 +61,11 @@ msgstr ""
 msgid "(Default)"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:119
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:129
 msgid "Form successfully saved"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:269
-msgid "Unable to clear user data for mobile worker"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:271
-msgid "Unabled to clear user data"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/entities/menu.js:106
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/entities/menu.js:112
 msgid "Unable to connect to form playing service. "
 msgstr ""
 
@@ -95,44 +87,44 @@ msgstr ""
 msgid "Download Requested"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:45
+#: corehq/apps/export/static/export/js/models.js:73
 msgid "Web Page (Excel Dashboards)"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:47
+#: corehq/apps/export/static/export/js/models.js:75
 msgid "CSV (Zip file)"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:49
+#: corehq/apps/export/static/export/js/models.js:77
 msgid "Excel (older versions)"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:51
+#: corehq/apps/export/static/export/js/models.js:79
 msgid "Excel 2007"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:67
+#: corehq/apps/export/static/export/js/models.js:95
 msgid "Create"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:67
+#: corehq/apps/export/static/export/js/models.js:95
 #: corehq/apps/style/static/style/js/main.js:227
 msgid "Save"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:344
+#: corehq/apps/export/static/export/js/models.js:376
 msgid "The table path should end with []"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:453
+#: corehq/apps/export/static/export/js/models.js:485
 msgid "Sensitive ID"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:455
+#: corehq/apps/export/static/export/js/models.js:487
 msgid "Sensitive Date"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:457
+#: corehq/apps/export/static/export/js/models.js:489
 msgid "None"
 msgstr ""
 

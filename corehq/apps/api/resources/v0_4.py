@@ -20,7 +20,8 @@ from corehq.apps.api.util import get_object_or_not_exist, object_does_not_exist,
 from corehq.apps.app_manager import util as app_manager_util
 from corehq.apps.app_manager.models import Application, RemoteApp
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.repeaters.models import Repeater, repeater_types
+from corehq.apps.repeaters.models import Repeater
+from corehq.apps.repeaters.utils import get_all_repeater_types
 from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
 from corehq.apps.users.util import format_username
@@ -187,7 +188,7 @@ class RepeaterResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourc
 
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(Repeater, kwargs['pk'], kwargs['domain'],
-                                       additional_doc_types=repeater_types.keys())
+                                       additional_doc_types=get_all_repeater_types().keys())
 
     def obj_create(self, bundle, request=None, **kwargs):
         bundle.obj.domain = kwargs['domain']
@@ -280,7 +281,7 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
         ).order_by('server_modified_on')
 
     class Meta(v0_3.CommCareCaseResource.Meta):
-        max_limit = 100 # Today, takes ~25 seconds for some domains
+        max_limit = 1000
         serializer = CommCareCaseSerializer()
         ordering = ['server_date_modified', 'date_modified']
         object_class = ESCase

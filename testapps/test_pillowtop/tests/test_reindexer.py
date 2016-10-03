@@ -181,10 +181,6 @@ def test_no_checkpoint_creation(self, reindex_id, pillow_name):
         )
 
 class UserReindexerTest(TestCase):
-    dependent_apps = [
-        'auditcare', 'django_digest', 'pillowtop',
-        'corehq.apps.domain', 'corehq.apps.users', 'corehq.apps.tzmigration',
-    ]
 
     def setUp(self):
         super(UserReindexerTest, self).setUp()
@@ -226,11 +222,6 @@ class UserReindexerTest(TestCase):
 
 
 class GroupReindexerTest(TestCase):
-    dependent_apps = [
-        'pillowtop',
-        'corehq.couchapps',
-        'corehq.apps.groups',
-    ]
 
     def setUp(self):
         super(GroupReindexerTest, self).setUp()

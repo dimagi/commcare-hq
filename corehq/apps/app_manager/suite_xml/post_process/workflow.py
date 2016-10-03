@@ -232,7 +232,7 @@ class EndOfFormNavigationWorkflow(object):
                         if child.id not in parent_ids
                     ]
 
-                stack_frames.append(StackFrameMeta(link.xpath, frame_children))
+                stack_frames.append(StackFrameMeta(link.xpath, frame_children, current_session=source_form_datums))
 
         return stack_frames
 
@@ -330,10 +330,15 @@ class CaseListFormWorkflow(object):
             reg_action = form.get_registration_actions(target_module.case_type)[0]
             source_session_var = reg_action.case_session_var
         source_case_id = session_var(source_session_var)
+        source_form_datums = self.helper.get_form_datums(form)
         case_count = CaseIDXPath(source_case_id).case().count()
-        frame_case_created = StackFrameMeta(self.get_if_clause(case_count.gt(0), target_command))
+        frame_case_created = StackFrameMeta(
+            self.get_if_clause(case_count.gt(0), target_command), current_session=source_form_datums
+        )
         stack_frames.append(frame_case_created)
-        frame_case_not_created = StackFrameMeta(self.get_if_clause(case_count.eq(0), target_command))
+        frame_case_not_created = StackFrameMeta(
+            self.get_if_clause(case_count.eq(0), target_command), current_session=source_form_datums
+        )
         stack_frames.append(frame_case_not_created)
 
         def add_datums_for_target(module, source_form_dm, allow_missing=False):
@@ -430,7 +435,18 @@ class StackFrameMeta(object):
     Class used in computing the form workflow.
     """
 
-    def __init__(self, if_clause, children=None, allow_empty_frame=False):
+    def __init__(self, if_clause, children=None, allow_empty_frame=False, current_session=None):
+        """
+        :param if_clause: XPath expression to use in if clause for CreateFrame
+        :type if_clause: string
+        :param children: Child elements for the frame
+        :type children: list
+        :param allow_empty_frame: True if the frame can be empty
+        :type allow_empty_frame: bool
+        :param current_session: List of current session datums
+        :type current_session: list of WorkflowDatumMeta
+        """
+        self.current_session = current_session
         self.if_clause = unescape(if_clause) if if_clause else None
         self.children = []
         self.allow_empty_frame = allow_empty_frame
@@ -448,9 +464,11 @@ class StackFrameMeta(object):
         if not self.children and not self.allow_empty_frame:
             return
 
+        children = _replace_session_references_in_stack(self.children, current_session=self.current_session)
+
         frame = CreateFrame(if_clause=self.if_clause)
 
-        for child in self.children:
+        for child in children:
             if isinstance(child, CommandId):
                 frame.add_command(XPath.string(child.id))
             elif isinstance(child, StackDatum):
@@ -529,4 +547,40 @@ class WorkflowDatumMeta(object):
         return not self == other
 
     def __repr__(self):
-        return 'DatumMeta(id={}, case_type={})'.format(self.id, self.case_type)
+        return 'WorkflowDatumMeta(id={}, case_type={})'.format(self.id, self.case_type)
+
+
+session_var_regex = re.compile(r"instance\('commcaresession'\)/session/data/(\w+)")
+
+
+def _replace_session_references_in_stack(stack_children, current_session=None):
+    """Given a list of stack children (commands and datums)
+    replace any references in the datum to session variables that
+    have already been added to the session.
+
+    e.g.
+    <datum id="case_id_a" value="instance('commcaresession')/session/data/case_id_new_a"/>
+    <datum id="case_id_b" value="instance('commcaresession')/session/data/case_id_a"/>
+                                                                          ^^^^^^^^^
+    In the second datum replace ``case_id_a`` with ``case_id_new_a``.
+
+    We have to do this because stack create blocks do not update the session after each datum
+    is added so items put into the session in one step aren't available to later steps.
+    """
+    current_session_vars = [datum.id for datum in current_session] if current_session else []
+    clean_children = []
+    child_map = {}
+    for child in stack_children:
+        if not isinstance(child, StackDatum):
+            clean_children.append(child)
+            continue
+        session_vars = session_var_regex.findall(child.value)
+        new_value = child.value
+        for var in session_vars:
+            if var in child_map and var not in current_session_vars:
+                new_value = new_value.replace(session_var(var), child_map[var])
+
+        child_map[child.id] = new_value
+        clean_children.append(StackDatum(id=child.id, value=new_value))
+
+    return clean_children

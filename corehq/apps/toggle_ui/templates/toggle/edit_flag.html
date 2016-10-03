@@ -110,6 +110,16 @@
                     });
                 }
             });
+
+            var projectInfoUrl = '<a href="{% url 'domain_internal_settings' '___' %}">domain</a>';
+            self.getNamespaceHtml = function(namespace, value) {
+                if (namespace === 'domain') {
+                    return projectInfoUrl.replace('___', value);
+                } else {
+                    return namespace;
+                }
+            };
+
         }
 
         var $home = $('#toggle_editing_ko');
@@ -175,7 +185,9 @@
                                 <a href="#" class="btn btn-danger" data-bind="click: $parent.removeItem"><i class="fa fa-trash"></i></a>
                             </div>
                             <input class="input-medium form-control" type="text" data-bind="value: value">
-                            <span class="input-group-addon" data-bind="html: namespace" style="font-family:monospace;"></span>
+                            <span class="input-group-addon"
+                                  data-bind="html: $parent.getNamespaceHtml(namespace(), value())"
+                                  style="font-family:monospace;"></span>
                             <span data-bind="text: last_used, visible: last_used" class="input-group-addon"></span>
                         </div>
                     </div>

@@ -4,7 +4,7 @@ from elasticsearch.exceptions import ConnectionError
 from mock import Mock
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.reports.util import create_export_filter, safe_filename
+from corehq.apps.reports.util import create_export_filter, safe_for_fs
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -59,8 +59,8 @@ class ReportUtilTests(TestCase):
 
 class TestSafeFilename(SimpleTestCase):
 
-    def test_safe_filename_bytestring(self):
-        self.assertEqual(safe_filename('spam*?: 𐍃𐍀𐌰𐌼-&.txt'), 'spam 𐍃𐍀𐌰𐌼-&.txt')
+    def test_safe_for_fs_bytestring(self):
+        self.assertEqual(safe_for_fs('spam*?: 𐍃𐍀𐌰𐌼-&.txt'), 'spam 𐍃𐍀𐌰𐌼-&.txt')
 
-    def test_safe_filename_unicode(self):
-        self.assertEqual(safe_filename(u'spam*?: 𐍃𐍀𐌰𐌼-&.txt'), u'spam 𐍃𐍀𐌰𐌼-&.txt')
+    def test_safe_for_fs_unicode(self):
+        self.assertEqual(safe_for_fs(u'spam*?: 𐍃𐍀𐌰𐌼-&.txt'), u'spam 𐍃𐍀𐌰𐌼-&.txt')

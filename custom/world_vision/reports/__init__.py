@@ -287,3 +287,20 @@ class AccordionTTCReport(TTCReport):
             'title': "%s (%s-%s)" % (self.title, self.report_config.get('strsd', '-'),
                                      self.report_config.get('stred', '-'))
         }
+
+    @property
+    def export_table(self):
+        reports = [r['report_table'] for report_set in self.report_context['reports'] for r in report_set]
+        return [self._export_table(r['title'], r['headers'], r['rows'], total_row=r['total_row']) for r in reports]
+
+from custom.world_vision.reports.child_report import ChildTTCReport
+from custom.world_vision.reports.mixed_report import MixedTTCReport
+from custom.world_vision.reports.mother_report import MotherTTCReport
+
+CUSTOM_REPORTS = (
+    ('TTC App Reports', (
+        MixedTTCReport,
+        MotherTTCReport,
+        ChildTTCReport
+    )),
+)

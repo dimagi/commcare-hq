@@ -147,6 +147,7 @@ class CaseBlock(dict):
                 if create_or_update[key] is not CaseBlock.undefined and key in self['update']:
                     raise CaseBlockError("Key %r specified twice" % key)
 
+        create_or_update = {key: val for key, val in create_or_update.items() if val is not CaseBlock.undefined}
         if create:
             self['create'].update(create_or_update)
         else:

@@ -3,7 +3,6 @@ from copy import copy, deepcopy
 import json
 from datetime import datetime
 
-from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.sql_db.connections import UCR_ENGINE_ID
 from corehq.util.quickcache import quickcache, skippable_quickcache
 from dimagi.ext.couchdbkit import (
@@ -20,6 +19,7 @@ from corehq.apps.cachehq.mixins import (
     CachedCouchDocumentMixin,
     QuickCachedDocumentMixin,
 )
+from corehq.apps.userreports.const import UCR_SQL_BACKEND
 from corehq.apps.userreports.dbaccessors import get_number_of_report_configs_by_data_source, \
     get_report_configs_for_domain, get_datasources_for_domain
 from corehq.apps.userreports.exceptions import (
@@ -28,7 +28,6 @@ from corehq.apps.userreports.exceptions import (
     ReportConfigurationNotFoundError,
     StaticDataSourceConfigurationNotFoundError,
 )
-from corehq.apps.userreports.const import UCR_SQL_BACKEND
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
@@ -39,6 +38,7 @@ from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory,
 from corehq.apps.userreports.reports.filters.specs import FilterSpec
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.pillows.utils import get_deleted_doc_types
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
 from dimagi.utils.couch.bulk import get_docs
@@ -287,7 +287,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         if not self.is_static:
             self.is_deactivated = True
             self.save()
-            IndicatorSqlAdapter(self).drop_table()
+            get_indicator_adapter(self).drop_table()
 
 
 class ReportMeta(DocumentSchema):

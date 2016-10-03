@@ -61,7 +61,7 @@ hqLayout.actions = {
     },
 };
 
-$(window).load(function () {
+$(window).on('load', function () {
     hqLayout.actions.initialize();
     hqLayout.actions.balanceSidebar();
 });

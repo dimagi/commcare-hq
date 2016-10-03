@@ -66,7 +66,7 @@
     </script>
     {% endif %}
     <script>
-        $(document).ready(function () {
+        $(function () {
             // https://github.com/twitter/bootstrap/issues/6122
             // this is necessary to get popovers to be able to extend
             // outside the borders of their containing div
@@ -94,7 +94,7 @@
         });
     </script>
     <script>
-        $(document).ready(function() {
+        $(function() {
             gaTrackLink($('#edit_label'), 'App Builder', 'Open Form', 'Edit Label');
             {% for module in app.get_modules %}
                 {% for form in module.get_forms %}
@@ -321,7 +321,7 @@
         </ul>
         </li>
     {% endif %}
-    <li class="text-hq-nav-header">Actions</li>
+    <li class="text-hq-nav-header">{% trans "Actions" %}</li>
     <li class="app-name-div{% if copy_app_form and copy_app_form.is_bound %} active{% endif %}">
         <a href="{% url "view_app" domain app.id %}copy/#copy" {% if is_app_view %}data-toggle="tab"{% endif %}>
             <i class="fa fa-copy"></i>

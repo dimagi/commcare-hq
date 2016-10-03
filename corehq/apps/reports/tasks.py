@@ -16,6 +16,7 @@ from celery.task import periodic_task
 from celery.task import task
 from celery.utils.log import get_task_logger
 
+from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.export.dbaccessors import get_all_daily_saved_export_instances
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from couchexport.files import Temp
@@ -48,7 +49,8 @@ from .analytics.couchaccessors import (
     get_form_ids_having_multimedia as couch_get_form_ids_having_multimedia
 )
 from .analytics.esaccessors import (
-    get_form_ids_having_multimedia as es_get_form_ids_having_multimedia
+    get_form_ids_having_multimedia as es_get_form_ids_having_multimedia,
+    scroll_case_names,
 )
 from .dbaccessors import get_all_hq_group_export_configs
 from .export import save_metadata_export_to_tempfile
@@ -184,8 +186,8 @@ def update_calculated_properties():
                 "cp_n_30_day_cases": int(CALC_FNS["cases_in_last"](dom, 30)),
                 "cp_n_60_day_cases": int(CALC_FNS["cases_in_last"](dom, 60)),
                 "cp_n_90_day_cases": int(CALC_FNS["cases_in_last"](dom, 90)),
-                "cp_n_cases": int(all_stats["cases"].get(dom, 0)),
-                "cp_n_forms": int(all_stats["forms"].get(dom, 0)),
+                "cp_n_cases": int(CALC_FNS["cases"](dom)),
+                "cp_n_forms": int(CALC_FNS["forms"](dom)),
                 "cp_n_forms_30_d": int(CALC_FNS["forms_in_last"](dom, 30)),
                 "cp_n_forms_60_d": int(CALC_FNS["forms_in_last"](dom, 60)),
                 "cp_n_forms_90_d": int(CALC_FNS["forms_in_last"](dom, 90)),
@@ -298,14 +300,27 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id,
     num_forms = len(forms_info)
     DownloadBase.set_progress(build_form_multimedia_zip, 0, num_forms)
 
+    case_id_to_name = _get_case_names(
+        domain,
+        set.union(*map(lambda form_info: form_info['case_ids'], forms_info)),
+    )
+
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
     if use_transfer:
         fpath = _get_download_file_path(xmlns, startdate, enddate, export_id, app_id, num_forms)
     else:
         _, fpath = tempfile.mkstemp()
 
-    _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info)
+    _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info, case_id_to_name)
     _expose_download(fpath, use_transfer, zip_name, download_id, num_forms)
+
+
+def _get_case_names(domain, case_ids):
+    case_id_to_name = {c: c for c in case_ids}
+    for case in scroll_case_names(domain, case_ids):
+        if case.get('name'):
+            case_id_to_name[case.get('_id')] = case.get('name')
+    return case_id_to_name
 
 
 def _get_download_file_path(xmlns, startdate, enddate, export_id, app_id, num_forms):
@@ -339,25 +354,41 @@ def _expose_download(fpath, use_transfer, zip_name, download_id, num_forms):
     DownloadBase.set_progress(build_form_multimedia_zip, num_forms, num_forms)
 
 
-def _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info):
+def _format_filename(form_info, question_id, extension, case_id_to_name):
+    filename = u"{}-user_{}-form_{}{}".format(
+        unidecode(question_id),
+        form_info['form'].user_id or 'unknown',
+        form_info['form'].form_id or 'unknown',
+        extension
+    )
+    if form_info['case_ids']:
+        case_names = u'-'.join(map(
+            lambda case_id: case_id_to_name[case_id],
+            form_info['case_ids'],
+        ))
+        filename = u'{}-{}'.format(case_names, filename)
+    return filename
 
-    def filename(form_info, question_id, extension):
-        return u"{}-{}-{}{}".format(
-            unidecode(question_id),
-            form_info['user'],
-            form_info['id'],
-            extension
-        )
+
+def _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info, case_id_to_name):
 
     if not (os.path.isfile(fpath) and use_transfer):  # Don't rebuild the file if it is already there
         with open(fpath, 'wb') as zfile:
-            with zipfile.ZipFile(zfile, 'w') as z:
+            with zipfile.ZipFile(zfile, 'w') as multimedia_zipfile:
                 for form_number, form_info in enumerate(forms_info):
-                    f = form_info['form']
-                    for a in form_info['attachments']:
-                        fname = filename(form_info, a['question_id'], a['extension'])
-                        zi = zipfile.ZipInfo(fname, a['timestamp'])
-                        z.writestr(zi, f.get_attachment(a['name']), zipfile.ZIP_STORED)
+                    form = form_info['form']
+                    for attachment in form_info['attachments']:
+                        filename = _format_filename(
+                            form_info,
+                            attachment['question_id'],
+                            attachment['extension'],
+                            case_id_to_name
+                        )
+                        zip_info = zipfile.ZipInfo(filename, attachment['timestamp'])
+                        multimedia_zipfile.writestr(zip_info, form.get_attachment(
+                            attachment['name']),
+                            zipfile.ZIP_STORED
+                        )
                     DownloadBase.set_progress(build_form_multimedia_zip, form_number + 1, num_forms)
 
 
@@ -427,12 +458,11 @@ def _extract_form_attachment_info(form, properties):
 
     unknown_number = 0
 
+    case_blocks = extract_case_blocks(form.form_data)
     form_info = {
         'form': form,
-        'attachments': list(),
-        'name': form.name or "unknown form",
-        'user': form.user_id or "unknown_user",
-        'id': form.form_id,
+        'attachments': [],
+        'case_ids': {c['@case_id'] for c in case_blocks},
     }
 
     # TODO make form.attachments always return objects that conform to a
