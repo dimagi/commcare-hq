@@ -1,4 +1,5 @@
 # coding=utf-8
+from mock import patch, MagicMock
 from django.conf import settings
 from django.test import SimpleTestCase
 from fakecouch import FakeCouchDb
@@ -8,8 +9,10 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.pillow import get_change_feed_pillow_for_db
 from corehq.apps.change_feed.data_sources import COUCH
+from corehq.pillows.case import get_case_to_elasticsearch_pillow
 from corehq.util.test_utils import trap_extra_setup
-from pillowtop.feed.interface import Change
+from pillowtop.feed.interface import Change, ChangeMeta
+from pillowtop.dao.exceptions import DocumentMismatchError
 
 
 class ChangeFeedPillowTest(SimpleTestCase):
@@ -72,3 +75,56 @@ class ChangeFeedPillowTest(SimpleTestCase):
         message = self.consumer.next()
         change_meta = change_meta_from_kafka_message(message.value)
         self.assertEqual(document['domain'], change_meta.domain)
+
+
+class TestElasticProcessorPillows(SimpleTestCase):
+
+    def setUp(self):
+        with patch('pillowtop.checkpoints.manager.get_or_create_checkpoint'):
+            self.pillow = get_case_to_elasticsearch_pillow()
+
+    def test_mismatched_rev(self):
+        """
+        Ensures that if the rev from kafka does not match the rev fetched from the document,
+        then we throw an error
+        """
+        document = {
+            'doc_type': 'CommCareCase',
+            'type': 'mother',
+            'domain': 'rev-domain',
+            '_rev': 'match-me',
+        }
+        broken_metadata = ChangeMeta(
+            document_id='test-id',
+            document_rev='mismatched',
+            data_source_type='couch',
+            data_source_name='test_commcarehq'
+        )
+        good_metadata = ChangeMeta(
+            document_id='test-id',
+            document_rev='match-me',
+            data_source_type='couch',
+            data_source_name='test_commcarehq'
+        )
+
+        with self.assertRaises(DocumentMismatchError):
+            self.pillow.process_change(
+                Change(
+                    id='test-id',
+                    sequence_id='3',
+                    document=document,
+                    metadata=broken_metadata
+                )
+            )
+
+        try:
+            self.pillow.process_change(
+                Change(
+                    id='test-id',
+                    sequence_id='3',
+                    document=document,
+                    metadata=good_metadata
+                )
+            )
+        except DocumentMismatchError:
+            self.fail('Incorectly raise a document not found error for matching revs')
