@@ -1,4 +1,6 @@
 import calendar
+from dateutil.relativedelta import relativedelta
+
 from django.core.urlresolvers import reverse
 from corehq.apps.accounting.async_handlers import (
     SubscriberFilterAsyncHandler,
@@ -343,6 +345,22 @@ class OptionalMonthYearFilter(BaseReportFilter, OptionalFilterMixin):
 class StatementPeriodFilter(OptionalMonthYearFilter):
     slug = 'statement_period'
     label = _("Statement Period")
+
+    def selected_period(self):
+        period = self.get_value(self.request, self.domain)
+        if period is not None:
+            month = period[0].month
+            year = period[0].year
+        else:
+            today = datetime.date.today()
+            one_month_ago = today - relativedelta(months=1)
+            month = one_month_ago.month
+            year = one_month_ago.year
+
+        return {
+            'month': month,
+            'year': year,
+        }
 
 
 class DueDatePeriodFilter(OptionalMonthYearFilter):
