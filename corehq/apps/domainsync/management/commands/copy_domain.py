@@ -29,7 +29,7 @@ NUM_PROCESSES = 8
 
 class Command(BaseCommand):
     help = "Copies the contents of a domain to another database. " \
-           "If tagetdb is not specified, the target is the database " \
+           "If targetdb is not specified, the target is the database " \
            "specified by COUCH_DATABASE in your settings."
     args = '<sourcedb> <domain> [<targetdb>]'
     option_list = BaseCommand.option_list + (

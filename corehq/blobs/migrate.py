@@ -12,7 +12,7 @@ can be run:
 The migration may be done automatically when running `./manage.py migrate`
 if there are only a few documents to be migrated. However, if there are
 many documents to be migrated then the normal migration process will
-stop and propmpt you to run the blob migration manually before
+stop and prompt you to run the blob migration manually before
 continuing with the normal migration process.
 
 ## Writing new migrations
