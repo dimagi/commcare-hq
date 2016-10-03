@@ -126,7 +126,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
     )
     server_modified_boundary = forms.IntegerField(
         label=ugettext_lazy("enter number of days"),
-        required=True,
+        required=False,
     )
     conditions = forms.CharField(
         required=True,
@@ -198,6 +198,13 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         self.domain = kwargs.pop('domain')
         self.enhancements_enabled = AUTO_CASE_UPDATE_ENHANCEMENTS.enabled(self.domain)
         super(AddAutomaticCaseUpdateRuleForm, self).__init__(*args, **kwargs)
+
+        if not self.enhancements_enabled:
+            # Always set the value of filter_on_server_modified to true when the
+            # enhancement toggle is not set
+            self.data = self.data.copy()
+            self.initial['filter_on_server_modified'] = 'true'
+            self.data['filter_on_server_modified'] = 'true'
 
         # We can't set these fields to be required because they are displayed
         # conditionally and we'll confuse django validation if we make them
@@ -301,16 +308,19 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
             ),
         )
 
-    def _valid_boundary(self, value):
-        return self.enhancements_enabled or (isinstance(value, int) and value > 30)
-
     def clean_server_modified_boundary(self):
         value = self.cleaned_data.get('server_modified_boundary')
-        if not self._valid_boundary(value):
-            raise ValidationError(_("Please enter a whole number greater than "
-                                    "or equal to 30."))
-        if not self.cleaned_data.get('filter_on_server_modified'):
-            return None
+
+        if self.enhancements_enabled:
+            if not self.cleaned_data.get('filter_on_server_modified'):
+                return None
+
+            if not isinstance(value, int) or value <= 0:
+                raise ValidationError(_("Please enter a whole number greater than 0."))
+        else:
+            if not isinstance(value, int) or value < 30:
+                raise ValidationError(_("Please enter a whole number greater than or equal to 30."))
+
         return value
 
     def clean_conditions(self):

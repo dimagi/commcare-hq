@@ -696,7 +696,6 @@ class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
             domain=self.domain,
             initial={
                 'action': AddAutomaticCaseUpdateRuleForm.ACTION_CLOSE,
-                'filter_on_server_modified': 'true',
                 'property_value_type': AutomaticUpdateAction.EXACT,
             }
         )
