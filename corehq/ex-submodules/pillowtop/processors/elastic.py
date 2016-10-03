@@ -3,7 +3,7 @@ import time
 
 from elasticsearch.exceptions import RequestError, ConnectionError, NotFoundError, ConflictError
 
-from pillowtop.dao.exceptions import DocumentNotFoundError
+from pillowtop.dao.exceptions import DocumentNotFoundError, DocumentMismatchError
 from pillowtop.exceptions import PillowtopIndexingError
 from pillowtop.logger import pillow_logging
 from .interface import PillowProcessor
@@ -45,7 +45,7 @@ class ElasticProcessor(PillowProcessor):
                         change.metadata.document_rev,
                     )
                 )
-                raise DocumentNotFoundError(u'Mismatched revs')
+                raise DocumentMismatchError(u'Mismatched revs')
 
         if self.doc_filter_fn and self.doc_filter_fn(doc):
             return
