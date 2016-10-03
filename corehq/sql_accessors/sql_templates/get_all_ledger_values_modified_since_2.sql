@@ -4,14 +4,9 @@ CREATE FUNCTION get_all_ledger_values_modified_since(reference_date timestamp wi
 RETURNS SETOF form_processor_ledgervalue AS $$
 BEGIN
     RETURN QUERY
-    SELECT ledgers.* FROM (
-        SELECT * FROM form_processor_ledgervalue
-        WHERE last_modified >= reference_date
-        LIMIT query_limit + 1
-    ) AS ledgers
-    WHERE ledgers.id > last_id
-    ORDER BY ledgers.last_modified, ledgers.id
-    LIMIT query_limit
-    ;
+    SELECT * FROM form_processor_ledgervalue
+        WHERE (last_modified, id) > (reference_date, last_id)
+        ORDER BY last_modified, id
+        LIMIT query_limit;
 END;
 $$ LANGUAGE plpgsql;

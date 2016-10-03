@@ -810,7 +810,7 @@ TF_USES_SQLITE_BACKEND = PredictablyRandomToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
     0.8,
-    always_disabled=['hsph-betterbirth'],
+    always_disabled=['hsph-betterbirth', 'iquitos'],
 )
 
 

@@ -87,6 +87,10 @@
         var username = "{{ username  }}";
         var domain = "{{ domain }}";
         var formplayer_url = "{{ formplayer_url }}";
+        var instanceViewerEnabled = false;
+        {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
+            instanceViewerEnabled = true;
+        {% endif %}
         var options = {
             "apps": apps,
             "language": language,
@@ -94,6 +98,7 @@
             "domain": domain,
             "formplayer_url": formplayer_url,
             "gridPolyfillPath": "{% static 'css-grid-polyfill-binaries/css-polyfills.js' %}",
+            "debuggerEnabled": instanceViewerEnabled,
         };
         FormplayerFrontend.start(options);
         $(function () {

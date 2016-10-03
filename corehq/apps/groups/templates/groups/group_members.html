@@ -105,7 +105,7 @@
 
             $(function() {
                 $('#edit_membership').submit(function() {
-                    $(this).find(':button').attr('disabled', 'disabled');
+                    $(this).find(':button').prop('disabled', true);
                     $(this).ajaxSubmit({
                         success: outcome(true, "Group membership", "#edit_membership", "Edit Group Membership"),
                         error: outcome(false, "Group membership", "#edit_membership")
@@ -128,7 +128,7 @@
                     }
                 });
                 $('#group-data-form').submit(function() {
-                    $(this).find(':button').attr('disabled', 'disabled');
+                    $(this).find(':button').prop('disabled', true);
                     $(this).ajaxSubmit({
                         success: outcome(true, "Group data", "#group-data-form", "Edit Group Data"),
                         error: outcome(false, "Group data", "#group-data-form")

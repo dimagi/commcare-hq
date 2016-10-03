@@ -54,23 +54,17 @@
             }
             ">
             <!-- Tab title -->
-            <div class="debugger-tab-title" data-bind="
-                click: toggleState
-                ">
-                <i class="debugger-state fa" data-bind="
-                    css: {
-                        'fa-expand': isMinimized,
-                        'fa-compress': !isMinimized()
-                    }
-                "></i>
-                <span>{% trans "CloudCare Debugger" %}</span>
+            <div class="debugger-tab-title">
+                <i class="fa fa-bug"></i>
+                <span class="debugger-title">{% trans "CloudCare Debugger" %}</span>
+                <a class="pull-right" data-bind="click: toggleState">{% trans "Show Debugger" %}</a>
             </div>
 
             <!-- Debugger content -->
             <div class="debugger-container">
                 <!-- navigation tabs -->
 
-                <nav class="navbar navbar-default">
+                <nav class="navbar navbar-default debugger-navbar">
                   <div class="container-fluid">
 
                     <div class="navbar-header">

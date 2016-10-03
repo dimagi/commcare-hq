@@ -1218,7 +1218,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             crispy.Div(
                 crispy.HTML(self.column_config_template), id="columns-table", data_bind='with: columnsList'
             ),
-            hqcrispy.HiddenFieldWithErrors('columns', None, data_bind="value: columnsList.serializedProperties"),
+            hqcrispy.HiddenFieldWithErrors('columns', data_bind="value: columnsList.serializedProperties"),
         )
 
     @property

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations, IntegrityError
+from django.db import migrations, IntegrityError
+
+from corehq.sql_db.operations import HqRunPython
 
 
 def rename_static_data_source_pillow_errors(apps, schema_editor):
@@ -23,5 +25,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(rename_static_data_source_pillow_errors)
+        HqRunPython(rename_static_data_source_pillow_errors)
     ]

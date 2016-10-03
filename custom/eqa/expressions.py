@@ -1,3 +1,4 @@
+from corehq.apps.app_manager.models import Application
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from dimagi.ext.jsonobject import JsonObject, StringProperty
@@ -79,6 +80,68 @@ class EQAExpressionSpec(JsonObject):
         }
 
 
+class EQAActionItemSpec(JsonObject):
+    type = TypeProperty('cqi_action_item')
+    xmlns = StringProperty()
+    section = StringProperty()
+    question_id = StringProperty()
+
+    def __call__(self, item, context=None):
+        xforms_ids = CaseAccessors(item['domain']).get_case_xform_ids(item['_id'])
+        forms = FormAccessors(item['domain']).get_forms(xforms_ids)
+        f_forms = [f for f in forms if f.xmlns == self.xmlns]
+        s_forms = sorted(f_forms, key=lambda x: x.received_on)
+
+        if len(s_forms) > 0:
+            latest_form = s_forms[-1]
+        else:
+            latest_form = None
+        path_to_action_plan = 'form/action_plan/%s/action_plan' % self.section
+
+        if latest_form:
+            action_plans = latest_form.get_data(path_to_action_plan)
+            if action_plans:
+                action_plan_for_question = None
+                for action_plan in action_plans:
+                    if action_plan['incorrect_questions'] == self.question_id:
+                        action_plan_for_question = action_plan
+                        break
+                if action_plan_for_question:
+                    incorrect_question = action_plan_for_question.get('incorrect_questions')
+                    responsible = ', '.join(
+                        [
+                            item.get(x.strip(), '---') for x in
+                            action_plan_for_question.get('action_plan_input', {}).get('responsible', '').split(',')
+                        ]
+                    )
+                    support = ', '.join(
+                        [
+                            item.get(x.strip(), '---') for x in
+                            action_plan_for_question.get('action_plan_input', {}).get('support', '').split(',')
+                        ]
+                    )
+                    application = Application.get(latest_form.app_id)
+                    form = application.get_form_by_xmlns(self.xmlns)
+                    question_list = application.get_questions(self.xmlns)
+                    questions = {x['value']: x for x in question_list}
+                    return {
+                        'form_name': form.name['en'],
+                        'section': self.section,
+                        'timeEnd': latest_form.metadata.timeEnd,
+                        'gap': questions['data/code_to_text/%s' % incorrect_question].label,
+                        'intervention_action': action_plan_for_question.get('intervention_action', '---'),
+                        'responsible': responsible,
+                        'support': support,
+                        'deadline': action_plan_for_question.get('DEADLINE', '---'),
+                        'notes': action_plan_for_question.get('notes', '---'),
+                    }
+
+
 def eqa_expression(spec, context):
     wrapped = EQAExpressionSpec.wrap(spec)
+    return wrapped
+
+
+def cqi_action_item(spec, context):
+    wrapped = EQAActionItemSpec.wrap(spec)
     return wrapped

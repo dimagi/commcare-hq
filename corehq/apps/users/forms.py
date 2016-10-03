@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
@@ -550,8 +551,12 @@ class NewMobileWorkerForm(forms.Form):
             self.fields['location_id'].required = True
 
         if self.project.strong_mobile_passwords:
+            if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
+                validator = "validate_password_draconian"
+            else:
+                validator = "validate_password_standard"
             self.fields['password'].widget = forms.TextInput(attrs={
-                "validate_password": "",
+                validator: "",
                 "ng_keydown": "markNonDefault()",
                 "class": "default",
             })

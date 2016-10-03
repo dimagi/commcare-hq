@@ -44,6 +44,7 @@
             </div>
           </div>
         </div>
+        <% if (showIncompleteForms()) { %>
         <div class=" grid-item col-xs-6 col-sm-4 formplayer-request">
           <div class="js-incomplete-sessions-item appicon appicon-incomplete">
             <i class="ff ff-incomplete-bg appicon-icon appicon-icon-bg" aria-hidden="true"></i>
@@ -53,6 +54,7 @@
             </div>
           </div>
         </div>
+        <% } %>
         <div class="grid-item col-xs-6 col-sm-4 formplayer-request">
           <div class="js-sync-item appicon appicon-sync">
             <i class="ff ff-sync appicon-icon" aria-hidden="true"></i>

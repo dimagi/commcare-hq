@@ -49,8 +49,6 @@ branches:
   - vellum-staging # J$ 11/13
   - django-1.8 # nick P 8/25
   - ce/domain-list-api # Cal 8/31
-  - revert-13231-revert-13024-mk-235887-configure-menu-grid+onboarding # Jenny 9/19
-  - revert-13231-revert-13024-mk-235887-configure-menu-grid # Manish 9/20
   - onboarding # Jenny 9/19
 submodules:
   submodules/touchforms-src:
@@ -60,8 +58,7 @@ submodules:
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches:
-      - commcare_2.30 #wsp 9/14
+    branches: []
   submodules/django-digest-src:
     branches: []
   submodules/dimagi-utils-src:
@@ -74,4 +71,4 @@ submodules:
     branches: []
   deployment/commcare-hq-deploy:
     branches:
-      - br/celery-bash
+      - revert-122-revert-118-br/celery-bash

@@ -118,17 +118,6 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                 self.isEditing(false);
                 self.hasError(false);
             };
-
-            // Revert to read-only mode on blur, without saving, unless the input
-            // blurred only because focus jumped to one of the buttons (i.e., user pressed tab)
-            self.blur = function() {
-                setTimeout(function() {
-                    if (!self.saveHasFocus() && !self.cancelHasFocus() && !self.hasError()) {
-                        self.isEditing(false);
-                        self.value(self.readOnlyValue);
-                    }
-                }, 200);
-            };
         },
         template: '<div class="ko-inline-edit inline" data-bind="css: {\'has-error\': hasError()}">\
             <div class="read-only" data-bind="visible: !isEditing(), click: edit">\
