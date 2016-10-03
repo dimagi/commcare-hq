@@ -35,6 +35,7 @@
     {% include 'app_manager/partials/graph_configuration_modal.html' %}
 
     <script>
+        {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or module.case_type != "" %}
         $(function () {
             var state = hqImport('app_manager/js/detail-screen-config.js').state;
             var DetailScreenConfig = hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig;
@@ -86,6 +87,7 @@
                 }
             }
         });
+        {% endif %}
         $(function () {
             var moduleType = {{ module.module_type|JSON }};
             var showCaseTypeError = function(message) {
@@ -102,6 +104,15 @@
                 if (value !== valueNoSpaces) {
                     $(this).val(valueNoSpaces);
                 }
+                {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+                    if (!valueNoSpaces) {
+                        $(this).closest('.form-group').addClass('has-error');
+                        showCaseTypeError(
+                            gettext("Case type is required.")
+                        );
+                        return;
+                    }
+                {% endif %}
                 if (!valueNoSpaces.match(/^[\w-]+$/g)) {
                     $(this).closest('.form-group').addClass('has-error');
                     showCaseTypeError(
@@ -112,7 +123,6 @@
                     showCaseTypeError(
                         gettext("'commcare-user' is a reserved case type. Please change the case type")
                     );
-
                 } else {
                     $(this).closest('.form-group').removeClass('has-error');
                     hideCaseTypeError();
@@ -231,14 +241,16 @@
 {% endblock %}
 
 {% block form-view %}
-    {% include 'app_manager/partials/module_view_heading.html' %}
+{% include 'app_manager/partials/module_view_heading.html' %}
 <div class="tabbable">
+{% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or module.case_type != "" %}
 <ul class="nav nav-tabs" id="module-view-tabs">
     {% block tab-headers %}
     <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
-    {% if module.module_type != 'shadow' %}
-    <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
+    {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" and module.module_type != 'shadow' %}
+            <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
     {% endif %}
+    {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or module.case_type != "" %}
     {% for detail in details %}
     <li>
         <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">
@@ -253,150 +265,24 @@
     </li>
     {% endif %}
     {% endfor %}
+    {% endif %}
     {% endblock %}{# endblock tab-headers #}
 </ul>
 <div class="spacer"></div>
+{% endif %}
 <div class="tab-content">
     {% block tab-content %}
     <div class="tab-pane active" id="module-settings">
-        <form class="form-horizontal save-button-form"
-              action="{% url 'corehq.apps.app_manager.views.edit_module_attr' domain app.id module.id 'all' %}">
-            {% csrf_token %}
-            <div class="save-button-holder clearfix"></div>
-            <fieldset>
-                {% block settings_fields %}
-                {% if module.module_type == 'shadow' %}
-                <div id="sourceModuleForms">
-                    <div class="form-group">
-                        <label class="col-sm-2 control-label">
-                            {% trans "Source Module" %}
-                        </label>
-                        <div class="col-sm-4">
-                            <select name="source_module_id" class="form-control"
-                                    data-bind="options: modules,
-                                               optionsText: 'name',
-                                               optionsValue: 'uniqueId',
-                                               value: selectedModuleId"></select>
-                        </div>
-                    </div>
-                    <div class="form-group" data-bind="visible: selectedModule().forms().length">
-                        <label class="col-sm-2 control-label">
-                            {% trans "Include Forms" %}
-                        </label>
-                        <div class="col-sm-4"
-                             data-bind="template: {name: 'module-forms-template',
-                                                   foreach: selectedModule().forms()}"></div>
-                        <div class="hidden">
-                            <select name="excl_form_ids"
-                                    multiple="multiple"
-                                    data-bind="options: selectedModule().forms,
-                                               optionsText: 'name',
-                                               optionsValue: 'uniqueId',
-                                               selectedOptions: excludedFormIds"></select>
-                            {# POST a value, even if no forms are excluded #}
-                            <input name="excl_form_ids" type="checkbox" value="0" checked="">
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-                <div class="form-group">
-                    <label class="col-sm-2 control-label">
-                        {% trans "Menu Mode" %}
-                    </label>
-                    <div class="col-sm-4">
-                        <select type="text" name="put_in_root" class="form-control" id="put_in_root">
-                            <option value="false">{% trans "Display module and then forms" %}</option>
-                            <option value="true"{% if module.put_in_root %} selected{% endif %}>{% trans "Display only forms" %}</option>
-                        </select>
-                    </div>
-                </div>
-
-                {% if app.grid_display_for_some_modules %}
-                <div class="form-group" id="display_style_container">
-                    <label class="col-sm-2 control-label">
-                        {% trans "Display Style" %}
-                    </label>
-                    <div class="col-sm-4">
-                        <select type="text" name="display_style" class="form-control">
-                            <option value="list">{% trans "List" %}</option>
-                            <option value="grid"{% if module.grid_display_style %} selected{% endif %}>
-                                {% trans "Grid" %}
-                            </option>
-                        </select>
-                    </div>
-                </div>
-                {% endif %}
-                {% include "app_manager/partials/module_filter.html" with value=module.module_filter %}
-                {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
-                {% if child_module_enabled %}
-                <div class="form-group">
-                    <label class="col-sm-2 control-label">
-                        {% trans "Parent Module" %}
-                    </label>
-                    <div class="col-sm-4">
-                        <select type="text" name="root_module_id" class="form-control">
-                            <option value="">{% trans "No Parent" %}</option>
-                            {% for mod in valid_parent_modules %}
-                                <option value="{{mod.unique_id}}"{% if mod.unique_id == module.root_module_id %} selected{% endif %}>
-                                    {{ mod.name|trans:langs }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-                {% endif %}
-                {% endblock %}
-            </fieldset>
-        </form>
+        {% include "app_manager/partials/module_view_settings.html" %}
     </div>
+
+    {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
     <div class="tab-pane" id="case-settings">
-        <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_module_attr" domain app.id module.id 'all' %}">
-            {% csrf_token %}
-            <div class="save-button-holder clearfix"></div>
-            <fieldset>
-                <legend>{% trans "Basic" %}</legend>
-                <div class="form-group">
-                    <label class="col-sm-2 control-label">
-                        {% trans "Case Type" %}
-                        <span class="hq-help-template"
-                              data-title="{% trans "Case Type" %}"
-
-                              data-content="{% trans "The name for the type of case you are tracking (e.g. &quot;pregnancy&quot;, &quot;farm&quot;, &quot;household&quot;, etc.). All cases you register in this module will be this type of case, and only cases of this type will show in the case list. Other modules with the same case type will use the same set of cases." %}"
-                                ></span>
-                    </label>
-                    <div class="col-sm-4">
-                        <input class="code form-control" type="text" id="case_type" name="case_type" value="{{ module.case_type }}" />
-                        <span class="help-block" id="case_type_error" style="display: none;">
-                            {% trans "Case types can only include the characters a-z, 0-9, '-' and '_'" %}
-                        </span>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="control-label col-sm-2">
-                        {% trans "Label for Cases" %}
-                        <span class="hq-help-template"
-                              data-title="{% trans "Label for Cases" %}"
-                              data-content="{% trans "This label will appear at the top of the phone's case select screen." %}"
-                        ></span>
-                    </label>
-                    <div class="col-sm-4">
-                        <input type="text" name="case_label" value="{{ module.case_label|trans:langs }}" class="form-control" />
-                    </div>
-                </div>
-            </fieldset>
-            <fieldset>
-                <legend>{% trans "Advanced" %}</legend>
-                {% block case_management_advanced_fields %}
-                {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List Menu Item" DESC="An item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
-                {% include 'app_manager/partials/case_list_form_setting.html' %}
-                {% if module.module_type == 'basic' and request.project.survey_management_enabled %}
-                    {% include 'app_manager/partials/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
-                {% endif %}
-                {% endblock case_management_advanced_fields %}
-            </fieldset>
-        </form>
+        {% include "app_manager/partials/module_view_case_management.html" %}
     </div>
+    {% endif %}
 
+    {% if module.case_type != "" or not request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
     {% for detail in details %}
     <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
         {% include 'app_manager/partials/case_list.html' %}
@@ -407,6 +293,7 @@
     </div>
     {% endif %}
     {% endfor %}
+    {% endif %}
     {% endblock %}{# endblock tab-content #}
 </div>
 </div>

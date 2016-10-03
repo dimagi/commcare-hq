@@ -47,13 +47,16 @@ from corehq.apps.app_manager.models import (
     DeleteModuleRecord,
     DetailColumn,
     DetailTab,
+    FormActionCondition,
     Module,
     ModuleNotFoundException,
+    OpenCaseAction,
     ParentSelect,
     ReportModule,
     ShadowModule,
     SortElement,
     ReportAppConfig,
+    UpdateCaseAction,
     FixtureSelect,
     DefaultCaseSearchProperty)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
@@ -813,10 +816,37 @@ def new_module(request, domain, app_id):
     lang = request.COOKIES.get('lang', app.langs[0])
     name = request.POST.get('name')
     module_type = request.POST.get('module_type', 'case')
-    if module_type == 'case':
+    if module_type == 'case' or module_type == 'survey':
+        if toggles.ONBOARDING_PROTOTYPE.enabled(domain):
+            if module_type == 'case':
+                name = name or 'Record List'
+            else:
+                name = name or 'Surveys'
         module = app.add_module(Module.new_module(name, lang))
         module_id = module.id
-        app.new_form(module_id, "Untitled Form", lang)
+        if toggles.ONBOARDING_PROTOTYPE.enabled(domain):
+            if module_type == 'case':
+                # registration form
+                register = app.new_form(module_id, "Register", lang)
+                register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
+                register.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
+
+                # one followup form
+                followup = app.new_form(module_id, "Followup", lang)
+                followup.requires = "case"
+                followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
+
+                # make case type unique across app
+                app_case_types = set([module.case_type for module in app.modules if module.case_type])
+                module.case_type = 'record'
+                suffix = 0
+                while module.case_type in app_case_types:
+                    suffix = suffix + 1
+                    module.case_type = 'record-{}'.format(suffix)
+            else:
+                form = app.new_form(module_id, "Survey", lang)
+        else:
+            app.new_form(module_id, "Untitled Form", lang)
         app.save()
         response = back_to_main(request, domain, app_id=app_id, module_id=module_id)
         response.set_cookie('suppress_build_errors', 'yes')

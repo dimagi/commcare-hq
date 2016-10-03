@@ -1,6 +1,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load xforms_extras %}
+{% load crispy_forms_tags %}
 
 <script type="text/html" id="CommcareSettings.widgets.select">
     <span>
@@ -152,6 +153,69 @@
     </aside>
 </script>
 
+{% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+
+<div class="tabbable">
+    <ul class="nav nav-tabs">
+        <li class="active"><a href="#commcare-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
+        {% if app.get_doc_type == 'Application' %}
+            <li><a id="demand-multimedia" href="#multimedia" data-toggle="tab">{% trans "Multimedia" %}</a></li>
+        {% endif %}
+        <li><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
+        <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
+    </ul>
+    <br>
+    <div class="tab-content">
+        <div class="tab-pane active" id="commcare-settings">
+            {% include 'app_manager/partials/commcare_settings.html' %}
+        </div>
+        {% if app.get_doc_type == 'Application' %}
+            <div class="tab-pane" id="multimedia">
+                <div data-bind="if: load_state() === 'loading'">
+                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                    {% trans "Loading ..." %}
+                </div>
+                <div data-bind="html: multimedia_page_html"></div>
+                <div data-bind="if: load_state() === 'error'">
+                    <button class="btn btn-default" data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
+                </div>
+            </div>
+        {% endif %}
+        <div class="tab-pane" id="languages">
+            {% include 'app_manager/languages.html' %}
+        </div>
+        <div class="tab-pane" id="actions">
+            {% if copy_app_form %}
+                <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
+                    {% crispy copy_app_form %}
+                </form>
+                <br>
+            {% endif %}
+            {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
+                <legend>Export compressed application</legend>
+                <form action="{% url "gzip_app" domain app.id %}" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-arrow-down"></i>
+                        {% trans "Download" %}
+                    </button>
+                </form>
+                <br>
+            {% endif %}
+            <legend>{% trans "Delete Application" %}</legend>
+            <form action="{% url "corehq.apps.app_manager.views.delete_app" domain app.id %}" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger disable-on-submit">
+                    <i class="fa fa-trash"></i>
+                    {% trans "Delete this application" %}
+                </button>
+            </form>
+        </div>
+    </div>
+</div> 
+
+{% else %}
+
 <inline-edit params="
     value: '{{ app.name|escapejs }}',
     readOnlyClass: 'h3',
@@ -187,18 +251,22 @@
                         <span data-bind="text: title"></span>
                     </a>
                 </legend>
-                <div class="collapse" data-bind="foreach: settings, attr: {id: id}, css: {'in': !reallyCollapse()}">
+                <div class="collapse" data-bind="foreach: settings, attr: {id: id}, css: {'in':
+!reallyCollapse()}">
                     <!-- ko if: widget !== 'none' -->
                     <div class="form-group" data-bind="
                         visible: visible,
                         css: {error: hasError()}
                     ">
                         <div class="col-sm-2 control-label">
-                            <label data-bind="html: name, attr: {for: inputId}" class="inner-control-label"></label>
-                            <span data-bind="makeHqHelp: { name: name, description: $data.description, format: $data.description_format}, visible: $data.description"></span>
+                            <label data-bind="html: name, attr: {for: inputId}"
+class="inner-control-label"></label>
+                            <span data-bind="makeHqHelp: { name: name, description: $data.description, format:
+$data.description_format}, visible: $data.description"></span>
                         </div>
                         <div class="col-sm-4">
-                            <span data-bind="template: $data.widget_template || 'CommcareSettings.widgets.' + widget"></span>
+                            <span data-bind="template: $data.widget_template || 'CommcareSettings.widgets.' +
+widget"></span>
                             <p class="help-block" data-bind="visible: disabledButHasValue">
                                 <span data-bind="text: $data.disabled_txt"></span>
                                 <span data-bind="visible: !$data.disabled_txt">
@@ -218,9 +286,12 @@
                                     text: $data.warning || $parents[1].warning,
                                     visible: !$data.valueIsLegal()">
                                 </span>
-                                <span class="label label-info" data-bind="visible: $data.preview">{% trans "Preview" %}</span>
-                                <span data-bind="visible: disabledMessage(), css: {'text-warning': !optionOK(), 'text-success': optionOK}">
-                                    <i class="fa" data-bind="css: {'fa-arrow-left': !optionOK(), 'fa-check': optionOK}"></i>
+                                <span class="label label-info" data-bind="visible: $data.preview">{% trans
+"Preview" %}</span>
+                                <span data-bind="visible: disabledMessage(), css: {'text-warning': !optionOK(),
+'text-success': optionOK}">
+                                    <i class="fa" data-bind="css: {'fa-arrow-left': !optionOK(), 'fa-check':
+optionOK}"></i>
                                     <span data-bind="text: disabledMessage()"></span>
                                 </span>
                             </div>
@@ -266,3 +337,4 @@
     </form>
 </div>
 
+{% endif %}
