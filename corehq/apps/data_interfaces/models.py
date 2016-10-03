@@ -266,7 +266,6 @@ class AutomaticUpdateAction(models.Model):
     property_value = models.CharField(max_length=126, null=True)
 
     property_value_type = models.CharField(max_length=15,
-                                           choices=PROPERTY_TYPE_CHOICES,
                                            default=EXACT)
 
     class Meta:

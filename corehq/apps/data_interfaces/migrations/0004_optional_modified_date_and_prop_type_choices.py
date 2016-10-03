@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='automaticupdateaction',
             name='property_value_type',
-            field=models.CharField(default=b'Exact', max_length=15, choices=[(b'Exact', b'Exact'), (b'Case Property', b'Case Property')]),
+            field=models.CharField(default=b'EXACT', max_length=15),
             preserve_default=True,
         ),
         migrations.AddField(
