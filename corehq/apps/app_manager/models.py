@@ -1988,6 +1988,10 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     fixture_select = SchemaProperty(FixtureSelect)
     auto_select_case = BooleanProperty(default=False)
 
+    @property
+    def is_surveys(self):
+        return self.case_type == ""
+
     @classmethod
     def wrap(cls, data):
         if cls is ModuleBase:
@@ -5179,6 +5183,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return properties.get('cc-content-valid', 'yes')
 
     @property
+    def advanced_app_builder(self):
+        properties = (self.profile or {}).get('properties', {})
+        return properties.get('advanced_app_builder', 'false') == 'true'
+
+    @property
     def jad_settings(self):
         s = super(Application, self).jad_settings
         s.update({
@@ -5437,10 +5446,21 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             pass
         try:
             form = from_module.forms.pop(j)
+            if toggles.ONBOARDING_PROTOTYPE.enabled(self.domain):
+                if not to_module.is_surveys and i == 0:
+                    # first form in record list is the reg form
+                    i = 1
+                if from_module.is_surveys != to_module.is_surveys:
+                    if from_module.is_surveys:
+                        form.requires = "case"
+                        form.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
+                    else:
+                        form.requires = "none"
+                        form.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='never'))
             to_module.add_insert_form(from_module, form, index=i, with_source=True)
         except IndexError:
             raise RearrangeError()
-        if to_module.case_type != from_module.case_type:
+        if to_module.case_type != from_module.case_type and not toggles.ONBOARDING_PROTOTYPE.enabled(self.domain):
             raise ConflictingCaseTypeError()
 
     def scrub_source(self, source):
