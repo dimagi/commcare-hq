@@ -3,13 +3,13 @@ from lxml import etree
 import HTMLParser
 import json
 import socket
-import csv
 from datetime import timedelta, date, datetime
 from collections import defaultdict, namedtuple, OrderedDict
 from StringIO import StringIO
 
 import dateutil
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.csv import UnicodeWriter
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 from django.conf import settings
@@ -971,7 +971,7 @@ class DownloadMALTView(BaseAdminSectionView):
             except (ValueError, ValidationError):
                 messages.error(
                     request,
-                    _("Enter a valid year-month. e.g. 2015-09 (for December 2015)")
+                    _("Enter a valid year-month. e.g. 2015-09 (for September 2015)")
                 )
         return super(DownloadMALTView, self).get(request, *args, **kwargs)
 
@@ -1001,7 +1001,7 @@ class DownloadGIRView(BaseAdminSectionView):
             except (ValueError, ValidationError):
                 messages.error(
                     request,
-                    _("Enter a valid year-month. e.g. 2015-09 (for December 2015)")
+                    _("Enter a valid year-month. e.g. 2015-09 (for September 2015)")
                 )
         return super(DownloadGIRView, self).get(request, *args, **kwargs)
 
@@ -1019,7 +1019,7 @@ def _gir_csv_response(month, year):
     field_names = GIR_FIELDS
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = u'attachment; filename=gir.csv'
-    writer = csv.writer(response)
+    writer = UnicodeWriter(response)
     writer.writerow(list(field_names))
     for months in domain_months.values():
         writer.writerow(months[0].export_row(months[1:]))
