@@ -748,6 +748,13 @@ AUTO_CASE_UPDATE_ENHANCEMENTS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
+    'run_auto_case_updates_on_save',
+    'Run Auto Case Update rules on each case save.',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
 EWS_BROADCAST_BY_ROLE = StaticToggle(
     'ews_broadcast_by_role',
     'EWS: Filter broadcast recipients by role',

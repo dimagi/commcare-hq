@@ -33,9 +33,11 @@
         $scope.update_property_name = initial.update_property_name;
         $scope.update_property_value = initial.update_property_value;
         $scope.server_modified_boundary = initial.server_modified_boundary;
+        $scope.filter_on_server_modified = initial.filter_on_server_modified;
+        $scope.property_value_type = initial.property_value_type;
         $scope.conditions_objs = initial.conditions;
         $scope.conditions = JSON.stringify(initial.conditions);
-        $scope.case_property_map = {}
+        $scope.case_property_map = {};
 
         $scope.get_typeahead_source = function(query, process) {
             process($scope.case_property_map[$scope.case_type] || []);
@@ -60,6 +62,10 @@
                 setTimeout($scope.init_typeahead, 100);
             }
         }, true);
+
+        $scope.showServerModifiedBoundaryField = function() {
+            return $scope.filter_on_server_modified == 'true';
+        };
 
         $scope.addCondition = function() {
             $scope.conditions_objs.push({});
