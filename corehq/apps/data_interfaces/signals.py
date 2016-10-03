@@ -1,4 +1,4 @@
-from corehq.toggles import AUTO_CASE_UPDATE_ENHANCEMENTS
+from corehq.toggles import RUN_AUTO_CASE_UPDATES_ON_SAVE
 from dimagi.utils.logging import notify_exception
 
 
@@ -9,7 +9,7 @@ def case_changed_receiver(sender, case, **kwargs):
     try:
         from corehq.apps.data_interfaces.tasks import run_case_update_rules_on_save
 
-        if AUTO_CASE_UPDATE_ENHANCEMENTS.enabled(case.domain):
+        if RUN_AUTO_CASE_UPDATES_ON_SAVE.enabled(case.domain):
             run_case_update_rules_on_save.delay(case)
     except Exception as e:
         error_message = 'Exception in case update signal'
