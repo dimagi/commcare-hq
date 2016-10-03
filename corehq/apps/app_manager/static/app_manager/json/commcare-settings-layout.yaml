@@ -19,7 +19,6 @@
   id: app-settings-general
   collapse: true
   settings:
-    - features.sense  # CommCare Sense
     - hq.build_spec  # CommCare Version
     - properties.cc-autoup-freq  # Auto Update Frequency
     - properties.unsent-number-limit  # Unsent Form Limit
@@ -45,6 +44,7 @@
   id: app-settings-j2me-ui
   collapse: true
   settings:
+    - features.sense  # CommCare Sense
     - properties.extra_key_action  # Extra Key Action
     - properties.cc-entry-mode  # Item Selection Mode
     - properties.cc-send-unsent  # Send Forms Mode
