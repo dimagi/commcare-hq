@@ -568,6 +568,10 @@ function _getDisplayOptions(question) {
     var maxIter = 10; // protect against a potential infinite loop
     var form = question.parent;
 
+    if (form === undefined) {
+        return {};
+    }
+
     // logic in case the question is in a group or repeat or nested group, etc.
     while (form.displayOptions === undefined && maxIter > 0) {
         maxIter --;
