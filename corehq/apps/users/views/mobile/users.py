@@ -226,6 +226,10 @@ class EditCommCareUserView(BaseEditUserView):
             'demo_restore_date': naturaltime(demo_restore_date_created(self.editable_user)),
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES
         }
+        if self.commtrack_form.errors:
+            messages.error(self.request, _(
+                "There were some errors while saving user's locations. Please check 'Locations' tab"
+            ))
         if self.domain_object.commtrack_enabled or self.domain_object.uses_locations:
             context.update({
                 'commtrack_enabled': self.domain_object.commtrack_enabled,
