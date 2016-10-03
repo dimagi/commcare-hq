@@ -42,6 +42,7 @@ var mk_translation_ui = function (spec) {
                 $('<div/>').addClass("col-sm-3").append(this.value.ui).appendTo(this.ui);
                 $('<div/>').addClass("col-sm-1").append(this.$delete).append(this.$add).appendTo(this.ui);
                 $('<div/>').addClass("col-sm-5").append(this.$error).appendTo(this.ui);
+                this.ui = $('<div/>').append(this.ui);
                 this.$error.hide()
 
                 var helperFunction = function () {
@@ -91,12 +92,12 @@ var mk_translation_ui = function (spec) {
                 setSolid: function (solid) {
                     this.solid = solid;
                     if (solid) {
-                        this.ui.find("legend").parent().remove();
+                        this.ui.find("legend").closest(".row").remove();
                         this.key.setEdit(false);
                         this.$delete.show();
                         this.$add.hide();
                     } else {
-                        this.ui.prepend("<div class='col-sm-12'><legend>Add Translation</legend></div>");
+                        this.ui.prepend("<div class='row'><div class='col-sm-12'><legend>Add Translation</legend></div></div>");
                         this.key.setEdit(true);
                         this.$delete.hide();
                         this.$add.show();
