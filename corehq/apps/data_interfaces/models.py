@@ -132,9 +132,17 @@ class AutomaticUpdateRule(models.Model):
             elif action.action == AutomaticUpdateAction.ACTION_CLOSE:
                 close = True
 
+        # Update any referenced parent cases
         for id, properties in cases_to_update.items():
-            close_case = close if id == case.case_id else False
-            update_case(case.domain, id, case_properties=properties, close=close_case,
+            if id == case.case_id:
+                continue
+            update_case(case.domain, id, case_properties=properties, close=False,
+                xmlns=AUTO_UPDATE_XMLNS)
+
+        # Update / close the case
+        properties = cases_to_update[case.case_id]
+        if close or properties:
+            update_case(case.domain, case.case_id, case_properties=properties, close=close,
                 xmlns=AUTO_UPDATE_XMLNS)
 
         return close
