@@ -22,6 +22,7 @@ from corehq.apps.es import GroupES
 from corehq.blobs import get_blob_db
 from corehq.elastic import send_to_elasticsearch
 from corehq.util.decorators import change_log_level
+from corehq.apps.hqadmin.utils import parse_celery_workers
 
 ServiceStatus = namedtuple("ServiceStatus", "success msg")
 
@@ -133,9 +134,18 @@ def check_heartbeat():
         t = cresource.get("api/workers", params_dict={'status': True}).body_string()
         all_workers = json.loads(t)
         bad_workers = []
-        for hostname, status in all_workers.items():
-            if not status:
+        expected_running, expected_stopped = parse_celery_workers(all_workers)
+
+        for hostname in expected_running:
+            if not all_workers[hostname]:
                 bad_workers.append('* {} celery worker down'.format(hostname))
+
+        for hostname in expected_stopped:
+            if all_workers[hostname]:
+                bad_workers.append(
+                    '* {} celery worker is running when we expect it to be stopped.'.format(hostname)
+                )
+
         if bad_workers:
             return ServiceStatus(False, '\n'.join(bad_workers))
 

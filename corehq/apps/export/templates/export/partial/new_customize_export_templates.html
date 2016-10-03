@@ -148,7 +148,7 @@
                                            class="field-include"
                                            data-bind="checked: column.selected" />
                                     <!--/ko-->
-                                    <!-- ko if: column.isUserDefined -->
+                                    <!-- ko if: column.isEditable() -->
                                     <div class="remove-user-defined-column pull-right">
                                         <button class="btn btn-danger btn-xs" data-bind="
                                             click: function() {
@@ -167,8 +167,8 @@
                                             attr: { class: hqImport('export/js/utils.js').getTagCSSClass(tag) }"></span>
                                     </span>
 
-                                    <!-- ko if: !column.isUserDefined -->
-                                    <code data-toggle="tooltip" data-placement="top" 
+                                    <!-- ko if: !column.isEditable() -->
+                                    <code data-toggle="tooltip" data-placement="top"
                                         data-bind="
                                             text: column.formatProperty(),
                                             attr: {
@@ -180,7 +180,7 @@
                                             }
                                         "></code>
                                     <!-- /ko -->
-                                    <!-- ko if: column.isUserDefined -->
+                                    <!-- ko if: column.isEditable() -->
                                     <input
                                         type="text"
                                         class="form-control"

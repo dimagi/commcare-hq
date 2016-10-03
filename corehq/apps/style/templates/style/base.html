@@ -219,6 +219,7 @@
         {% maintenance_alert %}
         <!-- .hide used for A/B test of account creation page -->
         <div class="hq-container{% if is_register_user %} molly{% endif %}">
+            {% block navigation %}
             <div id="hq-navigation"
                  class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
                 <div class="container-fluid">
@@ -265,46 +266,47 @@
                     </nav>
                 </div>
             </div>
+            {% endblock navigation %}
             {% if request.project.is_snapshot %}
                 <div class="alert alert-info">
                     {% trans "This is a snapshot of " %}{{ request.project.copied_from.display_name }}
                 </div>
             {% endif %}
 
-            {% if not no_header or messages %}
-                <!--[if IE]>
-                    <div id="unsupported-browser" class="alert alert-error alert-block alert-full">
-                        <p><i class="fa fa-warning-sign"></i><strong>{% trans 'CommCare HQ does not work well with Internet Explorer.'%}</strong></p>
-                        <p>
-                            {% blocktrans %}
-                            We recommend
-                            <a href="https://www.google.com/chrome">Chrome</a>
-                            or <a href="http://www.mozilla.org/">Firefox</a>.
-                            {% endblocktrans %}
-                        </p>
-                    </div>
-                <![endif]-->
-                <div class="container-fluid">
-                    <div class="row">
-                        <div class="col-sm-12">
-                           {% if messages %}
-                                {% for message in messages %}
-                                    <div class="alert alert-margin-top fade in alert-block alert-full page-level-alert{% if message.tags %} {{ message.tags }}{% endif %}">
-                                        <a class="close" data-dismiss="alert" href="#">&times;</a>
-                                        {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
-                                    </div>
-                                {% endfor %}
-                            {% endif %}
-                            <div id="message-alerts" class="ko-template" data-bind="foreach: alerts">
-                                <div data-bind="attr: {'class': alert_class}">
+            <!--[if IE]>
+                <div id="unsupported-browser" class="alert alert-error alert-block alert-full">
+                    <p><i class="fa fa-warning-sign"></i><strong>{% trans 'CommCare HQ does not work well with Internet Explorer.'%}</strong></p>
+                    <p>
+                        {% blocktrans %}
+                        We recommend
+                        <a href="https://www.google.com/chrome">Chrome</a>
+                        or <a href="http://www.mozilla.org/">Firefox</a>.
+                        {% endblocktrans %}
+                    </p>
+                </div>
+            <![endif]-->
+            {% block messages %}
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-sm-12">
+                       {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-margin-top fade in alert-block alert-full page-level-alert{% if message.tags %} {{ message.tags }}{% endif %}">
                                     <a class="close" data-dismiss="alert" href="#">&times;</a>
-                                    <span data-bind="text: message"></span>
+                                    {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
                                 </div>
+                            {% endfor %}
+                        {% endif %}
+                        <div id="message-alerts" class="ko-template" data-bind="foreach: alerts">
+                            <div data-bind="attr: {'class': alert_class}">
+                                <a class="close" data-dismiss="alert" href="#">&times;</a>
+                                <span data-bind="text: message"></span>
                             </div>
                         </div>
                     </div>
                 </div>
-            {% endif %}
+            </div>
+            {% endblock messages %}
             {% block content %}{% endblock content %}
         </div>
         <footer>
@@ -418,13 +420,10 @@
             }
 
             var message_element = $("#message-alerts").get(0);
-            // if not no_header
-            if (typeof message_element !== 'undefined') {
-                ko.cleanNode(message_element);
-                $(message_element).koApplyBindings({
-                    alerts: message_alerts
-                });
-            }
+            ko.cleanNode(message_element);
+            $(message_element).koApplyBindings({
+                alerts: message_alerts
+            });
 
         </script>
         {% endaddtoblock %}

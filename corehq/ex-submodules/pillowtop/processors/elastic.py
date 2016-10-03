@@ -3,6 +3,7 @@ import time
 
 from elasticsearch.exceptions import RequestError, ConnectionError, NotFoundError, ConflictError
 
+from pillowtop.dao.exceptions import DocumentNotFoundError
 from pillowtop.exceptions import PillowtopIndexingError
 from pillowtop.logger import pillow_logging
 from .interface import PillowProcessor
@@ -34,7 +35,7 @@ class ElasticProcessor(PillowProcessor):
         doc = change.get_document()
         if doc is None:
             pillow_logging.warning("Unable to get document from change: {}".format(change))
-            return
+            raise DocumentNotFoundError()  # force a retry
 
         if self.doc_filter_fn and self.doc_filter_fn(doc):
             return

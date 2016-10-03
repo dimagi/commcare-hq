@@ -124,12 +124,6 @@ def domain_has_privilege(domain, privilege_slug, **assignment):
             return False
         if plan_version.role.has_privilege(privilege):
             return True
-        # temporary until we feel safe changing roles - J$, Noah, Cal
-        elif (plan_version.role.slug != 'community_plan_v1' and
-              (privilege_slug == privileges.EXCEL_DASHBOARD or
-               privilege_slug == privileges.DAILY_SAVED_EXPORT)
-            ):
-            return True
     except ProductPlanNotFoundError:
         return False
     except AccountingError:

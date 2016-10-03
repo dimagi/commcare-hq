@@ -369,14 +369,9 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
     // Called afterRender, ensures that the debugger takes the whole screen
     self.adjustWidth = function(e) {
         var $debug = $('#instance-xml-home'),
-            $body = $('body'),
-            margin = 10;
+            $body = $('body');
 
-        // On a mobile device or preview mode
-        if ($body.width() < 768) {
-            margin = 0;
-        }
-        $debug.width($body.width() - $debug.offset().left - margin);
+        $debug.width($body.width() - $debug.offset().left);
     };
 };
 

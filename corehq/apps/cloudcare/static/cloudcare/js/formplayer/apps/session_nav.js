@@ -14,10 +14,12 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
 
     var API = {
         listApps: function () {
+            FormplayerFrontend.regions.breadcrumb.empty();
             FormplayerFrontend.trigger("clearForm");
             SessionNavigate.AppList.Controller.listApps();
         },
         singleApp: function(appId) {
+            FormplayerFrontend.regions.breadcrumb.empty();
             SessionNavigate.AppList.Controller.singleApp(appId);
         },
         selectApp: function (appId) {

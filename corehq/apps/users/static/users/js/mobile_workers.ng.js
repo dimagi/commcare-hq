@@ -237,6 +237,13 @@
             $scope.workers.push($scope.mobileWorker);
             workerCreationFactory.stageNewMobileWorker($scope.mobileWorker);
         };
+
+        $scope.retryMobileWorker = function (worker) {
+            $scope.initializeMobileWorker(worker);
+            $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE;
+            $scope.usernameStatusMessage = 'Username is available.';
+            $scope.markNonDefault();
+        };
     };
 
     var mobileWorkerFactories = {};
@@ -315,7 +322,7 @@
         };
     };
 
-    mobileWorkerDirectives.validatePassword = function ($http, $q, djangoRMI) {
+    mobileWorkerDirectives.validatePasswordStandard = function ($http, $q, djangoRMI) {
         return {
             restrict: 'AE',
             require: 'ngModel',
@@ -338,6 +345,30 @@
                     return goodEnough;
                 };
             }
+        };
+    };
+
+    mobileWorkerDirectives.validatePasswordDraconian = function ($http, $q, djangoRMI) {
+        return {
+            restrict: 'AE',
+            require: 'ngModel',
+            link: function ($scope, $elem, $attr, ctrl) {
+                ctrl.$validators.validatePassword = function (password) {
+                    if (!password) {
+                        return false;
+                    }
+                    $formElements.password()
+                        .removeClass('has-error has-success')
+                        .addClass('has-pending');
+                    if ($formElements.password().hasClass('non-default')) {
+                        $formElements.passwordHint()
+                            .text(gettext("Password Requirements: 1 special character, " +
+                                          "1 number, 1 capital letter, minimum length of 8 characters."));
+                    }
+
+                    return true;
+                };
+            },
         };
     };
 

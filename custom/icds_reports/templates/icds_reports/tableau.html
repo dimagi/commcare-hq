@@ -13,6 +13,9 @@
         tableauUrl: "{{ tableau_access_url }}{{ report_workbook }}/{{ report_worksheet }}",
         userLocationLevel: "{{ view_by }}",
         userLocation: "{{ view_by_value|default:'' }}",
+        stateCode: "{{ state_code|default:'All' }}",
+        districtCode: "{{ district_code|default:'All' }}",
+        blockCode: "{{ block_code|default:'All' }}",
         isDebug: {{ debug|yesno:"true,false" }},
     };
 
