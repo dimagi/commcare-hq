@@ -91,10 +91,12 @@ var mk_translation_ui = function (spec) {
                 setSolid: function (solid) {
                     this.solid = solid;
                     if (solid) {
+                        this.ui.find("legend").parent().remove();
                         this.key.setEdit(false);
                         this.$delete.show();
                         this.$add.hide();
                     } else {
+                        this.ui.prepend("<div class='col-sm-12'><legend>Add Translation</legend></div>");
                         this.key.setEdit(true);
                         this.$delete.hide();
                         this.$add.show();
