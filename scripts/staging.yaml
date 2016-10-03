@@ -49,6 +49,7 @@ branches:
   - vellum-staging # J$ 11/13
   - ce/domain-list-api # Cal 8/31
   - onboarding # Jenny 9/19
+  - np/kill-djcelery # Nick P 10/3
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
