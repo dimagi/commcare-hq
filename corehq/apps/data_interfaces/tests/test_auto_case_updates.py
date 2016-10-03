@@ -476,7 +476,7 @@ class AutomaticCaseUpdateTest(TestCase):
     @run_with_all_backends
     def test_run_on_save(self):
         with _with_case(self.domain, 'test-case-type-3', datetime(2016, 1, 1), case_name='signal') as case:
-            with patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.apply_actions') as apply:
+            with patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.apply_rule') as apply:
                 # property is updated after save signal (case update used to force save)
                 update_case(self.domain, case.case_id, {})
                 apply.assert_called_once()
