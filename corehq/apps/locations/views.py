@@ -252,10 +252,12 @@ class LocationTypesView(BaseLocationView):
             pk = loc_type['pk']
             if not _is_fake_pk(pk):
                 pks.append(loc_type['pk'])
-        if not (
-            len(loc_types) == len(set(lt['name'] for lt in loc_types))
-            and len(loc_types) == len(set(lt['code'] for lt in loc_types))
-        ):
+
+        names = [lt['name'] for lt in loc_types]
+        unique_names = len(names) == len(set(names))
+        codes = [lt['code'] for lt in loc_types if lt['code']]
+        unique_codes = len(codes) == len(set(codes))
+        if not unique_names or not unique_codes:
             raise LocationConsistencyError("'name' and 'code' are supposed to be unique")
 
         hierarchy = self.get_hierarchy(loc_types)
