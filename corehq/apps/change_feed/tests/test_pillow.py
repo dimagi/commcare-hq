@@ -127,4 +127,4 @@ class TestElasticProcessorPillows(SimpleTestCase):
                 )
             )
         except DocumentMismatchError:
-            self.fail('Incorectly raise a document not found error for matching revs')
+            self.fail('Incorectly raise a DocumentMismatchError for matching revs')
