@@ -813,6 +813,7 @@ class EditAutomaticUpdateRuleView(AddAutomaticUpdateRuleView):
                 'property_value': criterion.property_value,
             })
 
+        close_case = False
         update_case = False
         update_property_name = None
         update_property_value = None
@@ -823,18 +824,22 @@ class EditAutomaticUpdateRuleView(AddAutomaticUpdateRuleView):
                 update_property_name = action.property_name
                 update_property_value = action.property_value
                 property_value_type = action.property_value_type
-                break
+            elif action.action == AutomaticUpdateAction.ACTION_CLOSE:
+                close_case = True
+
+        if close_case and update_case:
+            initial_action = AddAutomaticCaseUpdateRuleForm.ACTION_UPDATE_AND_CLOSE
+        elif update_case and not close_case:
+            initial_action = AddAutomaticCaseUpdateRuleForm.ACTION_UPDATE
+        else:
+            initial_action = AddAutomaticCaseUpdateRuleForm.ACTION_CLOSE
 
         initial = {
             'name': self.rule.name,
             'case_type': self.rule.case_type,
             'server_modified_boundary': self.rule.server_modified_boundary,
             'conditions': json.dumps(conditions),
-            'action': (
-                AddAutomaticCaseUpdateRuleForm.ACTION_UPDATE_AND_CLOSE
-                if update_case
-                else AddAutomaticCaseUpdateRuleForm.ACTION_CLOSE
-            ),
+            'action': initial_action,
             'update_property_name': update_property_name,
             'update_property_value': update_property_value,
             'property_value_type': property_value_type,
