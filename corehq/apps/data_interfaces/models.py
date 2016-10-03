@@ -11,6 +11,7 @@ from dateutil.parser import parse
 from django.db import models
 from corehq.apps.hqcase.utils import update_case
 from corehq.form_processor.models import CommCareCaseSQL
+from django.utils.translation import ugettext_lazy
 
 ALLOWED_DATE_REGEX = re.compile('^\d{4}-\d{2}-\d{2}')
 AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
@@ -267,8 +268,8 @@ class AutomaticUpdateAction(models.Model):
     CASE_PROPERTY = "CASE_PROPERTY"
 
     PROPERTY_TYPE_CHOICES = (
-        (EXACT, EXACT),
-        (CASE_PROPERTY, CASE_PROPERTY)
+        (EXACT, ugettext_lazy("Exact value")),
+        (CASE_PROPERTY, ugettext_lazy("Case property")),
     )
 
 
