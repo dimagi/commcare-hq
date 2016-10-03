@@ -1,4 +1,5 @@
-import uuid, os
+import uuid
+import os
 from datetime import datetime, timedelta
 from django.test import SimpleTestCase, TestCase
 from django.template import Template, Context
