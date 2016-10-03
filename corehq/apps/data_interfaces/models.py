@@ -101,7 +101,11 @@ class AutomaticUpdateRule(models.Model):
         close = False
 
         def _get_case_property_value(current_case, name):
-            return current_case.resolve_case_property(name)[0].value
+            result = current_case.resolve_case_property(name)
+            if result:
+                return result[0].value
+
+            return None
 
         def _add_update_property(name, value, current_case):
             while name.startswith('parent/'):
@@ -118,6 +122,8 @@ class AutomaticUpdateRule(models.Model):
             if action.action == AutomaticUpdateAction.ACTION_UPDATE:
                 if action.property_value_type == AutomaticUpdateAction.CASE_PROPERTY:
                     value = _get_case_property_value(case, action.property_value)
+                    if value is None:
+                        continue
                 else:
                     value = action.property_value
 
