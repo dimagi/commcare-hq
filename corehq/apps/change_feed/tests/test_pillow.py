@@ -1,5 +1,5 @@
 # coding=utf-8
-from mock import patch, MagicMock
+from mock import patch
 from django.conf import settings
 from django.test import SimpleTestCase
 from fakecouch import FakeCouchDb
