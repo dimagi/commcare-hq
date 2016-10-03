@@ -265,6 +265,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                 css_id='server_modified_boundary_multifield',
                 label_class=self.helper.label_class,
                 field_class='col-sm-8 col-md-6',
+                ng_show='showServerModifiedBoundaryField()',
             ),
             Field(
                 'action',

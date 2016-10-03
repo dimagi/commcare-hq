@@ -63,6 +63,10 @@
             }
         }, true);
 
+        $scope.showServerModifiedBoundaryField = function() {
+            return $scope.filter_on_server_modified == 'true';
+        };
+
         $scope.addCondition = function() {
             $scope.conditions_objs.push({});
             ga_track_event('Automatic Case Closure', 'Rules', 'Add Filter');
