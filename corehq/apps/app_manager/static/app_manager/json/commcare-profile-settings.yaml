@@ -166,7 +166,7 @@
 - id: "sense"
   type: "features"
   name: "CommCare Sense"
-  description: "Configure for low-literate users"
+  description: "Configure for low-literate users, J2ME only"
   values: ["true", "false"]
   value_names: ["Yes", "No"]
   default: "false"

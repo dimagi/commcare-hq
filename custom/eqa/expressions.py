@@ -110,13 +110,13 @@ class EQAActionItemSpec(JsonObject):
                     incorrect_question = action_plan_for_question.get('incorrect_questions')
                     responsible = ', '.join(
                         [
-                            item.get_case_property(x.strip()) for x in
+                            item.get(x.strip(), '---') for x in
                             action_plan_for_question.get('action_plan_input', {}).get('responsible', '').split(',')
                         ]
                     )
                     support = ', '.join(
                         [
-                            item.get_case_property(x.strip()) for x in
+                            item.get(x.strip(), '---') for x in
                             action_plan_for_question.get('action_plan_input', {}).get('support', '').split(',')
                         ]
                     )

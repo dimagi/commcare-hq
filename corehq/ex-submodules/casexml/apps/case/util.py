@@ -21,6 +21,9 @@ from dimagi.utils.couch.database import iter_docs
 
 
 def validate_phone_datetime(datetime_string, none_ok=False, form_id=None):
+    if isinstance(datetime_string, datetime.datetime):
+        return datetime_string
+
     if none_ok:
         if datetime_string is None:
             return None
