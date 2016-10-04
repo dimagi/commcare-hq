@@ -3,7 +3,6 @@ from crispy_forms.layout import Fieldset, Hidden, Layout
 from crispy_forms.bootstrap import StrictButton
 from django import forms
 from django.utils.translation import ugettext as _
-from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.domain.models import Domain
 from corehq.apps.style import crispy as hqcrispy
 
@@ -12,13 +11,12 @@ class CopyApplicationForm(forms.Form):
     domain = forms.CharField(
         label=_("Copy this app to project"),
         widget=forms.TextInput(attrs={"data-bind": "typeahead: domain_names"}))
-    name = forms.CharField(required=True, label=_('Name'))
+    name = forms.CharField(required=False, label=_('Name'))
 
-    def __init__(self, from_domain, app_id, *args, **kwargs):
+    def __init__(self, app_id, *args, **kwargs):
         export_zipped_apps_enabled = kwargs.pop('export_zipped_apps_enabled', False)
         super(CopyApplicationForm, self).__init__(*args, **kwargs)
         fields = ['domain', 'name']
-        self.fields['name'].initial = get_app(from_domain, app_id).name
         if export_zipped_apps_enabled:
             self.fields['gzip'] = forms.FileField(required=False)
             fields.append('gzip')
