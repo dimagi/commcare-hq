@@ -556,7 +556,14 @@ API_BLACKLIST = StaticToggle(
     'API_BLACKLIST',
     ("Blacklist API access to a user or domain that spams us"),
     TAG_EXPERIMENTAL,
-    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER]
+    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
+FORM_SUBMISSION_BLACKLIST = StaticToggle(
+    'FORM_SUBMISSION_BLACKLIST',
+    ("Blacklist form submissions from a domain that spams us"),
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 
