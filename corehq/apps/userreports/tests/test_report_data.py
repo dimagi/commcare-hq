@@ -69,6 +69,34 @@ class ReportDataTest(TestCase):
                     "column_id": "number",
                     "display": "Number",
                     "aggregation": "simple",
+                },
+                {
+                    "type": "expression",
+                    "column_id": "ten",
+                    "display": "The Number Ten",
+                    "expression": {
+                        'type': 'constant',
+                        'constant': 10,
+                    }
+                },
+                {
+                    "type": "expression",
+                    "column_id": "by_tens",
+                    "display": "Counting by tens",
+                    "expression": {
+                        "type": "evaluator",
+                        "statement": "a * b",
+                        "context_variables": {
+                            "a": {
+                                "type": "property_name",
+                                "property_name": "number",
+                            },
+                            "b": {
+                                "type": "property_name",
+                                "property_name": "ten",
+                            }
+                        }
+                    }
                 }
             ],
             filters=[],
@@ -110,6 +138,8 @@ class ReportDataTest(TestCase):
         for row in report_data:
             self.assertTrue(row['name'] in rows_by_name)
             self.assertEqual(rows_by_name[row['name']].number, row['number'])
+            self.assertEqual(10, row['ten'])
+            self.assertEqual(10 * row['number'], row['by_tens'])
 
     def test_limit(self):
         count = 5
