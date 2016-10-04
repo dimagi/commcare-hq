@@ -43,6 +43,8 @@ class ChoiceQueryContext(object):
 class ChoiceProvider(object):
     __metaclass__ = ABCMeta
 
+    location_safe = False
+
     def __init__(self, report, filter_slug):
         self.report = report
         self.filter_slug = filter_slug
@@ -140,6 +142,8 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
 
 
 class LocationChoiceProvider(ChainableChoiceProvider):
+
+    location_safe = True
 
     def __init__(self, report, filter_slug):
         super(LocationChoiceProvider, self).__init__(report, filter_slug)
