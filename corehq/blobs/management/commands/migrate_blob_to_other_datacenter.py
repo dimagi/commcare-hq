@@ -1,9 +1,11 @@
 from collections import namedtuple
+from getpass import getpass
 import json
 from optparse import make_option
 from os.path import join
 import zipfile
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from couchforms.models import XFormInstance
@@ -15,29 +17,62 @@ from corehq.blobs.mixin import _get_couchdb_name, safe_id
 from corehq.blobs.exceptions import NotFound
 
 BlobInfo = namedtuple('BlobInfo', ['type', 'id', 'external_blob_ids'])
+MockSettings = namedtuple('MockSettings', ['S3_BLOB_DB_SETTINGS'])
 
 
 class Command(BaseCommand):
     help = "Command to migrate a domain's attachments in the blobdb to a new blobdb"
     args = '<domain>'
-    option_list = BaseCommand.option_list + ()
+    option_list = BaseCommand.option_list + (
+        make_option('--from-riak-url',
+            action='store',
+            dest='from_riak_url',
+            default='',
+            help='The URL of the Riak instance you are migrating from'
+        ),
+        make_option('--output-zip',
+            action='store',
+            dest='output_zip',
+            default='blobs.zip',
+        ),
+        make_option('--output-jsonl',
+            action='store',
+            dest='output_jsonl',
+            default='blobs.jsonl',
+        ),
+    )
 
     def handle(self, *args, **options):
         domain = args[0]
+
+        from_riak_settings = {}
+        if options['from_riak_url']:
+            access_key = getpass("Please enter the from riak access key: ")
+            secret_key = getpass("Please enter the from riak secret key: ")
+            from_riak_settings = {
+                'url': options['from_riak_url'],
+                'access_key': access_key,
+                'secret_key': secret_key,
+                'config': {'connect_timeout': 3, 'read_timeout': 5},
+            }
+
         blobs_to_copy = []
         blobs_to_copy.extend(get_saved_exports_blobs(domain))
         blobs_to_copy.extend(get_applications_blobs(domain))
         blobs_to_copy.extend(get_multimedia_blobs(domain))
         blobs_to_copy.extend(get_xforms_blobs(domain))
 
-        with open('blobs.jsonl', 'w') as f:
+        with open(options['output_jsonl'], 'w') as f:
             for doc in blobs_to_copy:
                 f.write(json.dumps(doc._asdict()))
                 f.write('\n')
 
-        db = get_blob_db()
+        if from_riak_settings:
+            db = get_blob_db(MockSettings(from_riak_settings))
+        else:
+            db = get_blob_db()
 
-        with open('blobs.zip', 'wb') as zfile:
+        with open(options['output_zip'], 'wb') as zfile:
             with zipfile.ZipFile(zfile, 'w') as blob_zipfile:
                 for info in blobs_to_copy:
                     bucket = join(_get_couchdb_name(eval(info.type)), safe_id(info.id))
