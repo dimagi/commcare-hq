@@ -18,7 +18,10 @@ class CopyApplicationForm(forms.Form):
         export_zipped_apps_enabled = kwargs.pop('export_zipped_apps_enabled', False)
         super(CopyApplicationForm, self).__init__(*args, **kwargs)
         fields = ['domain', 'name']
-        self.fields['name'].initial = get_app(from_domain, app_id).name
+        if app_id:
+            app = get_app(from_domain, app_id)
+            if app:
+                self.fields['name'].initial = app.name
         if export_zipped_apps_enabled:
             self.fields['gzip'] = forms.FileField(required=False)
             fields.append('gzip')
