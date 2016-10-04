@@ -116,4 +116,4 @@ def _get_domain(document):
 
 def is_deletion(raw_doc_type):
     # can be overridden
-    return raw_doc_type.endswith(DELETED_SUFFIX)
+    return raw_doc_type is not None and raw_doc_type.endswith(DELETED_SUFFIX)
