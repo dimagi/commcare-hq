@@ -7,6 +7,7 @@ from pillowtop.utils import get_all_pillow_instances
 from corehq.apps.hqadmin.models import ESRestorePillowCheckpoints
 from pillowtop.es_utils import get_index_info_from_pillow
 
+
 class Command(BaseCommand):
     help = ("Restores full ES cluster or specific index from snapshot. "
             "Index arguments are optional and it will default to a full "
