@@ -360,22 +360,10 @@ WebFormSession.prototype.nextQuestion = function(opts) {
             'action': Formplayer.Const.NEXT_QUESTION,
         },
         function(resp) {
-            var ix = resp.tree[0].ix;
-            opts.callback(parseInt(ix));
+            opts.callback(parseInt(resp.currentIndex), resp.isAtLastIndex);
             resp.title = opts.title;
             $.publish('session.reconcile', [resp, {}]);
-        },
-        null,
-        function (resp) {
-            // we currently don't have a way of determining when a form has reached the last index.
-            // if the nextQuestion returns a simple server error, then we assume it's reached the last index.
-            if (resp.status === "error" && resp.exception === null) {
-                opts.showSubmitButtonCallback();
-                return false;
-            }
-            return true;
-        }
-    );
+        });
 };
 
 WebFormSession.prototype.prevQuestion = function(opts) {
@@ -383,8 +371,7 @@ WebFormSession.prototype.prevQuestion = function(opts) {
             'action': Formplayer.Const.PREV_QUESTION,
         },
         function(resp) {
-            var ix = resp.tree[0].ix;
-            opts.callback(parseInt(ix));
+            opts.callback(parseInt(resp.currentIndex), false);
             resp.title = opts.title;
             $.publish('session.reconcile', [resp, {}]);
         });

@@ -182,54 +182,60 @@ function Form(json) {
     delete json.tree;
     Container.call(self, json);
     self.submitText = ko.observable('Submit');
-    self.debugQIndex = ko.observable(0);
+
     self.currentIndex = ko.observable(0);
     self.atLastIndex = ko.observable(false);
 
-    var _updateIndexCallback = function (ix) {
+    var _updateIndexCallback = function (ix, isAtLastIndex) {
         self.currentIndex(ix);
+        self.atLastIndex(isAtLastIndex);
     };
 
-    var _updateSubmitStatus = function () {
-        self.atLastIndex(true);
-    };
-
-    self.showInFormNavigation = ko.observable(self.displayOptions.oneQuestionPerScreen() === true);
+    self.showInFormNavigation = ko.observable(
+        self.displayOptions.oneQuestionPerScreen !== undefined
+        && self.displayOptions.oneQuestionPerScreen() === true
+    );
 
     self.isCurrentRequiredSatisfied = ko.computed(function () {
-        if (!self.displayOptions.oneQuestionPerScreen()) return true;
-        return self.children()[0].answer() === null && !self.children()[0].required() || self.children()[0].answer() !== null;
+        if (!self.showInFormNavigation()) return true;
+        return (self.children()[0].answer() === null && !self.children()[0].required())
+            || self.children()[0].answer() !== null;
     });
 
     self.enableNextButton = ko.computed(function () {
-        return self.showInFormNavigation() && self.isCurrentRequiredSatisfied() && self.children()[0].isValid() && !self.atLastIndex();
+        if (!self.showInFormNavigation()) return false;
+        return self.showInFormNavigation()
+            && self.isCurrentRequiredSatisfied()
+            && self.children()[0].isValid()
+            && !self.atLastIndex()
+            && !self.children()[0].pendingAnswer();
     });
 
     self.enablePreviousButton = ko.computed(function () {
+        if (!self.showInFormNavigation()) return false;
         return self.currentIndex() > 0;
     });
 
     self.showSubmitButton = ko.computed(function () {
-        return !self.displayOptions.oneQuestionPerScreen() || self.atLastIndex();
+        return !self.showInFormNavigation();
     });
 
     self.submitForm = function(form) {
         $.publish('formplayer.' + Formplayer.Const.SUBMIT, self);
     };
+
     self.nextQuestion = function () {
         $.publish('formplayer.' + Formplayer.Const.NEXT_QUESTION, {
             callback: _updateIndexCallback,
             title: self.title(),
-            showSubmitButtonCallback: _updateSubmitStatus
         });
     };
 
     self.prevQuestion = function () {
-        $.publish('formplayer.' + Formplayer.Const.PREV_QUESTION, { callback: _updateIndexCallback, title: self.title() });
-    };
-
-    self.advanceToIndex = function () {
-        $.publish('formplayer.' + Formplayer.Const.QUESTIONS_FOR_INDEX, self.debugQIndex());
+        $.publish('formplayer.' + Formplayer.Const.PREV_QUESTION, {
+            callback: _updateIndexCallback,
+            title: self.title(),
+        });
     };
 
     $.unsubscribe('session');
