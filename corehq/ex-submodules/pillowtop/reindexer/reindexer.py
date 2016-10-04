@@ -179,7 +179,7 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
     @staticmethod
     def _doc_to_change(doc):
         return Change(
-            id=doc['_id'], sequence_id=None, document=doc, deleted=is_deletion(doc['doc_type'])
+            id=doc['_id'], sequence_id=None, document=doc, deleted=is_deletion(doc.get('doc_type'))
         )
 
 
