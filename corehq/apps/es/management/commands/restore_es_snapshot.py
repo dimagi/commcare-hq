@@ -1,8 +1,11 @@
 from django.core.management.base import BaseCommand, CommandError
-from datetime import datetime, timedelta
+from datetime import date, timedelta
 from corehq.elastic import get_es_new
 from elasticsearch.client import SnapshotClient, IndicesClient
 from django.conf import settings
+from pillowtop.utils import get_all_pillow_instances
+from corehq.apps.hqadmin.models import ESRestorePillowCheckpoints
+from pillowtop.es_utils import get_index_info_from_pillow
 
 class Command(BaseCommand):
     help = ("Restores full ES cluster or specific index from snapshot. "
@@ -22,11 +25,12 @@ class Command(BaseCommand):
             self.restore_snapshot(es, date, indices)
         finally:
             client.open(indices)
+        self.rewind_pillows(indices, date)
 
     @staticmethod
     def get_date(args):
         days_ago = int(args[0])
-        restore_date = (datetime.utcnow() - timedelta(days=days_ago))
+        restore_date = (date.today() - timedelta(days=days_ago))
         return restore_date
 
     @staticmethod
@@ -55,3 +59,23 @@ class Command(BaseCommand):
                                 ),
                                 body={'indices': indices}
         )
+
+    @staticmethod
+    def rewind_pillows(indices, date):
+        if indices == '_all':
+            pillows = get_all_pillow_instances()
+        else:
+            pillows = []
+            for pillow in get_all_pillow_instances():
+                index_info = get_index_info_from_pillow(pillow)
+                if index_info.index in indices or index_info.alias in indices:
+                    pillows.append(pillow)
+        for pillow in pillows:
+            checkpoint = pillow.checkpoint
+            try:
+                seq = ESRestorePillowCheckpoints.objects.get(checkpoint_id=checkpoint.checkpoint_id,
+                                                             date_updated=date)
+            except ESRestorePillowCheckpoints.DoesNotExist:
+                seq = 0
+
+            pillow.checkpoint.update_to(seq.seq)
