@@ -602,9 +602,9 @@ class SoftwareProductRate(models.Model):
         return '%s @ $%s /month' % (self.product.name, self.monthly_fee)
 
     def __eq__(self, other):
-        if not isinstance(other, self.__class__) or not self.product.pk == other.product.pk:
+        if not isinstance(other, self.__class__):
             return False
-        for field in ['monthly_fee', 'is_active']:
+        for field in ['product', 'monthly_fee', 'is_active']:
             if not getattr(self, field) == getattr(other, field):
                 return False
         return True
@@ -666,9 +666,9 @@ class FeatureRate(models.Model):
         )
 
     def __eq__(self, other):
-        if not isinstance(other, self.__class__) or not self.feature.pk == other.feature.pk:
+        if not isinstance(other, self.__class__):
             return False
-        for field in ['monthly_fee', 'monthly_limit', 'per_excess_fee', 'is_active']:
+        for field in ['feature', 'monthly_fee', 'monthly_limit', 'per_excess_fee', 'is_active']:
             if not getattr(self, field) == getattr(other, field):
                 return False
         return True
@@ -679,12 +679,9 @@ class FeatureRate(models.Model):
         feature, _ = Feature.objects.get_or_create(name=feature_name, feature_type=feature_type)
         rate = FeatureRate(feature=feature)
 
-        if monthly_fee is not None:
-            rate.monthly_fee = monthly_fee
-        if monthly_limit is not None:
-            rate.monthly_limit = monthly_limit
-        if per_excess_fee is not None:
-            rate.per_excess_fee = per_excess_fee
+        rate.monthly_fee = monthly_fee or rate.monthly_fee
+        rate.monthly_limit = monthly_limit or rate.monthly_limit
+        rate.per_excess_fee = per_excess_fee or rate.per_excess_fee
 
         if save:
             rate.save()
