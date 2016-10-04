@@ -390,7 +390,8 @@ HQ_APPS = (
 
     'custom.icds_reports',
     'custom.enikshay.integrations.ninetyninedots',
-    'custom.pnlppgi'
+    'custom.pnlppgi',
+    'custom.enikshay'
 )
 
 # DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
@@ -1841,6 +1842,7 @@ DOMAIN_MODULE_MAP = {
     'icds-cas': 'custom.icds_reports',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
+    'enikshay-test': 'custom.enikshay',
 
     'crs-remind': 'custom.apps.crs_reports',
 
