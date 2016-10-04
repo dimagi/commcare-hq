@@ -402,9 +402,15 @@ def _get_export_properties(export_id, export_is_legacy):
         if export_is_legacy:
             schema = FormExportSchema.get(export_id)
             for table in schema.tables:
-                # - in question id is replaced by . in excel exports
-                properties |= {c.display.replace('.', '-') for c in
-                               table.columns if c.display}
+                # Strip the prefixed 'form' and change '.'s to '-'s
+                properties |= set(map(
+                    lambda column: '-'.join(column.index.split('.')[1:]),
+                    # Filter out any columns that are not form questions
+                    filter(
+                        lambda column: column.index and column.index.startswith('form'),
+                        table.columns,
+                    ),
+                ))
         else:
             from corehq.apps.export.models import FormExportInstance
             export = FormExportInstance.get(export_id)
