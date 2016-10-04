@@ -587,6 +587,10 @@ API_BLACKLIST = StaticToggle(
     ("Blacklist API access to a user or domain that spams us"),
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
+    description="For temporary, emergency use only. If a partner doesn't properly "
+    "throttle their API requests, it can hammer our infrastructure, causing "
+    "outages. This will cut off the tide, but we should communicate with them "
+    "immediately.",
 )
 
 FORM_SUBMISSION_BLACKLIST = StaticToggle(
@@ -594,6 +598,9 @@ FORM_SUBMISSION_BLACKLIST = StaticToggle(
     ("Blacklist form submissions from a domain that spams us"),
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_DOMAIN],
+    description="This is a temporary solution to an unusually high volume of "
+    "form submissions from a domain.  We have some projects that automatically "
+    "send forms. If that ever causes problems, we can use this to cut them off.",
 )
 
 
