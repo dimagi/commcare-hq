@@ -935,3 +935,10 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
+
+ONBOARDING_PROTOTYPE = StaticToggle(
+    'onboarding_prototype',
+    'Prototype for case management onboarding',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
