@@ -37,6 +37,7 @@ from couchexport.files import Temp
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
 from dimagi.utils.decorators.memoized import memoized
+from corehq.util.quickcache import quickcache
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 
@@ -47,6 +48,7 @@ from corehq.apps.app_manager.models import Application, Form
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.dashboard.models import IconContext, TileConfiguration, Tile
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
+from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.style.decorators import (
@@ -81,7 +83,10 @@ from corehq.apps.userreports.reports.builder.forms import (
     ConfigureListReportForm,
     ConfigureWorkerReportForm,
     ConfigureMapReportForm)
-from corehq.apps.userreports.reports.filters.choice_providers import ChoiceQueryContext
+from corehq.apps.userreports.reports.filters.choice_providers import (
+    ChoiceQueryContext,
+    LocationChoiceProvider
+)
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators, resume_building_indicators
@@ -1215,14 +1220,24 @@ def data_source_status(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
     return json_response({'isBuilt': config.meta.build.finished})
 
-
-@login_and_domain_required
-def choice_list_api(request, domain, report_id, filter_id):
+@quickcache(['domain', 'report_id', 'filter_id'], timeout=5 * 60)
+def _get_report_filter(domain, report_id, filter_id):
     report = get_report_config_or_404(report_id, domain)[0]
     report_filter = report.get_ui_filter(filter_id)
     if report_filter is None:
         raise Http404(_(u'Filter {} not found!').format(filter_id))
+    return report_filter
 
+def _is_location_safe_choice_list(domain, report_id, filter_id):
+    report_filter = _get_report_filter(domain, report_id, filter_id)
+    if hasattr(report_filter, 'choice_provider'):
+        return report_filter.choice_provider.location_safe
+    return False
+
+@login_and_domain_required
+@conditionally_location_safe(_is_location_safe_choice_list)
+def choice_list_api(request, domain, report_id, filter_id):
+    report_filter = _get_report_filter(domain, report_id, filter_id)
     if hasattr(report_filter, 'choice_provider'):
         query_context = ChoiceQueryContext(
             query=request.GET.get('q', None),
