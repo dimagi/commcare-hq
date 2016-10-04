@@ -192,7 +192,7 @@ class EditCommCareUserView(BaseEditUserView):
 
     @property
     @memoized
-    def update_commtrack_form(self):
+    def commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
             return CommtrackUserForm(self.request.POST, domain=self.domain)
 
@@ -200,7 +200,14 @@ class EditCommCareUserView(BaseEditUserView):
         linked_loc = self.editable_user.location
         initial_id = linked_loc._id if linked_loc else None
         program_id = self.editable_user.get_domain_membership(self.domain).program_id
-        return CommtrackUserForm(domain=self.domain, initial={'location': initial_id, 'program_id': program_id})
+        assigned_locations = ','.join(self.editable_user.assigned_location_ids)
+        return CommtrackUserForm(
+            domain=self.domain,
+            initial={
+                'primary_location': initial_id,
+                'program_id': program_id,
+                'assigned_locations': assigned_locations}
+        )
 
     @property
     def page_context(self):
@@ -219,12 +226,16 @@ class EditCommCareUserView(BaseEditUserView):
             'demo_restore_date': naturaltime(demo_restore_date_created(self.editable_user)),
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES
         }
+        if self.commtrack_form.errors:
+            messages.error(self.request, _(
+                "There were some errors while saving user's locations. Please check 'Locations' tab"
+            ))
         if self.domain_object.commtrack_enabled or self.domain_object.uses_locations:
             context.update({
                 'commtrack_enabled': self.domain_object.commtrack_enabled,
                 'uses_locations': self.domain_object.uses_locations,
                 'commtrack': {
-                    'update_form': self.update_commtrack_form,
+                    'update_form': self.commtrack_form,
                 },
             })
         return context
@@ -266,11 +277,7 @@ class EditCommCareUserView(BaseEditUserView):
         }]
 
     def post(self, request, *args, **kwargs):
-        if request.POST['form_type'] == "commtrack":
-            if self.update_commtrack_form.is_valid():
-                self.update_commtrack_form.save(self.editable_user)
-                messages.success(request, _("Information updated!"))
-        elif self.request.POST['form_type'] == "add-phonenumber":
+        if self.request.POST['form_type'] == "add-phonenumber":
             phone_number = self.request.POST['phone_number']
             phone_number = re.sub('\s', '', phone_number)
             if re.match(r'\d+$', phone_number):
