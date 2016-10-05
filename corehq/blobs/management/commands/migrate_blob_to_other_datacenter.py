@@ -180,6 +180,7 @@ def get_multimedia_blobs(domain):
 
 
 def get_xforms_blobs(domain):
+    # todo change to ES
     xforms = XFormInstance.get_db().view(
         'couchforms/all_submissions_by_domain',
         startkey=[domain],
