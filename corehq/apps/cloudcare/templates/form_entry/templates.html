@@ -52,8 +52,8 @@
 </script>
 
 <script type="text/html" id="form-fullform-ko-template">
-    <div class="container form-container">
-      <div class="page-header">
+    <div class="container form-container" data-bind="css: { 'form-single-question': showInFormNavigation }">
+      <div class="page-header" data-bind="visible: !showInFormNavigation()">
         <h1 class="title" data-bind="text: title"></h1>
       </div>
 
