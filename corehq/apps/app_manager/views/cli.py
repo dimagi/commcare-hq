@@ -1,4 +1,5 @@
 from django.utils.text import slugify
+from django.template.loader import render_to_string
 
 from couchdbkit.exceptions import DocTypeError
 from couchdbkit.resource import ResourceNotFound
@@ -7,6 +8,7 @@ from dimagi.utils.web import json_response
 from soil import DownloadBase
 
 from corehq.apps.hqmedia.tasks import build_application_zip
+from corehq.apps.app_manager.views.utils import get_langs
 from corehq.util.view_utils import absolute_reverse, json_error
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
@@ -88,6 +90,22 @@ def direct_ccz(request, domain):
         app = app if isinstance(app, Document) else wrap_app(app)
     except (ResourceNotFound, DocTypeError):
         return error("Application not found", code=404)
+
+    errors = app.validate_app()
+    if errors:
+        lang, langs = get_langs(request, app)
+        error_html = render_to_string('app_manager/partials/build_errors.html', {
+            'request': request,
+            'app': app,
+            'build_errors': errors,
+            'domain': domain,
+            'langs': langs,
+            'lang': lang
+        })
+        return json_response(
+            {'error_html': error_html},
+            status_code=400,
+        )
 
     app.set_media_versions(None)
     download = DownloadBase()
