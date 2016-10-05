@@ -20,6 +20,8 @@ from corehq.blobs.exceptions import NotFound
 BlobInfo = namedtuple('BlobInfo', ['type', 'id', 'external_blobs'])
 MockSettings = namedtuple('MockSettings', ['S3_BLOB_DB_SETTINGS'])
 
+JSONL_NAME_IN_ZIPFILE = "blobs.jsonl"
+
 
 class Command(BaseCommand):
     help = "Command to migrate a domain's attachments in the blobdb to a new blobdb"
@@ -47,11 +49,6 @@ class Command(BaseCommand):
             action='store',
             dest='output_zip',
             default='blobs.zip',
-        ),
-        make_option('--output-jsonl-file',
-            action='store',
-            dest='output_jsonl',
-            default='blobs.jsonl',
         ),
         make_option('--no-zip-file',
             action='store_false',
@@ -129,7 +126,7 @@ class Command(BaseCommand):
             for doc in blobs_to_copy:
                 blobs_to_copy_str += json.dumps(doc._asdict()) + "\n"
 
-            zip_info = zipfile.ZipInfo(options['output_jsonl'])
+            zip_info = zipfile.ZipInfo(JSONL_NAME_IN_ZIPFILE)
             self.to_zip.writestr(zip_info, blobs_to_copy_str)
 
     def _get_blobs_to_copy(self, domain=None, options=None):
@@ -140,7 +137,7 @@ class Command(BaseCommand):
             blobs_to_copy.extend(get_multimedia_blobs(domain))
             blobs_to_copy.extend(get_xforms_blobs(domain))
         else:
-            blobs_to_copy_file = self.from_zip.open(options['output_jsonl'])
+            blobs_to_copy_file = self.from_zip.open(JSONL_NAME_IN_ZIPFILE)
             for line in blobs_to_copy_file:
                 blobs_to_copy.append(BlobInfo(**json.loads(line)))
 
