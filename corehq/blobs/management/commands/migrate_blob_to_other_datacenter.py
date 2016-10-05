@@ -27,6 +27,12 @@ class Command(BaseCommand):
     help = "Command to migrate a domain's attachments in the blobdb to a new blobdb"
     args = '<domain>'
     option_list = BaseCommand.option_list + (
+        make_option('--domain',
+            action='store',
+            dest='domain',
+            default='',
+            help='Domain you are copying from. Required if using --from-riak-url'
+        ),
         make_option('--from-riak-url',
             action='store',
             dest='from_riak_url',
@@ -62,10 +68,11 @@ class Command(BaseCommand):
     to_zip = None
 
     def handle(self, *args, **options):
-        domain = args[0]
+        if options['from_riak_url'] and not options['domain']:
+            raise ValueError("Must provide domain if copying from riak")
 
         self._set_from_data_source(options)
-        blobs = self._get_blobs_to_copy(domain, options)
+        blobs = self._get_blobs_to_copy(options)
 
         self._set_to_data_source(options, blobs)
         self.output_blobs(blobs)
@@ -129,7 +136,8 @@ class Command(BaseCommand):
             zip_info = zipfile.ZipInfo(JSONL_NAME_IN_ZIPFILE)
             self.to_zip.writestr(zip_info, blobs_to_copy_str)
 
-    def _get_blobs_to_copy(self, domain=None, options=None):
+    def _get_blobs_to_copy(self, options=None):
+        domain = options['domain']
         blobs_to_copy = []
         if self.from_db:
             blobs_to_copy.extend(get_saved_exports_blobs(domain))
