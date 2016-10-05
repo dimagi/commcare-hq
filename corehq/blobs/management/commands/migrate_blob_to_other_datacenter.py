@@ -76,6 +76,7 @@ class Command(BaseCommand):
 
         self._set_to_data_source(options, blobs)
         self.output_blobs(blobs)
+        self.cleanup()
 
     def cleanup(self):
         if self.to_zip:
