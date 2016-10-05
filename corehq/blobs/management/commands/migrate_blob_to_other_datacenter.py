@@ -25,7 +25,6 @@ JSONL_NAME_IN_ZIPFILE = "blobs.jsonl"
 
 class Command(BaseCommand):
     help = "Command to migrate a domain's attachments in the blobdb to a new blobdb"
-    args = '<domain>'
     option_list = BaseCommand.option_list + (
         make_option('--domain',
             action='store',
@@ -37,7 +36,7 @@ class Command(BaseCommand):
             action='store',
             dest='from_riak_url',
             default='',
-            help='The URL of the Riak instance you are migrating from'
+            help='The URL of the Riak instance you are migrating from. Uses definition in settings as default'
         ),
         make_option('--from-zip-file',
             action='store',
@@ -71,10 +70,10 @@ class Command(BaseCommand):
         if options['from_riak_url'] and not options['domain']:
             raise ValueError("Must provide domain if copying from riak")
 
-        self._set_from_data_source(options)
-        blobs = self._get_blobs_to_copy(options)
+        self.set_from_data_source(options)
+        blobs = self.get_blobs_to_copy(options)
 
-        self._set_to_data_source(options, blobs)
+        self.set_to_data_source(options, blobs)
         self.output_blobs(blobs)
         self.cleanup()
 
@@ -88,7 +87,7 @@ class Command(BaseCommand):
             for external_blob in info.external_blobs.values():
                 blob_id = external_blob['id']
                 try:
-                    blob = self._get_blob(bucket, blob_id)
+                    blob = self.get_blob(bucket, blob_id)
                 except NotFound as e:
                     print('Blob Not Found: ' + str(e))
                 else:
@@ -105,7 +104,7 @@ class Command(BaseCommand):
                             content = blob
                         self.to_db.put(content, blob_id, bucket)
 
-    def _set_from_data_source(self, options):
+    def set_from_data_source(self, options):
         riak_settings = {}
         if options['from_riak_url']:
             riak_settings = get_riak_settings(options['from_riak_url'])
@@ -118,7 +117,7 @@ class Command(BaseCommand):
             else:
                 self.from_db = get_blob_db()
 
-    def _set_to_data_source(self, options, blobs_to_copy):
+    def set_to_data_source(self, options, blobs_to_copy):
         riak_settings = {}
         self.to_db = None
         if options['to_riak_url']:
@@ -137,7 +136,7 @@ class Command(BaseCommand):
             zip_info = zipfile.ZipInfo(JSONL_NAME_IN_ZIPFILE)
             self.to_zip.writestr(zip_info, blobs_to_copy_str)
 
-    def _get_blobs_to_copy(self, options=None):
+    def get_blobs_to_copy(self, options=None):
         domain = options['domain']
         blobs_to_copy = []
         if self.from_db:
@@ -152,7 +151,7 @@ class Command(BaseCommand):
 
         return blobs_to_copy
 
-    def _get_blob(self, bucket, blob_id):
+    def get_blob(self, bucket, blob_id):
         if self.from_db:
             return self.from_db.get(blob_id, bucket).read()
         elif self.from_zip:
