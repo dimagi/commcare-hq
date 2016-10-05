@@ -27,11 +27,11 @@ class LocationBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
     @classmethod
     def get_labels(cls):
         return [
-                ('Zone', 'Select Zone', 'zone'),
-                ('Region', 'Select Region', 'region'),
-                ('District', 'Select Form', 'district'),
-                ('Site', 'Select Site', 'site')
-            ]
+            ('Zone', 'Select Zone', 'zone'),
+            ('Region', 'Select Region', 'region'),
+            ('District', 'Select Form', 'district'),
+            ('Site', 'Select Site', 'site')
+        ]
 
     @property
     @memoized

@@ -2,7 +2,6 @@ from couchdbkit import ResourceNotFound
 from sqlagg.filters import EQ
 
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.util import get_INFilter_element_bindparam
 from corehq.apps.users.models import CommCareUser
 
