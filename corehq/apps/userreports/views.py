@@ -1220,6 +1220,7 @@ def data_source_status(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
     return json_response({'isBuilt': config.meta.build.finished})
 
+
 @quickcache(['domain', 'report_id', 'filter_id'], timeout=5 * 60)
 def _get_report_filter(domain, report_id, filter_id):
     report = get_report_config_or_404(report_id, domain)[0]
@@ -1228,11 +1229,13 @@ def _get_report_filter(domain, report_id, filter_id):
         raise Http404(_(u'Filter {} not found!').format(filter_id))
     return report_filter
 
+
 def _is_location_safe_choice_list(domain, report_id, filter_id):
     report_filter = _get_report_filter(domain, report_id, filter_id)
     if hasattr(report_filter, 'choice_provider'):
         return report_filter.choice_provider.location_safe
     return False
+
 
 @login_and_domain_required
 @conditionally_location_safe(_is_location_safe_choice_list)
