@@ -12,14 +12,14 @@ RENAMES = (
     ("all-xforms-to-elasticsearch", "XFormToElasticsearchPillow-xforms_2016-07-07"),
     ("case-search-to-elasticsearch", "CaseSearchToElasticsearchPillow-case_search_2016-03-15"),
     ("GroupPillow", "GroupPillow-hqgroups_20150403_1501"),
-    ("GroupToUserPillow", "GroupToUserPillow-hqusers_2016-07-19"),
+    ("GroupToUserPillow", "GroupToUserPillow-hqusers_2016-09-29"),
     ("KafkaDomainPillow", "KafkaDomainPillow-hqdomains_2016-08-08"),
     ("ledger-to-elasticsearch", "LedgerToElasticsearchPillow-ledgers_2016-03-15"),
     ("report-cases-to-elasticsearch", "ReportCaseToElasticsearchPillow-report_cases_czei39du507m9mmpqk3y01x72a3ux4p0"),
     ("report-xforms-to-elasticsearch", "ReportXFormToElasticsearchPillow-report_xforms_20160707_2322"),
     ("sql-sms-to-es", "SqlSMSPillow-smslogs_708c77f8e5fe00286fa5791e9fa7d45f"),
-    ("UnknownUsersPillow", "UnknownUsersPillow-hqusers_2016-07-19"),
-    ("UserPillow", "UserPillow-hqusers_2016-07-19"),
+    ("UnknownUsersPillow", "UnknownUsersPillow-hqusers_2016-09-29"),
+    ("UserPillow", "UserPillow-hqusers_2016-09-29"),
 )
 
 
