@@ -515,3 +515,11 @@ class CumulativeMalaria(MalariaReport):
                                 row.get('per_cas_fa', EMPTY_CELL),
                                 zone.name
                             ]
+
+CUSTOM_REPORTS = (
+    ['Custom Reports', (
+        SiteReportingRatesReport,
+        WeeklyMalaria,
+        CumulativeMalaria
+    )],
+)
