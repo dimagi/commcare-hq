@@ -59,6 +59,7 @@ class Command(BaseCommand):
 
         from_riak_settings = {}
         if options['from_riak_url']:
+            print("the following options are for the from riak server ({0})".format(options['from_riak_url']))
             access_key = getpass("Please enter the from riak access key: ")
             secret_key = getpass("Please enter the from riak secret key: ")
             from_riak_settings = {
@@ -87,6 +88,7 @@ class Command(BaseCommand):
         to_riak_settings = {}
         to_db = None
         if options['to_riak_url']:
+            print("the following options are for the to riak server ({0})".format(options['to_riak_url']))
             access_key = getpass("Please enter the to riak access key: ")
             secret_key = getpass("Please enter the to riak secret key: ")
             from_riak_settings = {
