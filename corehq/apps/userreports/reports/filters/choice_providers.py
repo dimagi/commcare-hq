@@ -168,9 +168,6 @@ class LocationChoiceProvider(ChainableChoiceProvider):
 
     def query(self, query_context):
         # todo: consider making this an extensions framework similar to custom expressions
-        # todo: does this need fancier permission restrictions and what not?
-        # see e.g. locations.views.child_locations_for_select2
-
         locations = self._locations_query(query_context.query, query_context.user).order_by('name')
 
         return [
@@ -188,7 +185,16 @@ class LocationChoiceProvider(ChainableChoiceProvider):
                 selected_locations, include_self=True
             )
 
-        return [Choice(loc.location_id, loc.display_name) for loc in selected_locations]
+        return self._locations_to_choices(selected_locations)
+
+    def default_value(self, user):
+        """Return only the locations this user can access
+        """
+        return self._locations_to_choices(
+            self._locations_query(query_text=None, user=user))
+
+    def _locations_to_choices(self, locations):
+        return [Choice(loc.location_id, loc.display_name) for loc in locations]
 
 
 class UserChoiceProvider(ChainableChoiceProvider):
