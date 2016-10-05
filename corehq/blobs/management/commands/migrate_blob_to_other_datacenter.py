@@ -9,8 +9,8 @@ import zipfile
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from couchforms.models import XFormInstance
 from corehq.apps.app_manager.models import Application, RemoteApp
+from corehq.apps.es.forms import FormES
 from corehq.apps.hqmedia.models import CommCareMultimedia
 
 from corehq.blobs import get_blob_db
@@ -219,15 +219,18 @@ def get_multimedia_blobs(domain):
 
 
 def get_xforms_blobs(domain):
-    # todo change to ES
-    xforms = XFormInstance.get_db().view(
-        'couchforms/all_submissions_by_domain',
-        startkey=[domain],
-        endkey=[domain, {}],
-        include_docs=True,
-        reduce=False,
-    ).all()
-    return _format_return_value('XFormInstance', xforms)
+    xforms = (
+        FormES()
+        .remove_default_filters()
+        .domain(domain)
+        .source('external_blobs')
+        .exists('external_blobs')
+        .run().raw_hits
+    )
+    return [
+        BlobInfo('XFormInstance', xform['_id'], xform['_source']['external_blobs'])
+        for xform in xforms
+    ]
 
 
 def _format_return_value(type, docs):
