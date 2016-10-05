@@ -59,6 +59,7 @@ class Command(BaseCommand):
                                     repo_name=repo_name, year=date.year,
                                     month=date.month, day=date.day
                                 ),
+                                wait_for_completion=True,
                                 body={'indices': indices}
         )
 
