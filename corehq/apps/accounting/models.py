@@ -1439,7 +1439,7 @@ class Subscription(models.Model):
             )
             credit_line.is_active = False
             credit_line.adjust_credit_balance(
-                credit_line.balance * Decimal('-1.0'),
+                credit_line.balance * Decimal('-1'),
                 related_credit=transferred_credit,
             )
 
@@ -1864,7 +1864,7 @@ class Invoice(InvoiceBase):
 
     @property
     def applied_tax(self):
-        return self.tax_rate * self.subtotal
+        return Decimal('%.4f' % round(self.tax_rate * self.subtotal, 4))
 
     @property
     @memoized
