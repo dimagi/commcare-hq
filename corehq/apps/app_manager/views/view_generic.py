@@ -127,13 +127,11 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         context.update(get_app_view_context(request, app))
     else:
         from corehq.apps.dashboard.views import NewUserDashboardView
-        template = NewUserDashboardView.template_name
-        context.update({'templates': NewUserDashboardView.templates(domain)})
+        return HttpResponseRedirect(reverse(NewUserDashboardView.urlname, args=[domain]))
 
     # update multimedia context for forms and modules.
     menu_host = form or module
     if menu_host:
-
         default_file_name = 'module%s' % module_id
         if form_id:
             default_file_name = '%s_form%s' % (default_file_name, form_id)
@@ -206,13 +204,13 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     # Pass form for Copy Application to template
     domain_names = [d.name for d in Domain.active_for_user(request.couch_user)]
     domain_names.sort()
-    if copy_app_form is None:
+    if app and copy_app_form is None:
         toggle_enabled = toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
         copy_app_form = CopyApplicationForm(domain, app_id, export_zipped_apps_enabled=toggle_enabled)
-    context.update({
-        'copy_app_form': copy_app_form,
-        'domain_names': domain_names,
-    })
+        context.update({
+            'copy_app_form': copy_app_form,
+            'domain_names': domain_names,
+        })
 
     context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]
 
