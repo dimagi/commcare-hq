@@ -2,6 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+{% if not no_header %}
 <h2>
     {% blocktrans with verb=bulk_upload.verb|default:"Upload"|title %}
         {{ verb }}
@@ -10,6 +11,8 @@
         {{ plural_noun }} Using Excel
     {% endblocktrans %}
 </h2>
+{% endif %}
+
 <p>
     <ol>
         <li id="download_block">
