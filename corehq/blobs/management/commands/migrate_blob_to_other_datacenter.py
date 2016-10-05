@@ -17,7 +17,7 @@ from corehq.blobs import get_blob_db
 from corehq.blobs.mixin import _get_couchdb_name, safe_id
 from corehq.blobs.exceptions import NotFound
 
-BlobInfo = namedtuple('BlobInfo', ['type', 'id', 'external_blob_ids'])
+BlobInfo = namedtuple('BlobInfo', ['type', 'id', 'external_blobs'])
 MockSettings = namedtuple('MockSettings', ['S3_BLOB_DB_SETTINGS'])
 
 
@@ -80,7 +80,8 @@ class Command(BaseCommand):
     def output_blobs(self, blobs):
         for info in blobs:
             bucket = join(_get_couchdb_name(eval(info.type)), safe_id(info.id))
-            for blob_id in info.external_blob_ids:
+            for external_blob in info.external_blobs.values():
+                blob_id = external_blob['id']
                 try:
                     blob = self._get_blob(bucket, blob_id)
                 except NotFound as e:
@@ -231,8 +232,6 @@ def get_xforms_blobs(domain):
 
 def _format_return_value(type, docs):
     return [
-        BlobInfo(type, doc['id'],
-            [blob['id'] for blob in doc['doc']['external_blobs'].values()]
-        )
+        BlobInfo(type, doc['id'], doc['doc']['external_blobs'])
         for doc in docs
     ]
