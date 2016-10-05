@@ -132,11 +132,14 @@
                             {% angularjs %}
                             <div class="alert alert-neutral alert-small"
                                  ng-show="export.emailedExport">
-                                <h5>
-                                    <i class="fa fa-envelope"></i>
-                                    {% trans "Saved for Daily Report" %}
+                                <div class="h5">
+                                    <span ng-if="export.emailedExport.hasFile">
+                                        <strong>{% trans "Size:" %}</strong> {{ export.emailedExport.fileData.size }}&nbsp;&nbsp;&nbsp;
+                                        <strong>{% trans "Last Updated:" %}</strong> {{ export.emailedExport.fileData.lastUpdated }}
+                                    </span>
                                     {% if has_edit_permissions %}
                                     {% angularjs %}
+                                    &nbsp;&nbsp;
                                     <button type="button"
                                             class="btn btn-default btn-xs"
                                             ng-show="!export.emailedExport.updatingData"
@@ -154,7 +157,28 @@
                                         {% trans "Updating Data, please wait..." %}
                                     </button>
                                     {% endif %}
-                                </h5>
+                                </div>
+
+                                <div class="h5" ng-if="export.emailedExport.hasFile">
+                                    <div class="input-group">
+                                        <span ng-class="{'input-group-btn': showLink}" >
+                                            <a ng-click="copyLinkRequested($event)"
+                                               class="btn btn-info btn-sm">
+                                                <i class="fa fa-download"></i>
+                                                {% trans "Copy Dashboard Feed Link" %}
+                                            </a>
+                                        </span>
+                                        <input ng-show="showLink"
+                                               type="text"
+                                               class="form-control input-sm"
+                                               readonly
+                                               value="{{ export.emailedExport.fileData.downloadUrl }}"
+                                        >
+                                    </div>
+                                </div>
+
+
+
 
                                 {% if has_edit_permissions %}
                                 <p class="text-warning"
@@ -173,17 +197,6 @@
                                 </p>
                                 {% endif %}
 
-                                <p ng-if="export.emailedExport.hasFile">
-                                    <a href="{{ export.emailedExport.fileData.downloadUrl }}"
-                                       ng-click="downloadRequested($event)"
-                                       class="btn btn-info btn-xs">
-                                        <i class="fa fa-download"></i>
-                                        {% trans "Download" %}
-                                    </a>&nbsp;&nbsp;
-                                    <strong>{% trans "Size:" %}</strong> {{ export.emailedExport.fileData.size }}&nbsp;&nbsp;&nbsp;
-                                    <strong>{% trans "Last Updated:" %}</strong> {{ export.emailedExport.fileData.lastUpdated }}
-                                </p>
-                            
                                 {% if has_edit_permissions %}
                                 <p ng-if="!export.emailedExport.hasFile && !export.emailedExport.updatedDataTriggered">
                                     {% blocktrans %}
@@ -239,17 +252,32 @@
                         {% if has_edit_permissions %}
                         {% angularjs %}
                         <td>
-                            <a href="{{ export.editUrl }}"
-                               class="btn btn-default"><i class="fa fa-pencil"></i>
-                                {% trans 'Edit' %}</a>
+                            <a href="{{ export.editUrl }}" class="btn btn-default">
+                                <i class="fa fa-pencil"></i>
+                                <span ng-show="!export.emailedExport">{% trans 'Edit' %}</span>
+                                <span ng-show="export.emailedExport">{% trans 'Edit Columns' %}</span>
+
+                            </a>
                         </td>
                         {% endangularjs %}
                         {% endif %}
                         <td>
                             <a href="{% angularjs %}{{ export.downloadUrl }}{% endangularjs %}"
+                               ng-show="!export.emailedExport"
                                class="btn btn-primary"
-                               ng-click="sendExportAnalytics()">
-                                {{ Export_type }}</a>
+                               ng-click="sendExportAnalytics()"
+                            >
+                                {{ Export_type }}
+                            </a>
+                            <a class="btn btn-default"
+                               ng-show="export.emailedExport"
+                               href="#setFeedFiltersModal"
+                               data-toggle="modal"
+                               ng-click="setFilterModalExport(export)"
+
+                            >
+                                {% trans "Edit Filters" %}
+                            </a>
                         </td>
                         {% if allow_bulk_export %}
                         {% angularjs %}
