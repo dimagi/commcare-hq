@@ -2,12 +2,10 @@
 import datetime
 from operator import add
 
-from couchdbkit import ResourceNotFound
 from sqlagg import AliasColumn
 from sqlagg.columns import SimpleColumn, CountColumn, SumColumn
 from sqlagg.filters import LT, EQ, IN
 
-from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.filters.select import YearFilter
@@ -15,39 +13,17 @@ from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, AggregateColumn, DictDataFormat, \
     DataFormatter
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
-from corehq.apps.reports.util import get_INFilter_bindparams, get_INFilter_element_bindparam
+from corehq.apps.reports.util import get_INFilter_bindparams
 from corehq.apps.style.decorators import use_nvd3
 from corehq.apps.userreports.util import get_table_name
 from corehq.apps.users.models import CommCareUser
-from custom.pnlppgi.filters import WeekFilter
+from custom.pnlppgi.filters import WeekFilter, LocationBaseDrilldownOptionFilter
 from django.utils.translation import ugettext as _
 
+from custom.pnlppgi.utils import location_filter, users_locations
+from custom.pnlppgi.utils import update_config
 
 EMPTY_CELL = {'sort_key': 0, 'html': '---'}
-
-
-def update_config(config):
-    try:
-        group = Group.get('daa2641cf722f8397207c9041bfe5cb3')
-        users = group.users
-    except ResourceNotFound:
-        users = []
-    config.update({'users': users})
-    config.update(dict({get_INFilter_element_bindparam('owner_id', idx): val for idx, val in enumerate(users, 0)}))
-
-
-def users_locations():
-    try:
-        group = Group.get('daa2641cf722f8397207c9041bfe5cb3')
-        users = group.users
-    except ResourceNotFound:
-        users = []
-    location_ids = []
-    for user in users:
-        u = CommCareUser.get(user)
-        location_ids.append(u.location_id)
-    location_ids = set(location_ids)
-    return location_ids
 
 
 class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
@@ -62,7 +38,7 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
 
     @property
     def fields(self):
-        return [WeekFilter, YearFilter]
+        return [LocationBaseDrilldownOptionFilter, WeekFilter, YearFilter]
 
     @property
     def config(self):
@@ -77,20 +53,24 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
             'year': year,
             'monday': monday.replace(hour=16)
         }
+        location_filter(self.request, params=params)
         update_config(params)
         return params
 
     @property
     def group_by(self):
-        return ['location_id']
+        return ['site_id']
 
     @property
     def filters(self):
-        return [
+        filters = [
             EQ('week', 'week'),
             EQ('year', 'year'),
             IN('owner_id', get_INFilter_bindparams('owner_id', self.config['users']))
         ]
+        location_filter(self.request, filters=filters)
+        return filters
+
 
     @property
     def engine_id(self):
@@ -103,7 +83,7 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
     @property
     def columns(self):
         return [
-            DatabaseColumn('location_id', SimpleColumn('location_id')),
+            DatabaseColumn('location_id', SimpleColumn('site_id')),
             DatabaseColumn('Completude', CountColumn('doc_id', alias='completude')),
             DatabaseColumn('Promptitude', CountColumn(
                 'doc_id',
@@ -202,7 +182,7 @@ class WeeklyMalaria(MalariaReport):
 
     @property
     def fields(self):
-        return [WeekFilter, YearFilter]
+        return [LocationBaseDrilldownOptionFilter, WeekFilter, YearFilter]
 
     @property
     def config(self):
@@ -213,16 +193,19 @@ class WeeklyMalaria(MalariaReport):
             'week': week,
             'year': year
         }
+        location_filter(self.request, params=params)
         update_config(params)
         return params
 
     @property
     def filters(self):
-        return [
+        filters = [
             EQ('week', 'week'),
             EQ('year', 'year'),
             IN('owner_id', get_INFilter_bindparams('owner_id', self.config['users']))
         ]
+        location_filter(self.request, filters=filters)
+        return filters
 
     @property
     def group_by(self):
@@ -352,7 +335,7 @@ class CumulativeMalaria(MalariaReport):
 
     @property
     def fields(self):
-        return [YearFilter]
+        return [LocationBaseDrilldownOptionFilter, YearFilter]
 
     @property
     def config(self):
@@ -361,15 +344,18 @@ class CumulativeMalaria(MalariaReport):
             'domain': self.domain,
             'year': year
         }
+        location_filter(self.request, params=params)
         update_config(params)
         return params
 
     @property
     def filters(self):
-        return [
+        filters = [
             EQ('year', 'year'),
             IN('owner_id', get_INFilter_bindparams('owner_id', self.config['users']))
         ]
+        location_filter(self.request, filters=filters)
+        return filters
 
     @property
     def group_by(self):
