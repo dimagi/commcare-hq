@@ -176,13 +176,12 @@ def conditionally_location_safe(conditional_function):
     return _inner
 
 
-
 def location_restricted_response(request):
     from corehq.apps.hqwebapp.views import no_permissions
     return no_permissions(request, message=LOCATION_ACCESS_DENIED)
 
 
-def is_location_safe(view_fn, view_args, view_kwargs):
+def is_location_safe(view_fn, view_args, view_kwargs, request=None):
     """
     Check if view_fn had the @location_safe decorator applied.
     view_args and kwargs are also needed because view_fn alone doesn't always
@@ -193,7 +192,7 @@ def is_location_safe(view_fn, view_args, view_kwargs):
     if 'resource_name' in view_kwargs:
         return view_kwargs['resource_name'] in LOCATION_SAFE_TASTYPIE_RESOURCES
     if getattr(view_fn, '_conditionally_location_safe_function', False):
-        return view_fn._conditionally_location_safe_function(*view_args, **view_kwargs)
+        return view_fn._conditionally_location_safe_function(view_fn, request, *view_args, **view_kwargs)
     return False
 
 
