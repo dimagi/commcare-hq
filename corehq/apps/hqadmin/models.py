@@ -71,7 +71,7 @@ class PillowCheckpointSeqStore(models.Model):
 class ESRestorePillowCheckpoints(models.Model):
     seq = models.TextField()
     checkpoint_id = models.CharField(max_length=255, db_index=True)
-    date_updated = models.DateTimeField(auto_now=True)
+    date_updated = models.DateField()
 
     @classmethod
     def get_pillow_snapshots(cls):
