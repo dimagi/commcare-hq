@@ -31,6 +31,12 @@ class Command(BaseCommand):
             default='',
             help='The URL of the Riak instance you are migrating from'
         ),
+        make_option('--from-zip-file',
+            action='store',
+            dest='from_zip_filename',
+            default='',
+            help='The filename of the zip you want to read from. Implies you cannot write to zipfile'
+        ),
         make_option('--to-riak-url',
             action='store',
             dest='to_riak_url',
@@ -53,71 +59,31 @@ class Command(BaseCommand):
             default=True,
         ),
     )
+    from_db = None
+    from_zip = None
+    to_db = None
+    to_zip = None
 
     def handle(self, *args, **options):
         domain = args[0]
 
-        from_riak_settings = {}
-        if options['from_riak_url']:
-            print("the following options are for the from riak server ({0})".format(options['from_riak_url']))
-            access_key = getpass("Please enter the from riak access key: ")
-            secret_key = getpass("Please enter the from riak secret key: ")
-            from_riak_settings = {
-                'url': options['from_riak_url'],
-                'access_key': access_key,
-                'secret_key': secret_key,
-                'config': {'connect_timeout': 3, 'read_timeout': 5},
-            }
+        self._set_from_data_source(options)
+        blobs_to_copy = self._get_blobs_to_copy(domain, options)
 
-        blobs_to_copy = []
-        blobs_to_copy.extend(get_saved_exports_blobs(domain))
-        blobs_to_copy.extend(get_applications_blobs(domain))
-        blobs_to_copy.extend(get_multimedia_blobs(domain))
-        blobs_to_copy.extend(get_xforms_blobs(domain))
-
-        with open(options['output_jsonl'], 'w') as f:
-            for doc in blobs_to_copy:
-                f.write(json.dumps(doc._asdict()))
-                f.write('\n')
-
-        if from_riak_settings:
-            db = get_blob_db(MockSettings(from_riak_settings))
-        else:
-            db = get_blob_db()
-
-        to_riak_settings = {}
-        to_db = None
-        if options['to_riak_url']:
-            print("the following options are for the to riak server ({0})".format(options['to_riak_url']))
-            access_key = getpass("Please enter the to riak access key: ")
-            secret_key = getpass("Please enter the to riak secret key: ")
-            from_riak_settings = {
-                'url': options['to_riak_url'],
-                'access_key': access_key,
-                'secret_key': secret_key,
-                'config': {'connect_timeout': 3, 'read_timeout': 5},
-            }
-            to_db = get_blob_db(to_riak_settings)
-
-        blob_zipfile = None
-        if options['zip_file']:
-            zfile = open(options['output_zip'], 'wb')
-            blob_zipfile = zipfile.ZipFile(zfile, 'w')
-            blob_zipfile.write(options['output_jsonl'])
-
-        if blob_zipfile or to_db:
+        self._set_to_data_source(options, blobs_to_copy)
+        if self.to_zip or self.to_db:
             for info in blobs_to_copy:
                 bucket = join(_get_couchdb_name(eval(info.type)), safe_id(info.id))
                 for blob_id in info.external_blob_ids:
                     try:
-                        blob = db.get(blob_id, bucket).read()
+                        blob = self._get_blob(bucket, blob_id)
                     except NotFound as e:
                         print('Blob Not Found: ' + str(e))
                     else:
-                        if blob_zipfile:
+                        if self.to_zip:
                             zip_info = zipfile.ZipInfo(join(bucket, blob_id))
-                            blob_zipfile.writestr(zip_info, blob)
-                        if to_db:
+                            self.to_zip.writestr(zip_info, blob)
+                        if self.to_db:
                             print('writing blob ' + zip_info.filename)
                             if isinstance(blob, unicode):
                                 content = StringIO(blob.encode("utf-8"))
@@ -125,11 +91,78 @@ class Command(BaseCommand):
                                 content = StringIO(blob)
                             else:
                                 content = blob
-                            to_db.put(content, blob_id, bucket)
+                            self.to_db.put(content, blob_id, bucket)
 
-        if blob_zipfile:
-            blob_zipfile.close()
-            zfile.close()
+    def cleanup(self):
+        if self.to_zip:
+            self.to_zip.close()
+
+    def _set_from_data_source(self, options):
+        riak_settings = {}
+        if options['from_riak_url']:
+            riak_settings = get_riak_settings(options['from_riak_url'])
+        elif options['from_zip_filename']:
+            self.from_zip = zipfile.ZipFile(options['from_zip_filename'])
+
+        if not self.from_zip:
+            if riak_settings:
+                self.from_db = get_blob_db(MockSettings(riak_settings))
+            else:
+                self.from_db = get_blob_db()
+
+    def _set_to_data_source(self, options, blobs_to_copy):
+        riak_settings = {}
+        self.to_db = None
+        if options['to_riak_url']:
+            riak_settings = get_riak_settings(options['to_riak_url'])
+            self.to_db = get_blob_db(riak_settings)
+
+        self.to_zip = None
+        if options['zip_file'] or not self.from_zip:
+            zfile = open(options['output_zip'], 'wb')
+            self.to_zip = zipfile.ZipFile(zfile, 'w')
+
+            blobs_to_copy_str = ""
+            for doc in blobs_to_copy:
+                blobs_to_copy_str += json.dumps(doc._asdict()) + "\n"
+
+            zip_info = zipfile.ZipInfo(options['output_jsonl'])
+            self.to_zip.writestr(zip_info, blobs_to_copy_str)
+
+    def _get_blobs_to_copy(self, domain=None, options=None):
+        blobs_to_copy = []
+        if self.from_db:
+            blobs_to_copy.extend(get_saved_exports_blobs(domain))
+            blobs_to_copy.extend(get_applications_blobs(domain))
+            blobs_to_copy.extend(get_multimedia_blobs(domain))
+            blobs_to_copy.extend(get_xforms_blobs(domain))
+        else:
+            blobs_to_copy_file = self.from_zip.open(options['output_jsonl'])
+            for line in blobs_to_copy_file:
+                blobs_to_copy.append(BlobInfo(**json.loads(line)))
+
+        return blobs_to_copy
+
+    def _get_blob(self, bucket, blob_id):
+        if self.from_db:
+            return self.from_db.get(blob_id, bucket).read()
+        elif self.from_zip:
+            return self.from_zip.open(join(bucket, blob_id))
+        else:
+            raise Exception("Don't know what happened here")
+
+
+def get_riak_settings(riak_url):
+    print("the following options are for the from riak server ({0})".format(riak_url))
+    access_key = getpass("Please enter the riak access key: ")
+    secret_key = getpass("Please enter the riak secret key: ")
+    riak_settings = {
+        'url': riak_url,
+        'access_key': access_key,
+        'secret_key': secret_key,
+        'config': {'connect_timeout': 3, 'read_timeout': 5},
+    }
+    return riak_settings
 
 
 def get_saved_exports_blobs(domain):
