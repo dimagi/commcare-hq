@@ -198,17 +198,22 @@ function Form(json) {
 
     self.isCurrentRequiredSatisfied = ko.computed(function () {
         if (!self.showInFormNavigation()) return true;
-        return (self.children()[0].answer() === null && !self.children()[0].required())
-            || self.children()[0].answer() !== null;
+
+        return _.every(self.children(), function (q) {
+            return (q.answer() === null && !q.required()) || q.answer() !== null;
+        });
     });
 
     self.enableNextButton = ko.computed(function () {
         if (!self.showInFormNavigation()) return false;
-        return self.showInFormNavigation()
+
+        var allValidAndNotPending = _.every(self.children(), function (q) {
+            return q.isValid() && !q.pendingAnswer();
+        });
+        return allValidAndNotPending
+            && self.showInFormNavigation()
             && self.isCurrentRequiredSatisfied()
-            && self.children()[0].isValid()
-            && !self.atLastIndex()
-            && !self.children()[0].pendingAnswer();
+            && !self.atLastIndex();
     });
 
     self.enablePreviousButton = ko.computed(function () {
