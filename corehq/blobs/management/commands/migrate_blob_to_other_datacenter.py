@@ -47,6 +47,11 @@ class Command(BaseCommand):
             dest='output_jsonl',
             default='blobs.jsonl',
         ),
+        make_option('--no-zip-file',
+            action='store_false',
+            dest='zip_file',
+            default=True,
+        ),
     )
 
     def handle(self, *args, **options):
@@ -92,27 +97,36 @@ class Command(BaseCommand):
             }
             to_db = get_blob_db(to_riak_settings)
 
-        with open(options['output_zip'], 'wb') as zfile:
-            with zipfile.ZipFile(zfile, 'w') as blob_zipfile:
-                for info in blobs_to_copy:
-                    bucket = join(_get_couchdb_name(eval(info.type)), safe_id(info.id))
-                    for blob_id in info.external_blob_ids:
-                        try:
-                            blob = db.get(blob_id, bucket).read()
-                        except NotFound as e:
-                            print('Blob Not Found: ' + str(e))
+
+        blob_zipfile = None
+        if options['zip_file']:
+            zfile = open(options['output_zip'], 'wb')
+            blob_zipfile = zipfile.ZipFile(zfile, 'w')
+
+        for info in blobs_to_copy:
+            bucket = join(_get_couchdb_name(eval(info.type)), safe_id(info.id))
+            for blob_id in info.external_blob_ids:
+                try:
+                    blob = db.get(blob_id, bucket).read()
+                except NotFound as e:
+                    print('Blob Not Found: ' + str(e))
+                else:
+                    if blob_zipfile:
+                        zip_info = zipfile.ZipInfo(join(bucket, blob_id))
+                        blob_zipfile.writestr(zip_info, blob)
+                    if to_db:
+                        print('writing blob ' + zip_info.filename)
+                        if isinstance(blob, unicode):
+                            content = StringIO(blob.encode("utf-8"))
+                        elif isinstance(blob, bytes):
+                            content = StringIO(blob)
                         else:
-                            zip_info = zipfile.ZipInfo(join(bucket, blob_id))
-                            blob_zipfile.writestr(zip_info, blob)
-                            if to_db:
-                                print('writing blob ' + zip_info.filename)
-                                if isinstance(blob, unicode):
-                                    content = StringIO(blob.encode("utf-8"))
-                                elif isinstance(blob, bytes):
-                                    content = StringIO(blob)
-                                else:
-                                    content = blob
-                                to_db.put(content, blob_id, bucket)
+                            content = blob
+                        to_db.put(content, blob_id, bucket)
+
+        if blob_zipfile:
+            blob_zipfile.close()
+            zfile.close()
 
 
 def get_saved_exports_blobs(domain):
