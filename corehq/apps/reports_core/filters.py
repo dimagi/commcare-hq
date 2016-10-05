@@ -8,7 +8,7 @@ from corehq.util.dates import iso_string_to_date
 
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext, ugettext_lazy as _
 
 
 FilterParam = namedtuple('FilterParam', ['name', 'required'])
@@ -25,12 +25,15 @@ class BaseFilter(object):
         self.name = name
         self.params = params or []
 
-    def get_value(self, context):
+    def get_value(self, context, user):
+        kwargs = {
+            "request_user": user
+        }
         if self.check_context(context):
-            kwargs = {param.name: context[param.name] for param in self.params if param.name in context}
+            kwargs.update({param.name: context[param.name] for param in self.params if param.name in context})
             return self.value(**kwargs)
         else:
-            return self.default_value()
+            return self.default_value(request_user=user)
 
     def check_context(self, context):
         return all(slug.name in context for slug in self.params if slug.required)
@@ -47,24 +50,34 @@ class BaseFilter(object):
         """
         return None
 
-    def default_value(self):
+    def default_value(self, request_user=None):
         """
         If the filter is not marked as required and the user does not supply any / all necessary parameters
         this value will be used instead.
         """
         return None
 
-    def context(self, value, lang=None):
+    def context(self, values, lang=None):
         """
         Context for rendering the filter.
         """
         context = {
             'label': localize(self.label, lang),
             'css_id': self.css_id,
-            'value': value,
+            'value': self._values_to_dict(values),
         }
         context.update(self.filter_context())
         return context
+
+    def _values_to_dict(self, values):
+        """Some values are returned as Choice objects which need to be converted to
+        dicts to be displayed properly
+        """
+        if values:
+            return [
+                dict(value._asdict()) if isinstance(value, Choice) else value
+                for value in values
+            ]
 
     def filter_context(self):
         """
@@ -116,7 +129,7 @@ class DatespanFilter(BaseFilter):
         if startdate or enddate:
             return DateSpan(startdate, enddate, inclusive=date_range_inclusive)
 
-    def default_value(self):
+    def default_value(self, request_user=None):
         # default to "Show All Dates"
         return None
 
@@ -160,7 +173,7 @@ class NumericFilter(BaseFilter):
 
         return {"operator": operator, "operand": operand}
 
-    def default_value(self):
+    def default_value(self, request_user=None):
         return None
 
 
@@ -177,7 +190,7 @@ class PreFilter(BaseFilter):
     def value(self):
         return self.default_value()
 
-    def default_value(self):
+    def default_value(self, request_user=None):
         if self.pre_value is None:
             return {
                 'operator': self.pre_operator or 'is',
@@ -231,7 +244,7 @@ class ChoiceListFilter(BaseFilter):
                                                choices=choice_values))
         return next(choice_obj for choice_obj in self.choices if choice_obj.value == choice)
 
-    def default_value(self):
+    def default_value(self, request_user=None):
         return self.choices[0]
 
 
@@ -267,7 +280,12 @@ class DynamicChoiceListFilter(BaseFilter):
             choices = selection.split(CHOICE_DELIMITER)
             typed_choices = [transform_from_datatype(self.datatype)(c) for c in choices]
             return self.choice_provider.get_sorted_choices_for_values(typed_choices)
-        return self.default_value()
+        return self.default_value(kwargs.get("request_user", None))
 
-    def default_value(self):
-        return [Choice(SHOW_ALL_CHOICE, '')]
+    def default_value(self, request_user=None):
+        if hasattr(self.choice_provider, 'default_value'):
+            choice_provider_default = self.choice_provider.default_value(request_user)
+            if choice_provider_default is not None:
+                return choice_provider_default
+
+        return [Choice(SHOW_ALL_CHOICE, ugettext('Show all'))]

@@ -65,7 +65,7 @@ from corehq.apps.reports.datatables import DataTablesHeader
 UCR_EXPORT_TO_EXCEL_ROW_LIMIT = 1000
 
 
-def get_filter_values(filters, request_dict):
+def get_filter_values(filters, request_dict, user=None):
     """
     Return a dictionary mapping filter ids to specified values
     :param filters: A list of corehq.apps.reports_core.filters.BaseFilter
@@ -75,7 +75,7 @@ def get_filter_values(filters, request_dict):
     """
     try:
         return {
-            filter.css_id: filter.get_value(request_dict)
+            filter.css_id: filter.get_value(request_dict, user)
             for filter in filters
         }
     except FilterException, e:
@@ -184,7 +184,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def filter_values(self):
-        return get_filter_values(self.filters, self.request_dict)
+        return get_filter_values(self.filters, self.request_dict, self.request.user)
 
     @property
     @memoized

@@ -100,6 +100,10 @@ class ChainableChoiceProvider(ChoiceProvider):
     def query_count(self, query_context):
         pass
 
+    @abstractmethod
+    def default_value(self, user):
+        pass
+
 
 class DataSourceColumnChoiceProvider(ChoiceProvider):
 
