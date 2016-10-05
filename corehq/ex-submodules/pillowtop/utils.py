@@ -12,7 +12,7 @@ from dimagi.utils.modules import to_function
 
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.logger import pillow_logging
-from pillowtop.dao.exceptions import DocumentMismatchError
+from pillowtop.dao.exceptions import DocumentMismatchError, DocumentNotFoundError
 
 
 def _get_pillow_instance(full_class_str):
@@ -239,3 +239,15 @@ def ensure_matched_revisions(change):
                 )
             )
             raise DocumentMismatchError(u'Mismatched revs')
+
+
+def ensure_document_exists(change):
+    """
+    Ensures that the document recorded in Kafka exists and is properly returned
+
+    :raises: DocumentNotFoundError - Raised when the document is not found
+    """
+    doc = change.get_document()
+    if doc is None:
+        pillow_logging.warning("Unable to get document from change: {}".format(change))
+        raise DocumentNotFoundError()  # force a retry
