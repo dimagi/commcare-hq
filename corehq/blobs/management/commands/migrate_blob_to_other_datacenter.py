@@ -1,4 +1,5 @@
 from collections import namedtuple
+from cStringIO import StringIO
 from getpass import getpass
 import json
 from optparse import make_option
@@ -30,12 +31,18 @@ class Command(BaseCommand):
             default='',
             help='The URL of the Riak instance you are migrating from'
         ),
-        make_option('--output-zip',
+        make_option('--to-riak-url',
+            action='store',
+            dest='to_riak_url',
+            default='',
+            help='The URL of the Riak instance you are migrating to'
+        ),
+        make_option('--output-zip-file',
             action='store',
             dest='output_zip',
             default='blobs.zip',
         ),
-        make_option('--output-jsonl',
+        make_option('--output-jsonl-file',
             action='store',
             dest='output_jsonl',
             default='blobs.jsonl',
@@ -72,16 +79,40 @@ class Command(BaseCommand):
         else:
             db = get_blob_db()
 
+        to_riak_settings = {}
+        to_db = None
+        if options['to_riak_url']:
+            access_key = getpass("Please enter the to riak access key: ")
+            secret_key = getpass("Please enter the to riak secret key: ")
+            from_riak_settings = {
+                'url': options['to_riak_url'],
+                'access_key': access_key,
+                'secret_key': secret_key,
+                'config': {'connect_timeout': 3, 'read_timeout': 5},
+            }
+            to_db = get_blob_db(to_riak_settings)
+
         with open(options['output_zip'], 'wb') as zfile:
             with zipfile.ZipFile(zfile, 'w') as blob_zipfile:
                 for info in blobs_to_copy:
                     bucket = join(_get_couchdb_name(eval(info.type)), safe_id(info.id))
                     for blob_id in info.external_blob_ids:
                         try:
-                            zip_info = zipfile.ZipInfo(join(bucket, blob_id))
-                            blob_zipfile.writestr(zip_info, db.get(blob_id, bucket).read())
+                            blob = db.get(blob_id, bucket).read()
                         except NotFound as e:
                             print('Blob Not Found: ' + str(e))
+                        else:
+                            zip_info = zipfile.ZipInfo(join(bucket, blob_id))
+                            blob_zipfile.writestr(zip_info, blob)
+                            if to_db:
+                                print('writing blob ' + zip_info.filename)
+                                if isinstance(blob, unicode):
+                                    content = StringIO(blob.encode("utf-8"))
+                                elif isinstance(blob, bytes):
+                                    content = StringIO(blob)
+                                else:
+                                    content = blob
+                                to_db.put(content, blob_id, bucket)
 
 
 def get_saved_exports_blobs(domain):
