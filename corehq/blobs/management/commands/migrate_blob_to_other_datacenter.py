@@ -99,11 +99,11 @@ class Command(BaseCommand):
             }
             to_db = get_blob_db(to_riak_settings)
 
-
         blob_zipfile = None
         if options['zip_file']:
             zfile = open(options['output_zip'], 'wb')
             blob_zipfile = zipfile.ZipFile(zfile, 'w')
+            blob_zipfile.write(options['output_jsonl'])
 
         if blob_zipfile or to_db:
             for info in blobs_to_copy:
