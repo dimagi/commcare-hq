@@ -190,8 +190,13 @@ class LocationChoiceProvider(ChainableChoiceProvider):
     def default_value(self, user):
         """Return only the locations this user can access
         """
+        location = user.get_sql_location(self.domain)
+        if location:
+            return self._locations_to_choices([location])
+
         return self._locations_to_choices(
-            self._locations_query(query_text=None, user=user))
+            self._locations_query(query_text=None, user=user)
+        )
 
     def _locations_to_choices(self, locations):
         return [Choice(loc.location_id, loc.display_name) for loc in locations]
