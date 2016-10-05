@@ -3,7 +3,8 @@ import time
 
 from elasticsearch.exceptions import RequestError, ConnectionError, NotFoundError, ConflictError
 
-from pillowtop.dao.exceptions import DocumentNotFoundError, DocumentMismatchError
+from pillowtop.dao.exceptions import DocumentNotFoundError
+from pillowtop.utils import ensure_matched_revisions
 from pillowtop.exceptions import PillowtopIndexingError
 from pillowtop.logger import pillow_logging
 from .interface import PillowProcessor
@@ -36,16 +37,8 @@ class ElasticProcessor(PillowProcessor):
         if doc is None:
             pillow_logging.warning("Unable to get document from change: {}".format(change))
             raise DocumentNotFoundError()  # force a retry
-        if doc and '_rev' in doc and change.metadata and change.metadata.document_rev is not None:
-            if doc['_rev'] != change.metadata.document_rev:
-                pillow_logging.warning(
-                    u"Mismatched revs for {}: Cloudant rev {} vs. Changes feed rev {}".format(
-                        change.id,
-                        doc['_rev'],
-                        change.metadata.document_rev,
-                    )
-                )
-                raise DocumentMismatchError(u'Mismatched revs')
+
+        ensure_matched_revisions(change)
 
         if self.doc_filter_fn and self.doc_filter_fn(doc):
             return

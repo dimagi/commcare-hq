@@ -15,6 +15,7 @@ from fluff.signals import get_migration_context, get_tables_to_rebuild, reformat
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
+from pillowtop.utils import ensure_matched_revisions
 
 
 REBUILD_CHECK_INTERVAL = 10 * 60  # in seconds
@@ -120,6 +121,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
             if table.config.domain == domain:
                 # only bother getting the document if we have a domain match from the metadata
                 doc = change.get_document()
+                ensure_matched_revisions(change)
                 if table.config.filter(doc):
                     # best effort will swallow errors in the table
                     table.best_effort_save(doc)
