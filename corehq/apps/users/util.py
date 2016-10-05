@@ -171,3 +171,8 @@ def user_display_string(username, first_name="", last_name=""):
             yield u' "%s"' % html.escape(full_name)
 
     return safestring.mark_safe(''.join(parts()))
+
+
+def user_location_data(location_ids):
+    # Spec for 'commcare_location_ids' custom data field
+    return ' '.join(location_ids)
