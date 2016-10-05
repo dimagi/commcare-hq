@@ -392,6 +392,18 @@ def _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info, case_
                     DownloadBase.set_progress(build_form_multimedia_zip, form_number + 1, num_forms)
 
 
+def _convert_legacy_indices_to_export_properties(indices):
+    # Strip the prefixed 'form' and change '.'s to '-'s
+    return set(map(
+        lambda index: '-'.join(index.split('.')[1:]),
+        # Filter out any columns that are not form questions
+        filter(
+            lambda index: index and index.startswith('form'),
+            indices,
+        ),
+    ))
+
+
 def _get_export_properties(export_id, export_is_legacy):
     """
     Return a list of strings corresponding to form questions that are
@@ -402,9 +414,9 @@ def _get_export_properties(export_id, export_is_legacy):
         if export_is_legacy:
             schema = FormExportSchema.get(export_id)
             for table in schema.tables:
-                # - in question id is replaced by . in excel exports
-                properties |= {c.display.replace('.', '-') for c in
-                               table.columns if c.display}
+                properties |= _convert_legacy_indices_to_export_properties(
+                    map(lambda column: column.index, table.columns)
+                )
         else:
             from corehq.apps.export.models import FormExportInstance
             export = FormExportInstance.get(export_id)
