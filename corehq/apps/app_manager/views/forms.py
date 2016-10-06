@@ -18,6 +18,7 @@ from django.conf import settings
 from django.contrib import messages
 from unidecode import unidecode
 from corehq.apps.app_manager.views.media_utils import handle_media_edits
+from corehq.apps.app_manager.views.notifications import notify_form_changed
 from corehq.apps.app_manager.views.schedules import get_schedule_context
 
 from corehq.apps.app_manager.views.utils import back_to_main, \
@@ -324,6 +325,7 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
     handle_media_edits(request, form, should_edit, resp, lang)
 
     app.save(resp)
+    notify_form_changed(domain, request.couch_user, app_id, unique_form_id)
     if ajax:
         return HttpResponse(json.dumps(resp))
     else:
@@ -372,6 +374,7 @@ def patch_xform(request, domain, app_id, unique_form_id):
         'sha1': hashlib.sha1(form.source.encode('utf-8')).hexdigest()
     }
     app.save(response_json)
+    notify_form_changed(domain, request.couch_user, app_id, unique_form_id)
     return json_response(response_json)
 
 
@@ -507,7 +510,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
 
         def qualified_form_name(form, auto_link):
             module_name = trans(form.get_module().name, langs)
-            form_name = trans(form.name, app.langs)
+            form_name = trans(form.name, langs)
             star = '* ' if auto_link else '  '
             return u"{}{} -> {}".format(star, module_name, form_name)
 

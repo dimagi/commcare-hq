@@ -60,6 +60,8 @@ class TestUserSyncToEs(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestUserSyncToEs, cls).setUpClass()
+
         # create the index
         cls.es = get_es_new()
         with trap_extra_setup(ConnectionError):

@@ -4,14 +4,9 @@ CREATE FUNCTION get_all_cases_modified_since(reference_date timestamp with time 
 RETURNS SETOF form_processor_commcarecasesql AS $$
 BEGIN
     RETURN QUERY
-    SELECT cases.* FROM (
-        SELECT * FROM form_processor_commcarecasesql as case_table
-        WHERE case_table.server_modified_on >= reference_date
-        LIMIT query_limit + 1
-    ) AS cases
-    WHERE cases.id > last_id
-    ORDER BY cases.server_modified_on, cases.id
-    LIMIT query_limit
-    ;
+    SELECT * FROM form_processor_commcarecasesql as case_table
+        WHERE (case_table.server_modified_on, case_table.id) > (reference_date, last_id)
+        ORDER BY case_table.server_modified_on, case_table.id
+        LIMIT query_limit;
 END;
 $$ LANGUAGE plpgsql;

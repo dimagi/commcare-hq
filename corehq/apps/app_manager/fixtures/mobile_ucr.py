@@ -133,7 +133,7 @@ class ReportFixturesProvider(object):
             rows_elem.append(_row_to_row_elem(
                 dict(
                     zip(
-                        map(lambda column_config: column_config.column_id, data_source.column_configs),
+                        map(lambda column_config: column_config.column_id, data_source.top_level_columns),
                         map(str, total_row)
                     )
                 ),

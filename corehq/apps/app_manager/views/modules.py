@@ -387,6 +387,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         "source_module_id": None,
         "task_list": ('task_list-show', 'task_list-label'),
         "excl_form_ids": None,
+        "display_style": None
     }
 
     if attr not in attributes:
@@ -435,6 +436,8 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             return HttpResponseBadRequest("case type is improperly formatted")
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(request.POST.get("put_in_root"))
+    if should_edit("display_style"):
+        module["display_style"] = request.POST.get("display_style")
     if should_edit("source_module_id"):
         module["source_module_id"] = request.POST.get("source_module_id")
     if should_edit("display_separately"):

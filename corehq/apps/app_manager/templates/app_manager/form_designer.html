@@ -15,7 +15,10 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
+    <script src="{% static 'moment/moment.js' %}"></script>
     <script src="{% static 'requirejs/require.js' %}"></script>
+    <script src="{% static 'app_manager/js/app-notifications.js' %}"></script>
+    <script src="{% static 'js/ws4redis.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -118,12 +121,23 @@
 
         {% include 'app_manager/partials/form_designer_requirejs_config.html' with vellum_debug=vellum_debug %}
 
-        require(["jquery", "jquery.vellum"], function ($) {
+        require(["jquery", "jquery.vellum", "moment"], function ($) {
             $(function () {
                 $("#edit").hide();
                 $('#hq-footer').hide();
 
                 $('#formdesigner').vellum(VELLUM_OPTIONS);
+
+                {% if notifications_enabled %}
+                var userId = '{{ request.couch_user.get_id }}';
+                var notifications = hqImport('app_manager/js/app-notifications.js');
+                // initialize redis
+                var ws4redis = WS4Redis({
+                    uri: '{{ WEBSOCKET_URI }}{{ notify_facility }}?subscribe-broadcast',
+                    receive_message: notifications.NotifyFunction(userId, $('#notify-bar')),
+                    heartbeat_msg: {{ WS4REDIS_HEARTBEAT }},
+                });
+                {% endif %}
             });
         });
         analytics.workflow('Entered the Form Builder');

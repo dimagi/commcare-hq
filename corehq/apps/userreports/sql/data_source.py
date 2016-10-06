@@ -3,6 +3,7 @@ from collections import OrderedDict
 
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext
+from corehq.apps.userreports.reports.specs import ReportColumn, ExpressionColumn, CalculatedColumn
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -64,8 +65,32 @@ class ConfigurableReportSqlDataSource(SqlData):
         return get_engine_id(self.config)
 
     @property
-    def column_configs(self):
+    def top_level_columns(self):
+        """
+        This returns a list of BaseReportColumn objects that define the top-level columns
+        in the report. These top-level columns may resolve to more than one column in the
+        underlying query or report (e.g. percentage columns or expanded columns)
+        """
         return self._column_configs.values()
+
+    @property
+    def inner_columns(self):
+        """
+        This returns a list of Column objects that are contained within the top_level_columns
+        above.
+        """
+        return [
+            inner_col for col in self.top_level_columns
+            for inner_col in col.get_column_config(self.config, self.lang).columns
+        ]
+
+    @property
+    def top_level_db_columns(self):
+        return [col for col in self.top_level_columns if isinstance(col, ReportColumn)]
+
+    @property
+    def top_level_computed_columns(self):
+        return [col for col in self.top_level_columns if isinstance(col, ExpressionColumn)]
 
     @property
     def table_name(self):
@@ -107,11 +132,11 @@ class ConfigurableReportSqlDataSource(SqlData):
                 for sort_column_id, order in self._order_by
                 for order_by in self._get_db_column_ids(sort_column_id)
             ]
-        elif self.column_configs:
+        elif self.top_level_columns:
             try:
                 return [
                     OrderBy(order_by, is_ascending=True)
-                    for order_by in self._get_db_column_ids(self.column_configs[0].column_id)
+                    for order_by in self._get_db_column_ids(self.top_level_columns[0].column_id)
                 ]
             except InvalidQueryColumn:
                 pass
@@ -119,7 +144,9 @@ class ConfigurableReportSqlDataSource(SqlData):
 
     @property
     def columns(self):
-        db_columns = [c for sql_conf in self.sql_column_configs for c in sql_conf.columns]
+        # This explicitly only includes columns that resolve to database queries.
+        # The name is a bit confusing but is hard to change due to its dependency in SqlData
+        db_columns = [c for c in self.inner_columns if not isinstance(c, CalculatedColumn)]
         fields = {c.slug for c in db_columns}
 
         return db_columns + [
@@ -129,7 +156,7 @@ class ConfigurableReportSqlDataSource(SqlData):
 
     @property
     def sql_column_configs(self):
-        return [col.get_sql_column_config(self.config, self.lang) for col in self.column_configs]
+        return [col.get_column_config(self.config, self.lang) for col in self.top_level_db_columns]
 
     @property
     def column_warnings(self):
@@ -140,13 +167,18 @@ class ConfigurableReportSqlDataSource(SqlData):
     def get_data(self, start=None, limit=None):
         ret = super(ConfigurableReportSqlDataSource, self).get_data(start=start, limit=limit)
 
-        for report_column in self.column_configs:
+        for report_column in self.top_level_db_columns:
             report_column.format_data(ret)
+
+        for computed_column in self.top_level_computed_columns:
+            for row in ret:
+                row[computed_column.column_id] = computed_column.wrapped_expression(row)
+
         return ret
 
     @property
     def has_total_row(self):
-        return any(column_config.calculate_total for column_config in self.column_configs)
+        return any(column_config.calculate_total for column_config in self.top_level_db_columns)
 
     @method_decorator(catch_and_raise_exceptions)
     def get_total_records(self):
@@ -170,7 +202,7 @@ class ConfigurableReportSqlDataSource(SqlData):
         def _get_relevant_column_ids(col, column_id_to_expanded_column_ids):
             return column_id_to_expanded_column_ids.get(col.column_id, [col.column_id])
 
-        expanded_columns = get_expanded_columns(self.column_configs, self.config)
+        expanded_columns = get_expanded_columns(self.top_level_columns, self.config)
 
         qc = self.query_context()
         for c in self.columns:
@@ -181,7 +213,7 @@ class ConfigurableReportSqlDataSource(SqlData):
             session.connection(),
             [
                 column_id
-                for col in self.column_configs for column_id in _get_relevant_column_ids(col, expanded_columns)
+                for col in self.top_level_columns for column_id in _get_relevant_column_ids(col, expanded_columns)
                 if col.calculate_total
             ],
             self.filter_values
@@ -189,7 +221,7 @@ class ConfigurableReportSqlDataSource(SqlData):
 
         total_row = [
             _clean_total_row(totals.get(column_id), col)
-            for col in self.column_configs for column_id in _get_relevant_column_ids(
+            for col in self.top_level_columns for column_id in _get_relevant_column_ids(
                 col, expanded_columns
             )
         ]

@@ -49,7 +49,7 @@ def get_sanitized_request_repr(request):
     """
     if isinstance(request, HttpRequest):
         filter = get_exception_reporter_filter(request)
-        return filter.get_request_repr(request)
+        return repr(filter.get_post_parameters(request))
 
     return request
 

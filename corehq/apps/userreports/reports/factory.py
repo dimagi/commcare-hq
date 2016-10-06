@@ -6,7 +6,7 @@ from corehq.apps.userreports.reports.filters.specs import ReportFilter
 from corehq.apps.userreports.reports.specs import PieChartSpec, \
     MultibarAggregateChartSpec, MultibarChartSpec, \
     FieldColumn, PercentageColumn, ExpandedColumn, AggregateDateColumn, \
-    OrderBySpec, LocationColumn
+    OrderBySpec, LocationColumn, ExpressionColumn
 
 
 class ReportFactory(object):
@@ -33,6 +33,7 @@ class ReportColumnFactory(object):
         'field': FieldColumn,
         'percent': PercentageColumn,
         'location': LocationColumn,
+        'expression': ExpressionColumn,
     }
 
     @classmethod

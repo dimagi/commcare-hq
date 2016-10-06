@@ -1,0 +1,106 @@
+{
+    "domains": [
+        "enikshay-test",
+        "enikshay-test-test"
+    ],
+    "data_source_table": "episode",
+    "report_id": "tb_hiv",
+    "config": {
+        "description": "",
+        "title": "TB-HIV Web Report",
+        "sort_expression": [],
+        "visible": false,
+        "configured_charts": [],
+        "aggregation_columns": [],
+        "filters": [
+            {
+                "compare_as_string": false,
+                "datatype": "string",
+                "required": false,
+                "display": "Case Open Date",
+                "field": "patient_registration_date",
+                "type": "date",
+                "slug": "patient_registration_date"
+            },
+            {
+                "compare_as_string": false,
+                "datatype": "string",
+                "type": "dynamic_choice_list",
+                "slug": "village",
+                "field": "person_owner_id",
+                "choice_provider": {
+                    "include_descendants": true,
+                    "type": "location"
+                },
+                "display": "Location"
+            }
+        ],
+        "columns": [
+            {
+                "display": "Total TB patients Registered",
+                "column_id": "episode_type_patient",
+                "type": "field",
+                "field": "episode_type_patient",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Registered TB Patients with known HIV status",
+                "column_id": "hiv_test_done",
+                "type": "field",
+                "field": "hiv_test_done",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Registered TB patients found to be HIV positive",
+                "column_id": "hiv_positive",
+                "type": "field",
+                "field": "hiv_positive",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "HIV positive TB patients receiving CPT during TB treatment",
+                "column_id": "cpt_during_tb",
+                "type": "field",
+                "field": "cpt_during_tb",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "HIV positive TB patients receiving ART during TB treatment",
+                "column_id": "art_during_tb",
+                "type": "field",
+                "field": "art_during_tb",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            }
+        ]
+    }
+}

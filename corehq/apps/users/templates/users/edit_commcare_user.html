@@ -9,7 +9,7 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
     <script src="{% static 'style/js/ui-element.js' %}"></script>
-{% if strong_mobile_passwords %}
+{% if strong_mobile_passwords and not hide_password_feedback %}
     <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
     <script src="{% static 'registration/js/password.js' %}"></script>
 {% endif %}
@@ -47,7 +47,15 @@
                         alert_user("{% trans 'Password changed successfully' %}", 'success');
                         ga_track_event("Edit Mobile Worker", "Reset password", "{{couch_user_id|escapejs}}");
                     } else {
-                        alert_user("{% trans 'Password was not changed' %}", 'danger');
+                        message = gettext('Password was not changed ');
+
+                        {% if hide_password_feedback %}
+                        message += gettext("Password Requirements: 1 special character, " +
+                                          "1 number, 1 capital letter, minimum length of 8 characters.");
+                        {% endif %}
+                    
+                        alert_user(message, 'danger');
+
                     }
                 },
                 error: function (response) {

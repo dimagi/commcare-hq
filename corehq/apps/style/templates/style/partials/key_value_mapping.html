@@ -14,9 +14,9 @@
                         <div class="col-sm-3">
                             <input type="text"
                                    class="enum-key form-control"
-                                   placeholder="key"
-                                   data-bind="value: key"/>
-                            <div class="help-block" data-bind='visible: $parent.isItemDuplicated(ko.utils.unwrapObservable(key))'>
+                                   data-bind="value: key, attr: {placeholder: $parent.labels().placeholder}"/>
+                            <div class="help-block" data-bind='visible: $parent.isItemDuplicated(ko.utils.unwrapObservable(key)),
+                            text: $parent.labels().duplicated'>
                                 Key is duplicated.
                             </div>
                         </div>
@@ -34,12 +34,14 @@
                     <div data-bind="template: {name: 'value_icon_uploader', data: iconManager}">
                     </div>
                     <!-- /ko -->
+                    <!-- ko if: !$parent.values_are_icons() -->
                     <div class="col-sm-1 btn" data-bind="visible: !_([$parent.lang, null]).contains($parent.backup(value()).lang)">
                         <a href="#" class="btn btn-info btn-xs lang-text"
                            data-bind="
                             text: $parent.backup(value()).lang
                         "></a>
                     </div>
+                    <!-- /ko -->
                     <div class="col-sm-1 pull-right">
                         <a href="#" data-bind="click: $parent.removeItem" class="btn btn-danger">
                             <i class="icon-white fa fa-remove"></i>
@@ -58,7 +60,7 @@
 
         <div class="col-sm-offset-1">
             <a href="#" class="btn btn-success"
-               data-bind="click: addItem">
+               data-bind="click: addItem, text: $data.labels().addButton">
                 <i class="icon-white fa fa-plus"></i>
                 Add Key &rarr; Value Mapping
             </a>
@@ -143,6 +145,13 @@
 </div>
 
 <div id="icon_uploader_path" class="hide">
+    <div class="col-sm-1 btn" data-bind="visible: !_([$parents[1].lang, null]).contains($parents[1].backup($parent.value()).lang)">
+        <a href="#" class="btn btn-info btn-xs lang-text"
+           data-bind="
+            text: $parents[1].backup($parent.value()).lang
+        "></a>
+    </div>
+
     <div data-bind="visible: $parent.editing">
         <label class="control-label col-sm-1">Path</label>
         <div class="col-sm-4">

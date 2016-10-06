@@ -169,7 +169,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         if (useUniformUnits) {
             heightPixels = widthPixels;
         } else {
-            heightPixels = widthPixels/2;
+            heightPixels = widthPixels / 2;
         }
 
         model = {
@@ -249,6 +249,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             'click @ui.actionButton': 'caseListAction',
             'click @ui.searchButton': 'caseListSearch',
             'click @ui.paginators': 'paginateAction',
+            'keypress': 'keyAction',
         },
 
         caseListAction: function () {
@@ -259,6 +260,12 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             e.preventDefault();
             var searchText = $('#searchText').val();
             FormplayerFrontend.trigger("menu:search", searchText);
+        },
+
+        keyAction: function (event) {
+            if (event.which === 13 || event.keyCode === 13) {
+                this.caseListSearch(event);
+            }
         },
 
         paginateAction: function (e) {
