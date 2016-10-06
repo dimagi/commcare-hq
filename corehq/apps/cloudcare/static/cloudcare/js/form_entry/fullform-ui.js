@@ -200,7 +200,8 @@ function Form(json) {
         if (!self.showInFormNavigation()) return true;
 
         return _.every(self.children(), function (q) {
-            return (q.answer() === null && !q.required()) || q.answer() !== null;
+            return (q.answer() === Formplayer.Const.NO_ANSWER && !q.required())
+                || q.answer() !== null;
         });
     });
 
