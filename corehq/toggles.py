@@ -808,7 +808,8 @@ GRID_MENUS = StaticToggle(
     'grid_menus',
     'Allow using grid menus on Android',
     TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Grid+Views',
 )
 
 NEW_EXPORTS = StaticToggle(
