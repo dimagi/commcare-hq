@@ -92,6 +92,7 @@ import corehq.apps.hqmedia.models as hqmedia
 import couchforms.models as xform
 from corehq.apps.app_manager.models import Application, RemoteApp
 from couchexport.models import SavedBasicExport
+from dimagi.utils.decorators.memoized import memoized
 
 
 MIGRATION_INSTRUCTIONS = """
@@ -233,12 +234,16 @@ class BlobDbBackendMigrator(BaseDocMigrator):
 
     def __init__(self, slug, couchdb, filename=None):
         super(BlobDbBackendMigrator, self).__init__(slug, couchdb, filename)
-        self.db = get_blob_db()
         self.total_blobs = 0
         self.not_found = 0
         if not isinstance(self.db, MigratingBlobDB):
             raise MigrationError(
                 "Expected to find migrating blob db backend (got %r)" % self.db)
+
+    @property
+    @memoized
+    def db(self):
+        return get_blob_db()
 
     def _do_migration(self, doc):
         obj = BlobHelper(doc, self.couchdb)
@@ -269,42 +274,16 @@ class BlobDbBackendMigrator(BaseDocMigrator):
         return doc.get("external_blobs")
 
 
-class BlobDbBackendExporter(BaseDocMigrator):
+class BlobDbBackendExporter(BlobDbBackendMigrator):
 
     def __init__(self, slug, couchdb, filename=None, domain=None):
-        super(BlobDbBackendExporter, self).__init__(slug, couchdb, filename)
-        self.db = get_blob_db_exporter(slug, domain)
-        self.total_blobs = 0
-        self.not_found = 0
         self.domain = domain
-        if not isinstance(self.db, MigratingBlobDB):
-            raise MigrationError(
-                "Expected to find migrating blob db backend (got %r)" % self.db)
+        super(BlobDbBackendExporter, self).__init__(slug, couchdb, filename)
 
-    def _do_migration(self, doc):
-        obj = BlobHelper(doc, self.couchdb)
-        bucket = obj._blobdb_bucket()
-        assert obj.external_blobs and obj.external_blobs == obj.blobs, doc
-        for name, meta in obj.blobs.iteritems():
-            self.total_blobs += 1
-            try:
-                content = self.db.old_db.get(meta.id, bucket)
-            except NotFound:
-                self.not_found += 1
-            else:
-                with content:
-                    self.db.copy_blob(content, meta.info, bucket)
-        return True
-
-    def processing_complete(self, skipped):
-        super(BlobDbBackendExporter, self).processing_complete(skipped)
-        if self.not_found:
-            print("{} of {} blobs were not found in the old blob database. It "
-                  "is possible that some blobs were deleted as part of normal "
-                  "operation during the migration if the migration took a long "
-                  "time. However, it may be cause for concern if a majority of "
-                  "the total number of migrated blobs were not found."
-                  .format(self.not_found, self.total_blobs))
+    @property
+    @memoized
+    def db(self):
+        return get_blob_db_exporter(self.slug, self.domain)
 
     def should_process(self, doc):
         return doc.get('domain') == self.domain and doc.get("external_blobs")
