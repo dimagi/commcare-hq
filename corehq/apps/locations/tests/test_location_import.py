@@ -2,7 +2,7 @@ from couchdbkit import ResourceNotFound
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc
 from corehq.apps.commtrack.const import DAYS_IN_MONTH
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.locations.bulk import LocationImporter
 from mock import patch
 from corehq.apps.consumption.shortcuts import get_default_consumption
@@ -94,6 +94,37 @@ class LocationImportTest(CommTrackTest):
         self.assertIsNone(result['id'])
         with self.assertRaises(ResourceNotFound):
             Location.get('i-am-invalid')
+
+    def test_import_with_custom_data(self):
+        """
+        When importing with a invalid location id, import_location should not
+        create a new location
+        """
+        data = {
+            'name': 'pablo',
+            'site_code': 'colombia',
+            'data': {
+                'drug': 'weed',
+            },
+        }
+        result = import_location(self.domain.name, 'state', data)
+        location = SQLLocation.objects.get(location_id=result['id'])
+
+        self.assertEqual(location.metadata['drug'], 'weed')
+
+        # Ensure metadata change works
+        data = {
+            'name': 'pablo',
+            'site_code': 'colombia',
+            'data': {
+                'drug': 'cocaine',
+            },
+        }
+        result = import_location(self.domain.name, 'state', data)
+        result = import_location(self.domain.name, 'state', data)
+        location = SQLLocation.objects.get(location_id=result['id'])
+
+        self.assertEqual(location.metadata['drug'], 'cocaine')
 
     def test_import_with_location_id_and_wrong_domain(self):
         """
