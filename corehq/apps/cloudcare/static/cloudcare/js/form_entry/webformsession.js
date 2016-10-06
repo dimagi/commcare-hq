@@ -335,12 +335,13 @@ WebFormSession.prototype.answerQuestion = function(q) {
     var self = this;
     var ix = getIx(q);
     var answer = q.answer();
+    var oneQuestionPerScreen = (self.displayOptions === undefined) ? false : ko.utils.unwrapObservable(self.displayOptions.oneQuestionPerScreen);
 
     this.serverRequest({
             'action': Formplayer.Const.ANSWER,
             'ix': ix,
             'answer': answer,
-            'oneQuestionPerScreen': self.displayOptions.oneQuestionPerScreen(),
+            'oneQuestionPerScreen': oneQuestionPerScreen,
         },
         function(resp) {
             $.publish('session.reconcile', [resp, q]);
