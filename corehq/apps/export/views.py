@@ -47,7 +47,8 @@ from corehq.apps.export.forms import (
     FilterFormESExportDownloadForm,
     FilterCaseESExportDownloadForm,
     CreateExportTagForm,
-    DashboardFeedFilterForm)
+    DashboardFeedFilterForm,
+)
 from corehq.apps.export.models import (
     FormExportDataSchema,
     CaseExportDataSchema,
@@ -1403,23 +1404,14 @@ class FormExportListView(BaseExportListView):
 
     @memoized
     def get_saved_exports(self):
-        exports = FormExportSchema.get_stale_exports(self.domain)
-        new_exports = get_form_export_instances(self.domain)
-        if use_new_exports(self.domain):
-            exports += new_exports
-        else:
-            exports += revert_new_exports(new_exports)
-        if not self.has_deid_view_permissions:
-            exports = filter(lambda x: not x.is_safe, exports)
-        return sorted(exports, key=lambda x: x.name)
+        exports = _get_case_exports_by_domain(self.domain, self.has_deid_view_permissions)
+        return filter(lambda x: not x.is_daily_saved_export, exports)
 
     @property
     @memoized
     def daily_emailed_exports(self):
-        all_form_exports = []
-        for group in self.emailed_export_groups:
-            all_form_exports.extend(group.form_exports)
-        return all_form_exports
+        # Display daily saved (emailed) exports as "Dashboard Feed"s
+        return []
 
     @property
     def create_export_form_title(self):
@@ -1516,22 +1508,13 @@ class CaseExportListView(BaseExportListView):
     @property
     @memoized
     def daily_emailed_exports(self):
-        all_case_exports = []
-        for group in self.emailed_export_groups:
-            all_case_exports.extend(group.case_exports)
-        return all_case_exports
+        # Display daily saved (emailed) exports in dashboard feed list view, not here.
+        return []
 
     @memoized
     def get_saved_exports(self):
-        exports = CaseExportSchema.get_stale_exports(self.domain)
-        new_exports = get_case_export_instances(self.domain)
-        if use_new_exports(self.domain):
-            exports += new_exports
-        else:
-            exports += revert_new_exports(new_exports)
-        if not self.has_deid_view_permissions:
-            exports = filter(lambda x: not x.is_safe, exports)
-        return sorted(exports, key=lambda x: x.name)
+        exports = _get_case_exports_by_domain(self.domain, self.has_deid_view_permissions)
+        return filter(lambda x: not x.is_daily_saved_export, exports)
 
     @property
     def create_export_form_title(self):
