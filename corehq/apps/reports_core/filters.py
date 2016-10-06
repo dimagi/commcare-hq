@@ -25,7 +25,7 @@ class BaseFilter(object):
         self.name = name
         self.params = params or []
 
-    def get_value(self, context, user):
+    def get_value(self, context, user=None):
         kwargs = {
             "request_user": user
         }

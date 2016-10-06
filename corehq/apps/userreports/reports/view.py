@@ -200,7 +200,11 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def filter_values(self):
-        return get_filter_values(self.filters, self.request_dict, self.request.couch_user)
+        try:
+            user = self.request.couch_user
+        except AttributeError:
+            user = None
+        return get_filter_values(self.filters, self.request_dict, user=user)
 
     @property
     @memoized
