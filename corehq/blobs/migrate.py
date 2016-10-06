@@ -131,12 +131,13 @@ class BaseDocMigrator(BaseDocProcessor):
     # If true, load attachment content before migrating.
     load_attachments = False
 
-    def __init__(self, slug, couchdb, filename=None):
+    def __init__(self, slug, couchdb, filename=None, domain=None):
         super(BaseDocMigrator, self).__init__()
         self.slug = slug
         self.couchdb = couchdb
         self.dirpath = None
         self.filename = filename
+        self.domain = domain
         if filename is None:
             self.dirpath = mkdtemp()
             self.filename = os.path.join(self.dirpath, "export.txt")
@@ -231,8 +232,8 @@ class CouchAttachmentMigrator(BaseDocMigrator):
 
 class BlobDbBackendMigrator(BaseDocMigrator):
 
-    def __init__(self, slug, couchdb, filename=None):
-        super(BlobDbBackendMigrator, self).__init__(slug, couchdb, filename)
+    def __init__(self, slug, couchdb, filename=None, domain=None):
+        super(BlobDbBackendMigrator, self).__init__(slug, couchdb, filename, domain)
         self.db = get_blob_db()
         self.total_blobs = 0
         self.not_found = 0
@@ -269,6 +270,46 @@ class BlobDbBackendMigrator(BaseDocMigrator):
         return doc.get("external_blobs")
 
 
+class BlobDbBackendExporter(BaseDocMigrator):
+
+    def __init__(self, slug, couchdb, filename=None, domain=None):
+        super(BlobDbBackendExporter, self).__init__(slug, couchdb, filename, domain)
+        self.db = get_blob_db(export=True, domain=domain)
+        self.total_blobs = 0
+        self.not_found = 0
+        if not isinstance(self.db, MigratingBlobDB):
+            raise MigrationError(
+                "Expected to find migrating blob db backend (got %r)" % self.db)
+
+    def _do_migration(self, doc):
+        obj = BlobHelper(doc, self.couchdb)
+        bucket = obj._blobdb_bucket()
+        assert obj.external_blobs and obj.external_blobs == obj.blobs, doc
+        for name, meta in obj.blobs.iteritems():
+            self.total_blobs += 1
+            try:
+                content = self.db.old_db.get(meta.id, bucket)
+            except NotFound:
+                self.not_found += 1
+            else:
+                with content:
+                    self.db.copy_blob(content, meta.info, bucket)
+        return True
+
+    def processing_complete(self, skipped):
+        super(BlobDbBackendExporter, self).processing_complete(skipped)
+        if self.not_found:
+            print("{} of {} blobs were not found in the old blob database. It "
+                  "is possible that some blobs were deleted as part of normal "
+                  "operation during the migration if the migration took a long "
+                  "time. However, it may be cause for concern if a majority of "
+                  "the total number of migrated blobs were not found."
+                  .format(self.not_found, self.total_blobs))
+
+    def should_process(self, doc):
+        return doc.get('domain') == self.domain and doc.get("external_blobs")
+
+
 class Migrator(object):
 
     def __init__(self, slug, doc_types, doc_migrator_class):
@@ -283,6 +324,34 @@ class Migrator(object):
 
     def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
         doc_migrator = self.doc_migrator_class(self.slug, self.couchdb, filename)
+
+        progress_logger = CouchProcessorProgressLogger(self.doc_types)
+
+        document_provider = CouchDocumentProvider(self.iteration_key, self.doc_types)
+
+        processor = DocumentProcessorController(
+            document_provider,
+            doc_migrator,
+            reset,
+            max_retry,
+            chunk_size,
+            progress_logger=progress_logger
+        )
+        return processor.run()
+
+
+class ByDomainMigrator(Migrator):
+    domain = None
+
+    def by_domain(self, domain):
+        self.domain = domain
+        self.iteration_key = self.iteration_key + '/domain=' + self.domain
+
+    def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
+        if not self.domain:
+            raise MigrationError("Must specify domain")
+
+        doc_migrator = self.doc_migrator_class(self.slug, self.couchdb, filename, self.domain)
 
         progress_logger = CouchProcessorProgressLogger(self.doc_types)
 
@@ -324,6 +393,28 @@ MIGRATIONS = {m.slug: m for m in [
         xform.SubmissionErrorLog,
         ("HQSubmission", xform.XFormInstance),
     ], CouchAttachmentMigrator),
+    ByDomainMigrator("export_domain_apps", [
+        Application,
+        RemoteApp,
+        ("Application-Deleted", Application),
+        ("RemoteApp-Deleted", RemoteApp),
+    ], BlobDbBackendExporter),
+    ByDomainMigrator("export_domain_media", [
+        hqmedia.CommCareAudio,
+        hqmedia.CommCareImage,
+        hqmedia.CommCareVideo,
+        hqmedia.CommCareMultimedia,
+    ], BlobDbBackendExporter),
+    ByDomainMigrator("export_domain_couch_xform", [
+        xform.XFormInstance,
+        ("XFormInstance-Deleted", xform.XFormInstance),
+        xform.XFormArchived,
+        xform.XFormDeprecated,
+        xform.XFormDuplicate,
+        xform.XFormError,
+        xform.SubmissionErrorLog,
+        ("HQSubmission", xform.XFormInstance),
+    ], BlobDbBackendExporter),
 ]}
 
 

@@ -28,12 +28,14 @@ class Command(BaseCommand):
             help="Discard any existing migration state."),
         make_option('--chunk-size', type="int", default=100,
             help="Maximum number of records to read from couch at once."),
+        make_option('--domain', action="store",
+            help="Domain to migrate. (not used yet)"),
     )
 
     @change_log_level('boto3', logging.WARNING)
     @change_log_level('botocore', logging.WARNING)
     def handle(self, slug=None, log_dir=None, reset=False, chunk_size=100,
-               **options):
+               domain=None, **options):
         try:
             migrator = MIGRATIONS[slug]
         except KeyError:
@@ -45,6 +47,8 @@ class Command(BaseCommand):
                 slug, datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
             ))
             assert not os.path.exists(file), file
+        if domain:
+            migrator.by_domain(domain)
         total, skips = migrator.migrate(file, reset=reset, chunk_size=chunk_size)
         if skips:
             sys.exit(skips)
