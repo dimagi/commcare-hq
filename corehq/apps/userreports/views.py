@@ -37,7 +37,6 @@ from couchexport.files import Temp
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
 from dimagi.utils.decorators.memoized import memoized
-from corehq.util.quickcache import quickcache
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 
@@ -85,7 +84,6 @@ from corehq.apps.userreports.reports.builder.forms import (
     ConfigureMapReportForm)
 from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
-    LocationChoiceProvider
 )
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.sql import IndicatorSqlAdapter

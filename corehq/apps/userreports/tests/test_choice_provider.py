@@ -202,9 +202,9 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
                 searchable_text=[location.site_code, location.name]
             )
             for location in [
-                    self.locations['Cambridge'],
-                    self.locations['Middlesex'],
-                    self.locations['Somerville'],
+                self.locations['Cambridge'],
+                self.locations['Middlesex'],
+                self.locations['Somerville'],
             ]
         ]
         self.static_choice_provider = StaticChoiceProvider(scoped_choices)
