@@ -1,5 +1,5 @@
-from django.core.exceptions import ValidationError
 import pytz
+from django.core.exceptions import ValidationError
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.util.global_request import get_request
@@ -60,3 +60,8 @@ def get_timezone_for_user(couch_user_or_id, domain):
                 return coerce_timezone_value(domain_membership.timezone)
 
     return get_timezone_for_domain(domain)
+
+
+def get_timezone_aware_date_for_domain(domain, date):
+    tz_utc_aware_date = pytz.utc.localize(date)
+    return tz_utc_aware_date.astimezone(get_timezone_for_domain(domain))

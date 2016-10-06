@@ -1,3 +1,4 @@
+import pytz
 from collections import namedtuple
 from django.test import SimpleTestCase
 from mock import patch
@@ -172,6 +173,7 @@ class StockExportColumnTest(SimpleTestCase):
 
             headers = list(column.get_headers())
             self.assertEqual(headers, ['water (123)', 'water (abc)'])
+
 
 class TestRowNumberColumn(SimpleTestCase):
 
@@ -390,3 +392,119 @@ class TestUserDefinedExportColumn(SimpleTestCase):
             result,
             '1234',
         )
+
+
+class TestDatesInExportColumn(SimpleTestCase):
+
+    @patch('corehq.util.timezones.utils.get_timezone_for_domain', lambda _: pytz.UTC)
+    def test_get_value_utc(self):
+        column = ExportColumn(
+            item=ExportItem(
+                path=[PathNode(name='form'), PathNode(name='date')],
+            ),
+        )
+
+        result = column.get_value(
+            'my-domain',
+            '1234',
+            {'date': '2016-09-02T10:00:00.000000Z'},
+            [PathNode(name='form')]
+        )
+        self.assertEqual(
+            result,
+            '2016-09-02T10:00:00+00:00',
+        )
+
+    @patch('corehq.util.timezones.utils.get_timezone_for_domain', lambda _: pytz.timezone('America/Chicago'))
+    def test_get_value_chicago(self):
+        column = ExportColumn(
+            item=ExportItem(
+                path=[PathNode(name='form'), PathNode(name='date')],
+            ),
+        )
+
+        result = column.get_value(
+            'my-domain',
+            '1234',
+            {'date': '2016-09-02T10:00:00.000000Z'},
+            [PathNode(name='form')]
+        )
+        self.assertEqual(
+            result,
+            '2016-09-02T05:00:00-05:00',
+        )
+
+    @patch('corehq.util.timezones.utils.get_timezone_for_domain', lambda _: pytz.UTC)
+    def test_get_value_utc_transform_dates(self):
+        column = ExportColumn(
+            item=ExportItem(
+                path=[PathNode(name='form'), PathNode(name='date')],
+            ),
+        )
+
+        result = column.get_value(
+            'my-domain',
+            '1234',
+            {'date': '2016-09-02T10:00:00.000000Z'},
+            [PathNode(name='form')],
+            transform_dates=True,
+        )
+        self.assertEqual(
+            result,
+            '2016-09-02 10:00:00',
+        )
+
+    @patch('corehq.util.timezones.utils.get_timezone_for_domain', lambda _: pytz.timezone('America/Chicago'))
+    def test_get_value_chicago_transform_dates(self):
+        column = ExportColumn(
+            item=ExportItem(
+                path=[PathNode(name='form'), PathNode(name='date')],
+            ),
+        )
+
+        result = column.get_value(
+            'my-domain',
+            '1234',
+            {'date': '2016-09-02T10:00:00.000000Z'},
+            [PathNode(name='form')],
+            transform_dates=True,
+        )
+        self.assertEqual(
+            result,
+            '2016-09-02 05:00:00',
+        )
+
+    @patch('corehq.util.timezones.utils.get_timezone_for_domain', lambda _: pytz.UTC)
+    def test_get_value_missing(self):
+        column = ExportColumn(
+            item=ExportItem(
+                path=[PathNode(name='form'), PathNode(name='date')],
+            ),
+        )
+
+        result = column.get_value(
+            'my-domain',
+            '1234',
+            {'date': ''},
+            [PathNode(name='form')],
+            transform_dates=True,
+        )
+        self.assertEqual(result, '')
+
+        result = column.get_value(
+            'my-domain',
+            '1234',
+            {},
+            [PathNode(name='form')],
+            transform_dates=True,
+        )
+        self.assertEqual(result, None)
+
+        result = column.get_value(
+            'my-domain',
+            '1234',
+            {'date': None},
+            [PathNode(name='form')],
+            transform_dates=True,
+        )
+        self.assertEqual(result, None)

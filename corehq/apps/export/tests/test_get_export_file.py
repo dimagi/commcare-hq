@@ -1,4 +1,5 @@
 import json
+import pytz
 from StringIO import StringIO
 
 from django.test import SimpleTestCase
@@ -271,6 +272,7 @@ class WriterTest(SimpleTestCase):
                 }
             )
 
+    @patch('corehq.util.timezones.utils.get_timezone_for_domain', lambda _: pytz.UTC)
     def test_transform_dates(self):
         """Ensure dates are transformed for excel when `transform_dates` is set to True"""
         export_instance = FormExportInstance(
