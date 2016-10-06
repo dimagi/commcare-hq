@@ -340,7 +340,7 @@ class Migrator(object):
         return processor.run()
 
 
-class ByDomainMigrator(Migrator):
+class ExportByDomain(Migrator):
     domain = None
 
     def by_domain(self, domain):
@@ -393,19 +393,22 @@ MIGRATIONS = {m.slug: m for m in [
         xform.SubmissionErrorLog,
         ("HQSubmission", xform.XFormInstance),
     ], CouchAttachmentMigrator),
-    ByDomainMigrator("export_domain_apps", [
+]}
+
+EXPORTERS = {m.slug: m for m in [
+    ExportByDomain("export_domain_apps", [
         Application,
         RemoteApp,
         ("Application-Deleted", Application),
         ("RemoteApp-Deleted", RemoteApp),
     ], BlobDbBackendExporter),
-    ByDomainMigrator("export_domain_media", [
+    ExportByDomain("export_domain_media", [
         hqmedia.CommCareAudio,
         hqmedia.CommCareImage,
         hqmedia.CommCareVideo,
         hqmedia.CommCareMultimedia,
     ], BlobDbBackendExporter),
-    ByDomainMigrator("export_domain_couch_xform", [
+    ExportByDomain("export_domain_couch_xform", [
         xform.XFormInstance,
         ("XFormInstance-Deleted", xform.XFormInstance),
         xform.XFormArchived,

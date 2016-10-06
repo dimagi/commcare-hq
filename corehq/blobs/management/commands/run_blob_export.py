@@ -4,22 +4,22 @@ import sys
 from datetime import datetime
 from optparse import make_option
 from django.core.management import BaseCommand, CommandError
-from corehq.blobs.migrate import MIGRATIONS
+from corehq.blobs.migrate import EXPORTERS
 from corehq.util.decorators import change_log_level
 
 
-USAGE = """Usage: ./manage.py run_blob_migration [options] <slug>
+USAGE = """Usage: ./manage.py run_blob_export [options] <slug> <domain>
 
 Slugs:
 
 {}
 
-""".format('\n'.join(sorted(MIGRATIONS)))
+""".format('\n'.join(sorted(EXPORTERS)))
 
 
 class Command(BaseCommand):
     """
-    Example: ./manage.py run_blob_migration [options] saved_exports
+    Example: ./manage.py run_blob_export [options] export_domain_apps domain
     """
     help = USAGE
     option_list = BaseCommand.option_list + (
@@ -32,12 +32,16 @@ class Command(BaseCommand):
 
     @change_log_level('boto3', logging.WARNING)
     @change_log_level('botocore', logging.WARNING)
-    def handle(self, slug=None, log_dir=None, reset=False, chunk_size=100,
-               domain=None, **options):
+    def handle(self, slug=None, domain=None, log_dir=None, reset=False,
+               chunk_size=100, **options):
         try:
-            migrator = MIGRATIONS[slug]
+            migrator = EXPORTERS[slug]
         except KeyError:
             raise CommandError(USAGE)
+
+        if not domain:
+            raise CommandError(USAGE)
+
         if log_dir is None:
             file = None
         else:
@@ -45,6 +49,7 @@ class Command(BaseCommand):
                 slug, datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
             ))
             assert not os.path.exists(file), file
+        migrator.by_domain(domain)
         total, skips = migrator.migrate(file, reset=reset, chunk_size=chunk_size)
         if skips:
             sys.exit(skips)
