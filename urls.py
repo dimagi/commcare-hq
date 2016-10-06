@@ -2,15 +2,19 @@ from django.conf import settings
 from django.conf.urls import patterns, url, include
 from django.shortcuts import render
 from django.views.generic import TemplateView, RedirectView
+
+from corehq.apps.app_manager.views.formdesigner import ping
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.utils import legacy_domain_re
 
 from django.contrib import admin
-from corehq.apps.domain.views import ProBonoStaticView
+from corehq.apps.domain.views import ProBonoStaticView, logo
+from corehq.apps.hqwebapp.views import eula, apache_license, bsd_license, product_agreement, cda, unsubscribe
 from corehq.apps.reports.views import ReportNotificationUnsubscribeView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.reports.urls import report_urls
 from corehq.apps.registration.utils import PRICING_LINK
+from corehq.apps.sms.views import sms_in
 
 try:
     from localsettings import LOCAL_APP_URLS
@@ -36,7 +40,7 @@ from corehq.apps.sms.urls import sms_admin_interface_urls
 
 
 domain_specific = patterns('',
-    url(r'^logo.png', 'corehq.apps.domain.views.logo', name='logo'),
+    url(r'^logo.png', logo, name='logo'),
     (r'^apps/', include('corehq.apps.app_manager.urls')),
     (r'^api/', include('corehq.apps.api.urls')),
     # the receiver needs to accept posts at an endpoint that might
@@ -127,21 +131,22 @@ urlpatterns = patterns('',
     (r'^403/$', TemplateView.as_view(template_name='403.html')),
     url(r'^captcha/', include('captcha.urls')),
     url(r'^eula_basic/$', TemplateView.as_view(template_name='eula.html'), name='eula_basic'),
-    url(r'^eula/$', 'corehq.apps.hqwebapp.views.eula', name='eula'),
+    url(r'^eula/$', eula, name='eula'),
     url(r'^apache_license_basic/$', TemplateView.as_view(template_name='apache_license.html'), name='apache_license_basic'),
-    url(r'^apache_license/$', 'corehq.apps.hqwebapp.views.apache_license', name='apache_license'),
+    url(r'^apache_license/$', apache_license, name='apache_license'),
     url(r'^bsd_license_basic/$', TemplateView.as_view(template_name='bsd_license.html'), name='bsd_license_basic'),
-    url(r'^bsd_license/$', 'corehq.apps.hqwebapp.views.bsd_license', name='bsd_license'),
-    url(r'^product_agreement/$', 'corehq.apps.hqwebapp.views.product_agreement', name='product_agreement'),
+    url(r'^bsd_license/$', bsd_license, name='bsd_license'),
+    url(r'^product_agreement/$', product_agreement, name='product_agreement'),
     url(r'^exchange/cda_basic/$', TemplateView.as_view(template_name='cda.html'), name='cda_basic'),
-    url(r'^exchange/cda/$', 'corehq.apps.hqwebapp.views.cda', name='cda'),
-    url(r'^sms_in/$', 'corehq.apps.sms.views.sms_in', name='sms_in'),
+    url(r'^exchange/cda/$', cda, name='cda'),
+    url(r'^sms_in/$', sms_in, name='sms_in'),
     url(r'^unsubscribe/(?P<user_id>[\w-]+)/',
-        'corehq.apps.hqwebapp.views.unsubscribe', name='unsubscribe'),
+        unsubscribe, name='unsubscribe'),
     (r'^wisepill/', include('custom.apps.wisepill.urls')),
     url(r'^pro_bono/$', ProBonoStaticView.as_view(),
         name=ProBonoStaticView.urlname),
     url(r'^ping/$', 'corehq.apps.app_manager.views.formdesigner.ping', name='ping'),
+    url(r'^ping/$', ping, name='ping'),
     url(r'^robots.txt$', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
     url(r'^software-plans/$', RedirectView.as_view(url=PRICING_LINK), name='go_to_pricing'),
     url(r'^unsubscribe_report/(?P<scheduled_report_id>[\w-]+)/'
