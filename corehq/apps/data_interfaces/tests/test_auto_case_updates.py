@@ -29,6 +29,7 @@ from corehq.apps import hqcase
 class AutomaticCaseUpdateTest(TestCase):
 
     def setUp(self):
+        super(AutomaticCaseUpdateTest, self).setUp()
         self.domain = 'auto-update-test'
         update_toggle_cache(AUTO_CASE_UPDATE_ENHANCEMENTS.slug, self.domain, True, NAMESPACE_DOMAIN)
         update_toggle_cache(RUN_AUTO_CASE_UPDATES_ON_SAVE.slug, self.domain, True, NAMESPACE_DOMAIN)
@@ -142,6 +143,7 @@ class AutomaticCaseUpdateTest(TestCase):
         AutomaticUpdateAction.objects.all().delete()
         AutomaticUpdateRule.objects.all().delete()
         FormProcessorTestUtils.delete_all_cases(self.domain)
+        super(AutomaticCaseUpdateTest, self).tearDown()
 
     def _get_case_ids(self, *args, **kwargs):
         return [self.case_id]

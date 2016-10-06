@@ -322,6 +322,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
 
     @classmethod
     def setUpClass(cls):
+        super(BulkAppTranslationDownloadTest, cls).setUpClass()
         cls.app = Application.wrap(cls.get_json("app"))
         # Todo, refactor this into BulkAppTranslationTestBase.upload_raw_excel_translations
         file = StringIO()

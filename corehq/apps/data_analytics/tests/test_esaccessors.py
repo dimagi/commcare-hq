@@ -14,9 +14,11 @@ class MaltAnalyticsTest(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(MaltAnalyticsTest, cls).setUpClass()
         cls.es = get_es_new()
 
     def setUp(self):
+        super(MaltAnalyticsTest, self).setUp()
         ensure_index_deleted(XFORM_INDEX_INFO.index)
         initialize_index_and_mapping(self.es, XFORM_INDEX_INFO)
 
