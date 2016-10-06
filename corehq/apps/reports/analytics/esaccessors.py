@@ -541,14 +541,13 @@ def get_aggregated_ledger_values(domain, case_ids, section_id, entry_ids=None):
 
 
 def get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate):
-    # TODO: Remove references to _attachments once all forms have been migrated to Riak
     query = (FormES()
              .domain(domain)
              .app(app_id)
              .xmlns(xmlns)
              .submitted(gte=startdate, lte=enddate)
              .remove_default_filter("has_user")
-             .source(['_attachments', '_id', 'external_blobs']))
+             .source(['_id', 'external_blobs']))
     form_ids = set()
     for form in query.scroll():
         try:
