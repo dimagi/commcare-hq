@@ -3,7 +3,9 @@
 import sys
 import os
 import mimetypes
+import yaml
 from collections import namedtuple
+from contextlib import contextmanager
 
 GeventCommand = namedtuple('GeventCommand', 'command contains')
 
@@ -56,12 +58,47 @@ def _should_patch_gevent(args, gevent_commands):
     return should_patch
 
 
+def _should_optimize_ptop(args):
+    return (
+        'run_ptop' in args and
+        '--optimize' in args and
+        any(map(lambda arg: arg.startswith('--pillow-name'), args))
+    )
+
+
+def _get_pillow_name(args):
+    for arg in args:
+        if arg.startswith('--pillow-name'):
+            return arg.split('=')[1]
+
+
+def _get_pillow_dependent_apps(pillow_name):
+    with open('./corehq/pillows/pillow_dependencies.yml', 'r+') as f:
+        dependencies = yaml.load(f)
+        return dependencies[pillow_name]
+
+
 def set_default_settings_path(argv):
     if len(argv) > 1 and argv[1] == 'test':
         module = 'testsettings'
     else:
         module = 'settings'
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", module)
+
+
+@contextmanager
+def dependent_apps(dependent_apps):
+    from django.conf import settings
+
+    _real_installed_apps = settings.INSTALLED_APPS
+    print 'overriding settings.INSTALLED_APPS to {}'.format(
+        ','.join(dependent_apps)
+    )
+    settings.INSTALLED_APPS = tuple(dependent_apps)
+    try:
+        yield
+    finally:
+        settings.INSTALLED_APPS = _real_installed_apps
 
 
 if __name__ == "__main__":
@@ -92,4 +129,10 @@ if __name__ == "__main__":
 
     set_default_settings_path(sys.argv)
     from django.core.management import execute_from_command_line
-    execute_from_command_line(sys.argv)
+    if _should_optimize_ptop(sys.argv):
+        pillow_name = _get_pillow_name(sys.argv)
+        apps = _get_pillow_dependent_apps(pillow_name)
+        with dependent_apps(apps):
+            execute_from_command_line(sys.argv)
+    else:
+        execute_from_command_line(sys.argv)
