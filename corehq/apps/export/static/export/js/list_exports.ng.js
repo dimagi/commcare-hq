@@ -19,7 +19,7 @@
 
     var exportsControllers = {};
     exportsControllers.ListExportsController = function (
-        $scope, djangoRMI, bulk_download_url, legacy_bulk_download_url
+        $scope, djangoRMI, bulk_download_url, legacy_bulk_download_url, $rootScope
     ) {
         /**
          * This controller fetches a list of saved exports from
@@ -85,6 +85,9 @@
             $btn.addClass('disabled');
             $btn.text(gettext('Download Requested'));
         };
+        $scope.copyLinkRequested = function($event) {
+            $scope.showLink = true;
+        };
         $scope.selectAll = function () {
             _.each($scope.exports, function (exp) {
                 exp.addedToBulk = true;
@@ -115,6 +118,97 @@
                         component.updatedDataTriggered = true;
                     }
                 });
+        };
+        $scope.setFilterModalExport = function (export_) {
+            // The filterModalExport is used as context for the FeedFilterFormController
+            $rootScope.filterModalExport = export_;
+        };
+    };
+    exportsControllers.FeedFilterFormController = function (
+        $scope, $rootScope, djangoRMI, filterFormElements, filterFormModalElement
+    ) {
+        var self = {};
+        $scope._ = _;   // make underscore.js available
+        $scope.formData = {};
+
+        var formElement = filterFormElements;
+        /* ------------------------------------------------- */
+        // TODO: Coppied directly from DownloadExportFormController ...
+        // TODO: Is this all worth it? Should we just load it into the django context? This seems like overkill
+
+        self._groupRetries = 0;
+        $scope.hasGroups = false;
+        $scope.groupsLoading = true;
+        $scope.groupsError = false;
+
+        self._updateGroups = function (data) {
+            if (data.success) {
+                $scope.groupsLoading = false;
+                $scope.hasGroups = data.groups.length > 0;
+                if (formElement.group()) formElement.group().select2({
+                    data: data.groups
+                });
+            } else {
+                self._handleGroupRetry();
+            }
+        };
+        self._handleGroupRetry = function () {
+            if (self._groupRetries > 3) {
+                self._handleGroupError();
+            } else {
+                self._groupRetries ++;
+                self._getGroups();
+            }
+        };
+        self._handleGroupError = function () {
+            $scope.groupsLoading = false;
+            $scope.groupsError = true;
+        };
+        self._getGroups = function () {
+            djangoRMI.get_group_options({})
+                .success(self._updateGroups)
+                .error(self._handleGroupRetry);
+        };
+        self._getGroups();
+        /* ------------------------------------------------- */
+
+
+        $rootScope.$watch("filterModalExport", function (newSelectedExport, oldSelectedExport) {
+            if (newSelectedExport) {
+                $scope.formData = newSelectedExport.emailedExport.filters;
+                // select2s require programmatic update
+                formElement.user_type().select2("val", $scope.formData.user_types);
+                formElement.group().select2("val", $scope.formData.group);
+            }
+        });
+
+        $scope.$watch("formData.date_range", function(newDateRange, oldDateRange) {
+            if (!newDateRange) {
+                $scope.formData.date_range = "last7";
+            }
+        });
+        $scope.$watch("formData.type_or_group", function(newVal, oldVal) {
+            if (!newVal) {
+                $scope.formData.type_or_group = "type";
+            }
+        });
+
+        $scope.commitFilters = function () {
+            var export_ = $rootScope.filterModalExport;
+
+            djangoRMI.commit_filters({
+                export: export_,
+                form_data: $scope.formData,
+            }).success(function (data) {
+                if (data.success) {
+                    export_.emailedExport.filters = $scope.formData;
+                    export_.emailedExport.updatingData = false;
+                    export_.emailedExport.updatedDataTriggered = true;
+                    filterFormModalElement().modal('hide');
+                } else {
+                }
+            }).error(function (data) {
+            });
         };
     };
 

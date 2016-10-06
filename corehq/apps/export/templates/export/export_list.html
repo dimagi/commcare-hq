@@ -41,6 +41,17 @@
     listExportsApp.constant('legacy_bulk_download_url', "{{ legacy_bulk_download_url }}");
     listExportsApp.constant('modelType', {{ model_type|JSON }});
     listExportsApp.constant('staticModelType', {{ static_model_type|JSON }});
+    listExportsApp.constant('filterFormElements', {
+        group: function () {
+            return $('#id_group');
+        },
+        user_type: function () {
+            return $('#id_user_types');
+        }
+    });
+    listExportsApp.constant('filterFormModalElement', function () {
+        return $('#setFeedFiltersModal');
+    });
 }(window.angular));
 </script>
 <script>

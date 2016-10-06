@@ -1119,9 +1119,9 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
             size=export.file_size,
             last_updated=export.last_updated,
             last_accessed=export.last_accessed,
-            download_url=reverse(
+            download_url=self.request.build_absolute_uri(reverse(
                 'download_daily_saved_export', args=[self.domain, export._id]
-            ),
+            )),
         )
 
     @allow_remote_invocation
@@ -1339,6 +1339,23 @@ class DashboardFeedListView(BaseExportListView):
             export_tag=export_tag,
         ))
 
+    # TODO: Coppied straight from BaseDownloadExportView ...
+    @allow_remote_invocation
+    def get_group_options(self, in_data):
+        """Returns list of groups for the group filters
+        :param in_data: dict passed by the  angular js controller.
+        :return: {
+            'success': True,
+            'groups': [<..list of groups..>],
+        }
+        """
+        groups = map(
+            lambda g: {'id': g._id, 'text': g.name},
+            Group.get_reporting_groups(self.domain)
+        )
+        return format_angular_success({
+            'groups': groups,
+        })
 
 class FormExportListView(BaseExportListView):
     urlname = 'list_form_exports'
@@ -1613,7 +1630,7 @@ class BaseModifyNewCustomView(BaseNewExportView):
     @property
     def page_context(self):
         context = super(BaseModifyNewCustomView, self).page_context
-        context['format_options'] = ["html", "xls", "xlsx", "csv"]
+        context['format_options'] = ["xls", "xlsx", "csv"]
         return context
 
 

@@ -1,0 +1,44 @@
+{% load crispy_forms_tags %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load djangular_tags %}
+
+<div class="modal fade"
+     id="setFeedFiltersModal"
+     ng-controller="FeedFilterFormController"
+>
+    <div class="modal-dialog">
+        <form name="feedFiltersForm"
+              class="form form-horizontal"
+              ng-submit="commitFilters()"
+        >
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span>
+                    </button>
+                    <h4 class="modal-title">{% trans "Filter Feed" %}</h4>
+                </div>
+
+                <div class="modal-body">
+                    {% crispy feed_filter_form %}
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-default"
+                            data-dismiss="modal"
+                            ng-disabled="!!isSubmittingForm">{% trans 'Cancel' %}</button>
+                    <button type="submit"
+                            class="btn btn-success"
+                            ng-show="!showNoAppsError && !formLoadError"
+                            ng-disabled="!!exportOptionsForm.$invalid || !!isSubmittingForm">
+                        {% blocktrans %}
+                            Save filters
+                        {% endblocktrans %}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
