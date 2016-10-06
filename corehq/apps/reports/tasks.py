@@ -45,11 +45,8 @@ from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.util.files import file_extention_from_filename
 from corehq.util.view_utils import absolute_reverse
 
-from .analytics.couchaccessors import (
-    get_form_ids_having_multimedia as couch_get_form_ids_having_multimedia
-)
 from .analytics.esaccessors import (
-    get_form_ids_having_multimedia as es_get_form_ids_having_multimedia,
+    get_form_ids_having_multimedia,
     scroll_case_names,
 )
 from .dbaccessors import get_all_hq_group_export_configs
@@ -296,16 +293,14 @@ def build_form_multimedia_zip(
         user_types=None,
         group=None):
 
-    import ipdb; ipdb.set_trace()
-    form_ids = _get_form_ids_having_multimedia(
+    form_ids = get_form_ids_having_multimedia(
         domain,
         app_id,
         xmlns,
-        startdate,
-        enddate,
-        export_is_legacy,
-        user_types=user_types,
+        parse(startdate),
+        parse(enddate),
         group=group,
+        user_types=user_types,
     )
     properties = _get_export_properties(export_id, export_is_legacy)
 
@@ -322,7 +317,7 @@ def build_form_multimedia_zip(
 
     case_id_to_name = _get_case_names(
         domain,
-        set.union(*map(lambda form_info: form_info['case_ids'], forms_info)),
+        set.union(*map(lambda form_info: form_info['case_ids'], forms_info)) if forms_info else set(),
     )
 
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
@@ -447,37 +442,6 @@ def _get_export_properties(export_id, export_is_legacy):
                         path_parts = path_parts[1:] if path_parts[0] == "form" else path_parts
                         properties.add("-".join(path_parts))
     return properties
-
-
-def _get_form_ids_having_multimedia(
-        domain,
-        app_id,
-        xmlns,
-        startdate,
-        enddate,
-        export_is_legacy,
-        user_types=None,
-        group=None):
-    """
-    Return a list of form ids.
-    Each form has a multimedia attachment and meets the given filters.
-    """
-    if not export_is_legacy:
-        fetch_fn = es_get_form_ids_having_multimedia
-        startdate = parse(startdate)
-        enddate = parse(enddate)
-    else:
-        fetch_fn = couch_get_form_ids_having_multimedia
-
-    return fetch_fn(
-        domain,
-        app_id,
-        xmlns,
-        startdate,
-        enddate,
-        group=group,
-        user_types=user_types,
-    )
 
 
 def _extract_form_attachment_info(form, properties):
