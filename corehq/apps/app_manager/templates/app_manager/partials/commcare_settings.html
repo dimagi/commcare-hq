@@ -1,0 +1,95 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load xforms_extras %}
+
+<form class="form-horizontal">
+    <div class="clearfix">
+        <div class="pull-right">
+            <div id="settings-save-btn"></div>
+        </div>
+    </div>
+    <div data-bind="foreach: sections">
+        <fieldset data-bind="visible: notEmpty">
+            <legend>
+                <a data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}">
+                    <i class="fa fa-angle-double-down"></i>
+                    <span data-bind="text: title"></span>
+                </a>
+            </legend>
+            <div class="collapse" data-bind="foreach: settings, attr: {id: id}, css: {'in': !reallyCollapse()}">
+                <!-- ko if: widget !== 'none' -->
+                <div class="form-group" data-bind="
+                    visible: visible,
+                    css: {error: hasError()}
+                ">
+                    <div class="col-sm-2 control-label">
+                        <label data-bind="html: name, attr: {for: inputId}" class="inner-control-label"></label>
+                        <span data-bind="makeHqHelp: { name: name, description: $data.description, format: $data.description_format}, visible: $data.description"></span>
+                    </div>
+                    <div class="col-sm-4">
+                        <span data-bind="template: $data.widget_template || 'CommcareSettings.widgets.' + widget"></span>
+                        <p class="help-block" data-bind="visible: disabledButHasValue">
+                            <span data-bind="text: $data.disabled_txt"></span>
+                            <span data-bind="visible: !$data.disabled_txt">
+                            {% blocktrans %}
+                                Oops!
+                                This setting shouldn't be here.
+                                Could you change it to the default
+                                to make it go away?
+                                Sorry about that.
+                            {% endblocktrans %}
+                            </span>
+                        </p>
+                    </div>
+                    <div class="col-sm-2 control-label">
+                        <div class="pull-left">
+                            <span class="label label-danger" data-bind="
+                                text: $data.warning || $parents[1].warning,
+                                visible: !$data.valueIsLegal()">
+                            </span>
+                            <span class="label label-info" data-bind="visible: $data.preview">{% trans "Preview" %}</span>
+                            <span data-bind="visible: disabledMessage(), css: {'text-warning': !optionOK(), 'text-success': optionOK}">
+                                <i class="fa" data-bind="css: {'fa-arrow-left': !optionOK(), 'fa-check': optionOK}"></i>
+                                <span data-bind="text: disabledMessage()"></span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <!-- /ko -->
+            </div>
+        </fieldset>
+    </div>
+    {% if False and request|toggle_enabled:"CUSTOM_PROPERTIES" %}
+    <fieldset>
+        <legend>
+            <a
+                data-toggle="collapse"
+                data-bind="
+                    attr: { href: '#' + customPropertyType },
+                    css: { collapsed: true }
+                    ">
+                <i class="fa fa-angle-double-down"></i>
+                <span>{% trans "Custom Properties" %}</span>
+            </a>
+        </legend>
+        <div class="collapse col-sm-6" data-bind="attr: { id: customPropertyType }">
+            <div class="custom-property-list" data-bind="
+                foreach: customProperties,
+                as: 'customProperty'
+                ">
+                <div class="form-group container-fluid" data-bind="
+                    template: {
+                        name: 'CommcareSettings.widgets.customProperty'
+                    }
+                    ">
+                </div>
+
+            </div>
+            <button class="btn btn-default" data-bind="click: onAddCustomProperty">
+                <i class="fa fa-plus"></i>
+                {% trans "Add Custom Property" %}
+            </button>
+        </div>
+    </fieldset>
+    {% endif %}
+</form>
