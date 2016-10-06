@@ -1653,7 +1653,7 @@ class CreateNewCustomFormExportView(BaseModifyNewCustomView):
     page_title = ugettext_lazy("Create Form Export")
     export_type = FORM_EXPORT
 
-    def get_export_instance(self, schema):
+    def create_new_export_instance(self, schema):
         return self.export_instance_cls.generate_instance_from_schema(schema)
 
     def get(self, request, *args, **kwargs):
@@ -1665,7 +1665,7 @@ class CreateNewCustomFormExportView(BaseModifyNewCustomView):
             app_id,
             xmlns,
         )
-        self.export_instance = self.get_export_instance(schema)
+        self.export_instance = self.create_new_export_instance(schema)
 
         return super(CreateNewCustomFormExportView, self).get(request, *args, **kwargs)
 
@@ -1675,7 +1675,7 @@ class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
     page_title = ugettext_lazy("Create Case Export")
     export_type = CASE_EXPORT
 
-    def get_export_instance(self, schema):
+    def create_new_export_instance(self, schema):
         return self.export_instance_cls.generate_instance_from_schema(schema)
 
     def get(self, request, *args, **kwargs):
@@ -1687,15 +1687,15 @@ class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
             app_id,
             case_type,
         )
-        self.export_instance = self.get_export_instance(schema)
+        self.export_instance = self.create_new_export_instance(schema)
 
         return super(CreateNewCustomCaseExportView, self).get(request, *args, **kwargs)
 
 
 class DashboardFeedMixin(object):
 
-    def get_export_instance(self, schema):
-        instance = super(DashboardFeedMixin, self).get_export_instance(schema)
+    def create_new_export_instance(self, schema):
+        instance = super(DashboardFeedMixin, self).create_new_export_instance(schema)
         instance.export_format = "html"
         instance.is_daily_saved_export = True
         return instance
