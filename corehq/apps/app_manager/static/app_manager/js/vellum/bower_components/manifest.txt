@@ -1,25 +1,25 @@
 ├─┬ At.js#bd0dacc0bf
 │ ├─┬ Caret.js#0.2.2 (latest is 0.3.1)
-│ │ └── jquery#1.11.3
-│ └── jquery#1.11.3 (3.1.0 available)
+│ │ └── jquery#2.2.4
+│ └── jquery#2.2.4 (3.1.1 available)
 ├── Caret.js#0.2.2 (latest is 0.3.1)
 ├── MediaUploader#8a75015f15
 ├── XMLWriter#ab8760d6e0
 ├─┬ bootstrap#3.3.7 (latest is 4.0.0-alpha.4)
-│ └── jquery#1.11.3 (3.1.0 available)
+│ └── jquery#2.2.4 (3.1.1 available)
 ├── chai#3.5.0
-├── codemirror#3.24.0 (latest is 5.18.2)
+├── codemirror#3.24.0 (latest is 5.19.0)
 ├── equivalent-xml-js#7de21be295
-├── fuse.js#2.4.1 (latest is 2.5.0)
-├── jquery#1.11.3 (latest is 3.1.0)
+├── fuse.js#2.5.0
+├── jquery#2.2.4 (latest is 3.1.1)
 ├── jsdiff#2.2.2
-├─┬ jstree#3.2.1 (latest is 3.3.2)
-│ └── jquery#1.11.3 (3.1.0 available)
+├─┬ jstree#3.3.2
+│ └── jquery#2.2.4 (3.1.1 available)
 ├── langcodes#e03b2f012e
-├── markdown-it#7.0.1
+├── markdown-it#7.0.1 (latest is 8.0.0)
 ├── require-css#0.1.8
 ├── require-less#0.1.5
-├── requirejs#2.3.1
+├── requirejs#2.3.2
 ├── requirejs-plugins#1.0.3
 ├── requirejs-text#2.0.15
 ├── requirejs-tpl#a3ca1e0e7f

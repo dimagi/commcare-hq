@@ -112,11 +112,11 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 },
             });
 
-            $('#select-case').unbind('click').click(function () {
+            $('#select-case').off('click').click(function () {
                 FormplayerFrontend.trigger("menu:select", model.model.get('id'));
             });
-            $('#case-detail-modal').find('.detail-tabs').html(tabListView.render().el);
-            $('#case-detail-modal').find('.modal-body').html(menuListView.render().el);
+            $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
+            $('#case-detail-modal').find('.js-detail-content').html(menuListView.render().el);
             $('#case-detail-modal').modal('show');
         },
 

@@ -1,0 +1,68 @@
+.debugger {
+  width: 800px;
+  position: fixed;
+  z-index: 10;
+  bottom: 0;
+  background-color: white;
+
+  -webkit-transition: height 0.5s;
+  transition: height 0.5s;
+}
+
+.debugger .debugger-content {
+  overflow-y: auto;
+  margin-top: 12px;
+  height: 300px;
+  height: 335px;
+  padding: 8px;
+  padding-bottom: 0;
+}
+
+
+.debugger.debugger-minimized {
+  height: 30px;
+}
+
+.debugger.debugger-maximized {
+  height: 400px;
+}
+
+.debugger .debugger-state {
+  cursor: pointer;
+}
+
+.debugger-code {
+  font-family: monospace;
+}
+
+.debugger-navbar {
+  border-radius: 0px;
+  border: none;
+  background-color: @cc-bg;
+}
+
+.debugger-tab-title {
+  line-height: 18px;
+  color: white;
+  background-color: @cc-brand-low;
+  border-bottom: #ddd solid 4px;
+  padding: 6px;
+  cursor: pointer;
+  .debugger-title {
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+  a {
+    color: #9d9d9d;
+    pointer: cursor;
+  }
+  a:hover {
+    color: white;
+    text-decoration: none;
+  }
+
+  -webkit-transition: background-color 0.5s;
+  transition: background-color 0.5s;
+}
+
+

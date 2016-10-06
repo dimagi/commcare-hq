@@ -8,7 +8,8 @@
     "airsmadagascar",
     "airsmozambique",
     "airsrwanda",
-    "airsethiopia"
+    "airsethiopia",
+    "airszambia"
   ],
   "config": {
     "engine_id": "default",
@@ -284,9 +285,9 @@
                 "milange": 91807,
                 "mocuba": 140365,
                 "molumbo": 44715,
-                "mopeia": 15683,
+                "mopeia": 15607,
                 "morrumbala": 97861,
-                "quelimane": 76936
+                "quelimane": 67630
               },
               "type": "switch",
               "switch_on": {
@@ -328,14 +329,13 @@
                 }
               }
             },
-            "Zambia": {
+            "zambia": {
               "default": 0,
               "cases": {
-                "central": 15750,
-                "eastern": 174841,
-                "luapula": 166161,
-                "muchinga": 65903,
-                "northern": 116693
+                "eastern": 214302,
+                "luapula": 153755,
+                "muchinga": 52525,
+                "northern": 121602
               },
               "type": "switch",
               "switch_on": {
@@ -343,7 +343,7 @@
                   "type": "property_path",
                   "property_path": [
                     "user_data",
-                    "level_1_data"
+                    "level_1_name"
                   ]
                 },
                 "type": "related_doc",
@@ -502,31 +502,30 @@
               "default": 0,
               "cases": {
                 "alto_benfica": 9933,
+                "chimuara": 3196,
                 "chire": 21069,
-                "corromana": 19652,
-                "dachudua_majaua": 16805,
-                "derre": 13054,
+                "corromoana": 19652,
+                "dachudua": 16805,
+                "derre_sede": 14017,
                 "dulanha": 10084,
-                "guerissa": 3501,
+                "guerissa": 2538,
                 "liciro": 12042,
-                "madal": 10350.25,
-                "maquival": 17310,
+                "madal": 9235,
+                "maquival": 15260,
                 "megaza": 7499,
-                "milange_sede": 52876,
+                "sede": 52876,
                 "mocuba_sede": 52953,
-                "molumbo_": 25063,
-                "morrumbala_sede": 35337,
+                "molumbo_sede ": 25063,
+                "mopeia_sede": 8834,
+                "morrumbala_sede": 42093,
                 "muandiua": 16676,
-                "muaquia": 12697,
+                "muaquiua": 12697,
                 "mugeba": 31865,
                 "munhiba": 17409,
                 "namanjavira": 15508,
-                "namuinho": 49276,
+                "namuinho": 43135,
                 "pinda": 10524,
-                "sabe": 6756,
-                "mopeia_sede": 8744,
-                "posto_campo": 3578,
-                "chimuara": 3361
+                "posto_campo": 3577
               },
               "type": "switch",
               "switch_on": {
@@ -596,7 +595,7 @@
                 "Musheri": 5692,
                 "Mushikiri": 6454,
                 "Nasho": 7029,
-                "Nyagatare": 4963,
+                "Nyagatare I": 4963,
                 "Nyagatare II": 6741,
                 "Nyamugari": 9494,
                 "Nyarubuye": 4389,
@@ -623,48 +622,44 @@
                 }
               }
             },
-            "Zambia": {
+            "zambia": {
               "default": 0,
               "cases": {
-                "chitambo": 1867,
-                "luano": 957,
-                "mkushi": 8424,
-                "serenje": 4502,
-                "chadiza": 14432,
-                "chipata": 40981,
-                "katete": 25407,
-                "lundazi": 26101,
-                "mambwe": 8528,
-                "nyimba": 14168,
-                "petauke": 33123,
-                "sinda": 6639,
-                "vubwi": 5462,
-                "chembe": 5366,
-                "chiengi": 31683,
-                "chipili": 1328,
-                "kawambwa": 16133,
-                "mansa": 23624,
-                "milenge": 2381,
-                "mwansabombwe": 8720,
-                "mwense": 19970,
-                "nchelenge": 26169,
-                "samfya": 30787,
-                "chama": 17293,
-                "chinsali": 7018,
-                "isoka": 6134,
-                "mafinga": 6341,
-                "mpika": 12001,
-                "nakonde": 12115,
-                "shiwangandu": 5001,
-                "chilubi": 17995,
-                "kaputa": 10854,
-                "kasama": 17769,
-                "luwingu": 16127,
-                "mbala": 12895,
-                "mporokoso": 10746,
-                "mpulungu": 9184,
-                "mungwi": 11890,
-                "nsama": 9233
+                "chadiza": 14969,
+                "chama": 17724,
+                "chembe": 5544,
+                "chiengi": 27035,
+                "chilubi": 14147,
+                "chinsali": 11284,
+                "chipata": 61671,
+                "chipili_district": 1556,
+                "isoka": 5821,
+                "kaputa": 11385,
+                "kasama": 23365,
+                "katete": 24253,
+                "kawambwa": 11722,
+                "lundazi": 27423,
+                "luwingu": 15265,
+                "mafinga": 5903,
+                "mambwe": 7855,
+                "mansa": 24142,
+                "mbala": 13338,
+                "milenge": 1933,
+                "mpika": 12407,
+                "mporokoso": 11180,
+                "mpulungu": 9274,
+                "mungwi": 15504,
+                "mwansabombwe": 7634,
+                "mwense": 18910,
+                "nakonde": 12663,
+                "nchelenge": 25168,
+                "nsama": 8144,
+                "nyimba": 14152,
+                "petauke": 34023,
+                "samfya": 30111,
+                "shiwangandu_district": 4447,
+                "sinda": 6889,
+                "vubwi": 5343
               },
               "type": "switch",
               "switch_on": {
@@ -672,7 +667,7 @@
                   "type": "property_path",
                   "property_path": [
                     "user_data",
-                    "level_2_data"
+                    "level_2_name"
                   ]
                 },
                 "type": "related_doc",
@@ -1188,6 +1183,78 @@
                   "property_name": "owner_id"
                 }
               }
+            },
+            "zambia": {
+              "default": 0,
+              "cases": {
+                "chadiza": 14969,
+                "chaka_rhc": 12254,
+                "chalabesa_rhc": 7519,
+                "chama": 17724,
+                "chembe_rhc": 5544,
+                "chiengi": 15403,
+                "chifwenge_rhc": 6171,
+                "chilubi_island_rhc": 7976,
+                "chinsali": 11284,
+                "chipata": 38912,
+                "chipili_district": 1556,
+                "ilondola_mission_rhc": 2972,
+                "isoka": 5821,
+                "kabole_rhc": 11632,
+                "kaputa": 8082,
+                "kasama": 23365,
+                "kasongole": 3303,
+                "katete": 24253,
+                "katuta_rhc": 3998,
+                "kawambwa": 7729,
+                "kazembe_rhc": 7634,
+                "lubwe_mission": 14982,
+                "lundazi": 27423,
+                "luwingu": 11267,
+                "lwela_rhc": 933,
+                "mafinga": 5903,
+                "mambwe": 4362,
+                "mansa": 24142,
+                "matumbo": 1475,
+                "mbala": 8564,
+                "milenge": 1000,
+                "mpika": 4888,
+                "mporokoso": 5945,
+                "mpulungu": 9274,
+                "mukanda_rhc": 22759,
+                "mukupa_kaoma": 5235,
+                "mungwi": 15504,
+                "mushota_rhc": 3993,
+                "mwense": 18910,
+                "nakonde": 8663,
+                "nchelenge": 25168,
+                "nsama_rhc": 4759,
+                "ntatumbila_rhc": 4000,
+                "nyanje": 6889,
+                "nyimba": 14152,
+                "petauke": 21769,
+                "samfya": 15129,
+                "senga_rhc": 4774,
+                "st_luke_msoro": 3493,
+                "sumbu_rhc": 3385,
+                "vubwi": 5343
+              },
+              "type": "switch",
+              "switch_on": {
+                "value_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "user_data",
+                    "level_3_name"
+                  ]
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareUser",
+                "doc_id_expression": {
+                  "type": "property_name",
+                  "property_name": "owner_id"
+                }
+              }
             }
           },
           "type": "switch",
@@ -1355,10 +1422,10 @@
         "expression": {
           "default": 0,
           "cases": {
-            "mozambique": 483922,
+            "mozambique": 474540,
             "Senegal": 220551,
             "Rwanda": 188189,
-            "Zambia": 539348,
+            "zambia": 542184,
             "Ethiopia": 708258,
             "Mali": 242684,
             "Madagascar": 311916,

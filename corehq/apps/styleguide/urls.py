@@ -1,8 +1,15 @@
-from django.conf.urls import *
-from corehq.apps.styleguide.views import *
+from django.conf.urls import include, patterns, url
+from corehq.apps.styleguide.views import (
+    ClassBasedViewStyleGuideView,
+    ColorsStyleGuide,
+    FormsStyleGuideView,
+    IconsStyleGuideView,
+    MainStyleGuideView,
+)
+from corehq.apps.styleguide.views.docs import default
 
 doc_urlpatterns = patterns('corehq.apps.styleguide.views.docs',
-    url(r'^$', 'default', name='sg_examples_default'),
+    url(r'^$', default, name='sg_examples_default'),
     url(r'^simple_crispy/',
         include('corehq.apps.styleguide.examples.simple_crispy_form.urls')),
     url(r'^controls_demo/',

@@ -157,7 +157,7 @@
 - id: "sense"
   type: "features"
   name: "CommCare Sense"
-  description: "Configure for low-literate users"
+  description: "Configure for low-literate users, J2ME only"
   values: ["true", "false"]
   value_names: ["Yes", "No"]
   default: "false"
@@ -345,15 +345,4 @@
   value_names: ["Low Density", "Medium Density", "High Density", "X-High Density", "XX-High Density", "XXX-High Density", "None"]
   default: "none"
   since: "2.24"
-  force: true
-
-- name: "Grid Menus"
-  description: "If enabled module and form menus will display in a grid view instead of a list."
-  id: "cc-grid-menus"
-  values: ["yes", "no"]
-  value_names: ["Yes", "No"]
-  default: "no"
-  disabled_default: "no"
-  values_txt: "Whether to enable or disable Grid View for menus."
-  since: "2.27"
   force: true

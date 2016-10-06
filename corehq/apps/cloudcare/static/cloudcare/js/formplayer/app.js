@@ -1,4 +1,4 @@
-/*global Marionette, Backbone, WebFormSession, Util, CodeMirror */
+/*global Marionette, Backbone, WebFormSession, Util */
 
 /**
  * The primary Marionette application managing menu navigation and launching form entry
@@ -7,6 +7,7 @@
 var FormplayerFrontend = new Marionette.Application();
 
 var showError = hqImport('cloudcare/js/util.js').showError;
+var showHTMLError = hqImport('cloudcare/js/util.js').showHTMLError;
 var showSuccess = hqImport('cloudcare/js/util.js').showSuccess;
 var tfLoading = hqImport('cloudcare/js/util.js').tfLoading;
 var tfLoadingComplete = hqImport('cloudcare/js/util.js').tfLoadingComplete;
@@ -86,16 +87,20 @@ FormplayerFrontend.reqres.setHandler('clearMenu', function () {
     $('#menu-region').html("");
 });
 
-$(document).bind("ajaxStart", function () {
+$(document).on("ajaxStart", function () {
     $(".formplayer-request").addClass('formplayer-requester-disabled');
     tfLoading();
-}).bind("ajaxStop", function () {
+}).on("ajaxStop", function () {
     $(".formplayer-request").removeClass('formplayer-requester-disabled');
     tfLoadingComplete();
 });
 
-FormplayerFrontend.reqres.setHandler('showError', function (errorMessage) {
-    showError(errorMessage, $("#cloudcare-notifications"), 10000);
+FormplayerFrontend.on('showError', function (errorMessage, isHTML) {
+    if (isHTML) {
+        showHTMLError(errorMessage, $("#cloudcare-notifications"), 10000);
+    } else {
+        showError(errorMessage, $("#cloudcare-notifications"), 10000);
+    }
 });
 
 FormplayerFrontend.reqres.setHandler('showSuccess', function(successMessage) {
@@ -120,6 +125,7 @@ FormplayerFrontend.on('startForm', function (data) {
     data.domain = user.domain;
     data.username = user.username;
     data.formplayerEnabled = true;
+    data.displayOptions = user.displayOptions;
     data.onerror = function (resp) {
         showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
     };
@@ -144,10 +150,7 @@ FormplayerFrontend.on('startForm', function (data) {
             showError(resp.output, $("#cloudcare-notifications"));
         }
     };
-    data.formplayerEnabled = true;
-    data.answerCallback = function(sessionId) {
-        FormplayerFrontend.trigger('debugger.formXML', sessionId);
-    };
+    data.debuggerEnabled = user.debuggerEnabled;
     data.resourceMap = function(resource_path) {
         var urlObject = Util.currentUrlToObject();
         var appId = urlObject.appId;
@@ -155,41 +158,6 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     var sess = new WebFormSession(data);
     sess.renderFormXml(data, $('#webforms'));
-});
-
-FormplayerFrontend.on('debugger.formXML', function(sessionId) {
-    var user = FormplayerFrontend.request('currentUser');
-    var success = function(data) {
-        var $instanceTab = $('#debugger-xml-instance-tab'),
-            codeMirror;
-
-        codeMirror = CodeMirror(function(el) {
-            $('#xml-viewer-pretty').html(el);
-        }, {
-            value: data.output,
-            mode: 'xml',
-            viewportMargin: Infinity,
-            readOnly: true,
-            lineNumbers: true,
-        });
-
-        $instanceTab.off();
-        $instanceTab.on('shown.bs.tab', function() {
-            codeMirror.refresh();
-        });
-    };
-    var options = {
-        url: user.formplayer_url + '/get-instance',
-        data: JSON.stringify({
-            'session-id': sessionId,
-            'domain': user.domain,
-            'username': user.username,
-        }),
-        success: success,
-    };
-    Util.setCrossDomainAjaxOptions(options);
-
-    $.ajax(options);
 });
 
 FormplayerFrontend.on("start", function (options) {
@@ -200,6 +168,13 @@ FormplayerFrontend.on("start", function (options) {
     user.apps = options.apps;
     user.domain = options.domain;
     user.formplayer_url = options.formplayer_url;
+    user.debuggerEnabled = options.debuggerEnabled;
+    user.phoneMode = options.phoneMode;
+    user.displayOptions = {
+        phoneMode: options.phoneMode,
+        oneQuestionPerScreen: options.oneQuestionPerScreen,
+    };
+    
     FormplayerFrontend.request('gridPolyfillPath', options.gridPolyfillPath);
     if (Backbone.history) {
         Backbone.history.start();
@@ -208,12 +183,24 @@ FormplayerFrontend.on("start", function (options) {
             if (options.phoneMode) {
                 appId = options.apps[0]['_id'];
 
+                FormplayerFrontend.trigger('setAppDisplayProperties', options.apps[0]);
                 FormplayerFrontend.trigger("app:singleApp", appId);
             } else {
                 FormplayerFrontend.trigger("apps:list", options.apps);
             }
         }
     }
+});
+
+FormplayerFrontend.on('setAppDisplayProperties', function(app) {
+    FormplayerFrontend.DisplayProperties = app.profile.properties;
+    if (Object.freeze) {
+        Object.freeze(FormplayerFrontend.DisplayProperties);
+    }
+});
+
+FormplayerFrontend.reqres.setHandler('getAppDisplayProperties', function() {
+    return FormplayerFrontend.DisplayProperties || {};
 });
 
 FormplayerFrontend.on("sync", function () {

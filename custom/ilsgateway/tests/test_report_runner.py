@@ -101,7 +101,8 @@ class TestReportRunner(TestCase):
     def test_report_runner(self):
         d = datetime(2015, 9, 1)
         with mock.patch('custom.ilsgateway.tanzania.warehouse.updater.default_start_date', return_value=d), \
-                mock.patch('custom.ilsgateway.tasks.default_start_date', return_value=d):
+                mock.patch('custom.ilsgateway.tasks.default_start_date', return_value=d), \
+                mock.patch('custom.ilsgateway.tasks.get_start_date', return_value=d):
             report_run(TEST_DOMAIN)
             self.assertEqual(OrganizationSummary.objects.filter(date__lte=datetime(2015, 9, 3)).count(), 7)
 
@@ -156,7 +157,8 @@ class TestReportRunner(TestCase):
     def test_report_runner2(self):
         d = datetime(2015, 9, 1)
         with mock.patch('custom.ilsgateway.tanzania.warehouse.updater.default_start_date', return_value=d), \
-                mock.patch('custom.ilsgateway.tasks.default_start_date', return_value=d):
+                mock.patch('custom.ilsgateway.tasks.default_start_date', return_value=d),\
+                mock.patch('custom.ilsgateway.tasks.get_start_date', return_value=d):
             report_run(TEST_DOMAIN)
             self.assertEqual(OrganizationSummary.objects.filter(date__lte=datetime(2015, 9, 3)).count(), 7)
             self.assertEqual(

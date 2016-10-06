@@ -86,7 +86,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                 });
                 data[self.saveValueName] = self.value();
                 self.isSaving(true);
-                $(window).bind("beforeunload", self.beforeUnload);
+                $(window).on("beforeunload", self.beforeUnload);
 
                 $.ajax({
                     url: self.url,
@@ -100,13 +100,13 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                         if (self.postSave) {
                             self.postSave(data);
                         }
-                        $(window).unbind("beforeunload", self.beforeUnload);
+                        $(window).off("beforeunload", self.beforeUnload);
                     },
                     error: function () {
                         self.isEditing(true);
                         self.isSaving(false);
                         self.hasError(true);
-                        $(window).unbind("beforeunload", self.beforeUnload);
+                        $(window).off("beforeunload", self.beforeUnload);
                     },
                 });
             };
@@ -117,17 +117,6 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                 self.value(self.readOnlyValue);
                 self.isEditing(false);
                 self.hasError(false);
-            };
-
-            // Revert to read-only mode on blur, without saving, unless the input
-            // blurred only because focus jumped to one of the buttons (i.e., user pressed tab)
-            self.blur = function() {
-                setTimeout(function() {
-                    if (!self.saveHasFocus() && !self.cancelHasFocus() && !self.hasError()) {
-                        self.isEditing(false);
-                        self.value(self.readOnlyValue);
-                    }
-                }, 200);
             };
         },
         template: '<div class="ko-inline-edit inline" data-bind="css: {\'has-error\': hasError()}">\

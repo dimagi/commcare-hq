@@ -6,7 +6,7 @@ from django.test import TestCase, SimpleTestCase
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from couchexport.models import SavedExportSchema
-from toggle.shortcuts import toggle_enabled, clear_toggle_cache
+from toggle.shortcuts import toggle_enabled, clear_toggle_cache, set_toggle
 
 from corehq.toggles import NEW_EXPORTS, NAMESPACE_DOMAIN
 from corehq.util.test_utils import TestFileMixin, generate_cases
@@ -15,6 +15,7 @@ from corehq.apps.export.models import (
     FormExportDataSchema,
     CaseExportDataSchema,
     ExportGroupSchema,
+    UserDefinedExportColumn,
     ExportItem,
     StockItem,
     FormExportInstance,
@@ -62,6 +63,7 @@ class TestMigrateDomain(TestCase):
         self.project = Domain(name=self.domain)
         self.project.save()
         clear_toggle_cache(NEW_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN)
+        set_toggle(NEW_EXPORTS.slug, self.domain, False, namespace=NAMESPACE_DOMAIN)
 
     def tearDown(self):
         self.project.delete()
@@ -145,21 +147,95 @@ class TestConvertBase(TestCase, TestFileMixin):
         super(TestConvertBase, self).setUp()
         delete_all_export_instances()
 
-    def _convert_form_export(self, export_file_name):
+    def _convert_form_export(self, export_file_name, force=False):
+        return self._convert_export(
+            'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
+            export_file_name,
+            force=force
+        )
+
+    def _convert_case_export(self, export_file_name, force=False):
+        return self._convert_export(
+            'corehq.apps.export.models.new.CaseExportDataSchema.generate_schema_from_builds',
+            export_file_name,
+            force=force
+        )
+
+    def _convert_export(self, mock_path, export_file_name, force=False):
         saved_export_schema = SavedExportSchema.wrap(self.get_json(export_file_name))
-        with mock.patch(
-                'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
-                return_value=self.schema):
-            instance, meta = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
+
+        with mock.patch.object(SavedExportSchema, 'save', return_value='False Save'):
+            with mock.patch(
+                    mock_path,
+                    return_value=self.schema):
+                instance, meta = convert_saved_export_to_export_instance(
+                    self.domain,
+                    saved_export_schema,
+                    force_convert_columns=force,
+                )
+
         return instance, meta
 
-    def _convert_case_export(self, export_file_name):
-        saved_export_schema = SavedExportSchema.wrap(self.get_json(export_file_name))
-        with mock.patch(
-                'corehq.apps.export.models.new.CaseExportDataSchema.generate_schema_from_builds',
-                return_value=self.schema):
-            instance, meta = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
-        return instance, meta
+
+@mock.patch(
+    'corehq.apps.export.models.new.get_request',
+    return_value=MockRequest(domain='my-domain'),
+)
+class TestForceConvertExport(TestConvertBase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestForceConvertExport, cls).setUpClass()
+        cls.project = create_domain(cls.domain)
+        cls.project.commtrack_enabled = True
+        cls.project.save()
+        cls.schema = CaseExportDataSchema(
+            domain=cls.domain,
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[
+                        ExportItem(
+                            path=[PathNode(name='DOB')],
+                            label='Case Property DOB',
+                            last_occurrences={cls.app_id: 3},
+                        ),
+                    ],
+                    last_occurrences={cls.app_id: 3},
+                ),
+            ],
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.project.delete()
+        super(TestForceConvertExport, cls).tearDownClass()
+
+    def test_force_column_convert(self, _):
+        instance, _ = self._convert_case_export('case')
+        table = instance.get_table(MAIN_TABLE)
+
+        index, column = table.get_column([PathNode(name='DOB')], 'ExportItem', None)
+        self.assertIsNotNone(column)
+        index, column = table.get_column([PathNode(name='age')], 'ExportItem', None)
+        # When we don't force the convert we shouldn't convert when it's not in the schema
+        self.assertIsNone(column)
+
+        instance, _ = self._convert_case_export('case', force=True)
+        table = instance.get_table(MAIN_TABLE)
+
+        index, column = table.get_column([PathNode(name='age')], None, None)
+        # When we do force the convert we should convert even when it's not in the schema
+        self.assertIsNotNone(column)
+        self.assertEqual(column.label, 'Age Label')
+        self.assertTrue(isinstance(column, UserDefinedExportColumn))
+        self.assertFalse(column.is_editable)
+        self.assertEqual(column.deid_transform, DEID_ID_TRANSFORM)
+
+        index_dob, _ = table.get_column([PathNode(name='DOB')], 'ExportItem', None)
+
+        # Ensure that the ordering remains correct with forced column conversion
+        self.assertTrue(index > index_dob)
 
 
 @mock.patch(
@@ -617,11 +693,7 @@ class TestSingleNodeRepeatConversion(TestConvertBase):
         This test ensures that if a repeat only receives one entry, that the selection
         will still be migrated.
         """
-        saved_export_schema = SavedExportSchema.wrap(self.get_json('single_node_repeat'))
-        with mock.patch(
-                'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
-                return_value=self.schema):
-            instance, _ = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
+        instance, _ = self._convert_form_export('single_node_repeat')
 
         table = instance.get_table([PathNode(name='form'), PathNode(name='repeat', is_repeat=True)])
         index, column = table.get_column(
@@ -689,11 +761,7 @@ class TestConvertStockFormExport(TestConvertBase):
         )
 
     def test_convert_form_export_stock_basic(self, _, __):
-        saved_export_schema = SavedExportSchema.wrap(self.get_json('stock_form_export'))
-        with mock.patch(
-                'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
-                return_value=self.schema):
-            instance, _ = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
+        instance, _ = self._convert_form_export('stock_form_export')
 
         table = instance.get_table(MAIN_TABLE)
         index, column = table.get_column(
@@ -709,12 +777,7 @@ class TestConvertStockFormExport(TestConvertBase):
         self.assertTrue(column.selected)
 
     def test_convert_form_export_stock_in_repeat(self, _, __):
-        saved_export_schema = SavedExportSchema.wrap(self.get_json('stock_form_export_repeat'))
-        with mock.patch(
-                'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
-                return_value=self.schema):
-            instance, _ = convert_saved_export_to_export_instance(self.domain, saved_export_schema)
-
+        instance, _ = self._convert_form_export('stock_form_export_repeat')
         table = instance.get_table([PathNode(name='form'), PathNode(name='repeat', is_repeat=True)])
         index, column = table.get_column(
             [

@@ -2,7 +2,7 @@
 {% with chartdiv|default:"pieplaceholder" as chartdiv %}
     {% with hoverdiv|default:"piehoverplaceholder" as hoverdiv %}
     <script>
-        $(document).ready(function() {
+        $(function() {
             var data = [
             {% for point in chart_data %}
                 { label: "{{ point.display }}",  data: {{ point.value }}{% if point.color %}, color: "{{ point.color }}" {% endif %}} ,
@@ -54,7 +54,7 @@
             else {
                   $('#{{ chartdiv }}').html("<h4>No data</h4>");
             }
-            $("#{{ chartdiv }}").bind("plothover", pieHover);
+            $("#{{ chartdiv }}").on("plothover", pieHover);
         })
     </script>
     <div class="hq-graphic-report">

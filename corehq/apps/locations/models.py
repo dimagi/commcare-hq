@@ -124,6 +124,10 @@ class LocationType(models.Model):
 
     class Meta:
         app_label = 'locations'
+        unique_together = (
+            ('domain', 'code'),
+            ('domain', 'name'),
+        )
 
     def __init__(self, *args, **kwargs):
         super(LocationType, self).__init__(*args, **kwargs)
@@ -570,15 +574,8 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
 
     @property
     def path(self):
-        # todo: this is inconsistent with couch Location.path in that it
-        # doesn't include its own ID. Should look into adding the ID
-        # and removing the `path_including_self` function below
-        return list(reversed(self.lineage))
-
-    @property
-    def path_including_self(self):
-        _path = self.path
-        _path.append(self.location_id)
+        _path = list(reversed(self.lineage))
+        _path.append(self._id)
         return _path
 
     @classmethod
@@ -711,19 +708,24 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
 
     @property
     def location_type(self):
+        notify_of_deprecation(
+            "You should use either location_type_name or location_type_object")
         return self.location_type_object.name
 
     _sql_location_type = None
 
     @location_type.setter
     def location_type(self, value):
+        self.set_location_type(value)
+
+    def set_location_type(self, location_type_name):
         msg = "You can't create a location without a real location type"
-        if not value:
+        if not location_type_name:
             raise LocationType.DoesNotExist(msg)
         try:
             self._sql_location_type = LocationType.objects.get(
                 domain=self.domain,
-                name=value,
+                name=location_type_name,
             )
         except LocationType.DoesNotExist:
             raise LocationType.DoesNotExist(msg)

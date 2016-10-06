@@ -1,4 +1,4 @@
-from corehq.apps.app_manager.const import APP_V2, AUTO_SELECT_USERCASE
+from corehq.apps.app_manager.const import AUTO_SELECT_USERCASE
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     AdvancedOpenCaseAction,
@@ -14,7 +14,7 @@ from django.test import SimpleTestCase
 class ModuleTests(SimpleTestCase):
 
     def setUp(self):
-        self.app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        self.app = Application.new_app('domain', "Untitled Application")
         self.module = self.app.add_module(Module.new_module('Untitled Module', None))
         self.module.case_type = 'another_case_type'
         self.form = self.module.new_form("Untitled Form", None)
@@ -23,7 +23,7 @@ class ModuleTests(SimpleTestCase):
 class AdvancedModuleTests(SimpleTestCase):
 
     def setUp(self):
-        self.app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        self.app = Application.new_app('domain', "Untitled Application")
         self.module = self.app.add_module(AdvancedModule.new_module('Untitled Module', None))
         self.form = self.module.new_form("Untitled Form", None)
 

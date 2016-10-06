@@ -80,6 +80,34 @@ hqDefine('locations/ko/location_types.js', function(){
                 }
             });
 
+            // Make sure name and code are unique
+            _.each({
+                'name': 'duplicate_name_error',
+                'code': 'duplicate_code_error',
+            }, function (error_fn, field) {
+                var counts_by_value = _.countBy(self.loc_types(), function (loc_type) {
+                    return loc_type[field]();
+                });
+                var duplicates = [];
+                _.each(counts_by_value, function (count, value) {
+                    if (field === 'code' && value === ''){
+                        // exclude empty codes
+                        // if code is empty, the backend will autofill it as name
+                        return;
+                    }
+                    if (count > 1) {
+                        duplicates.push(value);
+                        valid = false;
+                    }
+                });
+                _.each(self.loc_types(), function (loc_type) {
+                    loc_type[error_fn](false);
+                    if (_.contains(duplicates, loc_type[field]())) {
+                        loc_type[error_fn](true);
+                    }
+                });
+            });
+
             var top_level_loc = false;
             $.each(self.loc_types(), function(i, e) {
                 if (!e.parent_type()) {
@@ -166,6 +194,8 @@ hqDefine('locations/ko/location_types.js', function(){
         self.view = view_model;
 
         self.name_error = ko.observable(false);
+        self.duplicate_name_error = ko.observable(false);
+        self.duplicate_code_error = ko.observable(false);
 
         self.validate = function() {
             self.name_error(false);

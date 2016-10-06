@@ -242,7 +242,7 @@ $(function () {
                 }
                 else {
                     $.each($checkboxes, function() {
-                        $(this).removeProp("checked");
+                        $(this).prop("checked", false);
                     });
                 }
             }

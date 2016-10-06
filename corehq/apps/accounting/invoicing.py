@@ -400,6 +400,22 @@ class LineItemFactory(object):
         except KeyError:
             raise LineItemError("No line item factory exists for the feature type '%s" % feature_type)
 
+    @property
+    @memoized
+    def is_prorated(self):
+        return not (
+            self.invoice.date_end.day == self._days_in_billing_period
+            and self.invoice.date_start.day == 1
+        )
+
+    @property
+    def num_prorated_days(self):
+        return self.invoice.date_end.day - self.invoice.date_start.day + 1
+
+    @property
+    def _days_in_billing_period(self):
+        return calendar.monthrange(self.invoice.date_end.year, self.invoice.date_end.month)[1]
+
 
 class ProductLineItemFactory(LineItemFactory):
 
@@ -414,14 +430,6 @@ class ProductLineItemFactory(LineItemFactory):
             self._auto_generate_credits(line_item)
 
         return line_item
-
-    @property
-    @memoized
-    def is_prorated(self):
-        return not (
-            self.invoice.date_end.day == self._days_in_billing_period
-            and self.invoice.date_start.day == 1
-        )
 
     @property
     def base_description(self):
@@ -443,10 +451,6 @@ class ProductLineItemFactory(LineItemFactory):
             }
 
     @property
-    def num_prorated_days(self):
-        return self.invoice.date_end.day - self.invoice.date_start.day + 1
-
-    @property
     def unit_cost(self):
         if self.is_prorated:
             return Decimal("%.2f" % round(self.rate.monthly_fee / self._days_in_billing_period, 2))
@@ -461,10 +465,6 @@ class ProductLineItemFactory(LineItemFactory):
     @property
     def plan_name(self):
         return self.subscription.plan_version.plan.name
-
-    @property
-    def _days_in_billing_period(self):
-        return calendar.monthrange(self.invoice.date_end.year, self.invoice.date_end.month)[1]
 
     def _auto_generate_credits(self, line_item):
         CreditLine.add_credit(
@@ -489,6 +489,20 @@ class FeatureLineItemFactory(LineItemFactory):
 
 
 class UserLineItemFactory(FeatureLineItemFactory):
+
+    @property
+    def unit_cost(self):
+        non_prorated_unit_cost = super(UserLineItemFactory, self).unit_cost
+        # To ensure that integer division is avoided
+        assert isinstance(non_prorated_unit_cost, Decimal)
+
+        if self.is_prorated:
+            return Decimal(
+                "%.2f" % round(
+                    non_prorated_unit_cost * self.num_prorated_days / self._days_in_billing_period, 2
+                )
+            )
+        return non_prorated_unit_cost
 
     @property
     def quantity(self):

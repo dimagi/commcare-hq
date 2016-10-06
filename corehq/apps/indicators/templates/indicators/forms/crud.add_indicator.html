@@ -6,7 +6,7 @@
 
             if ($change_doc_type) {
                 $('#id_doc_type_choices').parent().parent().hide();
-                $('#id_change_doc_type').removeProp('checked');
+                $('#id_change_doc_type').prop('checked', false);
                 $change_doc_type.change(function () {
                     var $doc_type = $('#id_doc_type_choices').parent().parent();
                     ($(this).prop('checked')) ? $doc_type.fadeIn() : $doc_type.fadeOut();

@@ -1,7 +1,7 @@
 import datetime
 from django.test import TestCase
 
-from corehq.apps.app_manager.const import APP_V2, AMPLIFIES_YES
+from corehq.apps.app_manager.const import AMPLIFIES_YES
 from corehq.apps.app_manager.models import Application
 from corehq.apps.data_analytics.malt_generator import MALTTableGenerator
 from corehq.apps.data_analytics.models import MALTRow
@@ -57,8 +57,8 @@ class MaltGeneratorTest(TestCase):
 
     @classmethod
     def _setup_apps(cls):
-        cls.non_wam_app = Application.new_app(cls.DOMAIN_NAME, "app 1", APP_V2)
-        cls.wam_app = Application.new_app(cls.DOMAIN_NAME, "app 2", APP_V2)
+        cls.non_wam_app = Application.new_app(cls.DOMAIN_NAME, "app 1")
+        cls.wam_app = Application.new_app(cls.DOMAIN_NAME, "app 2")
         cls.wam_app.amplifies_workers = AMPLIFIES_YES
         cls.non_wam_app.save()
         cls.wam_app.save()

@@ -6,7 +6,7 @@ from corehq.apps.tzmigration.api import set_migration_started, \
     MigrationStatus
 from corehq.apps.tzmigration.timezonemigration import prepare_planning_db, \
     get_planning_db, get_planning_db_filepath, delete_planning_db, \
-    prepare_case_json, commit_plan, FormJsonDiff, is_datetime
+    prepare_case_json, commit_plan, FormJsonDiff, is_datetime_string
 from corehq.form_processor.utils import should_use_sql_backend
 from couchforms.dbaccessors import get_form_ids_by_type
 
@@ -98,7 +98,7 @@ class Command(BaseCommand):
         for diff in self.planning_db.get_diffs():
             json_diff = diff.json_diff
             if json_diff.diff_type == 'diff':
-                if is_datetime(json_diff.old_value) and is_datetime(json_diff.new_value):
+                if is_datetime_string(json_diff.old_value) and is_datetime_string(json_diff.new_value):
                     continue
             if json_diff in (
                     FormJsonDiff(diff_type=u'type', path=[u'external_id'], old_value=u'', new_value=None),

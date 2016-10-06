@@ -283,6 +283,15 @@ SingleSelectEntry.prototype.onPreProcess = function(newValue) {
     }
 };
 
+$.datetimepicker.setDateFormatter({
+    parseDate: function (date, format) {
+        var d = moment(date, format);
+        return d.isValid() ? d.toDate() : false;
+    },
+    formatDate: function (date, format) {
+        return moment(date).format(format);
+    },
+});
 /**
  * Base class for DateEntry, TimeEntry, and DateTimeEntry. Shares the same
  * date picker between the three types of Entry.
@@ -291,38 +300,84 @@ function DateTimeEntryBase(question, options) {
     var self = this,
         thisYear = new Date().getFullYear(),
         minDate,
-        maxDate;
+        maxDate,
+        displayOpts = _getDisplayOptions(question);
 
     EntrySingleAnswer.call(self, question, options);
     // Set max date to 10 years in the future
     maxDate = moment(thisYear + 10, 'YYYY').toDate();
     // Set min date to 100 years in the past
     minDate = moment(thisYear - 100, 'YYYY').toDate();
+
     self.afterRender = function() {
         self.$picker = $('#' + self.entryId);
-        self.$picker.datetimepicker({
+        var datepickerOpts = {
             timepicker: self.timepicker,
             datepicker: self.datepicker,
-            value: self.answer(),
             format: self.clientFormat,
+            formatTime: self.clientTimeFormat,
+            formatDate: self.clientDateFormat,
+            value: self.answer() ? self.convertServerToClientFormat(self.answer()) : self.answer(),
             maxDate: maxDate,
             minDate: minDate,
+            scrollInput: false,
             onChangeDateTime: function(newDate) {
                 if (!newDate) {
                     self.answer(Formplayer.Const.NO_ANSWER);
                     return;
                 }
                 self.answer(moment(newDate).format(self.serverFormat));
-            }
-        });
+            },
+            onGenerate: function () {
+                var $dt = $(this);
+                if ($dt.find('.xdsoft_mounthpicker .xdsoft_prev .fa').length < 1) {
+                    $dt.find('.xdsoft_mounthpicker .xdsoft_prev').append($('<i class="fa fa-chevron-left" />'));
+                }
+                if ($dt.find('.xdsoft_mounthpicker .xdsoft_next .fa').length < 1) {
+                    $dt.find('.xdsoft_mounthpicker .xdsoft_next').append($('<i class="fa fa-chevron-right" />'));
+                }
+
+                if ($dt.find('.xdsoft_timepicker .xdsoft_prev .fa').length < 1) {
+                    $dt.find('.xdsoft_timepicker .xdsoft_prev').append($('<i class="fa fa-chevron-up" />'));
+                }
+                if ($dt.find('.xdsoft_timepicker .xdsoft_next .fa').length < 1) {
+                    $dt.find('.xdsoft_timepicker .xdsoft_next').append($('<i class="fa fa-chevron-down" />'));
+                }
+
+                if ($dt.find('.xdsoft_today_button .fa').length < 1) {
+                    $dt.find('.xdsoft_today_button').append($('<i class="fa fa-home" />'));
+                }
+
+                $dt.find('.xdsoft_label i').addClass('fa fa-caret-down');
+
+                if (displayOpts.phoneMode() && !self.datepicker && self.timepicker) {
+                    $dt.find('.xdsoft_time_box').addClass('time-box-full');
+                }
+
+                if (displayOpts.phoneMode() && self.timepicker && self.datepicker) {
+                    $dt.find('.xdsoft_save_selected')
+                        .show().text(django.gettext('Save'))
+                        .addClass('btn btn-primary')
+                        .removeClass('blue-gradient-button');
+                    $dt.find('.xdsoft_save_selected').appendTo($dt);
+                }
+            },
+        };
+        self.$picker.datetimepicker(datepickerOpts)
+            .val(self.answer() ? moment(self.answer()).format(self.clientFormat) : self.answer());
     };
 }
 DateTimeEntryBase.prototype = Object.create(EntrySingleAnswer.prototype);
 DateTimeEntryBase.prototype.constructor = EntrySingleAnswer;
+DateTimeEntryBase.prototype.convertServerToClientFormat = function(date) {
+    return moment(date, this.serverFormat).format(this.clientFormat);
+};
 
 // Format for time or date or datetime for the browser. Defaults to ISO.
 // Formatting string should be in datetimepicker format: http://xdsoft.net/jqplugins/datetimepicker/
 DateTimeEntryBase.prototype.clientFormat = undefined;
+DateTimeEntryBase.prototype.clientTimeFormat = undefined;
+DateTimeEntryBase.prototype.clientDateFormat = undefined;
 
 // Format for time or date or datetime for the server. Defaults to ISO.
 // Formatting string should be in momentjs format: http://momentjs.com/docs/#/parsing/string-format/
@@ -337,8 +392,9 @@ function DateEntry(question, options) {
 }
 DateEntry.prototype = Object.create(DateTimeEntryBase.prototype);
 DateEntry.prototype.constructor = DateTimeEntryBase;
-// This is format equates to 31/12/2016 and is used by the datetimepicker
-DateEntry.prototype.clientFormat = 'd/m/Y';
+// This is format equates to 12/31/2016 and is used by the datetimepicker
+DateEntry.prototype.clientFormat = 'MM/DD/YYYY';
+DateEntry.prototype.clientDateFormat = 'MM/DD/YYYY';
 DateEntry.prototype.serverFormat = 'YYYY-MM-DD';
 
 
@@ -350,6 +406,9 @@ function DateTimeEntry(question, options) {
 }
 DateTimeEntry.prototype = Object.create(DateTimeEntryBase.prototype);
 DateTimeEntry.prototype.constructor = DateTimeEntryBase;
+DateTimeEntry.prototype.clientTimeFormat = 'HH:mm';
+DateTimeEntry.prototype.clientDateFormat = 'MM/DD/YYYY';
+DateTimeEntry.prototype.clientFormat = 'MM/DD/YYYY HH:mm';
 
 function TimeEntry(question, options) {
     this.templateType = 'time';
@@ -357,10 +416,11 @@ function TimeEntry(question, options) {
     this.datepicker = false;
     DateTimeEntryBase.call(this, question, options);
 }
-TimeEntry.prototype = Object.create(EntrySingleAnswer.prototype);
-TimeEntry.prototype.constructor = EntrySingleAnswer;
+TimeEntry.prototype = Object.create(DateTimeEntryBase.prototype);
+TimeEntry.prototype.constructor = DateTimeEntryBase;
 
-TimeEntry.prototype.clientFormat = 'H:i';
+TimeEntry.prototype.clientTimeFormat = 'HH:mm';
+TimeEntry.prototype.clientFormat = 'HH:mm';
 TimeEntry.prototype.serverFormat = 'HH:mm';
 
 
@@ -499,4 +559,24 @@ function intpad(x, n) {
         s = '0' + s;
     }
     return s;
+}
+
+/**
+ * Utility that gets the display options from a parent form of a question.
+ * */
+function _getDisplayOptions(question) {
+    var maxIter = 10; // protect against a potential infinite loop
+    var form = question.parent;
+
+    if (form === undefined) {
+        return {};
+    }
+
+    // logic in case the question is in a group or repeat or nested group, etc.
+    while (form.displayOptions === undefined && maxIter > 0) {
+        maxIter --;
+        form = parent.parent;
+    }
+
+    return form.displayOptions || {};
 }

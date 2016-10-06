@@ -1078,7 +1078,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
 
     This small change is why we can't use the default PasswordReset form.
     """
-    email = forms.EmailField(label=ugettext_lazy("Username"), max_length=254,
+    email = forms.EmailField(label=ugettext_lazy("Email"), max_length=254,
                              widget=forms.TextInput(attrs={'class': 'form-control'}))
     if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
         captcha = CaptchaField(label=ugettext_lazy("Type the letters in the box"))
@@ -1516,6 +1516,8 @@ class ProBonoForm(forms.Form):
     contact_email = forms.EmailField(label=ugettext_lazy("Contact email"))
     organization = forms.CharField(label=ugettext_lazy("Organization"))
     project_overview = forms.CharField(widget=forms.Textarea, label="Project overview")
+    airtime_expense = forms.CharField(label=ugettext_lazy("Estimated annual expenditures on airtime:"))
+    device_expense = forms.CharField(label=ugettext_lazy("Estimated annual expenditures on devices:"))
     pay_only_features_needed = forms.CharField(widget=forms.Textarea, label="Pay only features needed")
     duration_of_project = forms.CharField(help_text=ugettext_lazy(
         "We grant pro-bono subscriptions to match the duration of your "
@@ -1547,6 +1549,8 @@ class ProBonoForm(forms.Form):
                     style=('' if use_domain_field else 'display:none'),
                 ),
                 'project_overview',
+                'airtime_expense',
+                'device_expense',
                 'pay_only_features_needed',
                 'duration_of_project',
                 'num_expected_users',

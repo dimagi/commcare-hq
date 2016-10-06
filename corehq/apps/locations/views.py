@@ -41,6 +41,7 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from .analytics import users_have_locations
 from .const import ROOT_LOCATION_TYPE
 from .dbaccessors import get_users_assigned_to_locations
+from .exceptions import LocationConsistencyError
 from .permissions import (
     locations_access_required,
     is_locations_admin,
@@ -246,10 +247,18 @@ class LocationTypesView(BaseLocationView):
         for loc_type in loc_types:
             for prop in ['name', 'parent_type', 'administrative',
                          'shares_cases', 'view_descendants', 'pk']:
-                assert prop in loc_type, "Missing an organization level property!"
+                if prop not in loc_type:
+                    raise LocationConsistencyError("Missing an organization level property!")
             pk = loc_type['pk']
             if not _is_fake_pk(pk):
                 pks.append(loc_type['pk'])
+
+        names = [lt['name'] for lt in loc_types]
+        names_are_unique = len(names) == len(set(names))
+        codes = [lt['code'] for lt in loc_types if lt['code']]
+        codes_are_unique = len(codes) == len(set(codes))
+        if not names_are_unique or not codes_are_unique:
+            raise LocationConsistencyError("'name' and 'code' are supposed to be unique")
 
         hierarchy = self.get_hierarchy(loc_types)
 
@@ -560,7 +569,7 @@ class EditLocationView(NewLocationView):
             consumption = get_default_monthly_consumption(
                 self.domain,
                 product._id,
-                self.location.location_type,
+                self.location.location_type_name,
                 # FIXME accessing this value from the sql location
                 # would be faster
                 self.supply_point.case_id if self.supply_point else None,
@@ -615,7 +624,7 @@ class EditLocationView(NewLocationView):
     @property
     def page_name(self):
         return mark_safe(_("Edit {name} <small>{type}</small>").format(
-            name=self.location.name, type=self.location.location_type
+            name=self.location.name, type=self.location.location_type_name
         ))
 
     @property

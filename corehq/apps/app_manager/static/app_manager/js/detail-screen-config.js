@@ -338,9 +338,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         };
 
         self.initSaveButtonListeners = function($el){
-            $el.find('input[type=text], textarea').bind('textchange', _fireChange);
-            $el.find('input[type=checkbox]').bind('change', _fireChange);
-            $el.find(".case-list-lookup-icon button").bind("click", _fireChange); // Trigger save button when icon upload buttons are clicked
+            $el.find('input[type=text], textarea').on('textchange', _fireChange);
+            $el.find('input[type=checkbox]').on('change', _fireChange);
+            $el.find(".case-list-lookup-icon button").on("click", _fireChange); // Trigger save button when icon upload buttons are clicked
         };
 
         var _remove_empty = function(type){
@@ -914,6 +914,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 this.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
                 this.allowsTabs = options.allowsTabs;
                 this.useCaseTiles = ko.observable(spec[this.columnKey].use_case_tiles ? "yes" : "no");
+                this.showCaseTileColumn = ko.computed(function () {
+                    return that.useCaseTiles() === "yes" && COMMCAREHQ.toggleEnabled('CASE_LIST_TILE');
+                });
                 this.persistCaseContext = ko.observable(spec[this.columnKey].persist_case_context || false);
                 this.persistentCaseContextXML = ko.observable(spec[this.columnKey].persistent_case_context_xml|| 'case_name');
                 this.persistTileOnForms = ko.observable(spec[this.columnKey].persist_tile_on_forms || false);

@@ -45,7 +45,6 @@ from corehq.apps.accounting.utils import (
     fmt_dollar_amount,
     get_change_status,
     get_dimagi_from_email,
-    has_subscription_already_ended,
     log_accounting_error,
     log_accounting_info,
 )

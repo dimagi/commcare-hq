@@ -4,7 +4,6 @@ from django.test.utils import override_settings
 from lxml import etree
 
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module, ReportModule, ReportAppConfig
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
@@ -93,7 +92,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         """
         from corehq.apps.userreports.tests.utils import get_sample_report_config
 
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app = Application.new_app('domain', "Untitled Application")
 
         report_module = app.add_module(ReportModule.new_module('Reports', None))
         report_module.unique_id = 'report_module'
@@ -130,7 +129,7 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
     hindi_audio = 'jr://file/commcare/case_list_audo_hin.mp3'
 
     def setUp(self):
-        self.app = Application.new_app('domain', "my app", application_version=APP_V2)
+        self.app = Application.new_app('domain', "my app")
         self.module = self.app.add_module(Module.new_module("Module 1", None))
         self.form = self.app.new_form(0, "Form 1", None)
         self.min_spec = BuildSpec.from_string('2.21/latest')
