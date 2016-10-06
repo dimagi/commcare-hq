@@ -349,7 +349,7 @@ class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
             'xmlns': export.xmlns if hasattr(export, 'xmlns') else '',
             'export_id': export.get_id,
             'zip_name': 'multimedia-{}'.format(unidecode(export.name)),
-            'user_types': self.data['user_types'],
+            'user_types': self._get_es_user_types(),
             'group': self.data['group'],
             'download_id': download_id
         }
