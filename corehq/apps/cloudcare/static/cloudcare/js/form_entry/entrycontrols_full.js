@@ -87,29 +87,16 @@ EntrySingleAnswer = function(question, options) {
     var self = this;
 
     Entry.call(self, question, options);
-    if (question.answer()) {
-        if (options.enableRateLimit) {
-            self.rawAnswer = ko.observable(question.answer()).extend({
-                rateLimit: {
-                    timeout: 500,
-                    method: "notifyWhenChangesStop"
-                }
-            });
-        } else {
-            self.rawAnswer = ko.observable(question.answer());
-        }
-    } else {
-        if (options.enableRateLimit) {
-            self.rawAnswer = ko.observable(Formplayer.Const.NO_ANSWER).extend({
-                rateLimit: {
-                    timeout: 500,
-                    method: "notifyWhenChangesStop"
-                }
-            });
-        } else {
-            self.rawAnswer = ko.observable(Formplayer.Const.NO_ANSWER);
-        }
+    var extensions = {};
+    if (options.enableRateLimit) {
+        extensions.rateLimit = {
+            timeout: Formplayer.Const.KO_ENTRY_TIMEOUT,
+            method: "notifyWhenChangesStop"
+        };
     }
+    self.rawAnswer = ko.observable(question.answer() || Formplayer.Const.NO_ANSWER)
+        .extend(extensions);
+    
     self.rawAnswer.subscribe(self.onPreProcess.bind(self));
 }
 EntrySingleAnswer.prototype = Object.create(Entry.prototype);
