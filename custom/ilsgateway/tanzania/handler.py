@@ -33,13 +33,16 @@ def choose_handler(keyword, handlers):
 
 
 def handle(verified_contact, text, msg):
-    if not verified_contact:
+    if verified_contact:
+        user = verified_contact.owner
+        domain = verified_contact.domain
+    elif msg.domain:
+        user = None
+        domain = msg.domain
+    else:
         return False
 
-    user = verified_contact.owner if verified_contact else None
-    domain = user.domain
-
-    if domain and not ILSGatewayConfig.for_domain(domain):
+    if not ILSGatewayConfig.for_domain(domain):
         return False
 
     text = text.replace('\r', ' ').replace('\n', ' ').strip()
@@ -67,17 +70,20 @@ def handle(verified_contact, text, msg):
             return NotSubmittedHandler
         return None
 
-    handlers = {
+    handlers_for_unregistered_or_registered_users = {
+        ('register', 'reg', 'join', 'sajili'): RegisterHandler,
+    }
+
+    handlers_for_registered_users = {
         ('arrived', 'aliwasili'): ArrivedHandler,
         ('help', 'msaada'): HelpHandler,
         ('language', 'lang', 'lugha'): LanguageHandler,
         ('stop', 'acha', 'hapo'): StopHandler,
         ('yes', 'ndio', 'ndyo'): YesHandler,
-        ('register', 'reg', 'join', 'sajili'): RegisterHandler,
         ('test',): MessageInitiatior,
     }
 
-    location_needed_handlers = {
+    handlers_for_registered_users_with_location = {
         ('soh', 'hmk'): SOHHandler,
         ('submitted', 'nimetuma'): RandrHandler,
         ('delivered', 'dlvd', 'nimepokea'): DeliveredHandler,
@@ -91,15 +97,26 @@ def handle(verified_contact, text, msg):
     }
 
     if EMG_AND_REC_SMS_HANDLERS.enabled(domain):
-        location_needed_handlers[('emg', )] = EmergencyHandler
-        location_needed_handlers[('rec',)] = ReceiptHandler
+        handlers_for_registered_users_with_location[('emg',)] = EmergencyHandler
+        handlers_for_registered_users_with_location[('rec',)] = ReceiptHandler
 
-    handler_class = choose_handler(keyword, location_needed_handlers)
-    if handler_class and not user.location_id:
+    handler_class = (
+        choose_handler(keyword, handlers_for_unregistered_or_registered_users) or
+        choose_handler(keyword, handlers_for_registered_users) or
+        choose_handler(keyword, handlers_for_registered_users_with_location)
+    )
+
+    if (
+        not user and
+        handler_class not in handlers_for_unregistered_or_registered_users.values()
+    ):
         return True
 
-    if not handler_class:
-        handler_class = choose_handler(keyword, handlers)
+    if (
+        handler_class in handlers_for_registered_users_with_location.values() and
+        (not user or not user.location_id)
+    ):
+        return True
 
     handler = handler_class(**params) if handler_class else None
     if handler:

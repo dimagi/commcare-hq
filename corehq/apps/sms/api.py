@@ -515,6 +515,9 @@ def process_incoming(msg):
         msg.domain = v.domain
         msg.location_id = get_location_id_by_verified_number(v)
         msg.save()
+    elif msg.domain_scope:
+        msg.domain = msg.domain_scope
+        msg.save()
 
     can_receive_sms = PhoneBlacklist.can_receive_sms(msg.phone_number)
     opt_in_keywords, opt_out_keywords = get_opt_keywords(msg)
@@ -541,7 +544,7 @@ def process_incoming(msg):
         is_verified = v is not None and v.verified
         is_verified_and_active = is_verified and is_contact_active(v.domain, v.owner_doc_type, v.owner_id)
 
-        if is_verified_and_active or (v is None and msg.domain_scope):
+        if is_verified_and_active or (v is None and msg.domain):
             handled = load_and_call(settings.CUSTOM_SMS_HANDLERS, v, msg.text, msg)
 
         if not handled and is_verified_and_active:
