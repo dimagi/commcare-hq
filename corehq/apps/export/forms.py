@@ -243,6 +243,101 @@ class BaseFilterExportDownloadForm(forms.Form):
         }
 
 
+class DashboardFeedFilterForm(BaseFilterExportDownloadForm):
+    """
+    A form used to configure the filters on a Dashboard Feed export
+    """
+
+    date_range = forms.ChoiceField(
+        label=ugettext_lazy("Date Range"),
+        required=True,
+        initial="last7",
+        choices=[
+            ("last7", ugettext_lazy("Last 7 days")),
+            ("last30", ugettext_lazy("Last 30 days")),
+            ("lastmonth", ugettext_lazy("Last month")),
+            ("lastyear", ugettext_lazy("Last year")),
+            ("lastn", ugettext_lazy("Days ago")),
+            ("since", ugettext_lazy("Since a date")),
+            ("range", ugettext_lazy("From a date to a date")),
+        ],
+    )
+    days = forms.IntegerField(
+        label=ugettext_lazy("Number of Days"),
+        required=False,
+    )
+    start_date = forms.DateField(
+        label=ugettext_lazy("Begin Date"),
+        required=False,
+        widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD"}),
+    )
+    end_date = forms.DateField(
+        label=ugettext_lazy("End Date"),
+        required=False,
+        widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD"}),
+    )
+
+    @property
+    def extra_fields(self):
+        return [
+            crispy.Field(
+                'date_range',
+                ng_model='formData.date_range',
+                ng_required='true',
+            ),
+            crispy.Div(
+                crispy.Field("days", ng_model="formData.days"),
+                ng_show="formData.date_range === 'lastn'"
+            ),
+            crispy.Div(
+                crispy.Field("start_date", ng_model="formData.start_date",),
+                ng_show="formData.date_range === 'range' || formData.date_range === 'since'"
+            ),
+            crispy.Div(
+                crispy.Field("end_date", ng_model="formData.end_date"),
+                ng_show="formData.date_range === 'range'"
+            )
+        ]
+
+    def to_export_instance_filters(self):
+        """
+        Serialize the bound form as an ExportInstanceFilters object.
+        """
+        return ExportInstanceFilters(
+            date_period=DatePeriod(
+                period_type=self.cleaned_data['date_range'],
+                days=self.cleaned_data['days'],
+                begin=self.cleaned_data['start_date'],
+                end=self.cleaned_data['end_date'],
+            ),
+            type_or_group=self.cleaned_data['type_or_group'],
+            user_types=self.cleaned_data['user_types'],
+            group=self.cleaned_data['group']
+        )
+
+    @classmethod
+    def get_form_data_from_export_instance_filters(cls, export_instance_filters):
+        """
+        Return a dictionary representing the form data from a given ExportInstanceFilters.
+        This is used to populate a form from an existing export instance
+        :param export_instance_filters:
+        :return:
+        """
+        if export_instance_filters:
+            date_period = export_instance_filters.date_period
+            return {
+                "date_range": date_period.period_type if date_period else None,
+                "days": date_period.days if date_period else None,
+                "start_date": date_period.begin if date_period else None,
+                "end_date": date_period.end if date_period else None,
+                "type_or_group": export_instance_filters['type_or_group'],
+                "user_types": export_instance_filters['user_types'],
+                "group": export_instance_filters['group'],
+            }
+        else:
+            return None
+
+
 class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
     """The filters for Form Export Download
     """

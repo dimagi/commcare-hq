@@ -47,7 +47,7 @@ from corehq.apps.export.forms import (
     FilterFormESExportDownloadForm,
     FilterCaseESExportDownloadForm,
     CreateExportTagForm,
-)
+    DashboardFeedFilterForm)
 from corehq.apps.export.models import (
     FormExportDataSchema,
     CaseExportDataSchema,
@@ -1019,7 +1019,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
     def fmt_emailed_export_data(self, group_id=None, index=None,
                                 has_file=False, file_id=None, size=0,
                                 last_updated=None, last_accessed=None,
-                                download_url=None):
+                                download_url=None, filters=None):
         """
         Return a dictionary containing details about an emailed export.
         This will eventually be passed to an Angular controller.
@@ -1035,6 +1035,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
             'hasFile': has_file,
             'index': index,  # This can be removed when we're off legacy exports
             'fileData': file_data,
+            'filters': DashboardFeedFilterForm.get_form_data_from_export_instance_filters(filters)
         }
 
     def fmt_legacy_emailed_export_data(self, group_id=None, index=None,
@@ -1114,6 +1115,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
     def _get_daily_saved_export_metadata(self, export):
 
         return self.fmt_emailed_export_data(
+            filters=export.filters,
             has_file=export.has_file(),
             file_id=export._id,
             size=export.file_size,
@@ -1246,6 +1248,12 @@ class DashboardFeedListView(BaseExportListView):
             "exports_type": _("dashboard feeds"),
             "model_type": None,
             "static_model_type": False,
+            "feed_filter_form": DashboardFeedFilterForm(
+                self.domain_object,
+                initial={
+                    'type_or_group': 'type',
+                },
+            )
         })
         return context
 
@@ -1261,7 +1269,6 @@ class DashboardFeedListView(BaseExportListView):
     @property
     def bulk_download_url(self):
         return ""
-
 
     @memoized
     def get_saved_exports(self):
@@ -1338,6 +1345,30 @@ class DashboardFeedListView(BaseExportListView):
             app_id_param=app_id_param,
             export_tag=export_tag,
         ))
+
+    @allow_remote_invocation
+    def commit_filters(self, in_data):
+        export_id = in_data['export']['id']
+        form_data = in_data['form_data']
+        try:
+            export = get_properly_wrapped_export_instance(export_id)
+            filter_form = DashboardFeedFilterForm(self.domain_object, form_data)
+            if filter_form.is_valid():
+                filters = filter_form.to_export_instance_filters()
+                if export.filters != filters:
+                    export.filters = filters
+                    export.save()
+                    from corehq.apps.export.tasks import rebuild_export_task
+                    rebuild_export_task.delay(export)
+                return format_angular_success()
+            else:
+                pass
+        except Exception as e:
+            return format_angular_error(
+                _("Problem saving dashboard feed filters: {} {}").format(
+                    e.__class__, e
+                ),
+            )
 
     # TODO: Coppied straight from BaseDownloadExportView ...
     @allow_remote_invocation
