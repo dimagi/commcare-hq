@@ -230,5 +230,6 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
         except TransportError:
             raise Exception(
                 'The Elasticsearch index was missing after reindex! If the index was manually deleted '
-                'you can fix this by running ./manage.py ptop_reindexer_v2 [index-name] --reset'
+                'you can fix this by running ./manage.py ptop_reindexer_v2 [index-name] --reset or '
+                './manage.py ptop_preindex --reset.'
             )
