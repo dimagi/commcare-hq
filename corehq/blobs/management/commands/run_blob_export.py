@@ -45,7 +45,7 @@ class Command(BaseCommand):
         if log_dir is None:
             file = None
         else:
-            file = os.path.join(log_dir, "{}-blob-migration-{}.txt".format(
+            file = os.path.join(log_dir, "{}-blob-export-{}.txt".format(
                 slug, datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
             ))
             assert not os.path.exists(file), file

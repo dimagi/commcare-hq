@@ -1,5 +1,3 @@
-"""Filesystem database for large binary data objects (blobs)
-"""
 from __future__ import absolute_import
 import base64
 from hashlib import md5
@@ -12,7 +10,7 @@ from corehq.blobs.interface import AbstractBlobDB, SAFENAME
 
 
 class ZipBlobDB(AbstractBlobDB):
-    """Blobs stored in zip file. Used for importing/exporting environments
+    """Blobs stored in zip file. Used for exporting a domain's blobs
     """
 
     def __init__(self, slug, domain):

@@ -131,13 +131,12 @@ class BaseDocMigrator(BaseDocProcessor):
     # If true, load attachment content before migrating.
     load_attachments = False
 
-    def __init__(self, slug, couchdb, filename=None, domain=None):
+    def __init__(self, slug, couchdb, filename=None):
         super(BaseDocMigrator, self).__init__()
         self.slug = slug
         self.couchdb = couchdb
         self.dirpath = None
         self.filename = filename
-        self.domain = domain
         if filename is None:
             self.dirpath = mkdtemp()
             self.filename = os.path.join(self.dirpath, "export.txt")
@@ -232,8 +231,8 @@ class CouchAttachmentMigrator(BaseDocMigrator):
 
 class BlobDbBackendMigrator(BaseDocMigrator):
 
-    def __init__(self, slug, couchdb, filename=None, domain=None):
-        super(BlobDbBackendMigrator, self).__init__(slug, couchdb, filename, domain)
+    def __init__(self, slug, couchdb, filename=None):
+        super(BlobDbBackendMigrator, self).__init__(slug, couchdb, filename)
         self.db = get_blob_db()
         self.total_blobs = 0
         self.not_found = 0
@@ -273,10 +272,11 @@ class BlobDbBackendMigrator(BaseDocMigrator):
 class BlobDbBackendExporter(BaseDocMigrator):
 
     def __init__(self, slug, couchdb, filename=None, domain=None):
-        super(BlobDbBackendExporter, self).__init__(slug, couchdb, filename, domain)
+        super(BlobDbBackendExporter, self).__init__(slug, couchdb, filename)
         self.db = get_blob_db_exporter(slug, domain)
         self.total_blobs = 0
         self.not_found = 0
+        self.domain = domain
         if not isinstance(self.db, MigratingBlobDB):
             raise MigrationError(
                 "Expected to find migrating blob db backend (got %r)" % self.db)

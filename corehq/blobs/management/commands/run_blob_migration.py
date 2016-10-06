@@ -33,7 +33,7 @@ class Command(BaseCommand):
     @change_log_level('boto3', logging.WARNING)
     @change_log_level('botocore', logging.WARNING)
     def handle(self, slug=None, log_dir=None, reset=False, chunk_size=100,
-               domain=None, **options):
+               **options):
         try:
             migrator = MIGRATIONS[slug]
         except KeyError:
