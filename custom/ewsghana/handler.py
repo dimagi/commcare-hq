@@ -14,7 +14,10 @@ from custom.ilsgateway.tanzania.handlers.notdelivered import NotDeliveredHandler
 from custom.ilsgateway.tanzania.handlers.notsubmitted import NotSubmittedHandler
 
 
-def handle(verified_contact, text, msg=None):
+def handle(verified_contact, text, msg):
+    if not verified_contact:
+        return False
+
     user = verified_contact.owner if verified_contact else None
     domain = user.domain
     if not domain:

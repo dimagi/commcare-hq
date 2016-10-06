@@ -485,6 +485,27 @@ def get_opt_keywords(msg):
     )
 
 
+def load_and_call(sms_handler_names, phone_number, text, sms):
+    handled = False
+
+    for sms_handler_name in sms_handler_names:
+        try:
+            handler = to_function(sms_handler_name)
+        except:
+            notify_exception(None, message=('error loading sms handler: %s' % sms_handler_name))
+            continue
+
+        try:
+            handled = handler(phone_number, text, sms)
+        except Exception as e:
+            log_sms_exception(sms)
+
+        if handled:
+            break
+
+    return handled
+
+
 def process_incoming(msg):
     v = PhoneNumber.by_phone(msg.phone_number, include_pending=True)
 
@@ -514,35 +535,27 @@ def process_incoming(msg):
                 send_sms_to_verified_number(v, text)
             else:
                 send_sms(msg.domain, None, msg.phone_number, text)
-    elif v is not None and v.verified:
-        if (
-            domain_has_privilege(msg.domain, privileges.INBOUND_SMS) and
-            is_contact_active(v.domain, v.owner_doc_type, v.owner_id)
-        ):
-            for h in settings.SMS_HANDLERS:
-                try:
-                    handler = to_function(h)
-                except:
-                    notify_exception(None, message=('error loading sms handler: %s' % h))
-                    continue
+    elif domain_has_privilege(msg.domain, privileges.INBOUND_SMS):
+        handled = False
 
-                try:
-                    was_handled = handler(v, msg.text, msg=msg)
-                except Exception, e:
-                    log_sms_exception(msg)
-                    was_handled = False
+        is_verified = v is not None and v.verified
+        is_verified_and_active = is_verified and is_contact_active(v.domain, v.owner_doc_type, v.owner_id)
 
-                if was_handled:
-                    break
-    else:
-        handled = process_pre_registration(msg)
+        if is_verified_and_active or (v is None and msg.domain_scope):
+            handled = load_and_call(settings.CUSTOM_SMS_HANDLERS, v, msg.text, msg)
 
-        if not handled:
-            handled = process_sms_registration(msg)
+        if not handled and is_verified_and_active:
+            handled = load_and_call(settings.SMS_HANDLERS, v, msg.text, msg)
 
-        if not handled:
-            import verify
-            verify.process_verification(v, msg)
+        if not handled and not is_verified:
+            handled = process_pre_registration(msg)
+
+            if not handled:
+                handled = process_sms_registration(msg)
+
+            if not handled:
+                import verify
+                verify.process_verification(v, msg)
 
     # If the sms queue is enabled, then the billable gets created in remove_from_queue()
     if (
