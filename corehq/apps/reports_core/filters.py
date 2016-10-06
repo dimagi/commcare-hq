@@ -64,20 +64,10 @@ class BaseFilter(object):
         context = {
             'label': localize(self.label, lang),
             'css_id': self.css_id,
-            'value': self._values_to_dict(values),
+            'value': values,
         }
         context.update(self.filter_context())
         return context
-
-    def _values_to_dict(self, values):
-        """Some values are returned as Choice objects which need to be converted to
-        dicts to be displayed properly
-        """
-        if values:
-            return [
-                dict(value._asdict()) if isinstance(value, Choice) else value
-                for value in values
-            ]
 
     def filter_context(self):
         """
@@ -274,6 +264,21 @@ class DynamicChoiceListFilter(BaseFilter):
         self.url_generator = url_generator
         self.choice_provider = choice_provider
 
+    def context(self, values, lang=None):
+        context = super(DynamicChoiceListFilter, self).context(values, lang)
+        context['value'] = self._values_to_dict(values)
+        return context
+
+    def _values_to_dict(self, values):
+        """Some values are returned as Choice objects which need to be converted to
+        dicts to be displayed properly
+        """
+        if values:
+            return [
+                dict(value._asdict()) if isinstance(value, Choice) else value
+                for value in values
+            ]
+
     def value(self, **kwargs):
         selection = unicode(kwargs.get(self.name, ""))
         if selection:
@@ -288,4 +293,4 @@ class DynamicChoiceListFilter(BaseFilter):
             if choice_provider_default is not None:
                 return choice_provider_default
 
-        return [Choice(SHOW_ALL_CHOICE, ugettext('Show all'))]
+        return [Choice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')))]

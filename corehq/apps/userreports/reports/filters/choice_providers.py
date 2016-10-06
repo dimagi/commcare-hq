@@ -1,10 +1,13 @@
 from abc import ABCMeta, abstractmethod
 
+from django.utils.translation import ugettext
+
 from sqlalchemy.exc import ProgrammingError
 from corehq.apps.es import GroupES, UserES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.exceptions import ColumnNotFoundError
+from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.util import raw_username
@@ -170,10 +173,9 @@ class LocationChoiceProvider(ChainableChoiceProvider):
         # todo: consider making this an extensions framework similar to custom expressions
         locations = self._locations_query(query_context.query, query_context.user).order_by('name')
 
-        return [
-            Choice(loc.location_id, loc.display_name) for loc in
+        return self._locations_to_choices(
             locations[query_context.offset:query_context.offset + query_context.limit]
-        ]
+        )
 
     def query_count(self, query, user):
         return self._locations_query(query, user).count()
@@ -194,9 +196,8 @@ class LocationChoiceProvider(ChainableChoiceProvider):
         if location:
             return self._locations_to_choices([location])
 
-        return self._locations_to_choices(
-            self._locations_query(query_text=None, user=user)
-        )
+        # If the user isn't assigned to a location, they have access to all locations
+        return [Choice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')))]
 
     def _locations_to_choices(self, locations):
         return [Choice(loc.location_id, loc.display_name) for loc in locations]
