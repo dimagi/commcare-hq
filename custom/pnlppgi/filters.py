@@ -29,7 +29,7 @@ class LocationBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
         return [
             ('Zone', 'Select Zone', 'zone'),
             ('Region', 'Select Region', 'region'),
-            ('District', 'Select Form', 'district'),
+            ('District', 'Select District', 'district'),
             ('Site', 'Select Site', 'site')
         ]
 

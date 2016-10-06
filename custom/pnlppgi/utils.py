@@ -48,7 +48,7 @@ def location_filter(request, params=None, filters=None):
                     value = district_id
             else:
                 key = 'region_id'
-                value = district_id
+                value = region_id
         else:
             key = 'zone_id'
             value = zone_id
