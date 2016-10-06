@@ -283,10 +283,30 @@ def _store_excel_in_redis(file):
 
 
 @task
-def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id,
-                              export_id, zip_name, download_id, export_is_legacy):
+def build_form_multimedia_zip(
+        domain,
+        xmlns,
+        startdate,
+        enddate,
+        app_id,
+        export_id,
+        zip_name,
+        download_id,
+        export_is_legacy,
+        user_types=None,
+        group=None):
 
-    form_ids = _get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate, export_is_legacy)
+    import ipdb; ipdb.set_trace()
+    form_ids = _get_form_ids_having_multimedia(
+        domain,
+        app_id,
+        xmlns,
+        startdate,
+        enddate,
+        export_is_legacy,
+        user_types=user_types,
+        group=group,
+    )
     properties = _get_export_properties(export_id, export_is_legacy)
 
     if not app_id:
@@ -429,7 +449,15 @@ def _get_export_properties(export_id, export_is_legacy):
     return properties
 
 
-def _get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate, export_is_legacy):
+def _get_form_ids_having_multimedia(
+        domain,
+        app_id,
+        xmlns,
+        startdate,
+        enddate,
+        export_is_legacy,
+        user_types=None,
+        group=None):
     """
     Return a list of form ids.
     Each form has a multimedia attachment and meets the given filters.
@@ -447,6 +475,8 @@ def _get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate, e
         xmlns,
         startdate,
         enddate,
+        group=group,
+        user_types=user_types,
     )
 
 
