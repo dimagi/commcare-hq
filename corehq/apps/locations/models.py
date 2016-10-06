@@ -324,6 +324,20 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         direct_matches = self.filter_by_user_input(domain, user_input)
         return self.get_queryset_descendants(direct_matches, include_self=True)
 
+    def filter_by_user_input_accessible_to_user(self, domain, user, user_input):
+        if user.has_permission(domain, 'access_all_locations'):
+            return self.filter_by_user_input(domain, user_input)
+
+        users_location = user.get_sql_location(domain)
+        return (users_location.get_descendants(include_self=True)
+                .filter(domain=domain)
+                .filter(models.Q(name__icontains=user_input) |
+                        models.Q(site_code__icontains=user_input)))
+
+    def filter_path_by_user_input_accessible_to_user(self, domain, user, user_input):
+        direct_matches = self.filter_by_user_input_accessible_to_user(domain, user, user_input)
+        return self.get_queryset_descendants(direct_matches, include_self=True)
+
     def accessible_to_user(self, domain, user):
         if user.has_permission(domain, 'access_all_locations'):
             return self.get_queryset()

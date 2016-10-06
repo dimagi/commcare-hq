@@ -2,7 +2,8 @@ from abc import ABCMeta, abstractmethod
 from django.test import SimpleTestCase, TestCase
 import mock
 from functools import partial
-from corehq.apps.commtrack.tests.util import bootstrap_location_types, make_loc
+
+from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.fake.groups_fake import GroupESFake
 from corehq.apps.es.fake.users_fake import UserESFake
@@ -14,7 +15,7 @@ from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceProvider, \
     ChoiceQueryContext, LocationChoiceProvider, UserChoiceProvider, GroupChoiceProvider, \
     OwnerChoiceProvider
-from corehq.apps.users.models import CommCareUser, WebUser, DomainMembership
+from corehq.apps.users.models import CommCareUser, WebUser, DomainMembership, UserRole, Permissions
 from corehq.apps.users.util import normalize_username
 
 
@@ -136,39 +137,37 @@ class ChoiceProviderTestMixin(object):
         pass
 
 
-class LocationChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
+class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestCase):
     domain = 'location-choice-provider'
-
-    @classmethod
-    def make_location(cls, location_code, location_name, domain=None):
-        domain = domain or cls.domain
-        return make_loc(location_code, location_name, type='outlet', domain=domain)
+    location_type_names = ['state', 'county', 'city']
+    location_structure = [
+        ('Massachusetts', [
+            ('Middlesex', [
+                ('Cambridge', []),
+                ('Somerville', []),
+            ]),
+            ('Suffolke', [
+                ('Bostone', []),
+            ])
+        ])
+    ]
 
     @classmethod
     def setUpClass(cls):
         delete_all_locations()
         delete_all_users()
-        cls.domain_obj = create_domain(cls.domain)
+        super(LocationChoiceProviderTest, cls).setUpClass()
         report = ReportConfiguration(domain=cls.domain)
-        bootstrap_location_types(cls.domain)
-
-        location_code_name_pairs = (
-            ('cambridge_ma', 'Cambridge'),
-            ('somerville_ma', 'Somerville'),
-            ('boston_ma', 'Boston'),
-        )
-        cls.locations = []
-        choices = []
-
-        for location_code, location_name in location_code_name_pairs:
-            location = cls.make_location(location_code, location_name)
-            cls.locations.append(location)
-            choices.append(SearchableChoice(location.location_id, location.sql_location.display_name,
-                                            searchable_text=[location_code, location_name]))
+        choices = [
+            SearchableChoice(
+                location.location_id,
+                location.display_name,
+                searchable_text=[location.site_code, location.name]
+            )
+            for location in cls.locations.itervalues()
+        ]
         choices.sort(key=lambda choice: choice.display)
-        from corehq.apps.users.models import CommCareUser
         cls.web_user = WebUser.create(cls.domain, 'blah', 'password')
-        cls.web_user.set_location(cls.domain, cls.locations[1])
         cls.choice_provider = LocationChoiceProvider(report, None)
         cls.static_choice_provider = StaticChoiceProvider(choices)
         cls.choice_query_context = partial(ChoiceQueryContext, user=cls.web_user)
@@ -179,12 +178,39 @@ class LocationChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         delete_all_locations()
 
     def test_query_search(self):
-        self._test_query(self.choice_query_context('e', 2, page=0))
-        self._test_query(self.choice_query_context('e', 2, page=1))
+        self._test_query(self.choice_query_context('e', page=0))
+        self._test_query(self.choice_query_context('e', page=1))
 
     def test_get_choices_for_values(self):
         self._test_get_choices_for_values(
-            ['made-up', self.locations[0].location_id, self.locations[1].location_id])
+            ['made-up', self.locations['Cambridge'].location_id, self.locations['Middlesex'].location_id])
+
+    def test_scoped_to_location_search(self):
+        self.web_user.set_location(self.domain, self.locations['Middlesex'])
+        role = UserRole(
+            domain=self.domain,
+            name='Regional Supervisor',
+            permissions=Permissions(access_all_locations=False),
+        )
+        role.save()
+        self.web_user.set_role(self.domain, role.get_qualified_id())
+
+        scoped_choices = [
+            SearchableChoice(
+                location.location_id,
+                location.display_name,
+                searchable_text=[location.site_code, location.name]
+            )
+            for location in [
+                    self.locations['Cambridge'],
+                    self.locations['Middlesex'],
+                    self.locations['Somerville'],
+            ]
+        ]
+        self.static_choice_provider = StaticChoiceProvider(scoped_choices)
+        self._test_query(self.choice_query_context('', page=0))
+        self._test_query(self.choice_query_context('Somerville', page=0))
+        self._test_query(self.choice_query_context('Boston', page=0))
 
 
 @mock.patch('corehq.apps.users.analytics.UserES', UserESFake)
@@ -295,17 +321,19 @@ class GroupChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
 @mock.patch('corehq.apps.users.analytics.UserES', UserESFake)
 @mock.patch('corehq.apps.userreports.reports.filters.choice_providers.UserES', UserESFake)
 @mock.patch('corehq.apps.userreports.reports.filters.choice_providers.GroupES', GroupESFake)
-class OwnerChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
+class OwnerChoiceProviderTest(LocationHierarchyTestCase, ChoiceProviderTestMixin):
     domain = 'owner-choice-provider'
+    location_type_names = ['state']
+    location_structure = [('Massachusetts', [])]
 
     @classmethod
     def setUpClass(cls):
-        cls.domain_obj = create_domain(cls.domain)
+        super(OwnerChoiceProviderTest, cls).setUpClass()
         report = ReportConfiguration(domain=cls.domain)
         cls.group = GroupChoiceProviderTest.make_group('Group', domain=cls.domain)
         cls.mobile_worker = UserChoiceProviderTest.make_mobile_worker('mobile-worker', domain=cls.domain)
         cls.web_user = UserChoiceProviderTest.make_web_user('web-user@example.com', domain=cls.domain)
-        cls.location = LocationChoiceProviderTest.make_location('location', 'Location', domain=cls.domain)
+        cls.location = cls.locations['Massachusetts']
         cls.docs = [cls.group, cls.mobile_worker, cls.web_user, cls.location]
         cls.choices = [
             SearchableChoice(cls.group.get_id, cls.group.name, [cls.group.name]),
@@ -313,7 +341,7 @@ class OwnerChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
                              [cls.mobile_worker.username]),
             SearchableChoice(cls.web_user.get_id, cls.web_user.username,
                              [cls.web_user.username]),
-            SearchableChoice(cls.location.location_id, cls.location.sql_location.display_name,
+            SearchableChoice(cls.location.location_id, cls.location.display_name,
                              [cls.location.name, cls.location.site_code]),
         ]
         cls.choice_provider = OwnerChoiceProvider(report, None)

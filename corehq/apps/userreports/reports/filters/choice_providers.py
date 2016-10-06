@@ -160,14 +160,15 @@ class LocationChoiceProvider(ChainableChoiceProvider):
         self.include_descendants = spec.get('include_descendants', self.include_descendants)
 
     def _locations_query(self, query_text, user):
-        location_queryset = SQLLocation.active_objects.accessible_to_user(self.domain, user)
+        location_queryset = SQLLocation.active_objects
         if query_text:
-            return location_queryset.filter_path_by_user_input(
+            return location_queryset.filter_path_by_user_input_accessible_to_user(
                 domain=self.domain,
+                user=user,
                 user_input=query_text
             )
 
-        return location_queryset.filter(domain=self.domain)
+        return location_queryset.accessible_to_user(self.domain, user).filter(domain=self.domain)
 
     def query(self, query_context):
         # todo: consider making this an extensions framework similar to custom expressions
