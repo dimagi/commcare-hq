@@ -317,10 +317,6 @@ class LocationForm(forms.Form):
             location.latitude = coords[0]
             location.longitude = coords[1]
 
-        for k, v in self.cleaned_data.iteritems():
-            if k.startswith('prop:'):
-                prop_name = k[len('prop:'):]
-                setattr(location, prop_name, v)
 
         if commit:
             location.save()
