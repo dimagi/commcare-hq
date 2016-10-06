@@ -53,6 +53,8 @@ branches:
   - ce/es-restore # Cal 9/4
 #  - np/upgrade-twofactor # Nick P 10/5
   - np/upgrade-django-mptt # Nick P 10/6
+  - np/19/replace-get_request_repr # Nick P 10/6
+  - np/exception # Nick P 10/6
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
