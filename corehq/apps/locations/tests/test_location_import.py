@@ -126,6 +126,33 @@ class LocationImportTest(CommTrackTest):
 
         self.assertEqual(location.metadata['drug'], 'cocaine')
 
+    def test_import_no_changes_needed(self):
+        """
+        Ensures that when no changes have been made, then we do not import
+        the location.
+        """
+
+        data = {
+            'name': 'pablo',
+            'site_code': 'colombia',
+            'data': {
+                'drug': 'weed',
+            },
+        }
+        result1 = import_location(self.domain.name, 'state', data)
+        result2 = import_location(self.domain.name, 'state', data)
+        self.assertEqual(result1['id'], result2['id'])
+        self.assertIn('no changes for', result2['message'])
+
+        data = {
+            'name': 'pablo',
+            'site_code': 'colombia',
+        }
+        result1 = import_location(self.domain.name, 'state', data)
+        result2 = import_location(self.domain.name, 'state', data)
+        self.assertEqual(result1['id'], result2['id'])
+        self.assertIn('no changes for', result2['message'])
+
     def test_import_with_location_id_and_wrong_domain(self):
         """
         When updating with location_id and the wrong domain, the location
