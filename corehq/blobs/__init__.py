@@ -6,7 +6,7 @@ DEFAULT_BUCKET = "_default"
 _db = []  # singleton/global, stack for tests to push temporary dbs
 
 
-def get_blob_db(export=False, domain=None):
+def get_blob_db():
     if not _db:
         from django.conf import settings
         db = _get_s3_db(settings)
@@ -15,11 +15,13 @@ def get_blob_db(export=False, domain=None):
         elif getattr(settings, "BLOB_DB_MIGRATING_FROM_FS_TO_S3", False):
             from .migratingdb import MigratingBlobDB
             db = MigratingBlobDB(db, _get_fs_db(settings))
-        elif export:
-            from .migratingdb import MigratingBlobDB
-            db = MigratingBlobDB(_get_zip_db(domain), db)
         _db.append(db)
     return _db[-1]
+
+
+def get_blob_db_exporter(slug, domain):
+    from .migratingdb import MigratingBlobDB
+    return MigratingBlobDB(_get_zip_db(slug, domain), get_blob_db())
 
 
 def _get_s3_db(settings):
@@ -37,9 +39,9 @@ def _get_fs_db(settings):
     return FilesystemBlobDB(blob_dir)
 
 
-def _get_zip_db(domain):
+def _get_zip_db(slug, domain):
     from .zipdb import ZipBlobDB
-    return ZipBlobDB(domain)
+    return ZipBlobDB(slug, domain)
 
 
 class BlobInfo(namedtuple("BlobInfo", ["identifier", "length", "digest"])):

@@ -15,8 +15,8 @@ class ZipBlobDB(AbstractBlobDB):
     """Blobs stored in zip file. Used for importing/exporting environments
     """
 
-    def __init__(self, domain):
-        self.zipname = 'export-{domain}-blobs.zip'.format(domain=domain)
+    def __init__(self, slug, domain):
+        self.zipname = 'export-{domain}-{slug}-blobs.zip'.format(domain=domain, slug=slug)
 
     def put(self, content, basename="", bucket=DEFAULT_BUCKET):
         identifier = self.get_identifier(basename)

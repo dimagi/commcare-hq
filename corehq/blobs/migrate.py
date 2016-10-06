@@ -73,7 +73,7 @@ from base64 import b64encode
 from tempfile import mkdtemp
 
 from django.conf import settings
-from corehq.blobs import get_blob_db
+from corehq.blobs import get_blob_db, get_blob_db_exporter
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.migratingdb import MigratingBlobDB
 from corehq.blobs.mixin import BlobHelper
@@ -274,7 +274,7 @@ class BlobDbBackendExporter(BaseDocMigrator):
 
     def __init__(self, slug, couchdb, filename=None, domain=None):
         super(BlobDbBackendExporter, self).__init__(slug, couchdb, filename, domain)
-        self.db = get_blob_db(export=True, domain=domain)
+        self.db = get_blob_db_exporter(slug, domain)
         self.total_blobs = 0
         self.not_found = 0
         if not isinstance(self.db, MigratingBlobDB):
