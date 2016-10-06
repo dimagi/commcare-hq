@@ -121,7 +121,6 @@ class LocationImportTest(CommTrackTest):
             },
         }
         result = import_location(self.domain.name, 'state', data)
-        result = import_location(self.domain.name, 'state', data)
         location = SQLLocation.objects.get(location_id=result['id'])
 
         self.assertEqual(location.metadata['drug'], 'cocaine')
