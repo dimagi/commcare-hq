@@ -97,8 +97,8 @@ class LocationImportTest(CommTrackTest):
 
     def test_import_with_custom_data(self):
         """
-        When importing with a invalid location id, import_location should not
-        create a new location
+        When importing locations with custom data, the data should be inserted into the location.
+        Also ensures that when the data gets updated, the location does too.
         """
         data = {
             'name': 'pablo',
