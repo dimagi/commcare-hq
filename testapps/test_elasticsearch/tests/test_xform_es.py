@@ -40,11 +40,12 @@ class XFormESTestCase(SimpleTestCase):
         cls.es.indices.refresh(XFORM_INDEX_INFO.index)
 
     @classmethod
-    def tearDown(cls):
+    def tearDownClass(cls):
         for form in cls.forms:
             cls.es.delete(XFORM_INDEX_INFO.index, XFORM_INDEX_INFO.type, form.wrapped_form.form_id)
         cls.es.indices.refresh(XFORM_INDEX_INFO.index)
         cls.forms = []
+        super(XFormESTestCase, cls).tearDownClass()
 
     def test_forms_are_in_index(self):
         for form in self.forms:
