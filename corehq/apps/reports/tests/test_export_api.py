@@ -4,6 +4,7 @@ import uuid
 
 from django.core.urlresolvers import reverse
 from django.test.client import Client
+from django.test import SimpleTestCase
 
 from elasticsearch.exceptions import ConnectionError
 
@@ -19,12 +20,13 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import get_submit_url
 from corehq.apps.users.models import WebUser
+from corehq.apps.reports.tasks import _convert_legacy_indices_to_export_properties
 
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
+from corehq.util.test_utils import make_es_ready_form, trap_extra_setup, generate_cases
 from pillowtop.es_utils import initialize_index_and_mapping
 
 FORM_TEMPLATE = """<?xml version='1.0' ?>
@@ -209,3 +211,22 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
 
         community_domain.delete()
         new_user.delete()
+
+
+class IndicesConversionTest(SimpleTestCase):
+    """
+    Ensures that export indices map correctly to question ids
+    """
+
+
+@generate_cases([
+    (['form.outer.inner'], set(['outer-inner'])),
+    (['form.outer.inner', 'outer.inner'], set(['outer-inner'])),
+    (['form.outer.inner', None, ''], set(['outer-inner'])),
+
+], IndicesConversionTest)
+def test_convert_legacy_indices_to_export_properties(self, indices, expected):
+    self.assertEqual(
+        _convert_legacy_indices_to_export_properties(indices),
+        expected,
+    )

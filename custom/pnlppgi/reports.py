@@ -2,12 +2,10 @@
 import datetime
 from operator import add
 
-from couchdbkit import ResourceNotFound
 from sqlagg import AliasColumn
 from sqlagg.columns import SimpleColumn, CountColumn, SumColumn
 from sqlagg.filters import LT, EQ, IN
 
-from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.filters.select import YearFilter
@@ -15,25 +13,17 @@ from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, AggregateColumn, DictDataFormat, \
     DataFormatter
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
-from corehq.apps.reports.util import get_INFilter_bindparams, get_INFilter_element_bindparam
+from corehq.apps.reports.util import get_INFilter_bindparams
 from corehq.apps.style.decorators import use_nvd3
 from corehq.apps.userreports.util import get_table_name
 from corehq.apps.users.models import CommCareUser
-from custom.pnlppgi.filters import WeekFilter
+from custom.pnlppgi.filters import WeekFilter, LocationBaseDrilldownOptionFilter
 from django.utils.translation import ugettext as _
 
+from custom.pnlppgi.utils import location_filter, users_locations
+from custom.pnlppgi.utils import update_config
 
 EMPTY_CELL = {'sort_key': 0, 'html': '---'}
-
-
-def update_config(config):
-    try:
-        group = Group.get('daa2641cf722f8397207c9041bfe5cb3')
-        users = group.users
-    except ResourceNotFound:
-        users = []
-    config.update({'users': users})
-    config.update(dict({get_INFilter_element_bindparam('owner_id', idx): val for idx, val in enumerate(users, 0)}))
 
 
 class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
@@ -48,7 +38,7 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
 
     @property
     def fields(self):
-        return [WeekFilter, YearFilter]
+        return [LocationBaseDrilldownOptionFilter, WeekFilter, YearFilter]
 
     @property
     def config(self):
@@ -63,20 +53,24 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
             'year': year,
             'monday': monday.replace(hour=16)
         }
+        location_filter(self.request, params=params)
         update_config(params)
         return params
 
     @property
     def group_by(self):
-        return ['location_id']
+        return ['site_id']
 
     @property
     def filters(self):
-        return [
+        filters = [
             EQ('week', 'week'),
             EQ('year', 'year'),
             IN('owner_id', get_INFilter_bindparams('owner_id', self.config['users']))
         ]
+        location_filter(self.request, filters=filters)
+        return filters
+
 
     @property
     def engine_id(self):
@@ -89,7 +83,7 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
     @property
     def columns(self):
         return [
-            DatabaseColumn('location_id', SimpleColumn('location_id')),
+            DatabaseColumn('location_id', SimpleColumn('site_id')),
             DatabaseColumn('Completude', CountColumn('doc_id', alias='completude')),
             DatabaseColumn('Promptitude', CountColumn(
                 'doc_id',
@@ -154,13 +148,15 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
             location_type__code='centre-de-sante',
             is_archived=False
         ).order_by('name')
+        user_locations = users_locations()
         for site in locations:
             loc_data = data.get(site.location_id, {})
-            yield [
-                site.name,
-                cell_format(loc_data.get('completude', EMPTY_CELL)),
-                cell_format(loc_data.get('promptitude', EMPTY_CELL)),
-            ]
+            if site.location_id in user_locations:
+                yield [
+                    site.name,
+                    cell_format(loc_data.get('completude', EMPTY_CELL)),
+                    cell_format(loc_data.get('promptitude', EMPTY_CELL)),
+                ]
 
 
 class MalariaReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
@@ -186,7 +182,7 @@ class WeeklyMalaria(MalariaReport):
 
     @property
     def fields(self):
-        return [WeekFilter, YearFilter]
+        return [LocationBaseDrilldownOptionFilter, WeekFilter, YearFilter]
 
     @property
     def config(self):
@@ -197,16 +193,19 @@ class WeeklyMalaria(MalariaReport):
             'week': week,
             'year': year
         }
+        location_filter(self.request, params=params)
         update_config(params)
         return params
 
     @property
     def filters(self):
-        return [
+        filters = [
             EQ('week', 'week'),
             EQ('year', 'year'),
             IN('owner_id', get_INFilter_bindparams('owner_id', self.config['users']))
         ]
+        location_filter(self.request, filters=filters)
+        return filters
 
     @property
     def group_by(self):
@@ -298,32 +297,34 @@ class WeeklyMalaria(MalariaReport):
             location_type__code='region',
             is_archived=False
         ).order_by('name')
+        user_locations = users_locations()
         for reg in locations:
             for dis in reg.children.order_by('name'):
                 for site in dis.children.order_by('name'):
                     row = data.get(site.location_id, {})
-                    yield [
-                        reg.name,
-                        dis.name,
-                        site.name,
-                        row.get('cas_vus_5', EMPTY_CELL),
-                        row.get('cas_suspects_5', EMPTY_CELL),
-                        row.get('tests_realises_5', EMPTY_CELL),
-                        row.get('cas_confirmes_5', EMPTY_CELL),
-                        row.get('cas_vus_5_10', EMPTY_CELL),
-                        row.get('cas_suspects_5_10', EMPTY_CELL),
-                        row.get('tests_realises_5_10', EMPTY_CELL),
-                        row.get('cas_confirmes_5_10', EMPTY_CELL),
-                        row.get('cas_vus_fe', EMPTY_CELL),
-                        row.get('cas_suspects_fe', EMPTY_CELL),
-                        row.get('tests_realises_fe', EMPTY_CELL),
-                        row.get('cas_confirmes_fe', EMPTY_CELL),
-                        row.get('cas_vu_total', EMPTY_CELL),
-                        row.get('cas_suspect_total', EMPTY_CELL),
-                        row.get('tests_realises_total', EMPTY_CELL),
-                        row.get('cas_confirmes_total', EMPTY_CELL),
-                        row.get('div_teasts_cas', EMPTY_CELL)
-                    ]
+                    if site.location_id in user_locations:
+                        yield [
+                            reg.name,
+                            dis.name,
+                            site.name,
+                            row.get('cas_vus_5', EMPTY_CELL),
+                            row.get('cas_suspects_5', EMPTY_CELL),
+                            row.get('tests_realises_5', EMPTY_CELL),
+                            row.get('cas_confirmes_5', EMPTY_CELL),
+                            row.get('cas_vus_5_10', EMPTY_CELL),
+                            row.get('cas_suspects_5_10', EMPTY_CELL),
+                            row.get('tests_realises_5_10', EMPTY_CELL),
+                            row.get('cas_confirmes_5_10', EMPTY_CELL),
+                            row.get('cas_vus_fe', EMPTY_CELL),
+                            row.get('cas_suspects_fe', EMPTY_CELL),
+                            row.get('tests_realises_fe', EMPTY_CELL),
+                            row.get('cas_confirmes_fe', EMPTY_CELL),
+                            row.get('cas_vu_total', EMPTY_CELL),
+                            row.get('cas_suspect_total', EMPTY_CELL),
+                            row.get('tests_realises_total', EMPTY_CELL),
+                            row.get('cas_confirmes_total', EMPTY_CELL),
+                            row.get('div_teasts_cas', EMPTY_CELL)
+                        ]
 
 
 class CumulativeMalaria(MalariaReport):
@@ -334,7 +335,7 @@ class CumulativeMalaria(MalariaReport):
 
     @property
     def fields(self):
-        return [YearFilter]
+        return [LocationBaseDrilldownOptionFilter, YearFilter]
 
     @property
     def config(self):
@@ -343,15 +344,18 @@ class CumulativeMalaria(MalariaReport):
             'domain': self.domain,
             'year': year
         }
+        location_filter(self.request, params=params)
         update_config(params)
         return params
 
     @property
     def filters(self):
-        return [
+        filters = [
             EQ('year', 'year'),
             IN('owner_id', get_INFilter_bindparams('owner_id', self.config['users']))
         ]
+        location_filter(self.request, filters=filters)
+        return filters
 
     @property
     def group_by(self):
@@ -467,31 +471,41 @@ class CumulativeMalaria(MalariaReport):
             location_type__code='zone',
             is_archived=False
         ).order_by('name')
+        user_locations = users_locations()
         for zone in locations:
             for reg in zone.children.order_by('name'):
                 for dis in reg.children.order_by('name'):
                     for site in dis.children.order_by('name'):
                         row = data.get(site.location_id, {})
-                        yield [
-                            reg.name,
-                            dis.name,
-                            site.name,
-                            row.get('cas_vus_5', EMPTY_CELL),
-                            row.get('cas_suspects_5', EMPTY_CELL),
-                            row.get('cas_confirmes_5', EMPTY_CELL),
-                            row.get('cas_vus_5_10', EMPTY_CELL),
-                            row.get('cas_suspects_5_10', EMPTY_CELL),
-                            row.get('cas_confirmes_5_10', EMPTY_CELL),
-                            row.get('cas_vus_10', EMPTY_CELL),
-                            row.get('cas_suspects_10', EMPTY_CELL),
-                            row.get('cas_confirmes_10', EMPTY_CELL),
-                            row.get('cas_vus_fe', EMPTY_CELL),
-                            row.get('cas_suspects_fe', EMPTY_CELL),
-                            row.get('cas_confirmes_fe', EMPTY_CELL),
-                            row.get('total_cas', EMPTY_CELL),
-                            row.get('per_cas_5', EMPTY_CELL),
-                            row.get('per_cas_5_10', EMPTY_CELL),
-                            row.get('per_cas_10', EMPTY_CELL),
-                            row.get('per_cas_fa', EMPTY_CELL),
-                            zone.name
-                        ]
+                        if site.location_id in user_locations:
+                            yield [
+                                reg.name,
+                                dis.name,
+                                site.name,
+                                row.get('cas_vus_5', EMPTY_CELL),
+                                row.get('cas_suspects_5', EMPTY_CELL),
+                                row.get('cas_confirmes_5', EMPTY_CELL),
+                                row.get('cas_vus_5_10', EMPTY_CELL),
+                                row.get('cas_suspects_5_10', EMPTY_CELL),
+                                row.get('cas_confirmes_5_10', EMPTY_CELL),
+                                row.get('cas_vus_10', EMPTY_CELL),
+                                row.get('cas_suspects_10', EMPTY_CELL),
+                                row.get('cas_confirmes_10', EMPTY_CELL),
+                                row.get('cas_vus_fe', EMPTY_CELL),
+                                row.get('cas_suspects_fe', EMPTY_CELL),
+                                row.get('cas_confirmes_fe', EMPTY_CELL),
+                                row.get('total_cas', EMPTY_CELL),
+                                row.get('per_cas_5', EMPTY_CELL),
+                                row.get('per_cas_5_10', EMPTY_CELL),
+                                row.get('per_cas_10', EMPTY_CELL),
+                                row.get('per_cas_fa', EMPTY_CELL),
+                                zone.name
+                            ]
+
+CUSTOM_REPORTS = (
+    ['Custom Reports', (
+        SiteReportingRatesReport,
+        WeeklyMalaria,
+        CumulativeMalaria
+    )],
+)

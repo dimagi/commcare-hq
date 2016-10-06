@@ -103,11 +103,11 @@ class EQAActionItemSpec(JsonObject):
             if action_plans:
                 action_plan_for_question = None
                 for action_plan in action_plans:
-                    if action_plan['incorrect_questions'] == self.question_id:
+                    if action_plan.get('incorrect_questions', '') == self.question_id:
                         action_plan_for_question = action_plan
                         break
                 if action_plan_for_question:
-                    incorrect_question = action_plan_for_question.get('incorrect_questions')
+                    incorrect_question = action_plan_for_question.get('incorrect_questions', '')
                     responsible = ', '.join(
                         [
                             item.get(x.strip(), '---') for x in
@@ -128,7 +128,7 @@ class EQAActionItemSpec(JsonObject):
                         'form_name': form.name['en'],
                         'section': self.section,
                         'timeEnd': latest_form.metadata.timeEnd,
-                        'gap': questions['data/code_to_text/%s' % incorrect_question].label,
+                        'gap': questions.get('data/code_to_text/%s' % incorrect_question, {}).get('label', '---'),
                         'intervention_action': action_plan_for_question.get('intervention_action', '---'),
                         'responsible': responsible,
                         'support': support,

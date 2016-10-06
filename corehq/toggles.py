@@ -556,7 +556,14 @@ API_BLACKLIST = StaticToggle(
     'API_BLACKLIST',
     ("Blacklist API access to a user or domain that spams us"),
     TAG_EXPERIMENTAL,
-    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER]
+    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
+FORM_SUBMISSION_BLACKLIST = StaticToggle(
+    'FORM_SUBMISSION_BLACKLIST',
+    ("Blacklist form submissions from a domain that spams us"),
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 
@@ -748,6 +755,13 @@ AUTO_CASE_UPDATE_ENHANCEMENTS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
+    'run_auto_case_updates_on_save',
+    'Run Auto Case Update rules on each case save.',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
 EWS_BROADCAST_BY_ROLE = StaticToggle(
     'ews_broadcast_by_role',
     'EWS: Filter broadcast recipients by role',
@@ -794,7 +808,8 @@ GRID_MENUS = StaticToggle(
     'grid_menus',
     'Allow using grid menus on Android',
     TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Grid+Views',
 )
 
 NEW_EXPORTS = StaticToggle(
@@ -809,7 +824,7 @@ TF_USES_SQLITE_BACKEND = PredictablyRandomToggle(
     'Use a SQLite backend for Touchforms',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    0.8,
+    1,
     always_disabled=['hsph-betterbirth', 'iquitos'],
 )
 
@@ -933,5 +948,12 @@ ONBOARDING_PROTOTYPE = StaticToggle(
     'onboarding_prototype',
     'Prototype for case management onboarding',
     TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
+APP_BUILDER_NOTIFICATIONS = StaticToggle(
+    'app_builder_notifications',
+    'Enable app builder notifications on duplicate form edits.',
+    TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN]
 )

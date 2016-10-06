@@ -65,6 +65,7 @@ function WebFormSession(params) {
     self.formplayerEnabled = params.formplayerEnabled;
     self.debuggerEnabled = params.debuggerEnabled;
     self.post_url = params.post_url;
+    self.displayOptions = params.displayOptions;
 
     if (params.form_uid) {
         self.formSpec = {type: 'form-name', val: params.form_uid};
@@ -294,6 +295,7 @@ WebFormSession.prototype.loadForm = function($form, initLang) {
         'nav': 'fao',
         'uses_sql_backend': this.uses_sql_backend,
         'post_url': this.post_url,
+        'oneQuestionPerScreen': true
     };
 
     args[this.formSpec.type] = this.formSpec.val;
@@ -434,7 +436,7 @@ WebFormSession.prototype.serverError = function(q, resp) {
 WebFormSession.prototype.initForm = function(args, $form) {
     var self = this;
     this.serverRequest(args, function(resp) {
-        self.renderFormXml(resp, $form);
+        self.renderFormXml(resp, $form, self.displayOptions);
         self.onload(self, resp);
     });
 };
