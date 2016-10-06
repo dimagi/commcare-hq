@@ -17,6 +17,17 @@ def get_for_all_ranges(slug, data):
     return row
 
 
+def get_headers():
+    headers = [DataTablesColumn('Age')]
+    for age_range in AGE_RANGES:
+        if len(age_range) > 1:
+            headers.append(DataTablesColumn('%d-%d' % (age_range[0], age_range[1])))
+        else:
+            headers.append(DataTablesColumn(u'≥%d' % age_range[0]))
+    headers.append(DataTablesColumn('Total'))
+    return headers
+
+
 class CaseFindingAllTBPatientsReport(AllTBPatientsReport):
     report_title = 'Block 1: All TB patients registered in the quarter'
 
@@ -32,16 +43,7 @@ class AllNewAndRecurrentTBCases(EnikshayReport):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn('Age'),
-            DataTablesColumn('0-4'),
-            DataTablesColumn('5-14'),
-            DataTablesColumn('15-24'),
-            DataTablesColumn('25-34'),
-            DataTablesColumn('35-44'),
-            DataTablesColumn('45-54'),
-            DataTablesColumn('55-64'),
-            DataTablesColumn(u'≥65'),
-            DataTablesColumn('total')
+            *get_headers()
         )
 
     @property
