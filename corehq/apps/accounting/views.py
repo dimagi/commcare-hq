@@ -128,6 +128,7 @@ class NewBillingAccountView(BillingAccountsSectionView):
         return reverse(self.urlname)
 
     def post(self, request, *args, **kwargs):
+        raise Exception("Nick P testing")
         if self.account_form.is_valid():
             account = self.account_form.create_account()
             return HttpResponseRedirect(reverse('manage_billing_account', args=(account.id,)))
