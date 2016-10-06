@@ -14,6 +14,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.commtrack.util import generate_code
 from corehq.apps.custom_data_fields import CustomDataEditor
+from corehq.apps.custom_data_fields.edit_entity import get_prefixed
 from corehq.apps.es import UserES
 from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
@@ -317,6 +318,7 @@ class LocationForm(forms.Form):
             location.latitude = coords[0]
             location.longitude = coords[1]
 
+        location.metadata.update(get_prefixed(self.data))
 
         if commit:
             location.save()
