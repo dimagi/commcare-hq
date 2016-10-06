@@ -324,7 +324,7 @@
                     {% endif %}
                 </fieldset>
             </form>
-            <form id="import-form" method="post" class="form-inline" action="{% url "import_app_from_snapshot" project %}">
+            <form id="import-form" method="post" class="form-inline" action="{% url "import_app_from_snapshot" project.get_id %}">
                 {% csrf_token %}
                 <div class="hide" id="import-app">
                     <select name="project" class="form-control" id="project_select">
