@@ -21,8 +21,8 @@ class ZipBlobDB(AbstractBlobDB):
     def put(self, content, basename="", bucket=DEFAULT_BUCKET):
         identifier = self.get_identifier(basename)
         path = self.get_path(identifier, bucket)
-        length = 0
         content = content.read()
+        length = len(content)
         with zipfile.ZipFile(self.zipname, 'a') as z:
             z.writestr(path, content)
         digest = md5(content)
