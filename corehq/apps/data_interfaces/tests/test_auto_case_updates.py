@@ -47,7 +47,7 @@ class AutomaticCaseUpdateTest(TestCase):
             AutomaticUpdateRuleCriteria(
                 property_name='last_visit_date',
                 property_value='30',
-                match_type=AutomaticUpdateRuleCriteria.MATCH_DAYS_SINCE,
+                match_type=AutomaticUpdateRuleCriteria.MATCH_DAYS_AFTER,
             ),
         ]
         self.rule.automaticupdateaction_set = [
@@ -98,7 +98,7 @@ class AutomaticCaseUpdateTest(TestCase):
             AutomaticUpdateRuleCriteria(
                 property_name='last_visit_date',
                 property_value='40',
-                match_type=AutomaticUpdateRuleCriteria.MATCH_DAYS_SINCE,
+                match_type=AutomaticUpdateRuleCriteria.MATCH_DAYS_AFTER,
             ),
         ]
         self.rule4.automaticupdateaction_set = [
@@ -214,13 +214,13 @@ class AutomaticCaseUpdateTest(TestCase):
             self.assertEqual(case.closed, True)
 
     @run_with_all_backends
-    def test_match_days_since(self):
+    def test_match_days_after(self):
         with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
             self.rule2.automaticupdaterulecriteria_set = [
                 AutomaticUpdateRuleCriteria(
                     property_name='last_visit_date',
                     property_value='30',
-                    match_type=AutomaticUpdateRuleCriteria.MATCH_DAYS_SINCE,
+                    match_type=AutomaticUpdateRuleCriteria.MATCH_DAYS_AFTER,
                 ),
             ]
             self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
@@ -337,7 +337,7 @@ class AutomaticCaseUpdateTest(TestCase):
                 AutomaticUpdateRuleCriteria(
                     property_name='last_visit_date',
                     property_value='30',
-                    match_type=AutomaticUpdateRuleCriteria.MATCH_DAYS_SINCE,
+                    match_type=AutomaticUpdateRuleCriteria.MATCH_DAYS_AFTER,
                 ),
                 AutomaticUpdateRuleCriteria(
                     property_name='property1',

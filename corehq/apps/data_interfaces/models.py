@@ -179,13 +179,13 @@ class AutomaticUpdateRule(models.Model):
 
 
 class AutomaticUpdateRuleCriteria(models.Model):
-    MATCH_DAYS_SINCE = 'DAYS'
+    MATCH_DAYS_AFTER = 'DAYS'
     MATCH_EQUAL = 'EQUAL'
     MATCH_NOT_EQUAL = 'NOT_EQUAL'
     MATCH_HAS_VALUE = 'HAS_VALUE'
 
     MATCH_TYPE_CHOICES = (
-        (MATCH_DAYS_SINCE, MATCH_DAYS_SINCE),
+        (MATCH_DAYS_AFTER, MATCH_DAYS_AFTER),
         (MATCH_EQUAL, MATCH_EQUAL),
         (MATCH_NOT_EQUAL, MATCH_NOT_EQUAL),
         (MATCH_HAS_VALUE, MATCH_HAS_VALUE),
@@ -203,7 +203,7 @@ class AutomaticUpdateRuleCriteria(models.Model):
         values = case.resolve_case_property(self.property_name)
         return [element.value for element in values]
 
-    def check_days_since(self, case, now):
+    def check_days_after(self, case, now):
         values = self.get_case_values(case)
         for date_to_check in values:
             if (
@@ -248,7 +248,7 @@ class AutomaticUpdateRuleCriteria(models.Model):
 
     def matches(self, case, now):
         return {
-            self.MATCH_DAYS_SINCE: self.check_days_since,
+            self.MATCH_DAYS_AFTER: self.check_days_after,
             self.MATCH_EQUAL: self.check_equal,
             self.MATCH_NOT_EQUAL: self.check_not_equal,
             self.MATCH_HAS_VALUE: self.check_has_value,
