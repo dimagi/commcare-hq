@@ -234,16 +234,12 @@ class BlobDbBackendMigrator(BaseDocMigrator):
 
     def __init__(self, slug, couchdb, filename=None):
         super(BlobDbBackendMigrator, self).__init__(slug, couchdb, filename)
+        self.db = get_blob_db()
         self.total_blobs = 0
         self.not_found = 0
         if not isinstance(self.db, MigratingBlobDB):
             raise MigrationError(
                 "Expected to find migrating blob db backend (got %r)" % self.db)
-
-    @property
-    @memoized
-    def db(self):
-        return get_blob_db()
 
     def _do_migration(self, doc):
         obj = BlobHelper(doc, self.couchdb)
@@ -274,20 +270,47 @@ class BlobDbBackendMigrator(BaseDocMigrator):
         return doc.get("external_blobs")
 
 
-class BlobDbBackendExporter(BlobDbBackendMigrator):
+class BlobDbBackendExporter(BaseDocMigrator):
 
     def __init__(self, slug, couchdb, filename=None, domain=None):
-        self.domain = domain
         super(BlobDbBackendExporter, self).__init__(slug, couchdb, filename)
-
-    @property
-    @memoized
-    def db(self):
         from corehq.blobs.zipdb import get_blob_db_exporter
-        return get_blob_db_exporter(self.slug, self.domain)
+        self.db = get_blob_db_exporter(self.slug, domain)
+        self.total_blobs = 0
+        self.not_found = 0
+        self.domain = domain
+        if not isinstance(self.db, MigratingBlobDB):
+            raise MigrationError(
+                "Expected to find migrating blob db backend (got %r)" % self.db)
 
     def _backup_doc(self, doc):
         pass
+
+    def _do_migration(self, doc):
+        obj = BlobHelper(doc, self.couchdb)
+        bucket = obj._blobdb_bucket()
+        assert obj.external_blobs and obj.external_blobs == obj.blobs, doc
+        from_db = get_blob_db()
+        for name, meta in obj.blobs.iteritems():
+            self.total_blobs += 1
+            try:
+                content = from_db.get(meta.id, bucket)
+            except NotFound:
+                self.not_found += 1
+            else:
+                with content:
+                    self.db.copy_blob(content, meta.info, bucket)
+        return True
+
+    def processing_complete(self, skipped):
+        super(BlobDbBackendExporter, self).processing_complete(skipped)
+        if self.not_found:
+            print("{} of {} blobs were not found in the old blob database. It "
+                  "is possible that some blobs were deleted as part of normal "
+                  "operation during the migration if the migration took a long "
+                  "time. However, it may be cause for concern if a majority of "
+                  "the total number of migrated blobs were not found."
+                  .format(self.not_found, self.total_blobs))
 
     def should_process(self, doc):
         return doc.get('domain') == self.domain and doc.get("external_blobs")
