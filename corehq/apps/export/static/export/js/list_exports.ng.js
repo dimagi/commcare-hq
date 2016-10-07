@@ -111,7 +111,7 @@
             analytics.workflow("Clicked Export button");
         };
         $scope.updateEmailedExportData = function (component, exp) {
-            $('#modalRefreshExportConfirm-' + exp.id + '-' + component.groupId).modal('hide');
+            $('#modalRefreshExportConfirm-' + exp.id + '-' + (component.groupId ? component.groupId : '')).modal('hide');
             component.updatingData = true;
             djangoRMI.update_emailed_export_data({
                 'component': component,
