@@ -1,10 +1,8 @@
 from __future__ import absolute_import
-import base64
-from hashlib import md5
 from os.path import commonprefix, join, sep
 import zipfile
 
-from corehq.blobs import BlobInfo, DEFAULT_BUCKET
+from corehq.blobs import DEFAULT_BUCKET
 from corehq.blobs.exceptions import BadName
 from corehq.blobs.interface import AbstractBlobDB, SAFENAME
 
@@ -17,15 +15,7 @@ class ZipBlobDB(AbstractBlobDB):
         self.zipname = 'export-{domain}-{slug}-blobs.zip'.format(domain=domain, slug=slug)
 
     def put(self, content, basename="", bucket=DEFAULT_BUCKET):
-        identifier = self.get_identifier(basename)
-        path = self.get_path(identifier, bucket)
-        content = content.read()
-        length = len(content)
-        with zipfile.ZipFile(self.zipname, 'a') as z:
-            z.writestr(path, content)
-        digest = md5(content)
-        b64digest = base64.b64encode(digest.digest())
-        return BlobInfo(identifier, length, "md5-" + b64digest)
+        raise NotImplementedError
 
     def get(self, identifier, bucket=DEFAULT_BUCKET):
         raise NotImplementedError
