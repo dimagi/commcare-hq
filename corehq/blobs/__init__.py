@@ -19,11 +19,6 @@ def get_blob_db():
     return _db[-1]
 
 
-def get_blob_db_exporter(slug, domain):
-    from .migratingdb import MigratingBlobDB
-    return MigratingBlobDB(_get_zip_db(slug, domain), get_blob_db())
-
-
 def _get_s3_db(settings):
     from .s3db import S3BlobDB
     config = getattr(settings, "S3_BLOB_DB_SETTINGS", None)
@@ -37,11 +32,6 @@ def _get_fs_db(settings):
         reason = settings.SHARED_DRIVE_CONF.get_unset_reason("blob_dir")
         raise Error("cannot initialize blob db: %s" % reason)
     return FilesystemBlobDB(blob_dir)
-
-
-def _get_zip_db(slug, domain):
-    from .zipdb import ZipBlobDB
-    return ZipBlobDB(slug, domain)
 
 
 class BlobInfo(namedtuple("BlobInfo", ["identifier", "length", "digest"])):

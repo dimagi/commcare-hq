@@ -73,7 +73,7 @@ from base64 import b64encode
 from tempfile import mkdtemp
 
 from django.conf import settings
-from corehq.blobs import get_blob_db, get_blob_db_exporter
+from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.migratingdb import MigratingBlobDB
 from corehq.blobs.mixin import BlobHelper
@@ -283,6 +283,7 @@ class BlobDbBackendExporter(BlobDbBackendMigrator):
     @property
     @memoized
     def db(self):
+        from corehq.blobs.zipdb import get_blob_db_exporter
         return get_blob_db_exporter(self.slug, self.domain)
 
     def should_process(self, doc):

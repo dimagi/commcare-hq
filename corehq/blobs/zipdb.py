@@ -44,3 +44,13 @@ def safejoin(root, subpath):
     if commonprefix([root + sep, path]) != root + sep:
         raise BadName(u"invalid relative path: %r" % subpath)
     return path
+
+
+def get_blob_db_exporter(slug, domain):
+    from .migratingdb import MigratingBlobDB
+    from corehq.blobs import get_blob_db
+    return MigratingBlobDB(_get_zip_db(slug, domain), get_blob_db())
+
+
+def _get_zip_db(slug, domain):
+    return ZipBlobDB(slug, domain)
