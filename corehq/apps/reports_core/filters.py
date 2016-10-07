@@ -266,10 +266,10 @@ class DynamicChoiceListFilter(BaseFilter):
 
     def context(self, values, lang=None):
         context = super(DynamicChoiceListFilter, self).context(values, lang)
-        context['value'] = self._values_to_dict(values)
+        context['value'] = self._format_values_for_display(values)
         return context
 
-    def _values_to_dict(self, values):
+    def _format_values_for_display(self, values):
         """Some values are returned as Choice objects which need to be converted to
         dicts to be displayed properly
         """
