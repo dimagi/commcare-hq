@@ -1183,11 +1183,6 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
         """
         raise NotImplementedError("Must implement generate_create_form_url")
 
-    def get_emailed_indexes(self, email_group):
-        """Return a list of indexes of the components of the HQGroupExportConfiguration
-        ExportConfiguration list"""
-        raise NotImplementedError("must implement get_emailed_indexes")
-
     def update_emailed_es_export_data(self, in_data):
         from corehq.apps.export.tasks import rebuild_export_task
         export_instance_id = in_data['export']['id']
