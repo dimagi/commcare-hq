@@ -20,7 +20,7 @@ from corehq.apps.users.models import CommCareUser
 from custom.pnlppgi.filters import WeekFilter, LocationBaseDrilldownOptionFilter
 from django.utils.translation import ugettext as _
 
-from custom.pnlppgi.utils import location_filter, users_locations
+from custom.pnlppgi.utils import location_filter, users_locations, show_location
 from custom.pnlppgi.utils import update_config
 
 EMPTY_CELL = {'sort_key': 0, 'html': '---'}
@@ -143,11 +143,17 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
 
         formatter = DataFormatter(DictDataFormat(self.columns, no_value=self.no_value))
         data = formatter.format(self.data, keys=self.keys, group_by=self.group_by)
-        locations = SQLLocation.objects.filter(
-            domain=self.domain,
-            location_type__code='centre-de-sante',
-            is_archived=False
-        ).order_by('name')
+        selected_location = location_filter(self.request, location_filter_selected=True)
+        if selected_location:
+            locations = SQLLocation.objects.get(
+                location_id=selected_location
+            ).get_descendants(include_self=True).filter(location_type__code='centre-de-sante').order_by('name')
+        else:
+            locations = SQLLocation.objects.filter(
+                domain=self.domain,
+                location_type__code='centre-de-sante',
+                is_archived=False
+            ).order_by('name')
         user_locations = users_locations()
         for site in locations:
             loc_data = data.get(site.location_id, {})
@@ -292,6 +298,19 @@ class WeeklyMalaria(MalariaReport):
     def rows(self):
         formatter = DataFormatter(DictDataFormat(self.columns, no_value=self.no_value))
         data = formatter.format(self.data, keys=self.keys, group_by=self.group_by)
+        selected_location = location_filter(self.request, location_filter_selected=True)
+        selected_hierarchy = []
+        if selected_location:
+            selected_hierarchy = SQLLocation.objects.get(
+                location_id=selected_location
+            ).get_descendants(
+                include_self=True
+            ).filter(
+                location_type__code='centre-de-sante'
+            ).values_list(
+                'location_id',
+                flat=True
+            )
         locations = SQLLocation.objects.filter(
             domain=self.domain,
             location_type__code='region',
@@ -302,7 +321,7 @@ class WeeklyMalaria(MalariaReport):
             for dis in reg.children.order_by('name'):
                 for site in dis.children.order_by('name'):
                     row = data.get(site.location_id, {})
-                    if site.location_id in user_locations:
+                    if show_location(site, user_locations, selected_hierarchy):
                         yield [
                             reg.name,
                             dis.name,
@@ -466,6 +485,21 @@ class CumulativeMalaria(MalariaReport):
     def rows(self):
         formatter = DataFormatter(DictDataFormat(self.columns, no_value=self.no_value))
         data = formatter.format(self.data, keys=self.keys, group_by=self.group_by)
+
+        selected_location = location_filter(self.request, location_filter_selected=True)
+        selected_hierarchy = []
+        if selected_location:
+            selected_hierarchy = SQLLocation.objects.get(
+                location_id=selected_location
+            ).get_descendants(
+                include_self=True
+            ).filter(
+                location_type__code='centre-de-sante'
+            ).values_list(
+                'location_id',
+                flat=True
+            )
+
         locations = SQLLocation.objects.filter(
             domain=self.domain,
             location_type__code='zone',
@@ -477,7 +511,7 @@ class CumulativeMalaria(MalariaReport):
                 for dis in reg.children.order_by('name'):
                     for site in dis.children.order_by('name'):
                         row = data.get(site.location_id, {})
-                        if site.location_id in user_locations:
+                        if show_location(site, user_locations, selected_hierarchy):
                             yield [
                                 reg.name,
                                 dis.name,
