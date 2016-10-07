@@ -1228,7 +1228,7 @@ def _get_report_filter(domain, report_id, filter_id):
     return report_filter
 
 
-def _is_location_safe_choice_list(view_fn, request, domain, report_id, filter_id, **view_kwargs):
+def _is_location_safe_choice_list(view_fn, domain, report_id, filter_id, **view_kwargs):
     report_filter = _get_report_filter(domain, report_id, filter_id)
     if hasattr(report_filter, 'choice_provider'):
         return report_filter.choice_provider.location_safe

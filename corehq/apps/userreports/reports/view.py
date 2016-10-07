@@ -98,7 +98,7 @@ def query_dict_to_dict(query_dict, domain):
     return request_dict
 
 
-def _has_location_filter(view_fn, request, *args, **kwargs):
+def _has_location_filter(view_fn, *args, **kwargs):
     """check that the report has at least one location choice provider filter
     """
     # God help me.

@@ -26,7 +26,7 @@ class LocationAccessMiddleware(object):
         else:
             request.can_access_all_locations = False
             if (
-                not is_location_safe(view_fn, view_args, view_kwargs, request)
+                not is_location_safe(view_fn, view_args, view_kwargs)
                 or not user.get_sql_location(domain)
             ):
                 return location_restricted_response(request)
