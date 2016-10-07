@@ -183,31 +183,6 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
     }
 };
 
-WebFormSession.prototype.displayInstanceXml = function(resp) {
-    var $instanceTab = $('#debugger-xml-instance-tab'),
-        self = this,
-        codeMirror;
-
-    if (!self.debuggerEnabled || !resp.instanceXml || !resp.instanceXml.output) {
-        return;
-    }
-
-    codeMirror = CodeMirror(function(el) {
-        $('#xml-viewer-pretty').html(el);
-    }, {
-        value: resp.instanceXml.output,
-        mode: 'xml',
-        viewportMargin: Infinity,
-        readOnly: true,
-        lineNumbers: true,
-    });
-
-    $instanceTab.off();
-    $instanceTab.on('shown.bs.tab', function() {
-        codeMirror.refresh();
-    });
-};
-
 /*
  * Handles a successful request to touchforms.
  * @param {Object} response - touchforms response object
@@ -226,7 +201,9 @@ WebFormSession.prototype.handleSuccess = function(resp, callback) {
 
         try {
             callback(resp);
-            self.displayInstanceXml(resp);
+            if (self.debuggerEnabled) {
+                $.publish('debugger.update', resp);
+            }
         } catch (err) {
             console.error(err);
             self.onerror({message: Formplayer.Utils.touchformsError(err)});
@@ -493,5 +470,7 @@ WebFormSession.prototype.renderFormXml = function (resp, $form) {
     var self = this;
     self.session_id = self.session_id || resp.session_id;
     self.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $form);
-    self.displayInstanceXml(resp);
+    if (self.debuggerEnabled) {
+        $.publish('debugger.update', resp);
+    }
 };

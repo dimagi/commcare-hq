@@ -420,9 +420,35 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
 
     self.evalXPath = new Formplayer.ViewModels.EvaluateXPath();
     self.isMinimized = ko.observable(true);
+    self.instanceXml = ko.observable('');
     self.toggleState = function() {
         self.isMinimized(!self.isMinimized());
     };
+    $.unsubscribe('debugger.update');
+    $.subscribe('debugger.update', function(e, resp) {
+        if (resp.instanceXml) {
+            self.instanceXml(resp.instanceXml.output);
+        }
+    });
+
+    self.instanceXml.subscribe(function(newXml) {
+        var $instanceTab = $('#debugger-xml-instance-tab'),
+            codeMirror;
+
+        codeMirror = CodeMirror(function(el) {
+            $('#xml-viewer-pretty').html(el);
+        }, {
+            value: newXml,
+            mode: 'xml',
+            viewportMargin: Infinity,
+            readOnly: true,
+            lineNumbers: true,
+        });
+        $instanceTab.off();
+        $instanceTab.on('shown.bs.tab', function() {
+            codeMirror.refresh();
+        });
+    });
 
     // Called afterRender, ensures that the debugger takes the whole screen
     self.adjustWidth = function(e) {
