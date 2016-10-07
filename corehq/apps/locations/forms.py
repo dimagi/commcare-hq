@@ -366,41 +366,21 @@ class UsersAtLocationForm(MultipleSelectionForm):
                       .fields([]))
         return user_query.run().doc_ids
 
-    def already_have_locations(self, users):
-        user_query = (UserES()
-                      .domain(self.domain_object.name)
-                      .mobile_users()
-                      .doc_id(list(users))
-                      .exists('location_id')
-                      .fields(['username']))
-        return [raw_username(u['username']) for u in user_query.run().hits]
-
     def unassign_users(self, users):
         for doc in iter_docs(CommCareUser.get_db(), users):
             # This could probably be sped up by bulk saving, but there's a lot
             # of stuff going on - seems tricky.
-            CommCareUser.wrap(doc).unset_location()
+            CommCareUser.wrap(doc).unset_location_by_id(self.location.location_id, fall_back_to_next=True)
 
     def assign_users(self, users):
         for doc in iter_docs(CommCareUser.get_db(), users):
-            CommCareUser.wrap(doc).set_location(self.location)
-
-    def clean_selected_ids(self):
-        selected_users = set(self.cleaned_data['selected_ids'])
-        previous_users = set(self.users_at_location)
-        self.to_remove = previous_users - selected_users
-        self.to_add = selected_users - previous_users
-        conflicted = self.already_have_locations(self.to_add)
-        if (
-            conflicted
-            and not self.domain_object.supports_multiple_locations_per_user
-        ):
-            raise forms.ValidationError(_(
-                u"The following users already have locations assigned,  "
-                u"you must unassign them before they can be added here:  "
-            ) + u", ".join(conflicted))
-        return []
+            CommCareUser.wrap(doc).add_to_assigned_locations(self.location)
 
     def save(self):
-        self.unassign_users(self.to_remove)
-        self.assign_users(self.to_add)
+        selected_users = set(self.cleaned_data['selected_ids'])
+        previous_users = set(self.users_at_location)
+        to_remove = previous_users - selected_users
+        to_add = selected_users - previous_users
+
+        self.unassign_users(to_remove)
+        self.assign_users(to_add)

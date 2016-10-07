@@ -224,9 +224,13 @@ class BaseEditUserView(BaseUserSettingsView):
         user_domain_membership = self.editable_user.get_domain_membership(self.domain)
         linked_loc = user_domain_membership.location_id
         linked_prog = user_domain_membership.program_id
+        assigned_locations = ','.join(user_domain_membership.assigned_location_ids)
         return CommtrackUserForm(
             domain=self.domain,
-            initial={'location': linked_loc, 'program_id': linked_prog}
+            initial={
+                'primary_location': linked_loc,
+                'program_id': linked_prog,
+                'assigned_locations': assigned_locations}
         )
 
     def update_user(self):
@@ -245,10 +249,8 @@ class BaseEditUserView(BaseUserSettingsView):
 
     def post(self, request, *args, **kwargs):
         if self.request.POST['form_type'] == "commtrack":
-            self.editable_user.get_domain_membership(self.domain).location_id = self.request.POST['location']
-            if self.request.project.commtrack_enabled:
-                self.editable_user.get_domain_membership(self.domain).program_id = self.request.POST['program_id']
-            self.editable_user.save()
+            if self.commtrack_form.is_valid():
+                self.commtrack_form.save(self.editable_user)
         elif self.request.POST['form_type'] == "update-user":
             if all([self.update_user(), self.custom_user_is_valid()]):
                 messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.raw_username)
