@@ -116,6 +116,7 @@ class register_factory(object):
 INSTANCE_BY_ID = {
     'groups': Instance(id='groups', src='jr://fixture/user-groups'),
     'reports': Instance(id='reports', src='jr://fixture/commcare:reports'),
+    'locations': Instance(id='locations', src='jr://fixture/commtrack:locations'),
     'ledgerdb': Instance(id='ledgerdb', src='jr://instance/ledgerdb'),
     'casedb': Instance(id='casedb', src='jr://instance/casedb'),
     'commcaresession': Instance(id='commcaresession', src='jr://instance/session'),
