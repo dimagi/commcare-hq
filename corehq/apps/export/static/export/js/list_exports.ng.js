@@ -85,8 +85,8 @@
             $btn.addClass('disabled');
             $btn.text(gettext('Download Requested'));
         };
-        $scope.copyLinkRequested = function($event) {
-            $scope.showLink = true;
+        $scope.copyLinkRequested = function($event, export_) {
+            export_.showLink = true;
             var clipboard = new Clipboard($event.target, {
                 target: function (trigger) {
                     return trigger.nextElementSibling;

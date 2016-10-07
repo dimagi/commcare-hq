@@ -161,13 +161,13 @@
 
                                 <div class="h5" ng-if="export.emailedExport.hasFile">
                                     <div class="input-group">
-                                        <span ng-class="{'input-group-btn': showLink}" ng-click="copyLinkRequested($event)">
+                                        <span ng-class="{'input-group-btn': export.showLink}" ng-click="copyLinkRequested($event, export)">
                                             <a class="btn btn-info btn-sm">
                                                 <i class="fa fa-download"></i>
                                                 {% trans "Copy Dashboard Feed Link" %}
                                             </a>
                                         </span>
-                                        <input ng-show="showLink"
+                                        <input ng-show="export.showLink"
                                                type="text"
                                                class="form-control input-sm"
                                                readonly
