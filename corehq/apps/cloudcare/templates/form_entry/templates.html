@@ -17,16 +17,53 @@
     </div>
 </script>
 
+<script type="text/html" id="form-navigation-ko-template">
+  <h2 class="formnav-title" data-bind="text: title, visible: showInFormNavigation"></h2>
+  <div class="formnav-container" data-bind="visible: showInFormNavigation">
+    <button type="button"
+            class="btn btn-formnav"
+            data-bind="click: prevQuestion, visible: enablePreviousButton">
+      <i class="fa fa-chevron-left"></i>
+    </button>
+    <button type="button"
+            disabled="disabled"
+            class="btn btn-formnav disabled"
+            data-bind="visible: !enablePreviousButton()">
+      <i class="fa fa-chevron-left"></i>
+    </button>
+
+    <button type="button"
+            class="btn btn-success btn-formnav-submit"
+            data-bind="visible: atLastIndex(), click: submitForm">Complete <i class="fa fa-chevron-right"></i></button>
+
+    <button type="button"
+            disabled="disabled"
+            class="btn btn-formnav disabled btn-formnav-next"
+            data-bind="visible: !enableNextButton() && !atLastIndex()">
+      <i class="fa fa-chevron-right"></i>
+    </button>
+    <button type="button"
+            class="btn btn-formnav btn-formnav-next"
+            data-bind="click: nextQuestion, visible: enableNextButton() && !atLastIndex()">
+      <i class="fa fa-chevron-right"></i>
+    </button>
+
+  </div>
+</script>
+
 <script type="text/html" id="form-fullform-ko-template">
-    <div class="container form-container">
-      <div class="page-header">
+    <div class="container form-container" data-bind="css: { 'form-single-question': showInFormNavigation }">
+      <div class="page-header" data-bind="visible: !showInFormNavigation()">
         <h1 class="title" data-bind="text: title"></h1>
       </div>
+
       <div class="row">
         <div class="col-sm-12">
           <form class="form form-horizontal" data-bind="submit: submitForm">
-            <div data-bind="template: { name: childTemplate, foreach: $data.children }"/>
-            <div class="form-actions form-group">
+            <div class="question-container">
+              <div data-bind="template: { name: childTemplate, foreach: $data.children }"/>
+            </div>
+            <div class="form-actions form-group" data-bind="visible: showSubmitButton">
                 <div data-bind="css: Formplayer.Const.LABEL_OFFSET + ' ' + Formplayer.Const.CONTROL_WIDTH">
                     <input class="submit btn btn-primary"
                         type="submit"
@@ -263,6 +300,7 @@
 <script type="text/html" id="text-entry-ko-template">
     <textarea class="textfield form-control" data-bind="
         value: $data.rawAnswer,
+        valueUpdate: 'keyup',
         attr: {
             maxlength: lengthLimit,
         }
@@ -275,6 +313,7 @@
 <script type="text/html" id="password-entry-ko-template">
     <input type="password" class="form-control" data-bind="
         value: $data.rawAnswer,
+        valueUpdate: 'keyup',
     "/>
     <span class="help-block type" data-bind="text: helpText()"></span>
 </script>
@@ -282,6 +321,7 @@
 <script type="text/html" id="str-entry-ko-template">
     <input type="text" class="form-control" data-bind="
         value: $data.rawAnswer,
+        valueUpdate: 'keyup',
         attr: {
             maxlength: lengthLimit,
         }

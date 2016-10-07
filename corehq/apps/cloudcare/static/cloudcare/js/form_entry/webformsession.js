@@ -267,6 +267,9 @@ WebFormSession.prototype.applyListeners = function() {
         'formplayer.' + Formplayer.Const.NEW_REPEAT,
         'formplayer.' + Formplayer.Const.EVALUATE_XPATH,
         'formplayer.' + Formplayer.Const.SUBMIT,
+        'formplayer.' + Formplayer.Const.NEXT_QUESTION,
+        'formplayer.' + Formplayer.Const.PREV_QUESTION,
+        'formplayer.' + Formplayer.Const.QUESTIONS_FOR_INDEX,
     ].join(' '));
     $.subscribe('formplayer.' + Formplayer.Const.SUBMIT, function(e, form) {
         self.submitForm(form);
@@ -282,6 +285,15 @@ WebFormSession.prototype.applyListeners = function() {
     });
     $.subscribe('formplayer.' + Formplayer.Const.EVALUATE_XPATH, function(e, xpath, callback) {
         self.evaluateXPath(xpath, callback);
+    });
+    $.subscribe('formplayer.' + Formplayer.Const.NEXT_QUESTION, function(e, opts) {
+        self.nextQuestion(opts);
+    });
+    $.subscribe('formplayer.' + Formplayer.Const.PREV_QUESTION, function(e, opts) {
+        self.prevQuestion(opts);
+    });
+    $.subscribe('formplayer.' + Formplayer.Const.QUESTIONS_FOR_INDEX, function(e, index) {
+        self.getQuestionsForIndex(index);
     });
 };
 
@@ -323,17 +335,51 @@ WebFormSession.prototype.answerQuestion = function(q) {
     var self = this;
     var ix = getIx(q);
     var answer = q.answer();
+    var oneQuestionPerScreen = (self.displayOptions === undefined) ? false : ko.utils.unwrapObservable(self.displayOptions.oneQuestionPerScreen);
 
     this.serverRequest({
             'action': Formplayer.Const.ANSWER,
             'ix': ix,
-            'answer': answer
+            'answer': answer,
+            'oneQuestionPerScreen': oneQuestionPerScreen,
         },
         function(resp) {
             $.publish('session.reconcile', [resp, q]);
             if (self.answerCallback !== undefined) {
                 self.answerCallback(self.session_id);
             }
+        });
+};
+
+WebFormSession.prototype.nextQuestion = function(opts) {
+    this.serverRequest({
+            'action': Formplayer.Const.NEXT_QUESTION,
+        },
+        function(resp) {
+            opts.callback(parseInt(resp.currentIndex), resp.isAtLastIndex);
+            resp.title = opts.title;
+            $.publish('session.reconcile', [resp, {}]);
+        });
+};
+
+WebFormSession.prototype.prevQuestion = function(opts) {
+    this.serverRequest({
+            'action': Formplayer.Const.PREV_QUESTION,
+        },
+        function(resp) {
+            opts.callback(parseInt(resp.currentIndex), false);
+            resp.title = opts.title;
+            $.publish('session.reconcile', [resp, {}]);
+        });
+};
+
+WebFormSession.prototype.getQuestionsForIndex = function(index) {
+    this.serverRequest({
+            'action': Formplayer.Const.QUESTIONS_FOR_INDEX,
+            'ix': index,
+        },
+        function(resp) {
+            $.publish('session.reconcile', [resp, {}]);
         });
 };
 
