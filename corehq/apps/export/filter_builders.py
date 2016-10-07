@@ -124,13 +124,14 @@ class CouchFormExportFilterBuilder(BaseExportFilterBuilder):
         return SerializableFunction(users_filter, users=_get_filtered_users(self.domain, self.user_types))
 
     def _get_datespan_filter(self):
-        try:
-            if not self.date_interval.is_valid():
-                return
-            self.date_interval.set_timezone(self.timezone)
-        except AttributeError:
-            pass  # TODO: Explain this
-        return SerializableFunction(datespan_export_filter, datespan=self.date_interval)
+        if self.date_interval:
+            try:
+                if not self.date_interval.is_valid():
+                    return
+                self.date_interval.set_timezone(self.timezone)
+            except AttributeError:
+                pass  # TODO: Explain this
+            return SerializableFunction(datespan_export_filter, datespan=self.date_interval)
 
 
 class ESCaseExportFilterBuilder(BaseExportFilterBuilder):
@@ -158,17 +159,17 @@ class ESCaseExportFilterBuilder(BaseExportFilterBuilder):
 
         return case_filter
 
-
     def _get_datespan_filter(self):
-        try:
-            if not self.date_interval.is_valid():
-                return
-            self.date_interval.set_timezone(self.timezone)
-        except AttributeError:
-            pass  # TODO: Explain this
-        return ModifiedOnRangeFilter(
-            gte=self.date_interval.startdate, lt=self.date_interval.enddate + timedelta(days=1)
-        )
+        if self.date_interval:
+            try:
+                if not self.date_interval.is_valid():
+                    return
+                self.date_interval.set_timezone(self.timezone)
+            except AttributeError:
+                pass  # TODO: Explain this
+            return ModifiedOnRangeFilter(
+                gte=self.date_interval.startdate, lt=self.date_interval.enddate + timedelta(days=1)
+            )
 
 
 class CouchCaseExportFilterBuilder(BaseExportFilterBuilder):
