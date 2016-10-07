@@ -194,7 +194,7 @@ class AutomaticUpdateRuleCriteria(models.Model):
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
     property_name = models.CharField(max_length=126)
     property_value = models.CharField(max_length=126, null=True)
-    match_type = models.CharField(max_length=10, choices=MATCH_TYPE_CHOICES)
+    match_type = models.CharField(max_length=10)
 
     class Meta:
         app_label = "data_interfaces"
