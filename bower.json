@@ -58,7 +58,8 @@
     "datetimepicker": "2.5.4",
     "DOMPurify": "0.8.3",
     "jquery-tiny-pubsub": "https://github.com/cowboy/jquery-tiny-pubsub.git#~0.7.0",
-    "markdown-it": "7.0.1"
+    "markdown-it": "7.0.1",
+    "clipboard": "^1.5.12"
   },
   "devDependencies": {
     "chai": "3.3.0",

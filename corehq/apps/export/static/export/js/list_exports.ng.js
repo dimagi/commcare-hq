@@ -87,6 +87,13 @@
         };
         $scope.copyLinkRequested = function($event) {
             $scope.showLink = true;
+            var clipboard = new Clipboard($event.target, {
+                target: function (trigger) {
+                    return trigger.nextElementSibling;
+                }
+            });
+            clipboard.onClick($event);
+            clipboard.destroy();
         };
         $scope.selectAll = function () {
             _.each($scope.exports, function (exp) {
