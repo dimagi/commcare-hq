@@ -124,6 +124,8 @@ class RegisterHandler(KeywordHandler):
                 password = uuid.uuid4().hex
                 self.user = CommCareUser.create(self.domain, username, password, phone_number=strip_plus(self.msg.phone_number))
             self.verified_contact = self.user.save_verified_number(self.domain, self.msg.phone_number, True)
+            # As per earlier ILSGateway system, set language by default to Swahili
+            self.user.language = 'sw'
 
         if first_name or last_name:
             self.user.first_name = first_name
