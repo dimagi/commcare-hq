@@ -260,7 +260,6 @@ HQ_APPS = (
     'corehq.apps.hqcouchlog',
     'corehq.apps.hqwebapp',
     'corehq.apps.hqmedia',
-    'corehq.apps.loadtestendpoints',
     'corehq.apps.locations',
     'corehq.apps.products',
     'corehq.apps.prelogin',
@@ -1375,10 +1374,13 @@ WEB_USER_TERM = "Web User"
 DEFAULT_CURRENCY = "USD"
 DEFAULT_CURRENCY_SYMBOL = "$"
 
-SMS_HANDLERS = [
-    'corehq.apps.sms.handlers.forwarding.forwarding_handler',
+CUSTOM_SMS_HANDLERS = [
     'custom.ilsgateway.tanzania.handler.handle',
     'custom.ewsghana.handler.handle',
+]
+
+SMS_HANDLERS = [
+    'corehq.apps.sms.handlers.forwarding.forwarding_handler',
     'corehq.apps.commtrack.sms.handle',
     'corehq.apps.sms.handlers.keyword.sms_keyword_handler',
     'corehq.apps.sms.handlers.form_session.form_session_handler',

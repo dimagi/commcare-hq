@@ -383,13 +383,6 @@ HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
     [NAMESPACE_USER],
 )
 
-REMOTE_APPS = StaticToggle(
-    'remote-apps',
-    'Allow creation of remote applications',
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN],
-)
-
 CAN_EDIT_EULA = StaticToggle(
     'can_edit_eula',
     "Whether this user can set the custom eula and data sharing internal project options. "
@@ -825,7 +818,7 @@ TF_USES_SQLITE_BACKEND = PredictablyRandomToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
     1,
-    always_disabled=['hsph-betterbirth', 'iquitos'],
+    always_disabled=['hsph-betterbirth', 'iquitos', 'malawi-fp-study'],
 )
 
 

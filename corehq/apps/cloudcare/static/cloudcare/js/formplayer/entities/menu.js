@@ -90,7 +90,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                         "query_dictionary": params.queryDict,
                         "previewCommand": params.previewCommand,
                         "installReference": params.installReference,
-                        "oneQuestionPerScreen": displayOptions.oneQuestionPerScreen,
+                        "oneQuestionPerScreen": ko.utils.unwrapObservable(displayOptions.oneQuestionPerScreen),
                     });
 
                     if (options.steps) {
