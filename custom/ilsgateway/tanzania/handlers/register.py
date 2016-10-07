@@ -122,7 +122,12 @@ class RegisterHandler(KeywordHandler):
             with CriticalSection([key]):
                 username = generate_username(self.domain, first_name, last_name)
                 password = uuid.uuid4().hex
-                self.user = CommCareUser.create(self.domain, username, password, phone_number=strip_plus(self.msg.phone_number))
+                self.user = CommCareUser.create(
+                    self.domain,
+                    username,
+                    password,
+                    phone_number=strip_plus(self.msg.phone_number)
+                )
             self.verified_contact = self.user.save_verified_number(self.domain, self.msg.phone_number, True)
             # As per earlier ILSGateway system, set language by default to Swahili
             self.user.language = 'sw'
