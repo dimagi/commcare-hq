@@ -286,6 +286,9 @@ class BlobDbBackendExporter(BlobDbBackendMigrator):
         from corehq.blobs.zipdb import get_blob_db_exporter
         return get_blob_db_exporter(self.slug, self.domain)
 
+    def _backup_doc(self, doc):
+        pass
+
     def should_process(self, doc):
         return doc.get('domain') == self.domain and doc.get("external_blobs")
 
