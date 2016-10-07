@@ -497,7 +497,7 @@ def load_and_call(sms_handler_names, phone_number, text, sms):
 
         try:
             handled = handler(phone_number, text, sms)
-        except Exception as e:
+        except Exception:
             log_sms_exception(sms)
 
         if handled:
@@ -538,17 +538,15 @@ def process_incoming(msg):
                 send_sms_to_verified_number(v, text)
             else:
                 send_sms(msg.domain, None, msg.phone_number, text)
-    elif domain_has_privilege(msg.domain, privileges.INBOUND_SMS):
+    else:
         handled = False
-
         is_verified = v is not None and v.verified
-        is_verified_and_active = is_verified and is_contact_active(v.domain, v.owner_doc_type, v.owner_id)
 
-        if is_verified_and_active or (v is None and msg.domain):
+        if msg.domain and domain_has_privilege(msg.domain, privileges.INBOUND_SMS):
             handled = load_and_call(settings.CUSTOM_SMS_HANDLERS, v, msg.text, msg)
 
-        if not handled and is_verified_and_active:
-            handled = load_and_call(settings.SMS_HANDLERS, v, msg.text, msg)
+            if not handled and is_verified and is_contact_active(v.domain, v.owner_doc_type, v.owner_id):
+                handled = load_and_call(settings.SMS_HANDLERS, v, msg.text, msg)
 
         if not handled and not is_verified:
             handled = process_pre_registration(msg)
