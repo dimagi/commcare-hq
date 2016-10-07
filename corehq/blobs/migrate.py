@@ -274,14 +274,14 @@ class BlobDbBackendExporter(BaseDocMigrator):
 
     def __init__(self, slug, couchdb, filename=None, domain=None):
         super(BlobDbBackendExporter, self).__init__(slug, couchdb, filename)
-        from corehq.blobs.zipdb import get_blob_db_exporter
+        from corehq.blobs.zipdb import get_blob_db_exporter, ZipBlobDB
         self.db = get_blob_db_exporter(self.slug, domain)
         self.total_blobs = 0
         self.not_found = 0
         self.domain = domain
-        if not isinstance(self.db, MigratingBlobDB):
+        if not isinstance(self.db, ZipBlobDB):
             raise MigrationError(
-                "Expected to find migrating blob db backend (got %r)" % self.db)
+                "Expected to find zip blob db backend (got %r)" % self.db)
 
     def _backup_doc(self, doc):
         pass

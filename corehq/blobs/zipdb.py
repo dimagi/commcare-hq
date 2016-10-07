@@ -47,9 +47,7 @@ def safejoin(root, subpath):
 
 
 def get_blob_db_exporter(slug, domain):
-    from .migratingdb import MigratingBlobDB
-    from corehq.blobs import get_blob_db
-    return MigratingBlobDB(_get_zip_db(slug, domain), get_blob_db())
+    return _get_zip_db(slug, domain)
 
 
 def _get_zip_db(slug, domain):
