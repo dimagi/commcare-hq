@@ -23,4 +23,4 @@ class Command(BaseCommand):
             bucket = '/'.join(filename.split('/')[:-1])
             identifier = filename.split('/')[-1]
             blob = cStringIO.StringIO(from_zip.read(filename))
-            to_db.put(blob, identifier, bucket)
+            to_db.copy_blob(blob, identifier, bucket)
