@@ -15,6 +15,6 @@ def pillow_seq_store_task():
 @periodic_task(run_every=crontab(hour=0, minute=0), queue='background_queue')
 def create_es_snapshot_checkpoints():
     today = date.today()
-    three_days_ago = today - timedelta(days=3)
+    thirty_days_ago = today - timedelta(days=30)
     ESRestorePillowCheckpoints.get_pillow_snapshots()
-    ESRestorePillowCheckpoints.objects.filter(date_updated__lt=three_days_ago).delete()
+    ESRestorePillowCheckpoints.objects.filter(date_updated__lt=thirty_days_ago).delete()
