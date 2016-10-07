@@ -54,4 +54,5 @@ domain_specific = patterns('corehq.apps.hqwebapp.views',
         'retrieve_download', {'template': 'style/includes/file_download.html'},
         name='hq_soil_download'),
     url(r'toggles.js$', 'toggles_js', name='toggles_js'),
+    url(r'couch_doc_counts', 'couch_doc_counts'),
 )
