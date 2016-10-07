@@ -5,7 +5,6 @@ from elasticsearch.client import SnapshotClient, IndicesClient
 from django.conf import settings
 from pillowtop.utils import get_all_pillow_instances
 from corehq.apps.hqadmin.models import ESRestorePillowCheckpoints
-from pillowtop.es_utils import get_index_info_from_pillow
 from pillowtop.checkpoints.manager import DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
 
 
@@ -25,9 +24,9 @@ class Command(BaseCommand):
         client = self.get_client_and_close_indices(es, indices)
         try:
             self.restore_snapshot(es, date, indices)
-        finally:
+        except:
             client.open(indices)
-        self.rewind_pillows(indices, date)
+        self.rewind_pillows(date)
 
     @staticmethod
     def get_date(args):
@@ -54,26 +53,20 @@ class Command(BaseCommand):
         snapshot_client = SnapshotClient(es)
         env = settings.SERVER_ENVIRONMENT
         repo_name = '{}_es_snapshot'.format(env)
+        kwargs = {}
+        if indices != '_all':
+            kwargs['body'] = {'indices': indices}
         snapshot_client.restore(repo_name,
                                 '{repo_name}_{year}_{month}_{day}'.format(
                                     repo_name=repo_name, year=date.year,
                                     month=date.month, day=date.day
                                 ),
                                 wait_for_completion=True,
-                                body={'indices': indices}
-        )
+                                **kwargs)
 
     @staticmethod
-    def rewind_pillows(indices, date):
-        if indices == '_all':
-            pillows = get_all_pillow_instances()
-        else:
-            pillows = []
-            for pillow in get_all_pillow_instances():
-                index_info = get_index_info_from_pillow(pillow)
-                if index_info.index in indices or index_info.alias in indices:
-                    pillows.append(pillow)
-        for pillow in pillows:
+    def rewind_pillows(date):
+        for pillow in get_all_pillow_instances():
             checkpoint = pillow.checkpoint
             try:
                 checkpoint = ESRestorePillowCheckpoints.objects.get(checkpoint_id=checkpoint.checkpoint_id,
