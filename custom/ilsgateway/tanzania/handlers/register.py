@@ -10,7 +10,12 @@ from custom.ilsgateway.tanzania.reminders import REGISTER_HELP, \
     REGISTRATION_CONFIRM_DISTRICT, REGISTRATION_CONFIRM, Roles, REGISTER_UNKNOWN_DISTRICT, REGISTER_UNKNOWN_CODE
 from dimagi.utils.couch import CriticalSection
 
-DISTRICT_PREFIXES = ['d', 'm', 'tb', 'tg', 'dm', 'mz', 'mt', 'mb', 'ir', 'tb', 'ms']
+DISTRICT_PREFIXES = [
+    'd', 'dm', 'dr',
+    'ir',
+    'm', 'mb', 'ms', 'mt', 'mz',
+    'tb', 'tg',
+]
 
 
 def generate_username(domain, first_name, last_name):
