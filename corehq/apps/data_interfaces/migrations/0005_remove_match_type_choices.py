@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='automaticupdaterulecriteria',
             name='match_type',
-            field=models.CharField(max_length=10),
+            field=models.CharField(max_length=15),
         ),
     ]
