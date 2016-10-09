@@ -179,12 +179,16 @@ class AutomaticUpdateRule(models.Model):
 
 
 class AutomaticUpdateRuleCriteria(models.Model):
+    # True when today < (the date in property_name - property_value days)
+    MATCH_DAYS_BEFORE = 'DAYS_BEFORE'
+    # True when today >= (the date in property_name + property_value days)
     MATCH_DAYS_AFTER = 'DAYS'
     MATCH_EQUAL = 'EQUAL'
     MATCH_NOT_EQUAL = 'NOT_EQUAL'
     MATCH_HAS_VALUE = 'HAS_VALUE'
 
     MATCH_TYPE_CHOICES = (
+        (MATCH_DAYS_BEFORE, MATCH_DAYS_BEFORE),
         (MATCH_DAYS_AFTER, MATCH_DAYS_AFTER),
         (MATCH_EQUAL, MATCH_EQUAL),
         (MATCH_NOT_EQUAL, MATCH_NOT_EQUAL),
@@ -203,15 +207,20 @@ class AutomaticUpdateRuleCriteria(models.Model):
         values = case.resolve_case_property(self.property_name)
         return [element.value for element in values]
 
-    def check_days_after(self, case, now):
+    def _try_date_conversion(self, date_or_string):
+        if (
+            not isinstance(date_or_string, date) and
+            isinstance(date_or_string, basestring) and
+            ALLOWED_DATE_REGEX.match(date_or_string)
+        ):
+            date_or_string = parse(date_or_string)
+
+        return date_or_string
+
+    def check_days_before(self, case, now):
         values = self.get_case_values(case)
         for date_to_check in values:
-            if (
-                not isinstance(date_to_check, date) and
-                isinstance(date_to_check, basestring) and
-                ALLOWED_DATE_REGEX.match(date_to_check)
-            ):
-                date_to_check = parse(date_to_check)
+            date_to_check = self._try_date_conversion(date_to_check)
 
             if not isinstance(date_to_check, date):
                 continue
@@ -220,7 +229,24 @@ class AutomaticUpdateRuleCriteria(models.Model):
                 date_to_check = datetime.combine(date_to_check, time(0, 0))
 
             days = int(self.property_value)
-            if date_to_check <= (now - timedelta(days=days)):
+            if now < (date_to_check - timedelta(days=days)):
+                return True
+
+        return False
+
+    def check_days_after(self, case, now):
+        values = self.get_case_values(case)
+        for date_to_check in values:
+            date_to_check = self._try_date_conversion(date_to_check)
+
+            if not isinstance(date_to_check, date):
+                continue
+
+            if not isinstance(date_to_check, datetime):
+                date_to_check = datetime.combine(date_to_check, time(0, 0))
+
+            days = int(self.property_value)
+            if now >= (date_to_check + timedelta(days=days)):
                 return True
 
         return False
@@ -248,6 +274,7 @@ class AutomaticUpdateRuleCriteria(models.Model):
 
     def matches(self, case, now):
         return {
+            self.MATCH_DAYS_BEFORE: self.check_days_before,
             self.MATCH_DAYS_AFTER: self.check_days_after,
             self.MATCH_EQUAL: self.check_equal,
             self.MATCH_NOT_EQUAL: self.check_not_equal,
