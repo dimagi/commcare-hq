@@ -357,7 +357,10 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                 if not property_value:
                     raise ValidationError(_("Please specify a property value."))
 
-                if property_match_type == AutomaticUpdateRuleCriteria.MATCH_DAYS_AFTER:
+                if property_match_type in (
+                    AutomaticUpdateRuleCriteria.MATCH_DAYS_AFTER,
+                    AutomaticUpdateRuleCriteria.MATCH_DAYS_BEFORE,
+                ):
                     try:
                         property_value = int(property_value)
                     except:
