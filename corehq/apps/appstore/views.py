@@ -286,6 +286,9 @@ def approve_app(request, snapshot):
 @login_required
 @retry_resource(3)
 def import_app(request, snapshot):
+    """
+    Download to existing project
+    """
     user = request.couch_user
     if not user.is_eula_signed():
         messages.error(request, 'You must agree to our eula to download an app')
@@ -307,6 +310,7 @@ def import_app(request, snapshot):
         assert full_apps, 'Bad attempt to copy apps from a project without any!'
         for app in full_apps:
             new_doc = from_project.copy_component(app['doc_type'], app.get_id, to_project_name, user)
+        ensure_explicit_community_subscription(to_project_name, date.today())
         clear_app_cache(request, to_project_name)
 
         from_project.downloads += 1
@@ -321,6 +325,9 @@ def import_app(request, snapshot):
 
 @login_required
 def copy_snapshot(request, snapshot):
+    """
+    Download as New Project
+    """
     user = request.couch_user
     if not user.is_eula_signed():
         messages.error(request, 'You must agree to our eula to download an app')
