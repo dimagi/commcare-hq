@@ -43,10 +43,10 @@ class FeatureRateAsyncHandler(BaseRateAsyncHandler):
 
     @property
     def create_response(self):
-        if Feature.objects.filter(name=self.name).count() > 0:
+        if Feature.objects.filter(name=self.name):
             raise AsyncHandlerError("Feature '%s' already exists, and likely already "
                                     "in this Software Plan Version." % self.name)
-        new_feature, _ = Feature.objects.get_or_create(
+        new_feature, _ = Feature.objects.create(
             name=self.name,
             feature_type=self.rate_type,
         )
@@ -66,10 +66,10 @@ class SoftwareProductRateAsyncHandler(BaseRateAsyncHandler):
 
     @property
     def create_response(self):
-        if SoftwareProduct.objects.filter(name=self.name).count() > 0:
+        if SoftwareProduct.objects.filter(name=self.name):
             raise AsyncHandlerError("Product '%s' already exists, and likely already "
                                     "in this Software Plan Version." % self.name)
-        new_product, _ = SoftwareProduct.objects.get_or_create(
+        new_product, _ = SoftwareProduct.objects.create(
             name=self.name,
             product_type=self.rate_type
         )
@@ -161,14 +161,15 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
         from django_countries.data import COUNTRIES
         countries = sorted(COUNTRIES.items(), key=lambda x: x[1].encode('utf-8'))
         if self.search_string:
-            return filter(lambda x: x[1].lower().startswith(self.search_string.lower()), countries)
+            search_string = self.search_string.capitalize()
+            return filter(lambda x: x[1].startswith(search_string), countries)
         return countries
 
     @property
     def active_accounts_response(self):
         accounts = BillingAccount.objects.filter(is_active=True)
         if self.search_string:
-            accounts = accounts.filter(name__contains=self.search_string)
+            accounts = accounts.filter(name__icontains=self.search_string)
         return [(a.id, a.name) for a in accounts]
 
     @property
@@ -180,10 +181,10 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
 
     @property
     def account_response(self):
-        accounts = BillingAccount.objects
+        accounts = BillingAccount.objects.order_by('name')
         if self.search_string:
             accounts = accounts.filter(name__contains=self.search_string)
-        return [(a.id, a.name) for a in accounts.order_by('name')]
+        return [(a.id, a.name) for a in accounts]
 
     @property
     def plan_version_response(self):
@@ -236,7 +237,7 @@ class BaseSingleOptionFilterAsyncHandler(BaseAsyncHandler):
     @property
     def paginated_data(self):
         start = (self.page - 1) * self.limit
-        end = self.page * self.limit
+        end = start + self.limit
         return self.query.all()[start:end]
 
     @property
@@ -323,8 +324,7 @@ class AccountFilterAsyncHandler(BaseSingleOptionFilterAsyncHandler):
 
         if self.action == 'account_name' and self.search_string:
             query = query.filter(name__icontains=self.search_string)
-
-        if self.action == 'account_id':
+        elif self.action == 'account_id':
             query = query.exclude(
                 salesforce_account_id=None
             ).exclude(
@@ -333,8 +333,7 @@ class AccountFilterAsyncHandler(BaseSingleOptionFilterAsyncHandler):
             if self.search_string:
                 query = query.filter(
                     salesforce_account_id__istartswith=self.search_string)
-
-        if self.action == 'dimagi_contact':
+        elif self.action == 'dimagi_contact':
             query = query.exclude(
                 dimagi_contact=None
             ).exclude(
