@@ -238,6 +238,34 @@ class AutomaticCaseUpdateTest(TestCase):
             self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
     @run_with_all_backends
+    def test_match_days_before(self):
+        with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
+            self.rule2.automaticupdaterulecriteria_set = [
+                AutomaticUpdateRuleCriteria(
+                    property_name='last_visit_date',
+                    property_value='30',
+                    match_type=AutomaticUpdateRuleCriteria.MATCH_DAYS_BEFORE,
+                ),
+            ]
+            # When the case property doesn't exist, it should not match
+            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+
+            set_case_property_directly(case, 'last_visit_date', '2015-10-01')
+            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+
+            set_case_property_directly(case, 'last_visit_date', '2016-01-02')
+            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+
+            set_case_property_directly(case, 'last_visit_date', '2016-01-31')
+            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+
+            set_case_property_directly(case, 'last_visit_date', '2016-02-01')
+            self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+
+            set_case_property_directly(case, 'last_visit_date', '2016-03-01')
+            self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+
+    @run_with_all_backends
     def test_match_equal(self):
         with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
             self.rule2.automaticupdaterulecriteria_set = [
