@@ -47,7 +47,7 @@ name: autostaging
 branches:
   - dsr-multi-loc # sr 9/20
   - vellum-staging # J$ 11/13
-  #- onboarding # Jenny 9/19
+  - onboarding # Jenny 9/19
 #  - np/kill-djcelery # Nick P 10/3
   - ce/es-restore # Cal 9/4
 #  - np/upgrade-twofactor # Nick P 10/5
