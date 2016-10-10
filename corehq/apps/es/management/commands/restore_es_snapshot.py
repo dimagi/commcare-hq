@@ -20,6 +20,14 @@ class Command(BaseCommand):
             raise CommandError('Usage is restore_es_snapshot %s' % self.args)
         date = self.get_date(args)
         indices = self.get_indices(args)
+        confirm = raw_input("This command will close the following es indices to reads and writes "
+                            "for its duration: {}. Are you sure "
+                            "you wish to continue? (y/n)".format(indices))
+        if confirm.lower() != "y":
+            return
+        pillows = raw_input("Have you stopped all pillows? (y/n)")
+        if pillows.lower() != "y":
+            return
         es = get_es_new()
         client = self.get_client_and_close_indices(es, indices)
         try:

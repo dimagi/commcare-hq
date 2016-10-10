@@ -16,5 +16,5 @@ def pillow_seq_store_task():
 def create_es_snapshot_checkpoints():
     today = date.today()
     thirty_days_ago = today - timedelta(days=30)
-    ESRestorePillowCheckpoints.get_pillow_snapshots()
+    ESRestorePillowCheckpoints.create_pillow_checkpoint_snaphots()
     ESRestorePillowCheckpoints.objects.filter(date_updated__lt=thirty_days_ago).delete()
