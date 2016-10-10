@@ -230,7 +230,10 @@ def ensure_matched_revisions(change):
             change.metadata and
             change.metadata.document_rev is not None):
 
-        if change.metadata and fetched_document['_rev'] != change.metadata.document_rev:
+        fetched_rev = _convert_rev_to_int(fetched_document['_rev'])
+        stored_rev = _convert_rev_to_int(change.metadata.document_rev)
+
+        if change.metadata and (fetched_rev < stored_rev or stored_rev == -1):
             pillow_logging.warning(
                 u"Mismatched revs for {}: Cloudant rev {} vs. Changes feed rev {}".format(
                     change.id,
@@ -239,6 +242,13 @@ def ensure_matched_revisions(change):
                 )
             )
             raise DocumentMismatchError(u'Mismatched revs')
+
+
+def _convert_rev_to_int(rev):
+    try:
+        return int(rev.split('-')[0])
+    except (ValueError, AttributeError):
+        return -1
 
 
 def ensure_document_exists(change):
