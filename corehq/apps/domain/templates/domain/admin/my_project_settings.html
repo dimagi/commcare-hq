@@ -14,11 +14,6 @@
             width: 50%;
             display: inline;
         }
-
-        .matched-message {
-            display: inline;
-            padding-left: 1em;
-        }
     </style>
 {% endblock %}
 
@@ -33,7 +28,7 @@
                 $userTimezone = $('#id_user_timezone'),
                 $overrideGlobalTimezone = $('#id_override_global_tz');
 
-        var $matchMessage = $('<span class="matched-message help-block" />');
+        var $matchMessage = $('<span class="help-block" />');
         $userTimezone.parent().append($matchMessage);
 
         var $matchTzButton = $('<a href="#" class="btn btn-default" style="margin-left: 1em;" />').text("{% trans 'Reset to Default' %}");

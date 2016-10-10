@@ -327,6 +327,16 @@ class SubmissionPost(object):
             status=500,
         ).response()
 
+    @staticmethod
+    def get_blacklisted_response():
+        return OpenRosaResponse(
+            message=("This submission was blocked because of an unusual volume "
+                     "of submissions from this project space.  Please contact "
+                     "support to resolve."),
+            nature=ResponseNature.SUBMIT_ERROR,
+            status=509,
+        ).response()
+
 
 def _transform_instance_to_error(interface, e, instance):
     error_message = '{}: {}'.format(

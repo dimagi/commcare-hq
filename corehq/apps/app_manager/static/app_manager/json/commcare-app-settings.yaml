@@ -68,7 +68,7 @@
 
 - id: case_sharing
   name: "Case Sharing"
-  description: 'Allow mobile workers in the same case sharing group to share case lists.  Read more on the <a href="https://confluence.dimagi.com/display/commcarepublic/Case+Sharing"/>Help Site</a>'
+  description: 'Allow mobile workers in the same case sharing group to share case lists.  Read more on the <a href="https://confluence.dimagi.com/display/commcarepublic/Case+Sharing">Help Site</a>'
   description_format: html
   widget: bool
   default: false
@@ -78,7 +78,7 @@
 
 - id: cloudcare_enabled
   name: "CloudCare"
-  description: 'Allow mobile workers to access the web-based version of your application. Read more on the <a href="https://confluence.dimagi.com/display/commcarepublic/Using+CloudCare"/>Help Site</a>'
+  description: 'Allow mobile workers to access the web-based version of your application. Read more on the <a href="https://confluence.dimagi.com/display/commcarepublic/Using+CloudCare">Help Site</a>'
   description_format: html
   widget: bool
   default: false
@@ -149,11 +149,22 @@
   since: '2.14'
 
 - id: use_grid_menus
-  name: Use Menu Grids
-  description: Display root menu as a grid instead of a list.
-  widget: bool
+  name: Modules Menu Display
+  description: Display root menu as a list or grid.
+  values: [false, true]
+  value_names: ['List', 'Grid']
   default: false
   since: "2.24"
+  toggle: GRID_MENUS
+
+- id: grid_form_menus
+  name: Forms Menu Display
+  description: "Configure form menus display. For per-module option turn on grid view for the forms
+  menu in a module under module's settings page."
+  values: ['none', 'all', 'some']
+  value_names: ['List', 'Grid', 'Enable Menu Display Setting Per-Module']
+  default: 'none'
+  since: '2.24'
   toggle: GRID_MENUS
 
 - id: comment

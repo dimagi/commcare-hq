@@ -2,7 +2,7 @@ from couchdbkit import ResourceNotFound
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc
 from corehq.apps.commtrack.const import DAYS_IN_MONTH
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.locations.bulk import LocationImporter
 from mock import patch
 from corehq.apps.consumption.shortcuts import get_default_consumption
@@ -94,6 +94,63 @@ class LocationImportTest(CommTrackTest):
         self.assertIsNone(result['id'])
         with self.assertRaises(ResourceNotFound):
             Location.get('i-am-invalid')
+
+    def test_import_with_custom_data(self):
+        """
+        When importing locations with custom data, the data should be inserted into the location.
+        Also ensures that when the data gets updated, the location does too.
+        """
+        data = {
+            'name': 'pablo',
+            'site_code': 'colombia',
+            'data': {
+                'drug': 'weed',
+            },
+        }
+        result = import_location(self.domain.name, 'state', data)
+        location = SQLLocation.objects.get(location_id=result['id'])
+
+        self.assertEqual(location.metadata['drug'], 'weed')
+
+        # Ensure metadata change works
+        data = {
+            'name': 'pablo',
+            'site_code': 'colombia',
+            'data': {
+                'drug': 'cocaine',
+            },
+        }
+        result = import_location(self.domain.name, 'state', data)
+        location = SQLLocation.objects.get(location_id=result['id'])
+
+        self.assertEqual(location.metadata['drug'], 'cocaine')
+
+    def test_import_no_changes_needed(self):
+        """
+        Ensures that when no changes have been made, then we do not import
+        the location.
+        """
+
+        data = {
+            'name': 'pablo',
+            'site_code': 'colombia',
+            'data': {
+                'drug': 'weed',
+            },
+        }
+        result1 = import_location(self.domain.name, 'state', data)
+        result2 = import_location(self.domain.name, 'state', data)
+        self.assertEqual(result1['id'], result2['id'])
+        self.assertIn('no changes for', result2['message'])
+
+        data = {
+            'name': 'pablo',
+            'site_code': 'colombia',
+        }
+        result1 = import_location(self.domain.name, 'state', data)
+        result2 = import_location(self.domain.name, 'state', data)
+        self.assertEqual(result1['id'], result2['id'])
+        self.assertIn('no changes for', result2['message'])
 
     def test_import_with_location_id_and_wrong_domain(self):
         """

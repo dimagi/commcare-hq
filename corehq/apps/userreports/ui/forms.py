@@ -85,14 +85,18 @@ class ConfigurableReportEditForm(DocumentFormBase):
                 'configured_charts',
                 'sort_expression',
             ),
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    _("Save Changes"),
-                    type="submit",
-                    css_class="btn btn-primary",
-                ),
-            ),
         )
+        # Restrict edit for static reports
+        if not read_only:
+            self.helper.layout.append(
+                hqcrispy.FormActions(
+                    twbscrispy.StrictButton(
+                        _("Save Changes"),
+                        type="submit",
+                        css_class="btn btn-primary",
+                    ),
+                )
+            )
 
     def clean_visible(self):
         return self.cleaned_data['visible'] == 'True'

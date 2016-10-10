@@ -1,4 +1,5 @@
 import json
+from itertools import groupby
 
 from django.conf import settings
 from django.utils.safestring import mark_safe
@@ -84,3 +85,32 @@ def get_celery_stats():
             worker_info.append(' '.join([worker_name, status_html, tasks_html]))
         worker_status = '<br>'.join(worker_info)
     return mark_safe(worker_status)
+
+
+def parse_celery_workers(celery_workers):
+    """
+    Parses the response from the flower get workers api into a list of hosts
+    we expect to be running and a list of hosts we expect to be stopped
+    """
+    expect_stopped = []
+    expect_running = filter(
+        lambda hostname: not hostname.endswith('_timestamp'),
+        celery_workers.keys(),
+    )
+
+    timestamped_workers = filter(
+        lambda hostname: hostname.endswith('_timestamp'),
+        celery_workers.keys(),
+    )
+
+    def _strip_timestamp(hostname):
+        return '.'.join(hostname.split('.')[:-1])
+
+    timestamped_workers = sorted(timestamped_workers, key=_strip_timestamp)
+
+    for hostname, group in groupby(timestamped_workers, _strip_timestamp):
+
+        sorted_workers = sorted(list(group), reverse=True)
+        expect_running.append(sorted_workers.pop(0))
+        expect_stopped.extend(sorted_workers)
+    return expect_running, expect_stopped

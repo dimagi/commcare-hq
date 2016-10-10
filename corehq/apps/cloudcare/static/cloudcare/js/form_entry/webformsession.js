@@ -1,3 +1,5 @@
+/*global CodeMirror */
+
 // IE compliance
 if (!Array.prototype.indexOf) {
     Array.prototype.indexOf = function (e) {
@@ -61,7 +63,9 @@ function WebFormSession(params) {
     self.domain = params.domain;
     self.username = params.username;
     self.formplayerEnabled = params.formplayerEnabled;
+    self.debuggerEnabled = params.debuggerEnabled;
     self.post_url = params.post_url;
+    self.displayOptions = params.displayOptions;
 
     if (params.form_uid) {
         self.formSpec = {type: 'form-name', val: params.form_uid};
@@ -135,6 +139,7 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
     requestParams['session-id'] = self.session_id;
     // stupid hack for now to make up for both being used in different requests
     requestParams['session_id'] = self.session_id;
+    requestParams['debuggerEnabled'] = self.debuggerEnabled;
     if (this.blockingRequestInProgress) {
         return;
     }
@@ -176,6 +181,31 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
     }
 };
 
+WebFormSession.prototype.displayInstanceXml = function(resp) {
+    var $instanceTab = $('#debugger-xml-instance-tab'),
+        self = this,
+        codeMirror;
+
+    if (!self.debuggerEnabled || !resp.instanceXml || !resp.instanceXml.output) {
+        return;
+    }
+
+    codeMirror = CodeMirror(function(el) {
+        $('#xml-viewer-pretty').html(el);
+    }, {
+        value: resp.instanceXml.output,
+        mode: 'xml',
+        viewportMargin: Infinity,
+        readOnly: true,
+        lineNumbers: true,
+    });
+
+    $instanceTab.off();
+    $instanceTab.on('shown.bs.tab', function() {
+        codeMirror.refresh();
+    });
+};
+
 /*
  * Handles a successful request to touchforms.
  * @param {Object} response - touchforms response object
@@ -194,6 +224,7 @@ WebFormSession.prototype.handleSuccess = function(resp, callback) {
 
         try {
             callback(resp);
+            self.displayInstanceXml(resp);
         } catch (err) {
             console.error(err);
             self.onerror({message: Formplayer.Utils.touchformsError(err)});
@@ -236,6 +267,9 @@ WebFormSession.prototype.applyListeners = function() {
         'formplayer.' + Formplayer.Const.NEW_REPEAT,
         'formplayer.' + Formplayer.Const.EVALUATE_XPATH,
         'formplayer.' + Formplayer.Const.SUBMIT,
+        'formplayer.' + Formplayer.Const.NEXT_QUESTION,
+        'formplayer.' + Formplayer.Const.PREV_QUESTION,
+        'formplayer.' + Formplayer.Const.QUESTIONS_FOR_INDEX,
     ].join(' '));
     $.subscribe('formplayer.' + Formplayer.Const.SUBMIT, function(e, form) {
         self.submitForm(form);
@@ -252,6 +286,15 @@ WebFormSession.prototype.applyListeners = function() {
     $.subscribe('formplayer.' + Formplayer.Const.EVALUATE_XPATH, function(e, xpath, callback) {
         self.evaluateXPath(xpath, callback);
     });
+    $.subscribe('formplayer.' + Formplayer.Const.NEXT_QUESTION, function(e, opts) {
+        self.nextQuestion(opts);
+    });
+    $.subscribe('formplayer.' + Formplayer.Const.PREV_QUESTION, function(e, opts) {
+        self.prevQuestion(opts);
+    });
+    $.subscribe('formplayer.' + Formplayer.Const.QUESTIONS_FOR_INDEX, function(e, index) {
+        self.getQuestionsForIndex(index);
+    });
 };
 
 WebFormSession.prototype.loadForm = function($form, initLang) {
@@ -264,6 +307,7 @@ WebFormSession.prototype.loadForm = function($form, initLang) {
         'nav': 'fao',
         'uses_sql_backend': this.uses_sql_backend,
         'post_url': this.post_url,
+        'oneQuestionPerScreen': true
     };
 
     args[this.formSpec.type] = this.formSpec.val;
@@ -291,17 +335,51 @@ WebFormSession.prototype.answerQuestion = function(q) {
     var self = this;
     var ix = getIx(q);
     var answer = q.answer();
+    var oneQuestionPerScreen = (self.displayOptions === undefined) ? false : ko.utils.unwrapObservable(self.displayOptions.oneQuestionPerScreen);
 
     this.serverRequest({
             'action': Formplayer.Const.ANSWER,
             'ix': ix,
-            'answer': answer
+            'answer': answer,
+            'oneQuestionPerScreen': oneQuestionPerScreen,
         },
         function(resp) {
             $.publish('session.reconcile', [resp, q]);
             if (self.answerCallback !== undefined) {
                 self.answerCallback(self.session_id);
             }
+        });
+};
+
+WebFormSession.prototype.nextQuestion = function(opts) {
+    this.serverRequest({
+            'action': Formplayer.Const.NEXT_QUESTION,
+        },
+        function(resp) {
+            opts.callback(parseInt(resp.currentIndex), resp.isAtLastIndex);
+            resp.title = opts.title;
+            $.publish('session.reconcile', [resp, {}]);
+        });
+};
+
+WebFormSession.prototype.prevQuestion = function(opts) {
+    this.serverRequest({
+            'action': Formplayer.Const.PREV_QUESTION,
+        },
+        function(resp) {
+            opts.callback(parseInt(resp.currentIndex), false);
+            resp.title = opts.title;
+            $.publish('session.reconcile', [resp, {}]);
+        });
+};
+
+WebFormSession.prototype.getQuestionsForIndex = function(index) {
+    this.serverRequest({
+            'action': Formplayer.Const.QUESTIONS_FOR_INDEX,
+            'ix': index,
+        },
+        function(resp) {
+            $.publish('session.reconcile', [resp, {}]);
         });
 };
 
@@ -404,7 +482,7 @@ WebFormSession.prototype.serverError = function(q, resp) {
 WebFormSession.prototype.initForm = function(args, $form) {
     var self = this;
     this.serverRequest(args, function(resp) {
-        self.renderFormXml(resp, $form);
+        self.renderFormXml(resp, $form, self.displayOptions);
         self.onload(self, resp);
     });
 };
@@ -413,4 +491,5 @@ WebFormSession.prototype.renderFormXml = function (resp, $form) {
     var self = this;
     self.session_id = self.session_id || resp.session_id;
     self.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $form);
+    self.displayInstanceXml(resp);
 };

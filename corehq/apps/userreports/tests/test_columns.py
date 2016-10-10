@@ -195,7 +195,7 @@ class TestExpandedColumn(TestCase):
         self.addCleanup(report_config.delete)
         data_source = ReportFactory.from_spec(report_config)
 
-        return data_source, data_source.column_configs[0]
+        return data_source, data_source.top_level_columns[0]
 
     def setUp(self):
         super(TestExpandedColumn, self).setUp()

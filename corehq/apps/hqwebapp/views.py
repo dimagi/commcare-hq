@@ -36,12 +36,14 @@ import httpagentparser
 from couchdbkit import ResourceNotFound
 from two_factor.views import LoginView
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
+from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 
 from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
 from soil import DownloadBase
 from soil import views as soil_views
@@ -146,7 +148,7 @@ def redirect_to_default(req, domain=None):
                 couch_user = req.couch_user
 
                 if (couch_user.is_commcare_user() and
-                        couch_user.can_view_any_reports(domain)):
+                        couch_user.can_view_some_reports(domain)):
                     url = reverse("cloudcare_main", args=[domain, ""])
                 else:
                     from corehq.apps.dashboard.views import dashboard_default
@@ -1121,4 +1123,16 @@ def toggles_js(request, domain, template='hqwebapp/js/toggles_template.js'):
     return render(request, template, {
         'toggles_dict': toggles.toggle_values_by_name(username=request.user.username, domain=domain),
         'previews_dict': feature_previews.preview_values_by_name(domain=domain)
+    })
+
+
+@require_superuser
+def couch_doc_counts(request, domain):
+    from casexml.apps.case.models import CommCareCase
+    from couchforms.models import XFormInstance
+    start = string_to_datetime(request.GET.get('start')) if request.GET.get('start') else None
+    end = string_to_datetime(request.GET.get('end')) if request.GET.get('end') else None
+    return json_response({
+        cls.__name__: get_doc_count_in_domain_by_class(domain, cls, start, end)
+        for cls in [CommCareCase, XFormInstance]
     })

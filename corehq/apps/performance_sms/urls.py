@@ -1,9 +1,14 @@
 from django.conf.urls import patterns, url
+
 from corehq.apps.performance_sms.views import (
     ListPerformanceConfigsView,
     AddPerformanceConfigView,
     EditPerformanceConfig,
-    EditPerformanceConfigAdvanced)
+    EditPerformanceConfigAdvanced,
+    delete_performance_config,
+    sample_performance_messages,
+    send_performance_messages,
+)
 
 urlpatterns = patterns(
     'corehq.apps.performance_sms.views',
@@ -15,10 +20,10 @@ urlpatterns = patterns(
         name=EditPerformanceConfig.urlname),
     url(r'^edit/(?P<config_id>[\w-]+)/advanced/$', EditPerformanceConfigAdvanced.as_view(),
         name=EditPerformanceConfigAdvanced.urlname),
-    url(r'^delete/(?P<config_id>[\w-]+)/$', 'delete_performance_config',
+    url(r'^delete/(?P<config_id>[\w-]+)/$', delete_performance_config,
         name='performance_sms.delete_performance_messages'),
-    url(r'^sample/(?P<config_id>[\w-]+)/$', 'sample_performance_messages',
+    url(r'^sample/(?P<config_id>[\w-]+)/$', sample_performance_messages,
         name='performance_sms.sample_performance_messages'),
-    url(r'^send/(?P<config_id>[\w-]+)/$', 'send_performance_messages',
+    url(r'^send/(?P<config_id>[\w-]+)/$', send_performance_messages,
         name='performance_sms.send_performance_messages'),
 )

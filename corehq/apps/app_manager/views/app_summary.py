@@ -10,6 +10,7 @@ from django.views.generic import View
 
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
+from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule, WORKFLOW_FORM
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.views import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
@@ -44,7 +45,7 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
 
         return {
             'VELLUM_TYPES': VELLUM_TYPES,
-            'form_name_map': _get_form_name_map(self.app),
+            'form_name_map': _get_name_map(self.app),
             'langs': self.app.langs,
             'app_id': self.app.id,
         }
@@ -118,13 +119,16 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
         }
 
 
-def _get_form_name_map(app):
-    return {
-        form.unique_id: {
-            'module_name': module.name,
-            'form_name': form.name,
-        } for module in app.get_modules() for form in module.get_forms()
-    }
+def _get_name_map(app):
+    name_map = {}
+    for module in app.get_modules():
+        name_map[module.unique_id] = module.name
+        for form in module.get_forms():
+            name_map[form.unique_id] = {
+                'form_name': form.name,
+                'module_name': module.name,
+            }
+    return name_map
 
 
 def _translate_name(names, language):
@@ -133,12 +137,131 @@ def _translate_name(names, language):
     try:
         return names[language]
     except KeyError:
-        first_name = names.popitem()
-        return "{} [{}]".format(first_name[1], first_name[0])
+        first_name = names.iteritems().next()
+        return u"{} [{}]".format(first_name[1], first_name[0])
 
 
 def _get_translated_form_name(app, form_id, language):
-    return _translate_name(_get_form_name_map(app)[form_id]['form_name'], language)
+    return _translate_name(_get_name_map(app)[form_id]['form_name'], language)
+
+
+def _get_translated_module_name(app, module_id, language):
+    return _translate_name(_get_name_map(app)[module_id], language)
+
+
+APP_SUMMARY_EXPORT_HEADER_NAMES = [
+    'app',
+    'module',
+    'form',
+    'display_filter',
+    'case_list_filter',
+    'case_type',
+    'case_actions',
+    'filter',
+    'module_type',
+    'comments',
+    'end_of_form_navigation',
+]
+AppSummaryRow = namedtuple('AppSummaryRow', APP_SUMMARY_EXPORT_HEADER_NAMES)
+AppSummaryRow.__new__.__defaults__ = (None, ) * len(APP_SUMMARY_EXPORT_HEADER_NAMES)
+
+
+class DownloadAppSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
+    urlname = 'download_app_summary'
+    http_method_names = [u'get']
+
+    def get(self, request, domain, app_id):
+        language = request.GET.get('lang', 'en')
+        headers = [(self.app.name, tuple(APP_SUMMARY_EXPORT_HEADER_NAMES))]
+        data = [(self.app.name, [
+            AppSummaryRow(
+                app=self.app.name,
+                comments=self.app.comment,
+            )
+        ])]
+
+        for module in self.app.get_modules():
+            try:
+                case_list_filter = module.case_details.short.filter
+            except AttributeError:
+                case_list_filter = None
+
+            data += [
+                (self.app.name, [
+                    AppSummaryRow(
+                        app=self.app.name,
+                        module=_get_translated_module_name(self.app, module.unique_id, language),
+                        display_filter=module.module_filter,
+                        case_type=module.case_type,
+                        case_list_filter=case_list_filter,
+                        case_actions=module.case_details.short.filter if hasattr(module, 'case_details') else None,
+                        filter=module.module_filter,
+                        module_type='advanced' if isinstance(module, AdvancedModule) else 'standard',
+                        comments=module.comment,
+                    )
+                ])
+            ]
+            for form in module.get_forms():
+                post_form_workflow = form.post_form_workflow
+                if form.post_form_workflow == WORKFLOW_FORM:
+                    post_form_workflow = "form:\n{}".format(
+                        "\n".join(
+                            ["{form}: {xpath} [{datums}]".format(
+                                form=_get_translated_form_name(self.app, link.form_id, language),
+                                xpath=link.xpath,
+                                datums=", ".join(
+                                    "{}: {}".format(
+                                        datum.name, datum.xpath
+                                    ) for datum in link.datums)
+                            ) for link in form.form_links]
+                        )
+                    )
+                data += [
+                    (self.app.name, [
+                        AppSummaryRow(
+                            app=self.app.name,
+                            module=_get_translated_module_name(self.app, module.unique_id, language),
+                            form=_get_translated_form_name(self.app, form.get_unique_id(), language),
+                            display_filter=form.form_filter,
+                            case_type=form.get_case_type(),
+                            case_actions=self._get_form_actions(form),
+                            filter=form.form_filter,
+                            module_type='advanced' if isinstance(module, AdvancedModule) else 'standard',
+                            comments=form.comment,
+                            end_of_form_navigation=post_form_workflow,
+                        )
+                    ])
+                ]
+
+        export_string = StringIO()
+        export_raw(tuple(headers), data, export_string, Format.XLS_2007),
+        return export_response(
+            export_string,
+            Format.XLS_2007,
+            u'{app_name} v.{app_version} - App Summary ({lang})'.format(
+                app_name=self.app.name,
+                app_version=self.app.version,
+                lang=language
+            ),
+        )
+
+    def _get_form_actions(self, form):
+        update_types = {
+            'AdvancedOpenCaseAction': 'open',
+            'LoadUpdateAction': 'update',
+        }
+
+        if isinstance(form, AdvancedForm):
+            return "\n".join([
+                "{action_type}: {case_type} [{case_tag}]".format(
+                    action_type=update_types[type(action).__name__],
+                    case_type=action.case_type,
+                    case_tag=action.case_tag,
+                )
+                for action in form.actions.get_all_actions()
+            ])
+        else:
+            return form.get_action_type()
 
 
 CASE_SUMMARY_EXPORT_HEADER_NAMES = [

@@ -1035,6 +1035,7 @@ class TestIterationNumberExpression(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestIterationNumberExpression, cls).setUpClass()
         cls.spec = ExpressionFactory.from_spec({'type': 'base_iteration_number'})
 
     def test_default(self):

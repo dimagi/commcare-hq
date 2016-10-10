@@ -126,6 +126,7 @@ class LocationStub(object):
     A representation of location excel row
     """
     titles = LOCATION_SHEET_HEADERS
+    NOT_PROVIDED = 'NOT_PROVIDED_IN_EXCEL'
     meta_data_attrs = ['name', 'site_code', 'latitude', 'longitude', 'external_id']
 
     def __init__(self, name, site_code, location_type, parent_code, location_id,
@@ -168,8 +169,19 @@ class LocationStub(object):
         longitude = row.get(cls.titles['longitude'])
         do_delete = row.get(cls.titles['do_delete'], 'N').lower() in ['y', 'yes']
         external_id = row.get(cls.titles['external_id'])
-        custom_data = row.get(cls.titles['custom_data'])
-        uncategorized_data = row.get(cls.titles['uncategorized_data'])
+
+        def _optional_attr(attr):
+            if cls.titles[attr] in row:
+                val = row.get(cls.titles[attr])
+                if type(val) == dict and '' in val:
+                    # when excel header is 'data: ', the value is parsed as {'': ''}, but it should be {}
+                    val.pop('')
+                return val
+            else:
+                return cls.NOT_PROVIDED
+
+        custom_data = _optional_attr('custom_data')
+        uncategorized_data = _optional_attr('uncategorized_data')
         index = index
         return cls(name, site_code, location_type, parent_code, location_id,
                    do_delete, external_id, latitude, longitude, custom_data, uncategorized_data,
@@ -189,15 +201,24 @@ class LocationStub(object):
 
         for attr in self.meta_data_attrs:
             setattr(self.db_object, attr, getattr(self, attr, None))
-        self.db_object.metadata = self.custom_location_data
+        if self.custom_data != self.NOT_PROVIDED or self.uncategorized_data != self.NOT_PROVIDED:
+            self.db_object.metadata = self.custom_location_data
 
     @property
     @memoized
     def custom_location_data(self):
-        custom_data = {}
-        custom_data.update(self.custom_data)
-        custom_data.update(self.uncategorized_data)
-        return custom_data
+        # This just compiles the custom location data, the validation is done in _custom_data_errors()
+        if self.custom_data is self.NOT_PROVIDED or self.uncategorized_data is self.NOT_PROVIDED:
+            # if either of these are not provided, then existing data should be updated, not overridden
+            metadata = copy.copy(self.db_object.metadata)
+        else:
+            # if both of these are provided, then existing data should be overridden
+            metadata = {}
+        if self.custom_data != self.NOT_PROVIDED:
+            metadata.update(self.custom_data)
+        if self.uncategorized_data != self.NOT_PROVIDED:
+            metadata.update(self.uncategorized_data)
+        return metadata
 
     def autoset_location_id_or_site_code(self, old_collection):
         # if one of location_id/site_code are missing, lookup for the other in
@@ -326,10 +347,11 @@ class LocationExcelValidator(object):
 
         # all locations sheets should have correct headers
         location_stubs = []
+        optional_headers = [LOCATION_SHEET_HEADERS['custom_data'], LOCATION_SHEET_HEADERS['uncategorized_data']]
         for sheet_name, sheet_reader in sheets_by_title.items():
             if sheet_name != self.types_sheet_title:
-                actual = set(sheet_reader.fieldnames)
-                expected = set(LOCATION_SHEET_HEADERS.values())
+                actual = set(sheet_reader.fieldnames) - set(optional_headers)
+                expected = set(LOCATION_SHEET_HEADERS.values()) - set(optional_headers)
                 if actual != expected:
                     raise LocationExcelSheetError(
                         _(u"Locations sheet with title '{name}' should contain exactly '{expected}' "
@@ -606,7 +628,7 @@ class LocationTreeValidator(object):
             _(u"Problem with custom data for location '{site_code}', in sheet '{type}', at index '{i}' - '{er}'")
             .format(site_code=l.site_code, type=l.location_type, i=l.index, er=validator(l.custom_data))
             for l in self.all_listed_locations
-            if validator(l.custom_data)
+            if l.custom_data is not LocationStub.NOT_PROVIDED and validator(l.custom_data)
         ]
 
     @memoized

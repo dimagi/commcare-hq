@@ -338,12 +338,12 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
     @property
     def headers(self):
-        return DataTablesHeader(*[col.data_tables_column for col in self.data_source.columns])
+        return DataTablesHeader(*[col.data_tables_column for col in self.data_source.inner_columns])
 
     def get_ajax(self, params):
         try:
             data_source = self.data_source
-            if len(data_source.columns) > 50 and not DISABLE_COLUMN_LIMIT_IN_UCR.enabled(self.domain):
+            if len(data_source.inner_columns) > 50 and not DISABLE_COLUMN_LIMIT_IN_UCR.enabled(self.domain):
                 raise UserReportsError(_("This report has too many columns to be displayed"))
             data_source.set_filter_values(self.filter_values)
 
@@ -352,12 +352,11 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             echo = int(params.get('sEcho', 1))
             if sort_column and echo != 1:
                 data_source.set_order_by(
-                    [(data_source.column_configs[int(sort_column)].column_id, sort_order.upper())]
+                    [(data_source.top_level_columns[int(sort_column)].column_id, sort_order.upper())]
                 )
 
             datatables_params = DatatablesParams.from_request_dict(params)
             page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
-
             total_records = data_source.get_total_records()
             total_row = data_source.get_total_row() if data_source.has_total_row else None
         except UserReportsError as e:
@@ -446,7 +445,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         raw_rows = list(data.get_data())
         headers = [column.header for column in self.data_source.columns]
 
-        column_id_to_expanded_column_ids = get_expanded_columns(data.column_configs, data.config)
+        column_id_to_expanded_column_ids = get_expanded_columns(data.top_level_columns, data.config)
         column_ids = []
         for column in self.spec.report_columns:
             column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))

@@ -93,6 +93,7 @@ FORM_IGNORED_DIFFS = (
     FormJsonDiff(diff_type=u'missing', path=(u'form', u'case', u'#text'), old_value=u'', new_value=Ellipsis),
     FormJsonDiff(diff_type=u'type', path=(u'xmlns',), old_value=None, new_value=u''),
     FormJsonDiff(diff_type=u'type', path=(u'initial_processing_complete',), old_value=None, new_value=True),
+    FormJsonDiff(diff_type=u'missing', path=(u'backend_id',), old_value=Ellipsis, new_value=u'sql'),
 )
 
 CASE_IGNORED_DIFFS = (
@@ -113,7 +114,8 @@ CASE_IGNORED_DIFFS = (
     FormJsonDiff(
         diff_type=u'missing', path=(u'indices', u'[*]', u'relationship'),
         old_value=Ellipsis, new_value=u'child'
-    )
+    ),
+    FormJsonDiff(diff_type=u'missing', path=(u'backend_id',), old_value=Ellipsis, new_value=u'sql'),
 )
 
 RENAMED_FIELDS = {

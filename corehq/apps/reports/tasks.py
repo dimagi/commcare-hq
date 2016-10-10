@@ -45,11 +45,8 @@ from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.util.files import file_extention_from_filename
 from corehq.util.view_utils import absolute_reverse
 
-from .analytics.couchaccessors import (
-    get_form_ids_having_multimedia as couch_get_form_ids_having_multimedia
-)
 from .analytics.esaccessors import (
-    get_form_ids_having_multimedia as es_get_form_ids_having_multimedia,
+    get_form_ids_having_multimedia,
     scroll_case_names,
 )
 from .dbaccessors import get_all_hq_group_export_configs
@@ -283,10 +280,28 @@ def _store_excel_in_redis(file):
 
 
 @task
-def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id,
-                              export_id, zip_name, download_id, export_is_legacy):
+def build_form_multimedia_zip(
+        domain,
+        xmlns,
+        startdate,
+        enddate,
+        app_id,
+        export_id,
+        zip_name,
+        download_id,
+        export_is_legacy,
+        user_types=None,
+        group=None):
 
-    form_ids = _get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate, export_is_legacy)
+    form_ids = get_form_ids_having_multimedia(
+        domain,
+        app_id,
+        xmlns,
+        parse(startdate),
+        parse(enddate),
+        group=group,
+        user_types=user_types,
+    )
     properties = _get_export_properties(export_id, export_is_legacy)
 
     if not app_id:
@@ -302,7 +317,7 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id,
 
     case_id_to_name = _get_case_names(
         domain,
-        set.union(*map(lambda form_info: form_info['case_ids'], forms_info)),
+        set.union(*map(lambda form_info: form_info['case_ids'], forms_info)) if forms_info else set(),
     )
 
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
@@ -392,6 +407,18 @@ def _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info, case_
                     DownloadBase.set_progress(build_form_multimedia_zip, form_number + 1, num_forms)
 
 
+def _convert_legacy_indices_to_export_properties(indices):
+    # Strip the prefixed 'form' and change '.'s to '-'s
+    return set(map(
+        lambda index: '-'.join(index.split('.')[1:]),
+        # Filter out any columns that are not form questions
+        filter(
+            lambda index: index and index.startswith('form'),
+            indices,
+        ),
+    ))
+
+
 def _get_export_properties(export_id, export_is_legacy):
     """
     Return a list of strings corresponding to form questions that are
@@ -402,9 +429,9 @@ def _get_export_properties(export_id, export_is_legacy):
         if export_is_legacy:
             schema = FormExportSchema.get(export_id)
             for table in schema.tables:
-                # - in question id is replaced by . in excel exports
-                properties |= {c.display.replace('.', '-') for c in
-                               table.columns if c.display}
+                properties |= _convert_legacy_indices_to_export_properties(
+                    map(lambda column: column.index, table.columns)
+                )
         else:
             from corehq.apps.export.models import FormExportInstance
             export = FormExportInstance.get(export_id)
@@ -415,27 +442,6 @@ def _get_export_properties(export_id, export_is_legacy):
                         path_parts = path_parts[1:] if path_parts[0] == "form" else path_parts
                         properties.add("-".join(path_parts))
     return properties
-
-
-def _get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate, export_is_legacy):
-    """
-    Return a list of form ids.
-    Each form has a multimedia attachment and meets the given filters.
-    """
-    if not export_is_legacy:
-        fetch_fn = es_get_form_ids_having_multimedia
-        startdate = parse(startdate)
-        enddate = parse(enddate)
-    else:
-        fetch_fn = couch_get_form_ids_having_multimedia
-
-    return fetch_fn(
-        domain,
-        app_id,
-        xmlns,
-        startdate,
-        enddate,
-    )
 
 
 def _extract_form_attachment_info(form, properties):

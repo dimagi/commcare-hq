@@ -177,13 +177,71 @@ Container.prototype.fromJS = function(json) {
  */
 function Form(json) {
     var self = this;
+    self.displayOptions = json.displayOptions || {};
     json.children = json.tree;
     delete json.tree;
     Container.call(self, json);
     self.submitText = ko.observable('Submit');
 
+    self.currentIndex = ko.observable(0);
+    self.atLastIndex = ko.observable(false);
+
+    var _updateIndexCallback = function (ix, isAtLastIndex) {
+        self.currentIndex(ix);
+        self.atLastIndex(isAtLastIndex);
+    };
+
+    self.showInFormNavigation = ko.observable(
+        self.displayOptions.oneQuestionPerScreen !== undefined
+        && self.displayOptions.oneQuestionPerScreen() === true
+    );
+
+    self.isCurrentRequiredSatisfied = ko.computed(function () {
+        if (!self.showInFormNavigation()) return true;
+
+        return _.every(self.children(), function (q) {
+            return (q.answer() === Formplayer.Const.NO_ANSWER && !q.required())
+                || q.answer() !== null;
+        });
+    });
+
+    self.enableNextButton = ko.computed(function () {
+        if (!self.showInFormNavigation()) return false;
+
+        var allValidAndNotPending = _.every(self.children(), function (q) {
+            return q.isValid() && !q.pendingAnswer();
+        });
+        return allValidAndNotPending
+            && self.showInFormNavigation()
+            && self.isCurrentRequiredSatisfied()
+            && !self.atLastIndex();
+    });
+
+    self.enablePreviousButton = ko.computed(function () {
+        if (!self.showInFormNavigation()) return false;
+        return self.currentIndex() > 0;
+    });
+
+    self.showSubmitButton = ko.computed(function () {
+        return !self.showInFormNavigation();
+    });
+
     self.submitForm = function(form) {
         $.publish('formplayer.' + Formplayer.Const.SUBMIT, self);
+    };
+
+    self.nextQuestion = function () {
+        $.publish('formplayer.' + Formplayer.Const.NEXT_QUESTION, {
+            callback: _updateIndexCallback,
+            title: self.title(),
+        });
+    };
+
+    self.prevQuestion = function () {
+        $.publish('formplayer.' + Formplayer.Const.PREV_QUESTION, {
+            callback: _updateIndexCallback,
+            title: self.title(),
+        });
     };
 
     $.unsubscribe('session');
@@ -369,14 +427,9 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
     // Called afterRender, ensures that the debugger takes the whole screen
     self.adjustWidth = function(e) {
         var $debug = $('#instance-xml-home'),
-            $body = $('body'),
-            margin = 10;
+            $body = $('body');
 
-        // On a mobile device or preview mode
-        if ($body.width() < 768) {
-            margin = 0;
-        }
-        $debug.width($body.width() - $debug.offset().left - margin);
+        $debug.width($body.width() - $debug.offset().left);
     };
 };
 
@@ -476,6 +529,11 @@ Formplayer.Const = {
     LABEL_OFFSET: 'col-sm-offset-4',
     CONTROL_WIDTH: 'col-sm-8',
 
+    // XForm Navigation
+    QUESTIONS_FOR_INDEX: 'questions_for_index',
+    NEXT_QUESTION: 'next_index',
+    PREV_QUESTION: 'prev_index',
+
     // XForm Actions
     NEW_FORM: 'new-form',
     ANSWER: 'answer',
@@ -501,6 +559,9 @@ Formplayer.Const = {
     CONTROL_LABEL: 11,
     CONTROL_AUDIO_CAPTURE: 12,
     CONTROL_VIDEO_CAPTURE: 13,
+
+    //knockout timeouts
+    KO_ENTRY_TIMEOUT: 500,
 
 };
 
@@ -540,6 +601,7 @@ Formplayer.Utils.answersEqual = function(answer1, answer2) {
 Formplayer.Utils.initialRender = function(formJSON, resourceMap, $div) {
     var form = new Form(formJSON),
         $debug = $('#cloudcare-debugger'),
+        $webformsNav = $('#webforms-nav'),
         cloudCareDebugger;
     Formplayer.resourceMap = resourceMap;
     ko.cleanNode($div[0]);
@@ -549,6 +611,11 @@ Formplayer.Utils.initialRender = function(formJSON, resourceMap, $div) {
         cloudCareDebugger = new Formplayer.ViewModels.CloudCareDebugger();
         ko.cleanNode($debug[0]);
         $debug.koApplyBindings(cloudCareDebugger);
+    }
+
+    if ($webformsNav.length) {
+        ko.cleanNode($webformsNav[0]);
+        $webformsNav.koApplyBindings(form);
     }
 
     return form;
