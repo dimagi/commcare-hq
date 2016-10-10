@@ -15,7 +15,7 @@ class NotificationTest(TestCase):
         self.user = User()
         self.user.username = 'mockmock@mockmock.com'
         self.user.save()
-        self.couch_user = WebUser(username=self.user.username)
+        self.couch_user = WebUser(username=self.user.username, domains=['test-dom'])
 
     def tearDown(self):
         self.note.delete()
@@ -66,5 +66,28 @@ class NotificationTest(TestCase):
             content="old notification", url="http://dimagi.com", type="info",
             activated=notification_activated, is_active=True
         )
-        notes = Notification.get_by_user(self.user)
+        notes = Notification.get_by_user(self.user, self.couch_user)
         self.assertEqual(len(notes), 1)
+
+    def test_domain_specific_notification(self):
+        self.note.activate()
+        notes = Notification.get_by_user(self.user, self.couch_user)
+        self.assertEqual(len(notes), 1)
+
+        # notification is for a domain the user is not a member of
+        note1 = Notification.objects.create(
+            content="dom notification", url="http://dimagi.com", type="info",
+            domain_specific=True, domains=['dom']
+        )
+        note1.activate()
+        notes = Notification.get_by_user(self.user, self.couch_user)
+        self.assertEqual(len(notes), 1)
+
+        #notification is for the users domain
+        note2 = Notification.objects.create(
+            content="test dom notification", url="http://dimagi.com", type="info",
+            domain_specific=True, domains=['test-dom']
+        )
+        note2.activate()
+        notes = Notification.get_by_user(self.user, self.couch_user)
+        self.assertEqual(len(notes), 2)
