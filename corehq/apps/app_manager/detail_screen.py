@@ -280,7 +280,7 @@ class TimeAgo(FormattedDetailColumn):
 @register_format_type('distance')
 class Distance(FormattedDetailColumn):
     XPATH_FUNCTION = u"if(here() = '' or {xpath} = '', '', concat(round(distance({xpath}, here()) div 100) div 10, ' km'))"
-    SORT_XPATH_FUNCTION = u'if({xpath} = '', 2147483647, round(distance({xpath}, here())))'
+    SORT_XPATH_FUNCTION = u"if({xpath} = '', 2147483647, round(distance({xpath}, here())))"
     SORT_TYPE = 'double'
 
 
