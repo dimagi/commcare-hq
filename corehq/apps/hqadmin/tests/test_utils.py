@@ -91,20 +91,20 @@ class TestParseCeleryWorkers(SimpleTestCase):
 
 @generate_cases([
     # Ensures we correctly parse a single regular worker
-    ({'regular_host': True}, (['regular_host'], [])),
+    ({'regular_host': True}, ['regular_host']),
     # Ensures we correctly parse a single timestamped worker
-    ({'main_.20_timestamp': True}, (['main_.20_timestamp'], [])),
+    ({'main_.20_timestamp': True}, ['main_.20_timestamp']),
     # Ensures we parse timestamped and regular
     ({
         'main_.40_timestamp': True,
         'regular_host': True,
-    }, (['regular_host', 'main_.40_timestamp'], [])),
+    }, ['regular_host', 'main_.40_timestamp']),
     # Ensures we correctly parse multiple timestamped workers
     ({
         'main_.40_timestamp': True,
         'main_.20_timestamp': True,
         'main_.30_timestamp': True,
-    }, (['main_.40_timestamp'], ['main_.30_timestamp', 'main_.20_timestamp'])),
+    }, ['main_.40_timestamp']),
 
     # Ensures we correctly parse multiple timestamped workers
     ({
@@ -113,10 +113,7 @@ class TestParseCeleryWorkers(SimpleTestCase):
         'main_.30_timestamp': True,
         'secondary_.30_timestamp': True,
         'secondary_.20_timestamp': True,
-    }, (
-        ['main_.40_timestamp', 'secondary_.30_timestamp'],
-        ['main_.30_timestamp', 'main_.20_timestamp', 'secondary_.20_timestamp'],
-    )),
+    }, ['main_.40_timestamp', 'secondary_.30_timestamp']),
 
 ], TestParseCeleryWorkers)
 def test_parse_celery_workers(self, workers, expected):

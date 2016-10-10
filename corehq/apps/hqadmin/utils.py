@@ -92,7 +92,6 @@ def parse_celery_workers(celery_workers):
     Parses the response from the flower get workers api into a list of hosts
     we expect to be running and a list of hosts we expect to be stopped
     """
-    expect_stopped = []
     expect_running = filter(
         lambda hostname: not hostname.endswith('_timestamp'),
         celery_workers.keys(),
@@ -112,5 +111,4 @@ def parse_celery_workers(celery_workers):
 
         sorted_workers = sorted(list(group), reverse=True)
         expect_running.append(sorted_workers.pop(0))
-        expect_stopped.extend(sorted_workers)
-    return expect_running, expect_stopped
+    return expect_running
