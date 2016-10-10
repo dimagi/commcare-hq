@@ -109,7 +109,8 @@ class CloudcareMain(View):
             apps = get_cloudcare_apps(domain)
             if request.project.use_cloudcare_releases:
 
-                if toggles.CLOUDCARE_LATEST_BUILD.enabled(domain):
+                if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or
+                        toggles.CLOUDCARE_LATEST_BUILD.enabled(request.couch_user.username)):
                     get_cloudcare_app = get_latest_build_doc
                 else:
                     get_cloudcare_app = get_latest_released_app_doc
