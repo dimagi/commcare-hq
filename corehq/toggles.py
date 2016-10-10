@@ -934,7 +934,7 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     'use_latest_build_cloudcare',
     'Uses latest build for cloudcare instead of latest starred',
     TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 
