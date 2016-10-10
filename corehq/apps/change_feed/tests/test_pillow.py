@@ -111,6 +111,13 @@ class TestElasticProcessorPillows(SimpleTestCase):
             data_source_type='couch',
             data_source_name='test_commcarehq'
         )
+        newer_metadata = ChangeMeta(
+            document_id='test-id',
+            # Rev is lower than the rev in the fetched document and we should not throw an error
+            document_rev='2-me',
+            data_source_type='couch',
+            data_source_name='test_commcarehq'
+        )
         stale_metadata = ChangeMeta(
             document_id='test-id',
             document_rev='4-me',  # Rev is higher than the rev in the fetched document so it is stale
@@ -145,6 +152,18 @@ class TestElasticProcessorPillows(SimpleTestCase):
                     sequence_id='3',
                     document=document,
                     metadata=good_metadata
+                )
+            )
+        except DocumentMismatchError:
+            self.fail('Incorectly raise a DocumentMismatchError for matching revs')
+
+        try:
+            self.pillow.process_change(
+                Change(
+                    id='test-id',
+                    sequence_id='3',
+                    document=document,
+                    metadata=newer_metadata
                 )
             )
         except DocumentMismatchError:
