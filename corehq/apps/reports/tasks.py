@@ -370,9 +370,9 @@ def _expose_download(fpath, use_transfer, zip_name, download_id, num_forms):
 
 
 def _format_filename(form_info, question_id, extension, case_id_to_name):
-    filename = u"{}-user_{}-form_{}{}".format(
+    filename = u"{}-{}-form_{}{}".format(
         unidecode(question_id),
-        form_info['form'].user_id or 'unknown',
+        form_info['form'].get_data('form/meta/username') or form_info['form'].user_id or 'user_unknown',
         form_info['form'].form_id or 'unknown',
         extension
     )
