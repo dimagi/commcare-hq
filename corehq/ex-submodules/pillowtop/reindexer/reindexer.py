@@ -58,11 +58,14 @@ class PillowChangeProviderReindexer(PillowReindexer):
         return options
 
     def reindex(self):
-        for change in self.change_provider.iter_all_changes(start_from=self.start_from):
+        for i, change in enumerate(self.change_provider.iter_all_changes(start_from=self.start_from)):
             try:
                 self.pillow.process_change(change)
             except Exception:
                 pillow_logging.exception("Unable to process change: %s", change.id)
+
+            if i % 1000:
+                pillow_logging.info("Processed %s docs", i)
 
 
 def _clean_index(es, index_info):
