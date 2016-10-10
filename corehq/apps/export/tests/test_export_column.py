@@ -37,6 +37,30 @@ class TestExportColumn(SimpleTestCase):
         col = ExportColumn(transform='deid_date')
         self.assertEqual(col.transform, 'deid_date')
 
+    def test_get_value(self):
+        column = ExportColumn(
+            item=ExportItem(
+                path=[PathNode(name='form'), PathNode(name='q1')],
+            ),
+        )
+        doc = {"q1": "answer"}
+        self.assertEqual(
+            column.get_value('domain', 'docid', doc, [PathNode(name='form')]),
+            "answer",
+        )
+
+    def test_get_value_with_text(self):
+        column = ExportColumn(
+            item=ExportItem(
+                path=[PathNode(name='form'), PathNode(name='q1')],
+            ),
+        )
+        doc = {"q1": {'#text': "answer"}}
+        self.assertEqual(
+            column.get_value('domain', 'docid', doc, [PathNode(name='form')]),
+            "answer",
+        )
+
 
 class SplitColumnTest(SimpleTestCase):
 
