@@ -74,7 +74,7 @@ class ESRestorePillowCheckpoints(models.Model):
     date_updated = models.DateField()
 
     @classmethod
-    def create_pillow_checkpoint_snaphots(cls):
+    def create_pillow_checkpoint_snapshots(cls):
         for pillow in get_all_pillow_instances():
             checkpoint = pillow.checkpoint
             db_seq = checkpoint.get_current_sequence_id()
