@@ -161,8 +161,18 @@ class ExportsPermissionsMixin(object):
 
     @property
     def has_view_permissions(self):
-        report_to_check = FORM_EXPORT_PERMISSION if self.form_or_case == 'form' else CASE_EXPORT_PERMISSION
-        return has_permission_to_view_report(self.request.couch_user, self.domain, report_to_check)
+        permissions_to_check = []
+        if self.form_or_case is None:
+            permissions_to_check = [FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION]
+        elif self.form_or_case == "form":
+            permissions_to_check = [FORM_EXPORT_PERMISSION]
+        elif self.form_or_case == "case":
+            permissions_to_check = [CASE_EXPORT_PERMISSION]
+
+        for permission in permissions_to_check:
+            if not has_permission_to_view_report(self.request.couch_user, self.domain, permission):
+                return False
+        return True
 
     @property
     def has_deid_view_permissions(self):
@@ -1231,7 +1241,7 @@ class DashboardFeedListView(BaseExportListView):
     template_name = 'export/dashboard_feed_list.html'
     urlname = 'list_dashboard_feeds'
     page_title = ugettext_lazy("Excel Dashboard Integration")
-    form_or_case = "form"  # TODO: This is gonna need to change...
+    form_or_case = None  # This view lists both case and form feeds
     allow_bulk_export = False
 
     @property
