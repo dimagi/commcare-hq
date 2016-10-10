@@ -75,4 +75,4 @@ submodules:
     branches: []
   deployment/commcare-hq-deploy:
     branches:
-      - revert-122-revert-118-br/celery-bash
+      - br/generalize-celery-bash
