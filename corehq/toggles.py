@@ -876,15 +876,6 @@ SEND_UCR_REBUILD_INFO = StaticToggle(
     [NAMESPACE_USER]
 )
 
-
-ZAPIER_INTEGRATION = StaticToggle(
-    'zapier_integration',
-    'Allow to use domain in Zapier application',
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
-)
-
-
 EMG_AND_REC_SMS_HANDLERS = StaticToggle(
     'emg_and_rec_sms_handlers',
     'Enable emergency and receipt sms handlers used in ILSGateway',
