@@ -58,10 +58,9 @@
                           placeholder="XPath Expression"
                           rows="1"
                           class="form-control vertical-resize"
-                          data-bind="
-                            text: formLink.xpath,
-                            value: formLink.xpath
-                "></textarea>
+                          data-bind="text: formLink.xpath, value: formLink.xpath"
+                          spellcheck="false"
+                ></textarea>
             </div>
         </div>
         <div class="row">
@@ -113,7 +112,8 @@
                                           placeholder="XPath Expression"
                                           rows="1"
                                           data-bind="text: xpath, value: xpath"
-                                          class="form-control">
+                                          class="form-control"
+                                          spellcheck="false">
                                 </textarea>
                             </div>
                         </div>
