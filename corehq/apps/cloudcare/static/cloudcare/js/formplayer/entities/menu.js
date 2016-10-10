@@ -68,6 +68,8 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             var domain = user.domain;
             var language = user.language;
             var formplayerUrl = user.formplayer_url;
+            var displayOptions = user.displayOptions || {};
+
 
             var menus = new Entities.MenuSelectCollection({
 
@@ -88,6 +90,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                         "query_dictionary": params.queryDict,
                         "previewCommand": params.previewCommand,
                         "installReference": params.installReference,
+                        "oneQuestionPerScreen": ko.utils.unwrapObservable(displayOptions.oneQuestionPerScreen),
                     });
 
                     if (options.steps) {

@@ -55,6 +55,7 @@ class StaticChoiceProviderTest(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(StaticChoiceProviderTest, cls).setUpClass()
         cls.choice_provider = StaticChoiceProvider([Choice('1', 'One'), Choice('2', 'Two'), Choice('3', 'Three')])
 
     def test_query_no_search(self):

@@ -1,6 +1,7 @@
-from django.conf.urls import *
+from django.conf.urls import patterns, url
+
+from corehq.messaging.smsbackends.unicel.views import incoming
 
 urlpatterns = patterns('',         
-    url(r'^in/$', 'corehq.messaging.smsbackends.unicel.views.incoming'),
+    url(r'^in/$', incoming, name='incoming'),
 )
-

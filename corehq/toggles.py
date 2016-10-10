@@ -383,13 +383,6 @@ HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
     [NAMESPACE_USER],
 )
 
-REMOTE_APPS = StaticToggle(
-    'remote-apps',
-    'Allow creation of remote applications',
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN],
-)
-
 CAN_EDIT_EULA = StaticToggle(
     'can_edit_eula',
     "Whether this user can set the custom eula and data sharing internal project options. "
@@ -556,7 +549,14 @@ API_BLACKLIST = StaticToggle(
     'API_BLACKLIST',
     ("Blacklist API access to a user or domain that spams us"),
     TAG_EXPERIMENTAL,
-    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER]
+    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
+FORM_SUBMISSION_BLACKLIST = StaticToggle(
+    'FORM_SUBMISSION_BLACKLIST',
+    ("Blacklist form submissions from a domain that spams us"),
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 
@@ -801,7 +801,8 @@ GRID_MENUS = StaticToggle(
     'grid_menus',
     'Allow using grid menus on Android',
     TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Grid+Views',
 )
 
 NEW_EXPORTS = StaticToggle(
@@ -816,8 +817,8 @@ TF_USES_SQLITE_BACKEND = PredictablyRandomToggle(
     'Use a SQLite backend for Touchforms',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    0.8,
-    always_disabled=['hsph-betterbirth', 'iquitos'],
+    1,
+    always_disabled=['hsph-betterbirth', 'iquitos', 'malawi-fp-study', 'possiblehealth'],
 )
 
 
@@ -933,5 +934,13 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     'use_latest_build_cloudcare',
     'Uses latest build for cloudcare instead of latest starred',
     TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+
+APP_BUILDER_NOTIFICATIONS = StaticToggle(
+    'app_builder_notifications',
+    'Enable app builder notifications on duplicate form edits.',
+    TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN]
 )

@@ -1,6 +1,7 @@
 import time
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
+from elasticsearch import TransportError
 
 import six
 from corehq.apps.change_feed.document_types import is_deletion
@@ -179,7 +180,7 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
     @staticmethod
     def _doc_to_change(doc):
         return Change(
-            id=doc['_id'], sequence_id=None, document=doc, deleted=is_deletion(doc['doc_type'])
+            id=doc['_id'], sequence_id=None, document=doc, deleted=is_deletion(doc.get('doc_type'))
         )
 
 
@@ -224,4 +225,11 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
 
         processor.run()
 
-        _prepare_index_for_usage(self.es, self.index_info)
+        try:
+            _prepare_index_for_usage(self.es, self.index_info)
+        except TransportError:
+            raise Exception(
+                'The Elasticsearch index was missing after reindex! If the index was manually deleted '
+                'you can fix this by running ./manage.py ptop_reindexer_v2 [index-name] --reset or '
+                './manage.py ptop_preindex --reset.'
+            )

@@ -147,19 +147,3 @@ def get_ledger_values_for_case_as_of(domain, case_id, section_id, as_of, program
         'product_id'
     )
     return dict(results)
-
-
-def get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate):
-    from couchforms.models import XFormInstance
-
-    key = [domain, app_id, xmlns]
-    form_ids = {
-        f['id'] for f in
-        XFormInstance.get_db().view(
-            "attachments/attachments",
-            start_key=key + [startdate],
-            end_key=key + [enddate, {}],
-            reduce=False
-        )
-    }
-    return form_ids

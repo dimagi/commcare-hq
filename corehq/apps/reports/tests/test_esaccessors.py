@@ -1,5 +1,6 @@
 import pytz
 import uuid
+from mock import patch
 
 from datetime import datetime, timedelta
 from django.test import SimpleTestCase
@@ -10,7 +11,7 @@ from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.models import CommCareCaseSQL, CaseTransaction
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
-from corehq.pillows.mappings.group_mapping import GROUP_INDEX
+from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from dimagi.utils.dates import DateSpan
@@ -25,6 +26,7 @@ from corehq.form_processor.utils import TestFormMetadata
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.const import CASE_ACTION_CREATE
 from corehq.pillows.xform import transform_xform_for_elasticsearch
+from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.pillows.case import transform_case_for_elasticsearch
 from corehq.apps.reports.analytics.esaccessors import (
     get_submission_counts_by_user,
@@ -61,18 +63,29 @@ class BaseESAccessorsTest(SimpleTestCase):
         super(BaseESAccessorsTest, self).setUp()
         with trap_extra_setup(ConnectionError):
             self.es = get_es_new()
-            ensure_index_deleted(self.es_index_info.index)
+            self._delete_es_index()
             self.domain = 'esdomain'
-            initialize_index_and_mapping(self.es, self.es_index_info)
+            if isinstance(self.es_index_info, (list, tuple)):
+                for index_info in self.es_index_info:
+                    initialize_index_and_mapping(self.es, index_info)
+            else:
+                initialize_index_and_mapping(self.es, self.es_index_info)
 
     def tearDown(self):
-        ensure_index_deleted(self.es_index_info.index)
+        self._delete_es_index()
         super(BaseESAccessorsTest, self).tearDown()
+
+    def _delete_es_index(self):
+        if isinstance(self.es_index_info, (list, tuple)):
+            for index_info in self.es_index_info:
+                ensure_index_deleted(index_info.index)
+        else:
+            ensure_index_deleted(self.es_index_info.index)
 
 
 class TestFormESAccessors(BaseESAccessorsTest):
 
-    es_index_info = XFORM_INDEX_INFO
+    es_index_info = [XFORM_INDEX_INFO, GROUP_INDEX_INFO]
 
     def _send_form_to_es(
             self,
@@ -98,8 +111,21 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
         es_form = transform_xform_for_elasticsearch(form_pair.json_form)
         send_to_elasticsearch('forms', es_form)
-        self.es.indices.refresh(self.es_index_info.index)
+        self.es.indices.refresh(XFORM_INDEX_INFO.index)
         return form_pair
+
+    def _send_group_to_es(self, _id=None, users=None):
+        group = Group(
+            domain=self.domain,
+            name='narcos',
+            users=users or [],
+            case_sharing=False,
+            reporting=False,
+            _id=_id or uuid.uuid4().hex,
+        )
+        send_to_elasticsearch('groups', group.to_json())
+        self.es.indices.refresh(GROUP_INDEX_INFO.index)
+        return group
 
     @run_with_all_backends
     def test_get_forms(self):
@@ -161,6 +187,108 @@ class TestFormESAccessors(BaseESAccessorsTest):
             xmlns,
             start,
             end
+        )
+        self.assertEqual(len(form_ids), 1)
+
+    @run_with_all_backends
+    def test_get_form_ids_having_multimedia_with_user_types(self):
+        start = datetime(2013, 7, 1)
+        end = datetime(2013, 7, 30)
+        xmlns = 'http://a.b.org'
+        app_id = '1234'
+        user_id = 'abc'
+
+        with patch('corehq.pillows.xform.get_user_type', lambda _: MOBILE_USER_TYPE):
+            self._send_form_to_es(
+                app_id=app_id,
+                xmlns=xmlns,
+                received_on=datetime(2013, 7, 2),
+                user_id=user_id,
+                attachment_dict={
+                    'my_image': {'content_type': 'image/jpg'}
+                }
+            )
+
+        with patch('corehq.pillows.xform.get_user_type', lambda _: WEB_USER_TYPE):
+            self._send_form_to_es(
+                app_id=app_id,
+                xmlns=xmlns,
+                received_on=datetime(2013, 7, 2),
+                user_id=user_id,
+                attachment_dict={
+                    'my_image': {'content_type': 'image/jpg'}
+                }
+            )
+
+        form_ids = get_form_ids_having_multimedia(
+            self.domain,
+            app_id,
+            xmlns,
+            start,
+            end,
+            user_types=[MOBILE_USER_TYPE]
+        )
+        self.assertEqual(len(form_ids), 1)
+
+        form_ids = get_form_ids_having_multimedia(
+            self.domain,
+            app_id,
+            xmlns,
+            start,
+            end,
+            user_types=[MOBILE_USER_TYPE, WEB_USER_TYPE]
+        )
+        self.assertEqual(len(form_ids), 2)
+
+        form_ids = get_form_ids_having_multimedia(
+            self.domain,
+            app_id,
+            xmlns,
+            start,
+            end,
+            user_types=[]
+        )
+        self.assertEqual(len(form_ids), 2)
+
+    @run_with_all_backends
+    def test_get_form_ids_having_multimedia_with_group(self):
+        start = datetime(2013, 7, 1)
+        end = datetime(2013, 7, 30)
+        xmlns = 'http://a.b.org'
+        app_id = '1234'
+        user_id = 'escobar'
+
+        self._send_group_to_es(
+            _id='medellin',
+            users=['escobar'],
+        )
+
+        self._send_form_to_es(
+            app_id=app_id,
+            xmlns=xmlns,
+            received_on=datetime(2013, 7, 2),
+            user_id=user_id,
+            attachment_dict={
+                'my_image': {'content_type': 'image/jpg'}
+            }
+        )
+        self._send_form_to_es(
+            app_id=app_id,
+            xmlns=xmlns,
+            received_on=datetime(2013, 7, 2),
+            user_id='murphy',
+            attachment_dict={
+                'my_image': {'content_type': 'image/jpg'}
+            }
+        )
+
+        form_ids = get_form_ids_having_multimedia(
+            self.domain,
+            app_id,
+            xmlns,
+            start,
+            end,
+            group='medellin',
         )
         self.assertEqual(len(form_ids), 1)
 
@@ -842,7 +970,7 @@ class TestGroupESAccessors(SimpleTestCase):
             _id=_id or uuid.uuid4().hex,
         )
         send_to_elasticsearch('groups', group.to_json())
-        self.es.indices.refresh(GROUP_INDEX)
+        self.es.indices.refresh(GROUP_INDEX_INFO.index)
         return group
 
     def test_group_query(self):

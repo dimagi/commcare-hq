@@ -78,12 +78,14 @@ describe('Integration', function() {
         // Fire off a change in the string question
         stringQ1.entry.rawAnswer('ben');
         this.clock.tick(stringQ1.throttle);
+        this.clock.tick(Formplayer.Const.KO_ENTRY_TIMEOUT);
 
         // once we receive signal to answer question, pending answer should be set
         assert.equal(stringQ1.pendingAnswer(), 'ben');
 
         // Fire off a change in the other question before we've reconciled first one
         stringQ2.entry.rawAnswer('lisa');
+        this.clock.tick(Formplayer.Const.KO_ENTRY_TIMEOUT);
         assert.equal(stringQ2.pendingAnswer(), 'lisa');
 
         // Have server respond to the string question before string changes
@@ -119,11 +121,13 @@ describe('Integration', function() {
 
         // Fire off a change in the string question
         stringQ.entry.rawAnswer('ben');
+        this.clock.tick(Formplayer.Const.KO_ENTRY_TIMEOUT);
         this.clock.tick(stringQ.throttle);
         assert.equal(stringQ.pendingAnswer(), 'ben');
 
         // Fire off a change in the multi question
         multiQ.entry.rawAnswer(["1"]);
+        this.clock.tick(Formplayer.Const.KO_ENTRY_TIMEOUT);
         assert.sameMembers(multiQ.pendingAnswer(), [1]);
 
         // Have server respond to the string question before multi changes

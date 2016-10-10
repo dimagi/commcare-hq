@@ -35,6 +35,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestExportInstanceGeneration, cls).setUpClass()
         cls.app_id = '1234'
         cls.schema = FormExportDataSchema(
             group_schemas=[
@@ -158,6 +159,7 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestExportInstanceGenerationMultipleApps, cls).setUpClass()
         cls.app_id = '1234'
         cls.second_app_id = '5678'
         cls.schema = FormExportDataSchema(
