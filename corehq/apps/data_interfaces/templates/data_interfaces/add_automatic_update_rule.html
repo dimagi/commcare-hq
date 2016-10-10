@@ -76,7 +76,7 @@
             ga_track_event('Automatic Case Closure', 'Rules', 'Remove');
         };
         $scope.matchesDaysSince = function(condition) {
-            return condition.property_match_type == 'DAYS';
+            return condition.property_match_type === 'DAYS' || condition.property_match_type === 'DAYS_BEFORE';
         };
         $scope.matchesHasValue = function(condition) {
             return condition.property_match_type == 'HAS_VALUE';
@@ -126,6 +126,7 @@
                         <select class="select form-control"
                                 ng-model="condition.property_match_type">
                             <option value="DAYS">{% trans "after date by" %}</option>
+                            <option value="DAYS_BEFORE">{% trans "before date by" %}</option>
                             <option value="EQUAL">{% trans "equals" %}</option>
                             <option value="NOT_EQUAL">{% trans "does not equal" %}</option>
                             <option value="HAS_VALUE">{% trans "has a value" %}</option>
