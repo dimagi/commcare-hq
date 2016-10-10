@@ -1384,6 +1384,7 @@ class DashboardFeedListView(BaseExportListView):
             'groups': groups,
         })
 
+
 class FormExportListView(BaseExportListView):
     urlname = 'list_form_exports'
     page_title = ugettext_noop("Export Forms")
@@ -1701,6 +1702,10 @@ class DashboardFeedMixin(object):
         context['format_options'] = ["html"]
         return context
 
+    @property
+    def report_class(self):
+        return DashboardFeedListView
+
 
 class CreateNewCaseFeedView(DashboardFeedMixin, CreateNewCustomCaseExportView):
     urlname = 'new_case_feed_export'
@@ -1833,13 +1838,17 @@ class DeleteNewCustomExportView(BaseModifyNewCustomView):
     def export_id(self):
         return self.kwargs.get('export_id')
 
-    def commit(self, request):
-        self.export_type = self.kwargs.get('export_type')
+    @property
+    @memoized
+    def export_instance(self):
         try:
-            export = self.export_instance_cls.get(self.export_id)
+            return self.export_instance_cls.get(self.export_id)
         except ResourceNotFound:
             raise Http404()
 
+    def commit(self, request):
+        self.export_type = self.kwargs.get('export_type')
+        export = self.export_instance
         export.delete()
         messages.success(
             request,
@@ -1850,6 +1859,21 @@ class DeleteNewCustomExportView(BaseModifyNewCustomView):
             )
         )
         return export._id
+
+    @property
+    @memoized
+    def report_class(self):
+        # The user will be redirected to the view class returned by this function after a successfull deletion
+        if self.export_instance.is_daily_saved_export:
+            if self.export_instance.export_format == "html":
+                return DashboardFeedListView
+            raise NotImplementedError  # TODO: Replace with daily saved export list view when that has been implemented
+        elif self.export_instance.type == FORM_EXPORT:
+            return FormExportListView
+        elif self.export_instance.type == CASE_EXPORT:
+            return CaseExportListView
+        else:
+            raise Exception("Export does not match any export list views!")
 
 
 class GenericDownloadNewExportMixin(object):
