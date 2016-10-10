@@ -199,6 +199,9 @@ class ExportColumn(DocumentSchema):
         Transform the given value with the transform specified in self.item.transform.
         Also transform dates if the transform_dates flag is true.
         """
+        if isinstance(value, dict) and '#text' in value:
+            value = value.get('#text')
+
         if transform_dates:
             value = couch_to_excel_datetime(value, doc)
         if self.item.transform:
