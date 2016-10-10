@@ -129,7 +129,7 @@ class CaseDetailDistance(SimpleTestCase, TestXmlMixin):
                     </template>
                     <sort direction="descending" order="1" type="double">
                         <text>
-                            <xpath function="if(gps= '', 2147483647, round(distance(case_name, here())))"/>
+                            <xpath function="if(gps = '', 2147483647, round(distance(case_name, here())))"/>
                         </text>
                     </sort>
                 </field>
