@@ -812,15 +812,12 @@ NEW_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-TF_USES_SQLITE_BACKEND = PredictablyRandomToggle(
-    'tf_sql_backend',
-    'Use a SQLite backend for Touchforms',
-    TAG_PRODUCT_PATH,
+TF_DOES_NOT_USE_SQLITE_BACKEND = StaticToggle(
+    'not_tf_sql_backend',
+    'Domains that do not use a SQLite backend for Touchforms',
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
-    1,
-    always_disabled=['hsph-betterbirth', 'iquitos', 'malawi-fp-study', 'possiblehealth'],
 )
-
 
 CUSTOM_APP_BASE_URL = StaticToggle(
     'custom_app_base_url',
