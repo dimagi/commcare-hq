@@ -19,7 +19,8 @@ def notify_form_changed(domain, couch_user, app_id, unique_form_id):
 
 
 def notify_event(domain, couch_user, app_id, unique_form_id, message):
-    message = '{} (<a href="https://confluence.dimagi.com/display/ccinternal/App+Builder+Notifications">what is this?</a>)'.format(message)
+    doc_url = 'https://confluence.dimagi.com/display/ccinternal/App+Builder+Notifications'
+    message = '{} (<a href="{}" target="_blank">what is this?</a>)'.format(message, doc_url)
     message_obj = RedisMessage(json.dumps({
         'domain': domain,
         'user_id': couch_user._id,
