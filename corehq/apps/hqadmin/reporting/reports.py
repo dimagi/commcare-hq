@@ -183,9 +183,9 @@ def get_active_countries_stats_data(domains, datespan, interval,
             .submitted(gte=f, lte=t)
             .size(0))
 
-        domains = form_query.run().aggregations.domains.keys
+        active_domains = form_query.run().aggregations.domains.keys
         countries = (DomainES()
-                .in_domains(domains)
+                .in_domains(active_domains)
                 .terms_aggregation('countries', 'countries')
                 .size(0))
 
