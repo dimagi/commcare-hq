@@ -42,17 +42,20 @@
             </div>
         </div>
         {% endif %}
-        <div class="form-group">
-            <label class="col-sm-2 control-label">
-                {% trans "Menu Mode" %}
-            </label>
-            <div class="col-sm-4">
-                <select type="text" name="put_in_root" class="form-control" id="put_in_root">
-                    <option value="false">{% trans "Display module and then forms" %}</option>
-                    <option value="true"{% if module.put_in_root %} selected{% endif %}>{% trans "Display only forms" %}</option>
-                </select>
+
+        {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or app.advanced_app_builder or module.is_surveys %}
+            <div class="form-group">
+                <label class="col-sm-2 control-label">
+                    {% trans "Menu Mode" %}
+                </label>
+                <div class="col-sm-4">
+                    <select type="text" name="put_in_root" class="form-control" id="put_in_root">
+                        <option value="false">{% trans "Display module and then forms" %}</option>
+                        <option value="true"{% if module.put_in_root %} selected{% endif %}>{% trans "Display only forms" %}</option>
+                    </select>
+                </div>
             </div>
-        </div>
+        {% endif %}
 
         {% if app.grid_display_for_some_modules %}
         <div class="form-group" id="display_style_container">
