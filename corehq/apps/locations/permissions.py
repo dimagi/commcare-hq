@@ -8,6 +8,7 @@ from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import (login_and_domain_required,
                                            domain_admin_required)
+from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.users.models import CommCareUser
 from .models import SQLLocation
 from .util import get_xform_location
@@ -18,6 +19,8 @@ LOCATION_ACCESS_DENIED = ugettext_lazy(
 )
 
 LOCATION_SAFE_TASTYPIE_RESOURCES = set()
+
+LOCATION_SAFE_HQ_REPORTS = set()
 
 
 def locations_access_required(view_fn):
@@ -179,6 +182,13 @@ def conditionally_location_safe(conditional_function):
     return _inner
 
 
+def location_safe_report(report_class):
+    if not issubclass(report_class, GenericReportView):
+        raise TypeError("This decorator can only be applied to HQ reports")
+    LOCATION_SAFE_HQ_REPORTS.add(report_class.slug)
+    return report_class
+
+
 def location_restricted_response(request):
     from corehq.apps.hqwebapp.views import no_permissions
     return no_permissions(request, message=LOCATION_ACCESS_DENIED)
@@ -196,6 +206,8 @@ def is_location_safe(view_fn, view_args, view_kwargs):
         return view_kwargs['resource_name'] in LOCATION_SAFE_TASTYPIE_RESOURCES
     if getattr(view_fn, '_conditionally_location_safe_function', False):
         return view_fn._conditionally_location_safe_function(view_fn, *view_args, **view_kwargs)
+    if getattr(view_fn, 'is_hq_report', False):
+        return view_kwargs['report_slug'] in LOCATION_SAFE_HQ_REPORTS
     return False
 
 
