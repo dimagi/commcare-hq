@@ -100,7 +100,8 @@ def direct_ccz(request, domain):
             'build_errors': errors,
             'domain': domain,
             'langs': langs,
-            'lang': lang
+            'lang': lang,
+            'in_iframe': True,
         })
         return json_response(
             {'error_html': error_html},

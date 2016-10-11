@@ -317,5 +317,12 @@
                 {% trans "Errors Building an Application" %}
             </a>
         </p>
+        {% if in_iframe %}
+        <script>
+            $('#build-errors a').each(function(index) {
+                $(this).attr('target', '_parent');
+            });
+        </script>
+        {% endif %}
     </div>
 {% endif %}
