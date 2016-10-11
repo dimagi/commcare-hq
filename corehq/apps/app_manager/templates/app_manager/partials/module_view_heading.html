@@ -15,7 +15,7 @@
     readOnlyClass: 'app-comment',
     value: '{{ module.comment|escapejs }}',
     {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
-        placeholder: 'Enter {% if module.case_type != '' %}record list{% endif %} description here',
+        placeholder: 'Enter {% if module.case_type != '' %}case list{% endif %} description here',
     {% else %}
         placeholder: '{% trans "Enter module description here"|escapejs %}',
     {% endif %}
@@ -35,7 +35,7 @@
                 {% if module.case_type == "" %}
                     {% trans "Delete Surveys" %}
                 {% else %}
-                    {% trans "Delete Record List" %}
+                    {% trans "Delete Case List" %}
                 {% endif %}
             {% else %}
                 {% trans "Delete Module" %}

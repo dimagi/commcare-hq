@@ -286,7 +286,7 @@
                     <span class="hq-help-template"
                           data-title="Why can't I delete this?"
                           data-placement="left"
-                          data-content="It's usually a bad idea to remove the registration form. If you really must, turn on <b>Allow deletion of registration form</b> in <a href='{% url "view_module" domain app.id module.id %}'>record list settings</a>."
+                          data-content="It's usually a bad idea to remove the registration form. If you really must, turn on <b>Allow deletion of registration form</b> in <a href='{% url "view_module" domain app.id module.id %}'>case list settings</a>."
                     ></span>
                 {% endif %}
             </form>
@@ -361,11 +361,7 @@
             {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or form.requires_case or form.get_action_type == 'open' %}
             <li>
                 <a id="case-configuration-tab" href="#case-configuration" data-toggle="tab">
-                    {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
-                        {% trans "Save Record" %}
-                    {% else %}
-                        {% trans "Case Management" %}
-                    {% endif %}
+                    {% trans "Case Management" %}
                 </a>
             </li>
             {% endif %}
