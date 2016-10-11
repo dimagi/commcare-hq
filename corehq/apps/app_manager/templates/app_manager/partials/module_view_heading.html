@@ -1,6 +1,30 @@
 {% load i18n %}
 {% load xforms_extras %}
+{% load hq_shared_tags %}
 
+<div class="pull-right">
+    <form action="{% url "delete_module" domain app.id module.unique_id %}" method="post">
+        {% csrf_token %}
+        <button type="submit" class="disable-on-submit btn btn-danger">
+            <i class="fa fa-trash"></i>
+            {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+                {% if module.case_type == "" %}
+                    {% trans "Delete Surveys" %}
+                {% else %}
+                    {% trans "Delete Case List" %}
+                {% endif %}
+            {% else %}
+                {% trans "Delete Module" %}
+            {% endif %}
+        </button>
+    </form>
+</div>
+
+{% if module.case_type == '' or not request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+    <h3 style="display: inline-block; margin-right: -5px;"><i class="fa fa-folder-open"></i></h3>
+{% else %}
+    <h3 style="display: inline-block; margin-right: -5px;"><i class="fa fa-list"></i></h3>
+{% endif %}
 {% inline_edit_trans module.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
 <br />
 <inline-edit params="
@@ -8,7 +32,11 @@
     id:'comment-id',
     readOnlyClass: 'app-comment',
     value: '{{ module.comment|escapejs }}',
-    placeholder: '{% trans "Enter module description here"|escapejs %}',
+    {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+        placeholder: 'Enter {% if module.case_type != '' %}case list{% endif %} description here',
+    {% else %}
+        placeholder: '{% trans "Enter module description here"|escapejs %}',
+    {% endif %}
     url: '{% url "corehq.apps.app_manager.views.edit_module_attr" domain app.id module.id 'comment' %}',
     saveValueName: 'comment',
     cols: 50,
@@ -16,14 +44,7 @@
 <br />
 
 <div id="build_errors"></div>
-<div class="pull-right">
-    <form action="{% url "delete_module" domain app.id module.unique_id %}" method="post">
-        {% csrf_token %}
-        <button type="submit" class="disable-on-submit btn btn-danger">
-            <i class="fa fa-trash"></i>
-            {% trans "Delete Module" %}
-        </button>
-    </form>
-</div>
 
-<div class="clearfix"></div>
+{% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+    <div class="clearfix"></div>
+{% endif %}
