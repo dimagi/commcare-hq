@@ -46,9 +46,11 @@
             fetchLimit: {{ fetchLimit }},
         };
         var el = $('#releases-table');
-        var releasesMain = new ReleasesMain(o);
-        _.defer(function(){ releasesMain.getMoreSavedApps(false); });
-        el.koApplyBindings(releasesMain);
+        if (el.length) {
+            var releasesMain = new ReleasesMain(o);
+            _.defer(function(){ releasesMain.getMoreSavedApps(false); });
+            el.koApplyBindings(releasesMain);
+        }
 
         var app_langs = {{ app.langs|JSON }};
         var app_profiles = {{ app.build_profiles|JSON }}
