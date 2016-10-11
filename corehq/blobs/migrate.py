@@ -122,6 +122,14 @@ It should be set to a real directory. Update localsettings.py and
 retry the migration.
 """
 
+PROCESSING_COMPLETE_MESSAGE = """
+{} of {} blobs were not found in the old blob database. It
+is possible that some blobs were deleted as part of normal
+operation during the migration if the migration took a long
+time. However, it may be cause for concern if a majority of
+the total number of migrated blobs were not found.
+"""
+
 
 def encode_content(data):
     if isinstance(data, unicode):
@@ -261,12 +269,7 @@ class BlobDbBackendMigrator(BaseDocMigrator):
     def processing_complete(self, skipped):
         super(BlobDbBackendMigrator, self).processing_complete(skipped)
         if self.not_found:
-            print("{} of {} blobs were not found in the old blob database. It "
-                  "is possible that some blobs were deleted as part of normal "
-                  "operation during the migration if the migration took a long "
-                  "time. However, it may be cause for concern if a majority of "
-                  "the total number of migrated blobs were not found."
-                  .format(self.not_found, self.total_blobs))
+            print(PROCESSING_COMPLETE_MESSAGE.format(self.not_found, self.total_blobs))
 
     def should_process(self, doc):
         return doc.get("external_blobs")
@@ -307,12 +310,7 @@ class BlobDbBackendExporter(BaseDocMigrator):
     def processing_complete(self, skipped):
         super(BlobDbBackendExporter, self).processing_complete(skipped)
         if self.not_found:
-            print("{} of {} blobs were not found in the old blob database. It "
-                  "is possible that some blobs were deleted as part of normal "
-                  "operation during the migration if the migration took a long "
-                  "time. However, it may be cause for concern if a majority of "
-                  "the total number of migrated blobs were not found."
-                  .format(self.not_found, self.total_blobs))
+            print(PROCESSING_COMPLETE_MESSAGE.format(self.not_found, self.total_blobs))
 
     def should_process(self, doc):
         return doc.get('domain') == self.domain and doc.get("external_blobs")
@@ -356,12 +354,7 @@ class SqlFormAttachmentExporter(BaseDocProcessor):
     def processing_complete(self, skipped):
         super(SqlFormAttachmentExporter, self).processing_complete(skipped)
         if self.not_found:
-            print("{} of {} blobs were not found in the old blob database. It "
-                  "is possible that some blobs were deleted as part of normal "
-                  "operation during the migration if the migration took a long "
-                  "time. However, it may be cause for concern if a majority of "
-                  "the total number of migrated blobs were not found."
-                  .format(self.not_found, self.total_blobs))
+            print(PROCESSING_COMPLETE_MESSAGE.format(self.not_found, self.total_blobs))
 
     def should_process(self, doc):
         return doc.get('domain') == self.domain and doc.get("external_blobs")
