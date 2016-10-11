@@ -43,15 +43,6 @@ REINDEX_FNS = {
 }
 
 
-def clean_options(options):
-    options = deepcopy(options)
-
-    for option in BaseCommand.option_list:
-        options.pop(option.dest, None)
-
-    return {key: value for key, value in options.items() if value is not None}
-
-
 class Command(BaseCommand):
     args = 'index'
     help = 'Reindex a pillowtop index'
@@ -96,13 +87,10 @@ class Command(BaseCommand):
             return raw_input("Are you sure you want to delete the current index (if it exists)? y/n\n") == 'y'
 
         reindexer = REINDEX_FNS[index]()
-        if not BaseCommand.option_list:
-            reindexer_options = {
-                key: value for key, value in options.items()
-                if value is not None and key in [option.dest for option in self.option_list]
-            }
-        else:  # remove when django>=1.8
-            reindexer_options = clean_options(options)
+        reindexer_options = {
+            key: value for key, value in options.items()
+            if value is not None and key in [option.dest for option in self.option_list]
+        }
         unconsumed = reindexer.consume_options(reindexer_options)
         if unconsumed:
             raise CommandError(

@@ -932,10 +932,3 @@ ONBOARDING_PROTOTYPE = StaticToggle(
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
-
-APP_BUILDER_NOTIFICATIONS = StaticToggle(
-    'app_builder_notifications',
-    'Enable app builder notifications on duplicate form edits.',
-    TAG_PRODUCT_CORE,
-    [NAMESPACE_DOMAIN]
-)

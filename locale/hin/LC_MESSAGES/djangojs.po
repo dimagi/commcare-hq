@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-10-04 19:28+0000\n"
+"POT-Creation-Date: 2016-10-11 19:29+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,17 +17,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: bower_components/bower_components/jquery-ui/jquery-ui.min.js:8
 #: bower_components/jquery-ui/jquery-ui.min.js:8
 msgid "'"
-msgstr ""
-
-#: bower_components/bower_components/underscore-legacy/test/utility.js:67
-#: bower_components/underscore-legacy/test/utility.js:67
-#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/test_underscore/utility.js:51
-#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/test_underscore/utility.js:51
-#: node_modules/underscore.string/test/test_underscore/utility.js:41
-msgid "champ"
 msgstr ""
 
 #: corehq/apps/accounting/static/accounting/js/accounting.billing_info_handler.js:85
@@ -74,16 +65,17 @@ msgid "(Default)"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:12
+#: submodules/formdesigner/_build/src/main-components.js:12
 msgid "label"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:359
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:365
 #: corehq/apps/export/static/export/js/models.js:95
 #: corehq/apps/style/static/style/js/main.js:227
 msgid "Save"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:135
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:136
 msgid "Form successfully saved"
 msgstr ""
 
@@ -1380,6 +1372,12 @@ msgstr ""
 #: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:667
 #: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:667
 msgid "true"
+msgstr ""
+
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/test_underscore/utility.js:51
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/test_underscore/utility.js:51
+#: node_modules/underscore.string/test/test_underscore/utility.js:41
+msgid "champ"
 msgstr ""
 
 #: node_modules/underscore.string/test/strings.js:285
