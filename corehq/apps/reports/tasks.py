@@ -372,7 +372,7 @@ def _expose_download(fpath, use_transfer, zip_name, download_id, num_forms):
 def _format_filename(form_info, question_id, extension, case_id_to_name):
     filename = u"{}-{}-form_{}{}".format(
         unidecode(question_id),
-        form_info['form'].get_data('form/meta/username') or form_info['form'].user_id or 'user_unknown',
+        form_info['username'] or form_info['form'].user_id or 'user_unknown',
         form_info['form'].form_id or 'unknown',
         extension
     )
@@ -469,6 +469,7 @@ def _extract_form_attachment_info(form, properties):
         'form': form,
         'attachments': [],
         'case_ids': {c['@case_id'] for c in case_blocks},
+        'username': form.get_data('form/meta/username')
     }
 
     # TODO make form.attachments always return objects that conform to a
