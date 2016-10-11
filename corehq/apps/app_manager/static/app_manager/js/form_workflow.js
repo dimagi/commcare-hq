@@ -112,12 +112,12 @@ hqDefine('app_manager/js/form_workflow.js', function() {
         self.serializedDatums = ko.observable('');
 
         self.get_form_by_id = function(form_id) {
-            return _.find(self.forms, function(form){ return form.uniqueId === form_id; })
+            return _.find(self.forms, function(form){ return form.uniqueId === form_id; });
         };
 
         self.serializeDatums = function() {
             var jsonDatums = JSON.stringify(_.map(self.datums(), function (datum) {
-                return {'name': datum.name, 'xpath': datum.xpath()}
+                return {'name': datum.name, 'xpath': datum.xpath()};
             }));
             self.serializedDatums(jsonDatums);
         };
@@ -149,10 +149,10 @@ hqDefine('app_manager/js/form_workflow.js', function() {
                 workflow.formDatumsUrl,
                 {form_id: self.formId()},
                 function (data) {
-                    self.datums(self.wrap_datums(data))
+                    self.datums(self.wrap_datums(data));
                 },
                 "json"
-            )
+            );
         };
 
         self.errors = ko.computed(function() {
