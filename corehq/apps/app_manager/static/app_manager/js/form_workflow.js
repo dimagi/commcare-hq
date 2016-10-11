@@ -108,6 +108,7 @@ hqDefine('app_manager/js/form_workflow.js', function() {
         self.autoLink = ko.observable();
         self.forms = workflow.forms || [];
         self.datums = ko.observableArray();
+        self.manualDatums = ko.observable(false);
         self.datumsFetched = ko.observable(false);
         self.serializedDatums = ko.observable('');
 
@@ -133,9 +134,23 @@ hqDefine('app_manager/js/form_workflow.js', function() {
             });
         };
 
+        self.enableManualDatums = function(){
+            self.manualDatums(true);
+        };
+
+        self.disableManualDatums = function(){
+            self.manualDatums(false);
+            $('#form-workflow .workflow-change-trigger').trigger('change');
+            self.datums.removeAll();
+        };
+
        // initialize
         self.autoLink(self.get_form_by_id(self.formId()).autoLink);
         self.datums(self.wrap_datums(datums));
+        self.manualDatums(self.datums().length && self.autoLink());
+        self.showLinkDatums = ko.computed(function(){
+            return (!self.autoLink() || self.manualDatums());
+        });
 
         self.formId.subscribe(function(form_id) {
             self.autoLink(self.get_form_by_id(form_id).autoLink);
