@@ -287,7 +287,8 @@ IS_DEVELOPER = StaticToggle(
 MM_CASE_PROPERTIES = StaticToggle(
     'mm_case_properties',
     'Multimedia Case Properties',
-    TAG_PRODUCT_PATH
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 VISIT_SCHEDULER = StaticToggle(
@@ -812,15 +813,12 @@ NEW_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-TF_USES_SQLITE_BACKEND = PredictablyRandomToggle(
-    'tf_sql_backend',
-    'Use a SQLite backend for Touchforms',
-    TAG_PRODUCT_PATH,
+TF_DOES_NOT_USE_SQLITE_BACKEND = StaticToggle(
+    'not_tf_sql_backend',
+    'Domains that do not use a SQLite backend for Touchforms',
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
-    1,
-    always_disabled=['hsph-betterbirth', 'iquitos', 'malawi-fp-study'],
 )
-
 
 CUSTOM_APP_BASE_URL = StaticToggle(
     'custom_app_base_url',
@@ -876,15 +874,6 @@ SEND_UCR_REBUILD_INFO = StaticToggle(
     [NAMESPACE_USER]
 )
 
-
-ZAPIER_INTEGRATION = StaticToggle(
-    'zapier_integration',
-    'Allow to use domain in Zapier application',
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
-)
-
-
 EMG_AND_REC_SMS_HANDLERS = StaticToggle(
     'emg_and_rec_sms_handlers',
     'Enable emergency and receipt sms handlers used in ILSGateway',
@@ -934,7 +923,7 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     'use_latest_build_cloudcare',
     'Uses latest build for cloudcare instead of latest starred',
     TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 ONBOARDING_PROTOTYPE = StaticToggle(

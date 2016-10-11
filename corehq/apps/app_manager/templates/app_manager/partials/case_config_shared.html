@@ -22,16 +22,17 @@
         "/>
         <select class="form-control" data-bind="
                 optstr: [
-                    {label:'{% trans "is" %}',value:'='},
-                    {label:'{% trans "has selected" %}',value:'selected'}
+                    {label:'{% trans "is" %}', value:'='},
+                    {label:'{% trans "has selected" %}', value:'selected'},
+                    {label:'{% trans "is true" %}', value:'boolean_true'}
                 ],
                 value: operator"></select>
-        <span data-bind="if: $root.getAnswers({question: question()}).length">
+        <span data-bind="if: $root.getAnswers({question: question()}).length && operator() != 'boolean_true'">
             <select class="form-control" data-bind="
                 optstr: $root.getAnswers({question: question()}),
                 value: answer"></select>
         </span>
-        <span data-bind="if: !$root.getAnswers({question: question()}).length">
+        <span data-bind="if: !$root.getAnswers({question: question()}).length && operator() != 'boolean_true'">
             <input type="text" class="form-control" data-bind="value: answer"/>
         </span>
     </div>

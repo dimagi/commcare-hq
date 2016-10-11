@@ -32,9 +32,6 @@ from corehq.apps.app_manager.exceptions import (
     FormNotFoundException)
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.programs.models import Program
-from corehq.apps.app_manager.const import (
-    APP_V2,
-)
 from corehq.apps.app_manager.util import (
     get_all_case_properties,
     save_xform,

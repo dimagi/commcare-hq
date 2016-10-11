@@ -11,7 +11,7 @@ from corehq.apps.hqwebapp.views import (
     MaintenanceAlertsView, redirect_to_default,
     landing_page, yui_crossdomain, password_change, no_permissions, login, logout, bug_report, debug_notify,
     quick_find, osdd, create_alert, activate_alert, deactivate_alert, jserror, dropbox_upload, domain_login,
-    retrieve_download, toggles_js)
+    retrieve_download, toggles_js, couch_doc_counts)
 
 urlpatterns = patterns(
     'corehq.apps.hqwebapp.views',
@@ -58,4 +58,5 @@ domain_specific = patterns('corehq.apps.hqwebapp.views',
         retrieve_download, {'template': 'style/includes/file_download.html'},
         name='hq_soil_download'),
     url(r'toggles.js$', toggles_js, name='toggles_js'),
+    url(r'couch_doc_counts', couch_doc_counts),
 )

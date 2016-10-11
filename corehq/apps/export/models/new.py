@@ -199,6 +199,20 @@ class ExportColumn(DocumentSchema):
         Transform the given value with the transform specified in self.item.transform.
         Also transform dates if the transform_dates flag is true.
         """
+
+        # When XML elements have additional attributes in them, the text node is
+        # put inside of the #text key. For example:
+        #
+        # <element id="123">value</element>  -> {'#text': 'value', 'id':'123'}
+        #
+        # Whereas elements without additional attributes just take on the string value:
+        #
+        # <element>value</element>  -> 'value'
+        #
+        # This line ensures that we grab the actual value instead of the dictionary
+        if isinstance(value, dict) and '#text' in value:
+            value = value.get('#text')
+
         if transform_dates:
             value = couch_to_excel_datetime(value, doc)
         if self.item.transform:

@@ -269,7 +269,7 @@ class FormActionCondition(DocumentSchema):
     type = StringProperty(choices=["if", "always", "never"], default="never")
     question = StringProperty()
     answer = StringProperty()
-    operator = StringProperty(choices=['=', 'selected'], default='=')
+    operator = StringProperty(choices=['=', 'selected', 'boolean_true'], default='=')
 
     def is_active(self):
         return self.type in ('if', 'always')

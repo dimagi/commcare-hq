@@ -42,22 +42,34 @@
 </div>
 
 <script type="text/html" id="form-link-template">
-    <div class="form-group">
+    <div class="panel panel-default">
+        <div class="panel-heading clearfix">
+            <a class="pull-right"
+               role="button"
+               href="#"
+               data-bind="click: $parent.onDestroyFormLink.bind($parent)">
+                <i class="fa fa-remove"></i>
+            </a>
+        </div>
+    <div class="form-group panel-body">
         <div class="row">
-            <div class="col-sm-5">
+            <div class="col-sm-12">
                 <textarea name="form_links_xpath_expressions"
                           placeholder="XPath Expression"
                           rows="1"
                           class="form-control vertical-resize"
-                          data-bind="
-                            text: formLink.xpath,
-                            value: formLink.xpath
-                "></textarea>
+                          data-bind="text: formLink.xpath, value: formLink.xpath"
+                          spellcheck="false"
+                ></textarea>
             </div>
-            <div class="col-sm-1">
-                <i class="fa fa-arrow-right"></i>
+        </div>
+        <div class="row">
+            <div class="col-sm-12 text-center">
+                <i class="fa fa-arrow-down"></i>
             </div>
-            <div class="col-sm-5">
+        </div>
+        <div class="row">
+            <div class="col-sm-11">
                 <select class="form-control" name="form_links_form_ids" data-bind="
                     options: $parent.forms,
                     optionsText: 'name',
@@ -66,16 +78,10 @@
                     value: formLink.formId
                     "></select>
             </div>
-            <div class="col-sm-1">
-                <button class="btn btn-danger" data-bind="
-                    click: $parent.onDestroyFormLink.bind($parent)
-                    ">
-                    <i class="fa fa-trash"></i>
-                </button>
-                <input type="hidden" name="datums_json" data-bind="value: formLink.serializedDatums"/>
-            </div>
+            <input type="hidden" name="datums_json" data-bind="value: formLink.serializedDatums"/>
         </div>
-        <div class="help-block" data-bind="visible: !formLink.autoLink()">
+        <div class="row help-block" data-bind="visible: !formLink.autoLink()">
+            <div class="col-sm-12">
             <p>
                 {% trans "This form requires manual linking." %}
                 <button class="btn btn-default btn-sm" data-bind="click: formLink.fetchDatums">
@@ -87,18 +93,30 @@
                     <!-- /ko -->
                 </button>
             </p>
+            </div>
+            <div class="col-sm-12">
             <p data-bind="visible: formLink.datumsFetched() && formLink.datums().length === 0">
                 {% trans "No additional linking required." %}
             </p>
-            <div data-bind="foreach: formLink.datums, visible: formLink.datumsFetched() && formLink.datums().length">
-                <div class="form-group">
-                    <label class="control-label">
-                        <span data-bind="text: name"></span><br/>
-                        <small>{% trans "Case Type: " %}</small><small data-bind="text: caseType"></small>
-                    </label>
-                    <div class="controls">
-                        <textarea name="_xpath" placeholder="XPath Expression" rows="1" data-bind="text: xpath, value: xpath">
-                        </textarea>
+            </div>
+            <div data-bind="foreach: formLink.datums, visible: formLink.datumsFetched() && formLink.datums().length" class="col-sm-12">
+                <div class="form-group col-sm-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <span data-bind="text: name"></span>
+                            <span class="label label-primary" data-bind="text: caseType"></span>
+                        </div>
+                        <div class="panel-body">
+                            <div class="controls">
+                                <textarea name="_xpath"
+                                          placeholder="XPath Expression"
+                                          rows="1"
+                                          data-bind="text: xpath, value: xpath"
+                                          class="form-control"
+                                          spellcheck="false">
+                                </textarea>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -113,5 +131,6 @@
                 <li data-bind="text: $data"></li>
             </ul>
         </div>
+    </div>
     </div>
 </script>

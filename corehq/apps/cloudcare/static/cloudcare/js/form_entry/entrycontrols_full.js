@@ -369,8 +369,7 @@ function DateTimeEntryBase(question, options) {
                 }
             },
         };
-        self.$picker.datetimepicker(datepickerOpts)
-            .val(self.answer() ? moment(self.answer()).format(self.clientFormat) : self.answer());
+        self.$picker.datetimepicker(datepickerOpts);
     };
 }
 DateTimeEntryBase.prototype = Object.create(EntrySingleAnswer.prototype);

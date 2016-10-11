@@ -30,7 +30,7 @@ def users_locations():
     return location_ids
 
 
-def location_filter(request, params=None, filters=None):
+def location_filter(request, params=None, filters=None, location_filter_selected=False):
     zone_id = request.GET.get('id_zone', '')
     region_id = request.GET.get('id_region', '')
     district_id = request.GET.get('id_district', '')
@@ -58,3 +58,9 @@ def location_filter(request, params=None, filters=None):
             params.update({key: value})
         elif filters:
             filters.append(EQ(key, key))
+    if location_filter_selected:
+        return value
+
+
+def show_location(s, ul, sel):
+    return s.location_id in ul and (len(sel) == 0 or s.location_id in sel)

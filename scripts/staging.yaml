@@ -47,7 +47,6 @@ name: autostaging
 branches:
   - dsr-multi-loc # sr 9/20
   - vellum-staging # J$ 11/13
-  - ce/domain-list-api # Cal 8/31
   - onboarding # Jenny 9/19
 #  - np/kill-djcelery # Nick P 10/3
   - ce/es-restore # Cal 9/4
@@ -75,4 +74,4 @@ submodules:
     branches: []
   deployment/commcare-hq-deploy:
     branches:
-      - revert-122-revert-118-br/celery-bash
+      - br/generalize-celery-bash
