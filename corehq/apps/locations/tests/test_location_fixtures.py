@@ -90,6 +90,16 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
             ['Massachusetts', 'Suffolk', 'Boston', 'Revere']
         )
 
+    def test_multiple_locations(self, uses_locations):
+        self.user.add_to_assigned_locations(self.locations['Suffolk'].couch_location)
+        self.user.add_to_assigned_locations(self.locations['New York City'].couch_location)
+
+        self._assert_fixture_has_locations(
+            'multiple_locations',
+            ['Massachusetts', 'Suffolk', 'Boston', 'Revere', 'New York',
+             'New York City', 'Manhattan', 'Queens', 'Brooklyn']
+        )
+
     def test_all_locations_flag_returns_all_locations(self, uses_locations):
         with flag_enabled('SYNC_ALL_LOCATIONS'):
             self._assert_fixture_has_locations(
