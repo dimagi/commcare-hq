@@ -8,6 +8,9 @@
     <div class="save-button-holder clearfix"></div>
     <fieldset>
         {% block settings_fields %}
+        {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" and not module.is_surveys %}
+            {% include "app_manager/partials/module_view_case_type.html" %}
+        {% endif %}
         {% if module.module_type == 'shadow' %}
         <div id="sourceModuleForms">
             <div class="form-group">
