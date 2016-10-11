@@ -3,7 +3,7 @@ import zipfile
 
 from django.core.management.base import BaseCommand
 
-from corehq.blobs import get_blob_db
+from corehq.blobs import BlobInfo, get_blob_db
 
 USAGE = "Usage: ./manage.py import_blob_zip <zipname>"
 
@@ -23,4 +23,6 @@ class Command(BaseCommand):
             bucket = '/'.join(filename.split('/')[:-1])
             identifier = filename.split('/')[-1]
             blob = cStringIO.StringIO(from_zip.read(filename))
-            to_db.copy_blob(blob, identifier, bucket)
+            # copy_blob only needs the identifier
+            blob_info = BlobInfo(identifier=identifier, length="", digest="")
+            to_db.copy_blob(blob, blob_info, bucket)
