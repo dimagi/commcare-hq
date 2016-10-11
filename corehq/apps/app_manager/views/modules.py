@@ -831,7 +831,7 @@ def new_module(request, domain, app_id):
                 register = app.new_form(module_id, "Register", lang)
                 with open(os.path.join(os.path.dirname(__file__), '..', 'static', 'app_manager', 'xml', 'registration_form.xml')) as f:
                     register.source = f.read()
-                register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
+                register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'), name_path=u'/data/name')
                 register.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
 
                 # make case type unique across app
