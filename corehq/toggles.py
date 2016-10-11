@@ -926,6 +926,12 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+ONBOARDING_PROTOTYPE = StaticToggle(
+    'onboarding_prototype',
+    'Prototype for case management onboarding',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
 
 APP_BUILDER_NOTIFICATIONS = StaticToggle(
     'app_builder_notifications',

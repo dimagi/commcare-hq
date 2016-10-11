@@ -67,7 +67,17 @@
   height: 263px;
   font-size: @font-size-small;
   position: relative;
+}
 
+.panel-dashboard-large {
+  height: 328px;
+  .list-group {
+    overflow-y: auto;
+    max-height: 250px;
+  }
+}
+
+.panel-dashboard-medium, .panel-dashboard-large {
   .list-group {
     margin-bottom: 10px;
     .list-group-item {

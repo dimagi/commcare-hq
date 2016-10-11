@@ -45,9 +45,10 @@ nav.appmanager-content {
 }
 
 
-.appmanager-main-menu {
+.nav-hq-sidebar {
   .edit-form-li,
-  .edit-module-li {
+  .edit-module-li,
+  .release-manager-li {
     position: relative;
     .drag_handle {
       display: block;
@@ -66,7 +67,7 @@ nav.appmanager-content {
   }
 
   // Pencil icons for editing forms
-  .edit-form-pencil {
+  .edit-form-pencil, #app-settings-gear {
     position: absolute;
     right: -13px;
     top: 3px;
@@ -84,11 +85,22 @@ nav.appmanager-content {
     }
   }
 
-  .edit-form-li:hover .edit-form-pencil {
+  .edit-form-li:hover .edit-form-pencil,
+  .release-manager-li:hover #app-settings-gear {
     opacity: 0.5;
   }
 
   .edit-form-li.active .edit-form-pencil .fa {
     color: white;
+  }
+
+  .edit-form-li.active, .release-manager-li.active {
+    #app-settings-gear {
+      opacity: 0.5;
+    }
+
+    .fa {
+      color: white;
+    }
   }
 }
