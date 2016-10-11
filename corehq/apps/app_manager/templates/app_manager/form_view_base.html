@@ -286,7 +286,7 @@
                     <span class="hq-help-template"
                           data-title="Why can't I delete this?"
                           data-placement="left"
-                          data-content="It's usually a bad idea to remove the registration form. If you really must, turn on <b>Allow deletion of registration form</b> in <a href='{% url "view_module" domain app.id module.id %}'>case list settings</a>."
+                          data-content="Case Lists need a registration form! If you would like to remove the whole case list, navigate to the <a href='{% url "view_module" domain app.id module.id %}'>case list settings</a> and click delete."
                     ></span>
                 {% endif %}
             </form>
