@@ -22,20 +22,25 @@
 
                 <div class="modal-body">
                     {% crispy feed_filter_form %}
+                    <div class="alert alert-danger" role="alert" ng-show="hasFormSubmitError">
+                        <span>{% angularjs %}{{ formSubmitErrorMessage }}{% endangularjs %}</span>
+                        <span ng-show="!formSubmitErrorMessage">There was an unknown saving the filters</span>
+                    </div>
                 </div>
 
                 <div class="modal-footer">
                     <button type="button"
                             class="btn btn-default"
                             data-dismiss="modal"
-                            ng-disabled="!!isSubmittingForm">{% trans 'Cancel' %}</button>
-                    <button type="submit"
-                            class="btn btn-success"
-                            ng-show="!showNoAppsError && !formLoadError"
-                            ng-disabled="!!exportOptionsForm.$invalid || !!isSubmittingForm">
-                        {% blocktrans %}
-                            Save filters
-                        {% endblocktrans %}
+                            ng-disabled="isSubmittingForm"
+                    >
+                        {% trans 'Cancel' %}
+                    </button>
+                    <button type="submit" class="btn btn-success" ng-show="!isSubmittingForm">
+                        {% trans "Save filters"%}
+                    </button>
+                    <button class="btn" disabled ng-show="isSubmittingForm">
+                        {% trans "Saving..." %}
                     </button>
                 </div>
             </div>

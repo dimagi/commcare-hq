@@ -137,6 +137,9 @@
         var self = {};
         $scope._ = _;   // make underscore.js available
         $scope.formData = {};
+        $scope.isSubmittingForm = false;
+        $scope.hasFormSubmitError = false;
+        $scope.formSubmitErrorMessage = null;
 
         var formElement = filterFormElements;
         /* ------------------------------------------------- */
@@ -202,20 +205,35 @@
 
         $scope.commitFilters = function () {
             var export_ = $rootScope.filterModalExport;
+            $scope.isSubmittingForm = true;
 
             djangoRMI.commit_filters({
                 export: export_,
                 form_data: $scope.formData,
             }).success(function (data) {
+                $scope.isSubmittingForm = false;
                 if (data.success) {
+                    self._clearSubmitError();
                     export_.emailedExport.filters = $scope.formData;
                     export_.emailedExport.updatingData = false;
                     export_.emailedExport.updatedDataTriggered = true;
                     filterFormModalElement().modal('hide');
                 } else {
+                    self._handleSubmitError(data);
                 }
             }).error(function (data) {
+                $scope.isSubmittingForm = false;
+                self._handleSubmitError(data);
             });
+        };
+
+        self._handleSubmitError = function(data) {
+            $scope.hasFormSubmitError = true;
+            $scope.formSubmitErrorMessage = data.error;
+        };
+        self._clearSubmitError = function() {
+            $scope.hasFormSubmitError = false;
+            $scope.formSubmitErrorMessage = null;
         };
     };
 
