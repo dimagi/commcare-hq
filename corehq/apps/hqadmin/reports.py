@@ -362,7 +362,7 @@ INDICATOR_DATA = {
         "chart_title": "Active Countries",
         "hide_cumulative_charts": True,
         "histogram_type": "active_countries",
-        "xaxis_label": "# workers",
+        "xaxis_label": "# countries",
     },
     "countries": {
         "ajax_view": "admin_reports_stats_data",
