@@ -184,7 +184,7 @@
             var FormWorkflow = hqImport('app_manager/js/form_workflow.js').FormWorkflow;
             var labels = {};
             labels[FormWorkflow.Values.DEFAULT] = "{% trans "Home Screen" %}";
-            labels[FormWorkflow.Values.ROOT] = "{% trans "Module Menu" %}";
+            labels[FormWorkflow.Values.ROOT] = "{% trans "Main Menu" %}";
             {% with module_name=module.name|trans:langs %}
             labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module_name|escapejs }}";
             {% endwith %}

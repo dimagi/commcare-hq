@@ -2047,7 +2047,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     def root_module(self):
         if self.root_module_id:
             return self._parent.get_module_by_unique_id(self.root_module_id,
-                   error=_("Could not find parent module for '{}'").format(self.default_name()))
+                   error=_("Could not find parent menu for '{}'").format(self.default_name()))
 
     def requires_case_details(self):
         return False
@@ -3928,7 +3928,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         if self.source_module_id:
             try:
                 return self._parent.get_module_by_unique_id(self.source_module_id,
-                       error=_("Could not find source module for '{}'.").format(self.default_name()))
+                       error=_("Could not find source for '{}'.").format(self.default_name()))
             except ModuleNotFoundException:
                 pass
         return None
@@ -5320,7 +5320,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if matches(obj):
                 return obj
         if not error:
-            error = _("Module in app '{app_id}' with unique id '{unique_id}' not found.").format(
+            error = _("Could not find '{unique_id}' in app '{app_id}'.").format(
                 app_id=self.id, unique_id=unique_id)
         raise ModuleNotFoundException(error)
 
@@ -5963,7 +5963,7 @@ class DeleteFormRecord(DeleteRecord):
         if self.module_unique_id is not None:
             name = trans(self.form.name, app.default_language, include_lang=False)
             module = app.get_module_by_unique_id(self.module_unique_id,
-                     error=_("Could not find module containing form '{}'").format(name))
+                     error=_("Could not find form '{}'").format(name))
         else:
             module = app.modules[self.module_id]
         forms = module.forms

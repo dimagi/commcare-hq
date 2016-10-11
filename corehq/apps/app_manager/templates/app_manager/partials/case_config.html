@@ -89,7 +89,7 @@
                 {% trans "Does not use cases" as no_cases %}
                 {% trans "Registers a new case" as registers_case %}
                 {% trans "Updates or closes a case" as updates_case %}
-                {% trans "Registers a case for a different module" as different_module %}
+                {% trans "Registers a case for a different case list" as different_module %}
                 <select class="form-control" id="case-action-select" data-bind="
                     optstr: [{value: 'none', label: '{{ no_cases|escapejs }}'},
                              {value: 'open', label: '{{ registers_case|escapejs }}'},
@@ -118,7 +118,7 @@
                     <h5 class="pull-left">{% trans "Child Cases" %}</h5>
                     <span data-bind="makeHqHelp: {}"
                       data-title="{% trans "Child Cases" %}"
-                      data-content="{% trans "Child Cases let you open other types of cases for use in other modules. When possible, they'll be linked to the current case so you'll always know where they came from. A great use of Child Cases is for tracking a newborn separately from its mother." %}"
+                      data-content="{% trans "Child Cases let you open other types of cases for use in other case lists. When possible, they'll be linked to the current case so you'll always know where they came from. A great use of Child Cases is for tracking a newborn separately from its mother." %}"
                     ></span>
                 </header>
         

@@ -695,7 +695,7 @@ def rearrange(request, domain, app_id, key):
             app.rearrange_modules(i, j)
     except IncompatibleFormTypeException:
         messages.error(request, _(
-            'The form can not be moved into the desired module.'
+            'The form can not be moved into the desired menu.'
         ))
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
     except (RearrangeError, ModuleNotFoundException):
