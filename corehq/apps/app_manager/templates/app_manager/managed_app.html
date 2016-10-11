@@ -287,6 +287,8 @@
                                                 class="fcc fcc-app-completeform appmanager-icon-type"
                                             {% elif form.get_action_type == 'update' %}
                                                 class="fcc fcc-app-updateform appmanager-icon-type"
+                                            {% else %}
+                                                class="fa fa-file-o"
                                             {% endif %}
                                                 title="{{ form.get_icon_help_text }}"
                                                 data-toggle="tooltip"
