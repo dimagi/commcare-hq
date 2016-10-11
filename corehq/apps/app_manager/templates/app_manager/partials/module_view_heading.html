@@ -2,6 +2,24 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 
+<div class="pull-right">
+    <form action="{% url "delete_module" domain app.id module.unique_id %}" method="post">
+        {% csrf_token %}
+        <button type="submit" class="disable-on-submit btn btn-danger">
+            <i class="fa fa-trash"></i>
+            {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+                {% if module.case_type == "" %}
+                    {% trans "Delete Surveys" %}
+                {% else %}
+                    {% trans "Delete Case List" %}
+                {% endif %}
+            {% else %}
+                {% trans "Delete Module" %}
+            {% endif %}
+        </button>
+    </form>
+</div>
+
 {% if module.case_type == '' or not request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
     <h3 style="display: inline-block; margin-right: -5px;"><i class="fa fa-folder-open"></i></h3>
 {% else %}
@@ -26,23 +44,6 @@
 <br />
 
 <div id="build_errors"></div>
-<div class="pull-right">
-    <form action="{% url "delete_module" domain app.id module.unique_id %}" method="post">
-        {% csrf_token %}
-        <button type="submit" class="disable-on-submit btn btn-danger">
-            <i class="fa fa-trash"></i>
-            {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
-                {% if module.case_type == "" %}
-                    {% trans "Delete Surveys" %}
-                {% else %}
-                    {% trans "Delete Case List" %}
-                {% endif %}
-            {% else %}
-                {% trans "Delete Module" %}
-            {% endif %}
-        </button>
-    </form>
-</div>
 
 {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
     <div class="clearfix"></div>
