@@ -17,6 +17,8 @@ from django.core.urlresolvers import reverse
 from tastypie import fields
 from tastypie.bundle import Bundle
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication, AdminAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_obj
@@ -37,7 +39,6 @@ from corehq.apps.userreports.sql.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions, CouchUser, UserRole
 from corehq.util import get_document_or_404
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
-from corehq.toggles import ZAPIER_INTEGRATION
 
 from . import v0_1, v0_4, CouchResourceMixin
 from . import HqBaseResource, DomainSpecificResourceMixin
@@ -790,7 +791,7 @@ class UserDomainsResource(Resource):
         couch_user = CouchUser.from_django_user(request.user)
         results = []
         for domain in couch_user.get_domains():
-            if not ZAPIER_INTEGRATION.enabled(domain):
+            if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION):
                 continue
             domain_object = Domain.get_by_name(domain)
             results.append(UserDomain(
@@ -821,7 +822,7 @@ class DomainForms(Resource):
 
         domain = kwargs['domain']
         couch_user = CouchUser.from_django_user(bundle.request.user)
-        if not ZAPIER_INTEGRATION.enabled(domain) or not couch_user.is_member_of(domain):
+        if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION) or not couch_user.is_member_of(domain):
             raise ImmediateHttpResponse(
                 HttpForbidden('You are not allowed to get list of forms for this domain')
             )

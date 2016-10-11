@@ -59,6 +59,8 @@ BUILD_PROFILES = 'build_profiles'
 EXCEL_DASHBOARD = 'excel_dashboard'
 DAILY_SAVED_EXPORT = 'daily_saved_export'
 
+ZAPIER_INTEGRATION = 'zapier_integration'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -91,6 +93,7 @@ MAX_PRIVILEGES = [
     ADVANCED_DOMAIN_SECURITY,
     EXCEL_DASHBOARD,
     DAILY_SAVED_EXPORT,
+    ZAPIER_INTEGRATION
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -135,4 +138,5 @@ class Titles(object):
             BUILD_PROFILES: _('Build Profiles'),
             EXCEL_DASHBOARD: _('Excel Dashboard'),
             DAILY_SAVED_EXPORT: _('Daily saved export'),
+            ZAPIER_INTEGRATION: _('Zapier Integration')
         }.get(privilege, privilege)
