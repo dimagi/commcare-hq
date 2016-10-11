@@ -3,7 +3,7 @@ from mock import patch
 
 from corehq.util.test_utils import generate_cases
 from ..models import PillowCheckpointSeqStore
-from ..utils import pillow_seq_store, EPSILON, parse_celery_workers
+from ..utils import pillow_seq_store, EPSILON, parse_celery_workers, parse_celery_pings
 
 
 def _get_dummy_pillow():
@@ -80,6 +80,28 @@ class TestPillowCheckpointSeqStore(TestCase):
 
         store = PillowCheckpointSeqStore.get_by_pillow_name('DummyPillowThatDoesNotExist')
         self.assertIsNone(store)
+
+
+class TestParseCeleryWorkerPings(SimpleTestCase):
+    """
+    Ensures that we correctly response the celery ping responses
+    """
+    def test_celery_worker_pings(self):
+        response = parse_celery_pings([
+            {'celery@myhost': {'ok': 'pong'}},
+            {'celery@otherhost': {'ok': 'pong'}},
+            {'celery@yikes': {'ok': 'notpong'}},
+        ])
+        self.assertEqual(response, {
+            'myhost': True,
+            'otherhost': True,
+            'yikes': False,
+        })
+
+    def test_celery_worker_pings_empty(self):
+        response = parse_celery_pings([])
+
+        self.assertEqual(response, {})
 
 
 class TestParseCeleryWorkers(SimpleTestCase):
