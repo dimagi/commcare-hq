@@ -1,5 +1,7 @@
 {% load i18n %}
 {% load xforms_extras %}
+{% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
 <div class="alert alert-warning alert-block">
     <p>{% trans "Click <strong>Edit</strong> to start building your form." %}</p>
 </div>
+{% endif %}

@@ -129,14 +129,14 @@
                      data-toggle="collapse"
                      data-parent="#mm-reference-list"
                      data-bind="attr: { href: '#' + id }">
-                    <i class="fa fa-angle-double-down"></i> {% trans 'Module' %}: <span data-bind="text: name"></span>
+                    <i class="fa fa-angle-double-down"></i> <span data-bind="text: name"></span>
                 </a>
             </h3>
         </div>
         <div class="panel-body collapse in"
              data-bind="attr: { id: id }">
             <div class="accordion-inner">
-                <p>{% trans 'Showing all media in the module named' %} '<span data-bind="text: name"></span>'.</p>
+                <p>{% trans 'Showing all media in ' %} '<span data-bind="text: name"></span>'.</p>
                 <div class="accordion" data-bind="attr: { id: id + '-ModuleRefs' }">
                     {% include "hqmedia/partials/reference_table.html" with ref_type="active_menu_references" show_refs="showMenuRefs" parent_accordion="ModuleRefs" this_accordion="ModuleMenuRefs" title="Menu References" %}
                 </div>

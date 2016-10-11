@@ -184,7 +184,7 @@
             var FormWorkflow = hqImport('app_manager/js/form_workflow.js').FormWorkflow;
             var labels = {};
             labels[FormWorkflow.Values.DEFAULT] = "{% trans "Home Screen" %}";
-            labels[FormWorkflow.Values.ROOT] = "{% trans "Module Menu" %}";
+            labels[FormWorkflow.Values.ROOT] = "{% trans "Main Menu" %}";
             {% with module_name=module.name|trans:langs %}
             labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module_name|escapejs }}";
             {% endwith %}
@@ -200,7 +200,7 @@
                 workflow: '{{ form.post_form_workflow }}',
             };
 
-            {% if request|toggle_enabled:"FORM_LINK_WORKFLOW"%}
+            {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" and request|toggle_enabled:"FORM_LINK_WORKFLOW" %}
             labels[FormWorkflow.Values.FORM] = "{% trans "Link to other form" %}";
             options.forms = {{ linkable_forms|JSON}}
             options.formLinks = {{ form.form_links|JSON }}
@@ -213,7 +213,7 @@
         $('#auto-gps-capture').koApplyBindings({
             auto_gps_capture: ko.observable({{ form.auto_gps_capture|JSON }})
         });
-        {% if request|toggle_enabled:'NO_VELLUM' %}
+        {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" and request|toggle_enabled:'NO_VELLUM' %}
         $('#no-vellum').koApplyBindings({
             no_vellum: ko.observable({{ form.no_vellum|JSON }})
         });
@@ -273,6 +273,32 @@
 
 {% block form-view %}
     <div id="build_errors"></div>
+    {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+        <div class="pull-right">
+            <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="disable-on-submit btn btn-danger"
+                    {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" and not app.advanced_app_builder and form.get_action_type == 'open' %}disabled="disabled"{% endif %}>
+                    <i class="fa fa-trash"></i>
+                    {% trans "Delete Form" %}
+                </button>
+                {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" and not app.advanced_app_builder and form.get_action_type == 'open' %}
+                    <span class="hq-help-template"
+                          data-title="Why can't I delete this?"
+                          data-placement="left"
+                          data-content="Case Lists need a registration form! If you would like to remove the whole case list, navigate to the <a href='{% url "view_module" domain app.id module.id %}'>case list settings</a> and click delete."
+                    ></span>
+                {% endif %}
+            </form>
+        </div>
+    
+        {% if form.get_action_type == 'open' %}
+        <h3 style="display: inline-block; margin-right: -5px;"><i class="fcc fcc-app-createform appmanager-icon-type"></i></h3>
+        {% elif form.requires_case %}
+        <h3 style="display: inline-block; margin-right: -5px;"><i class="fcc fcc-app-updateform appmanager-icon-type"></i></h3>
+        {% endif %}
+    {% endif %}
+
     {% inline_edit_trans form.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
     <br />
     <inline-edit params="
@@ -285,53 +311,60 @@
         saveValueName: 'comment',
         cols: 50,
     "></inline-edit>
-    <br />
-    <br />
-    <div class="pull-right">
-        <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">
-            {% csrf_token %}
-            <button type="submit" class="disable-on-submit btn btn-danger">
-                <i class="fa fa-trash"></i>
-                {% trans "Delete Form" %}
-            </button>
-        </form>
-    </div>
-
-    <div class="btn-group">
-        {% if not form.no_vellum %}
-        <a id="edit_label" href="{% url "form_source" domain app.id module.id form.id %}" class="btn btn-primary">
-            <i class="fa fa-pencil"></i>
-            {% trans "Edit" %}
-        </a>
-        {% else %}
-        <button class="btn btn-primary disabled" disabled="disabled"
-                title="{% trans "Your administrator has locked this form from edits through the form builder"|force_escape %}">
-            <i class="fa fa-pencil"></i>
-            {% trans "Edit" %}
-        </button>
-        {% endif %}
-        {% if allow_cloudcare %}
-            {% if form.source %}
-            <a id="cloudcare-preview-url" href="#" target="_blank" class="btn btn-default">
-                <i class="fa fa-play"></i>
-                {% trans "Preview Form" %}
+    {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+        <div class="spacer"></div>
+    {% else %}
+        <br />
+        <br />
+        <div class="pull-right">
+            <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="disable-on-submit btn btn-danger">
+                    <i class="fa fa-trash"></i>
+                    {% trans "Delete Form" %}
+                </button>
+            </form>
+        </div>
+    
+        <div class="btn-group">
+            {% if not form.no_vellum %}
+            <a id="edit_label" href="{% url "form_source" domain app.id module.id form.id %}" class="btn btn-primary">
+                <i class="fa fa-pencil"></i>
+                {% trans "Edit" %}
             </a>
+            {% else %}
+            <button class="btn btn-primary disabled" disabled="disabled"
+                    title="{% trans "Your administrator has locked this form from edits through the form
+    builder"|force_escape %}">
+                <i class="fa fa-pencil"></i>
+                {% trans "Edit" %}
+            </button>
             {% endif %}
-        {% endif %}
-    </div>
-
-    <br/><br/><br/>
+            {% if allow_cloudcare %}
+                {% if form.source %}
+                <a id="cloudcare-preview-url" href="#" target="_blank" class="btn btn-default">
+                    <i class="fa fa-play"></i>
+                    {% trans "Preview Form" %}
+                </a>
+                {% endif %}
+            {% endif %}
+        </div>
+    
+        <br/><br/><br/>
+    {% endif %}
 
     <div class="tabbable">
         <ul class="nav nav-tabs">
             <li class="active">
                 <a href="#form-settings" id="tour-form-settings-tab" data-toggle="tab">{% trans "Settings" %}</a>
             </li>
+            {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or form.requires_case or form.get_action_type == 'open' %}
             <li>
                 <a id="case-configuration-tab" href="#case-configuration" data-toggle="tab">
                     {% trans "Case Management" %}
                 </a>
             </li>
+            {% endif %}
             {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
             <li>
                 <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
@@ -347,7 +380,11 @@
                  </li>
             {% endif %}
             <li>
-                <a href="#advanced" data-toggle="tab">{% trans "Advanced" %}</a>
+                {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+                    <a href="#advanced" data-toggle="tab">{% trans "Actions" %}</a>
+                {% else %}
+                    <a href="#advanced" data-toggle="tab">{% trans "Advanced" %}</a>
+                {% endif %}
             </li>
         </ul>
         <br>
@@ -356,12 +393,13 @@
                 {% include "app_manager/partials/form_tab_settings.html" %}
             {% endif %}
 
+            {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or form.requires_case or form.get_action_type == 'open' %}
             <div class="tab-pane" id="case-configuration">
                 {% if form_errors or xform_validation_errored %}
                     <p class="alert alert-warning">
                         {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
                     </p>
-                {% elif form.source %}
+                {% elif form.source or request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
                     <div class="help-block">
                         {% blocktrans %}
                             Cases give you a way to track patients, farms, etc. over time. You can choose to save
@@ -379,6 +417,7 @@
                     </p>
                 {% endif %}
             </div>
+            {% endif %}
 
             <div class="tab-pane" id="usercase-configuration">
                 {% if form_errors or xform_validation_errored %}

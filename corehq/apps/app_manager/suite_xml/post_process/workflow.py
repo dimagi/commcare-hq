@@ -370,7 +370,7 @@ class CaseListFormWorkflow(object):
                     elif not allow_missing:
                         raise SuiteValidationError(
                             u"The '{}' module is not properly configured to have a Case List Registration Form. "
-                            u"All forms in the module should have the same case management configuration.".format(
+                            u"All forms in the case list should have the same case management configuration.".format(
                                 module.default_name()
                             ))
 
