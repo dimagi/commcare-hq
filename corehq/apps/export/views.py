@@ -1340,7 +1340,6 @@ class DailySavedExportListView(BaseExportListView):
     def get_create_export_url(self, form_data):
         create_form = CreateExportTagForm(form_data)
         if not create_form.is_valid():
-            import ipdb; ipdb.set_trace()
             raise ExportFormValidationException()
 
         if create_form.cleaned_data['model_type'] == "case":
