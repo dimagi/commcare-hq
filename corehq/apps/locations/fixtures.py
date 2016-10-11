@@ -141,10 +141,9 @@ def get_all_locations_to_sync(user):
     else:
         all_locations = set()
 
-        user_location = user.sql_location
-        user_locations = set([user_location]) if user_location is not None else set()
+        user_locations = set(user.sql_locations)
+        # old flagged multi-locations, ToDo remove in next phase
         user_locations |= {location for location in _gather_multiple_locations(user)}
-
         for user_location in user_locations:
             location_type = user_location.location_type
             expand_from = location_type.expand_from or location_type
