@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
@@ -557,6 +558,35 @@ def sync_db_api(request, domain):
         )
     else:
         return json_response(response)
+
+
+class ReadableQuestions(View):
+
+    urlname = 'readable_questions'
+
+    @csrf_exempt
+    @method_decorator(cloudcare_api)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ReadableQuestions, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, domain):
+        instance_xml = request.POST.get('instanceXml').encode('utf-8')
+        app_id = request.POST.get('appId')
+        xmlns = request.POST.get('xmlns')
+
+        _, form_data_json = xml2json(instance_xml)
+        pretty_questions = readable.get_questions(domain, app_id, xmlns)
+
+        readable_form = readable.get_readable_form_data(form_data_json, pretty_questions)
+
+        rendered_readable_form = render_to_string(
+            'reports/form/partials/readable_form.html',
+            {'questions': readable_form}
+        )
+
+        return json_response({
+            'form_data': rendered_readable_form,
+        })
 
 
 @cloudcare_api
