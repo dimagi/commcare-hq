@@ -107,46 +107,48 @@
                      data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}">
                 </div>
             </div>
-            <!--ko if: actionType() !== 'none'-->
-            <header class="clearfix" data-bind="visible: actionType() !== 'open-other'">
-                <h5 class="pull-left">{% trans "Child Cases" %}</h5>
-                <span data-bind="makeHqHelp: {}"
-                  data-title="{% trans "Child Cases" %}"
-                  data-content="{% trans "Child Cases let you open other types of cases for use in other modules. When possible, they'll be linked to the current case so you'll always know where they came from. A great use of Child Cases is for tracking a newborn separately from its mother." %}"
-                ></span>
-            </header>
-    
-            <div data-bind="foreach: subcases" class="form">
-                <div class="form-inline">
-                    <i class="fa fa-check"></i>
-                    {% trans "Opens a case for a different case list" %}
-                    <span class="form-group" data-bind="css: {'has-warning': !case_type()}">
-                        <select class="form-control" data-bind="
-                            options: $parent.caseTypes,
-                            optionsText: $parent.getCaseTypeLabel,
-                            value: case_type,
-                            optionsCaption: 'Choose a Module...'
-                        "></select>
-                        <span class="help-block" data-bind="visible: !case_type()">{% trans "Required" %}</span>
-                        {% if show_custom_ref %}
-                            <label>{% trans "Override reference id: " %}</label>
-                            <input type="text" data-bind="value: reference_id"/>
-                        {% endif %}
-                    </span>
-                    <a href="#" data-bind="openModal: 'remove-subcase-modal-template'" class="pull-right">
-                        <i class="fa fa-trash"></i>
-                        {% trans "Remove case" %}
+                {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or app.advanced_app_builder %}
+                <!--ko if: actionType() !== 'none'-->
+                <header class="clearfix" data-bind="visible: actionType() !== 'open-other'">
+                    <h5 class="pull-left">{% trans "Child Cases" %}</h5>
+                    <span data-bind="makeHqHelp: {}"
+                      data-title="{% trans "Child Cases" %}"
+                      data-content="{% trans "Child Cases let you open other types of cases for use in other modules. When possible, they'll be linked to the current case so you'll always know where they came from. A great use of Child Cases is for tracking a newborn separately from its mother." %}"
+                    ></span>
+                </header>
+        
+                <div data-bind="foreach: subcases" class="form">
+                    <div class="form-inline">
+                        <i class="fa fa-check"></i>
+                        {% trans "Opens a case for a different case list" %}
+                        <span class="form-group" data-bind="css: {'has-warning': !case_type()}">
+                            <select class="form-control" data-bind="
+                                options: $parent.caseTypes,
+                                optionsText: $parent.getCaseTypeLabel,
+                                value: case_type,
+                                optionsCaption: 'Choose a Module...'
+                            "></select>
+                            <span class="help-block" data-bind="visible: !case_type()">{% trans "Required" %}</span>
+                            {% if show_custom_ref %}
+                                <label>{% trans "Override reference id: " %}</label>
+                                <input type="text" data-bind="value: reference_id"/>
+                            {% endif %}
+                        </span>
+                        <a href="#" data-bind="openModal: 'remove-subcase-modal-template'" class="pull-right">
+                            <i class="fa fa-trash"></i>
+                            {% trans "Remove case" %}
+                        </a>
+                    </div>
+                    <div class="container-fluid" data-bind="template: 'case-config:case-transaction'"></div>
+                </div>
+                <div>
+                    <a href="#" data-bind="click: addSubCase">
+                        <i class="fa fa-plus"></i>
+                        {% trans "Opens a case for a different case list..." %}
                     </a>
                 </div>
-                <div class="container-fluid" data-bind="template: 'case-config:case-transaction'"></div>
-            </div>
-            <div>
-                <a href="#" data-bind="click: addSubCase">
-                    <i class="fa fa-plus"></i>
-                    {% trans "Opens a case for a different case list..." %}
-                </a>
-            </div>
-            <!--/ko-->
+                <!--/ko-->
+            {% endif %}
         {% endif %}
     </div>
 </div>
