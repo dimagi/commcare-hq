@@ -134,17 +134,11 @@ def check_heartbeat():
         t = cresource.get("api/workers", params_dict={'status': True}).body_string()
         all_workers = json.loads(t)
         bad_workers = []
-        expected_running, expected_stopped = parse_celery_workers(all_workers)
+        expected_running = parse_celery_workers(all_workers)
 
         for hostname in expected_running:
             if not all_workers[hostname]:
                 bad_workers.append('* {} celery worker down'.format(hostname))
-
-        for hostname in expected_stopped:
-            if all_workers[hostname]:
-                bad_workers.append(
-                    '* {} celery worker is running when we expect it to be stopped.'.format(hostname)
-                )
 
         if bad_workers:
             return ServiceStatus(False, '\n'.join(bad_workers))
