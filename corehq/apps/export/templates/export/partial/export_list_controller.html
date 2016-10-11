@@ -160,7 +160,16 @@
                                 </div>
 
                                 <div class="h5" ng-if="export.emailedExport.hasFile">
-                                    <div class="input-group">
+
+                                    <a href="{{ export.emailedExport.fileData.downloadUrl }}"
+                                       ng-click="downloadRequested($event)"
+                                       class="btn btn-info btn-xs"
+                                       ng-show="!export.isFeed">
+                                        <i class="fa fa-download"></i>
+                                        {% trans "Download" %}
+                                    </a>
+
+                                    <div class="input-group" ng-show="export.isFeed">
                                         <span ng-class="{'input-group-btn': export.showLink}" ng-click="copyLinkRequested($event, export)">
                                             <a class="btn btn-info btn-sm">
                                                 <i class="fa fa-download"></i>
@@ -223,10 +232,16 @@
                                                         <strong>Once the data is updated, a data refresh should occur automatically on a daily basis.</strong>
                                                     {% endblocktrans %}
                                                 </p>
-                                                <p>
+                                                <p ng-if="!export.isDailySaved">
                                                     {% blocktrans %}
                                                         To download data now, please click the Export button instead.
                                                     {% endblocktrans %}
+                                                </p>
+                                                <p ng-if="export.isDailySaved && export.isFeed">
+                                                    To export data now, please copy the dashboard feed link instead.
+                                                </p>
+                                                <p ng-if="!export.isFeed">
+                                                    To export data now, please click the Download button instead.
                                                 </p>
                                             </div>
                                             <div class="modal-footer">
@@ -251,8 +266,8 @@
                         <td>
                             <a href="{{ export.editUrl }}" class="btn btn-default">
                                 <i class="fa fa-pencil"></i>
-                                <span ng-show="!export.emailedExport">{% trans 'Edit' %}</span>
-                                <span ng-show="export.emailedExport">{% trans 'Edit Columns' %}</span>
+                                <span ng-show="!export.isDailySaved">{% trans 'Edit' %}</span>
+                                <span ng-show="export.isDailySaved">{% trans 'Edit Columns' %}</span>
 
                             </a>
                         </td>
@@ -260,14 +275,14 @@
                         {% endif %}
                         <td>
                             <a href="{% angularjs %}{{ export.downloadUrl }}{% endangularjs %}"
-                               ng-show="!export.emailedExport"
+                               ng-show="!export.isDailySaved"
                                class="btn btn-primary"
                                ng-click="sendExportAnalytics()"
                             >
                                 {{ Export_type }}
                             </a>
                             <a class="btn btn-default"
-                               ng-show="export.emailedExport"
+                               ng-show="export.isDailySaved"
                                href="#setFeedFiltersModal"
                                data-toggle="modal"
                                ng-click="setFilterModalExport(export)"

@@ -1237,21 +1237,29 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
         })
 
 
-class DashboardFeedListView(BaseExportListView):
-    template_name = 'export/dashboard_feed_list.html'
-    urlname = 'list_dashboard_feeds'
-    page_title = ugettext_lazy("Excel Dashboard Integration")
+class DailySavedExportListView(BaseExportListView):
+    urlname = 'list_daily_saved_exports'
+    template_name = 'export/daily_saved_export_list.html'
+    page_title = ugettext_lazy("Daily Saved Exports")
     form_or_case = None  # This view lists both case and form feeds
     allow_bulk_export = False
 
+    def _get_create_export_class(self, model):
+        return {
+            "form": CreateNewDailySavedFormExport,
+            "case": CreateNewDailySavedCaseExport,
+        }[model]
+
+    def _get_edit_export_class(self, model):
+        return {
+            "form": EditFormDailySavedExportView,
+            "case": EditCaseDailySavedExportView
+        }[model]
+
     @property
     def page_context(self):
-        context = super(DashboardFeedListView, self).page_context
+        context = super(DailySavedExportListView, self).page_context
         context.update({
-            "Export_type": _("Dashboard Feed"),
-            "export_type": _("dashboard feed"),
-            "Exports_type": _("Dashboard Feeds"),
-            "exports_type": _("dashboard feeds"),
             "model_type": None,
             "static_model_type": False,
             "feed_filter_form": DashboardFeedFilterForm(
@@ -1281,7 +1289,7 @@ class DashboardFeedListView(BaseExportListView):
         form_exports = _get_form_exports_by_domain(self.domain, self.has_deid_view_permissions)
         case_exports = _get_case_exports_by_domain(self.domain, self.has_deid_view_permissions)
         combined_exports = sorted(form_exports + case_exports, key=lambda x: x.name)
-        return filter(lambda x: x.is_daily_saved_export, combined_exports)
+        return filter(lambda x: x.is_daily_saved_export and not x.export_format == "html", combined_exports)
 
     @property
     def daily_emailed_exports(self):
@@ -1290,11 +1298,11 @@ class DashboardFeedListView(BaseExportListView):
     def fmt_export_data(self, export):
 
         if isinstance(export, FormExportInstance):
-            edit_view = EditFormFeedView
-            download_view = DownloadNewFormExportView  # TODO: probably make a new view for feeds
+            edit_view = self._get_edit_export_class('form')
+            download_view = DownloadNewFormExportView
             formname = export.formname
         else:
-            edit_view = EditCaseFeedView
+            edit_view = self._get_edit_export_class('case')
             download_view = DownloadNewCaseExportView
             formname = None
 
@@ -1308,11 +1316,11 @@ class DashboardFeedListView(BaseExportListView):
             'formname': formname,
             'addedToBulk': False,
             'exportType': export.type,
+            'isDailySaved': True,
             'emailedExport': emailed_export,
             'editUrl': reverse(edit_view.urlname, args=(self.domain, export.get_id)),
             'downloadUrl': reverse(download_view.urlname, args=(self.domain, export.get_id)),
         }
-
 
     @allow_remote_invocation
     def get_app_data_drilldown_values(self, in_data):
@@ -1320,10 +1328,10 @@ class DashboardFeedListView(BaseExportListView):
             raise Http404()
         try:
             rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
-            response = rmi_helper.get_dashboard_feed_rmi_response()
+            response = rmi_helper.get_dual_model_rmi_response()
         except Exception as e:
             return format_angular_error(
-                _("Problem getting Create Dashbaord Feed Form: {} {}").format(
+                _("Problem getting Create Daily Saved Export Form: {} {}").format(
                     e.__class__, e
                 ),
             )
@@ -1337,10 +1345,10 @@ class DashboardFeedListView(BaseExportListView):
 
         if create_form.cleaned_data['model_type'] == "case":
             export_tag = create_form.cleaned_data['case_type']
-            cls = CreateNewCaseFeedView
+            cls = self._get_create_export_class('case')
         else:
             export_tag = create_form.cleaned_data['form']
-            cls = CreateNewFormFeedView
+            cls = self._get_create_export_class('form')
         app_id = create_form.cleaned_data['application']
         app_id_param = '&app_id={}'.format(app_id) if app_id != ApplicationDataRMIHelper.UNKNOWN_SOURCE else ""
 
@@ -1351,30 +1359,6 @@ class DashboardFeedListView(BaseExportListView):
             app_id_param=app_id_param,
             export_tag=export_tag,
         ))
-
-    @allow_remote_invocation
-    def commit_filters(self, in_data):
-        export_id = in_data['export']['id']
-        form_data = in_data['form_data']
-        try:
-            export = get_properly_wrapped_export_instance(export_id)
-            filter_form = DashboardFeedFilterForm(self.domain_object, form_data)
-            if filter_form.is_valid():
-                filters = filter_form.to_export_instance_filters()
-                if export.filters != filters:
-                    export.filters = filters
-                    export.save()
-                    from corehq.apps.export.tasks import rebuild_export_task
-                    rebuild_export_task.delay(export)
-                return format_angular_success()
-            else:
-                pass
-        except Exception as e:
-            return format_angular_error(
-                _("Problem saving dashboard feed filters: {} {}").format(
-                    e.__class__, e
-                ),
-            )
 
     # TODO: Coppied straight from BaseDownloadExportView ...
     @allow_remote_invocation
@@ -1393,6 +1377,75 @@ class DashboardFeedListView(BaseExportListView):
         return format_angular_success({
             'groups': groups,
         })
+
+    @allow_remote_invocation
+    def commit_filters(self, in_data):
+        export_id = in_data['export']['id']
+        form_data = in_data['form_data']
+        try:
+            export = get_properly_wrapped_export_instance(export_id)
+            filter_form = DashboardFeedFilterForm(self.domain_object, form_data)
+            if filter_form.is_valid():
+                filters = filter_form.to_export_instance_filters()
+                if export.filters != filters:
+                    export.filters = filters
+                    export.save()
+                    from corehq.apps.export.tasks import rebuild_export_task
+                    rebuild_export_task.delay(export)
+                return format_angular_success()
+            else:
+                return format_angular_error("Problem saving dashboard feed filters: Invalid form")
+        except Exception as e:
+            return format_angular_error(
+                _("Problem saving dashboard feed filters: {} {}").format(
+                    e.__class__, e
+                ),
+            )
+
+class DashboardFeedListView(DailySavedExportListView):
+    template_name = 'export/dashboard_feed_list.html'
+    urlname = 'list_dashboard_feeds'
+    page_title = ugettext_lazy("Excel Dashboard Integration")
+    form_or_case = None  # This view lists both case and form feeds
+    allow_bulk_export = False
+
+    def _get_create_export_class(self, model):
+        return {
+            "form": CreateNewFormFeedView,
+            "case": CreateNewCaseFeedView,
+        }[model]
+
+    def _get_edit_export_class(self, model):
+        return {
+            "form": EditFormFeedView,
+            "case": EditCaseFeedView
+        }[model]
+
+
+    @property
+    def page_context(self):
+        context = super(DashboardFeedListView, self).page_context
+        context.update({
+            "Export_type": _("Dashboard Feed"),
+            "export_type": _("dashboard feed"),
+            "Exports_type": _("Dashboard Feeds"),
+            "exports_type": _("dashboard feeds"),
+        })
+        return context
+
+    def fmt_export_data(self, export):
+        data = super(DashboardFeedListView, self).fmt_export_data(export)
+        data.update({
+            'isFeed': True,
+        })
+        return data
+
+    @memoized
+    def get_saved_exports(self):
+        form_exports = _get_form_exports_by_domain(self.domain, self.has_deid_view_permissions)
+        case_exports = _get_case_exports_by_domain(self.domain, self.has_deid_view_permissions)
+        combined_exports = sorted(form_exports + case_exports, key=lambda x: x.name)
+        return filter(lambda x: x.is_daily_saved_export and x.export_format == "html", combined_exports)
 
 
 class FormExportListView(BaseExportListView):
@@ -1717,6 +1770,18 @@ class DashboardFeedMixin(object):
         return DashboardFeedListView
 
 
+class DailySavedExportMixin(object):
+
+    def create_new_export_instance(self, schema):
+        instance = super(DailySavedExportMixin, self).create_new_export_instance(schema)
+        instance.is_daily_saved_export = True
+        return instance
+
+    @property
+    def report_class(self):
+        return DailySavedExportListView
+
+
 class CreateNewCaseFeedView(DashboardFeedMixin, CreateNewCustomCaseExportView):
     urlname = 'new_case_feed_export'
     page_title = ugettext_lazy("Create Dashboard Feed")
@@ -1725,6 +1790,14 @@ class CreateNewCaseFeedView(DashboardFeedMixin, CreateNewCustomCaseExportView):
 class CreateNewFormFeedView(DashboardFeedMixin, CreateNewCustomFormExportView):
     urlname = 'new_form_feed_export'
     page_title = ugettext_lazy("Create Dashboard Feed")
+
+
+class CreateNewDailySavedCaseExport(DailySavedExportMixin, CreateNewCustomCaseExportView):
+    urlname = 'new_case_daily_saved_export'
+
+
+class CreateNewDailySavedFormExport(DailySavedExportMixin, CreateNewCustomFormExportView):
+    urlname = 'new_form_faily_saved_export'
 
 
 class BaseEditNewCustomExportView(BaseModifyNewCustomView):
@@ -1832,11 +1905,21 @@ class EditNewCustomCaseExportView(BaseEditNewCustomExportView):
             export_instance.case_type,
         )
 
+
 class EditCaseFeedView(DashboardFeedMixin, EditNewCustomCaseExportView):
     urlname = 'edit_case_feed_export'
 
+
 class EditFormFeedView(DashboardFeedMixin, EditNewCustomFormExportView):
     urlname = 'edit_form_feed_export'
+
+
+class EditCaseDailySavedExportView(DailySavedExportMixin, EditNewCustomCaseExportView):
+    urlname = 'edit_case_daily_saved_export'
+
+
+class EditFormDailySavedExportView(DailySavedExportMixin, EditNewCustomFormExportView):
+    urlname = 'edit_form_daily_saved_export'
 
 
 class DeleteNewCustomExportView(BaseModifyNewCustomView):
@@ -1877,7 +1960,7 @@ class DeleteNewCustomExportView(BaseModifyNewCustomView):
         if self.export_instance.is_daily_saved_export:
             if self.export_instance.export_format == "html":
                 return DashboardFeedListView
-            raise NotImplementedError  # TODO: Replace with daily saved export list view when that has been implemented
+            return DailySavedExportListView
         elif self.export_instance.type == FORM_EXPORT:
             return FormExportListView
         elif self.export_instance.type == CASE_EXPORT:

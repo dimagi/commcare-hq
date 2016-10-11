@@ -420,6 +420,11 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
+    def can_view_daily_saved_exports(self):
+        return True  # TODO: write me
+
+    @property
+    @memoized
     def can_only_see_deid_exports(self):
         from corehq.apps.export.views import user_can_view_deid_exports
         return (not self.can_view_form_exports
@@ -471,6 +476,7 @@ class ProjectDataTab(UITab):
                 EditNewCustomFormExportView,
                 EditNewCustomCaseExportView,
                 DashboardFeedListView,
+                DailySavedExportListView,
             )
             if use_new_exports(self.domain):
                 create_case_cls = CreateNewCustomCaseExportView
@@ -546,6 +552,14 @@ class ProjectDataTab(UITab):
                             } if self.can_edit_commcare_data else None,
                         ])
                     })
+            if self.can_view_daily_saved_exports:
+                export_data_views.append({
+                    "title": DailySavedExportListView.page_title,
+                    "url": reverse(DailySavedExportListView.urlname, args=(self.domain,)),
+                    "show_in_dropdown": True,
+                    'icon': 'icon icon-share fa fa-share-square-o',  # TODO: Choose a unique icon for this
+                    "subpages": []  # TODO: populate this
+                })
             if self.can_view_dashboard_feeds:
                 export_data_views.append({
                     'title': DashboardFeedListView.page_title,
@@ -594,7 +608,8 @@ class ProjectDataTab(UITab):
         from corehq.apps.export.views import (
             FormExportListView,
             CaseExportListView,
-            DashboardFeedListView
+            DashboardFeedListView,
+            DailySavedExportListView,
         )
         return filter(None, [
             dropdown_dict(
@@ -609,6 +624,10 @@ class ProjectDataTab(UITab):
                 DashboardFeedListView.page_title,
                 url=reverse(DashboardFeedListView.urlname, args=(self.domain,))
             ) if self.can_view_dashboard_feeds else None,
+            dropdown_dict(
+                DailySavedExportListView.page_title,
+                url=reverse(DailySavedExportListView.urlname, args=(self.domain,))
+            ) if self.can_view_daily_saved_exports else None,
             dropdown_dict(None, is_divider=True),
             dropdown_dict(_("View All"), url=self.url),
         ])

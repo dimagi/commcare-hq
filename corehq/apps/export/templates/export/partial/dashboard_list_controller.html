@@ -1,4 +1,4 @@
-{%  extends 'export/partial/export_list_controller.html' %}
+{%  extends 'export/partial/daily_saved_export_list_controller.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load djangular_tags %}
@@ -7,12 +7,4 @@
 {% blocktrans %}
     Excel dashboard feeds allow Excel to directly connect to CommCareHQ to download data. Data is updated daily.
 {% endblocktrans %}
-{% endblock %}
-
-{% block second_column_header %}
-    {% trans "Edit Columns" %}
-{% endblock %}
-
-{% block third_column_header %}
-    {% trans "Edit Filters" %}
 {% endblock %}
