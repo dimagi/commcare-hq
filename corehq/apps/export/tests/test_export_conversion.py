@@ -24,6 +24,7 @@ from corehq.apps.export.models import (
     PARENT_CASE_TABLE,
     PathNode,
     CASE_HISTORY_TABLE,
+    SplitGPSExportColumn,
 )
 from corehq.apps.app_manager.models import Domain, Application, RemoteApp, Module
 from corehq.apps.export.utils import (
@@ -478,6 +479,20 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestConvertBase):
         )
         self.assertEqual(column.label, 'Question One')
         self.assertEqual(column.selected, True)
+
+    def test_conversion_with_text_nodes(self, _, __):
+        instance, _ = self._convert_form_export('basic_with_text_nodes')
+
+        table = instance.get_table(MAIN_TABLE)
+
+        index, column = table.get_column(
+            [PathNode(name='form'), PathNode(name='meta'), PathNode(name='location')],
+            'GeopointItem',
+            None,
+        )
+        self.assertEqual(column.label, 'Meta Location')
+        self.assertEqual(column.selected, True)
+        self.assertTrue(isinstance(column, SplitGPSExportColumn))
 
     def test_repeat_conversion(self, _, __):
         instance, _ = self._convert_form_export('repeat')
