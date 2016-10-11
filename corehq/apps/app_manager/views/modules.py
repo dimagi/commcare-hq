@@ -2,6 +2,7 @@
 from collections import OrderedDict, namedtuple
 import json
 import logging
+import os
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, gettext_lazy
@@ -828,6 +829,8 @@ def new_module(request, domain, app_id):
             if module_type == 'case':
                 # registration form
                 register = app.new_form(module_id, "Register", lang)
+                with open(os.path.join(os.path.dirname(__file__), '..', 'static', 'app_manager', 'xml', 'registration_form.xml')) as f:
+                    register.source = f.read()
                 register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
                 register.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
 
