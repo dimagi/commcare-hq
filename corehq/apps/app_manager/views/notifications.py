@@ -3,7 +3,6 @@ import datetime
 from django.utils.translation import ugettext as _
 from ws4redis.publisher import RedisPublisher
 from ws4redis.redis_store import RedisMessage
-from corehq.toggles import APP_BUILDER_NOTIFICATIONS
 from dimagi.utils.parsing import json_format_datetime
 
 
@@ -20,18 +19,18 @@ def notify_form_changed(domain, couch_user, app_id, unique_form_id):
 
 
 def notify_event(domain, couch_user, app_id, unique_form_id, message):
-    if APP_BUILDER_NOTIFICATIONS.enabled(domain):
-        message = {
-            'domain': domain,
-            'user_id': couch_user._id,
-            'username': couch_user.username,
-            'text': message,
-            'timestamp': json_format_datetime(datetime.datetime.utcnow()),
-        }
-        message = RedisMessage(json.dumps(message))
-        RedisPublisher(
-            facility=get_facility_for_form(domain, app_id, unique_form_id), broadcast=True
-        ).publish_message(message)
+    doc_url = 'https://confluence.dimagi.com/display/ccinternal/App+Builder+Notifications'
+    message = '{} (<a href="{}" target="_blank">what is this?</a>)'.format(message, doc_url)
+    message_obj = RedisMessage(json.dumps({
+        'domain': domain,
+        'user_id': couch_user._id,
+        'username': couch_user.username,
+        'text': message,
+        'timestamp': json_format_datetime(datetime.datetime.utcnow()),
+    }))
+    RedisPublisher(
+        facility=get_facility_for_form(domain, app_id, unique_form_id), broadcast=True
+    ).publish_message(message_obj)
 
 
 def get_facility_for_form(domain, app_id, unique_form_id):

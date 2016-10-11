@@ -925,11 +925,3 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
-
-
-APP_BUILDER_NOTIFICATIONS = StaticToggle(
-    'app_builder_notifications',
-    'Enable app builder notifications on duplicate form edits.',
-    TAG_PRODUCT_CORE,
-    [NAMESPACE_DOMAIN]
-)
