@@ -84,12 +84,12 @@
 </script>
 
 <script type="text/html" id="case-config:case-transaction:case-preload">
-    <div class="panel-heading panel-title">{% trans "Load the following case properties into the form" %}</div>
+    <div class="panel-heading panel-title">{% trans "Load the following properties into the form" %}</div>
     <table class="table table-condensed" data-bind="visible: case_preload().length">
         <thead>
             <tr>
                 <th></th>
-                <th>{% trans "Case Property" %}</th>
+                <th>{% trans "Property" %}</th>
                 <th></th>
                 <th>{% trans "Question" %}</th>
             </tr>
@@ -123,7 +123,7 @@
     </table>
     <div class="panel-body">
         <div class="alert alert-block alert-info" data-bind="visible: !case_preload().length">
-            {% trans "No case properties will be loaded" %}
+            {% trans "No properties will be loaded" %}
         </div>
         <a href="#" class="firstProperty" data-bind="click: addPreload, visible: !case_preload().length">
             <i class="fa fa-plus"></i>
@@ -133,14 +133,14 @@
 </script>
 
 <script type="text/html" id="case-config:case-transaction:case-properties">
-    <div class="panel-heading panel-title">{% trans "Save data to the following case properties" %}</div>
+    <div class="panel-heading panel-title">{% trans "Save data to the following properties" %}</div>
     <table class="table table-condensed" data-bind="visible: case_properties().length">
         <thead>
             <tr>
                 <th></th>
                 <th>{% trans "Question" %}</th>
                 <th></th>
-                <th>{% trans "Case Property" %}</th>
+                <th>{% trans "Property" %}</th>
             </tr>
         </thead>
 
@@ -172,7 +172,7 @@
     </table>
     <div class="panel-body">
         <div class="alert alert-block alert-info" data-bind="visible: !case_properties().length">
-            {% trans "No case properties will be saved" %}
+            {% trans "No properties will be saved" %}
         </div>
         <a href="#" class="firstProperty" data-bind="click: addProperty, visible: !case_properties().length">
             <i class="fa fa-plus"></i>
