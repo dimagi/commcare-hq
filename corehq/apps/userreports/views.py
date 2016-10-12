@@ -698,6 +698,15 @@ class ReportPreview(BaseDomainView):
     def post(self, request, domain, data_source):
         post_data = json.loads(urllib.unquote(request.body))
         do_aggregation = post_data['aggregate']
+        # Example value of an item in post_data['columns']:
+        #     {
+        #         u'columnId': u'modified_on_6457b79c',
+        #         u'name': u'modified_on'
+        #         u'label': u'modified on',
+        #         u'isNumeric': False,
+        #         u'isGroupByColumn': False,
+        #         u'aggregation': None,
+        #     },
         columns = [{
             'type': 'field',
             'field': c['columnId'],

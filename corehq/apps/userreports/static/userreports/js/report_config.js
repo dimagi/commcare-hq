@@ -111,7 +111,17 @@ var reportBuilder = function () {
                 url: self.dataSourceUrl,
                 type: 'post',
                 contentType: 'application/json; charset=utf-8',
-                data: JSON.stringify({'columns': columns, 'aggregate': self.isAggregationEnabled()}),
+                data: JSON.stringify({
+                    'columns': _.map(columns, function (c) { return {
+                        'columnId': c.columnId,
+                        'name': c.name,
+                        'label': c.label,
+                        'isNumeric': c.isNumeric,
+                        'isGroupByColumn': c.isGroupByColumn(),
+                        'aggregation': c.aggregation(),
+                    }; }),
+                    'aggregate': self.isAggregationEnabled(),
+                }),
                 dataType: 'json',
                 success: self.renderReportPreview,
             });
