@@ -79,7 +79,7 @@ def phone_number_changed(case):
     update_actions = [update.get_update_action() for update in get_case_updates(last_case_action.form)]
     phone_number_changed = any(
         action for action in update_actions
-        if 'mobile_number' in action.dynamic_properties or
+        if 'phone_number' in action.dynamic_properties or
         'backup_number' in action.dynamic_properties
     )
     return phone_number_changed
