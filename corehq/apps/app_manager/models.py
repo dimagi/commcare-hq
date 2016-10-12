@@ -883,7 +883,7 @@ class FormBase(DocumentSchema):
                 return self.validate_form()
         return self
 
-    def validate_for_build(self, validate_module=True):
+    def validate_for_build(self):
         errors = []
 
         try:
@@ -941,11 +941,11 @@ class FormBase(DocumentSchema):
                 error.update(meta)
                 errors.append(error)
 
-        errors.extend(self.extended_build_validation(meta, xml_valid, validate_module))
+        errors.extend(self.extended_build_validation(meta, xml_valid))
 
         return errors
 
-    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
+    def extended_build_validation(self, error_meta, xml_valid):
         """
         Override to perform additional validation during build process.
         """
@@ -1470,31 +1470,30 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     def uses_usercase(self):
         return actions_use_usercase(self.active_actions())
 
-    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
+    def extended_build_validation(self, error_meta, xml_valid):
         errors = []
         if xml_valid:
             for error in self.check_actions():
                 error.update(error_meta)
                 errors.append(error)
 
-        if validate_module:
-            needs_case_type = False
-            needs_case_detail = False
-            needs_referral_detail = False
+        needs_case_type = False
+        needs_case_detail = False
+        needs_referral_detail = False
 
-            if self.requires_case():
-                needs_case_detail = True
-                needs_case_type = True
-            if self.requires_case_type():
-                needs_case_type = True
-            if self.requires_referral():
-                needs_referral_detail = True
+        if self.requires_case():
+            needs_case_detail = True
+            needs_case_type = True
+        if self.requires_case_type():
+            needs_case_type = True
+        if self.requires_referral():
+            needs_referral_detail = True
 
-            errors.extend(self.get_module().get_case_errors(
-                needs_case_type=needs_case_type,
-                needs_case_detail=needs_case_detail,
-                needs_referral_detail=needs_referral_detail,
-            ))
+        errors.extend(self.get_module().get_case_errors(
+            needs_case_type=needs_case_type,
+            needs_case_detail=needs_case_detail,
+            needs_referral_detail=needs_referral_detail,
+        ))
 
         return errors
 
@@ -2639,7 +2638,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
         return errors
 
-    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
+    def extended_build_validation(self, error_meta, xml_valid):
         errors = []
         if xml_valid:
             for error in self.check_actions():
@@ -2647,12 +2646,11 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 errors.append(error)
 
         module = self.get_module()
-        if validate_module:
-            errors.extend(module.get_case_errors(
-                needs_case_type=False,
-                needs_case_detail=module.requires_case_details(),
-                needs_referral_detail=False,
-            ))
+        errors.extend(module.get_case_errors(
+            needs_case_type=False,
+            needs_case_detail=module.requires_case_details(),
+            needs_referral_detail=False,
+        ))
 
         return errors
 
@@ -5560,7 +5558,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             errors.extend(module.validate_for_build())
 
         for form in self.get_forms():
-            errors.extend(form.validate_for_build(validate_module=True))
+            errors.extend(form.validate_for_build())
 
             # make sure that there aren't duplicate xmlns's
             xmlns_count[form.xmlns] += 1
