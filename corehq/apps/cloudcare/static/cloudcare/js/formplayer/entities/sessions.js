@@ -7,7 +7,15 @@
 
 FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Backbone, Marionette, $) {
 
-    Entities.FormEntrySession = Backbone.Model.extend({});
+    Entities.FormEntrySession = Backbone.Model.extend({
+        isNew: function() {
+            return !this.get('sessionId');
+        },
+        sync: function (method, model, options) {
+            Util.setCrossDomainAjaxOptions(options);
+            return Backbone.Collection.prototype.sync.call(this, 'create', model, options);
+        },
+    });
 
     Entities.FormEntrySessionCollection = Backbone.Collection.extend({
 
@@ -31,6 +39,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             var domain = user.domain;
             var formplayerUrl = user.formplayer_url;
             var options = {
+                parse: true,
                 data: JSON.stringify({
                     "username": user.username,
                     "domain": domain,
@@ -88,17 +97,15 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             var user = FormplayerFrontend.request('currentUser');
             var formplayerUrl = user.formplayer_url;
             var options = {
-                url: user.formplayer_url + '/delete-session',
-            }
-
-            debugger;
-            session.destroy({
-                data: {
+                data: JSON.stringify({
                     "sessionId": session.get('sessionId'),
                     "username": user.username,
                     "domain": user.domain,
-                }
-            }, options);
+                }),
+                url: user.formplayer_url + '/delete-incomplete-form',
+            }
+
+            session.destroy(options);
 
         },
     };
