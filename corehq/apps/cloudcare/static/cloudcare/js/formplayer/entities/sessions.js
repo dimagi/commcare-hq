@@ -93,10 +93,18 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             });
             return defer.promise();
         },
+
+        deleteSession: function(sessionId) {
+            console.log('deleting session')
+        },
     };
 
     FormplayerFrontend.reqres.setHandler("getSession", function (sessionId) {
         return API.getSession(sessionId);
+    });
+
+    FormplayerFrontend.reqres.setHandler("deleteSession", function (sessionId) {
+        return API.deleteSession(sessionId);
     });
 
     FormplayerFrontend.reqres.setHandler("sessions", function () {

@@ -6,6 +6,7 @@ FormplayerFrontend.module("SessionNavigate.SessionList", function (SessionList, 
         className: "formplayer-request",
         events: {
             "click": "rowClick",
+            "click .module-delete-control": "onDeleteSession"
         },
 
         template: "#session-view-item-template",
@@ -20,7 +21,12 @@ FormplayerFrontend.module("SessionNavigate.SessionList", function (SessionList, 
             return {
                 humanDateOpened: moment(this.model.get('dateOpened')).fromNow(),
             };
-        }
+        },
+        onDeleteSession: function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var result = FormplayerFrontend.request("deleteSession", this.model.get('sessionId'));
+        },
     });
 
     SessionList.SessionListView = Marionette.CompositeView.extend({
