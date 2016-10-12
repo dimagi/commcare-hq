@@ -96,7 +96,7 @@
     <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id module.id form.id %}'>
         {% csrf_token %}
         <fieldset>
-            <legend>{% trans "Copy Form to a Different Module" %}</legend>
+            <legend>{% trans "Copy Form" %}</legend>
             <select name='to_module_id' class='form-control'>{% for mod in app.get_modules %}
                 <option value={{ mod.id }}>{{ mod.name|html_trans:langs }}</option>
                 {% endfor %}</select>

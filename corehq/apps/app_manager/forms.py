@@ -35,9 +35,7 @@ class CopyApplicationForm(forms.Form):
                 *fields
             ),
             Hidden('app', app_id),
-            hqcrispy.FormActions(
-                StrictButton(_('Copy'), type='submit', css_class='btn-primary')
-            )
+            StrictButton(_('Copy'), type='submit', css_class='btn-primary col-sm-offset-3 col-md-offset-4 col-lg-offset-2')
         )
 
     def clean_domain(self):
