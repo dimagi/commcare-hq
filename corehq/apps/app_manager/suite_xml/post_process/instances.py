@@ -94,6 +94,13 @@ class EntryInstances(PostProcessor):
             if instance_name in unknown_instance_ids:
                 instances.add(Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name)))
                 unknown_instance_ids.remove(instance_name)
+        instance_name = 'locations'
+        if instance_name in unknown_instance_ids:
+            if toggles.FLAT_LOCATION_FIXTURE.enabled(self.app.domain):
+                instances.add(Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name)))
+            else:
+                instances.add(Instance(id=instance_name, src='jr://fixture/commtrack:{}'.format(instance_name)))
+            unknown_instance_ids.remove(instance_name)
         return instances, unknown_instance_ids
 
 
