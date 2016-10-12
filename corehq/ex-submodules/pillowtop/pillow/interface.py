@@ -171,14 +171,26 @@ class ConstructedPillow(PillowBase):
 
 def handle_pillow_error(pillow, change, exception):
     from pillow_retry.models import PillowError
-    error = PillowError.get_or_create(change, pillow)
-    error.add_attempt(exception, sys.exc_info()[2])
-    error.save()
+    save_error = True
+    try:
+        from corehq.apps.userreports.pillow import ConfigurableReportKafkaPillow
+        if isinstance(pillow, ConfigurableReportKafkaPillow):
+            save_error = False  # this is temporarily not supported!
+    except ImportError:
+        pass
+
+    error_id = None
+    if save_error:
+        error = PillowError.get_or_create(change, pillow)
+        error.add_attempt(exception, sys.exc_info()[2])
+        error.save()
+        error_id = error.id
+
     pillow_logging.exception(
         "[%s] Error on change: %s, %s. Logged as: %s" % (
             pillow.get_name(),
             change['id'],
             exception,
-            error.id
+            error_id
         )
     )
