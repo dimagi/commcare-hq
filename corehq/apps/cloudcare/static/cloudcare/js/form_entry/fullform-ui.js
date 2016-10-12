@@ -183,11 +183,11 @@ function Form(json) {
     Container.call(self, json);
     self.submitText = ko.observable('Submit');
 
-    self.currentIndex = ko.observable(0);
+    self.currentIndex = ko.observable("0");
     self.atLastIndex = ko.observable(false);
 
     var _updateIndexCallback = function (ix, isAtLastIndex) {
-        self.currentIndex(ix);
+        self.currentIndex(ix.toString());
         self.atLastIndex(isAtLastIndex);
     };
 
@@ -219,7 +219,7 @@ function Form(json) {
 
     self.enablePreviousButton = ko.computed(function () {
         if (!self.showInFormNavigation()) return false;
-        return self.currentIndex() > 0;
+        return self.currentIndex() !== "0" && self.currentIndex() !== "-1";
     });
 
     self.showSubmitButton = ko.computed(function () {
