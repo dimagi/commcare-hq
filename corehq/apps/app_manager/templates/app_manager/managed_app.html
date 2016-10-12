@@ -144,7 +144,7 @@
         {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
             <li class="{% if not module %}active {% endif %}release-manager-li">
                 <a id="demand-releases" href="{% url "view_app" domain app.id %}releases/">
-                    <i class="fa fa-mobile-phone"></i>
+                    <i class="fa fa-mobile-phone preview-icon"></i>
                     {{ app.name }}
                 </a>
                 <div id="app-settings-gear">
@@ -181,7 +181,7 @@
         {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" or request|toggle_enabled:"PREVIEW_APP" %}
         <li>
           <a id="js-toggle-app-preview">
-              <i class="fa fa-mobile-phone preview-icon"></i>
+              <i class="fa {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}fa-eye{% else %}fa-mobile-phone preview-icon{% endif %}"></i>
               <span class="preview-action-show hide">{% trans "Show App Preview" %}</span>
               <span class="preview-action-hide hide">{% trans "Hide App Preview" %}</span>
           </a>
