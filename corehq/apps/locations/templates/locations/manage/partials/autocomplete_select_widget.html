@@ -33,7 +33,10 @@ $("#{{ id }}").select2({
         }
 
         if (val !== "") {
-            $.get("{{ query_url }}", payload).done(function(data) { callback(data); });
+            $.get("{{ query_url }}", payload).done(function(data) {
+                callback(data);
+                $(element).trigger('select-ready');
+            });
         }
     },
     formatResult: function(e) { return e.name; },
