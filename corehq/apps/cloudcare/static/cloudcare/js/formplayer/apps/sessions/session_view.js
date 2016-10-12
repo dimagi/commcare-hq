@@ -25,7 +25,7 @@ FormplayerFrontend.module("SessionNavigate.SessionList", function (SessionList, 
         onDeleteSession: function(e) {
             e.preventDefault();
             e.stopPropagation();
-            var result = FormplayerFrontend.request("deleteSession", this.model.get('sessionId'));
+            var result = FormplayerFrontend.request("deleteSession", this.model);
         },
     });
 

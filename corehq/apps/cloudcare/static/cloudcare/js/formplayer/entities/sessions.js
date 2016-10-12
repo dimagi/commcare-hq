@@ -17,8 +17,9 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             return response.sessions;
         },
 
-        initialize: function (params) {
-            this.fetch = params.fetch;
+        fetch: function (options) {
+            Util.setCrossDomainAjaxOptions(options);
+            return Backbone.Collection.prototype.fetch.call(this, options);
         },
     });
 
@@ -29,33 +30,21 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             var user = FormplayerFrontend.request('currentUser');
             var domain = user.domain;
             var formplayerUrl = user.formplayer_url;
-
-            var menus = new Entities.FormEntrySessionCollection({
-
-                fetch: function (options) {
-
-                    options.data = JSON.stringify({
-                        "username": user.username,
-                        "domain": domain,
-                    });
-
-                    options.url = formplayerUrl + '/get_sessions';
-                    Util.setCrossDomainAjaxOptions(options);
-                    return Backbone.Collection.prototype.fetch.call(this, options);
-                },
-
-                initialize: function (params) {
-                    this.fetch = params.fetch;
-                },
-
-            });
-
-            var defer = $.Deferred();
-            menus.fetch({
+            var options = {
+                data: JSON.stringify({
+                    "username": user.username,
+                    "domain": domain,
+                }),
+                url: formplayerUrl + '/get_sessions',
                 success: function (request) {
                     defer.resolve(request);
                 },
-            });
+            };
+
+            var menus = new Entities.FormEntrySessionCollection(options);
+
+            var defer = $.Deferred();
+            menus.fetch(options);
             return defer.promise();
         },
 
@@ -94,13 +83,28 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             return defer.promise();
         },
 
-        deleteSession: function(sessionId) {
+        deleteSession: function(session) {
             console.log('deleting session')
+            var user = FormplayerFrontend.request('currentUser');
+            var formplayerUrl = user.formplayer_url;
+            var options = {
+                url: user.formplayer_url + '/delete-session',
+            }
+
+            debugger;
+            session.destroy({
+                data: {
+                    "sessionId": session.get('sessionId'),
+                    "username": user.username,
+                    "domain": user.domain,
+                }
+            }, options);
+
         },
     };
 
-    FormplayerFrontend.reqres.setHandler("getSession", function (sessionId) {
-        return API.getSession(sessionId);
+    FormplayerFrontend.reqres.setHandler("getSession", function (session) {
+        return API.getSession(session);
     });
 
     FormplayerFrontend.reqres.setHandler("deleteSession", function (sessionId) {
