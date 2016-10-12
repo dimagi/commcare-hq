@@ -50,7 +50,6 @@ branches:
   - onboarding # Jenny 9/19
 #  - np/kill-djcelery # Nick P 10/3
 #  - np/upgrade-twofactor # Nick P 10/5
-  - np/upgrade-django-mptt # Nick P 10/6
   - bmb/currentind-string # Biyeun 11/12
 submodules:
   submodules/touchforms-src:
