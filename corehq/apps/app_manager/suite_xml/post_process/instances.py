@@ -94,6 +94,13 @@ class EntryInstances(PostProcessor):
             if instance_name in unknown_instance_ids:
                 instances.add(Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name)))
                 unknown_instance_ids.remove(instance_name)
+        instance_name = 'locations'
+        if instance_name in unknown_instance_ids:
+            if toggles.FLAT_LOCATION_FIXTURE.enabled(self.app.domain):
+                instances.add(Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name)))
+            else:
+                instances.add(Instance(id=instance_name, src='jr://fixture/commtrack:{}'.format(instance_name)))
+            unknown_instance_ids.remove(instance_name)
         return instances, unknown_instance_ids
 
 
@@ -116,7 +123,6 @@ class register_factory(object):
 INSTANCE_BY_ID = {
     'groups': Instance(id='groups', src='jr://fixture/user-groups'),
     'reports': Instance(id='reports', src='jr://fixture/commcare:reports'),
-    'locations': Instance(id='locations', src='jr://fixture/commtrack:locations'),
     'ledgerdb': Instance(id='ledgerdb', src='jr://instance/ledgerdb'),
     'casedb': Instance(id='casedb', src='jr://instance/casedb'),
     'commcaresession': Instance(id='commcaresession', src='jr://instance/session'),
