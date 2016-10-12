@@ -173,14 +173,8 @@ def update_calculated_properties():
     for r in results:
         dom = r["name"]
         try:
-            last_updated_date = iso_string_to_datetime(r["cp_last_updated"])
-            last_updated_ago = datetime.utcnow() - last_updated_date
-            last_form_string = CALC_FNS["last_form_submission"](dom, False)
-            last_form_date = iso_string_to_datetime(last_form_string)
-            last_form_ago = datetime.utcnow() - last_form_date
-            if last_updated_ago < timedelta(days=7) and last_form_ago > timedelta(days=1):
-                # skip if no forms submitted in the last day
-                # and stats were updated less than a week ago
+            last_form_submission = CALC_FNS["last_form_submission"](dom, False)
+            if _skip_updating_domain_stats(r["cp_last_updated"], last_form_submission):
                 continue
             calced_props = {
                 "_id": r["_id"],
@@ -199,7 +193,7 @@ def update_calculated_properties():
                 "cp_n_forms_60_d": int(CALC_FNS["forms_in_last"](dom, 60)),
                 "cp_n_forms_90_d": int(CALC_FNS["forms_in_last"](dom, 90)),
                 "cp_first_form": CALC_FNS["first_form_submission"](dom, False),
-                "cp_last_form": last_form_string,
+                "cp_last_form": last_form_submission,
                 "cp_is_active": CALC_FNS["active"](dom),
                 "cp_has_app": CALC_FNS["has_app"](dom),
                 "cp_last_updated": json_format_datetime(datetime.utcnow()),
@@ -232,6 +226,18 @@ def update_calculated_properties():
             send_to_elasticsearch("domains", calced_props)
         except Exception, e:
             notify_exception(None, message='Domain {} failed on stats calculations with {}'.format(dom, e))
+
+
+def _skip_updating_domain_stats(last_updated, last_form_submission):
+    """
+    Skip domain if no forms submitted in the last day
+    AND stats were updated less than a week ago.
+
+    :return: True to skip domain
+     """
+    last_updated_ago = datetime.utcnow() - iso_string_to_datetime(last_updated)
+    last_form_ago = datetime.utcnow() - iso_string_to_datetime(last_form_submission)
+    return last_updated_ago < timedelta(days=7) and last_form_ago > timedelta(days=1)
 
 
 def is_app_active(app_id, domain):
