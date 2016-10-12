@@ -9,7 +9,7 @@ var reportBuilder = function () {
         self.name = column["name"];
         self.label = column["label"];
         self.isNumeric = column["is_numeric"];
-        self.aggregation = ko.observable(column["is_numeric"] ? "sum": null);
+        self.aggregation = ko.observable(column["is_numeric"] ? "simple": null);
         self.isGroupByColumn = ko.observable(false);
         self.isGroupByColumn.subscribe(function (newValue) {
             var index = parent.selectedColumns.indexOf(self);
