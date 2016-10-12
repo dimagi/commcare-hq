@@ -5,6 +5,18 @@
 
 <div data-bind="saveButton: shortScreen.saveButton"></div>
 
+{% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+<legend>
+    Title
+    <span class="hq-help-template"
+          data-title="{% trans "Label on Phone" %}"
+          data-content="{% trans "This label will appear at the top of the phone's case select screen." %}"
+    ></span>
+</legend>
+<div class="row"><div class="col-sm-3"><input type="text" name="case_label" class="form-control" /></div></div>
+<br><br>
+{% endif %}
+
 <div data-bind="with: customXMLViewModel">
     <div data-bind="visible: enabled">
         <legend>{% trans "Custom Case List XML" %}</legend>
@@ -201,7 +213,7 @@
 </div>
 {% endif %}
 
-{% if detail.parent_select %}
+{% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" and detail.parent_select %}
 <div data-bind="with: parentSelect, DetailScreenConfig_notifyShortScreenOnChange: $root">
     <div data-bind="visible: moduleOptions().length" class="form-horizontal">
         <legend>{% trans "Parent Child Selection" %}</legend>
@@ -217,7 +229,7 @@
         </div>
         <div class="form-group" data-bind="visible: active">
             <label class="control-label col-sm-2">
-                {% trans "Use Case List from module" %}
+                {% trans "Use Case List from" %}
             </label>
             <div class="col-sm-4">
                 <select class="form-control" data-bind="optstr: moduleOptions, value: moduleId"></select>

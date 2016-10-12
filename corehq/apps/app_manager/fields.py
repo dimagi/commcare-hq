@@ -164,7 +164,7 @@ class ApplicationDataRMIHelper(object):
         self.as_dict = as_dict
         default_form_placeholder = AppFormRMIPlaceholder(
             application=_("Select Application"),
-            module=_("Select Module"),
+            module=_("Select Menu"),
             form=_("Select Form"),
         )
         self.form_placeholders = form_placeholders or default_form_placeholder

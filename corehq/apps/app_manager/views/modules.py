@@ -2,6 +2,7 @@
 from collections import OrderedDict, namedtuple
 import json
 import logging
+import os
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, gettext_lazy
@@ -47,13 +48,16 @@ from corehq.apps.app_manager.models import (
     DeleteModuleRecord,
     DetailColumn,
     DetailTab,
+    FormActionCondition,
     Module,
     ModuleNotFoundException,
+    OpenCaseAction,
     ParentSelect,
     ReportModule,
     ShadowModule,
     SortElement,
     ReportAppConfig,
+    UpdateCaseAction,
     FixtureSelect,
     DefaultCaseSearchProperty)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
@@ -348,11 +352,11 @@ class AllowWithReason(namedtuple('AllowWithReason', 'allow reason')):
     @property
     def message(self):
         if self.reason == self.ALL_FORMS_REQUIRE_CASE:
-            return gettext_lazy('Not all forms in the module update a case.')
+            return gettext_lazy('Not all forms in the case list update a case.')
         elif self.reason == self.MODULE_IN_ROOT:
-            return gettext_lazy("The module's 'Menu Mode' is not configured as 'Display module and then forms'")
+            return gettext_lazy("'Menu Mode' is not configured as 'Display menu and then forms'")
         elif self.reason == self.PARENT_SELECT_ACTIVE:
-            return gettext_lazy("The module has 'Parent Selection' configured.")
+            return gettext_lazy("'Parent Selection' is configured.")
 
 
 @no_conflict_require_POST
@@ -446,7 +450,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         parent_module = request.POST.get("parent_module")
         module.parent_select.module_id = parent_module
         if module_case_hierarchy_has_circular_reference(module):
-            return HttpResponseBadRequest(_("The case hierarchy for this module contains a circular reference."))
+            return HttpResponseBadRequest(_("The case hierarchy contains a circular reference."))
     if should_edit("auto_select_case"):
         module["auto_select_case"] = request.POST.get("auto_select_case") == 'true'
 
@@ -516,7 +520,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
                 app.get_module(module_id)
                 module["root_module_id"] = request.POST.get("root_module_id")
             except ModuleNotFoundException:
-                messages.error(_("Unknown Module"))
+                messages.error(_("Unknown Menu"))
 
     if should_edit('excl_form_ids') and isinstance(module, ShadowModule):
         excl = request.POST.getlist('excl_form_ids')
@@ -709,7 +713,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     if parent_select is not None:
         module.parent_select = ParentSelect.wrap(parent_select)
         if module_case_hierarchy_has_circular_reference(module):
-            return HttpResponseBadRequest(_("The case hierarchy for this module contains a circular reference."))
+            return HttpResponseBadRequest(_("The case hierarchy contains a circular reference."))
     if fixture_select is not None:
         module.fixture_select = FixtureSelect.wrap(fixture_select)
     if search_properties is not None:
@@ -813,12 +817,38 @@ def new_module(request, domain, app_id):
     lang = request.COOKIES.get('lang', app.langs[0])
     name = request.POST.get('name')
     module_type = request.POST.get('module_type', 'case')
-    if module_type == 'case':
+    if module_type == 'case' or module_type == 'survey':
+        if toggles.ONBOARDING_PROTOTYPE.enabled(domain):
+            if module_type == 'case':
+                name = name or 'Case List'
+            else:
+                name = name or 'Surveys'
         module = app.add_module(Module.new_module(name, lang))
         module_id = module.id
-        app.new_form(module_id, "Untitled Form", lang)
+        form_id=None
+        if toggles.ONBOARDING_PROTOTYPE.enabled(domain):
+            if module_type == 'case':
+                # registration form
+                register = app.new_form(module_id, "Register", lang)
+                with open(os.path.join(os.path.dirname(__file__), '..', 'static', 'app_manager', 'xml', 'registration_form.xml')) as f:
+                    register.source = f.read()
+                register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'), name_path=u'/data/name')
+                register.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
+
+                # make case type unique across app
+                app_case_types = set([module.case_type for module in app.modules if module.case_type])
+                module.case_type = 'case'
+                suffix = 0
+                while module.case_type in app_case_types:
+                    suffix = suffix + 1
+                    module.case_type = 'case-{}'.format(suffix)
+            else:
+                form = app.new_form(module_id, "Survey", lang)
+            form_id = 0
+        else:
+            app.new_form(module_id, "Untitled Form", lang)
         app.save()
-        response = back_to_main(request, domain, app_id=app_id, module_id=module_id)
+        response = back_to_main(request, domain, app_id=app_id, module_id=module_id, form_id=form_id)
         response.set_cookie('suppress_build_errors', 'yes')
         return response
     elif module_type in MODULE_TYPE_MAP:
