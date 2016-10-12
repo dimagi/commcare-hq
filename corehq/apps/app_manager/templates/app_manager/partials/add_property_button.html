@@ -5,13 +5,13 @@
         <i class="fa fa-plus"></i>
         {% trans "Add Property" %}
     </button>
-    {% if request|toggle_enabled:'GRAPH_CREATION' %}
+    {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" and request|toggle_enabled:'GRAPH_CREATION' %}
     <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
         <span class="caret"></span>
     </button>
     <ul class="dropdown-menu">
         <li data-bind="click: addProperty"><a>{% trans "Property" %}</a></li>
-        {% if request|toggle_enabled:'GRAPH_CREATION' %}
+        {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" and request|toggle_enabled:'GRAPH_CREATION' %}
         <!-- ko if: hqImport('app_manager/js/app_manager.js').checkCommcareVersion("2.17") -->
         <li data-bind="click: addGraph"><a>{% trans "Graph" %}</a></li>
         <!-- /ko -->

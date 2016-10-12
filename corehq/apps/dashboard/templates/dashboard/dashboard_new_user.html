@@ -22,33 +22,83 @@
 
 {% block dashboard-content %}
 <div class="page-header">
-    <h1>{% trans 'What type of app would you like to build?' %}</h1>
+    {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+        <h1>{% trans 'Would you like to work on an existing app or create a new one?' %}</h1>
+    {% else %}
+        <h1>{% trans 'What type of app would you like to build?' %}</h1>
+    {% endif %}
 </div>
 <div class="row">
-    {% for template in templates %}
-        <div class="col-md-4">
+    {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+        <div class="col-md-6">
+            <div class="panel panel-dashboard panel-dashboard-large">
+                <div class="panel-heading">
+                    <a class="dashboard-link"
+                        data-index="0"
+                        href="#">
+                        {% trans 'Existing Applications' %}
+                    </a>
+                </div>
+                <div class="panel-body">
+                    <i class="fcc fcc-applications dashboard-icon dashboard-icon-large dashboard-icon-bg"></i>
+                    <div class="list-group">
+                        {% for app in apps %}
+                            <div class="list-group-item">
+                                <a href='{% url "view_app" domain app.id %}'>{{ app.name }}</a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
             <div class="panel panel-dashboard">
                 <div class="panel-heading">
                     <a class="dashboard-link"
-                        data-index="{{ forloop.counter0 }}"
-                        href="{{ template.url }}">
-                        {{ template.heading }}
+                        data-index="1"
+                        href="{% url 'default_new_app' domain %}">
+                        {% trans 'Blank Application' %}
                     </a>
                 </div>
                 <div class="panel-body">
                     <p class="text-center">
                         <a class="dashboard-link"
-                            data-index="{{ forloop.counter0 }}"
-                            href="{{ template.url }}">
-                        <i class="fcc {{ template.icon }} dashboard-icon dashboard-icon-large"></i>
+                            data-index="1"
+                            href="{% url 'default_new_app' domain %}">
+                        <i class="fcc fcc-blankapp dashboard-icon dashboard-icon-large"></i>
                         <span class="lead">
-                            {{ template.lead }}
+                            {% trans 'Start from scratch' %}
                         </span>
                     </a></p>
                 </div>
             </div>
         </div>
-    {% endfor %}
+    {% else %}
+        {% for template in templates %}
+            <div class="col-md-4">
+                <div class="panel panel-dashboard">
+                    <div class="panel-heading">
+                        <a class="dashboard-link"
+                            data-index="{{ forloop.counter0 }}"
+                            href="{{ template.url }}">
+                            {{ template.heading }}
+                        </a>
+                    </div>
+                    <div class="panel-body">
+                        <p class="text-center">
+                            <a class="dashboard-link"
+                                data-index="{{ forloop.counter0 }}"
+                                href="{{ template.url }}">
+                            <i class="fcc {{ template.icon }} dashboard-icon dashboard-icon-large"></i>
+                            <span class="lead">
+                                {{ template.lead }}
+                            </span>
+                        </a></p>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
 </div>
 
 {% endblock dashboard-content %}

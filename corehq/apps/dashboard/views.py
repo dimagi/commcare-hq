@@ -4,7 +4,7 @@ from django.utils.translation import ugettext_noop, ugettext as _
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 
 from corehq import privileges
-from corehq.apps.app_manager.dbaccessors import domain_has_apps
+from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
 from corehq.apps.dashboard.models import (
     TileConfiguration,
     AppsPaginatedContext,
@@ -74,7 +74,14 @@ class NewUserDashboardView(BaseDashboardView):
 
     @property
     def page_context(self):
-        return {'templates': self.templates(self.domain)}
+        return NewUserDashboardView.page_context(self.domain)
+
+    @classmethod
+    def page_context(cls, domain):
+        return {
+            'apps': get_brief_apps_in_domain(domain),
+            'templates': cls.templates(domain),
+        }
 
     @classmethod
     def templates(cls, domain):

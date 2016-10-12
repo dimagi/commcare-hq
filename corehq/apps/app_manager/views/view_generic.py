@@ -12,6 +12,7 @@ from corehq.apps.app_manager.views.apps import get_apps_base_context, \
     get_app_view_context
 from corehq.apps.app_manager.views.forms import \
     get_form_view_context_and_template
+from corehq.apps.app_manager.views.releases import get_releases_context
 from corehq.apps.app_manager.views.utils import bail, encode_if_unicode
 from corehq.apps.hqmedia.controller import (
     MultimediaImageUploadController,
@@ -45,7 +46,7 @@ from django_prbac.utils import has_privilege
 
 @retry_resource(3)
 def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
-                 copy_app_form=None):
+                 copy_app_form=None, release_manager=False):
     """
     This is the main view for the app. All other views redirect to here.
 
@@ -244,6 +245,9 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             },
         })
 
+    if release_manager:
+        context['release_manager'] = release_manager
+        context.update(get_releases_context(request, domain, app_id))
     response = render(request, template, context)
 
     response.set_cookie('lang', encode_if_unicode(lang))
