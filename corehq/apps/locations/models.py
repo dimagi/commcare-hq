@@ -364,7 +364,7 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
 
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
 
-    objects = LocationManager()
+    objects = _tree_manager = LocationManager()
     # This should really be the default location manager
     active_objects = OnlyUnarchivedLocationManager()
 
