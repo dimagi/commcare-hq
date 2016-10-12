@@ -15,7 +15,8 @@ class OtaRestoreUserTest(TestCase):
         cls.domain.commtrack_enabled = True
         cls.domain.save()
         cls.user = CommCareUser(domain=DOMAIN,
-                                domain_membership=DomainMembership(domain=DOMAIN, location_id='1'))
+                                domain_membership=DomainMembership(domain=DOMAIN, location_id='1',
+                                                                   assigned_location_ids=['1']))
         cls.restore_user = cls.user.to_ota_restore_user()
 
     @classmethod
