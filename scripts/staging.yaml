@@ -52,7 +52,6 @@ branches:
 #  - np/upgrade-twofactor # Nick P 10/5
   - np/upgrade-django-mptt # Nick P 10/6
   - np/19/django-compressor # Nick P 10/7
-  - br/br/fix-bad-checks  # Ben 10/12
   - bmb/currentind-string # Biyeun 11/12
 submodules:
   submodules/touchforms-src:
