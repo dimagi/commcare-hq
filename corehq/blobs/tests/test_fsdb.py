@@ -11,18 +11,7 @@ from corehq.blobs.exceptions import ArgumentError
 from corehq.util.test_utils import generate_cases
 
 
-class TestFilesystemBlobDB(TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        cls.rootdir = mkdtemp(prefix="blobdb")
-        cls.db = mod.FilesystemBlobDB(cls.rootdir)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.db = None
-        rmtree(cls.rootdir)
-        cls.rootdir = None
+class _BlobDBTests(object):
 
     def test_put_and_get(self):
         name = "test.1"
@@ -57,6 +46,14 @@ class TestFilesystemBlobDB(TestCase):
         with self.db.get(info.identifier) as fh:
             self.assertEqual(fh.read(), b"content")
 
+    def test_put_from_get_stream(self):
+        name = "form.xml"
+        old = self.db.put(StringIO(b"content"), name, "old_bucket")
+        with self.db.get(old.identifier, "old_bucket") as fh:
+            new = self.db.put(fh, name, "new_bucket")
+        with self.db.get(new.identifier, "new_bucket") as fh:
+            self.assertEqual(fh.read(), b"content")
+
     def test_delete(self):
         name = "test.4"
         bucket = "doc.4"
@@ -67,7 +64,7 @@ class TestFilesystemBlobDB(TestCase):
         with self.assertRaises(mod.NotFound):
             self.db.get(info.identifier, bucket)
 
-        self.assertFalse(self.db.delete(info.identifier, bucket), 'delete should fail')
+        return info, bucket
 
     def test_bulk_delete(self):
         blobs = [
@@ -87,15 +84,16 @@ class TestFilesystemBlobDB(TestCase):
             with self.assertRaises(mod.NotFound):
                 self.db.get(info.identifier, blob[1])
 
-        self.assertFalse(self.db.bulk_delete(paths), 'delete should fail')
+        return paths
 
     def test_delete_bucket(self):
         bucket = join("doctype", "ys7v136b")
-        self.db.put(StringIO(b"content"), bucket=bucket)
+        info = self.db.put(StringIO(b"content"), bucket=bucket)
         self.assertTrue(self.db.delete(bucket=bucket))
 
-        names = os.listdir(self.db.get_path(bucket="doctype"))
-        self.assertNotIn("ys7v136b", names, "bucket not deleted")
+        self.assertTrue(info.identifier)
+        with self.assertRaises(mod.NotFound):
+            self.db.get(info.identifier, bucket=bucket)
 
     def test_delete_identifier_in_default_bucket(self):
         info = self.db.put(StringIO(b"content"))
@@ -121,6 +119,53 @@ class TestFilesystemBlobDB(TestCase):
         with self.db.get(info.identifier) as fh:
             self.assertEqual(fh.read(), b"content")
         self.assertTrue(self.db.delete(bucket=mod.DEFAULT_BUCKET))
+
+    def test_empty_attachment_name(self):
+        info = self.db.put(StringIO(b"content"))
+        self.assertNotIn(".", info.identifier)
+        return info
+
+
+@generate_cases([
+    ("test.1", "\u4500.1"),
+    ("test.1", "/tmp/notallowed"),
+    ("test.1", "."),
+    ("test.1", ".."),
+    ("test.1", "../notallowed"),
+    ("test.1", "notallowed/.."),
+    ("/test.1",),
+    ("../test.1",),
+], _BlobDBTests)
+def test_bad_name(self, name, bucket=mod.DEFAULT_BUCKET):
+    with self.assertRaises(mod.BadName):
+        self.db.get(name, bucket)
+
+
+class TestFilesystemBlobDB(TestCase, _BlobDBTests):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.rootdir = mkdtemp(prefix="blobdb")
+        cls.db = mod.FilesystemBlobDB(cls.rootdir)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.db = None
+        rmtree(cls.rootdir)
+        cls.rootdir = None
+
+    def test_delete(self):
+        info, bucket = super(TestFilesystemBlobDB, self).test_delete()
+        self.assertFalse(self.db.delete(info.identifier, bucket), 'delete should fail')
+
+    def test_bulk_delete(self):
+        paths = super(TestFilesystemBlobDB, self).test_bulk_delete()
+        self.assertFalse(self.db.bulk_delete(paths), 'delete should fail')
+
+    def test_delete_bucket(self):
+        super(TestFilesystemBlobDB, self).test_delete_bucket()
+        names = os.listdir(self.db.get_path(bucket="doctype"))
+        self.assertNotIn("ys7v136b", names, "bucket not deleted")
 
     def test_bucket_path(self):
         bucket = join("doctype", "8cd98f0")
@@ -157,26 +202,10 @@ class TestFilesystemBlobDB(TestCase):
             self.assertEqual(fh.read(), b"content")
 
     def test_empty_attachment_name(self):
-        info = self.db.put(StringIO(b"content"))
-        self.assertNotIn(".", info.identifier)
+        info = super(TestFilesystemBlobDB, self).test_empty_attachment_name()
         path = self.db.get_path(info.identifier)
         with open(path, "rb") as fh:
             self.assertEqual(fh.read(), b"content")
-
-
-@generate_cases([
-    ("test.1", "\u4500.1"),
-    ("test.1", "/tmp/notallowed"),
-    ("test.1", "."),
-    ("test.1", ".."),
-    ("test.1", "../notallowed"),
-    ("test.1", "notallowed/.."),
-    ("/test.1",),
-    ("../test.1",),
-], TestFilesystemBlobDB)
-def test_bad_name(self, name, bucket=mod.DEFAULT_BUCKET):
-    with self.assertRaises(mod.BadName):
-        self.db.get(name, bucket)
 
 
 @generate_cases([
