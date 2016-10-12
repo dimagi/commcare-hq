@@ -11,28 +11,27 @@ var reportBuilder = function () {
         self.isNumeric = column["is_numeric"];
         self.aggregation = ko.observable(column["is_numeric"] ? "sum": null);
         self.isGroupByColumn = ko.observable(false);
-        // TODO: Refactor for multiple group-by columns
-        //self.isGroupByColumn.subscribe(function (newValue) {
-        //    // Put the group-by column first in the report
-        //
-        //    if (newValue) {  // Check whether it has a value, because the user can unselect group by
-        //        // Put the group-by column first in the report
-        //        var selectedColumnNames = _.map(self.selectedColumns(), function (c) { return c.name; });
-        //        var index = selectedColumnNames.indexOf(newValue);
-        //        var column;
-        //        if (index === -1) {
-        //            // The column is not in the report. Insert it.
-        //            column = _.find(self.columns, function (c) { return c["name"] === newValue; });
-        //            self.selectedColumns.unshift(new reportBuilder.ReportColumn(column, self));
-        //        } else if (index > 0) {
-        //            // The column is already in the report, but not first. Bump it up.
-        //            column = self.selectedColumns.splice(index, 1)[0];
-        //            self.selectedColumns.unshift(column);
-        //        }
-        //    }
-        //    self.setIsFormatEnabled();
-        //    self.refreshPreview();
-        //});
+        self.isGroupByColumn.subscribe(function (newValue) {
+            var index = parent.selectedColumns.indexOf(self);
+            var lookAhead = index;
+            if (newValue) {
+                // Move group-by column before aggregated columns
+                while (lookAhead > 0 && !parent.selectedColumns()[lookAhead - 1].isGroupByColumn()) {
+                    lookAhead--;
+                }
+            } else {
+                // Move aggregated column after group-by columns
+                var end = parent.selectedColumns().length - 1;
+                while (lookAhead < end && parent.selectedColumns()[lookAhead + 1].isGroupByColumn()) {
+                    lookAhead++;
+                }
+            }
+            if (lookAhead !== index) {
+                parent.selectedColumns.splice(index, 1);  // Remove self
+                parent.selectedColumns.splice(lookAhead, 0, self);  // Insert self
+            }
+            parent.refreshPreview();
+        });
         self.aggregation.subscribe(function (newValue) {
             parent.refreshPreview();
         });
