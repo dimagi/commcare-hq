@@ -102,7 +102,6 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
                     ComputedDocumentMixin, CouchDocLockableMixIn,
                     AbstractXFormInstance):
     """An XForms instance."""
-    migrating_blobs_from_couch = True
     domain = StringProperty()
     app_id = StringProperty()
     xmlns = StringProperty()
