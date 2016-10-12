@@ -19,6 +19,7 @@ from celery.utils.log import get_task_logger
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.export.dbaccessors import get_all_daily_saved_export_instances
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.util.dates import iso_string_to_datetime
 from couchexport.files import Temp
 from couchexport.groupexports import export_for_group, rebuild_export
 from couchexport.tasks import cache_file_to_be_served
@@ -172,6 +173,15 @@ def update_calculated_properties():
     for r in results:
         dom = r["name"]
         try:
+            last_updated_date = iso_string_to_datetime(r["cp_last_updated"])
+            last_updated_ago = datetime.utcnow() - last_updated_date
+            last_form_string = CALC_FNS["last_form_submission"](dom, False)
+            last_form_date = iso_string_to_datetime(last_form_string)
+            last_form_ago = datetime.utcnow() - last_form_date
+            if last_updated_ago < timedelta(days=7) and last_form_ago > timedelta(days=1):
+                # skip if no forms submitted in the last day
+                # and stats were updated less than a week ago
+                continue
             calced_props = {
                 "_id": r["_id"],
                 "cp_n_web_users": int(all_stats["web_users"].get(dom, 0)),
@@ -189,7 +199,7 @@ def update_calculated_properties():
                 "cp_n_forms_60_d": int(CALC_FNS["forms_in_last"](dom, 60)),
                 "cp_n_forms_90_d": int(CALC_FNS["forms_in_last"](dom, 90)),
                 "cp_first_form": CALC_FNS["first_form_submission"](dom, False),
-                "cp_last_form": CALC_FNS["last_form_submission"](dom, False),
+                "cp_last_form": last_form_string,
                 "cp_is_active": CALC_FNS["active"](dom),
                 "cp_has_app": CALC_FNS["has_app"](dom),
                 "cp_last_updated": json_format_datetime(datetime.utcnow()),
