@@ -23,7 +23,7 @@
     <div class="col-md-4">
       <legend>Configure Report</legend>
       <div>
-        <h3>Type of Report</h3>
+        <h3>{% trans 'Type of Report' %}</h3>
         <select data-bind="options: reportTypeOptions,
                            value: reportType,
                            optionsText: 'label',
@@ -31,49 +31,46 @@
         </select>
       </div>
 
-      <div id="groupBy" data-bind="fadeVisible: isGroupByEnabled">
-        <h3 data-bind="text: groupByHeading"></h3>
-        <select data-bind="options: columns,
-                           value: selectedGroupByName,
-                           optionsText: 'label',
-                           optionsValue: 'name',
-                           valueAllowUnset: true"></select>
-      </div>
-
       <div id="columns">
-        <h3 data-bind="text: reportType() === 'agg' ?  'Indicators' : 'Columns'">Columns</h3>
+        <h3 data-bind="text: reportType() === 'agg' ?  '{% trans 'Indicators' %}' : '{% trans 'Columns' %}'">
+            {% trans 'Columns' %}
+        </h3>
         <table class="table">
-          <thead data-bind="fadeVisible: isFormatEnabled">
+          <thead data-bind="fadeVisible: isAggregationEnabled">
             <tr>
-              <th>Indicator</th>
-              <th>Format</th>
+              <th>{% trans 'Indicator' %}</th>
+              <th class="center">{% trans 'Display Each' %}</th>
+              <th>{% trans 'Summarize' %}</th>
               <th>&nbsp;</th>
             </tr>
           </thead>
           <tbody>
             <!-- ko foreach: selectedColumns -->
-            <!-- ko ifnot: isGroupByColumn -->
             <tr>
               <td data-bind="text: label"></td>
               <td>
-                <select data-bind="fadeVisible: isFormatEnabled,
-                                   value: aggregation">
-                  <option value="sum">Sum</option>
-                  <option value="avg">Average</option>
-                  <!-- <option value="count">Count Per Choice</option> -->
-                </select>
-                <span data-bind="fadeVisible: isGroupByColumn">
-                  <i data-bind="text: $parent.groupByColumnStatus"></i>
-                </span>
+                <input data-bind="fadeVisible: $parent.isAggregationEnabled,
+                                  checked: isGroupByColumn"
+                       type="checkbox" />
               </td>
               <td>
-                <!-- ko ifnot: isGroupByColumn -->
+                <select data-bind="fadeVisible: $parent.isAggregationEnabled,
+                                   disable: isGroupByColumn,
+                                   value: aggregation">
+                  <!-- TODO: Get these per column -->
+                  <option value="simple">---</option>
+                  <option value="sum">{% trans 'Sum' %}</option>
+                  <option value="avg">{% trans 'Average' %}</option>
+                  <!-- <option value="count">Count Per Choice</option> -->
+                </select>
+              </td>
+              <td>
+                <!-- ko ifnot: isGroupByColumn -->{# We need at least one group-by column #}
                 <button class="btn btn-danger"
                         data-bind="click: $parent.removeColumn"><i class="fa fa-remove"></i></button>
                 <!-- /ko -->
               </td>
             </tr>
-            <!-- /ko -->
             <!-- /ko -->
             <tr>
               <td>
@@ -92,11 +89,11 @@
     </div>
 
     <div class="col-md-8">
-        <legend>Preview Report</legend>
+        <legend>{% trans 'Preview Report' %}</legend>
 
         <!-- ko if: selectedChart() === 'none' -->
-        <div data-bind="fadeVisible: isGroupByEnabled">
-            <div class="btn btn-primary" data-bind="click: function(){selectedChart('bar');}">Add Chart</div>
+        <div data-bind="fadeVisible: isAggregationEnabled">
+            <div class="btn btn-primary" data-bind="click: function(){selectedChart('bar');}">{% trans 'Add Chart' %}</div>
             <div> <!-- I'm so lazy... -->
                 <br>
             </div>
@@ -105,22 +102,22 @@
 
       <div class="well" data-bind="fadeVisible: previewChart">
 
-        <h3 style="display: inline-block">Chart Preview</h3>
+        <h3 style="display: inline-block">{% trans 'Chart Preview' %}</h3>
         <div class="pull-right">
           <div class="btn btn-danger" data-bind="click: function(){selectedChart('none');}"><i class="fa fa-remove"></i></div>
         </div>
         <div data-bind="if: selectedChart() !== 'none'">
             Type:
             <select data-bind="value: selectedChart">
-                <option value="bar">Bar</option>
-                <option value="pie">Pie</option>
+                <option value="bar">{% trans 'Bar' %}</option>
+                <option value="pie">{% trans 'Pie' %}</option>
             </select>
         </div>
 
         <div id="chart"></div>
       </div>
       <div class="well">
-        <h3>Data Table</h3>
+        <h3>{% trans 'Data Table' %}</h3>
         <table id="preview" class="table"></table>
       </div>
     </div>
@@ -136,8 +133,7 @@
             "sourceType": "{{ source_type }}",
             "dataSourceUrl": "{{ data_source_url }}",
         });
-        ko.cleanNode($("#reportConfig"));
-        $("#reportConfig").koApplyBindings(reportConfig);
+        ko.applyBindings(reportConfig, $("#reportConfig").get(0));
     });
 
 </script>
