@@ -23,7 +23,6 @@ from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 
 from corehq import toggles
-from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.commtrack.tasks import import_locations_async, location_lock_key, LOCK_LOCATIONS_TIMEOUT
 from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
@@ -190,7 +189,6 @@ class LocationTypesView(BaseLocationView):
     template_name = 'locations/location_types.html'
 
     @method_decorator(can_edit_location_types)
-    @method_decorator(require_can_edit_apps)
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(LocationTypesView, self).dispatch(request, *args, **kwargs)
