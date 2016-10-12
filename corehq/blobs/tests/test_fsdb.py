@@ -6,6 +6,8 @@ from tempfile import mkdtemp
 from unittest import TestCase
 from StringIO import StringIO
 
+from mock import patch
+
 import corehq.blobs.fsdb as mod
 from corehq.blobs.exceptions import ArgumentError
 from corehq.util.test_utils import generate_cases
@@ -154,6 +156,14 @@ class TestFilesystemBlobDB(TestCase, _BlobDBTests):
         rmtree(cls.rootdir)
         cls.rootdir = None
 
+    def test_put_with_colliding_blob_id(self):
+        # unfortunately can't do this on S3 because there is no way to
+        # reliably check if an object exists before putting it.
+        with patch("corehq.blobs.interface.random_url_id", new=lambda n: 'not-unique'):
+            self.db.put(StringIO(b"bing"))
+            with self.assertRaises(mod.FileExists):
+                self.db.put(StringIO(b"bang"))
+
     def test_delete(self):
         info, bucket = super(TestFilesystemBlobDB, self).test_delete()
         self.assertFalse(self.db.delete(info.identifier, bucket), 'delete should fail')
@@ -173,33 +183,6 @@ class TestFilesystemBlobDB(TestCase, _BlobDBTests):
         path = self.db.get_path(bucket=bucket)
         self.assertTrue(isdir(path), path)
         self.assertTrue(os.listdir(path))
-
-    def test_safe_attachment_path(self):
-        name = "test.1"
-        bucket = join("doctype", "8cd98f0")
-        info = self.db.put(StringIO(b"content"), name, bucket)
-        self.assertTrue(info.identifier.startswith(name + "."), info.identifier)
-        path = self.db.get_path(info.identifier, bucket)
-        with open(path, "rb") as fh:
-            self.assertEqual(fh.read(), b"content")
-
-    def test_unsafe_attachment_path(self):
-        name = "\u4500.1"
-        bucket = join("doctype", "8cd98f0")
-        info = self.db.put(StringIO(b"content"), name, bucket)
-        self.assertTrue(info.identifier.startswith("unsafe."), info.identifier)
-        path = self.db.get_path(info.identifier, bucket)
-        with open(path, "rb") as fh:
-            self.assertEqual(fh.read(), b"content")
-
-    def test_unsafe_attachment_name(self):
-        name = "test/1"  # name with directory separator
-        bucket = join("doctype", "8cd98f0")
-        info = self.db.put(StringIO(b"content"), name, bucket)
-        self.assertTrue(info.identifier.startswith("unsafe."), info.identifier)
-        path = self.db.get_path(info.identifier, bucket)
-        with open(path, "rb") as fh:
-            self.assertEqual(fh.read(), b"content")
 
     def test_empty_attachment_name(self):
         info = super(TestFilesystemBlobDB, self).test_empty_attachment_name()

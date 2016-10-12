@@ -100,21 +100,3 @@ class TestS3BlobDB(TestCase, _BlobDBTests):
         bucket = join("doctype", "8cd98f0")
         self.db.put(StringIO(b"content"), bucket=bucket)
         self.assertEqual(self.db.get_path(bucket=bucket), bucket)
-
-    def test_safe_attachment_path(self):
-        name = "test.1"
-        bucket = join("doctype", "8cd98f0")
-        info = self.db.put(StringIO(b"content"), name, bucket)
-        self.assertTrue(info.identifier.startswith(name + "."), info.identifier)
-
-    def test_unsafe_attachment_path(self):
-        name = "\u4500.1"
-        bucket = join("doctype", "8cd98f0")
-        info = self.db.put(StringIO(b"content"), name, bucket)
-        self.assertTrue(info.identifier.startswith("unsafe."), info.identifier)
-
-    def test_unsafe_attachment_name(self):
-        name = "test/1"  # name with directory separator
-        bucket = join("doctype", "8cd98f0")
-        info = self.db.put(StringIO(b"content"), name, bucket)
-        self.assertTrue(info.identifier.startswith("unsafe."), info.identifier)
