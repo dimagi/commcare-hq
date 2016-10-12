@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(*assert_migration_complete("applications"))
-        HqRunPython(*assert_migration_complete("multimedia"))
-        HqRunPython(*assert_migration_complete("xforms"))
+        HqRunPython(*assert_migration_complete("applications")),
+        HqRunPython(*assert_migration_complete("multimedia")),
+        HqRunPython(*assert_migration_complete("xforms")),
     ]
