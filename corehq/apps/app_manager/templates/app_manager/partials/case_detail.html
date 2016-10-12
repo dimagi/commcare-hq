@@ -1,5 +1,8 @@
 {% load i18n %}
 {% load hq_shared_tags %}
+
+{% include 'app_manager/partials/case_list_missing_warning.html' %}
+
 <div data-bind="saveButton: longScreen.saveButton"></div>
 <legend>
     {% trans "Display Properties" %}
