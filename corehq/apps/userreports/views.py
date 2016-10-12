@@ -713,7 +713,7 @@ class ReportPreview(BaseDomainView):
             'column_id': c['columnId'],
             'display': c['label'],
             'aggregation': c.get('aggregation') or 'simple',
-            # TODO: It's more complicated than this
+            # TODO: Reuse ColumnOption
             # Generate column IDs to allow columns to appear more than once
         } for c in post_data['columns']]
         if do_aggregation:
