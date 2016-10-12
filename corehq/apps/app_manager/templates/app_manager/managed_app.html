@@ -46,13 +46,15 @@
     <script>
         $(function () {
             $('[data-toggle="tooltip"]').tooltip()
-            $('.edit-form-pencil').tooltip({
-                title: "{% trans "Edit in form builder" %}",
-                placement: 'auto'
-            });
+            {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+                $('.edit-form-pencil').tooltip({
+                    title: "{% trans "Edit in form builder" %}",
+                    placement: 'auto'
+                });
+            {% endif %}
             $('.edit-form-li').each(function () {
                 var $this = $(this);
-                if (!{{ formdesigner|JSON }} || !$this.hasClass("active")) {
+                if ({% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}!{% endif %}{{ formdesigner|JSON }} || !$this.hasClass("active")) {
                     var $pencil = $this.find('.edit-form-pencil');
                     $pencil.addClass('no-data');
                     $this.hover(function() {
@@ -62,6 +64,20 @@
                     });
                 }
             });
+
+            {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+                // TODO: this doesn't respond correctly as you jump between pages
+                // TODO: can't jump from settings to deploy
+                // TODO: un-hack
+                if (document.location.pathname.match(/(modules-|releases)/)) {
+                    $('#app-settings-gear').hide();
+                    $('.release-manager-li').mouseenter(function() {
+                        $('#app-settings-gear').show();
+                    }).mouseleave(function() {
+                        $('#app-settings-gear').hide();
+                    });
+                }
+            {% endif %}
         });
     </script>
     {% endif %}
@@ -125,23 +141,53 @@
 </div>
 <nav class="appmanager-content">
     <ul class="nav nav-hq-sidebar">
-        <li {% if release_manager %}class="active"{% endif %}>
-            <a id="demand-releases" href="{% url "view_app" domain app.id %}releases/#releases" {% if is_app_view %}data-toggle="tab" data-pagetitle="{% trans "Deploy" %}: {{ app.name }}"{% endif %}>
-                <i class="fa fa-download"></i>
-                {% trans "Deploy" %}
-            </a>
-        </li>
+        {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+            <li class="{% if not module %}active {% endif %}release-manager-li">
+                <a id="demand-releases" href="{% url "view_app" domain app.id %}releases/">
+                    <i class="fa fa-mobile-phone preview-icon"></i>
+                    {{ app.name }}
+                </a>
+                <div id="app-settings-gear">
+                    <a href="{% url "view_app" domain app.id %}">
+                        <i class="fa fa-gear"></i>
+                    </a>
+                </div>
+                {% if app.get_doc_type == 'Application' %}
+                    <span id="langs" style="right: 25px;">
+                        {% if not app.is_remote_app and app.langs|length > 1%}
+                            <select name="lang" class="form-control">
+                                {% for lang in app.langs %}
+                                    <option value="{{ lang }}"
+                                            {% if lang == langs.0 %}selected=""{% endif %}>
+                                        {% if lang == app.langs.0 %}*{% endif %}
+                                        {{ lang }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        {% endif %}
+                    </span>
+                {% endif %}
+            </li>
+        {% else %}
+            <li {% if release_manager %}class="active"{% endif %}>
+                <a id="demand-releases"
+                    href="{% url "view_app" domain app.id %}releases/#releases" {% if is_app_view %}data-toggle="tab" data-pagetitle="{% trans "Deploy" %}: {{ app.name }}"{% endif %}>
+                    <i class="fa fa-download"></i>
+                    {% trans "Deploy" %}
+                </a>
+            </li>
+        {% endif %}
 
-        {% if request|toggle_enabled:"PREVIEW_APP" %}
+        {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" or request|toggle_enabled:"PREVIEW_APP" %}
         <li>
           <a id="js-toggle-app-preview">
-              <i class="fa fa-mobile-phone preview-icon"></i>
+              <i class="fa {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}fa-play-circle{% else %}fa-mobile-phone preview-icon{% endif %}"></i>
               <span class="preview-action-show hide">{% trans "Show App Preview" %}</span>
               <span class="preview-action-hide hide">{% trans "Hide App Preview" %}</span>
           </a>
         </li>
         {% endif %}
-        <li class="divider"></li>
+        <{% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}!--{% endif %}li class="divider"></li>
         <li {% if not module and not form and not release_manager %}class="app-name-div
                 {% if not copy_app_form or not copy_app_form.is_bound %}active{% endif %}"
             {% endif %}>
@@ -184,7 +230,7 @@
                 <i class="fa fa-list"></i>
                 {% trans "App Summary" %}
             </a>
-        </li>
+        </li{% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}--{% endif %}>
         <li class="divider"></li>
     {% if app.get_doc_type == "Application" %}
         <li>
@@ -205,6 +251,7 @@
                             {% if module.module_type == 'advanced' %}<i class="fa fa-flask appmanager-icon-type"></i>
                             {% elif module.module_type == 'report' %}<i class="fa fa-bar-chart appmanager-icon-type"></i>
                             {% elif module.module_type == 'shadow' %}<i class="fa fa-folder-open-o appmanager-icon-type"></i>
+                            {% elif not module.is_surveys and request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}<i class="fa fa-list"></i>
                             {% else %}<i class="fa fa-folder-open"></i>{% endif %}
                             <span {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>
                                 {{ module.name|html_trans:langs }}
@@ -223,9 +270,16 @@
                                     <li class="edit-form-li{% ifequal form selected_form %} active{% endifequal %}" data-moduleid="{{ module.id }}" data-index="{{ form.id }}">
                                         <!--[F]-->
                                         <a id="view_form_{{ module.id }}_{{ form.id }}_sidebar"
-                                           href="{% url "view_form" domain app.id module.id form.id %}">
-                                            <i class="drag_handle"></i>
-                                            {% if request|toggle_enabled:"SUPPORT" %}
+                                            {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+                                                href="{% url "form_source" domain app.id module.id form.id %}"
+                                            {% else %}
+                                                href="{% url "view_form" domain app.id module.id form.id %}"
+                                            {% endif %}
+                                        >
+                                            {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or form.get_action_type != 'open' %}
+                                                <i class="drag_handle"></i>
+                                            {% endif %}
+                                            {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" or request|toggle_enabled:"SUPPORT" %}
                                             <i
                                             {% if form.get_action_type == 'open' %}
                                                 class="fcc fcc-app-createform appmanager-icon-type"
@@ -233,6 +287,8 @@
                                                 class="fcc fcc-app-completeform appmanager-icon-type"
                                             {% elif form.get_action_type == 'update' %}
                                                 class="fcc fcc-app-updateform appmanager-icon-type"
+                                            {% else %}
+                                                class="fa fa-file-o"
                                             {% endif %}
                                                 title="{{ form.get_icon_help_text }}"
                                                 data-toggle="tooltip"
@@ -246,9 +302,15 @@
                                         </a>
                                         {% if not form.no_vellum %}
                                             <div class="edit-form-pencil">
-                                                <a id="edit_pen_{{ module.id }}_{{ form.id }}" href="{% url "form_source" domain app.id module.id form.id %}">
-                                                    <i class="fa fa-pencil"></i>
-                                                </a>
+                                                {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+                                                    <a id="edit_pen_{{ module.id }}_{{ form.id }}" href="{% url "view_form" domain app.id module.id form.id %}">
+                                                        <i class="fa fa-gear"></i>
+                                                    </a>
+                                                {% else %}
+                                                    <a id="edit_pen_{{ module.id }}_{{ form.id }}" href="{% url "form_source" domain app.id module.id form.id %}">
+                                                        <i class="fa fa-pencil"></i>
+                                                    </a>
+                                                {% endif %}
                                             </div>
                                         {% endif %}
                                     </li>
@@ -257,11 +319,29 @@
                             <li class="sort-disabled">
                                 <form action="{% url "corehq.apps.app_manager.views.new_form" domain app.id module.id %}"
                                       method="post" class="hide">{% csrf_token %}
+                                      {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+                                          <input type="hidden" name="case_action" />
+                                          <input type="hidden" name="name" />
+                                      {% endif %}
                                 </form>
                                 {% if module.doc_type != 'CareplanModule' and module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %}
-                                <a class="submit_on_click" href="#">
+                                {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+                                    <a class="new-form" href="#" data-case-action="{% if module.is_surveys %}none{% else %}update{% endif %}">
+                                {% else %}
+                                    <a class="submit_on_click" href="#">
+                                {% endif %}
                                     <i class="fa fa-plus icon-blue"></i>
-                                    <span class="text-muted">{% trans "Form" %}</span>
+                                    <span class="text-muted">
+                                        {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+                                            {% if module.is_surveys %}
+                                                {% trans "Survey" %}
+                                            {% else %}
+                                                {% trans "Followup" %}
+                                            {% endif %}
+                                        {% else %}
+                                            {% trans "Form" %}
+                                        {% endif %}
+                                    </span>
                                 </a>
                                 {% endif %}
                             </li>
@@ -274,37 +354,48 @@
                           method="post" class="hide">{% csrf_token %}
                     <input id="new-module-type" type="hidden" name="module_type" />
                 </form>
-                {% if show_care_plan or show_advanced or show_report_modules or show_shadow_modules %}
+                {% if show_care_plan or show_advanced or show_report_modules or show_shadow_modules or request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
                     <li class="sort-disabled dropdown">
                         <a href="#" data-toggle="dropdown">
                             <i class="new-module-icon fa fa-plus icon-blue"></i>
-                            <span class="text-muted">{% trans "Module" %}</span><span class="caret"></span>
+                            <span class="text-muted">
+                                {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+                                    {% trans "New" %}
+                                {% else %}
+                                    {% trans "Module" %}
+                                {% endif %}
+                            </span><span class="caret"></span>
                         </a>
                         <ul class="dropdown-menu" role="menu">
-                            <li><a href="#" class="new-module" data-type="case">{% trans "New Case Module" %}</a></li>
-                            {% if show_care_plan %}
-                            <li><a data-toggle="modal" href="#careplan-module-modal">{% trans "New Care Plan Module" %}</a></li>
-                            {% endif %}
-                            {% if show_advanced %}
-                            <li>
-                                <a href="#" class="new-module" data-type="advanced">
-                                    {% trans "New Advanced Module" %}
-                                </a>
-                            </li>
-                            {% endif %}
-                            {% if show_report_modules %}
-                            <li>
-                                <a href="#" class="new-module" data-type="report">
-                                    {% trans "New Report Module" %}
-                                </a>
-                            </li>
-                            {% endif %}
-                            {% if show_shadow_modules %}
-                            <li>
-                                <a href="#" class="new-module" data-type="shadow">
-                                    {% trans "New Shadow Module" %}
-                                </a>
-                            </li>
+                            {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+                                <li><a href="#" class="new-module" data-type="survey">{% trans "Surveys" %}</a></li>
+                                <li><a href="#" class="new-module" data-type="case">{% trans "Case List" %}</a></li>
+                            {% else %}
+                                <li><a href="#" class="new-module" data-type="case">{% trans "New Case Module" %}</a></li>
+                                {% if show_care_plan %}
+                                <li><a data-toggle="modal" href="#careplan-module-modal">{% trans "New Care Plan Module" %}</a></li>
+                                {% endif %}
+                                {% if show_advanced %}
+                                <li>
+                                    <a href="#" class="new-module" data-type="advanced">
+                                        {% trans "New Advanced Module" %}
+                                    </a>
+                                </li>
+                                {% endif %}
+                                {% if show_report_modules %}
+                                <li>
+                                    <a href="#" class="new-module" data-type="report">
+                                        {% trans "New Report Module" %}
+                                    </a>
+                                </li>
+                                {% endif %}
+                                {% if show_shadow_modules %}
+                                <li>
+                                    <a href="#" class="new-module" data-type="shadow">
+                                        {% trans "New Shadow Module" %}
+                                    </a>
+                                </li>
+                                {% endif %}
                             {% endif %}
                         </ul>
                     </li>
@@ -321,19 +412,21 @@
         </ul>
         </li>
     {% endif %}
-    <li class="text-hq-nav-header">{% trans "Actions" %}</li>
-    <li class="app-name-div{% if copy_app_form and copy_app_form.is_bound %} active{% endif %}">
-        <a href="{% url "view_app" domain app.id %}copy/#copy" {% if is_app_view %}data-toggle="tab"{% endif %}>
-            <i class="fa fa-copy"></i>
-            {% trans "Copy Application" %}
-        </a>
-    </li>
-    <li>
-        <a href="{% url "view_app" domain app.id %}delete/#delete" {% if is_app_view %}data-toggle="tab"{% endif %}>
-            <i class="fa fa-trash"></i>
-            {% trans "Delete Application" %}
-        </a>
-    </li>
+    {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+        <li class="text-hq-nav-header">{% trans "Actions" %}</li>
+        <li class="app-name-div{% if copy_app_form and copy_app_form.is_bound %} active{% endif %}">
+            <a href="{% url "view_app" domain app.id %}copy/#copy" {% if is_app_view %}data-toggle="tab"{% endif %}>
+                <i class="fa fa-copy"></i>
+                {% trans "Copy Application" %}
+            </a>
+        </li>
+        <li>
+            <a href="{% url "view_app" domain app.id %}delete/#delete" {% if is_app_view %}data-toggle="tab"{% endif %}>
+                <i class="fa fa-trash"></i>
+                {% trans "Delete Application" %}
+            </a>
+        </li>
+    {% endif %}
     </ul>
 </nav>
 {% endif %}
