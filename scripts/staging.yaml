@@ -49,10 +49,10 @@ branches:
   - vellum-staging # J$ 11/13
   - onboarding # Jenny 9/19
 #  - np/kill-djcelery # Nick P 10/3
-  - ce/es-restore # Cal 9/4
 #  - np/upgrade-twofactor # Nick P 10/5
   - np/upgrade-django-mptt # Nick P 10/6
   - np/19/django-compressor # Nick P 10/7
+  - br/br/fix-bad-checks  # Ben 10/12
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -73,5 +73,4 @@ submodules:
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
   deployment/commcare-hq-deploy:
-    branches:
-      - br/generalize-celery-bash
+    branches: []
