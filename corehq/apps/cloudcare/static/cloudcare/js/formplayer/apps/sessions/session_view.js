@@ -15,6 +15,12 @@ FormplayerFrontend.module("SessionNavigate.SessionList", function (SessionList, 
             var model = this.model;
             FormplayerFrontend.trigger("getSession", model.get('sessionId'));
         },
+
+        templateHelpers: function(e) {
+            return {
+                humanDateOpened: moment(this.model.get('dateOpened')).fromNow(),
+            };
+        }
     });
 
     SessionList.SessionListView = Marionette.CompositeView.extend({
