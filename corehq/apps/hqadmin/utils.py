@@ -90,11 +90,10 @@ def get_celery_stats():
 def parse_celery_pings(worker_responses):
     pings = {}
     for worker in worker_responses:
-        assert len(worker.keys()) == 1 and '@' in worker.keys()[0]
+        assert len(worker.keys()) == 1
 
         worker_fullname = worker.keys()[0]
-        worker_hostname = worker_fullname.split('@')[1]
-        pings[worker_hostname] = worker[worker_fullname].get('ok') == 'pong'
+        pings[worker_fullname] = worker[worker_fullname].get('ok') == 'pong'
     return pings
 
 

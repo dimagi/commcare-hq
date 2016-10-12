@@ -93,9 +93,9 @@ class TestParseCeleryWorkerPings(SimpleTestCase):
             {'celery@yikes': {'ok': 'notpong'}},
         ])
         self.assertEqual(response, {
-            'myhost': True,
-            'otherhost': True,
-            'yikes': False,
+            'celery@myhost': True,
+            'celery@otherhost': True,
+            'celery@yikes': False,
         })
 
     def test_celery_worker_pings_empty(self):
