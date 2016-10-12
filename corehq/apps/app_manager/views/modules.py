@@ -825,6 +825,7 @@ def new_module(request, domain, app_id):
                 name = name or 'Surveys'
         module = app.add_module(Module.new_module(name, lang))
         module_id = module.id
+        form_id=None
         if toggles.ONBOARDING_PROTOTYPE.enabled(domain):
             if module_type == 'case':
                 # registration form
@@ -843,10 +844,11 @@ def new_module(request, domain, app_id):
                     module.case_type = 'case-{}'.format(suffix)
             else:
                 form = app.new_form(module_id, "Survey", lang)
+            form_id = 0
         else:
             app.new_form(module_id, "Untitled Form", lang)
         app.save()
-        response = back_to_main(request, domain, app_id=app_id, module_id=module_id)
+        response = back_to_main(request, domain, app_id=app_id, module_id=module_id, form_id=form_id)
         response.set_cookie('suppress_build_errors', 'yes')
         return response
     elif module_type in MODULE_TYPE_MAP:
