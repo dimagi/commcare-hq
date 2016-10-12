@@ -94,7 +94,7 @@ def parse_celery_pings(worker_responses):
 
         worker_fullname = worker.keys()[0]
         worker_hostname = worker_fullname.split('@')[1]
-        pings[worker_hostname] = worker[worker_fullname]['ok'] == 'pong'
+        pings[worker_hostname] = worker[worker_fullname].get('ok') == 'pong'
     return pings
 
 
