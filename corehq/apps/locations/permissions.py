@@ -4,6 +4,7 @@ from corehq import privileges
 from functools import wraps
 from django.http import Http404
 from django.utils.translation import ugettext_lazy
+from django.views.generic import View
 from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import (login_and_domain_required,
@@ -149,25 +150,30 @@ def can_edit_form_location(domain, web_user, form):
 # TODO incorporate the above stuff into the new system
 
 
-def location_safe(view_fn):
-    """Decorator to apply to a view after making sure it's location-safe"""
-    view_fn.is_location_safe = True
-    return view_fn
-
-
-def tastypie_location_safe(resource):
+def location_safe(view):
+    """Decorator to apply to a view after making sure it's location-safe
+    Supports view functions, class-based views, tastypie resources, and HQ reports.
+    For classes, decorate the class, not the dispatch method.
     """
-    tastypie is a special snowflake that doesn't preserve anything, so it gets
-    it's own class decorator:
+    # view functions
+    view.is_location_safe = True
 
-        @tastypie_location_safe
-        class LocationResource(HqBaseResource):
-            type = "location"
-    """
-    if not issubclass(resource, Resource):
-        raise TypeError("This decorator can only be applied to tastypie resources")
-    LOCATION_SAFE_TASTYPIE_RESOURCES.add(resource.Meta.resource_name)
-    return resource
+    if isinstance(view, type):  # it's a class
+
+        # Django class-based views
+        if issubclass(view, View):
+            # `View.as_view()` preserves stuff set on `dispatch`
+            view.dispatch.__func__.is_location_safe = True
+
+        # tastypie resources
+        if issubclass(view, Resource):
+            LOCATION_SAFE_TASTYPIE_RESOURCES.add(view.Meta.resource_name)
+
+        # HQ report classes
+        if issubclass(view, GenericReportView):
+            LOCATION_SAFE_HQ_REPORTS.add(view.slug)
+
+    return view
 
 
 def conditionally_location_safe(conditional_function):
@@ -180,13 +186,6 @@ def conditionally_location_safe(conditional_function):
         view_fn._conditionally_location_safe_function = conditional_function
         return view_fn
     return _inner
-
-
-def location_safe_report(report_class):
-    if not issubclass(report_class, GenericReportView):
-        raise TypeError("This decorator can only be applied to HQ reports")
-    LOCATION_SAFE_HQ_REPORTS.add(report_class.slug)
-    return report_class
 
 
 def location_restricted_response(request):
