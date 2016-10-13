@@ -471,13 +471,11 @@ class AutomaticCaseUpdateTest(TestCase):
 
             # Update the rule to match on a different name and now it shouldn't match
             rule.automaticupdaterulecriteria_set.all().delete()
-            rule.automaticupdaterulecriteria_set.add(
-                AutomaticUpdateRuleCriteria.objects.create(
-                    property_name='parent/name',
-                    property_value='def',
-                    match_type=AutomaticUpdateRuleCriteria.MATCH_EQUAL,
-                    rule=rule,
-                )
+            AutomaticUpdateRuleCriteria.objects.create(
+                property_name='parent/name',
+                property_value='def',
+                match_type=AutomaticUpdateRuleCriteria.MATCH_EQUAL,
+                rule=rule,
             )
 
             self.assertFalse(rule.rule_matches_case(child, datetime(2016, 3, 1)))
