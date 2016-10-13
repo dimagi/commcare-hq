@@ -228,16 +228,23 @@ def update_calculated_properties():
             notify_exception(None, message='Domain {} failed on stats calculations with {}'.format(dom, e))
 
 
-def _skip_updating_domain_stats(last_updated, last_form_submission):
+def _skip_updating_domain_stats(last_updated=None, last_form_submission=None):
     """
     Skip domain if no forms submitted in the last day
     AND stats were updated less than a week ago.
 
     :return: True to skip domain
      """
+    if not last_updated:
+        return False
+
     last_updated_ago = datetime.utcnow() - iso_string_to_datetime(last_updated)
-    last_form_ago = datetime.utcnow() - iso_string_to_datetime(last_form_submission)
-    return last_updated_ago < timedelta(days=7) and last_form_ago > timedelta(days=1)
+    if last_form_submission:
+        last_form_ago = datetime.utcnow() - iso_string_to_datetime(last_form_submission)
+        new_data = last_form_ago < timedelta(days=1)
+    else:
+        new_data = False
+    return last_updated_ago < timedelta(days=7) and not new_data
 
 
 def is_app_active(app_id, domain):
