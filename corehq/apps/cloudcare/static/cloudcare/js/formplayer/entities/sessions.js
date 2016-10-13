@@ -93,7 +93,6 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
         },
 
         deleteSession: function(session) {
-            console.log('deleting session')
             var user = FormplayerFrontend.request('currentUser');
             var formplayerUrl = user.formplayer_url;
             var options = {
@@ -103,10 +102,19 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                     "domain": user.domain,
                 }),
                 url: user.formplayer_url + '/delete-incomplete-form',
+                complete: function(xhr) {
+                    if (xhr.responseJSON.status === 'error') {
+                        FormplayerFrontend.trigger(
+                            'showError',
+                            "Unable to delete incomplete form '" + session.get('title') + "'"
+                        );
+                        console.error(xhr.responseJSON.exception);
+                    }
+
+                },
             }
 
             session.destroy(options);
-
         },
     };
 
