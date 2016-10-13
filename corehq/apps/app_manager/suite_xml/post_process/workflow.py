@@ -406,7 +406,6 @@ class CaseListFormWorkflow(object):
             # return any source datums that were not already added to the target
             return [dm for dm in source_form_dm if dm not in used]
 
-        source_form_dm = self.helper.get_form_datums(form)
         if target_module.root_module_id:
             # add stack children for the root module before adding any for the child module.
             root_module = target_module.root_module
@@ -414,11 +413,11 @@ class CaseListFormWorkflow(object):
             frame_case_created.add_child(root_module_command)
             frame_case_not_created.add_child(root_module_command)
 
-            source_form_dm = add_datums_for_target(root_module, source_form_dm, allow_missing=True)
+            source_form_datums = add_datums_for_target(root_module, source_form_datums, allow_missing=True)
 
         frame_case_created.add_child(CommandId(target_command))
         frame_case_not_created.add_child(CommandId(target_command))
-        add_datums_for_target(target_module, source_form_dm)
+        add_datums_for_target(target_module, source_form_datums)
 
         return stack_frames
 
