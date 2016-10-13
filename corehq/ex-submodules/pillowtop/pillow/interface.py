@@ -27,6 +27,9 @@ class PillowBase(object):
     """
     __metaclass__ = ABCMeta
 
+    # set to true to disable saving pillow retry errors
+    retry_errors = True
+
     @abstractproperty
     def pillow_id(self):
         """
@@ -171,16 +174,8 @@ class ConstructedPillow(PillowBase):
 
 def handle_pillow_error(pillow, change, exception):
     from pillow_retry.models import PillowError
-    save_error = True
-    try:
-        from corehq.apps.userreports.pillow import ConfigurableReportKafkaPillow
-        if isinstance(pillow, ConfigurableReportKafkaPillow):
-            save_error = False  # this is temporarily not supported!
-    except ImportError:
-        pass
-
     error_id = None
-    if save_error:
+    if pillow.retry_errors:
         error = PillowError.get_or_create(change, pillow)
         error.add_attempt(exception, sys.exc_info()[2])
         error.save()
