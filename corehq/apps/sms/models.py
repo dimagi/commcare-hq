@@ -2007,12 +2007,11 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
             self.__clear_shared_domain_cache(domains)
             self.mobilebackendinvitation_set.all().delete()
             for domain in domains:
-                invitation = MobileBackendInvitation.create(
+                MobileBackendInvitation.create(
                     domain=domain,
                     accepted=True,
                     backend=self,
                 )
-                self.mobilebackendinvitation_set.add(invitation)
 
     def soft_delete(self):
         with transaction.atomic():
