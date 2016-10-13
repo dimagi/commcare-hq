@@ -156,6 +156,22 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
 
         self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-basic'), factory.app.create_suite())
 
+    def test_case_list_form_reg_form_creates_child_case(self):
+        factory = AppFactory(build_version='2.9')
+        register_person_module, register_person_form = factory.new_basic_module('reg_person_and_stub', 'person')
+
+        factory.form_opens_case(register_person_form)
+        factory.form_opens_case(register_person_form, case_type='stub', is_subcase=True)
+
+        person_module, update_person_form = factory.new_basic_module(
+            'update_person',
+            'person',
+            case_list_form=register_person_form
+        )
+
+        factory.form_requires_case(update_person_form)
+        self.assertXmlPartialEqual(self.get_xml('case_list_form_reg_form_creates_child_case'), factory.app.create_suite(), './entry[1]')
+
     def test_case_list_form_parent_child_submodule_basic(self):
         # * Register house (case type = house, basic)
         #   * Register house form
