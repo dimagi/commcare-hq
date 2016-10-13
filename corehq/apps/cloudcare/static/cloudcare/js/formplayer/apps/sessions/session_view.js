@@ -23,9 +23,18 @@ FormplayerFrontend.module("SessionNavigate.SessionList", function (SessionList, 
             };
         },
         onDeleteSession: function(e) {
+            var self = this;
             e.preventDefault();
             e.stopPropagation();
-            var result = FormplayerFrontend.request("deleteSession", this.model);
+            Util.confirmationModal({
+                title: gettext('Delete incomplete form?'),
+                message: gettext("Are you sure you want to delete '" + self.model.get('title') + "'"),
+                confirmText: gettext('Yes'),
+                cancelText: gettext('No'),
+                onConfirm: function() {
+                    FormplayerFrontend.request("deleteSession", self.model);
+                },
+            });
         },
     });
 
