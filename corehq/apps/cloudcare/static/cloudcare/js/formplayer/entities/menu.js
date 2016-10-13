@@ -51,12 +51,11 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             }
         },
 
-        initialize: function (params) {
-            this.domain = params.domain;
-            this.appId = params.appId;
-            this.fetch = params.fetch;
-            this.selection = params.selection;
+        fetch: function (options) {
+            Util.setCrossDomainAjaxOptions(options);
+            return Backbone.Collection.prototype.fetch.call(this, options);
         },
+
     });
 
     var API = {
@@ -69,43 +68,8 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             var language = user.language;
             var formplayerUrl = user.formplayer_url;
             var displayOptions = user.displayOptions || {};
-
-
-            var menus = new Entities.MenuSelectCollection({
-
-                appId: params.appId,
-
-                fetch: function (options) {
-                    var collection = this;
-
-                    options.data = JSON.stringify({
-                        "username": user.username,
-                        "domain": domain,
-                        "app_id": collection.appId,
-                        "locale": language,
-                        "selections": params.steps,
-                        "offset": params.page * 10,
-                        "search_text": params.search,
-                        "menu_session_id": params.sessionId,
-                        "query_dictionary": params.queryDict,
-                        "previewCommand": params.previewCommand,
-                        "installReference": params.installReference,
-                        "oneQuestionPerScreen": ko.utils.unwrapObservable(displayOptions.oneQuestionPerScreen),
-                    });
-
-                    if (options.steps) {
-                        options.data.selections = params.steps;
-                    }
-
-                    options.url = formplayerUrl + '/navigate_menu';
-                    Util.setCrossDomainAjaxOptions(options);
-                    return Backbone.Collection.prototype.fetch.call(this, options);
-                },
-
-            });
-
             var defer = $.Deferred();
-            menus.fetch({
+            var options = {
                 success: function (request) {
                     defer.resolve(request);
                 },
@@ -117,7 +81,27 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                     );
                     defer.resolve(request);
                 },
+            };
+
+            options.data = JSON.stringify({
+                "username": user.username,
+                "domain": domain,
+                "app_id": params.appId,
+                "locale": language,
+                "selections": params.steps,
+                "offset": params.page * 10,
+                "search_text": params.search,
+                "menu_session_id": params.sessionId,
+                "query_dictionary": params.queryDict,
+                "previewCommand": params.previewCommand,
+                "installReference": params.installReference,
+                "oneQuestionPerScreen": ko.utils.unwrapObservable(displayOptions.oneQuestionPerScreen),
             });
+            options.url = formplayerUrl + '/navigate_menu';
+
+            var menus = new Entities.MenuSelectCollection();
+
+            menus.fetch(options);
             return defer.promise();
         },
     };
