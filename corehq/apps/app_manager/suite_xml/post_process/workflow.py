@@ -145,7 +145,34 @@ class WorkflowHelper(PostProcessor):
                 for d in e.datums:
                     datums[module_id][form_id].append(WorkflowDatumMeta.from_session_datum(d))
 
+        for module_id, form_datum_map in datums.items():
+            for form_id, entry_datums in form_datum_map.items():
+                self._add_missing_case_types(module_id, form_id, entry_datums)
+
         return entries, datums
+
+    @memoized
+    def _form_datums(self, module_id, form_id):
+        module_id = module_id[1:]  # string 'm'
+        form_id = form_id[1:]  # strip 'f'
+        module = self.app.get_module(module_id)
+        if module.module_type == 'shadow':
+            module = module.source_module
+
+        if not module:
+            return {}
+        form = module.get_form(form_id)
+        if not form:
+            return {}
+        return {d.datum.id: d for d in self.entries_helper.get_datums_meta_for_form_generic(form, module)}
+
+    def _add_missing_case_types(self, module_id, form_id, entry_datums):
+        form_datums_by_id = self._form_datums(module_id, form_id)
+        for entry_datum in entry_datums:
+            if not entry_datum.case_type:
+                form_datum = form_datums_by_id.get(entry_datum.id)
+                if form_datum:
+                    entry_datum.case_type = form_datum.case_type
 
 
 class EndOfFormNavigationWorkflow(object):
@@ -515,6 +542,7 @@ class WorkflowDatumMeta(object):
         self.id = datum_id
         self.nodeset = nodeset
         self.function = function
+        self._case_type = None
 
     @classmethod
     def from_session_datum(cls, session_datum):
@@ -525,7 +553,10 @@ class WorkflowDatumMeta(object):
         return bool(self.nodeset)
 
     @property
-    @memoized
+    def is_new_case_id(self):
+        return self.function == 'uuid()'
+
+    @property
     def case_type(self):
         """Get the case type from the nodeset or the function if possible
         """
@@ -533,10 +564,19 @@ class WorkflowDatumMeta(object):
             match = self.type_regex.search(xpath)
             return match.group(1) if match else None
 
-        if self.nodeset:
-            return _extract_type(self.nodeset)
-        elif self.function:
-            return _extract_type(self.function)
+        if not self._case_type:
+            if self.nodeset:
+                self._case_type = _extract_type(self.nodeset)
+            elif self.function:
+                self._case_type = _extract_type(self.function)
+
+        return self._case_type
+
+    @case_type.setter
+    def case_type(self, case_type):
+        if self.case_type and case_type != self.case_type:
+            raise Exception("Datum already has a case type")
+        self._case_type = case_type
 
     def to_stack_datum(self, datum_id=None, source_id=None):
         value = session_var(source_id or self.id) if self.requires_selection else self.function
