@@ -546,19 +546,6 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
             case_sharing=True,
         )
 
-    def reporting_group_object(self, user_id=None):
-        """
-        Returns a fake group object that cannot be saved.
-
-        Similar to case_sharing_group_object method, but for
-        reporting groups.
-        """
-
-        return self._make_group_object(
-            user_id,
-            case_sharing=False,
-        )
-
     @property
     @memoized
     def couch_location(self):
