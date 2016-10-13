@@ -2007,7 +2007,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
             self.__clear_shared_domain_cache(domains)
             self.mobilebackendinvitation_set.all().delete()
             for domain in domains:
-                MobileBackendInvitation.create(
+                MobileBackendInvitation.objects.create(
                     domain=domain,
                     accepted=True,
                     backend=self,
