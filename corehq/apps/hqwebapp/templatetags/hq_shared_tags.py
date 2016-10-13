@@ -535,3 +535,9 @@ def url_replace(context, field, value):
 def view_pdb(element):
     import ipdb; ipdb.set_trace()
     return element
+
+
+@register.filter
+def get_id(doc):
+    '''Get a doc's id in a template'''
+    return doc._id
