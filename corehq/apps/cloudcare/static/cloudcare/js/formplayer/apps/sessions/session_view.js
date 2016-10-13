@@ -1,4 +1,4 @@
-/*global FormplayerFrontend */
+/*global FormplayerFrontend, moment, Util */
 
 FormplayerFrontend.module("SessionNavigate.SessionList", function (SessionList, FormplayerFrontend, Backbone, Marionette) {
     SessionList.SessionView = Marionette.ItemView.extend({
@@ -6,7 +6,7 @@ FormplayerFrontend.module("SessionNavigate.SessionList", function (SessionList, 
         className: "formplayer-request",
         events: {
             "click": "rowClick",
-            "click .module-delete-control": "onDeleteSession"
+            "click .module-delete-control": "onDeleteSession",
         },
 
         template: "#session-view-item-template",

@@ -94,7 +94,6 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
         deleteSession: function(session) {
             var user = FormplayerFrontend.request('currentUser');
-            var formplayerUrl = user.formplayer_url;
             var options = {
                 data: JSON.stringify({
                     "sessionId": session.get('sessionId'),
@@ -112,7 +111,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                     }
 
                 },
-            }
+            };
 
             session.destroy(options);
         },
