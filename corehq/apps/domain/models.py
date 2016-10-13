@@ -635,7 +635,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
             # for http://manage.dimagi.com/default.asp?236652#1232177
             # used for debugging why some domains are created without subs
             _assert = soft_assert(notify_admins=True, exponential_backoff=False)
-            _assert(False, '%r was created' % name)
+            _assert(False, '%r was created' % self.name)
         super(Domain, self).save(**params)
 
         from corehq.apps.domain.signals import commcare_domain_post_save
