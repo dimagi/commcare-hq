@@ -2099,10 +2099,12 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
 
     def validate_for_build(self):
         errors = []
-        if self.requires_case_details():
+        needs_case_detail = self.requires_case_details()
+        needs_case_type = needs_case_detail or len([1 for f in self.get_forms() if f.is_registration_form()])
+        if needs_case_detail or needs_case_type:
             errors.extend(self.get_case_errors(
-                needs_case_type=True,
-                needs_case_detail=True
+                needs_case_type=needs_case_type,
+                needs_case_detail=needs_case_detail
             ))
         if self.case_list_form.form_id:
             try:
