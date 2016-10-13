@@ -102,6 +102,10 @@ class AutomaticCaseUpdateTest(TestCase):
             property_value='C',
             rule=self.rule4,
         )
+        AutomaticUpdateAction.objects.create(
+            action=AutomaticUpdateAction.ACTION_CLOSE,
+            rule=self.rule4,
+        )
         self.rule5 = AutomaticUpdateRule(
             domain=self.domain,
             name='test-rule-5',
