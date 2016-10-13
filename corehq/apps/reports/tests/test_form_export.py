@@ -89,48 +89,34 @@ class FormMultimediaExportTest(SimpleTestCase):
                 "image_2": image_2_name
             }
         }
+        attachments = {
+            image_1_name: {
+                "content_type": "image/jpeg",
+                "content_length": 1024,
+            },
+            image_2_name: {
+                "content_type": "image/jpeg",
+                "content_length": 2048,
+            },
+            "form.xml": {
+                "content_type": "text/xml",
+                "content_length": 2048,
+            }
+        }
         with mock.patch.object(XFormInstanceSQL, 'form_data') as form_data_mock:
             form_data_mock.__get__ = mock.MagicMock(return_value=form)
             couch_xform = XFormInstance(
                 received_on=datetime.datetime.now(),
                 form=form,
-                _attachments={
-                    image_1_name: {
-                        "content_type": "image/jpeg",
-                        "length": 1024,
-                    },
-                    image_2_name: {
-                        "content_type": "image/jpeg",
-                        "length": 2048,
-                    },
-                    "form.xml": {
-                        "content_type": "text/xml",
-                        "length": 2048,
-                    }
-                }
             )
-            sql_xform = XFormInstanceSQL(
-                received_on=datetime.datetime.now(),
-            )
-            sql_xform.unsaved_attachments = [
-                XFormAttachmentSQL(
-                    name=image_1_name,
-                    content_type="image/jpeg",
-                    content_length=1024,
-                ),
-                XFormAttachmentSQL(
-                    name=image_2_name,
-                    content_type="image/jpeg",
-                    content_length=1024,
-                ),
-                XFormAttachmentSQL(
-                    name="form.xml",
-                    content_type="text/xml",
-                    content_length=1024,
-                ),
-            ]
+            for name, meta in attachments.items():
+                couch_xform.deferred_put_attachment("content", name, **meta)
+            sql_xform = XFormInstanceSQL(received_on=datetime.datetime.now())
+            sql_xform.unsaved_attachments = [XFormAttachmentSQL(name=name, **meta)
+                for name, meta in attachments.items()]
 
             for xform in (couch_xform, sql_xform):
+                print(type(xform).__name__)
                 form_info = _extract_form_attachment_info(xform, {"my_group-image_2", "image_1"})
                 attachments = {a['name']: a for a in form_info['attachments']}
                 self.assertTrue(image_1_name in attachments)
