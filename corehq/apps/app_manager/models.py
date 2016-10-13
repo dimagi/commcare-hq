@@ -5560,7 +5560,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             errors.extend(module.validate_for_build())
 
         for form in self.get_forms():
-            errors.extend(form.validate_for_build(validate_module=True))
+            errors.extend(form.validate_for_build(validate_module=False))
 
             # make sure that there aren't duplicate xmlns's
             xmlns_count[form.xmlns] += 1
