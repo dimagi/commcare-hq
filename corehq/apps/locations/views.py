@@ -31,6 +31,7 @@ from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.toggles import NEW_BULK_LOCATION_MANAGEMENT
 from corehq.apps.locations.permissions import location_safe
@@ -122,6 +123,7 @@ class LocationsListView(BaseLocationView):
 
     @use_jquery_ui
     @location_safe
+    @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, *args, **kwargs):
         return super(LocationsListView, self).dispatch(request, *args, **kwargs)
 
