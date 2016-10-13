@@ -56,6 +56,15 @@
                     <i class="fa fa-dashboard icon-dashboard dropdown-icon"></i> {% trans "Current Subscription" %}
                 </a>
             </li>
+            {% if request.couch_user.is_superuser %}
+            <li class="nav-divider divider"></li>
+            <li class="dropdown-header nav-header">{% trans 'Superuser Options' %}</li>
+            <li>
+                <a href="{% url "raw_doc" %}?id={{ request.project.get_id }}" id="menuitem-view-domain-doc">
+                    <i class="fa fa-cogs icon-cogs dropdown-icon"></i> {% trans "View Domain Doc" %}
+                </a>
+            </li>
+            {% endif %}
             {% endif %}
             <li class="nav-divider divider"></li>
             <li class="dropdown-header nav-header">{% trans 'Manage Account' %}</li>
