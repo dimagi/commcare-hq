@@ -828,14 +828,6 @@ CUSTOM_APP_BASE_URL = StaticToggle(
 )
 
 
-CASE_LIST_DISTANCE_SORT = StaticToggle(
-    'case_list_distance_sort',
-    'Allow sorting by distance from current location in the case list',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
-
 PROJECT_HEALTH_DASHBOARD = StaticToggle(
     'project_health_dashboard',
     'Shows the project performance dashboard in the reports navigation',
