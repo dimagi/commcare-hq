@@ -14,5 +14,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-       HqRunPython(*assert_migration_complete("saved_exports"))
+        HqRunPython(*assert_migration_complete("saved_exports"))
     ]

@@ -4026,8 +4026,6 @@ class LazyBlobDoc(BlobMixin):
       save save has succeeded, save the attachment in the cache
     """
 
-    migrating_blobs_from_couch = True
-
     def __init__(self, *args, **kwargs):
         super(LazyBlobDoc, self).__init__(*args, **kwargs)
         self._LAZY_ATTACHMENTS = {}
