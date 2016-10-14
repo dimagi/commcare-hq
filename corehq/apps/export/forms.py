@@ -9,7 +9,7 @@ from corehq.apps.export.filters import (
     ReceivedOnRangeFilter,
     GroupFormSubmittedByFilter,
     OR, OwnerFilter, LastModifiedByFilter, UserTypeFilter,
-    OwnerTypeFilter, ModifiedOnRangeFilter, FormSubmittedByFilter
+    OwnerTypeFilter, ModifiedOnRangeFilter, FormSubmittedByFilter, LocationsFilter
 )
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.groups.models import Group
@@ -413,7 +413,8 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
             self._get_datespan_filter(),
             self._get_group_filter(mobile_user_and_group_slugs),
             self._get_user_filter(mobile_user_and_group_slugs),
-            self._get_user_ids_filter(mobile_user_and_group_slugs)
+            self._get_user_ids_filter(mobile_user_and_group_slugs),
+            self._get_location_ids_filter(mobile_user_and_group_slugs)
         ])
 
     def _get_datespan_filter(self):
@@ -441,6 +442,11 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
         user_ids = ExpandedMobileWorkerFilter.selected_user_ids(mobile_user_and_group_slugs)
         if user_ids:
             return FormSubmittedByFilter(user_ids)
+
+    def _get_location_ids_filter(self, mobile_user_and_group_slugs):
+        location_ids = ExpandedMobileWorkerFilter.selected_location_ids(mobile_user_and_group_slugs)
+        if location_ids:
+            return LocationsFilter(location_ids)
 
     def get_multimedia_task_kwargs(self, export, download_id):
         kwargs = super(FilterFormESExportDownloadForm, self).get_multimedia_task_kwargs(export, download_id)
