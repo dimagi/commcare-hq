@@ -196,6 +196,23 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('load_case_from_custom_fixture_session'), suite, './entry[2]/session')
         self.assertXmlPartialEqual(self.get_xml('load_case_from_custom_fixture_instance'), suite, './entry[2]/instance')
 
+    def test_advanced_suite_load_case_from_fixture_with_report_fixture(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        app.get_module(1).get_form(0).actions.load_update_cases.append(LoadUpdateAction(
+            case_tag="",
+            case_type="clinic",
+            load_case_from_fixture=LoadCaseFromFixture(
+                fixture_nodeset="instance('commcare:reports')/reports/report[@id='some-report-guid']/rows/row",
+                fixture_tag="selected_row",
+                fixture_variable="index",
+            )
+        ))
+        with patch('corehq.apps.app_manager.suite_xml.post_process.instances.toggles.MOBILE_UCR.enabled') as mock_toggle:
+            mock_toggle.return_value = True
+            suite = app.create_suite()
+        self.assertXmlPartialEqual(self.get_xml('load_case_from_report_fixture_session'), suite, './entry[2]/session')
+        self.assertXmlPartialEqual(self.get_xml('load_case_from_report_fixture_instance'), suite, './entry[2]/instance')
+
     def test_advanced_suite_load_from_fixture(self):
         nodeset = "instance('item-list:table_tag')/calendar/year/month/day[@date > 735992 and @date < 736000]"
         app = Application.wrap(self.get_json('suite-advanced'))
