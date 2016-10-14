@@ -597,7 +597,13 @@ class HttpResponseConflict(HttpResponse):
 class EditCloudcareUserPermissionsView(BaseUserSettingsView):
     template_name = 'cloudcare/config.html'
     urlname = 'cloudcare_app_settings'
-    page_title = ugettext_noop("CloudCare Permissions")
+
+    @property
+    def page_title(self):
+        if toggles.USE_FORMPLAYER_FRONTEND.enabled(self.domain):
+            return _("Web Apps Permissions")
+        else:
+            return _("CloudCare Permissions")
 
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.CLOUDCARE))
