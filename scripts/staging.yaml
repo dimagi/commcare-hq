@@ -50,8 +50,7 @@ branches:
   - onboarding # Jenny 9/19
 #  - np/upgrade-twofactor # Nick P 10/5
   - bmb/currentind-string # Biyeun 11/12
-  - np/upgrade-django-celery # Nick P 10/13 # need to fake migrations
-  - np/south-djcelery # Nick P 10/14
+  - np/upgrade-django-celery # Nick P 10/13
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
