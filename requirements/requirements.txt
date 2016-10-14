@@ -78,7 +78,6 @@ django-two-factor-auth==1.2.2
 datadog==0.10.0
 django-websocket-redis==0.4.6
 django-redis-sessions==0.5.0
-django-uuidfield==0.5.0
 SQLAlchemy==1.0.14
 alembic==0.8.6
 git+git://github.com/dimagi/pyzxcvbn.git#egg=pyzxcvbn
