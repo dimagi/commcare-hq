@@ -89,11 +89,17 @@ class EntryInstances(PostProcessor):
         return instances, unknown_instance_ids
 
     def _add_custom_referenced_instances(self, instances, unknown_instance_ids):
-        if toggles.CUSTOM_CALENDAR_FIXTURE.enabled(self.app.domain):
-            instance_name = 'enikshay:calendar'
+        def _add_custom_instance(instance_name):
             if instance_name in unknown_instance_ids:
                 instances.add(Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name)))
                 unknown_instance_ids.remove(instance_name)
+
+        if toggles.CUSTOM_CALENDAR_FIXTURE.enabled(self.app.domain):
+            _add_custom_instance('enikshay:calendar')
+
+        if toggles.MOBILE_UCR.enabled(self.app.domain):
+            _add_custom_instance('commcare:reports')
+
         instance_name = 'locations'
         if instance_name in unknown_instance_ids:
             if toggles.FLAT_LOCATION_FIXTURE.enabled(self.app.domain):
