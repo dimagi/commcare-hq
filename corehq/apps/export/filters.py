@@ -9,6 +9,7 @@ from corehq.apps.es.cases import (
     opened_by,
     owner_type)
 from corehq.apps.es.forms import app, submitted, user_id, user_type
+from corehq.apps.es.users import location
 from corehq.apps.export.esaccessors import get_group_user_ids
 from corehq.pillows.utils import USER_TYPES
 
@@ -202,3 +203,11 @@ class UserTypeFilter(ExportFilter):
 
 class GroupFormSubmittedByFilter(GroupFilter):
     base_filter = FormSubmittedByFilter
+
+
+class LocationsFilter(ExportFilter):
+    def __init__(self, location_ids):
+        self.location_ids = location_ids
+
+    def to_es_filter(self):
+        return location(self.location_ids)
