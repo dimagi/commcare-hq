@@ -98,24 +98,31 @@
                     {% endblocktrans %}
                 </p>
                 <p>
+                     {% if request|is_new_cloudcare %}
                     {% blocktrans %}
                         To get started, please
                         <a href="https://confluence.dimagi.com/display/commcarepublic/Deploy+and+Install+an+Application+on+CommCareHQ"
                            target="_blank">deploy</a>
                         your application and submit data from a phone. You may also
-                    {% endblocktrans %}
                         <a href="https://confluence.dimagi.com/display/commcarepublic/CloudCare+-+Web+Data+Entry"
-                           target="_blank">{% trans "submit data via" %}
-                           {% if request|is_new_cloudcare %}
-                           web apps
-                           {% else %}
-                           CloudCare
-                           {% endif %}
+                           target="_blank">submit data via web apps
                         </a>
-                    {% blocktrans %}
                         , depending on your project's
                         <a href="https://www.commcarehq.org/pricing/" target="_blank">plan level</a>.
                     {% endblocktrans %}
+                    {% else %}
+                    {% blocktrans %}
+                        To get started, please
+                        <a href="https://confluence.dimagi.com/display/commcarepublic/Deploy+and+Install+an+Application+on+CommCareHQ"
+                           target="_blank">deploy</a>
+                        your application and submit data from a phone. You may also
+                        <a href="https://confluence.dimagi.com/display/commcarepublic/CloudCare+-+Web+Data+Entry"
+                           target="_blank">submit data via CloudCare
+                        </a>
+                        , depending on your project's
+                        <a href="https://www.commcarehq.org/pricing/" target="_blank">plan level</a>.
+                    {% endblocktrans %}
+                    {% endif %}
                 </p>
             </div>
         {% else %}

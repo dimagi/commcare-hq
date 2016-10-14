@@ -148,11 +148,10 @@
         <div id="cloudcare-app-settings-form" data-bind="with: applicationAccess">
             <label class="radio">
                 <input type="radio" value="false" data-bind="checked: restrict.JSON"/>
-                {% blocktrans %}Allow all mobile workers to see all {% endblocktrans %}
                 {% if request|is_new_cloudcare %}
-                web apps.
+                {% blocktrans %}Allow all mobile workers to see all web apps.{% endblocktrans %}
                 {% else %}
-                CloudCare {% trans "apps" %}.
+                {% blocktrans %}Allow all mobile workers to see all CloudCare apps.{% endblocktrans %}
                 {% endif %}
             </label>
             <label class="radio">
