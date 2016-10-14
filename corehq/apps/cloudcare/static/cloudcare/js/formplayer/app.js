@@ -19,6 +19,7 @@ FormplayerFrontend.on("before:start", function () {
 
         regions: {
             main: "#menu-region",
+            loadingProgress: "#formplayer-progress",
             breadcrumb: "#breadcrumb-region",
             persistentCaseTile: "#persistent-case-tile",
             phoneModeNavigation: '#phone-mode-navigation',
@@ -221,6 +222,18 @@ FormplayerFrontend.on("sync", function () {
     resp.error(function () {
         tfSyncComplete(true);
     });
+});
+
+FormplayerFrontend.on("retry", function(response, retryFn) {
+
+    var progressView = FormplayerFrontend.regions.loadingProgress.currentView
+    if (!progressView) {
+        progressView = new FormplayerFrontend.Utils.Views.ProgressView();
+        FormplayerFrontend.regions.loadingProgress.show(progressView);
+    }
+    progressView.setProgress(response.done / response.total);
+
+    setTimeout(retryFn, 3) //|| response.retryAfter);
 });
 
 

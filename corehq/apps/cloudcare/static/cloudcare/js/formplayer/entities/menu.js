@@ -12,7 +12,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
         model: Entities.MenuSelect,
 
-        parse: function (response) {
+        parse: function (response, request) {
             this.title = response.title;
             this.type = response.type;
             this.clearSession = response.clearSession;
@@ -22,11 +22,18 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             this.appId = response.appId;
             this.persistentCaseTile = response.persistentCaseTile;
 
-            if (response.commands) {
+            if (response.status === 'retry') {
+                FormplayerFrontend.trigger('retry', response, function() {
+                    var defer = $.Deferred();
+                    var menus = new Entities.MenuSelectCollection();
+                    request.xhr = undefined;
+                    menus.fetch(request);
+                    return defer.promise();
+                });
+            } else if (response.commands) {
                 this.type = "commands";
                 return response.commands;
-            }
-            else if (response.entities) {
+            } else if (response.entities) {
                 this.action = response.action;
                 this.styles = response.styles;
                 this.headers = response.headers;
@@ -38,24 +45,20 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 this.maxWidth = response.maxWidth;
                 this.maxHeight = response.maxHeight;
                 return response.entities;
-            }
-            else if(response.type === "query") {
+            } else if(response.type === "query") {
                 return response.displays;
-            }
-            else if(response.tree){
+            } else if(response.tree){
                 // form entry time, doggy
                 FormplayerFrontend.trigger('startForm', response, this.app_id);
-            }
-            else if(response.exception){
+            } else if(response.exception){
                 FormplayerFrontend.trigger('showError', response.exception, response.type === 'html');
             }
         },
 
-        fetch: function (options) {
+        sync: function (method, model, options) {
             Util.setCrossDomainAjaxOptions(options);
-            return Backbone.Collection.prototype.fetch.call(this, options);
+            return Backbone.Collection.prototype.sync.call(this, 'create', model, options);
         },
-
     });
 
     var API = {
