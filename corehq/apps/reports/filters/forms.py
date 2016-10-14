@@ -542,8 +542,8 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
              _("Select an Application") if cls.use_only_last
              else _("Show Forms in all Applications"), PARAM_SLUG_APP_ID),
             (_('Module'),
-             _("Select a Module") if cls.use_only_last
-             else _("Show Forms from all Modules in selected Application"), PARAM_SLUG_MODULE),
+             _("Select a Menu") if cls.use_only_last
+             else _("Show all Forms in selected Application"), PARAM_SLUG_MODULE),
             (_('Form'),
              _("Select a Form") if cls.use_only_last
              else _("Show all Forms in selected Module"), PARAM_SLUG_XMLNS),

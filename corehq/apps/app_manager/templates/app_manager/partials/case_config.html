@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load hq_shared_tags %}
 
 {% include 'app_manager/partials/case_config_shared.html' %}
 
@@ -62,75 +63,97 @@
     </div>
 </script>
 
+{% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" and not app.advanced_app_builder %}
+    <div class="help-block">
+        {% if form.get_action_type == 'open' %}
+            This is a Registration form. Use the Registration form to add new cases to your Case List.
+        {% else %}
+            This is a Followup form. Use Followup forms to change cases in your Case List.
+        {% endif %}
+    </div>
+{% endif %}
+
+{# this is only for ONBOARDING_PROTOTYPE; otherwise this template isn't included unles form.source exists #}
+{% if not form.source %}
+    <p class="alert alert-warning">
+        {% trans "You have not created a form yet. Create a form in order to set up saving." %}
+    </p>
+{% endif %}
 
 <div id="case-config-ko">
     <div data-bind="saveButton: saveButton"></div>
     <div data-bind="with: caseConfigViewModel">
-        <div class="form-inline container-fluid">
-            {% trans "This form " %}
-            {% trans "Does not use cases" as no_cases %}
-            {% trans "Registers a new case" as registers_case %}
-            {% trans "Updates or closes a case" as updates_case %}
-            {% trans "Registers a case for a different module" as different_module %}
-            <select class="form-control" id="case-action-select" data-bind="
-                optstr: [{value: 'none', label: '{{ no_cases|escapejs }}'},
-                         {value: 'open', label: '{{ registers_case|escapejs }}'},
-                         {value: 'update', label: '{{ updates_case|escapejs }}'},
-                         {value: 'open-other', label: '{{ different_module|escapejs }}'}],
-                value: actionType,
-                event: { change: function() { ga_track_event('Case Management', 'Form Level', 'Case Action'); } }
-            "></select>
-        </div>
-        <div class="spacer"></div>
-        <div data-bind="if: actionType() === 'update'">
-            <div class="container-fluid"
-                 data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}">
+        {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or app.advanced_app_builder %}
+            <div class="form-inline container-fluid">
+                {% trans "This form " %}
+                {% trans "Does not use cases" as no_cases %}
+                {% trans "Registers a new case" as registers_case %}
+                {% trans "Updates or closes a case" as updates_case %}
+                {% trans "Registers a case for a different case list" as different_module %}
+                <select class="form-control" id="case-action-select" data-bind="
+                    optstr: [{value: 'none', label: '{{ no_cases|escapejs }}'},
+                             {value: 'open', label: '{{ registers_case|escapejs }}'},
+                             {value: 'update', label: '{{ updates_case|escapejs }}'},
+                             {value: 'open-other', label: '{{ different_module|escapejs }}'}],
+                    value: actionType,
+                    event: { change: function() { ga_track_event('Case Management', 'Form Level', 'Case Action'); } }
+                "></select>
             </div>
-        </div>
-        <div data-bind="if: actionType() === 'open'">
-            <div class="container-fluid"
-                 data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}">
+        {% endif %}
+            {% if form.source %}
+            <div class="spacer"></div>
+            <div data-bind="if: actionType() === 'update'">
+                <div class="container-fluid"
+                     data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}">
+                </div>
             </div>
-        </div>
-        <!--ko if: actionType() !== 'none'-->
-        <header class="clearfix" data-bind="visible: actionType() !== 'open-other'">
-            <h5 class="pull-left">{% trans "Child Cases" %}</h5>
-            <span data-bind="makeHqHelp: {}"
-              data-title="{% trans "Child Cases" %}"
-              data-content="{% trans "Child Cases let you open other types of cases for use in other modules. When possible, they'll be linked to the current case so you'll always know where they came from. A great use of Child Cases is for tracking a newborn separately from its mother." %}"
-            ></span>
-        </header>
-
-        <div data-bind="foreach: subcases" class="form">
-            <div class="form-inline">
-                <i class="fa fa-check"></i>
-                {% trans "Opens a case for a different case list" %}
-                <span class="form-group" data-bind="css: {'has-warning': !case_type()}">
-                    <select class="form-control" data-bind="
-                        options: $parent.caseTypes,
-                        optionsText: $parent.getCaseTypeLabel,
-                        value: case_type,
-                        optionsCaption: 'Choose a Module...'
-                    "></select>
-                    <span class="help-block" data-bind="visible: !case_type()">{% trans "Required" %}</span>
-                    {% if show_custom_ref %}
-                        <label>{% trans "Override reference id: " %}</label>
-                        <input type="text" data-bind="value: reference_id"/>
-                    {% endif %}
-                </span>
-                <a href="#" data-bind="openModal: 'remove-subcase-modal-template'" class="pull-right">
-                    <i class="fa fa-trash"></i>
-                    {% trans "Remove case" %}
-                </a>
+            <div data-bind="if: actionType() === 'open'">
+                <div class="container-fluid"
+                     data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}">
+                </div>
             </div>
-            <div class="container-fluid" data-bind="template: 'case-config:case-transaction'"></div>
-        </div>
-        <div>
-            <a href="#" data-bind="click: addSubCase">
-                <i class="fa fa-plus"></i>
-                {% trans "Opens a case for a different case list..." %}
-            </a>
-        </div>
-        <!--/ko-->
+                {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or app.advanced_app_builder %}
+                <!--ko if: actionType() !== 'none'-->
+                <header class="clearfix" data-bind="visible: actionType() !== 'open-other'">
+                    <h5 class="pull-left">{% trans "Child Cases" %}</h5>
+                    <span data-bind="makeHqHelp: {}"
+                      data-title="{% trans "Child Cases" %}"
+                      data-content="{% trans "Child Cases let you open other types of cases for use in other case lists. When possible, they'll be linked to the current case so you'll always know where they came from. A great use of Child Cases is for tracking a newborn separately from its mother." %}"
+                    ></span>
+                </header>
+        
+                <div data-bind="foreach: subcases" class="form">
+                    <div class="form-inline">
+                        <i class="fa fa-check"></i>
+                        {% trans "Opens a case for a different case list" %}
+                        <span class="form-group" data-bind="css: {'has-warning': !case_type()}">
+                            <select class="form-control" data-bind="
+                                options: $parent.caseTypes,
+                                optionsText: $parent.getCaseTypeLabel,
+                                value: case_type,
+                                optionsCaption: 'Choose a Module...'
+                            "></select>
+                            <span class="help-block" data-bind="visible: !case_type()">{% trans "Required" %}</span>
+                            {% if show_custom_ref %}
+                                <label>{% trans "Override reference id: " %}</label>
+                                <input type="text" data-bind="value: reference_id"/>
+                            {% endif %}
+                        </span>
+                        <a href="#" data-bind="openModal: 'remove-subcase-modal-template'" class="pull-right">
+                            <i class="fa fa-trash"></i>
+                            {% trans "Remove case" %}
+                        </a>
+                    </div>
+                    <div class="container-fluid" data-bind="template: 'case-config:case-transaction'"></div>
+                </div>
+                <div>
+                    <a href="#" data-bind="click: addSubCase">
+                        <i class="fa fa-plus"></i>
+                        {% trans "Opens a case for a different case list..." %}
+                    </a>
+                </div>
+                <!--/ko-->
+            {% endif %}
+        {% endif %}
     </div>
 </div>

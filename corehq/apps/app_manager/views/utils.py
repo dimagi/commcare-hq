@@ -3,6 +3,7 @@ from urllib import urlencode
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
+from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import require_deploy_apps
 
@@ -52,7 +53,7 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
             1: 'view_app',
             2: 'view_app',
             3: 'view_module',
-            4: 'view_form',
+            4: 'form_designer' if toggles.ONBOARDING_PROTOTYPE.enabled(domain) else 'view_form',
         }[len(args)]
 
     return HttpResponseRedirect(
