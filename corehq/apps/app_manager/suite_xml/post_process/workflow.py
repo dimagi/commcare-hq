@@ -173,6 +173,7 @@ class WorkflowHelper(PostProcessor):
                 form_datum = form_datums_by_id.get(entry_datum.id)
                 if form_datum:
                     entry_datum.case_type = form_datum.case_type
+                    entry_datum.from_parent_module = form_datum.from_parent
 
 
 class EndOfFormNavigationWorkflow(object):
@@ -291,6 +292,8 @@ class EndOfFormNavigationWorkflow(object):
         """
         candidate = None
         for source_datum in source_datums:
+            if source_datum.from_parent_module:
+                continue
             if target_datum.id == source_datum.id:
                 if source_datum.case_type and source_datum.case_type == target_datum.case_type:
                     # same ID, same case type
@@ -543,6 +546,8 @@ class WorkflowDatumMeta(object):
         self.nodeset = nodeset
         self.function = function
         self._case_type = None
+        self.from_parent_module = False
+
 
     @classmethod
     def from_session_datum(cls, session_datum):
