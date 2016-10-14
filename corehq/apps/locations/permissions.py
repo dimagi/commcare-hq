@@ -93,8 +93,11 @@ def user_can_view_location(user, sql_location, project):
 
 
 def user_can_edit_location_types(user, project):
-    if (user.is_domain_admin(project.name) or
-            not project.location_restriction_for_users):
+    if user.is_domain_admin(project.name):
+        return True
+    elif not user.has_permission(project.name, 'edit_apps'):
+        return False
+    elif not project.location_restriction_for_users:
         return True
 
     return not user.get_domain_membership(project.name).location_id

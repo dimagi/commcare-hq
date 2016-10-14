@@ -48,11 +48,9 @@ branches:
   - dsr-multi-loc # sr 9/20
   - vellum-staging # J$ 11/13
   - onboarding # Jenny 9/19
-#  - np/kill-djcelery # Nick P 10/3
 #  - np/upgrade-twofactor # Nick P 10/5
-  - np/upgrade-django-mptt # Nick P 10/6
-  - np/19/django-compressor # Nick P 10/7
-  - br/br/fix-bad-checks  # Ben 10/12
+  - bmb/currentind-string # Biyeun 11/12
+#  - np/upgrade-django-celery # Nick P 10/13 # need to fake migrations
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

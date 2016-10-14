@@ -56,13 +56,6 @@ def process_pillow_retry(error_doc_id):
 
         change = error_doc.change_object
         try:
-            try:
-                from corehq.apps.userreports.pillow import ConfigurableReportKafkaPillow
-                if isinstance(pillow, ConfigurableReportKafkaPillow):
-                    raise Exception('this is temporarily not supported!')
-            except ImportError:
-                pass
-
             change_metadata = change.metadata
             if change_metadata:
                 document_store = get_document_store(

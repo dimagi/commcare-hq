@@ -364,7 +364,7 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
 
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
 
-    objects = LocationManager()
+    objects = _tree_manager = LocationManager()
     # This should really be the default location manager
     active_objects = OnlyUnarchivedLocationManager()
 
@@ -544,19 +544,6 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         return self._make_group_object(
             user_id,
             case_sharing=True,
-        )
-
-    def reporting_group_object(self, user_id=None):
-        """
-        Returns a fake group object that cannot be saved.
-
-        Similar to case_sharing_group_object method, but for
-        reporting groups.
-        """
-
-        return self._make_group_object(
-            user_id,
-            case_sharing=False,
         )
 
     @property

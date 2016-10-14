@@ -297,6 +297,9 @@ class PillowtopRetryAllPillowsTests(TestCase):
 
     def _test_error_logging_for_pillow(self, pillow_config):
         pillow = _pillow_instance_from_config_with_mock_process_change(pillow_config)
+        if not pillow.retry_errors:
+            return
+
         doc = self._get_random_doc()
         pillow.process_with_error_handling(Change(id=doc['id'], sequence_id='3', document=doc))
 
