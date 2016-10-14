@@ -23,6 +23,7 @@ class Command(BaseCommand):
             print '\n======================= Migrating DB: {} ======================='.format(db_alias)
             call_command(
                 'migrate',
+                *args,
                 database=db_alias,
                 interactive=options['interactive'],
                 fake=options['fake'],
