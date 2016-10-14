@@ -7,11 +7,6 @@ from urllib import urlencode
 from django.contrib import messages
 import settingshelper as helper
 
-# odd celery fix
-import djcelery
-
-djcelery.setup_loader()
-
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 LESS_DEBUG = DEBUG
@@ -211,7 +206,6 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    'djcelery',
     'djtables',
     'django_prbac',
     'djangular',
@@ -414,7 +408,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'django_otp',
     'django_otp.plugins.otp_static',
     'django_otp.plugins.otp_totp',
-    'djcelery',
     'djtables',
     'gunicorn',
     'langcodes',
