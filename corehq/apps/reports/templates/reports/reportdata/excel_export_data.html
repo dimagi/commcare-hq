@@ -42,7 +42,7 @@
             domain: '{{ domain }}',
             exportFilters: '{{ get_filter_params.urlencode|safe }}',
             bulkDownloadUrl: 'n',
-            downloadUrl: '{% url "corehq.apps.reports.views.export_all_form_metadata_async" domain %}'
+            downloadUrl: '{% url "export_all_form_metadata_async" domain %}'
 
         } );
 
