@@ -24,8 +24,10 @@ class Command(BaseCommand):
             call_command(
                 'migrate',
                 *args,
-                database=db_alias,
-                interactive=options['interactive'],
-                fake=options['fake'],
-                list=options['list'],
+                **dict(
+                    database=db_alias,
+                    interactive=options['interactive'],
+                    fake=options['fake'],
+                    list=options['list'],
+                )
             )
