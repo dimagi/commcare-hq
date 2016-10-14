@@ -54,7 +54,7 @@ class AutomaticCaseUpdateTest(TestCase):
             property_name='update_flag',
             property_value='Y',
             rule=self.rule,
-        ),
+        )
 
         self.rule2 = AutomaticUpdateRule(
             domain=self.domain,
