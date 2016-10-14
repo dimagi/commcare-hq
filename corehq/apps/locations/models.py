@@ -969,6 +969,6 @@ def _unassign_users_from_location(domain, location_id):
     from corehq.apps.locations.dbaccessors import get_all_users_by_location
     for user in get_all_users_by_location(domain, location_id):
         if user.is_web_user():
-            user.unset_location(domain)
+            user.unset_location_by_id(domain, location_id, fall_back_to_next=True)
         elif user.is_commcare_user():
-            user.unset_location()
+            user.unset_location_by_id(location_id, fall_back_to_next=True)
