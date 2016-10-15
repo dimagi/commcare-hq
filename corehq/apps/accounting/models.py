@@ -980,7 +980,7 @@ class Subscriber(models.Model):
         if not old_subscription:
             return False
         is_new_trial = new_subscription and new_subscription.is_trial
-        expired_trial = old_subscription and old_subscription.is_trial and not new_subscription
+        expired_trial = old_subscription.is_trial and not new_subscription
         return not is_new_trial and not expired_trial
 
     @staticmethod
