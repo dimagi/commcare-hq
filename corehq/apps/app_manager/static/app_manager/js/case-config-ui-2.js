@@ -1,4 +1,4 @@
-/*globals $, COMMCAREHQ, ko, _, alert_user*/
+/*globals $, COMMCAREHQ, ko, _*/
 
 hqDefine('app_manager/js/case-config-ui-2.js', function () {
     "use strict";
@@ -126,21 +126,7 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
         };
 
         self.refreshQuestions = function(url, moduleId, formId, event){
-            var $el = $(event.currentTarget);
-            $el.find('i').addClass('fa-spin');
-            $.get(
-                url,
-                {module_id: moduleId, form_id: formId}
-            ).success(function(data){
-                $el.addClass('btn-success').removeClass('btn-danger');
-                self.questions(data);
-                $el.find('i').removeClass('fa-spin');
-            }).error(function(e){
-                $el.removeClass('btn-success').addClass('btn-danger');
-                $el.find('i').removeClass('fa-spin');
-                alert_user("Something went wrong refreshing your form properties. "
-                           + "Please refresh the page and try again", "danger");
-            });
+            return caseConfigUtils.refreshQuestions(self.questions,url, moduleId, formId, event);
         };
         self.getAnswers = function (condition) {
             return caseConfigUtils.getAnswers(self.questions(), condition);
