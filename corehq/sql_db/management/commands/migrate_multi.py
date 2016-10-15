@@ -1,3 +1,4 @@
+from copy import copy
 from optparse import make_option
 
 from django.conf import settings
@@ -28,13 +29,10 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         for db_alias in settings.DATABASES.keys():
             print '\n======================= Migrating DB: {} ======================='.format(db_alias)
+            call_options = copy(options)
+            call_options['database'] = db_alias
             call_command(
                 'migrate',
                 *args,
-                **dict(
-                    database=db_alias,
-                    interactive=options['interactive'],
-                    fake=options['fake'],
-                    list=options['list'],
-                )
+                **call_options
             )
