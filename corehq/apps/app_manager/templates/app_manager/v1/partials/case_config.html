@@ -65,6 +65,7 @@
 
 <div id="case-config-ko">
     <div data-bind="saveButton: saveButton"></div>
+    <div data-bind="template: 'case-config:refresh-form-questions'"></div>
     <div data-bind="with: caseConfigViewModel">
         <div class="form-inline container-fluid">
             {% trans "This form " %}
