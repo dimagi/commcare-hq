@@ -1,4 +1,4 @@
-/*globals $, COMMCAREHQ, ko, _ */
+/*globals $, COMMCAREHQ, ko, _, alert_user*/
 
 hqDefine('app_manager/js/case-config-ui-2.js', function () {
     "use strict";
@@ -20,7 +20,7 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
             actions.subcases = a.subcases;
             return actions;
         }(params.actions));
-        self.questions = params.questions;
+        self.questions = ko.observable(params.questions);
         self.save_url = params.save_url;
         // `requires` is a ko observable so it can be read by another UI
         self.requires = params.requires;
@@ -96,7 +96,7 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
         });
 
         var questionMap = {};
-        _(self.questions).each(function (question) {
+        _(self.questions()).each(function (question) {
             questionMap[question.value] = question;
         });
         self.get_repeat_context = function(path) {
@@ -108,7 +108,7 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
         };
 
         var questionScores = {};
-        _(self.questions).each(function (question, i) {
+        _(self.questions()).each(function (question, i) {
             questionScores[question.value] = i;
         });
         self.questionScores = questionScores;
@@ -122,10 +122,28 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
         };
 
         self.getQuestions = function (filter, excludeHidden, includeRepeat, excludeTrigger) {
-            return caseConfigUtils.getQuestions(self.questions, filter, excludeHidden, includeRepeat, excludeTrigger);
+            return caseConfigUtils.getQuestions(self.questions(), filter, excludeHidden, includeRepeat, excludeTrigger);
+        };
+
+        self.refreshQuestions = function(url, moduleId, formId, event){
+            var $el = $(event.currentTarget);
+            $el.find('i').addClass('fa-spin');
+            $.get(
+                url,
+                {module_id: moduleId, form_id: formId}
+            ).success(function(data){
+                $el.addClass('btn-success').removeClass('btn-danger');
+                self.questions(data);
+                $el.find('i').removeClass('fa-spin');
+            }).error(function(e){
+                $el.removeClass('btn-success').addClass('btn-danger');
+                $el.find('i').removeClass('fa-spin');
+                alert_user("Something went wrong refreshing your form properties. "
+                           + "Please refresh the page and try again", "danger");
+            });
         };
         self.getAnswers = function (condition) {
-            return caseConfigUtils.getAnswers(self.questions, condition);
+            return caseConfigUtils.getAnswers(self.questions(), condition);
         };
 
         self.change = function () {

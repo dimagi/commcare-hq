@@ -395,6 +395,21 @@ def get_xform_source(request, domain, app_id, module_id, form_id):
         raise Http404()
     return _get_xform_source(request, app, form)
 
+@require_GET
+def get_form_questions(request, domain, app_id):
+    module_id = request.GET.get('module_id')
+    form_id = request.GET.get('form_id')
+    from corehq.apps.app_manager.views.utils import  get_langs
+
+    try:
+        app = get_app(domain, app_id)
+        form = app.get_module(module_id).get_form(form_id)
+        lang, langs = get_langs(request, app)
+    except (ModuleNotFoundException, IndexError):
+        raise Http404()
+    form.validate_form()
+    xform_questions = form.get_questions(langs, include_triggers=True)
+    return json_response(xform_questions)
 
 def get_form_view_context_and_template(request, domain, form, langs, messages=messages):
     xform_questions = []
