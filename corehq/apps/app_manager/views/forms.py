@@ -22,7 +22,7 @@ from corehq.apps.app_manager.views.notifications import notify_form_changed
 from corehq.apps.app_manager.views.schedules import get_schedule_context
 
 from corehq.apps.app_manager.views.utils import back_to_main, \
-    CASE_TYPE_CONFLICT_MSG
+    CASE_TYPE_CONFLICT_MSG, get_langs
 
 from corehq import toggles, privileges, feature_previews
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -399,15 +399,12 @@ def get_xform_source(request, domain, app_id, module_id, form_id):
 def get_form_questions(request, domain, app_id):
     module_id = request.GET.get('module_id')
     form_id = request.GET.get('form_id')
-    from corehq.apps.app_manager.views.utils import  get_langs
-
     try:
         app = get_app(domain, app_id)
         form = app.get_module(module_id).get_form(form_id)
         lang, langs = get_langs(request, app)
     except (ModuleNotFoundException, IndexError):
         raise Http404()
-    form.validate_form()
     xform_questions = form.get_questions(langs, include_triggers=True)
     return json_response(xform_questions)
 
