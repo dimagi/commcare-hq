@@ -395,7 +395,9 @@ def get_xform_source(request, domain, app_id, module_id, form_id):
         raise Http404()
     return _get_xform_source(request, app, form)
 
+
 @require_GET
+@require_can_edit_apps
 def get_form_questions(request, domain, app_id):
     module_id = request.GET.get('module_id')
     form_id = request.GET.get('form_id')
@@ -407,6 +409,7 @@ def get_form_questions(request, domain, app_id):
         raise Http404()
     xform_questions = form.get_questions(langs, include_triggers=True)
     return json_response(xform_questions)
+
 
 def get_form_view_context_and_template(request, domain, form, langs, messages=messages):
     xform_questions = []
