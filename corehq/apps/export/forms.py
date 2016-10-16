@@ -247,14 +247,16 @@ class BaseFilterExportDownloadForm(forms.Form):
         )
         return users_matching_filter(self.domain_object.name, user_filters)
 
-    def _get_es_user_types(self):
+    def _get_es_user_types(self, mobile_user_and_group_slugs):
         """
         Return a list of elastic search user types (each item in the return list
         is in corehq.pillows.utils.USER_TYPES) corresponding to the selected
         export user types.
         """
         es_user_types = []
-        export_user_types = self.cleaned_data['user_types']
+        # export_user_types = self.cleaned_data['user_types']
+        user_types = ExpandedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
+        export_user_types = [BaseFilterExportDownloadForm._USER_TYPES_CHOICES[i][0] for i in user_types]
         export_to_es_user_types_map = {
             self._USER_MOBILE: [utils.MOBILE_USER_TYPE],
             self._USER_DEMO: [utils.DEMO_USER_TYPE],
@@ -267,8 +269,9 @@ class BaseFilterExportDownloadForm(forms.Form):
             es_user_types.extend(export_to_es_user_types_map[type_])
         return es_user_types
 
-    def _get_group(self):
-        group = self.cleaned_data['group']
+    def _get_group(self, mobile_user_and_group_slugs):
+        # group = self.cleaned_data['group']
+        group = ExpandedMobileWorkerFilter.selected_group_ids(mobile_user_and_group_slugs)
         if group:
             return Group.get(group)
 
@@ -467,6 +470,8 @@ class NewFilterFormESExportDownloadForm(FilterFormESExportDownloadForm):
         del (self.fields['type_or_group'])
         del (self.fields['user_types'])
         del (self.fields['group'])
+        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-3'
         self.helper.layout = Layout(
             super(NewFilterFormESExportDownloadForm, self).extra_fields
         )
@@ -511,6 +516,11 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
         self.timezone = timezone
         super(FilterCaseESExportDownloadForm, self).__init__(domain_object, timezone, *args, **kwargs)
 
+        del (self.fields['type_or_group'])
+        del (self.fields['user_types'])
+        del (self.fields['group'])
+        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-3'
         # update date_range filter's initial values to span the entirety of
         # the domain's submission range
         default_datespan = datespan_from_beginning(self.domain_object, self.timezone)
@@ -537,20 +547,32 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
             datespan.set_timezone(self.timezone)
             return ModifiedOnRangeFilter(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
 
-    def get_case_filter(self):
-        group = self._get_group()
-        if group:
-            user_ids = set(group.get_static_user_ids())
+    def _get_location_filter(self, location_ids):
+        user_ids = UserES().location(location_ids).run().doc_ids
+        return OwnerFilter(user_ids)
+
+    def get_case_filter(self, mobile_user_and_group_slugs=None):
+        # check for groups again since it expects a single group this
+        # one though seems to be filtering for group and its users whereas
+        # GroupFormSubmittedByFilter(group) seems to be just for users in the group
+        group_ids = ExpandedMobileWorkerFilter.selected_group_ids(mobile_user_and_group_slugs)
+
+        if group_ids:
+            export_user_ids = []
+            for group_id in group_ids:
+                group = Group.get(group_id)
+                export_user_ids += group.get_static_user_ids()
             case_filter = [OR(
-                OwnerFilter(group._id),
-                OwnerFilter(user_ids),
-                LastModifiedByFilter(user_ids)
+                OwnerTypeFilter(self._get_es_user_types(mobile_user_and_group_slugs)),
+                OwnerFilter(group_ids),
+                OwnerFilter(export_user_ids),
+                LastModifiedByFilter(export_user_ids)
             )]
         else:
             case_sharing_groups = [g.get_id for g in
                                    Group.get_case_sharing_groups(self.domain_object.name)]
             case_filter = [OR(
-                OwnerTypeFilter(self._get_es_user_types()),
+                OwnerTypeFilter(self._get_es_user_types(mobile_user_and_group_slugs)),
                 OwnerFilter(case_sharing_groups),
                 LastModifiedByFilter(case_sharing_groups)
             )]
@@ -558,6 +580,14 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
         date_filter = self._get_datespan_filter()
         if date_filter:
             case_filter.append(date_filter)
+
+        location_ids = ExpandedMobileWorkerFilter.selected_location_ids(mobile_user_and_group_slugs)
+        if location_ids:
+            case_filter.append(OR(self._get_location_filter(location_ids)))
+
+        user_ids = ExpandedMobileWorkerFilter.selected_user_ids(mobile_user_and_group_slugs)
+        if user_ids:
+            case_filter.append(OR(OwnerFilter(user_ids)))
 
         return case_filter
 
