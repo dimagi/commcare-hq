@@ -24,6 +24,7 @@ from corehq.apps.reports.util import (
     case_users_filter,
     datespan_from_beginning,
 )
+from corehq.apps.es.users import UserES
 from corehq.apps.style.crispy import B3MultiField, CrispyTemplate
 from corehq.apps.style.forms.widgets import (
     Select2MultipleChoiceWidget,
@@ -436,7 +437,8 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
         if not group:
             users = ExpandedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
             # return UserTypeFilter(self._get_es_user_types())
-            return UserTypeFilter(users)
+            f_users = [BaseFilterExportDownloadForm._USER_TYPES_CHOICES[i][0] for i in users]
+            return UserTypeFilter(f_users)
 
     def _get_user_ids_filter(self, mobile_user_and_group_slugs):
         user_ids = ExpandedMobileWorkerFilter.selected_user_ids(mobile_user_and_group_slugs)
@@ -446,7 +448,9 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
     def _get_location_ids_filter(self, mobile_user_and_group_slugs):
         location_ids = ExpandedMobileWorkerFilter.selected_location_ids(mobile_user_and_group_slugs)
         if location_ids:
-            return LocationsFilter(location_ids)
+            user_ids = UserES().location(location_ids).run().doc_ids
+            # return LocationsFilter(location_ids)
+            return FormSubmittedByFilter(user_ids)
 
     def get_multimedia_task_kwargs(self, export, download_id):
         kwargs = super(FilterFormESExportDownloadForm, self).get_multimedia_task_kwargs(export, download_id)
