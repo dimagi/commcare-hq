@@ -1746,10 +1746,17 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
     def _get_export(self, domain, export_id):
         return CaseExportInstance.get(export_id)
 
-    def get_filters(self, filter_form_data):
+    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
         filter_form = self._get_filter_form(filter_form_data)
-        form_filters = filter_form.get_case_filter()
+        form_filters = filter_form.get_case_filter(mobile_user_and_group_slugs)
         return form_filters
+
+    @property
+    def page_context(self):
+        parent_context = super(DownloadNewCaseExportView, self).page_context
+        parent_context['new_export_filters'] = LocationRestrictedMobileWorkerFilter(
+            self.request, self.request.domain).render()
+        return parent_context
 
 
 @csrf_exempt
