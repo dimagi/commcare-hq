@@ -15,7 +15,7 @@ from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceProvider, \
     ChoiceQueryContext, LocationChoiceProvider, UserChoiceProvider, GroupChoiceProvider, \
     OwnerChoiceProvider
-from corehq.apps.users.models import CommCareUser, WebUser, DomainMembership, UserRole, Permissions
+from corehq.apps.users.models import CommCareUser, WebUser, DomainMembership
 from corehq.apps.users.util import normalize_username
 
 
@@ -146,7 +146,7 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
                 ('Cambridge', []),
                 ('Somerville', []),
             ]),
-            ('Suffolke', [
+            ('Suffolke', [      # Make all locations contain the letter 'e'
                 ('Bostone', []),
             ])
         ])
@@ -178,6 +178,7 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
         delete_all_locations()
 
     def test_query_search(self):
+        # Searching for something common to all locations gets you all locations
         self._test_query(self.choice_query_context('e', page=0))
         self._test_query(self.choice_query_context('e', page=1))
 
@@ -187,14 +188,7 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
 
     def test_scoped_to_location_search(self):
         self.web_user.set_location(self.domain, self.locations['Middlesex'])
-        role = UserRole(
-            domain=self.domain,
-            name='Regional Supervisor',
-            permissions=Permissions(access_all_locations=False),
-        )
-        role.save()
-        self.web_user.set_role(self.domain, role.get_qualified_id())
-
+        self.restrict_user_to_location(self.web_user)
         scoped_choices = [
             SearchableChoice(
                 location.location_id,
@@ -208,8 +202,14 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
             ]
         ]
         self.static_choice_provider = StaticChoiceProvider(scoped_choices)
+
+        # When an empty query is given, the user receives all the choices they can access
         self._test_query(self.choice_query_context('', page=0))
+        # Searching for something common to all locations give only the accessible locations
+        self._test_query(self.choice_query_context('e', page=0))
+        # When a user queries for something they can access, it gets returned
         self._test_query(self.choice_query_context('Somerville', page=0))
+        # When a user searches for something they can't access, it isn't returned
         self._test_query(self.choice_query_context('Boston', page=0))
 
 

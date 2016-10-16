@@ -68,7 +68,7 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
         self.assertItemsEqual(self.locations.values(), all_locs)
 
     def test_location_restricted(self):
-        self._restrict_user_location()
+        self.restrict_user_to_location(self.web_user)
         accessible_locs = (
             SQLLocation.objects.accessible_to_user(self.domain, self.web_user)
         )
@@ -79,7 +79,7 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
         )
 
     def test_filter_path_by_user_input(self):
-        self._restrict_user_location()
+        self.restrict_user_to_location(self.web_user)
 
         # User searching for higher in the hierarchy is only given the items
         # they are allowed to see
@@ -100,12 +100,3 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
             .accessible_to_user(self.domain, self.web_user)
         )
         self.assertItemsEqual([], no_locs)
-
-    def _restrict_user_location(self):
-        role = UserRole(
-            domain=self.domain,
-            name='Regional Supervisor',
-            permissions=Permissions(access_all_locations=False),
-        )
-        role.save()
-        self.web_user.set_role(self.domain, role.get_qualified_id())
