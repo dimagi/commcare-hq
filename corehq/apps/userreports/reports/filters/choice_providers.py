@@ -224,7 +224,7 @@ class UserChoiceProvider(ChainableChoiceProvider):
         return [Choice(user_id, raw_username(username))
                 for user_id, username in user_es.values_list('_id', 'username')]
 
-    def default_value(self):
+    def default_value(self, user):
         return None
 
 
@@ -254,7 +254,7 @@ class GroupChoiceProvider(ChainableChoiceProvider):
         return [Choice(group_id, name)
                 for group_id, name in group_es.values_list('_id', 'name')]
 
-    def default_value(self):
+    def default_value(self, user):
         return None
 
 
