@@ -12,7 +12,7 @@ from django.views.decorators.http import require_GET
 
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter, ExpandedMobileWorkerFilter
+from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter
 from corehq.apps.reports.views import should_update_export, \
     build_download_saved_export_response, require_form_export_permission
 from corehq.form_processor.utils import use_new_exports
@@ -1730,7 +1730,8 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
     @property
     def page_context(self):
         parent_context = super(DownloadNewFormExportView, self).page_context
-        parent_context['new_export_filters'] = LocationRestrictedMobileWorkerFilter(self.request, self.request.domain).render()
+        parent_context['new_export_filters'] = LocationRestrictedMobileWorkerFilter(
+            self.request, self.request.domain).render()
         return parent_context
 
 class BulkDownloadNewFormExportView(DownloadNewFormExportView):
