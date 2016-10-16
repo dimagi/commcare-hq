@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from mock import patch
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import (
     AUTO_SELECT_CASE,
@@ -16,6 +15,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin, commtrack_enabled
 from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.util.test_utils import flag_enabled
 
 
 class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
@@ -177,6 +177,7 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                                    './entry[2]/session')
         self.assertXmlPartialEqual(self.get_xml('load_case_from_fixture_instance'), suite, './entry[2]/instance')
 
+    @flag_enabled('CUSTOM_CALENDAR_FIXTURE')
     def test_advanced_suite_load_case_from_fixture_with_custom_fixture(self):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.get_module(1).get_form(0).actions.load_update_cases.append(LoadUpdateAction(
@@ -190,12 +191,11 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 auto_select=True,
             )
         ))
-        with patch('corehq.apps.app_manager.suite_xml.post_process.instances.toggles.CUSTOM_CALENDAR_FIXTURE.enabled') as mock_toggle:
-            mock_toggle.return_value = True
-            suite = app.create_suite()
+        suite = app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('load_case_from_custom_fixture_session'), suite, './entry[2]/session')
         self.assertXmlPartialEqual(self.get_xml('load_case_from_custom_fixture_instance'), suite, './entry[2]/instance')
 
+    @flag_enabled('MOBILE_UCR')
     def test_advanced_suite_load_case_from_fixture_with_report_fixture(self):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.get_module(1).get_form(0).actions.load_update_cases.append(LoadUpdateAction(
@@ -207,9 +207,7 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 fixture_variable="index",
             )
         ))
-        with patch('corehq.apps.app_manager.suite_xml.post_process.instances.toggles.MOBILE_UCR.enabled') as mock_toggle:
-            mock_toggle.return_value = True
-            suite = app.create_suite()
+        suite = app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('load_case_from_report_fixture_session'), suite, './entry[2]/session')
         self.assertXmlPartialEqual(self.get_xml('load_case_from_report_fixture_instance'), suite, './entry[2]/instance')
 
