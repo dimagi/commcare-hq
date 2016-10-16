@@ -1,6 +1,6 @@
 from ..models import SQLLocation
 from .util import LocationHierarchyTestCase
-from corehq.apps.users.models import  WebUser, UserRole, Permissions
+from corehq.apps.users.models import WebUser
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
 
@@ -17,6 +17,7 @@ class BaseTestLocationQuerysetMethods(LocationHierarchyTestCase):
             ])
         ])
     ]
+
 
 class TestLocationQuerysetMethods(BaseTestLocationQuerysetMethods):
 
