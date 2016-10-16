@@ -11,3 +11,15 @@ def get_expanded_columns(column_configs, data_source_config):
         for column_config in column_configs
         if column_config.type == 'expanded'
     }
+
+
+def has_location_filter(view_fn, *args, **kwargs):
+    """check that the report has at least one location choice provider filter
+    """
+    from corehq.apps.userreports.reports.view import ConfigurableReport
+    report = ConfigurableReport(args=args, kwargs=kwargs)
+    return any(
+        filter_.choice_provider.location_safe
+        if hasattr(filter_, 'choice_provider') else False
+        for filter_ in report.filters
+    )

@@ -45,6 +45,7 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.reports.util import (
     get_expanded_columns,
+    has_location_filter,
 )
 from corehq.apps.userreports.util import (
     default_language,
@@ -98,20 +99,6 @@ def query_dict_to_dict(query_dict, domain):
     return request_dict
 
 
-def _has_location_filter(view_fn, *args, **kwargs):
-    """check that the report has at least one location choice provider filter
-    """
-    # God help me.
-    # We can't access the instance of the report view in the location_safe
-    # decorator
-    report = ConfigurableReport(args=args, kwargs=kwargs)
-    return any(
-        filter_.choice_provider.location_safe
-        if hasattr(filter_, 'choice_provider') else False
-        for filter_ in report.filters
-    )
-
-
 class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     section_name = ugettext_noop("Reports")
     template_name = 'userreports/configurable_report.html'
@@ -134,7 +121,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @use_jquery_ui
     @use_datatables
     @use_nvd3
-    @conditionally_location_safe(_has_location_filter)
+    @conditionally_location_safe(has_location_filter)
     def dispatch(self, request, *args, **kwargs):
         original = super(ConfigurableReport, self).dispatch(request, *args, **kwargs)
         return original

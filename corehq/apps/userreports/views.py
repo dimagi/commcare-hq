@@ -101,6 +101,7 @@ from corehq.apps.userreports.util import (
     allowed_report_builder_reports,
     number_of_report_builder_reports
 )
+from corehq.apps.userreports.reports.util import has_location_filter
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.couch import get_document_or_404
@@ -1229,10 +1230,7 @@ def _get_report_filter(domain, report_id, filter_id):
 
 
 def _is_location_safe_choice_list(view_fn, domain, report_id, filter_id, **view_kwargs):
-    report_filter = _get_report_filter(domain, report_id, filter_id)
-    if hasattr(report_filter, 'choice_provider'):
-        return report_filter.choice_provider.location_safe
-    return False
+    return has_location_filter(view_fn, domain=domain, subreport_slug=report_id)
 
 
 @login_and_domain_required
