@@ -228,7 +228,7 @@ class EditCommCareUserView(BaseEditUserView):
         }
         if self.commtrack_form.errors:
             messages.error(self.request, _(
-                "There were some errors while saving user's locations. Please check 'Locations' tab"
+                "There were some errors while saving user's locations. Please check the 'Locations' tab"
             ))
         if self.domain_object.commtrack_enabled or self.domain_object.uses_locations:
             context.update({
