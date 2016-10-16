@@ -10,7 +10,7 @@ from django.core.urlresolvers import reverse
 from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.users.models import WebUser, CommCareUser, UserRole, Permissions
 from corehq.toggles import (RESTRICT_FORM_EDIT_BY_LOCATION, NAMESPACE_DOMAIN)
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import toggle_enabled
 from corehq.apps.users.views.mobile import users as user_views
 from corehq.form_processor.utils.xform import (
     TestFormMetadata,
@@ -66,7 +66,7 @@ class TestPermissions(LocationHierarchyTestCase):
         self.assertCannotEdit(self.locationless_web_user, self.cambridge_form)
         self.assertCannotEdit(self.locationless_web_user, self.boston_form)
 
-    @flag_enabled('MULTIPLE_LOCATIONS_PER_USER')
+    @toggle_enabled('MULTIPLE_LOCATIONS_PER_USER')
     @run_with_all_backends
     def test_multiple_locations_per_user(self):
         # Note also that location types must not be administrative for multiple

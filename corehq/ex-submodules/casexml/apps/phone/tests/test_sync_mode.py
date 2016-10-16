@@ -19,7 +19,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, \
     run_with_all_backends
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import toggle_enabled
 from casexml.apps.case.tests.util import (
     check_user_has_case, assert_user_doesnt_have_case,
     assert_user_has_case, TEST_DOMAIN_NAME, assert_user_has_cases)
@@ -1046,7 +1046,7 @@ class ExtensionCasesFirstSync(SyncBaseTest):
     @run_with_all_backends
     def test_is_first_extension_sync(self):
         """Before any syncs, this should return true when the toggle is enabled, otherwise false"""
-        with flag_enabled('EXTENSION_CASES_SYNC_ENABLED'):
+        with toggle_enabled('EXTENSION_CASES_SYNC_ENABLED'):
             self.assertTrue(self.restore_state.is_first_extension_sync)
 
         self.assertFalse(self.restore_state.is_first_extension_sync)
@@ -1055,7 +1055,7 @@ class ExtensionCasesFirstSync(SyncBaseTest):
     def test_is_first_extension_sync_after_sync(self):
         """After a sync with the extension code in place, this should be false"""
         self.factory.create_case()
-        with flag_enabled('EXTENSION_CASES_SYNC_ENABLED'):
+        with toggle_enabled('EXTENSION_CASES_SYNC_ENABLED'):
             config = get_restore_config(self.project, self.user, restore_id=self.sync_log._id)
             self.assertTrue(get_properly_wrapped_sync_log(self.sync_log._id).extensions_checked)
             self.assertFalse(config.restore_state.is_first_extension_sync)
@@ -1902,7 +1902,7 @@ class SteadyStateExtensionSyncTest(SyncBaseTest):
         self.factory.create_or_update_case(extension)
         return host, extension
 
-    @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
+    @toggle_enabled('EXTENSION_CASES_SYNC_ENABLED')
     @run_with_all_backends
     def test_delegating_extensions(self):
         """Make an extension, delegate it, send it back, see what happens"""
@@ -1962,7 +1962,7 @@ class SteadyStateExtensionSyncTest(SyncBaseTest):
 
         # Hooray!
 
-    @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
+    @toggle_enabled('EXTENSION_CASES_SYNC_ENABLED')
     @run_with_all_backends
     def test_multiple_syncs(self):
         host, extension = self._create_extension()

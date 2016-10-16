@@ -2,7 +2,7 @@ import mock
 import os
 from xml.etree import ElementTree
 
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import toggle_enabled
 
 from datetime import datetime, timedelta
 from django.test import TestCase
@@ -91,7 +91,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
         )
 
     def test_all_locations_flag_returns_all_locations(self, uses_locations):
-        with flag_enabled('SYNC_ALL_LOCATIONS'):
+        with toggle_enabled('SYNC_ALL_LOCATIONS'):
             self._assert_fixture_has_locations(
                 'expand_from_root',
                 ['Massachusetts', 'Suffolk', 'Middlesex', 'Boston', 'Revere', 'Cambridge',
@@ -182,8 +182,8 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
         )
 
     def test_flat_sync_format(self, uses_locations):
-        with flag_enabled('SYNC_ALL_LOCATIONS'):
-            with flag_enabled('FLAT_LOCATION_FIXTURE'):
+        with toggle_enabled('SYNC_ALL_LOCATIONS'):
+            with toggle_enabled('FLAT_LOCATION_FIXTURE'):
                 self._assert_fixture_has_locations(
                     'expand_from_root_flat',
                     ['Massachusetts', 'Suffolk', 'Middlesex', 'Boston', 'Revere', 'Cambridge',

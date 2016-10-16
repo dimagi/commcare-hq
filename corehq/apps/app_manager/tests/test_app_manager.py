@@ -14,7 +14,7 @@ from corehq.apps.app_manager.models import Application, DetailColumn, import_app
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.models import ReportConfiguration
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import toggle_enabled
 
 
 class AppManagerTest(TestCase):
@@ -208,7 +208,7 @@ class AppManagerTest(TestCase):
 
 class TestReportModule(SimpleTestCase):
 
-    @flag_enabled('MOBILE_UCR')
+    @toggle_enabled('MOBILE_UCR')
     @patch('dimagi.ext.couchdbkit.Document.get_db')
     def test_purge_report_from_mobile_ucr(self, get_db):
         report_config = ReportConfiguration(domain='domain', config_id='foo1')
