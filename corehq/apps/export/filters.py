@@ -194,7 +194,7 @@ class FormSubmittedByFilter(ExportFilter):
 class UserTypeFilter(ExportFilter):
 
     def __init__(self, user_types):
-        # _assert_user_types(user_types)
+        _assert_user_types(user_types)
         self.user_types = user_types
 
     def to_es_filter(self):
