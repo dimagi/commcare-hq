@@ -4,7 +4,6 @@ from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.locations.const import LOCATION_TYPE_SHEET_HEADERS, LOCATION_SHEET_HEADERS
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.toggles import NEW_BULK_LOCATION_MANAGEMENT
 from corehq.util.quickcache import quickcache
 from corehq.util.spreadsheets.excel import flatten_json, json_to_headers
 from dimagi.utils.decorators.memoized import memoized
@@ -153,11 +152,6 @@ class LocationExporter(object):
             return True
         return False
 
-    @property
-    @memoized
-    def new_bulk_management_enabled(self):
-        return NEW_BULK_LOCATION_MANAGEMENT.enabled(self.domain)
-
     def get_consumption(self, loc):
         if (
             not self.include_consumption or
@@ -203,21 +197,14 @@ class LocationExporter(object):
                 'data': model_data,
                 'uncategorized_data': uncategorized_data,
                 'consumption': self.get_consumption(loc),
+                LOCATION_SHEET_HEADERS['external_id']: loc.external_id,
+                LOCATION_SHEET_HEADERS['do_delete']: ''
             }
-            if self.new_bulk_management_enabled:
-                loc_dict.update({
-                    LOCATION_SHEET_HEADERS['external_id']: loc.external_id,
-                    LOCATION_SHEET_HEADERS['do_delete']: ''
-                })
             tab_rows.append(dict(flatten_json(loc_dict)))
 
-        tab_headers = ['site_code', 'name', 'parent_site_code', 'latitude', 'longitude']
-        if self.include_ids:
-            tab_headers = ['location_id'] + tab_headers
-        if self.new_bulk_management_enabled:
-            tab_headers = ['location_id', 'site_code', 'name', 'parent_code',
-                           'latitude', 'longitude', 'external_id', 'do_delete']
-            tab_headers = [LOCATION_SHEET_HEADERS[h] for h in tab_headers]
+        header_keys = ['location_id', 'site_code', 'name', 'parent_code',
+                       'latitude', 'longitude', 'external_id', 'do_delete']
+        tab_headers = [LOCATION_SHEET_HEADERS[h] for h in header_keys]
 
         def _extend_headers(prefix, headers):
             tab_headers.extend(json_to_headers(
@@ -228,10 +215,7 @@ class LocationExporter(object):
         if self.include_consumption_flag and loc_type.name not in self.administrative_types:
             _extend_headers('consumption', self.product_codes)
 
-        if self.new_bulk_management_enabled:
-            sheet_title = loc_type.code
-        else:
-            sheet_title = loc_type.name
+        sheet_title = loc_type.code
 
         return (sheet_title, {
             'headers': tab_headers,
@@ -270,9 +254,7 @@ class LocationExporter(object):
 
     def get_export_dict(self):
         location_types = self.domain_obj.location_types
-        sheets = []
-        if self.new_bulk_management_enabled:
-            sheets.extend([self.type_sheet(location_types)])
+        sheets = [self.type_sheet(location_types)]
         sheets.extend([
             self._loc_type_dict(loc_type)
             for loc_type in location_types

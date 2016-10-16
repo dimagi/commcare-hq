@@ -16,10 +16,7 @@ def import_locations_async(domain, file_ref_id):
     importer = MultiExcelImporter(import_locations_async, file_ref_id)
     task = import_locations_async
     DownloadBase.set_progress(task, 0, 100)
-    if NEW_BULK_LOCATION_MANAGEMENT.enabled(domain):
-        results = new_locations_import(domain, importer)
-    else:
-        results = list(import_locations(domain, importer))
+    results = new_locations_import(domain, importer)
     DownloadBase.set_progress(task, 100, 100)
     importer.mark_complete()
 
