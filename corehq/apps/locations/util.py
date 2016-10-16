@@ -119,11 +119,10 @@ def get_location_data_model(domain):
 
 class LocationExporter(object):
 
-    def __init__(self, domain, include_consumption=False, include_ids=False):
+    def __init__(self, domain, include_consumption=False):
         self.domain = domain
         self.domain_obj = Domain.get_by_name(domain)
         self.include_consumption_flag = include_consumption
-        self.include_ids = include_ids
         self.data_model = get_location_data_model(domain)
         self.administrative_types = {}
 
@@ -262,9 +261,8 @@ class LocationExporter(object):
         return sheets
 
 
-def dump_locations(response, domain, include_consumption=False, include_ids=False):
-    exporter = LocationExporter(domain, include_consumption=include_consumption,
-                                include_ids=include_ids)
+def dump_locations(response, domain, include_consumption=False):
+    exporter = LocationExporter(domain, include_consumption=include_consumption)
     result = write_to_file(exporter.get_export_dict())
     response.write(result)
 
