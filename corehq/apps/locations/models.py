@@ -430,6 +430,74 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
 
         self._products = value
 
+    def _close_case_and_remove_users(self):
+        """
+        Closes linked supply point cases for a location and unassigns the users
+        assigned to that location.
+
+        Used by both archive and delete methods
+        """
+        sp = self.linked_supply_point()
+        # sanity check that the supply point exists and is still open.
+        # this is important because if you archive a child, then try
+        # to archive the parent, we don't want to try to close again
+        if sp and not sp.closed:
+            close_case(sp.case_id, self.domain, COMMTRACK_USERNAME)
+
+        _unassign_users_from_location(self.domain, self.location_id)
+
+    def _archive_single_location(self):
+        """
+        Archive a single location, caller is expected to handle
+        archiving children as well.
+
+        This is just used to prevent having to do recursive
+        couch queries in `archive()`.
+        """
+        self.is_archived = True
+        self.save()
+
+        self._close_case_and_remove_users()
+
+    def archive(self):
+        """
+        Mark a location and its descendants as archived.
+        This will cause it (and its data) to not show up in default Couch and
+        SQL views.  This also unassigns users assigned to the location.
+        """
+        for loc in self.get_descendants(include_self=True):
+            loc._archive_single_location()
+
+    def _unarchive_single_location(self):
+        """
+        Unarchive a single location, caller is expected to handle
+        unarchiving children as well.
+
+        This is just used to prevent having to do recursive
+        couch queries in `unarchive()`.
+        """
+        self.is_archived = False
+        self.save()
+
+        # reopen supply point case if needed
+        sp = self.linked_supply_point()
+        # sanity check that the supply point exists and is not open.
+        # this is important because if you unarchive a child, then try
+        # to unarchive the parent, we don't want to try to open again
+        if sp and sp.closed:
+            for action in sp.actions:
+                if action.action_type == 'close':
+                    action.xform.archive(user_id=COMMTRACK_USERNAME)
+                    break
+
+    def unarchive(self):
+        """
+        Unarchive a location and reopen supply point case if it
+        exists.
+        """
+        for loc in self.get_descendants(include_self=True):
+            loc._unarchive_single_location()
+
     def sql_full_delete(self):
         """
         SQL ONLY FULL DELETE
@@ -722,75 +790,6 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
             )
         except LocationType.DoesNotExist:
             raise LocationType.DoesNotExist(msg)
-
-    def _archive_single_location(self):
-        """
-        Archive a single location, caller is expected to handle
-        archiving children as well.
-
-        This is just used to prevent having to do recursive
-        couch queries in `archive()`.
-        """
-        self.is_archived = True
-        self.save()
-
-        self._close_case_and_remove_users()
-
-    def archive(self):
-        """
-        Mark a location and its descendants as archived.
-        This will cause it (and its data) to not show up in default Couch and
-        SQL views.  This also unassigns users assigned to the location.
-        """
-        for loc in [self] + self.descendants:
-            loc._archive_single_location()
-
-    def _unarchive_single_location(self):
-        """
-        Unarchive a single location, caller is expected to handle
-        unarchiving children as well.
-
-        This is just used to prevent having to do recursive
-        couch queries in `unarchive()`.
-        """
-        self.is_archived = False
-        self.save()
-
-        # reopen supply point case if needed
-        sp = self.linked_supply_point()
-        # sanity check that the supply point exists and is not open.
-        # this is important because if you unarchive a child, then try
-        # to unarchive the parent, we don't want to try to open again
-        if sp and sp.closed:
-            for action in sp.actions:
-                if action.action_type == 'close':
-                    action.xform.archive(user_id=COMMTRACK_USERNAME)
-                    break
-
-    def unarchive(self):
-        """
-        Unarchive a location and reopen supply point case if it
-        exists.
-        """
-        for loc in [self] + self.descendants:
-            loc._unarchive_single_location()
-
-    def _close_case_and_remove_users(self):
-        """
-        Closes linked supply point cases for a location and unassigns the users
-        assigned to that location.
-
-        Used by both archive and delete methods
-        """
-
-        sp = self.linked_supply_point()
-        # sanity check that the supply point exists and is still open.
-        # this is important because if you archive a child, then try
-        # to archive the parent, we don't want to try to close again
-        if sp and not sp.closed:
-            close_case(sp.case_id, self.domain, COMMTRACK_USERNAME)
-
-        _unassign_users_from_location(self.domain, self._id)
 
     def full_delete(self):
         """

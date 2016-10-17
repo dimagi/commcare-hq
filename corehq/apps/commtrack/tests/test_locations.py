@@ -52,7 +52,7 @@ class LocationsTest(CommTrackTest):
 
         original_count = len(list(Location.by_domain(self.domain.name)))
 
-        loc = self.user.location
+        loc = self.user.sql_location
         loc.archive()
 
         # it should also archive children
@@ -79,7 +79,7 @@ class LocationsTest(CommTrackTest):
 
     @run_with_all_backends
     def test_archive_flips_sp_cases(self):
-        loc = make_loc('someloc')
+        loc = make_loc('someloc').sql_location
         sp = loc.linked_supply_point()
 
         self.assertFalse(sp.closed)

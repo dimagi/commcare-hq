@@ -334,7 +334,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
         couch_location.save()
         after_save = datetime.utcnow()
         location = SQLLocation.objects.last()
-        self.assertEqual(couch_location._id, location.location_id)
+        self.assertEqual(couch_location.location_id, location.location_id)
         self.assertEqual('winterfell', location.name)
         location_db = LocationSet([location])
         self.assertFalse(
@@ -342,7 +342,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
         )
 
         # archive the location
-        couch_location.archive()
+        location.archive()
         after_archive = datetime.utcnow()
 
         location = SQLLocation.objects.last()

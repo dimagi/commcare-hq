@@ -75,7 +75,6 @@ class StockStateBehaviorTest(StockStateTest):
         )
 
     def test_stock_state_for_archived_locations(self):
-        self.sp.location.save()
         self.report(10, 0)
 
         # make sure that this StockState existed before archive
@@ -85,7 +84,7 @@ class StockStateBehaviorTest(StockStateTest):
             product_id=self.products[0]._id,
         )
 
-        self.sp.location.archive()
+        self.sp.sql_location.archive()
 
         with self.assertRaises(StockState.DoesNotExist):
             StockState.objects.get(
@@ -105,7 +104,6 @@ class StockStateBehaviorTest(StockStateTest):
         )
 
     def test_stock_state_for_deleted_locations(self):
-        self.sp.location.save()
         self.report(10, 0)
 
         # make sure that this StockState existed before delete
