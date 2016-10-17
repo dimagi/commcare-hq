@@ -238,8 +238,8 @@ class CaseAPITest(TestCase):
             case._doc['type'] = None
             case.save()
             self.assertEqual(None, CommCareCase.get(case.case_id).type)
-            res_sanitized = CaseAPIResult(id=case.case_id, couch_doc=case, sanitize=True)
-            res_unsanitized = CaseAPIResult(id=case.case_id, couch_doc=case, sanitize=False)
+            res_sanitized = CaseAPIResult(domain=TEST_DOMAIN, id=case.case_id, couch_doc=case, sanitize=True)
+            res_unsanitized = CaseAPIResult(domain=TEST_DOMAIN, id=case.case_id, couch_doc=case, sanitize=False)
 
             json = res_sanitized.case_json
             self.assertEqual(json['properties']['case_type'], '')
