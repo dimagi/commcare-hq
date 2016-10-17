@@ -1,5 +1,4 @@
 couchdbkit
-phonenumbers
 pycurl
 sorl-thumbnail
 Django==1.5.6
