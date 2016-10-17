@@ -1623,6 +1623,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 pass
         return None
 
+    @memoized
+    def get_sql_location(self, domain):
+        return self.sql_location
+
     def set_location(self, location):
         """
         Set the location, and all important user data, for
