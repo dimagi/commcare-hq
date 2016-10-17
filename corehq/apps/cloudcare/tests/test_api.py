@@ -26,17 +26,32 @@ class CaseAPITest(TestCase):
     case_types = ['t1', 't2']
     user_ids = ['TEST_API1', 'TEST_API2']
 
-    def setUp(self):
-        super(CaseAPITest, self).setUp()
-        create_domain(self.domain)
-        self.password = "****"
+    @classmethod
+    def setUpClass(cls):
+        super(CaseAPITest, cls).setUpClass()
+        create_domain(cls.domain)
+        cls.password = "****"
 
         def create_user(username):
-            return CommCareUser.create(self.domain,
-                                       format_username(username, self.domain),
-                                       self.password)
+            return CommCareUser.create(cls.domain,
+                                       format_username(username, cls.domain),
+                                       cls.password)
 
-        self.users = [create_user(id) for id in self.user_ids]
+        cls.users = [create_user(id) for id in cls.user_ids]
+
+        update_toggle_cache(toggles.CLOUDCARE_CACHE.slug, TEST_DOMAIN, True, toggles.NAMESPACE_DOMAIN)
+
+    @classmethod
+    def tearDownClass(cls):
+        for user in cls.users:
+            django_user = user.get_django_user()
+            django_user.delete()
+            user.delete()
+        clear_toggle_cache(toggles.CLOUDCARE_CACHE.slug, TEST_DOMAIN, toggles.NAMESPACE_DOMAIN)
+        super(CaseAPITest, cls).tearDownClass()
+
+    def setUp(self):
+        super(CaseAPITest, self).setUp()
 
         def create_case_set(user, child_user):
             # for each user we need one open and one closed case of
@@ -54,15 +69,9 @@ class CaseAPITest(TestCase):
 
         self.test_type = self.case_types[0]
         self.test_user_id = self.users[0]._id
-        update_toggle_cache(toggles.CLOUDCARE_CACHE.slug, TEST_DOMAIN, True, toggles.NAMESPACE_DOMAIN)
 
     def tearDown(self):
-        for user in self.users:
-            django_user = user.get_django_user()
-            django_user.delete()
-            user.delete()
         delete_all_cases()
-        clear_toggle_cache(toggles.CLOUDCARE_CACHE.slug, TEST_DOMAIN, toggles.NAMESPACE_DOMAIN)
         super(CaseAPITest, self).tearDown()
 
     def assertListMatches(self, list, function):
