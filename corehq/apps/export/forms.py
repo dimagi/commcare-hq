@@ -9,7 +9,7 @@ from corehq.apps.export.filters import (
     ReceivedOnRangeFilter,
     GroupFormSubmittedByFilter,
     OR, OwnerFilter, LastModifiedByFilter, UserTypeFilter,
-    OwnerTypeFilter, ModifiedOnRangeFilter, FormSubmittedByFilter, LocationsFilter
+    OwnerTypeFilter, ModifiedOnRangeFilter, FormSubmittedByFilter
 )
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.groups.models import Group
@@ -430,9 +430,9 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
     def _get_group_filter(self, mobile_user_and_group_slugs):
         # change here to get group from emw
         # group = self.cleaned_data['group']
-        group = ExpandedMobileWorkerFilter.selected_group_ids(mobile_user_and_group_slugs)
-        if group:
-            return GroupFormSubmittedByFilter(group)
+        group_ids = ExpandedMobileWorkerFilter.selected_group_ids(mobile_user_and_group_slugs)
+        if group_ids:
+            return GroupFormSubmittedByFilter(group_ids)
 
     def _get_user_filter(self, mobile_user_and_group_slugs):
         # group = self.cleaned_data['group']

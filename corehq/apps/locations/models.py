@@ -1,7 +1,7 @@
 import warnings
 from functools import partial
 
-# from bulk_update.helper import bulk_update as bulk_update_helper
+from bulk_update.helper import bulk_update as bulk_update_helper
 
 from couchdbkit import ResourceNotFound
 from dimagi.ext.couchdbkit import *
