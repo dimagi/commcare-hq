@@ -17,7 +17,6 @@ from jsonobject import JsonObject
 from jsonobject import StringProperty
 from jsonobject.properties import BooleanProperty
 from lxml import etree
-from uuidfield import UUIDField
 from corehq.apps.sms.mixin import MessagingCaseContactMixin
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound, BadName
@@ -397,7 +396,7 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
 
 
 class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
-    attachment_id = UUIDField(unique=True, db_index=True)
+    attachment_id = models.UUIDField(unique=True, db_index=True)
     content_type = models.CharField(max_length=255, null=True)
     content_length = models.IntegerField(null=True)
     blob_id = models.CharField(max_length=255, default=None)

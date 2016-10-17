@@ -145,6 +145,7 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.common.BrokenLinkEmailsMiddleware',
     'django_otp.middleware.OTPMiddleware',
@@ -939,7 +940,7 @@ LOGGING = {
             'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
         },
         'couch-request-formatter': {
-            'format': '%(asctime)s [%(username)s:%(domain)s] %(hq_url)s %(method)s %(error_status)s %(path)s %(duration)s'
+            'format': '%(asctime)s [%(username)s:%(domain)s] %(hq_url)s %(method)s %(status_code)s %(content_length)s %(path)s %(duration)s'
         },
         'datadog': {
             'format': '%(metric)s %(created)s %(value)s metric_type=%(metric_type)s %(message)s'

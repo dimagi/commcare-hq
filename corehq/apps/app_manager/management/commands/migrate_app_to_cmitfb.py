@@ -15,6 +15,7 @@ logger.setLevel('DEBUG')
 
 
 class Command(BaseCommand):
+    args = 'app_id_or_domain'
     help = '''
         Migrate apps from case management in the app builder to form builder.
         Pass either a domain name (to migrate all apps in the domain) or an

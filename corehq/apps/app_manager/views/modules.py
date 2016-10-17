@@ -415,7 +415,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     resp = {'update': {}, 'corrections': {}}
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
-        if is_valid_case_type(case_type, module):
+        if not case_type or is_valid_case_type(case_type, module):
             old_case_type = module["case_type"]
             module["case_type"] = case_type
             for cp_mod in (mod for mod in app.modules if isinstance(mod, CareplanModule)):

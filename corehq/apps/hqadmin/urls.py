@@ -1,4 +1,4 @@
-from django.conf.urls import *
+from django.conf.urls import include, patterns, url
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.utils import new_domain_re
 from corehq.apps.hqadmin.views import (

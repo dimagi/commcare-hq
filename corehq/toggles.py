@@ -828,14 +828,6 @@ CUSTOM_APP_BASE_URL = StaticToggle(
 )
 
 
-CASE_LIST_DISTANCE_SORT = StaticToggle(
-    'case_list_distance_sort',
-    'Allow sorting by distance from current location in the case list',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
-
 PROJECT_HEALTH_DASHBOARD = StaticToggle(
     'project_health_dashboard',
     'Shows the project performance dashboard in the reports navigation',
@@ -892,14 +884,6 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
 CUSTOM_CALENDAR_FIXTURE = StaticToggle(
     'custom_calendar_fixture',
     'Send a calendar fixture down to all users (UATBC/eNikshay one off)',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-)
-
-
-NEW_BULK_LOCATION_MANAGEMENT = StaticToggle(
-    'new_bulk_location_management',
-    'Enable advanced features in Bulk Location Upload',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
 )

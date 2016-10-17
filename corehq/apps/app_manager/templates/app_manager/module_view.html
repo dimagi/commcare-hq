@@ -113,7 +113,7 @@
                         return;
                     }
                 {% endif %}
-                if (!valueNoSpaces.match(/^[\w-]+$/g)) {
+                if (!valueNoSpaces.match(/^[\w-]*$/g)) {
                     $(this).closest('.form-group').addClass('has-error');
                     showCaseTypeError(
                         gettext("Case types can only include the characters a-z, 0-9, '-' and '_'")

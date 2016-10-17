@@ -2103,10 +2103,12 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
 
     def validate_for_build(self):
         errors = []
-        if self.requires_case_details():
+        needs_case_detail = self.requires_case_details()
+        needs_case_type = needs_case_detail or len([1 for f in self.get_forms() if f.is_registration_form()])
+        if needs_case_detail or needs_case_type:
             errors.extend(self.get_case_errors(
-                needs_case_type=True,
-                needs_case_detail=True
+                needs_case_type=needs_case_type,
+                needs_case_detail=needs_case_detail
             ))
         if self.case_list_form.form_id:
             try:
@@ -4030,8 +4032,6 @@ class LazyBlobDoc(BlobMixin):
       save save has succeeded, save the attachment in the cache
     """
 
-    migrating_blobs_from_couch = True
-
     def __init__(self, *args, **kwargs):
         super(LazyBlobDoc, self).__init__(*args, **kwargs)
         self._LAZY_ATTACHMENTS = {}
@@ -4577,7 +4577,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @absolute_url_property
     def jar_url(self):
-        return reverse('corehq.apps.app_manager.views.download_jar', args=[self.domain, self._id])
+        return reverse('download_jar', args=[self.domain, self._id])
 
     def get_jar_path(self):
         spec = {
@@ -4753,11 +4753,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @absolute_url_property
     def odk_profile_url(self):
-        return reverse('corehq.apps.app_manager.views.download_odk_profile', args=[self.domain, self._id])
+        return reverse('download_odk_profile', args=[self.domain, self._id])
 
     @absolute_url_property
     def odk_media_profile_url(self):
-        return reverse('corehq.apps.app_manager.views.download_odk_media_profile', args=[self.domain, self._id])
+        return reverse('download_odk_media_profile', args=[self.domain, self._id])
 
     @property
     def odk_profile_display_url(self):

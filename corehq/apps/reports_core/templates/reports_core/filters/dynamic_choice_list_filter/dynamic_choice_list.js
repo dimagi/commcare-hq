@@ -1,10 +1,14 @@
 {% load reports_core_tags %}
+{% load hq_shared_tags %}
 // note: this depends on choice-list-api.js
-var filter_id = "#{{ filter.css_id }}-input";
+var filter_id = "#{{ context_.css_id }}-input",
+    initialValues = _.map({{context_.value|JSON}}, function(value){
+        return choiceListUtils.formatValueForSelect2(value);
+    }),
 // TODO: Ideally the separator would be defined in one place. Right now it is
 //       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
-var separator = "\u001F";
-var initialValues = $(filter_id).val() !== "" ? $(filter_id).val().split(separator) : [];
+    separator = "\u001F";
+
 $(filter_id).select2({
     minimumInputLength: 0,
     multiple: true,
@@ -21,6 +25,4 @@ $(filter_id).select2({
         cache: true
     }
 });
-$(filter_id).select2('data', _.map(initialValues, function(v){
-    return {id: v, text: v};
-}));
+$(filter_id).select2('data', initialValues);

@@ -1,4 +1,4 @@
-from django.conf.urls import *
+from django.conf.urls import patterns, url
 
 from corehq.apps.groups.views import (
     add_group, delete_group, undo_delete_group, restore_group, edit_group,

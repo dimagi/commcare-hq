@@ -3,7 +3,7 @@ cython==0.23.4
 restkit==4.2.2
 iso8601==0.1.10
 jsonobject==0.7.1
-jsonobject-couchdbkit==0.7.4.1
+jsonobject-couchdbkit==0.8.0.1
 celery==3.1.18
 # required by django-digest
 decorator==4.0.4
@@ -64,10 +64,10 @@ twilio==3.6.4
 django-countries==3.3
 reportlab==3.0
 stripe==1.12.2
-django-compressor==1.6
+django-compressor==2.1
 django-angular==0.7.16
 Pycco==0.3.0
-django-mptt==0.7.4
+django-mptt==0.8.6
 jsonpath-rw==1.4.0
 pip>=6.1.1
 git+git://github.com/smartfile/django-transfer.git@6e0dc94c3341c358fca8eb2bf74e23aee3983ec4
@@ -78,7 +78,6 @@ django-two-factor-auth==1.2.2
 datadog==0.10.0
 django-websocket-redis==0.4.6
 django-redis-sessions==0.5.0
-django-uuidfield==0.5.0
 SQLAlchemy==1.0.14
 alembic==0.8.6
 git+git://github.com/dimagi/pyzxcvbn.git#egg=pyzxcvbn
