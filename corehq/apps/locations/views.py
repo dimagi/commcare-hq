@@ -33,7 +33,6 @@ from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.forms import MultipleSelectionForm
-from corehq.toggles import NEW_BULK_LOCATION_MANAGEMENT
 from corehq.apps.locations.permissions import location_safe
 from corehq.util import reverse
 from dimagi.utils.couch import release_lock
@@ -803,8 +802,7 @@ class LocationImportView(BaseLocationView):
 @locations_access_required
 def location_importer_job_poll(request, domain, download_id,
                                template="style/partials/download_status.html"):
-    if NEW_BULK_LOCATION_MANAGEMENT.enabled(domain):
-        template = "locations/manage/partials/locations_upload_status.html"
+    template = "locations/manage/partials/locations_upload_status.html"
     try:
         context = get_download_context(download_id, check_state=True)
     except TaskFailedError:
@@ -825,11 +823,9 @@ def location_export(request, domain):
                                   "you can do a bulk import or export."))
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
     include_consumption = request.GET.get('include_consumption') == 'true'
-    include_ids = request.GET.get('include_ids') == 'true'
     response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
     response['Content-Disposition'] = 'attachment; filename="locations.xlsx"'
-    dump_locations(response, domain, include_consumption=include_consumption,
-                   include_ids=include_ids)
+    dump_locations(response, domain, include_consumption=include_consumption)
     return response
 
 
