@@ -181,9 +181,7 @@ class CaseAPIHelper(object):
             CASE_STATUS_ALL: None,
         }[self.status]
 
-        ids = get_case_ids_in_domain_by_owner(
-            self.domain, owner_id__in=owner_ids, closed=closed)
-
+        ids = self.case_accessors.get_case_ids_by_owners(owner_ids, closed=closed)
         return self._case_results(ids)
 
 

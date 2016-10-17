@@ -150,16 +150,19 @@ class CaseAPITest(TestCase):
         self.assertEqual(self.expectedByType, len(list))
         self.assertListMatches(list, lambda c: c['properties']['case_type'] == self.test_type)
 
+    @run_with_all_backends
     def testGetOwnedOpen(self):
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_OPEN, footprint=False)
         self.assertEqual(self.expectedOpenByUser, len(list))
         self.assertListMatches(list, lambda c: not c['closed'] and c['user_id'] == self.test_user_id)
 
+    @run_with_all_backends
     def testGetOwnedClosed(self):
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_CLOSED, footprint=False)
         self.assertEqual(self.expectedClosedByUser, len(list))
         self.assertListMatches(list, lambda c: c['closed'] and c['user_id'] == self.test_user_id)
 
+    @run_with_all_backends
     def testGetOwnedBoth(self):
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_ALL, footprint=False)
         self.assertEqual(self.expectedByUser, len(list))
