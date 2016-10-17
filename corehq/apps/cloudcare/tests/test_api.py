@@ -208,18 +208,21 @@ class CaseAPITest(TestCase):
         self.assertListMatches(list, lambda c: 'xform_ids' not in c._couch_doc)
         self.assertListMatches(list, lambda c: isinstance(c.to_json(), basestring))
 
+    @run_with_all_backends
     def testFiltersOnAll(self):
         list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL,
                                   filters={"properties/case_name": _type_to_name(self.test_type)})
         self.assertEqual(self.expectedByType, len(list))
         self.assertListMatches(list, lambda c: c['properties']['case_name'] == _type_to_name(self.test_type))
 
+    @run_with_all_backends
     def testFiltersOnOwned(self):
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_ALL,
                                   filters={"properties/case_name": _type_to_name(self.test_type)})
         self.assertEqual(2, len(list))
         self.assertListMatches(list, lambda c: c['properties']['case_name'] == _type_to_name(self.test_type))
 
+    @run_with_all_backends
     def testFiltersWithoutFootprint(self):
         name = _type_to_name(_child_case_type(self.test_type))
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_ALL,

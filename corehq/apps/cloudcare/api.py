@@ -200,7 +200,6 @@ def get_filtered_cases(domain, status, user_id=None, case_type=None,
     filters = dict((k, v) for k, v in (filters or {}).items() if v is not None)
     if should_use_sql_backend(domain):
         assert not footprint, "'footprint' not supported for SQL domains"
-        assert not filters, "'filters' not supported for SQL domains"
     helper = CaseAPIHelper(domain, status, case_type=case_type, ids_only=ids_only,
                            footprint=footprint, strip_history=strip_history,
                            filters=filters)
