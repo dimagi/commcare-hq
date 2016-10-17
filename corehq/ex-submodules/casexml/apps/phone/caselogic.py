@@ -3,7 +3,6 @@ import logging
 from casexml.apps.case.dbaccessors import get_reverse_indices_json
 from casexml.apps.case.models import CommCareCase
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.utils.general import should_use_sql_backend
 
 
 def get_related_cases(initial_cases, domain, strip_history=False, search_up=True):
@@ -13,7 +12,6 @@ def get_related_cases(initial_cases, domain, strip_history=False, search_up=True
     If search_up is True, all cases and their parent cases are returned.
     If search_up is False, all cases and their child cases are returned.
     """
-    assert not should_use_sql_backend(domain), "get_related_cases not supported for SQL domain"
     if not initial_cases:
         return {}
 
