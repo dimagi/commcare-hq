@@ -102,7 +102,7 @@ class LocationsTest(CommTrackTest):
 
         original_count = len(list(Location.by_domain(self.domain.name)))
 
-        loc = self.user.location
+        loc = self.user.sql_location
         loc.full_delete()
 
         # it should also delete children
@@ -122,7 +122,7 @@ class LocationsTest(CommTrackTest):
 
     @run_with_all_backends
     def test_delete_closes_sp_cases(self):
-        loc = make_loc('test_loc')
+        loc = make_loc('test_loc').sql_location
         sp = loc.linked_supply_point()
 
         self.assertFalse(sp.closed)

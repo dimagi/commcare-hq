@@ -498,6 +498,17 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         for loc in self.get_descendants(include_self=True):
             loc._unarchive_single_location()
 
+    def full_delete(self):
+        """
+        Delete a location and its dependants.
+        This also unassigns users assigned to the location.
+        """
+        to_delete = self.get_descendants(include_self=True).couch_locations()
+        # if there are errors deleting couch locations, roll back sql delete
+        with transaction.atomic():
+            self.sql_full_delete()
+            Location.get_db().bulk_delete(to_delete)
+
     def sql_full_delete(self):
         """
         SQL ONLY FULL DELETE
@@ -790,17 +801,6 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
             )
         except LocationType.DoesNotExist:
             raise LocationType.DoesNotExist(msg)
-
-    def full_delete(self):
-        """
-        Delete a location and its dependants.
-        This also unassigns users assigned to the location.
-        """
-        to_delete = [self] + self.descendants
-        # if there are errors deleting couch locations, roll back sql delete
-        with transaction.atomic():
-            self.sql_location.sql_full_delete()
-            Location.get_db().bulk_delete(to_delete)
 
     @classmethod
     def _migration_get_fields(cls):

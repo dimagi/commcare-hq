@@ -113,7 +113,7 @@ class StockStateBehaviorTest(StockStateTest):
             product_id=self.products[0]._id,
         )
 
-        self.sp.location.full_delete()
+        self.sp.sql_location.full_delete()
 
         with self.assertRaises(StockState.DoesNotExist):
             StockState.objects.get(

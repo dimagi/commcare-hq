@@ -468,16 +468,15 @@ def archive_location(request, domain, loc_id):
 @location_safe
 def delete_location(request, domain, loc_id):
     try:
-        loc = Location.get(loc_id)
-        if loc.domain != domain:
-            raise Http404()
+        loc = SQLLocation.objects.get(domain=domain, location_id=loc_id)
+    except SQLLocation.DoesNotExist:
+        raise Http404()
+    try:
         loc.full_delete()
     except (ResourceNotFound, BulkSaveError):
         # Sometimes the couch and sql locations go out of sync and we can end up
         # in a state where the couch doc is deleted and the sql doc still exists.
-        loc = SQLLocation.objects.prefetch_related(
-            'location_type').get(location_id=loc_id)
-        # delete the sql location anyway
+        # delete the sql locations anyway
         loc.sql_full_delete()
         logger.error(
             'Location with ID [{}] in domain [{}] was missing its couch doc '
