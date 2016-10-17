@@ -5,8 +5,9 @@ from django.test import TestCase
 from django.core.urlresolvers import reverse
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 from corehq import toggles
 from corehq.apps.domain.shortcuts import create_domain
@@ -62,7 +63,7 @@ class CaseAPITest(TestCase):
                 # child
                 _create_case(child_user,
                              _child_case_type(type), close=False,
-                             index={'parent': ('parent-case', c1._id)})
+                             index={'parent': ('parent-case', c1.case_id)})
 
         for i, user in enumerate(self.users):
             create_case_set(user, self.users[(i + 1) % len(self.users)])
@@ -71,7 +72,7 @@ class CaseAPITest(TestCase):
         self.test_user_id = self.users[0]._id
 
     def tearDown(self):
-        delete_all_cases()
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(TEST_DOMAIN)
         super(CaseAPITest, self).tearDown()
 
     def assertListMatches(self, list, function):
@@ -232,9 +233,9 @@ class CaseAPITest(TestCase):
             # because of how setattr is overridden you have to set it to None in this wacky way
             case._doc['type'] = None
             case.save()
-            self.assertEqual(None, CommCareCase.get(case._id).type)
-            res_sanitized = CaseAPIResult(id=case._id, couch_doc=case, sanitize=True)
-            res_unsanitized = CaseAPIResult(id=case._id, couch_doc=case, sanitize=False)
+            self.assertEqual(None, CommCareCase.get(case.case_id).type)
+            res_sanitized = CaseAPIResult(id=case.case_id, couch_doc=case, sanitize=True)
+            res_unsanitized = CaseAPIResult(id=case.case_id, couch_doc=case, sanitize=False)
 
             json = res_sanitized.case_json
             self.assertEqual(json['properties']['case_type'], '')
@@ -320,6 +321,6 @@ def _create_case(user, type, close=False, **extras):
             close=True,
         ).as_xml())
     post_case_blocks(blocks, {'domain': TEST_DOMAIN})
-    case = CommCareCase.get(case_id)
+    case = CaseAccessors(TEST_DOMAIN).get_case(case_id)
     assert case.closed == close
     return case
