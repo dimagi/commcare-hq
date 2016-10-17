@@ -8,6 +8,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import post_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.utils.general import should_use_sql_backend
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 from corehq import toggles
 from corehq.apps.domain.shortcuts import create_domain
@@ -190,14 +191,16 @@ class CaseAPITest(TestCase):
         list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL, footprint=True,
                                   ids_only=True)
         self.assertEqual(self.expectedAll, len(list))
-        self.assertListMatches(list, lambda c: isinstance(c._couch_doc, dict))
+        if should_use_sql_backend(TEST_DOMAIN):
+            self.assertListMatches(list, lambda c: isinstance(c._couch_doc, dict))
         self.assertListMatches(list, lambda c: isinstance(c.to_json(), basestring))
 
     def testGetAllIdsOnlyStripHistory(self):
         list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL, footprint=True,
                                   ids_only=True, strip_history=True)
         self.assertEqual(self.expectedAll, len(list))
-        self.assertListMatches(list, lambda c: isinstance(c._couch_doc, dict))
+        if should_use_sql_backend(TEST_DOMAIN):
+            self.assertListMatches(list, lambda c: isinstance(c._couch_doc, dict))
         self.assertListMatches(list, lambda c: 'actions' not in c._couch_doc)
         self.assertListMatches(list, lambda c: 'xform_ids' not in c._couch_doc)
         self.assertListMatches(list, lambda c: isinstance(c.to_json(), basestring))

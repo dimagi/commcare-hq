@@ -13,6 +13,7 @@ from casexml.apps.case.models import CommCareCase, CASE_STATUS_ALL, CASE_STATUS_
 from casexml.apps.case.util import iter_cases
 from casexml.apps.phone.caselogic import get_footprint
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.parsing import json_format_date
 from touchforms.formplayer.models import EntrySession
@@ -128,8 +129,12 @@ class CaseAPIHelper(object):
         if not self.ids_only or self.filters or self.footprint:
             # optimization hack - we know we'll need the full cases eventually
             # so just grab them now.
-            base_results = [CaseAPIResult(domain=self.domain, couch_doc=case, id_only=self.ids_only)
-                            for case in iter_cases(case_id_list, self.strip_history, self.wrap)]
+            if should_use_sql_backend(self.domain):
+                base_results = [CaseAPIResult(domain=self.domain, couch_doc=case, id_only=self.ids_only)
+                                for case in self.case_accessors.iter_cases(case_id_list)]
+            else:
+                base_results = [CaseAPIResult(domain=self.domain, couch_doc=case, id_only=self.ids_only)
+                                for case in iter_cases(case_id_list, self.strip_history, self.wrap)]
         else:
             base_results = [CaseAPIResult(domain=self.domain, id=id, id_only=True) for id in case_id_list]
 
@@ -152,9 +157,9 @@ class CaseAPIHelper(object):
     def get_all(self):
         status = self.status or CASE_STATUS_ALL
         if status == CASE_STATUS_ALL:
-            case_ids = get_case_ids_in_domain(self.domain, type=self.case_type)
+            case_ids = self.case_accessors.get_case_ids_in_domain(self.case_type)
         elif status == CASE_STATUS_OPEN:
-            case_ids = get_open_case_ids_in_domain(self.domain, type=self.case_type)
+            case_ids = self.case_accessors.get_open_case_ids_in_domain_by_type(self.case_type)
         else:
             raise ValueError("Invalid value for 'status': '%s'" % status)
 
