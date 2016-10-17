@@ -7,7 +7,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import post_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 from corehq import toggles
 from corehq.apps.domain.shortcuts import create_domain
@@ -126,20 +126,24 @@ class CaseAPITest(TestCase):
     def expectedAll(self):
         return len(self.user_ids) * len(self.case_types) * 3
 
+    @run_with_all_backends
     def testGetAllOpen(self):
         list = get_filtered_cases(self.domain, status=CASE_STATUS_OPEN)
         self.assertEqual(self.expectedOpen, len(list))
         self.assertListMatches(list, lambda c: not c['closed'])
 
+    @run_with_all_backends
     def testGetAllWithClosed(self):
         list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL)
         self.assertEqual(self.expectedOpen + self.expectedClosed, len(list))
 
+    @run_with_all_backends
     def testGetAllOpenWithType(self):
         list = get_filtered_cases(self.domain, status=CASE_STATUS_OPEN, case_type=self.test_type)
         self.assertEqual(self.expectedOpenByType, len(list))
         self.assertListMatches(list, lambda c: not c['closed'] and c['properties']['case_type'] == self.test_type)
 
+    @run_with_all_backends
     def testGetAllWithClosedAndType(self):
         list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL, case_type=self.test_type)
         self.assertEqual(self.expectedByType, len(list))
