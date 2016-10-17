@@ -5,8 +5,9 @@ from django.test import TestCase
 from django.core.urlresolvers import reverse
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 from corehq import toggles
 from corehq.apps.domain.shortcuts import create_domain
@@ -26,17 +27,32 @@ class CaseAPITest(TestCase):
     case_types = ['t1', 't2']
     user_ids = ['TEST_API1', 'TEST_API2']
 
-    def setUp(self):
-        super(CaseAPITest, self).setUp()
-        create_domain(self.domain)
-        self.password = "****"
+    @classmethod
+    def setUpClass(cls):
+        super(CaseAPITest, cls).setUpClass()
+        create_domain(cls.domain)
+        cls.password = "****"
 
         def create_user(username):
-            return CommCareUser.create(self.domain,
-                                       format_username(username, self.domain),
-                                       self.password)
+            return CommCareUser.create(cls.domain,
+                                       format_username(username, cls.domain),
+                                       cls.password)
 
-        self.users = [create_user(id) for id in self.user_ids]
+        cls.users = [create_user(id) for id in cls.user_ids]
+
+        update_toggle_cache(toggles.CLOUDCARE_CACHE.slug, TEST_DOMAIN, True, toggles.NAMESPACE_DOMAIN)
+
+    @classmethod
+    def tearDownClass(cls):
+        for user in cls.users:
+            django_user = user.get_django_user()
+            django_user.delete()
+            user.delete()
+        clear_toggle_cache(toggles.CLOUDCARE_CACHE.slug, TEST_DOMAIN, toggles.NAMESPACE_DOMAIN)
+        super(CaseAPITest, cls).tearDownClass()
+
+    def setUp(self):
+        super(CaseAPITest, self).setUp()
 
         def create_case_set(user, child_user):
             # for each user we need one open and one closed case of
@@ -47,22 +63,16 @@ class CaseAPITest(TestCase):
                 # child
                 _create_case(child_user,
                              _child_case_type(type), close=False,
-                             index={'parent': ('parent-case', c1._id)})
+                             index={'parent': ('parent-case', c1.case_id)})
 
         for i, user in enumerate(self.users):
             create_case_set(user, self.users[(i + 1) % len(self.users)])
 
         self.test_type = self.case_types[0]
         self.test_user_id = self.users[0]._id
-        update_toggle_cache(toggles.CLOUDCARE_CACHE.slug, TEST_DOMAIN, True, toggles.NAMESPACE_DOMAIN)
 
     def tearDown(self):
-        for user in self.users:
-            django_user = user.get_django_user()
-            django_user.delete()
-            user.delete()
-        delete_all_cases()
-        clear_toggle_cache(toggles.CLOUDCARE_CACHE.slug, TEST_DOMAIN, toggles.NAMESPACE_DOMAIN)
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(TEST_DOMAIN)
         super(CaseAPITest, self).tearDown()
 
     def assertListMatches(self, list, function):
@@ -116,35 +126,42 @@ class CaseAPITest(TestCase):
     def expectedAll(self):
         return len(self.user_ids) * len(self.case_types) * 3
 
+    @run_with_all_backends
     def testGetAllOpen(self):
         list = get_filtered_cases(self.domain, status=CASE_STATUS_OPEN)
         self.assertEqual(self.expectedOpen, len(list))
         self.assertListMatches(list, lambda c: not c['closed'])
 
+    @run_with_all_backends
     def testGetAllWithClosed(self):
         list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL)
         self.assertEqual(self.expectedOpen + self.expectedClosed, len(list))
 
+    @run_with_all_backends
     def testGetAllOpenWithType(self):
         list = get_filtered_cases(self.domain, status=CASE_STATUS_OPEN, case_type=self.test_type)
         self.assertEqual(self.expectedOpenByType, len(list))
         self.assertListMatches(list, lambda c: not c['closed'] and c['properties']['case_type'] == self.test_type)
 
+    @run_with_all_backends
     def testGetAllWithClosedAndType(self):
         list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL, case_type=self.test_type)
         self.assertEqual(self.expectedByType, len(list))
         self.assertListMatches(list, lambda c: c['properties']['case_type'] == self.test_type)
 
+    @run_with_all_backends
     def testGetOwnedOpen(self):
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_OPEN, footprint=False)
         self.assertEqual(self.expectedOpenByUser, len(list))
         self.assertListMatches(list, lambda c: not c['closed'] and c['user_id'] == self.test_user_id)
 
+    @run_with_all_backends
     def testGetOwnedClosed(self):
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_CLOSED, footprint=False)
         self.assertEqual(self.expectedClosedByUser, len(list))
         self.assertListMatches(list, lambda c: c['closed'] and c['user_id'] == self.test_user_id)
 
+    @run_with_all_backends
     def testGetOwnedBoth(self):
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_ALL, footprint=False)
         self.assertEqual(self.expectedByUser, len(list))
@@ -188,18 +205,21 @@ class CaseAPITest(TestCase):
         self.assertListMatches(list, lambda c: 'xform_ids' not in c._couch_doc)
         self.assertListMatches(list, lambda c: isinstance(c.to_json(), basestring))
 
+    @run_with_all_backends
     def testFiltersOnAll(self):
         list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL,
                                   filters={"properties/case_name": _type_to_name(self.test_type)})
         self.assertEqual(self.expectedByType, len(list))
         self.assertListMatches(list, lambda c: c['properties']['case_name'] == _type_to_name(self.test_type))
 
+    @run_with_all_backends
     def testFiltersOnOwned(self):
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_ALL,
                                   filters={"properties/case_name": _type_to_name(self.test_type)})
         self.assertEqual(2, len(list))
         self.assertListMatches(list, lambda c: c['properties']['case_name'] == _type_to_name(self.test_type))
 
+    @run_with_all_backends
     def testFiltersWithoutFootprint(self):
         name = _type_to_name(_child_case_type(self.test_type))
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_ALL,
@@ -218,22 +238,20 @@ class CaseAPITest(TestCase):
         self.assertEqual(self.expectedOpenByUserWithFootprint + self.expectedClosedByUserWithFootprint, len(list))
 
     def testCaseAPIResultJSON(self):
-        try:
-            case = CommCareCase()
-            # because of how setattr is overridden you have to set it to None in this wacky way
-            case._doc['type'] = None
-            case.save()
-            self.assertEqual(None, CommCareCase.get(case._id).type)
-            res_sanitized = CaseAPIResult(id=case._id, couch_doc=case, sanitize=True)
-            res_unsanitized = CaseAPIResult(id=case._id, couch_doc=case, sanitize=False)
+        case = CommCareCase()
+        # because of how setattr is overridden you have to set it to None in this wacky way
+        case._doc['type'] = None
+        case.save()
+        self.addCleanup(case.delete)
+        self.assertEqual(None, CommCareCase.get(case.case_id).type)
+        res_sanitized = CaseAPIResult(domain=TEST_DOMAIN, id=case.case_id, couch_doc=case, sanitize=True)
+        res_unsanitized = CaseAPIResult(domain=TEST_DOMAIN, id=case.case_id, couch_doc=case, sanitize=False)
 
-            json = res_sanitized.case_json
-            self.assertEqual(json['properties']['case_type'], '')
+        json = res_sanitized.case_json
+        self.assertEqual(json['properties']['case_type'], '')
 
-            json = res_unsanitized.case_json
-            self.assertEqual(json['properties']['case_type'], None)
-        finally:
-            case.delete()
+        json = res_unsanitized.case_json
+        self.assertEqual(json['properties']['case_type'], None)
 
     def testGetCasesCaching(self):
         user = self.users[0]
@@ -311,6 +329,6 @@ def _create_case(user, type, close=False, **extras):
             close=True,
         ).as_xml())
     post_case_blocks(blocks, {'domain': TEST_DOMAIN})
-    case = CommCareCase.get(case_id)
+    case = CaseAccessors(TEST_DOMAIN).get_case(case_id)
     assert case.closed == close
     return case
