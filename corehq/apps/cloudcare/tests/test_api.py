@@ -167,16 +167,19 @@ class CaseAPITest(TestCase):
         self.assertEqual(self.expectedByUser, len(list))
         self.assertListMatches(list, lambda c: c['user_id'] == self.test_user_id)
 
+    @run_with_all_backends
     def testGetOwnedOpenWithFootprint(self):
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_OPEN, footprint=True)
         self.assertEqual(self.expectedOpenByUserWithFootprint, len(list))
         self.assertListMatches(list, lambda c: not c['closed'] or c['user_id'] != self.test_user_id)
 
+    @run_with_all_backends
     def testGetOwnedClosedWithFootprint(self):
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_CLOSED, footprint=True)
         self.assertEqual(self.expectedClosedByUserWithFootprint, len(list))
         self.assertListMatches(list, lambda c: c['closed'] or c['user_id'] != self.test_user_id)
 
+    @run_with_all_backends
     def testGetOwnedBothWithFootprint(self):
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_ALL, footprint=True)
         self.assertEqual(self.expectedOpenByUserWithFootprint + self.expectedClosedByUserWithFootprint, len(list))
@@ -228,6 +231,7 @@ class CaseAPITest(TestCase):
         self.assertEqual(1, len(list))
         self.assertListMatches(list, lambda c: c['properties']['case_name'] == name)
 
+    @run_with_all_backends
     def testFiltersWithFootprint(self):
         name = _type_to_name(_child_case_type(self.test_type))
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_ALL,

@@ -2,7 +2,10 @@ import itertools
 import logging
 from casexml.apps.case.dbaccessors import get_reverse_indices_json
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.phone.cleanliness import get_dependent_case_info
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.utils.general import should_use_sql_backend
 
 
@@ -13,7 +16,7 @@ def get_related_cases(initial_cases, domain, strip_history=False, search_up=True
     If search_up is True, all cases and their parent cases are returned.
     If search_up is False, all cases and their child cases are returned.
     """
-    assert not should_use_sql_backend(domain), "get_related_cases not supported for SQL domain"
+    assert not should_use_sql_backend(domain), "get_related_cases should not be called by sql domain"
     if not initial_cases:
         return {}
 
@@ -68,4 +71,13 @@ def get_related_cases(initial_cases, domain, strip_history=False, search_up=True
 
 
 def get_footprint(initial_case_list, domain, strip_history=False):
-    return get_related_cases(initial_case_list, domain, strip_history=strip_history, search_up=True)
+    if should_use_sql_backend(domain):
+        open_case_ids = {case.case_id for case in initial_case_list}
+        dependent_cases = get_dependent_case_info(domain, open_case_ids)
+        case_ids = open_case_ids.union(dependent_cases.all_ids)
+        wrap = isinstance(next(iter(initial_case_list)), CommCareCaseSQL)
+        if not wrap:
+            return list(case_ids)
+        return CaseAccessors(domain).get_cases(list(case_ids))
+
+    return get_related_cases(initial_case_list, domain, strip_history=strip_history, search_up=True).values()
