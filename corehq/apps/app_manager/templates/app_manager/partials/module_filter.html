@@ -1,9 +1,10 @@
 {% load hq_shared_tags %}
 {% load i18n %}
-{% if request|feature_preview_enabled:"MODULE_FILTER" %}
+<!-- for prototype, ignore the preview because if module filtering isn't on, the Advanced section shows up blank, which is annoying to work around -->
+{% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" or request|feature_preview_enabled:"MODULE_FILTER" %}
 <div class="form-group" id="module-filter">
     <label class="col-sm-2 control-label">
-        {% trans "Module Filter" %}
+        {% trans "Filter" %}
     </label>
     <div class="col-sm-4 commcare-feature" data-since-version="2.20">
         <textarea
@@ -16,9 +17,9 @@
                 errorHtml: $('#module-filter-xpath-error-html').html()
             }"></textarea>
         <script type="text/html" id="module-filter-xpath-error-html">
-            There is something wrong with the logic in the Module Filter.
+            There is something wrong with the logic in the filter.
             Check to make sure your parentheses match.
-            Read more about Module Filters <a href="https://confluence.dimagi.com/display/commcarepublic/Module+Filtering">here</a>.
+            Read more about filters <a href="https://confluence.dimagi.com/display/commcarepublic/Module+Filtering">here</a>.
         </script>
     </div>
 </div>

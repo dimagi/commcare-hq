@@ -1,0 +1,18 @@
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div class="form-group">
+    <label class="col-sm-2 control-label">
+        {% trans "Case Type" %}
+        <span class="hq-help-template"
+              data-title="{% trans "Case Type" %}"
+
+              data-content="{% trans "The name for the type of case you are tracking (e.g. &quot;pregnancy&quot;, &quot;farm&quot;, &quot;household&quot;, etc.). All cases you register in this case list will be this type of case, and only cases of this type will show in the case list. Other case lists with the same case type will use the same set of cases." %}"
+                ></span>
+    </label>
+    <div class="col-sm-4">
+        <input class="code form-control" type="text" id="case_type" name="case_type" value="{{ module.case_type }}" />
+        <span class="help-block" id="case_type_error" style="display: none;"></span>
+    </div>
+</div>

@@ -56,6 +56,9 @@
         </a>
         </legend>
         <div class="collapse" data-bind="attr: {id: id}, css: {'in': !reallyCollapse()}" id="form-settings-advanced" style="overflow: hidden;">
+            {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+                {% include 'app_manager/partials/case_list_form_setting.html' %}
+            {% endif %}
             <div class="form-group" data-bind="
                 visible: visible,
                 css: {error: hasError()}">

@@ -46,9 +46,11 @@
             fetchLimit: {{ fetchLimit }},
         };
         var el = $('#releases-table');
-        var releasesMain = new ReleasesMain(o);
-        _.defer(function(){ releasesMain.getMoreSavedApps(false); });
-        el.koApplyBindings(releasesMain);
+        if (el.length) {
+            var releasesMain = new ReleasesMain(o);
+            _.defer(function(){ releasesMain.getMoreSavedApps(false); });
+            el.koApplyBindings(releasesMain);
+        }
 
         var app_langs = {{ app.langs|JSON }};
         var app_profiles = {{ app.build_profiles|JSON }}
@@ -59,7 +61,7 @@
         {% endif %}
     });
 
-    analytics.workflow('Visited the Release Manager');
+    //analytics.workflow('Visited the Release Manager');
 </script>
 <script>
     $(function () {
@@ -67,7 +69,11 @@
     });
 </script>
 
-{% if build_profile_access %}
+{% if intro_only %}
+    Intro content goes here. Why don't you click on <b>New</b> on the left?
+{% else %}
+
+{% if intro_only and build_profile_access %}
 <div class="tabbable">
     <ul class="nav nav-tabs">
         <li class="active"><a href="#versions-tab" data-toggle="tab">{% trans "Versions" %}</a></li>
@@ -337,6 +343,7 @@
         </div>
      </div>
 </div>
+{% endif %}
 {% endif %}
 
 <!-- Async Download Modals -->
