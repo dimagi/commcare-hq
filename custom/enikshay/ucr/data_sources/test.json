@@ -1,0 +1,1157 @@
+{
+    "domains": [
+        "enikshay-test",
+        "enikshay-test-test"
+    ],
+    "config": {
+        "referenced_doc_type": "CommCareCase",
+        "engine_id": "ucr",
+        "description": "",
+        "base_item_expression": {
+        },
+        "table_id": "test",
+        "display_name": "test",
+        "configured_filter": {
+            "operator": "eq",
+            "expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "type"
+            },
+            "type": "boolean_expression",
+            "property_value": "test"
+        },
+        "configured_indicators": [
+            {
+                "type": "expression",
+                "datatype": "date",
+                "column_id": "opened_on",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "opened_on"
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "person_owner_id",
+                "expression": {
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "owner_id"
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "lab_serial_number",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "test_update_form"
+                    },
+                    "value_expression": {
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "microscopy",
+                            "ql_microscopy",
+                            "lab_serial_number"
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "lab_serial_number",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "test_update_form"
+                    },
+                    "value_expression": {
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "microscopy",
+                            "ql_microscopy",
+                            "lab_serial_number"
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "sample_receipt_date",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "sample_receipt_form"
+                    },
+                    "value_expression": {
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "sample_receipt_date"
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "person_name",
+                "expression": {
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "name"
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "person_sex",
+                "expression": {
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "sex"
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "person_age",
+                "expression": {
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "age"
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "person_current_address",
+                "expression": {
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "current_address"
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "person_phone_number",
+                "expression": {
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "phone_number"
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "referring_facility_name",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "referring_facility_name"
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "purpose_of_testing",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "purpose_of_testing"
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "key_populations",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "person_registration_form"
+                    },
+                    "value_expression": {
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "ql_useful_information",
+                            "key_populations"
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "nikshay_id",
+                "expression": {
+                    "type": "nested",
+                    "related_doc_type": "CommCareCase",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "episode_case"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "nikshay_id"
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "history_month_att",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "episode_case"
+                            },
+                            "value_expression": {
+                                "type": "property_name",
+                                "property_name": "cat1_cat2"
+                            }
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "cat1"
+                    },
+                    "expression_if_true": {
+                        "type": "constant",
+                        "constant": "no"
+                    },
+                    "expression_if_false": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "episode_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "cat1_cat2"
+                                }
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "cat2"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": "yes"
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": ""
+                        }
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "sample_a_visual_appearance",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "test_update_form"
+                    },
+                    "value_expression": {
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "microscopy",
+                            "ql_sample_a",
+                            "sample_a_visual_appearance"
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "sample_a_result",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "test_update_form"
+                    },
+                    "value_expression": {
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "microscopy",
+                            "ql_sample_a",
+                            "sample_a_result"
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "sample_b_visual_appearance",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "test_update_form"
+                    },
+                    "value_expression": {
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "microscopy",
+                            "ql_sample_b",
+                            "sample_b_visual_appearance"
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "sample_b_result",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "test_update_form"
+                    },
+                    "value_expression": {
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "microscopy",
+                            "ql_sample_b",
+                            "sample_b_result"
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "hiv_status",
+                "expression": {
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "hiv_status"
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "diabetes_status",
+                "expression": {
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "diabetes_status"
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "date",
+                "column_id": "date_reported",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "date_reported"
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "predominant_system",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "complete_treatment_form"
+                    },
+                    "value_expression": {
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "ql_treatment_admin_details",
+                            "predominant_symptom"
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "predominant_system_duration",
+                "expression": {
+                    "type": "diff_days",
+                    "from_date_expression": {
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "named",
+                            "name": "complete_treatment_form"
+                        },
+                        "value_expression": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "ql_patient_details",
+                                "date_first_symptom"
+                            ]
+                        }
+                    },
+                    "to_date_expression": {
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "named",
+                            "name": "complete_treatment_form"
+                        },
+                        "value_expression": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "registration_date"
+                            ]
+                        }
+                    }
+                }
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "suspect"
+                        },
+                        {
+                            "type": "named",
+                            "name": "test_reason_suspect"
+                        },
+                        {
+                            "type": "named",
+                            "name": "microscopy"
+                        },
+                        {
+                            "type": "named",
+                            "name": "diagnostic"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "suspect_examined_for_diagnosis"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "suspect"
+                        },
+                        {
+                            "type": "named",
+                            "name": "test_reason_suspect"
+                        },
+                        {
+                            "type": "named",
+                            "name": "microscopy"
+                        },
+                        {
+                            "type": "named",
+                            "name": "diagnostic"
+                        },
+                        {
+                            "type": "named",
+                            "name": "positive"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "suspect_examined_for_diagnosis_positive"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "suspect"
+                        },
+                        {
+                            "type": "named",
+                            "name": "repeat_exam_for_diagnosis"
+                        },
+                        {
+                            "type": "named",
+                            "name": "microscopy"
+                        },
+                        {
+                            "type": "named",
+                            "name": "diagnostic"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "suspect_repeat_for_diagnosis"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "suspect"
+                        },
+                        {
+                            "type": "named",
+                            "name": "repeat_exam_for_diagnosis"
+                        },
+                        {
+                            "type": "named",
+                            "name": "microscopy"
+                        },
+                        {
+                            "type": "named",
+                            "name": "diagnostic"
+                        },
+                        {
+                            "type": "named",
+                            "name": "positive"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "suspect_repeat_for_diagnosis_positive"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "microscopy"
+                        },
+                        {
+                            "type": "named",
+                            "name": "follow_up"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "patient_follow_up"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "microscopy"
+                        },
+                        {
+                            "type": "named",
+                            "name": "follow_up"
+                        },
+                        {
+                            "type": "named",
+                            "name": "positive"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "patient_follow_up_positive"
+            },
+            {
+                "type": "expression",
+                "datatype": "integer",
+                "column_id": "total_slides",
+                "expression": {
+                    "type": "evaluator",
+                    "statement": "(1 if str(a) != 'None' and str(a) != '' else 0) + (1 if str(b) != 'None' and str(b) != '' else 0)",
+                    "context_variables": {
+                        "a": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_update_form"
+                            },
+                            "value_expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "microscopy",
+                                    "ql_sample_a",
+                                    "sample_a_result_value"
+                                ],
+                                "datatype": "integer"
+                            }
+                        },
+                        "b": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_update_form"
+                            },
+                            "value_expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "microscopy",
+                                    "ql_sample_b",
+                                    "sample_b_result_value"
+                                ],
+                                "datatype": "integer"
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "integer",
+                "column_id": "positive_slides",
+                "expression": {
+                    "type": "evaluator",
+                    "statement": "(1 if a >= 0 else 0) + (1 if b >= 0 else 0)",
+                    "context_variables": {
+                        "a": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_update_form"
+                            },
+                            "value_expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "microscopy",
+                                    "ql_sample_a",
+                                    "sample_a_result_value"
+                                ],
+                                "datatype": "integer"
+                            }
+                        },
+                        "b": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_update_form"
+                            },
+                            "value_expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "microscopy",
+                                    "ql_sample_b",
+                                    "sample_b_result_value"
+                                ],
+                                "datatype": "integer"
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "integer",
+                "column_id": "negative_slides",
+                "expression": {
+                    "type": "evaluator",
+                    "statement": "(1 if a == -1 else 0) + (1 if b == -1 else 0)",
+                    "context_variables": {
+                        "a": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_update_form"
+                            },
+                            "value_expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "microscopy",
+                                    "ql_sample_a",
+                                    "sample_a_result_value"
+                                ],
+                                "datatype": "integer"
+                            }
+                        },
+                        "b": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_update_form"
+                            },
+                            "value_expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "microscopy",
+                                    "ql_sample_b",
+                                    "sample_b_result_value"
+                                ],
+                                "datatype": "integer"
+                            }
+                        }
+                    }
+                }
+            }
+        ],
+        "named_expressions": {
+            "test_update_form": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_case_forms",
+                            "case_id_expression": {
+                                "type": "property_name",
+                                "property_name": "_id"
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "xmlns"
+                            },
+                            "property_value": "http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3"
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "received_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
+            "sample_receipt_form": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_case_forms",
+                            "case_id_expression": {
+                                "type": "property_name",
+                                "property_name": "_id"
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "xmlns"
+                            },
+                            "property_value": "http://openrosa.org/formdesigner/B139DDFB-13C5-4E89-8BE6-E74ACB9FCBBE"
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "received_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
+            "person_id": {
+                "value_expression": {
+                    "type": "nested",
+                    "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "referenced_id"
+                    },
+                    "argument_expression": {
+                        "type": "array_index",
+                        "array_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "indices"
+                        },
+                        "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    }
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                    "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "referenced_id"
+                    },
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "array_index",
+                        "array_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "indices"
+                        },
+                        "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    }
+                }
+            },
+            "person_registration_form": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_case_forms",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "type": "nested",
+                                    "value_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "referenced_id"
+                                    },
+                                    "argument_expression": {
+                                        "type": "array_index",
+                                        "array_expression": {
+                                            "datatype": null,
+                                            "type": "property_name",
+                                            "property_name": "indices"
+                                        },
+                                        "index_expression": {
+                                            "type": "constant",
+                                            "constant": 0
+                                        }
+                                    }
+                                },
+                                "type": "related_doc",
+                                "related_doc_type": "CommCareCase",
+                                "doc_id_expression": {
+                                    "value_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "referenced_id"
+                                    },
+                                    "type": "nested",
+                                    "argument_expression": {
+                                        "type": "array_index",
+                                        "array_expression": {
+                                            "datatype": null,
+                                            "type": "property_name",
+                                            "property_name": "indices"
+                                        },
+                                        "index_expression": {
+                                            "type": "constant",
+                                            "constant": 0
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "xmlns"
+                            },
+                            "property_value": "http://openrosa.org/formdesigner/D11C7CAF-A409-4236-8314-380B0353514D"
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "received_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
+            "episode_case": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "type"
+                            },
+                            "property_value": "episode"
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
+            "complete_treatment_form": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_case_forms",
+                            "case_id_expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "reduce_items",
+                                    "items_expression": {
+                                        "type": "sort_items",
+                                        "items_expression": {
+                                            "type": "filter_items",
+                                            "items_expression": {
+                                                "type": "get_subcases",
+                                                "case_id_expression": {
+                                                    "value_expression": {
+                                                        "datatype": null,
+                                                        "type": "property_name",
+                                                        "property_name": "referenced_id"
+                                                    },
+                                                    "type": "nested",
+                                                    "argument_expression": {
+                                                        "type": "array_index",
+                                                        "array_expression": {
+                                                            "datatype": null,
+                                                            "type": "property_name",
+                                                            "property_name": "indices"
+                                                        },
+                                                        "index_expression": {
+                                                            "type": "constant",
+                                                            "constant": 0
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "filter_expression": {
+                                                "type": "boolean_expression",
+                                                "operator": "eq",
+                                                "expression": {
+                                                    "type": "property_name",
+                                                    "property_name": "type"
+                                                },
+                                                "property_value": "episode"
+                                            }
+                                        },
+                                        "sort_expression": {
+                                            "type": "property_name",
+                                            "property_name": "opened_on"
+                                        }
+                                    },
+                                    "aggregation_fn": "last_item"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "_id"
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "xmlns"
+                            },
+                            "property_value": "http://openrosa.org/formdesigner/60B0DB43-CC15-43A0-BFE7-885310AFD6E4"
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "received_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            }
+        },
+        "named_filters": {
+            "suspect": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "episode_type_at_request"
+                },
+                "property_value": "presumptive_tb"
+            },
+            "patient": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "episode_type_at_request"
+                },
+                "property_value": "confirmed_tb"
+            },
+            "test_reason_suspect": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "diagnostic_test_reason"
+                },
+                "property_value": "presumptive_tb"
+            },
+            "microscopy": {
+                "operator": "in",
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "test_type_value"
+                },
+                "property_value": ["microscopy-zn", "microscopy-fluorescent"]
+            },
+            "diagnostic": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "purpose_of_testing"
+                },
+                "property_value": "diagnostic"
+            },
+            "follow_up": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "purpose_of_testing"
+                },
+                "property_value": "follow_up"
+            },
+            "repeat_exam_for_diagnosis": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "diagnostic_test_reason"
+                },
+                "property_value": "repeat_exam_for_diagnosis"
+            },
+            "positive": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "result"
+                },
+                "property_value": "tb_detected"
+            }
+        }
+    }
+}

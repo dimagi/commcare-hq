@@ -427,7 +427,7 @@
                                 "datatype": "string"
                             },
                             "type": "boolean_expression",
-                            "property_value": "diagnostic_or_pretreatment"
+                            "property_value": "diagnostic"
                         },
                         "expression_if_true": {
                             "type": "property_path",
@@ -469,7 +469,7 @@
                                 "datatype": "string"
                             },
                             "type": "boolean_expression",
-                            "property_value": "diagnostic_or_pretreatment"
+                            "property_value": "diagnostic"
                         },
                         "expression_if_true": {
                             "type": "property_path",
@@ -533,7 +533,7 @@
                             }
                         },
                         "type": "boolean_expression",
-                        "property_value": "diagnostic_or_pretreatment"
+                        "property_value": "diagnostic"
                     },
                     "expression_if_true": {
                         "type": "nested",
@@ -1292,7 +1292,7 @@
                             "property_name": "purpose_of_testing"
                         }
                     },
-                    "property_value": "diagnostic_or_pretreatment"
+                    "property_value": "diagnostic"
                 },
                 "type": "boolean",
                 "display_name": "test_purpose_diagnostic",
@@ -1819,7 +1819,7 @@
                                 "property_name": "episode_type"
                             },
                             "operator": "eq",
-                            "property_value": "Patient"
+                            "property_value": "confirmed_tb"
                         }
                     ]
                 }
@@ -5429,7 +5429,7 @@
                         },
                         {
                             "type": "named",
-                            "name": "diagnostic_or_pretreatment"
+                            "name": "diagnostic"
                         }
                     ]
                 },
@@ -5450,7 +5450,7 @@
                         },
                         {
                             "type": "named",
-                            "name": "diagnostic_or_pretreatment"
+                            "name": "diagnostic"
                         },
                         {
                             "type": "named",
@@ -5834,7 +5834,7 @@
                     "property_name": "episode_type"
                 },
                 "operator": "eq",
-                "property_value": "Suspect"
+                "property_value": "presumptive_tb"
             },
             "treatment_outcome_cured": {
                 "operator": "eq",
@@ -6208,7 +6208,7 @@
                 },
                 "property_value": ["microscopy-zn", "microscopy-fluorescent"]
             },
-            "diagnostic_or_pretreatment": {
+            "diagnostic": {
                 "operator": "eq",
                 "expression": {
                     "type": "nested",
@@ -6227,7 +6227,7 @@
                     }
                 },
                 "type": "boolean_expression",
-                "property_value": "diagnostic_or_pretreatment"
+                "property_value": "diagnostic"
             },
             "repeat_for_diagnosis": {
                 "operator": "eq",
@@ -6242,13 +6242,13 @@
                         "property_path": [
                             "form",
                             "ql_request_details",
-                            "purpose_of_testing"
+                            "diagnostic_test_reason"
                         ],
                         "datatype": "string"
                     }
                 },
                 "type": "boolean_expression",
-                "property_value": "repeat_for_diagnosis"
+                "property_value": "repeat_exam_for_diagnosis"
             },
             "follow_up": {
                 "operator": "in",
@@ -6539,7 +6539,7 @@
                         "property_name": "purpose_of_testing"
                     }
                 },
-                "property_value": "diagnostic_or_pretreatment"
+                "property_value": "diagnostic"
             },
             "test_purpose_end_of_ip": {
                 "operator": "eq",
