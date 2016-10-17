@@ -336,7 +336,7 @@ def get_cases(request, domain):
             usercase_id = CommCareUser.get_by_user_id(user_id).get_usercase_id()
             usercase = accessor.get_case(usercase_id) if usercase_id else None
             return json_response(map(
-                lambda case: CaseAPIResult(domain=domain, id=case['_id'], couch_doc=case, id_only=ids_only),
+                lambda case: CaseAPIResult(id=case['_id'], couch_doc=case, id_only=ids_only),
                 filter(None, [case, case.parent, usercase])
             ))
 
@@ -349,7 +349,7 @@ def get_cases(request, domain):
         # owned case list + footprint
         case = accessor.get_case(case_id)
         assert case.domain == domain
-        cases = [CaseAPIResult(domain=domain, id=case_id, couch_doc=case, id_only=ids_only)]
+        cases = [CaseAPIResult(id=case_id, couch_doc=case, id_only=ids_only)]
     else:
         filters = get_filters_from_request_params(request_params)
         status = api_closed_to_status(request_params.get('closed', 'false'))
