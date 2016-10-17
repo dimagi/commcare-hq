@@ -232,22 +232,20 @@ class CaseAPITest(TestCase):
         self.assertEqual(self.expectedOpenByUserWithFootprint + self.expectedClosedByUserWithFootprint, len(list))
 
     def testCaseAPIResultJSON(self):
-        try:
-            case = CommCareCase()
-            # because of how setattr is overridden you have to set it to None in this wacky way
-            case._doc['type'] = None
-            case.save()
-            self.assertEqual(None, CommCareCase.get(case.case_id).type)
-            res_sanitized = CaseAPIResult(domain=TEST_DOMAIN, id=case.case_id, couch_doc=case, sanitize=True)
-            res_unsanitized = CaseAPIResult(domain=TEST_DOMAIN, id=case.case_id, couch_doc=case, sanitize=False)
+        case = CommCareCase()
+        # because of how setattr is overridden you have to set it to None in this wacky way
+        case._doc['type'] = None
+        case.save()
+        self.addCleanup(case.delete)
+        self.assertEqual(None, CommCareCase.get(case.case_id).type)
+        res_sanitized = CaseAPIResult(domain=TEST_DOMAIN, id=case.case_id, couch_doc=case, sanitize=True)
+        res_unsanitized = CaseAPIResult(domain=TEST_DOMAIN, id=case.case_id, couch_doc=case, sanitize=False)
 
-            json = res_sanitized.case_json
-            self.assertEqual(json['properties']['case_type'], '')
+        json = res_sanitized.case_json
+        self.assertEqual(json['properties']['case_type'], '')
 
-            json = res_unsanitized.case_json
-            self.assertEqual(json['properties']['case_type'], None)
-        finally:
-            case.delete()
+        json = res_unsanitized.case_json
+        self.assertEqual(json['properties']['case_type'], None)
 
     def testGetCasesCaching(self):
         user = self.users[0]
