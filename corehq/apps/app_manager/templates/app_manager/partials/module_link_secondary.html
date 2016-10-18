@@ -1,0 +1,29 @@
+{% load i18n %}
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+
+{# For APP BUILDER PROTOTYPE use only #}
+
+
+<form action="{% url "corehq.apps.app_manager.views.new_form" domain app.id module.id %}"
+      method="post"
+      class="hide">
+  {% csrf_token %}
+    <input type="hidden" name="case_action" />
+    <input type="hidden" name="name" />
+</form>
+
+{% if module.doc_type != 'CareplanModule' and module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %}
+<a href="#"
+   class="appnav-secondary new-form"
+   data-case-action="{% if module.is_surveys %}none{% else %}update{% endif %}">
+  <i class="fa fa-plus new-module-icon icon-blue"></i>
+  <span class="text-muted">
+      {% if module.is_surveys %}
+          {% trans "Survey" %}
+      {% else %}
+          {% trans "Followup" %}
+      {% endif %}
+  </span>
+</a>
+{% endif %}

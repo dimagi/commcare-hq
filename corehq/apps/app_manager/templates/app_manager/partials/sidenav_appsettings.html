@@ -1,0 +1,49 @@
+{% load i18n %}
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+
+<li class="divider"></li>
+<li {% if not module and not form and not release_manager %}class="app-name-div
+        {% if not copy_app_form or not copy_app_form.is_bound %}active{% endif %}"
+    {% endif %}>
+    <a href="{% url "view_app" domain app.id %}#app-settings" {% if is_app_view %}data-toggle="tab" data-default="1" data-pagetitle="{% trans "Settings" %}: {{ app.name }}"{% endif %} >
+        <i class="fa fa-cog"></i>
+        {% trans "Settings" %}
+    </a>
+</li>
+{% if app.get_doc_type == 'Application' %}
+<li>
+    <a id="demand-multimedia" href="{% url "view_app" domain app.id %}multimedia/#multimedia" {% if is_app_view %}data-toggle="tab" data-pagetitle="{% trans "Multimedia" %}: {{ app.name }}"{% endif %}>
+        <i class="fa fa-photo"></i>
+        {% trans "Multimedia" %}
+    </a>
+</li>
+{% endif %}
+<li>
+    <a href="{% url "view_app" domain app.id %}languages/#languages-and-translations" {% if is_app_view %}data-toggle="tab" data-pagetitle="{% trans "Languages" %}: {{ app.name }}"{% endif %}>
+        <i class="fa fa-globe"></i>
+        {% trans "Languages" %}
+    </a>
+    {% if app.get_doc_type == 'Application' %}
+        <span id="langs">
+            {% if not app.is_remote_app and app.langs|length > 1%}
+                <select name="lang" class="form-control">
+                    {% for lang in app.langs %}
+                        <option value="{{ lang }}"
+                                {% if lang == langs.0 %}selected=""{% endif %}>
+                            {% if lang == app.langs.0 %}*{% endif %}
+                            {{ lang }}
+                        </option>
+                    {% endfor %}
+                </select>
+            {% endif %}
+        </span>
+    {% endif %}
+</li>
+<li>
+    <a href="{% url "app_summary" domain app.id %}">
+        <i class="fa fa-list"></i>
+        {% trans "App Summary" %}
+    </a>
+</li>
+<li class="divider"></li>
