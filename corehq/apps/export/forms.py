@@ -248,15 +248,14 @@ class BaseFilterExportDownloadForm(forms.Form):
         )
         return users_matching_filter(self.domain_object.name, user_filters)
 
-    def _get_es_user_types(self, mobile_user_and_group_slugs):
+    def _get_es_user_types(self):
         """
         Return a list of elastic search user types (each item in the return list
         is in corehq.pillows.utils.USER_TYPES) corresponding to the selected
         export user types.
         """
         es_user_types = []
-        user_types = ExpandedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
-        export_user_types = [BaseFilterExportDownloadForm._USER_TYPES_CHOICES[i][0] for i in user_types]
+        export_user_types = self.cleaned_data['user_types']
         export_to_es_user_types_map = {
             self._USER_MOBILE: [utils.MOBILE_USER_TYPE],
             self._USER_DEMO: [utils.DEMO_USER_TYPE],
@@ -269,9 +268,10 @@ class BaseFilterExportDownloadForm(forms.Form):
             es_user_types.extend(export_to_es_user_types_map[type_])
         return es_user_types
 
-    def _get_group(self, mobile_user_and_group_slugs):
-        group_ids = CaseListFilter.selected_group_ids(mobile_user_and_group_slugs)
-        return group_ids
+    def _get_group(self):
+        group = self.cleaned_data['group']
+        if group:
+            return Group.get(group)
 
     def get_edit_url(self, export):
         """Gets the edit url for the specified export.
@@ -410,6 +410,77 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
         return reverse(EditNewCustomFormExportView.urlname,
                        args=(self.domain_object.name, export._id))
 
+    def get_form_filter(self):
+        return filter(None, [
+            self._get_datespan_filter(),
+            self._get_group_filter(),
+            self._get_user_filter()
+        ])
+
+    def _get_datespan_filter(self):
+        datespan = self._get_datespan()
+        if datespan.is_valid():
+            datespan.set_timezone(self.timezone)
+            return ReceivedOnRangeFilter(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
+
+    def _get_group_filter(self):
+        group = self.cleaned_data['group']
+        if group:
+            return GroupFormSubmittedByFilter(group)
+
+    def _get_user_filter(self):
+        group = self.cleaned_data['group']
+        if not group:
+            return UserTypeFilter(self._get_es_user_types())
+
+    def get_multimedia_task_kwargs(self, export, download_id):
+        kwargs = super(FilterFormESExportDownloadForm, self).get_multimedia_task_kwargs(export, download_id)
+        kwargs['export_is_legacy'] = False
+        return kwargs
+
+
+class EmwfFilterFormExport(FilterFormESExportDownloadForm):
+    def __init__(self, domain_object, *args, **kwargs):
+        self.domain_object = domain_object
+        super(EmwfFilterFormExport, self).__init__(domain_object, *args, **kwargs)
+
+        # remove the three filters. Rendered directly in view
+        del (self.fields['type_or_group'])
+        del (self.fields['user_types'])
+        del (self.fields['group'])
+        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-3'
+        self.helper.layout = Layout(
+            super(EmwfFilterFormExport, self).extra_fields
+        )
+
+    def _get_es_user_types(self, mobile_user_and_group_slugs):
+        """
+        Override to fetch params from url and not form_data
+        Return a list of elastic search user types (each item in the return list
+        is in corehq.pillows.utils.USER_TYPES) corresponding to the selected
+        export user types.
+        """
+        es_user_types = []
+        user_types = ExpandedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
+        export_user_types = [BaseFilterExportDownloadForm._USER_TYPES_CHOICES[i][0] for i in user_types]
+        export_to_es_user_types_map = {
+            self._USER_MOBILE: [utils.MOBILE_USER_TYPE],
+            self._USER_DEMO: [utils.DEMO_USER_TYPE],
+            self._USER_UNKNOWN: [
+                utils.UNKNOWN_USER_TYPE, utils.SYSTEM_USER_TYPE, utils.WEB_USER_TYPE
+            ],
+            self._USER_SUPPLY: [utils.COMMCARE_SUPPLY_USER_TYPE]
+        }
+        for type_ in export_user_types:
+            es_user_types.extend(export_to_es_user_types_map[type_])
+        return es_user_types
+
+    def _get_group(self, mobile_user_and_group_slugs):
+        # Override to fetch params from url and not form_data
+        group_ids = CaseListFilter.selected_group_ids(mobile_user_and_group_slugs)
+        return group_ids
+
     def get_form_filter(self, mobile_user_and_group_slugs):
         return filter(None, [
             self._get_datespan_filter(),
@@ -418,12 +489,6 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
             self._get_user_ids_filter(mobile_user_and_group_slugs),
             self._get_location_ids_filter(mobile_user_and_group_slugs)
         ])
-
-    def _get_datespan_filter(self):
-        datespan = self._get_datespan()
-        if datespan.is_valid():
-            datespan.set_timezone(self.timezone)
-            return ReceivedOnRangeFilter(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
 
     def _get_group_filter(self, mobile_user_and_group_slugs):
         group_ids = ExpandedMobileWorkerFilter.selected_group_ids(mobile_user_and_group_slugs)
@@ -446,27 +511,6 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
             users = SQLLocation.users_at_locations_and_descendants(location_ids)
             user_ids = [user['_id'] for user in users]
             return FormSubmittedByFilter(user_ids)
-
-    def get_multimedia_task_kwargs(self, export, download_id):
-        kwargs = super(FilterFormESExportDownloadForm, self).get_multimedia_task_kwargs(export, download_id)
-        kwargs['export_is_legacy'] = False
-        return kwargs
-
-
-class NewFilterFormESExportDownloadForm(FilterFormESExportDownloadForm):
-    def __init__(self, domain_object, *args, **kwargs):
-        self.domain_object = domain_object
-        super(NewFilterFormESExportDownloadForm, self).__init__(domain_object, *args, **kwargs)
-
-        # remove the three filters. Rendered directly in view
-        del (self.fields['type_or_group'])
-        del (self.fields['user_types'])
-        del (self.fields['group'])
-        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-3'
-        self.helper.layout = Layout(
-            super(NewFilterFormESExportDownloadForm, self).extra_fields
-        )
 
 
 class GenericFilterCaseExportDownloadForm(BaseFilterExportDownloadForm):
