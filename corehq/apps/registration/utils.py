@@ -6,7 +6,8 @@ from django.template.loader import render_to_string
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition, DefaultProductPlan, BillingAccount,
     BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
-    SubscriptionType, PreOrPostPay
+    SubscriptionType, PreOrPostPay,
+    DEFAULT_ACCOUNT_FORMAT,
 )
 from corehq.apps.accounting.tasks import ensure_explicit_community_subscription
 from corehq.apps.registration.models import RegistrationRequest
@@ -239,10 +240,10 @@ def create_30_day_advanced_trial(domain_obj):
     )
     expiration_date = date.today() + timedelta(days=30)
     trial_account = BillingAccount.objects.get_or_create(
-        name="Trial Account for %s" % domain_obj.name,
+        name=DEFAULT_ACCOUNT_FORMAT % domain_obj.name,
         currency=Currency.get_default(),
         created_by_domain=domain_obj.name,
-        account_type=BillingAccountType.TRIAL,
+        account_type=BillingAccountType.USER_CREATED,
         pre_or_post_pay=PreOrPostPay.POSTPAY,
     )[0]
     trial_subscription = Subscription.new_domain_subscription(
