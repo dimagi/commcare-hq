@@ -919,6 +919,67 @@ class ExportGroupSchema(DocumentSchema):
     last_occurrences = DictProperty()
 
 
+class InferredExportGroupSchema(ExportGroupSchema):
+    """
+    Same as an ExportGroupSchema with a few utility methods
+    """
+
+    def put_item(self, path):
+        assert self.path == path[:len(self.path)], "ExportItem's path doesn't start with the table"
+
+        item = self.get_item(path)
+
+        if item:
+            return item
+
+        item = ExportItem(
+            path=path,
+            label='.'.join(map(lambda node: node.name, path)),
+        )
+        self.items.append(item)
+        return item
+
+    def get_item(self, path):
+        for item in self.items:
+            if item.path == path and isinstance(item, ExportItem):
+                return item
+        return None
+
+
+class InferredSchema(Document):
+    """
+    An inferred schema is information we know about the application that is not
+    in the application itself. For example, inferred schemas can keep track of
+    case properties that were uploaded during a case import. This way we have a
+    record of these properties even though they were not in the application
+    structure.
+    """
+    domain = StringProperty(required=True)
+    created_on = DateTimeProperty(default=datetime.utcnow)
+    group_schemas = SchemaListProperty(InferredExportGroupSchema)
+    case_type = StringProperty(required=True)
+    version = IntegerProperty(default=1)
+
+    def put_group_schema(self, path):
+        group_schema = self.get_group_schema(path)
+
+        if group_schema:
+            return group_schema
+
+        group_schema = InferredExportGroupSchema(
+            path=path,
+            items=[],
+        )
+        self.group_schemas.append(group_schema)
+        return group_schema
+
+    def get_group_schema(self, path):
+        for group_schema in self.group_schemas:
+            if group_schema.path == path:
+                return group_schema
+        return None
+
+
 class ExportDataSchema(Document):
     """
     An object representing the things that can be exported for a particular
