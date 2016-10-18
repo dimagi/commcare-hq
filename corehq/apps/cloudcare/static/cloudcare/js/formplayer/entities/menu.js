@@ -61,15 +61,15 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
         getMenus: function (params) {
 
-            var user = FormplayerFrontend.request('currentUser');
-            var username = user.username;
-            var domain = user.domain;
-            var language = user.language;
-            var formplayerUrl = user.formplayer_url;
-            var displayOptions = user.displayOptions || {};
-            var defer = $.Deferred();
-            var menus;
-            var options = {
+            var user = FormplayerFrontend.request('currentUser'),
+                username = user.username,
+                formplayerUrl = user.formplayer_url,
+                displayOptions = user.displayOptions || {},
+                defer = $.Deferred(),
+                options,
+                menus;
+
+            options = {
                 success: function (parsedMenus, response) {
                     if (response.status === 'retry') {
                         FormplayerFrontend.trigger('retry', response, function() {
@@ -98,9 +98,9 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
             options.data = JSON.stringify({
                 "username": user.username,
-                "domain": domain,
+                "domain": user.domain,
                 "app_id": params.appId,
-                "locale": language,
+                "locale": user.language,
                 "selections": params.steps,
                 "offset": params.page * 10,
                 "search_text": params.search,
@@ -114,7 +114,9 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
             menus = new Entities.MenuSelectCollection();
 
-            Object.freeze(options)
+            if (Object.freeze) {
+                Object.freeze(options)
+            }
             menus.fetch($.extend(true, {}, options));
             return defer.promise();
         },
