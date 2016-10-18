@@ -3,6 +3,12 @@
 {% load hq_shared_tags %}
 
 <div class="pull-right">
+    {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+      <a class="btn btn-default js-preview-toggle" style="display: none;" href="#">
+        <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview Changes" %}</span>
+        <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Hide Preview" %}</span>
+      </a>
+    {% else %}
     <form action="{% url "delete_module" domain app.id module.unique_id %}" method="post">
         {% csrf_token %}
         <button type="submit" class="disable-on-submit btn btn-danger">
@@ -18,6 +24,7 @@
             {% endif %}
         </button>
     </form>
+    {% endif %}
 </div>
 
 {% if module.case_type == '' or not request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}

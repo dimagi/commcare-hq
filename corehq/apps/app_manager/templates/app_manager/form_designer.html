@@ -141,7 +141,24 @@
         });
         analytics.workflow('Entered the Form Builder');
 
+      {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+        $(function () {
+            var previewApp = hqImport('app_manager/js/preview_app.js');
+            previewApp.prependToggleTo('.fd-form-actions', $('#js-fd-app-preview-btn-template').html());
+        });
+      {% endif %}
     </script>
+
+    {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+      <script type="text/html" id="js-fd-app-preview-btn-template">
+        <div class="btn-group">
+          <a class="btn btn-default js-preview-toggle" href="#">
+            <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview Changes" %}</span>
+            <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Hide Preview" %}</span>
+          </a>
+        </div>
+      </script>
+    {% endif %}
 {% endblock %}
 
 {% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
