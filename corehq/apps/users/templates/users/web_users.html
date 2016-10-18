@@ -609,7 +609,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    {% if request|toggle_enabled:"LOCATION_BASED_ACCESS_RESTRICTIONS" %}
+                                    {% if domain_has_org_based_access_privilege or locations_permission_without_domain_privilege %}
                                     <div class="form-group">
                                         <label class="col-sm-4 control-label">
                                             {% trans "Full Organization Access" %}
@@ -617,9 +617,19 @@
                                         <div class="col-sm-8 controls">
                                             <div class="checkbox">
                                                 <label>
+                                                {% if locations_permission_without_domain_privilege %}
+                                                    <input type="checkbox"
+                                                           disabled="true" 
+                                                           data-bind="checked: permissions.access_all_locations" />
+                                                        {% trans "Allow role to access data from all locations" %}
+                                                    <span class="hel-block">
+                                                        {% trans "Organization-base data restrictions are only available on the Pro plan and above" %}
+                                                    </span>
+                                                {% else %}
                                                     <input type="checkbox"
                                                            data-bind="checked: permissions.access_all_locations" />
                                                     {% trans "Allow role to access data from all locations" %}
+                                                {% endif %}
                                                 </label>
                                             </div>
                                         </div>

@@ -349,6 +349,13 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
     @use_angular_js
     @method_decorator(require_can_edit_web_users)
     def dispatch(self, request, *args, **kwargs):
+        if self.locations_permission_without_domain_privilege:
+            messages.warning(request, _(
+                "Any users assigned to roles that are restricted "
+                "in data access by organization will no longer be able to "
+                "access this project.  Please update the existing roles")
+            )
+
         return super(ListWebUsersView, self).dispatch(request, *args, **kwargs)
 
     def query_es(self, limit, skip, query=None):
@@ -420,6 +427,24 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
 
     @property
     @memoized
+    def domain_has_org_based_access_privilege(self):
+        return domain_has_privilege(self.domain, privileges.ORGANIZATION_BASED_ACCESS_RESTRICTIONS)
+
+    @property
+    @memoized
+    def locations_permission_without_domain_privilege(self):
+        # returns True if domain doesn't have 'ORGANIZATION_BASED_ACCESS_RESTRICTIONS' privilege
+        #   but any one of the user role uses 'Permissions.access_all_locations'
+        if self.domain_has_org_based_access_privilege:
+            return False
+        import pdb; pdb.set_trace()
+        return any([
+            role.permissions.access_all_locations
+            for role in self.user_roles
+        ])
+
+    @property
+    @memoized
     def user_roles(self):
         user_roles = [AdminUserRole(domain=self.domain)]
         user_roles.extend(sorted(
@@ -468,6 +493,8 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
             'admins': WebUser.get_admins_by_domain(self.domain),
             'domain_object': self.domain_object,
             'uses_locations': self.domain_object.uses_locations,
+            'domain_has_org_based_access_privilege': self.domain_has_org_based_access_privilege,
+            'locations_permission_without_domain_privilege': self.locations_permission_without_domain_privilege,
         }
 
 
