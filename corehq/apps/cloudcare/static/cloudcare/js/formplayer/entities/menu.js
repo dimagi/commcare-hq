@@ -48,7 +48,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             } else if (response.tree){
                 // form entry time, doggy
                 FormplayerFrontend.trigger('startForm', response, this.app_id);
-            } 
+            }
         },
 
         sync: function (method, model, options) {
@@ -68,7 +68,6 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 defer = $.Deferred(),
                 options,
                 menus;
-
             options = {
                 success: function (parsedMenus, response) {
                     if (response.status === 'retry') {
