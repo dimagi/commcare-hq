@@ -177,7 +177,7 @@ class PreFilter(BaseFilter):
         self.pre_value = pre_value
         self.pre_operator = pre_operator
 
-    def value(self):
+    def value(self, **kwargs):
         return self.default_value()
 
     def default_value(self, request_user=None):
