@@ -6,6 +6,15 @@
 {% load i18n %}
 {% load compress %}
 
+{# todo change so that app builder doesn't inherit from style/base_section.html etc. Don't want to do this just now because prototype is so inter-weaved #}
+{% block page_sidebar_classes %}
+{% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}appmanager-sidebar{% else %}{{ block.super }}{% endif %}
+{% endblock %}
+
+{% block page_content_classes %}
+{% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% endif %}{% else %}{{ block.super }}{% endif %}
+{% endblock %}
+
 {% block title %}{% trans "Applications" %}{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
@@ -16,26 +25,58 @@
   <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2-3.5.2-legacy/select2-bootstrap.css' %}" />
   {% endcompress %}
 
-  {% if less_debug %}
-  <link type="text/less"
-        rel="stylesheet"
-        media="all"
-        href="{% static 'app_manager/less/app_manager.debug.less' %}" />
-  <link type="text/less"
-        rel="stylesheet"
-        media="all"
-        href="{% static 'app_manager/less/preview_app.debug.less' %}"/>
+  {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+    {% if less_debug %}
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'app_manager/less/font-workflow.less' %}" />
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'app_manager/less/new_appmanager.debug.less' %}" />
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'app_manager/less/preview_app.debug.less' %}"/>
+    {% else %}
+    {% compress css %}
+        <link type="text/less"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'app_manager/less/font-workflow.less' %}" />
+        <link type="text/less"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'app_manager/less/new_appmanager.less' %}" />
+        <link type="text/less"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'app_manager/less/preview_app.less' %}"/>
+    {% endcompress %}
+    {% endif %}
   {% else %}
-  {% compress css %}
-      <link type="text/less"
-            rel="stylesheet"
-            media="all"
-            href="{% static 'app_manager/less/app_manager.less' %}" />
-      <link type="text/less"
-            rel="stylesheet"
-            media="all"
-            href="{% static 'app_manager/less/preview_app.less' %}"/>
-  {% endcompress %}
+    {% if less_debug %}
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'app_manager/less/app_manager.debug.less' %}" />
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'app_manager/less/preview_app.debug.less' %}"/>
+    {% else %}
+    {% compress css %}
+        <link type="text/less"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'app_manager/less/app_manager.less' %}" />
+        <link type="text/less"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'app_manager/less/preview_app.less' %}"/>
+    {% endcompress %}
+    {% endif %}
   {% endif %}
 
 {% endblock %}
@@ -96,7 +137,7 @@
 {% endblock %}
 
 {% block page_breadcrumbs %}
-    {% if not formdesigner %}
+    {% if not formdesigner and not request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
         <ul class="breadcrumb breadcrumb-hq-section">
             <li>{% trans 'Applications' %}</li>
             {% block breadcrumbs %}{% endblock %}
