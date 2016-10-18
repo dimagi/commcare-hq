@@ -275,23 +275,12 @@
     <div id="build_errors"></div>
     {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
         <div class="pull-right">
-            <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">
-                {% csrf_token %}
-                <button type="submit" class="disable-on-submit btn btn-danger"
-                    {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" and not app.advanced_app_builder and form.get_action_type == 'open' %}disabled="disabled"{% endif %}>
-                    <i class="fa fa-trash"></i>
-                    {% trans "Delete Form" %}
-                </button>
-                {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" and not app.advanced_app_builder and form.get_action_type == 'open' %}
-                    <span class="hq-help-template"
-                          data-title="Why can't I delete this?"
-                          data-placement="left"
-                          data-content="Case Lists need a registration form! If you would like to remove the whole case list, navigate to the <a href='{% url "view_module" domain app.id module.id %}'>case list settings</a> and click delete."
-                    ></span>
-                {% endif %}
-            </form>
+            <a class="btn btn-default js-preview-toggle" style="display: none;" href="#">
+              <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview Changes" %}</span>
+              <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Hide Preview" %}</span>
+            </a>
         </div>
-    
+
         {% if form.get_action_type == 'open' %}
         <h3 style="display: inline-block; margin-right: -5px;"><i class="fcc fcc-app-createform appmanager-icon-type"></i></h3>
         {% elif form.requires_case %}
