@@ -129,6 +129,9 @@
        $('.appmanager-content').fadeIn();
        $('.appmanager-loading').fadeOut();
     });
+    {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+    hqLayout.utils.setIsAppbuilderResizing(true);
+    {% endif %}
     </script>
 {% endblock %}
 

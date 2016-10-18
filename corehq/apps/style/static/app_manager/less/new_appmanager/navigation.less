@@ -1,5 +1,48 @@
+
+
+.appmanager-sidebar {
+  // hack from http://stackoverflow.com/questions/266015/css-floats-how-do-i-keep-them-on-one-line
+  min-width: @app-manager-sidebar-width;
+  width: auto !important;
+  width: @app-manager-sidebar-width;
+  float: left;
+}
+
+.appmanager-sidebar .appmanager-title {
+  background-color: @cc-brand-mid;
+  position: relative;
+  margin: 0;
+  padding-top: 20px;
+  padding-bottom: 10px;
+  font-size: @font-size-base*1.2;
+
+  a, a:link, a:visited, a:hover {
+    color: white;
+    text-decoration: none;
+  }
+  a {
+    padding-left: 20px;
+  }
+
+  .drag_handle {
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+    line-height: 24px;
+    text-align: center;
+    width: 19px;
+    opacity: 0;
+    .transition(all .6s);
+  }
+
+  .appmanager-icon-type {
+    font-size: 1.4rem;
+  }
+}
+
 nav.appmanager-content {
-  margin: 20px 0;
+  margin-bottom: 20px;
 
   // Menu indentation
   // First level: whole menu ("Deploy", etc.)
@@ -35,8 +78,6 @@ nav.appmanager-content {
       padding: 0;
     }
   }
-
-
 }
 
 // Used to indicate sortable table rows (i.e., case list rows)
@@ -45,10 +86,11 @@ nav.appmanager-content {
 }
 
 
+
+
 .nav-hq-sidebar {
   .edit-form-li,
-  .edit-module-li,
-  .release-manager-li {
+  .edit-module-li {
     position: relative;
     .drag_handle {
       display: block;

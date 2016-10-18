@@ -14,6 +14,15 @@
     {% endif %}
 {% endblock %}
 
+{% block stylesheets %}{{ block.super }}
+  <style type="text/css">
+    .hq-container {
+      padding-bottom: 0;
+      margin-bottom: 0;
+    }
+  </style>
+{% endblock %}
+
 {% block js %}{{ block.super }}
     <script src="{% static 'moment/moment.js' %}"></script>
     <script src="{% static 'requirejs/require.js' %}"></script>
