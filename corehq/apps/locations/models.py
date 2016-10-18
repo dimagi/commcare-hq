@@ -19,6 +19,7 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
+from corehq.apps.es.users import UserES
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 from corehq.util.soft_assert import soft_assert
 from mptt.models import MPTTModel, TreeForeignKey, TreeManager
@@ -687,6 +688,15 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
             locations += location.get_descendants(include_self=True)
         return locations
 
+    @classmethod
+    def location_and_descendants_ids(cls, location_ids):
+        all_locations = cls.location_and_descendants(location_ids)
+        return [location.get_id for location in all_locations]
+
+    @classmethod
+    def users_at_locations_and_descendants(cls, location_ids):
+        location_ids = SQLLocation.location_and_descendants_ids(location_ids)
+        return UserES().location(location_ids).run().hits
 
 def filter_for_archived(locations, include_archive_ancestors):
     """
