@@ -437,12 +437,10 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
 
     def _get_user_filter(self, mobile_user_and_group_slugs):
         # group = self.cleaned_data['group']
-        group = ExpandedMobileWorkerFilter.selected_group_ids(mobile_user_and_group_slugs)
-        if not group:
-            users = ExpandedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
-            # return UserTypeFilter(self._get_es_user_types())
-            f_users = [BaseFilterExportDownloadForm._USER_TYPES_CHOICES[i][0] for i in users]
-            return UserTypeFilter(f_users)
+        users = ExpandedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
+        # return UserTypeFilter(self._get_es_user_types())
+        f_users = [BaseFilterExportDownloadForm._USER_TYPES_CHOICES[i][0] for i in users]
+        return UserTypeFilter(f_users)
 
     def _get_user_ids_filter(self, mobile_user_and_group_slugs):
         user_ids = ExpandedMobileWorkerFilter.selected_user_ids(mobile_user_and_group_slugs)
