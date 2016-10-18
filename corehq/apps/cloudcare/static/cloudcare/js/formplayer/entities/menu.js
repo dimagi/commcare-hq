@@ -12,34 +12,40 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
         model: Entities.MenuSelect,
 
+        commonProperties: [
+            'title',
+            'type',
+            'clearSession',
+            'notification',
+            'breadcrumbs',
+            'appVersion',
+            'appId',
+            'persistentCaseTile',
+        ],
+
+        entityProperties: [
+            'action',
+            'styles',
+            'headers',
+            'currentPage',
+            'pageCount',
+            'titles',
+            'numEntitiesPerRow',
+            'maxWidth',
+            'maxHeight',
+        ],
+
         parse: function (response, request) {
-            this.title = response.title;
-            this.type = response.type;
-            this.clearSession = response.clearSession;
-            this.notification = response.notification;
-            this.breadcrumbs = response.breadcrumbs;
-            this.appVersion = response.appVersion;
-            this.appId = response.appId;
-            this.persistentCaseTile = response.persistentCaseTile;
+            _.extend(this, _.pick(response, this.commonProperties));
 
             if (response.commands) {
-                this.type = "commands";
                 return response.commands;
             } else if (response.entities) {
-                this.action = response.action;
-                this.styles = response.styles;
-                this.headers = response.headers;
-                this.widthHints = response.widthHints;
-                this.currentPage = response.currentPage;
-                this.pageCount = response.pageCount;
-                this.tiles = response.tiles;
-                this.numEntitiesPerRow = response.numEntitiesPerRow;
-                this.maxWidth = response.maxWidth;
-                this.maxHeight = response.maxHeight;
+                _.extend(this, _.pick(response, this.entityProperties));
                 return response.entities;
-            } else if(response.type === "query") {
+            } else if (response.type === "query") {
                 return response.displays;
-            } else if(response.tree){
+            } else if (response.tree){
                 // form entry time, doggy
                 FormplayerFrontend.trigger('startForm', response, this.app_id);
             } 
