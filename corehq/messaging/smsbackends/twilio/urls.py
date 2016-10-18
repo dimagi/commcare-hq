@@ -1,4 +1,4 @@
-from django.conf.urls import *
+from django.conf.urls import patterns, url
 from corehq.messaging.smsbackends.twilio.views import (TwilioIncomingSMSView,
     TwilioIncomingIVRView)
 

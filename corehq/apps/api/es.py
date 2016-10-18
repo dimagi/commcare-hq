@@ -446,8 +446,8 @@ class ReportXFormES(XFormES):
                                     "path": "form.case",
                                     "filter": {
                                         "or": [
-                                            {"term": {"@case_id": "%s" % case_id}},
-                                            {"term": {"case_id": "%s" % case_id}}
+                                            {"term": {"form.case.@case_id": "%s" % case_id}},
+                                            {"term": {"form.case.case_id": "%s" % case_id}}
                                         ]
                                     }
                                 }

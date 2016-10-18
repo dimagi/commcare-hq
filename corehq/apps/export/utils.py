@@ -438,7 +438,8 @@ def _convert_index_to_path_nodes(index):
             if part == '#':
                 path[-1].is_repeat = True
             else:
-                path.append(PathNode(name=part, is_repeat=False))
+                if part != '#text':
+                    path.append(PathNode(name=part, is_repeat=False))
         return path
     else:
         return [PathNode(name=n) for n in index.split('.')]

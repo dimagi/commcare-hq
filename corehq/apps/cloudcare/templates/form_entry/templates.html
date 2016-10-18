@@ -5,7 +5,7 @@
     <div class="gr">
         <fieldset class="gr-header">
             <legend>
-                <span class="caption" data-bind="html: caption"></span>
+                <span class="caption" data-bind="html: caption_markdown() || caption()"></span>
                 <button class="btn btn-xs btn-danger del pull-right" href="#" data-bind="
                     visible: isRepetition,
                     click: deleteRepeat

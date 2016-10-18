@@ -93,8 +93,11 @@ def user_can_view_location(user, sql_location, project):
 
 
 def user_can_edit_location_types(user, project):
-    if (user.is_domain_admin(project.name) or
-            not project.location_restriction_for_users):
+    if user.is_domain_admin(project.name):
+        return True
+    elif not user.has_permission(project.name, 'edit_apps'):
+        return False
+    elif not project.location_restriction_for_users:
         return True
 
     return not user.get_domain_membership(project.name).location_id
@@ -164,6 +167,18 @@ def tastypie_location_safe(resource):
     return resource
 
 
+def conditionally_location_safe(conditional_function):
+    """Decorator to apply to a view function that verifies if something is location
+    safe based on the arguments or kwarguments. That function should return
+    True or False.
+
+    """
+    def _inner(view_fn):
+        view_fn._conditionally_location_safe_function = conditional_function
+        return view_fn
+    return _inner
+
+
 def location_restricted_response(request):
     from corehq.apps.hqwebapp.views import no_permissions
     return no_permissions(request, message=LOCATION_ACCESS_DENIED)
@@ -179,6 +194,8 @@ def is_location_safe(view_fn, view_args, view_kwargs):
         return True
     if 'resource_name' in view_kwargs:
         return view_kwargs['resource_name'] in LOCATION_SAFE_TASTYPIE_RESOURCES
+    if getattr(view_fn, '_conditionally_location_safe_function', False):
+        return view_fn._conditionally_location_safe_function(view_fn, *view_args, **view_kwargs)
     return False
 
 

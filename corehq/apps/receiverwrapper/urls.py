@@ -1,4 +1,4 @@
-from django.conf.urls import *
+from django.conf.urls import patterns, url
 
 from corehq.apps.receiverwrapper.views import post, secure_post
 

@@ -109,7 +109,8 @@ class CloudcareMain(View):
             apps = get_cloudcare_apps(domain)
             if request.project.use_cloudcare_releases:
 
-                if toggles.CLOUDCARE_LATEST_BUILD.enabled(domain):
+                if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or
+                        toggles.CLOUDCARE_LATEST_BUILD.enabled(request.couch_user.username)):
                     get_cloudcare_app = get_latest_build_doc
                 else:
                     get_cloudcare_app = get_latest_released_app_doc
@@ -596,7 +597,13 @@ class HttpResponseConflict(HttpResponse):
 class EditCloudcareUserPermissionsView(BaseUserSettingsView):
     template_name = 'cloudcare/config.html'
     urlname = 'cloudcare_app_settings'
-    page_title = ugettext_noop("CloudCare Permissions")
+
+    @property
+    def page_title(self):
+        if toggles.USE_FORMPLAYER_FRONTEND.enabled(self.domain):
+            return _("Web Apps Permissions")
+        else:
+            return _("CloudCare Permissions")
 
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.CLOUDCARE))

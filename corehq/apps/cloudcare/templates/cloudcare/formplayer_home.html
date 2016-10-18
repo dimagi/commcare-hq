@@ -4,7 +4,7 @@
 {% load compress %}
 
 {% block title %}
-    {% trans "CloudCare" %}
+    {% trans "Web Apps" %}
 {% endblock %}
 
 {% block page_title %}{% endblock %}
@@ -24,7 +24,7 @@
 {% block navigation %}{{ block.super }}
   <div class="navbar navbar-inverse navbar-cloudcare navbar-static-top">
     <div class="container-fluid">
-      <a class="navbar-brand" href="{% url 'cloudcare_default' domain %}"><i class="fcc fcc-flower"></i> Cloudcare</a>
+      <a class="navbar-brand" href="{% url 'cloudcare_default' domain %}"><i class="fcc fcc-flower"></i> Web Apps</a>
       <ul class="nav navbar-nav navbar-right" >
         <li><a href="#" id="commcare-menu-toggle">{% trans 'Show Full Menu' %}</a></li>
       </ul>
@@ -163,5 +163,6 @@
     {% include 'formplayer/menu_list.html' %}
     {% include 'formplayer/session_list.html' %}
     {% include 'formplayer/query_view.html' %}
+    {% include 'formplayer/confirmation_modal.html' %}
 
 {% endblock %}
