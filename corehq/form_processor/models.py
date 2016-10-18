@@ -423,10 +423,13 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
         try:
             blob = db.get(self.blob_id, self.blobdb_bucket())
         except (KeyError, NotFound, BadName):
-            try:
-                # http://manage.dimagi.com/default.asp?239638
-                blob = db.get(self.blob_id, self.blobdb_bucket(True))
-            except (KeyError, NotFound, BadName):
+            if not self.blob_bucket and '-' in str(self.attachment_id):
+                try:
+                    # http://manage.dimagi.com/default.asp?239638
+                    blob = db.get(self.blob_id, self.blobdb_bucket(True))
+                except (KeyError, NotFound, BadName):
+                    raise AttachmentNotFound(self.name)
+            else:
                 raise AttachmentNotFound(self.name)
 
         if stream:
@@ -449,9 +452,10 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
             return self.blob_bucket
         if self.attachment_id is None:
             raise AttachmentNotFound("cannot manipulate attachment on unidentified document")
-        attach_id = str(self.attachment_id)
         if remove_dashes:
-            attach_id = attach_id.replace('-', '')
+            attach_id = self.attachment_id.hex
+        else:
+            attach_id = str(self.attachment_id)
         return os.path.join(self._attachment_prefix, attach_id)
 
     class Meta:
