@@ -8,10 +8,8 @@ from django.utils.translation import ugettext as _
 
 from couchdbkit.exceptions import ResourceNotFound
 
-from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from casexml.apps.case.models import CommCareCase, CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN
 from casexml.apps.case.util import iter_cases
-from casexml.apps.phone.caselogic import get_footprint
 from casexml.apps.phone.cleanliness import get_dependent_case_info
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils.general import should_use_sql_backend
@@ -22,10 +20,6 @@ from touchforms.formplayer.models import EntrySession
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.cloudcare.exceptions import RemoteAppError
-from corehq.apps.hqcase.dbaccessors import (
-    get_case_ids_in_domain,
-    get_case_ids_in_domain_by_owner,
-)
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import get_es_new, ES_META
 
