@@ -28,7 +28,7 @@ EMPTY_CELL = {'sort_key': 0, 'html': '---'}
 
 class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
     slug = 'site_reporting_rates_report'
-    name = 'Site Reporting Rates Report'
+    name = u'Complétude et promptitude'
 
     report_template_path = 'pnlppgi/site_reporting.html'
 
@@ -182,7 +182,7 @@ class MalariaReport(SqlTabularReport, CustomProjectReport, ProjectReportParamete
 
 class WeeklyMalaria(MalariaReport):
     slug = 'weekly_malaria'
-    name = 'Weekly Malaria'
+    name = u'Données de la semaine'
 
     report_template_path = 'pnlppgi/weekly_malaria.html'
 
@@ -348,7 +348,7 @@ class WeeklyMalaria(MalariaReport):
 
 class CumulativeMalaria(MalariaReport):
     slug = 'cumulative_malaria'
-    name = 'Cumulative Malaria'
+    name = u'Données cumulées'
 
     report_template_path = 'pnlppgi/cumulative_malaria.html'
 
