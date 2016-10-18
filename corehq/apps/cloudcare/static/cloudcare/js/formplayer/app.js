@@ -232,6 +232,15 @@ FormplayerFrontend.on("sync", function () {
     $.ajax(options);
 });
 
+/**
+ * retry
+ *
+ * Will retry a restore when doing an async restore.
+ *
+ * @param {Object} response - An async restore response object
+ * @param {function} retryFn - The function to be called when ready to retry restoring
+ * @param {String} progressMessage - The message to be displayed above the progress bar
+ */
 FormplayerFrontend.on("retry", function(response, retryFn, progressMessage) {
 
     var progressView = FormplayerFrontend.regions.loadingProgress.currentView,
@@ -250,6 +259,13 @@ FormplayerFrontend.on("retry", function(response, retryFn, progressMessage) {
     setTimeout(retryFn, retryTimeout);
 });
 
+
+/**
+ * clearProgress
+ *
+ * Clears the progress bar. If currently in progress, wait 200 ms to transition
+ * to complete progress.
+ */
 FormplayerFrontend.on('clearProgress', function() {
     var progressView = FormplayerFrontend.regions.loadingProgress.currentView,
         progressFinishTimeout = 0;
