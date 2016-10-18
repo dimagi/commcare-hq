@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-10-11 19:29+0000\n"
+"POT-Creation-Date: 2016-10-18 19:21+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -77,6 +77,34 @@ msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:136
 msgid "Form successfully saved"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/apps/sessions/session_view.js:30
+msgid "Delete incomplete form?"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/apps/sessions/session_view.js:31
+msgid "Are you sure you want to delete '"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/apps/sessions/session_view.js:32
+msgid "Yes"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/apps/sessions/session_view.js:33
+msgid "No"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/apps/util/util.js:22
+msgid "Confirm?"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/apps/util/util.js:24
+msgid "OK"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/apps/util/util.js:25
+msgid "Cancel"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/entities/menu.js:115
@@ -184,27 +212,27 @@ msgstr ""
 msgid "Add Key, Value Mapping"
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:89
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:82
 msgid "Please enter your name."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:98
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:91
 msgid "Please specify an email."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:125
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:118
 msgid "There is already a user with this email."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:133
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:126
 msgid "Checking email..."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:143
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:136
 msgid "Please specify a password."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:163
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:152
 msgid "Please specify a project name."
 msgstr ""
 
