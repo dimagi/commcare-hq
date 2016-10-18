@@ -107,9 +107,9 @@ CALLCENTER = FeaturePreview(
 
 MODULE_FILTER = FeaturePreview(
     slug='module_filter',
-    label=_('Module Filtering'),
+    label=_('Menu Filtering'),
     description=_(
-        'Similar to form display conditions, hide your module unless the condition is met. Most commonly used'
+        'Similar to form display conditions, hide your menu unless the condition is met. Most commonly used'
         ' in conjunction with '
         '<a href="https://help.commcarehq.org/display/commcarepublic/Custom+User+Data">custom user data</a>.'
     ),

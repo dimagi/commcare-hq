@@ -7,7 +7,9 @@
     {% include 'analytics/fullstory.html' %}
 {% endblock %}
 {% block js %}{{ block.super }}
-    <script src="{% static 'app_manager/js/commcaresettings.js' %}"></script>
+    {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or not release_manager %}
+        <script src="{% static 'app_manager/js/commcaresettings.js' %}"></script>
+    {% endif %}
     <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
     <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
     <script src="{% static 'app_manager/js/password_setter.jquery.js' %}"></script>
@@ -30,7 +32,7 @@
             settings: {
                 sections: {{ settings_layout|JSON }},
                 values: {{ settings_values|JSON }},
-                {% if request|toggle_enabled:"CUSTOM_PROPERTIES" %}
+                {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" and request|toggle_enabled:"CUSTOM_PROPERTIES" %}
                 customProperties: {{ custom_properties|JSON }},
                 {% endif %}
                 urls: {
@@ -46,13 +48,16 @@
             }
         };
 
+        {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or not release_manager %}
         $(function () {
             var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
             COMMCAREHQ.appView.settings = new CommcareSettings(COMMCAREHQ.appView.settings);
             $('#commcare-settings').koApplyBindings(COMMCAREHQ.appView.settings);
         });
+        {% endif %}
 
         {% if not app.is_remote_app %}
+        {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or not release_manager %}
         $(function () {
             var multimedia_tab = (function () {
                 var self = {};
@@ -84,7 +89,9 @@
             });
         });
         {% endif %}
+        {% endif %}
 
+        {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
         $(function () {
             var state = "",
                 $main = $("#releases"),
@@ -121,8 +128,10 @@
                 });
             });
         });
+        {% endif %}
 
     </script>
+    {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or not release_manager %}
     {% include 'hqmedia/partials/multimedia_init.html' %}
     <script>
         var refs = {{ refs|JSON }};
@@ -180,6 +189,7 @@
         });
     </script>
     {% endif %}
+    {% endif %}
     {% if app.doc_type == "Application" %}
         <script>
             $(function () {
@@ -204,6 +214,7 @@
             ga_track_event('App Builder', 'Download Multimedia');
         });
     </script>
+    {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or not release_manager %}
     <script>
         // Set up typeahead for domain names
         $(function(){
@@ -212,6 +223,7 @@
             });
         });
     </script>
+    {% endif %}
 {% endblock %}
 
 {% block title %}
@@ -223,6 +235,45 @@
 {% endblock %}
 
 {% block form-view %}
+
+{% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+<a href="{% url "app_summary" domain app.id %}" class="btn btn-default pull-right">
+    <i class="fa fa-list-alt"></i>
+    App Summary
+</a>
+
+<inline-edit params="
+    value: '{{ app.name|escapejs }}',
+    readOnlyClass: 'h3',
+    url: '{% url "edit_app_attr" domain app.id 'name' %}',
+    placeholder: '{% trans "Untitled App"|escapejs %}',
+    postSave: function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); },
+    rows: 1,
+    saveValueName: 'name',
+"></inline-edit>
+<br />
+<inline-edit params="
+    value: '{{ app.short_comment|escapejs }}',
+    url: '{% url "edit_app_attr" domain app.id 'comment' %}',
+    placeholder: '{% trans "Enter app description here"|escapejs %}',
+    saveValueName: 'comment',
+    readOnlyClass: 'app-comment',
+    cols: 50,
+"></inline-edit>
+
+<br><br>
+{% if release_manager %}
+    <div class="tab-pane" id="releases">
+        {% include "app_manager/partials/releases.html" %}
+    </div>
+{% else %}
+    <div class="tab-content">
+        <div class="tab-pane{% if not copy_app_form.is_bound %} active{% endif %}" id="app-settings">
+            {% include "app_manager/partials/app-settings.html" %}
+        </div>
+    </div>
+{% endif %}
+{% else %}
     <div class="tab-content">
         <div class="tab-pane" id="releases">
             <!-- templates only; will be populated asynchronously -->
@@ -285,6 +336,7 @@
             </form>
         </div>
     </div>
+{% endif %}
 {% endblock %}
 
 {% block modals %}{{ block.super }}

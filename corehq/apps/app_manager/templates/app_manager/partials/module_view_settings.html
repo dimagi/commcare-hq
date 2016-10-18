@@ -8,11 +8,14 @@
     <div class="save-button-holder clearfix"></div>
     <fieldset>
         {% block settings_fields %}
+        {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" and not module.is_surveys %}
+            {% include "app_manager/partials/module_view_case_type.html" %}
+        {% endif %}
         {% if module.module_type == 'shadow' %}
         <div id="sourceModuleForms">
             <div class="form-group">
                 <label class="col-sm-2 control-label">
-                    {% trans "Source Module" %}
+                    {% trans "Source Menu" %}
                 </label>
                 <div class="col-sm-4">
                     <select name="source_module_id" class="form-control"
@@ -42,17 +45,20 @@
             </div>
         </div>
         {% endif %}
-        <div class="form-group">
-            <label class="col-sm-2 control-label">
-                {% trans "Menu Mode" %}
-            </label>
-            <div class="col-sm-4">
-                <select type="text" name="put_in_root" class="form-control" id="put_in_root">
-                    <option value="false">{% trans "Display module and then forms" %}</option>
-                    <option value="true"{% if module.put_in_root %} selected{% endif %}>{% trans "Display only forms" %}</option>
-                </select>
+
+        {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or app.advanced_app_builder or module.is_surveys %}
+            <div class="form-group">
+                <label class="col-sm-2 control-label">
+                    {% trans "Menu Mode" %}
+                </label>
+                <div class="col-sm-4">
+                    <select type="text" name="put_in_root" class="form-control" id="put_in_root">
+                        <option value="false">{% trans "Display menu and then forms" %}</option>
+                        <option value="true"{% if module.put_in_root %} selected{% endif %}>{% trans "Display only forms" %}</option>
+                    </select>
+                </div>
             </div>
-        </div>
+        {% endif %}
 
         {% if app.grid_display_for_some_modules %}
         <div class="form-group" id="display_style_container">
@@ -74,7 +80,7 @@
         {% if child_module_enabled %}
         <div class="form-group">
             <label class="col-sm-2 control-label">
-                {% trans "Parent Module" %}
+                {% trans "Parent Menu" %}
             </label>
             <div class="col-sm-4">
                 <select type="text" name="root_module_id" class="form-control">

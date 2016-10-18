@@ -90,14 +90,27 @@ def paginate_releases(request, domain, app_id):
     return json_response(saved_apps)
 
 
+def release_manager(request, domain, app_id):
+    from corehq.apps.app_manager.views.view_generic import view_generic
+    return view_generic(request, domain, app_id=app_id, release_manager=toggles.ONBOARDING_PROTOTYPE.enabled(domain))
+
+
 @require_deploy_apps
 def releases_ajax(request, domain, app_id, template='app_manager/partials/releases.html'):
+    context = get_releases_context(request, domain, app_id)
+    response = render(request, template, context)
+    response.set_cookie('lang', encode_if_unicode(context['lang']))
+    return response
+
+
+def get_releases_context(request, domain, app_id):
     app = get_app(domain, app_id)
     context = get_apps_base_context(request, domain, app)
     can_send_sms = domain_has_privilege(domain, privileges.OUTBOUND_SMS)
     build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)
 
     context.update({
+        'intro_only': len(app.modules) == 0 and toggles.ONBOARDING_PROTOTYPE.enabled(domain),
         'release_manager': True,
         'can_send_sms': can_send_sms,
         'has_mobile_workers': get_doc_count_in_domain_by_class(domain, CommCareUser) > 0,
@@ -105,7 +118,7 @@ def releases_ajax(request, domain, app_id, template='app_manager/partials/releas
             get_sms_autocomplete_context(request, domain)['sms_contacts']
             if can_send_sms else []
         ),
-        'build_profile_access': build_profile_access,
+        'build_profile_access': build_profile_access and False,
         'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
         'vellum_case_management': app.vellum_case_management,
         'fetchLimit': request.GET.get('limit', DEFAULT_FETCH_LIMIT),
@@ -119,9 +132,7 @@ def releases_ajax(request, domain, app_id, template='app_manager/partials/releas
             })
         except ReportConfigurationNotFoundError:
             pass
-    response = render(request, template, context)
-    response.set_cookie('lang', encode_if_unicode(context['lang']))
-    return response
+    return context
 
 
 @login_and_domain_required

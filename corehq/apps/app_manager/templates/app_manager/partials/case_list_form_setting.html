@@ -1,6 +1,76 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% load i18n %}
+
+{% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+{% if not module.is_surveys and form.get_action_type == 'open' and app.advanced_app_builder %}
+
+<script>
+    // show extra fields if user wants reg form in both case list and menu
+    $(function() {
+        var $form = $("#case-list-form"),
+            $config = $("#case_list_form-label, #case_list_media");
+        $config.addClass("hide");
+        $form.on("change", "input[type='checkbox']", function() {
+            if ($form.find(":checked").length === 2) {
+                $config.removeClass("hide");
+            } else {
+                $config.addClass("hide");
+            }
+        });
+    });
+</script>
+
+<div id="case-list-form">
+    <div class="form-group">
+        <label class="col-sm-2 control-label">
+            Registration Form Accessible in Menu
+            <span class="hq-help-template"
+                  data-title="{% trans "Registration Form Accessible from Case List" %}"
+                  data-content="{% blocktrans %}Minimize duplicate case registrations by requiring mobile workers
+                  to search the case list before they can enter a form that registers new cases.{% endblocktrans %}"
+            ></span>
+        </label>
+        <div class="col-sm-4">
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" />
+                </label>
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-2 control-label">
+            Registration Form Accessible from Case List
+            <span class="hq-help-template"
+                  data-title="{% trans "Registration Form Accessible from Case List" %}"
+                  data-content="{% blocktrans %}Include a registration form in the application's menu of forms.{% endblocktrans %}"
+            ></span>
+        </label>
+        <div class="col-sm-4">
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" checked />
+                </label>
+            </div>
+        </div>
+    </div>
+    <div class="form-group" id="case_list_form-label">
+        <label class="col-sm-2 control-label">
+            {% trans "Label for Case List Registration" %}
+        </label>
+        <div class="col-sm-4">
+            {% input_trans module.case_list_form.label langs input_name='case_list_form_label' %}
+        </div>
+    </div>
+</div>
+<div id="case_list_media">
+    {% include "app_manager/partials/nav_menu_media.html" with item=multimedia.case_list_form qualifier='case_list_form_' ICON_LABEL="Registration Form Icon" AUDIO_LABEL="Registration Form Audio" %}
+</div>
+
+{% endif %}
+{% else %}
+
 <div id="case-list-form">
     <div class="form-group">
         <label class="col-sm-2 control-label">
@@ -41,10 +111,10 @@
                 <div>
                     {% blocktrans %}
                     Registration forms are only available from the case list when<br/>
-                    (1) The registration form is in a different module<br/>
-                    (2) Every form in the module updates or closes the case<br/>
+                    (1) The registration form is in a different case list<br/>
+                    (2) Every form in the case list updates or closes the case<br/>
                     (3) The case list does not have parent case selection configured.<br/>
-                    (4) The module's "Menu Mode" is configured as "Display module and then forms".<br/>
+                    (4) The case list's "Menu Mode" is configured as "Display menu and then forms".<br/>
                     To learn more, see our <a href="https://help.commcarehq.org/display/commcarepublic/Minimize+Duplicates" target="_blank">Help Site</a>
                     {% endblocktrans %}
                 </div>
@@ -61,7 +131,7 @@
         <div class="col-sm-4">
             {% input_trans module.case_list_form.label langs input_name='case_list_form_label' %}
             <div data-bind="visible: !allowed" class="help-block">
-                {%  trans "Error! Registration form will be ignored since this module is not allowed to have one for the following reason:" %}<br/>
+                {%  trans "Error! Registration form will be ignored for the following reason:" %}<br/>
                 <ul><li data-bind="text: now_allowed_reason"></li></ul>
                 {% blocktrans %}
                     To learn more, see our
@@ -72,5 +142,8 @@
     </div>
 </div>
 <div id="case_list_media">
-    {% include "app_manager/partials/nav_menu_media.html" with item=multimedia.case_list_form qualifier='case_list_form_' ICON_LABEL="Registration Form Icon" AUDIO_LABEL="Registration Form Audio" %}
+    {% include "app_manager/partials/nav_menu_media.html" with item=multimedia.case_list_form
+qualifier='case_list_form_' ICON_LABEL="Registration Form Icon" AUDIO_LABEL="Registration Form Audio" %}
 </div>
+
+{% endif %}

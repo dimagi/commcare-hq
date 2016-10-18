@@ -7,20 +7,7 @@
     <div class="save-button-holder clearfix"></div>
     <fieldset>
         <legend>{% trans "Basic" %}</legend>
-        <div class="form-group">
-            <label class="col-sm-2 control-label">
-                {% trans "Case Type" %}
-                <span class="hq-help-template"
-                      data-title="{% trans "Case Type" %}"
-
-                      data-content="{% trans "The name for the type of case you are tracking (e.g. &quot;pregnancy&quot;, &quot;farm&quot;, &quot;household&quot;, etc.). All cases you register in this module will be this type of case, and only cases of this type will show in the case list. Other modules with the same case type will use the same set of cases." %}"
-                        ></span>
-            </label>
-            <div class="col-sm-4">
-                <input class="code form-control" type="text" id="case_type" name="case_type" value="{{ module.case_type }}" />
-                <span class="help-block" id="case_type_error" style="display: none;"></span>
-            </div>
-        </div>
+        {% include "app_manager/partials/module_view_case_type.html" %}
         <div class="form-group">
             <label class="control-label col-sm-2">
                 {% trans "Label for Cases" %}
@@ -37,10 +24,10 @@
     <fieldset>
         <legend>{% trans "Advanced" %}</legend>
         {% block case_management_advanced_fields %}
-        {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List Menu Item" DESC="An item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
+        {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List Menu Item" DESC="An item in the menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
         {% include 'app_manager/partials/case_list_form_setting.html' %}
         {% if module.module_type == 'basic' and request.project.survey_management_enabled %}
-            {% include 'app_manager/partials/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
+            {% include 'app_manager/partials/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
         {% endif %}
         {% endblock case_management_advanced_fields %}
     </fieldset>
