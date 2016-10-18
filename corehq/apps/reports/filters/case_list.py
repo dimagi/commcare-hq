@@ -72,6 +72,7 @@ class CaseListFilterOptions(EmwfOptionsView):
 
     @property
     def data_sources(self):
+        print 'fetching data source for filters in view'
         locations_own_cases = (LocationType.objects
                                .filter(domain=self.domain, shares_cases=True)
                                .exists())
