@@ -30,6 +30,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                     menus.fetch(request);
                     return defer.promise();
                 });
+                return;
             } else if (response.commands) {
                 this.type = "commands";
                 return response.commands;

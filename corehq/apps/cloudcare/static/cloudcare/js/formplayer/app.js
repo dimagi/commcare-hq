@@ -19,7 +19,7 @@ FormplayerFrontend.on("before:start", function () {
 
         regions: {
             main: "#menu-region",
-            loadingProgress: "#formplayer-progress",
+            loadingProgress: "#formplayer-progress-container",
             breadcrumb: "#breadcrumb-region",
             persistentCaseTile: "#persistent-case-tile",
             phoneModeNavigation: '#phone-mode-navigation',
@@ -176,7 +176,7 @@ FormplayerFrontend.on("start", function (options) {
         phoneMode: options.phoneMode,
         oneQuestionPerScreen: options.oneQuestionPerScreen,
     };
-    
+
     FormplayerFrontend.request('gridPolyfillPath', options.gridPolyfillPath);
     if (Backbone.history) {
         Backbone.history.start();
@@ -206,34 +206,58 @@ FormplayerFrontend.reqres.setHandler('getAppDisplayProperties', function() {
 });
 
 FormplayerFrontend.on("sync", function () {
-    var user = FormplayerFrontend.request('currentUser');
-    var username = user.username;
-    var domain = user.domain;
-    var formplayer_url = user.formplayer_url;
-    var options = {
+    var user = FormplayerFrontend.request('currentUser'),
+        username = user.username,
+        domain = user.domain,
+        formplayer_url = user.formplayer_url,
+        complete,
+        options;
+
+    complete = function(response) {
+        if (response.responseJSON.status === 'retry') {
+            FormplayerFrontend.trigger('retry', response.responseJSON, function() {
+                $.ajax(options)
+            });
+        } else {
+            FormplayerFrontend.trigger('clearProgress');
+            tfSyncComplete(response.responseJSON.status === 'error');
+        }
+    };
+    options = {
         url: formplayer_url + "/sync-db",
         data: JSON.stringify({"username": username, "domain": domain}),
+        complete: complete,
     };
     Util.setCrossDomainAjaxOptions(options);
-    var resp = $.ajax(options);
-    resp.done(function () {
-        tfSyncComplete(false);
-    });
-    resp.error(function () {
-        tfSyncComplete(true);
-    });
+    $.ajax(options);
 });
 
 FormplayerFrontend.on("retry", function(response, retryFn) {
 
-    var progressView = FormplayerFrontend.regions.loadingProgress.currentView
+    var progressView = FormplayerFrontend.regions.loadingProgress.currentView,
+        progress = response.total === 0 ? 0 : response.done / response.total,
+        retryTimeout = response.retryAfter;
+
     if (!progressView) {
         progressView = new FormplayerFrontend.Utils.Views.ProgressView();
         FormplayerFrontend.regions.loadingProgress.show(progressView);
     }
-    progressView.setProgress(response.done / response.total);
 
-    setTimeout(retryFn, 3) //|| response.retryAfter);
+    progressView.setProgress(progress, retryTimeout);
+    setTimeout(retryFn, retryTimeout);
+});
+
+FormplayerFrontend.on('clearProgress', function() {
+    var progressView = FormplayerFrontend.regions.loadingProgress.currentView,
+        progressFinishTimeout = 0;
+    if (progressView) {
+        progressFinishTimeout = 200;
+        progressView.setProgress(1, progressFinishTimeout);
+    }
+
+    setTimeout(function() {
+        FormplayerFrontend.regions.loadingProgress.empty()
+    }, progressFinishTimeout);
 });
 
 
