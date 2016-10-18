@@ -450,7 +450,8 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
     def _get_location_ids_filter(self, mobile_user_and_group_slugs):
         location_ids = ExpandedMobileWorkerFilter.selected_location_ids(mobile_user_and_group_slugs)
         if location_ids:
-            user_ids = UserES().location(location_ids).run().doc_ids
+            users = SQLLocation.users_at_locations_and_descendants(location_ids)
+            user_ids = [user['_id'] for user in users]
             # return LocationsFilter(location_ids)
             return FormSubmittedByFilter(user_ids)
 
@@ -547,15 +548,11 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
             return ModifiedOnRangeFilter(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
 
     def _get_location_filter(self, location_ids):
-        all_locations = SQLLocation.location_and_descendants(location_ids)
-        location_ids = [location.get_id for location in all_locations]
-        user_ids = UserES().location(location_ids).run().doc_ids
+        users = SQLLocation.users_at_locations_and_descendants(location_ids)
+        user_ids = [user['_id'] for user in users]
         return OwnerFilter(user_ids)
 
-    def get_case_filter(self, mobile_user_and_group_slugs=None):
-        print 'fetching filter for cases'
-        group_ids = self._get_group(mobile_user_and_group_slugs)
-
+    def _get_group_independent_filters(self, mobile_user_and_group_slugs):
         default_filters = [OwnerTypeFilter(self._get_es_user_types(mobile_user_and_group_slugs))]
 
         location_ids = ExpandedMobileWorkerFilter.selected_location_ids(mobile_user_and_group_slugs)
@@ -566,25 +563,27 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
         if user_ids:
             default_filters.append(OwnerFilter(user_ids))
 
+        return default_filters
+
+    def get_case_filter(self, mobile_user_and_group_slugs=None):
+        print 'fetching filter for cases'
+        group_ids = self._get_group(mobile_user_and_group_slugs)
+
         if group_ids:
-            groups_static_user_ids = []
-            for group_id in group_ids:
-                group = Group.get(group_id)
-                groups_static_user_ids += group.get_static_user_ids()
-            case_filter = [OR(
-                OwnerFilter(group_ids),
-                OwnerFilter(groups_static_user_ids),
-                LastModifiedByFilter(groups_static_user_ids),
-                *default_filters
-            )]
+            groups_static_user_ids = Group.get_static_user_ids_for_groups(group_ids)
+            owner_filter_ids = group_ids + groups_static_user_ids
+            last_modified_filter_ids = groups_static_user_ids
         else:
-            case_sharing_groups = [g.get_id for g in
+            case_sharing_group_ids = [g.get_id for g in
                                    Group.get_case_sharing_groups(self.domain_object.name)]
-            case_filter = [OR(
-                OwnerFilter(case_sharing_groups),
-                LastModifiedByFilter(case_sharing_groups),
-                *default_filters
-            )]
+            owner_filter_ids = case_sharing_group_ids
+            last_modified_filter_ids = case_sharing_group_ids
+
+        case_filter = [OR(
+            OwnerFilter(owner_filter_ids),
+            LastModifiedByFilter(last_modified_filter_ids),
+            *self._get_group_independent_filters(mobile_user_and_group_slugs)
+        )]
 
         date_filter = self._get_datespan_filter()
         if date_filter:
