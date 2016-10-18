@@ -1554,6 +1554,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                     parent_types.add((module_case_type, subcase.reference_id or 'parent'))
         return parent_types, case_properties
 
+    # jls
     def update_app_case_meta(self, app_case_meta):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
         questions = {
@@ -1563,6 +1564,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         }
         module_case_type = self.get_module().case_type
         type_meta = app_case_meta.get_type(module_case_type)
+        import pdb; pdb.set_trace()
         for type_, action in self.active_actions().items():
             if type_ == 'open_case':
                 type_meta.add_opener(self.unique_id, action.condition)
@@ -1575,20 +1577,20 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                 )
             if type_ == 'close_case':
                 type_meta.add_closer(self.unique_id, action.condition)
-            if type_ == 'update_case':
+            if type_ == 'update_case' or type_ == 'usercase_update':
                 for name, question_path in FormAction.get_action_properties(action):
                     self.add_property_save(
                         app_case_meta,
-                        module_case_type,
+                        USERCASE_TYPE if type_ == 'usercase_update' else module_case_type,
                         name,
                         questions,
                         question_path
                     )
-            if type_ == 'case_preload' or type_ == 'load_from_form':
+            if type_ == 'case_preload' or type_ == 'load_from_form' or type_ == 'usercase_preload':
                 for name, question_path in FormAction.get_action_properties(action):
                     self.add_property_load(
                         app_case_meta,
-                        module_case_type,
+                        USERCASE_TYPE if type_ == 'usercase_preload' else module_case_type,
                         name,
                         questions,
                         question_path
