@@ -1,7 +1,8 @@
 from django.core.urlresolvers import reverse
 
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.filters.base import BaseMultipleOptionFilter
+from corehq.apps.userreports.reports.filters.choice_providers import LocationChoiceProvider
+from custom.enikshay.reports.utils import Report
 
 
 class EnikshayLocationFilter(BaseMultipleOptionFilter):
@@ -15,12 +16,12 @@ class EnikshayLocationFilter(BaseMultipleOptionFilter):
 
     @property
     def selected(self):
+        selected = super(EnikshayLocationFilter, self).selected
+        choice_provider = LocationChoiceProvider(Report(domain=self.domain), None)
+        choice_provider.configure({'include_descendants': True})
         return [
-            {'id': location.location_id, 'text': location.display_name}
-            for location in SQLLocation.objects.filter(
-                domain=self.domain,
-                location_id__in=super(EnikshayLocationFilter, self).selected
-            )
+            {'id': location.value, 'text': location.display}
+            for location in choice_provider.get_choices_for_known_values(selected)
         ]
 
     @property
