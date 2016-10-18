@@ -579,6 +579,7 @@ class TestXForm(SimpleTestCase, TestXmlMixin):
             (condition_case('false()', 'never')),
             (condition_case("/data/question1 = 'yes'", 'if', '/data/question1', 'yes')),
             (condition_case("selected(/data/question1, 'yes')", 'if', '/data/question1', 'yes', 'selected')),
+            (condition_case("/data/question1", 'if', '/data/question1', None, 'boolean_true')),
         ]
 
         for case in cases:

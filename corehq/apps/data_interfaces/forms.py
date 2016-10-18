@@ -1,5 +1,5 @@
 import json
-from corehq.apps.data_interfaces.models import AutomaticUpdateRuleCriteria
+from corehq.apps.data_interfaces.models import AutomaticUpdateRuleCriteria, AutomaticUpdateAction
 from corehq.apps.style import crispy as hqcrispy
 from couchdbkit import ResourceNotFound
 
@@ -116,9 +116,17 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         label=ugettext_lazy("Case Type"),
         required=True,
     )
+    filter_on_server_modified = forms.ChoiceField(
+        label=ugettext_lazy("Filter on Last Modified"),
+        choices=(
+            ('true', ugettext_lazy("Yes")),
+            ('false', ugettext_lazy("No")),
+        ),
+        required=False
+    )
     server_modified_boundary = forms.IntegerField(
         label=ugettext_lazy("enter number of days"),
-        required=True,
+        required=False,
     )
     conditions = forms.CharField(
         required=True,
@@ -134,6 +142,11 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
     )
     update_property_name = TrimmedCharField(
         required=False,
+    )
+    property_value_type = forms.ChoiceField(
+        label=ugettext_lazy('Value Type'),
+        choices=AutomaticUpdateAction.PROPERTY_TYPE_CHOICES,
+        required=False
     )
     update_property_value = TrimmedCharField(
         required=False,
@@ -183,7 +196,15 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         if 'domain' not in kwargs:
             raise Exception("Expected domain in kwargs")
         self.domain = kwargs.pop('domain')
+        self.enhancements_enabled = AUTO_CASE_UPDATE_ENHANCEMENTS.enabled(self.domain)
         super(AddAutomaticCaseUpdateRuleForm, self).__init__(*args, **kwargs)
+
+        if not self.enhancements_enabled:
+            # Always set the value of filter_on_server_modified to true when the
+            # enhancement toggle is not set
+            self.data = self.data.copy()
+            self.initial['filter_on_server_modified'] = 'true'
+            self.data['filter_on_server_modified'] = 'true'
 
         # We can't set these fields to be required because they are displayed
         # conditionally and we'll confuse django validation if we make them
@@ -191,66 +212,83 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         # when they are displayed they are required.
         self.fields['update_property_name'].label = _("Property") + '<span class="asteriskField">*</span>'
         self.fields['update_property_value'].label = _("Value") + '<span class="asteriskField">*</span>'
-
-        if AUTO_CASE_UPDATE_ENHANCEMENTS.enabled(self.domain):
-            self.allow_updates_without_closing()
-
-        self.set_case_type_choices(self.initial.get('case_type'))
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-4 col-md-3'
         self.helper.form_method = 'POST'
         self.helper.form_action = '#'
+
+        if self.enhancements_enabled:
+            self.allow_updates_without_closing()
+
+        _update_property_fields = filter(None, [
+            Field(
+                'update_property_name',
+                ng_model='update_property_name',
+                css_class='case-property-typeahead',
+            ),
+            Field(
+                'property_value_type',
+                ng_model='property_value_type',
+            ) if self.enhancements_enabled else None,
+            Field(
+                'update_property_value',
+                ng_model='update_property_value',
+            )
+        ])
+
+        _basic_info_fields = filter(None, [
+            Field(
+                'name',
+                ng_model='name',
+            ),
+            Field(
+                'case_type',
+                ng_model='case_type',
+            ),
+            Field(
+                'filter_on_server_modified',
+                ng_model='filter_on_server_modified',
+            ) if self.enhancements_enabled else None,
+            hqcrispy.B3MultiField(
+                _("Close Case") + '<span class="asteriskField">*</span>',
+                Div(
+                    hqcrispy.MultiInlineField(
+                        'server_modified_boundary',
+                        ng_model='server_modified_boundary',
+                    ),
+                    css_class='col-sm-6',
+                ),
+                Div(
+                    HTML('<label class="control-label">%s</label>' %
+                         _('days after the case was last modified.')),
+                    css_class='col-sm-6',
+                ),
+                help_bubble_text=_("This will close the case if it has been "
+                                   "more than the chosen number of days since "
+                                   "the case was last modified. Cases are "
+                                   "checked against this rule weekly."),
+                css_id='server_modified_boundary_multifield',
+                label_class=self.helper.label_class,
+                field_class='col-sm-8 col-md-6',
+                ng_show='showServerModifiedBoundaryField()',
+            ),
+            Field(
+                'action',
+                ng_model='action',
+            ),
+            Div(
+                *_update_property_fields,
+                ng_show='showUpdateProperty()'
+            )
+        ])
+
+        self.set_case_type_choices(self.initial.get('case_type'))
         self.helper.layout = Layout(
             Fieldset(
                 _("Basic Information"),
-                Field(
-                    'name',
-                    ng_model='name',
-                ),
-                Field(
-                    'case_type',
-                    ng_model='case_type',
-                ),
-                hqcrispy.B3MultiField(
-                    _("Close Case") + '<span class="asteriskField">*</span>',
-                    Div(
-                        hqcrispy.MultiInlineField(
-                            'server_modified_boundary',
-                            ng_model='server_modified_boundary',
-                        ),
-                        css_class='col-sm-6',
-                    ),
-                    Div(
-                        HTML('<label class="control-label">%s</label>' %
-                             _('days after the case was last modified.')),
-                        css_class='col-sm-6',
-                    ),
-                    help_bubble_text=_("This will close the case if it has been "
-                                       "more than the chosen number of days since "
-                                       "the case was last modified. Cases are "
-                                       "checked against this rule weekly."),
-                    css_id='server_modified_boundary_multifield',
-                    label_class=self.helper.label_class,
-                    field_class='col-sm-8 col-md-6',
-                ),
-                Field(
-                    'action',
-                    ng_model='action',
-                ),
-                Div(
-                    Field(
-                        'update_property_name',
-                        ng_model='update_property_name',
-                        css_class='case-property-typeahead',
-                    ),
-                    Field(
-                        'update_property_value',
-                        ng_model='update_property_value',
-                    ),
-                    ng_show='showUpdateProperty()',
-                ),
+                *_basic_info_fields
             ),
             Fieldset(
                 _("Filter Cases to Close (Optional)"),
@@ -272,9 +310,17 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
 
     def clean_server_modified_boundary(self):
         value = self.cleaned_data.get('server_modified_boundary')
-        if not isinstance(value, int) or value < 30:
-            raise ValidationError(_("Please enter a whole number greater than "
-                                    "or equal to 30."))
+
+        if self.enhancements_enabled:
+            if not self.cleaned_data.get('filter_on_server_modified'):
+                return None
+
+            if not isinstance(value, int) or value <= 0:
+                raise ValidationError(_("Please enter a whole number greater than 0."))
+        else:
+            if not isinstance(value, int) or value < 30:
+                raise ValidationError(_("Please enter a whole number greater than or equal to 30."))
+
         return value
 
     def clean_conditions(self):
@@ -311,14 +357,14 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                 if not property_value:
                     raise ValidationError(_("Please specify a property value."))
 
-                if property_match_type == AutomaticUpdateRuleCriteria.MATCH_DAYS_SINCE:
+                if property_match_type in (
+                    AutomaticUpdateRuleCriteria.MATCH_DAYS_AFTER,
+                    AutomaticUpdateRuleCriteria.MATCH_DAYS_BEFORE,
+                ):
                     try:
                         property_value = int(property_value)
                     except:
                         raise ValidationError(_("Please enter a number of days that is a number."))
-
-                    if property_value <= 0:
-                        raise ValidationError(_("Please enter a number of days that is positive."))
 
             result.append(dict(
                 property_name=property_name,
@@ -355,3 +401,16 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
             if not value:
                 raise ValidationError(_("This field is required"))
         return value
+
+    def clean_filter_on_server_modified(self):
+        if not self.enhancements_enabled:
+            return True
+        else:
+            string_value = self.cleaned_data.get('filter_on_server_modified')
+            return json.loads(string_value)
+
+    def clean_property_value_type(self):
+        if not self.enhancements_enabled:
+            return AutomaticUpdateAction.EXACT
+        else:
+            return self.cleaned_data.get('property_value_type')

@@ -3,6 +3,40 @@
 function Util() {
 }
 
+/**
+ * confirmationModal
+ *
+ * Takes an options hash that specifies options for a confirmation modal.
+ *
+ * @param options - Object
+ *      {
+ *          'title': <title> | 'Confirm?',
+ *          'message': <message>,
+ *          'confirmText': <confirmText> | 'OK',
+ *          'cancelText': <cancelText> | 'Cancel',
+ *          'onConfirm': function() {},
+ *      }
+ */
+Util.confirmationModal = function(options) {
+    options = _.defaults(options, {
+        title: gettext('Confirm?'),
+        message: '',
+        confirmText: gettext('OK'),
+        cancelText: gettext('Cancel'),
+        onConfirm: function() {},
+    });
+    var $modal = $('#js-confirmation-modal');
+    $modal.find('.js-modal-title').text(options.title);
+    $modal.find('.js-modal-body').text(options.message);
+    $modal.find('#js-confirmation-confirm').text(options.confirmText);
+    $modal.find('#js-confirmation-cancel').text(options.cancelText);
+
+    $modal.find('#js-confirmation-confirm').click(function(e) {
+        options.onConfirm(e);
+    });
+    $modal.modal('show');
+};
+
 Util.encodedUrlToObject = function (encodedUrl) {
     return decodeURIComponent(encodedUrl);
 };

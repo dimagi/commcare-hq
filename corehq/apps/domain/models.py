@@ -556,8 +556,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         return domain
 
     @classmethod
-    def get_or_create_with_name(cls, name, is_active=False,
-                                secure_submissions=True):
+    def get_or_create_with_name(cls, name, is_active=False, secure_submissions=True, use_sql_backend=False):
         result = cls.view("domain/domains", key=name, reduce=False, include_docs=True).first()
         if result:
             return result
@@ -567,6 +566,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
                 is_active=is_active,
                 date_created=datetime.utcnow(),
                 secure_submissions=secure_submissions,
+                use_sql_backend=use_sql_backend,
             )
             new_domain.save(**get_safe_write_kwargs())
             return new_domain

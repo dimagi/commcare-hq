@@ -215,6 +215,12 @@ def toggle_enabled(request, toggle_or_toggle_name):
     return _toggle_enabled(corehq.toggles, request, toggle_or_toggle_name)
 
 
+@register.filter
+def is_new_cloudcare(request):
+    from corehq import toggles
+    return _toggle_enabled(toggles, request, toggles.USE_FORMPLAYER_FRONTEND)
+
+
 @register.simple_tag
 def toggle_js_url(domain, username):
     return '{url}?username={username}&cachebuster={domain_cb}-{user_cb}'.format(
@@ -517,6 +523,7 @@ class IncludeAwareNode(loader_tags.IncludeNode):
             include_count = context.render_context._includes = []
         return include_count
 
+
 @register.simple_tag(takes_context=True)
 def url_replace(context, field, value):
     """Usage <a href="?{% url_replace 'since' restore_id %}">
@@ -528,3 +535,9 @@ def url_replace(context, field, value):
     params = context['request'].GET.copy()
     params[field] = value
     return params.urlencode()
+
+
+@register.filter
+def view_pdb(element):
+    import ipdb; ipdb.set_trace()
+    return element

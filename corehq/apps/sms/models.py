@@ -197,7 +197,9 @@ class SMSBase(UUIDGeneratorMixin, Log):
     queued_timestamp = models.DateTimeField(null=True)
     processed_timestamp = models.DateTimeField(null=True)
 
-    # If the message was simulated from a domain, this is the domain
+    # When an SMS is received on a domain-owned backend, we set this to
+    # the domain name. This can be used by the framework to handle domain-specific
+    # processing of unregistered contacts.
     domain_scope = models.CharField(max_length=126, null=True)
 
     # Set to True to send the message regardless of whether the destination
@@ -2004,12 +2006,12 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
         with transaction.atomic():
             self.__clear_shared_domain_cache(domains)
             self.mobilebackendinvitation_set.all().delete()
-            self.mobilebackendinvitation_set = [
-                MobileBackendInvitation(
+            for domain in domains:
+                MobileBackendInvitation.objects.create(
                     domain=domain,
                     accepted=True,
-                ) for domain in domains
-            ]
+                    backend=self,
+                )
 
     def soft_delete(self):
         with transaction.atomic():

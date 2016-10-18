@@ -87,6 +87,16 @@ def get_celery_stats():
     return mark_safe(worker_status)
 
 
+def parse_celery_pings(worker_responses):
+    pings = {}
+    for worker in worker_responses:
+        assert len(worker.keys()) == 1
+
+        worker_fullname = worker.keys()[0]
+        pings[worker_fullname] = worker[worker_fullname].get('ok') == 'pong'
+    return pings
+
+
 def parse_celery_workers(celery_workers):
     """
     Parses the response from the flower get workers api into a list of hosts

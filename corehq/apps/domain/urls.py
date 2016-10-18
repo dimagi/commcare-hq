@@ -1,6 +1,9 @@
 import sys
-from django.conf.urls import *
-from django.contrib.auth.views import password_reset
+from django.conf.urls import patterns, url
+from django.contrib.auth.views import (
+    password_reset, password_change, password_change_done, password_reset_done,
+    password_reset_complete,
+)
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils.translation import ugettext as _
@@ -28,6 +31,8 @@ from corehq.apps.domain.views import (
     CardsView, CardView, PasswordResetView,
     CaseSearchConfigView,
     EditOpenClinicaSettingsView,
+    autocomplete_fields, test_repeater, drop_repeater, set_published_snapshot,
+    calculated_properties,
 )
 from corehq.apps.repeaters.views import AddCaseRepeaterView, RepeatRecordView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
@@ -78,15 +83,15 @@ def extend(d1, d2):
 urlpatterns =\
     patterns('corehq.apps.domain.views',
         url(r'^domain/select/$', 'select', name='domain_select'),
-        url(r'^domain/autocomplete/(?P<field>\w+)/$', 'autocomplete_fields', name='domain_autocomplete_fields'),
+        url(r'^domain/autocomplete/(?P<field>\w+)/$', autocomplete_fields, name='domain_autocomplete_fields'),
         url(r'^domain/transfer/(?P<guid>\w+)/activate$',
             ActivateTransferDomainView.as_view(), name='activate_transfer_domain'),
         url(r'^domain/transfer/(?P<guid>\w+)/deactivate$',
             DeactivateTransferDomainView.as_view(), name='deactivate_transfer_domain'),
     ) +\
     patterns('django.contrib.auth.views',
-        url(r'^accounts/password_change/$', 'password_change', auth_pages_path('password_change_form.html'), name='password_change'),
-        url(r'^accounts/password_change_done/$', 'password_change_done',
+        url(r'^accounts/password_change/$', password_change, auth_pages_path('password_change_form.html'), name='password_change'),
+        url(r'^accounts/password_change_done/$', password_change_done,
             extend(auth_pages_path('password_change_done.html'),
                    {'extra_context': {'current_page': {'page_name': _('Password Change Complete')}}}),
             name='password_change_done'),
@@ -97,7 +102,7 @@ urlpatterns =\
                     'from_email': settings.DEFAULT_FROM_EMAIL,
                     'extra_context': {'current_page': {'page_name': _('Password Reset')}}}),
             name='password_reset_email'),
-        url(r'^accounts/password_reset_email/done/$', 'password_reset_done',
+        url(r'^accounts/password_reset_email/done/$', password_reset_done,
             extend(auth_pages_path('password_reset_done.html'),
                    {'extra_context': {'current_page': {'page_name': _('Reset My Password')}}}),
             name='password_reset_done'),
@@ -108,7 +113,7 @@ urlpatterns =\
                                                     'extra_context': {'current_page':
                                                         {'page_name': _('Password Reset Confirmation')}}}),
             name=PasswordResetView.urlname),
-        url(r'^accounts/password_reset_confirm/done/$', 'password_reset_complete',
+        url(r'^accounts/password_reset_confirm/done/$', password_reset_complete,
             extend(auth_pages_path('password_reset_complete.html'),
                    {'extra_context': {'current_page': {'page_name': _('Password Reset Complete')}}}),
             name='password_reset_complete')
@@ -164,10 +169,10 @@ domain_settings = patterns(
     url(r'^forwarding/new/CaseRepeater/$', AddCaseRepeaterView.as_view(), {'repeater_type': 'CaseRepeater'},
         name=AddCaseRepeaterView.urlname),
     url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.urlname),
-    url(r'^forwarding/test/$', 'test_repeater', name='test_repeater'),
-    url(r'^forwarding/(?P<repeater_id>[\w-]+)/stop/$', 'drop_repeater', name='drop_repeater'),
-    url(r'^snapshots/set_published/(?P<snapshot_name>[\w-]+)/$', 'set_published_snapshot', name='domain_set_published'),
-    url(r'^snapshots/set_published/$', 'set_published_snapshot', name='domain_clear_published'),
+    url(r'^forwarding/test/$', test_repeater, name='test_repeater'),
+    url(r'^forwarding/(?P<repeater_id>[\w-]+)/stop/$', drop_repeater, name='drop_repeater'),
+    url(r'^snapshots/set_published/(?P<snapshot_name>[\w-]+)/$', set_published_snapshot, name='domain_set_published'),
+    url(r'^snapshots/set_published/$', set_published_snapshot, name='domain_clear_published'),
     url(r'^snapshots/$', ExchangeSnapshotsView.as_view(), name=ExchangeSnapshotsView.urlname),
     url(r'^transfer/$', TransferDomainView.as_view(), name=TransferDomainView.urlname),
     url(r'^snapshots/new/$', CreateNewExchangeSnapshotView.as_view(), name=CreateNewExchangeSnapshotView.urlname),
@@ -176,7 +181,7 @@ domain_settings = patterns(
     url(r'^commtrack/settings/$', RedirectView.as_view(url='commtrack_settings')),
     url(r'^internal/info/$', EditInternalDomainInfoView.as_view(), name=EditInternalDomainInfoView.urlname),
     url(r'^internal/calculations/$', EditInternalCalculationsView.as_view(), name=EditInternalCalculationsView.urlname),
-    url(r'^internal/calculated_properties/$', 'calculated_properties', name='calculated_properties'),
+    url(r'^internal/calculated_properties/$', calculated_properties, name='calculated_properties'),
     url(r'^previews/$', FeaturePreviewsView.as_view(), name=FeaturePreviewsView.urlname),
     url(r'^flags/$', FeatureFlagsView.as_view(), name=FeatureFlagsView.urlname),
     url(r'^sms_rates/$', SMSRatesView.as_view(), name=SMSRatesView.urlname),

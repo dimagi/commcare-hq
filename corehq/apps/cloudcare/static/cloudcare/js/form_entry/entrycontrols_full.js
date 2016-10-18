@@ -85,12 +85,18 @@ EntryArrayAnswer.prototype.onPreProcess = function(newValue) {
  */
 EntrySingleAnswer = function(question, options) {
     var self = this;
+
     Entry.call(self, question, options);
-    if (question.answer()) {
-        self.rawAnswer = ko.observable(question.answer());
-    } else {
-        self.rawAnswer = ko.observable(Formplayer.Const.NO_ANSWER);
+    var extensions = {};
+    if (options.enableRateLimit) {
+        extensions.rateLimit = {
+            timeout: Formplayer.Const.KO_ENTRY_TIMEOUT,
+            method: "notifyWhenChangesStop"
+        };
     }
+    self.rawAnswer = ko.observable(question.answer() || Formplayer.Const.NO_ANSWER)
+        .extend(extensions);
+    
     self.rawAnswer.subscribe(self.onPreProcess.bind(self));
 }
 EntrySingleAnswer.prototype = Object.create(Entry.prototype);
@@ -147,7 +153,7 @@ function FreeTextEntry(question, options) {
             return false;
         }
         return true;
-    }
+    };
 
     self.getErrorMessage = function(raw) {
         return null;
@@ -300,16 +306,18 @@ function DateTimeEntryBase(question, options) {
     var self = this,
         thisYear = new Date().getFullYear(),
         minDate,
-        maxDate;
+        maxDate,
+        displayOpts = _getDisplayOptions(question);
 
     EntrySingleAnswer.call(self, question, options);
     // Set max date to 10 years in the future
     maxDate = moment(thisYear + 10, 'YYYY').toDate();
     // Set min date to 100 years in the past
     minDate = moment(thisYear - 100, 'YYYY').toDate();
+
     self.afterRender = function() {
         self.$picker = $('#' + self.entryId);
-        self.$picker.datetimepicker({
+        var datepickerOpts = {
             timepicker: self.timepicker,
             datepicker: self.datepicker,
             format: self.clientFormat,
@@ -325,8 +333,43 @@ function DateTimeEntryBase(question, options) {
                     return;
                 }
                 self.answer(moment(newDate).format(self.serverFormat));
-            }
-        });
+            },
+            onGenerate: function () {
+                var $dt = $(this);
+                if ($dt.find('.xdsoft_mounthpicker .xdsoft_prev .fa').length < 1) {
+                    $dt.find('.xdsoft_mounthpicker .xdsoft_prev').append($('<i class="fa fa-chevron-left" />'));
+                }
+                if ($dt.find('.xdsoft_mounthpicker .xdsoft_next .fa').length < 1) {
+                    $dt.find('.xdsoft_mounthpicker .xdsoft_next').append($('<i class="fa fa-chevron-right" />'));
+                }
+
+                if ($dt.find('.xdsoft_timepicker .xdsoft_prev .fa').length < 1) {
+                    $dt.find('.xdsoft_timepicker .xdsoft_prev').append($('<i class="fa fa-chevron-up" />'));
+                }
+                if ($dt.find('.xdsoft_timepicker .xdsoft_next .fa').length < 1) {
+                    $dt.find('.xdsoft_timepicker .xdsoft_next').append($('<i class="fa fa-chevron-down" />'));
+                }
+
+                if ($dt.find('.xdsoft_today_button .fa').length < 1) {
+                    $dt.find('.xdsoft_today_button').append($('<i class="fa fa-home" />'));
+                }
+
+                $dt.find('.xdsoft_label i').addClass('fa fa-caret-down');
+
+                if (displayOpts.phoneMode() && !self.datepicker && self.timepicker) {
+                    $dt.find('.xdsoft_time_box').addClass('time-box-full');
+                }
+
+                if (displayOpts.phoneMode() && self.timepicker && self.datepicker) {
+                    $dt.find('.xdsoft_save_selected')
+                        .show().text(django.gettext('Save'))
+                        .addClass('btn btn-primary')
+                        .removeClass('blue-gradient-button');
+                    $dt.find('.xdsoft_save_selected').appendTo($dt);
+                }
+            },
+        };
+        self.$picker.datetimepicker(datepickerOpts);
     };
 }
 DateTimeEntryBase.prototype = Object.create(EntrySingleAnswer.prototype);
@@ -473,19 +516,19 @@ function getEntry(question) {
         case Formplayer.Const.STRING:
             rawStyle = question.style ? ko.utils.unwrapObservable(question.style.raw) === 'numeric' : false;
             if (rawStyle) {
-                entry = new PhoneEntry(question, {});
+                entry = new PhoneEntry(question, { enableRateLimit: true });
             } else {
-                entry = new FreeTextEntry(question, {});
+                entry = new FreeTextEntry(question, { enableRateLimit: true });
             }
             break;
         case Formplayer.Const.INT:
-            entry = new IntEntry(question, {});
+            entry = new IntEntry(question, { enableRateLimit: true });
             break;
         case Formplayer.Const.LONGINT:
-            entry = new IntEntry(question, { lengthLimit: 15 });
+            entry = new IntEntry(question, { lengthLimit: 15, enableRateLimit: true  });
             break;
         case Formplayer.Const.FLOAT:
-            entry = new FloatEntry(question, {});
+            entry = new FloatEntry(question, { enableRateLimit: true });
             break;
         case Formplayer.Const.SELECT:
             entry = new SingleSelectEntry(question, {});
@@ -521,4 +564,24 @@ function intpad(x, n) {
         s = '0' + s;
     }
     return s;
+}
+
+/**
+ * Utility that gets the display options from a parent form of a question.
+ * */
+function _getDisplayOptions(question) {
+    var maxIter = 10; // protect against a potential infinite loop
+    var form = question.parent;
+
+    if (form === undefined) {
+        return {};
+    }
+
+    // logic in case the question is in a group or repeat or nested group, etc.
+    while (form.displayOptions === undefined && maxIter > 0) {
+        maxIter --;
+        form = parent.parent;
+    }
+
+    return form.displayOptions || {};
 }

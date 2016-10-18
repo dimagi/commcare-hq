@@ -256,6 +256,11 @@ the following contents:
 URL_ROOT = 'http://localhost:8000/a/{{DOMAIN}}'
 ```
 
+#### New CloudCare
+
+A new version of CloudCare has been released. To use this new version, please
+refer to the install instructions [here](https://github.com/dimagi/formplayer).
+
 Running CommCare HQ
 -------------------
 

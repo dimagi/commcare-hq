@@ -25,7 +25,8 @@ from corehq.apps.data_interfaces.forms import (
     AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm,
     AddAutomaticCaseUpdateRuleForm)
 from corehq.apps.data_interfaces.models import (AutomaticUpdateRule,
-    AutomaticUpdateRuleCriteria, AutomaticUpdateAction)
+                                                AutomaticUpdateRuleCriteria,
+                                                AutomaticUpdateAction)
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
@@ -695,6 +696,7 @@ class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
             domain=self.domain,
             initial={
                 'action': AddAutomaticCaseUpdateRuleForm.ACTION_CLOSE,
+                'property_value_type': AutomaticUpdateAction.EXACT,
             }
         )
 
@@ -748,6 +750,7 @@ class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
                 action=AutomaticUpdateAction.ACTION_UPDATE,
                 property_name=self.rule_form.cleaned_data['update_property_name'],
                 property_value=self.rule_form.cleaned_data['update_property_value'],
+                property_value_type=self.rule_form.cleaned_data['property_value_type']
             )
 
     def create_rule(self):
@@ -758,6 +761,7 @@ class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
                 case_type=self.rule_form.cleaned_data['case_type'],
                 active=True,
                 server_modified_boundary=self.rule_form.cleaned_data['server_modified_boundary'],
+                filter_on_server_modified=self.rule_form.cleaned_data['filter_on_server_modified'],
             )
             self.create_criteria(rule)
             self.create_actions(rule)
@@ -809,28 +813,37 @@ class EditAutomaticUpdateRuleView(AddAutomaticUpdateRuleView):
                 'property_value': criterion.property_value,
             })
 
+        close_case = False
         update_case = False
         update_property_name = None
         update_property_value = None
+        property_value_type = AutomaticUpdateAction.EXACT
         for action in self.rule.automaticupdateaction_set.all():
             if action.action == AutomaticUpdateAction.ACTION_UPDATE:
                 update_case = True
                 update_property_name = action.property_name
                 update_property_value = action.property_value
-                break
+                property_value_type = action.property_value_type
+            elif action.action == AutomaticUpdateAction.ACTION_CLOSE:
+                close_case = True
+
+        if close_case and update_case:
+            initial_action = AddAutomaticCaseUpdateRuleForm.ACTION_UPDATE_AND_CLOSE
+        elif update_case and not close_case:
+            initial_action = AddAutomaticCaseUpdateRuleForm.ACTION_UPDATE
+        else:
+            initial_action = AddAutomaticCaseUpdateRuleForm.ACTION_CLOSE
 
         initial = {
             'name': self.rule.name,
             'case_type': self.rule.case_type,
             'server_modified_boundary': self.rule.server_modified_boundary,
             'conditions': json.dumps(conditions),
-            'action': (
-                AddAutomaticCaseUpdateRuleForm.ACTION_UPDATE_AND_CLOSE
-                if update_case
-                else AddAutomaticCaseUpdateRuleForm.ACTION_CLOSE
-            ),
+            'action': initial_action,
             'update_property_name': update_property_name,
             'update_property_value': update_property_value,
+            'property_value_type': property_value_type,
+            'filter_on_server_modified': json.dumps(self.rule.filter_on_server_modified),
         }
         return AddAutomaticCaseUpdateRuleForm(domain=self.domain, initial=initial)
 
@@ -853,6 +866,7 @@ class EditAutomaticUpdateRuleView(AddAutomaticUpdateRuleView):
             rule.name = self.rule_form.cleaned_data['name']
             rule.case_type = self.rule_form.cleaned_data['case_type']
             rule.server_modified_boundary = self.rule_form.cleaned_data['server_modified_boundary']
+            rule.filter_on_server_modified = self.rule_form.cleaned_data['filter_on_server_modified']
             rule.last_run = None
             rule.save()
             rule.automaticupdaterulecriteria_set.all().delete()

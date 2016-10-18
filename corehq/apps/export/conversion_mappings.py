@@ -38,6 +38,8 @@ FORM_PROPERTY_MAPPING = {
     ("form.@name", None): ([PathNode(name='form'), PathNode(name='@name')], None),
     ("form.@xmlns", None): ([PathNode(name="xmlns")], None),
     ("id", None): ([PathNode(name="number")], None),
+    ("form.meta.location", None): ([PathNode(name='form'), PathNode(name='meta'), PathNode(name='location')], None),
+    ("form.meta.location.#text", None): ([PathNode(name='form'), PathNode(name='meta'), PathNode(name='location')], None),
 }
 
 CASE_PROPERTY_MAPPING = {

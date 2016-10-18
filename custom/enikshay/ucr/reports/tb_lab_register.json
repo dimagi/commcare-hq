@@ -3,7 +3,7 @@
         "enikshay-test",
         "enikshay-test-test"
     ],
-    "data_source_table": "episode",
+    "data_source_table": "test",
     "report_id": "tb_lab_register",
     "config": {
         "description": "",
@@ -77,7 +77,7 @@
             {
                 "display": "Sex (M/F/TG)",
                 "type": "field",
-                "field": "sex",
+                "field": "person_sex",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -89,7 +89,7 @@
             {
                 "display": "Age",
                 "type": "field",
-                "field": "age",
+                "field": "person_age",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -101,7 +101,7 @@
             {
                 "display": "Complete Address",
                 "type": "field",
-                "field": "current_address",
+                "field": "person_current_address",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -113,7 +113,7 @@
             {
                 "display": "Phone Number",
                 "type": "field",
-                "field": "mobile_number",
+                "field": "person_phone_number",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -125,7 +125,7 @@
             {
                 "display": "Key population",
                 "type": "field",
-                "field": "known_populations",
+                "field": "key_populations",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -149,7 +149,7 @@
             {
                 "display": "Presumptive TB /RE/  Presumptive NTM",
                 "type": "field",
-                "field": "purpose_of_test",
+                "field": "purpose_of_testing",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -159,7 +159,19 @@
                 "calculate_total": false
             },
             {
-                "display": "Predominant symptom duration",
+                "display": "Predominant symptom",
+                "type": "field",
+                "field": "predominant_system",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Predominant duration",
                 "type": "field",
                 "field": "predominant_system_duration",
                 "aggregation": "simple",
@@ -170,7 +182,6 @@
                 },
                 "calculate_total": false
             },
-            
             {
                 "display": "Nikshay ID",
                 "type": "field",

@@ -85,14 +85,18 @@ class ConfigurableReportEditForm(DocumentFormBase):
                 'configured_charts',
                 'sort_expression',
             ),
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    _("Save Changes"),
-                    type="submit",
-                    css_class="btn btn-primary",
-                ),
-            ),
         )
+        # Restrict edit for static reports
+        if not read_only:
+            self.helper.layout.append(
+                hqcrispy.FormActions(
+                    twbscrispy.StrictButton(
+                        _("Save Changes"),
+                        type="submit",
+                        css_class="btn btn-primary",
+                    ),
+                )
+            )
 
     def clean_visible(self):
         return self.cleaned_data['visible'] == 'True'
@@ -134,7 +138,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
     referenced_doc_type = forms.ChoiceField(
         choices=DOC_TYPE_CHOICES,
         label=_("Source Type"))
-    display_name = forms.CharField(label=_("Report Title"),
+    display_name = forms.CharField(label=_("Data Source Display Name"),
                                    help_text=help_text.DISPLAY_NAME)
     description = forms.CharField(required=False,
                                   help_text=help_text.DESCRIPTION)

@@ -76,14 +76,21 @@ COUCH_USERNAME = ''
 COUCH_PASSWORD = ''
 COUCH_DATABASE_NAME = 'commcarehq'
 
+redis_host = 'redis'
+
 redis_cache = {
     'BACKEND': 'django_redis.cache.RedisCache',
-    'LOCATION': 'redis://redis:6379/0',
+    'LOCATION': 'redis://{}:6379/0'.format(redis_host),
     'OPTIONS': {},
 }
+
 CACHES = {
     'default': redis_cache,
     'redis': redis_cache
+}
+
+WS4REDIS_CONNECTION = {
+    'host': redis_host,
 }
 
 ELASTICSEARCH_HOST = 'elasticsearch'
