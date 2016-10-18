@@ -393,7 +393,7 @@
                 {% include "app_manager/partials/form_tab_settings.html" %}
             {% endif %}
 
-            {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or form.requires_case or form.get_action_type == 'open' %}
+            {% if form.requires_case or form.get_action_type == 'open' %}
             <div class="tab-pane" id="case-configuration">
                 {% if form_errors or xform_validation_errored %}
                     <p class="alert alert-warning">
