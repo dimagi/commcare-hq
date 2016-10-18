@@ -60,7 +60,7 @@ sqlagg==0.7.0
 django-redis==4.2
 redis==2.10.3
 # WeasyPrint==0.20.2
-twilio==3.6.4
+twilio==5.6.0
 django-countries==3.3
 reportlab==3.0
 stripe==1.12.2
