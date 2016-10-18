@@ -74,13 +74,9 @@ class NewUserDashboardView(BaseDashboardView):
 
     @property
     def page_context(self):
-        return NewUserDashboardView.page_context(self.domain)
-
-    @classmethod
-    def page_context(cls, domain):
         return {
-            'apps': get_brief_apps_in_domain(domain),
-            'templates': cls.templates(domain),
+            'apps': get_brief_apps_in_domain(self.domain),
+            'templates': self.templates(self.domain),
         }
 
     @classmethod
