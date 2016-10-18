@@ -72,27 +72,6 @@
             {
                 "type": "expression",
                 "datatype": "string",
-                "column_id": "lab_serial_number",
-                "expression": {
-                    "type": "nested",
-                    "argument_expression": {
-                        "type": "named",
-                        "name": "test_update_form"
-                    },
-                    "value_expression": {
-                        "type": "property_path",
-                        "property_path": [
-                            "form",
-                            "microscopy",
-                            "ql_microscopy",
-                            "lab_serial_number"
-                        ]
-                    }
-                }
-            },
-            {
-                "type": "expression",
-                "datatype": "string",
                 "column_id": "sample_receipt_date",
                 "expression": {
                     "type": "nested",
