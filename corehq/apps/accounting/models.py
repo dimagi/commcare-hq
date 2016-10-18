@@ -318,6 +318,8 @@ class Currency(models.Model):
         return default
 
 
+DEFAULT_ACCOUNT_FORMAT = 'Account for Project %s'
+
 class BillingAccount(models.Model):
     """
     The key model that links a Subscription to its financial source and methods of payment.
@@ -386,7 +388,7 @@ class BillingAccount(models.Model):
             last_payment_method = last_payment_method or LastPayment.NONE
             pre_or_post_pay = pre_or_post_pay or PreOrPostPay.POSTPAY
             account = BillingAccount(
-                name="Account for Project %s" % domain,
+                name=DEFAULT_ACCOUNT_FORMAT % domain,
                 created_by=created_by,
                 created_by_domain=domain,
                 currency=Currency.get_default(),
