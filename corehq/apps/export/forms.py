@@ -11,6 +11,8 @@ from corehq.apps.export.filters import (
     OR, OwnerFilter, LastModifiedByFilter, UserTypeFilter,
     OwnerTypeFilter, ModifiedOnRangeFilter, FormSubmittedByFilter
 )
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
@@ -271,9 +273,8 @@ class BaseFilterExportDownloadForm(forms.Form):
 
     def _get_group(self, mobile_user_and_group_slugs):
         # group = self.cleaned_data['group']
-        group = ExpandedMobileWorkerFilter.selected_group_ids(mobile_user_and_group_slugs)
-        if group:
-            return Group.get(group)
+        group_ids = CaseListFilter.selected_group_ids(mobile_user_and_group_slugs)
+        return group_ids
 
     def get_edit_url(self, export):
         """Gets the edit url for the specified export.
@@ -548,46 +549,48 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
             return ModifiedOnRangeFilter(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
 
     def _get_location_filter(self, location_ids):
+        all_locations = SQLLocation.location_and_descendants(location_ids)
+        location_ids = [location.get_id for location in all_locations]
         user_ids = UserES().location(location_ids).run().doc_ids
         return OwnerFilter(user_ids)
 
     def get_case_filter(self, mobile_user_and_group_slugs=None):
-        # check for groups again since it expects a single group this
-        # one though seems to be filtering for group and its users whereas
-        # GroupFormSubmittedByFilter(group) seems to be just for users in the group
-        group_ids = ExpandedMobileWorkerFilter.selected_group_ids(mobile_user_and_group_slugs)
+        print 'fetching filter for cases'
+        group_ids = self._get_group(mobile_user_and_group_slugs)
+
+        default_filters = [OwnerTypeFilter(self._get_es_user_types(mobile_user_and_group_slugs))]
+
+        location_ids = ExpandedMobileWorkerFilter.selected_location_ids(mobile_user_and_group_slugs)
+        if location_ids:
+            default_filters.append(self._get_location_filter(location_ids))
+
+        user_ids = ExpandedMobileWorkerFilter.selected_user_ids(mobile_user_and_group_slugs)
+        if user_ids:
+            default_filters.append(OwnerFilter(user_ids))
 
         if group_ids:
-            export_user_ids = []
+            groups_static_user_ids = []
             for group_id in group_ids:
                 group = Group.get(group_id)
-                export_user_ids += group.get_static_user_ids()
+                groups_static_user_ids += group.get_static_user_ids()
             case_filter = [OR(
-                OwnerTypeFilter(self._get_es_user_types(mobile_user_and_group_slugs)),
                 OwnerFilter(group_ids),
-                OwnerFilter(export_user_ids),
-                LastModifiedByFilter(export_user_ids)
+                OwnerFilter(groups_static_user_ids),
+                LastModifiedByFilter(groups_static_user_ids),
+                *default_filters
             )]
         else:
             case_sharing_groups = [g.get_id for g in
                                    Group.get_case_sharing_groups(self.domain_object.name)]
             case_filter = [OR(
-                OwnerTypeFilter(self._get_es_user_types(mobile_user_and_group_slugs)),
                 OwnerFilter(case_sharing_groups),
-                LastModifiedByFilter(case_sharing_groups)
+                LastModifiedByFilter(case_sharing_groups),
+                *default_filters
             )]
 
         date_filter = self._get_datespan_filter()
         if date_filter:
             case_filter.append(date_filter)
-
-        location_ids = ExpandedMobileWorkerFilter.selected_location_ids(mobile_user_and_group_slugs)
-        if location_ids:
-            case_filter.append(OR(self._get_location_filter(location_ids)))
-
-        user_ids = ExpandedMobileWorkerFilter.selected_user_ids(mobile_user_and_group_slugs)
-        if user_ids:
-            case_filter.append(OR(OwnerFilter(user_ids)))
 
         return case_filter
 
