@@ -12,6 +12,7 @@ from django.views.decorators.http import require_GET
 
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter
 from corehq.apps.reports.views import should_update_export, \
     build_download_saved_export_response, require_form_export_permission
@@ -714,6 +715,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
         """Returns a the export filters and a list of JSON export specs
         """
         filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
+        # tried self.request.POST.getlist(EMWF.slug)
         import re
         regex = re.compile('(emw=){1}([^&]*)(&){0,1}')
         matches = regex.findall(filter_form_data['emw'])
@@ -1747,6 +1749,7 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
         return CaseExportInstance.get(export_id)
 
     def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
+        print 'fetching filters for export'
         filter_form = self._get_filter_form(filter_form_data)
         form_filters = filter_form.get_case_filter(mobile_user_and_group_slugs)
         return form_filters
@@ -1754,7 +1757,7 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
     @property
     def page_context(self):
         parent_context = super(DownloadNewCaseExportView, self).page_context
-        parent_context['new_export_filters'] = LocationRestrictedMobileWorkerFilter(
+        parent_context['new_export_filters'] = CaseListFilter(
             self.request, self.request.domain).render()
         return parent_context
 
