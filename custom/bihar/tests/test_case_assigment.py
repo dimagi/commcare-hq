@@ -1,15 +1,17 @@
 import uuid
+
 from django.test import TestCase
+
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_xforms, delete_all_cases
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.exceptions import CaseAssignmentError
-from corehq.apps.hqcase.utils import assign_case
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from custom.bihar.exceptions import CaseAssignmentError
+from custom.bihar.utils import assign_case
 
 
 class CaseAssignmentTest(TestCase):
