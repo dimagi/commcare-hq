@@ -124,7 +124,6 @@
         require(["jquery", "jquery.vellum", "moment"], function ($) {
             $(function () {
                 $("#edit").hide();
-                $('#hq-footer').hide();
 
                 $('#formdesigner').vellum(VELLUM_OPTIONS);
 
@@ -152,3 +151,5 @@
 {% endblock %}
 
 {% block column_style %}hq-flush-content{% endblock %}
+
+{% block footer %}{% endblock %}
