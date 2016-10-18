@@ -22,16 +22,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             this.appId = response.appId;
             this.persistentCaseTile = response.persistentCaseTile;
 
-            if (response.status === 'retry') {
-                FormplayerFrontend.trigger('retry', response, function() {
-                    var defer = $.Deferred();
-                    var menus = new Entities.MenuSelectCollection();
-                    request.xhr = undefined;
-                    menus.fetch(request);
-                    return defer.promise();
-                });
-                return;
-            } else if (response.commands) {
+            if (response.commands) {
                 this.type = "commands";
                 return response.commands;
             } else if (response.entities) {
@@ -51,9 +42,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             } else if(response.tree){
                 // form entry time, doggy
                 FormplayerFrontend.trigger('startForm', response, this.app_id);
-            } else if(response.exception){
-                FormplayerFrontend.trigger('showError', response.exception, response.type === 'html');
-            }
+            } 
         },
 
         sync: function (method, model, options) {
@@ -73,17 +62,31 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             var formplayerUrl = user.formplayer_url;
             var displayOptions = user.displayOptions || {};
             var defer = $.Deferred();
+            var menus;
             var options = {
-                success: function (request) {
-                    defer.resolve(request);
+                success: function (parsedMenus, response) {
+                    if (response.status === 'retry') {
+                        FormplayerFrontend.trigger('retry', response, function() {
+                            menus.fetch($.extend(true, {}, options));
+                        }, gettext('Please wait while we sync your user...'));
+                    } else if (response.exception){
+                        FormplayerFrontend.trigger(
+                            'showError',
+                            response.exception,
+                            response.type === 'html'
+                        );
+                    } else {
+                        FormplayerFrontend.trigger('clearProgress');
+                        defer.resolve(parsedMenus);
+                    }
                 },
-                error: function (request) {
+                error: function () {
                     FormplayerFrontend.request(
                         'showError',
                         gettext('Unable to connect to form playing service. ' +
                                 'Please report an issue if you continue to see this message.')
                     );
-                    defer.resolve(request);
+                    defer.resolve();
                 },
             };
 
@@ -103,9 +106,10 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             });
             options.url = formplayerUrl + '/navigate_menu';
 
-            var menus = new Entities.MenuSelectCollection();
+            menus = new Entities.MenuSelectCollection();
 
-            menus.fetch(options);
+            Object.freeze(options)
+            menus.fetch($.extend(true, {}, options));
             return defer.promise();
         },
     };
