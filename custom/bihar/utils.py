@@ -4,7 +4,7 @@ from xml.etree import ElementTree
 
 from django.utils.translation import ugettext_noop
 
-from bihar.exceptions import CaseAssignmentError
+from custom.bihar.exceptions import CaseAssignmentError
 from casexml.apps.case.dbaccessors import get_reverse_indices_json
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
