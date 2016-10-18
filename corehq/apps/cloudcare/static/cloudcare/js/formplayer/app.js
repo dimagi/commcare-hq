@@ -216,7 +216,7 @@ FormplayerFrontend.on("sync", function () {
     complete = function(response) {
         if (response.responseJSON.status === 'retry') {
             FormplayerFrontend.trigger('retry', response.responseJSON, function() {
-                $.ajax(options)
+                $.ajax(options);
             }, gettext('Please wait while we sync your user...'));
         } else {
             FormplayerFrontend.trigger('clearProgress');
@@ -236,12 +236,12 @@ FormplayerFrontend.on("retry", function(response, retryFn, progressMessage) {
 
     var progressView = FormplayerFrontend.regions.loadingProgress.currentView,
         progress = response.total === 0 ? 0 : response.done / response.total,
-        progressMessage = progressMessage || gettext('Please wait...'),
         retryTimeout = response.retryAfter * 1000;
+    progressMessage = progressMessage || gettext('Please wait...');
 
     if (!progressView) {
         progressView = new FormplayerFrontend.Utils.Views.ProgressView({
-            progressMessage: progressMessage
+            progressMessage: progressMessage,
         });
         FormplayerFrontend.regions.loadingProgress.show(progressView);
     }
@@ -259,7 +259,7 @@ FormplayerFrontend.on('clearProgress', function() {
     }
 
     setTimeout(function() {
-        FormplayerFrontend.regions.loadingProgress.empty()
+        FormplayerFrontend.regions.loadingProgress.empty();
     }, progressFinishTimeout);
 });
 

@@ -62,7 +62,6 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
         getMenus: function (params) {
 
             var user = FormplayerFrontend.request('currentUser'),
-                username = user.username,
                 formplayerUrl = user.formplayer_url,
                 displayOptions = user.displayOptions || {},
                 defer = $.Deferred(),
@@ -114,7 +113,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             menus = new Entities.MenuSelectCollection();
 
             if (Object.freeze) {
-                Object.freeze(options)
+                Object.freeze(options);
             }
             menus.fetch($.extend(true, {}, options));
             return defer.promise();

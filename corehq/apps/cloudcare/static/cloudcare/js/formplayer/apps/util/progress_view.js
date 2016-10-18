@@ -12,7 +12,7 @@ FormplayerFrontend.module("Utils.Views", function (Views, FormplayerFrontend, Ba
         templateHelpers: function() {
             return {
                 progressMessage: this.progressMessage,
-            }
+            };
         },
 
         setProgress: function(progress, duration) {
