@@ -4787,10 +4787,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                                          content_type="image/png")
             return png_data
 
-    def generate_shortened_url(self, url_type, build_profile_id=None):
+    def generate_shortened_url(self, view_name, build_profile_id=None):
         try:
             if settings.BITLY_LOGIN:
-                view_name = 'corehq.apps.app_manager.views.{}'.format(url_type)
                 if build_profile_id is not None:
                     long_url = "{}{}?profile={}".format(
                         self.url_base, reverse(view_name, args=[self.domain, self._id]), build_profile_id
