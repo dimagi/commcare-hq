@@ -49,7 +49,7 @@ from corehq.apps.export.forms import (
     CreateCaseExportTagForm,
     FilterFormCouchExportDownloadForm,
     FilterCaseCouchExportDownloadForm,
-    NewFilterFormESExportDownloadForm,
+    EmwfFilterFormExport,
     FilterCaseESExportDownloadForm,
 )
 from corehq.apps.export.models import (
@@ -1719,7 +1719,7 @@ class GenericDownloadNewExportMixin(object):
 
 class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExportView):
     urlname = 'new_export_download_forms'
-    filter_form_class = NewFilterFormESExportDownloadForm
+    filter_form_class = EmwfFilterFormExport
 
     def _get_export(self, domain, export_id):
         return FormExportInstance.get(export_id)
