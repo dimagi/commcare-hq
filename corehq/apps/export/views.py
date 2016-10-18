@@ -464,7 +464,6 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
     @use_daterangepicker
     @use_select2
     @use_angular_js
-    @location_safe
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         if not (self.has_edit_permissions
@@ -716,12 +715,8 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
         """
         filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
         # tried self.request.POST.getlist(EMWF.slug)
-        import re
-        regex = re.compile('(emw=){1}([^&]*)(&){0,1}')
-        matches = regex.findall(filter_form_data['emw'])
-        mobile_user_and_group_slugs = [n[1] for n in matches]
         try:
-            export_filter = self.get_filters(filter_form_data, mobile_user_and_group_slugs)
+            export_filter = self.get_filters(filter_form_data)
         except ExportFormValidationException:
             raise ExportAsyncException(
                 _("Form did not validate.")
@@ -1721,6 +1716,18 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
     urlname = 'new_export_download_forms'
     filter_form_class = EmwfFilterFormExport
 
+    @use_daterangepicker
+    @use_select2
+    @use_angular_js
+    @location_safe
+    @method_decorator(login_and_domain_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not (self.has_edit_permissions
+                or self.has_view_permissions
+                or self.has_deid_view_permissions):
+            raise Http404()
+        return super(DownloadNewFormExportView, self).dispatch(request, *args, **kwargs)
+
     def _get_export(self, domain, export_id):
         return FormExportInstance.get(export_id)
 
@@ -1736,6 +1743,25 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
             self.request, self.request.domain).render()
         return parent_context
 
+    def _process_filters_and_specs(self, in_data):
+        """Returns a the export filters and a list of JSON export specs
+        """
+        filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
+        # tried self.request.POST.getlist(EMWF.slug)
+        import re
+        regex = re.compile('(emw=){1}([^&]*)(&){0,1}')
+        matches = regex.findall(filter_form_data['emw'])
+        mobile_user_and_group_slugs = [n[1] for n in matches]
+        try:
+            export_filter = self.get_filters(filter_form_data, mobile_user_and_group_slugs)
+        except ExportFormValidationException:
+            raise ExportAsyncException(
+                _("Form did not validate.")
+            )
+
+        return export_filter, export_specs
+
+
 class BulkDownloadNewFormExportView(DownloadNewFormExportView):
     urlname = 'new_bulk_download_forms'
     page_title = ugettext_noop("Download Form Exports")
@@ -1744,6 +1770,18 @@ class BulkDownloadNewFormExportView(DownloadNewFormExportView):
 class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExportView):
     urlname = 'new_export_download_cases'
     filter_form_class = FilterCaseESExportDownloadForm
+
+    @use_daterangepicker
+    @use_select2
+    @use_angular_js
+    @location_safe
+    @method_decorator(login_and_domain_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not (self.has_edit_permissions
+                or self.has_view_permissions
+                or self.has_deid_view_permissions):
+            raise Http404()
+        return super(DownloadNewCaseExportView, self).dispatch(request, *args, **kwargs)
 
     def _get_export(self, domain, export_id):
         return CaseExportInstance.get(export_id)
@@ -1760,6 +1798,24 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
         parent_context['new_export_filters'] = CaseListFilter(
             self.request, self.request.domain).render()
         return parent_context
+
+    def _process_filters_and_specs(self, in_data):
+        """Returns a the export filters and a list of JSON export specs
+        """
+        filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
+        # tried self.request.POST.getlist(EMWF.slug)
+        import re
+        regex = re.compile('(emw=){1}([^&]*)(&){0,1}')
+        matches = regex.findall(filter_form_data['emw'])
+        mobile_user_and_group_slugs = [n[1] for n in matches]
+        try:
+            export_filter = self.get_filters(filter_form_data, mobile_user_and_group_slugs)
+        except ExportFormValidationException:
+            raise ExportAsyncException(
+                _("Form did not validate.")
+            )
+
+        return export_filter, export_specs
 
 
 @csrf_exempt
