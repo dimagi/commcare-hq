@@ -26,7 +26,6 @@ from corehq.apps.reports.util import (
     case_users_filter,
     datespan_from_beginning,
 )
-from corehq.apps.es.users import UserES
 from corehq.apps.style.crispy import B3MultiField, CrispyTemplate
 from corehq.apps.style.forms.widgets import (
     Select2MultipleChoiceWidget,
@@ -256,7 +255,6 @@ class BaseFilterExportDownloadForm(forms.Form):
         export user types.
         """
         es_user_types = []
-        # export_user_types = self.cleaned_data['user_types']
         user_types = ExpandedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
         export_user_types = [BaseFilterExportDownloadForm._USER_TYPES_CHOICES[i][0] for i in user_types]
         export_to_es_user_types_map = {
@@ -272,7 +270,6 @@ class BaseFilterExportDownloadForm(forms.Form):
         return es_user_types
 
     def _get_group(self, mobile_user_and_group_slugs):
-        # group = self.cleaned_data['group']
         group_ids = CaseListFilter.selected_group_ids(mobile_user_and_group_slugs)
         return group_ids
 
@@ -429,16 +426,12 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
             return ReceivedOnRangeFilter(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
 
     def _get_group_filter(self, mobile_user_and_group_slugs):
-        # change here to get group from emw
-        # group = self.cleaned_data['group']
         group_ids = ExpandedMobileWorkerFilter.selected_group_ids(mobile_user_and_group_slugs)
         if group_ids:
             return GroupFormSubmittedByFilter(group_ids)
 
     def _get_user_filter(self, mobile_user_and_group_slugs):
-        # group = self.cleaned_data['group']
         users = ExpandedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
-        # return UserTypeFilter(self._get_es_user_types())
         f_users = [BaseFilterExportDownloadForm._USER_TYPES_CHOICES[i][0] for i in users]
         return UserTypeFilter(f_users)
 
@@ -452,7 +445,6 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
         if location_ids:
             users = SQLLocation.users_at_locations_and_descendants(location_ids)
             user_ids = [user['_id'] for user in users]
-            # return LocationsFilter(location_ids)
             return FormSubmittedByFilter(user_ids)
 
     def get_multimedia_task_kwargs(self, export, download_id):

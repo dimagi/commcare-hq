@@ -160,8 +160,6 @@ class LocationRestrictedEmwfOptionsView(EmwfOptionsView):
     def get_locations_query(self, query):
         return SQLLocation.active_objects.filter_path_by_user_input(self.domain, query).\
             accessible_to_user(self.request.domain, self.request.couch_user)
-        # return SQLLocation.active_objects.filter_path_by_user_input(self.domain, query) & \
-        #     SQLLocation.objects.accessible_to_user(self.request.domain, self.request.couch_user)
 
 
 def paginate_options(data_sources, query, start, size):
