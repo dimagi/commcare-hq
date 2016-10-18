@@ -1222,7 +1222,7 @@ Reports are made up of columns. The currently supported column types ares:
 
 Field columns have a type of `"field"`. Here's an example field column that shows the owner name from an associated `owner_id`:
 
-```
+```json
 {
     "type": "field",
     "field": "owner_id",
@@ -1233,7 +1233,7 @@ Field columns have a type of `"field"`. Here's an example field column that show
         "type": "custom",
         "custom_type": "owner_display"
     },
-    "aggregation": "simple",
+    "aggregation": "simple"
 }
 ```
 

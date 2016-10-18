@@ -113,7 +113,7 @@ class LocationType(models.Model):
         on_delete=models.CASCADE,
     )  # levels below this location type that we start expanding from
     _expand_from_root = models.BooleanField(default=False, db_column='expand_from_root')
-    expand_to = models.ForeignKey('self', null=True, related_name='+')  # levels above this type that are synced
+    expand_to = models.ForeignKey('self', null=True, related_name='+', on_delete=models.CASCADE)  # levels above this type that are synced
     last_modified = models.DateTimeField(auto_now=True)
 
     emergency_level = StockLevelField(default=0.5)
@@ -276,7 +276,12 @@ class LocationQueriesMixin(object):
 
 
 class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
-    pass
+    def accessible_to_user(self, domain, user):
+        if user.has_permission(domain, 'access_all_locations'):
+            return self
+
+        users_location = user.get_sql_location(domain)
+        return self & users_location.get_descendants(include_self=True)
 
 
 class LocationManager(LocationQueriesMixin, TreeManager):
@@ -323,6 +328,7 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         """
         direct_matches = self.filter_by_user_input(domain, user_input)
         return self.get_queryset_descendants(direct_matches, include_self=True)
+
 
     def accessible_to_user(self, domain, user):
         if user.has_permission(domain, 'access_all_locations'):

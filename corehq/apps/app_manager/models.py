@@ -4577,7 +4577,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @absolute_url_property
     def jar_url(self):
-        return reverse('corehq.apps.app_manager.views.download_jar', args=[self.domain, self._id])
+        return reverse('download_jar', args=[self.domain, self._id])
 
     def get_jar_path(self):
         spec = {
@@ -4753,11 +4753,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @absolute_url_property
     def odk_profile_url(self):
-        return reverse('corehq.apps.app_manager.views.download_odk_profile', args=[self.domain, self._id])
+        return reverse('download_odk_profile', args=[self.domain, self._id])
 
     @absolute_url_property
     def odk_media_profile_url(self):
-        return reverse('corehq.apps.app_manager.views.download_odk_media_profile', args=[self.domain, self._id])
+        return reverse('download_odk_media_profile', args=[self.domain, self._id])
 
     @property
     def odk_profile_display_url(self):
@@ -4791,10 +4791,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                                          content_type="image/png")
             return png_data
 
-    def generate_shortened_url(self, url_type, build_profile_id=None):
+    def generate_shortened_url(self, view_name, build_profile_id=None):
         try:
             if settings.BITLY_LOGIN:
-                view_name = 'corehq.apps.app_manager.views.{}'.format(url_type)
                 if build_profile_id is not None:
                     long_url = "{}{}?profile={}".format(
                         self.url_base, reverse(view_name, args=[self.domain, self._id]), build_profile_id

@@ -1,5 +1,5 @@
 import sys
-from django.conf.urls import *
+from django.conf.urls import patterns, url
 from django.contrib.auth.views import (
     password_reset, password_change, password_change_done, password_reset_done,
     password_reset_complete,

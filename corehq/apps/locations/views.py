@@ -33,7 +33,6 @@ from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.forms import MultipleSelectionForm
-from corehq.toggles import NEW_BULK_LOCATION_MANAGEMENT
 from corehq.apps.locations.permissions import location_safe
 from corehq.util import reverse
 from dimagi.utils.couch import release_lock
@@ -116,13 +115,13 @@ class BaseLocationView(BaseDomainView):
         return context
 
 
+@location_safe
 class LocationsListView(BaseLocationView):
     urlname = 'manage_locations'
     page_title = ugettext_noop("Organization Structure")
     template_name = 'locations/manage/locations.html'
 
     @use_jquery_ui
-    @location_safe
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, *args, **kwargs):
         return super(LocationsListView, self).dispatch(request, *args, **kwargs)
@@ -359,6 +358,7 @@ class LocationTypesView(BaseLocationView):
         return ordered_loc_types
 
 
+@location_safe
 class NewLocationView(BaseLocationView):
     urlname = 'create_location'
     page_title = ugettext_noop("New Location")
@@ -367,7 +367,6 @@ class NewLocationView(BaseLocationView):
     form_tab = 'basic'
 
     @use_multiselect
-    @location_safe
     def dispatch(self, request, *args, **kwargs):
         return super(NewLocationView, self).dispatch(request, *args, **kwargs)
 
@@ -523,12 +522,12 @@ def unarchive_location(request, domain, loc_id):
     })
 
 
+@location_safe
 class EditLocationView(NewLocationView):
     urlname = 'edit_location'
     page_title = ugettext_noop("Edit Location")
     creates_new_location = False
 
-    @location_safe
     @method_decorator(can_edit_location)
     def dispatch(self, request, *args, **kwargs):
         return super(EditLocationView, self).dispatch(request, *args, **kwargs)
@@ -803,8 +802,7 @@ class LocationImportView(BaseLocationView):
 @locations_access_required
 def location_importer_job_poll(request, domain, download_id,
                                template="style/partials/download_status.html"):
-    if NEW_BULK_LOCATION_MANAGEMENT.enabled(domain):
-        template = "locations/manage/partials/locations_upload_status.html"
+    template = "locations/manage/partials/locations_upload_status.html"
     try:
         context = get_download_context(download_id, check_state=True)
     except TaskFailedError:
@@ -825,11 +823,9 @@ def location_export(request, domain):
                                   "you can do a bulk import or export."))
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
     include_consumption = request.GET.get('include_consumption') == 'true'
-    include_ids = request.GET.get('include_ids') == 'true'
     response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
     response['Content-Disposition'] = 'attachment; filename="locations.xlsx"'
-    dump_locations(response, domain, include_consumption=include_consumption,
-                   include_ids=include_ids)
+    dump_locations(response, domain, include_consumption=include_consumption)
     return response
 
 

@@ -173,11 +173,9 @@
                             <option value="double">
                                 {% trans "Decimal" %}
                             </option>
-                            {% if request|toggle_enabled:'CASE_LIST_DISTANCE_SORT' %}
-                                <option value="distance">
-                                    {% trans "Distance from current location (Preview!)" %}
-                                </option>
-                            {% endif %}
+                            <option value="distance">
+                                {% trans "Distance from current location" %}
+                            </option>
                             {% if request|toggle_enabled:'CACHE_AND_INDEX' %}
                                 <option value="index">
                                     {% trans "Cache and Index" %}

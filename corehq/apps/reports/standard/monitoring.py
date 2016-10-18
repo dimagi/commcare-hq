@@ -1302,7 +1302,9 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
 
         chart.set_axis_labels('x', [''] + [(str(h) + ':00') for h in range(24)] + [''])
         chart.set_axis_labels('x', [' ', _('Time ({timezone})').format(timezone=timezone), ' '])
-        chart.set_axis_labels('y', [''] + [day_names[n] for n in days] + [''])
+        # our google charts library doesn't support unicode
+        # TODO: replace with some in JS (d3?)
+        chart.set_axis_labels('y', [''] + [day_names[n].encode('ascii', 'replace') for n in days] + [''])
 
         chart.add_marker(1, 1.0, 'o', '333333', 25)
         return chart.get_url() + '&chds=-1,24,-1,7,0,20'

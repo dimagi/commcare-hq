@@ -3,7 +3,7 @@ cython==0.23.4
 restkit==4.2.2
 iso8601==0.1.10
 jsonobject==0.7.1
-jsonobject-couchdbkit==0.7.4.1
+jsonobject-couchdbkit==0.8.0.1
 celery==3.1.18
 # required by django-digest
 decorator==4.0.4
@@ -78,7 +78,6 @@ django-two-factor-auth==1.2.2
 datadog==0.10.0
 django-websocket-redis==0.4.6
 django-redis-sessions==0.5.0
-django-uuidfield==0.5.0
 SQLAlchemy==1.0.14
 alembic==0.8.6
 git+git://github.com/dimagi/pyzxcvbn.git#egg=pyzxcvbn

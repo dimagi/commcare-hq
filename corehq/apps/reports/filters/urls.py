@@ -1,4 +1,4 @@
-from django.conf.urls import *
+from django.conf.urls import patterns, url
 
 from .api import EmwfOptionsView
 from .case_list import CaseListFilterOptions
