@@ -56,6 +56,9 @@ class UserES(HQESQuery):
         query._default_filters['active'] = {"term": {"is_active": False}}
         return query
 
+    def users_at_locations(self, location_ids):
+        return self.location(location_ids).run().doc_ids
+
 
 def domain(domain):
     return filters.OR(
