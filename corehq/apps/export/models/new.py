@@ -960,6 +960,9 @@ class InferredSchema(Document):
     case_type = StringProperty(required=True)
     version = IntegerProperty(default=1)
 
+    class Meta:
+        app_label = 'export'
+
     def put_group_schema(self, path):
         group_schema = self.get_group_schema(path)
 
