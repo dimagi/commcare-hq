@@ -46,7 +46,7 @@ class FixtureDataTest(TestCase):
         self.data_item = FixtureDataItem(
             domain=self.domain,
             data_type_id=self.data_type.get_id,
-            fields= {
+            fields={
                 "state_name": FieldList(
                     field_list=[
                         FixtureItemField(
@@ -160,7 +160,7 @@ class FixtureDataTest(TestCase):
 
     def test_get_indexed_items(self):
         with self.assertRaises(FixtureVersionError):
-            fixtures = FixtureDataItem.get_indexed_items(self.domain,
-                self.tag, 'state_name')
+            fixtures = FixtureDataItem.get_indexed_items(
+                self.domain, self.tag, 'state_name')
             delhi_id = fixtures['Delhi_state']['district_id']
             self.assertEqual(delhi_id, 'Delhi_id')
