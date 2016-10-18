@@ -1,14 +1,20 @@
 {% load hq_shared_tags %}
 
-<div class="preview-phone-container"
-     id="js-appmanager-preview">
+
+<div id="js-appmanager-preview" class="preview-phone-wrapper">
+
+
+
+<div class="preview-phone-container">
+  <button type="button" class="btn btn-default js-preview-toggle btn-preview-toggle">
+    <i class="fa fa-close"></i>
+  </button>
   <iframe
       class="preview-phone-window"
       frameBorder="0"
       scrolling="no"
       src="{% url 'preview_app' request.domain app.get_id %}">
   </iframe>
-  <button type="button" class="btn btn-default btn-preview-close">
-    <i class="fa fa-remove"></i>
-  </button>
+</div>
+
 </div>

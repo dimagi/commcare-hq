@@ -5,7 +5,8 @@ hqLayout.selector = {
     content: '#hq-content',
     footer: '#hq-footer',
     sidebar: '#hq-sidebar',
-    breadcrumbs: '#hq-breadcrumbs'
+    breadcrumbs: '#hq-breadcrumbs',
+    messages: '#hq-messages-container',
 };
 
 hqLayout.values = {
@@ -33,8 +34,8 @@ hqLayout.utils = {
     isScrolledToFooter: function () {
         return hqLayout.utils.getCurrentScrollPosition() >= hqLayout.utils.getFooterShowPosition();
     },
-    isScrollable: function () {
-        return $(document).height() > $(window).height();
+    setBalancePreviewFn: function (fn) {
+        hqLayout.actions.balancePreview = fn;
     }
 };
 
@@ -59,15 +60,20 @@ hqLayout.actions = {
             }
         }
     },
+    balancePreview: function () {
+        // set with setBalancePreviewFn in utils.
+    }
 };
 
 $(window).on('load', function () {
     hqLayout.actions.initialize();
     hqLayout.actions.balanceSidebar();
+    hqLayout.actions.balancePreview();
 });
 
 $(window).resize(function () {
     hqLayout.actions.balanceSidebar();
+    hqLayout.actions.balancePreview();
 });
 
 $(window).scroll(function () {
