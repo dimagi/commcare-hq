@@ -217,7 +217,7 @@ FormplayerFrontend.on("sync", function () {
         if (response.responseJSON.status === 'retry') {
             FormplayerFrontend.trigger('retry', response.responseJSON, function() {
                 $.ajax(options)
-            });
+            }, gettext('Please wait while we sync your user...'));
         } else {
             FormplayerFrontend.trigger('clearProgress');
             tfSyncComplete(response.responseJSON.status === 'error');
@@ -232,14 +232,17 @@ FormplayerFrontend.on("sync", function () {
     $.ajax(options);
 });
 
-FormplayerFrontend.on("retry", function(response, retryFn) {
+FormplayerFrontend.on("retry", function(response, retryFn, progressMessage) {
 
     var progressView = FormplayerFrontend.regions.loadingProgress.currentView,
         progress = response.total === 0 ? 0 : response.done / response.total,
-        retryTimeout = response.retryAfter;
+        progressMessage = progressMessage || gettext('Please wait...'),
+        retryTimeout = 3000 //response.retryAfter * 1000;
 
     if (!progressView) {
-        progressView = new FormplayerFrontend.Utils.Views.ProgressView();
+        progressView = new FormplayerFrontend.Utils.Views.ProgressView({
+            progressMessage: progressMessage
+        });
         FormplayerFrontend.regions.loadingProgress.show(progressView);
     }
 
