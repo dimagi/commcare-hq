@@ -237,7 +237,7 @@ FormplayerFrontend.on("retry", function(response, retryFn, progressMessage) {
     var progressView = FormplayerFrontend.regions.loadingProgress.currentView,
         progress = response.total === 0 ? 0 : response.done / response.total,
         progressMessage = progressMessage || gettext('Please wait...'),
-        retryTimeout = 3000 //response.retryAfter * 1000;
+        retryTimeout = response.retryAfter * 1000;
 
     if (!progressView) {
         progressView = new FormplayerFrontend.Utils.Views.ProgressView({
