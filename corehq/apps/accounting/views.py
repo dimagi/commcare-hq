@@ -186,7 +186,7 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
             'subscription_list': [
                 (sub, Invoice.objects.filter(subscription=sub).latest('date_due').date_due
                       if Invoice.objects.filter(subscription=sub).count() else 'None on record',
-                ) for sub in Subscription.objects.filter(account=self.account)
+                ) for sub in Subscription.objects.filter(account=self.account).order_by('subscriber__domain', 'date_end')
             ],
         }
 

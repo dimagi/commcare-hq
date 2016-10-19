@@ -10,6 +10,7 @@ class BulkUiTranslation(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(BulkUiTranslation, cls).setUpClass()
         cls.app = Application.new_app("test-domain", "Test App")
         cls.app.langs = ["en", "fra"]
 

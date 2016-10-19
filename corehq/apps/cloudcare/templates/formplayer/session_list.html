@@ -1,20 +1,30 @@
 {% load hq_shared_tags %}
 
 <script type="text/template" id="session-view-list-template">
-    <p><h2>Sessions</h2></p>
-    <table class="table table-hover table-striped table-bordered">
-        <tr>
-            <th>Title</th>
-            <th>Date Opened</th>
-        </tr>
+  <div class="module-menu-container">
+    <div class="page-header menu-header">
+      <h1 class="page-title">Incomplete Forms</h1>
+    </div>
+    <table class="table module-table">
+        <tbody>
+        </tbody>
     </table>
 </script>
 
 <script type="text/template" id="session-view-item-template">
-    <td class="col-sm-2">
-        <%- title %>
+    <td class="module-column module-column-icon">
+       <div class="module-icon-container">
+         <i class="fa fa-pencil module-icon" aria-hidden="true"></i>
+       </div>
     </td>
-    <td class="col-sm-2">
-        <%- dateOpened %>
+    <td class="module-column module-column-name">
+        <h3>
+            <b><%- title %></b>
+            <% if (caseName) { %>(<%- caseName %>)<% } %>
+            opened <%- humanDateOpened %>
+        </h3>
+        <div class="module-delete-control">
+            <i class="fa fa-trash module-icon module-delete-icon"></i>
+        </div>
     </td>
 </script>

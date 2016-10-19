@@ -285,9 +285,9 @@
                 "milange": 91807,
                 "mocuba": 140365,
                 "molumbo": 44715,
-                "mopeia": 15683,
+                "mopeia": 15607,
                 "morrumbala": 97861,
-                "quelimane": 76936
+                "quelimane": 67630
               },
               "type": "switch",
               "switch_on": {
@@ -502,31 +502,30 @@
               "default": 0,
               "cases": {
                 "alto_benfica": 9933,
-                "chimuara": 3361,
+                "chimuara": 3196,
                 "chire": 21069,
                 "corromoana": 19652,
                 "dachudua": 16805,
-                "derre_sede": 13054,
+                "derre_sede": 14017,
                 "dulanha": 10084,
-                "guerissa": 3501,
+                "guerissa": 2538,
                 "liciro": 12042,
-                "madal": 10350,
-                "maquival": 17310,
+                "madal": 9235,
+                "maquival": 15260,
                 "megaza": 7499,
+                "sede": 52876,
                 "mocuba_sede": 52953,
-                "molumbo_": 25063,
-                "mopeia_sede": 8744,
-                "morrumbala_sede": 35337,
+                "molumbo_sede ": 25063,
+                "mopeia_sede": 8834,
+                "morrumbala_sede": 42093,
                 "muandiua": 16676,
                 "muaquiua": 12697,
                 "mugeba": 31865,
                 "munhiba": 17409,
                 "namanjavira": 15508,
-                "namuinho": 49276,
+                "namuinho": 43135,
                 "pinda": 10524,
-                "posto_campo": 3578,
-                "sabe": 6756,
-                "sede": 52876
+                "posto_campo": 3577
               },
               "type": "switch",
               "switch_on": {
@@ -1423,7 +1422,7 @@
         "expression": {
           "default": 0,
           "cases": {
-            "mozambique": 483922,
+            "mozambique": 474540,
             "Senegal": 220551,
             "Rwanda": 188189,
             "zambia": 542184,

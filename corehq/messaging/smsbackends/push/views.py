@@ -45,6 +45,7 @@ class PushIncomingView(NewIncomingBackendView):
             number,
             text,
             PushBackend.get_api_id(),
+            domain_scope=self.domain,
             backend_id=self.backend_couch_id
         )
         return HttpResponse("OK")

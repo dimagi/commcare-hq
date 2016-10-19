@@ -9,7 +9,7 @@ from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.permissions import (
-    tastypie_location_safe, LOCATION_ACCESS_DENIED)
+    location_safe, LOCATION_ACCESS_DENIED)
 from corehq.apps.users.models import WebUser
 from corehq.util.quickcache import quickcache
 from dimagi.utils.decorators.memoized import memoized
@@ -46,7 +46,7 @@ def _user_locations_ids(user, project, only_editable):
         return viewable + editable
 
 
-@tastypie_location_safe
+@location_safe
 class LocationResource(HqBaseResource):
     type = "location"
     uuid = fields.CharField(attribute='location_id', readonly=True, unique=True)
@@ -100,7 +100,7 @@ class LocationResource(HqBaseResource):
         limit = 0
 
 
-@tastypie_location_safe
+@location_safe
 class InternalLocationResource(LocationResource):
 
     # using the default resource dispatch function to bypass our authorization for internal use

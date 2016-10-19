@@ -90,6 +90,11 @@ hqDefine('locations/ko/location_types.js', function(){
                 });
                 var duplicates = [];
                 _.each(counts_by_value, function (count, value) {
+                    if (field === 'code' && value === ''){
+                        // exclude empty codes
+                        // if code is empty, the backend will autofill it as name
+                        return;
+                    }
                     if (count > 1) {
                         duplicates.push(value);
                         valid = false;

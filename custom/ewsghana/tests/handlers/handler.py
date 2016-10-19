@@ -15,5 +15,5 @@ class HandlerTest(TestCase):
         self.user = bootstrap_user(username='testuser', phone_number='323232', domain=domain.name, home_loc=loc)
 
     def test_not_ews_domain(self):
-        self.assertFalse(handle(self.user.get_verified_number(), "soh dp 40.0"))
-        self.assertFalse(handle(self.user.get_verified_number(), "dp 40.0"))
+        self.assertFalse(handle(self.user.get_verified_number(), "soh dp 40.0", None))
+        self.assertFalse(handle(self.user.get_verified_number(), "dp 40.0", None))

@@ -7,7 +7,7 @@ from fluff import TYPE_STRING
 from fluff.util import get_column_type
 
 
-class SqlColumnConfig(object):
+class ColumnConfig(object):
     """
     Stub object to send column information to the data source
     """
@@ -63,7 +63,7 @@ def get_expanded_column_config(data_source_configuration, column_config, lang):
             data_source_configuration, column_config, column_config.max_expansion
         )
     except ColumnNotFoundError as e:
-        return SqlColumnConfig([], warnings=[unicode(e)])
+        return ColumnConfig([], warnings=[unicode(e)])
     else:
         if over_expansion_limit:
             column_warnings.append(_(
@@ -73,7 +73,7 @@ def get_expanded_column_config(data_source_configuration, column_config, lang):
                 header=column_config.get_header(lang),
                 max=column_config.max_expansion,
             ))
-        return SqlColumnConfig(_expand_column(column_config, vals, lang), warnings=column_warnings)
+        return ColumnConfig(_expand_column(column_config, vals, lang), warnings=column_warnings)
 
 
 DEFAULT_MAXIMUM_EXPANSION = 10

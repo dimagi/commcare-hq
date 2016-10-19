@@ -21,7 +21,6 @@ from corehq.apps.sms.api import (
     incoming,
     send_sms_with_backend_name,
     send_sms_to_verified_number,
-    DomainScopeValidationError,
     MessageMetadata,
 )
 from corehq.apps.sms.resources.v0_5 import SelfRegistrationUserInfo
@@ -64,6 +63,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
+from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.util.dates import iso_string_to_datetime
@@ -355,28 +355,20 @@ class TestSMSMessageView(BaseDomainView):
 
     def post(self, request, *args, **kwargs):
         message = request.POST.get("message", "")
-        domain_scope = None if request.couch_user.is_superuser else self.domain
-        try:
-            incoming(self.phone_number, message, "TEST", domain_scope=domain_scope)
+        phone_entry = PhoneNumber.by_phone(self.phone_number)
+        if phone_entry and phone_entry.domain != self.domain:
+            messages.error(
+                request,
+                _("Invalid phone number being simulated. Please choose a "
+                  "two-way phone number belonging to a contact in your project.")
+            )
+        else:
+            incoming(self.phone_number, message, SQLTestSMSBackend.get_api_id(), domain_scope=self.domain)
             messages.success(
                 request,
-                _("Test message sent.")
+                _("Test message received.")
             )
-        except DomainScopeValidationError:
-            messages.error(
-                request,
-                _("Invalid phone number being simulated. You may only "
-                  "simulate SMS from verified numbers belonging to contacts "
-                  "in this domain.")
-            )
-        except Exception:
-            notify_exception(request)
-            messages.error(
-                request,
-                _("An error has occurred. Please try again in a few minutes "
-                  "and if the issue persists, please contact CommCareHQ "
-                  "Support.")
-            )
+
         return self.get(request, *args, **kwargs)
 
 
@@ -2179,8 +2171,11 @@ class IncomingBackendView(View):
 
 
 class NewIncomingBackendView(View):
-    domain = None
-    backend_couch_id = None
+
+    def __init__(self, *args, **kwargs):
+        super(NewIncomingBackendView, self).__init__(*args, **kwargs)
+        self.domain = None
+        self.backend_couch_id = None
 
     @property
     def backend_class(self):

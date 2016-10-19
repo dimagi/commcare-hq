@@ -106,4 +106,4 @@ class LedgerV1DocumentStore(DjangoDocumentStore):
         def _doc_gen_fn(obj):
             return obj.to_json()
 
-        super(LedgerV1DocumentStore, self).__init__(StockState, _doc_gen_fn)
+        super(LedgerV1DocumentStore, self).__init__(StockState, _doc_gen_fn, model_manager=StockState.include_archived)

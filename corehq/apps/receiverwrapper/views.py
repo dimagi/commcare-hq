@@ -32,6 +32,7 @@ from couchforms.const import MAGIC_PROPERTY
 from couchforms.getters import MultimediaBug
 from dimagi.utils.logging import notify_exception
 from corehq.apps.ota.utils import handle_401_response
+from corehq import toggles
 
 
 @count_by_response_code('commcare.xform_submissions')
@@ -40,6 +41,9 @@ def _process_form(request, domain, app_id, user_id, authenticated,
     if should_ignore_submission(request):
         # silently ignore submission if it meets ignore-criteria
         return SubmissionPost.submission_ignored_response()
+
+    if toggles.FORM_SUBMISSION_BLACKLIST.enabled(domain):
+        return SubmissionPost.get_blacklisted_response()
 
     try:
         instance, attachments = couchforms.get_instance_and_attachment(request)

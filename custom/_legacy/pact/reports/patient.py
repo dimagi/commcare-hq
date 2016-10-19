@@ -122,39 +122,8 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
         if not self.patient_id:
             return None
 
-        #a fuller query doing filtered+query vs simpler base_query filter
-        full_query = {
-            'query': {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"term": {"domain.exact": self.request.domain}},
-                            {"term": {"doc_type": "xforminstance"}},
-                            {
-                                "nested": {
-                                    "path": "form.case",
-                                    "filter": {
-                                        "or": [
-                                            {
-                                                "term": {
-                                                    "@case_id": "%s" % self.patient_id
-                                                }
-                                            },
-                                            {
-                                                "term": {
-                                                    "case_id": "%s" % self.patient_id
-                                                }
-                                            },
-
-                                        ]
-                                    }
-                                }
-                            }
-                        ]
-                    },
-                    "query": {"match_all": {}}
-                }
-            },
+        full_query = ReportXFormES.by_case_id_query(self.request.domain, self.patient_id)
+        full_query.update({
             "fields": [
                 "_id",
                 "received_on",
@@ -166,7 +135,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
             "sort": self.get_sorting_block(),
             "size": self.pagination.count,
             "from": self.pagination.start
-        }
+        })
         full_query['script_fields'] = pact_script_fields()
         res = self.xform_es.run_query(full_query)
         return res

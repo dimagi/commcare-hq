@@ -8,7 +8,10 @@ class WeekExpressionSpec(JsonObject):
     property = StringProperty()
 
     def __call__(self, item, context=None):
-        date = force_to_datetime(item[self.property])
+        try:
+            date = force_to_datetime(item[self.property])
+        except ValueError:
+            return -1
         return date.isocalendar()[1]
 
 
@@ -17,7 +20,10 @@ class YearExpressionSpec(JsonObject):
     property = StringProperty()
 
     def __call__(self, item, context=None):
-        date = force_to_datetime(item[self.property])
+        try:
+            date = force_to_datetime(item[self.property])
+        except ValueError:
+            return -1
         return date.year
 
 

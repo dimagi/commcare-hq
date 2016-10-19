@@ -205,7 +205,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
             )
             if parent_case:
                 extras['index'] = {
-                    parent_ref: (parent_type, parent_case._id)
+                    parent_ref: (parent_type, parent_case.case_id)
                 }
 
         case_name = fields_to_update.pop('name', None)

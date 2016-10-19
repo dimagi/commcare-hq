@@ -20,7 +20,11 @@ class TestSubscriptionEmailLogic(SimpleTestCase):
         self._run_test(None, Subscription(is_trial=True), False)
 
     def test_non_trial_with_no_previous(self):
-        self._run_test(None, Subscription(is_trial=False), True)
+        self._run_test(None, Subscription(is_trial=False), False)
+
+    def test_non_trial_with_previous(self):
+        self._run_test(Subscription(is_trial=False), Subscription(is_trial=False), True)
+        self._run_test(Subscription(is_trial=True), Subscription(is_trial=False), True)
 
     def _run_test(self, old_sub, new_sub, expected_output):
         self.assertEqual(expected_output, Subscriber.should_send_subscription_notification(old_sub, new_sub))

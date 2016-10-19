@@ -318,6 +318,8 @@ class Currency(models.Model):
         return default
 
 
+DEFAULT_ACCOUNT_FORMAT = 'Account for Project %s'
+
 class BillingAccount(models.Model):
     """
     The key model that links a Subscription to its financial source and methods of payment.
@@ -386,7 +388,7 @@ class BillingAccount(models.Model):
             last_payment_method = last_payment_method or LastPayment.NONE
             pre_or_post_pay = pre_or_post_pay or PreOrPostPay.POSTPAY
             account = BillingAccount(
-                name="Account for Project %s" % domain,
+                name=DEFAULT_ACCOUNT_FORMAT % domain,
                 created_by=created_by,
                 created_by_domain=domain,
                 currency=Currency.get_default(),
@@ -977,8 +979,10 @@ class Subscriber(models.Model):
 
     @staticmethod
     def should_send_subscription_notification(old_subscription, new_subscription):
+        if not old_subscription:
+            return False
         is_new_trial = new_subscription and new_subscription.is_trial
-        expired_trial = old_subscription and old_subscription.is_trial and not new_subscription
+        expired_trial = old_subscription.is_trial and not new_subscription
         return not is_new_trial and not expired_trial
 
     @staticmethod
@@ -1439,7 +1443,7 @@ class Subscription(models.Model):
             )
             credit_line.is_active = False
             credit_line.adjust_credit_balance(
-                credit_line.balance * Decimal('-1.0'),
+                credit_line.balance * Decimal('-1'),
                 related_credit=transferred_credit,
             )
 
@@ -1864,7 +1868,7 @@ class Invoice(InvoiceBase):
 
     @property
     def applied_tax(self):
-        return self.tax_rate * self.subtotal
+        return Decimal('%.4f' % round(self.tax_rate * self.subtotal, 4))
 
     @property
     @memoized

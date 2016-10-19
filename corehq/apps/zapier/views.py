@@ -7,11 +7,13 @@ from django.views.decorators.csrf import csrf_exempt
 
 from django.views.generic import View
 
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.zapier.queries import get_subscription_by_url
 from corehq.apps.zapier.services import delete_subscription_with_url
-from corehq.toggles import ZAPIER_INTEGRATION
+from corehq import privileges
+
 from .models import ZapierSubscription
 
 
@@ -23,7 +25,8 @@ class SubscribeView(View):
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
         domain = args[0]
-        if not ZAPIER_INTEGRATION.enabled(domain) or not request.couch_user.is_member_of(domain):
+        if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION)\
+                or not request.couch_user.is_member_of(domain):
             return HttpResponseForbidden()
         return super(SubscribeView, self).dispatch(request, *args, **kwargs)
 
