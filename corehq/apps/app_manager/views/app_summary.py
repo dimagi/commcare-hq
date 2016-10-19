@@ -343,9 +343,9 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
 
     def _get_form_sheet_name(self, module, form, language):
         return "{} - {}".format(
-                _get_translated_module_name(self.app, module.unique_id, language),
-                _get_translated_form_name(self.app, form.get_unique_id(), language),
-            )
+            _get_translated_module_name(self.app, module.unique_id, language),
+            _get_translated_form_name(self.app, form.get_unique_id(), language),
+        )
 
     def get_all_forms_row(self, module, form, language):
         return ((
