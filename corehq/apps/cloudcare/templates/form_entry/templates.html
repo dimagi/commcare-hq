@@ -300,7 +300,7 @@
 <script type="text/html" id="text-entry-ko-template">
     <textarea class="textfield form-control" data-bind="
         value: $data.rawAnswer,
-        valueUpdate: 'keyup',
+        valueUpdate: valueUpdate,
         attr: {
             maxlength: lengthLimit,
         }
@@ -313,7 +313,7 @@
 <script type="text/html" id="password-entry-ko-template">
     <input type="password" class="form-control" data-bind="
         value: $data.rawAnswer,
-        valueUpdate: 'keyup',
+        valueUpdate: valueUpdate,
     "/>
     <span class="help-block type" data-bind="text: helpText()"></span>
 </script>
@@ -321,7 +321,7 @@
 <script type="text/html" id="str-entry-ko-template">
     <input type="text" class="form-control" data-bind="
         value: $data.rawAnswer,
-        valueUpdate: 'keyup',
+        valueUpdate: valueUpdate,
         attr: {
             maxlength: lengthLimit,
         }

@@ -88,15 +88,18 @@ EntrySingleAnswer = function(question, options) {
 
     Entry.call(self, question, options);
     var extensions = {};
-    if (options.enableRateLimit) {
+    var displayOptions = _getDisplayOptions(question)
+    self.valueUpdate = undefined;
+    if (options.enableRateLimit && ko.utils.unwrapObservable(displayOptions.phoneMode)) {
         extensions.rateLimit = {
             timeout: Formplayer.Const.KO_ENTRY_TIMEOUT,
             method: "notifyWhenChangesStop"
         };
+        self.valueUpdate = 'keyup';
     }
     self.rawAnswer = ko.observable(question.answer() || Formplayer.Const.NO_ANSWER)
         .extend(extensions);
-    
+
     self.rawAnswer.subscribe(self.onPreProcess.bind(self));
 }
 EntrySingleAnswer.prototype = Object.create(Entry.prototype);
