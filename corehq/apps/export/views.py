@@ -1716,16 +1716,8 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
     urlname = 'new_export_download_forms'
     filter_form_class = EmwfFilterFormExport
 
-    @use_daterangepicker
-    @use_select2
-    @use_angular_js
     @location_safe
-    @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
-        if not (self.has_edit_permissions
-                or self.has_view_permissions
-                or self.has_deid_view_permissions):
-            raise Http404()
         return super(DownloadNewFormExportView, self).dispatch(request, *args, **kwargs)
 
     def _get_export(self, domain, export_id):
@@ -1771,16 +1763,8 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
     urlname = 'new_export_download_cases'
     filter_form_class = FilterCaseESExportDownloadForm
 
-    @use_daterangepicker
-    @use_select2
-    @use_angular_js
     @location_safe
-    @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
-        if not (self.has_edit_permissions
-                or self.has_view_permissions
-                or self.has_deid_view_permissions):
-            raise Http404()
         return super(DownloadNewCaseExportView, self).dispatch(request, *args, **kwargs)
 
     def _get_export(self, domain, export_id):

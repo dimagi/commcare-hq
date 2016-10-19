@@ -56,8 +56,11 @@ class UserES(HQESQuery):
         query._default_filters['active'] = {"term": {"is_active": False}}
         return query
 
-    def users_at_locations(self, location_ids):
-        return self.location(location_ids).run().doc_ids
+    def users_at_locations_and_descendants(self, location_ids):
+        from corehq.apps.locations.models import SQLLocation
+        location_ids = SQLLocation.location_and_descendants_ids(location_ids)
+        l_ids = [l_id for l_id in location_ids]
+        return self.location(l_ids).run().hits
 
 
 def domain(domain):
