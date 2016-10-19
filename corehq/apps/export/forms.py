@@ -11,9 +11,9 @@ from corehq.apps.export.filters import (
     OR, OwnerFilter, LastModifiedByFilter, UserTypeFilter,
     OwnerTypeFilter, ModifiedOnRangeFilter, FormSubmittedByFilter
 )
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.es.users import UserES
 from corehq.apps.reports.filters.case_list import CaseListFilter
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import (
@@ -171,6 +171,15 @@ class BaseFilterExportDownloadForm(forms.Form):
         required=False,
     )
 
+    _EXPORT_TO_ES_USER_TYPES_MAP = {
+        _USER_MOBILE: [utils.MOBILE_USER_TYPE],
+        _USER_DEMO: [utils.DEMO_USER_TYPE],
+        _USER_UNKNOWN: [
+            utils.UNKNOWN_USER_TYPE, utils.SYSTEM_USER_TYPE, utils.WEB_USER_TYPE
+        ],
+        _USER_SUPPLY: [utils.COMMCARE_SUPPLY_USER_TYPE]
+    }
+
     def __init__(self, domain_object, *args, **kwargs):
         self.domain_object = domain_object
         super(BaseFilterExportDownloadForm, self).__init__(*args, **kwargs)
@@ -257,14 +266,7 @@ class BaseFilterExportDownloadForm(forms.Form):
         """
         es_user_types = []
         export_user_types = self.cleaned_data['user_types']
-        export_to_es_user_types_map = {
-            self._USER_MOBILE: [utils.MOBILE_USER_TYPE],
-            self._USER_DEMO: [utils.DEMO_USER_TYPE],
-            self._USER_UNKNOWN: [
-                utils.UNKNOWN_USER_TYPE, utils.SYSTEM_USER_TYPE, utils.WEB_USER_TYPE
-            ],
-            self._USER_SUPPLY: [utils.COMMCARE_SUPPLY_USER_TYPE]
-        }
+        export_to_es_user_types_map = self._EXPORT_TO_ES_USER_TYPES_MAP
         for type_ in export_user_types:
             es_user_types.extend(export_to_es_user_types_map[type_])
         return es_user_types
@@ -460,23 +462,16 @@ class EmwfFilterFormExport(FilterFormESExportDownloadForm):
         export user types.
         """
         es_user_types = []
-        user_types = ExpandedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
-        export_user_types = [BaseFilterExportDownloadForm._USER_TYPES_CHOICES[i][0] for i in user_types]
-        export_to_es_user_types_map = {
-            self._USER_MOBILE: [utils.MOBILE_USER_TYPE],
-            self._USER_DEMO: [utils.DEMO_USER_TYPE],
-            self._USER_UNKNOWN: [
-                utils.UNKNOWN_USER_TYPE, utils.SYSTEM_USER_TYPE, utils.WEB_USER_TYPE
-            ],
-            self._USER_SUPPLY: [utils.COMMCARE_SUPPLY_USER_TYPE]
-        }
+        user_types = LocationRestrictedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
+        export_user_types = [self._USER_TYPES_CHOICES[i][0] for i in user_types]
+        export_to_es_user_types_map = self._EXPORT_TO_ES_USER_TYPES_MAP
         for type_ in export_user_types:
             es_user_types.extend(export_to_es_user_types_map[type_])
         return es_user_types
 
     def _get_group(self, mobile_user_and_group_slugs):
         # Override to fetch params from url and not form_data
-        group_ids = CaseListFilter.selected_group_ids(mobile_user_and_group_slugs)
+        group_ids = LocationRestrictedMobileWorkerFilter.selected_group_ids(mobile_user_and_group_slugs)
         return group_ids
 
     def get_form_filter(self, mobile_user_and_group_slugs):
@@ -489,24 +484,24 @@ class EmwfFilterFormExport(FilterFormESExportDownloadForm):
         ])
 
     def _get_group_filter(self, mobile_user_and_group_slugs):
-        group_ids = ExpandedMobileWorkerFilter.selected_group_ids(mobile_user_and_group_slugs)
+        group_ids = LocationRestrictedMobileWorkerFilter.selected_group_ids(mobile_user_and_group_slugs)
         if group_ids:
             return GroupFormSubmittedByFilter(group_ids)
 
     def _get_user_filter(self, mobile_user_and_group_slugs):
-        users = ExpandedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
-        f_users = [BaseFilterExportDownloadForm._USER_TYPES_CHOICES[i][0] for i in users]
+        users = LocationRestrictedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
+        f_users = [self._USER_TYPES_CHOICES[i][0] for i in users]
         return UserTypeFilter(f_users)
 
     def _get_user_ids_filter(self, mobile_user_and_group_slugs):
-        user_ids = ExpandedMobileWorkerFilter.selected_user_ids(mobile_user_and_group_slugs)
+        user_ids = LocationRestrictedMobileWorkerFilter.selected_user_ids(mobile_user_and_group_slugs)
         if user_ids:
             return FormSubmittedByFilter(user_ids)
 
     def _get_location_ids_filter(self, mobile_user_and_group_slugs):
-        location_ids = ExpandedMobileWorkerFilter.selected_location_ids(mobile_user_and_group_slugs)
+        location_ids = LocationRestrictedMobileWorkerFilter.selected_location_ids(mobile_user_and_group_slugs)
         if location_ids:
-            users = SQLLocation.users_at_locations_and_descendants(location_ids)
+            users = UserES().users_at_locations_and_descendants(location_ids)
             user_ids = [user['_id'] for user in users]
             return FormSubmittedByFilter(user_ids)
 
@@ -583,18 +578,39 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
             return ModifiedOnRangeFilter(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
 
     def _get_location_filter(self, location_ids):
-        users = SQLLocation.users_at_locations_and_descendants(location_ids)
+        users = UserES().users_at_locations_and_descendants(location_ids)
         user_ids = [user['_id'] for user in users]
         return OwnerFilter(user_ids)
+
+    def _get_group(self, mobile_user_and_group_slugs):
+        # Override to fetch params from url and not form_data
+        group_ids = CaseListFilter.selected_group_ids(mobile_user_and_group_slugs)
+        return group_ids
+
+    def _get_es_user_types(self, mobile_user_and_group_slugs):
+        """
+        Override to fetch params from url and not form_data
+        Return a list of elastic search user types (each item in the return list
+        is in corehq.pillows.utils.USER_TYPES) corresponding to the selected
+        export user types.
+        """
+        es_user_types = []
+        user_types = CaseListFilter.selected_user_types(mobile_user_and_group_slugs)
+        export_user_types = [self._USER_TYPES_CHOICES[i][0] for i in user_types]
+        export_to_es_user_types_map = self._EXPORT_TO_ES_USER_TYPES_MAP
+        for type_ in export_user_types:
+            es_user_types.extend(export_to_es_user_types_map[type_])
+        return es_user_types
 
     def _get_group_independent_filters(self, mobile_user_and_group_slugs):
         default_filters = [OwnerTypeFilter(self._get_es_user_types(mobile_user_and_group_slugs))]
 
-        location_ids = ExpandedMobileWorkerFilter.selected_location_ids(mobile_user_and_group_slugs)
+        location_ids = CaseListFilter.selected_location_ids(mobile_user_and_group_slugs)
         if location_ids:
             default_filters.append(self._get_location_filter(location_ids))
+            default_filters.append(OwnerFilter(location_ids))
 
-        user_ids = ExpandedMobileWorkerFilter.selected_user_ids(mobile_user_and_group_slugs)
+        user_ids = CaseListFilter.selected_user_ids(mobile_user_and_group_slugs)
         if user_ids:
             default_filters.append(OwnerFilter(user_ids))
 

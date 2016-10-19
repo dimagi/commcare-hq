@@ -680,23 +680,14 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         notify_of_deprecation("'sql_location' was just called on a sql_location.  That's kinda silly.")
         return self
 
-    @classmethod
-    def location_and_descendants(cls, location_ids):
-        locations = []
-        for location_id in location_ids:
-            location = cls.by_location_id(location_id)
-            locations += location.get_descendants(include_self=True)
-        return locations
 
     @classmethod
     def location_and_descendants_ids(cls, location_ids):
-        all_locations = cls.location_and_descendants(location_ids)
-        return [location.get_id for location in all_locations]
+        locations = cls.objects.filter(location_id__in=location_ids)
+        return (cls.objects
+                .get_queryset_descendants(locations, include_self=True)
+                .location_ids())
 
-    @classmethod
-    def users_at_locations_and_descendants(cls, location_ids):
-        location_ids = SQLLocation.location_and_descendants_ids(location_ids)
-        return UserES().location(location_ids).run().hits
 
 def filter_for_archived(locations, include_archive_ancestors):
     """
