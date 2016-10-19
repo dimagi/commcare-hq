@@ -532,13 +532,6 @@ RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-LOCATION_BASED_ACCESS_RESTRICTIONS = StaticToggle(
-    'location_based_access_restrictions',
-    "Allow project to restrict web user access by location",
-    TAG_PRODUCT_PATH,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 API_THROTTLE_WHITELIST = StaticToggle(
     'api_throttle_whitelist',
     ('API throttle whitelist'),
