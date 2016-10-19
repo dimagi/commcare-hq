@@ -184,42 +184,43 @@ class BaseFilterExportDownloadForm(forms.Form):
         self.helper.form_tag = False
         self.helper.label_class = 'col-sm-3'
         self.helper.field_class = 'col-sm-5'
-        self.helper.layout = Layout(
-            crispy.Field(
-                'type_or_group',
-                ng_model="formData.type_or_group",
-                ng_required='false',
-            ),
-            crispy.Div(
+        if not (hasattr(self, 'skip_layout') and self.skip_layout):
+            self.helper.layout = Layout(
                 crispy.Field(
-                    'user_types',
-                    ng_model='formData.user_types',
+                    'type_or_group',
+                    ng_model="formData.type_or_group",
                     ng_required='false',
                 ),
-                ng_show="formData.type_or_group === 'type'",
-            ),
-            crispy.Div(
-                B3MultiField(
-                    _("Group"),
-                    crispy.Div(
-                        crispy.Div(
-                            InlineField(
-                                'group',
-                                ng_model='formData.group',
-                                ng_required='false',
-                                style="width: 98%",
-                            ),
-                            ng_show="hasGroups",
-                        ),
+                crispy.Div(
+                    crispy.Field(
+                        'user_types',
+                        ng_model='formData.user_types',
+                        ng_required='false',
                     ),
-                    CrispyTemplate('export/crispy_html/groups_help.html', {
-                        'domain': self.domain_object.name,
-                    }),
+                    ng_show="formData.type_or_group === 'type'",
                 ),
-                ng_show="formData.type_or_group === 'group'",
-            ),
-            *self.extra_fields
-        )
+                crispy.Div(
+                    B3MultiField(
+                        _("Group"),
+                        crispy.Div(
+                            crispy.Div(
+                                InlineField(
+                                    'group',
+                                    ng_model='formData.group',
+                                    ng_required='false',
+                                    style="width: 98%",
+                                ),
+                                ng_show="hasGroups",
+                            ),
+                        ),
+                        CrispyTemplate('export/crispy_html/groups_help.html', {
+                            'domain': self.domain_object.name,
+                        }),
+                    ),
+                    ng_show="formData.type_or_group === 'group'",
+                ),
+                *self.extra_fields
+            )
 
     @property
     def extra_fields(self):
@@ -442,6 +443,7 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
 class EmwfFilterFormExport(FilterFormESExportDownloadForm):
     def __init__(self, domain_object, *args, **kwargs):
         self.domain_object = domain_object
+        self.skip_layout = True
         super(EmwfFilterFormExport, self).__init__(domain_object, *args, **kwargs)
 
         self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
@@ -546,6 +548,7 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
 
     def __init__(self, domain_object, timezone, *args, **kwargs):
         self.timezone = timezone
+        self.skip_layout = True
         super(FilterCaseESExportDownloadForm, self).__init__(domain_object, timezone, *args, **kwargs)
 
         self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
