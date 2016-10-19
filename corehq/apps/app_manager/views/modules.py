@@ -387,6 +387,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         "source_module_id": None,
         "task_list": ('task_list-show', 'task_list-label'),
         "excl_form_ids": None,
+        "display_style": None
     }
 
     if attr not in attributes:
@@ -410,7 +411,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     resp = {'update': {}, 'corrections': {}}
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
-        if is_valid_case_type(case_type, module):
+        if not case_type or is_valid_case_type(case_type, module):
             old_case_type = module["case_type"]
             module["case_type"] = case_type
             for cp_mod in (mod for mod in app.modules if isinstance(mod, CareplanModule)):
@@ -435,6 +436,8 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             return HttpResponseBadRequest("case type is improperly formatted")
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(request.POST.get("put_in_root"))
+    if should_edit("display_style"):
+        module["display_style"] = request.POST.get("display_style")
     if should_edit("source_module_id"):
         module["source_module_id"] = request.POST.get("source_module_id")
     if should_edit("display_separately"):

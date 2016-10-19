@@ -130,9 +130,6 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
         return MOCK_XFORM_ES or XFormES(domain)
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        if domain == 'hsph-betterbirth':
-            raise BadRequest("There have been too many requests from this domain."
-                             "  Please contact support to re-enable access.")
         include_archived = 'include_archived' in bundle.request.GET
         try:
             es_query = es_search(bundle.request, domain, ['include_archived'])
@@ -288,7 +285,7 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
         ).order_by('server_modified_on')
 
     class Meta(v0_3.CommCareCaseResource.Meta):
-        max_limit = 100 # Today, takes ~25 seconds for some domains
+        max_limit = 1000
         serializer = CommCareCaseSerializer()
         ordering = ['server_date_modified', 'date_modified']
         object_class = ESCase

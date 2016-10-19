@@ -331,7 +331,8 @@ def track_periodic_data():
     """
     # Start by getting a list of web users mapped to their domains
     six_months_ago = date.today() - timedelta(days=180)
-    users_to_domains = UserES().web_users().last_logged_in(gte=six_months_ago).fields(['domains', 'email'])\
+    users_to_domains = UserES().web_users().last_logged_in(gte=six_months_ago)\
+                               .fields(['domains', 'email', 'date_joined'])\
                                .run().hits
     # users_to_domains is a list of dicts
     domains_to_forms = FormES().terms_aggregation('domain', 'domain').size(0).run()\
@@ -349,6 +350,7 @@ def track_periodic_data():
         email = user.get('email')
         if not email:
             continue
+        date_created = user.get('date_joined')
         max_forms = 0
         max_workers = 0
 
@@ -378,6 +380,10 @@ def track_periodic_data():
                 {
                     'property': '{}over_300_form_submissions'.format(env),
                     'value': max_forms > 300
+                },
+                {
+                    'property': '{}date_created'.format(env),
+                    'value': date_created
                 }
             ]
         }

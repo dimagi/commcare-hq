@@ -24,6 +24,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.utils.translation import ugettext as _, ugettext_noop
 from braces.views import JSONResponseMixin
+from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.dispatcher import (
     ReportDispatcher,
 )
@@ -44,6 +45,7 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.reports.util import (
     get_expanded_columns,
+    has_location_filter,
 )
 from corehq.apps.userreports.util import (
     default_language,
@@ -65,7 +67,7 @@ from corehq.apps.reports.datatables import DataTablesHeader
 UCR_EXPORT_TO_EXCEL_ROW_LIMIT = 1000
 
 
-def get_filter_values(filters, request_dict):
+def get_filter_values(filters, request_dict, user=None):
     """
     Return a dictionary mapping filter ids to specified values
     :param filters: A list of corehq.apps.reports_core.filters.BaseFilter
@@ -75,7 +77,7 @@ def get_filter_values(filters, request_dict):
     """
     try:
         return {
-            filter.css_id: filter.get_value(request_dict)
+            filter.css_id: filter.get_value(request_dict, user)
             for filter in filters
         }
     except FilterException, e:
@@ -119,6 +121,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @use_jquery_ui
     @use_datatables
     @use_nvd3
+    @conditionally_location_safe(has_location_filter)
     def dispatch(self, request, *args, **kwargs):
         original = super(ConfigurableReport, self).dispatch(request, *args, **kwargs)
         return original
@@ -184,7 +187,11 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def filter_values(self):
-        return get_filter_values(self.filters, self.request_dict)
+        try:
+            user = self.request.couch_user
+        except AttributeError:
+            user = None
+        return get_filter_values(self.filters, self.request_dict, user=user)
 
     @property
     @memoized
@@ -338,12 +345,12 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
     @property
     def headers(self):
-        return DataTablesHeader(*[col.data_tables_column for col in self.data_source.columns])
+        return DataTablesHeader(*[col.data_tables_column for col in self.data_source.inner_columns])
 
     def get_ajax(self, params):
         try:
             data_source = self.data_source
-            if len(data_source.columns) > 50 and not DISABLE_COLUMN_LIMIT_IN_UCR.enabled(self.domain):
+            if len(data_source.inner_columns) > 50 and not DISABLE_COLUMN_LIMIT_IN_UCR.enabled(self.domain):
                 raise UserReportsError(_("This report has too many columns to be displayed"))
             data_source.set_filter_values(self.filter_values)
 
@@ -352,12 +359,11 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             echo = int(params.get('sEcho', 1))
             if sort_column and echo != 1:
                 data_source.set_order_by(
-                    [(data_source.column_configs[int(sort_column)].column_id, sort_order.upper())]
+                    [(data_source.top_level_columns[int(sort_column)].column_id, sort_order.upper())]
                 )
 
             datatables_params = DatatablesParams.from_request_dict(params)
             page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
-
             total_records = data_source.get_total_records()
             total_row = data_source.get_total_row() if data_source.has_total_row else None
         except UserReportsError as e:
@@ -446,7 +452,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         raw_rows = list(data.get_data())
         headers = [column.header for column in self.data_source.columns]
 
-        column_id_to_expanded_column_ids = get_expanded_columns(data.column_configs, data.config)
+        column_id_to_expanded_column_ids = get_expanded_columns(data.top_level_columns, data.config)
         column_ids = []
         for column in self.spec.report_columns:
             column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))

@@ -5,7 +5,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.consumption.shortcuts import get_default_consumption, set_default_consumption_for_supply_point
 from corehq.apps.products.models import Product
-from corehq.apps.custom_data_fields.edit_entity import add_prefix
+from corehq.apps.custom_data_fields.edit_entity import add_prefix, get_prefixed
 from corehq.util.spreadsheets.excel import enforce_string_type, StringTypeRequiredError
 
 from .exceptions import LocationImportError
@@ -223,6 +223,9 @@ class LocationImporter(object):
             form_data.get('location_type') != existing.location_type_name
             or form_data.get('parent_id') != existing.parent_location_id
         ):
+            return False
+
+        if get_prefixed(form_data) != existing.metadata:
             return False
 
         for product_code, val in consumption:

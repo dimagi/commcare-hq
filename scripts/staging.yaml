@@ -47,11 +47,11 @@ name: autostaging
 branches:
   - dsr-multi-loc # sr 9/20
   - vellum-staging # J$ 11/13
-  - django-1.8 # nick P 8/25
-  - ce/domain-list-api # Cal 8/31
-  #- revert-13231-revert-13024-mk-235887-configure-menu-grid+onboarding # Jenny 9/19
-  - revert-13231-revert-13024-mk-235887-configure-menu-grid # Manish 9/20
-  #- onboarding # Jenny 9/19
+  - onboarding # Jenny 9/19
+#  - np/upgrade-twofactor # Nick P 10/5
+  - bmb/currentind-string # Biyeun 11/12
+  - np/upgrade-django-celery # Nick P 10/13
+  - je/remove-phonenumbers
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -60,8 +60,7 @@ submodules:
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches:
-      - commcare_2.30 #wsp 9/14
+    branches: []
   submodules/django-digest-src:
     branches: []
   submodules/dimagi-utils-src:
@@ -73,5 +72,4 @@ submodules:
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
   deployment/commcare-hq-deploy:
-    branches:
-      - br/celery-bash
+    branches: []

@@ -9,7 +9,7 @@
   "config": {
     "title": "Issue Tracker - Issues (State)",
     "description": "",
-    "visible": false,
+    "visible": true,
     "aggregation_columns": [
       "state_id"
     ],

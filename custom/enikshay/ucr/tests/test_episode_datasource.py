@@ -62,7 +62,7 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
                 "create": True,
                 "update": dict(
                     dob="1987-08-15",
-                    sex="m",
+                    sex="male",
                 )
             },
         )
@@ -94,7 +94,7 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
                 'update': dict(
                     test_type_value='microscopy-zn',
                     result=lab_result,
-                    purpose_of_testing='diagnostic_or_pretreatment'
+                    purpose_of_testing='diagnostic'
                 )
             },
             indices=[CaseIndex(

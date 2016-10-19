@@ -46,7 +46,8 @@
                 vellumTypes: {{ VELLUM_TYPES|JSON }},
                 formNameMap: {{ form_name_map|JSON }},
                 appLangs: {{ langs|JSON }},
-                downloadURL: '{% url 'download_case_summary' domain app_id %}',
+                caseDownloadURL: '{% url 'download_case_summary' domain app_id %}',
+                appDownloadURL: '{% url 'download_app_summary' domain app_id %}',
             });
 
             summaryApp.config(['$routeProvider', function($routeProvider) {

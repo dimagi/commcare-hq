@@ -4,7 +4,7 @@ from collections import namedtuple
 from urllib import unquote
 from elasticsearch import Elasticsearch
 from django.conf import settings
-from elasticsearch.exceptions import ElasticsearchException, RequestError
+from elasticsearch.exceptions import ElasticsearchException
 
 from corehq.apps.es.utils import flatten_field_dict
 from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
@@ -162,7 +162,7 @@ def run_query(index_name, q, debug_host=None):
             raise
     try:
         return es_instance.search(es_meta.index, es_meta.type, body=q)
-    except RequestError as e:
+    except ElasticsearchException as e:
         raise ESError(e)
 
 
@@ -175,7 +175,7 @@ def scroll_query(index_name, q):
             doc_type=es_meta.type,
             query=q,
         )
-    except RequestError as e:
+    except ElasticsearchException as e:
         raise ESError(e)
 
 

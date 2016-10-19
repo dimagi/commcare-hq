@@ -4,7 +4,7 @@ from operator import add
 
 from sqlagg import AliasColumn
 from sqlagg.columns import SimpleColumn, CountColumn, SumColumn
-from sqlagg.filters import LT, EQ
+from sqlagg.filters import LT, EQ, IN
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
@@ -13,19 +13,22 @@ from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, AggregateColumn, DictDataFormat, \
     DataFormatter
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
+from corehq.apps.reports.util import get_INFilter_bindparams
 from corehq.apps.style.decorators import use_nvd3
 from corehq.apps.userreports.util import get_table_name
 from corehq.apps.users.models import CommCareUser
-from custom.pnlppgi.filters import WeekFilter
+from custom.pnlppgi.filters import WeekFilter, LocationBaseDrilldownOptionFilter
 from django.utils.translation import ugettext as _
 
+from custom.pnlppgi.utils import location_filter, users_locations, show_location
+from custom.pnlppgi.utils import update_config
 
 EMPTY_CELL = {'sort_key': 0, 'html': '---'}
 
 
 class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
     slug = 'site_reporting_rates_report'
-    name = 'Site Reporting Rates Report'
+    name = u'Complétude et promptitude'
 
     report_template_path = 'pnlppgi/site_reporting.html'
 
@@ -35,7 +38,7 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
 
     @property
     def fields(self):
-        return [WeekFilter, YearFilter]
+        return [LocationBaseDrilldownOptionFilter, WeekFilter, YearFilter]
 
     @property
     def config(self):
@@ -43,23 +46,31 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
         year = self.request.GET.get('year')
         date = "%s-W%s-1" % (year, week)
         monday = datetime.datetime.strptime(date, "%Y-W%W-%w")
-        return {
+
+        params = {
             'domain': self.domain,
             'week': week,
             'year': year,
             'monday': monday.replace(hour=16)
         }
+        location_filter(self.request, params=params)
+        update_config(params)
+        return params
 
     @property
     def group_by(self):
-        return ['location_id']
+        return ['site_id']
 
     @property
     def filters(self):
-        return [
+        filters = [
             EQ('week', 'week'),
             EQ('year', 'year'),
+            IN('owner_id', get_INFilter_bindparams('owner_id', self.config['users']))
         ]
+        location_filter(self.request, filters=filters)
+        return filters
+
 
     @property
     def engine_id(self):
@@ -72,7 +83,7 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
     @property
     def columns(self):
         return [
-            DatabaseColumn('location_id', SimpleColumn('location_id')),
+            DatabaseColumn('location_id', SimpleColumn('site_id')),
             DatabaseColumn('Completude', CountColumn('doc_id', alias='completude')),
             DatabaseColumn('Promptitude', CountColumn(
                 'doc_id',
@@ -113,10 +124,10 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
     @property
     def rows(self):
 
-        def cell_format(data, all_users):
+        def cell_format(data):
             percent = 0
             if isinstance(data, dict):
-                percent = data['sort_key'] * 100 / float(len(set(all_users)) or 1)
+                percent = 100
             return {
                 'sort_key': percent,
                 'html': "%.2f%%" % percent
@@ -132,18 +143,26 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
 
         formatter = DataFormatter(DictDataFormat(self.columns, no_value=self.no_value))
         data = formatter.format(self.data, keys=self.keys, group_by=self.group_by)
-        locations = SQLLocation.objects.filter(
-            domain=self.domain,
-            location_type__code='centre-de-sante'
-        ).order_by('name')
+        selected_location = location_filter(self.request, location_filter_selected=True)
+        if selected_location:
+            locations = SQLLocation.objects.get(
+                location_id=selected_location
+            ).get_descendants(include_self=True).filter(location_type__code='centre-de-sante').order_by('name')
+        else:
+            locations = SQLLocation.objects.filter(
+                domain=self.domain,
+                location_type__code='centre-de-sante',
+                is_archived=False
+            ).order_by('name')
+        user_locations = users_locations()
         for site in locations:
-            users_for_location = users_dict.get(site.location_id, [])
             loc_data = data.get(site.location_id, {})
-            yield [
-                site.name,
-                cell_format(loc_data.get('completude', EMPTY_CELL), users_for_location),
-                cell_format(loc_data.get('promptitude', EMPTY_CELL), users_for_location),
-            ]
+            if site.location_id in user_locations:
+                yield [
+                    site.name,
+                    cell_format(loc_data.get('completude', EMPTY_CELL)),
+                    cell_format(loc_data.get('promptitude', EMPTY_CELL)),
+                ]
 
 
 class MalariaReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
@@ -163,30 +182,36 @@ class MalariaReport(SqlTabularReport, CustomProjectReport, ProjectReportParamete
 
 class WeeklyMalaria(MalariaReport):
     slug = 'weekly_malaria'
-    name = 'Weekly Malaria'
+    name = u'Données de la semaine'
 
     report_template_path = 'pnlppgi/weekly_malaria.html'
 
     @property
     def fields(self):
-        return [WeekFilter, YearFilter]
+        return [LocationBaseDrilldownOptionFilter, WeekFilter, YearFilter]
 
     @property
     def config(self):
         week = self.request.GET.get('week')
         year = self.request.GET.get('year')
-        return {
+        params = {
             'domain': self.domain,
             'week': week,
             'year': year
         }
+        location_filter(self.request, params=params)
+        update_config(params)
+        return params
 
     @property
     def filters(self):
-        return [
+        filters = [
             EQ('week', 'week'),
             EQ('year', 'year'),
+            IN('owner_id', get_INFilter_bindparams('owner_id', self.config['users']))
         ]
+        location_filter(self.request, filters=filters)
+        return filters
 
     @property
     def group_by(self):
@@ -273,58 +298,83 @@ class WeeklyMalaria(MalariaReport):
     def rows(self):
         formatter = DataFormatter(DictDataFormat(self.columns, no_value=self.no_value))
         data = formatter.format(self.data, keys=self.keys, group_by=self.group_by)
-        locations = SQLLocation.objects.filter(domain=self.domain, location_type__code='region').order_by('name')
+        selected_location = location_filter(self.request, location_filter_selected=True)
+        selected_hierarchy = []
+        if selected_location:
+            selected_hierarchy = SQLLocation.objects.get(
+                location_id=selected_location
+            ).get_descendants(
+                include_self=True
+            ).filter(
+                location_type__code='centre-de-sante'
+            ).values_list(
+                'location_id',
+                flat=True
+            )
+        locations = SQLLocation.objects.filter(
+            domain=self.domain,
+            location_type__code='region',
+            is_archived=False
+        ).order_by('name')
+        user_locations = users_locations()
         for reg in locations:
             for dis in reg.children.order_by('name'):
                 for site in dis.children.order_by('name'):
                     row = data.get(site.location_id, {})
-                    yield [
-                        reg.name,
-                        dis.name,
-                        site.name,
-                        row.get('cas_vus_5', EMPTY_CELL),
-                        row.get('cas_suspects_5', EMPTY_CELL),
-                        row.get('tests_realises_5', EMPTY_CELL),
-                        row.get('cas_confirmes_5', EMPTY_CELL),
-                        row.get('cas_vus_5_10', EMPTY_CELL),
-                        row.get('cas_suspects_5_10', EMPTY_CELL),
-                        row.get('tests_realises_5_10', EMPTY_CELL),
-                        row.get('cas_confirmes_5_10', EMPTY_CELL),
-                        row.get('cas_vus_fe', EMPTY_CELL),
-                        row.get('cas_suspects_fe', EMPTY_CELL),
-                        row.get('tests_realises_fe', EMPTY_CELL),
-                        row.get('cas_confirmes_fe', EMPTY_CELL),
-                        row.get('cas_vu_total', EMPTY_CELL),
-                        row.get('cas_suspect_total', EMPTY_CELL),
-                        row.get('tests_realises_total', EMPTY_CELL),
-                        row.get('cas_confirmes_total', EMPTY_CELL),
-                        row.get('div_teasts_cas', EMPTY_CELL)
-                    ]
+                    if show_location(site, user_locations, selected_hierarchy):
+                        yield [
+                            reg.name,
+                            dis.name,
+                            site.name,
+                            row.get('cas_vus_5', EMPTY_CELL),
+                            row.get('cas_suspects_5', EMPTY_CELL),
+                            row.get('tests_realises_5', EMPTY_CELL),
+                            row.get('cas_confirmes_5', EMPTY_CELL),
+                            row.get('cas_vus_5_10', EMPTY_CELL),
+                            row.get('cas_suspects_5_10', EMPTY_CELL),
+                            row.get('tests_realises_5_10', EMPTY_CELL),
+                            row.get('cas_confirmes_5_10', EMPTY_CELL),
+                            row.get('cas_vus_fe', EMPTY_CELL),
+                            row.get('cas_suspects_fe', EMPTY_CELL),
+                            row.get('tests_realises_fe', EMPTY_CELL),
+                            row.get('cas_confirmes_fe', EMPTY_CELL),
+                            row.get('cas_vu_total', EMPTY_CELL),
+                            row.get('cas_suspect_total', EMPTY_CELL),
+                            row.get('tests_realises_total', EMPTY_CELL),
+                            row.get('cas_confirmes_total', EMPTY_CELL),
+                            row.get('div_teasts_cas', EMPTY_CELL)
+                        ]
 
 
 class CumulativeMalaria(MalariaReport):
     slug = 'cumulative_malaria'
-    name = 'Cumulative Malaria'
+    name = u'Données cumulées'
 
     report_template_path = 'pnlppgi/cumulative_malaria.html'
 
     @property
     def fields(self):
-        return [YearFilter]
+        return [LocationBaseDrilldownOptionFilter, YearFilter]
 
     @property
     def config(self):
         year = self.request.GET.get('year')
-        return {
+        params = {
             'domain': self.domain,
             'year': year
         }
+        location_filter(self.request, params=params)
+        update_config(params)
+        return params
 
     @property
     def filters(self):
-        return [
+        filters = [
             EQ('year', 'year'),
+            IN('owner_id', get_INFilter_bindparams('owner_id', self.config['users']))
         ]
+        location_filter(self.request, filters=filters)
+        return filters
 
     @property
     def group_by(self):
@@ -435,32 +485,61 @@ class CumulativeMalaria(MalariaReport):
     def rows(self):
         formatter = DataFormatter(DictDataFormat(self.columns, no_value=self.no_value))
         data = formatter.format(self.data, keys=self.keys, group_by=self.group_by)
-        locations = SQLLocation.objects.filter(domain=self.domain, location_type__code='region').order_by('name')
-        # TODO add zones loop
-        for reg in locations:
-            for dis in reg.children.order_by('name'):
-                for site in dis.children.order_by('name'):
-                    row = data.get(site.location_id, {})
-                    yield [
-                        reg.name,
-                        dis.name,
-                        site.name,
-                        row.get('cas_vus_5', EMPTY_CELL),
-                        row.get('cas_suspects_5', EMPTY_CELL),
-                        row.get('cas_confirmes_5', EMPTY_CELL),
-                        row.get('cas_vus_5_10', EMPTY_CELL),
-                        row.get('cas_suspects_5_10', EMPTY_CELL),
-                        row.get('cas_confirmes_5_10', EMPTY_CELL),
-                        row.get('cas_vus_10', EMPTY_CELL),
-                        row.get('cas_suspects_10', EMPTY_CELL),
-                        row.get('cas_confirmes_10', EMPTY_CELL),
-                        row.get('cas_vus_fe', EMPTY_CELL),
-                        row.get('cas_suspects_fe', EMPTY_CELL),
-                        row.get('cas_confirmes_fe', EMPTY_CELL),
-                        row.get('total_cas', EMPTY_CELL),
-                        row.get('per_cas_5', EMPTY_CELL),
-                        row.get('per_cas_5_10', EMPTY_CELL),
-                        row.get('per_cas_10', EMPTY_CELL),
-                        row.get('per_cas_fa', EMPTY_CELL),
-                        'zone'
-                    ]
+
+        selected_location = location_filter(self.request, location_filter_selected=True)
+        selected_hierarchy = []
+        if selected_location:
+            selected_hierarchy = SQLLocation.objects.get(
+                location_id=selected_location
+            ).get_descendants(
+                include_self=True
+            ).filter(
+                location_type__code='centre-de-sante'
+            ).values_list(
+                'location_id',
+                flat=True
+            )
+
+        locations = SQLLocation.objects.filter(
+            domain=self.domain,
+            location_type__code='zone',
+            is_archived=False
+        ).order_by('name')
+        user_locations = users_locations()
+        for zone in locations:
+            for reg in zone.children.order_by('name'):
+                for dis in reg.children.order_by('name'):
+                    for site in dis.children.order_by('name'):
+                        row = data.get(site.location_id, {})
+                        if show_location(site, user_locations, selected_hierarchy):
+                            yield [
+                                reg.name,
+                                dis.name,
+                                site.name,
+                                row.get('cas_vus_5', EMPTY_CELL),
+                                row.get('cas_suspects_5', EMPTY_CELL),
+                                row.get('cas_confirmes_5', EMPTY_CELL),
+                                row.get('cas_vus_5_10', EMPTY_CELL),
+                                row.get('cas_suspects_5_10', EMPTY_CELL),
+                                row.get('cas_confirmes_5_10', EMPTY_CELL),
+                                row.get('cas_vus_10', EMPTY_CELL),
+                                row.get('cas_suspects_10', EMPTY_CELL),
+                                row.get('cas_confirmes_10', EMPTY_CELL),
+                                row.get('cas_vus_fe', EMPTY_CELL),
+                                row.get('cas_suspects_fe', EMPTY_CELL),
+                                row.get('cas_confirmes_fe', EMPTY_CELL),
+                                row.get('total_cas', EMPTY_CELL),
+                                row.get('per_cas_5', EMPTY_CELL),
+                                row.get('per_cas_5_10', EMPTY_CELL),
+                                row.get('per_cas_10', EMPTY_CELL),
+                                row.get('per_cas_fa', EMPTY_CELL),
+                                zone.name
+                            ]
+
+CUSTOM_REPORTS = (
+    ['Custom Reports', (
+        SiteReportingRatesReport,
+        WeeklyMalaria,
+        CumulativeMalaria
+    )],
+)

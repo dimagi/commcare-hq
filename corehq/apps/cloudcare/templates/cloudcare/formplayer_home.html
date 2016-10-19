@@ -4,7 +4,7 @@
 {% load compress %}
 
 {% block title %}
-    {% trans "CloudCare" %}
+    {% trans "Web Apps" %}
 {% endblock %}
 
 {% block page_title %}{% endblock %}
@@ -24,7 +24,7 @@
 {% block navigation %}{{ block.super }}
   <div class="navbar navbar-inverse navbar-cloudcare navbar-static-top">
     <div class="container-fluid">
-      <a class="navbar-brand" href="{% url 'cloudcare_default' domain %}"><i class="fcc fcc-flower"></i> Cloudcare</a>
+      <a class="navbar-brand" href="{% url 'cloudcare_default' domain %}"><i class="fcc fcc-flower"></i> Web Apps</a>
       <ul class="nav navbar-nav navbar-right" >
         <li><a href="#" id="commcare-menu-toggle">{% trans 'Show Full Menu' %}</a></li>
       </ul>
@@ -87,6 +87,10 @@
         var username = "{{ username  }}";
         var domain = "{{ domain }}";
         var formplayer_url = "{{ formplayer_url }}";
+        var instanceViewerEnabled = false;
+        {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
+            instanceViewerEnabled = true;
+        {% endif %}
         var options = {
             "apps": apps,
             "language": language,
@@ -94,6 +98,7 @@
             "domain": domain,
             "formplayer_url": formplayer_url,
             "gridPolyfillPath": "{% static 'css-grid-polyfill-binaries/css-polyfills.js' %}",
+            "debuggerEnabled": instanceViewerEnabled,
         };
         FormplayerFrontend.start(options);
         $(function () {
@@ -134,6 +139,7 @@
         <section id="case-crumbs" style="width: 800px"></section>
         <section id="cases"></section>
         <div id="menu-container">
+            <section id="formplayer-progress-container"></section>
             <div id="breadcrumb-region"></div>
             <div id="persistent-case-tile" class="container"></div>
             <section id="cloudcare-notifications" class="container notifications-container"></section>
@@ -158,5 +164,7 @@
     {% include 'formplayer/menu_list.html' %}
     {% include 'formplayer/session_list.html' %}
     {% include 'formplayer/query_view.html' %}
+    {% include 'formplayer/confirmation_modal.html' %}
+    {% include 'formplayer/progress.html' %}
 
 {% endblock %}

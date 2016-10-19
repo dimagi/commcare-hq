@@ -104,10 +104,10 @@ describe('WebForm', function() {
 
             sinon.spy(sess.taskQueue, 'execute');
 
-            assert.isFalse(!!$('input#submit').attr('disabled'));
+            assert.isFalse(!!$('input#submit').prop('disabled'));
             assert.isFalse(sess.taskQueue.execute.calledOnce);
             server.respond();
-            assert.isFalse(!!$('input#submit').attr('disabled'));
+            assert.isFalse(!!$('input#submit').prop('disabled'));
             assert.isTrue(sess.taskQueue.execute.calledOnce);
         });
 

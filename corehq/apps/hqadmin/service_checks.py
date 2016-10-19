@@ -12,6 +12,7 @@ from django.core import cache
 from django.conf import settings
 from django.contrib.auth.models import User
 from restkit import Resource
+from celery import Celery
 import requests
 from soil import heartbeat
 from dimagi.utils.web import get_url_base
@@ -22,6 +23,7 @@ from corehq.apps.es import GroupES
 from corehq.blobs import get_blob_db
 from corehq.elastic import send_to_elasticsearch
 from corehq.util.decorators import change_log_level
+from corehq.apps.hqadmin.utils import parse_celery_workers, parse_celery_pings
 
 ServiceStatus = namedtuple("ServiceStatus", "success msg")
 
@@ -133,9 +135,23 @@ def check_heartbeat():
         t = cresource.get("api/workers", params_dict={'status': True}).body_string()
         all_workers = json.loads(t)
         bad_workers = []
-        for hostname, status in all_workers.items():
-            if not status:
+        expected_running, expected_stopped = parse_celery_workers(all_workers)
+
+        celery = Celery()
+        celery.config_from_object(settings)
+        worker_responses = celery.control.ping(timeout=10)
+        pings = parse_celery_pings(worker_responses)
+
+        for hostname in expected_running:
+            if hostname not in pings or not pings[hostname]:
                 bad_workers.append('* {} celery worker down'.format(hostname))
+
+        for hostname in expected_stopped:
+            if hostname in pings:
+                bad_workers.append(
+                    '* {} celery worker is running when we expect it to be stopped.'.format(hostname)
+                )
+
         if bad_workers:
             return ServiceStatus(False, '\n'.join(bad_workers))
 

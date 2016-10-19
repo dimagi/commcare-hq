@@ -22,14 +22,25 @@ from corehq.pillows.sms import get_sms_reindexer
 from corehq.pillows.user import get_user_reindexer
 from corehq.pillows.xform import get_couch_form_reindexer, get_sql_form_reindexer
 
-
-def clean_options(options):
-    options = deepcopy(options)
-
-    for option in BaseCommand.option_list:
-        options.pop(option.dest, None)
-
-    return {key: value for key, value in options.items() if value is not None}
+REINDEX_FNS = {
+    'domain': get_domain_reindexer,
+    'user': get_user_reindexer,
+    'group': get_group_reindexer,
+    'groups-to-user': get_groups_to_user_reindexer,
+    'case': get_couch_case_reindexer,
+    'form': get_couch_form_reindexer,
+    'sql-case': get_sql_case_reindexer,
+    'sql-form': get_sql_form_reindexer,
+    'case-search': get_case_search_reindexer,
+    'ledger-v2': get_ledger_v2_reindexer,
+    'ledger-v1': get_ledger_v1_reindexer,
+    'sms': get_sms_reindexer,
+    'report-case': get_report_case_reindexer,
+    'report-xform': get_report_xforms_reindexer,
+    'app': get_app_reindexer,
+    'couch-app-form-submission': get_couch_app_form_submission_tracker_reindexer,
+    'sql-app-form-submission': get_sql_app_form_submission_tracker_reindexer,
+}
 
 
 class Command(BaseCommand):
@@ -69,39 +80,17 @@ class Command(BaseCommand):
     def handle(self, index, *args, **options):
         cleanup = options.pop('cleanup')
         noinput = options.pop('noinput')
-        reindex_fns = {
-            'domain': get_domain_reindexer,
-            'user': get_user_reindexer,
-            'group': get_group_reindexer,
-            'groups-to-user': get_groups_to_user_reindexer,
-            'case': get_couch_case_reindexer,
-            'form': get_couch_form_reindexer,
-            'sql-case': get_sql_case_reindexer,
-            'sql-form': get_sql_form_reindexer,
-            'case-search': get_case_search_reindexer,
-            'ledger-v2': get_ledger_v2_reindexer,
-            'ledger-v1': get_ledger_v1_reindexer,
-            'sms': get_sms_reindexer,
-            'report-case': get_report_case_reindexer,
-            'report-xform': get_report_xforms_reindexer,
-            'app': get_app_reindexer,
-            'couch-app-form-submission': get_couch_app_form_submission_tracker_reindexer,
-            'sql-app-form-submission': get_sql_app_form_submission_tracker_reindexer,
-        }
-        if index not in reindex_fns:
-            raise CommandError('Supported indices to reindex are: {}'.format(','.join(reindex_fns.keys())))
+        if index not in REINDEX_FNS:
+            raise CommandError('Supported indices to reindex are: {}'.format(','.join(REINDEX_FNS.keys())))
 
         def confirm():
             return raw_input("Are you sure you want to delete the current index (if it exists)? y/n\n") == 'y'
 
-        reindexer = reindex_fns[index]()
-        if not BaseCommand.option_list:
-            reindexer_options = {
-                key: value for key, value in options.items()
-                if value is not None and key in [option.dest for option in self.option_list]
-            }
-        else:  # remove when django>=1.8
-            reindexer_options = clean_options(options)
+        reindexer = REINDEX_FNS[index]()
+        reindexer_options = {
+            key: value for key, value in options.items()
+            if value is not None and key in [option.dest for option in self.option_list]
+        }
         unconsumed = reindexer.consume_options(reindexer_options)
         if unconsumed:
             raise CommandError(

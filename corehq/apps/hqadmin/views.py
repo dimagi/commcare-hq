@@ -3,13 +3,13 @@ from lxml import etree
 import HTMLParser
 import json
 import socket
-import csv
 from datetime import timedelta, date, datetime
 from collections import defaultdict, namedtuple, OrderedDict
 from StringIO import StringIO
 
 import dateutil
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.csv import UnicodeWriter
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 from django.conf import settings
@@ -37,6 +37,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.xml import SYNC_XMLNS
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.callcenter.utils import CallCenterCase
+from corehq.apps.domain.auth import basicauth
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
@@ -971,7 +972,7 @@ class DownloadMALTView(BaseAdminSectionView):
             except (ValueError, ValidationError):
                 messages.error(
                     request,
-                    _("Enter a valid year-month. e.g. 2015-09 (for December 2015)")
+                    _("Enter a valid year-month. e.g. 2015-09 (for September 2015)")
                 )
         return super(DownloadMALTView, self).get(request, *args, **kwargs)
 
@@ -1001,7 +1002,7 @@ class DownloadGIRView(BaseAdminSectionView):
             except (ValueError, ValidationError):
                 messages.error(
                     request,
-                    _("Enter a valid year-month. e.g. 2015-09 (for December 2015)")
+                    _("Enter a valid year-month. e.g. 2015-09 (for September 2015)")
                 )
         return super(DownloadGIRView, self).get(request, *args, **kwargs)
 
@@ -1019,7 +1020,7 @@ def _gir_csv_response(month, year):
     field_names = GIR_FIELDS
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = u'attachment; filename=gir.csv'
-    writer = csv.writer(response)
+    writer = UnicodeWriter(response)
     writer.writerow(list(field_names))
     for months in domain_months.values():
         writer.writerow(months[0].export_row(months[1:]))
@@ -1208,13 +1209,12 @@ def top_five_projects_by_country(request):
 class WebUserDataView(View):
     urlname = 'web_user_data'
 
-    def dispatch(self, request, *args, **kwargs):
-        return super(WebUserDataView, self).dispatch(request, domain='dummy', *args, **kwargs)
-
-    @method_decorator(login_or_basic)
+    @method_decorator(check_lockout)
+    @method_decorator(basicauth())
     def get(self, request, *args, **kwargs):
-        if request.couch_user.is_web_user():
-            data = {'domains': request.couch_user.domains}
+        couch_user = CouchUser.from_django_user(request.user)
+        if couch_user.is_web_user():
+            data = {'domains': couch_user.domains}
             return JsonResponse(data)
         else:
             return HttpResponse('Only web users can access this endpoint', status=400)

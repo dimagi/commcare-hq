@@ -33,73 +33,64 @@ def domain_has_submission_in_last_30_days(domain):
 
 
 def get_number_of_forms_in_domain(domain):
-    return FormES().domain(domain).size(0).run().total
+    return FormES().domain(domain).count()
+
+
+def _received_on_query(domain, desc=False):
+    return (
+        FormES()
+        .fields(['received_on'])
+        .domain(domain)
+        .sort('received_on', desc=desc)
+    )
 
 
 def get_first_form_submission_received(domain):
-    from corehq.apps.reports.util import make_form_couch_key
-    key = make_form_couch_key(domain)
-    row = XFormInstance.get_db().view(
-        "all_forms/view",
-        reduce=False,
-        startkey=key,
-        endkey=key + [{}],
-        limit=1,
-        stale=stale_ok(),
-    ).first()
-    if row:
-        submission_time = iso_string_to_datetime(row["key"][2])
-    else:
-        submission_time = None
-    return submission_time
+    result = _received_on_query(domain)[0]
+
+    if not result:
+        return
+
+    return iso_string_to_datetime(result[0]['received_on'])
 
 
 def get_last_form_submission_received(domain):
-    from corehq.apps.reports.util import make_form_couch_key
-    key = make_form_couch_key(domain)
-    row = XFormInstance.get_db().view(
-        "all_forms/view",
-        reduce=False,
-        endkey=key,
-        startkey=key + [{}],
-        descending=True,
-        limit=1,
-        stale=stale_ok(),
-    ).first()
-    if row:
-        submission_time = iso_string_to_datetime(row["key"][2])
-    else:
-        submission_time = None
-    return submission_time
+    result = _received_on_query(domain, desc=True)[0]
+
+    if not result:
+        return
+
+    return iso_string_to_datetime(result[0]['received_on'])
 
 
 def app_has_been_submitted_to_in_last_30_days(domain, app_id):
     now = datetime.datetime.utcnow()
     _30_days = datetime.timedelta(days=30)
-    then = json_format_datetime(now - _30_days)
-    now = json_format_datetime(now)
 
-    key = ['submission app', domain, app_id]
-    row = XFormInstance.get_db().view(
-        "all_forms/view",
-        startkey=key + [then],
-        endkey=key + [now],
-        limit=1,
-        stale=stale_ok(),
-    ).all()
-    return True if row else False
+    result = _received_on_query(domain, desc=True).app(app_id)[0]
+
+    if not result:
+        return
+
+    return iso_string_to_datetime(result[0]['received_on']) > (now - _30_days)
 
 
 def get_all_xmlns_app_id_pairs_submitted_to_in_domain(domain):
-    key = ["submission xmlns app", domain]
-    results = XFormInstance.get_db().view(
-        'all_forms/view',
-        startkey=key,
-        endkey=key + [{}],
-        group=True,
-        group_level=4,
-    ).all()
-    return {(result['key'][-2], result['key'][-1]) for result in results}
+    query = (FormES()
+             .domain(domain)
+             .aggregation(
+                 TermsAggregation("app_id", "app_id").aggregation(
+                     TermsAggregation("xmlns", "xmlns.exact")))
+             .remove_default_filter("has_xmlns")
+             .remove_default_filter("has_user")
+             .size(0))
+    query_result = query.run()
+    form_counts = set()
+    for app_id, bucket in query_result.aggregations.app_id.buckets_dict.iteritems():
+        for sub_bucket in bucket.xmlns.buckets_list:
+            xmlns = sub_bucket.key
+            form_counts.add((xmlns, app_id))
+    return form_counts
 
 
 @quickcache(['domain', 'app_id', 'xmlns'], memoize_timeout=0, timeout=5 * 60)
@@ -183,8 +174,8 @@ def get_form_count_breakdown_for_domain(domain):
     query = (FormES()
              .domain(domain)
              .aggregation(
-                TermsAggregation("app_id", "app_id").aggregation(
-                    TermsAggregation("xmlns", "xmlns.exact")))
+                 TermsAggregation("app_id", "app_id").aggregation(
+                     TermsAggregation("xmlns", "xmlns.exact")))
              .remove_default_filter("has_xmlns")
              .remove_default_filter("has_user")
              .size(0))

@@ -15,6 +15,7 @@ from fluff.signals import get_migration_context, get_tables_to_rebuild, reformat
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
+from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
 
 
 REBUILD_CHECK_INTERVAL = 10 * 60  # in seconds
@@ -120,6 +121,8 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
             if table.config.domain == domain:
                 # only bother getting the document if we have a domain match from the metadata
                 doc = change.get_document()
+                ensure_document_exists(change)
+                ensure_matched_revisions(change)
                 if table.config.filter(doc):
                     # best effort will swallow errors in the table
                     table.best_effort_save(doc)
@@ -132,6 +135,10 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
     # for tests to be able to call bootstrap on it.
     # we could easily remove the class and push all the stuff in __init__ to
     # get_kafka_ucr_pillow below if we wanted.
+
+    # don't retry errors until we figure out how to distinguish between
+    # doc save errors and data source config errors
+    retry_errors = False
 
     def __init__(self, processor, pillow_name):
         change_feed = KafkaChangeFeed(topics.ALL, group_id=pillow_name)

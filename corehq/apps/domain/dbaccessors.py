@@ -1,18 +1,28 @@
 from corehq.apps.domain.models import Domain
 from corehq.util.couch import get_db_by_doc_type
 from corehq.util.couch_helpers import paginate_view
+from dimagi.utils.parsing import json_format_datetime
 
 
-def get_doc_count_in_domain_by_class(domain, doc_class):
+def get_doc_count_in_domain_by_class(domain, doc_class, start_date=None, end_date=None):
     doc_type = doc_class.__name__
-    return get_doc_count_in_domain_by_type(domain, doc_type, doc_class.get_db())
+    return get_doc_count_in_domain_by_type(domain, doc_type, doc_class.get_db(),
+                                           start_date=start_date, end_date=end_date)
 
 
-def get_doc_count_in_domain_by_type(domain, doc_type, db):
+def get_doc_count_in_domain_by_type(domain, doc_type, db, start_date=None, end_date=None):
+    start_key = [domain, doc_type]
+    end_key = [domain, doc_type]
+    if start_date is not None:
+        start_key.append(json_format_datetime(start_date))
+    if end_date is not None:
+        end_key.append(json_format_datetime(end_date))
+    end_key.append({})
+
     row = db.view(
         "by_domain_doc_type_date/view",
-        startkey=[domain, doc_type],
-        endkey=[domain, doc_type, {}],
+        startkey=start_key,
+        endkey=end_key,
         reduce=True,
     ).one()
     return row["value"] if row else 0

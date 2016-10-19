@@ -1,4 +1,4 @@
-/*global Marionette, Backbone, WebFormSession, Util, CodeMirror */
+/*global Marionette, Backbone, WebFormSession, Util */
 
 /**
  * The primary Marionette application managing menu navigation and launching form entry
@@ -7,6 +7,7 @@
 var FormplayerFrontend = new Marionette.Application();
 
 var showError = hqImport('cloudcare/js/util.js').showError;
+var showHTMLError = hqImport('cloudcare/js/util.js').showHTMLError;
 var showSuccess = hqImport('cloudcare/js/util.js').showSuccess;
 var tfLoading = hqImport('cloudcare/js/util.js').tfLoading;
 var tfLoadingComplete = hqImport('cloudcare/js/util.js').tfLoadingComplete;
@@ -18,6 +19,7 @@ FormplayerFrontend.on("before:start", function () {
 
         regions: {
             main: "#menu-region",
+            loadingProgress: "#formplayer-progress-container",
             breadcrumb: "#breadcrumb-region",
             persistentCaseTile: "#persistent-case-tile",
             phoneModeNavigation: '#phone-mode-navigation',
@@ -80,6 +82,7 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
 
 FormplayerFrontend.on('clearForm', function () {
     $('#webforms').html("");
+    $('#webforms-nav').html("");
 });
 
 FormplayerFrontend.reqres.setHandler('clearMenu', function () {
@@ -94,8 +97,12 @@ $(document).on("ajaxStart", function () {
     tfLoadingComplete();
 });
 
-FormplayerFrontend.reqres.setHandler('showError', function (errorMessage) {
-    showError(errorMessage, $("#cloudcare-notifications"), 10000);
+FormplayerFrontend.on('showError', function (errorMessage, isHTML) {
+    if (isHTML) {
+        showHTMLError(errorMessage, $("#cloudcare-notifications"), 10000);
+    } else {
+        showError(errorMessage, $("#cloudcare-notifications"), 10000);
+    }
 });
 
 FormplayerFrontend.reqres.setHandler('showSuccess', function(successMessage) {
@@ -120,6 +127,7 @@ FormplayerFrontend.on('startForm', function (data) {
     data.domain = user.domain;
     data.username = user.username;
     data.formplayerEnabled = true;
+    data.displayOptions = user.displayOptions;
     data.onerror = function (resp) {
         showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
     };
@@ -144,10 +152,7 @@ FormplayerFrontend.on('startForm', function (data) {
             showError(resp.output, $("#cloudcare-notifications"));
         }
     };
-    data.formplayerEnabled = true;
-    data.answerCallback = function(sessionId) {
-        FormplayerFrontend.trigger('debugger.formXML', sessionId);
-    };
+    data.debuggerEnabled = user.debuggerEnabled;
     data.resourceMap = function(resource_path) {
         var urlObject = Util.currentUrlToObject();
         var appId = urlObject.appId;
@@ -155,41 +160,6 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     var sess = new WebFormSession(data);
     sess.renderFormXml(data, $('#webforms'));
-});
-
-FormplayerFrontend.on('debugger.formXML', function(sessionId) {
-    var user = FormplayerFrontend.request('currentUser');
-    var success = function(data) {
-        var $instanceTab = $('#debugger-xml-instance-tab'),
-            codeMirror;
-
-        codeMirror = CodeMirror(function(el) {
-            $('#xml-viewer-pretty').html(el);
-        }, {
-            value: data.output,
-            mode: 'xml',
-            viewportMargin: Infinity,
-            readOnly: true,
-            lineNumbers: true,
-        });
-
-        $instanceTab.off();
-        $instanceTab.on('shown.bs.tab', function() {
-            codeMirror.refresh();
-        });
-    };
-    var options = {
-        url: user.formplayer_url + '/get-instance',
-        data: JSON.stringify({
-            'session-id': sessionId,
-            'domain': user.domain,
-            'username': user.username,
-        }),
-        success: success,
-    };
-    Util.setCrossDomainAjaxOptions(options);
-
-    $.ajax(options);
 });
 
 FormplayerFrontend.on("start", function (options) {
@@ -200,6 +170,13 @@ FormplayerFrontend.on("start", function (options) {
     user.apps = options.apps;
     user.domain = options.domain;
     user.formplayer_url = options.formplayer_url;
+    user.debuggerEnabled = options.debuggerEnabled;
+    user.phoneMode = options.phoneMode;
+    user.displayOptions = {
+        phoneMode: options.phoneMode,
+        oneQuestionPerScreen: options.oneQuestionPerScreen,
+    };
+
     FormplayerFrontend.request('gridPolyfillPath', options.gridPolyfillPath);
     if (Backbone.history) {
         Backbone.history.start();
@@ -208,6 +185,7 @@ FormplayerFrontend.on("start", function (options) {
             if (options.phoneMode) {
                 appId = options.apps[0]['_id'];
 
+                FormplayerFrontend.trigger('setAppDisplayProperties', options.apps[0]);
                 FormplayerFrontend.trigger("app:singleApp", appId);
             } else {
                 FormplayerFrontend.trigger("apps:list", options.apps);
@@ -216,23 +194,89 @@ FormplayerFrontend.on("start", function (options) {
     }
 });
 
+FormplayerFrontend.on('setAppDisplayProperties', function(app) {
+    FormplayerFrontend.DisplayProperties = app.profile.properties;
+    if (Object.freeze) {
+        Object.freeze(FormplayerFrontend.DisplayProperties);
+    }
+});
+
+FormplayerFrontend.reqres.setHandler('getAppDisplayProperties', function() {
+    return FormplayerFrontend.DisplayProperties || {};
+});
+
 FormplayerFrontend.on("sync", function () {
-    var user = FormplayerFrontend.request('currentUser');
-    var username = user.username;
-    var domain = user.domain;
-    var formplayer_url = user.formplayer_url;
-    var options = {
+    var user = FormplayerFrontend.request('currentUser'),
+        username = user.username,
+        domain = user.domain,
+        formplayer_url = user.formplayer_url,
+        complete,
+        options;
+
+    complete = function(response) {
+        if (response.responseJSON.status === 'retry') {
+            FormplayerFrontend.trigger('retry', response.responseJSON, function() {
+                $.ajax(options);
+            }, gettext('Please wait while we sync your user...'));
+        } else {
+            FormplayerFrontend.trigger('clearProgress');
+            tfSyncComplete(response.responseJSON.status === 'error');
+        }
+    };
+    options = {
         url: formplayer_url + "/sync-db",
         data: JSON.stringify({"username": username, "domain": domain}),
+        complete: complete,
     };
     Util.setCrossDomainAjaxOptions(options);
-    var resp = $.ajax(options);
-    resp.done(function () {
-        tfSyncComplete(false);
-    });
-    resp.error(function () {
-        tfSyncComplete(true);
-    });
+    $.ajax(options);
+});
+
+/**
+ * retry
+ *
+ * Will retry a restore when doing an async restore.
+ *
+ * @param {Object} response - An async restore response object
+ * @param {function} retryFn - The function to be called when ready to retry restoring
+ * @param {String} progressMessage - The message to be displayed above the progress bar
+ */
+FormplayerFrontend.on("retry", function(response, retryFn, progressMessage) {
+
+    var progressView = FormplayerFrontend.regions.loadingProgress.currentView,
+        progress = response.total === 0 ? 0 : response.done / response.total,
+        retryTimeout = response.retryAfter * 1000;
+    progressMessage = progressMessage || gettext('Please wait...');
+
+    if (!progressView) {
+        progressView = new FormplayerFrontend.Utils.Views.ProgressView({
+            progressMessage: progressMessage,
+        });
+        FormplayerFrontend.regions.loadingProgress.show(progressView);
+    }
+
+    progressView.setProgress(progress, retryTimeout);
+    setTimeout(retryFn, retryTimeout);
+});
+
+
+/**
+ * clearProgress
+ *
+ * Clears the progress bar. If currently in progress, wait 200 ms to transition
+ * to complete progress.
+ */
+FormplayerFrontend.on('clearProgress', function() {
+    var progressView = FormplayerFrontend.regions.loadingProgress.currentView,
+        progressFinishTimeout = 0;
+    if (progressView) {
+        progressFinishTimeout = 200;
+        progressView.setProgress(1, progressFinishTimeout);
+    }
+
+    setTimeout(function() {
+        FormplayerFrontend.regions.loadingProgress.empty();
+    }, progressFinishTimeout);
 });
 
 

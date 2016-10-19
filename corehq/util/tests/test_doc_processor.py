@@ -111,8 +111,15 @@ class TestResumableDocsByTypeIterator(TestCase):
 
 class SimulateDeleteReindexAccessor(ReindexAccessor):
     def __init__(self, wrapped_accessor, deleted_doc_ids=None):
+        """
+        :type wrapped_accessor: ReindexAccessor
+        """
         self.deleted_doc_ids = deleted_doc_ids or []
         self.wrapped_accessor = wrapped_accessor
+
+    @property
+    def model_class(self):
+        return self.wrapped_accessor.model_class
 
     @property
     def startkey_attribute_name(self):

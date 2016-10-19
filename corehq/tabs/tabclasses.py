@@ -142,7 +142,26 @@ class ProjectReportsTab(UITab):
                 request=self._request, domain=self.domain),
             current_url=self.url)
 
-        return saved_reports_dropdown + reports
+        return saved_reports_dropdown + reports + self._get_configurable_reports_dropdown()
+
+    def _get_configurable_reports_dropdown(self):
+        """Returns all the configurable reports turned on for that user only if that
+        user is restricted by location.
+        """
+        if self.can_access_all_locations:
+            return []
+
+        from corehq.reports import _safely_get_report_configs, _make_report_class
+        configurable_reports = [
+            _make_report_class(config, show_in_dropdown=True)
+            for config in _safely_get_report_configs(self.domain)
+        ]
+        configurable_reports_dropdown = [
+            dropdown_dict(report.name, report.get_url(self.domain))
+            for report in configurable_reports
+            if report.display_in_dropdown(domain=self.domain, project=self.project, user=self.couch_user)
+        ]
+        return configurable_reports_dropdown
 
 
 class IndicatorAdminTab(UITab):
@@ -632,12 +651,18 @@ class ApplicationsTab(UITab):
 
 
 class CloudcareTab(UITab):
-    title = ugettext_noop("CloudCare")
     view = "corehq.apps.cloudcare.views.default"
 
     url_prefix_formats = ('/a/{domain}/cloudcare/',)
 
     ga_tracker = GaTracker('CloudCare', 'Click Cloud-Care top-level nav')
+
+    @property
+    def title(self):
+        if toggles.USE_FORMPLAYER_FRONTEND.enabled(self.domain):
+            return _("Web Apps")
+        else:
+            return _("CloudCare")
 
     @property
     def _is_viewable(self):
@@ -982,8 +1007,12 @@ class ProjectUsersTab(UITab):
             ]
 
             if self.can_view_cloudcare:
+                if toggles.USE_FORMPLAYER_FRONTEND.enabled(self.domain):
+                    title = _("Web Apps Permissions")
+                else:
+                    title = _("CloudCare Permissions")
                 mobile_users_menu.append({
-                    'title': _('CloudCare Permissions'),
+                    'title': title,
                     'url': reverse('cloudcare_app_settings',
                                    args=[self.domain])
                 })

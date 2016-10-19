@@ -4,6 +4,7 @@ from datetime import datetime
 from unittest import SkipTest
 
 from django.conf import settings
+from django.db import connections
 from django.test import TestCase
 
 from corehq.form_processor.backends.sql.dbaccessors import (
@@ -31,6 +32,8 @@ class BaseReindexAccessorTest(object):
         cls.second_batch = cls._get_doc_ids(cls._create_docs(4))
         time.sleep(.02)
         cls.end = datetime.utcnow()
+
+        cls._analyse()
 
     @classmethod
     def class_teardown_reindex(cls):
@@ -70,6 +73,12 @@ class BaseUnshardedAccessorMixin(object):
             # https://github.com/nose-devs/nose/issues/946
             raise SkipTest('Only applicable if no sharding is setup')
 
+    @classmethod
+    def _analyse(cls):
+        db_cursor = connections['default'].cursor()
+        with db_cursor as cursor:
+            cursor.execute('ANALYSE')  # the doc count query relies on this
+
     def test_limit(self):
         docs = self._get_docs(None, limit=2)
         self.assertEqual(2, len(docs))
@@ -80,9 +89,11 @@ class BaseUnshardedAccessorMixin(object):
         self.assertEqual(self._get_doc_ids(docs), self.second_batch[:2])
 
         last_doc = self.accessor_class().get_doc(self.second_batch[0])
-
-        docs = self._get_docs(self.middle, last_doc_pk=last_doc.pk, limit=2)
+        docs = self._get_docs(self._get_last_modified_date(last_doc), last_doc_pk=last_doc.pk, limit=2)
         self.assertEqual(self._get_doc_ids(docs), self.second_batch[1:3])
+
+    def test_get_doc_count(self):
+        self.assertEqual(8, self.accessor_class().get_doc_count('default'))
 
 
 class BaseShardedAccessorMixin(object):
@@ -94,12 +105,26 @@ class BaseShardedAccessorMixin(object):
         cls.partion_config = PartitionConfig()
         assert len(cls.partion_config.get_form_processing_dbs()) > 1
 
+    @classmethod
+    def _analyse(cls):
+        for db_alias in cls.partion_config.get_form_processing_dbs():
+            db_cursor = connections[db_alias].cursor()
+            with db_cursor as cursor:
+                cursor.execute('ANALYSE')  # the doc count query relies on this
+
     def _get_docs(self, start, last_doc_pk=None, limit=500):
         accessor = self.accessor_class()
         all_docs = []
         for from_db in self.partion_config.get_form_processing_dbs():
             all_docs.extend(accessor.get_docs(from_db, start))
         return all_docs
+
+    def test_get_doc_count(self):
+        doc_count = sum(
+            self.accessor_class().get_doc_count(from_db)
+            for from_db in self.partion_config.get_form_processing_dbs()
+        )
+        self.assertEqual(8, doc_count)
 
 
 class BaseCaseReindexAccessorTest(BaseReindexAccessorTest):
@@ -114,6 +139,10 @@ class BaseCaseReindexAccessorTest(BaseReindexAccessorTest):
     @classmethod
     def _get_doc_ids(cls, docs):
         return [doc.case_id for doc in docs]
+
+    @classmethod
+    def _get_last_modified_date(cls, doc):
+        return doc.server_modified_on
 
 
 class UnshardedCaseReindexAccessorTests(BaseUnshardedAccessorMixin, BaseCaseReindexAccessorTest, TestCase):
@@ -153,6 +182,10 @@ class BaseFormReindexAccessorTest(BaseReindexAccessorTest):
     def _get_doc_ids(cls, docs):
         return [doc.form_id for doc in docs]
 
+    @classmethod
+    def _get_last_modified_date(cls, doc):
+        return doc.received_on
+
 
 class UnshardedFormReindexAccessorTests(BaseUnshardedAccessorMixin, BaseFormReindexAccessorTest, TestCase):
 
@@ -191,6 +224,10 @@ class BaseLedgerReindexAccessorTest(BaseReindexAccessorTest):
     @classmethod
     def _get_doc_ids(cls, docs):
         return [doc.ledger_reference.as_id() for doc in docs]
+
+    @classmethod
+    def _get_last_modified_date(cls, doc):
+        return doc.last_modified
 
 
 class UnshardedLedgerReindexAccessorTests(BaseUnshardedAccessorMixin, BaseLedgerReindexAccessorTest, TestCase):

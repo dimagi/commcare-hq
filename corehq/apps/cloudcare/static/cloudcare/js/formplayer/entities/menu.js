@@ -12,50 +12,48 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
         model: Entities.MenuSelect,
 
-        parse: function (response) {
-            this.title = response.title;
-            this.type = response.type;
-            this.clearSession = response.clearSession;
-            this.notification = response.notification;
-            this.breadcrumbs = response.breadcrumbs;
-            this.appVersion = response.appVersion;
-            this.appId = response.appId;
-            this.persistentCaseTile = response.persistentCaseTile;
+        commonProperties: [
+            'title',
+            'type',
+            'clearSession',
+            'notification',
+            'breadcrumbs',
+            'appVersion',
+            'appId',
+            'persistentCaseTile',
+        ],
+
+        entityProperties: [
+            'action',
+            'styles',
+            'headers',
+            'currentPage',
+            'pageCount',
+            'titles',
+            'numEntitiesPerRow',
+            'maxWidth',
+            'maxHeight',
+        ],
+
+        parse: function (response, request) {
+            _.extend(this, _.pick(response, this.commonProperties));
 
             if (response.commands) {
-                this.type = "commands";
                 return response.commands;
-            }
-            else if (response.entities) {
-                this.action = response.action;
-                this.styles = response.styles;
-                this.headers = response.headers;
-                this.widthHints = response.widthHints;
-                this.currentPage = response.currentPage;
-                this.pageCount = response.pageCount;
-                this.tiles = response.tiles;
-                this.numEntitiesPerRow = response.numEntitiesPerRow;
-                this.maxWidth = response.maxWidth;
-                this.maxHeight = response.maxHeight;
+            } else if (response.entities) {
+                _.extend(this, _.pick(response, this.entityProperties));
                 return response.entities;
-            }
-            else if(response.type === "query") {
+            } else if (response.type === "query") {
                 return response.displays;
-            }
-            else if(response.tree){
+            } else if (response.tree){
                 // form entry time, doggy
                 FormplayerFrontend.trigger('startForm', response, this.app_id);
             }
-            else if(response.exception){
-                FormplayerFrontend.request('showError', response.exception);
-            }
         },
 
-        initialize: function (params) {
-            this.domain = params.domain;
-            this.appId = params.appId;
-            this.fetch = params.fetch;
-            this.selection = params.selection;
+        sync: function (method, model, options) {
+            Util.setCrossDomainAjaxOptions(options);
+            return Backbone.Collection.prototype.sync.call(this, 'create', model, options);
         },
     });
 
@@ -63,58 +61,61 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
         getMenus: function (params) {
 
-            var user = FormplayerFrontend.request('currentUser');
-            var username = user.username;
-            var domain = user.domain;
-            var language = user.language;
-            var formplayerUrl = user.formplayer_url;
-
-            var menus = new Entities.MenuSelectCollection({
-
-                appId: params.appId,
-
-                fetch: function (options) {
-                    var collection = this;
-
-                    options.data = JSON.stringify({
-                        "username": user.username,
-                        "domain": domain,
-                        "app_id": collection.appId,
-                        "locale": language,
-                        "selections": params.steps,
-                        "offset": params.page * 10,
-                        "search_text": params.search,
-                        "menu_session_id": params.sessionId,
-                        "query_dictionary": params.queryDict,
-                        "previewCommand": params.previewCommand,
-                        "installReference": params.installReference,
-                    });
-
-                    if (options.steps) {
-                        options.data.selections = params.steps;
+            var user = FormplayerFrontend.request('currentUser'),
+                formplayerUrl = user.formplayer_url,
+                displayOptions = user.displayOptions || {},
+                defer = $.Deferred(),
+                options,
+                menus;
+            options = {
+                success: function (parsedMenus, response) {
+                    if (response.status === 'retry') {
+                        FormplayerFrontend.trigger('retry', response, function() {
+                            menus.fetch($.extend(true, {}, options));
+                        }, gettext('Please wait while we sync your user...'));
+                    } else if (response.exception){
+                        FormplayerFrontend.trigger(
+                            'showError',
+                            response.exception,
+                            response.type === 'html'
+                        );
+                    } else {
+                        FormplayerFrontend.trigger('clearProgress');
+                        defer.resolve(parsedMenus);
                     }
-
-                    options.url = formplayerUrl + '/navigate_menu';
-                    Util.setCrossDomainAjaxOptions(options);
-                    return Backbone.Collection.prototype.fetch.call(this, options);
                 },
-
-            });
-
-            var defer = $.Deferred();
-            menus.fetch({
-                success: function (request) {
-                    defer.resolve(request);
-                },
-                error: function (request) {
+                error: function () {
                     FormplayerFrontend.request(
                         'showError',
                         gettext('Unable to connect to form playing service. ' +
                                 'Please report an issue if you continue to see this message.')
                     );
-                    defer.resolve(request);
+                    defer.resolve();
                 },
+            };
+
+            options.data = JSON.stringify({
+                "username": user.username,
+                "domain": user.domain,
+                "app_id": params.appId,
+                "locale": user.language,
+                "selections": params.steps,
+                "offset": params.page * 10,
+                "search_text": params.search,
+                "menu_session_id": params.sessionId,
+                "query_dictionary": params.queryDict,
+                "previewCommand": params.previewCommand,
+                "installReference": params.installReference,
+                "oneQuestionPerScreen": ko.utils.unwrapObservable(displayOptions.oneQuestionPerScreen),
             });
+            options.url = formplayerUrl + '/navigate_menu';
+
+            menus = new Entities.MenuSelectCollection();
+
+            if (Object.freeze) {
+                Object.freeze(options);
+            }
+            menus.fetch($.extend(true, {}, options));
             return defer.promise();
         },
     };

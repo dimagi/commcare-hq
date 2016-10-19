@@ -50,6 +50,90 @@
                 "calculate_total": false
             },
             {
+                "display": "Number of new sputum positive patients",
+                "type": "field",
+                "field": "new_sputum_positive_patient",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "New patients with negative sputum results at the end of 2 month IP",
+                "type": "field",
+                "field": "new_sputum_negative_patient_2months_ip",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "New patients with positive sputum results at the end of 2 month IP",
+                "type": "field",
+                "field": "new_sputum_positive_patient_2months_ip",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "New patients with N.A. sputum results at the end of 2 month IP",
+                "type": "field",
+                "field": "new_sputum_na_patient_2months_ip",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "New patients with negative sputum results at the end of 3 month IP",
+                "type": "field",
+                "field": "new_sputum_negative_patient_3months_ip",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "New patients with positive sputum results at the end of 3 month IP",
+                "type": "field",
+                "field": "new_sputum_positive_patient_3months_ip",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "New patients with N.A. sputum results at the end of 3 month IP",
+                "type": "field",
+                "field": "new_sputum_na_patient_3months_ip",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
                 "display": "Sputum Positive Cat II Retreatment Patients (excluding ‘Others’)",
                 "type": "field",
                 "field": "positive_patients_cat2",

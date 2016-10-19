@@ -11,6 +11,8 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.modules import to_function
 
 from pillowtop.exceptions import PillowNotFoundError
+from pillowtop.logger import pillow_logging
+from pillowtop.dao.exceptions import DocumentMismatchError, DocumentNotFoundError
 
 
 def _get_pillow_instance(full_class_str):
@@ -209,3 +211,53 @@ def prepare_bulk_payloads(bulk_changes, max_size, chunk_size=100):
             payloads[-1] = appended_payload
 
     return filter(None, payloads)
+
+
+def ensure_matched_revisions(change):
+    """
+    This function ensures that the document fetched from a change matches the
+    revision at which it was pushed to kafka at.
+
+    See http://manage.dimagi.com/default.asp?237983 for more details
+
+    :raises: DocumentMismatchError - Raised when the revisions of the fetched document
+        and the change metadata do not match
+    """
+    fetched_document = change.get_document()
+
+    change_has_rev = change.metadata and change.metadata.document_rev is not None
+    doc_has_rev = fetched_document and '_rev' in fetched_document
+    if doc_has_rev and change_has_rev:
+
+        doc_rev = fetched_document['_rev']
+        change_rev = change.metadata.document_rev
+        if doc_rev != change_rev:
+            fetched_rev = _convert_rev_to_int(doc_rev)
+            stored_rev = _convert_rev_to_int(change_rev)
+            if fetched_rev < stored_rev or stored_rev == -1:
+                message = u"Mismatched revs for {}: Cloudant rev {} vs. Changes feed rev {}".format(
+                    change.id,
+                    doc_rev,
+                    change_rev
+                )
+                pillow_logging.warning(message)
+                raise DocumentMismatchError(message)
+
+
+def _convert_rev_to_int(rev):
+    try:
+        return int(rev.split('-')[0])
+    except (ValueError, AttributeError):
+        return -1
+
+
+def ensure_document_exists(change):
+    """
+    Ensures that the document recorded in Kafka exists and is properly returned
+
+    :raises: DocumentNotFoundError - Raised when the document is not found
+    """
+    doc = change.get_document()
+    if doc is None:
+        pillow_logging.warning("Unable to get document from change: {}".format(change))
+        raise DocumentNotFoundError()  # force a retry

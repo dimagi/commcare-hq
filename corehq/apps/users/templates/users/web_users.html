@@ -68,14 +68,14 @@
                     $('#save_restrict_option')
                             .text('{% trans "Saved" %}')
                             .removeClass('btn-success')
-                            .attr('disabled', 'disabled')
+                            .prop('disabled', true)
                             .addClass('disabled btn-default');
             });
             e.preventDefault();
         });
 
         $('.resend-invite').click(function (e) {
-            $(this).addClass('disabled').attr('disabled', 'disabled');
+            $(this).addClass('disabled').prop('disabled', true);
             var post_url = '{% url "reinvite_web_user" domain %}';
             var doc_id = this.getAttribute('data-invite');
             var self = this;
@@ -104,11 +104,11 @@
             $('#confirm-delete').off('click');
             $('#confirm-delete').on('click', function () {
                 var $button = $(this);
-                $button.addClass('disabled').attr('disabled', 'disabled');
+                $button.addClass('disabled').prop('disabled', true);
                 $.post(post_url, {id: id},
                     function(data) {
                         $el.closest("tr").remove();
-                        $button.removeClass('disabled').attr('disabled', false);
+                        $button.removeClass('disabled').prop('disabled', false);
                         $('#modal-deletion').modal('hide');
                     }
                 );
@@ -375,16 +375,16 @@
                             </td>
                             <td>
                                 <div>
-                                    <a href="#" class="resend-invite btn btn-default"
+                                    <button type="button" class="resend-invite btn btn-default"
                                        data-invite={{ invitation.get_id }}>
                                         <i class="fa fa-envelope-o"></i>
                                         {% trans "Resend Invitation" %}
-                                    </a>
-                                    <a href="#" class="btn btn-danger delete-invitation"
+                                    </button>
+                                    <button type="button" class="btn btn-danger delete-invitation"
                                        data-id={{ invitation.get_id }}>
                                         <i class="fa fa-trash"></i>
                                         {% trans "Delete Invitation" %}
-                                    </a>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -729,7 +729,7 @@
             <div class="modal-body"></div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-                <a class="btn btn-danger" id="confirm-delete">{% trans "Delete" %}</a>
+                <button type="button" class="btn btn-danger" id="confirm-delete">{% trans "Delete" %}</button>
             </div>
         </div>
     </div>

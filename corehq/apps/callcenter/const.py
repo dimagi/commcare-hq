@@ -59,6 +59,7 @@ PER_DOMAIN_FORM_INDICATORS = {
         'childForms': {'type': TYPE_SUM, 'xmlns': PCI_CHILD_FORM},
     },
     'infomovel': {
+        # Supervisor App V1
         'FindPatientForms': {'type': TYPE_SUM, 'xmlns': CDC_FindPatientForms},
         'RegisterContactForms': {'type': TYPE_SUM, 'xmlns': CDC_RegisterContactForms},
         'NormalVisit': {'type': TYPE_SUM, 'xmlns': CDC_NormalVisit},
@@ -67,6 +68,12 @@ PER_DOMAIN_FORM_INDICATORS = {
         'PatientEducation': {'type': TYPE_SUM, 'xmlns': CDC_PatientEducation},
         'ActivistaEducation': {'type': TYPE_SUM, 'xmlns': CDC_ActivistaEducation},
         'BuscaActivaVisit': {'type': TYPE_SUM, 'xmlns': CDC_BuscaActivaVisit},
+        # Supervisor App V2
+        # 'FindPatientForms': {'type': TYPE_SUM, 'xmlns': CDC_FindPatientForms},
+        'FirstVisitForms': {'type': TYPE_SUM, 'xmlns': CDC_FirstVisit},
+        'RegisterPatientForms': {'type': TYPE_SUM, 'xmlns': CDC_RegisterPatientForms},
+        'BuscaActivaForms': {'type': TYPE_SUM, 'xmlns': CDC_BuscaActivaVisit},
+        'HomeVisitForms': {'type': TYPE_SUM, 'xmlns': CDC_NormalVisit},
     },
     'cdc-mozambique-test': {
         'FindPatientForms': {'type': TYPE_SUM, 'xmlns': CDC_FindPatientForms},

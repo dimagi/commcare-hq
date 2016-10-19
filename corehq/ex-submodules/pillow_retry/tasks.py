@@ -1,6 +1,8 @@
 from celery.task import task
 import sys
 from django.conf import settings
+
+from corehq.apps.change_feed.data_sources import get_document_store
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.logging import notify_error
@@ -53,14 +55,15 @@ def process_pillow_retry(error_doc_id):
                 return
 
         change = error_doc.change_object
-
         try:
-            try:
-                from corehq.apps.userreports.pillow import ConfigurableReportKafkaPillow
-                if isinstance(pillow, ConfigurableReportKafkaPillow):
-                    raise Exception('this is temporarily not supported!')
-            except ImportError:
-                pass
+            change_metadata = change.metadata
+            if change_metadata:
+                document_store = get_document_store(
+                    data_source_type=change_metadata.data_source_type,
+                    data_source_name=change_metadata.data_source_name,
+                    domain=change_metadata.domain
+                )
+                change.document_store = document_store
             pillow.process_change(change)
         except Exception:
             ex_type, ex_value, ex_tb = sys.exc_info()

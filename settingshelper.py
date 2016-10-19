@@ -5,11 +5,7 @@ import sys
 import tempfile
 import uuid
 
-try:
-    from django.db.backends.base.creation import TEST_DATABASE_PREFIX
-except ImportError:
-    # TODO - remove when django >= 1.8
-    from django.db.backends.creation import TEST_DATABASE_PREFIX
+from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 
 
 def is_testing():
@@ -176,8 +172,11 @@ def get_allowed_websocket_channels(request, channels):
     if request.user and request.user.is_authenticated() and request.user.is_superuser:
         return channels
     else:
+        # todo: support for non-superusers
+        # it might be easier to wait on supporting this until we switch to channels
         raise PermissionDenied(
-            'Not allowed to subscribe or to publish to websockets without superuser permissions!'
+            'Not allowed to subscribe or to publish to websockets without '
+            'superuser permissions or domain membership!'
         )
 
 

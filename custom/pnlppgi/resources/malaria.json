@@ -94,6 +94,38 @@
         "type": "expression"
       },
       {
+        "display_name": "Zone ID",
+        "transform": {},
+        "datatype": "string",
+        "expression": {
+          "value_expression": {
+            "location_id_expression": {
+              "location_id_expression": {
+                "location_id_expression": {
+                  "datatype": null,
+                  "type": "property_name",
+                  "property_name": "location_id"
+                },
+                "type": "location_parent_id"
+              },
+              "type": "location_parent_id"
+            },
+            "type": "location_parent_id"
+          },
+          "type": "related_doc",
+          "related_doc_type": "CommCareUser",
+          "doc_id_expression": {
+            "datatype": "string",
+            "type": "property_name",
+            "property_name": "owner_id"
+          }
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "zone_id",
+        "type": "expression"
+      },
+      {
         "display_name": "Region",
         "transform": {},
         "datatype": "string",
@@ -518,6 +550,20 @@
         "type": "expression"
       },
       {
+        "display_name": "",
+        "transform": {},
+        "datatype": "string",
+        "expression": {
+          "datatype": "string",
+          "type": "property_name",
+          "property_name": "owner_id"
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "owner_id",
+        "type": "expression"
+      },
+      {
         "display_name": null,
         "transform": {},
         "datatype": "integer",
@@ -526,7 +572,7 @@
         "is_nullable": true,
         "column_id": "week",
         "expression": {
-          "property": "opened_on",
+          "property": "date_fin",
           "type": "week_expression"
         }
       },
@@ -539,7 +585,7 @@
         "is_nullable": true,
         "column_id": "year",
         "expression": {
-          "property": "opened_on",
+          "property": "date_fin",
           "type": "year_expression"
         }
       }

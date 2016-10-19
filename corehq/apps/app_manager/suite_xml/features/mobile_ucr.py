@@ -32,7 +32,7 @@ class ReportModuleSuiteHelper(object):
     def get_details(self):
         _load_reports(self.report_module)
         for config in self.report_module.report_configs:
-            for filter_slug, f in _MobileSelectFilterHelpers.get_filters(config):
+            for filter_slug, f in _MobileSelectFilterHelpers.get_filters(config, self.domain):
                 yield (_MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
                        _MobileSelectFilterHelpers.get_select_details(config, filter_slug, self.domain), True)
             yield (_get_select_detail_id(config), _get_select_details(config), True)
@@ -41,10 +41,10 @@ class ReportModuleSuiteHelper(object):
     def get_custom_entries(self):
         _load_reports(self.report_module)
         for config in self.report_module.report_configs:
-            yield _get_config_entry(config)
+            yield _get_config_entry(config, self.domain)
 
 
-def _get_config_entry(config):
+def _get_config_entry(config, domain):
     return Entry(
         command=Command(
             id='reports.{}'.format(config.uuid),
@@ -59,7 +59,7 @@ def _get_config_entry(config):
                 nodeset=_MobileSelectFilterHelpers.get_options_nodeset(config, filter_slug),
                 value='./@value',
             )
-            for filter_slug, f in _MobileSelectFilterHelpers.get_filters(config)
+            for filter_slug, f in _MobileSelectFilterHelpers.get_filters(config, domain)
         ] + [
             SessionDatum(
                 detail_confirm=_get_summary_detail_id(config),
@@ -292,9 +292,10 @@ class _MobileSelectFilterHelpers(object):
             .format(report_id=config.uuid, filter_slug=filter_slug))
 
     @staticmethod
-    def get_filters(config):
+    def get_filters(config, domain):
         return [(slug, f) for slug, f in config.filters.items()
-                if isinstance(f, MobileSelectFilter)]
+                if isinstance(f, MobileSelectFilter)
+                and config.report(domain).get_ui_filter(slug)]
 
     @staticmethod
     def get_datum_id(config, filter_slug):
@@ -329,4 +330,4 @@ class _MobileSelectFilterHelpers(object):
             "[column[@id='{column_id}']=instance('commcaresession')/session/data/{datum_id}]".format(
                 column_id=config.report(domain).get_ui_filter(slug).field,
                 datum_id=_MobileSelectFilterHelpers.get_datum_id(config, slug))
-            for slug, f in _MobileSelectFilterHelpers.get_filters(config)])
+            for slug, f in _MobileSelectFilterHelpers.get_filters(config, domain)])

@@ -18,7 +18,7 @@ function setup() {
         -r requirements/test-requirements.txt
 
     # compile pyc files
-    python -m compileall corehq custom submodules testapps *.py > /dev/null
+    python -m compileall -q corehq custom submodules testapps *.py
 
     if [[ "$TEST" =~ ^python ]]; then
         /usr/lib/jvm/jdk1.7.0/bin/keytool -genkey \

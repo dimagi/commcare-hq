@@ -1222,7 +1222,7 @@ Reports are made up of columns. The currently supported column types ares:
 
 Field columns have a type of `"field"`. Here's an example field column that shows the owner name from an associated `owner_id`:
 
-```
+```json
 {
     "type": "field",
     "field": "owner_id",
@@ -1233,7 +1233,7 @@ Field columns have a type of `"field"`. Here's an example field column that show
         "type": "custom",
         "custom_type": "owner_display"
     },
-    "aggregation": "simple",
+    "aggregation": "simple"
 }
 ```
 
@@ -1349,6 +1349,36 @@ Then you will get a report like this:
 
 Expanded columns have an optional parameter `"max_expansion"` (defaults to 10) which limits the number of columns that can be created.  WARNING: Only override the default if you are confident that there will be no adverse performance implications for the server.
 
+### Expression columns
+
+Expression columns can be used to do just-in-time calculations on the data coming out of reports.
+They allow you to use any UCR expression on the data in the report row.
+These can be referenced according to the `column_id`s from the other defined column.
+They can support advanced use cases like doing math on two different report columns,
+or doing conditional logic based on the contents of another column.
+
+A simple example is below, which assumes another called "number" in the report and shows
+how you could make a column that is 10 times that column.
+
+
+```json
+{
+    "type": "expression",
+    "column_id": "by_tens",
+    "display": "Counting by tens",
+    "expression": {
+        "type": "evaluator",
+        "statement": "a * b",
+        "context_variables": {
+            "a": {
+                "type": "property_name",
+                "property_name": "number"
+            },
+            "b": 10
+        }
+    }
+}
+```
 
 ### The "aggregation" column property
 
