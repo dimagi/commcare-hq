@@ -157,6 +157,9 @@ class FormAccessors(object):
     def soft_undelete_forms(self, form_ids):
         return self.db_accessor.soft_undelete_forms(self.domain, form_ids)
 
+    def write_blob_bucket(self, attachment):
+        self.db_accessor.write_blob_bucket(attachment)
+
 
 class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
     """

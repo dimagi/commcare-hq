@@ -461,6 +461,15 @@ class FormAccessorSQL(AbstractFormAccessor):
             results = fetchall_as_namedtuple(cursor)
             return [result.form_id for result in results]
 
+    @staticmethod
+    @transaction.atomic
+    def write_blob_bucket(attachment, bucket):
+        with get_cursor(XFormInstanceSQL) as cursor:
+            cursor.execute(
+                'SELECT write_blob_bucket(%s, %s::text)',
+                [attachment.attachment_id, bucket]
+            )
+
 
 class CaseReindexAccessor(ReindexAccessor):
     @property
