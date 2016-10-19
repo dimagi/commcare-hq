@@ -935,6 +935,7 @@ class InferredExportGroupSchema(ExportGroupSchema):
         item = ExportItem(
             path=path,
             label='.'.join(map(lambda node: node.name, path)),
+            last_occurrences={INFERRED_OCCURRENCE: INFERRED_OCCURRENCE}
         )
         self.items.append(item)
         return item
@@ -972,6 +973,7 @@ class InferredSchema(Document):
         group_schema = InferredExportGroupSchema(
             path=path,
             items=[],
+            last_occurrences={INFERRED_OCCURRENCE: INFERRED_OCCURRENCE}
         )
         self.group_schemas.append(group_schema)
         return group_schema

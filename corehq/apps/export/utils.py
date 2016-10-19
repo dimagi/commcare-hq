@@ -30,10 +30,14 @@ from .const import (
     FORM_EXPORT,
     DEID_TRANSFORM_FUNCTIONS,
     TRANSFORM_FUNCTIONS,
+    INFERRED_OCCURRENCE,
 )
 
 
 def is_occurrence_deleted(last_occurrences, app_ids_and_versions):
+    if INFERRED_OCCURRENCE in last_occurrences:
+        return False
+
     is_deleted = True
     for app_id, version in app_ids_and_versions.iteritems():
         if last_occurrences.get(app_id) >= version:
