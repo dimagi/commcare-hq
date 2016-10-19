@@ -930,7 +930,7 @@ class SelfRegistrationForm(forms.Form):
         layout_fields = [
             crispy.Fieldset(
                 _('Register'),
-                crispy.Field('username'),
+                crispy.Field('username', placeholder='sam123'),
                 crispy.Field('password'),
                 crispy.Field('password2'),
                 crispy.Field('email'),
@@ -947,11 +947,11 @@ class SelfRegistrationForm(forms.Form):
 
     username = TrimmedCharField(
         required=True,
-        label=ugettext_lazy('Username'),
+        label=ugettext_lazy('Create a Username'),
     )
     password = forms.CharField(
         required=True,
-        label=ugettext_lazy('Password'),
+        label=ugettext_lazy('Create a Password'),
         widget=PasswordInput(),
     )
     password2 = forms.CharField(
@@ -961,7 +961,7 @@ class SelfRegistrationForm(forms.Form):
     )
     email = forms.EmailField(
         required=False,
-        label=ugettext_lazy('Email address'),
+        label=ugettext_lazy('Email address (used for tasks like resetting your password)'),
     )
 
     def clean_username(self):

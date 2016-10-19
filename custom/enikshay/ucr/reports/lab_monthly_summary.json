@@ -3,7 +3,7 @@
         "enikshay-test",
         "enikshay-test-test"
     ],
-    "data_source_table": "episode",
+    "data_source_table": "test",
     "report_id": "lab_monthly_summary",
     "config": {
         "description": "",
@@ -18,9 +18,9 @@
                 "datatype": "string",
                 "required": false,
                 "display": "Case Open Date",
-                "field": "patient_registration_date",
+                "field": "opened_on",
                 "type": "date",
-                "slug": "patient_registration_date"
+                "slug": "opened_on"
             },
             {
                 "compare_as_string": false,
@@ -38,9 +38,8 @@
         "columns": [
             {
                 "display": "TB Suspects Examined for Diagnosis",
-                "column_id": "tb_suspects_examined_for_diagnosis",
                 "type": "field",
-                "field": "tb_suspects_examined_for_diagnosis",
+                "field": "suspect_examined_for_diagnosis",
                 "aggregation": "sum",
                 "sortable": false,
                 "description": null,
@@ -51,9 +50,8 @@
             },
             {
                 "display": "TB Suspects found positive",
-                "column_id": "tb_suspects_found_positive",
                 "type": "field",
-                "field": "tb_suspects_found_positive",
+                "field": "suspect_examined_for_diagnosis_positive",
                 "aggregation": "sum",
                 "sortable": false,
                 "description": null,
@@ -66,7 +64,7 @@
                 "display": "TB suspects undergoing Repeat Sputum Examination",
                 "column_id": "tb_suspects_undergoing",
                 "type": "field",
-                "field": "tb_suspects_undergoing",
+                "field": "suspect_repeat_for_diagnosis",
                 "aggregation": "sum",
                 "sortable": false,
                 "description": null,
@@ -77,9 +75,8 @@
             },
             {
                 "display": "TB Suspects found positive on Repeat Sputum Examination",
-                "column_id": "tb_suspects_undergoing_found_positive",
                 "type": "field",
-                "field": "tb_suspects_undergoing_found_positive",
+                "field": "suspect_repeat_for_diagnosis_positive",
                 "aggregation": "sum",
                 "sortable": false,
                 "description": null,
@@ -90,9 +87,8 @@
             },
             {
                 "display": "Follow-up patients examined",
-                "column_id": "follow_up_examined",
                 "type": "field",
-                "field": "follow_up_examined",
+                "field": "patient_follow_up",
                 "aggregation": "sum",
                 "sortable": false,
                 "description": null,
@@ -103,9 +99,8 @@
             },
             {
                 "display": "Patients positive on follow-up",
-                "column_id": "follow_up_examined_positive",
                 "type": "field",
-                "field": "follow_up_examined_positive",
+                "field": "patient_follow_up_positive",
                 "aggregation": "sum",
                 "sortable": false,
                 "description": null,
@@ -116,9 +111,8 @@
             },
             {
                 "display": "Total Slides Examined",
-                "column_id": "slide_examined",
                 "type": "field",
-                "field": "slide_examined",
+                "field": "total_slides",
                 "aggregation": "sum",
                 "sortable": false,
                 "description": null,
@@ -129,9 +123,8 @@
             },
             {
                 "display": "Total Positive Slides",
-                "column_id": "positive_slide",
                 "type": "field",
-                "field": "positive_slide",
+                "field": "positive_slides",
                 "aggregation": "sum",
                 "sortable": false,
                 "description": null,
@@ -142,9 +135,8 @@
             },
             {
                 "display": "Total Negative Slides",
-                "column_id": "negative_slide",
                 "type": "field",
-                "field": "negative_slide",
+                "field": "negative_slides",
                 "aggregation": "sum",
                 "sortable": false,
                 "description": null,

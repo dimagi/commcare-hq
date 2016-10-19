@@ -422,7 +422,8 @@ def default_nav_link(nav_report, i, report_cls):
 
 
 def get_awcc(group):
-    return group.metadata.get("awc-code") or _('no awcc')
+    metadata = group.metadata or {}
+    return metadata.get("awc-code") or _('no awcc')
 
 
 def url_and_params(urlbase, params):

@@ -105,6 +105,7 @@ def _can_edit_workers_location(web_user, mobile_worker):
     return user_can_access_location_id(mobile_worker.domain, web_user, loc_id)
 
 
+@location_safe
 class EditCommCareUserView(BaseEditUserView):
     urlname = "edit_commcare_user"
     user_update_form_class = UpdateCommCareUserInfoForm
@@ -118,7 +119,6 @@ class EditCommCareUserView(BaseEditUserView):
             return "users/edit_commcare_user.html"
 
     @use_multiselect
-    @location_safe
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, *args, **kwargs):
         return super(EditCommCareUserView, self).dispatch(request, *args, **kwargs)
@@ -547,6 +547,7 @@ def update_user_data(request, domain, couch_user_id):
     return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id]))
 
 
+@location_safe
 class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/mobile_workers.html'
     urlname = 'mobile_workers'
@@ -554,7 +555,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     @use_select2
     @use_angular_js
-    @location_safe
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, *args, **kwargs):
         return super(MobileWorkerListView, self).dispatch(*args, **kwargs)
