@@ -54,11 +54,13 @@ from corehq.apps.export.const import (
     MISSING_VALUE,
     EMPTY_VALUE,
     KNOWN_CASE_PROPERTIES,
+    INFERRED_OCCURRENCE,
 )
 from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
+    get_inferred_schema,
 )
 from corehq.apps.export.utils import is_occurrence_deleted
 
@@ -548,7 +550,13 @@ class ExportInstance(BlobMixin, Document):
             schema.domain,
             getattr(schema, 'app_id', None),
         )
-        for group_schema in schema.group_schemas:
+        group_schemas = schema.group_schemas
+
+        inferred_schema = instance._get_inferred_schema()
+        if inferred_schema:
+            group_schemas.extend(inferred_schema.group_schemas)
+
+        for group_schema in group_schemas:
             table = instance.get_table(group_schema.path) or TableConfiguration(
                 path=group_schema.path,
                 label=instance.defaults.get_default_table_name(group_schema.path),
@@ -727,6 +735,9 @@ class CaseExportInstance(ExportInstance):
             case_type=schema.case_type,
         )
 
+    def _get_inferred_schema(self):
+        return get_inferred_schema(self.domain, self.case_type)
+
 
 class FormExportInstance(ExportInstance):
     xmlns = StringProperty()
@@ -747,6 +758,9 @@ class FormExportInstance(ExportInstance):
             xmlns=schema.xmlns,
             app_id=schema.app_id,
         )
+
+    def _get_inferred_schema(self):
+        return None
 
 
 class ExportInstanceDefaults(object):
