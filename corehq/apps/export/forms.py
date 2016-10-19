@@ -444,14 +444,10 @@ class EmwfFilterFormExport(FilterFormESExportDownloadForm):
         self.domain_object = domain_object
         super(EmwfFilterFormExport, self).__init__(domain_object, *args, **kwargs)
 
-        # remove the three filters. Rendered directly in view
-        del (self.fields['type_or_group'])
-        del (self.fields['user_types'])
-        del (self.fields['group'])
         self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-3'
         self.helper.layout = Layout(
-            super(EmwfFilterFormExport, self).extra_fields
+            *super(EmwfFilterFormExport, self).extra_fields
         )
 
     def _get_es_user_types(self, mobile_user_and_group_slugs):
@@ -552,9 +548,6 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
         self.timezone = timezone
         super(FilterCaseESExportDownloadForm, self).__init__(domain_object, timezone, *args, **kwargs)
 
-        del (self.fields['type_or_group'])
-        del (self.fields['user_types'])
-        del (self.fields['group'])
         self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-3'
         # update date_range filter's initial values to span the entirety of
@@ -562,6 +555,9 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
         default_datespan = datespan_from_beginning(self.domain_object, self.timezone)
         self.fields['date_range'].widget = DateRangePickerWidget(
             default_datespan=default_datespan
+        )
+        self.helper.layout = Layout(
+            *self.extra_fields
         )
 
 
