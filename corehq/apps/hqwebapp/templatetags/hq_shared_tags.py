@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from datetime import datetime, timedelta
 import json
+import re
 import warnings
 
 from django.conf import settings
@@ -44,6 +45,10 @@ def JSON(obj):
 def escape_script_tags(unsafe_str):
     # seriously: http://stackoverflow.com/a/1068548/8207
     return unsafe_str.replace('</script>', '<" + "/script>')
+
+
+def strip_script_tags(unsafe_str):
+    return re.sub(r'<\/?script>', '', unsafe_str)
 
 
 @register.filter

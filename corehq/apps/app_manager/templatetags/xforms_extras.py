@@ -2,6 +2,7 @@ from django import template
 from django.utils import html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import strip_script_tags
 
 register = template.Library()
 
@@ -39,12 +40,12 @@ def trans(name, langs=None, include_lang=True, use_delim=True):
 
 @register.filter
 def html_trans(name, langs=["default"]):
-    return mark_safe(trans(name, langs, use_delim=False) or EMPTY_LABEL)
+    return mark_safe(strip_script_tags(trans(name, langs, use_delim=False)) or EMPTY_LABEL)
 
 
 @register.filter
 def html_name(name):
-    return mark_safe(name or EMPTY_LABEL)
+    return mark_safe(strip_script_tags(name) or EMPTY_LABEL)
 
 
 @register.simple_tag

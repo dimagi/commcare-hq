@@ -14,6 +14,7 @@ from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
     CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
     DeviceLogSoftAssertReport
 from corehq.apps.hqwebapp.models import GaTracker
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import strip_script_tags
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
@@ -606,7 +607,7 @@ class ApplicationsTab(UITab):
     @classmethod
     def make_app_title(cls, app_name, doc_type):
         return mark_safe("%s%s" % (
-            mark_for_escaping(app_name or '(Untitled)'),
+            mark_for_escaping(strip_script_tags(app_name) or '(Untitled)'),
             mark_for_escaping(' (Remote)' if doc_type == 'RemoteApp' else ''),
         ))
 
