@@ -1554,7 +1554,6 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                     parent_types.add((module_case_type, subcase.reference_id or 'parent'))
         return parent_types, case_properties
 
-    # jls
     def update_app_case_meta(self, app_case_meta):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
         questions = {
@@ -1564,7 +1563,6 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         }
         module_case_type = self.get_module().case_type
         type_meta = app_case_meta.get_type(module_case_type)
-        import pdb; pdb.set_trace()
         for type_, action in self.active_actions().items():
             if type_ == 'open_case':
                 type_meta.add_opener(self.unique_id, action.condition)
