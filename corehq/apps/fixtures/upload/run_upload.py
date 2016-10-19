@@ -170,7 +170,7 @@ def _diff_lists(list_a, list_b):
     set_a = set(list_a)
     set_b = set(list_b)
     not_in_b = set_a.difference(set_b)
-    not_in_a = set_a.difference(set_a)
+    not_in_a = set_b.difference(set_a)
     return list(not_in_a), list(not_in_b)
 
 
