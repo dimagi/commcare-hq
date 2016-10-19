@@ -22,7 +22,8 @@ class Command(BaseCommand):
         elif doc['doc_type'] == 'CommCareUser':
             return self.migrate_cc_user(doc)
 
-    def migrate_cc_user(self, doc):
+    @classmethod
+    def migrate_cc_user(cls, doc):
 
         # skip if doesn't have location
         if not doc['location_id']:
@@ -44,7 +45,8 @@ class Command(BaseCommand):
             })
         return DocUpdate(doc)
 
-    def migrate_web_user(self, doc):
+    @classmethod
+    def migrate_web_user(cls, doc):
         def should_skip(dm):
             if not dm['location_id']:
                 return True

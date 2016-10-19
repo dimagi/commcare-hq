@@ -1379,6 +1379,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             role_id = data["role_id"]
             del data['role_id']
             should_save = True
+        # Todo; remove after migration
+        from corehq.apps.users.management.commands import add_multi_location_property
+        add_multi_location_property.Command().migrate_user(data)
+
         self = super(CommCareUser, cls).wrap(data)
         if should_save:
             self.domain_membership = DomainMembership(domain=data.get('domain', ""))
