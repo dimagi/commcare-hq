@@ -5,6 +5,7 @@ from corehq.apps.fixtures.exceptions import ExcelMalformatException, FixtureUplo
     FixtureAPIException
 from corehq.apps.fixtures.models import FixtureDataType, FieldList, FixtureItemField, \
     FixtureDataItem
+from corehq.apps.fixtures.utils import get_fields_without_attributes
 from corehq.util.spreadsheets.excel import WorksheetNotFound
 from .upload import DELETE_HEADER, FixtureUploadResult, \
     get_memoized_location, FAILURE_MESSAGES, get_workbook
@@ -19,13 +20,6 @@ def run_upload(domain, workbook, replace=False, task=None):
     return_val = FixtureUploadResult()
     group_memoizer = GroupMemoizer(domain)
     get_location = get_memoized_location(domain)
-
-    def diff_lists(list_a, list_b):
-        set_a = set(list_a)
-        set_b = set(list_b)
-        not_in_b = set_a.difference(set_b)
-        not_in_a = set_a.difference(set_a)
-        return list(not_in_a), list(not_in_b)
 
     with CouchTransaction() as transaction:
         type_sheets = workbook.get_all_type_sheets()
@@ -42,7 +36,7 @@ def run_upload(domain, workbook, replace=False, task=None):
             new_data_type = FixtureDataType(
                 domain=domain,
                 is_global=table_def.is_global,
-                tag=table_def.table_id,
+                tag=tag,
                 fields=table_def.fields,
                 item_attributes=table_def.item_attributes
             )
@@ -74,71 +68,10 @@ def run_upload(domain, workbook, replace=False, task=None):
                 data_type = new_data_type
             transaction.save(data_type)
 
-            data_items = list(workbook.get_data_sheet(data_type))
+            data_items = list(workbook.get_data_sheet(data_type.tag))
             items_in_table = len(data_items)
             for sort_key, di in enumerate(data_items):
                 _update_progress(table_number, sort_key, items_in_table)
-                # Check that type definitions in 'types' sheet vs corresponding columns in the item-sheet MATCH
-                item_fields_list = di['field'].keys() if 'field' in di else []
-                not_in_sheet, not_in_types = diff_lists(item_fields_list, data_type.fields_without_attributes)
-                if len(not_in_sheet) > 0:
-                    error_message = _(FAILURE_MESSAGES["has_no_field_column"]).format(tag=tag, field=not_in_sheet[0])
-                    raise ExcelMalformatException(error_message)
-                if len(not_in_types) > 0:
-                    error_message = _(FAILURE_MESSAGES["has_extra_column"]).format(tag=tag, field=not_in_types[0])
-                    raise ExcelMalformatException(error_message)
-
-                # check that this item has all the properties listed in its 'types' definition
-                item_attributes_list = di['property'].keys() if 'property' in di else []
-                not_in_sheet, not_in_types = diff_lists(item_attributes_list, data_type.item_attributes)
-                if len(not_in_sheet) > 0:
-                    error_message = _(FAILURE_MESSAGES["has_no_field_column"]).format(tag=tag, field=not_in_sheet[0])
-                    raise ExcelMalformatException(error_message)
-                if len(not_in_types) > 0:
-                    error_message = _(FAILURE_MESSAGES["has_extra_column"]).format(tag=tag, field=not_in_types[0])
-                    raise ExcelMalformatException(error_message)
-
-                # check that properties in 'types' sheet vs item-sheet MATCH
-                for field in data_type.fields:
-                    if len(field.properties) > 0:
-                        sheet_props = di.get(field.field_name, {})
-                        sheet_props_list = sheet_props.keys()
-                        type_props = field.properties
-                        not_in_sheet, not_in_types = diff_lists(sheet_props_list, type_props)
-                        if len(not_in_sheet) > 0:
-                            error_message = _(FAILURE_MESSAGES["sheet_has_no_property"]).format(
-                                tag=tag,
-                                property=not_in_sheet[0],
-                                field=field.field_name
-                            )
-                            raise ExcelMalformatException(error_message)
-                        if len(not_in_types) > 0:
-                            error_message = _(FAILURE_MESSAGES["sheet_has_extra_property"]).format(
-                                tag=tag,
-                                property=not_in_types[0],
-                                field=field.field_name
-                            )
-                            raise ExcelMalformatException(error_message)
-                        # check that fields with properties are numbered
-                        if type(di['field'][field.field_name]) != list:
-                            error_message = _(FAILURE_MESSAGES["invalid_field_with_property"]).format(field=field.field_name)
-                            raise ExcelMalformatException(error_message)
-                        field_prop_len = len(di['field'][field.field_name])
-                        for prop in sheet_props:
-                            if type(sheet_props[prop]) != list:
-                                error_message = _(FAILURE_MESSAGES["invalid_property"]).format(
-                                    field=field.field_name,
-                                    prop=prop
-                                )
-                                raise ExcelMalformatException(error_message)
-                            if len(sheet_props[prop]) != field_prop_len:
-                                error_message = _(FAILURE_MESSAGES["wrong_field_property_combos"]).format(
-                                    field=field.field_name,
-                                    prop=prop
-                                )
-                                raise ExcelMalformatException(error_message)
-
-                # excel format check should have been covered by this line. Can make assumptions about data now
                 type_fields = data_type.fields
                 item_fields = {}
                 for field in type_fields:
@@ -229,6 +162,90 @@ def run_upload(domain, workbook, replace=False, task=None):
                     else:
                         old_data_item.add_location(location_cache.location,
                                                    transaction=transaction)
+
+    return return_val
+
+
+def _diff_lists(list_a, list_b):
+    set_a = set(list_a)
+    set_b = set(list_b)
+    not_in_b = set_a.difference(set_b)
+    not_in_a = set_a.difference(set_a)
+    return list(not_in_a), list(not_in_b)
+
+
+def validate_fixture_upload(workbook):
+    type_sheets = workbook.get_all_type_sheets()
+    return_val = FixtureUploadResult()
+
+    total_tables = len(type_sheets)
+    return_val.number_of_fixtures = total_tables
+
+    for table_number, table_def in enumerate(type_sheets):
+        tag = table_def.table_id
+        fields = table_def.fields
+        item_attributes = table_def.item_attributes
+        data_items = list(workbook.get_data_sheet(tag))
+        for sort_key, data_item in enumerate(data_items):
+            # Check that type definitions in 'types' sheet vs corresponding columns in the item-sheet MATCH
+            item_fields_list = data_item['field'].keys() if 'field' in data_item else []
+            not_in_sheet, not_in_types = _diff_lists(item_fields_list, get_fields_without_attributes(fields))
+            if len(not_in_sheet) > 0:
+                error_message = _(FAILURE_MESSAGES["has_no_field_column"]).format(tag=tag, field=not_in_sheet[0])
+                raise ExcelMalformatException(error_message)
+            if len(not_in_types) > 0:
+                error_message = _(FAILURE_MESSAGES["has_extra_column"]).format(tag=tag, field=not_in_types[0])
+                raise ExcelMalformatException(error_message)
+
+            # check that this item has all the properties listed in its 'types' definition
+            item_attributes_list = data_item['property'].keys() if 'property' in data_item else []
+            not_in_sheet, not_in_types = _diff_lists(item_attributes_list, item_attributes)
+            if len(not_in_sheet) > 0:
+                error_message = _(FAILURE_MESSAGES["has_no_field_column"]).format(tag=tag, field=not_in_sheet[0])
+                raise ExcelMalformatException(error_message)
+            if len(not_in_types) > 0:
+                error_message = _(FAILURE_MESSAGES["has_extra_column"]).format(tag=tag, field=not_in_types[0])
+                raise ExcelMalformatException(error_message)
+
+            # check that properties in 'types' sheet vs item-sheet MATCH
+            for field in fields:
+                if len(field.properties) > 0:
+                    sheet_props = data_item.get(field.field_name, {})
+                    sheet_props_list = sheet_props.keys()
+                    type_props = field.properties
+                    not_in_sheet, not_in_types = _diff_lists(sheet_props_list, type_props)
+                    if len(not_in_sheet) > 0:
+                        error_message = _(FAILURE_MESSAGES["sheet_has_no_property"]).format(
+                            tag=tag,
+                            property=not_in_sheet[0],
+                            field=field.field_name
+                        )
+                        raise ExcelMalformatException(error_message)
+                    if len(not_in_types) > 0:
+                        error_message = _(FAILURE_MESSAGES["sheet_has_extra_property"]).format(
+                            tag=tag,
+                            property=not_in_types[0],
+                            field=field.field_name
+                        )
+                        raise ExcelMalformatException(error_message)
+                    # check that fields with properties are numbered
+                    if type(data_item['field'][field.field_name]) != list:
+                        error_message = _(FAILURE_MESSAGES["invalid_field_with_property"]).format(field=field.field_name)
+                        raise ExcelMalformatException(error_message)
+                    field_prop_len = len(data_item['field'][field.field_name])
+                    for prop in sheet_props:
+                        if type(sheet_props[prop]) != list:
+                            error_message = _(FAILURE_MESSAGES["invalid_property"]).format(
+                                field=field.field_name,
+                                prop=prop
+                            )
+                            raise ExcelMalformatException(error_message)
+                        if len(sheet_props[prop]) != field_prop_len:
+                            error_message = _(FAILURE_MESSAGES["wrong_field_property_combos"]).format(
+                                field=field.field_name,
+                                prop=prop
+                            )
+                            raise ExcelMalformatException(error_message)
 
     return return_val
 

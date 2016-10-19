@@ -165,8 +165,8 @@ class FixtureWorkbook(object):
         except WorksheetNotFound as e:
             raise FixtureUploadError(_("Workbook does not contain a sheet called '%(title)s'") % {'title': e.title})
 
-    def get_data_sheet(self, data_type):
-        return self.workbook.get_worksheet(data_type.tag)
+    def get_data_sheet(self, data_type_tag):
+        return self.workbook.get_worksheet(data_type_tag)
 
     def get_all_type_sheets(self):
         type_sheets = []
@@ -182,8 +182,9 @@ class FixtureWorkbook(object):
         return type_sheets
 
     def validate(self):
+        from corehq.apps.fixtures.upload.run_upload import validate_fixture_upload
         self.get_types_sheet()
-        self.get_all_type_sheets()
+        validate_fixture_upload(self)
 
 
 def validate_file_format(file_or_filename):
