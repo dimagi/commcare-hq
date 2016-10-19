@@ -65,7 +65,8 @@ from corehq.apps.data_analytics.const import GIR_FIELDS
 from corehq.apps.data_analytics.admin import MALTRowAdmin
 from corehq.apps.domain.decorators import (
     require_superuser, require_developer,
-    login_or_basic, domain_admin_required
+    login_or_basic, domain_admin_required,
+    check_lockout
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.ota.views import get_restore_response, get_restore_params
