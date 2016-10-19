@@ -1,3 +1,77 @@
+"""
+Location Permissions
+====================
+
+Normal Access
+-------------
+
+Location Types - Users who can edit apps on the domain can edit location types::
+Locations - Users who can edit mobile workers on the domain can edit locations
+
+
+Restricted Access and Whitelist
+--------------------------------
+
+Many large projects have mid-level users who should have access to a subset of
+the project based on the organization's hierarchy.
+
+This is handled by a special permission called "Full Organization Access" which
+is enabled by default on all user roles. To restrict data access based on a
+user's location, projects may create a user role with this permission disabled.
+
+This is checked like so::
+
+    user.has_permission(domain, 'access_all_locations')
+
+We have whitelisted portions of HQ that have been made to correctly handle
+these restricted users. Anything not explicitly whitelisted is inaccessible to
+restricted users.
+
+
+Whitelist Implementation
+------------------------
+
+There is ``LocationAccessMiddleware`` which controls this whitelist. It
+intercepts every request, checks if the user has restricted access to the
+domain, and if so, only allows requests to whitelisted views. This middleware
+also guarantees that restricted users have a location assigned. That is, if a
+user should be restricted, but does not have an assigned location, they can't
+see anything. This is to prevent users from obtaining full access in the event
+that their location is deleted or improperly assigned.
+
+The other component of this is uitabs. The menu bar and the sidebar on HQ are
+composed of a bunch of links and names, essentially. We run the url for each of
+these links against the same check that the middleware uses to see if it should
+be visible to the user. In this way, they only see menu and sidebar links that
+are accessible.
+
+To mark a view as location safe, you apply the ``@location_safe`` decorator to
+it. This can be applied directly to view functions, view classes, HQ report
+classes, or tastypie resources (see implentation and existing usages for
+examples).
+
+UCR and Report Builder reports will be automatically marked as location safe if
+the report contains a location choice provider.
+
+When marking a view as location safe, you must also check for restricted users
+by using either ``request.can_access_all_locations`` or
+``user.has_permission(domain, 'access_all_locations')`` and limit the data
+returned accordingly.
+
+You should create a user who is restricted and click through the desired
+workflow to make sure it still makes sense, there could be for instance, ajax
+requests that must also be protected, or links to features the user shouldn't
+see.
+
+
+Legacy Implementation
+---------------------
+Prior to the implementation of the whitelist, we created a series of
+unconnected location-based permissions schemes controlled by feature flags.
+These each restrict access to a particular feature and don't affect the rest of
+HQ. These are deprecated, and we intend to transition projects off of those
+onto the whitelist once we've added enough features to meet their use-case.
+"""
 from django_prbac.decorators import requires_privilege_raise404
 from tastypie.resources import Resource
 from corehq import privileges
