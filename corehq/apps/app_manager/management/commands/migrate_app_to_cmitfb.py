@@ -48,7 +48,7 @@ class Command(BaseCommand):
             forms = [f for f in module.forms if f.doc_type == 'Form']
             for form in forms:
                 preload = form.actions.case_preload.preload
-                if preload:
+                if preload and form.requires == 'case':
                     xform = XForm(form.source)
                     xform.add_case_preloads(preload)
                     save_xform(app, form, ET.tostring(xform.xml))
