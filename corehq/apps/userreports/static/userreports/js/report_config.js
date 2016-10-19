@@ -9,30 +9,39 @@ var reportBuilder = function () {
         self.name = column["name"];
         self.label = column["label"];
         self.isNumeric = column["is_numeric"];
-        self.aggregation = ko.observable(column["is_numeric"] ? "simple": null);
-        self.isGroupByColumn = ko.observable(false);
-        self.isGroupByColumn.subscribe(function (newValue) {
+        self.aggregation = column["is_numeric"] ? "simple": null;
+        self.isGroupByColumn = false;
+
+        self.groupByOrAggregation = ko.observable(self.aggregation);
+        self.groupByOrAggregation.subscribe(function (newValue) {
             var index = parent.selectedColumns.indexOf(self);
             var lookAhead = index;
-            if (newValue) {
-                // Move group-by column before aggregated columns
-                while (lookAhead > 0 && !parent.selectedColumns()[lookAhead - 1].isGroupByColumn()) {
-                    lookAhead--;
+
+            if (newValue === "groupBy") {
+                if (self.isGroupByColumn === false) {
+                    // Move group-by column before aggregated columns
+                    while (lookAhead > 0 && !parent.selectedColumns()[lookAhead - 1].isGroupByColumn) {
+                        lookAhead--;
+                    }
                 }
+                self.isGroupByColumn = true;
+                self.aggregation = null;
             } else {
-                // Move aggregated column after group-by columns
-                var end = parent.selectedColumns().length - 1;
-                while (lookAhead < end && parent.selectedColumns()[lookAhead + 1].isGroupByColumn()) {
-                    lookAhead++;
+                if (self.isGroupByColumn === true) {
+                    // Move aggregated column after group-by columns
+                    var end = parent.selectedColumns().length - 1;
+                    while (lookAhead < end && parent.selectedColumns()[lookAhead + 1].isGroupByColumn) {
+                        lookAhead++;
+                    }
                 }
+                self.isGroupByColumn = false;
+                self.aggregation = newValue;
             }
+
             if (lookAhead !== index) {
                 parent.selectedColumns.splice(index, 1);  // Remove self
                 parent.selectedColumns.splice(lookAhead, 0, self);  // Insert self
             }
-            parent.refreshPreview();
-        });
-        self.aggregation.subscribe(function (newValue) {
             parent.refreshPreview();
         });
 
@@ -79,7 +88,7 @@ var reportBuilder = function () {
             if (self.isAggregationEnabled() && !wasAggregationEnabled) {
                 // Group by the first report column by default
                 if (self.selectedColumns().length > 0) {
-                    self.selectedColumns()[0].isGroupByColumn(true);
+                    self.selectedColumns()[0].groupByOrAggregation("groupBy");
                 }
             }
             self.refreshPreview();
@@ -117,8 +126,8 @@ var reportBuilder = function () {
                         'name': c.name,
                         'label': c.label,
                         'isNumeric': c.isNumeric,
-                        'isGroupByColumn': c.isGroupByColumn(),
-                        'aggregation': c.aggregation(),
+                        'isGroupByColumn': c.isGroupByColumn,
+                        'aggregation': c.aggregation,
                     }; }),
                     'aggregate': self.isAggregationEnabled(),
                 }),
@@ -148,11 +157,11 @@ var reportBuilder = function () {
                 var aaData = data;
 
                 var aggColumns = _.filter(self.selectedColumns(), function (c) {
-                    return self.isAggregationEnabled && c.isNumeric && !c.isGroupByColumn();
+                    return self.isAggregationEnabled && c.isNumeric && !c.isGroupByColumn;
                 });
                 var groupByNames = _.map(
                     _.filter(self.selectedColumns(), function (c) {
-                        return c.isGroupByColumn() === true;
+                        return c.isGroupByColumn === true;
                     }),
                     function (c) { return c.name; }
                 );
@@ -195,7 +204,6 @@ var reportBuilder = function () {
                 return c["name"] === self.newColumnName();
             });
             self.selectedColumns.push(new reportBuilder.ReportColumn(column, self));
-            self.setIsFormatEnabled();
             self.newColumnName('');
         };
 

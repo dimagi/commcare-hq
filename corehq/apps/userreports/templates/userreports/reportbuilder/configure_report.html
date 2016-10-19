@@ -39,8 +39,7 @@
           <thead data-bind="fadeVisible: isAggregationEnabled">
             <tr>
               <th>{% trans 'Indicator' %}</th>
-              <th class="center">{% trans 'Display Each' %}</th>
-              <th>{% trans 'Summarize' %}</th>
+              <th>{% trans 'Format' %}</th>
               <th>&nbsp;</th>
             </tr>
           </thead>
@@ -49,14 +48,9 @@
             <tr>
               <td data-bind="text: label"></td>
               <td>
-                <input data-bind="fadeVisible: $parent.isAggregationEnabled,
-                                  checked: isGroupByColumn"
-                       type="checkbox" />
-              </td>
-              <td>
                 <select data-bind="fadeVisible: $parent.isAggregationEnabled,
-                                   disable: isGroupByColumn,
-                                   value: aggregation">
+                                   value: groupByOrAggregation">
+                  <option value="groupBy">{% trans 'Display Each' %}</option>
                   <option value="simple">---</option>
                   <!-- ko if: isNumeric -->
                   <option value="sum">{% trans 'Sum' %}</option>
