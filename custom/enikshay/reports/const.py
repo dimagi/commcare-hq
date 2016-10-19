@@ -19,13 +19,3 @@ AGE_RANGES = (
     (55, 64),
     (65,)
 )
-
-
-TEST_TYPES = (
-    'microscopy-zn',
-    'microscopy-fluorescent',
-    'cbnaat',
-    'culture',
-    'dst',
-    'line_probe_assay'
-)

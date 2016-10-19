@@ -13,7 +13,7 @@ from custom.utils.utils import clean_IN_filter_value
 
 TABLE_ID = 'episode'
 
-ReportConfig = namedtuple('ReportConfig', ['domain', 'locations_id', 'start_date', 'end_date'])
+EnikshayReportConfig = namedtuple('ReportConfig', ['domain', 'locations_id', 'start_date', 'end_date'])
 
 
 class MultiReport(CustomProjectReport, GenericReportView):
@@ -48,7 +48,7 @@ class EnikshayReport(DatespanMixin, CustomProjectReport, SqlTabularReport):
 
     @property
     def report_config(self):
-        return ReportConfig(
+        return EnikshayReportConfig(
             domain=self.domain,
             locations_id=self.request.GET.getlist('locations_id', []),
             start_date=self.datespan.startdate,

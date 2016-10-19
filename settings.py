@@ -388,7 +388,6 @@ HQ_APPS = (
     'custom.common',
 
     'custom.icds_reports',
-    'custom.enikshay.integrations.ninetyninedots',
     'custom.pnlppgi',
     'custom.enikshay'
 )

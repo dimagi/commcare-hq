@@ -2,7 +2,7 @@ from sqlagg.columns import CountColumn
 from sqlagg.filters import RawFilter
 
 from corehq.apps.reports.sqlreport import DatabaseColumn
-from custom.enikshay.reports.consts import TREATMENT_OUTCOMES
+from custom.enikshay.reports.const import TREATMENT_OUTCOMES
 from custom.enikshay.reports.generic import EnikshaySqlData
 
 TABLE_ID = 'episode'

@@ -2,7 +2,7 @@ from sqlagg.columns import CountColumn
 from sqlagg.filters import RawFilter
 
 from corehq.apps.reports.sqlreport import DatabaseColumn
-from custom.enikshay.reports.consts import AGE_RANGES, TEST_TYPES
+from custom.enikshay.reports.const import AGE_RANGES
 from custom.enikshay.reports.generic import EnikshaySqlData
 
 TABLE_ID = 'episode'
@@ -45,7 +45,7 @@ def generate_for_all_ranges(slug, filters):
             '',
             CountColumn(
                 'doc_id',
-                filters=filters,
+                filters=filters + [type_filter],
                 alias='%s_total' % slug
             )
         )
@@ -58,20 +58,20 @@ class CaseFindingSqlData(EnikshaySqlData):
     @property
     def columns(self):
         test_type_filter = [
-            RawFilter("test_type_value IN (%s)" % ','.join(["'%s'" % test_type for test_type in TEST_TYPES]))
+            RawFilter("bacteriological_examination = 1")
         ]
 
         return (
-            generate_for_all_ranges('male', self.filters + [RawFilter("sex = 'm'")]) +
-            generate_for_all_ranges('female', self.filters + [RawFilter("sex = 'f'")]) +
-            generate_for_all_ranges('transgender', self.filters + [RawFilter("sex = 't'")]) +
+            generate_for_all_ranges('male', self.filters + [RawFilter("sex = 'male'")]) +
+            generate_for_all_ranges('female', self.filters + [RawFilter("sex = 'female'")]) +
+            generate_for_all_ranges('transgender', self.filters + [RawFilter("sex = 'transgender'")]) +
             generate_for_all_ranges('all', self.filters) +
             [
                 DatabaseColumn(
                     '',
                     CountColumn(
                         'doc_id',
-                        filters=self.filters + test_type_filter + [RawFilter("episode_type = 'Suspect'")],
+                        filters=self.filters + test_type_filter + [RawFilter("episode_type = 'presumptive_tb'")],
                         alias='patients_with_presumptive_tb'
                     )
                 ),
@@ -80,7 +80,10 @@ class CaseFindingSqlData(EnikshaySqlData):
                     CountColumn(
                         'doc_id',
                         filters=(
-                            self.filters + test_type_filter + [RawFilter("result_of_test = 'tb_detected'")]
+                            self.filters + test_type_filter + [
+                                RawFilter("result_of_test = 'tb_detected'"),
+                                RawFilter("episode_type = 'presumptive_tb'")
+                            ]
                         ),
                         alias='patients_with_positive_tb'
                     )

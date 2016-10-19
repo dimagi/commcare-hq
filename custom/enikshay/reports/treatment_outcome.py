@@ -1,7 +1,10 @@
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesColumnGroup, DataTablesHeader
 from custom.enikshay.reports.generic import EnikshayReport, EnikshayMultiReport
-from custom.enikshay.reports.consts import TREATMENT_OUTCOMES
+from custom.enikshay.reports.const import TREATMENT_OUTCOMES
 from custom.enikshay.reports.sqldata.treatment_outcome_sql_data import TreatmentOutcomeSqlData
+
+
+from django.utils.translation import ugettext_lazy, ugettext as _
 
 
 class NoSortDataTablesHeader(DataTablesHeader):
@@ -24,7 +27,7 @@ def generate_for_all_outcomes(title, slug, data):
 
 class AllTBPatientsReport(EnikshayReport):
 
-    name = 'BLOCK - A: All TB patients registered in the quarter'
+    name = ugettext_lazy('BLOCK - A: All TB patients registered in the quarter')
     slug = 'treatment_outcome_report'
 
     @property
@@ -32,28 +35,28 @@ class AllTBPatientsReport(EnikshayReport):
         return NoSortDataTablesHeader(
             DataTablesColumn('Type of Patient'),
             DataTablesColumnGroup(
-                'Cured', DataTablesColumn('1')
+                _('Cured'), DataTablesColumn('1')
             ),
             DataTablesColumnGroup(
-                'Treatment Completed', DataTablesColumn('2')
+                _('Treatment Completed'), DataTablesColumn('2')
             ),
             DataTablesColumnGroup(
-                'Died', DataTablesColumn('3')
+                _('Died'), DataTablesColumn('3')
             ),
             DataTablesColumnGroup(
-                'Treatment Failure', DataTablesColumn('4')
+                _('Treatment Failure'), DataTablesColumn('4')
             ),
             DataTablesColumnGroup(
-                'Lost to follow up', DataTablesColumn('5')
+                _('Lost to follow up'), DataTablesColumn('5')
             ),
             DataTablesColumnGroup(
-                'Regimen changed', DataTablesColumn('6')
+                _('Regimen changed'), DataTablesColumn('6')
             ),
             DataTablesColumnGroup(
-                'Not evaluated', DataTablesColumn('7')
+                _('Not evaluated'), DataTablesColumn('7')
             ),
             DataTablesColumnGroup(
-                'Total', DataTablesColumn('')
+                _('Total'), DataTablesColumn('')
             )
         )
 
@@ -66,45 +69,45 @@ class AllTBPatientsReport(EnikshayReport):
         model = self.model
         data = model.get_data()[0]
         return [
-            generate_for_all_outcomes('NEW CASES (Total)', 'new_patients', data),
+            generate_for_all_outcomes(_('NEW CASES (Total)'), 'new_patients', data),
             generate_for_all_outcomes(
-                'Pulmonary, Microbiologically confirmed', 'new_patients_pulmonary_microbiological',
+                _('Pulmonary, Microbiologically confirmed'), 'new_patients_pulmonary_microbiological',
                 data
             ),
             generate_for_all_outcomes(
-                'Pulmonary, Clinically diagnosed', 'new_patients_pulmonary_clinical',
+                _('Pulmonary, Clinically diagnosed'), 'new_patients_pulmonary_clinical',
                 data
             ),
             generate_for_all_outcomes(
-                'Extra-pulmonary', 'new_patients_extra_pulmonary',
+                _('Extra-pulmonary'), 'new_patients_extra_pulmonary',
                 data
             ),
             generate_for_all_outcomes(
-                'PREVIOUSLY TREATED CASES (Total)', 'previously_treated_patients',
+                _('PREVIOUSLY TREATED CASES (Total)'), 'previously_treated_patients',
                 data
             ),
             generate_for_all_outcomes(
-                'Recurrent', 'recurrent_patients',
+                _('Recurrent'), 'recurrent_patients',
                 data
             ),
             generate_for_all_outcomes(
-                'After Treatment failure', 'treatment_after_failure_patients',
+                _('After Treatment failure'), 'treatment_after_failure_patients',
                 data
             ),
             generate_for_all_outcomes(
-                'Treatment after lost to follow up', 'treatment_after_lfu_patients',
+                _('Treatment after lost to follow up'), 'treatment_after_lfu_patients',
                 data
             ),
             generate_for_all_outcomes(
-                'HIV - reactive all', 'hiv_reactive_patients',
+                _('HIV - reactive all'), 'hiv_reactive_patients',
                 data
             ),
             generate_for_all_outcomes(
-                'New', 'new_hiv_reactive_patients',
+                _('New'), 'new_hiv_reactive_patients',
                 data
             ),
             generate_for_all_outcomes(
-                'Previously Treated', 'previously_treated_hiv_reactive_patients',
+                _('Previously Treated'), 'previously_treated_hiv_reactive_patients',
                 data
             )
         ]
@@ -112,15 +115,15 @@ class AllTBPatientsReport(EnikshayReport):
 
 class CPTAndARTReport(EnikshayReport):
 
-    name = 'BLOCK - B: CPT and ART'
+    name = ugettext_lazy('BLOCK - B: CPT and ART')
     slug = 'treatment_outcome_report'
 
     @property
     def headers(self):
         return NoSortDataTablesHeader(
-            DataTablesColumn('Total No. of TB patients known to be HIV infected'),
-            DataTablesColumn('No. on CPT#'),
-            DataTablesColumn('No. on ART#')
+            DataTablesColumn(_('Total No. of TB patients known to be HIV infected')),
+            DataTablesColumn(_('No. on CPT#')),
+            DataTablesColumn(_('No. on ART#'))
         )
 
     @property
@@ -142,7 +145,7 @@ class CPTAndARTReport(EnikshayReport):
 
 class TreatmentOutcomeReport(EnikshayMultiReport):
 
-    name = 'Treatment Outcome'
+    name = ugettext_lazy('Treatment Outcome')
     slug = 'treatment_outcome'
 
     @property
