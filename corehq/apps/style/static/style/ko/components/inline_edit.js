@@ -79,6 +79,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                     return;
                 }
 
+                self.value(self.value().replace(/<\/?script>/g, ''));
                 self.readOnlyValue = self.value();
                 var data = self.saveParams;
                 _.each(data, function(value, key) {
