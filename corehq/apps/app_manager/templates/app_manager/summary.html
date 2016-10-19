@@ -47,6 +47,7 @@
                 formNameMap: {{ form_name_map|JSON }},
                 appLangs: {{ langs|JSON }},
                 caseDownloadURL: '{% url 'download_case_summary' domain app_id %}',
+                formDownloadURL: '{% url 'download_form_summary' domain app_id %}',
                 appDownloadURL: '{% url 'download_app_summary' domain app_id %}',
             });
 
