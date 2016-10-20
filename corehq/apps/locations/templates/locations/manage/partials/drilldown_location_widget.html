@@ -1,0 +1,36 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+<script>
+
+$(function() {
+    function updateSelect2(e) {
+        var options = {
+            formatResult: function(e) { return e.name; },
+            formatSelection: function(e) { return e.name; },
+            allowClear: true,
+            placeholder: '{% trans "Choose a primary location" %}',
+            formatNoMatches: function() {
+                return '{% trans "No Locations set for this user" %}';
+            },
+            data: {'results': $(e).select2('data')},
+        }
+        $('#{{ css_id }}').select2(options);
+    };
+
+    // This custom event is fired in autocomplete_select_widget.html
+    $('#{{ source_css_id }}').on('select-ready', function() {
+        updateSelect2(this);
+        // set to initial value
+        $('#{{ css_id }}').val({{ value|JSON }});
+    });
+
+    $('#{{ source_css_id }}').on('change', function() {
+        updateSelect2(this);
+        if ($(this).select2('data').length == 0) {
+            $('#{{ css_id }}').val(null);
+        }
+    }).trigger('change');
+});
+
+</script>
+<input type="hidden" id="{{ css_id }}" name="{{ name }}" value="{{ value }}" style="width: 30em;" />
