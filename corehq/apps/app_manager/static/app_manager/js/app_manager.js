@@ -288,6 +288,46 @@ hqDefine('app_manager/js/app_manager.js', function () {
             });
         }
 
+        if (COMMCAREHQ.toggleEnabled('ONBOARDING_PROTOTYPE')) {
+
+            $('#js-add-new-item').popover({
+                title: "Add",
+                container: 'body',
+                content: function () {
+                    return $('#js-popover-template-add-item-content').text();
+                },
+                html: true,
+                trigger: 'manual',
+                placement: 'right',
+                template: $('#js-popover-template-add-item').text()
+            }).one('shown.bs.popover', function () {
+                var pop = this;
+                $('.popover-additem').on('click', function (e) {
+                    $(pop).popover('hide');
+                    var dataType = $(e.target).closest('a').data('type');
+                    console.log(dataType);
+                    $('#new-module-type').val(dataType);
+                    var form = $('#new-module-form');
+                    if (!form.data('clicked')) {
+                        form.data('clicked', 'true');
+                        $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
+                        form.submit();
+                    }
+                });
+            }).on('click', function (e) {
+                console.log('prevent');
+                e.preventDefault();
+                $(this).popover('show');
+            });
+
+            $('body').click(function (event) {
+                if (!($(event.target).hasClass('appnav-add') || $(event.target).hasClass('popover-additem-option') || $(event.target).hasClass('fa'))) {
+                    $('#js-add-new-item').popover('hide');
+                }
+            });
+
+        }
+
         module.commcareVersion.subscribe(function () {
             $('.commcare-feature').each(function () {
                 // .attr() keeps zero intact in 2.10, data() doesn't
