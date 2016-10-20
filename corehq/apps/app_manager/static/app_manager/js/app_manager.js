@@ -267,7 +267,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
             var form = $('#new-module-form');
             if (!form.data('clicked')) {
                 form.data('clicked', 'true');
-                $('.new-module-icon').removeClass().addClass("fa fa-refresh icon-spin");
+                $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
                 form.submit();
             }
         });
