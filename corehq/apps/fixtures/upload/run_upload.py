@@ -188,7 +188,7 @@ def _diff_lists(list_a, list_b):
     set_b = set(list_b)
     not_in_b = set_a.difference(set_b)
     not_in_a = set_b.difference(set_a)
-    return list(not_in_a), list(not_in_b)
+    return sorted(not_in_a), sorted(not_in_b)
 
 
 def validate_fixture_upload(workbook):
@@ -214,26 +214,26 @@ def validate_fixture_upload(workbook):
             # Check that type definitions in 'types' sheet vs corresponding columns in the item-sheet MATCH
             item_fields_list = data_item['field'].keys() if 'field' in data_item else []
             not_in_sheet, not_in_types = _diff_lists(item_fields_list, get_fields_without_attributes(fields))
-            if len(not_in_sheet) > 0:
+            for missing_field in not_in_sheet:
                 error_messages.append(
                     _(FAILURE_MESSAGES["has_no_field_column"])
-                    .format(tag=tag, field=not_in_sheet[0]))
-            if len(not_in_types) > 0:
+                    .format(tag=tag, field=missing_field))
+            for missing_field in not_in_types:
                 error_messages.append(
                     _(FAILURE_MESSAGES["has_extra_column"])
-                    .format(tag=tag, field=not_in_types[0]))
+                    .format(tag=tag, field=missing_field))
 
             # check that this item has all the properties listed in its 'types' definition
             item_attributes_list = data_item['property'].keys() if 'property' in data_item else []
             not_in_sheet, not_in_types = _diff_lists(item_attributes_list, item_attributes)
-            if len(not_in_sheet) > 0:
+            for missing_field in not_in_sheet:
                 error_messages.append(
                     _(FAILURE_MESSAGES["has_no_field_column"])
-                    .format(tag=tag, field=not_in_sheet[0]))
-            if len(not_in_types) > 0:
+                    .format(tag=tag, field=missing_field))
+            for missing_field in not_in_types:
                 error_messages.append(
                     _(FAILURE_MESSAGES["has_extra_column"])
-                    .format(tag=tag, field=not_in_types[0]))
+                    .format(tag=tag, field=missing_field))
 
             # check that properties in 'types' sheet vs item-sheet MATCH
             for field in fields:
@@ -242,16 +242,16 @@ def validate_fixture_upload(workbook):
                     sheet_props_list = sheet_props.keys()
                     type_props = field.properties
                     not_in_sheet, not_in_types = _diff_lists(sheet_props_list, type_props)
-                    if len(not_in_sheet) > 0:
+                    for missing_property in not_in_sheet:
                         error_messages.append(_(FAILURE_MESSAGES["sheet_has_no_property"]).format(
                             tag=tag,
-                            property=not_in_sheet[0],
+                            property=missing_property,
                             field=field.field_name
                         ))
-                    if len(not_in_types) > 0:
+                    for missing_property in not_in_types:
                         error_messages.append(
                             _(FAILURE_MESSAGES["sheet_has_extra_property"])
-                            .format(tag=tag, property=not_in_types[0], field=field.field_name))
+                            .format(tag=tag, property=missing_property, field=field.field_name))
                     # check that fields with properties are numbered
                     if type(data_item['field'][field.field_name]) != list:
                         error_messages.append(
