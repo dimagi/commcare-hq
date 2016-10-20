@@ -21,6 +21,9 @@ class MigratingBlobDB(object):
         except NotFound:
             return self.old_db.get(*args, **kw)
 
+    def exists(self, *args, **kw):
+        return self.new_db.exists(*args, **kw) or self.old_db.exists(*args, **kw)
+
     def delete(self, *args, **kw):
         new_result = self.new_db.delete(*args, **kw)
         old_result = self.old_db.delete(*args, **kw)

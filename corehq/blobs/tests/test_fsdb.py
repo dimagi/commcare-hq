@@ -56,6 +56,19 @@ class _BlobDBTests(object):
         with self.db.get(new.identifier, "new_bucket") as fh:
             self.assertEqual(fh.read(), b"content")
 
+    def test_exists(self):
+        name = "test.3.0"
+        bucket = "doc.3.0"
+        info = self.db.put(StringIO(b"content"), name, bucket)
+        self.assertTrue(self.db.exists(info.identifier, bucket), 'not found')
+
+    def test_delete_not_exists(self):
+        name = "test.3.1"
+        bucket = "doc.3.1"
+        info = self.db.put(StringIO(b"content"), name, bucket)
+        self.db.delete(info.identifier, bucket)
+        self.assertFalse(self.db.exists(info.identifier, bucket), 'not deleted')
+
     def test_delete(self):
         name = "test.4"
         bucket = "doc.4"

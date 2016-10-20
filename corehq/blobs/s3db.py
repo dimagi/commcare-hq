@@ -59,6 +59,15 @@ class S3BlobDB(AbstractBlobDB):
             resp = self._s3_bucket().Object(path).get()
         return BlobStream(resp["Body"], self, path)
 
+    def exists(self, identifier, bucket=DEFAULT_BUCKET):
+        path = self.get_path(identifier, bucket)
+        try:
+            with maybe_not_found(throw=NotFound(identifier, bucket)):
+                self._s3_bucket().Object(path).load()
+            return True
+        except NotFound:
+            return False
+
     def delete(self, *args, **kw):
         identifier, bucket = self.get_args_for_delete(*args, **kw)
         path = self.get_path(identifier, bucket)
