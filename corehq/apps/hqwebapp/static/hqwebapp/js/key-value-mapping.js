@@ -215,7 +215,10 @@ uiElement.key_value_mapping = function (o) {
 
         var $modal = $modalDiv.find('.modal');
         $modal.appendTo('body');
-        $modal.modal('show');
+        $modal.modal({
+            show: true,
+            backdrop: 'static',
+        });
         $modal.on('hidden', function () {
             $modal.remove();
         });
