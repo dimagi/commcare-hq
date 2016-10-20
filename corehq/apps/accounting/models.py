@@ -1304,6 +1304,17 @@ class Subscription(models.Model):
             funding_source=(funding_source or FundingSource.CLIENT),
             **kwargs
         )
+
+        # changing a plan overrides future subscriptions
+        future_subscriptions = Subscription.objects.filter(
+            subscriber=self.subscriber,
+            date_end=None,
+        )
+        if date_end is not None:
+            future_subscriptions = future_subscriptions.filter(date_start__lt=date_end)
+        if future_subscriptions.count() > 0:
+            future_subscriptions.update(date_end=F('date_start'))
+
         new_subscription.save()
 
         new_subscription.set_billing_account_entry_point()

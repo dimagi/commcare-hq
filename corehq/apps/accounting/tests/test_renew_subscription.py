@@ -89,3 +89,22 @@ class TestRenewSubscriptions(BaseAccountingTest):
         )
         next_subscription.save()
         self.assertEqual(next_subscription, self.subscription.next_subscription)
+
+    def test_change_plan_after_renewal(self):
+        today = datetime.date.today()
+        next_month = today + datetime.timedelta(days=30)
+        self.subscription.date_end = next_month
+        self.subscription.save()
+
+        self.renewed_subscription = self.subscription.renew_subscription()
+        self.assertEqual(self.renewed_subscription.date_end, None)
+        self.assertEqual(self.renewed_subscription.date_start, self.subscription.date_end)
+        self.assertEqual(self.renewed_subscription.date_start, next_month)
+
+        new_edition = SoftwarePlanEdition.ADVANCED
+        new_plan = DefaultProductPlan.get_default_plan(new_edition)
+        new_subscription = self.subscription.change_plan(new_plan)
+        self.assertEqual(new_subscription.date_end, None)
+
+        self.renewed_subscription.refresh_from_db()
+        self.assertEqual(self.renewed_subscription.date_end, self.renewed_subscription.date_start)
