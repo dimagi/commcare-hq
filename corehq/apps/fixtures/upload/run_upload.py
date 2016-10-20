@@ -183,8 +183,11 @@ def validate_fixture_upload(workbook):
         tag = table_def.table_id
         fields = table_def.fields
         item_attributes = table_def.item_attributes
-        data_items = list(workbook.get_data_sheet(tag))
-        for sort_key, data_item in enumerate(data_items):
+        try:
+            data_item = iter(workbook.get_data_sheet(tag)).next()
+        except StopIteration:
+            continue
+        else:
             # Check that type definitions in 'types' sheet vs corresponding columns in the item-sheet MATCH
             item_fields_list = data_item['field'].keys() if 'field' in data_item else []
             not_in_sheet, not_in_types = _diff_lists(item_fields_list, get_fields_without_attributes(fields))
@@ -231,11 +234,12 @@ def validate_fixture_upload(workbook):
                                 prop=prop
                             ))
                         if len(sheet_props[prop]) != field_prop_len:
-                            error_messages.append( _(FAILURE_MESSAGES["wrong_field_property_combos"]).format(
+                            error_messages.append(_(FAILURE_MESSAGES["wrong_field_property_combos"]).format(
                                 field=field.field_name,
                                 prop=prop
                             ))
     return error_messages
+
 
 def do_fixture_upload(domain, file_ref, replace, task=None):
     workbook = get_workbook(file_ref.get_filename())
