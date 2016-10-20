@@ -6,6 +6,7 @@ from corehq.apps.fixtures.exceptions import ExcelMalformatException, FixtureUplo
 from corehq.apps.fixtures.models import FixtureDataType, FieldList, FixtureItemField, \
     FixtureDataItem
 from corehq.apps.fixtures.utils import get_fields_without_attributes
+from corehq.util.soft_assert import soft_assert
 from corehq.util.spreadsheets.excel import WorksheetNotFound
 from .upload import DELETE_HEADER, FixtureUploadResult, \
     get_memoized_location, FAILURE_MESSAGES, get_workbook
@@ -258,6 +259,10 @@ def do_fixture_upload(domain, file_ref, replace, task=None):
     except FixtureAPIException as e:
         raise FixtureUploadError(unicode(e))
     except Exception:
+        soft_assert('@'.join(['droberts', 'dimagi.com'])).call(
+            False, 'Unknown fixture upload exception',
+            {'filename': file_ref.get_filename()}
+        )
         raise FixtureUploadError(_("Fixture upload failed for some reason and we have noted this failure. "
                                    "Please make sure the excel file is correctly formatted and try again."))
 
