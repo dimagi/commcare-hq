@@ -190,6 +190,9 @@ ReportContent = namedtuple('ReportContent', ['text', 'attachment'])
 
 
 class ReportConfig(CachedCouchDocumentMixin, Document):
+    """
+    This model represents a "Saved Report." That is, a saved set of filters for a given report.
+    """
 
     domain = StringProperty()
 
