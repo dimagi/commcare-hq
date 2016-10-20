@@ -4,9 +4,9 @@ from django.forms.utils import flatatt
 from django.forms.widgets import (
     CheckboxInput,
     Input,
+    RadioChoiceInput,
     RadioSelect,
     RadioFieldRenderer,
-    RadioInput,
     TextInput,
     MultiWidget,
 )
@@ -39,7 +39,7 @@ class BootstrapCheckboxInput(CheckboxInput):
                          (flatatt(final_attrs), self.inline_label))
 
 
-class BootstrapRadioInput(RadioInput):
+class BootstrapRadioInput(RadioChoiceInput):
 
     def __unicode__(self):
         if 'id' in self.attrs:
@@ -160,7 +160,7 @@ class Select2MultipleChoiceWidget(forms.SelectMultiple):
         final_attrs = self.build_attrs(attrs)
         output = super(Select2MultipleChoiceWidget, self).render(name, value, attrs, choices)
         output += """
-            <script type="text/javascript">
+            <script>
                 $(function() {
                     $('#%s').select2({ width: 'resolve' });
                 });
@@ -207,7 +207,7 @@ class DateRangePickerWidget(Input):
         # yes, I know inline html in python is gross, but this is what the
         # built in django widgets are doing. :|
         output += """
-            <script type="text/javascript">
+            <script>
                 $(function () {
                     var separator = '%(separator)s';
                     var report_labels = JSON.parse('%(range_labels_json)s');

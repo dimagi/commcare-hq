@@ -1,14 +1,32 @@
-from corehq.apps.change_feed import topics
 from corehq.fluff.calculators.case import CasePropertyFilter
 import fluff
 from couchforms.models import XFormInstance
 from fluff.filters import ORFilter, ANDFilter, CustomFilter
 from casexml.apps.case.models import CommCareCase
 from corehq.fluff.calculators.xform import FormPropertyFilter
-from custom.intrahealth import INTRAHEALTH_DOMAINS, report_calcs, OPERATEUR_XMLNSES, get_real_date, \
-    get_location_id, get_location_id_by_type, COMMANDE_XMLNSES, get_products, IsExistFormPropertyFilter,\
-    RAPTURE_XMLNSES, get_rupture_products, LIVRAISON_XMLNSES, get_pps_name, get_district_name, get_month,\
-    get_region_id, get_district_id, get_products_id, get_rupture_products_ids
+from custom.intrahealth import (
+    COMMANDE_XMLNSES,
+    INTRAHEALTH_DOMAINS,
+    LIVRAISON_XMLNSES,
+    OPERATEUR_XMLNSES,
+    RAPTURE_XMLNSES,
+    report_calcs,
+)
+from custom.intrahealth.utils import (
+    get_district_id,
+    get_district_name,
+    get_location_id,
+    get_location_id_by_type,
+    get_month,
+    get_pps_name,
+    get_products,
+    get_products_id,
+    get_real_date,
+    get_region_id,
+    get_rupture_products,
+    get_rupture_products_ids,
+    IsExistFormPropertyFilter,
+)
 from custom.utils.utils import flat_field
 
 IH_DELETED_TYPES = ('XFormArchived', 'XFormDuplicate', 'XFormDeprecated', 'XFormError')
@@ -31,7 +49,6 @@ class CouvertureFluff(fluff.IndicatorDocument):
 
     domains = INTRAHEALTH_DOMAINS
     group_by = ('domain', fluff.AttributeGetter('location_id', get_location_id))
-    kafka_topic = topics.FORM
     deleted_types = IH_DELETED_TYPES
 
     location_id = flat_field(get_location_id)
@@ -57,7 +74,6 @@ class TauxDeSatisfactionFluff(fluff.IndicatorDocument):
     domains = INTRAHEALTH_DOMAINS
     group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'productName')),
                 fluff.AttributeGetter('product_id', lambda f: get_products_id(f, 'productName')))
-    kafka_topic = topics.FORM
 
     region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
     district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
@@ -89,7 +105,6 @@ class IntraHealthFluff(fluff.IndicatorDocument):
     )
     domains = INTRAHEALTH_DOMAINS
     deleted_types = IH_DELETED_TYPES
-    kafka_topic = topics.FORM
     group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'product_name')),
                 fluff.AttributeGetter('product_id', lambda f: get_products_id(f, 'product_name')))
 
@@ -124,7 +139,6 @@ class RecapPassageFluff(fluff.IndicatorDocument):
     deleted_types = IH_DELETED_TYPES
     group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'product_name')),
                 fluff.AttributeGetter('product_id', lambda f: get_products_id(f, 'product_name')))
-    kafka_topic = topics.FORM
 
     location_id = flat_field(get_location_id)
     region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
@@ -143,7 +157,6 @@ class TauxDeRuptureFluff(fluff.IndicatorDocument):
     ])
     domains = INTRAHEALTH_DOMAINS
     deleted_types = IH_DELETED_TYPES
-    kafka_topic = topics.FORM
     group_by = (fluff.AttributeGetter('product_name', lambda f: get_rupture_products(f)),
                 fluff.AttributeGetter('product_id', lambda f: get_rupture_products_ids(f)))
 
@@ -161,7 +174,6 @@ class LivraisonFluff(fluff.IndicatorDocument):
 
     domains = INTRAHEALTH_DOMAINS
     group_by = ('domain', )
-    kafka_topic = topics.FORM
     deleted_types = IH_DELETED_TYPES
 
     month = flat_field(lambda f: get_month(f, 'mois_visite'))
@@ -182,7 +194,6 @@ class RecouvrementFluff(fluff.IndicatorDocument):
 
     domains = INTRAHEALTH_DOMAINS
     deleted_types = IH_DELETED_CASE_TYPES
-    kafka_topic = topics.CASE
     group_by = ('domain', fluff.AttributeGetter('district_name',
                                                 lambda case: case.get_case_property('district_name')))
 

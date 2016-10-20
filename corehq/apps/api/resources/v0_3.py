@@ -1,13 +1,14 @@
-from corehq.apps.cloudcare.api import es_filter_cases
 from tastypie import fields
 
-
-from corehq.apps.api.resources import v0_2, v0_1
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.resources import DomainSpecificResourceMixin
-from corehq.apps.api.util import object_does_not_exist
-from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, \
-    FormAccessors
+from corehq.apps.api.resources import HqBaseResource
+from corehq.apps.api.auth import RequirePermissionAuthentication, CustomResourceMeta
+from corehq.apps.api.util import object_does_not_exist, get_obj
+from corehq.apps.cloudcare.api import es_filter_cases
+from corehq.apps.users.models import Permissions
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
 class CaseListFilters(object):
@@ -36,18 +37,34 @@ class CaseListFilters(object):
             del self.filters['order_by']
 
 
-class CommCareCaseResource(v0_2.CommCareCaseResource, DomainSpecificResourceMixin):
-    
-    # in v2 this can't be null, but in v3 it can
+class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
+    type = "case"
+    id = fields.CharField(attribute='case_id', readonly=True, unique=True)
+    case_id = id
     user_id = fields.CharField(attribute='user_id', null=True)
+    date_modified = fields.CharField(attribute='date_modified', default="1900-01-01")
+    closed = fields.BooleanField(attribute='closed')
+    date_closed = fields.CharField(attribute='closed_on', null=True)
 
-    # in v2 the bundle.obj is not actually a CommCareCase object but just a dict_object around a CaseAPIResult
-    # so there is no 'get_json'
+    server_date_modified = fields.CharField(attribute='server_date_modified', default="1900-01-01")
+    server_date_opened = fields.CharField(attribute='server_date_opened', null=True)
+
+    xform_ids = fields.ListField(attribute='xform_ids')
+
+    properties = fields.DictField()
+
     def dehydrate_properties(self, bundle):
         return bundle.obj.get_properties_in_api_format()
 
+    indices = fields.DictField()
+
     def dehydrate_indices(self, bundle):
         return bundle.obj.get_index_map()
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'pk': get_obj(bundle_or_obj).case_id
+        }
 
     def obj_get(self, bundle, **kwargs):
         case_id = kwargs['pk']
@@ -55,21 +72,14 @@ class CommCareCaseResource(v0_2.CommCareCaseResource, DomainSpecificResourceMixi
             return CaseAccessors(kwargs['domain']).get_case(case_id)
         except CaseNotFound:
             raise object_does_not_exist("CommCareCase", case_id)
-    
+
     def obj_get_list(self, bundle, domain, **kwargs):
         filters = CaseListFilters(bundle.request.GET)
         return es_filter_cases(domain, filters=filters.filters)
 
-    
-class XFormInstanceResource(v0_1.XFormInstanceResource, DomainSpecificResourceMixin):
-    archived = fields.CharField(readonly=True)
-
-    def dehydrate_archived(self, bundle):
-        return bundle.obj.is_archived
-    
-    def obj_get(self, bundle, **kwargs):
-        instance_id = kwargs['pk']
-        try:
-            return FormAccessors(kwargs['domain']).get_form(instance_id)
-        except XFormNotFound:
-            raise object_does_not_exist("XFormInstance", instance_id)
+    class Meta(CustomResourceMeta):
+        authentication = RequirePermissionAuthentication(Permissions.edit_data)
+        object_class = CommCareCase
+        resource_name = 'case'
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']

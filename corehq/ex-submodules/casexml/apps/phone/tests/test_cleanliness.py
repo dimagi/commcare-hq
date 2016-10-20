@@ -10,7 +10,7 @@ from casexml.apps.phone.data_providers.case.clean_owners import pop_ids
 from casexml.apps.phone.exceptions import InvalidDomainError, InvalidOwnerIdError
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
-from corehq.form_processor.tests import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 
 @override_settings(TESTS_SHOULD_TRACK_CLEANLINESS=None)
@@ -710,7 +710,7 @@ class GetDependentCasesTest(TestCase):
     def test_returns_nothing_with_no_dependencies(self):
         case = CaseStructure()
         self.factory.create_or_update_case(case)
-        self.assertEqual(set(), get_dependent_case_info(self.domain, case.case_id).all_ids)
+        self.assertEqual(set(), get_dependent_case_info(self.domain, [case.case_id]).all_ids)
 
     @run_with_all_backends
     def test_returns_simple_extension(self):

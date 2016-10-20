@@ -4,16 +4,16 @@ from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed import document_types
 from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
-from corehq.apps.change_feed.tests.utils import get_current_kafka_seq
 from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.es import UserES, ESQuery
+from corehq.apps.es import UserES
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
 from corehq.form_processor.change_publishers import change_meta_from_sql_form
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.user import get_user_pillow, get_unknown_users_pillow
@@ -47,10 +47,6 @@ class UserPillowTestBase(TestCase):
 
 
 class UserPillowTest(UserPillowTestBase):
-    dependent_apps = [
-        'auditcare', 'django_digest', 'pillowtop',
-        'corehq.apps.domain', 'corehq.apps.users', 'corehq.apps.tzmigration',
-    ]
 
     def test_kafka_user_pillow(self):
         self._make_and_test_user_kafka_pillow('user-pillow-test-kafka')
@@ -62,7 +58,7 @@ class UserPillowTest(UserPillowTestBase):
         user.save()
 
         # send to kafka
-        since = get_current_kafka_seq(document_types.COMMCARE_USER)
+        since = get_topic_offset(document_types.COMMCARE_USER)
         producer.send_change(document_types.COMMCARE_USER, _user_to_change_meta(user))
 
         # send to elasticsearch
@@ -76,7 +72,7 @@ class UserPillowTest(UserPillowTestBase):
         user = CommCareUser.create(TEST_DOMAIN, username, 'secret')
 
         # send to kafka
-        since = get_current_kafka_seq(document_types.COMMCARE_USER)
+        since = get_topic_offset(document_types.COMMCARE_USER)
         producer.send_change(document_types.COMMCARE_USER, _user_to_change_meta(user))
 
         # send to elasticsearch
@@ -94,18 +90,6 @@ class UserPillowTest(UserPillowTestBase):
 
 
 class UnknownUserPillowTest(UserPillowTestBase):
-    dependent_apps = [
-        'auditcare',
-        'django_digest',
-        'pillowtop',
-        'couchforms',
-        'corehq.apps.domain',
-        'corehq.apps.users',
-        'corehq.apps.tzmigration',
-        'corehq.form_processor',
-        'corehq.sql_accessors',
-        'corehq.sql_proxy_accessors',
-    ]
 
     @run_with_all_backends
     def test_unknown_user_pillow(self):
@@ -140,8 +124,8 @@ class UnknownUserPillowTest(UserPillowTestBase):
         # KafkaChangeFeed listens for multiple topics (form, form-sql) in the case search pillow,
         # so we need to provide a dict of seqs to kafka
         return {
-            topics.FORM_SQL: get_current_kafka_seq(topics.FORM_SQL),
-            topics.FORM: get_current_kafka_seq(topics.FORM)
+            topics.FORM_SQL: get_topic_offset(topics.FORM_SQL),
+            topics.FORM: get_topic_offset(topics.FORM)
         }
 
 

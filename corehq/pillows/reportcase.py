@@ -6,7 +6,7 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
-from pillowtop.checkpoints.manager import PillowCheckpoint
+from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
 from pillowtop.reindexer.change_providers.case import get_domain_case_change_provider
@@ -33,9 +33,8 @@ def transform_case_to_report_es(doc_dict):
 
 
 def get_report_case_to_elasticsearch_pillow(pillow_id='ReportCaseToElasticsearchPillow'):
-    checkpoint = PillowCheckpoint(
-        'report-cases-to-elasticsearch',
-    )
+    assert pillow_id == 'ReportCaseToElasticsearchPillow', 'Pillow ID is not allowed to change'
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, REPORT_CASE_INDEX_INFO)
     form_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=REPORT_CASE_INDEX_INFO,

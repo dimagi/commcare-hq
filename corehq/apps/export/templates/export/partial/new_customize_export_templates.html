@@ -13,6 +13,18 @@
             <span>
                 <span class="label label-warning" data-bind="visible: table.is_deleted">deleted</span>
             </span>
+
+            <!-- ko if: table.is_user_defined -->
+            <div class="remove-user-defined-table pull-right">
+                <button class="btn btn-danger btn-xs" data-bind="
+                    click: function() {
+                        $parent.tables.remove(table)
+                    }
+                ">
+                {% trans "Remove" %}
+                </button>
+            </div>
+            <!-- /ko -->
         </legend>
         <div class="col-sm-12" data-bind="visibleFade: table.selected">
             <div class="form-group pull-right">
@@ -37,10 +49,18 @@
             </div>
             <div class="form-group">
                 <label class="col-sm-4 col-md-3 col-lg-2 control-label">{% trans "Sheet Name" %}</label>
-                <div class="col-sm-4 col-md-3 col-lg-2">
+                <div class="col-sm-9 col-md-8 col-lg-6">
                     <input type="text" class="form-control" data-bind="value: table.label" />
                 </div>
             </div>
+            <!-- ko if: table.is_user_defined -->
+            <div class="form-group">
+                <label class="col-sm-4 col-md-3 col-lg-2 control-label">{% trans "Custom Path" %}</label>
+                <div class="col-sm-4 col-md-3 col-lg-2">
+                    <input type="text" class="form-control" data-bind="value: table.customPathString" />
+                </div>
+            </div>
+            <!-- /ko -->
             <div class="form-group">
                 <label class="col-md-3 col-lg-2 control-label">
                     <strong>{% trans "Choose the fields you want to export." %}</strong><br />
@@ -87,6 +107,22 @@
                             {% endif %}
                         </tr>
                         </thead>
+
+
+                        {% if request|toggle_enabled:"ALLOW_USER_DEFINED_EXPORT_COLUMNS" %}
+                        <tfoot>
+                            <tr>
+                                <td colspan="100%">
+                                    <button class="btn btn-default btn-sm" data-bind="
+                                        click: table.addUserDefinedExportColumn
+                                    ">
+                                    {% trans "Add custom export property" %}
+                                    </button>
+                                </td>
+                            </tr>
+                        </tfoot>
+                        {% endif %}
+
                         <tbody data-bind="
                             sortable: {
                                 data: table.columns,
@@ -112,6 +148,17 @@
                                            class="field-include"
                                            data-bind="checked: column.selected" />
                                     <!--/ko-->
+                                    <!-- ko if: column.isEditable() -->
+                                    <div class="remove-user-defined-column pull-right">
+                                        <button class="btn btn-danger btn-xs" data-bind="
+                                            click: function() {
+                                                $parent.columns.remove(column)
+                                            }
+                                        ">
+                                        {% trans "Remove" %}
+                                        </button>
+                                    </div>
+                                    <!-- /ko -->
                                 </td>
                                 <td>
                                     <span data-bind="foreach: { data: column.tags, as: 'tag' }">
@@ -119,7 +166,9 @@
                                             text: tag,
                                             attr: { class: hqImport('export/js/utils.js').getTagCSSClass(tag) }"></span>
                                     </span>
-                                    <code data-toggle="tooltip" data-placement="top" 
+
+                                    <!-- ko if: !column.isEditable() -->
+                                    <code data-toggle="tooltip" data-placement="top"
                                         data-bind="
                                             text: column.formatProperty(),
                                             attr: {
@@ -130,6 +179,16 @@
                                                 'export-tooltip': column.translatedHelp()
                                             }
                                         "></code>
+                                    <!-- /ko -->
+                                    <!-- ko if: column.isEditable() -->
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        data-bind="
+                                            value: column.customPathString
+                                        "
+                                    />
+                                    <!-- /ko -->
                                 </td>
                                 <td><input class="form-control" type="text" data-bind="value: column.label" /></td>
                                 {% if export_instance.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}

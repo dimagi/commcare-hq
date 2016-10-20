@@ -6,6 +6,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.reports import (
     AdminDomainStatsReport,
     AdminDomainMapReport,
+    AdminDomainMapInternal,
     AdminAppReport,
     AdminUserReport,
     RealProjectSpacesReport,
@@ -342,6 +343,7 @@ ADMIN_REPORTS = (
     (_('Domain Stats'), (
         AdminDomainStatsReport,
         AdminDomainMapReport,
+        AdminDomainMapInternal,
         AdminUserReport,
         AdminAppReport,
         PillowErrorsReport,

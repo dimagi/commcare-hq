@@ -107,7 +107,7 @@ legend .subtext {
     }
 }
 
-.app-manager-content {
+.appmanager-content {
     @select2Width: 210px;
 
     .app-manager-select2s(@select2Width);
@@ -234,5 +234,14 @@ textarea.vertical-resize {
             margin-left: 0;
             margin-right: 0;
         }
+        .langcode-container.has-lang {
+            input, textarea {
+                padding-right: 45px;
+            }
+        }
     }
+}
+
+table .ko-inline-edit .read-only:hover {
+    background-color: @cc-neutral-hi;
 }

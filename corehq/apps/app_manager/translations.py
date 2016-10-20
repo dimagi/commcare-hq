@@ -15,7 +15,7 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode, ItextValue, ItextOutput
-from corehq.util.spreadsheets.excel import HeaderValueError, WorkbookJSONReader
+from corehq.util.spreadsheets.excel import HeaderValueError, WorkbookJSONReader, JSONReaderError
 
 from django.contrib import messages
 from django.utils.translation import ugettext as _
@@ -69,6 +69,12 @@ def process_bulk_app_translation_upload(app, f):
             ).format(e))
         )
         return msgs
+    except JSONReaderError as e:
+        msgs.append(
+            (messages.error, _(
+                "App Translation Failed! There is an issue with excel columns. Error details: {}."
+            ).format(e))
+        )
 
     for sheet in workbook.worksheets:
         # sheet.__iter__ can only be called once, so cache the result
@@ -379,7 +385,7 @@ def expected_bulk_app_sheet_rows(app):
                                 if isinstance(part, ItextOutput):
                                     value += "<output value=\"" + part.ref + "\"/>"
                                 else:
-                                    value += mark_safe(force_text(part).replace('<', '&lt;').replace('>', '&gt;'))
+                                    value += mark_safe(force_text(part).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;'))
                             itext_items[text_id][(lang, value_form)] = value
 
                 for text_id, values in itext_items.iteritems():
@@ -552,7 +558,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
             value_node.xml.append(n)
 
     def _looks_like_markdown(str):
-        return re.search(r'^\d+[\.\)] |^\*|~~.+~~|# |\*{1,3}\S+\*{1,3}|\[.+\]\(\S+\)', str)
+        return re.search(r'^\d+[\.\)] |^\*|~~.+~~|# |\*{1,3}\S+\*{1,3}|\[.+\]\(\S+\)', str, re.M)
 
     def get_markdown_node(text_node_):
         return text_node_.find("./{f}value[@form='markdown']")

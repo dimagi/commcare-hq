@@ -6,3 +6,7 @@ class PillowtopCheckpointReset(Exception):
 
 class PillowNotFoundError(Exception):
     pass
+
+
+class PillowtopIndexingError(Exception):
+    pass

@@ -1,3 +1,4 @@
+/* globals: ga_track_event */
 hqDefine('app_manager/js/releases.js', function () {
     function SavedApp(app_data, releasesMain) {
         var self = ko.mapping.fromJS(app_data);
@@ -31,10 +32,19 @@ hqDefine('app_manager/js/releases.js', function () {
             return profiles;
         };
 
+        self.track_deploy_type = function(type) {
+            ga_track_event('App Manager', 'Deploy Type', type);
+        };
+
         self.changeAppCode = function () {
             self.app_code(null);
             self.failed_url_generation(false);
             self.generating_url(false);
+        };
+
+        self.onSMSPanelClick = function() {
+            self.track_deploy_type('Send to phone via SMS');
+            self.generate_short_url('short_url');
         };
 
         self.build_profile.subscribe(self.changeAppCode);
@@ -174,6 +184,9 @@ hqDefine('app_manager/js/releases.js', function () {
             analytics.workflow('Initiate Installation Method');
         };
 
+        self.reveal_java_download = function(){
+            return this.j2me_enabled();
+        };
         return self;
     }
 
@@ -188,7 +201,7 @@ hqDefine('app_manager/js/releases.js', function () {
         self.buildState = ko.observable('');
         self.fetchState = ko.observable('');
         self.nextVersionToFetch = null;
-        self.fetchLimit = 5;
+        self.fetchLimit = o.fetchLimit || 5;
         self.deployAnyway = {};
         self.currentAppVersion = ko.observable(self.options.currentAppVersion);
         self.lastAppVersion = ko.observable();
@@ -324,12 +337,17 @@ hqDefine('app_manager/js/releases.js', function () {
                 "Please reload your page and try again";
         self.deleteSavedApp = function (savedApp) {
             savedApp._deleteState('pending');
-            $.post(self.url('delete'), {saved_app: savedApp.id()}, function () {
-                self.savedApps.remove(savedApp);
-                savedApp._deleteState(false);
-            }).error(function () {
-                savedApp._deleteState('error');
-                alert(self.reload_message);
+            $.post({
+                url: self.url('delete'),
+                data: {saved_app: savedApp.id()},
+                success: function () {
+                    self.savedApps.remove(savedApp);
+                    savedApp._deleteState(false);
+                },
+                error: function () {
+                    savedApp._deleteState('error');
+                    alert(self.reload_message);
+                },
             });
         };
         self.revertSavedApp = function (savedApp) {
@@ -342,24 +360,26 @@ hqDefine('app_manager/js/releases.js', function () {
 
             var url = self.url('currentVersion');
             self.fetchState('pending');
-            $.get(
-                self.url('currentVersion')
-            ).success(function (data) {
-                self.fetchState('');
-                self.currentAppVersion(data.currentVersion);
-                if (!data.latestRelease) {
-                    self.actuallyMakeBuild();
-                } else if (data.latestRelease !== self.lastAppVersion()) {
-                    window.alert("The versions list has changed since you loaded the page.");
-                    self.reloadApps();
-                } else if (self.lastAppVersion() !== self.currentAppVersion()) {
-                    self.actuallyMakeBuild();
-                } else {
-                    window.alert("No new changes to deploy!");
-                }
-            }).error(function () {
-                self.fetchState('error');
-                window.alert(self.reload_message);
+            $.get({
+                url: self.url('currentVersion'),
+                success: function(data) {
+                    self.fetchState('');
+                    self.currentAppVersion(data.currentVersion);
+                    if (!data.latestRelease) {
+                        self.actuallyMakeBuild();
+                    } else if (data.latestRelease !== self.lastAppVersion()) {
+                        window.alert("The versions list has changed since you loaded the page.");
+                        self.reloadApps();
+                    } else if (self.lastAppVersion() !== self.currentAppVersion()) {
+                        self.actuallyMakeBuild();
+                    } else {
+                        window.alert("No new changes to deploy!");
+                    }
+                },
+                error: function () {
+                    self.fetchState('error');
+                    window.alert(self.reload_message);
+                },
             });
         };
         self.reloadApps = function () {
@@ -368,26 +388,20 @@ hqDefine('app_manager/js/releases.js', function () {
             self.getMoreSavedApps(false);
         };
         self.actuallyMakeBuild = function () {
-            var comment = window.prompt(
-                "Add a comment about the version to help you remember later:"
-            );
-            if (comment || comment === "") {
-                $(this).find("input[name='comment']").val(comment);
-            } else {
-                return;
-            }
             self.buildState('pending');
-            $.post(self.url('newBuild'), {
-                comment: comment
-            }).success(function (data) {
-                $('#build-errors-wrapper').html(data.error_html);
-                if (data.saved_app) {
-                    var app = SavedApp(data.saved_app, self);
-                    self.addSavedApp(app, true);
-                }
-                self.buildState('');
-            }).error(function () {
-                self.buildState('error');
+            $.post({
+                url: self.url('newBuild'),
+                success: function(data) {
+                    $('#build-errors-wrapper').html(data.error_html);
+                    if (data.saved_app) {
+                        var app = SavedApp(data.saved_app, self);
+                        self.addSavedApp(app, true);
+                    }
+                    self.buildState('');
+                },
+                error: function() {
+                    self.buildState('error');
+                },
             });
         };
     }

@@ -115,9 +115,13 @@ GIR_FIELDS = [
     "D4 All Experienced + Active Users",
     "D5 All Active Users",
     "D6 All Active Users Current + Prior 2 Mos",
+    "Eligible Forms",
+    "Experienced Threshold",
+    "Performance Threshold",
 ]
 
 NO_BU = "MISSING BU"
 
 DEFAULT_PERFORMANCE_THRESHOLD = 15
 DEFAULT_EXPERIENCED_THRESHOLD = 3
+DEFAULT_ACCESS_THRESHOLD = 20

@@ -9,7 +9,7 @@ from nose.tools import nottest
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
-from corehq.apps.accounting.tests import BaseAccountingTest
+from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.domain.models import Domain
 from corehq.apps.ivr.models import Call
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
@@ -293,6 +293,8 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
     def setUpClass(cls):
         if getattr(settings, "SKIP_TOUCHFORMS_TESTS", False):
             raise SkipTest("because settings.SKIP_TOUCHFORMS_TESTS")
+
+        super(TouchformsTestCase, cls).setUpClass()
 
     def setUp(self):
         self.users = []

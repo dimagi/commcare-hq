@@ -92,18 +92,18 @@ Caveats
 
 Travis
 ------
-Travis also uses Docker to run the HQ test suite. To simulate the travis build you can use the `.travis/simulate.sh`
+Travis also uses Docker to run the HQ test suite. To simulate the travis build you can use the `./scripts/docker`
 script:
 
 ```
-  $ ./scripts/docker test
+  $ JS_SETUP=yes ./scripts/docker test
   runs python tests
 
   $ TEST=javascript ./scripts/docker test
-  runs the python sharded tests
+  runs the javascript tests
 
   $ TEST=python-sharded ./scripts/docker test
-  runs the javascript tests (see .travis.yml for more env variable options)
+  runs the python sharded tests
   
   $ ./scripts/docker test corehq/apps/app_manager/tests/test_suite.py:SuiteTest
   runs only the corehq.apps.app_manager.tests.test_suite.SuiteTest
@@ -112,5 +112,24 @@ script:
   drops you into a bash shell in the docker web container from where you can
   run any other commands
   
+  $ ./scripts/docker hqtest teardown
+  remove all test containers and volumes
+  
 ```
 
+ENV Vars
+~~~~~~~~
+
+* JS_SETUP=yes
+  * Run `npm` and `bower` installs
+* TEST=[javascript|python|python-sharded]
+  * javascript: extra setup and config for JS tests. Also only run JS tests
+  * python: default tests
+  * python-sharded: configure django for sharded setup and only run subset of tests
+* NOSE_DIVIDED_WE_RUN
+  * used to only run a subset of tests
+  * see .travis.yml for exact options
+* REUSE_DB
+  * Same as normal REUSE_DB
+ 
+See .travis.yml for env variable options used on travis.

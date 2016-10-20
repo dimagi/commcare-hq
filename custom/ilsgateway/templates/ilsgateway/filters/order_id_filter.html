@@ -1,0 +1,7 @@
+{% extends 'reports/filters/base.html' %}
+{% load hq_shared_tags %}
+{% block filter_content %}
+        <input name="{{ slug }}"
+               type="number"
+               class="form-control {% block input_css_class %}{% endblock %}" value="{{ value }}">
+{% endblock %}

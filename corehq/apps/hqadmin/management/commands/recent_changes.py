@@ -1,9 +1,9 @@
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 from dimagi.utils.couch.database import get_db
 from corehq.apps.hqadmin.history import download_changes
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Gets recent changes and prints them out in a csv format"
     args = "(number of changes) (filename)"
     label = ""

@@ -163,7 +163,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                 });
 
                 // Hide all panels, then show the requested one
-                $(selector + ' .panel-collapse.in').collapse('hide')
+                $(selector + ' .panel-collapse.in').collapse('hide');
                 $(selector + ' > .panel:nth-child(' + (index + 1) + ') .panel-collapse').collapse('show');
             });
         };
@@ -202,8 +202,9 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
         self.config = config;
 
         self.getCaseTags = function (type, action) {
-            var tags = [];
-            var actions = [];
+            var tags = [],
+                actions = [],
+                index;
             if (type === 'all') {
                 actions = actions.concat(self.open_cases());
                 actions = actions.concat(self.load_update_cases());
@@ -211,14 +212,14 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
             if (type === 'subcase') {
                 actions = actions.concat(self.load_update_cases());
                 // only allow creating subcases of actions before this one
-                var index = self.open_cases.indexOf(action);
+                index = self.open_cases.indexOf(action);
                 if (index > 0) {
                     actions = actions.concat(self.open_cases.slice(0, index));
                 }
             }
             if (type === 'auto-select') {
                 // only allow auto-selecting based off loaded actions before this one
-                var index = self.load_update_cases.indexOf(action);
+                index = self.load_update_cases.indexOf(action);
                 if (index > 0) {
                     actions = actions.concat(self.load_update_cases.slice(0, index));
                 }
@@ -293,6 +294,10 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                 value: 'auto_select'
             },
             {
+                display: 'Load Case From Fixture',
+                value: 'load_case_from_fixture'
+            },
+            {
                 display: '---',
                 value: 'separator'
             },
@@ -359,37 +364,48 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
         };
 
         self.addFormAction = function (action) {
-            if (action.value === 'load' || action.value === 'auto_select') {
-                var index = self.load_update_cases().length;
-                var tag_prefix = action.value === 'auto_select'? 'auto' : '';
-                var action_data = {
-                    case_type: config.caseType,
-                    details_module: null,
-                    case_tag: tag_prefix + 'load_' + config.caseType + index,
-                    case_index: {
-                        tag: '',
-                        reference_id: 'parent',
-                        relationship: 'child'
-                    },
-                    preload: [],
-                    case_properties: [],
-                    close_condition: DEFAULT_CONDITION('never'),
-                    show_product_stock: false,
-                    product_program: '',
-                    auto_select: null
-                };
+            var index;
+            if (action.value === 'load' || action.value === 'auto_select' || action.value === 'load_case_from_fixture') {
+                index = self.load_update_cases().length;
+                var tag_prefix = action.value === 'auto_select'? 'auto' : '',
+                    action_data = {
+                        case_type: config.caseType,
+                        details_module: null,
+                        case_tag: tag_prefix + 'load_' + config.caseType + index,
+                        case_index: {
+                            tag: '',
+                            reference_id: 'parent',
+                            relationship: 'child',
+                        },
+                        preload: [],
+                        case_properties: [],
+                        close_condition: DEFAULT_CONDITION('never'),
+                        show_product_stock: false,
+                        product_program: '',
+                        auto_select: null,
+                        load_case_from_fixture: null,
+                    };
                 if (action.value === 'auto_select') {
                     action_data.auto_select = {
                         mode: '',
                         value_source: '',
                         value_key: ''
                     };
-
+                } else if (action.value === 'load_case_from_fixture') {
+                    action_data.load_case_from_fixture = {
+                        fixture_nodeset: '',
+                        fixture_tag: '',
+                        fixture_variable: '',
+                        case_property: '',
+                        auto_select: false,
+                        arbitrary_datum_id: '',
+                        arbitrary_datum_function: '',
+                    };
                 }
                 self.load_update_cases.push(LoadUpdateAction.wrap(action_data, self.config));
                 self.config.applyAccordion('load', index);
             } else if (action.value === 'open') {
-                var index = self.open_cases().length;
+                index = self.open_cases().length;
                 self.open_cases.push(OpenCaseAction.wrap({
                     case_type: config.caseType,
                     name_path: '',
@@ -429,6 +445,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                     }
                 }
             }
+            self.config.saveButton.fire('change');
         };
 
         self.unwrap = function () {
@@ -520,8 +537,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                     nameSnip + spanSnip +
                     '<% if (action.parent_tags()) { %> : ' +
                     'subcase of <span style="font-weight: bold;"><%= action.parent_tags() %></span>' +
-                    '<% } %>' + closeSnip + "</span>",
-                    action, {variable: 'action'});
+                    '<% } %>' + closeSnip + "</span>")({action: action});
             } else {
                 if (action.auto_select) {
                     nameSnip = "<%= action.case_tag() %> (autoselect mode: <%= action.auto_select.mode() %>)";
@@ -529,8 +545,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                 return _.template(nameSnip + spanSnip +
                     "<% if (action.hasPreload()) { %> : load<% } %>" +
                     "<% if (action.hasCaseProperties()) { %> : update<% } %>" +
-                    closeSnip + "</span>",
-                    action, {variable: 'action'});
+                    closeSnip + "</span>")({action: action});
             }
         },
         suggestedProperties: function(action, allow_parent) {
@@ -572,6 +587,15 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                     create: function (options) {
                         if (options.data) {
                             return AutoSelect.wrap(options.data, self);
+                        } else {
+                            return null;
+                        }
+                    }
+                },
+                load_case_from_fixture: {
+                    create: function (options) {
+                        if (options.data) {
+                            return LoadCaseFromFixture.wrap(options.data, self);
                         } else {
                             return null;
                         }
@@ -1012,6 +1036,54 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                 self.value_source('');
                 self.value_key('');
             });
+            return self;
+        }
+    };
+
+    var LoadCaseFromFixture = {
+        mapping: {
+            include: [
+                'fixture_nodeset',
+                'fixture_tag',
+                'fixture_variable',
+                'case_property',
+                'auto_select',
+                'arbitrary_datum_id',
+                'arbitrary_datum_function',
+            ],
+        },
+        wrap: function (data, action) {
+            var self = ko.mapping.fromJS(data, LoadCaseFromFixture.mapping);
+            self.action = action;
+            self.isBlank = ko.computed(function () {
+                return !self.fixture_nodeset() &&
+                    !self.fixture_tag() &&
+                    !self.fixture_variable() &&
+                    !self.case_property() &&
+                    !self.auto_select();
+            });
+
+            self.validate = ko.computed(function () {
+                var case_type = self.case_type,
+                    case_tag = self.case_tag;
+                if (!self.config.caseConfigViewModel) {
+                    return;
+                }
+                if (!case_type) {
+                    return "Case Type required";
+                }
+                if (case_tag) {
+                    if (!/^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/.test(case_tag)) {
+                        return "Case Tag: only letters, numbers, '-', and '_' allowed";
+                    }
+                    var tags = self.config.caseConfigViewModel.getCaseTags('all');
+                    if (_.where(tags, {value: case_tag}).length > 1) {
+                        return "Case Tag already in use";
+                    }
+                }
+                return null;
+            });
+
             return self;
         }
     };

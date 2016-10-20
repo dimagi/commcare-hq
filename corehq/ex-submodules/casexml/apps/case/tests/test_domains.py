@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.test.utils import override_settings
 
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.tests.utils import run_with_all_backends
 
 ALICE_XML = """<?xml version='1.0' ?>

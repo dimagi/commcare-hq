@@ -4,15 +4,25 @@
 {% load crispy_forms_tags %}
 {% load djangular_tags %}
 
+{% block stylesheets %}
+<link type="text/css"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'ui-select/dist/select.min.css' %}" />
+{% endblock %}
+
 {% block js %}
-<script type="text/javascript"
-        src="{% static 'style/js/pagination.ng.js' %}"></script>
-<script type="text/javascript"
-        src="{% static 'users/js/mobile_workers.ng.js' %}"></script>
+<script src="{% static 'style/js/pagination.ng.js' %}"></script>
+<script src="{% static 'users/js/mobile_workers.ng.js' %}"></script>
+<script src="{% static 'angular-sanitize/angular-sanitize.js' %}"></script>
+<script src="{% static 'ui-select/dist/select.js' %}"></script>
+{% if strong_mobile_passwords %}
+    <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
+{% endif %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-<script type="text/javascript">
+<script>
 $(function () {
    'use strict';
     $('#newMobileWorkerModal').on('shown.bs.modal', function () {
@@ -21,7 +31,7 @@ $(function () {
 });
 (function (angular, undefined) {
     'use strict';
-    var mobileWorkerApp = angular.module('mobileWorkerApp', ['hq.pagination', 'hq.mobile_workers']);
+    var mobileWorkerApp = angular.module('mobileWorkerApp', ['hq.pagination', 'hq.mobile_workers', 'ngSanitize', 'ui.select']);
     mobileWorkerApp.config(['$httpProvider', function($httpProvider) {
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
@@ -72,6 +82,8 @@ $(function () {
                 });
         }
     });
+    mobileWorkerApp.constant('generateStrongPasswords', {{ strong_mobile_passwords|JSON }});
+    mobileWorkerApp.constant('location_url', '{{ location_url }}');
     {% angularjs %}
     mobileWorkerApp.directive('workertableHeader', function () {
         return {
@@ -124,7 +136,7 @@ $(function () {
                                 ng-click="initializeMobileWorker()">
                             <i class="fa fa-plus"></i> {% trans "Create Mobile Worker" %}
                         </button>
-                        {% if can_bulk_edit_users %}
+                        {% if can_bulk_edit_users and can_access_all_locations %}
                             <a id="bulk_download" class="btn btn-info" href="{% url "download_commcare_users" domain %}">
                                 <i class="fa fa-cloud-download"></i> {% trans "Download Mobile Workers" %}
                             </a>
@@ -132,7 +144,7 @@ $(function () {
                                 {% trans "Bulk Upload" %}
                             </a>
                         {% endif %}
-                        {% if can_add_extra_users %}
+                        {% if can_add_extra_users and can_access_all_locations %}
                             <a class="btn btn-default" href="{% url "user_fields_view" domain %}" id="btn-edit_user_fields">
                                 {% trans "Edit User Fields" %}
                             </a>
@@ -164,9 +176,10 @@ $(function () {
                                     </div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
+                                    <button type="button" class="btn btn-default" ng-click="markDefault()" data-dismiss="modal">{% trans 'Cancel' %}</button>
                                     <button type="submit"
                                             ng-disabled="mobileWorkerForm.$invalid || usernameAvailabilityStatus !== 'available'"
+                                            ng-click="markDefault()"
                                             class="btn btn-primary">
                                         {% trans "Create" %}
                                     </button>
@@ -261,7 +274,7 @@ $(function () {
                                                 class="btn btn-default"
                                                 data-toggle="modal"
                                                 data-target="#newMobileWorkerModal"
-                                                ng-click="initializeMobileWorker(worker); usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE; usernameStatusMessage = 'Username is available.'">
+                                                ng-click="retryMobileWorker">
                                             {% trans 'Retry' %}
                                         </button>
                                     </div>

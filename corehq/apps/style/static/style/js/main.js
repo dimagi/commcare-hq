@@ -91,7 +91,7 @@ COMMCAREHQ.updateDOM = function (update) {
     var key;
     for (key in update) {
         if (update.hasOwnProperty(key)) {
-            $(key).text(update[key]).val(update[key]);
+            $(key).html(update[key]).val(update[key]);
         }
     }
 };
@@ -183,10 +183,13 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
             if (options.save) {
                 button.on('save', options.save);
             }
-            $(window).bind('beforeunload', function () {
-                var stillAttached = button.ui.parents()[button.ui.parents().length - 1].tagName.toLowerCase() == 'html';
-                if (button.state !== 'saved' && stillAttached) {
-                    return options.unsavedMessage || "";
+            $(window).on('beforeunload', function () {
+                var lastParent = button.ui.parents()[button.ui.parents().length - 1];
+                if (lastParent) {
+                    var stillAttached = lastParent.tagName.toLowerCase() == 'html';
+                    if (button.state !== 'saved' && stillAttached) {
+                        return options.unsavedMessage || "";
+                    }
                 }
             });
             return button;
@@ -210,7 +213,7 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
                 };
             _.defer(function () {
                 $form.find('*').change(fireChange);
-                $form.find('input, textarea').bind('textchange', fireChange);
+                $form.find('input, textarea').on('textchange', fireChange);
             });
             return button;
         },
@@ -255,7 +258,7 @@ COMMCAREHQ.beforeUnloadCallback = function () {
 $(function () {
     'use strict';
     COMMCAREHQ.initBlock($("body"));
-    $(window).bind('beforeunload', COMMCAREHQ.beforeUnloadCallback);
+    $(window).on('beforeunload', COMMCAREHQ.beforeUnloadCallback);
 });
 
 COMMCAREHQ.toggleEnabled = hqImport('hqwebapp/js/toggles.js').toggleEnabled;

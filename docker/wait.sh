@@ -14,15 +14,15 @@ fi
 echo "Waiting for services: $SERVICES"
 
 for service in $SERVICES; do
+    svc=$(echo $service | cut -d : -f 1)
+    port=$(echo $service | cut -d : -f 2)
     while [ -z "$host" ]; do
-        svc=$(echo $service | tr '[:lower:]' '[:upper:]')
-        host=$(env | grep -E "${svc}_PORT_[0-9]+_TCP_ADDR" | cut -d = -f 2 | head -n1)
-        port=$(env | grep -E "${svc}_PORT_[0-9]+_TCP_PORT" | cut -d = -f 2 | head -n1)
+        host=$(env | grep -E "${svc}_PORT_${port}_TCP_ADDR" | cut -d = -f 2 | head -n1)
 
-        [ -z "$host" ] && echo "Waiting for link to $service" && sleep 1
+        [ -z "$host" ] && echo "Waiting for link to $svc" && sleep 1
     done
 
-    echo -n "Waiting for TCP connection to $service @ $host:$port..."
+    echo -n "Waiting for TCP connection to $svc @ $host:$port..."
 
     counter=0
     while ! { exec 6<>/dev/tcp/${host}/${port}; } 2>/dev/null
@@ -36,8 +36,8 @@ for service in $SERVICES; do
       fi
     done
 
-    echo "$service ok"
+    echo "$svc ok"
     host=
 done
 
-echo "Services ready: $SERVICES"
+echo "Services ready!"

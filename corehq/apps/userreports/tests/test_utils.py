@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
-from corehq.apps.userreports.sql import get_table_name, get_column_name
-from corehq.apps.userreports.sql.util import truncate_value
+from corehq.apps.userreports.sql import get_column_name
+from corehq.apps.userreports.util import get_table_name, truncate_value
 
 
 class UtilitiesTestCase(SimpleTestCase):

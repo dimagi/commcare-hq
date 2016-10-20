@@ -1,0 +1,6 @@
+<partial>
+	<session>
+		<datum id="case_id_case_clinic" nodeset="instance('casedb')/casedb/case[@case_type='clinic'][@status='open']" value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long" />
+		<datum id="selected_row" nodeset="instance('commcare:reports')/reports/report[@id='some-report-guid']/rows/row" value="./@index" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
+	</session>
+</partial>

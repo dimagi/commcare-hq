@@ -2,6 +2,7 @@ from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
+from corehq.apps.app_manager.const import APP_V1
 
 from corehq.apps.app_manager.views.modules import get_module_template, \
     get_module_view_context
@@ -72,8 +73,8 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     except ModuleNotFoundException:
         return bail(request, domain, app_id)
 
-    if app and app.application_version == '1.0':
-        _assert = soft_assert(to=['droberts' + '@' + 'dimagi.com'])
+    if app and app.application_version == APP_V1:
+        _assert = soft_assert()
         _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
         return render(request, 'app_manager/no_longer_supported.html', {
             'domain': domain,
@@ -126,13 +127,11 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         context.update(get_app_view_context(request, app))
     else:
         from corehq.apps.dashboard.views import NewUserDashboardView
-        template = NewUserDashboardView.template_name
-        context.update({'templates': NewUserDashboardView.templates(domain)})
+        return HttpResponseRedirect(reverse(NewUserDashboardView.urlname, args=[domain]))
 
     # update multimedia context for forms and modules.
     menu_host = form or module
     if menu_host:
-
         default_file_name = 'module%s' % module_id
         if form_id:
             default_file_name = '%s_form%s' % (default_file_name, form_id)
@@ -205,13 +204,13 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     # Pass form for Copy Application to template
     domain_names = [d.name for d in Domain.active_for_user(request.couch_user)]
     domain_names.sort()
-    if copy_app_form is None:
+    if app and copy_app_form is None:
         toggle_enabled = toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
-        copy_app_form = CopyApplicationForm(app_id, export_zipped_apps_enabled=toggle_enabled)
-    context.update({
-        'copy_app_form': copy_app_form,
-        'domain_names': domain_names,
-    })
+        copy_app_form = CopyApplicationForm(domain, app_id, export_zipped_apps_enabled=toggle_enabled)
+        context.update({
+            'copy_app_form': copy_app_form,
+            'domain_names': domain_names,
+        })
 
     context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]
 

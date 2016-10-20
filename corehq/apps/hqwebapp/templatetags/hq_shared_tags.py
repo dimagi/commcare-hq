@@ -1,11 +1,12 @@
+from collections import OrderedDict
 from datetime import datetime, timedelta
 import json
 import warnings
 
 from django.conf import settings
+from django.template import loader_tags
 from django.template.base import Variable, VariableDoesNotExist
 from django.template.loader import render_to_string
-from django.utils.datastructures import SortedDict
 from django.utils.translation import ugettext as _
 from django.http import QueryDict
 from django import template
@@ -19,6 +20,7 @@ from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.web import json_handler
 from corehq.apps.hqwebapp.models import MaintenanceAlert
+from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
 
 
 register = template.Library()
@@ -137,7 +139,7 @@ def domains_for_user(context, request, selected_domain=None):
 
     domain_list = _get_domain_list(request.couch_user)
     ctxt = {
-        'domain_list': domain_list,
+        'domain_list': sorted(domain_list, key=lambda domain: domain['name'].lower()),
         'current_domain': selected_domain,
         'can_publish_to_exchange': (
             selected_domain is not None and selected_domain != 'public' and
@@ -168,7 +170,7 @@ def mod(value, arg):
 @register.filter(name='sort')
 def listsort(value):
     if isinstance(value, dict):
-        new_dict = SortedDict()
+        new_dict = OrderedDict()
         key_list = value.keys()
         key_list.sort()
         for key in key_list:
@@ -204,16 +206,19 @@ def _toggle_enabled(module, request, toggle_or_toggle_name):
         toggle = getattr(module, toggle_or_toggle_name)
     else:
         toggle = toggle_or_toggle_name
-    return (
-        (hasattr(request, 'user') and toggle.enabled(request.user.username)) or
-        (hasattr(request, 'domain') and toggle.enabled(request.domain))
-    )
+    return toggle.enabled_for_request(request)
 
 
 @register.filter
 def toggle_enabled(request, toggle_or_toggle_name):
     import corehq.toggles
     return _toggle_enabled(corehq.toggles, request, toggle_or_toggle_name)
+
+
+@register.filter
+def is_new_cloudcare(request):
+    from corehq import toggles
+    return _toggle_enabled(toggles, request, toggles.USE_FORMPLAYER_FRONTEND)
 
 
 @register.simple_tag
@@ -411,3 +416,128 @@ def prelogin_url(context, urlname):
         return reverse(urlname, args=[context['LANGUAGE_CODE']])
     else:
         return reverse(urlname)
+
+
+@register.tag
+def addtoblock(parser, token):
+    try:
+        tag_name, args = token.split_contents()
+    except ValueError:
+        raise template.TemplateSyntaxError("'addtoblock' tag requires a block_name.")
+
+    nodelist = parser.parse(('endaddtoblock',))
+    parser.delete_first_token()
+    return AddToBlockNode(nodelist, args)
+
+
+@register.tag(name='block')
+def appending_block(parser, token):
+    """
+    this overrides {% block %} to include the combined contents of
+    all {% addtoblock %} nodes
+    """
+    node = loader_tags.do_block(parser, token)
+    node.__class__ = AppendingBlockNode
+    return node
+
+
+@register.tag(name='include')
+def include_aware_block(parser, token):
+    """
+    this overrides {% include %} to keep track of whether the current template
+    render context is in an include block
+    """
+    node = loader_tags.do_include(parser, token)
+    node.__class__ = IncludeAwareNode
+    return node
+
+
+class AddToBlockNode(template.Node):
+
+    def __init__(self, nodelist, block_name):
+        self.nodelist = nodelist
+        self.block_name = block_name
+
+    def write(self, context, text):
+        rendered_blocks = AppendingBlockNode.get_rendered_blocks_dict(context)
+        if self.block_name in rendered_blocks:
+            raise AlreadyRenderedException('Block {} already rendered. Cannot add new node'.format(self.block_name))
+        request_blocks = self.get_addtoblock_contents_dict(context)
+        if self.block_name not in request_blocks:
+            request_blocks[self.block_name] = ''
+        request_blocks[self.block_name] += text
+
+    def render(self, context):
+        output = self.nodelist.render(context)
+        self.write(context, output)
+        return ''
+
+    @staticmethod
+    def get_addtoblock_contents_dict(context):
+        try:
+            request_blocks = context.render_context._addtoblock_contents
+        except AttributeError:
+            request_blocks = context.render_context._addtoblock_contents = {}
+        return request_blocks
+
+
+class AppendingBlockNode(loader_tags.BlockNode):
+
+    def render(self, context):
+        super_result = super(AppendingBlockNode, self).render(context)
+        if not IncludeAwareNode.get_include_count(context):
+            request_blocks = AddToBlockNode.get_addtoblock_contents_dict(context)
+            if self.name not in request_blocks:
+                request_blocks[self.name] = ''
+
+            contents = request_blocks.pop(self.name, '')
+            rendered_blocks = self.get_rendered_blocks_dict(context)
+            rendered_blocks.add(self.name)
+            return super_result + contents
+        else:
+            return super_result
+
+    @staticmethod
+    def get_rendered_blocks_dict(context):
+        try:
+            rendered_blocks = context.render_context._rendered_blocks
+        except AttributeError:
+            rendered_blocks = context.render_context._rendered_blocks = set()
+        return rendered_blocks
+
+
+class IncludeAwareNode(loader_tags.IncludeNode):
+
+    def render(self, context):
+        include_count = IncludeAwareNode.get_include_count(context)
+        include_count.append(True)
+        super_result = super(IncludeAwareNode, self).render(context)
+        include_count.pop()
+        return super_result
+
+    @staticmethod
+    def get_include_count(context):
+        try:
+            include_count = context.render_context._includes
+        except AttributeError:
+            include_count = context.render_context._includes = []
+        return include_count
+
+
+@register.simple_tag(takes_context=True)
+def url_replace(context, field, value):
+    """Usage <a href="?{% url_replace 'since' restore_id %}">
+    will replace the 'since' parameter in the url with <restore_id>
+    note the presense of the '?' in the href value
+
+    http://stackoverflow.com/a/16609591/2957657
+    """
+    params = context['request'].GET.copy()
+    params[field] = value
+    return params.urlencode()
+
+
+@register.filter
+def view_pdb(element):
+    import ipdb; ipdb.set_trace()
+    return element

@@ -2,9 +2,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.sqlreport import TableDataFormat
 from custom.care_pathways.reports import CareBaseReport
-from custom.care_pathways.filters import GeographyFilter, GenderFilter, GroupLeadershipFilter, CBTNameFilter, \
-    GroupByFilter, PPTYearFilter, ScheduleFilter, DisaggregateByFilter, TypeFilter, MalawiPPTYearFilter, \
-    RealOrTestFilter
+from custom.care_pathways.filters import GroupByFilter, DisaggregateByFilter, TypeFilter
 from custom.care_pathways.sqldata import AdoptionDisaggregatedSqlData
 from custom.care_pathways.utils import CareDataFormatter, _chunks
 
@@ -18,20 +16,7 @@ class AdoptionDisaggregatedReport(CareBaseReport):
 
     @property
     def fields(self):
-        filters = [GeographyFilter]
-        if self.domain == 'care-macf-malawi':
-            filters.append(MalawiPPTYearFilter)
-        else:
-            filters.append(PPTYearFilter)
-        filters.extend([
-            GenderFilter,
-            GroupLeadershipFilter,
-            CBTNameFilter
-        ])
-        if self.domain == 'care-macf-malawi':
-            filters.append(RealOrTestFilter)
-        if self.domain == 'pathways-india-mis':
-            filters.append(ScheduleFilter)
+        filters = super(AdoptionDisaggregatedReport, self).fields
         filters.append(TypeFilter)
         filters.append(GroupByFilter)
         filters.append(DisaggregateByFilter)

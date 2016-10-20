@@ -13,11 +13,38 @@ from dimagi.utils.modules import to_function
 from django.utils.translation import ugettext as _
 
 
+class DateFormat(object):
+    def __init__(self, human_readable_format, c_standard_format, validate_regex):
+        self.human_readable_format = human_readable_format
+        self.c_standard_format = c_standard_format
+        self.validate_regex = validate_regex
+
+    def parse(self, value):
+        return datetime.datetime.strptime(value, self.c_standard_format)
+
+    def is_valid(self, value):
+        return re.match(self.validate_regex, value) is not None
+
+
+# A project can specify the expected format of answers to date questions
+# in SMS Surveys. These are the available choices.
+ALLOWED_SURVEY_DATE_FORMATS = (
+    DateFormat('YYYYMMDD', '%Y%m%d', '^\d{8}$'),
+    DateFormat('MMDDYYYY', '%m%d%Y', '^\d{8}$'),
+    DateFormat('DDMMYYYY', '%d%m%Y', '^\d{8}$'),
+)
+
+SURVEY_DATE_FORMAT_LOOKUP = {df.human_readable_format: df for df in ALLOWED_SURVEY_DATE_FORMATS}
+
 phone_number_plus_re = re.compile("^\+{0,1}\d+$")
 
 
 class ContactNotFoundException(Exception):
     pass
+
+
+def get_date_format(human_readable_format):
+    return SURVEY_DATE_FORMAT_LOOKUP.get(human_readable_format, ALLOWED_SURVEY_DATE_FORMATS[0])
 
 
 def strip_plus(phone_number):
@@ -241,3 +268,40 @@ def set_domain_default_backend_to_test_backend(domain):
         domain,
         test_backend
     )
+
+
+@quickcache(['domain', 'case_id'], timeout=60 * 60)
+def is_case_contact_active(domain, case_id):
+    from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+    from corehq.form_processor.exceptions import CaseNotFound
+
+    try:
+        case = CaseAccessors(domain).get_case(case_id)
+    except (ResourceNotFound, CaseNotFound):
+        return False
+
+    return not (case.closed or case.is_deleted)
+
+
+@quickcache(['domain', 'user_id'], timeout=60 * 60)
+def is_user_contact_active(domain, user_id):
+    try:
+        user = CouchUser.get_by_user_id(user_id, domain=domain)
+    except KeyError:
+        return False
+
+    if not user:
+        return False
+
+    return user.is_active
+
+
+def is_contact_active(domain, contact_doc_type, contact_id):
+    if contact_doc_type == 'CommCareCase':
+        return is_case_contact_active(domain, contact_id)
+    elif contact_doc_type in ('CommCareUser', 'WebUser'):
+        return is_user_contact_active(domain, contact_id)
+    else:
+        # We can't tie the contact to a document so since we can't say whether
+        # it's inactive, we count it as active
+        return True

@@ -7,9 +7,9 @@ from datetime import datetime
 import itertools
 
 import six
-from django.conf import settings
 from django.db import connections, InternalError, transaction
 
+from corehq.blobs import get_blob_db
 from corehq.form_processor.exceptions import (
     XFormNotFound,
     CaseNotFound,
@@ -66,7 +66,12 @@ def get_cursor(model):
 
 
 class ReindexAccessor(six.with_metaclass(ABCMeta)):
-    # TODO: implement this https://wiki.postgresql.org/images/3/35/Pagination_Done_the_PostgreSQL_Way.pdf
+    @abstractproperty
+    def model_class(self):
+        """
+        :return: the django model class belonging to this reindexer
+        """
+        raise NotImplementedError
 
     @abstractproperty
     def startkey_attribute_name(self):
@@ -101,8 +106,26 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         """
         raise NotImplementedError
 
+    def get_doc_count(self, from_db):
+        """Get the doc count from the given DB
+        :param from_db: The DB alias to query
+        """
+        from_db = 'default' if from_db is None else from_db
+        sql_query = "SELECT reltuples FROM pg_class WHERE oid = '{}'::regclass"
+        db_cursor = connections[from_db].cursor()
+        with db_cursor as cursor:
+            cursor.execute(sql_query.format(self.model_class._meta.db_table))
+            return int(fetchone_as_namedtuple(cursor).reltuples)
+
 
 class FormReindexAccessor(ReindexAccessor):
+
+    def __init__(self, include_attachments=True):
+        self.include_attachments = include_attachments
+
+    @property
+    def model_class(self):
+        return XFormInstanceSQL
 
     @property
     def startkey_attribute_name(self):
@@ -115,7 +138,7 @@ class FormReindexAccessor(ReindexAccessor):
             pass
 
     def doc_to_json(self, doc):
-        return doc.to_json(include_attachments=True)
+        return doc.to_json(include_attachments=self.include_attachments)
 
     def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
         received_on_since = startkey or datetime.min
@@ -222,13 +245,52 @@ class FormAccessorSQL(AbstractFormAccessor):
             return result.form_exists
 
     @staticmethod
-    @transaction.atomic
-    def hard_delete_forms(domain, form_ids):
+    def hard_delete_forms(domain, form_ids, delete_attachments=True):
         assert isinstance(form_ids, list)
+
+        if delete_attachments:
+            attachments = list(FormAccessorSQL.get_attachments_for_forms(form_ids))
+
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute('SELECT hard_delete_forms(%s, %s) AS deleted_count', [domain, form_ids])
             results = fetchall_as_namedtuple(cursor)
-            return sum([result.deleted_count for result in results])
+            deleted_count = sum([result.deleted_count for result in results])
+
+        if delete_attachments:
+            attachments_to_delete = attachments
+            if deleted_count != len(form_ids):
+                # in the unlikely event that we didn't delete all forms (because they weren't all
+                # in the specified domain), only delete attachments for forms that were deleted.
+                deleted_forms = set()
+                for form_id in form_ids:
+                    if not FormAccessorSQL.form_exists(form_id):
+                        deleted_forms.add(form_id)
+
+                attachments_to_delete = []
+                for attachment in attachments:
+                    if attachment.form_id in deleted_forms:
+                        attachments_to_delete.append(attachment)
+
+            db = get_blob_db()
+            paths = [
+                db.get_path(attachment.blob_id, attachment.blobdb_bucket())
+                for attachment in attachments_to_delete
+            ]
+            db.bulk_delete(paths)
+
+        return deleted_count
+
+    @staticmethod
+    def get_attachments_for_forms(form_ids, ordered=False):
+        attachments = RawQuerySetWrapper(XFormAttachmentSQL.objects.raw(
+            'SELECT * from get_multiple_forms_attachments(%s)',
+            [form_ids]
+        ))
+
+        if ordered:
+            attachments = _order_list(form_ids, attachments, 'form_id')
+
+        return attachments
 
     @staticmethod
     def archive_form(form, user_id=None):
@@ -333,7 +395,7 @@ class FormAccessorSQL(AbstractFormAccessor):
             operation.id = None
             form.track_create(operation)
 
-        deleted = FormAccessorSQL.hard_delete_forms(form.domain, [form.orig_id])
+        deleted = FormAccessorSQL.hard_delete_forms(form.domain, [form.orig_id], delete_attachments=False)
         assert deleted == 1
         FormAccessorSQL.save_new_form(form)
 
@@ -364,6 +426,15 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def get_form_ids_in_domain_by_type(domain, type_):
         state = doc_type_to_state[type_]
+        return FormAccessorSQL.get_form_ids_in_domain_by_state(domain, state)
+
+    @staticmethod
+    def get_deleted_form_ids_in_domain(domain):
+        deleted_state = XFormInstanceSQL.NORMAL | XFormInstanceSQL.DELETED
+        return FormAccessorSQL.get_form_ids_in_domain_by_state(domain, deleted_state)
+
+    @staticmethod
+    def get_form_ids_in_domain_by_state(domain, state):
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute(
                 'SELECT form_id from get_form_ids_in_domain_by_type(%s, %s)',
@@ -392,6 +463,10 @@ class FormAccessorSQL(AbstractFormAccessor):
 
 
 class CaseReindexAccessor(ReindexAccessor):
+    @property
+    def model_class(self):
+        return CommCareCaseSQL
+
     @property
     def startkey_attribute_name(self):
         return 'server_modified_on'
@@ -589,11 +664,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return None
 
     @staticmethod
-    def get_case_ids_in_domain(domain, type_=None):
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute('SELECT case_id FROM get_case_ids_in_domain(%s, %s)', [domain, type_])
-            results = fetchall_as_namedtuple(cursor)
-            return [result.case_id for result in results]
+    def get_case_ids_in_domain(domain, type_=None, deleted=False):
+        return CaseAccessorSQL._get_case_ids_in_domain(domain, case_type=type_)
+
+    @staticmethod
+    def get_deleted_case_ids_in_domain(domain):
+        return CaseAccessorSQL._get_case_ids_in_domain(domain, deleted=True)
 
     @staticmethod
     def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None):
@@ -670,12 +746,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         )
 
     @staticmethod
-    def _get_case_ids_in_domain(domain, case_type=None, owner_ids=None, is_closed=None):
+    def _get_case_ids_in_domain(domain, case_type=None, owner_ids=None, is_closed=None, deleted=False):
         owner_ids = list(owner_ids) if owner_ids else None
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
-                'SELECT case_id FROM get_case_ids_in_domain(%s, %s, %s, %s)',
-                [domain, case_type, owner_ids, is_closed]
+                'SELECT case_id FROM get_case_ids_in_domain(%s, %s, %s, %s, %s)',
+                [domain, case_type, owner_ids, is_closed, deleted]
             )
             results = fetchall_as_namedtuple(cursor)
             return [result.case_id for result in results]
@@ -752,13 +828,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_deleted_case_ids_by_owner(domain, owner_id):
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute(
-                'SELECT case_id FROM get_deleted_case_ids_by_owner(%s, %s)',
-                [domain, owner_id]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return [result.case_id for result in results]
+        return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=[owner_id], deleted=True)
 
     @staticmethod
     def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
@@ -782,6 +852,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
 
 class LedgerReindexAccessor(ReindexAccessor):
+    @property
+    def model_class(self):
+        return LedgerValue
+
     @property
     def startkey_attribute_name(self):
         return 'last_modified'

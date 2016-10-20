@@ -1,14 +1,27 @@
 from django_prbac.decorators import requires_privilege_raise404
+from tastypie.resources import Resource
 from corehq import privileges
 from functools import wraps
 from django.http import Http404
+from django.utils.translation import ugettext_lazy
+from django.views.generic import View
 from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import (login_and_domain_required,
                                            domain_admin_required)
+from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.users.models import CommCareUser
 from .models import SQLLocation
 from .util import get_xform_location
+
+LOCATION_ACCESS_DENIED = ugettext_lazy(
+    "This project has restricted data access rules.  Please contact your "
+    "project administrator to access specific data in the project"
+)
+
+LOCATION_SAFE_TASTYPIE_RESOURCES = set()
+
+LOCATION_SAFE_HQ_REPORTS = set()
 
 
 def locations_access_required(view_fn):
@@ -43,11 +56,25 @@ def can_edit_any_location(view_fn):
     return locations_access_required(_inner)
 
 
+def get_user_location(user, domain):
+    if user.is_commcare_user():
+        return user.location
+    else:
+        return user.get_location(domain)
+
+
+def get_user_sql_location(user, domain):
+    if user.is_commcare_user():
+        return user.sql_location
+    else:
+        return user.get_sql_location(domain)
+
+
 def user_can_edit_location(user, sql_location, project):
     if user_can_edit_any_location(user, project):
         return True
 
-    user_loc = user.get_sql_location(sql_location.domain)
+    user_loc = get_user_sql_location(user, sql_location.domain)
     if not user_loc:
         return False
     return user_loc.is_direct_ancestor_of(sql_location)
@@ -58,7 +85,8 @@ def user_can_view_location(user, sql_location, project):
             not project.location_restriction_for_users):
         return True
 
-    user_loc = user.get_location(sql_location.domain)
+    user_loc = get_user_location(user, sql_location.domain)
+
     if not user_loc:
         return True
 
@@ -68,28 +96,12 @@ def user_can_view_location(user, sql_location, project):
     return sql_location.location_id in user_loc.lineage
 
 
-def can_edit_location(view_fn):
-    """
-    Decorator controlling a user's access to a specific location.
-    The decorated function must be passed a loc_id arg (eg: from urls.py)
-    """
-    @wraps(view_fn)
-    def _inner(request, domain, loc_id, *args, **kwargs):
-        try:
-            # pass to view?
-            location = SQLLocation.objects.get(location_id=loc_id)
-        except SQLLocation.DoesNotExist:
-            raise Http404()
-        else:
-            if user_can_edit_location(request.couch_user, location, request.project):
-                return view_fn(request, domain, loc_id, *args, **kwargs)
-        raise Http404()
-    return locations_access_required(_inner)
-
-
 def user_can_edit_location_types(user, project):
-    if (user.is_domain_admin(project.name) or
-            not project.location_restriction_for_users):
+    if user.is_domain_admin(project.name):
+        return True
+    elif not user.has_permission(project.name, 'edit_apps'):
+        return False
+    elif not project.location_restriction_for_users:
         return True
 
     return not user.get_domain_membership(project.name).location_id
@@ -132,3 +144,103 @@ def can_edit_form_location(domain, web_user, form):
         if not form_location:
             return False
         return user_can_edit_location(web_user, form_location, domain_obj)
+
+
+#### Unified location permissions below this point
+# TODO incorporate the above stuff into the new system
+
+
+def location_safe(view):
+    """Decorator to apply to a view after making sure it's location-safe
+    Supports view functions, class-based views, tastypie resources, and HQ reports.
+    For classes, decorate the class, not the dispatch method.
+    """
+    # view functions
+    view.is_location_safe = True
+
+    if isinstance(view, type):  # it's a class
+
+        # Django class-based views
+        if issubclass(view, View):
+            # `View.as_view()` preserves stuff set on `dispatch`
+            view.dispatch.__func__.is_location_safe = True
+
+        # tastypie resources
+        if issubclass(view, Resource):
+            LOCATION_SAFE_TASTYPIE_RESOURCES.add(view.Meta.resource_name)
+
+        # HQ report classes
+        if issubclass(view, GenericReportView):
+            LOCATION_SAFE_HQ_REPORTS.add(view.slug)
+
+    return view
+
+
+def conditionally_location_safe(conditional_function):
+    """Decorator to apply to a view function that verifies if something is location
+    safe based on the arguments or kwarguments. That function should return
+    True or False.
+
+    """
+    def _inner(view_fn):
+        view_fn._conditionally_location_safe_function = conditional_function
+        return view_fn
+    return _inner
+
+
+def location_restricted_response(request):
+    from corehq.apps.hqwebapp.views import no_permissions
+    return no_permissions(request, message=LOCATION_ACCESS_DENIED)
+
+
+def is_location_safe(view_fn, view_args, view_kwargs):
+    """
+    Check if view_fn had the @location_safe decorator applied.
+    view_args and kwargs are also needed because view_fn alone doesn't always
+    contain enough information
+    """
+    if getattr(view_fn, 'is_location_safe', False):
+        return True
+    if 'resource_name' in view_kwargs:
+        return view_kwargs['resource_name'] in LOCATION_SAFE_TASTYPIE_RESOURCES
+    if getattr(view_fn, '_conditionally_location_safe_function', False):
+        return view_fn._conditionally_location_safe_function(view_fn, *view_args, **view_kwargs)
+    if getattr(view_fn, 'is_hq_report', False):
+        return view_kwargs['report_slug'] in LOCATION_SAFE_HQ_REPORTS
+    return False
+
+
+def user_can_access_location_id(domain, user, location_id):
+    if user.has_permission(domain, 'access_all_locations'):
+        return True
+
+    return (SQLLocation.objects
+            .accessible_to_user(domain, user)
+            .filter(location_id=location_id)
+            .exists())
+
+
+def can_edit_location(view_fn):
+    """
+    Decorator controlling a user's access to a specific location.
+    The decorated function must be passed a loc_id arg (eg: from urls.py)
+    """
+    @wraps(view_fn)
+    def _inner(request, domain, loc_id, *args, **kwargs):
+        if Domain.get_by_name(domain).location_restriction_for_users:
+            # TODO Old style restrictions, remove after converting existing projects
+            try:
+                # pass to view?
+                location = SQLLocation.objects.get(location_id=loc_id)
+            except SQLLocation.DoesNotExist:
+                raise Http404()
+            else:
+                if user_can_edit_location(request.couch_user, location, request.project):
+                    return view_fn(request, domain, loc_id, *args, **kwargs)
+            raise Http404()
+
+        if user_can_access_location_id(domain, request.couch_user, loc_id):
+            return view_fn(request, domain, loc_id, *args, **kwargs)
+        return location_restricted_response(request)
+
+    return locations_access_required(_inner)

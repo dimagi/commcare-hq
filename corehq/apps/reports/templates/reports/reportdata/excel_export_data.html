@@ -3,11 +3,11 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block js %} {{ block.super }}
-    <script type="text/javascript" src="{% static 'reports/javascripts/reports.download_export.js' %}"></script>
-    <script type="text/javascript" src="{% static 'reports/ko/export.manager.js' %}"></script>
+    <script src="{% static 'reports/javascripts/reports.download_export.js' %}"></script>
+    <script src="{% static 'reports/ko/export.manager.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
-    <script type="text/javascript">
+    <script>
         var exportDownloader = new HQExportDownloader({
             domain: '{{ domain }}'
         });
@@ -167,7 +167,7 @@
 
     </script>
 
-    <script type="text/javascript">
+    <script>
         $('.hq-generic-report').on('apply-click', function() {
             $('.user-type-btn').trigger({
                 type: 'applied-click',

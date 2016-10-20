@@ -12,7 +12,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseIndexInfo, CaseAcce
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, \
     CaseTransaction, CommCareCaseIndexSQL, CaseAttachmentSQL, SupplyPointCaseMixin
-from corehq.form_processor.tests import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.form_processor.tests.test_basic_cases import _submit_case_block
 from corehq.sql_db.routers import db_for_read_write
 
@@ -22,7 +22,6 @@ CaseTransactionTrace = namedtuple('CaseTransactionTrace', 'form_id include')
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class CaseAccessorTestsSQL(TestCase):
-    dependent_apps = ['corehq.sql_accessors', 'corehq.sql_proxy_accessors']
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)
@@ -640,6 +639,28 @@ class CaseAccessorTestsSQL(TestCase):
             revoked=False
         ))
         self.assertEqual(len(case.get_closing_transactions()), 2)
+
+    def test_get_deleted_case_ids(self):
+        case1 = _create_case()
+        case2 = _create_case()
+        CaseAccessorSQL.soft_delete_cases(DOMAIN, [case1.case_id])
+
+        case_ids = CaseAccessorSQL.get_case_ids_in_domain(DOMAIN)
+        self.assertEqual(case_ids, [case2.case_id])
+
+        deleted = CaseAccessorSQL.get_deleted_case_ids_in_domain(DOMAIN)
+        self.assertEquals(deleted, [case1.case_id])
+
+    def test_get_deleted_case_ids_by_owner(self):
+        user_id = uuid.uuid4().hex
+        case1 = _create_case(user_id=user_id)
+        case2 = _create_case(user_id=user_id)
+        case3 = _create_case(user_id=user_id)
+
+        CaseAccessorSQL.soft_delete_cases(DOMAIN, [case1.case_id, case2.case_id])
+
+        case_ids = CaseAccessorSQL.get_deleted_case_ids_by_owner(DOMAIN, user_id)
+        self.assertEqual(set(case_ids), {case1.case_id, case2.case_id})
 
 
 class CaseAccessorsTests(TestCase):

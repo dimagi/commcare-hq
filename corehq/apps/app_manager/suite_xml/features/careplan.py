@@ -1,3 +1,4 @@
+from django.utils.translation import ugettext as _
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK
 from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
@@ -19,7 +20,8 @@ class CareplanMenuContributor(SuiteContributorByModule):
             )
 
             if not module.display_separately:
-                parent = self.app.get_module_by_unique_id(module.parent_select.module_id)
+                parent = self.app.get_module_by_unique_id(module.parent_select.module_id,
+                         error=_("Could not find module '{}' is attached to.").format(module.default_name()))
                 create_goal_form = module.get_form_by_type(CAREPLAN_GOAL, 'create')
                 create_menu = Menu(
                     id=id_strings.menu_id(parent),

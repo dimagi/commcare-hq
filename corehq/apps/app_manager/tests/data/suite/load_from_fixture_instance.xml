@@ -1,0 +1,4 @@
+<partial>
+	<instance id="casedb" src="jr://instance/casedb"/>
+	<instance id="item-list:table_tag" src="jr://fixture/item-list:table_tag"/>
+</partial>

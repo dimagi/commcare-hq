@@ -28,7 +28,7 @@ class DeliveredHandler(GenericStockReportHandler):
     formatter = DeliveryFormatter
 
     def _send_delivery_alert_to_facilities(self, location):
-        locs = [c.get_id for c in location.children]
+        locs = [c.get_id for c in location.get_children()]
         users = []
         for location_id in locs:
             users.extend(get_users_by_location_id(self.domain, location_id))
@@ -66,10 +66,10 @@ class DeliveredHandler(GenericStockReportHandler):
         if not location:
             return False
         status_type = None
-        if location.location_type == 'FACILITY':
+        if location.location_type_name == 'FACILITY':
             status_type = SupplyPointStatusTypes.DELIVERY_FACILITY
             self.respond(DELIVERY_PARTIAL_CONFIRM)
-        elif location.location_type == 'DISTRICT':
+        elif location.location_type_name == 'DISTRICT':
             status_type = SupplyPointStatusTypes.DELIVERY_DISTRICT
             self._send_delivery_alert_to_facilities(location)
             self.respond(DELIVERY_CONFIRM_DISTRICT, contact_name=self.user.first_name + " " + self.user.last_name,

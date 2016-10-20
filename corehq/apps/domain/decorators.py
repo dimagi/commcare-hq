@@ -80,7 +80,7 @@ def login_and_domain_required(view_func):
             if user.is_authenticated() and user.is_active:
                 if not domain.is_active:
                     msg = _((
-                        'The domain "{domain}" has been deactivated. '
+                        'The domain "{domain}" has not yet been activated. '
                         'Please report an issue if you think this is a mistake.'
                     ).format(domain=domain_name))
                     messages.info(req, msg)
@@ -258,7 +258,8 @@ def two_factor_check(api_key):
     def _outer(fn):
         @wraps(fn)
         def _inner(request, domain, *args, **kwargs):
-            if not api_key and Domain.get_by_name(domain).two_factor_auth:
+            dom = Domain.get_by_name(domain)
+            if not api_key and dom and dom.two_factor_auth:
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
                 if token and match_token(request.user, token):
                     return fn(request, *args, **kwargs)

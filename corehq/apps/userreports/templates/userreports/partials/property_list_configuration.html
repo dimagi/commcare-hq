@@ -27,6 +27,7 @@ TODO:
                         "></span>
                         <!--/ko-->
                     </th>
+                    <!--ko if: $data.hasDisplayCol -->
                     <th>
                         {% trans "Display Text" %}
                         <!--ko if: $data.displayHelpText -->
@@ -35,6 +36,7 @@ TODO:
                         "></span>
                         <!--/ko-->
                     </th>
+                    <!--/ko-->
                     <!--ko if: $data.hasFormatCol -->
                     <th>
                         {% trans "Format" %}
@@ -53,6 +55,17 @@ TODO:
                         <span class="hq-help-template" data-bind="
                             if: calcHelpText,
                             attr: {'data-content': calcHelpText}
+                        "></span>
+                        <!--/ko-->
+                    </th>
+                    <!--/ko-->
+                    <!--ko if: $data.hasFilterValueCol -->
+                    <th>
+                        {% trans "Filter Value" %}
+                        <!--ko if: $data.filterValueHelpText -->
+                        <span class="hq-help-template" data-bind="
+                            if: filterValueHelpText,
+                            attr: {'data-content': filterValueHelpText}
                         "></span>
                         <!--/ko-->
                     </th>
@@ -80,11 +93,11 @@ TODO:
                     <!-- ko ifnot: $root.optionsContainQuestions -->
                     <input type="text"
                            class="form-control"
-                           data-bind="select2: $root.propertyOptions, value: property">
+                           data-bind="select2: $parent.selectablePropertyOptions, value: property">
                     <!-- /ko -->
                     <!-- ko if: $root.optionsContainQuestions -->
                     <input class="form-control" type="hidden" data-bind="
-                        questionsSelect: $root.propertyOptions.concat(
+                        questionsSelect: $parent.selectablePropertyOptions.concat(
                             existsInCurrentVersion() ? [] : {value: dataSourceField(), label: ''}
                         ),
                         value: existsInCurrentVersion() ? property : dataSourceField,
@@ -93,14 +106,15 @@ TODO:
                     <!-- /ko -->
                     <label class="help-block" data-bind="if: $parent.showWarnings() && !property()">
                         {% trans "Please select a property." %}</label>
-                    {# This is gross and I hate it #}
-                    <label class="help-block" style="white-space: pre-wrap;" data-bind="if: !existsInCurrentVersion()">
+                    <label class="help-block" data-bind="if: !existsInCurrentVersion()">
                         {% blocktrans %}
-                            This property or question no longer exists in your app.
-                            You must delete this property to update this report.
+                        This property or question no longer exists in your app. <br>
+                        You must delete this property to update this report.
                         {% endblocktrans %}
                     </label>
                 </td>
+
+                <!--ko if: $parent.hasDisplayCol -->
                 <td class="form-group">
                     <div data-bind="css: {'has-error': showDisplayTextError}">
                         <input type="text" class="form-control" data-bind="
@@ -110,15 +124,27 @@ TODO:
                         <span data-bind="if: showDisplayTextError" class="help-block">This field is required</span>
                     </div>
                 </td>
+                <!--/ko-->
+
                 <!--ko if: $parent.hasFormatCol -->
                 <td>
+                    <!--ko if: !$parent.hasFilterValueCol -->
                     <select class="form-control" data-bind="
                         options: ReportBuilder.Constants.FORMAT_OPTIONS,
                         value: format,
                         attr: {disabled: !existsInCurrentVersion()}
                     "></select>
+                    <!--/ko-->
+                    <!--ko if: $parent.hasFilterValueCol -->
+                    <select class="form-control" data-bind="
+                        options: ReportBuilder.Constants.DEFAULT_FILTER_FORMAT_OPTIONS,
+                        value: format,
+                        attr: {disabled: !existsInCurrentVersion()}
+                    "></select>
+                    <!--/ko-->
                 </td>
                 <!--/ko-->
+
                 <!--ko if: $parent.hasCalculationCol -->
                 <td>
                     <select class="form-control" data-bind="
@@ -128,6 +154,27 @@ TODO:
                     "></select>
                 </td>
                 <!--/ko-->
+
+                <!--ko if: $parent.hasFilterValueCol -->
+                <td>
+                    <!--ko if: $data.format() === 'Date'-->
+                    <select class="form-control" data-bind="
+                        options: $root.dateRangeOptions,
+                        optionsText: function (o) { return o.description; },
+                        optionsValue: function (o) { return o.slug; },
+                        value: filterOperator,
+                        attr: {disabled: !existsInCurrentVersion()}
+                    "></select>
+                    <!--/ko-->
+                    <!--ko if: $data.format() !== 'Date'-->
+                    <input type="text" class="form-control" data-bind="
+                        textInput: filterValue,
+                        attr: {disabled: !existsInCurrentVersion()}
+                    "/>
+                    <!--/ko-->
+                </td>
+                <!--/ko-->
+
                 <td class="span1">
                     <i style="cursor: pointer;" title="Delete" data-bind="
                         click: function(){$parent.columns.remove($data)},
@@ -137,7 +184,7 @@ TODO:
             {# there must be no whitespace between <tbody> and <tr> #}
             {# the .hide().fadeIn() will fail badly on FireFox #}
             </tr></tbody>
-            <tbody data-bind="visible: columns().length < 25" class="add-prop">
+            <tbody data-bind="visible: columns().length < 40" class="add-prop">
                 <tr>
                     <td></td>
                     <td colspan="4">

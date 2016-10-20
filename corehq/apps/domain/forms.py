@@ -6,7 +6,6 @@ import sys
 import uuid
 from urlparse import urlparse, parse_qs
 
-import dateutil
 from captcha.fields import CaptchaField
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -19,7 +18,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
 from django.contrib.auth.tokens import default_token_generator
-from django.contrib.sites.models import get_current_site
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
@@ -747,6 +746,11 @@ class PrivacySecurityForm(forms.Form):
         required=False,
         help_text=ugettext_lazy("All web users on this project will be required to enable two factor authentication")
     )
+    strong_mobile_passwords = BooleanField(
+        label=ugettext_lazy("Require Strong Passwords for Mobile Workers"),
+        required=False,
+        help_text=ugettext_lazy("All mobile workers in this project will be required to have a strong password")
+    )
 
     def __init__(self, *args, **kwargs):
         user_name = kwargs.pop('user_name')
@@ -762,7 +766,9 @@ class PrivacySecurityForm(forms.Form):
         self.helper[3] = twbscrispy.PrependedText('allow_domain_requests', '')
         self.helper[4] = twbscrispy.PrependedText('hipaa_compliant', '')
         self.helper[5] = twbscrispy.PrependedText('two_factor_auth', '')
+        self.helper[6] = twbscrispy.PrependedText('strong_mobile_passwords', '')
         if not domain_has_privilege(domain, privileges.ADVANCED_DOMAIN_SECURITY):
+            self.helper.layout.pop(6)
             self.helper.layout.pop(5)
         if not HIPAA_COMPLIANCE_CHECKBOX.enabled(user_name):
             self.helper.layout.pop(4)
@@ -784,6 +790,7 @@ class PrivacySecurityForm(forms.Form):
         domain.allow_domain_requests = self.cleaned_data.get('allow_domain_requests', False)
         domain.secure_sessions = self.cleaned_data.get('secure_sessions', False)
         domain.two_factor_auth = self.cleaned_data.get('two_factor_auth', False)
+        domain.strong_mobile_passwords = self.cleaned_data.get('strong_mobile_passwords', False)
         secure_submissions = self.cleaned_data.get(
             'secure_submissions', False)
         apps_to_save = []
@@ -811,8 +818,6 @@ class PrivacySecurityForm(forms.Form):
 class DomainInternalForm(forms.Form, SubAreaMixin):
     sf_contract_id = CharField(label=ugettext_noop("Salesforce Contract ID"), required=False)
     sf_account_id = CharField(label=ugettext_noop("Salesforce Account ID"), required=False)
-    services = ChoiceField(label=ugettext_noop("Services"), required=False,
-                           choices=tuple_of_copies(["basic", "plus", "full", "custom"]))
     initiative = forms.MultipleChoiceField(label=ugettext_noop("Initiative"),
                                            widget=forms.CheckboxSelectMultiple(),
                                            choices=tuple_of_copies(DATA_DICT["initiatives"], blank=False),
@@ -852,11 +857,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         label=ugettext_noop("Device Model"),
         help_text=ugettext_lazy("Add CloudCare, if this project is using CloudCare as well"),
         required=False,
-    )
-    deployment_date = CharField(
-        label=ugettext_noop("Deployment date"),
-        required=False,
-        help_text=ugettext_lazy("Date that the project went live (usually right after training).")
     )
     business_unit = forms.ChoiceField(
         label=ugettext_noop('Business Unit'),
@@ -909,6 +909,14 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                    "Programs that use CommCare data to make programmatic decisions."
                    )
     )
+    data_access_threshold = IntegerField(
+        label=ugettext_noop("Minimum Monthly Data Accesses"),
+        required=False,
+        help_text=ugettext_lazy(
+            "Minimum number of times project staff are expected to access CommCare data each month. "
+            "The default value is 20."
+        )
+    )
 
     def __init__(self, can_edit_eula, *args, **kwargs):
         super(DomainInternalForm, self).__init__(*args, **kwargs)
@@ -945,7 +953,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'organization_name',
                 'notes',
                 'phone_model',
-                'deployment_date',
                 'business_unit',
                 'countries',
                 'commtrack_domain',
@@ -953,13 +960,13 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'experienced_threshold',
                 'amplifies_workers',
                 'amplifies_project',
+                'data_access_threshold',
                 crispy.Div(*additional_fields),
             ),
             crispy.Fieldset(
                 _("Salesforce Details"),
                 'sf_contract_id',
                 'sf_account_id',
-                'services',
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -977,14 +984,12 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             kwargs['can_use_data'] = self.cleaned_data['can_use_data'] == 'true'
 
         domain.update_deployment(
-            date=dateutil.parser.parse(self.cleaned_data['deployment_date']),
             countries=self.cleaned_data['countries'],
         )
         domain.is_test = self.cleaned_data['is_test']
         domain.update_internal(
             sf_contract_id=self.cleaned_data['sf_contract_id'],
             sf_account_id=self.cleaned_data['sf_account_id'],
-            services=self.cleaned_data['services'],
             initiative=self.cleaned_data['initiative'],
             self_started=self.cleaned_data['self_started'] == 'true',
             area=self.cleaned_data['area'],
@@ -998,6 +1003,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             amplifies_workers=self.cleaned_data['amplifies_workers'],
             amplifies_project=self.cleaned_data['amplifies_project'],
             business_unit=self.cleaned_data['business_unit'],
+            data_access_threshold=self.cleaned_data['data_access_threshold'],
             **kwargs
         )
 
@@ -1072,7 +1078,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
 
     This small change is why we can't use the default PasswordReset form.
     """
-    email = forms.EmailField(label=ugettext_lazy("Username"), max_length=254,
+    email = forms.EmailField(label=ugettext_lazy("Email"), max_length=254,
                              widget=forms.TextInput(attrs={'class': 'form-control'}))
     if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
         captcha = CaptchaField(label=ugettext_lazy("Type the letters in the box"))
@@ -1365,23 +1371,17 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     return False
 
                 if self.current_subscription is not None:
-                    if self.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY:
-                        self.current_subscription.cancel_subscription(
-                            adjustment_method=SubscriptionAdjustmentMethod.USER,
-                            web_user=self.creating_user,
-                        )
-                    else:
-                        subscription = self.current_subscription.change_plan(
-                            self.plan_version,
-                            web_user=self.creating_user,
-                            adjustment_method=SubscriptionAdjustmentMethod.USER,
-                            service_type=SubscriptionType.PRODUCT,
-                            pro_bono_status=ProBonoStatus.NO,
-                        )
-                        subscription.is_active = True
-                        if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
-                            subscription.do_not_invoice = True
-                        subscription.save()
+                    subscription = self.current_subscription.change_plan(
+                        self.plan_version,
+                        web_user=self.creating_user,
+                        adjustment_method=SubscriptionAdjustmentMethod.USER,
+                        service_type=SubscriptionType.PRODUCT,
+                        pro_bono_status=ProBonoStatus.NO,
+                    )
+                    subscription.is_active = True
+                    if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
+                        subscription.do_not_invoice = True
+                    subscription.save()
                 else:
                     subscription = Subscription.new_domain_subscription(
                         self.account, self.domain, self.plan_version,
@@ -1510,6 +1510,8 @@ class ProBonoForm(forms.Form):
     contact_email = forms.EmailField(label=ugettext_lazy("Contact email"))
     organization = forms.CharField(label=ugettext_lazy("Organization"))
     project_overview = forms.CharField(widget=forms.Textarea, label="Project overview")
+    airtime_expense = forms.CharField(label=ugettext_lazy("Estimated annual expenditures on airtime:"))
+    device_expense = forms.CharField(label=ugettext_lazy("Estimated annual expenditures on devices:"))
     pay_only_features_needed = forms.CharField(widget=forms.Textarea, label="Pay only features needed")
     duration_of_project = forms.CharField(help_text=ugettext_lazy(
         "We grant pro-bono subscriptions to match the duration of your "
@@ -1541,6 +1543,8 @@ class ProBonoForm(forms.Form):
                     style=('' if use_domain_field else 'display:none'),
                 ),
                 'project_overview',
+                'airtime_expense',
+                'device_expense',
                 'pay_only_features_needed',
                 'duration_of_project',
                 'num_expected_users',

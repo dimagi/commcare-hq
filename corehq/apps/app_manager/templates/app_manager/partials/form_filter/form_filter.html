@@ -1,6 +1,5 @@
 {% load i18n %}
-{% if app.application_version == '2.0' %}
-    <div class="form-group">
+<div class="form-group">
         <label class="control-label col-sm-2">
             {% trans "Display Condition" %}
             <span class="hq-help-template"
@@ -25,7 +24,7 @@
                     <a href="https://confluence.dimagi.com/display/commcarepublic/Form+Display+Conditions">here</a>
                 {% endblocktrans %}
                 </span>
-                <span data-slug="notAllowedButExists">{% trans "Error in display condition!" %}</span>
+                <span data-slug="notAllowedButExists">{% trans "Error: Module Does Not Use Cases" %}</span>
                 <span id="caseReferenceNotAllowed" data-slug="caseReferenceNotAllowed">
                     {% blocktrans %}
                     To use display conditions in a module which reference a case, <br/>
@@ -57,4 +56,3 @@
             </div>
         </div>
     </div>
-{% endif %}

@@ -1,6 +1,7 @@
 import logging
+
+from custom.bihar.utils import assign_case
 from casexml.apps.case.signals import cases_received
-from corehq.apps.hqcase.utils import assign_case
 from custom.bihar import BIHAR_DOMAINS
 
 

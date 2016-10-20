@@ -1,3 +1,4 @@
+import os
 import re
 
 from couchdbkit import ResourceNotFound
@@ -71,3 +72,31 @@ def get_domains_created_by_user(creating_user):
     query = DomainES().created_by_user(creating_user)
     data = query.run()
     return [d['name'] for d in data.hits]
+
+
+@quickcache([], timeout=3600)
+def domain_name_stop_words():
+    path = os.path.join(os.path.dirname(__file__), 'static', 'domain', 'json')
+    with open(os.path.join(path, 'stop_words.yml')) as f:
+        return tuple([word.strip() for word in f.readlines() if word[0] != '#'])
+
+
+def get_domain_url_slug(hr_name, max_length=25, separator='-'):
+    from dimagi.utils.name_to_url import name_to_url
+    name = name_to_url(hr_name, "project")
+    if len(name) <= max_length:
+        return name
+
+    stop_words = domain_name_stop_words()
+    words = [word for word in name.split('-') if word not in stop_words]
+    words = iter(words)
+    try:
+        text = next(words)
+    except StopIteration:
+        return u''
+
+    for word in words:
+        if len(text + separator + word) <= max_length:
+            text += separator + word
+
+    return text[:max_length]

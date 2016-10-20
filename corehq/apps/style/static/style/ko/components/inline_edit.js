@@ -1,18 +1,19 @@
 /*
- * Component for an inline editing widget: a piece of text that, when clicked on, turns into a textarea.
- * The textarea is accompanied by a save button capable of saving the new value to the server via ajax.
+ * Component for an inline editing widget: a piece of text that, when clicked on, turns into an input (textarea or
+ * text input). The input is accompanied by a save button capable of saving the new value to the server via ajax.
  *
  * Required parameters
  *  - url: The URL to call on save.
  *
  * Optional parameters
  *  - value: Text to display and edit
- *  - name: HTML name of textarea
- *  - id: HTML id of textarea
+ *  - name: HTML name of input
+ *  - id: HTML id of input
  *  - placeholder: Text to display when in read-only mode if value is blank
  *  - lang: Display this language code in a badge next to the widget.
- *  - rows: Number of rows in textarea.
- *  - cols: Number of cols in textarea.
+ *  - nodeName: 'textarea' or 'input'. Defaults to 'textarea'.
+ *  - rows: Number of rows in input.
+ *  - cols: Number of cols in input.
  *  - saveValueName: Name to associate with text value when saving. Defaults to 'value'.
  *  - saveParams: Any additional data to pass along. May contain observables.
  *  - errorMessage: Message to display if server returns an error.
@@ -39,6 +40,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
             self.lang = params.lang || '';
 
             // Styling
+            self.nodeName = params.nodeName || 'textarea';
             self.rows = params.rows || 2;
             self.cols = params.cols || "";
             self.readOnlyClass = params.readOnlyClass || '';
@@ -84,7 +86,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                 });
                 data[self.saveValueName] = self.value();
                 self.isSaving(true);
-                $(window).bind("beforeunload", self.beforeUnload);
+                $(window).on("beforeunload", self.beforeUnload);
 
                 $.ajax({
                     url: self.url,
@@ -98,13 +100,13 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                         if (self.postSave) {
                             self.postSave(data);
                         }
-                        $(window).unbind("beforeunload", self.beforeUnload);
+                        $(window).off("beforeunload", self.beforeUnload);
                     },
                     error: function () {
                         self.isEditing(true);
                         self.isSaving(false);
                         self.hasError(true);
-                        $(window).unbind("beforeunload", self.beforeUnload);
+                        $(window).off("beforeunload", self.beforeUnload);
                     },
                 });
             };
@@ -115,17 +117,6 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                 self.value(self.readOnlyValue);
                 self.isEditing(false);
                 self.hasError(false);
-            };
-
-            // Revert to read-only mode on blur, without saving, unless the input
-            // blurred only because focus jumped to one of the buttons (i.e., user pressed tab)
-            self.blur = function() {
-                setTimeout(function() {
-                    if (!self.saveHasFocus() && !self.cancelHasFocus() && !self.hasError()) {
-                        self.isEditing(false);
-                        self.value(self.readOnlyValue);
-                    }
-                }, 200);
             };
         },
         template: '<div class="ko-inline-edit inline" data-bind="css: {\'has-error\': hasError()}">\
@@ -142,13 +133,23 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                 <span class="placeholder text-muted" data-bind="text: placeholder, css: readOnlyClass, visible: !value()"></span>\
             </div>\
             <div class="read-write form-inline" data-bind="visible: isEditing()">\
-                <div class="form-group langcode-container">\
-                    <textarea class="form-control" data-bind="\
-                        attr: {name: name, id: id, placeholder: placeholder, rows: rows, cols: cols},\
-                        value: value,\
-                        hasFocus: isEditing(),\
-                        event: {blur: blur},\
-                    "></textarea>\
+                <div class="form-group langcode-container" data-bind="css: {\'has-lang\': lang}">\
+                    <!-- ko if: nodeName === "textarea" -->\
+                        <textarea class="form-control" data-bind="\
+                            attr: {name: name, id: id, placeholder: placeholder, rows: rows, cols: cols},\
+                            value: value,\
+                            hasFocus: isEditing(),\
+                            event: {blur: blur},\
+                        "></textarea>\
+                    <!-- /ko -->\
+                    <!-- ko if: nodeName === "input" -->\
+                        <input type="text" class="form-control" data-bind="\
+                            attr: {name: name, id: id, placeholder: placeholder, rows: rows, cols: cols},\
+                            value: value,\
+                            hasFocus: isEditing(),\
+                            event: {blur: blur},\
+                        " />\
+                    <!-- /ko -->\
                     <!-- ko if: lang -->\
                         <span class="btn btn-xs btn-info btn-langcode-preprocessed langcode-input pull-right"\
                               data-bind="text: lang, visible: !value()"\

@@ -6,21 +6,21 @@ from tastypie import http
 from tastypie.resources import Resource
 from tastypie.exceptions import InvalidSortError, ImmediateHttpResponse
 
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.util import get_obj
 
 
-class dict_object(object):
+class DictObject(object):
 
-    def __init__(self, dict):
-        self.dict = dict
+    def __init__(self, dict=None):
+        self._data = dict or {}
 
     def __getattr__(self, item):
-        return self.dict[item]
+        return self._data.get(item, None)
 
     def __repr__(self):
-        return 'dict_object(%r)' % self.dict
+        return 'DictObject(%r)' % self._data
 
 
 def build_content_type(format, encoding='utf-8'):
@@ -92,8 +92,18 @@ class CorsResourceMixin(object):
 class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
     """
     Convenience class to allow easy adjustment of API resource base classes.
+    # ToDO, move API blacklist to auth
     """
-    pass
+    def dispatch(self, request_type, request, **kwargs):
+        if toggles.API_BLACKLIST.enabled_for_request(request):
+            msg = ("API access has been temporarily cut off due to too many "
+                   "requests.  To re-enable, please contact support.")
+            raise ImmediateHttpResponse(HttpResponse(
+                json.dumps({"error": msg}),
+                content_type="application/json",
+                status=401))
+        return super(HqBaseResource, self).dispatch(request_type, request, **kwargs)
+
 
 
 class SimpleSortableResourceMixin(object):

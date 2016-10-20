@@ -2,7 +2,8 @@
   "domains": [
     "icds-test",
     "icds-sql",
-    "icds-cas"
+    "icds-cas",
+    "icds-cas-sandbox"
   ],
   "report_id": "static-mpr_6ac_child_health_cases",
   "data_source_table": "static-child_cases_monthly",

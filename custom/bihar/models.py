@@ -1,5 +1,4 @@
 import datetime
-from corehq.apps.change_feed import topics
 from custom.bihar import getters, BIHAR_DOMAINS
 from custom.bihar.calculations.homevisit import DateRangeFilter
 from custom.bihar.calculations.utils import filters
@@ -46,7 +45,6 @@ class CareBiharFluff(fluff.IndicatorDocument):
     domains = BIHAR_DOMAINS
     group_by = ['domain', 'owner_id']
 
-    kafka_topic = topics.CASE
     save_direct_to_sql = False
 
     # home visit

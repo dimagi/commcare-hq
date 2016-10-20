@@ -2,12 +2,12 @@
 {% load hq_shared_tags %}
 
 {% block js %}
-    <script type="text/javascript" src="{% static 'reports/javascripts/reports.download_export.js' %}"></script>
-    <script type="text/javascript" src="{% static 'reports/ko/export.manager.js' %}"></script>
+    <script src="{% static 'reports/javascripts/reports.download_export.js' %}"></script>
+    <script src="{% static 'reports/ko/export.manager.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}
-    <script type="text/javascript">
+    <script>
         var exportDownloader = new HQExportDownloader({
             domain: '{{ domain }}'
         });

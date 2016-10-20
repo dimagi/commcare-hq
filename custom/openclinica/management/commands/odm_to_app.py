@@ -3,7 +3,6 @@ Create a template app from ODM-formatted OpenClinica study metadata
 """
 from lxml import etree
 from django.core.management.base import BaseCommand
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import (
     Application,
     Module,
@@ -189,8 +188,8 @@ class Study(StudyObject):
         add_edit_form_to_module(module)
         return module
 
-    def get_new_app(self, domain_name, app_name, version=APP_V2):
-        app = Application.new_app(domain_name, app_name, application_version=version)
+    def get_new_app(self, domain_name, app_name):
+        app = Application.new_app(domain_name, app_name)
         app.comment = self.name  # Study names can be long. cf. https://clinicaltrials.gov/
         reg_module = self.new_reg_subject_module(app)
         subject_module = self.new_edit_subject_module(app, reg_form_id=reg_module.get_form(0).get_unique_id())

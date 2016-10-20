@@ -139,12 +139,6 @@ def get_default_requisition_config():
                 keyword='req',
                 caption='Request',
             ),
-            # TODO not tested yet, so not included
-            # CommtrackActionConfig(
-            #    action=RequisitionActions.APPROVAL,
-            #    keyword='approve',
-            #    caption='Approved',
-            # ),
             CommtrackActionConfig(
                 action=RequisitionActions.FULFILL,
                 keyword='fulfill',

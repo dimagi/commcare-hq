@@ -11,7 +11,7 @@
 {% endblock %}
 
 {% block reports-js-inline %}{{ block.super }}
-    <script type="text/javascript">
+    <script>
         $(function() {
             var defaultConfig = {{ default_config|JSON }};
             {% if report.has_datespan %}

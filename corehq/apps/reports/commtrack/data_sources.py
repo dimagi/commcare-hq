@@ -8,7 +8,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
 from corehq.apps.commtrack.models import SupplyPointCase, SQLLocation
-from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.products.models import Product
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime, timedelta
@@ -494,7 +494,7 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                             yield {
                                 'parent_name': loc.parent.name if loc.parent else '',
                                 'loc_id': loc.location_id,
-                                'loc_path': loc.path_including_self,
+                                'loc_path': loc.path,
                                 'name': loc.name,
                                 'type': loc.location_type.name,
                                 'reporting_status': 'reporting',
@@ -517,7 +517,7 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                     yield {
                         'parent_name': loc.parent.name if loc.parent else '',
                         'loc_id': loc.location_id,
-                        'loc_path': loc.path_including_self,
+                        'loc_path': loc.path,
                         'name': loc.name,
                         'type': loc.location_type.name,
                         'reporting_status': 'nonreporting',

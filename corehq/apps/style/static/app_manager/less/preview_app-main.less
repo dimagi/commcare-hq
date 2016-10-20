@@ -1,0 +1,84 @@
+@import '../../style/less/_hq/includes/variables.less';
+@import '../../style/less/_hq/includes/mixins.less';
+
+/* this file is included in app_manager/apps_base.html and is relevant to the
+EXTERNAL styling of the preview app container in app manager.
+
+For the styling of the app preview content and layout, please check out
+preview_app/less */
+
+
+@preview-phone-width: 250px;
+@preview-phone-height: 444px;
+@preview-phone-case-offset-y: 40px;
+@preview-phone-case-offset-x: 15px;
+
+#hq-content {
+  overflow-x: hidden;
+  min-height: @preview-phone-height + 150;
+}
+
+.preview-phone-window {
+   height: @preview-phone-height;
+   width: @preview-phone-width;
+   background-color: white;
+}
+
+.preview-phone-container {
+  position: fixed;
+  box-sizing: border-box;
+  background-color: black;
+  .border-top-radius(30px);
+  .border-bottom-radius(30px);
+  top: 110px;
+  right: -930px;
+  overflow: hidden;
+
+  width: @preview-phone-width + (@preview-phone-case-offset-x * 2);
+  height: @preview-phone-height + (@preview-phone-case-offset-y * 2);
+  padding-top: @preview-phone-case-offset-y;
+  padding-left: @preview-phone-case-offset-x;
+
+  .box-shadow(0 0px 10px 3px rgba(0,0,0,.45));
+
+  z-index: @zindex-app-preview;
+
+  .transition(all 1s);
+
+  &.small-height {
+    top: 20px;
+    position: absolute;
+  }
+
+  &.open {
+    right: 30px;
+  }
+}
+
+.preview-icon {
+  font-size: 1.5rem;
+  line-height: 24px;
+}
+
+.appmanager-content-animate-preview {
+  .transition(all 1s);
+}
+
+.btn-preview-close {
+  @preview-close-size: 30px;
+  margin: 0 auto;
+  display: block;
+  background-color: lighten(@cc-text, 20);
+  border-color: lighten(@cc-text, 30);
+  .border-top-radius(@preview-close-size/2);
+  .border-bottom-radius(@preview-close-size/2);
+  width: @preview-close-size;
+  height: @preview-close-size;
+  box-sizing: border-box;
+  padding: 0;
+  text-align: center;
+  color: lighten(@cc-text, 60);
+  font-size: 1.6rem;
+  padding-left: 1px;
+  .transition(all .6s);
+}

@@ -1,7 +1,7 @@
 import logging
 from optparse import make_option
 from couchdbkit import Database, BulkSaveError
-from django.core.management.base import LabelCommand, CommandError
+from django.core.management.base import BaseCommand, CommandError
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLog
 from corehq.apps.domain.models import Domain
@@ -17,11 +17,11 @@ from dimagi.utils.chunked import chunked
 CHUNK_SIZE = 100
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Copy all data (users, forms, cases) associated with a single group"
     args = '<sourcedb> <group_id>'
     label = ""
-    option_list = LabelCommand.option_list + (
+    option_list = BaseCommand.option_list + (
         make_option('--exclude-user-owned',
             action='store_true', dest='exclude_user_owned', default=False,
             help="In addition to getting cases owned by the group itself, also get those owned by all users in the group"),
@@ -107,6 +107,7 @@ class Command(LabelCommand):
         def form_wrapper(row):
             doc = row['doc']
             doc.pop('_attachments', None)
+            doc.pop('external_blobs', None)
             return XFormInstance.wrap(doc)
         for i, subset in enumerate(chunked(xform_ids, CHUNK_SIZE)):
             print i * CHUNK_SIZE

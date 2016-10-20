@@ -11,7 +11,6 @@ from corehq.util.spreadsheets.excel import WorkbookJSONReader
 
 from couchexport.export import export_raw
 from couchexport.models import Format
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.translations import (
@@ -323,6 +322,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
 
     @classmethod
     def setUpClass(cls):
+        super(BulkAppTranslationDownloadTest, cls).setUpClass()
         cls.app = Application.wrap(cls.get_json("app"))
         # Todo, refactor this into BulkAppTranslationTestBase.upload_raw_excel_translations
         file = StringIO()
@@ -353,7 +353,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
 class RenameLangTest(SimpleTestCase):
 
     def test_rename_lang_empty_form(self):
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app = Application.new_app('domain', "Untitled Application")
         module = app.add_module(Module.new_module('module', None))
         form1 = app.new_form(module.id, "Untitled Form", None)
         form1.source = '<source>'
@@ -432,7 +432,7 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
         return workbook.worksheets_by_title[title]
 
     def setUp(self):
-        self.app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        self.app = Application.new_app('domain', "Untitled Application")
         self.app.langs = ['en', 'afr', 'fra']
         module1 = self.app.add_module(Module.new_module('module', None))
         form1 = self.app.new_form(module1.id, "Untitled Form", None)

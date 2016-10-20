@@ -14,7 +14,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.style.decorators import use_datatables
 from corehq.toggles import all_toggles, ALL_TAGS, NAMESPACE_USER, NAMESPACE_DOMAIN
 from toggle.models import Toggle
-from toggle.shortcuts import clear_toggle_cache
+from toggle.shortcuts import clear_toggle_cache, parse_toggle
 
 NOT_FOUND = "Not Found"
 
@@ -157,18 +157,22 @@ class ToggleEditView(ToggleBaseView):
             context['last_used'] = _get_usage_info(toggle)
         return context
 
-    def call_save_fn(self, changed_entries, currently_enabled):
+    def call_save_fn_and_clear_cache(self, toggle_slug, changed_entries, currently_enabled):
         for entry in changed_entries:
-            if entry.startswith(NAMESPACE_DOMAIN):
-                domain = entry.split(":")[-1]
+            enabled = entry in currently_enabled
+            namespace, entry = parse_toggle(entry)
+            if namespace == NAMESPACE_DOMAIN:
+                domain = entry
                 if self.static_toggle.save_fn is not None:
-                    self.static_toggle.save_fn(domain, entry in currently_enabled)
+                    self.static_toggle.save_fn(domain, enabled)
                 toggle_js_domain_cachebuster.clear(domain)
             else:
                 # these are sent down with no namespace
                 assert ':' not in entry, entry
                 username = entry
                 toggle_js_user_cachebuster.clear(username)
+
+            clear_toggle_cache(toggle_slug, entry, namespace=namespace)
 
     def post(self, request, *args, **kwargs):
         toggle = self.get_toggle()
@@ -183,9 +187,7 @@ class ToggleEditView(ToggleBaseView):
         toggle.save()
 
         changed_entries = previously_enabled ^ currently_enabled  # ^ means XOR
-        self.call_save_fn(changed_entries, currently_enabled)
-        for item in changed_entries:
-            clear_toggle_cache(toggle.slug, item)
+        self.call_save_fn_and_clear_cache(toggle.slug, changed_entries, currently_enabled)
 
         data = {
             'items': item_list

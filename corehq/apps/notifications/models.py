@@ -2,6 +2,8 @@ import datetime
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import Q
+from django.contrib.postgres.fields import ArrayField
 
 
 NOTIFICATION_TYPES = (
@@ -22,18 +24,24 @@ class Notification(models.Model):
     users_read = models.ManyToManyField(User)
     is_active = models.BooleanField(default=False)
     activated = models.DateTimeField(db_index=True, null=True, blank=True)
+    domain_specific = models.BooleanField(default=False)
+    domains = ArrayField(
+        models.TextField(null=True, blank=True),
+        null=True
+    )
 
     class Meta:
         ordering = ["-activated"]
 
     @classmethod
-    def get_by_user(cls, user, limit=10):
+    def get_by_user(cls, django_user, couch_user, limit=10):
         """Returns notifications for a particular user
 
         After five notifications all notifications should be marked as read.
         """
-        notes = cls.objects.filter(is_active=True)[:limit]
-        read_notifications = set(cls.objects.filter(users_read=user).values_list('id', flat=True))
+        notes = cls.objects.filter(Q(domain_specific=False) | Q(domains__overlap=couch_user.domains),
+                                     is_active=True, activated__gt=django_user.date_joined)[:limit]
+        read_notifications = set(cls.objects.filter(users_read=django_user).values_list('id', flat=True))
 
         def _fmt_note(note_idx):
             index = note_idx[0]
@@ -75,7 +83,7 @@ class Notification(models.Model):
 
 
 class LastSeenNotification(models.Model):
-    user = models.ForeignKey(User, unique=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     last_seen_date = models.DateTimeField()
 
     @classmethod

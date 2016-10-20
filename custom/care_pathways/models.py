@@ -1,7 +1,7 @@
-from corehq.apps.change_feed import topics
 import fluff
 from casexml.apps.case.models import CommCareCase
 from corehq.fluff.calculators.case import CasePropertyFilter
+from custom.care_pathways import DOMAINS
 from custom.care_pathways.utils import get_domain_configuration
 
 # This calculator is necessary to generate 'date' field which is required in the database
@@ -91,10 +91,8 @@ def case_property(property):
 class GeographyFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
     document_filter = CasePropertyFilter(type='farmer_record')
-    domains = ('pathways-india-mis', 'pathways-tanzania', 'care-macf-malawi', 'care-macf-bangladesh',)
+    domains = DOMAINS
     group_by = ('domain',)
-
-    kafka_topic = topics.CASE
 
     numerator = Numerator()
     lvl_1 = case_property('lvl_1')
@@ -107,13 +105,11 @@ class GeographyFluff(fluff.IndicatorDocument):
 class FarmerRecordFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
     document_filter = CasePropertyFilter(type='farmer_record')
-    domains = ('pathways-india-mis', 'pathways-tanzania', 'care-macf-malawi', 'care-macf-bangladesh')
+    domains = DOMAINS
     group_by = ('domain',
                 fluff.AttributeGetter('value_chain', lambda c: get_mapping(c)),
                 fluff.AttributeGetter('domains', lambda c: get_domains(c)),
                 fluff.AttributeGetter('practices', lambda c: get_practices(c)))
-
-    kafka_topic = topics.CASE
 
     lvl_1 = case_property('lvl_1')
     lvl_2 = case_property('lvl_2')

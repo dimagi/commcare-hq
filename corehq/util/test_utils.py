@@ -12,7 +12,6 @@ from contextlib import contextmanager
 
 from functools import wraps
 from django.conf import settings
-from django.test.utils import override_settings
 
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.decorators import ContextDecorator
@@ -68,25 +67,16 @@ class trap_extra_setup(ContextDecorator):
             raise SkipTest("{}{}: {}".format(msg, type(err).__name__, err))
 
 
-def softer_assert(func=None):
+class softer_assert(ContextDecorator):
     """A decorator/context manager to disable hardened soft_assert for tests"""
-    @contextmanager
-    def softer_assert():
-        patch = mock.patch("corehq.util.soft_assert.core.is_hard_mode",
+    def __enter__(self):
+        self.patch = mock.patch("corehq.util.soft_assert.core.is_hard_mode",
                            new=lambda: False)
-        patch.start()
-        try:
-            yield
-        finally:
-            patch.stop()
+        self.patch.start()
+        return self
 
-    if func is not None:
-        @functools.wraps(func)
-        def wrapper(*args, **kw):
-            with softer_assert():
-                return func(*args, **kw)
-        return wrapper
-    return softer_assert()
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.patch.stop()
 
 
 class TestFileMixin(object):
@@ -234,42 +224,6 @@ def run_with_multiple_configs(fn, run_configs):
     return inner
 
 
-class OverridableSettingsTestMixin(object):
-    """Backport of core Django functionality to 1.7. Can be removed
-    once Django >= 1.8
-    https://github.com/django/django/commit/d89f56dc4d03f6bf6602536b8b62602ec0d46d2f
-
-    Usage:
-
-      @override_settings(A_SETTING=True)
-      class SomeTests(TestCase, OverridableSettingsTestMixin):
-
-          @classmethod
-          def setUpClass(cls):
-              super(SomeTests, cls).setUpClass()
-              # settings.A_SETTING is True here
-
-          @classmethod
-          def tearDownClass(cls):
-              # teardown stuff
-              # don't forget to call super to undo override_settings
-              super(SomeTests, cls).tearDownClass()
-    """
-    @classmethod
-    def setUpClass(cls):
-        super(OverridableSettingsTestMixin, cls).setUpClass()
-        if cls._overridden_settings:
-            cls._cls_overridden_context = override_settings(**cls._overridden_settings)
-            cls._cls_overridden_context.enable()
-
-    @classmethod
-    def tearDownClass(cls):
-        if hasattr(cls, '_cls_overridden_context'):
-            cls._cls_overridden_context.disable()
-            delattr(cls, '_cls_overridden_context')
-        super(OverridableSettingsTestMixin, cls).tearDownClass()
-
-
 class log_sql_output(ContextDecorator):
     """
     Can be used as either a context manager or decorator.
@@ -400,9 +354,9 @@ def create_and_save_a_form(domain):
 
 def _create_case(domain, **kwargs):
     from casexml.apps.case.mock import CaseBlock
-    from casexml.apps.case.util import post_case_blocks
-    return post_case_blocks(
-        [CaseBlock(**kwargs).as_xml()], domain=domain
+    from corehq.apps.hqcase.utils import submit_case_blocks
+    return submit_case_blocks(
+        [CaseBlock(**kwargs).as_string()], domain=domain
     )
 
 

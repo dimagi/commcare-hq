@@ -8,7 +8,9 @@ from unidecode import unidecode
 from corehq.apps.export.filters import (
     ReceivedOnRangeFilter,
     GroupFormSubmittedByFilter,
-    OR, OwnerFilter, LastModifiedByFilter, UserTypeFilter, OwnerTypeFilter)
+    OR, OwnerFilter, LastModifiedByFilter, UserTypeFilter,
+    OwnerTypeFilter, ModifiedOnRangeFilter
+)
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import (
@@ -347,6 +349,8 @@ class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
             'xmlns': export.xmlns if hasattr(export, 'xmlns') else '',
             'export_id': export.get_id,
             'zip_name': 'multimedia-{}'.format(unidecode(export.name)),
+            'user_types': self._get_es_user_types(),
+            'group': self.data['group'],
             'download_id': download_id
         }
 
@@ -431,7 +435,13 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
         kwargs['export_is_legacy'] = False
         return kwargs
 
-class FilterCaseCouchExportDownloadForm(BaseFilterExportDownloadForm):
+
+class GenericFilterCaseExportDownloadForm(BaseFilterExportDownloadForm):
+    def __init__(self, domain_object, timezone, *args, **kwargs):
+        super(GenericFilterCaseExportDownloadForm, self).__init__(domain_object, *args, **kwargs)
+
+
+class FilterCaseCouchExportDownloadForm(GenericFilterCaseExportDownloadForm):
     _export_type = 'case'
     # This class will be removed when the switch over to ES exports is complete
 
@@ -451,13 +461,45 @@ class FilterCaseCouchExportDownloadForm(BaseFilterExportDownloadForm):
                                     groups=case_sharing_groups)
 
 
-class FilterCaseESExportDownloadForm(BaseFilterExportDownloadForm):
+class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
     _export_type = 'case'
+
+    date_range = forms.CharField(
+        label=ugettext_lazy("Date Range"),
+        required=True,
+        widget=DateRangePickerWidget(),
+        help_text="Export cases modified in this date range",
+    )
+
+    def __init__(self, domain_object, timezone, *args, **kwargs):
+        self.timezone = timezone
+        super(FilterCaseESExportDownloadForm, self).__init__(domain_object, timezone, *args, **kwargs)
+
+        # update date_range filter's initial values to span the entirety of
+        # the domain's submission range
+        default_datespan = datespan_from_beginning(self.domain_object, self.timezone)
+        self.fields['date_range'].widget = DateRangePickerWidget(
+            default_datespan=default_datespan
+        )
+
 
     def get_edit_url(self, export):
         from corehq.apps.export.views import EditNewCustomCaseExportView
         return reverse(EditNewCustomCaseExportView.urlname,
                        args=(self.domain_object.name, export.get_id))
+
+    def _get_datespan(self):
+        date_range = self.cleaned_data['date_range']
+        dates = date_range.split(DateRangePickerWidget.separator)
+        startdate = dateutil.parser.parse(dates[0])
+        enddate = dateutil.parser.parse(dates[1])
+        return DateSpan(startdate, enddate)
+
+    def _get_datespan_filter(self):
+        datespan = self._get_datespan()
+        if datespan.is_valid():
+            datespan.set_timezone(self.timezone)
+            return ModifiedOnRangeFilter(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
 
     def get_case_filter(self):
         group = self._get_group()
@@ -476,4 +518,19 @@ class FilterCaseESExportDownloadForm(BaseFilterExportDownloadForm):
                 OwnerFilter(case_sharing_groups),
                 LastModifiedByFilter(case_sharing_groups)
             )]
+
+        date_filter = self._get_datespan_filter()
+        if date_filter:
+            case_filter.append(date_filter)
+
         return case_filter
+
+    @property
+    def extra_fields(self):
+        return [
+            crispy.Field(
+                'date_range',
+                ng_model='formData.date_range',
+                ng_required='true',
+            ),
+        ]

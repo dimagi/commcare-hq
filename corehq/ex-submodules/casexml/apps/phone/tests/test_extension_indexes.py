@@ -9,7 +9,7 @@ from casexml.apps.case.tests.util import assert_user_doesnt_have_cases, \
     assert_user_has_cases
 from casexml.apps.phone.models import get_properly_wrapped_sync_log
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
-from corehq.form_processor.tests import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.util.test_utils import softer_assert
 
 
@@ -31,7 +31,7 @@ def get_test_name(test_name):
 
 @nottest
 def test_generator(test_name, skip=False):
-    @softer_assert
+    @softer_assert()
     def test(self):
         if skip:
             self.skipTest(skip)

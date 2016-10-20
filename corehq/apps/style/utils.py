@@ -1,5 +1,4 @@
 import logging
-import threading
 
 
 def format_angular_error(error_msg, additional_data=None,

@@ -5,6 +5,7 @@ from dimagi.ext.couchdbkit import *
 
 from datetime import datetime, timedelta
 from django.db import models, transaction
+from django.http import Http404
 from collections import namedtuple
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form
@@ -17,9 +18,11 @@ from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
 from corehq.apps.sms import util as smsutil
 from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
     MSG_MOBILE_WORKER_ANDROID_INVITATION, MSG_MOBILE_WORKER_JAVA_INVITATION,
-    get_message)
+    MSG_REGISTRATION_INSTALL_COMMCARE, get_message)
+from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.load_balance import load_balance
 from django.utils.translation import ugettext_noop, ugettext_lazy
 
@@ -80,7 +83,7 @@ class Log(models.Model):
     location_id = models.CharField(max_length=126, null=True)
 
     # The MessagingSubEvent that this log is tied to
-    messaging_subevent = models.ForeignKey('MessagingSubEvent', null=True, on_delete=models.PROTECT)
+    messaging_subevent = models.ForeignKey('sms.MessagingSubEvent', null=True, on_delete=models.PROTECT)
 
     def set_system_error(self, message=None):
         self.error = True
@@ -161,6 +164,7 @@ class SMSBase(UUIDGeneratorMixin, Log):
     ERROR_PHONE_NUMBER_OPTED_OUT = 'PHONE_NUMBER_OPTED_OUT'
     ERROR_INVALID_DESTINATION_NUMBER = 'INVALID_DESTINATION_NUMBER'
     ERROR_MESSAGE_TOO_LONG = 'MESSAGE_TOO_LONG'
+    ERROR_CONTACT_IS_INACTIVE = 'CONTACT_IS_INACTIVE'
 
     ERROR_MESSAGES = {
         ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS:
@@ -175,6 +179,8 @@ class SMSBase(UUIDGeneratorMixin, Log):
             ugettext_noop("The gateway can't reach the destination number."),
         ERROR_MESSAGE_TOO_LONG:
             ugettext_noop("The gateway could not process the message because it was too long."),
+        ERROR_CONTACT_IS_INACTIVE:
+            ugettext_noop("The recipient has been deactivated."),
     }
 
     UUIDS_TO_GENERATE = ['couch_id']
@@ -191,7 +197,9 @@ class SMSBase(UUIDGeneratorMixin, Log):
     queued_timestamp = models.DateTimeField(null=True)
     processed_timestamp = models.DateTimeField(null=True)
 
-    # If the message was simulated from a domain, this is the domain
+    # When an SMS is received on a domain-owned backend, we set this to
+    # the domain name. This can be used by the framework to handle domain-specific
+    # processing of unregistered contacts.
     domain_scope = models.CharField(max_length=126, null=True)
 
     # Set to True to send the message regardless of whether the destination
@@ -1156,7 +1164,7 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
         (MessagingEvent.RECIPIENT_WEB_USER, ugettext_noop('Web User')),
     )
 
-    parent = models.ForeignKey('MessagingEvent')
+    parent = models.ForeignKey('MessagingEvent', on_delete=models.CASCADE)
     date = models.DateTimeField(null=False, db_index=True)
     recipient_type = models.CharField(max_length=3, choices=RECIPIENT_CHOICES, null=False)
     recipient_id = models.CharField(max_length=126, null=True)
@@ -1226,12 +1234,32 @@ class SelfRegistrationInvitation(models.Model):
     app_id = models.CharField(max_length=126, null=True)
     expiration_date = models.DateField(null=False)
     created_date = models.DateTimeField(null=False)
-    odk_url = models.CharField(max_length=126, null=True)
     phone_type = models.CharField(max_length=20, null=True, choices=PHONE_TYPE_CHOICES)
     registered_date = models.DateTimeField(null=True)
 
+    # True if we are assuming that the recipient has an Android phone
+    android_only = models.BooleanField(default=False)
+
+    # True to make email address a required field on the self-registration page
+    require_email = models.BooleanField(default=False)
+
+    # custom user data that will be set to the CommCareUser's user_data property
+    # when it is created
+    custom_user_data = jsonfield.JSONField(default=dict)
+
     class Meta:
         app_label = 'sms'
+
+    @property
+    @memoized
+    def odk_url(self):
+        if not self.app_id:
+            return None
+
+        try:
+            return self.get_app_odk_url(self.domain, self.app_id)
+        except Http404:
+            return None
 
     @property
     def already_registered(self):
@@ -1257,13 +1285,18 @@ class SelfRegistrationInvitation(models.Model):
         self.registered_date = datetime.utcnow()
         self.save()
 
-    def send_step1_sms(self):
+    def send_step1_sms(self, custom_message=None):
         from corehq.apps.sms.api import send_sms
+
+        if self.android_only:
+            self.send_step2_android_sms(custom_message)
+            return
+
         send_sms(
             self.domain,
             None,
             self.phone_number,
-            get_message(MSG_MOBILE_WORKER_INVITATION_START, domain=self.domain)
+            custom_message or get_message(MSG_MOBILE_WORKER_INVITATION_START, domain=self.domain)
         )
 
     def send_step2_java_sms(self):
@@ -1275,32 +1308,55 @@ class SelfRegistrationInvitation(models.Model):
             get_message(MSG_MOBILE_WORKER_JAVA_INVITATION, context=(self.domain,), domain=self.domain)
         )
 
-    def send_step2_android_sms(self):
-        from corehq.apps.sms.api import send_sms
+    def get_user_registration_url(self):
         from corehq.apps.users.views.mobile.users import CommCareUserSelfRegistrationView
+        return absolute_reverse(
+            CommCareUserSelfRegistrationView.urlname,
+            args=[self.domain, self.token]
+        )
 
-        registration_url = absolute_reverse(CommCareUserSelfRegistrationView.urlname,
-            args=[self.domain, self.token])
+    @classmethod
+    def get_app_info_url(cls, domain, app_id):
+        from corehq.apps.sms.views import InvitationAppInfoView
+        return absolute_reverse(
+            InvitationAppInfoView.urlname,
+            args=[domain, app_id]
+        )
+
+    @classmethod
+    def get_sms_install_link(cls, domain, app_id):
+        """
+        If CommCare detects this SMS on the phone during start up,
+        it gives the user the option to install the given app.
+        """
+        app_info_url = cls.get_app_info_url(domain, app_id)
+        return '[commcare app - do not delete] %s' % app_info_url
+
+    def send_step2_android_sms(self, custom_message=None):
+        from corehq.apps.sms.api import send_sms
+
+        registration_url = self.get_user_registration_url()
+
+        if custom_message:
+            message = custom_message.format(registration_url)
+        else:
+            message = get_message(MSG_MOBILE_WORKER_ANDROID_INVITATION, context=(registration_url,),
+                domain=self.domain)
+
         send_sms(
             self.domain,
             None,
             self.phone_number,
-            get_message(MSG_MOBILE_WORKER_ANDROID_INVITATION, context=(registration_url,), domain=self.domain)
+            message
         )
 
-        """
-        # Until odk 2.24 gets released to the Google Play store, this part won't work
         if self.odk_url:
-            app_info_url = absolute_reverse(InvitationAppInfoView.urlname,
-                args=[self.domain, self.token])
-            message = '[commcare app - do not delete] %s' % app_info_url
             send_sms(
                 self.domain,
                 None,
                 self.phone_number,
-                message,
+                self.get_sms_install_link(self.domain, self.app_id),
             )
-        """
 
     def expire(self):
         self.expiration_date = datetime.utcnow().date() - timedelta(days=1)
@@ -1373,8 +1429,9 @@ class SelfRegistrationInvitation(models.Model):
         return app.get_short_odk_url(with_media=True)
 
     @classmethod
-    def initiate_workflow(cls, domain, phone_numbers, app_id=None,
-            days_until_expiration=30):
+    def initiate_workflow(cls, domain, users, app_id=None,
+            days_until_expiration=30, custom_first_message=None,
+            android_only=False, require_email=False):
         """
         If app_id is passed in, then an additional SMS will be sent to Android
         phones containing a link to the latest starred build (or latest
@@ -1388,12 +1445,8 @@ class SelfRegistrationInvitation(models.Model):
         invalid_format_numbers = []
         numbers_in_use = []
 
-        odk_url = None
-        if app_id:
-            odk_url = cls.get_app_odk_url(domain, app_id)
-
-        for phone_number in phone_numbers:
-            phone_number = apply_leniency(phone_number)
+        for user_info in users:
+            phone_number = apply_leniency(user_info.phone_number)
             try:
                 CommCareMobileContactMixin.validate_number_format(phone_number)
             except InvalidFormatException:
@@ -1409,20 +1462,87 @@ class SelfRegistrationInvitation(models.Model):
             expiration_date = (datetime.utcnow().date() +
                 timedelta(days=days_until_expiration))
 
-            invitation = cls.objects.create(
+            invitation = cls(
                 domain=domain,
                 phone_number=phone_number,
                 token=uuid.uuid4().hex,
                 app_id=app_id,
                 expiration_date=expiration_date,
                 created_date=datetime.utcnow(),
-                odk_url=odk_url,
+                android_only=android_only,
+                require_email=require_email,
+                custom_user_data=user_info.custom_user_data or {},
             )
 
-            invitation.send_step1_sms()
+            if android_only:
+                invitation.phone_type = cls.PHONE_TYPE_ANDROID
+
+            invitation.save()
+            invitation.send_step1_sms(custom_first_message)
             success_numbers.append(phone_number)
 
         return (success_numbers, invalid_format_numbers, numbers_in_use)
+
+    @classmethod
+    def send_install_link(cls, domain, users, app_id, custom_message=None):
+        """
+        This method sends two SMS to each user: 1) an SMS with the link to the
+        Google Play store to install Commcare, and 2) an install SMS for the
+        given app.
+
+        Use this method to reinstall CommCare on a user's phone. The user must
+        already have a mobile worker account. If the user doesn't yet have a
+        mobile worker account, use SelfRegistrationInvitation.initiate_workflow()
+        so that they can set one up as part of the process.
+
+        :param domain: the name of the domain this request is for
+        :param users: a list of SelfRegistrationUserInfo objects
+        :param app_id: the app_id of the app for which to send the install link
+        :param custom_message: (optional) a custom message to use when sending the
+        Google Play URL.
+        """
+        from corehq.apps.sms.api import send_sms, send_sms_to_verified_number
+
+        if custom_message:
+            custom_message = custom_message.format(GOOGLE_PLAY_STORE_COMMCARE_URL)
+
+        domain_translated_message = custom_message or get_message(
+            MSG_REGISTRATION_INSTALL_COMMCARE,
+            domain=domain,
+            context=(GOOGLE_PLAY_STORE_COMMCARE_URL,)
+        )
+        sms_install_link = cls.get_sms_install_link(domain, app_id)
+
+        success_numbers = []
+        invalid_format_numbers = []
+        error_numbers = []
+
+        for user in users:
+            try:
+                CommCareMobileContactMixin.validate_number_format(user.phone_number)
+            except InvalidFormatException:
+                invalid_format_numbers.append(user.phone_number)
+                continue
+
+            phone_number = PhoneNumber.by_phone(user.phone_number)
+            if phone_number:
+                if phone_number.domain != domain:
+                    error_numbers.append(user.phone_number)
+                    continue
+                user_translated_message = custom_message or get_message(
+                    MSG_REGISTRATION_INSTALL_COMMCARE,
+                    verified_number=phone_number,
+                    context=(GOOGLE_PLAY_STORE_COMMCARE_URL,)
+                )
+                send_sms_to_verified_number(phone_number, user_translated_message)
+                send_sms_to_verified_number(phone_number, sms_install_link)
+            else:
+                send_sms(domain, None, user.phone_number, domain_translated_message)
+                send_sms(domain, None, user.phone_number, sms_install_link)
+
+            success_numbers.append(user.phone_number)
+
+        return (success_numbers, invalid_format_numbers, error_numbers)
 
 
 class ActiveMobileBackendManager(models.Manager):
@@ -1886,12 +2006,12 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
         with transaction.atomic():
             self.__clear_shared_domain_cache(domains)
             self.mobilebackendinvitation_set.all().delete()
-            self.mobilebackendinvitation_set = [
-                MobileBackendInvitation(
+            for domain in domains:
+                MobileBackendInvitation.objects.create(
                     domain=domain,
                     accepted=True,
-                ) for domain in domains
-            ]
+                    backend=self,
+                )
 
     def soft_delete(self):
         with transaction.atomic():
@@ -2048,7 +2168,7 @@ class SQLMobileBackendMapping(models.Model):
     prefix = models.CharField(max_length=25)
 
     # The backend to use for the given phone prefix
-    backend = models.ForeignKey('SQLMobileBackend')
+    backend = models.ForeignKey('SQLMobileBackend', on_delete=models.CASCADE)
 
     @classmethod
     def __set_default_domain_backend(cls, domain, backend_type, backend=None):
@@ -2133,7 +2253,7 @@ class MobileBackendInvitation(models.Model):
     domain = models.CharField(max_length=126, null=True, db_index=True)
 
     # The backend that is being shared
-    backend = models.ForeignKey('SQLMobileBackend')
+    backend = models.ForeignKey('SQLMobileBackend', on_delete=models.CASCADE)
     accepted = models.BooleanField(default=False)
 
 

@@ -1,9 +1,9 @@
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 from django_countries.data import COUNTRIES
 from corehq.apps.domain.models import Domain
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Migrates old django domain countries from string to list. Sept 2014."
     args = ""
     label = ""

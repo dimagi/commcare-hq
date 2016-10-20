@@ -20,7 +20,7 @@
 {% block filter_js %}
 <link href="{% static 'select2-3.4.5-legacy/select2.css' %}" rel="stylesheet"/>
 <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
-<script type="text/javascript">
+<script>
     $(function () {
         $('#{{ css_id }}').parent().koApplyBindings({
             select_params: {{ select.options|JSON }},

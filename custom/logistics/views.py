@@ -17,7 +17,7 @@ class BaseConfigView(BaseCommTrackManageView):
     @property
     def page_context(self):
         try:
-            runner = ReportRun.objects.get(domain=self.domain, complete=False)
+            runner = ReportRun.objects.filter(domain=self.domain, complete=False).latest('start_run')
         except ReportRun.DoesNotExist:
             runner = None
 

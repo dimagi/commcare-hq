@@ -31,41 +31,32 @@ class DigestOtaRestoreTest(TestCase):
         delete_all_domains()
 
     def test_commcare_user_restore(self):
-        uri = reverse('ota_restore', args=[self.domain])
-        client = Client(HTTP_AUTHORIZATION=_get_http_auth_header(
-            self.commcare_user.username,
-            self.password,
-            uri,
-        ))
-
+        uri, client = self._set_restore_client(self.domain, self.commcare_user.username)
         resp = client.get(uri, follow=True)
         self.assertEqual(resp.status_code, 200)
         content = list(resp.streaming_content)[0]
         self.assertTrue("Successfully restored account {}!".format(self.username) in content)
 
     def test_web_user_restore(self):
-        uri = reverse('ota_restore', args=[self.domain])
-        client = Client(HTTP_AUTHORIZATION=_get_http_auth_header(
-            self.web_user.username,
-            self.password,
-            uri,
-        ))
-
+        uri, client = self._set_restore_client(self.domain, self.web_user.username)
         resp = client.get(uri, follow=True)
         self.assertEqual(resp.status_code, 200)
         content = list(resp.streaming_content)[0]
         self.assertTrue("Successfully restored account {}!".format(self.web_username) in content)
 
     def test_wrong_domain_web_user(self):
-        uri = reverse('ota_restore', args=[self.wrong_domain])
+        uri, client = self._set_restore_client(self.wrong_domain, self.web_user.username)
+        resp = client.get(uri, follow=True)
+        self.assertEqual(resp.status_code, 401)
+
+    def _set_restore_client(self, with_domain, auth_username):
+        uri = reverse('ota_restore', args=[with_domain])
         client = Client(HTTP_AUTHORIZATION=_get_http_auth_header(
-            self.web_user.username,
+            auth_username,
             self.password,
             uri,
         ))
-
-        resp = client.get(uri, follow=True)
-        self.assertEqual(resp.status_code, 401)
+        return uri, client
 
 
 def _get_http_auth_header(username, password, uri):

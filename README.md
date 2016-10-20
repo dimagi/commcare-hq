@@ -17,10 +17,10 @@ More in depth docs are available on [ReadTheDocs](http://commcare-hq.readthedocs
 ### Key Components
 
 + CommCare application builder
-+ OpenRosa compliant xForms designer
++ OpenRosa compliant XForms designer
 + SMS integration
-+ Domain/user/CHW management
-+ Xforms data collection
++ Domain/user/mobile worker management
++ XForms data collection
 + Case management
 + Over-the-air (ota) restore of user and cases
 + Integrated web and email reporting
@@ -29,135 +29,10 @@ Contributing
 ------------
 We welcome contributions, see our [CONTRIBUTING.rst](CONTRIBUTING.rst) document for more.
 
-Installing CommCare HQ
-----------------------
+Setting up CommCare HQ for developers
+-------------------------------------
 
 Please note that these instructions are targeted toward UNIX-based systems.
-
-### Installing dependencies
-
-For Ubuntu 12.04, download the JDK (version 7) tar.gz from http://www.oracle.com/technetwork/java/javase/downloads/index.html and rename it jdk.tar.gz in the same directory as install.sh.
-Run the included `install.sh` script to install all
-dependencies, set them up to run at startup, and set up required databases.
-Then skip to "Setting up a virtualenv".
-
-Otherwise, install the following software from your OS package manager or the
-individual project sites when necessary.
-
-+ Python 2.6 or 2.7 (use 32 bit if you're on Windows see `Alternate steps for Windows` section below)
-+ pip  (If you use virtualenv (see below) this will be installed automatically)
-+ CouchDB >= 1.0 (1.2 recommended) (install from OS package manager (`sudo apt-get install couchdb`) or [here][couchdb])
-   For Mac users
-       - use $ brew install couchdb
-       - note that when installing erlang, you do NOT need to check out an older version of erlang.rb
-
-+ PostgreSQL >= 9.4 - (install from OS package manager (`sudo apt-get install postgresql`) or [here][postgres])
-+ [Elasticsearch][elasticsearch] 1.7.4. In Ubuntu and other Debian derivatives,
-  [download the deb package][elasticsearch], install, and then **hold** the version to prevent automatic upgrades:
-
-        $ sudo dpkg -i elasticsearch-1.7.4.deb
-        $ sudo apt-mark hold elasticsearch
-
-  On Mac, the following works well:
-
-        $ brew install homebrew/versions/elasticsearch17
-
-+ redis >= 3.0.3 (install from OS package manager (`sudo apt-get install redis-server`) or follow these
-  [installation notes][redis])
-
-  On Mac, use:
-
-     	$ brew install redis
-
-+ [Jython][jython] 2.5.3 (optional, only needed for CloudCare). **Note**: CloudCare will _not_ work on 2.7.0 which is
-  the default version at jython.org. 2.5.3 is the default version in current versions of Ubuntu
-  (`sudo apt-get install jython`) but to be safe you can explicitly set and hold the version with
-
-        $ sudo apt-get install jython=2.5.3
-        $ sudo apt-mark hold jython
-
-   If the package is not in apt you will need to install manually: https://wiki.python.org/jython/InstallationInstructions
-
-+ For additional requirements necessary only if you want to modify the default
-  JavaScript or CSS styling, see [CommCare HQ Style](https://github.com/dimagi/hqstyle-src).
-
- [couchdb]: http://wiki.apache.org/couchdb/Installation
- [postgres]: http://www.postgresql.org/download/
- [redis]: https://gist.github.com/mwhite/c0381c5236855993572c
- [elasticsearch]: https://www.elastic.co/downloads/past-releases/elasticsearch-1-7-4
- [jython]: http://jython.org/downloads.html
-
-#### Elasticsearch Configuration (optional)
-
-To run Elasticsearch in an upstart configuration, see [this example](https://gist.github.com/3961323).
-
-To secure Elasticsearch, we recommend setting the listen port to localhost on a
-local machine. On a distributed environment, we recommend setting up ssh
-tunneled ports for the Elasticsearch port. The supervisor_elasticsearch.conf
-supervisor config demonstrates the tunnel creation using autossh.
-
-If working on a network with other Elasticsearch instances that you do not want to be included in your cluster
-automatically, set the cluster name to your hostname in /etc/elasticsearch/elasticsearch.yml:
-```yaml
-cluster.name: <your hostname>
-```
-
-#### CouchDB Configuration
-
-Start couchdb, and then open http://localhost:5984/_utils/ and create a new database named `commcarehq` and add a user named `commcarehq` with password `commcarehq`.
-
-To set up CouchDB from the command line, create the database:
-
-    $ curl -X PUT http://localhost:5984/commcarehq
-
-And add an admin user:
-
-    $ curl -X PUT http://localhost:5984/_config/admins/commcarehq -d '"commcarehq"'
-
-#### PostgreSQL Configuration
-
-Log in as the postgres user, and create a `commcarehq` user with password `commcarehq`, and `commcarehq` and
-`commcarehq_reporting` databases:
-
-    $ sudo su - postgres
-    postgres$ createuser -P commcarehq  # When prompted, enter password "commcarehq"
-    postgres$ createdb commcarehq
-    postgres$ createdb commcarehq_reporting
-
-If these commands give you difficulty, **particularly for Mac users** running Postgres.app, verify that the default
-postgres role has been created, and run the same commands without first logging in as the postgres POSIX user:
-
-    $ createuser -s -r postgres  # Create the postgres role if it does not yet exist
-    $ createuser -U postgres -P commcarehq  # When prompted, enter password "commcarehq"
-    $ createdb -U postgres commcarehq
-    $ createdb -U postgres commcarehq_reporting
-
-
-### Setting up a virtualenv
-
-A virtualenv is not required, but it may make your life easier. If you're on Windows see the section `Alternate steps
-for Windows` below. Ubuntu offers a convenient package for virtualenvwrapper, which makes managing and switching
-between environments easy:
-
-    $ sudo apt-get install virtualenvwrapper
-    $ mkvirtualenv cchq
-
-
-### Installing required dev packages
-
-The Python libraries you will be installing in the next step require the following packages. If you are on a mac, there are brew equivalents for some but not all of these packages. You can use 'brew search' to try to find equivalents for those that are available, and don't worry about the others
-
-    $ sudo apt-get install rabbitmq-server \
-          libpq-dev \
-          libffi-dev \
-          libfreetype6-dev \
-          libjpeg-dev \
-          libtiff-dev \
-          libwebp-dev \
-          libxml2-dev \
-          libxslt-dev \
-          python-dev
-
 
 ### Downloading and configuring CommCare HQ
 
@@ -182,40 +57,6 @@ and are writeable. If they do not exist, create them.
 
 Once you have completed the above steps, you can use Docker to build and run all of the service containers. The steps for setting up Docker can be found in the [docker folder](docker/README.md).  
 
-### Alternate steps for Windows
-On Windows it can be hard to compile some of the packages so we recommend installing those from their binary
-distributions. Because many of the binary packages are only available in 32bit format you should also make sure
-that you have a 32bit version of Python installed.
-
-+ Install 32 bit Python
-+ Install [MinGW][mingw] (used to compile some of the packages that don't have binary distributions).
-+ Install the following packages from their binaries. If you are using Virtualenv you will need to copy the packages
-  files from $PYTHON_HOME/Lib/site-packages to $ENV_HOME/Lib/site-packages. Alternatively you could create your
-  Virtualenv with the `--system-site-packages` option.
-  + [gevent][gevent]
-  + [numpy][numpy]
-  + [egenix-mx-base][mxbase]
-  + [Pillow][pillow]
-  + [psycopg2][psycopg2]
-  + [greenlet][greenlet]
-+ Install http-parser by adding MinGW/bin to the path and running `pip install http-parser`. You may also need to alter
-  $PYTHON_HOME/Lib/distutils/cygwincompiler.py to remove all instances of '-mno-cygwin' which is a depreciated compiler
-  option. The http-parser package is required by restkit.
-+ Having installed those packages you can comment them out of the requirements/requirements.txt file.
-+ Now run
-
-        $ pip install -r requirements/requirements.txt -r requirements/prod-requirements.txt
-
-  as described in the section above.
-
- [mingw]: http://www.mingw.org/wiki/Getting_Started
- [gevent]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#gevent
- [numpy]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy
- [mxbase]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#mxbase
- [pillow]: https://github.com/python-imaging/Pillow
- [psycopg2]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#psycopg
- [greenlet]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#greenlet
-
 ### Set up your django environment
 
 Before running any of the commands below, you should have all of the following running: couchdb, redis, and elasticsearch.
@@ -236,12 +77,12 @@ related to Raven for the following three commands.
 
     $ ./manage.py bootstrap <project-name> <email> <password>
 
-To set up elasticsearch indexes, first run (and then kill once you see the "Starting pillow" lines):
+To set up elasticsearch indexes run the following:
 
-    $ ./manage.py run_ptop --pillow-key=core
+    $ ./manage.py ptop_preindex
 
-This will do an initial run of the elasticsearch indexing process, but this will run as a service later. This run
-at least creates the indices for the first time.
+This will create all of the elasticsearch indexes (that don't already exist) and populate them with any 
+data that's in the database.
 
 Next, set the aliases of the elastic indices. These can be set by a management command that sets the stored index
 names to the aliases.
@@ -415,69 +256,30 @@ the following contents:
 URL_ROOT = 'http://localhost:8000/a/{{DOMAIN}}'
 ```
 
-#### Common issues
+#### New CloudCare
 
-+ A bug in psycopg 2.4.1 (a Python package we require) may break CommCare HQ
-  when using a virtualenv created with `--no-site-packages` or when the
-  `egenix-mx-base` Python package is not already installed. To fix this, install
-  `egenix-mx-base` (`sudo apt-get install python-egenix-mxdatetime` on Ubuntu)
-  and use `virtualenv --system-site-packages` instead.
-
-+ On Mac OS X, pip doesn't install the `libmagic` dependency for `python-magic`
-  properly. To fix this, run `brew install libmagic`.
-
-+ On Mac OS X, libevent may not be installed already, which the Python `gevent` library requires. The error message
-  will be a clang error that file `event.h` is not found. To fix this using Homebrew, run `brew install libevent`.
-
-+ On Mac OS X, if lxml fails to install, ensure that your command line tools are up to date by running `xcode-select --install`.
-
-+ On Mac OS X, if Pillow complains that it can't find freetype, make sure freetype is installed with `brew install freetype`. Then create a symlink with: `ln -s /usr/local/include/freetype2 /usr/local/include/freetype`.
-
-+ If you have an authentication error running `./manage.py migrate` the first
-  time, open `pg_hba.conf` (`/etc/postgresql/9.1/main/pg_hba.conf` on Ubuntu)
-  and change the line "local all all peer" to "local all all md5".
-
-+ On Windows, to get python-magic to work you will need to install the following dependencies.
-  Once they are installed make sure the install folder is on the path.
-  + [GNUWin32 regex][regex]
-  + [GNUWin32 zlib][zlib]
-  + [GNUWin32 file][file]
-
- [regex]: http://sourceforge.net/projects/gnuwin32/files/regex/
- [zlib]: http://sourceforge.net/projects/gnuwin32/files/zlib/
- [file]: http://sourceforge.net/projects/gnuwin32/files/file/
-
-+ On Windows, Touchforms may complain about not having permission to access `tmp`. To solve this make a `c:\tmp` folder.
-
-+ On Windows, if Celery gives this error on startup: `TypeError: 'LazySettings' object is not iterable` apply the
-  changes decribed in this bug report comment: https://github.com/celery/django-celery/issues/228#issuecomment-13562642
-
-+ On Amazon EC2's latest Ubuntu Server 14.04 Edition with default source list, `install.sh` may not install elasticsearch due to dependency issues. Use instructions provided in `https://gist.github.com/wingdspur/2026107` to install
+A new version of CloudCare has been released. To use this new version, please
+refer to the install instructions [here](https://github.com/dimagi/formplayer).
 
 Running CommCare HQ
 -------------------
 
-If your installation didn't set up the helper processes required by CommCare HQ
-to automatically run on system startup, you need to run them manually:
-
-    $ redis-server /path/to/redis.conf
-    $ /path/to/unzipped/elasticsearch/bin/elasticsearch &
-    $ /path/to/couchdb/bin/couchdb &
+Make sure the required services are running (PostgreSQL, Redis, Elasticsearch, CouchDB).
 
 Then run the following separately:
-
-    # Setting up the asynchronous task scheduler
-    # For Mac / Linux
-    $ ./manage.py celeryd --verbosity=2 --beat --statedb=celery.db --events
-    # Windows
-    > manage.py celeryd --settings=settings
-
-    # Keeps elasticsearch index in sync
-    $ ./manage.py run_ptop --all
 
     # run the Django server
     $ ./manage.py runserver 0.0.0.0:8000
 
+    # Keeps elasticsearch index in sync
+    $ ./manage.py run_ptop --all
+    
+    # Setting up the asynchronous task scheduler (only required if you have CELERY_ALWAYS_EAGER=False in settings)
+    # For Mac / Linux
+    $ ./manage.py celeryd --verbosity=2 --beat --statedb=celery.db --events
+    # Windows
+    > manage.py celeryd --settings=settings
+  
 If you want to use CloudCare you will also need to run the Touchforms server.
 
     # run Touchforms server
@@ -494,15 +296,6 @@ VELLUM_DEBUG = "dev"
 
     # simlink your Vellum code to submodules/formdesigner
     $ ln -s absolute/path/to/Vellum absolute/path/to/submodules/formdesigner/
-
-Building CommCare Mobile Apps
------------------------------
-
-In order to build, download, and sync a CommCare mobile app from your instance of
-CommCare HQ, you need to follow our [instructions][builds] for how to download
-and load CommCare binaries from the Dimagi build server.
-
- [builds]: https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/builds/README.md
 
 Running Tests
 -------------
@@ -527,6 +320,14 @@ To run a particular test or subset of tests
 
 If database tests are failing because of a `permission denied` error, give your postgres user permissions to create a database.
 In the postgres shell, run the following as a superuser: `ALTER USER commcarehq CREATEDB;`
+
+To avoid having to run the databse setup for each test run you can specify the `REUSE_DB` environment variable
+ which will use an existing test database if one exists:
+ 
+    $ REUSE_DB=1 ./manage.py test corehq.apps.app_manager
+    $ REUSE_DB=reset ./manage.py test corehq.apps.app_manager  # drop the current test DB and create a fresh one
+    
+See `corehq.tests.nose.HqdbContext` for full description of `REUSE_DB`.
 
 ## Javascript tests
 
@@ -602,3 +403,206 @@ You can combine the two to run the javascript tests when saving js files, and ru
 ### Sniffer Installation instructions
 https://github.com/jeffh/sniffer/
 (recommended to install pyinotify or macfsevents for this to actually be worthwhile otherwise it takes a long time to see the change)
+
+
+Pre-docker dev environment setup instructions (deprecated)
+----------------------------------------------------------
+
+### Installing dependencies
+
+For Ubuntu 12.04, download the JDK (version 7) tar.gz from http://www.oracle.com/technetwork/java/javase/downloads/index.html and rename it jdk.tar.gz in the same directory as install.sh.
+Run the included `install.sh` script to install all
+dependencies, set them up to run at startup, and set up required databases.
+Then skip to "Setting up a virtualenv".
+
+Otherwise, install the following software from your OS package manager or the
+individual project sites when necessary.
+
++ Python 2.6 or 2.7 (use 32 bit if you're on Windows see `Alternate steps for Windows` section below)
++ pip  (If you use virtualenv (see below) this will be installed automatically)
++ CouchDB >= 1.0 (1.2 recommended) (install from OS package manager (`sudo apt-get install couchdb`) or [here][couchdb])
+   For Mac users
+       - use $ brew install couchdb
+       - note that when installing erlang, you do NOT need to check out an older version of erlang.rb
+
++ PostgreSQL >= 9.4 - (install from OS package manager (`sudo apt-get install postgresql`) or [here][postgres])
++ [Elasticsearch][elasticsearch] 1.7.4. In Ubuntu and other Debian derivatives,
+  [download the deb package][elasticsearch], install, and then **hold** the version to prevent automatic upgrades:
+
+        $ sudo dpkg -i elasticsearch-1.7.4.deb
+        $ sudo apt-mark hold elasticsearch
+
+  On Mac, the following works well:
+
+        $ brew install homebrew/versions/elasticsearch17
+
++ redis >= 3.0.3 (install from OS package manager (`sudo apt-get install redis-server`) or follow these
+  [installation notes][redis])
+
+  On Mac, use:
+
+     	$ brew install redis
+
++ [Jython][jython] 2.5.3 (optional, only needed for CloudCare). **Note**: CloudCare will _not_ work on 2.7.0 which is
+  the default version at jython.org. 2.5.3 is the default version in current versions of Ubuntu
+  (`sudo apt-get install jython`) but to be safe you can explicitly set and hold the version with
+
+        $ sudo apt-get install jython=2.5.3
+        $ sudo apt-mark hold jython
+
+   If the package is not in apt you will need to install manually: https://wiki.python.org/jython/InstallationInstructions
+
++ For additional requirements necessary only if you want to modify the default
+  JavaScript or CSS styling, see [CommCare HQ Style](https://github.com/dimagi/hqstyle-src).
+
+ [couchdb]: http://wiki.apache.org/couchdb/Installation
+ [postgres]: http://www.postgresql.org/download/
+ [redis]: https://gist.github.com/mwhite/c0381c5236855993572c
+ [elasticsearch]: https://www.elastic.co/downloads/past-releases/elasticsearch-1-7-4
+ [jython]: http://jython.org/downloads.html
+
+#### Elasticsearch Configuration (optional)
+
+To run Elasticsearch in an upstart configuration, see [this example](https://gist.github.com/3961323).
+
+To secure Elasticsearch, we recommend setting the listen port to localhost on a
+local machine. On a distributed environment, we recommend setting up ssh
+tunneled ports for the Elasticsearch port. The supervisor_elasticsearch.conf
+supervisor config demonstrates the tunnel creation using autossh.
+
+If working on a network with other Elasticsearch instances that you do not want to be included in your cluster
+automatically, set the cluster name to your hostname in /etc/elasticsearch/elasticsearch.yml:
+```yaml
+cluster.name: <your hostname>
+```
+
+#### CouchDB Configuration
+
+Start couchdb, and then open http://localhost:5984/_utils/ and create a new database named `commcarehq` and add a user named `commcarehq` with password `commcarehq`.
+
+To set up CouchDB from the command line, create the database:
+
+    $ curl -X PUT http://localhost:5984/commcarehq
+
+And add an admin user:
+
+    $ curl -X PUT http://localhost:5984/_config/admins/commcarehq -d '"commcarehq"'
+
+#### PostgreSQL Configuration
+
+Log in as the postgres user, and create a `commcarehq` user with password `commcarehq`, and `commcarehq` and
+`commcarehq_reporting` databases:
+
+    $ sudo su - postgres
+    postgres$ createuser -P commcarehq  # When prompted, enter password "commcarehq"
+    postgres$ createdb commcarehq
+    postgres$ createdb commcarehq_reporting
+
+If these commands give you difficulty, **particularly for Mac users** running Postgres.app, verify that the default
+postgres role has been created, and run the same commands without first logging in as the postgres POSIX user:
+
+    $ createuser -s -r postgres  # Create the postgres role if it does not yet exist
+    $ createuser -U postgres -P commcarehq  # When prompted, enter password "commcarehq"
+    $ createdb -U postgres commcarehq
+    $ createdb -U postgres commcarehq_reporting
+
+
+### Setting up a virtualenv
+
+A virtualenv is not required, but it may make your life easier. If you're on Windows see the section `Alternate steps
+for Windows` below. Ubuntu offers a convenient package for virtualenvwrapper, which makes managing and switching
+between environments easy:
+
+    $ sudo apt-get install virtualenvwrapper
+    $ mkvirtualenv cchq
+
+
+### Installing required dev packages
+
+The Python libraries you will be installing in the next step require the following packages. If you are on a mac, there are brew equivalents for some but not all of these packages. You can use 'brew search' to try to find equivalents for those that are available, and don't worry about the others
+
+    $ sudo apt-get install rabbitmq-server \
+          libpq-dev \
+          libffi-dev \
+          libfreetype6-dev \
+          libjpeg-dev \
+          libtiff-dev \
+          libwebp-dev \
+          libxml2-dev \
+          libxslt-dev \
+          python-dev
+
+
+### Alternate steps for Windows
+On Windows it can be hard to compile some of the packages so we recommend installing those from their binary
+distributions. Because many of the binary packages are only available in 32bit format you should also make sure
+that you have a 32bit version of Python installed.
+
++ Install 32 bit Python
++ Install [MinGW][mingw] (used to compile some of the packages that don't have binary distributions).
++ Install the following packages from their binaries. If you are using Virtualenv you will need to copy the packages
+  files from $PYTHON_HOME/Lib/site-packages to $ENV_HOME/Lib/site-packages. Alternatively you could create your
+  Virtualenv with the `--system-site-packages` option.
+  + [gevent][gevent]
+  + [numpy][numpy]
+  + [egenix-mx-base][mxbase]
+  + [Pillow][pillow]
+  + [psycopg2][psycopg2]
+  + [greenlet][greenlet]
++ Install http-parser by adding MinGW/bin to the path and running `pip install http-parser`. You may also need to alter
+  $PYTHON_HOME/Lib/distutils/cygwincompiler.py to remove all instances of '-mno-cygwin' which is a depreciated compiler
+  option. The http-parser package is required by restkit.
++ Having installed those packages you can comment them out of the requirements/requirements.txt file.
++ Now run
+
+        $ pip install -r requirements/requirements.txt -r requirements/prod-requirements.txt
+
+  as described in the section above.
+
+ [mingw]: http://www.mingw.org/wiki/Getting_Started
+ [gevent]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#gevent
+ [numpy]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy
+ [mxbase]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#mxbase
+ [pillow]: https://github.com/python-imaging/Pillow
+ [psycopg2]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#psycopg
+ [greenlet]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#greenlet
+ 
+
+#### Common issues
+
++ A bug in psycopg 2.4.1 (a Python package we require) may break CommCare HQ
+  when using a virtualenv created with `--no-site-packages` or when the
+  `egenix-mx-base` Python package is not already installed. To fix this, install
+  `egenix-mx-base` (`sudo apt-get install python-egenix-mxdatetime` on Ubuntu)
+  and use `virtualenv --system-site-packages` instead.
+
++ On Mac OS X, pip doesn't install the `libmagic` dependency for `python-magic`
+  properly. To fix this, run `brew install libmagic`.
+
++ On Mac OS X, libevent may not be installed already, which the Python `gevent` library requires. The error message
+  will be a clang error that file `event.h` is not found. To fix this using Homebrew, run `brew install libevent`.
+
++ On Mac OS X, if lxml fails to install, ensure that your command line tools are up to date by running `xcode-select --install`.
+
++ On Mac OS X, if Pillow complains that it can't find freetype, make sure freetype is installed with `brew install freetype`. Then create a symlink with: `ln -s /usr/local/include/freetype2 /usr/local/include/freetype`.
+
++ If you have an authentication error running `./manage.py migrate` the first
+  time, open `pg_hba.conf` (`/etc/postgresql/9.1/main/pg_hba.conf` on Ubuntu)
+  and change the line "local all all peer" to "local all all md5".
+
++ On Windows, to get python-magic to work you will need to install the following dependencies.
+  Once they are installed make sure the install folder is on the path.
+  + [GNUWin32 regex][regex]
+  + [GNUWin32 zlib][zlib]
+  + [GNUWin32 file][file]
+
+ [regex]: http://sourceforge.net/projects/gnuwin32/files/regex/
+ [zlib]: http://sourceforge.net/projects/gnuwin32/files/zlib/
+ [file]: http://sourceforge.net/projects/gnuwin32/files/file/
+
++ On Windows, Touchforms may complain about not having permission to access `tmp`. To solve this make a `c:\tmp` folder.
+
++ On Windows, if Celery gives this error on startup: `TypeError: 'LazySettings' object is not iterable` apply the
+  changes decribed in this bug report comment: https://github.com/celery/django-celery/issues/228#issuecomment-13562642
+
++ On Amazon EC2's latest Ubuntu Server 14.04 Edition with default source list, `install.sh` may not install elasticsearch due to dependency issues. Use instructions provided in `https://gist.github.com/wingdspur/2026107` to install

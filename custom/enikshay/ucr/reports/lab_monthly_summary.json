@@ -1,0 +1,150 @@
+{
+    "domains": [
+        "enikshay-test",
+        "enikshay-test-test"
+    ],
+    "data_source_table": "test",
+    "report_id": "lab_monthly_summary",
+    "config": {
+        "description": "",
+        "title": "Lab Monthly Summary",
+        "sort_expression": [],
+        "visible": false,
+        "configured_charts": [],
+        "aggregation_columns": [],
+        "filters": [
+            {
+                "compare_as_string": false,
+                "datatype": "string",
+                "required": false,
+                "display": "Case Open Date",
+                "field": "opened_on",
+                "type": "date",
+                "slug": "opened_on"
+            },
+            {
+                "compare_as_string": false,
+                "datatype": "string",
+                "type": "dynamic_choice_list",
+                "slug": "village",
+                "field": "person_owner_id",
+                "choice_provider": {
+                    "include_descendants": true,
+                    "type": "location"
+                },
+                "display": "Location"
+            }
+        ],
+        "columns": [
+            {
+                "display": "TB Suspects Examined for Diagnosis",
+                "type": "field",
+                "field": "suspect_examined_for_diagnosis",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "TB Suspects found positive",
+                "type": "field",
+                "field": "suspect_examined_for_diagnosis_positive",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "TB suspects undergoing Repeat Sputum Examination",
+                "column_id": "tb_suspects_undergoing",
+                "type": "field",
+                "field": "suspect_repeat_for_diagnosis",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "TB Suspects found positive on Repeat Sputum Examination",
+                "type": "field",
+                "field": "suspect_repeat_for_diagnosis_positive",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Follow-up patients examined",
+                "type": "field",
+                "field": "patient_follow_up",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Patients positive on follow-up",
+                "type": "field",
+                "field": "patient_follow_up_positive",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Total Slides Examined",
+                "type": "field",
+                "field": "total_slides",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Total Positive Slides",
+                "type": "field",
+                "field": "positive_slides",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Total Negative Slides",
+                "type": "field",
+                "field": "negative_slides",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            }
+        ]
+    }
+}

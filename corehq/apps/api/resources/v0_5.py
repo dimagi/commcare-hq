@@ -1,4 +1,5 @@
 from django.http import Http404
+from django.forms import ValidationError
 from tastypie import http
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.authorization import ReadOnlyAuthorization
@@ -20,8 +21,11 @@ from corehq.apps.api.auth import (
     AdminAuthentication,
     CustomResourceMeta,
 )
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
+from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
 
@@ -33,14 +37,15 @@ from corehq.apps.userreports.models import ReportConfiguration, \
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.reports.view import query_dict_to_dict, \
     get_filter_values
-from corehq.apps.users.models import CommCareUser, WebUser, Permissions, CouchUser
+from corehq.apps.userreports.sql.columns import UCRExpandDatabaseSubcolumn
+from corehq.apps.users.models import CommCareUser, WebUser, Permissions, CouchUser, UserRole
 from corehq.util import get_document_or_404
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
-from corehq.toggles import ZAPIER_INTEGRATION
 
 from . import v0_1, v0_4, CouchResourceMixin
 from . import HqBaseResource, DomainSpecificResourceMixin
 from phonelog.models import DeviceReportEntry
+from itertools import chain
 
 
 MOCK_BULK_USER_ES = None
@@ -56,6 +61,18 @@ def user_es_call(domain, q, fields, size, start_at):
         query.set_query({"query_string": {"query": q}})
     return query.run().hits
 
+
+def _set_role_for_bundle(kwargs, bundle):
+    # check for roles associated with the domain
+    domain_roles = UserRole.by_domain_and_name(kwargs['domain'], bundle.data.get('role'))
+    if domain_roles:
+        qualified_role_id = domain_roles[0].get_qualified_id()
+        bundle.obj.set_role(kwargs['domain'], qualified_role_id)
+    else:
+        # check for preset roles and now create them for the domain
+        permission_preset_name = UserRole.get_preset_permission_by_name(bundle.data.get('role'))
+        if permission_preset_name:
+            bundle.obj.set_role(kwargs['domain'], permission_preset_name)
 
 class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
     """
@@ -79,7 +96,7 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
             user['id'] = user.pop('_id')
         return namedtuple('user', user.keys())(**user)
 
-    class Meta(v0_1.CustomResourceMeta):
+    class Meta(CustomResourceMeta):
         authentication = RequirePermissionAuthentication(Permissions.edit_commcare_users)
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
@@ -166,6 +183,18 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 elif key in ['email', 'username']:
                     setattr(bundle.obj, key, value.lower())
                     should_save = True
+                elif key == 'password':
+                    domain = Domain.get_by_name(bundle.obj.domain)
+                    if domain.strong_mobile_passwords:
+                        try:
+                            clean_password(bundle.data.get("password"))
+                        except ValidationError as e:
+                            if not hasattr(bundle.obj, 'errors'):
+                                bundle.obj.errors = []
+                            bundle.obj.errors.append(e.message)
+                            return False
+                    bundle.obj.set_password(bundle.data.get("password"))
+                    should_save = True
                 else:
                     setattr(bundle.obj, key, value)
                     should_save = True
@@ -199,8 +228,15 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         if self._update(bundle):
             assert bundle.obj.domain == kwargs['domain']
             bundle.obj.save()
-        return bundle
+            return bundle
+        else:
+            raise BadRequest(''.join(chain.from_iterable(bundle.obj.errors)))
 
+    def obj_delete(self, bundle, **kwargs):
+        user = CommCareUser.get(kwargs['pk'])
+        if user:
+            user.retire()
+        return ImmediateHttpResponse(response=http.HttpAccepted())
 
 class WebUserResource(v0_1.WebUserResource):
 
@@ -213,6 +249,23 @@ class WebUserResource(v0_1.WebUserResource):
         if not isinstance(data, dict) and request.method == 'POST':
             data = {'id': data.obj._id}
         return self._meta.serializer.serialize(data, format, options)
+
+    def dispatch(self, request_type, request, **kwargs):
+        """
+        Override dispatch to check for proper params for user create : role and admin permissions
+        """
+        if request.method == 'POST':
+            details = self._meta.serializer.deserialize(request.body)
+            if details.get('is_admin', False):
+                if self._admin_assigned_another_role(details):
+                    raise BadRequest("An admin can have only one role : Admin")
+            else:
+                if not details.get('role', None):
+                    raise BadRequest("Please assign role for non admin user")
+                elif self._invalid_user_role(request, details):
+                    raise BadRequest("Invalid User Role %s" % details.get('role', None))
+
+        return super(WebUserResource, self).dispatch(request_type, request, **kwargs)
 
     def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_detail'):
         if isinstance(bundle_or_obj, Bundle):
@@ -253,9 +306,13 @@ class WebUserResource(v0_1.WebUserResource):
                 username=bundle.data['username'].lower(),
                 password=bundle.data['password'],
                 email=bundle.data.get('email', '').lower(),
+                is_admin=bundle.data.get('is_admin', False)
             )
             del bundle.data['password']
             self._update(bundle)
+            # is_admin takes priority over role
+            if not bundle.obj.is_admin and bundle.data.get('role'):
+                _set_role_for_bundle(kwargs, bundle)
             bundle.obj.save()
         except Exception:
             bundle.obj.delete()
@@ -269,6 +326,12 @@ class WebUserResource(v0_1.WebUserResource):
             bundle.obj.save()
         return bundle
 
+    def _invalid_user_role(self, request, details):
+        return details.get('role') not in UserRole.preset_and_domain_role_names(request.domain)
+
+    def _admin_assigned_another_role(self, details):
+        # default value Admin since that will be assigned later anyway since is_admin is True
+        return details.get('role', 'Admin') != 'Admin'
 
 class AdminWebUserResource(v0_1.UserResource):
     domains = fields.ListField(attribute='domains')
@@ -510,7 +573,7 @@ class StockTransactionResource(HqBaseResource, ModelResource):
 
 
 ConfigurableReportData = namedtuple("ConfigurableReportData", [
-    "data", "id", "domain", "total_records", "get_params", "next_page"
+    "data", "columns", "id", "domain", "total_records", "get_params", "next_page"
 ])
 
 
@@ -520,6 +583,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
     ConfigurableReport view.
     """
     data = fields.ListField(attribute="data", readonly=True)
+    columns = fields.ListField(attribute="columns", readonly=True)
     total_records = fields.IntegerField(attribute="total_records", readonly=True)
     next_page = fields.CharField(attribute="next_page", readonly=True)
 
@@ -528,7 +592,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
 
     def _get_start_param(self, bundle):
         try:
-            start = int(bundle.request.GET.get('start', 0))
+            start = int(bundle.request.GET.get('offset', 0))
             if start < 0:
                 raise ValueError
         except (ValueError, TypeError):
@@ -551,7 +615,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         if total_records > start + limit:
             start += limit
             new_get_params = get_query_dict.copy()
-            new_get_params["start"] = start
+            new_get_params["offset"] = start
             # limit has not changed, but it may not have been present in get params before.
             new_get_params["limit"] = limit
             return reverse('api_dispatch_detail', kwargs=dict(
@@ -573,8 +637,19 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         report.set_filter_values(filter_values)
 
         page = list(report.get_data(start=start, limit=limit))
+
+        columns = []
+        for column in report.columns:
+            simple_column = {
+                "header": column.header,
+                "slug": column.slug,
+            }
+            if isinstance(column, UCRExpandDatabaseSubcolumn):
+                simple_column['expand_column_value'] = column.expand_value
+            columns.append(simple_column)
+
         total_records = report.get_total_records()
-        return page, total_records
+        return page, columns, total_records
 
     def obj_get(self, bundle, **kwargs):
         domain = kwargs['domain']
@@ -583,11 +658,12 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         limit = self._get_limit_param(bundle)
 
         report_config = self._get_report_configuration(pk, domain)
-        page, total_records = self._get_report_data(
+        page, columns, total_records = self._get_report_data(
             report_config, domain, start, limit, bundle.request.GET)
 
         return ConfigurableReportData(
             data=page,
+            columns=columns,
             total_records=total_records,
             id=report_config._id,
             domain=domain,
@@ -630,8 +706,8 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         uri = super(ConfigurableReportDataResource, self).get_resource_uri(bundle_or_obj, url_name)
         if bundle_or_obj is not None and uri:
             get_params = get_obj(bundle_or_obj).get_params.copy()
-            if "start" not in get_params:
-                get_params["start"] = 0
+            if "offset" not in get_params:
+                get_params["offset"] = 0
             if "limit" not in get_params:
                 get_params["limit"] = self.LIMIT_DEFAULT
             uri += "?{}".format(get_params.urlencode())
@@ -642,21 +718,35 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         detail_allowed_methods = ["get"]
 
 
+class DoesNothingPaginator(Paginator):
+    def page(self):
+        return {
+            self.collection_name: self.objects,
+            "meta": {'total_count': self.get_count()}
+        }
+
+
 class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
+    title = fields.CharField(readonly=True, attribute="title", null=True)
     filters = fields.ListField(readonly=True)
     columns = fields.ListField(readonly=True)
 
     def dehydrate_filters(self, bundle):
         obj_filters = bundle.obj.filters
         return [{
+            "type": f["type"],
             "datatype": f["datatype"],
             "slug": f["slug"]
         } for f in obj_filters]
 
     def dehydrate_columns(self, bundle):
         obj_columns = bundle.obj.columns
-        return [c['column_id'] for c in obj_columns]
+        return [{
+            "column_id": c['column_id'],
+            "display": c['display'],
+            "type": c["type"],
+        } for c in obj_columns]
 
     def obj_get(self, bundle, **kwargs):
         domain = kwargs['domain']
@@ -667,6 +757,10 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
             raise NotFound(e.message)
         return report_configuration
 
+    def obj_get_list(self, bundle, **kwargs):
+        domain = kwargs['domain']
+        return ReportConfiguration.by_domain(domain)
+
     def detail_uri_kwargs(self, bundle_or_obj):
         return {
             'domain': get_obj(bundle_or_obj).domain,
@@ -674,8 +768,9 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
         }
 
     class Meta(CustomResourceMeta):
-        list_allowed_methods = []
+        list_allowed_methods = ["get"]
         detail_allowed_methods = ["get"]
+        paginator_class = DoesNothingPaginator
 
 
 UserDomain = namedtuple('UserDomain', 'domain_name project_name')
@@ -699,7 +794,7 @@ class UserDomainsResource(Resource):
         couch_user = CouchUser.from_django_user(request.user)
         results = []
         for domain in couch_user.get_domains():
-            if not ZAPIER_INTEGRATION.enabled(domain):
+            if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION):
                 continue
             domain_object = Domain.get_by_name(domain)
             results.append(UserDomain(
@@ -730,7 +825,7 @@ class DomainForms(Resource):
 
         domain = kwargs['domain']
         couch_user = CouchUser.from_django_user(bundle.request.user)
-        if not ZAPIER_INTEGRATION.enabled(domain) or not couch_user.is_member_of(domain):
+        if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION) or not couch_user.is_member_of(domain):
             raise ImmediateHttpResponse(
                 HttpForbidden('You are not allowed to get list of forms for this domain')
             )

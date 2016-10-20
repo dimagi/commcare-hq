@@ -1,13 +1,16 @@
 from django.conf import settings
 from django.test import TestCase
 import os
+
+from django.test.testcases import SimpleTestCase
 from django.test.utils import override_settings
 
 from casexml.apps.case.util import post_case_blocks
-from corehq.apps.receiverwrapper import submit_form_locally
+from casexml.apps.case.xml.parser import case_update_from_block
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from casexml.apps.case.tests.util import check_xml_line_by_line, CaseBlock, delete_all_cases
 from datetime import datetime
-from casexml.apps.case.xml import V2
+from casexml.apps.case.xml import V2, V2_NAMESPACE
 from casexml.apps.case import const
 from casexml.apps.phone import xml
 from corehq.form_processor.tests.utils import run_with_all_backends
@@ -41,7 +44,9 @@ class Version2CaseParsingTest(TestCase):
         self.assertFalse(case.closed)
         self.assertEqual("bar-user-id", case.user_id)
         self.assertEqual("bar-user-id", case.opened_by)
-        self.assertEqual(datetime(2011, 12, 6, 13, 42, 50), case.modified_on)
+        creation_date = datetime(2011, 12, 6, 13, 42, 50)
+        self.assertEqual(creation_date, case.modified_on)
+        self.assertEqual(creation_date, case.opened_on)
         self.assertEqual("v2_case_type", case.type)
         self.assertEqual("test case name", case.name)
 
@@ -161,10 +166,30 @@ class Version2CaseParsingTest(TestCase):
                     <case_name>test case name</case_name>
                     <owner_id>bar-user-id</owner_id>
                 </create>
+                <update>
+                    <date_opened>2011-12-06</date_opened>
+                </update>
                 <index>
                     <baz_ref case_type="bop">some_other_referenced_id</baz_ref>
                     <foo_ref case_type="bar">some_referenced_id</foo_ref>
                 </index>
             </case>"""
         check_xml_line_by_line(self, expected_v2_response, v2response)
-        
+
+
+class SimpleParsingTests(SimpleTestCase):
+    def test_index_block_not_dict(self):
+        block = case_update_from_block({
+            '@xmlns': V2_NAMESPACE,
+            '@case_id': '123',
+            'index': "   "
+        })
+        self.assertEqual(block.get_index_action().indices, [])
+
+    def test_attachments_block_not_dict(self):
+        block = case_update_from_block({
+            '@xmlns': V2_NAMESPACE,
+            '@case_id': '123',
+            'attachment': "   "
+        })
+        self.assertEqual(block.get_attachment_action().attachments, {})

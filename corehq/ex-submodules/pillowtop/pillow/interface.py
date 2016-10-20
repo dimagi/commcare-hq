@@ -27,6 +27,9 @@ class PillowBase(object):
     """
     __metaclass__ = ABCMeta
 
+    # set to true to disable saving pillow retry errors
+    retry_errors = True
+
     @abstractproperty
     def pillow_id(self):
         """
@@ -60,10 +63,10 @@ class PillowBase(object):
         pass
 
     def get_last_checkpoint_sequence(self):
-        return self.checkpoint.get_or_create_wrapped().document.wrapped_sequence
+        return self.checkpoint.get_or_create_wrapped().wrapped_sequence
 
     def get_checkpoint(self, verify_unchanged=False):
-        return self.checkpoint.get_or_create_wrapped(verify_unchanged=verify_unchanged).document
+        return self.checkpoint.get_or_create_wrapped(verify_unchanged=verify_unchanged)
 
     def set_checkpoint(self, change):
         self.checkpoint.update_to(change['seq'])
@@ -108,7 +111,7 @@ class PillowBase(object):
             handle_pillow_error(self, change, ex)
 
     @abstractmethod
-    def process_change(self, change, is_retry_attempt=False):
+    def process_change(self, change):
         pass
 
     @abstractmethod
@@ -161,7 +164,7 @@ class ConstructedPillow(PillowBase):
     def get_change_feed(self):
         return self._change_feed
 
-    def process_change(self, change, is_retry_attempt=False):
+    def process_change(self, change):
         self._processor.process_change(self, change)
 
     def fire_change_processed_event(self, change, context):
@@ -170,23 +173,19 @@ class ConstructedPillow(PillowBase):
 
 
 def handle_pillow_error(pillow, change, exception):
-    from couchdbkit import ResourceNotFound
     from pillow_retry.models import PillowError
-    meta = None
-    if hasattr(pillow, 'get_couch_db'):
-        try:
-            meta = pillow.get_couch_db().show('domain_shows/domain_date', change['id'])
-        except ResourceNotFound:
-            pass
+    error_id = None
+    if pillow.retry_errors:
+        error = PillowError.get_or_create(change, pillow)
+        error.add_attempt(exception, sys.exc_info()[2])
+        error.save()
+        error_id = error.id
 
-    error = PillowError.get_or_create(change, pillow, change_meta=meta)
-    error.add_attempt(exception, sys.exc_info()[2])
-    error.save()
     pillow_logging.exception(
         "[%s] Error on change: %s, %s. Logged as: %s" % (
             pillow.get_name(),
             change['id'],
             exception,
-            error.id
+            error_id
         )
     )

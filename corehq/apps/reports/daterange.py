@@ -17,6 +17,7 @@ def get_all_daterange_choices():
         DateRangeChoice('lastyear', _('Last Year'), True),
         DateRangeChoice('since', _('Since a Date'), False),
         DateRangeChoice('range', _('Date Range'), False),
+        DateRangeChoice('thismonth', _('This Month'), True),
     )
 
 
@@ -31,13 +32,6 @@ def get_simple_dateranges():
     Get all dateranges that are simple (don't require additional config)
     """
     return filter(lambda choice: choice.simple, get_all_daterange_choices())
-
-
-def get_complex_dateranges():
-    """
-    Get all dateranges that are complex (require additional config)
-    """
-    return filter(lambda choice: not choice.simple, get_all_daterange_choices())
 
 
 def get_daterange_start_end_dates(date_range, start_date=None, end_date=None, days=None):

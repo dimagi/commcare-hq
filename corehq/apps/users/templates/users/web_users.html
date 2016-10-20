@@ -10,7 +10,7 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-<script type="text/javascript">
+<script>
 (function (angular, undefined) {
     'use strict';
     var usersApp = angular.module('usersApp', ['hq.web_users']);
@@ -54,7 +54,7 @@
         $('#restrict_users').on('change', function () {
             var $saveButton = $('#save_restrict_option');
             $saveButton
-                    .removeAttr('disabled')
+                    .prop('disabled', false)
                     .removeClass('disabled btn-default')
                     .addClass('btn-success')
                     .text('{% trans "Save" %}');
@@ -68,14 +68,14 @@
                     $('#save_restrict_option')
                             .text('{% trans "Saved" %}')
                             .removeClass('btn-success')
-                            .attr('disabled', 'disabled')
+                            .prop('disabled', true)
                             .addClass('disabled btn-default');
             });
             e.preventDefault();
         });
 
         $('.resend-invite').click(function (e) {
-            $(this).addClass('disabled').attr('disabled', 'disabled');
+            $(this).addClass('disabled').prop('disabled', true);
             var post_url = '{% url "reinvite_web_user" domain %}';
             var doc_id = this.getAttribute('data-invite');
             var self = this;
@@ -104,11 +104,11 @@
             $('#confirm-delete').off('click');
             $('#confirm-delete').on('click', function () {
                 var $button = $(this);
-                $button.addClass('disabled').attr('disabled', 'disabled');
+                $button.addClass('disabled').prop('disabled', true);
                 $.post(post_url, {id: id},
                     function(data) {
                         $el.closest("tr").remove();
-                        $button.removeClass('disabled').attr('disabled', false);
+                        $button.removeClass('disabled').prop('disabled', false);
                         $('#modal-deletion').modal('hide');
                     }
                 );
@@ -375,16 +375,16 @@
                             </td>
                             <td>
                                 <div>
-                                    <a href="#" class="resend-invite btn btn-default"
+                                    <button type="button" class="resend-invite btn btn-default"
                                        data-invite={{ invitation.get_id }}>
                                         <i class="fa fa-envelope-o"></i>
                                         {% trans "Resend Invitation" %}
-                                    </a>
-                                    <a href="#" class="btn btn-danger delete-invitation"
+                                    </button>
+                                    <button type="button" class="btn btn-danger delete-invitation"
                                        data-id={{ invitation.get_id }}>
                                         <i class="fa fa-trash"></i>
                                         {% trans "Delete Invitation" %}
-                                    </a>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -436,6 +436,12 @@
                                 data-title="View Reports"
                                 data-content="{% trans "See all CommCareHQ performance reports." %}"></span>
                         </th>
+                        <th>
+                          {% trans "Edit Subscription Info" %}
+                          <span class="hq-help-template"
+                                data-title="Edit Subscription Info"
+                                data-content="{% trans "Edit the subscription information for this domain." %}"></span>
+                        </th>
                         <th data-bind="visible: allowEdit">{% trans "Actions" %}</th>
                     </tr>
                 </thead>
@@ -459,6 +465,7 @@
                             </div>
                             <span data-bind="visible: !reportPermissions.all() && !reportPermissions.specific().length, staticChecked: false"></span>
                         </td>
+                        <td><i data-bind="staticChecked: permissions.edit_billing"></i></td>
                         <td data-bind="visible: $root.allowEdit">
                             <button class="btn btn-default" data-bind="css: {disabled: !$data._id}, click: $data._id ? $root.setRoleBeingEdited : null">
                                 <i class="fa fa-edit"></i>
@@ -590,6 +597,36 @@
                                     </div>
                                     <div class="form-group">
                                         <label class="col-sm-4 control-label">
+                                            {% trans "Edit Subscription Info" %}
+                                        </label>
+                                        <div class="col-sm-8 controls">
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox"
+                                                           data-bind="checked: permissions.edit_billing" />
+                                                    {% trans "Allow role to edit subscription information." %}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% if request|toggle_enabled:"LOCATION_BASED_ACCESS_RESTRICTIONS" %}
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label">
+                                            {% trans "Full Organization Access" %}
+                                        </label>
+                                        <div class="col-sm-8 controls">
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox"
+                                                           data-bind="checked: permissions.access_all_locations" />
+                                                    {% trans "Allow role to access data from all locations" %}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label">
                                             {% trans "View All Reports" %}
                                         </label>
                                         <div class="col-sm-8 controls">
@@ -692,7 +729,7 @@
             <div class="modal-body"></div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-                <a class="btn btn-danger" id="confirm-delete">{% trans "Delete" %}</a>
+                <button type="button" class="btn btn-danger" id="confirm-delete">{% trans "Delete" %}</button>
             </div>
         </div>
     </div>

@@ -1,5 +1,7 @@
 from StringIO import StringIO
 import logging
+from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
@@ -20,9 +22,14 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.commtrack.util import submit_mapping_case_block, get_supply_point_and_location
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.groups.models import Group
+from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.dbaccessors.all_commcare_users import get_all_commcare_users_by_domain
+from corehq.apps.users.dbaccessors.all_commcare_users import (
+    get_all_commcare_users_by_domain,
+    get_user_docs_by_username,
+)
+from corehq.apps.users.models import UserRole
 
 from .forms import get_mobile_worker_max_username_length
 from .models import CommCareUser, CouchUser
@@ -36,7 +43,7 @@ class UserUploadError(Exception):
 required_headers = set(['username'])
 allowed_headers = set([
     'data', 'email', 'group', 'language', 'name', 'password', 'phone-number',
-    'uncategorized_data', 'user_id', 'is_active', 'location_code',
+    'uncategorized_data', 'user_id', 'is_active', 'location_code', 'role',
 ]) | required_headers
 old_headers = {
     # 'old_header_name': 'new_header_name'
@@ -66,6 +73,45 @@ def check_headers(user_specs):
                 label=label, headers=', '.join(header_set)))
     if messages:
         raise UserUploadError('\n'.join(messages))
+
+
+def check_duplicate_usernames(user_specs):
+    usernames = set()
+    duplicated_usernames = set()
+
+    for row in user_specs:
+        username = row.get('username')
+        if username and username in usernames:
+            duplicated_usernames.add(username)
+        usernames.add(username)
+
+    if duplicated_usernames:
+        raise UserUploadError(_("The following usernames have duplicate entries in "
+            "your file: " + ', '.join(duplicated_usernames)))
+
+
+def check_existing_usernames(user_specs, domain):
+    usernames_without_ids = set()
+    invalid_usernames = set()
+
+    for row in user_specs:
+        username = row.get('username')
+        user_id = row.get('user_id')
+        if username and user_id:
+            continue
+        try:
+            usernames_without_ids.add(normalize_username(username, domain))
+        except ValidationError:
+            invalid_usernames.add(username)
+
+    if invalid_usernames:
+        raise UserUploadError(_('The following usernames are invalid: ' + ', '.join(invalid_usernames)))
+
+    existing_usernames = [u.get('username') for u in get_user_docs_by_username(usernames_without_ids)]
+
+    if existing_usernames:
+        raise UserUploadError(_("The following usernames already exist and must "
+            "have an id specified to be updated: " + ', '.join(existing_usernames)))
 
 
 class GroupMemoizer(object):
@@ -358,6 +404,38 @@ def get_location_from_site_code(site_code, location_cache):
         )
 
 
+def is_password(password):
+    if not password:
+        return False
+    for c in password:
+        if c != "*":
+            return True
+    return False
+
+
+def users_with_duplicate_passwords(rows):
+    password_dict = dict()
+
+    for row in rows:
+        username = row.get('username')
+        password = unicode(row.get('password'))
+        if not is_password(password):
+            continue
+
+        if password_dict.get(password):
+            password_dict[password].add(username)
+        else:
+            password_dict[password] = {username}
+
+    ret = set()
+
+    for usernames in password_dict.values():
+        if len(usernames) > 1:
+            ret = ret.union(usernames)
+
+    return ret
+
+
 def create_or_update_users_and_groups(domain, user_specs, group_specs, location_specs, task=None):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
     custom_data_validator = UserFieldsView.get_validator(domain)
@@ -375,9 +453,14 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
     user_ids = set()
     allowed_groups = set(group_memoizer.groups)
     allowed_group_names = [group.name for group in allowed_groups]
+    allowed_roles = UserRole.by_domain(domain)
+    roles_by_name = {role.name: role for role in allowed_roles}
     can_access_locations = domain_has_privilege(domain, privileges.LOCATIONS)
     if can_access_locations:
         location_cache = SiteCodeToLocationCache(domain)
+    project = Domain.get_by_name(domain)
+    usernames_with_dupe_passwords = users_with_duplicate_passwords(user_specs)
+
     try:
         for row in user_specs:
             _set_progress(current)
@@ -394,6 +477,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
             user_id = row.get('user_id')
             username = row.get('username')
             location_code = row.get('location_code', '')
+            role = row.get('role', '')
 
             if password:
                 password = unicode(password)
@@ -440,13 +524,20 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                     else:
                         user = CommCareUser.get_by_username(username)
 
-                    def is_password(password):
-                        if not password:
-                            return False
-                        for c in password:
-                            if c != "*":
-                                return True
-                        return False
+                    if project.strong_mobile_passwords and is_password(password):
+                        if raw_username(username) in usernames_with_dupe_passwords:
+                            raise UserUploadError(_("Provide a unique password for each mobile worker"))
+
+                        try:
+                            clean_password(password)
+                        except forms.ValidationError:
+                            if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
+                                msg = _("Mobile Worker passwords must be 8 "
+                                    "characters long with at least 1 capital "
+                                    "letter, 1 special character and 1 number")
+                            else:
+                                msg = _("Please provide a stronger password")
+                            raise UserUploadError(msg)
 
                     if user:
                         if user.domain != domain:
@@ -504,6 +595,14 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                             loc = get_location_from_site_code(location_code, location_cache)
                         else:
                             loc = None
+
+                    if role:
+                        if role in roles_by_name:
+                            user.set_role(domain, roles_by_name[role].get_qualified_id())
+                        else:
+                            raise UserUploadError(_(
+                                "Role '%s' does not exist"
+                            ) % role)
 
                     user.save()
                     if can_access_locations and loc:
@@ -608,6 +707,7 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
         model_data, uncategorized_data = (
             user_data_model.get_model_and_uncategorized(user.user_data)
         )
+        role = user.get_role(domain)
         return {
             'data': model_data,
             'uncategorized_data': uncategorized_data,
@@ -621,6 +721,7 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
             'user_id': user._id,
             'is_active': str(user.is_active),
             'location_code': location_cache.get(user.location_id),
+            'role': role.name if role else '',
         }
 
     unrecognized_user_data_keys = set()
@@ -635,7 +736,7 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
 
     user_headers = [
         'username', 'password', 'name', 'phone-number', 'email',
-        'language', 'user_id', 'is_active',
+        'language', 'role', 'user_id', 'is_active',
     ]
     if domain_has_privilege(domain, privileges.LOCATIONS):
         user_headers.append('location_code')

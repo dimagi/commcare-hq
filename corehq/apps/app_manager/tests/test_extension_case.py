@@ -1,4 +1,3 @@
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.exceptions import CaseError
 from corehq.apps.app_manager.models import (
     Application,
@@ -27,7 +26,7 @@ class ExtCasePropertiesTests(SimpleTestCase, TestXmlMixin):
         self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
         self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
 
-        self.app = Application.new_app('domain', 'New App', APP_V2)
+        self.app = Application.new_app('domain', 'New App')
         self.app.version = 3
         self.fish_module = self.app.add_module(Module.new_module('Fish Module', lang='en'))
         self.fish_module.case_type = 'fish'
@@ -86,7 +85,7 @@ class ExtCasePropertiesAdvancedTests(SimpleTestCase, TestXmlMixin):
     file_path = 'data', 'extension_case'
 
     def setUp(self):
-        self.app = Application.new_app('domain', 'New App', APP_V2)
+        self.app = Application.new_app('domain', 'New App')
         self.app.version = 3
         self.module = self.app.add_module(AdvancedModule.new_module('New Module', lang='en'))
         self.module.case_type = 'test_case_type'
@@ -141,7 +140,7 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
         self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
         self.is_usercase_in_use_mock.return_value = True
 
-        self.app = Application.new_app('domain', 'New App', APP_V2)
+        self.app = Application.new_app('domain', 'New App')
         self.module = self.app.add_module(AdvancedModule.new_module('Fish Module', None))
         self.module.case_type = 'fish'
         self.form = self.module.new_form('New Form', None)

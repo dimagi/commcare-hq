@@ -8,13 +8,11 @@ CouchAppsPreindexPlugin.register('couchapps', __file__, {
     'export_instances_by_is_daily_saved': 'meta',
     'receiverwrapper': 'receiverwrapper',
     'users_extra': (settings.USERS_GROUPS_DB, settings.NEW_USERS_GROUPS_DB),
+    'deleted_users_by_username': settings.USERS_GROUPS_DB,
     'all_docs': (
         None, settings.NEW_USERS_GROUPS_DB, settings.NEW_FIXTURES_DB, 'meta',
         settings.NEW_DOMAINS_DB, settings.NEW_APPS_DB),
     'by_domain_doc_type_date': (
-        None, settings.NEW_USERS_GROUPS_DB, settings.NEW_FIXTURES_DB, 'meta',
-        settings.NEW_DOMAINS_DB, settings.NEW_APPS_DB, settings.SYNCLOGS_DB),
-    'domain_shows': (
         None, settings.NEW_USERS_GROUPS_DB, settings.NEW_FIXTURES_DB, 'meta',
         settings.NEW_DOMAINS_DB, settings.NEW_APPS_DB, settings.SYNCLOGS_DB),
     # register these views to both the main db AND the apps db.
@@ -22,4 +20,5 @@ CouchAppsPreindexPlugin.register('couchapps', __file__, {
     'apps_with_submissions': settings.NEW_APPS_DB,
     'exports_forms_by_app': (None, settings.NEW_APPS_DB),
     'forms_by_app_info': (None, settings.NEW_APPS_DB),
+    'sync_logs_by_date': settings.SYNCLOGS_DB,
 })

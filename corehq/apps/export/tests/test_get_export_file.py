@@ -1,17 +1,24 @@
 import json
-from mock import patch
-
 from StringIO import StringIO
+
 from django.test import SimpleTestCase
 from elasticsearch.exceptions import ConnectionError
+from mock import patch
 from openpyxl import load_workbook
 
+from corehq.apps.export.const import (
+    DEID_DATE_TRANSFORM,
+)
 from corehq.apps.export.export import (
     _get_writer,
     _Writer,
     _write_export_instance,
     ExportFile,
     get_export_file,
+)
+from corehq.apps.export.const import (
+    MISSING_VALUE,
+    EMPTY_VALUE,
 )
 from corehq.apps.export.models import (
     TableConfiguration,
@@ -24,23 +31,23 @@ from corehq.apps.export.models import (
     CaseExportInstance,
     PathNode,
     Option,
-    MAIN_TABLE
-)
-from corehq.apps.export.const import (
-    DEID_DATE_TRANSFORM,
+    MAIN_TABLE,
+    StockItem,
+    StockFormExportColumn,
 )
 from corehq.apps.export.tests.util import (
     new_case,
     DOMAIN,
     DEFAULT_CASE_TYPE,
 )
-from corehq.pillows.case import CasePillow
+from corehq.elastic import send_to_elasticsearch, get_es_new
+from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
 from couchexport.export import get_writer
-from couchexport.transforms import couch_to_excel_datetime
 from couchexport.models import Format
-from pillowtop.es_utils import completely_initialize_pillow_index
+from couchexport.transforms import couch_to_excel_datetime
+from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class WriterTest(SimpleTestCase):
@@ -157,8 +164,109 @@ class WriterTest(SimpleTestCase):
                 {
                     u'My table': {
                         u'headers': [u'MC | one', u'MC | two', 'MC | extra'],
-                        u'rows': [[None, 1, 'extra'], [1, 1, '']],
+                        u'rows': [[EMPTY_VALUE, 1, 'extra'], [1, 1, '']],
 
+                    }
+                }
+            )
+
+    def test_form_stock_columns(self):
+        """Ensure that we can export stock properties in a form export"""
+        docs = [{
+            '_id': 'simone-biles',
+            'domain': DOMAIN,
+            'form': {
+                'balance': [
+                    {
+                        '@type': 'question-id',
+                        'entry': {
+                            '@quantity': '2',
+                        }
+                    }, {
+                        '@type': 'other-question-id',
+                        'entry': {
+                            '@quantity': '3',
+                        }
+                    }]
+            },
+        }, {
+            '_id': 'sam-mikulak',
+            'domain': DOMAIN,
+            'form': {
+                'balance': {
+                    '@type': 'question-id',
+                    'entry': {
+                        '@quantity': '2',
+                    }
+                },
+            },
+        }, {
+            '_id': 'kerri-walsh',
+            'domain': DOMAIN,
+            'form': {
+                'balance': {
+                    '@type': 'other-question-id',
+                    'entry': {
+                        '@quantity': '2',
+                    }
+                },
+            },
+        }, {
+            '_id': 'april-ross',
+            'domain': DOMAIN,
+            'form': {},
+        }]
+        export_instance = FormExportInstance(
+            export_format=Format.JSON,
+            domain=DOMAIN,
+            tables=[TableConfiguration(
+                label="My table",
+                selected=True,
+                path=[],
+                columns=[
+                    StockFormExportColumn(
+                        label="StockItem @type",
+                        item=StockItem(
+                            path=[
+                                PathNode(name='form'),
+                                PathNode(name='balance:question-id'),
+                                PathNode(name='@type'),
+                            ],
+                        ),
+                        selected=True,
+                    ),
+                    StockFormExportColumn(
+                        label="StockItem @quantity",
+                        item=StockItem(
+                            path=[
+                                PathNode(name='form'),
+                                PathNode(name='balance:question-id'),
+                                PathNode(name='entry'),
+                                PathNode(name='@quantity'),
+                            ],
+                        ),
+                        selected=True,
+                    ),
+                ]
+            )]
+        )
+        writer = _get_writer([export_instance])
+
+        with writer.open([export_instance]):
+            _write_export_instance(writer, export_instance, docs)
+
+        with ExportFile(writer.path, writer.format) as export:
+            self.assertEqual(
+                json.loads(export),
+                {
+                    u'My table': {
+                        u'headers': [u'StockItem @type', u'StockItem @quantity'],
+                        u'rows': [
+                            ['question-id', '2'],
+                            ['question-id', '2'],
+                            [MISSING_VALUE, MISSING_VALUE],
+                            [MISSING_VALUE, MISSING_VALUE],
+                        ],
                     }
                 }
             )
@@ -195,7 +303,7 @@ class WriterTest(SimpleTestCase):
                 {
                     u'My table': {
                         u'headers': [u'Date'],
-                        u'rows': [[None], [couch_to_excel_datetime('2015-07-22T14:16:49.584880Z', None)]],
+                        u'rows': [[MISSING_VALUE], [couch_to_excel_datetime('2015-07-22T14:16:49.584880Z', None)]],
 
                     }
                 }
@@ -370,27 +478,27 @@ class ExportTest(SimpleTestCase):
     @classmethod
     def setUpClass(cls):
         super(ExportTest, cls).setUpClass()
-        cls.case_pillow = CasePillow(online=False)
         with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
-            completely_initialize_pillow_index(cls.case_pillow)
+            cls.es = get_es_new()
+            initialize_index_and_mapping(cls.es, CASE_INDEX_INFO)
 
         case = new_case(foo="apple", bar="banana", date='2016-4-24')
-        cls.case_pillow.send_robust(case.to_json())
+        send_to_elasticsearch('cases', case.to_json())
 
         case = new_case(owner_id="some_other_owner", foo="apple", bar="banana", date='2016-4-04')
-        cls.case_pillow.send_robust(case.to_json())
+        send_to_elasticsearch('cases', case.to_json())
 
         case = new_case(type="some_other_type", foo="apple", bar="banana")
-        cls.case_pillow.send_robust(case.to_json())
+        send_to_elasticsearch('cases', case.to_json())
 
         case = new_case(closed=True, foo="apple", bar="banana")
-        cls.case_pillow.send_robust(case.to_json())
+        send_to_elasticsearch('cases', case.to_json())
 
-        cls.case_pillow.get_es_new().indices.refresh(cls.case_pillow.es_index)
+        cls.es.indices.refresh(CASE_INDEX_INFO.index)
 
     @classmethod
     def tearDownClass(cls):
-        ensure_index_deleted(cls.case_pillow.es_index)
+        ensure_index_deleted(CASE_INDEX_INFO.index)
         super(ExportTest, cls).tearDownClass()
 
     def test_get_export_file(self):
@@ -480,7 +588,7 @@ class ExportTest(SimpleTestCase):
                             u'DEID Date Transform column [sensitive]',
                         ],
                         u'rows': [
-                            [None],
+                            [MISSING_VALUE],
                             [u'2016-04-07'],
                             [u'2016-04-27'],  # offset by 3 since that's the mocked random offset
                         ],

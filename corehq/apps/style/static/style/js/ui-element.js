@@ -45,7 +45,7 @@ var uiElement;
 (function () {
     'use strict';
 
-    var Input = function ($elem, getElemValue, setElemValue, setPlaceholderValue) {
+    var Input = function ($elem, initialValue, getElemValue, setElemValue, setPlaceholderValue) {
         var that = this;
         eventize(this);
         this.ui = $('<div class="app-designer-input"/>');
@@ -61,7 +61,7 @@ var uiElement;
             setPlaceholderValue($elem, value);
         };
 
-        this.$edit_view = $elem.bind('change textchange', function () {
+        this.$edit_view = $elem.on('change textchange', function () {
             that.fire('change');
         });
         this.$noedit_view = $('<span class="ui-element-input"/>');
@@ -71,6 +71,7 @@ var uiElement;
             this.$noedit_view.text(this.value);
         });
         this.setEdit(this.edit);
+        this.val(initialValue);
     };
     Input.prototype = {
         val: function (value) {
@@ -131,7 +132,7 @@ var uiElement;
 
     uiElement = {
         input: function (value) {
-            return new Input($('<input type="text" class="form-control"/>').val(value), function ($elem) {
+            return new Input($('<input type="text" class="form-control"/>'), value, function ($elem) {
                 return $elem.val();
             }, function ($elem, value) {
                 return $elem.val(value);

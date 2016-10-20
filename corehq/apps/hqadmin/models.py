@@ -1,9 +1,15 @@
+from datetime import date
+
 from django.db import models
 
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.parsing import json_format_datetime
-from pillowtop.utils import get_pillow_by_name
+from dimagi.utils.decorators.memoized import memoized
+from pillowtop.utils import get_pillow_by_name, get_all_pillow_instances
 from pillowtop.exceptions import PillowNotFoundError
+
+
+from corehq.apps.users.models import WebUser
 
 
 class HqDeploy(Document):
@@ -60,3 +66,30 @@ class PillowCheckpointSeqStore(models.Model):
             return None
 
         return store
+
+
+class ESRestorePillowCheckpoints(models.Model):
+    seq = models.TextField()
+    checkpoint_id = models.CharField(max_length=255, db_index=True)
+    date_updated = models.DateField()
+
+    @classmethod
+    def create_pillow_checkpoint_snapshots(cls):
+        for pillow in get_all_pillow_instances():
+            checkpoint = pillow.checkpoint
+            db_seq = checkpoint.get_current_sequence_id()
+            cls.objects.create(seq=db_seq,
+                               checkpoint_id=checkpoint.checkpoint_id,
+                               date_updated=date.today())
+
+
+class VCMMigration(models.Model):
+    domain = models.CharField(max_length=255, null=False, unique=True)
+    emailed = models.DateTimeField(null=True)
+    migrated = models.DateTimeField(null=True)
+    notes = models.TextField(null=True)
+
+    @property
+    @memoized
+    def admins(self):
+        return [admin.email or admin.username for admin in WebUser.get_admins_by_domain(self.domain)]

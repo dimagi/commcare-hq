@@ -95,7 +95,7 @@ class ReportFixturesProvider(object):
     @staticmethod
     def _get_report_and_data_source(report_id, domain):
         report = get_report_config(report_id, domain)[0]
-        data_source = ReportFactory.from_spec(report)
+        data_source = ReportFactory.from_spec(report, include_prefilters=True)
         return report, data_source
 
     @staticmethod
@@ -133,7 +133,7 @@ class ReportFixturesProvider(object):
             rows_elem.append(_row_to_row_elem(
                 dict(
                     zip(
-                        map(lambda column_config: column_config.column_id, data_source.column_configs),
+                        map(lambda column_config: column_config.column_id, data_source.top_level_columns),
                         map(str, total_row)
                     )
                 ),

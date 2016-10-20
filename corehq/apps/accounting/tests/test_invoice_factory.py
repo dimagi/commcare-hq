@@ -43,7 +43,7 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
     def test_incomplete_starting_coverage(self):
         some_plan = generator.subscribable_plan()
         subscription = Subscription.new_domain_subscription(
-            self.account, self.domain, some_plan,
+            self.account, self.domain.name, some_plan,
             date_start=self.invoice_start + datetime.timedelta(days=3)
         )
         subscriptions = self.invoice_factory._get_subscriptions()
@@ -56,7 +56,7 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
     def test_incomplete_ending_coverage(self):
         some_plan = generator.subscribable_plan()
         subscription = Subscription.new_domain_subscription(
-            self.account, self.domain, some_plan,
+            self.account, self.domain.name, some_plan,
             date_start=self.invoice_start,
             date_end=self.invoice_end - datetime.timedelta(days=3)
         )
@@ -72,20 +72,20 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         some_plan = generator.subscribable_plan()
         middle_date = self.invoice_end - datetime.timedelta(days=15)
         Subscription.new_domain_subscription(
-            self.account, self.domain, some_plan,
+            self.account, self.domain.name, some_plan,
             date_start=self.invoice_start + datetime.timedelta(days=1),
             date_end=middle_date
         )
         next_start = middle_date + datetime.timedelta(days=2)
         next_end = next_start + datetime.timedelta(days=2)
         Subscription.new_domain_subscription(
-            self.account, self.domain, some_plan,
+            self.account, self.domain.name, some_plan,
             date_start=next_start,
             date_end=next_end,
         )
         final_start = next_end + datetime.timedelta(days=2)
         Subscription.new_domain_subscription(
-            self.account, self.domain, some_plan,
+            self.account, self.domain.name, some_plan,
             date_start=final_start,
             date_end=self.invoice_end - datetime.timedelta(days=1),
         )
@@ -98,7 +98,7 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
     def test_full_coverage(self):
         some_plan = generator.subscribable_plan()
         Subscription.new_domain_subscription(
-            self.account, self.domain, some_plan,
+            self.account, self.domain.name, some_plan,
             date_start=self.invoice_start,
             date_end=self.invoice_end + datetime.timedelta(days=1),
         )

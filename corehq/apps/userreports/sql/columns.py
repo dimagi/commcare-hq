@@ -7,7 +7,7 @@ from fluff import TYPE_STRING
 from fluff.util import get_column_type
 
 
-class SqlColumnConfig(object):
+class ColumnConfig(object):
     """
     Stub object to send column information to the data source
     """
@@ -20,6 +20,17 @@ class SqlColumnConfig(object):
         else:
             self.headers = headers
         self.warnings = warnings if warnings is not None else []
+
+
+class UCRExpandDatabaseSubcolumn(DatabaseColumn):
+    """
+    A light wrapper around DatabaseColumn that stores the expand value that this DatabaseColumn is based on.
+    """
+    def __init__(self, header, agg_column, expand_value, format_fn=None, slug=None, *args, **kwargs):
+        self.expand_value = expand_value
+        super(UCRExpandDatabaseSubcolumn, self).__init__(
+            header, agg_column, format_fn=None, slug=None, *args, **kwargs
+        )
 
 
 def column_to_sql(column):
@@ -52,7 +63,7 @@ def get_expanded_column_config(data_source_configuration, column_config, lang):
             data_source_configuration, column_config, column_config.max_expansion
         )
     except ColumnNotFoundError as e:
-        return SqlColumnConfig([], warnings=[unicode(e)])
+        return ColumnConfig([], warnings=[unicode(e)])
     else:
         if over_expansion_limit:
             column_warnings.append(_(
@@ -62,7 +73,7 @@ def get_expanded_column_config(data_source_configuration, column_config, lang):
                 header=column_config.get_header(lang),
                 max=column_config.max_expansion,
             ))
-        return SqlColumnConfig(_expand_column(column_config, vals, lang), warnings=column_warnings)
+        return ColumnConfig(_expand_column(column_config, vals, lang), warnings=column_warnings)
 
 
 DEFAULT_MAXIMUM_EXPANSION = 10
@@ -124,9 +135,10 @@ def _expand_column(report_column, distinct_values, lang):
         else:
             sql_agg_col = SumWhen(report_column.field, whens={val: 1}, else_=0, alias=alias)
 
-        columns.append(DatabaseColumn(
+        columns.append(UCRExpandDatabaseSubcolumn(
             u"{}-{}".format(report_column.get_header(lang), val),
             sql_agg_col,
+            val,
             sortable=False,
             data_slug=u"{}-{}".format(report_column.column_id, index),
             format_fn=report_column.get_format_fn(),

@@ -5,8 +5,8 @@
 
 {% block js %}{{ block.super }}
     {% if charts %}
-    <script type="text/javascript" src="{% static 'nvd3/lib/d3.v2.js' %}"></script>
-    <script type="text/javascript" src="{% static 'nvd3/nv.d3.min.js' %}"></script>
+    <script src="{% static 'nvd3/lib/d3.v2.js' %}"></script>
+    <script src="{% static 'nvd3/nv.d3.min.js' %}"></script>
     {% endif %}
 {% endblock %}
 
@@ -119,7 +119,7 @@
             </div>
         </div>
     </script>
-    <script type="text/javascript">
+    <script>
 
         {% if report_table and report_table.datatables %}
             var reportTables = new HQReportDataTables({

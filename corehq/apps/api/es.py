@@ -9,6 +9,7 @@ from django.utils.decorators import method_decorator, classonlymethod
 from django.views.generic import View
 from elasticsearch.exceptions import ElasticsearchException
 
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.es.utils import flatten_field_dict
 from corehq.apps.api.resources.v0_1 import TASTYPIE_RESERVED_GET_PARAMS
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
@@ -445,8 +446,8 @@ class ReportXFormES(XFormES):
                                     "path": "form.case",
                                     "filter": {
                                         "or": [
-                                            {"term": {"@case_id": "%s" % case_id}},
-                                            {"term": {"case_id": "%s" % case_id}}
+                                            {"term": {"form.case.@case_id": "%s" % case_id}},
+                                            {"term": {"form.case.case_id": "%s" % case_id}}
                                         ]
                                     }
                                 }
@@ -559,6 +560,8 @@ class ElasticAPIQuerySet(object):
             if self.model:
                 # HACK: Sometimes the model is a class w/ a wrap method, sometimes just a function
                 if hasattr(self.model, 'wrap'):
+                    if self.model == CommCareCase:
+                        jvalue['_source'].pop('modified_by', None)
                     yield self.model.wrap(jvalue['_source']) 
                 else:
                     yield self.model(jvalue['_source'])

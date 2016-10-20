@@ -17,6 +17,7 @@ class CaseDbCacheTest(TestCase):
     """
 
     def setUp(self):
+        super(CaseDbCacheTest, self).setUp()
         self.interface = FormProcessorInterface()
 
     @run_with_all_backends
@@ -145,6 +146,7 @@ class CaseDbCacheNoDbTest(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(CaseDbCacheNoDbTest, cls).setUpClass()
         cls.interface = FormProcessorInterface()
 
     def test_couch_wrap_lock_dependency_couch(self):

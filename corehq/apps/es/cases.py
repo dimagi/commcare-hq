@@ -16,7 +16,7 @@ closed after May 1st.
              case_es.closed_range(gte=datetime.date(2015, 05, 01))))
 """
 from .es_query import HQESQuery
-from . import filters
+from . import aggregations, filters
 
 
 class CaseES(HQESQuery):
@@ -36,6 +36,7 @@ class CaseES(HQESQuery):
             user,
             user_ids_handle_unknown,
             opened_by,
+            case_ids,
             active_in_range,
         ] + super(CaseES, self).builtin_filters
 
@@ -80,6 +81,10 @@ def opened_by(user_id):
     return filters.term('opened_by', user_id)
 
 
+def case_ids(case_ids):
+    return filters.term('_id', case_ids)
+
+
 def active_in_range(gt=None, gte=None, lt=None, lte=None):
     """Restricts cases returned to those with actions during the range"""
     return filters.nested(
@@ -103,3 +108,22 @@ def user_ids_handle_unknown(user_ids):
     else:
         user_filter = filters.missing('user_id')
     return user_filter
+
+
+def touched_total_aggregation(gt=None, gte=None, lt=None, lte=None):
+    return aggregations.FilterAggregation(
+        'touched_total',
+        filters.AND(
+            modified_range(gt, gte, lt, lte),
+        )
+    )
+
+
+def open_case_aggregation(name='open_case', gt=None, gte=None, lt=None, lte=None):
+    return aggregations.FilterAggregation(
+        name,
+        filters.AND(
+            modified_range(gt, gte, lt, lte),
+            is_closed(False),
+        )
+    )

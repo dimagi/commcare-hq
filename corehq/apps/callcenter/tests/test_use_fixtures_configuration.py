@@ -8,7 +8,7 @@ from corehq.apps.callcenter.app_parser import (
     _get_indicators_used_in_modules, _get_indicators_used_in_forms
 )
 from corehq.apps.callcenter import const
-from corehq.apps.callcenter.tests import get_indicator_slugs_from_config
+from corehq.apps.callcenter.tests.test_models import get_indicator_slugs_from_config
 from corehq.apps.domain.models import Domain, CallCenterProperties
 from corehq.apps.callcenter.fixturegenerators import IndicatorsFixturesProvider
 from corehq.util.test_utils import generate_cases, TestFileMixin
@@ -50,6 +50,7 @@ class TestIndicatorsFromApp(SimpleTestCase, TestFileMixin):
             'formsSubmittedWeek0',
             'forms_submitted_month1',
             'totalCases',
+            'motherFormsMonth0',
         ])
 
     def test_get_indicators_used_in_app_blank(self):
@@ -85,6 +86,7 @@ class TestIndicatorsFromApp(SimpleTestCase, TestFileMixin):
 
     def test_get_config_from_app(self):
         app = self._get_app()
+        app.domain = 'aarohi'
         self._add_indicators_to_module_details(app.get_module(0), self.test_indicators[0:2])
         self._add_indicators_to_module_details(app.get_module(1), self.test_indicators[2:4])
         forms = list(app.get_forms(bare=True))
@@ -160,12 +162,33 @@ class TestIndicatorsFromApp(SimpleTestCase, TestFileMixin):
     ('formsSubmittedWeek0', (const.FORMS_SUBMITTED, None, const.WEEK0, True)),
     ('forms_submitted_month1', (const.FORMS_SUBMITTED, None, const.MONTH1, False)),
     ('totalCases', (const.CASES_TOTAL, None, None, True)),
-    ('motherFormsMonth0', ('custom', None, None, True)),
+    ('motherFormsMonth0', (const.CUSTOM_FORM, 'motherForms', const.MONTH0, False)),
+    ('motherFormsMonth0)', None),
 ], TestIndicatorsFromApp)
 def test_parse_indicator(self, indicator_name, parsed_tuple):
+    expected = ParsedIndicator(*parsed_tuple) if parsed_tuple else parsed_tuple
     self.assertEqual(
-        parse_indicator(indicator_name),
-        ParsedIndicator(*parsed_tuple)
+        parse_indicator(indicator_name, const.PER_DOMAIN_FORM_INDICATORS['aarohi']),
+        expected
+    )
+
+
+@generate_cases([
+    (['FindPatientFormsMonth0', 'FindPatientFormsMonth1)'], ['FindPatientFormsMonth0']),  # custom
+    (['formsSubmittedWeek0', 'formsSubmittedWek1'], ['formsSubmittedWeek0']),  # legacy bad period
+    (['formsSubmittedWeek0', 'formsSubmitedWeek1'], ['formsSubmittedWeek0']),  # legacy bad indicator name
+    (['cases_active_week0', 'cases_active_wek1'], ['cases_active_week0']),  # bad period
+    (['cases_active_week0', 'cases_ative_week1'], ['cases_active_week0']),  # pad indicator name
+], TestIndicatorsFromApp)
+def test_get_config_from_app_bad_names(self, indicators, expected):
+    app = self._get_app()
+    app.domain = 'infomovel'
+    self._add_indicators_to_module_details(app.get_module(0), indicators=indicators)
+    config = get_call_center_config_from_app(app)
+    indicators_from_config = get_indicator_slugs_from_config(config)
+    self.assertEqual(
+        sorted(indicators_from_config),
+        expected
     )
 
 

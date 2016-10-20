@@ -7,6 +7,7 @@ from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
 from corehq.util.dates import unix_time
+from corehq.apps.analytics.utils import get_instance_string
 from datetime import datetime, date, timedelta
 import time
 import json
@@ -19,9 +20,13 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from corehq.toggles import deterministic_random
 from corehq.util.decorators import analytics_task
+from corehq.util.soft_assert import soft_assert
 
 from dimagi.utils.logging import notify_exception
 
+_hubspot_failure_soft_assert = soft_assert(to=['{}@{}'.format('cellowitz', 'dimagi.com'),
+                                               '{}@{}'.format('aphilippot', 'dimagi.com')],
+                                           send_to_ops=False)
 
 logger = logging.getLogger('analytics')
 logger.setLevel('DEBUG')
@@ -179,12 +184,17 @@ def update_hubspot_properties(webuser, properties):
 
 @analytics_task()
 def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
-    if path.startswith(reverse("register_user")):
+    from corehq.apps.registration.views import ProcessRegistrationView
+    if path.startswith(reverse(ProcessRegistrationView.urlname)):
         tracking_dict = {
             'created_account_in_hq': True,
             'is_a_commcare_user': True,
             'lifecyclestage': 'lead'
         }
+        if (hasattr(webuser, 'phone_numbers') and len(webuser.phone_numbers) > 0):
+            tracking_dict.update({
+                'phone': webuser.phone_numbers[0],
+            })
         tracking_dict.update(get_ab_test_properties(webuser))
         _track_on_hubspot(webuser, tracking_dict)
         _send_form_to_hubspot(HUBSPOT_SIGNUP_FORM_ID, webuser, cookies, meta)
@@ -245,7 +255,7 @@ def track_sent_invite_on_hubspot(webuser, cookies, meta):
 
 @analytics_task()
 def track_existing_user_accepted_invite_on_hubspot(webuser, cookies, meta):
-    _send_form_to_hubspot(HUBSPOT_INVITATION_SENT_FORM, webuser, cookies, meta)
+    _send_form_to_hubspot(HUBSPOT_EXISTING_USER_INVITE_FORM, webuser, cookies, meta)
 
 
 @analytics_task()
@@ -254,8 +264,9 @@ def track_new_user_accepted_invite_on_hubspot(webuser, cookies, meta):
 
 
 @analytics_task()
-def track_clicked_preview_on_hubspot(webuser, cookies, meta):
-    _send_form_to_hubspot(HUBSPOT_CLICKED_PREVIEW_FORM_ID, webuser, cookies, meta)
+def track_clicked_preview_on_hubspot(couchuser, cookies, meta):
+    if couchuser.is_web_user():
+        _send_form_to_hubspot(HUBSPOT_CLICKED_PREVIEW_FORM_ID, couchuser, cookies, meta)
 
 
 @analytics_task()
@@ -320,13 +331,17 @@ def track_periodic_data():
     """
     # Start by getting a list of web users mapped to their domains
     six_months_ago = date.today() - timedelta(days=180)
-    users_to_domains = UserES().web_users().last_logged_in(gte=six_months_ago).fields(['domains', 'email'])\
+    users_to_domains = UserES().web_users().last_logged_in(gte=six_months_ago)\
+                               .fields(['domains', 'email', 'date_joined'])\
                                .run().hits
     # users_to_domains is a list of dicts
     domains_to_forms = FormES().terms_aggregation('domain', 'domain').size(0).run()\
         .aggregations.domain.counts_by_bucket()
     domains_to_mobile_users = UserES().mobile_users().terms_aggregation('domain', 'domain').size(0).run()\
                                       .aggregations.domain.counts_by_bucket()
+
+    # Keep track of india and www data seperately
+    env = get_instance_string()
 
     # For each web user, iterate through their domains and select the max number of form submissions and
     # max number of mobile workers
@@ -335,6 +350,7 @@ def track_periodic_data():
         email = user.get('email')
         if not email:
             continue
+        date_created = user.get('date_joined')
         max_forms = 0
         max_workers = 0
 
@@ -350,20 +366,24 @@ def track_periodic_data():
             'email': email,
             'properties': [
                 {
-                    'property': 'max_form_submissions_in_a_domain',
+                    'property': '{}max_form_submissions_in_a_domain'.format(env),
                     'value': max_forms
                 },
                 {
-                    'property': 'max_mobile_workers_in_a_domain',
+                    'property': '{}max_mobile_workers_in_a_domain'.format(env),
                     'value': max_workers
                 },
                 {
-                    'property': 'project_spaces_created_by_user',
+                    'property': '{}project_spaces_created_by_user'.format(env),
                     'value': project_spaces_created,
                 },
                 {
-                    'property': 'over_300_form_submissions',
+                    'property': '{}over_300_form_submissions'.format(env),
                     'value': max_forms > 300
+                },
+                {
+                    'property': '{}date_created'.format(env),
+                    'value': date_created
                 }
             ]
         }
@@ -383,6 +403,8 @@ def submit_data_to_hub_and_kiss(submit_json):
     for (dispatcher, error_message) in [hubspot_dispatch, kissmetrics_dispatch]:
         try:
             dispatcher(submit_json)
+        except requests.exceptions.HTTPError, e:
+            _hubspot_failure_soft_assert(False, e.response.content)
         except Exception, e:
             notify_exception(None, u"{msg}: {exc}".format(msg=error_message, exc=e))
 

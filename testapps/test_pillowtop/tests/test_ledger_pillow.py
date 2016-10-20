@@ -1,10 +1,13 @@
-from django.test import TestCase, override_settings
+from django.conf import settings
+from django.core.management import call_command
+from django.test import TestCase
 from elasticsearch.exceptions import ConnectionError
 
 from casexml.apps.case.mock import CaseFactory
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
+from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.elastic import get_es_new
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
@@ -29,8 +32,8 @@ class LedgerPillowTest(TestCase):
 
     def setUp(self):
         super(LedgerPillowTest, self).setUp()
-        FormProcessorTestUtils.delete_all_cases(self.domain)
         FormProcessorTestUtils.delete_all_ledgers(self.domain)
+        FormProcessorTestUtils.delete_all_cases(self.domain)
         with trap_extra_setup(ConnectionError):
             self.pillow = get_ledger_to_elasticsearch_pillow()
         self.elasticsearch = get_es_new()
@@ -39,18 +42,20 @@ class LedgerPillowTest(TestCase):
 
     def tearDown(self):
         ensure_index_deleted(LEDGER_INDEX_INFO.index)
+        FormProcessorTestUtils.delete_all_ledgers(self.domain)
+        FormProcessorTestUtils.delete_all_cases(self.domain)
         super(LedgerPillowTest, self).tearDown()
 
     @run_with_all_backends
-    def test_ledger_pillow_sql(self):
+    def test_ledger_pillow(self):
         factory = CaseFactory(domain=self.domain)
         case = factory.create_case()
 
         consumer = get_test_kafka_consumer(topics.LEDGER)
         # have to get the seq id before the change is processed
-        kafka_seq = consumer.offsets()['fetch'][(topics.LEDGER, 0)]
+        kafka_seq = get_topic_offset(topics.LEDGER)
 
-        from corehq.apps.commtrack.tests import get_single_balance_block
+        from corehq.apps.commtrack.tests.util import get_single_balance_block
         from corehq.apps.hqcase.utils import submit_case_blocks
         submit_case_blocks([
             get_single_balance_block(case.case_id, self.product_id, 100)],
@@ -75,6 +80,28 @@ class LedgerPillowTest(TestCase):
         self.elasticsearch.indices.refresh(LEDGER_INDEX_INFO.index)
 
         # confirm change made it to elasticserach
+        self._assert_ledger_in_es(ref)
+
+    @run_with_all_backends
+    def test_ledger_reindexer(self):
+        factory = CaseFactory(domain=self.domain)
+        case = factory.create_case()
+
+        from corehq.apps.commtrack.tests.util import get_single_balance_block
+        from corehq.apps.hqcase.utils import submit_case_blocks
+        submit_case_blocks([
+            get_single_balance_block(case.case_id, self.product_id, 100)],
+            self.domain
+        )
+
+        ref = UniqueLedgerReference(case.case_id, 'stock', self.product_id)
+
+        index_id = 'ledger-v2' if settings.TESTS_SHOULD_USE_SQL_BACKEND else 'ledger-v1'
+        call_command('ptop_reindexer_v2', index_id, cleanup=True, noinput=True, reset=True)
+
+        self._assert_ledger_in_es(ref)
+
+    def _assert_ledger_in_es(self, ref):
         results = self.elasticsearch.search(
             LEDGER_INDEX_INFO.index,
             LEDGER_INDEX_INFO.type, body={

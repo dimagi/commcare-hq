@@ -9,12 +9,14 @@ from datetime import datetime
 class SupplyPointTest(TestCase):
 
     def setUp(self):
+        super(SupplyPointTest, self).setUp()
         self.domain = bootstrap_domain(TEST_DOMAIN)
         self.loc = make_loc('loc1')
 
     def tearDown(self):
         self.loc.delete()
         self.domain.delete()
+        super(SupplyPointTest, self).tearDown()
 
     def testMakeSupplyPoint(self):
         sp = self.loc.linked_supply_point()

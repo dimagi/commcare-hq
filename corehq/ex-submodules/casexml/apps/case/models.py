@@ -272,6 +272,10 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
     def deletion_id(self):
         return getattr(self, '-deletion_id', None)
 
+    @property
+    def deletion_date(self):
+        return getattr(self, '-deletion_date', None)
+
     def soft_delete(self):
         self.doc_type += DELETED_SUFFIX
         self.save()

@@ -36,6 +36,17 @@ class StaticToggle(object):
     def enabled(self, item, **kwargs):
         return any([toggle_enabled(self.slug, item, namespace=n, **kwargs) for n in self.namespaces])
 
+    def enabled_for_request(self, request):
+        return (
+            None in self.namespaces
+            and hasattr(request, 'user')
+            and toggle_enabled(self.slug, request.user.username, None)
+        ) or (
+            NAMESPACE_DOMAIN in self.namespaces
+            and hasattr(request, 'domain')
+            and toggle_enabled(self.slug, request.domain, NAMESPACE_DOMAIN)
+        )
+
     def set(self, item, enabled, namespace=None):
         set_toggle(self.slug, item, enabled, namespace)
 
@@ -76,12 +87,21 @@ class PredictablyRandomToggle(StaticToggle):
     It extends StaticToggle, so individual domains/users can also be explicitly added.
     """
 
-    def __init__(self, slug, label, tag, namespaces, randomness, help_link=None, description=None):
+    def __init__(self,
+            slug,
+            label,
+            tag,
+            namespaces,
+            randomness,
+            help_link=None,
+            description=None,
+            always_disabled=None):
         super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
                                                       help_link=help_link, description=description)
         assert namespaces, 'namespaces must be defined!'
         assert 0 <= randomness <= 1, 'randomness must be between 0 and 1!'
         self.randomness = randomness
+        self.always_disabled = always_disabled or []
 
     @property
     def randomness_percent(self):
@@ -91,6 +111,8 @@ class PredictablyRandomToggle(StaticToggle):
         return '{}:{}:{}'.format(self.namespaces, self.slug, item)
 
     def enabled(self, item, **kwargs):
+        if item in self.always_disabled:
+            return False
         return (
             (item and deterministic_random(self._get_identifier(item)) < self.randomness)
             or super(PredictablyRandomToggle, self).enabled(item, **kwargs)
@@ -116,10 +138,7 @@ def any_toggle_enabled(*toggles):
         @wraps(view_func)
         def wrapped_view(request, *args, **kwargs):
             for t in toggles:
-                if (
-                    (hasattr(request, 'user') and t.enabled(request.user.username))
-                    or (hasattr(request, 'domain') and t.enabled(request.domain))
-                ):
+                if t.enabled_for_request(request):
                     return view_func(request, *args, **kwargs)
             raise Http404()
         return wrapped_view
@@ -259,12 +278,6 @@ GRAPH_CREATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-OFFLINE_CLOUDCARE = StaticToggle(
-    'offline-cloudcare',
-    'Offline Cloudcare',
-    TAG_EXPERIMENTAL
-)
-
 IS_DEVELOPER = StaticToggle(
     'is_developer',
     'Is developer',
@@ -274,7 +287,8 @@ IS_DEVELOPER = StaticToggle(
 MM_CASE_PROPERTIES = StaticToggle(
     'mm_case_properties',
     'Multimedia Case Properties',
-    TAG_PRODUCT_PATH
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 VISIT_SCHEDULER = StaticToggle(
@@ -320,13 +334,6 @@ REPORT_BUILDER_BETA_GROUP = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-REPORT_BUILDER_MAP_REPORTS = StaticToggle(
-    'report_builder_map_reports',
-    'Report Builder map reports',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
 STOCK_TRANSACTION_EXPORT = StaticToggle(
     'ledger_export',
     'Show "export transactions" link on case details page',
@@ -338,6 +345,13 @@ SYNC_ALL_LOCATIONS = StaticToggle(
     'sync_all_locations',
     'Sync the full location hierarchy when syncing location fixtures',
     TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+FLAT_LOCATION_FIXTURE = StaticToggle(
+    'flat_location_fixture',
+    'Sync the location fixture in a flat format.',
+    TAG_ONE_OFF,  # todo: this should change to product path once we are signed off on format
     [NAMESPACE_DOMAIN]
 )
 
@@ -370,13 +384,6 @@ HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
     [NAMESPACE_USER],
 )
 
-REMOTE_APPS = StaticToggle(
-    'remote-apps',
-    'Allow creation of remote applications',
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN],
-)
-
 CAN_EDIT_EULA = StaticToggle(
     'can_edit_eula',
     "Whether this user can set the custom eula and data sharing internal project options. "
@@ -397,6 +404,14 @@ LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
     "Don't fail hard on missing or deleted sync tokens.",
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
+)
+
+# This toggle offers the "multiple_apps_unlimited" mobile flag to non-Dimagi users
+MOBILE_PRIVILEGES_FLAG = StaticToggle(
+    'mobile_privileges_flag',
+    'Offer "Enable Privileges on Mobile" flag.',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_USER]
 )
 
 MULTIPLE_LOCATIONS_PER_USER = StaticToggle(
@@ -465,24 +480,10 @@ VELLUM_SAVE_TO_CASE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-VELLUM_EXPERIMENTAL_UI = StaticToggle(
-    'experimental_ui',
-    "Enables some experimental UI enhancements for the form builder",
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
-)
-
 VELLUM_PRINTING = StaticToggle(
     'printing',
     "Enables the Print Android App Callout",
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
-VELLUM_RICH_TEXT = StaticToggle(
-    'rich_text',
-    "Enables rich text for the form builder",
-    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
 
@@ -526,8 +527,15 @@ MOBILE_UCR = StaticToggle(
 
 RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
     'restrict_web_users_by_location',
-    "Allow project to restrict web user permissions by location",
-    TAG_PRODUCT_CORE,
+    "Allow project to restrict web user permissions by location (deprecated)",
+    TAG_ONE_OFF,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+LOCATION_BASED_ACCESS_RESTRICTIONS = StaticToggle(
+    'location_based_access_restrictions',
+    "Allow project to restrict web user access by location",
+    TAG_PRODUCT_PATH,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -536,6 +544,20 @@ API_THROTTLE_WHITELIST = StaticToggle(
     ('API throttle whitelist'),
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_USER],
+)
+
+API_BLACKLIST = StaticToggle(
+    'API_BLACKLIST',
+    ("Blacklist API access to a user or domain that spams us"),
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
+FORM_SUBMISSION_BLACKLIST = StaticToggle(
+    'FORM_SUBMISSION_BLACKLIST',
+    ("Blacklist form submissions from a domain that spams us"),
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 
@@ -615,6 +637,13 @@ ICDS_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+NINETYNINE_DOTS = StaticToggle(
+    '99dots_integration',
+    'Enable access to 99DOTS',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
 MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
     'multiple_choice_custom_field',
     'Allow project to use multiple choice field in custom fields',
@@ -651,8 +680,8 @@ HSPH_HACK = StaticToggle(
 
 USE_FORMPLAYER_FRONTEND = StaticToggle(
     'use_formplayer_frontend',
-    'Use the new formplayer frontend',
-    TAG_ONE_OFF,
+    'Use New CloudCare',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
 
@@ -713,10 +742,17 @@ ABT_REMINDER_RECIPIENT = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-AUTO_CASE_UPDATES = StaticToggle(
+AUTO_CASE_UPDATE_ENHANCEMENTS = StaticToggle(
     'auto_case_updates',
-    'Ability to perform automatic case updates without closing the case.',
-    TAG_ONE_OFF,
+    'Enable enhancements to the Auto Case Update feature.',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
+RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
+    'run_auto_case_updates_on_save',
+    'Run Auto Case Update rules on each case save.',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
 
@@ -748,15 +784,6 @@ VIEW_BUILD_SOURCE = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-USE_SQL_BACKEND = StaticToggle(
-    'sql_backend',
-    'Uses a sql backend instead of a couch backend for form processing',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-    description="This flag is deprecated. All new domains now use the sql backend."
-)
-
-
 EWS_WEB_USER_EXTENSION = StaticToggle(
     'ews_web_user_extension',
     'Enable EWSGhana web user extension',
@@ -775,7 +802,8 @@ GRID_MENUS = StaticToggle(
     'grid_menus',
     'Allow using grid menus on Android',
     TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Grid+Views',
 )
 
 NEW_EXPORTS = StaticToggle(
@@ -785,26 +813,17 @@ NEW_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-TF_USES_SQLITE_BACKEND = StaticToggle(
-    'tf_sql_backend',
-    'Use a SQLite backend for Touchforms',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+TF_DOES_NOT_USE_SQLITE_BACKEND = StaticToggle(
+    'not_tf_sql_backend',
+    'Domains that do not use a SQLite backend for Touchforms',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
 )
-
 
 CUSTOM_APP_BASE_URL = StaticToggle(
     'custom_app_base_url',
     'Allow specifying a custom base URL for an application. Main use case is to allow migrating ICDS to a new cluster.',
     TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
-)
-
-
-CASE_LIST_DISTANCE_SORT = StaticToggle(
-    'case_list_distance_sort',
-    'Allow sorting by distance from current location in the case list',
-    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
 
@@ -847,10 +866,46 @@ SEND_UCR_REBUILD_INFO = StaticToggle(
     [NAMESPACE_USER]
 )
 
-
-ZAPIER_INTEGRATION = StaticToggle(
-    'zapier_integration',
-    'Allow to use domain in Zapier application',
+EMG_AND_REC_SMS_HANDLERS = StaticToggle(
+    'emg_and_rec_sms_handlers',
+    'Enable emergency and receipt sms handlers used in ILSGateway',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
+)
+
+ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
+    'allow_user_defined_export_columns',
+    'Allows users to specify their own export columns',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
+
+CUSTOM_CALENDAR_FIXTURE = StaticToggle(
+    'custom_calendar_fixture',
+    'Send a calendar fixture down to all users (UATBC/eNikshay one off)',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
+
+PREVIEW_APP = StaticToggle(
+    'preview_app',
+    'Preview an application in the app builder',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
+DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
+    'disable_column_limit_in_ucr',
+    'Disable column limit in UCR',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+CLOUDCARE_LATEST_BUILD = StaticToggle(
+    'use_latest_build_cloudcare',
+    'Uses latest build for cloudcare instead of latest starred',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )

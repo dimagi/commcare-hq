@@ -4,7 +4,6 @@ import operator
 from operator import contains, eq
 
 from couchdbkit import NoResultFound, MultipleResultsFound, ResourceNotFound, QueryMixin
-from corehq.apps.change_feed import topics
 from dimagi.ext.couchdbkit import StringProperty, DateProperty, DictProperty, Document
 from django.db import models
 from casexml.apps.case.models import CommCareCase
@@ -16,9 +15,19 @@ from corehq.fluff.calculators.xform import FormPropertyFilter
 from custom.m4change.user_calcs import anc_hmis_report_calcs, ld_hmis_report_calcs, immunization_hmis_report_calcs,\
     all_hmis_report_calcs, project_indicators_report_calcs, mcct_monthly_aggregate_report_calcs, \
     form_passes_filter_date_delivery
-from custom.m4change.constants import BOOKED_AND_UNBOOKED_DELIVERY_FORMS, \
-    BOOKED_DELIVERY_FORMS, UNBOOKED_DELIVERY_FORMS, M4CHANGE_DOMAINS, ALL_M4CHANGE_FORMS, BOOKING_FORMS, FOLLOW_UP_FORMS, \
-    LAB_RESULTS_FORMS, BOOKING_AND_FOLLOW_UP_FORMS, BOOKING_FOLLOW_UP_AND_LAB_RESULTS_FORMS, PMTCT_CLIENTS_FORM
+from custom.m4change.constants import (
+    ALL_M4CHANGE_FORMS,
+    BOOKED_AND_UNBOOKED_DELIVERY_FORMS,
+    BOOKED_DELIVERY_FORMS,
+    BOOKING_AND_FOLLOW_UP_FORMS,
+    BOOKING_FOLLOW_UP_AND_LAB_RESULTS_FORMS,
+    BOOKING_FORMS,
+    FOLLOW_UP_FORMS,
+    LAB_RESULTS_FORMS,
+    M4CHANGE_DOMAINS,
+    PMTCT_CLIENTS_FORM,
+    UNBOOKED_DELIVERY_FORMS,
+)
 
 
 NO_VALUE_STRING = "None"
@@ -52,7 +61,6 @@ class BaseM4ChangeCaseFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
     document_filter = ORFilter(_get_all_m4change_forms())
     domains = M4CHANGE_DOMAINS
-    kafka_topic = topics.CASE
 
     class Meta:
         app_label = 'm4change'

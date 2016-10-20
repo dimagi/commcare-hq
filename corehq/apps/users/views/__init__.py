@@ -44,8 +44,7 @@ from corehq.apps.es import AppES
 from corehq.apps.es.queries import search_string_query
 from corehq.apps.hqwebapp.utils import send_confirmation_email
 from corehq.apps.hqwebapp.views import BasePageView, logout
-from corehq.apps.registration.forms import AdminInvitesUserForm, \
-    NewWebUserRegistrationForm
+from corehq.apps.registration.forms import AdminInvitesUserForm, WebUserInvitationForm
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms.verify import (
@@ -75,6 +74,7 @@ from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRe
 from corehq.elastic import ADD_TO_ES_FILTER, es_query
 from corehq.util.couch import get_document_or_404
 from corehq import toggles
+from django.views.decorators.csrf import csrf_exempt
 
 
 def _users_context(request, domain):
@@ -148,7 +148,7 @@ class BaseEditUserView(BaseUserSettingsView):
     @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(BaseEditUserView, self).dispatch(request, *args, **kwargs)
-    
+
     @property
     @memoized
     def page_url(self):
@@ -177,8 +177,7 @@ class BaseEditUserView(BaseUserSettingsView):
     @property
     def existing_role(self):
         try:
-            return (self.editable_user.get_role(self.domain,
-                                                include_teams=False).get_qualified_id() or '')
+            return self.editable_user.get_role(self.domain).get_qualified_id() or ''
         except DomainMembershipError:
             raise Http404()
 
@@ -640,7 +639,7 @@ class UserInvitationView(object):
                 return render(request, self.template, context)
         else:
             if request.method == "POST":
-                form = NewWebUserRegistrationForm(request.POST)
+                form = WebUserInvitationForm(request.POST)
                 if form.is_valid():
                     # create the new user
                     user = activate_new_user(form, domain=invitation.domain)
@@ -661,7 +660,7 @@ class UserInvitationView(object):
                 if CouchUser.get_by_username(invitation.email):
                     return HttpResponseRedirect(reverse("login") + '?next=' +
                         reverse('domain_accept_invitation', args=[invitation.domain, invitation.get_id]))
-                form = NewWebUserRegistrationForm(initial={
+                form = WebUserInvitationForm(initial={
                     'email': invitation.email,
                     'hr_name': invitation.domain,
                     'create_domain': False,
@@ -973,13 +972,13 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
         raise Http404()
     django_user = commcare_user.get_django_user()
     if request.method == "POST":
-        form = SetUserPasswordForm(domain, login_id, user=django_user, data=request.POST)
+        form = SetUserPasswordForm(request.project, login_id, user=django_user, data=request.POST)
         if form.is_valid():
             form.save()
             json_dump['status'] = 'OK'
-            form = SetUserPasswordForm(domain, login_id, user='')
+            form = SetUserPasswordForm(request.project, login_id, user='')
     else:
-        form = SetUserPasswordForm(domain, login_id, user=django_user)
+        form = SetUserPasswordForm(request.project, login_id, user=django_user)
     context = _users_context(request, domain)
     context.update({
         'reset_password_form': form,
@@ -1003,4 +1002,14 @@ def location_restriction_for_users(request, domain):
     if "restrict_users" in request.POST:
         project.location_restriction_for_users = json.loads(request.POST["restrict_users"])
     project.save()
+    return HttpResponse()
+
+
+@csrf_exempt
+@require_POST
+@require_superuser
+def register_fcm_device_token(request, domain, couch_user_id, device_token):
+    user = WebUser.get_by_user_id(couch_user_id)
+    user.fcm_device_token = device_token
+    user.save()
     return HttpResponse()

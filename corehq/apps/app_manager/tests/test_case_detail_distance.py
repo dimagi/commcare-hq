@@ -1,7 +1,8 @@
 from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.models import SortElement
-from corehq.apps.app_manager.tests import AppFactory, TestXmlMixin
+from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 
 class CaseDetailDistance(SimpleTestCase, TestXmlMixin):
@@ -32,12 +33,12 @@ class CaseDetailDistance(SimpleTestCase, TestXmlMixin):
                     </header>
                     <template>
                         <text>
-                            <xpath function="if(here() = '', '', if(case_name = '', '', concat(round(distance(case_name, here()) div 1000), ' km')))"/>
+                            <xpath function="if(here() = '' or case_name = '', '', concat(round(distance(case_name, here()) div 100) div 10, ' km'))"/>
                         </text>
                     </template>
                     <sort direction="ascending" order="1" type="double">
                         <text>
-                                <xpath function="round(distance(case_name, here()))"/>
+                                <xpath function="if(case_name = '', 2147483647, round(distance(case_name, here())))"/>
                         </text>
                     </sort>
                 </field>
@@ -78,7 +79,7 @@ class CaseDetailDistance(SimpleTestCase, TestXmlMixin):
                     </template>
                     <sort direction="descending" order="1" type="double">
                         <text>
-                            <xpath function="round(distance(case_name, here()))"/>
+                            <xpath function="if(case_name = '', 2147483647, round(distance(case_name, here())))"/>
                         </text>
                     </sort>
                 </field>
@@ -128,7 +129,7 @@ class CaseDetailDistance(SimpleTestCase, TestXmlMixin):
                     </template>
                     <sort direction="descending" order="1" type="double">
                         <text>
-                            <xpath function="round(distance(gps, here()))"/>
+                            <xpath function="if(gps = '', 2147483647, round(distance(gps, here())))"/>
                         </text>
                     </sort>
                 </field>
@@ -158,7 +159,7 @@ class CaseDetailDistance(SimpleTestCase, TestXmlMixin):
                     </header>
                     <template>
                         <text>
-                            <xpath function="if(here() = '', '', if(case_name = '', '', concat(round(distance(case_name, here()) div 1000), ' km')))"/>
+                            <xpath function="if(here() = '' or case_name = '', '', concat(round(distance(case_name, here()) div 100) div 10, ' km'))"/>
                         </text>
                     </template>
                 </field>

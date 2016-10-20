@@ -45,27 +45,31 @@
 trunk: master
 name: autostaging
 branches:
-  - kill-advanced-submit-history-filters  # Danny 7/8
-  - hqDefine-users  # danny 6/7
+  - dsr-multi-loc # sr 9/20
   - vellum-staging # J$ 11/13
-  - dm/xform-blobs  # daniel 5/23
-  - nc/report-builder # Noah 6/29
+  - onboarding # Jenny 9/19
+#  - np/upgrade-twofactor # Nick P 10/5
+  - bmb/currentind-string # Biyeun 11/12
+  - np/upgrade-django-celery # Nick P 10/13
+  - je/remove-phonenumbers
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches:
-      - 2.28-jars
+    branches: []
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches:
-      - 2.28-jars
+    branches: []
   submodules/django-digest-src:
     branches: []
   submodules/dimagi-utils-src:
     branches: []
   submodules/django-prbac-src:
     branches: []
+  corehq/apps/prelogin:
+    branches: []
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
+    branches: []
+  deployment/commcare-hq-deploy:
     branches: []

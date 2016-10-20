@@ -20,7 +20,7 @@ from django.core.exceptions import ValidationError
 from corehq.apps.reminders.forms import validate_time
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq.apps.sms.util import (validate_phone_number, strip_plus,
-    get_sms_backend_classes)
+    get_sms_backend_classes, ALLOWED_SURVEY_DATE_FORMATS)
 from corehq.apps.domain.models import DayTimeWindow
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
@@ -47,7 +47,7 @@ CUSTOM = "CUSTOM"
 
 DEFAULT_CUSTOM_CHOICES = (
     (DEFAULT, ugettext_noop("Default")),
-    (CUSTOM, ugettext_noop("Specify:")),
+    (CUSTOM, ugettext_noop("Custom")),
 )
 
 MESSAGE_COUNTER_CHOICES = (
@@ -187,6 +187,15 @@ class SettingsForm(Form):
         choices=ENABLED_DISABLED_CHOICES,
     )
 
+    sms_survey_date_format = ChoiceField(
+        required=False,
+        label=ugettext_lazy("SMS Survey Date Format"),
+        choices=(
+            (df.human_readable_format, ugettext_lazy(df.human_readable_format))
+            for df in ALLOWED_SURVEY_DATE_FORMATS
+        ),
+    )
+
     # Chat Settings
     use_custom_case_username = ChoiceField(
         required=False,
@@ -244,6 +253,8 @@ class SettingsForm(Form):
         required=False,
         label=ugettext_noop("Enter Chat Template Identifier"),
     )
+
+    # Registration settings
     sms_case_registration_enabled = ChoiceField(
         required=False,
         choices=ENABLED_DISABLED_CHOICES,
@@ -326,6 +337,11 @@ class SettingsForm(Form):
                                    "with more than one mobile worker or case. SMS surveys "
                                    "and keywords will still only work for unique phone "
                                    "numbers in your project."),
+            ),
+            FieldWithHelpBubble(
+                'sms_survey_date_format',
+                help_bubble_text=_("Choose the format in which date questions "
+                                   "should be answered in SMS surveys."),
             ),
         ]
         return crispy.Fieldset(
@@ -996,7 +1012,16 @@ class BackendMapForm(Form):
         return self._clean_backend_id(value)
 
 
-class SendRegistrationInviationsForm(Form):
+class SendRegistrationInvitationsForm(Form):
+
+    PHONE_TYPE_ANDROID_ONLY = 'ANDROID'
+    PHONE_TYPE_ANY = 'ANY'
+
+    PHONE_CHOICES = (
+        (PHONE_TYPE_ANDROID_ONLY, ugettext_lazy("Android Only")),
+        (PHONE_TYPE_ANY, ugettext_lazy("Android or Other")),
+    )
+
     phone_numbers = TrimmedCharField(
         label=ugettext_lazy("Phone Number(s)"),
         required=True,
@@ -1013,6 +1038,37 @@ class SendRegistrationInviationsForm(Form):
         widget=forms.HiddenInput(),
     )
 
+    registration_message_type = ChoiceField(
+        required=True,
+        choices=DEFAULT_CUSTOM_CHOICES,
+    )
+
+    custom_registration_message = TrimmedCharField(
+        label=ugettext_lazy("Registration Message"),
+        required=False,
+        widget=forms.Textarea,
+    )
+
+    phone_type = ChoiceField(
+        label=ugettext_lazy("Recipient phones are"),
+        required=True,
+        choices=PHONE_CHOICES,
+    )
+
+    make_email_required = ChoiceField(
+        label=ugettext_lazy("Make email required at registration"),
+        required=True,
+        choices=ENABLED_DISABLED_CHOICES,
+    )
+
+    @property
+    def android_only(self):
+        return self.cleaned_data.get('phone_type') == self.PHONE_TYPE_ANDROID_ONLY
+
+    @property
+    def require_email(self):
+        return self.cleaned_data.get('make_email_required') == ENABLED
+
     def set_app_id_choices(self):
         app_ids = get_built_app_ids(self.domain)
         choices = []
@@ -1028,13 +1084,13 @@ class SendRegistrationInviationsForm(Form):
             raise Exception('Expected kwargs: domain')
         self.domain = kwargs.pop('domain')
 
-        super(SendRegistrationInviationsForm, self).__init__(*args, **kwargs)
+        super(SendRegistrationInvitationsForm, self).__init__(*args, **kwargs)
         self.set_app_id_choices()
 
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
-        self.helper.label_class = 'col-sm-3'
-        self.helper.field_class = 'col-sm-9'
+        self.helper.label_class = 'col-sm-4'
+        self.helper.field_class = 'col-sm-8'
         self.helper.layout = crispy.Layout(
             crispy.Div(
                 'app_id',
@@ -1043,8 +1099,25 @@ class SendRegistrationInviationsForm(Form):
                     placeholder=_("Enter phone number(s) in international "
                         "format. Example: +27..., +91...,"),
                 ),
+                'phone_type',
                 InlineField('action'),
                 css_class='modal-body',
+            ),
+            hqcrispy.FieldsetAccordionGroup(
+                _("Advanced"),
+                crispy.Field(
+                    'registration_message_type',
+                    data_bind='value: registration_message_type',
+                ),
+                crispy.Div(
+                    crispy.Field(
+                        'custom_registration_message',
+                        placeholder=_("Enter registration SMS"),
+                    ),
+                    data_bind='visible: showCustomRegistrationMessage',
+                ),
+                'make_email_required',
+                active=False
             ),
             crispy.Div(
                 twbscrispy.StrictButton(
@@ -1070,6 +1143,15 @@ class SendRegistrationInviationsForm(Form):
         for phone_number in phone_list:
             validate_phone_number(phone_number)
         return list(set(phone_list))
+
+    def clean_custom_registration_message(self):
+        value = self.cleaned_data.get('custom_registration_message')
+        if self.cleaned_data.get('registration_message_type') == CUSTOM:
+            if not value:
+                raise ValidationError(_("Please enter a message"))
+            return value
+
+        return None
 
 
 class InitiateAddSMSBackendForm(Form):

@@ -295,7 +295,6 @@ class TestProductLineItem(BaseInvoiceTestCase):
     def setUp(self):
         super(TestProductLineItem, self).setUp()
         self.product_rate = self.subscription.plan_version.product_rate
-        self.prorate = Decimal("%.2f" % round(self.product_rate.monthly_fee / 30, 2))
 
     def test_standard(self):
         """
@@ -348,8 +347,22 @@ class TestProductLineItem(BaseInvoiceTestCase):
 
             product_line_item = product_line_items.get()
 
-            self.assertGreater(product_line_item.quantity, 1)
-            self.assertEqual(product_line_item.unit_cost, self.prorate)
+            days_prorated_by_invoice_start_date = {
+                datetime.date(2016, 2, 23): 7,
+                datetime.date(2017, 5, 1): 22,
+            }
+            days_in_month_by_invoice_start_date = {
+                datetime.date(2016, 2, 23): 29,
+                datetime.date(2017, 5, 1): 31,
+            }
+
+            self.assertEqual(product_line_item.quantity, days_prorated_by_invoice_start_date[invoice.date_start])
+            self.assertEqual(
+                product_line_item.unit_cost,
+                Decimal("%.2f" % round(
+                    self.product_rate.monthly_fee / days_in_month_by_invoice_start_date[invoice.date_start], 2
+                ))
+            )
             self.assertIsNotNone(product_line_item.unit_description)
 
             self.assertEqual(product_line_item.base_cost, Decimal('0.0000'))

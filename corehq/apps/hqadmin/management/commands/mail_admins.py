@@ -16,6 +16,7 @@ class Command(BaseCommand):
         make_option('--stdin', action='store_true', default=False, help='Read message body from stdin'),
         make_option('--html', action='store_true', default=False, help='HTML payload'),
         make_option('--slack', action='store_true', default=False, help='Whether to send subject to slack'),
+        make_option('--environment', default='', help='The environment we are mailing about'),
     )
 
     def handle(self, *args, **options):
@@ -31,7 +32,12 @@ class Command(BaseCommand):
         mail_admins(options['subject'], message, html_message=html)
 
         if options['slack'] and hasattr(settings, 'MIA_THE_DEPLOY_BOT_API'):
+            if options.get('environment') == 'staging':
+                channel = '#staging'
+            else:
+                channel = '#hq-ops'
             requests.post(settings.MIA_THE_DEPLOY_BOT_API, data=json.dumps({
+                "channel": channel,
                 "username": "Igor the Iguana",
                 "text": options['subject'],
             }))

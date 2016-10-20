@@ -1,4 +1,5 @@
 import re
+from xml.etree import ElementTree
 
 BAD_SLUG_PATTERN = r"([/\\<>\s])"
 
@@ -20,5 +21,14 @@ def is_identifier_invalid(name):
     - Blank
     - Contains special characters
     - Start with "xml"
+    - Start with a number
     """
-    return not bool(name) or bool(re.search(BAD_SLUG_PATTERN, name)) or name.startswith('xml')
+    if (not bool(name) or name.startswith('xml')):
+        return True
+
+    try:
+        ElementTree.fromstring(u'<{} />'.format(name).encode('utf-8'))
+    except ElementTree.ParseError:
+        return True
+
+    return False

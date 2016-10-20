@@ -7,7 +7,7 @@
 {% block title %}{% trans "Create an Account" %}{% endblock title %}
 
 {% block js-inline  %}{{ block.super }}
-  <script type="text/javascript">
+  <script>
     $(function () {
       $(window).on('resize load', function () {
         var newHeight = $(window).height() - $('#hq-navigation').outerHeight() - $('#hq-footer').outerHeight() - 1;  // -1 for rounding errors
@@ -21,8 +21,8 @@
   <script src="{% static 'jquery-ui/ui/effect-slide.js' %}"></script>
   <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
   <script src="{% static 'style/ko/password_validators.ko.js' %}"></script>
-  <script type="text/javascript" src="{% static 'registration/js/new_user.ko.js' %}"></script>
-  <script type="text/javascript">
+  <script src="{% static 'registration/js/new_user.ko.js' %}"></script>
+  <script>
     $(function () {
       var reg = hqImport('registration/js/new_user.ko.js');
       reg.onModuleLoad = function () {
@@ -57,13 +57,12 @@
       });
 
       reg.setSubmitAttemptFn(function () {
-        _kmq.push(["trackClick", "create_account_clicked", "Clicked Create Account (new)"]);
+        _kmq.push(["trackClick", "create_account_clicked", "Clicked Create Account"]);
       });
 
       reg.setSubmitSuccessFn(function () {
-        _kmq.push(["trackClick", "create_account_success", "Account Creation was Successful (new)"]);
+        _kmq.push(["trackClick", "create_account_success", "Account Creation was Successful"]);
       });
-
     });
   </script>
 {% endblock %}

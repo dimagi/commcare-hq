@@ -182,6 +182,7 @@ property_path   | A nested reference to a property in a document | `doc["child"]
 conditional     | An if/else expression | `"legal" if doc["age"] > 21 else "underage"`
 switch          | A switch statement | `if doc["age"] == 21: "legal"` `elif doc["age"] == 60: ...` `else: ...`
 array_index     | An index into an array | `doc[1]`
+split_string    | Splitting a string and grabbing a specific element from it by index | `doc["foo bar"].split(' ')[0]`
 iterator        | Combine multiple expressions into a list | `[doc.name, doc.age, doc.gender]`
 related_doc     | A way to reference something in another document | `form.case.owner_id`
 root_doc        | A way to reference the root document explicitly (only needed when making a data source from repeat/child data) | `repeat.parent.name`
@@ -331,6 +332,25 @@ This expression returns `doc["siblings"][0]`:
 ```
 It will return nothing if the siblings property is not a list, the index isn't a number, or the indexed item doesn't exist.
 
+##### Split String Expression
+
+This expression returns `(doc["foo bar"]).split(' ')[0]`:
+```json
+{
+    "type": "split_string",
+    "string_expression": {
+        "type": "property_name",
+        "property_name": "multiple_value_string"
+    },
+    "index_expression": {
+        "type": "constant",
+        "constant": 0
+    },
+    "delimiter": ","
+}
+```
+The delimiter is optional and is defaulted to a space.  It will return nothing if the string_expression is not a string, or if the index isn't a number or the indexed item doesn't exist.
+
 ##### Iterator Expression
 
 ```json
@@ -419,7 +439,7 @@ Here is a simple example that demonstrates the structure. The keys of `propertie
 
 ```json
 {
-    "type": "named",
+    "type": "dict",
     "properties": {
         "name": "a constant name",
         "value": {
@@ -456,7 +476,7 @@ The date_expression and count_expression can be any valid expressions, or simply
 `add_months` offsets given date by given number of calendar months.
 If offset results in an invalid day (for e.g. Feb 30, April 31), the day of resulting date will be adjusted to last day of the resulting calendar month.
 
-The date_expression and months_expression can be any valid expressions, or simply constants, including nagative numbers.
+The date_expression and months_expression can be any valid expressions, or simply constants, including negative numbers.
 
 ```json
 {
@@ -468,7 +488,6 @@ The date_expression and months_expression can be any valid expressions, or simpl
     "months_expression": 28
 }
 ```
-
 
 #### "Diff Days" expressions
 
@@ -514,7 +533,7 @@ Variables can be any valid numbers (Python datatypes `int`, `float` and `long` a
 Only the following functions are permitted:
 
 * `rand()`: generate a random number between 0 and 1
-* `randint(max)`: generate a random integer beween 0 and `max`
+* `randint(max)`: generate a random integer between 0 and `max`
 * `int(value)`: convert `value` to an int. Value can be a number or a string representation of a number
 * `float(value)`: convert `value` to a floating point number
 * `str(value)`: convert `value` to a string
@@ -596,7 +615,7 @@ Above returns list of ages. Note that the `property_path` in `map_expression` is
 
 ##### sort_items Expression
 
-`sort_items` returns a sorted list of items based on sort value of each item.The sort value of an item is speicifed by `sort_expression`. By default, list will be in ascending order. Order can be changed by adding optional `order` expression with one of `DESC` (for descending) or `ASC` (for ascending) If a sort-value of an item is `None`, the item will appear in the start of list. If sort-values of any two items can't be compared, an empty list is returned.
+`sort_items` returns a sorted list of items based on sort value of each item.The sort value of an item is specified by `sort_expression`. By default, list will be in ascending order. Order can be changed by adding optional `order` expression with one of `DESC` (for descending) or `ASC` (for ascending) If a sort-value of an item is `None`, the item will appear in the start of list. If sort-values of any two items can't be compared, an empty list is returned.
 
 `items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned.
 
@@ -663,7 +682,7 @@ Last, but certainly not least, are named expressions.
 These are special expressions that can be defined once in a data source and then used throughout other filters and indicators in that data source.
 This allows you to write out a very complicated expression a single time, but still use it in multiple places with a simple syntax.
 
-Named expressions are defined in a special section of the data source. To reference a named expression, you just specify the type of `"named"` and the name as folllows:
+Named expressions are defined in a special section of the data source. To reference a named expression, you just specify the type of `"named"` and the name as follows:
 
 ```json
 {
@@ -1079,6 +1098,44 @@ filter to be compared against an indicator of data type `string`. You shouldn't
 ever need to use this option (make your column a `date` or `datetime` type
 instead), but it exists because the report builder needs it. 
 
+### Pre-Filters
+
+Pre-filters offer the kind of functionality you get from
+[data source filters](#data-source-filtering). This makes it easier to use one
+data source for many reports, especially if some of those reports just need
+the data source to be filtered slightly differently. Pre-filters do not need
+to be configured by app builders in report modules; fields with pre-filters
+will not be listed in the report module among the other fields that can be
+filtered.
+
+A pre-filter's `type` is set to "pre":
+```
+{
+  "type": "pre",
+  "field": "at_risk_field",
+  "slug": "at_risk_slug",
+  "datatype": "string",
+  "pre_value": "yes"
+}
+```
+
+If `pre_value` is scalar (i.e. `datatype` is "string", "integer", etc.), the
+filter will use the "equals" operator. If `pre_value` is null, the filter will
+use "is null". If `pre_value` is an array, the filter will use the "in"
+operator. e.g.
+```
+{
+  "type": "pre",
+  "field": "at_risk_field",
+  "slug": "at_risk_slug",
+  "datatype": "array",
+  "pre_value": ["yes", "maybe"]
+}
+```
+
+(If `pre_value` is an array and `datatype` is not "array", it is assumed that
+`datatype` refers to the data type of the items in the array.)
+
 ### Dynamic choice lists
 
 Dynamic choice lists provide a select widget that will generate a list of options dynamically.
@@ -1165,7 +1222,7 @@ Reports are made up of columns. The currently supported column types ares:
 
 Field columns have a type of `"field"`. Here's an example field column that shows the owner name from an associated `owner_id`:
 
-```
+```json
 {
     "type": "field",
     "field": "owner_id",
@@ -1176,7 +1233,7 @@ Field columns have a type of `"field"`. Here's an example field column that show
         "type": "custom",
         "custom_type": "owner_display"
     },
-    "aggregation": "simple",
+    "aggregation": "simple"
 }
 ```
 
@@ -1233,6 +1290,16 @@ Here's an example of an aggregate date column that aggregates the `received_on` 
   }
 ```
 
+AggregateDate supports an optional "format" parameter, which accepts the same [format string](https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior) as [Date formatting](#date-formatting). If you don't specify a format, the default will be "%Y-%m", which will show as, for example, "2008-09".
+
+Keep in mind that the only variables available for formatting are `year` and `month`, but that still gives you a fair range, e.g.
+
+| format    | Example result    |
+| --------- | ----------------- |
+| "%Y-%m"   | "2008-09"         |
+| "%B, %Y"  | "September, 2008" |
+| "%b (%y)" | "Sep (08)"        |
+
 
 ### Expanded Columns
 
@@ -1282,6 +1349,36 @@ Then you will get a report like this:
 
 Expanded columns have an optional parameter `"max_expansion"` (defaults to 10) which limits the number of columns that can be created.  WARNING: Only override the default if you are confident that there will be no adverse performance implications for the server.
 
+### Expression columns
+
+Expression columns can be used to do just-in-time calculations on the data coming out of reports.
+They allow you to use any UCR expression on the data in the report row.
+These can be referenced according to the `column_id`s from the other defined column.
+They can support advanced use cases like doing math on two different report columns,
+or doing conditional logic based on the contents of another column.
+
+A simple example is below, which assumes another called "number" in the report and shows
+how you could make a column that is 10 times that column.
+
+
+```json
+{
+    "type": "expression",
+    "column_id": "by_tens",
+    "display": "Counting by tens",
+    "expression": {
+        "type": "evaluator",
+        "statement": "a * b",
+        "context_variables": {
+            "a": {
+                "type": "property_name",
+                "property_name": "number"
+            },
+            "b": 10
+        }
+    }
+}
+```
 
 ### The "aggregation" column property
 

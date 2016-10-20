@@ -14,7 +14,7 @@
     <li class="nav-input">
         <button class="btn btn-primary" id="update-facets" data-prefix="{{ facet_prefix }}" data-params="{{ persistent_params }}">{% trans "Apply" %}</button>
     </li>
-    <li class="nav-input">
+    <li {% if not_searchable %} class="hidden" {% else %} class="nav-input" {% endif %}>
         <form action="{{ search_url }}" method="get" class="form-search" id="facet-search">
             <input type="search" name="{{ search_name }}" placeholder="{% trans 'Search for' %} {{ search_for }}" value="{{ search_query }}" class="search-query form-control" />
         </form>

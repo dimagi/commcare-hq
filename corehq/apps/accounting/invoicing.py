@@ -59,7 +59,13 @@ class DomainInvoiceFactory(object):
         subscriptions = self._get_subscriptions()
         self._ensure_full_coverage(subscriptions)
         for subscription in subscriptions:
-            self._create_invoice_for_subscription(subscription)
+            try:
+                self._create_invoice_for_subscription(subscription)
+            except InvoiceAlreadyCreatedError as e:
+                log_accounting_error(
+                    "Invoice already existed for domain %s: %s" % (self.domain.name, e),
+                    show_stack_trace=True,
+                )
 
     def _get_subscriptions(self):
         subscriptions = Subscription.objects.filter(
@@ -116,10 +122,7 @@ class DomainInvoiceFactory(object):
 
     def _create_invoice_for_subscription(self, subscription):
         def _get_invoice_start(sub, date_start):
-            if sub.date_start > date_start:
-                return sub.date_start
-            else:
-                return date_start
+            return max(sub.date_start, date_start)
 
         def _get_invoice_end(sub, date_end):
             if sub.date_end is not None and sub.date_end <= date_end:
@@ -397,6 +400,22 @@ class LineItemFactory(object):
         except KeyError:
             raise LineItemError("No line item factory exists for the feature type '%s" % feature_type)
 
+    @property
+    @memoized
+    def is_prorated(self):
+        return not (
+            self.invoice.date_end.day == self._days_in_billing_period
+            and self.invoice.date_start.day == 1
+        )
+
+    @property
+    def num_prorated_days(self):
+        return self.invoice.date_end.day - self.invoice.date_start.day + 1
+
+    @property
+    def _days_in_billing_period(self):
+        return calendar.monthrange(self.invoice.date_end.year, self.invoice.date_end.month)[1]
+
 
 class ProductLineItemFactory(LineItemFactory):
 
@@ -411,12 +430,6 @@ class ProductLineItemFactory(LineItemFactory):
             self._auto_generate_credits(line_item)
 
         return line_item
-
-    @property
-    @memoized
-    def is_prorated(self):
-        last_day = calendar.monthrange(self.invoice.date_end.year, self.invoice.date_end.month)[1]
-        return not (self.invoice.date_end.day == last_day and self.invoice.date_start.day == 1)
 
     @property
     def base_description(self):
@@ -438,13 +451,9 @@ class ProductLineItemFactory(LineItemFactory):
             }
 
     @property
-    def num_prorated_days(self):
-        return self.invoice.date_end.day - self.invoice.date_start.day + 1
-
-    @property
     def unit_cost(self):
         if self.is_prorated:
-            return Decimal("%.2f" % round(self.rate.monthly_fee / 30, 2))
+            return Decimal("%.2f" % round(self.rate.monthly_fee / self._days_in_billing_period, 2))
         return Decimal('0.0')
 
     @property
@@ -480,6 +489,20 @@ class FeatureLineItemFactory(LineItemFactory):
 
 
 class UserLineItemFactory(FeatureLineItemFactory):
+
+    @property
+    def unit_cost(self):
+        non_prorated_unit_cost = super(UserLineItemFactory, self).unit_cost
+        # To ensure that integer division is avoided
+        assert isinstance(non_prorated_unit_cost, Decimal)
+
+        if self.is_prorated:
+            return Decimal(
+                "%.2f" % round(
+                    non_prorated_unit_cost * self.num_prorated_days / self._days_in_billing_period, 2
+                )
+            )
+        return non_prorated_unit_cost
 
     @property
     def quantity(self):
@@ -580,7 +603,8 @@ class SmsLineItemFactory(FeatureLineItemFactory):
         return SmsBillable.objects.filter(
             domain__in=self.subscribed_domains,
             is_valid=True,
-            date_sent__range=[self.invoice.date_start, self.invoice.date_end]
+            date_sent__gte=self.invoice.date_start,
+            date_sent__lt=self.invoice.date_end + datetime.timedelta(days=1),
         ).order_by('-date_sent')
 
     @property

@@ -6,19 +6,20 @@ from corehq.apps.userreports.reports.filters.specs import ReportFilter
 from corehq.apps.userreports.reports.specs import PieChartSpec, \
     MultibarAggregateChartSpec, MultibarChartSpec, \
     FieldColumn, PercentageColumn, ExpandedColumn, AggregateDateColumn, \
-    OrderBySpec, LocationColumn
+    OrderBySpec, LocationColumn, ExpressionColumn
 
 
 class ReportFactory(object):
 
     @classmethod
-    def from_spec(cls, spec):
+    def from_spec(cls, spec, include_prefilters=False):
         from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
         order_by = [(o['field'], o['order']) for o in spec.sort_expression]
+        filters = spec.filters if include_prefilters else spec.filters_without_prefilters
         return ConfigurableReportDataSource(
             domain=spec.domain,
             config_or_config_id=spec.config_id,
-            filters=[ReportFilter.wrap(f) for f in spec.filters],
+            filters=[ReportFilter.wrap(f) for f in filters],
             aggregation_columns=spec.aggregation_columns,
             columns=spec.report_columns,
             order_by=order_by,
@@ -32,6 +33,7 @@ class ReportColumnFactory(object):
         'field': FieldColumn,
         'percent': PercentageColumn,
         'location': LocationColumn,
+        'expression': ExpressionColumn,
     }
 
     @classmethod

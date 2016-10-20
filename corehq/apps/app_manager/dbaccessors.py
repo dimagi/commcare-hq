@@ -124,7 +124,10 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
         if target == 'build':
             app = get_latest_build_doc(domain, app_id) or app
         elif target == 'save':
-            pass  # just use the working copy of the app
+            # If the app_id passed in was the working copy, just use that app.
+            # If it's a build, get the working copy.
+            if app.get('copy_of'):
+                app = get_current_app(domain, app_id)
         else:
             app = get_latest_released_app_doc(domain, app_id) or app
 
@@ -324,3 +327,8 @@ def get_case_types_from_apps(domain):
          .size(0)
          .terms_aggregation('modules.case_type.exact', 'case_types'))
     return set(q.run().aggregations.case_types.keys)
+
+
+def get_case_sharing_apps_in_domain(domain, exclude_app_id=None):
+    apps = get_apps_in_domain(domain, include_remote=False)
+    return [a for a in apps if a.case_sharing and exclude_app_id != a.id]

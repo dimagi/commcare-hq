@@ -4,12 +4,12 @@ from collections import namedtuple
 from urllib import unquote
 from elasticsearch import Elasticsearch
 from django.conf import settings
-from elasticsearch.exceptions import ElasticsearchException, RequestError
+from elasticsearch.exceptions import ElasticsearchException
 
 from corehq.apps.es.utils import flatten_field_dict
 from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
-from pillowtop.listener import send_to_elasticsearch as send_to_es
+from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
@@ -139,11 +139,30 @@ class ESError(Exception):
     pass
 
 
-def run_query(index_name, q):
-    es_meta = ES_META[index_name]
+def run_query(index_name, q, debug_host=None):
+    # the debug_host parameter allows you to query another env for testing purposes
+    if debug_host:
+        if not settings.DEBUG:
+            raise Exception("You can only specify an ES env in DEBUG mode")
+        es_host = settings.ELASTICSEARCH_DEBUG_HOSTS[debug_host]
+        es_instance = Elasticsearch([{'host': es_host,
+                                      'port': settings.ELASTICSEARCH_PORT}],
+                                    timeout=3, max_retries=0)
+    else:
+        es_instance = get_es_new()
+
     try:
-        return get_es_new().search(es_meta.index, es_meta.type, body=q)
-    except RequestError as e:
+        es_meta = ES_META[index_name]
+    except KeyError:
+        from corehq.apps.userreports.util import is_ucr_table
+        # todo: figure out if we really need types
+        if is_ucr_table(index_name):
+            es_meta = EsMeta(index_name, 'indicator')
+        else:
+            raise
+    try:
+        return es_instance.search(es_meta.index, es_meta.type, body=q)
+    except ElasticsearchException as e:
         raise ESError(e)
 
 
@@ -156,7 +175,7 @@ def scroll_query(index_name, q):
             doc_type=es_meta.type,
             query=q,
         )
-    except RequestError as e:
+    except ElasticsearchException as e:
         raise ESError(e)
 
 

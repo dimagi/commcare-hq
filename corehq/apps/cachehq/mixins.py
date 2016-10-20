@@ -9,7 +9,7 @@ from dimagi.utils.couch.cache import cache_core
 class _InvalidateCacheMixin(object):
 
     def clear_caches(self):
-        invalidate_document(self, couch_db=self.get_db())
+        invalidate_document(self)
 
     def save(self, **params):
         try:
@@ -35,7 +35,7 @@ class _InvalidateCacheMixin(object):
 
         self._doc['_id'] = id
         self.clear_caches()
-        invalidate_document(self, couch_db=self.get_db(), deleted=True)
+        invalidate_document(self, deleted=True)
 
     @classmethod
     def delete_docs(cls, docs, all_or_nothing=False, empty_on_delete=False):
@@ -43,7 +43,7 @@ class _InvalidateCacheMixin(object):
             docs, all_or_nothing=all_or_nothing, empty_on_delete=empty_on_delete)
         for doc in docs:
             doc.clear_caches()
-            invalidate_document(doc, couch_db=cls.get_db(), deleted=True)
+            invalidate_document(doc, deleted=True)
 
     bulk_delete = delete_docs
 

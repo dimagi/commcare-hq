@@ -2,11 +2,11 @@
 {% load hq_shared_tags %}
 
 {% block js %} {{ block.super }}
-    <script type="text/javascript" src="{% static 'style/js/main.js' %}"></script>
+    <script src="{% static 'style/js/main.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
-    <script type="text/javascript">
+    <script>
         $(function () {
             var path = '{{ request.path }}';
             $('.hq-help-template').each(function () {

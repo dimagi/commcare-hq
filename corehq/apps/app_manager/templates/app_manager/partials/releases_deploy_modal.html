@@ -19,10 +19,16 @@
                 <a href="{% url "mobile_workers" domain %}">{% trans "create your first mobile worker" %}</a>.
             </div>
         {% else %}
-            <div class="panel-group" id="deploy-accordion">
+            <div class="panel-group" data-bind="attr: {id: 'deploy-accordion_' + id()}">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <a data-toggle="collapse" data-parent="#deploy-accordion" href="#panel-android" aria-expanded="true" aria-controls="panel-android">
+                        <a
+                            data-toggle="collapse"
+                            href="#panel-android"
+                            aria-expanded="true"
+                            aria-controls="panel-android"
+                            data-bind="attr: {'data-parent': '#deploy-accordion_' + id()}"
+                            >
                             {% trans "Download to Android" %}
                         </a>
                     </div>
@@ -161,15 +167,21 @@
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <a data-toggle="collapse"
-                           data-parent="#deploy-accordion" href="#panel-java"
-                           data-bind="click: function() { track_deploy_type('Download to Java Phone'); },"
+                           data-bind="
+                           click: function() { track_deploy_type('Download to Java Phone'); },
+                           attr: {
+                               href: '#' + id() + '_download_java',
+                               'data-target': '#' + id() + '_download_java',
+                               'data-parent': '#deploy-accordion_' + id()
+                            }
+                           "
                            aria-expanded="true" aria-controls="panel-java">
                             {% trans "Download to Java Phone" %}
                         </a>
                     </div>
-                    <div class="panel-collapse collapse" id="panel-java">
+                    <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_download_java'}">
                         <div class="panel-body">
-                            <ol>
+                            <ol data-bind="if: reveal_java_download()">
                                 <li>
                                     {% trans "Download <strong>both</strong> of the following files:" %}
                                     <p><a data-bind="attr: {href: $root.url('jad', id)}">{% trans "Download" %} CommCare.jad</a></p>
@@ -184,6 +196,13 @@
                                     <a target="_blank" href="https://help.commcarehq.org/display/commcarepublic/Troubleshooting">{% trans "Troubleshooting Phone Problems" %}</a>.
                                 </li>
                             </ol>
+                            <p data-bind="if: !reveal_java_download()">
+                                {% blocktrans %}
+                                This version is not compatible with Java Phones. Please create a new build with latest J2ME supported version,
+                                {{ lastest_j2me_enabled_build }}
+                                to install on Java Phone.
+                                {% endblocktrans %}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -191,13 +210,19 @@
                 <div class="panel panel-default">
                     <div class="panel-heading">
                             <a data-toggle="collapse"
-                               data-parent="#deploy-accordion" href="#panel-sms"
-                               data-bind="click: function() { track_deploy_type('Send to phone via SMS'); }, click: function() { generate_short_url('short_url'); }"
+                               data-bind="
+                                   click: onSMSPanelClick,
+                                   attr: {
+                                      href: '#' + id() + '_sms',
+                                      'data-target': '#' + id() + '_sms',
+                                      'data-parent': '#deploy-accordion_' + id()
+                                   }
+                                "
                                aria-expanded="true" aria-controls="panel-sms">
                             {% trans "Send to phone via SMS" %}
                         </a>
                     </div>
-                    <div class="panel-collapse collapse" id="panel-sms">
+                    <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_sms'}">
                         <div class="panel-body">
                             <div data-bind="bootstrapTabs: true">
                                 <div class="tabbable">
@@ -255,10 +280,13 @@
                     <div class="panel panel-default">
                         <div class="panel-heading">
                             <a data-toggle="collapse"
-                               data-parent="#deploy-accordion" href="#panel-multimedia"
                                data-bind="
                                   click: function() { track_deploy_type('Download Multimedia'); },
-                                  attr: {href: '#' + id() + '_multimedia', 'data-target': '#' + id() + '_multimedia'}
+                                  attr: {
+                                    href: '#' + id() + '_multimedia',
+                                    'data-target': '#' + id() + '_multimedia',
+                                    'data-parent': '#deploy-accordion_' + id()
+                                  }
                                "
                                aria-expanded="true" aria-controls="panel-multimedia">
                                 {% trans 'Download Multimedia' %}

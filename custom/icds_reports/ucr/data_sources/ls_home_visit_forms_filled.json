@@ -2,7 +2,8 @@
   "domains": [
     "icds-sql",
     "icds-test",
-    "icds-cas"
+    "icds-cas",
+    "icds-cas-sandbox"
   ],
   "config": {
     "table_id": "static-ls_home_visit_forms_filled",
@@ -134,6 +135,6 @@
     ],
     "named_expressions": {},
     "named_filters": {},
-    "engine_id": "ucr"
+    "engine_id": "icds-ucr"
   }
 }

@@ -32,7 +32,7 @@
                 allow_repeats: {{ helper.allow_repeats|JSON }},
                 default_order: {{ default_order|JSON }},
                 minimal: {{ minimal|JSON }}
-            }, translations);
+            }, translations, {{ has_excel_dashboard_access|JSON }});
 
             var $export = $('#customize-export');
             $export.koApplyBindings(customExportView);
@@ -82,13 +82,22 @@
             </div>
             <div class="form-group">
                 <label for="format-select" class="control-label col-sm-3 col-md-2">{% trans "Default file type" %}</label>
-                <div class="col-sm-9 col-md-8 col-lg-6">
+                <div class="col-sm-9 col-md-8 col-lg-6"
+                     data-bind="css: {'has-error': custom_export.default_format() === 'html' && !{{ has_excel_dashboard_access|JSON }}}"
+                >
                     <select id="format-select" class="form-control" data-bind="value: custom_export.default_format">
                         <option value="csv">{% trans "CSV (Zip file)" %}</option>
                         <option value="xlsx">{% trans "Excel 2007" %}</option>
                         <option value="xls">{% trans "Excel (older versions)" %}</option>
-                        <option value="html">{% trans "Web Page (Excel Dashboards)" %}</option>
+                        <option value="html">{% trans "Excel Dashboard Integration" %}</option>
                     </select>
+                    <span class="help-block" data-bind="visible: custom_export.default_format() === 'html' && !{{ has_excel_dashboard_access|JSON }}">
+                        {% url "domain_subscription_view" domain as software_plan_url %}
+                        {% blocktrans %}
+                            Excel Dashboard Integration is only available on the Standard Plan or higher.
+                            Click <a href="{{ software_plan_url }}">here</a> to manage the software plan for your project.
+                        {% endblocktrans %}
+                    </span>
                 </div>
             </div>
             <div class="form-group">
@@ -109,9 +118,21 @@
                     </div>
                     <div class="checkbox">
                         <label>
-                            <input type="checkbox" id="presave-checkbox" data-bind="checked: presave" />
+                            <input type="checkbox" id="presave-checkbox" data-bind="
+                                checked: presave,
+                                attr: {disabled: custom_export.default_format() === 'html' || !{{ has_daily_saved_export_access|JSON }}}
+                            "/>
                             {% trans "Create a Daily Saved Export" %}
                         </label>
+                        {% if not has_daily_saved_export_access %}
+                            <span
+                                class="hq-help-template"
+                                data-content='{% blocktrans %}
+                                    Daily saved exports are only available on the Standard Plan or higher.
+                                    Click <a href="{{ software_plan_url }}">here</a> to manage the software plan for your project.
+                                {% endblocktrans %}'
+                            ></span>
+                        {% endif %}
                     </div>
                 {% if custom_export.type == 'form' %}
                     <div class="checkbox">
@@ -313,7 +334,7 @@
             <div class="col-sm-9 col-md-8 col-lg-6 col-sm-offset-3 col-md-offset-2">
                  <button type="submit" class="btn btn-large btn-primary" data-bind="
                     click: save_no_preview,
-                    disable: (save.state() === 'saving') || (save.state() === 'saving-preview')
+                    disable: (save.state() === 'saving') || (save.state() === 'saving-preview') || !valid()
                 ">
                     <span data-bind="visible: (save.state() !== 'saving') && (save.state() !== 'error')">
                         <span data-bind="visible: custom_export._id && custom_export._id()">{% trans "Save" %}</span>
@@ -334,6 +355,9 @@
                     {% trans "Delete this Export" %}
                 </a>
                 {% endif %}
+                <div class="text-danger" data-bind="if: !valid()">
+                    {% trans "There are errors with your configuration. Please fix them before creating the export." %}
+                </div>
             </div>
         </div>
     </form>

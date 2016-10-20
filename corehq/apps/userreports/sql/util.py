@@ -1,34 +1,6 @@
 import hashlib
 
 
-def truncate_value(value, max_length=63, from_left=True):
-    """
-    Truncate a value (typically a column name) to a certain number of characters,
-    using a hash to ensure uniqueness.
-    """
-    hash_length = 8
-    truncated_length = max_length - hash_length - 1
-    if from_left:
-        truncated_value = value[-truncated_length:]
-    else:
-        truncated_value = value[:truncated_length]
-
-    if len(value) > max_length:
-        short_hash = hashlib.sha1(value).hexdigest()[:hash_length]
-        return '{}_{}'.format(truncated_value, short_hash)
-    return value
-
-
-def get_table_name(domain, table_id):
-    def _hash(domain, table_id):
-        return hashlib.sha1('{}_{}'.format(hashlib.sha1(domain).hexdigest(), table_id)).hexdigest()[:8]
-
-    return truncate_value(
-        'config_report_{}_{}_{}'.format(domain, table_id, _hash(domain, table_id)),
-        from_left=False
-    )
-
-
 def get_column_name(path):
     """
     :param path: xpath from form or case

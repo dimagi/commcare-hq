@@ -1,18 +1,17 @@
 {
-    "_attachments": {
-        "form.xml": {
-            "content_type": "text/xml",
-            "digest": "md5-urn9hndEfdESU2iuKZmovw==",
-            "length": 3410,
-            "revpos": 1,
-            "stub": true
-        }
-    },
     "_id": "{instance_id}",
     "_rev": "1-357db8748930bb35224a9c47b2609832",
     "computed_": {},
     "computed_modified_on_": null,
     "doc_type": "XFormInstance",
+    "external_blobs": {
+        "form.xml": {
+            "content_length": 3410,
+            "content_type": "text/xml",
+            "digest": "md5-sc+xBvC3EgJfoDOmLcAOqg==",
+            "doc_type": "BlobMeta"
+        }
+    },
     "form": {
         "#type": "data",
         "@name": "Visit",

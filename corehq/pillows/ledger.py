@@ -8,7 +8,7 @@ from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from corehq.util.quickcache import quickcache
-from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
+from pillowtop.checkpoints.manager import PillowCheckpointEventHandler, get_checkpoint_for_elasticsearch_pillow
 from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
@@ -56,9 +56,8 @@ def _get_daily_consumption_for_ledger(ledger):
 
 
 def get_ledger_to_elasticsearch_pillow(pillow_id='LedgerToElasticsearchPillow'):
-    checkpoint = PillowCheckpoint(
-        'ledger-to-elasticsearch',
-    )
+    assert pillow_id == 'LedgerToElasticsearchPillow', 'Pillow ID is not allowed to change'
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, LEDGER_INDEX_INFO)
     processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=LEDGER_INDEX_INFO,

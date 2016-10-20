@@ -4,7 +4,8 @@
 {% load tzmigration %}
 
 {% if request.couch_user %}
-    <script type="text/javascript">
+    {% addtoblock js-inline %}
+    <script>
         gaTrackLink($('#settingsmenu-projectSettings'), 'Nav Bar', 'Click Gear Icon');
         gaTrackLink($('#settingsmenu-help'), 'Nav Bar', 'Click Question Mark');
         gaTrackLink($('#menuitem-projectsettings'), 'Nav Bar', 'Gear Icon', 'Update Project Settings');
@@ -15,10 +16,11 @@
         gaTrackLink($('#menuitem-userforum'), 'Nav Bar', 'Question Mark', 'User Forum');
         gaTrackLink($('#menuitem-issue'), 'Nav Bar', 'Question Mark', 'Report an Issue');
     </script>
+    {% endaddtoblock %}
 <ul class="nav navbar-nav" role="menu">
-    <li id="settingsmenu-projectSettings" class="dropdown">
-        <a href="#" class="dropdown-toggle dropdown-toggle-with-icon" data-toggle="dropdown">
-            <i class="icon-cog fa fa-cog nav-main-icon"></i>
+    <li class="dropdown">
+        <a href="#" id="settingsmenu-projectSettings" class="dropdown-toggle dropdown-toggle-with-icon" data-toggle="dropdown">
+            <i class="fa fa-cog nav-main-icon"></i> <span class="responsive-label">{% trans "Manage" %}</span>
         </a>
         <ul class="dropdown-menu dropdown-menu-right" role="menu">
             <li class="dropdown-header nav-header">{% trans 'Logged in As' %}</li>
@@ -54,6 +56,15 @@
                     <i class="fa fa-dashboard icon-dashboard dropdown-icon"></i> {% trans "Current Subscription" %}
                 </a>
             </li>
+            {% if request.couch_user.is_superuser %}
+            <li class="nav-divider divider"></li>
+            <li class="dropdown-header nav-header">{% trans 'Superuser Options' %}</li>
+            <li>
+                <a href="{% url "raw_doc" %}?id={{ request.project.get_id }}" id="menuitem-view-domain-doc">
+                    <i class="fa fa-cogs icon-cogs dropdown-icon"></i> {% trans "View Domain Doc" %}
+                </a>
+            </li>
+            {% endif %}
             {% endif %}
             <li class="nav-divider divider"></li>
             <li class="dropdown-header nav-header">{% trans 'Manage Account' %}</li>
@@ -70,9 +81,9 @@
             </li>
         </ul>
     </li>
-    <li id="settingsmenu-help" class="dropdown">
-        <a href="#" class="dropdown-toggle dropdown-toggle-with-icon" data-toggle="dropdown">
-            <i class="fa fa-question-circle icon-question-sign nav-main-icon"></i>
+    <li class="dropdown">
+        <a href="#" id="settingsmenu-help" class="dropdown-toggle dropdown-toggle-with-icon" data-toggle="dropdown">
+            <i class="fa fa-question-circle nav-main-icon"></i> <span class="responsive-label">{% trans "Help &amp; Resources" %}</span>
         </a>
         <ul class="dropdown-menu dropdown-menu-right" role="menu">
             <li class="dropdown-header nav-header">{% trans 'CommCare Help' %}</li>
@@ -97,6 +108,7 @@
     {% include 'notifications/partials/global_notifications.html' %}
     <li id="settingsmenu-project" class="dropdown">
         <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+            <span class="responsive-label">{% trans "Project" %}:</span>
             {% if domain %}
                 {% ifequal domain 'public' %}
                     {% trans 'CommCare HQ Demo Project' %}

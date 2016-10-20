@@ -23,6 +23,9 @@ def get_indicator_slugs_from_config(config, all_types=None):
     if config.forms_submitted.enabled:
         slugs.extend(basic_slugs(const.FORMS_SUBMITTED, config.forms_submitted.date_ranges))
 
+    for indicator in config.custom_form:
+        slugs.append('{}{}'.format(indicator.type, indicator.date_range.title()))
+
     for key in ['cases_total', 'cases_active', 'cases_opened', 'cases_closed']:
         indicator_config = getattr(config, key)
         if indicator_config.totals.enabled:

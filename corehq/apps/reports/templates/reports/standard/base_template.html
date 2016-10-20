@@ -19,7 +19,7 @@
 
 {% block js-inline %}{{ block.super }}
 {% block reports-js-inline %}
-    <script type="text/javascript">
+    <script>
         var standardHQReport = new HQReport({
             domain: '{{ domain }}',
             urlRoot: '{{ report.url_root }}',

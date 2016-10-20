@@ -1,6 +1,6 @@
 import uuid
 from django.test import TestCase
-from corehq.apps.app_manager.tests import AppFactory
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.reports.analytics.couchaccessors import (
     update_reports_analytics_indexes,
     get_all_form_definitions_grouped_by_app_and_xmlns,
@@ -49,7 +49,6 @@ class SetupSimpleAppMixin(object):
 
 
 class ReportAppAnalyticsTest(SetupSimpleAppMixin, TestCase):
-    dependent_apps = ['corehq.couchapps']
 
     @classmethod
     def setUpClass(cls):

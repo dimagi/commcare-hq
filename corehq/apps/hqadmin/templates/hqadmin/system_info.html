@@ -158,25 +158,65 @@
             }
         }
 
+        function PillowProgress(name, db_offset, seq) {
+            var self = this;
+            self.name = name;
+            self.db_offset = db_offset;
+            self.seq = seq;
+
+            self.width = function() {
+                return (self.seq * 100) / self.db_offset;
+            };
+
+            self.status = function() {
+                if (self.width() > 98) {
+                    return 'progress-bar-success';
+                } else if (self.width() < 50) {
+                    return 'progress-bar-danger';
+                } else if (self.width() < 75) {
+                    return 'progress-bar-warning';
+                }
+            };
+        }
+
         function PillowModel(pillow) {
             var self = this;
             self.name = ko.observable();
+            self.seq_format = ko.observable();
             self.seq = ko.observable();
-            self.db_seq = ko.observable();
+            self.offsets = ko.observable();
             self.time_since_last = ko.observable();
             self.show_supervisor_info = ko.observable();
             self.supervisor_state = ko.observable();
             self.supervisor_message = ko.observable();
             self.operation_in_progress = ko.observable(false);
+            self.progress = ko.observableArray();
 
             self.update = function (data) {
                 self.name(data.name);
+                self.seq_format(data.seq_format);
                 self.seq(data.seq);
-                self.db_seq(data.db_seq);
+                self.offsets(data.offsets);
                 self.time_since_last(data.time_since_last);
                 self.show_supervisor_info(!!data.supervisor_state);
                 self.supervisor_state(data.supervisor_state||'(unavailable)');
                 self.supervisor_message(data.supervisor_message);
+
+                self.progress([]);
+                if (self.seq_format() === 'json') {
+                    _.each(self.offsets(), function(db_offset, key) {
+                        var value;
+                        if (self.seq() === null || !self.seq().hasOwnProperty(key)) {
+                            value = 0;
+                        } else {
+                            value = self.seq()[key];
+                        }
+                        self.progress.push(new PillowProgress(key, db_offset, value));
+                    })
+                } else {
+                    var key = _.keys(self.offsets())[0];
+                    self.progress.push(new PillowProgress(key, self.offsets()[key], self.seq()));
+                }
             };
 
             self.update(pillow);
@@ -233,10 +273,6 @@
                 }
             });
 
-            self.show_progress = function () {
-                return (self.seq() * 100) / self.db_seq() <= 99;
-            };
-
             self.show_pillow_dialog = function (operation) {
                 var element = $('#pillow_operation_modal').get(0);
                 ko.cleanNode(element);
@@ -284,7 +320,7 @@
                     self.supervisor_message(err);
                 }).always(function() {
                     $('#pillow_operation_modal').modal('hide');
-                    $("#" + self.name() +" td").effect("highlight", {}, 2000);
+                    $("#" + self.name() +" td").fadeTo( "fast" , 0.5).fadeTo( "fast" , 1);
                 });
             }
         }
@@ -473,9 +509,7 @@
                         <th>Name</th>
                         <th>Supervisor Status</th>
                         <th>Time since last checkpoint</th>
-                        <th title="seq / db_seq">Reindex Progress</th>
-                        <th title="db_seq - seq"># Changes behind</th>
-                        <th title="seq / db_seq">Seq / Total Seq</th>
+                        <th>Checkpoint Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -487,20 +521,20 @@
                                 <span data-bind="makeHqHelp: { name: 'Info', description: supervisor_message, format: 'html'}, visible: supervisor_message"></span>
                         </td>
                         <td><label data-bind="text: time_since_last, css: checkpoint_status_css" class="label"></label></td>
-                        <td>
-                            <div class="progress" data-bind="visible: show_progress()">
-                                <div class="progress-bar progress-bar-striped active" data-bind="style: {width: ((seq() * 100)/db_seq()) + '%'}"></div>
+                        <td class="col-md-6" data-bind="foreach: progress">
+                            <div class="row">
+                              <div class="col-sm-4">
+                                  <div class="progress">
+                                        <div class="progress-bar progress-bar-striped" data-bind="style: {width: width() + '%'}, css: status()"></div>
+                                    </div>
+                              </div>
+                              <div class="col-sm-4">
+                                  <span data-bind="text: seq"></span>
+                                        / <span data-bind="text: db_offset"></span>
+                              </div>
+                              <div class="col-sm-4" data-bind="text: name">
+                              </div>
                             </div>
-                            <div data-bind="visible: !show_progress()">
-                                <span>All caught up</span>
-                            </div>
-                        </td>
-                        <td>
-                            <span data-bind="text: db_seq() - seq()"></span>
-                        </td>
-                        <td>
-                            <span data-bind="text: seq"></span>
-                            / <span data-bind="text: db_seq"></span>
                         </td>
                         <td>
                             {% if user_is_support %}
@@ -513,8 +547,7 @@
                                 disable: disabled"></button>
                             {% endif %}
                             <button class="btn btn-default" type="button" data-bind="
-                                click: refresh,
-                                disable: disabled">
+                                click: refresh">
                                 <i class="fa fa-refresh" data-bind="css: {'fa-spin': operation_in_progress}"></i>
                             </button>
                         </td>

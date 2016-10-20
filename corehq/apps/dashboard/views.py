@@ -15,14 +15,17 @@ from corehq.apps.domain.views import DomainViewMixin, LoginAndDomainMixin, \
     DefaultProjectSettingsView
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
+from corehq.apps.locations.views import LocationsListView
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.users.views import DefaultProjectUserSettingsView
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.style.decorators import use_angular_js
 from django_prbac.utils import has_privilege
 from django.conf import settings
 
 
 @login_and_domain_required
+@location_safe
 def dashboard_default(request, domain):
     return HttpResponseRedirect(default_dashboard_url(request, domain))
 
@@ -32,6 +35,9 @@ def default_dashboard_url(request, domain):
 
     if domain in settings.CUSTOM_DASHBOARD_PAGE_URL_NAMES:
         return reverse(settings.CUSTOM_DASHBOARD_PAGE_URL_NAMES[domain], args=[domain])
+
+    if couch_user and not couch_user.has_permission(domain, 'access_all_locations'):
+        return reverse(LocationsListView.urlname, args=[domain])
 
     if couch_user and user_has_custom_top_menu(domain, couch_user):
         return reverse('saved_reports', args=[domain])
@@ -156,7 +162,7 @@ class DomainDashboardView(JSONResponseMixin, BaseDashboardView):
 
 def _get_default_tile_configurations():
     can_edit_data = lambda request: (request.couch_user.can_edit_data()
-                                     or request.couch_user.can_export_data())
+                                     or request.couch_user.can_access_any_exports())
     can_edit_apps = lambda request: (request.couch_user.is_web_user()
                                      or request.couch_user.can_edit_apps())
     can_view_reports = lambda request: user_can_view_reports(request.project, request.couch_user)
@@ -177,7 +183,7 @@ def _get_default_tile_configurations():
         and request.couch_user.can_edit_data()
     )
 
-    is_domain_admin = lambda request: request.couch_user.is_domain_admin(request.domain)
+    is_billing_admin = lambda request: request.couch_user.can_edit_billing()
 
     return [
         TileConfiguration(
@@ -253,7 +259,7 @@ def _get_default_tile_configurations():
             icon='fcc fcc-settings',
             context_processor_class=IconContext,
             urlname=DefaultProjectSettingsView.urlname,
-            visibility_check=is_domain_admin,
+            visibility_check=is_billing_admin,
             help_text=_('Set project-wide settings and manage subscriptions'),
         ),
         TileConfiguration(

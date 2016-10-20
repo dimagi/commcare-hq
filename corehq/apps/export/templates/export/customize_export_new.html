@@ -18,7 +18,9 @@
             var customExportView = new ExportInstance(
                 {{ export_instance|JSON }},
                 {
-                    saveUrl: {{ request.get_full_path|safe|JSON }}
+                    saveUrl: {{ request.get_full_path|safe|JSON }},
+                    hasExcelDashboardAccess: {{ has_excel_dashboard_access|JSON }},
+                    hasDailySavedAccess: {{ has_daily_saved_export_access|JSON }},
                 }
             );
 
@@ -54,27 +56,35 @@
             <div class="form-group">
                 <label
                     for="export-name"
-                    class="col-sm-4 col-md-3 col-lg-2 control-label">
+                    class="col-sm-3 col-md-2 control-label">
                     {% trans "Export Name" %}
                 </label>
-                <div class="col-sm-4 col-md-3 col-lg-2">
+                <div class="col-sm-9 col-md-8 col-lg-6">
                     <input type="text" class="form-control" id="export-name" data-bind="value: name" />
                 </div>
             </div>
-            <div class="form-group">
+            <div class="form-group" data-bind="css: {'has-error': hasDisallowedHtmlFormat}">
                 <label
                     for="format-select"
-                    class="col-sm-4 col-md-3 col-lg-2 control-label">
+                    class="col-sm-3 col-md-2 control-label">
                     {% trans "Default file type" %}
                 </label>
-                <div class="col-sm-4 col-md-3 col-lg-2">
+                <div class="col-sm-9 col-md-8 col-lg-6">
                     <select class="form-control" id="format-select" data-bind="
                             options: getFormatOptionValues(),
                             optionsText: getFormatOptionText,
                             value: export_format
                         ">
                     </select>
+                    <div class="help-block" data-bind="visible: hasDisallowedHtmlFormat">
+                        {% url "domain_subscription_view" domain as software_plan_url %}
+                        {% blocktrans %}
+                            Excel Dashboard Integration is only available on the Standard Plan or higher.
+                            Click <a href="{{ software_plan_url }}">here</a> to manage the software plan for your project.
+                        {% endblocktrans %}
+                    </div>
                 </div>
+
             </div>
             <div class="form-group">
                 <div class="col-sm-offset-4 col-md-offset-3 col-lg-offset-2 col-sm-4">
@@ -89,9 +99,21 @@
                             <input
                                 type="checkbox"
                                 id="daily-saved-export-checkbox"
-                                data-bind="checked: is_daily_saved_export" />
+                                data-bind="
+                                    checked: is_daily_saved_export,
+                                    attr: { disabled: hasHtmlFormat() || !{{ has_daily_saved_export_access|JSON }}}
+                            "/>
                             {% trans "Create a Daily Saved Export" %}
                         </label>
+                        {% if not has_daily_saved_export_access %}
+                            <span
+                                class="hq-help-template"
+                                data-content='{% blocktrans %}
+                                    Daily saved exports are only available on the Standard Plan or higher.
+                                    Click <a href="{{ software_plan_url }}">here</a> to manage the software plan for your project.
+                                {% endblocktrans %}'
+                            ></span>
+                        {% endif %}
                     </div>
                 {% if export_instance.type == 'form' %}
                     <div class="checkbox">
@@ -113,6 +135,19 @@
         <fieldset data-bind="
             template: { foreach: tables, as: 'table', name: 'ko-table-configuration-template' }"
         ></fieldset>
+
+        {% if request|toggle_enabled:"ALLOW_USER_DEFINED_EXPORT_COLUMNS" %}
+        <fieldset>
+            <div class="col-sm-10">
+                <button class="btn btn-default" data-bind="
+                    click: addUserDefinedTableConfiguration
+                ">
+                {% trans "Add custom table configuration " %}
+                </button>
+            </div>
+        </fieldset>
+        {% endif %}
+
         {% if allow_deid %}
         <fieldset>
             <legend>{% trans "Privacy Settings" %}</legend>
@@ -143,7 +178,8 @@
                 <button type="submit" class="btn btn-lg btn-primary" data-bind="
                     click: save,
                     disable: (saveState() === hqImport('export/js/const.js').SAVE_STATES.SAVING ||
-                              saveState() === hqImport('export/js/const.js').SAVE_STATES.SUCCESS)
+                              saveState() === hqImport('export/js/const.js').SAVE_STATES.SUCCESS ||
+                              ! isValid())
                 ">
                     <span data-bind="
                         visible: saveState() === hqImport('export/js/const.js').SAVE_STATES.READY,
@@ -167,6 +203,9 @@
                     {% trans "Delete this Export" %}
                 </a>
                 {% endif %}
+                <div class="text-danger" data-bind="if: !isValid()">
+                    {% trans "There are errors with your configuration. Please fix them before creating the export." %}
+                </div>
             </div>
         </div>
     </form>

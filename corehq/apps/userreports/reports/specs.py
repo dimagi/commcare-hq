@@ -1,7 +1,12 @@
+from collections import namedtuple
 import json
+
+from datetime import date
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
+from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.userreports.exceptions import InvalidQueryColumn
+from corehq.apps.userreports.expressions import ExpressionFactory
 
 from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
 from corehq.apps.userreports.sql.columns import DEFAULT_MAXIMUM_EXPANSION
@@ -24,9 +29,10 @@ from sqlagg.columns import (
 )
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
 from corehq.apps.userreports.specs import TypeProperty
-from corehq.apps.userreports.sql import get_expanded_column_config, SqlColumnConfig
+from corehq.apps.userreports.sql import get_expanded_column_config, ColumnConfig
 from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.util import localize
+from dimagi.utils.decorators.memoized import memoized
 
 
 SQLAGG_COLUMN_MAP = {
@@ -42,28 +48,41 @@ SQLAGG_COLUMN_MAP = {
 }
 
 
-class ReportColumn(JsonObject):
+class BaseReportColumn(JsonObject):
     type = StringProperty(required=True)
     column_id = StringProperty(required=True)
     display = DefaultProperty()
     description = StringProperty()
-    transform = DictProperty()
-    calculate_total = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, obj):
         if 'display' not in obj and 'column_id' in obj:
             obj['display'] = obj['column_id']
-        return super(ReportColumn, cls).wrap(obj)
+        return super(BaseReportColumn, cls).wrap(obj)
+
+    def get_header(self, lang):
+        return localize(self.display, lang)
+
+    def get_column_ids(self):
+        """
+        Used as an abstraction layer for columns that can contain more than one data column
+        (for example, PercentageColumns).
+        """
+        return [self.column_id]
+
+    def get_column_config(self, data_source_config, lang):
+        raise NotImplementedError('subclasses must override this')
+
+
+class ReportColumn(BaseReportColumn):
+    transform = DictProperty()
+    calculate_total = BooleanProperty(default=False)
 
     def format_data(self, data):
         """
         Subclasses can apply formatting to the entire dataset.
         """
         pass
-
-    def get_sql_column_config(self, data_source_config, lang):
-        raise NotImplementedError('subclasses must override this')
 
     def get_format_fn(self):
         """
@@ -80,16 +99,6 @@ class ReportColumn(JsonObject):
         the query (e.g. an aggregate date splitting into year and month)
         """
         raise InvalidQueryColumn(_("You can't query on columns of type {}".format(self.type)))
-
-    def get_header(self, lang):
-        return localize(self.display, lang)
-
-    def get_column_ids(self):
-        """
-        Used as an abstraction layer for columns that can contain more than one data column
-        (for example, PercentageColumns).
-        """
-        return [self.column_id]
 
 
 class FieldColumn(ReportColumn):
@@ -128,8 +137,8 @@ class FieldColumn(ReportColumn):
                     float(row[column_name]) / total
                 )
 
-    def get_sql_column_config(self, data_source_config, lang):
-        return SqlColumnConfig(columns=[
+    def get_column_config(self, data_source_config, lang):
+        return ColumnConfig(columns=[
             DatabaseColumn(
                 header=self.get_header(lang),
                 agg_column=SQLAGG_COLUMN_MAP[self.aggregation](self.field, alias=self.column_id),
@@ -159,8 +168,8 @@ class LocationColumn(ReportColumn):
             except BadValueError:
                 row[column_name] = '{} ({})'.format(row[column_name], _('Invalid Location'))
 
-    def get_sql_column_config(self, data_source_config, lang):
-        return SqlColumnConfig(columns=[
+    def get_column_config(self, data_source_config, lang):
+        return ColumnConfig(columns=[
             DatabaseColumn(
                 header=self.get_header(lang),
                 agg_column=SimpleColumn(self.field, alias=self.column_id),
@@ -184,7 +193,7 @@ class ExpandedColumn(ReportColumn):
         _add_column_id_if_missing(obj)
         return super(ExpandedColumn, cls).wrap(obj)
 
-    def get_sql_column_config(self, data_source_config, lang):
+    def get_column_config(self, data_source_config, lang):
         return get_expanded_column_config(data_source_config, self, lang)
 
 
@@ -194,9 +203,10 @@ class AggregateDateColumn(ReportColumn):
     """
     type = TypeProperty('aggregate_date')
     field = StringProperty(required=True)
+    format = StringProperty(required=False)
 
-    def get_sql_column_config(self, data_source_config, lang):
-        return SqlColumnConfig(columns=[
+    def get_column_config(self, data_source_config, lang):
+        return ColumnConfig(columns=[
             AggregateColumn(
                 header=self.get_header(lang),
                 aggregate_fn=lambda year, month: {'year': year, 'month': month},
@@ -217,11 +227,11 @@ class AggregateDateColumn(ReportColumn):
         return '{}_month'.format(self.column_id)
 
     def get_format_fn(self):
-        # todo: support more aggregation/more formats
         def _format(data):
             if not data.get('year', None) or not data.get('month', None):
                 return _('Unknown Date')
-            return '{}-{:02d}'.format(int(data['year']), int(data['month']))
+            format_ = self.format or '%Y-%m'
+            return date(year=int(data['year']), month=int(data['month']), day=1).strftime(format_)
         return _format
 
     def get_query_column_ids(self):
@@ -237,11 +247,11 @@ class PercentageColumn(ReportColumn):
         default='percent'
     )
 
-    def get_sql_column_config(self, data_source_config, lang):
+    def get_column_config(self, data_source_config, lang):
         # todo: better checks that fields are not expand
-        num_config = self.numerator.get_sql_column_config(data_source_config, lang)
-        denom_config = self.denominator.get_sql_column_config(data_source_config, lang)
-        return SqlColumnConfig(columns=[
+        num_config = self.numerator.get_column_config(data_source_config, lang)
+        denom_config = self.denominator.get_column_config(data_source_config, lang)
+        return ColumnConfig(columns=[
             AggregateColumn(
                 header=self.get_header(lang),
                 aggregate_fn=lambda n, d: {'num': n, 'denom': d},
@@ -315,6 +325,33 @@ class PercentageColumn(ReportColumn):
 def _add_column_id_if_missing(obj):
     if obj.get('column_id') is None:
         obj['column_id'] = obj.get('alias') or obj['field']
+
+
+class CalculatedColumn(namedtuple('CalculatedColumn', ['header', 'slug'])):
+
+    @property
+    def data_tables_column(self):
+        return DataTablesColumn(self.header, sortable=False, data_slug=self.slug)
+
+
+class ExpressionColumn(BaseReportColumn):
+    expression = DefaultProperty(required=True)
+
+    @property
+    @memoized
+    def wrapped_expression(self):
+        return ExpressionFactory.from_spec(self.expression)
+
+    def get_column_config(self, data_source_config, lang):
+        return ColumnConfig(columns=[
+            CalculatedColumn(
+                header=self.get_header(lang),
+                slug=self.column_id,
+                # todo: are these needed?
+                # format_fn=self.get_format_fn(),
+                # help_text=self.description
+            )
+        ])
 
 
 class ChartSpec(JsonObject):

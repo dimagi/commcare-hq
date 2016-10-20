@@ -1,24 +1,30 @@
-from django.test import TestCase, override_settings
-from pillowtop.listener import BasicPillow
-from corehq.apps.domain.models import Domain
+from django.test import TestCase, override_settings, SimpleTestCase
+from mock import patch
 
-from ..utils import pillow_seq_store, EPSILON
+from corehq.util.test_utils import generate_cases
 from ..models import PillowCheckpointSeqStore
+from ..utils import pillow_seq_store, EPSILON, parse_celery_workers, parse_celery_pings
 
 
-class DummyPillow(BasicPillow):
-    document_class = Domain
+def _get_dummy_pillow():
+    from pillowtop.tests.utils import make_fake_constructed_pillow
+    return make_fake_constructed_pillow('dummy pillow', 'test_checkpoint_seq_store')
 
-    def run(self):
-        pass
+DummyPillow = _get_dummy_pillow
 
 
 @override_settings(PILLOWTOPS={'test': ['corehq.apps.hqadmin.tests.test_utils.DummyPillow']})
 class TestPillowCheckpointSeqStore(TestCase):
-    dependent_apps = ['pillowtop']
 
     def setUp(self):
+        super(TestPillowCheckpointSeqStore, self).setUp()
         self.pillow = DummyPillow()
+        self.pillow_patch = patch("corehq.apps.hqadmin.utils.get_couch_pillow_instances", return_value=[DummyPillow()])
+        self.pillow_patch.start()
+
+    def tearDown(self):
+        self.pillow_patch.stop()
+        super(TestPillowCheckpointSeqStore, self).tearDown()
 
     def test_basic_cloudant_seq(self):
         seq = '1-blahblah'
@@ -74,3 +80,66 @@ class TestPillowCheckpointSeqStore(TestCase):
 
         store = PillowCheckpointSeqStore.get_by_pillow_name('DummyPillowThatDoesNotExist')
         self.assertIsNone(store)
+
+
+class TestParseCeleryWorkerPings(SimpleTestCase):
+    """
+    Ensures that we correctly response the celery ping responses
+    """
+    def test_celery_worker_pings(self):
+        response = parse_celery_pings([
+            {'celery@myhost': {'ok': 'pong'}},
+            {'celery@otherhost': {'ok': 'pong'}},
+            {'celery@yikes': {'ok': 'notpong'}},
+        ])
+        self.assertEqual(response, {
+            'celery@myhost': True,
+            'celery@otherhost': True,
+            'celery@yikes': False,
+        })
+
+    def test_celery_worker_pings_empty(self):
+        response = parse_celery_pings([])
+
+        self.assertEqual(response, {})
+
+
+class TestParseCeleryWorkers(SimpleTestCase):
+    """
+    Ensures that we parse the hosts returned from flower into
+    workers we expect to be running and workers we don't.
+    """
+
+
+@generate_cases([
+    # Ensures we correctly parse a single regular worker
+    ({'regular_host': True}, (['regular_host'], [])),
+    # Ensures we correctly parse a single timestamped worker
+    ({'main_.20_timestamp': True}, (['main_.20_timestamp'], [])),
+    # Ensures we parse timestamped and regular
+    ({
+        'main_.40_timestamp': True,
+        'regular_host': True,
+    }, (['regular_host', 'main_.40_timestamp'], [])),
+    # Ensures we correctly parse multiple timestamped workers
+    ({
+        'main_.40_timestamp': True,
+        'main_.20_timestamp': True,
+        'main_.30_timestamp': True,
+    }, (['main_.40_timestamp'], ['main_.30_timestamp', 'main_.20_timestamp'])),
+
+    # Ensures we correctly parse multiple timestamped workers
+    ({
+        'main_.40_timestamp': True,
+        'main_.20_timestamp': True,
+        'main_.30_timestamp': True,
+        'secondary_.30_timestamp': True,
+        'secondary_.20_timestamp': True,
+    }, (
+        ['main_.40_timestamp', 'secondary_.30_timestamp'],
+        ['main_.30_timestamp', 'main_.20_timestamp', 'secondary_.20_timestamp'],
+    )),
+
+], TestParseCeleryWorkers)
+def test_parse_celery_workers(self, workers, expected):
+    self.assertEqual(parse_celery_workers(workers), expected)

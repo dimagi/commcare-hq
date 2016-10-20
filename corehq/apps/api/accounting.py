@@ -6,6 +6,7 @@ from corehq.apps.accounting.models import Feature, FeatureRate, SoftwarePlanVers
     SubscriptionAdjustment, BillingRecord, Invoice
 from corehq.apps.api.auth import CustomResourceMeta, AdminAuthentication
 from tastypie import fields
+
 from django_prbac.models import Role
 
 
@@ -92,7 +93,7 @@ class SoftwarePlanResource(ModelResource):
 
 
 class DefaultProductPlanResource(ModelResource):
-    plan = fields.IntegerField('plan', null=False)
+    plan = fields.IntegerField('plan_id', null=False)
 
     class Meta(AccountingResourceMeta):
         queryset = DefaultProductPlan.objects.all().order_by('pk')

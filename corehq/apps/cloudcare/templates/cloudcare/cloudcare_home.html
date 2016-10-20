@@ -23,15 +23,36 @@
 {% block stylesheets %}
     {% compress css %}
     <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
-    <link rel="stylesheet" href="{% static 'jquery-ui/themes/base/jquery-ui.min.css' %}">
     <link type="text/css"
           rel="stylesheet"
           media="all"
           href="{% static 'datatables/media/css/jquery.dataTables.min.css' %}" />
-    <link rel="stylesheet" href="{% static 'formplayer/style/webforms.css' %}">
-    <link rel="stylesheet" href="{% static 'cloudcare/css/cloudcare.css' %}">
+    <link rel="stylesheet" href="{% static 'cloudcare/css/webforms.css' %}">
+    <link rel="stylesheet" href="{% static 'datetimepicker/build/jquery.datetimepicker.min.css' %}">
     <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}" />
     {% endcompress %}
+
+    {% if less_debug %}
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'cloudcare/less/font-formplayer.less' %}" />
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'cloudcare/less/cloudcare.debug.less' %}" />
+    {% else %}
+    {% compress css %}
+        <link type="text/less"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'cloudcare/less/font-formplayer.less' %}" />
+        <link type="text/less"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'cloudcare/less/cloudcare.less' %}"/>
+    {% endcompress %}
+    {% endif %}
 {% endblock %}
 
 {% block js %} {{ block.super }}
@@ -39,6 +60,7 @@
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
     <script src="{% static 'nprogress/nprogress.js' %}"></script>
     <script src="{% static 'moment/min/moment.min.js' %}"></script>
+    <script src="{% static 'datetimepicker/build/jquery.datetimepicker.full.js' %}"></script>
 
     <script src="{% static 'style/js/ui-element.js' %}"></script>
     <script src="{% static 'case/js/cheapxml.js' %}"></script>
@@ -49,14 +71,13 @@
     <script src="{% static 'cloudcare/js/backbone/apps.js' %}"></script>
     <script src="{% static 'cloudcare/js/backbone/cases.js' %}"></script>
 
-    <script src="{% static 'formplayer/script/vendor/markdown-it-4.2.0.min.js' %}"></script>
-    <script src="{% static 'formplayer/script/vendor/purify.js' %}"></script>
-    <script src="{% static 'formplayer/script/vendor/ba-tiny-pubsub.min.js' %}"></script>
-    <script src="{% static 'formplayer/script/vendor/shortcut.js' %}"></script>
-    <script src="{% static 'formplayer/script/webformsession.js' %}"></script>
-    <script src="{% static 'formplayer/script/formnav-all.js' %}"></script>
-    <script src="{% static 'formplayer/script/entrycontrols_full.js' %}"></script>
-    <script src="{% static 'formplayer/script/fullform-ui.js' %}"></script>
+    <script src="{% static 'markdown-it/dist/markdown-it.js' %}"></script>
+    <script src="{% static 'DOMPurify/dist/purify.min.js' %}"></script>
+    <script src="{% static 'jquery-tiny-pubsub/dist/ba-tiny-pubsub.js' %}"></script>
+    <script src="{% static 'cloudcare/js/form_entry/webformsession.js' %}"></script>
+    <script src="{% static 'cloudcare/js/form_entry/formnav-all.js' %}"></script>
+    <script src="{% static 'cloudcare/js/form_entry/entrycontrols_full.js' %}"></script>
+    <script src="{% static 'cloudcare/js/form_entry/fullform-ui.js' %}"></script>
 
     <script src="{% static 'codemirror/lib/codemirror.js' %}"></script>
     <script src="{% static 'codemirror/mode/xml/xml.js' %}"></script>
@@ -70,7 +91,6 @@
 
     var translatedStrings = {
         saved : "{% trans "Form successfully saved" %}",
-        errSaving : "{% trans "Error saving!" %}",
         errSavingDetail : "{% trans "Save failed. Details: " %}",
         unknownError: "{% trans "Unknown error: " %}",
         unknownErrorDetail: "{% trans "This can happen if you loaded CloudCare from a different address than the server address" %}",
@@ -87,8 +107,6 @@
         navigateDirty: "{% trans "You have not submitted this form. Click ‘Stay on this Page’ to continue working on this form. If you click 'Leave this Page' you can resume work on this form later." %}",
         sidebarDirty: "{% trans "You have not submitted this form. Click ‘Cancel’ to continue working on this form. If you click 'OK' you can resume work on this form later." %}",
     {% endif %}
-        synced : "{% trans "User Data Successfully Synced" %}",
-        errSyncing : "{% trans "Could not sync user data. Please try again and report a bug if issue persists." %}"
     };
 
     $(function () {
@@ -232,6 +250,6 @@
     </div>
 
     {% include 'cloudcare/includes/case_details.html' %}
-    {% include 'formplayer/fullform-ui/templates.html' %}
+    {% include 'form_entry/templates.html' %}
 
 {% endblock %}

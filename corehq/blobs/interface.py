@@ -6,8 +6,9 @@ from uuid import uuid4
 
 from corehq.blobs import DEFAULT_BUCKET
 from corehq.blobs.exceptions import ArgumentError
+from corehq.blobs.util import random_url_id
 
-SAFENAME = re.compile("^[a-z0-9_./-]+$", re.IGNORECASE)
+SAFENAME = re.compile("^[a-z0-9_./{}-]+$", re.IGNORECASE)
 NOT_SET = object()
 
 
@@ -65,6 +66,16 @@ class AbstractBlobDB(object):
         raise NotImplementedError
 
     @abstractmethod
+    def bulk_delete(self, paths):
+        """Delete multiple blobs.
+
+        :param paths: The list of blob paths to delete.
+        :returns: True if all the blobs were deleted else false. None if it is
+        not known if the blob was deleted or not.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def copy_blob(self, content, info, bucket):
         """Copy blob from other blob database
 
@@ -76,13 +87,28 @@ class AbstractBlobDB(object):
 
     @staticmethod
     def get_identifier(basename):
-        if not basename:
-            return uuid4().hex
-        if SAFENAME.match(basename) and "/" not in basename:
-            prefix = basename
-        else:
-            prefix = "unsafe"
-        return prefix + "." + uuid4().hex
+        """Get an unique random identifier
+
+        The identifier is chosen from a 64 bit key space, which is
+        suitably large for no likely collisions in 1000 concurrent keys.
+        1000 is an arbitrary number chosen as an upper bound of the
+        number of blobs associated with any given object. We may need to
+        change this if we ever expect an object to have significantly
+        more than 1000 blobs (attachments). The probability of a
+        collision with a 64 bit ID is:
+
+        k = 1000
+        N = 2 ** 64
+        (k ** 2) / (2 * 2 ** 64) = 2.7e-14
+
+        which is somewhere near the probability of a meteor landing on
+        your house. For most objects the number of blobs present at any
+        moment in time will be far lower, and therefore the probability
+        of a collision will be much lower as well.
+
+        http://preshing.com/20110504/hash-collision-probabilities/
+        """
+        return random_url_id(8)
 
     @staticmethod
     def get_args_for_delete(identifier=NOT_SET, bucket=NOT_SET):

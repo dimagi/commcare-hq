@@ -19,7 +19,7 @@ class LocationFilter(AsyncLocationFilter):
     def ctx(self):
         api_root = reverse('api_dispatch_list', kwargs={'domain': self.domain,
                                                         'resource_name': 'location_internal',
-                                                        'api_name': 'v0.3'})
+                                                        'api_name': 'v0.5'})
         selected_loc_id = self.request.GET.get('location_id')
 
         locations = load_locs_json(self.domain, selected_loc_id)

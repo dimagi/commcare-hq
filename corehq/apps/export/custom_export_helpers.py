@@ -106,6 +106,14 @@ class CustomExportHelper(object):
     def post_data(self):
         return json.loads(self.request.body)
 
+    @property
+    def allow_daily_saved(self):
+        return has_privilege(self.request, privileges.DAILY_SAVED_EXPORT)
+
+    @property
+    def allow_excel_dashboard(self):
+        return has_privilege(self.request, privileges.EXCEL_DASHBOARD)
+
     def update_custom_export(self):
         """
         Updates custom_export object from the request
@@ -115,6 +123,13 @@ class CustomExportHelper(object):
         post_data = self.post_data
 
         custom_export_json = post_data['custom_export']
+
+        if post_data['presave'] and not self.allow_daily_saved:
+            raise BadExportConfiguration(_("This user does not have permission to create Daily Saved Exports"))
+        if custom_export_json['default_format'] == "html" and not self.allow_excel_dashboard:
+            raise BadExportConfiguration(_("This user does not have permission to create an excel dashboard"))
+        if custom_export_json["is_safe"] and not self.allow_deid:
+            raise BadExportConfiguration(_("This user does not have permission to create a de-identified export"))
 
         SAFE_KEYS = ('default_format', 'is_safe', 'name', 'schema_id', 'transform_dates')
         for key in SAFE_KEYS:

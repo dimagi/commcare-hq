@@ -6,6 +6,10 @@ Project Space: {{ domain }}
 
 Project overview: {{ pro_bono_form.project_overview.value }}
 
+Estimated annual expenditures on airtime: {{ pro_bono_form.airtime_expense.value }}
+
+Estimated annual expenditures on devices: {{ pro_bono_form.device_expense.value }}
+
 Pay only features needed: {{ pro_bono_form.pay_only_features_needed.value }}
 
 Duration of project: {{ pro_bono_form.duration_of_project.value }}

@@ -5,7 +5,9 @@ from kafka.common import KafkaUnavailableError
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
+from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
 from corehq.apps.change_feed.producer import send_to_kafka
+from corehq.apps.change_feed.topics import get_multi_topic_first_available_offsets
 from corehq.util.test_utils import trap_extra_setup
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.checkpoints.manager import PillowCheckpoint
@@ -43,6 +45,25 @@ class KafkaChangeFeedTest(SimpleTestCase):
         found_change_ids = set([change.id for change in changes])
         for expected_id in set([meta.document_id for meta in expected_metas]):
             self.assertTrue(expected_id in found_change_ids)
+
+    @trap_extra_setup(KafkaUnavailableError)
+    def test_expired_checkpoint_iteration_strict(self):
+        feed = KafkaChangeFeed(topics=[topics.FORM, topics.CASE], group_id='test-kafka-feed', strict=True)
+        first_avaliable_offsets = get_multi_topic_first_available_offsets([topics.FORM, topics.CASE])
+        since = {
+            topic: first_available - 1 for topic, first_available in first_avaliable_offsets.items()
+        }
+        with self.assertRaises(UnavailableKafkaOffset):
+            feed.iter_changes(since=since, forever=False).next()
+
+    @trap_extra_setup(KafkaUnavailableError)
+    def test_non_expired_checkpoint_iteration_strict(self):
+        feed = KafkaChangeFeed(topics=[topics.FORM, topics.CASE], group_id='test-kafka-feed', strict=True)
+        first_avaliable_offsets = get_multi_topic_first_available_offsets([topics.FORM, topics.CASE])
+        since = {
+            topic: first_available for topic, first_available in first_avaliable_offsets.items()
+        }
+        feed.iter_changes(since=since, forever=False).next()
 
 
 class KafkaCheckpointTest(TestCase):

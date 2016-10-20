@@ -18,6 +18,8 @@ from corehq.apps.export.models import (
     PathNode,
     StockExportColumn,
     RowNumberColumn,
+    SplitGPSExportColumn,
+    GeopointItem,
 )
 
 # System properties to be displayed above the form questions
@@ -50,6 +52,15 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
             PathNode(name='form'), PathNode(name='meta'), PathNode(name='timeEnd')
         ]),
         help_text=_('The time at which this form was completed'),
+        selected=True,
+    ),
+    ExportColumn(
+        tags=[PROPERTY_TAG_INFO],
+        label='started_time',
+        item=ExportItem(path=[
+            PathNode(name='form'), PathNode(name='meta'), PathNode(name='timeStart')
+        ]),
+        help_text=_('The time at which this form was started'),
         selected=True,
     ),
     ExportColumn(
@@ -101,10 +112,10 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
         is_advanced=True,
         help_text=_("The id of the device that submitted this form")
     ),
-    ExportColumn(
+    SplitGPSExportColumn(
         tags=[PROPERTY_TAG_INFO],
         label='location',
-        item=ExportItem(path=[
+        item=GeopointItem(path=[
             PathNode(name='form'), PathNode(name='meta'), PathNode(name='location')
         ]),
         is_advanced=True,

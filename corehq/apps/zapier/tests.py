@@ -5,13 +5,15 @@ from django.core.urlresolvers import reverse
 from django.test.testcases import TestCase
 from tastypie.models import ApiKey
 
+from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.domain.models import Domain
 from corehq.apps.repeaters.models import FormRepeater
 from corehq.apps.users.models import WebUser
 from corehq.apps.zapier import consts
 from corehq.apps.zapier.models import ZapierSubscription
-from corehq.toggles import ZAPIER_INTEGRATION
+
+from corehq.apps.accounting.tests import generator
 
 XFORM = """
     <h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms"
@@ -79,21 +81,28 @@ class TestZapierIntegration(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestZapierIntegration, cls).setUpClass()
+        generator.instantiate_accounting()
+
         cls.domain_object = Domain.get_or_create_with_name(TEST_DOMAIN, is_active=True)
         cls.domain = cls.domain_object.name
+
+        account = BillingAccount.get_or_create_account_by_domain(cls.domain, created_by="automated-test")[0]
+        plan = DefaultProductPlan.get_default_plan(edition=SoftwarePlanEdition.STANDARD)
+        subscription = Subscription.new_domain_subscription(account, cls.domain, plan)
+        subscription.is_active = True
+        subscription.save()
+
         cls.web_user = WebUser.create(cls.domain, 'test', '******')
         api_key_object, _ = ApiKey.objects.get_or_create(user=cls.web_user.get_django_user())
         cls.api_key = api_key_object.key
-        cls.application = Application.new_app(cls.domain, 'Test App', '1.0')
+        cls.application = Application.new_app(cls.domain, 'Test App')
         cls.application.save()
         module = cls.application.add_module(Module.new_module("Module 1", "en"))
         cls.application.new_form(module.id, name="Form1", attachment=XFORM, lang="en")
         cls.application.save()
-        ZAPIER_INTEGRATION.set('domain:{}'.format(cls.domain), True)
 
     @classmethod
     def tearDownClass(cls):
-        ZAPIER_INTEGRATION.set('domain:{}'.format(cls.domain), False)
         cls.web_user.delete()
         cls.application.delete()
         cls.domain_object.delete()

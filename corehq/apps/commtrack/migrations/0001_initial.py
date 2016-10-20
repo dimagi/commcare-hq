@@ -23,8 +23,8 @@ class Migration(migrations.Migration):
                 ('stock_on_hand', models.DecimalField(default=Decimal('0'), max_digits=20, decimal_places=5)),
                 ('daily_consumption', models.DecimalField(null=True, max_digits=20, decimal_places=5)),
                 ('last_modified_date', models.DateTimeField()),
-                ('sql_location', models.ForeignKey(to='locations.SQLLocation', null=True)),
-                ('sql_product', models.ForeignKey(to='products.SQLProduct')),
+                ('sql_location', models.ForeignKey(to='locations.SQLLocation', null=True, on_delete=models.CASCADE)),
+                ('sql_product', models.ForeignKey(to='products.SQLProduct', on_delete=models.CASCADE)),
             ],
             options={
             },

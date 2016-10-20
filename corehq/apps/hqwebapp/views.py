@@ -36,12 +36,14 @@ import httpagentparser
 from couchdbkit import ResourceNotFound
 from two_factor.views import LoginView
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
+from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 
 from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
 from soil import DownloadBase
 from soil import views as soil_views
@@ -60,7 +62,7 @@ from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN
 from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
-from corehq.apps.reports.util import is_mobile_worker_with_report_access
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
@@ -111,6 +113,7 @@ def not_found(request, template_name='404.html'):
 
 
 @require_GET
+@location_safe
 def redirect_to_default(req, domain=None):
     if not req.user.is_authenticated():
         if domain != None:
@@ -142,10 +145,10 @@ def redirect_to_default(req, domain=None):
         elif 1 == len(domains):
             if domains[0]:
                 domain = domains[0].name
+                couch_user = req.couch_user
 
-                if (req.couch_user.is_commcare_user()
-                    and not is_mobile_worker_with_report_access(
-                        req.couch_user, domain)):
+                if (couch_user.is_commcare_user() and
+                        couch_user.can_view_some_reports(domain)):
                     url = reverse("cloudcare_main", args=[domain, ""])
                 else:
                     from corehq.apps.dashboard.views import dashboard_default
@@ -228,6 +231,10 @@ def server_up(req):
             "always_check": True,
             "check_func": checks.check_redis,
         },
+        "formplayer": {
+            "always_check": True,
+            "check_func": checks.check_formplayer
+        },
     }
 
     failed = False
@@ -253,15 +260,16 @@ def server_up(req):
         return HttpResponse("success")
 
 
-def no_permissions(request, redirect_to=None, template_name="403.html"):
+def no_permissions(request, redirect_to=None, template_name="403.html", message=None):
     """
     403 error handler.
     """
     t = loader.get_template(template_name)
-    return HttpResponseForbidden(t.render(RequestContext(request,
-        {'MEDIA_URL': settings.MEDIA_URL,
-         'STATIC_URL': settings.STATIC_URL
-        })))
+    return HttpResponseForbidden(t.render(RequestContext(request, {
+        'MEDIA_URL': settings.MEDIA_URL,
+        'STATIC_URL': settings.STATIC_URL,
+        'message': message,
+    })))
 
 
 def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
@@ -1110,8 +1118,21 @@ class DataTablesAJAXPaginationMixin(object):
 
 @always_allow_browser_caching
 @login_and_domain_required
+@location_safe
 def toggles_js(request, domain, template='hqwebapp/js/toggles_template.js'):
     return render(request, template, {
         'toggles_dict': toggles.toggle_values_by_name(username=request.user.username, domain=domain),
         'previews_dict': feature_previews.preview_values_by_name(domain=domain)
+    })
+
+
+@require_superuser
+def couch_doc_counts(request, domain):
+    from casexml.apps.case.models import CommCareCase
+    from couchforms.models import XFormInstance
+    start = string_to_datetime(request.GET.get('start')) if request.GET.get('start') else None
+    end = string_to_datetime(request.GET.get('end')) if request.GET.get('end') else None
+    return json_response({
+        cls.__name__: get_doc_count_in_domain_by_class(domain, cls, start, end)
+        for cls in [CommCareCase, XFormInstance]
     })

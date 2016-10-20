@@ -7,10 +7,14 @@
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
         <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}" />
         <link rel="stylesheet" href="{% static 'codemirror/addon/fold/foldgutter.css' %}"/>
+        <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'font-awesome/css/font-awesome.min.css' %}" />
 
         {% compress js %}
-            <script type="text/javascript" src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-            <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+            <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+            <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
         {% endcompress %}
 
         {# CodeMirror uses granular resources as a means of config #}
@@ -68,14 +72,20 @@
             </div>
 
                 <div class="col-xs-9">
-                <h3>Doc {{ doc_id }}</h3>
-                <p>Doc type: {{ doc_type }}</p>
-                <p>Database or table: {{ dbname }}</p>
-                <div>
-                    <h3>Raw Doc:</h3>
-                    <pre id="couch-document">{{ doc }}</pre>
+                    <h3>Doc {{ doc_id }}</h3>
+                    <p>Doc type: {{ doc_type }}</p>
+                    <p>Database or table: {{ dbname }}</p>
+                    <a href="{% url 'global_quick_find' %}?q={{ doc_id }}">
+                        <img src="{% static 'prelogin/images/commcare-flower.png' %}"
+                             alt="CommCare" witdth="14px" height="14px"
+                             title="Open in HQ" />
+                    </a>
+                    <a href="{% url 'doc_in_es' %}?id={{ doc_id }}" target="_blank" title="Search in ES"><i class="fa fa-search"></i></a>
+                    <div>
+                        <h3>Raw Doc:</h3>
+                        <pre id="couch-document">{{ doc }}</pre>
+                    </div>
                 </div>
-            </div>
             </div>
         </div>
         {% endif %}

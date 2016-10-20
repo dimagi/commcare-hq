@@ -1,6 +1,6 @@
 import logging
 
-from django.conf.urls import *
+from django.conf.urls import include, patterns, url
 from django.core.exceptions import ImproperlyConfigured
 from corehq.apps.reports.util import get_installed_custom_modules
 from corehq.apps.reports.dispatcher import (ProjectReportDispatcher, 
@@ -20,9 +20,9 @@ from corehq.apps.userreports.views import (
     EditReportInBuilder,
     ReportBuilderDataSourceSelect,
     ReportBuilderTypeSelect,
-    ReportBuilderPaywall, ReportBuilderPaywallPricing,
-    ReportBuilderPaywallActivatingTrial,
-    ReportBuilderPaywallActivatingSubscription)
+    ReportBuilderPaywallPricing,
+    ReportBuilderPaywallActivatingSubscription,
+)
 from .filters import urls as filter_urls
 from .views import (
     EditFormInstance,
@@ -42,11 +42,8 @@ urlpatterns = patterns('corehq.apps.reports.views',
     ConfigurableReport.url_pattern(),
     CustomConfigurableReportDispatcher.url_pattern(),
 
-    url(r'builder/subscribe/$', ReportBuilderPaywall.as_view(), name=ReportBuilderPaywall.urlname),
     url(r'builder/subscribe/pricing/$', ReportBuilderPaywallPricing.as_view(),
         name=ReportBuilderPaywallPricing.urlname),
-    url(r'builder/subscribe/activating_trial/$', ReportBuilderPaywallActivatingTrial.as_view(),
-        name=ReportBuilderPaywallActivatingTrial.urlname),
     url(r'builder/subscribe/activating_subscription/$', ReportBuilderPaywallActivatingSubscription.as_view(),
         name=ReportBuilderPaywallActivatingSubscription.urlname),
 

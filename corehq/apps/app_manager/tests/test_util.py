@@ -5,7 +5,8 @@ from corehq.apps.app_manager.models import (
     FormSchedule,
     ScheduleVisit
 )
-from corehq.apps.app_manager.tests import TestXmlMixin, AppFactory
+from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from django.test.testcases import SimpleTestCase
 from mock import patch, MagicMock
 import re
@@ -93,6 +94,7 @@ class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
 class SchemaTest(SimpleTestCase):
     def setUp(self):
         self.factory = AppFactory()
+        self.factory_2 = AppFactory()
 
     def test_get_casedb_schema_form_without_cases(self):
         survey = self.add_form()
@@ -191,18 +193,77 @@ class SchemaTest(SimpleTestCase):
             },
         })
 
-    def test_get_session_schema_advanced_form(self):
-        m2, m2f0 = self.factory.new_advanced_module('visit history', 'visit')
-        self.factory.form_requires_case(m2f0, 'visit')
+    def test_get_session_schema_for_child_module(self):
+        # m0 - opens 'gold-fish' case.
+        # m1 - has m0 as root-module, has parent-select, updates 'guppy' case
+        self.module_0, _ = self.factory.new_basic_module('parent', 'gold-fish')
+        self.module_1, _ = self.factory.new_basic_module('child', 'guppy', parent_module=self.module_0)
+        # m0f0 registers gold-fish case and a child case ('guppy')
+        m0f0 = self.module_0.get_form(0)
+        self.factory.form_requires_case(m0f0, update={'name': 'goldilocks'})
+        self.factory.form_opens_case(m0f0, 'guppy', is_subcase=True)
 
-        schema = util.get_session_schema(m2f0)
-        self.assertDictEqual(schema["structure"]["case_id_load_visit_0"], {
-            "reference": {
-                "source": "casedb",
-                "subset": "case",
-                "key": "@case_id",
+        # m1f0 has parent-select, updates `guppy` case
+        m1f0 = self.module_1.get_form(0)
+        self.factory.form_requires_case(m1f0, parent_case_type='gold-fish')
+
+        casedb_schema = util.get_casedb_schema(m1f0)
+        session_schema = util.get_session_schema(m1f0)
+
+        expected_session_schema_structure = {
+            "case_id_guppy": {
+                "reference": {
+                    "subset": "case",
+                    "source": "casedb",
+                    "key": "@case_id"
+                }
+            }
+        }
+
+        expected_casedb_schema_subsets = [
+            {
+                "structure": {
+                    "case_name": {}
+                },
+                "related": {
+                    "parent": "parent"
+                },
+                "id": "case",
+                "key": "@case_type",
+                "name": "guppy"
             },
-        })
+            {
+                "structure": {
+                    "name": {},
+                    "case_name": {}
+                },
+                "related": None,
+                "id": "parent",
+                "key": "@case_type",
+                "name": "parent (gold-fish)"
+            }
+        ]
+
+        self.assertEqual(casedb_schema['subsets'], expected_casedb_schema_subsets)
+        self.assertEqual(session_schema['structure'], expected_session_schema_structure)
+
+    def test_get_case_sharing_hierarchy(self):
+        with patch('corehq.apps.app_manager.util.get_case_sharing_apps_in_domain') as mock_sharing:
+            mock_sharing.return_value = [self.factory.app, self.factory_2.app]
+            self.factory.app.case_sharing = True
+            self.factory_2.app.case_sharing = True
+
+            self.add_form("referral")
+            child = self.add_form("child")
+            self.factory.form_opens_case(child, case_type='referral', is_subcase=True)
+            pregnancy = self.add_form("pregnancy")
+            self.factory.form_opens_case(pregnancy, case_type='referral', is_subcase=True)
+            referral_2 = self.add_form_app_2('referral')
+            schema = util.get_casedb_schema(referral_2)
+            subsets = {s["id"]: s for s in schema["subsets"]}
+            self.assertTrue(re.match(r'^parent \((pregnancy|child) or (pregnancy|child)\)$',
+                            subsets["parent"]["name"]))
+            self.assertEqual(subsets["parent"]["structure"], {"case_name": {}})
 
     # -- helpers --
 
@@ -223,5 +284,16 @@ class SchemaTest(SimpleTestCase):
         if case_updates:
             assert case_type, 'case_type is required with case_updates'
             self.factory.form_requires_case(
+                form, case_type=case_type, update=case_updates)
+        return form
+
+    def add_form_app_2(self, case_type=None, case_updates=None):
+        module_id = len(self.factory_2.app.modules)
+        module, form = self.factory_2.new_basic_module(module_id, case_type)
+        if case_type:
+            self.factory_2.form_opens_case(form, case_type)
+        if case_updates:
+            assert case_type, 'case_type is required with case_updates'
+            self.factory_2.form_requires_case(
                 form, case_type=case_type, update=case_updates)
         return form

@@ -78,7 +78,7 @@ class CallCenterIndicators(object):
         self.override_cases = override_cases
         self.override_cache = override_cache
 
-        self.config = indicator_config or CallCenterIndicatorConfig.default_config()
+        self.config = indicator_config or CallCenterIndicatorConfig.default_config(domain_name)
 
         try:
             self.timezone = pytz.timezone(domain_timezone)
@@ -348,16 +348,21 @@ class CallCenterIndicators(object):
                 logger.debug('Adding legacy forms submitted stats: %s', indicator_config.date_ranges)
                 self._add_data(results, '{}{}'.format(LEGACY_FORMS_SUBMITTED, range_name.title()))
 
-            if self.domain in PER_DOMAIN_FORM_INDICATORS:
-                for custom in PER_DOMAIN_FORM_INDICATORS[self.domain]:
-                    self.add_custom_form_data(
-                        custom['slug'],
-                        range_name,
-                        custom['xmlns'],
-                        custom['type'],
-                        lower,
-                        upper
-                    )
+    def add_custom_data(self, indicator_config):
+        custom_domain_indicators = PER_DOMAIN_FORM_INDICATORS.get(self.domain, {})
+        for indicator in indicator_config:
+            custom = custom_domain_indicators.get(indicator.type)
+            if not custom:
+                continue  # domain does not have indicator of the specified name
+            lower, upper = self.date_ranges[indicator.date_range]
+            self.add_custom_form_data(
+                indicator.type,
+                indicator.date_range,
+                custom['xmlns'],
+                custom['type'],
+                lower,
+                upper
+            )
 
     def get_data(self):
         final_data = {}
@@ -397,6 +402,9 @@ class CallCenterIndicators(object):
 
         if self.config.forms_submitted.enabled:
             self.add_form_data(self.config.forms_submitted)
+
+        if self.config.custom_form:
+            self.add_custom_data(self.config.custom_form)
 
         if self.config.cases_total.enabled:
             query = CaseQueryTotal(self.domain, self.cc_case_type, self.owners_needing_data)

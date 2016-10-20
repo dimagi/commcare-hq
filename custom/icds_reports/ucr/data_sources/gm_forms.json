@@ -2,7 +2,8 @@
   "domains": [
     "icds-sql",
     "icds-test",
-    "icds-cas"
+    "icds-cas",
+    "icds-cas-sandbox"
   ],
   "config": {
     "table_id": "static-gm_forms",
@@ -627,6 +628,6 @@
         "property_value": "F"
       }
     },
-    "engine_id": "ucr"
+    "engine_id": "icds-ucr"
   }
 }

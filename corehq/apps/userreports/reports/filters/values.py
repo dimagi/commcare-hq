@@ -3,6 +3,7 @@ import datetime
 from django.core.urlresolvers import reverse
 
 from sqlagg.filters import (
+    BasicFilter,
     BetweenFilter,
     EQFilter,
     GTEFilter,
@@ -12,7 +13,12 @@ from sqlagg.filters import (
     LTEFilter,
     LTFilter,
     NOTEQFilter,
+    NOTNULLFilter,
+    get_column,
 )
+from sqlalchemy import bindparam
+
+from corehq.apps.reports.daterange import get_all_daterange_choices, get_daterange_start_end_dates
 from corehq.apps.reports.util import (
     get_INFilter_bindparams,
     get_INFilter_element_bindparam,
@@ -126,6 +132,110 @@ class NumericFilterValue(FilterValue):
         return {
             self.filter.slug: self.value["operand"],
         }
+
+
+class BasicBetweenFilter(BasicFilter):
+    """
+    BasicBetweenFilter implements a BetweenFilter that accepts the
+    same constructor arguments as INFilter.
+
+    PreFilterValue uses this to select the filter using
+    PreFilterValue.value['operator'] and instantiate either filter the
+    same way.
+    """
+    def build_expression(self, table):
+        assert len(self.parameter) == 2
+        return get_column(table, self.column_name).between(
+            bindparam(self.parameter[0]), bindparam(self.parameter[1])
+        )
+
+
+class PreFilterValue(FilterValue):
+
+    # All dynamic date operators use BasicBetweenFilter
+    dyn_date_operators = [c.slug for c in get_all_daterange_choices()]
+    null_operator_filters = {
+        '=': ISNULLFilter,
+        '!=': NOTNULLFilter,
+        'is': ISNULLFilter,
+        'is not': NOTNULLFilter,
+    }
+    array_operator_filters = {
+        'in': INFilter,
+        'between': BasicBetweenFilter,
+    }
+    scalar_operator_filters = NumericFilterValue.operators_to_filters
+
+    def _is_dyn_date(self):
+        return self.value.get('operator') in self.dyn_date_operators
+
+    def _is_null(self):
+        return self.value['operand'] is None
+
+    def _is_list(self):
+        """
+        Returns true if operand should be treated like an array when building
+        the query.
+        """
+        return isinstance(self.value['operand'], list)
+
+    @property
+    def _null_filter(self):
+        operator = self.value.get('operator') or 'is'
+        try:
+            return self.null_operator_filters[operator]
+        except KeyError:
+            raise TypeError('Null value does not support "{}" operator'.format(operator))
+
+    @property
+    def _array_filter(self):
+        operator = self.value.get('operator') or 'in'
+        try:
+            return self.array_operator_filters[operator]
+        except KeyError:
+            raise TypeError('Array value does not support "{}" operator'.format(operator))
+
+    @property
+    def _scalar_filter(self):
+        operator = self.value.get('operator') or '='
+        try:
+            return self.scalar_operator_filters[operator]
+        except KeyError:
+            raise TypeError('Scalar value does not support "{}" operator'.format(operator))
+
+    def to_sql_filter(self):
+        if self._is_dyn_date():
+            return BasicBetweenFilter(
+                self.filter.field,
+                get_INFilter_bindparams(self.filter.slug, ['start_date', 'end_date'])
+            )
+        elif self._is_null():
+            return self._null_filter(self.filter.field)
+        elif self._is_list():
+            return self._array_filter(
+                self.filter.field,
+                get_INFilter_bindparams(self.filter.slug, self.value['operand'])
+            )
+        else:
+            return self._scalar_filter(self.filter.field, self.filter.slug)
+
+    def to_sql_values(self):
+        if self._is_dyn_date():
+            start_date, end_date = get_daterange_start_end_dates(self.value['operator'], *self.value['operand'])
+            return {
+                get_INFilter_element_bindparam(self.filter.slug, i): str(v)
+                for i, v in enumerate([start_date, end_date])
+            }
+        elif self._is_null():
+            return {}
+        elif self._is_list():
+            # Array params work like IN bind params
+            return {
+                get_INFilter_element_bindparam(self.filter.slug, i): v
+                for i, v in enumerate(self.value['operand'])
+            }
+        else:
+            return {self.filter.slug: self.value['operand']}
 
 
 class ChoiceListFilterValue(FilterValue):

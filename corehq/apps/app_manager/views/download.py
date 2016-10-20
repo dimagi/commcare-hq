@@ -19,6 +19,7 @@ from corehq.apps.app_manager.util import add_odk_profile_after_build
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.builds.jadjar import convert_XML_To_J2ME
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
+from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import set_file_download
 from dimagi.utils.django.cached_object import CachedObject
 from dimagi.utils.web import json_response
@@ -289,21 +290,8 @@ def download_file(request, domain, app_id, path):
                     pass
                 else:
                     # this resource should exist but doesn't
-                    logging.error(
-                        'Expected build resource %s not found' % path,
-                        extra={'request': request}
-                    )
-                    if not request.app.build_broken:
-                        request.app.build_broken = True
-                        request.app.build_broken_reason = 'incomplete-build'
-                        try:
-                            request.app.save()
-                        except ResourceConflict:
-                            # this really isn't a big deal:
-                            # It'll get updated next time a resource is request'd;
-                            # in fact the conflict is almost certainly from
-                            # another thread doing this exact update
-                            pass
+                    _assert = soft_assert('@'.join(['jschweers', 'dimagi.com']))
+                    _assert(False, 'Expected build resource %s not found' % path)
                 raise Http404()
         try:
             callback, callback_args, callback_kwargs = resolve_path(path)
@@ -373,6 +361,7 @@ def validate_form_for_build(request, domain, app_id, unique_form_id, ajax=True):
         response_html = render_to_string('app_manager/partials/create_form_prompt.html')
     else:
         response_html = render_to_string('app_manager/partials/build_errors.html', {
+            'request': request,
             'app': app,
             'form': form,
             'build_errors': errors,

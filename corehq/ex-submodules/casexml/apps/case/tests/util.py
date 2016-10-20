@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 from xml.etree import ElementTree
 from corehq.apps.domain.models import Domain
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.util.test_utils import unit_testing_only
 
@@ -151,7 +151,7 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
         restore_user=user, params=RestoreParams(restore_id, version=version)
     )
     payload_string = restore_config.get_payload().as_string()
-    blocks = extract_caseblocks_from_xml(payload_string, version)
+    blocks_from_restore = extract_caseblocks_from_xml(payload_string, version)
 
     def check_block(case_block):
         case_block.set('xmlns', XMLNS)
@@ -160,10 +160,10 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
         n = 0
 
         def extra_info():
-            return "\n%s\n%s" % (case_block.to_string(), map(lambda b: b.to_string(), blocks))
+            return "\n%s\n%s" % (case_block.to_string(), map(lambda b: b.to_string(), blocks_from_restore))
 
         match = None
-        for block in blocks:
+        for block in blocks_from_restore:
             if block.get_case_id() == case_id:
                 if should_have:
                     if line_by_line:

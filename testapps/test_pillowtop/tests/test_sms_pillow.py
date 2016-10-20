@@ -1,6 +1,7 @@
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
+from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.es.sms import SMSES
 from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent, SMS
 from corehq.elastic import get_es_new
@@ -15,7 +16,6 @@ from mock import patch
 
 @patch('corehq.apps.sms.change_publishers.do_publish')
 class SqlSMSPillowTest(TestCase):
-    dependent_apps = ['corehq.apps.sms', 'corehq.apps.smsforms']
 
     domain = 'sms-pillow-test-domain'
 
@@ -115,7 +115,7 @@ class SqlSMSPillowTest(TestCase):
         consumer = get_test_kafka_consumer(topics.SMS)
 
         # get the seq id before the change is published
-        kafka_seq = consumer.offsets()['fetch'][(topics.SMS, 0)]
+        kafka_seq = get_topic_offset(topics.SMS)
 
         # create an sms
         self._create_sms()

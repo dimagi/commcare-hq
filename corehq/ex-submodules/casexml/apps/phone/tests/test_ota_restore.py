@@ -1,13 +1,14 @@
+from datetime import datetime
 from django.test import TestCase
 import os
 from django.test.utils import override_settings
 from casexml.apps.phone.tests.utils import generate_restore_payload, get_restore_config
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs, \
     delete_all_xforms
 from casexml.apps.phone.restore import RestoreConfig, CachedResponse
 from datetime import date
-from casexml.apps.phone.models import SyncLog
+from casexml.apps.phone.models import SyncLog, SimplifiedSyncLog
 from casexml.apps.phone import xml
 from casexml.apps.phone.tests import const
 from casexml.apps.phone.tests.utils import create_restore_user
@@ -18,6 +19,7 @@ from corehq.util.test_utils import TestFileMixin
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
 from corehq.apps.domain.models import Domain
+from casexml.apps.phone.restore import RestoreParams, RestoreCacheSettings
 
 
 class SimpleOtaRestoreTest(TestCase):
@@ -63,15 +65,13 @@ class SimpleOtaRestoreTest(TestCase):
         assertRegistrationData("phone_number", "555555")
 
 
-@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
-class OtaRestoreTest(TestCase, TestFileMixin):
-    """Tests OTA Restore"""
+class BaseOtaRestoreTest(TestCase, TestFileMixin):
     file_path = ('data',)
     root = os.path.dirname(__file__)
 
     @classmethod
     def setUpClass(cls):
-        super(OtaRestoreTest, cls).setUpClass()
+        super(BaseOtaRestoreTest, cls).setUpClass()
         delete_all_cases()
         delete_all_sync_logs()
         cls.project = Domain(name='ota-restore-tests')
@@ -80,12 +80,12 @@ class OtaRestoreTest(TestCase, TestFileMixin):
     @classmethod
     def tearDownClass(cls):
         cls.project.delete()
-        super(OtaRestoreTest, cls).tearDownClass()
+        super(BaseOtaRestoreTest, cls).tearDownClass()
 
     def setUp(self):
-        super(OtaRestoreTest, self).setUp()
+        super(BaseOtaRestoreTest, self).setUp()
         delete_all_users()
-        self.restore_user = create_restore_user()
+        self.restore_user = create_restore_user(self.project.name)
 
     def tearDown(self):
         delete_all_xforms()
@@ -93,7 +93,12 @@ class OtaRestoreTest(TestCase, TestFileMixin):
         delete_all_sync_logs()
         restore_config = RestoreConfig(project=self.project, restore_user=self.restore_user)
         restore_config.cache.delete(restore_config._initial_cache_key)
-        super(OtaRestoreTest, self).tearDown()
+        super(BaseOtaRestoreTest, self).tearDown()
+
+
+@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
+class OtaRestoreTest(BaseOtaRestoreTest):
+    """Tests OTA Restore"""
 
     def testUserRestore(self):
         self.assertEqual(0, SyncLog.view(
@@ -149,6 +154,9 @@ class OtaRestoreTest(TestCase, TestFileMixin):
                 <case_name>test case name</case_name>
                 <external_id>someexternal</external_id>
             </create>
+            <update>
+                <date_opened>2010-06-29</date_opened>
+            </update>
         </case>""".format(user_id=self.restore_user.user_id)
         check_xml_line_by_line(
             self,
@@ -169,6 +177,7 @@ class OtaRestoreTest(TestCase, TestFileMixin):
             </create>
             <update>
                 <external_id>someexternal</external_id>
+                <date_opened>2010-06-29</date_opened>
             </update>
         </case>""".format(user_id=self.restore_user.user_id)
         check_xml_line_by_line(
@@ -308,3 +317,124 @@ class WebUserOtaRestoreTest(OtaRestoreTest):
         super(WebUserOtaRestoreTest, self).setUp()
         delete_all_users()
         self.restore_user = create_restore_user(self.project.name, is_mobile_user=False)
+
+
+@override_settings(SERVER_ENVIRONMENT="production")  # This is only relevant for production
+class DateOpenedForceCloseTest(BaseOtaRestoreTest):
+    def setUp(self):
+        super(DateOpenedForceCloseTest, self).setUp()
+        self.introduced_date = datetime(2016, 7, 19, 19, 15)
+        self.reverted_date = datetime(2016, 7, 20, 9, 15)  # date bug was reverted on HQ
+        self.resolved_date = datetime(2016, 7, 21, 0, 0)  # approximate date this fix was deployed
+
+    def test_return_412_between_bug_dates(self):
+        log = SimplifiedSyncLog(
+            user_id=self.restore_user.user_id,
+            date=datetime(2016, 7, 19, 19, 20)
+        )
+        log.save()
+        restore_config = RestoreConfig(
+            project=self.project,
+            restore_user=self.restore_user,
+            params=RestoreParams(
+                sync_log_id=log._id,
+                version="2.0",
+            ),
+            cache_settings=RestoreCacheSettings()
+        )
+        response = restore_config.get_response()
+        self.assertEqual(response.status_code, 412)
+
+    def test_synced_after_bug_date_but_not_fixed(self):
+        before = SimplifiedSyncLog(
+            user_id=self.restore_user.user_id,
+            date=datetime(2016, 7, 19, 18, 0)  # synced before bug was introduced
+        )
+        before.save()
+        during = SimplifiedSyncLog(
+            user_id=self.restore_user.user_id,
+            previous_log_id=before._id,
+            date=datetime(2016, 7, 19, 20, 0)  # during bug
+        )
+        during.save()
+        after = SimplifiedSyncLog(
+            user_id=self.restore_user.user_id,
+            previous_log_id=during._id,
+            date=datetime(2016, 7, 20, 19, 0)  # after bug, before resolution
+        )
+        after.save()
+
+        restore_config = RestoreConfig(
+            project=self.project,
+            restore_user=self.restore_user,
+            params=RestoreParams(
+                sync_log_id=after._id,
+                version="2.0",
+            ),
+            cache_settings=RestoreCacheSettings()
+        )
+        response = restore_config.get_response()
+        self.assertEqual(response.status_code, 412)
+
+    def test_synced_before_and_after_bug_resolution_200(self):
+        before = SimplifiedSyncLog(
+            user_id=self.restore_user.user_id,
+            date=datetime(2016, 7, 19, 18, 0)  # synced before bug was introduced
+        )
+        before.save()
+        restore_config = RestoreConfig(
+            project=self.project,
+            restore_user=self.restore_user,
+            params=RestoreParams(
+                sync_log_id=before._id,
+                version="2.0",
+            ),
+            cache_settings=RestoreCacheSettings()
+        )
+        response = restore_config.get_response()
+        self.assertEqual(response.status_code, 200)
+
+        after = SimplifiedSyncLog(
+            user_id=self.restore_user.user_id,
+            previous_log_id=before._id,
+            date=datetime(2016, 7, 21, 19, 0)  # after resolution
+        )
+        after.save()
+
+        restore_config = RestoreConfig(
+            project=self.project,
+            restore_user=self.restore_user,
+            params=RestoreParams(
+                sync_log_id=after._id,
+                version="2.0",
+            ),
+            cache_settings=RestoreCacheSettings()
+        )
+        response = restore_config.get_response()
+        self.assertEqual(response.status_code, 200)
+
+    def test_synced_during_and_after_bug_resolution_returns_200(self):
+        during = SimplifiedSyncLog(
+            user_id=self.restore_user.user_id,
+            date=datetime(2016, 7, 19, 20, 0)  # during bug
+        )
+        during.save()
+
+        after = SimplifiedSyncLog(
+            user_id=self.restore_user.user_id,
+            previous_log_id=during._id,
+            date=datetime(2016, 7, 21, 19, 0)  # after resolution
+        )
+        after.save()
+
+        restore_config = RestoreConfig(
+            project=self.project,
+            restore_user=self.restore_user,
+            params=RestoreParams(
+                sync_log_id=after._id,
+                version="2.0",
+            ),
+            cache_settings=RestoreCacheSettings()
+        )
+        response = restore_config.get_response()
+        self.assertEqual(response.status_code, 200)

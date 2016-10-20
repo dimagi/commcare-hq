@@ -1,44 +1,26 @@
 # Standard library imports
-from itertools import imap
-
-# Django imports
 import datetime
-from corehq.apps.api.couch import UserQuerySetAdapter
-from dimagi.utils.couch.database import iter_docs
 
-# Tastypie imports
 from tastypie import fields
 from tastypie.exceptions import BadRequest
 
-# External imports
-from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
-from casexml.apps.case.models import CommCareCase
-from corehq.apps.es import FormES
-from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
-from couchforms.models import XFormInstance
-
 # CCHQ imports
-from corehq.apps.domain.decorators import (
-    digest_auth,
-    basic_auth,
-    api_key_auth,
-    login_or_digest,
-    login_or_basic,
-    login_or_api_key)
+from corehq.apps.es import FormES
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 
 # API imports
 from corehq.apps.api.auth import CustomResourceMeta, RequirePermissionAuthentication
-from corehq.apps.api.serializers import XFormInstanceSerializer
-from corehq.apps.api.util import get_object_or_not_exist, get_obj
+from corehq.apps.api.couch import UserQuerySetAdapter
 from corehq.apps.api.resources import (
     CouchResourceMixin,
     DomainSpecificResourceMixin,
     HqBaseResource,
 )
+from corehq.apps.es import FormES
+from corehq.apps.groups.models import Group
+from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 from dimagi.utils.parsing import string_to_boolean
-
 
 TASTYPIE_RESERVED_GET_PARAMS = ['api_key', 'username']
 
@@ -111,6 +93,13 @@ class CommCareUserResource(UserResource):
             bundle.data['extras'] = extras
         return super(UserResource, self).dehydrate(bundle)
 
+    def dehydrate_user_data(self, bundle):
+        user_data = bundle.obj.user_data
+        if self.determine_format(bundle.request) == 'application/xml':
+            # attribute names can't start with digits in xml
+            user_data = {k: v for k, v in user_data.iteritems() if not k[0].isdigit()}
+        return user_data
+
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
         show_archived = _safe_bool(bundle, 'archived')
@@ -130,10 +119,12 @@ class WebUserResource(UserResource):
     permissions = fields.DictField()
 
     def dehydrate_role(self, bundle):
-        return bundle.obj.get_role(bundle.request.domain).name
+        role = bundle.obj.get_role(bundle.request.domain)
+        return role.name if role else ''
 
     def dehydrate_permissions(self, bundle):
-        return bundle.obj.get_role(bundle.request.domain).permissions._doc
+        role = bundle.obj.get_role(bundle.request.domain)
+        return role.permissions._doc if role else {}
 
     def dehydrate_is_admin(self, bundle):
         return bundle.obj.is_domain_admin(bundle.request.domain)
@@ -150,90 +141,6 @@ class WebUserResource(UserResource):
             user = WebUser.get_by_username(username)
             return [user] if user else []
         return list(WebUser.by_domain(domain))
-
-
-class CommCareCaseResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
-    type = "case"
-    id = fields.CharField(attribute='get_id', readonly=True, unique=True)
-    user_id = fields.CharField(attribute='user_id')
-    date_modified = fields.CharField(attribute='modified_on', null=True)
-    closed = fields.BooleanField(attribute='closed')
-    date_closed = fields.CharField(attribute='closed_on', null=True)
-
-    xforms = fields.ListField(attribute='xform_ids')
-
-    properties = fields.ListField()
-
-    indices = fields.ListField(null=True)
-
-    def dehydrate_properties(self, bundle):
-        return bundle.obj.to_api_json()['properties']
-
-    def dehydrate_indices(self, bundle):
-        return bundle.obj.to_api_json()['indices']
-
-    def obj_get(self, bundle, **kwargs):
-        return get_object_or_not_exist(CommCareCase, kwargs['pk'],
-                                       kwargs['domain'])
-
-    def obj_get_list(self, bundle, **kwargs):
-        domain = kwargs['domain']
-        include_closed = {
-            'true': True,
-            'false': False,
-            'any': True
-        }[bundle.request.GET.get('closed', 'false')]
-        case_type = bundle.request.GET.get('case_type')
-
-        key = [domain]
-        if case_type:
-            key.append(case_type)
-
-        if include_closed:
-            case_ids = get_case_ids_in_domain(domain, type=case_type)
-        else:
-            case_ids = get_open_case_ids_in_domain(domain, type=case_type)
-
-        cases = imap(CommCareCase.wrap,
-                     iter_docs(CommCareCase.get_db(), case_ids))
-        return list(cases)
-
-    class Meta(CustomResourceMeta):
-        authentication = RequirePermissionAuthentication(Permissions.edit_data)
-        object_class = CommCareCase
-        list_allowed_methods = ['get']
-        detail_allowed_methods = ['get']
-        resource_name = 'case'
-
-
-class XFormInstanceResource(HqBaseResource, DomainSpecificResourceMixin):
-    type = "form"
-    id = fields.CharField(attribute='form_id', readonly=True, unique=True)
-
-    form = fields.DictField(attribute='form_data')
-    type = fields.CharField(attribute='type')
-    version = fields.CharField(attribute='version')
-    uiversion = fields.CharField(attribute='uiversion')
-    metadata = fields.DictField(attribute='metadata', null=True)
-    received_on = fields.DateTimeField(attribute="received_on")
-    md5 = fields.CharField(attribute='xml_md5')
-
-    def detail_uri_kwargs(self, bundle_or_obj):
-        return {
-            'pk': get_obj(bundle_or_obj).form_id
-        }
-
-    def obj_get(self, bundle, **kwargs):
-        return get_object_or_not_exist(XFormInstance, kwargs['pk'], kwargs['domain'])
-
-    class Meta(CustomResourceMeta):
-        authentication = RequirePermissionAuthentication(Permissions.edit_data)
-        object_class = XFormInstance        
-        list_allowed_methods = []
-        detail_allowed_methods = ['get']
-        resource_name = 'form'
-        ordering = ['received_on']
-        serializer = XFormInstanceSerializer(formats=['json'])
 
 
 def _safe_bool(bundle, param, default=False):

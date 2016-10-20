@@ -106,3 +106,19 @@ class SubmissionErrorTest(TestCase):
         self.assertIsNotNone(log)
         self.assertIn('Invalid XML', log.problem)
         self.assertEqual("this isn't even close to xml", log.get_xml())
+        self.assertEqual(log.form_data, {})
+
+    @run_with_all_backends
+    def test_missing_xmlns(self):
+        file, res = self._submit('missing_xmlns.xml')
+        self.assertEqual(500, res.status_code)
+        message = "Form is missing a required field: XMLNS"
+        self.assertIn(message, res.content)
+
+        # make sure we logged it
+        [log] = FormAccessors(self.domain.name).get_forms_by_type('SubmissionErrorLog', limit=1)
+
+        self.assertIsNotNone(log)
+        self.assertIn(message, log.problem)
+        with open(file) as f:
+            self.assertEqual(f.read(), log.get_xml())

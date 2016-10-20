@@ -47,7 +47,7 @@
 {% endif %}
 
 {% block js-inline %}
-<script type="text/javascript">
+<script>
     $('#id_add_phone_number').on('paste', function (event) {
         var clipboardData = event.clipboardData  ||  event.originalEvent.clipboardData;
         var pasteText = clipboardData.getData("Text");
@@ -67,6 +67,10 @@
     }).on("input", null, null, function() {
         $(":submit").prop("disabled", false);
     });
+
+    if ($('#js-unrecognized-data').length > 0) {
+      $(":submit").prop("disabled", false);
+    }
 
     {% if user_type == "mobile" %}
     $("button:submit", $userInformationForm).on("click", function(){

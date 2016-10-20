@@ -1,16 +1,20 @@
 import json
 from tastypie import fields
+from tastypie.exceptions import BadRequest
 from tastypie.resources import Resource
 
 from corehq.apps.api.auth import CustomResourceMeta, LoginAndDomainAuthentication
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.domain.models import Domain
+from corehq.apps.locations.permissions import (
+    location_safe, LOCATION_ACCESS_DENIED)
 from corehq.apps.users.models import WebUser
 from corehq.util.quickcache import quickcache
 from dimagi.utils.decorators.memoized import memoized
 
 from ..models import Location, SQLLocation
+from ..permissions import user_can_access_location_id
 
 
 @quickcache(['user._id', 'project.name', 'only_editable'], timeout=10)
@@ -20,8 +24,10 @@ def _user_locations_ids(user, project, only_editable):
         return (SQLLocation.by_domain(project.name)
                            .values_list('location_id', flat=True))
 
-    if (user.is_domain_admin(project.name) or
-            not project.location_restriction_for_users):
+    if not project.location_restriction_for_users:
+        return SQLLocation.objects.accessible_to_user(project.name, user).location_ids()
+
+    if user.is_domain_admin(project.name):
         return all_ids()
 
     user_loc = (user.get_location(project.name) if isinstance(user, WebUser)
@@ -39,6 +45,7 @@ def _user_locations_ids(user, project, only_editable):
         return viewable + editable
 
 
+@location_safe
 class LocationResource(HqBaseResource):
     type = "location"
     uuid = fields.CharField(attribute='location_id', readonly=True, unique=True)
@@ -50,6 +57,8 @@ class LocationResource(HqBaseResource):
     def obj_get(self, bundle, **kwargs):
         domain = kwargs['domain']
         location_id = kwargs['pk']
+        if not user_can_access_location_id(domain, bundle.request.couch_user, location_id):
+            raise BadRequest(LOCATION_ACCESS_DENIED)
         return get_object_or_not_exist(Location, location_id, domain)
 
     def child_queryset(self, domain, include_inactive, parent):
@@ -68,8 +77,12 @@ class LocationResource(HqBaseResource):
         viewable = _user_locations_ids(user, project, only_editable=False)
 
         if not parent_id:
+            if not user.has_permission(domain, 'access_all_locations'):
+                raise BadRequest(LOCATION_ACCESS_DENIED)
             locs = SQLLocation.root_locations(domain, include_inactive)
         else:
+            if not user_can_access_location_id(kwargs['domain'], user, parent_id):
+                raise BadRequest(LOCATION_ACCESS_DENIED)
             parent = get_object_or_not_exist(Location, parent_id, domain)
             locs = self.child_queryset(domain, include_inactive, parent)
         return [child for child in locs if child.location_id in viewable]
@@ -86,6 +99,7 @@ class LocationResource(HqBaseResource):
         limit = 0
 
 
+@location_safe
 class InternalLocationResource(LocationResource):
 
     # using the default resource dispatch function to bypass our authorization for internal use

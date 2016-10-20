@@ -6,7 +6,8 @@ from django.template.loader import render_to_string
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition, DefaultProductPlan, BillingAccount,
     BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
-    SubscriptionType, PreOrPostPay
+    SubscriptionType, PreOrPostPay,
+    DEFAULT_ACCOUNT_FORMAT,
 )
 from corehq.apps.accounting.tasks import ensure_explicit_community_subscription
 from corehq.apps.registration.models import RegistrationRequest
@@ -22,6 +23,8 @@ from dimagi.utils.couch.database import get_safe_write_kwargs
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.analytics.tasks import track_created_new_project_space_on_hubspot
 from corehq.apps.analytics.utils import get_meta
+from corehq import toggles
+from toggle.shortcuts import set_toggle
 
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
@@ -119,6 +122,7 @@ def request_new_domain(request, form, is_new_user=True):
                                        request.user.get_full_name())
     send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=is_new_user)
 
+    set_toggle(toggles.USE_FORMPLAYER_FRONTEND.slug, new_domain.name, True, namespace=toggles.NAMESPACE_DOMAIN)
     meta = get_meta(request)
     track_created_new_project_space_on_hubspot.delay(current_user, request.COOKIES, meta)
     return new_domain.name
@@ -236,10 +240,10 @@ def create_30_day_advanced_trial(domain_obj):
     )
     expiration_date = date.today() + timedelta(days=30)
     trial_account = BillingAccount.objects.get_or_create(
-        name="Trial Account for %s" % domain_obj.name,
+        name=DEFAULT_ACCOUNT_FORMAT % domain_obj.name,
         currency=Currency.get_default(),
         created_by_domain=domain_obj.name,
-        account_type=BillingAccountType.TRIAL,
+        account_type=BillingAccountType.USER_CREATED,
         pre_or_post_pay=PreOrPostPay.POSTPAY,
     )[0]
     trial_subscription = Subscription.new_domain_subscription(

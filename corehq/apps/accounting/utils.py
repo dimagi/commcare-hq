@@ -6,7 +6,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
-from django_prbac.models import Role, UserRole
+from django_prbac.models import Role, UserRole, Grant
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import add_months
 
@@ -25,8 +25,8 @@ logger = logging.getLogger('accounting')
 EXCHANGE_RATE_DECIMAL_PLACES = 9
 
 
-def log_accounting_error(message):
-    logger.error("[BILLING] %s" % message)
+def log_accounting_error(message, show_stack_trace=False):
+    logger.error("[BILLING] %s" % message, exc_info=show_stack_trace)
 
 
 def log_accounting_info(message):
@@ -201,10 +201,11 @@ def fmt_dollar_amount(decimal_value):
     return _("USD %s") % quantize_accounting_decimal(decimal_value)
 
 
-def get_customer_cards(account, username, domain):
+def get_customer_cards(username, domain):
     from corehq.apps.accounting.models import (
         StripePaymentMethod, PaymentMethodType,
     )
+    import stripe
     try:
         payment_method = StripePaymentMethod.objects.get(
             web_user=username,
@@ -214,6 +215,11 @@ def get_customer_cards(account, username, domain):
         return stripe_customer.cards
     except StripePaymentMethod.DoesNotExist:
         pass
+    except stripe.error.AuthenticationError:
+        if not settings.STRIPE_PRIVATE_KEY:
+            log_accounting_info("Private key is not defined in settings")
+        else:
+            raise
     return None
 
 
@@ -251,11 +257,11 @@ def get_active_reminders_by_domain_name(domain_name):
     ]
 
 
-def make_anchor_tag(href, name, attrs={}):
+def make_anchor_tag(href, name, attrs=None):
     context = {
         'href': href,
         'name': name,
-        'attrs': attrs,
+        'attrs': attrs or {},
     }
     return render_to_string('accounting/partials/anchor_tag.html', context)
 
@@ -266,3 +272,54 @@ def get_default_domain_url(domain):
         DefaultProjectSettingsView.urlname,
         args=[domain],
     )
+
+
+def ensure_grant(grantee_slug, priv_slug, dry_run=False, verbose=False):
+    """
+    Adds a parameterless grant between grantee and priv, looked up by slug.
+    """
+
+    try:
+        grantee = Role.objects.get(slug=grantee_slug)
+    except Role.DoesNotExist:
+        logger.info('[DRY RUN] grantee {} does not exist.'.format(grantee_slug))
+        return
+
+    try:
+        priv = Role.objects.get(slug=priv_slug)
+    except Role.DoesNotExist:
+        logger.info('[DRY RUN] privilege {} does not exist.'.format(priv_slug))
+        return
+
+    if dry_run:
+        grants = Grant.objects.filter(from_role__slug=grantee_slug,
+                                      to_role__slug=priv_slug)
+        if not grants:
+            logger.info('[DRY RUN] Granting privilege: %s => %s', grantee_slug, priv_slug)
+        if grantee.has_privilege(priv):
+            if verbose:
+                logger.info('[DRY RUN] Privilege already granted: %s => %s', grantee.slug, priv.slug)
+
+    else:
+        Role.get_cache().clear()
+        if grantee.has_privilege(priv):
+            if verbose:
+                logger.info('Privilege already granted: %s => %s', grantee.slug, priv.slug)
+        else:
+            if verbose:
+                logger.info('Granting privilege: %s => %s', grantee.slug, priv.slug)
+            Grant.objects.create(
+                from_role=grantee,
+                to_role=priv,
+            )
+
+
+def remove_grant(priv_slug, dry_run=False):
+    grants = Grant.objects.filter(to_role__slug=priv_slug)
+    if dry_run:
+        if grants:
+            logger.info("[DRY RUN] Removing privilege %s", priv_slug)
+    else:
+        if grants:
+            grants.delete()
+            logger.info("Removing privilege %s", priv_slug)

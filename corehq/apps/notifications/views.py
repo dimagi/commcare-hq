@@ -9,7 +9,6 @@ from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation, J
 
 from dimagi.utils.decorators.memoized import memoized
 
-from corehq import toggles
 from corehq.apps.domain.decorators import login_required, require_superuser
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.notifications.forms import NotificationCreationForm
@@ -29,7 +28,7 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
     @allow_remote_invocation
     def get_notifications(self, in_data):
         # todo always grab alerts if they are still relevant
-        notifications = Notification.get_by_user(self.request.user)
+        notifications = Notification.get_by_user(self.request.user, self.request.couch_user)
         has_unread = len(filter(lambda x: not x['isRead'], notifications)) > 0
         last_seen_notification_date = LastSeenNotification.get_last_seen_notification_date_for_user(
             self.request.user

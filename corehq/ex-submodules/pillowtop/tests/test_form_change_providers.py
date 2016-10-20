@@ -6,8 +6,9 @@ from fakecouch import FakeCouchDb
 
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils
-from couchforms.models import XFormInstance
-from pillowtop.reindexer.change_providers.form import CouchXFormDomainChangeProvider, SqlDomainXFormChangeProvider
+from couchforms.models import XFormInstance, all_known_formlike_doc_types
+from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
+from pillowtop.reindexer.change_providers.form import SqlDomainXFormChangeProvider
 
 
 class TestCouchDomainFormChangeProvider(SimpleTestCase):
@@ -46,12 +47,20 @@ class TestCouchDomainFormChangeProvider(SimpleTestCase):
         XFormInstance.set_db(cls.couch_db)
 
     def test_change_provider(self):
-        provider = CouchXFormDomainChangeProvider(self.domains)
+        provider = CouchDomainDocTypeChangeProvider(
+            couch_db=XFormInstance.get_db(),
+            domains=self.domains,
+            doc_types=all_known_formlike_doc_types()
+        )
         doc_ids = {change.id for change in provider.iter_all_changes()}
         self.assertEqual(doc_ids, set(itertools.chain(*self.form_ids.values())))
 
     def test_change_provider_empty(self):
-        provider = CouchXFormDomainChangeProvider([])
+        provider = CouchDomainDocTypeChangeProvider(
+            couch_db=XFormInstance.get_db(),
+            domains=[],
+            doc_types=all_known_formlike_doc_types()
+        )
         self.assertEqual([], [change for change in provider.iter_all_changes()])
 
 

@@ -1,7 +1,6 @@
 from __future__ import division
 from collections import namedtuple
 from datetime import datetime
-import importlib
 
 import sys
 
@@ -10,12 +9,13 @@ from django.conf import settings
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.modules import to_function
-from dimagi.utils.parsing import string_to_utc_datetime
 
 from pillowtop.exceptions import PillowNotFoundError
+from pillowtop.logger import pillow_logging
+from pillowtop.dao.exceptions import DocumentMismatchError, DocumentNotFoundError
 
 
-def get_pillow_instance(full_class_str):
+def _get_pillow_instance(full_class_str):
     pillow_class = _import_class_or_function(full_class_str)
     if pillow_class is None:
         raise ValueError('No pillow class found for {}'.format(full_class_str))
@@ -32,6 +32,14 @@ def get_all_pillow_classes():
 
 def get_all_pillow_instances():
     return [config.get_instance() for config in get_all_pillow_configs()]
+
+
+def get_couch_pillow_instances():
+    from pillowtop.feed.couch import CouchChangeFeed
+    return [
+        pillow for pillow in get_all_pillow_instances()
+        if isinstance(pillow.get_change_feed(), CouchChangeFeed)
+    ]
 
 
 def get_all_pillow_configs():
@@ -60,7 +68,7 @@ class PillowConfig(namedtuple('PillowConfig', ['section', 'name', 'class_name', 
             instance_generator_fn = _import_class_or_function(self.instance_generator)
             return instance_generator_fn(self.name)
         else:
-            return get_pillow_instance(self.class_name)
+            return _get_pillow_instance(self.class_name)
 
 
 def get_pillow_config_from_setting(section, pillow_config_string_or_dict):
@@ -115,11 +123,8 @@ def get_all_pillows_json():
 
 def get_pillow_json(pillow_config):
     assert isinstance(pillow_config, PillowConfig)
-    from pillowtop.listener import AliasedElasticPillow
 
-    pillow_class = pillow_config.get_class()
-    pillow = (pillow_class(online=False) if issubclass(pillow_class, AliasedElasticPillow)
-              else pillow_config.get_instance())
+    pillow = pillow_config.get_instance()
 
     checkpoint = pillow.get_checkpoint()
     timestamp = checkpoint.timestamp
@@ -136,15 +141,17 @@ def get_pillow_json(pillow_config):
     else:
         time_since_last = ''
         hours_since_last = None
-    try:
-        db_seq = pillow.get_change_feed().get_latest_change_id()
-    except ValueError:
-        db_seq = None
+    offsets = pillow.get_change_feed().get_current_offsets()
+
+    def _couch_seq_to_int(checkpoint, seq):
+        return force_seq_int(seq) if checkpoint.sequence_format != 'json' else seq
+
     return {
         'name': pillow_config.name,
-        'seq': force_seq_int(checkpoint.wrapped_sequence),
-        'old_seq': force_seq_int(checkpoint.old_sequence) or 0,
-        'db_seq': force_seq_int(db_seq),
+        'seq_format': checkpoint.sequence_format,
+        'seq': _couch_seq_to_int(checkpoint, checkpoint.wrapped_sequence),
+        'old_seq': _couch_seq_to_int(checkpoint, checkpoint.old_sequence) or 0,
+        'offsets': offsets,
         'time_since_last': time_since_last,
         'hours_since_last': hours_since_last
     }
@@ -162,31 +169,33 @@ class ErrorCollector(object):
 
 def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=None):
     doc_transform = doc_transform or (lambda x: x)
+    payload = []
     for change in changes:
         if change.deleted and change.id:
-            yield {
+            payload.append({
                 "delete": {
                     "_index": index_info.index,
                     "_type": index_info.type,
                     "_id": change.id
                 }
-            }
+            })
         elif not change.deleted:
             try:
                 doc = change.get_document()
                 doc = doc_transform(doc)
-                yield {
+                payload.append({
                     "index": {
                         "_index": index_info.index,
                         "_type": index_info.type,
                         "_id": doc['_id']
                     }
-                }
-                yield doc
+                })
+                payload.append(doc)
             except Exception as e:
                 if not error_collector:
                     raise
                 error_collector.add_error(ChangeError(change, e))
+    return payload
 
 
 def prepare_bulk_payloads(bulk_changes, max_size, chunk_size=100):
@@ -202,3 +211,53 @@ def prepare_bulk_payloads(bulk_changes, max_size, chunk_size=100):
             payloads[-1] = appended_payload
 
     return filter(None, payloads)
+
+
+def ensure_matched_revisions(change):
+    """
+    This function ensures that the document fetched from a change matches the
+    revision at which it was pushed to kafka at.
+
+    See http://manage.dimagi.com/default.asp?237983 for more details
+
+    :raises: DocumentMismatchError - Raised when the revisions of the fetched document
+        and the change metadata do not match
+    """
+    fetched_document = change.get_document()
+
+    change_has_rev = change.metadata and change.metadata.document_rev is not None
+    doc_has_rev = fetched_document and '_rev' in fetched_document
+    if doc_has_rev and change_has_rev:
+
+        doc_rev = fetched_document['_rev']
+        change_rev = change.metadata.document_rev
+        if doc_rev != change_rev:
+            fetched_rev = _convert_rev_to_int(doc_rev)
+            stored_rev = _convert_rev_to_int(change_rev)
+            if fetched_rev < stored_rev or stored_rev == -1:
+                message = u"Mismatched revs for {}: Cloudant rev {} vs. Changes feed rev {}".format(
+                    change.id,
+                    doc_rev,
+                    change_rev
+                )
+                pillow_logging.warning(message)
+                raise DocumentMismatchError(message)
+
+
+def _convert_rev_to_int(rev):
+    try:
+        return int(rev.split('-')[0])
+    except (ValueError, AttributeError):
+        return -1
+
+
+def ensure_document_exists(change):
+    """
+    Ensures that the document recorded in Kafka exists and is properly returned
+
+    :raises: DocumentNotFoundError - Raised when the document is not found
+    """
+    doc = change.get_document()
+    if doc is None:
+        pillow_logging.warning("Unable to get document from change: {}".format(change))
+        raise DocumentNotFoundError()  # force a retry

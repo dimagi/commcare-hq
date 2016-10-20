@@ -2,7 +2,7 @@ from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.dbaccessors import get_user_docs_by_location
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.sms.models import SMS
+from corehq.apps.sms.models import SMS, OUTGOING
 from corehq.util.timezones.conversions import ServerTime
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
 from custom.ilsgateway.models import SupplyPointStatusTypes, ILSNotes
@@ -176,6 +176,7 @@ class RecentMessages(ILSData):
     def rows(self):
         data = (SMS.by_domain(self.config['domain'])
                 .filter(location_id=self.config['location_id'])
+                .exclude(processed=False, direction=OUTGOING)
                 .order_by('-date'))
         messages = []
         for message in data:

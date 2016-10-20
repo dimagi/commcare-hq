@@ -15,7 +15,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
-    APP_V2,
     Module,
     ReportModule,
     ShadowModule,
@@ -37,7 +36,7 @@ class TestViews(TestCase):
         cls.user.is_superuser = True
         cls.user.save()
         cls.build = add_build(version='2.7.0', build_number=20655)
-        cls.app = Application.new_app(cls.domain.name, "TestApp", application_version=APP_V2)
+        cls.app = Application.new_app(cls.domain.name, "TestApp")
         cls.app.build_spec = BuildSpec.from_string('2.7.0/latest')
         toggles.CUSTOM_PROPERTIES.set("domain:{domain}".format(domain=cls.domain.name), True)
 
@@ -79,7 +78,7 @@ class TestViews(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_edit_commcare_profile(self):
-        app = Application.new_app(self.domain.name, "TestApp", application_version=APP_V2)
+        app = Application.new_app(self.domain.name, "TestApp")
         app.save()
         data = {
             "custom_properties": {
@@ -113,9 +112,9 @@ class TestViews(TestCase):
 
         self.assertEqual(custom_properties["random"], "changed")
 
-    def _test_status_codes(self, names, kwargs):
+    def _test_status_codes(self, names, kwargs, follow=False):
         for name in names:
-            response = self.client.get(reverse(name, kwargs=kwargs), follow=False)
+            response = self.client.get(reverse(name, kwargs=kwargs), follow=follow)
             self.assertEqual(response.status_code, 200)
 
     def _json_content_from_get(self, name, kwargs, data={}):
@@ -199,6 +198,16 @@ class TestViews(TestCase):
             'app_id': self.app.id,
             'module_id': module.id,
         })
+
+    def test_dashboard(self):
+        self._test_status_codes(['dashboard_new_user'], {
+            'domain': self.domain.name,
+        })
+
+        # This redirects to the dashboard
+        self._test_status_codes(['default_app'], {
+            'domain': self.domain.name,
+        }, True)
 
 
 class TestTemplateAppViews(TestCase):

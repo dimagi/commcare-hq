@@ -6,8 +6,8 @@
 
 {% block js %}
 {{ block.super }}
-    <script type="text/javascript" src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script type="text/javascript" src="{% static 'custom_data_fields/js/custom_data_fields.js' %}"></script>
+    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
+    <script src="{% static 'custom_data_fields/js/custom_data_fields.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}
@@ -53,7 +53,7 @@
             <legend>{{ view.page_name }}</legend>
             {% if custom_fields_form.data_fields.errors %}
                 {% for error in custom_fields_form.data_fields.errors %}
-                    <div class="alert alert-error">
+                    <div class="alert alert-danger">
                         {{ error|safe }}
                         <button type="button" class="close" data-dismiss="alert">&times;</button>
                     </div>

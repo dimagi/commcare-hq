@@ -1,7 +1,8 @@
+from itertools import groupby
 from collections import defaultdict
 from xml.etree.ElementTree import Element
 from casexml.apps.phone.models import OTARestoreUser
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq import toggles
 
 
@@ -58,7 +59,10 @@ def should_sync_locations(last_sync, location_db, restore_user):
 
 
 class LocationFixtureProvider(object):
-    id = 'commtrack:locations'
+
+    def __init__(self, id, serializer):
+        self.id = id
+        self.serializer = serializer
 
     def __call__(self, restore_user, version, last_sync=None, app=None):
         """
@@ -70,16 +74,20 @@ class LocationFixtureProvider(object):
         a fixture with ALL locations for the domain.
         """
         assert isinstance(restore_user, OTARestoreUser)
-
-        if not restore_user.project.uses_locations:
-            return []
-
-        all_locations = _all_locations(restore_user)
-
+        all_locations = restore_user.get_locations_to_sync()
         if not should_sync_locations(last_sync, all_locations, restore_user):
             return []
 
-        root_node = Element('fixture', {'id': self.id, 'user_id': restore_user.user_id})
+        return self.serializer.get_xml_nodes(self.id, restore_user, all_locations)
+
+
+class HierarchicalLocationSerializer(object):
+
+    def get_xml_nodes(self, fixture_id, restore_user, all_locations):
+        if not restore_user.project.uses_locations:
+            return []
+
+        root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id})
         root_locations = all_locations.root_locations
 
         if root_locations:
@@ -87,10 +95,47 @@ class LocationFixtureProvider(object):
         return [root_node]
 
 
-location_fixture_generator = LocationFixtureProvider()
+class FlatLocationSerializer(object):
+
+    def get_xml_nodes(self, fixture_id, restore_user, all_locations):
+        if not toggles.FLAT_LOCATION_FIXTURE.enabled(restore_user.domain):
+            return []
+
+        all_types = LocationType.objects.filter(domain=restore_user.domain).values_list(
+            'code', flat=True
+        )
+        base_attrs = {'{}_id'.format(t): '' for t in all_types if t is not None}
+        root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id})
+        outer_node = Element('locations')
+        root_node.append(outer_node)
+        for location in sorted(all_locations.by_id.values(), key=lambda l: l.site_code):
+            attrs = {
+                'type': location.location_type.code,
+                'id': location.location_id,
+            }
+            attrs.update(base_attrs)
+            attrs['{}_id'.format(location.location_type.code)] = location.location_id
+            tmp_location = location
+            while tmp_location.parent:
+                tmp_location = tmp_location.parent
+                attrs['{}_id'.format(tmp_location.location_type.code)] = tmp_location.location_id
+
+            location_node = Element('location', attrs)
+            _fill_in_location_element(location_node, location)
+            outer_node.append(location_node)
+
+        return [root_node]
 
 
-def _all_locations(user):
+location_fixture_generator = LocationFixtureProvider(
+    id='commtrack:locations', serializer=HierarchicalLocationSerializer()
+)
+flat_location_fixture_generator = LocationFixtureProvider(
+    id='locations', serializer=FlatLocationSerializer()
+)
+
+
+def get_all_locations_to_sync(user):
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
         return LocationSet(SQLLocation.active_objects.filter(domain=user.domain))
     else:
@@ -166,17 +211,15 @@ def _valid_parent_type(location):
 
 
 def _append_children(node, location_db, locations):
-    by_type = _group_by_type(locations)
-    for type, locs in by_type.items():
+    for type, locs in _group_by_type(locations):
         locs = sorted(locs, key=lambda loc: loc.name)
         node.append(_types_to_fixture(location_db, type, locs))
 
 
 def _group_by_type(locations):
-    by_type = defaultdict(lambda: [])
-    for loc in locations:
-        by_type[loc.location_type].append(loc)
-    return by_type
+    key = lambda loc: (loc.location_type.code, loc.location_type)
+    for (code, type), locs in groupby(sorted(locations, key=key), key=key):
+        yield type, list(locs)
 
 
 def _types_to_fixture(location_db, type, locs):
@@ -197,6 +240,12 @@ def _get_metadata_node(location):
 
 def _location_to_fixture(location_db, location, type):
     root = Element(type.code, {'id': location.location_id})
+    _fill_in_location_element(root, location)
+    _append_children(root, location_db, location_db.by_parent[location.location_id])
+    return root
+
+
+def _fill_in_location_element(xml_root, location):
     fixture_fields = [
         'name',
         'site_code',
@@ -210,8 +259,6 @@ def _location_to_fixture(location_db, location, type):
         field_node = Element(field)
         val = getattr(location, field)
         field_node.text = unicode(val if val is not None else '')
-        root.append(field_node)
+        xml_root.append(field_node)
 
-    root.append(_get_metadata_node(location))
-    _append_children(root, location_db, location_db.by_parent[location.location_id])
-    return root
+    xml_root.append(_get_metadata_node(location))

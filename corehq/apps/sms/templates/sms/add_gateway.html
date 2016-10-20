@@ -12,7 +12,7 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    <script type="text/javascript">
+    <script>
         var gatewayFormHandler = new AddGatewayFormHandler({
             share_backend: {{ form.give_other_domains_access.value|BOOL }},
             use_load_balancing: {{ use_load_balancing|BOOL }},

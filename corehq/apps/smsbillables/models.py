@@ -37,7 +37,7 @@ class SmsGatewayFeeCriteria(models.Model):
     backend_api_id = models.CharField(max_length=100, db_index=True)
     backend_instance = models.CharField(max_length=255, db_index=True, null=True)
     direction = models.CharField(max_length=10, db_index=True, choices=DIRECTION_CHOICES)
-    country_code = models.IntegerField(max_length=5, null=True, blank=True, db_index=True)
+    country_code = models.IntegerField(null=True, blank=True, db_index=True)
     prefix = models.CharField(max_length=10, blank=True, default="", db_index=True)
 
     class Meta:
@@ -103,10 +103,10 @@ class SmsGatewayFeeCriteria(models.Model):
 class SmsGatewayFee(models.Model):
     """
     The fee for sending or receiving an SMS Message based on gateway.
-    When an SmsBillable is calculated, it will use the most recent SmsFee available from the criteria
+    When an SmsBillable is calculated, it will use the most recent SmsGatewayFee available from the criteria
     to determine the gateway_charge.
 
-    Once an SmsFee is created, it cannot be modified.
+    Once an SmsGatewayFee is created, it cannot be modified.
     """
     criteria = models.ForeignKey(SmsGatewayFeeCriteria, on_delete=models.PROTECT)
     amount = models.DecimalField(max_digits=10, decimal_places=4, null=True)
@@ -273,7 +273,7 @@ class SmsBillable(models.Model):
     log_id = models.CharField(max_length=50, db_index=True)
     phone_number = models.CharField(max_length=50)
     is_valid = models.BooleanField(default=True, db_index=True)
-    domain = models.CharField(max_length=25, db_index=True)
+    domain = models.CharField(max_length=100, db_index=True)
     direction = models.CharField(max_length=10, db_index=True, choices=DIRECTION_CHOICES)
     date_sent = models.DateTimeField()
     date_created = models.DateTimeField(auto_now_add=True)

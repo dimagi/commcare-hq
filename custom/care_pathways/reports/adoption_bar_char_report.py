@@ -1,8 +1,7 @@
 from corehq.apps.reports.graph_models import Axis
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.sqlreport import DataFormatter, TableDataFormat
-from custom.care_pathways.filters import GeographyFilter, GenderFilter, GroupLeadershipFilter, CBTNameFilter,  GroupByFilter, PPTYearFilter, TypeFilter, ScheduleFilter, \
-    RealOrTestFilter, MalawiPPTYearFilter
+from custom.care_pathways.filters import GroupByFilter, TypeFilter
 from custom.care_pathways.reports import CareBaseReport
 from custom.care_pathways.sqldata import AdoptionBarChartReportSqlData
 from custom.care_pathways.charts import PathwaysMultiBarChart as MultiBarChart
@@ -17,20 +16,7 @@ class AdoptionBarChartReport(CareBaseReport):
 
     @property
     def fields(self):
-        filters = [GeographyFilter]
-        if self.domain == 'care-macf-malawi':
-            filters.append(MalawiPPTYearFilter)
-        else:
-            filters.append(PPTYearFilter)
-        filters.extend([
-            GenderFilter,
-            GroupLeadershipFilter,
-            CBTNameFilter
-        ])
-        if self.domain == 'care-macf-malawi':
-            filters.append(RealOrTestFilter)
-        if self.domain == 'pathways-india-mis':
-            filters.append(ScheduleFilter)
+        filters = super(AdoptionBarChartReport, self).fields
         filters.append(TypeFilter)
         filters.append(GroupByFilter)
         return filters

@@ -6,7 +6,7 @@ from django.test.utils import override_settings
 from unittest import skipUnless, SkipTest
 
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
-from corehq.form_processor.tests import create_form_for_test, FormProcessorTestUtils
+from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils
 from corehq.sql_db.config import PartitionConfig
 
 DOMAIN = 'sharding-test'
@@ -15,14 +15,13 @@ DOMAIN = 'sharding-test'
 @override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
 @skipUnless(settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup')
 class ShardingTests(TestCase):
-    dependent_apps = ['corehq.sql_accessors', 'corehq.sql_proxy_accessors']
 
     @classmethod
     def setUpClass(cls):
-        super(ShardingTests, cls).setUpClass()
         if not settings.USE_PARTITIONED_DATABASE:
             # https://github.com/nose-devs/nose/issues/946
             raise SkipTest('Only applicable if sharding is setup')
+        super(ShardingTests, cls).setUpClass()
         cls.partion_config = PartitionConfig()
         assert len(cls.partion_config.get_form_processing_dbs()) > 1
 

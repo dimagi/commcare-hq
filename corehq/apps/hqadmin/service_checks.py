@@ -12,8 +12,10 @@ from django.core import cache
 from django.conf import settings
 from django.contrib.auth.models import User
 from restkit import Resource
+from celery import Celery
 import requests
 from soil import heartbeat
+from dimagi.utils.web import get_url_base
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
@@ -21,6 +23,7 @@ from corehq.apps.es import GroupES
 from corehq.blobs import get_blob_db
 from corehq.elastic import send_to_elasticsearch
 from corehq.util.decorators import change_log_level
+from corehq.apps.hqadmin.utils import parse_celery_workers, parse_celery_pings
 
 ServiceStatus = namedtuple("ServiceStatus", "success msg")
 
@@ -132,9 +135,23 @@ def check_heartbeat():
         t = cresource.get("api/workers", params_dict={'status': True}).body_string()
         all_workers = json.loads(t)
         bad_workers = []
-        for hostname, status in all_workers.items():
-            if not status:
+        expected_running, expected_stopped = parse_celery_workers(all_workers)
+
+        celery = Celery()
+        celery.config_from_object(settings)
+        worker_responses = celery.control.ping(timeout=10)
+        pings = parse_celery_pings(worker_responses)
+
+        for hostname in expected_running:
+            if hostname not in pings or not pings[hostname]:
                 bad_workers.append('* {} celery worker down'.format(hostname))
+
+        for hostname in expected_stopped:
+            if hostname in pings:
+                bad_workers.append(
+                    '* {} celery worker is running when we expect it to be stopped.'.format(hostname)
+                )
+
         if bad_workers:
             return ServiceStatus(False, '\n'.join(bad_workers))
 
@@ -156,6 +173,22 @@ def check_couch():
     return ServiceStatus(True, "Successfully queried an arbitrary couch view")
 
 
+def check_formplayer():
+    formplayer_url = settings.FORMPLAYER_URL
+    if not formplayer_url.startswith('http'):
+        formplayer_url = '{}{}'.format(get_url_base(), formplayer_url)
+
+    try:
+        res = requests.get('{}/serverup'.format(formplayer_url), timeout=5)
+    except requests.exceptions.ConnectTimeout:
+        return ServiceStatus(False, "Could not establish a connection in time")
+    except requests.ConnectionError:
+        return ServiceStatus(False, "Could not connect to formplayer")
+    else:
+        msg = "Formplayer returned a {} status code".format(res.status_code)
+        return ServiceStatus(res.ok, msg)
+
+
 checks = (
     check_pillowtop,
     check_kafka,
@@ -168,4 +201,5 @@ checks = (
     check_elasticsearch,
     check_shared_dir,
     check_blobdb,
+    check_formplayer,
 )

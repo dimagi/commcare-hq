@@ -1,34 +1,16 @@
 {
     "AllHmisCaseFluffPillow": {
-        "advertised_name": "fluff.AllHmisCaseFluffPillow.testhq",
+        "advertised_name": "AllHmisCaseFluffPillow",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.AllHmisCaseFluffPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "XFormInstance",
-        "extra_args": {
-            "doc_type": "XFormInstance",
-            "domains": "m4change test-pathfinder"
-        },
         "full_class_name": "custom.m4change.models.AllHmisCaseFluffPillow",
-        "include_docs": false,
         "name": "AllHmisCaseFluffPillow"
     },
     "AncHmisCaseFluffPillow": {
-        "advertised_name": "fluff.AncHmisCaseFluffPillow.testhq",
+        "advertised_name": "AncHmisCaseFluffPillow",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.AncHmisCaseFluffPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "XFormInstance",
-        "extra_args": {
-            "doc_type": "XFormInstance",
-            "domains": "m4change test-pathfinder"
-        },
         "full_class_name": "custom.m4change.models.AncHmisCaseFluffPillow",
-        "include_docs": false,
         "name": "AncHmisCaseFluffPillow"
     },
     "AppDbChangeFeedPillow": {
@@ -48,7 +30,7 @@
     "ApplicationToElasticsearchPillow": {
         "advertised_name": "ApplicationToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "applications-to-elasticsearch",
+        "checkpoint_id": "ApplicationToElasticsearchPillow-test_hqapps_2016-07-11_2128",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "ApplicationToElasticsearchPillow"
     },
@@ -60,79 +42,38 @@
         "name": "BlobDeletionPillow"
     },
     "CacheInvalidatePillow": {
-        "advertised_name": "corehq.pillows.cacheinvalidate.CacheInvalidatePillow.testhq",
+        "advertised_name": "CacheInvalidatePillow",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "pillowtop_corehq.pillows.cacheinvalidate.CacheInvalidatePillow.testhq",
-        "couch_filter": "hqadmin/not_case_form",
-        "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": null,
-        "extra_args": {},
-        "full_class_name": "corehq.pillows.cacheinvalidate.CacheInvalidatePillow",
-        "include_docs": true,
+        "checkpoint_id": "cache_invalidate_pillow_test_commcarehq",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "CacheInvalidatePillow"
     },
     "CareBiharFluffPillow": {
-        "advertised_name": "fluff.CareBiharFluffPillow.testhq",
+        "advertised_name": "CareBiharFluffPillow",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.CareBiharFluffPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "CommCareCase",
-        "extra_args": {
-            "doc_type": "CommCareCase",
-            "domains": "care-bihar bihar"
-        },
         "full_class_name": "custom.bihar.models.CareBiharFluffPillow",
-        "include_docs": false,
         "name": "CareBiharFluffPillow"
-    },
-    "CasePillow": {
-        "advertised_name": "corehq.pillows.case.CasePillow.85e1a25ff57c5892b6fa95caf949ae4c.testhq",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.case.CasePillow.85e1a25ff57c5892b6fa95caf949ae4c.testhq",
-        "couch_filter": "case/casedocs",
-        "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "CommCareCase",
-        "es_alias": "hqcases",
-        "es_index": "test_hqcases_2016-03-04",
-        "es_type": "case",
-        "extra_args": {},
-        "full_class_name": "corehq.pillows.case.CasePillow",
-        "include_docs": true,
-        "name": "CasePillow",
-        "unique_id": "85e1a25ff57c5892b6fa95caf949ae4c"
     },
     "CaseToElasticsearchPillow": {
         "advertised_name": "CaseToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "all-cases-to-elasticsearch",
+        "checkpoint_id": "CaseToElasticsearchPillow-test_hqcases_2016-03-04",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "CaseToElasticsearchPillow"
     },
     "CaseSearchToElasticsearchPillow": {
         "advertised_name": "CaseSearchToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "case-search-to-elasticsearch",
+        "checkpoint_id": "CaseSearchToElasticsearchPillow-test_case_search_2016-03-15",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "CaseSearchToElasticsearchPillow"
     },
     "CouvertureFluffPillow": {
-        "advertised_name": "fluff.CouvertureFluffPillow.testhq",
+        "advertised_name": "CouvertureFluffPillow",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.CouvertureFluffPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "XFormInstance",
-        "extra_args": {
-            "doc_type": "XFormInstance",
-            "domains": "ipm-senegal testing-ipm-senegal ct-apr"
-        },
         "full_class_name": "custom.intrahealth.models.CouvertureFluffPillow",
-        "include_docs": false,
         "name": "CouvertureFluffPillow"
     },
     "DefaultChangeFeedPillow": {
@@ -150,328 +91,178 @@
         "name": "DomainDbKafkaPillow"
     },
     "FarmerRecordFluffPillow": {
-        "advertised_name": "fluff.FarmerRecordFluffPillow.testhq",
+        "advertised_name": "FarmerRecordFluffPillow",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.FarmerRecordFluffPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "CommCareCase",
-        "extra_args": {
-            "doc_type": "CommCareCase",
-            "domains": "pathways-india-mis pathways-tanzania care-macf-malawi care-macf-bangladesh"
-        },
         "full_class_name": "custom.care_pathways.models.FarmerRecordFluffPillow",
-        "include_docs": false,
         "name": "FarmerRecordFluffPillow"
     },
     "GeographyFluffPillow": {
-        "advertised_name": "fluff.GeographyFluffPillow.testhq",
+        "advertised_name": "GeographyFluffPillow",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.GeographyFluffPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "CommCareCase",
-        "extra_args": {
-            "doc_type": "CommCareCase",
-            "domains": "pathways-india-mis pathways-tanzania care-macf-malawi care-macf-bangladesh"
-        },
         "full_class_name": "custom.care_pathways.models.GeographyFluffPillow",
-        "include_docs": false,
         "name": "GeographyFluffPillow"
     },
     "GroupPillow": {
         "advertised_name": "GroupPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "GroupPillow",
+        "checkpoint_id": "GroupPillow-test_hqgroups_20150403_1501",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "GroupPillow"
     },
     "GroupToUserPillow": {
         "advertised_name": "GroupToUserPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "GroupToUserPillow",
+        "checkpoint_id": "GroupToUserPillow-test_hqusers_2016-07-19",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "GroupToUserPillow"
     },
     "ImmunizationHmisCaseFluffPillow": {
-        "advertised_name": "fluff.ImmunizationHmisCaseFluffPillow.testhq",
+        "advertised_name": "ImmunizationHmisCaseFluffPillow",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.ImmunizationHmisCaseFluffPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "XFormInstance",
-        "extra_args": {
-            "doc_type": "XFormInstance",
-            "domains": "m4change test-pathfinder"
-        },
         "full_class_name": "custom.m4change.models.ImmunizationHmisCaseFluffPillow",
-        "include_docs": false,
         "name": "ImmunizationHmisCaseFluffPillow"
     },
     "IntraHealthFluffPillow": {
-        "advertised_name": "fluff.IntraHealthFluffPillow.testhq",
+        "advertised_name": "IntraHealthFluffPillow",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.IntraHealthFluffPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "XFormInstance",
-        "extra_args": {
-            "doc_type": "XFormInstance",
-            "domains": "ipm-senegal testing-ipm-senegal ct-apr"
-        },
         "full_class_name": "custom.intrahealth.models.IntraHealthFluffPillow",
-        "include_docs": false,
         "name": "IntraHealthFluffPillow"
     },
     "KafkaDomainPillow": {
         "advertised_name": "KafkaDomainPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "KafkaDomainPillow",
+        "checkpoint_id": "KafkaDomainPillow-test_hqdomains_2016-08-08",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "KafkaDomainPillow"
     },
     "LdHmisCaseFluffPillow": {
-        "advertised_name": "fluff.LdHmisCaseFluffPillow.testhq",
+        "advertised_name": "LdHmisCaseFluffPillow",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.LdHmisCaseFluffPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "XFormInstance",
-        "extra_args": {
-            "doc_type": "XFormInstance",
-            "domains": "m4change test-pathfinder"
-        },
         "full_class_name": "custom.m4change.models.LdHmisCaseFluffPillow",
-        "include_docs": false,
         "name": "LdHmisCaseFluffPillow"
     },
     "LedgerToElasticsearchPillow": {
         "advertised_name": "LedgerToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "ledger-to-elasticsearch",
+        "checkpoint_id": "LedgerToElasticsearchPillow-test_ledgers_2016-03-15",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "LedgerToElasticsearchPillow"
     },
     "LivraisonFluffPillow": {
-        "advertised_name": "fluff.LivraisonFluffPillow.testhq",
+        "advertised_name": "LivraisonFluffPillow",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.LivraisonFluffPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "XFormInstance",
-        "extra_args": {
-            "doc_type": "XFormInstance",
-            "domains": "ipm-senegal testing-ipm-senegal ct-apr"
-        },
         "full_class_name": "custom.intrahealth.models.LivraisonFluffPillow",
-        "include_docs": false,
         "name": "LivraisonFluffPillow"
     },
     "MVPCaseIndicatorPillow": {
-        "advertised_name": "mvp_docs.pillows.MVPCaseIndicatorPillow.testhq",
+        "advertised_name": "MVPCaseIndicatorPillow",
         "change_feed_type": "CouchChangeFeed",
         "checkpoint_id": "mvp_docs.pillows.MVPCaseIndicatorPillow.testhq",
-        "couch_filter": "hqadmin/domains_and_doc_types",
-        "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "CommCareCase",
-        "extra_args": {
-            "doc_types": "CommCareCase CommCareCase-Deleted",
-            "domains": ""
-        },
-        "full_class_name": "mvp_docs.pillows.MVPCaseIndicatorPillow",
-        "include_docs": true,
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "MVPCaseIndicatorPillow"
     },
     "MVPFormIndicatorPillow": {
-        "advertised_name": "mvp_docs.pillows.MVPFormIndicatorPillow.testhq",
+        "advertised_name": "MVPFormIndicatorPillow",
         "change_feed_type": "CouchChangeFeed",
         "checkpoint_id": "mvp_docs.pillows.MVPFormIndicatorPillow.testhq",
-        "couch_filter": "hqadmin/domains_and_doc_types",
-        "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "XFormInstance",
-        "extra_args": {
-            "doc_types": "XFormInstance XFormInstance-Deleted XFormArchived",
-            "domains": ""
-        },
-        "full_class_name": "mvp_docs.pillows.MVPFormIndicatorPillow",
-        "include_docs": true,
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "MVPFormIndicatorPillow"
     },
     "McctMonthlyAggregateFormFluffPillow": {
-        "advertised_name": "fluff.McctMonthlyAggregateFormFluffPillow.testhq",
+        "advertised_name": "McctMonthlyAggregateFormFluffPillow",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.McctMonthlyAggregateFormFluffPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "XFormInstance",
-        "extra_args": {
-            "doc_type": "XFormInstance",
-            "domains": "m4change test-pathfinder"
-        },
         "full_class_name": "custom.m4change.models.McctMonthlyAggregateFormFluffPillow",
-        "include_docs": false,
         "name": "McctMonthlyAggregateFormFluffPillow"
     },
     "OpmUserFluffPillow": {
-        "advertised_name": "fluff.OpmUserFluffPillow.testhq",
+        "advertised_name": "OpmUserFluffPillow",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.OpmUserFluffPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq__users",
-        "document_class": "CommCareUser",
-        "extra_args": {
-            "doc_type": "CommCareUser",
-            "domains": "opm"
-        },
         "full_class_name": "custom.opm.models.OpmUserFluffPillow",
-        "include_docs": false,
         "name": "OpmUserFluffPillow"
     },
     "ProjectIndicatorsCaseFluffPillow": {
-        "advertised_name": "fluff.ProjectIndicatorsCaseFluffPillow.testhq",
+        "advertised_name": "ProjectIndicatorsCaseFluffPillow",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.ProjectIndicatorsCaseFluffPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "XFormInstance",
-        "extra_args": {
-            "doc_type": "XFormInstance",
-            "domains": "m4change test-pathfinder"
-        },
         "full_class_name": "custom.m4change.models.ProjectIndicatorsCaseFluffPillow",
-        "include_docs": false,
         "name": "ProjectIndicatorsCaseFluffPillow"
     },
     "RecapPassageFluffPillow": {
-        "advertised_name": "fluff.RecapPassageFluffPillow.testhq",
+        "advertised_name": "RecapPassageFluffPillow",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.RecapPassageFluffPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "XFormInstance",
-        "extra_args": {
-            "doc_type": "XFormInstance",
-            "domains": "ipm-senegal testing-ipm-senegal ct-apr"
-        },
         "full_class_name": "custom.intrahealth.models.RecapPassageFluffPillow",
-        "include_docs": false,
         "name": "RecapPassageFluffPillow"
     },
     "RecouvrementFluffPillow": {
-        "advertised_name": "fluff.RecouvrementFluffPillow.testhq",
+        "advertised_name": "RecouvrementFluffPillow",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.RecouvrementFluffPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "CommCareCase",
-        "extra_args": {
-            "doc_type": "CommCareCase",
-            "domains": "ipm-senegal testing-ipm-senegal ct-apr"
-        },
         "full_class_name": "custom.intrahealth.models.RecouvrementFluffPillow",
-        "include_docs": false,
         "name": "RecouvrementFluffPillow"
     },
     "ReportCaseToElasticsearchPillow": {
         "advertised_name": "ReportCaseToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "report-cases-to-elasticsearch",
+        "checkpoint_id": "ReportCaseToElasticsearchPillow-test_report_cases_czei39du507m9mmpqk3y01x72a3ux4p0",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "ReportCaseToElasticsearchPillow"
     },
     "ReportXFormToElasticsearchPillow": {
         "advertised_name": "ReportXFormToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "report-xforms-to-elasticsearch",
+        "checkpoint_id": "ReportXFormToElasticsearchPillow-test_report_xforms_20160824_1708",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "ReportXFormToElasticsearchPillow"
     },
     "SqlSMSPillow": {
         "advertised_name": "SqlSMSPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "sql-sms-to-es",
+        "checkpoint_id": "SqlSMSPillow-test_smslogs_708c77f8e5fe00286fa5791e9fa7d45f",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "SqlSMSPillow"
     },
     "TauxDeRuptureFluffPillow": {
-        "advertised_name": "fluff.TauxDeRuptureFluffPillow.testhq",
+        "advertised_name": "TauxDeRuptureFluffPillow",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.TauxDeRuptureFluffPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "XFormInstance",
-        "extra_args": {
-            "doc_type": "XFormInstance",
-            "domains": "ipm-senegal testing-ipm-senegal ct-apr"
-        },
         "full_class_name": "custom.intrahealth.models.TauxDeRuptureFluffPillow",
-        "include_docs": false,
         "name": "TauxDeRuptureFluffPillow"
     },
     "TauxDeSatisfactionFluffPillow": {
-        "advertised_name": "fluff.TauxDeSatisfactionFluffPillow.testhq",
+        "advertised_name": "TauxDeSatisfactionFluffPillow",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.TauxDeSatisfactionFluffPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "XFormInstance",
-        "extra_args": {
-            "doc_type": "XFormInstance",
-            "domains": "ipm-senegal testing-ipm-senegal ct-apr"
-        },
         "full_class_name": "custom.intrahealth.models.TauxDeSatisfactionFluffPillow",
-        "include_docs": false,
         "name": "TauxDeSatisfactionFluffPillow"
     },
     "UCLAPatientFluffPillow": {
-        "advertised_name": "fluff.UCLAPatientFluffPillow.testhq",
+        "advertised_name": "UCLAPatientFluffPillow",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.UCLAPatientFluffPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "CommCareCase",
-        "extra_args": {
-            "doc_type": "CommCareCase",
-            "domains": "succeed"
-        },
         "full_class_name": "custom.succeed.models.UCLAPatientFluffPillow",
-        "include_docs": false,
         "name": "UCLAPatientFluffPillow"
     },
     "UnknownUsersPillow": {
         "advertised_name": "UnknownUsersPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "UnknownUsersPillow",
+        "checkpoint_id": "UnknownUsersPillow-test_hqusers_2016-07-19",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "UnknownUsersPillow"
     },
     "UserCacheInvalidatePillow": {
-        "advertised_name": "corehq.pillows.cacheinvalidate.CacheInvalidatePillow.testhq",
+        "advertised_name": "UserCacheInvalidatePillow",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "pillowtop_corehq.pillows.cacheinvalidate.CacheInvalidatePillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq__users",
-        "document_class": null,
-        "extra_args": {},
-        "full_class_name": "corehq.pillows.cacheinvalidate.CacheInvalidatePillow",
-        "include_docs": true,
+        "checkpoint_id": "cache_invalidate_pillow_test_commcarehq__users",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "UserCacheInvalidatePillow"
     },
     "UserGroupsDbKafkaPillow": {
@@ -484,79 +275,35 @@
     "UserPillow": {
         "advertised_name": "UserPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "UserPillow",
+        "checkpoint_id": "UserPillow-test_hqusers_2016-07-19",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "UserPillow"
     },
     "WorldVisionChildFluffPillow": {
-        "advertised_name": "fluff.WorldVisionChildFluffPillow.testhq",
+        "advertised_name": "WorldVisionChildFluffPillow",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.WorldVisionChildFluffPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "CommCareCase",
-        "extra_args": {
-            "doc_type": "CommCareCase",
-            "domains": "wvindia2"
-        },
         "full_class_name": "custom.world_vision.models.WorldVisionChildFluffPillow",
-        "include_docs": false,
         "name": "WorldVisionChildFluffPillow"
     },
     "WorldVisionHierarchyFluffPillow": {
-        "advertised_name": "fluff.WorldVisionHierarchyFluffPillow.testhq",
+        "advertised_name": "WorldVisionHierarchyFluffPillow",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.WorldVisionHierarchyFluffPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq__users",
-        "document_class": "CommCareUser",
-        "extra_args": {
-            "doc_type": "CommCareUser",
-            "domains": "wvindia2"
-        },
         "full_class_name": "custom.world_vision.models.WorldVisionHierarchyFluffPillow",
-        "include_docs": false,
         "name": "WorldVisionHierarchyFluffPillow"
     },
     "WorldVisionMotherFluffPillow": {
-        "advertised_name": "fluff.WorldVisionMotherFluffPillow.testhq",
+        "advertised_name": "WorldVisionMotherFluffPillow",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.WorldVisionMotherFluffPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "CommCareCase",
-        "extra_args": {
-            "doc_type": "CommCareCase",
-            "domains": "wvindia2"
-        },
         "full_class_name": "custom.world_vision.models.WorldVisionMotherFluffPillow",
-        "include_docs": false,
         "name": "WorldVisionMotherFluffPillow"
-    },
-    "XFormPillow": {
-        "advertised_name": "corehq.pillows.xform.XFormPillow.test_xforms_2016-06-09.testhq",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.xform.XFormPillow.test_xforms_2016-06-09.testhq",
-        "couch_filter": "couchforms/xforms",
-        "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "XFormInstance",
-        "es_alias": "xforms",
-        "es_index": "test_xforms_2016-06-09",
-        "es_type": "xform",
-        "extra_args": {},
-        "full_class_name": "corehq.pillows.xform.XFormPillow",
-        "include_docs": false,
-        "name": "XFormPillow",
-        "unique_id": "test_xforms_2016-06-09"
     },
     "XFormToElasticsearchPillow": {
         "advertised_name": "XFormToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "all-xforms-to-elasticsearch",
+        "checkpoint_id": "XFormToElasticsearchPillow-test_xforms_2016-07-07",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "XFormToElasticsearchPillow"
     },

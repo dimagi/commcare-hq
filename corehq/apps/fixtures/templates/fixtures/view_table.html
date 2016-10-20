@@ -103,7 +103,7 @@
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
-    <script type="text/javascript">
+    <script>
 
         {% if report_table and report_table.datatables %}
             var reportTables = new HQReportDataTables({

@@ -9,6 +9,7 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.views import logout as django_logout
 
 from corehq.apps.domain.models import Domain
+from corehq.const import OPENROSA_DEFAULT_VERSION
 
 from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
 
@@ -27,11 +28,10 @@ OPENROSA_HEADERS = [OPENROSA_VERSION_HEADER, OPENROSA_DATE_HEADER, OPENROSA_ACCE
 
 class OpenRosaMiddleware(object):
     """
-    Middleware to support OpenRosa request/response standards compliance 
+    Middleware to support OpenRosa request/response standards compliance
     https://bitbucket.org/javarosa/javarosa/wiki/OpenRosaRequest
     """
-    
-    def __init__(self):        
+    def __init__(self):
         pass
 
     def process_request(self, request):
@@ -44,7 +44,7 @@ class OpenRosaMiddleware(object):
         request.openrosa_headers = or_headers
 
     def process_response(self, request, response):
-        response[OPENROSA_VERSION_HEADER] = settings.OPENROSA_VERSION
+        response[OPENROSA_VERSION_HEADER] = OPENROSA_DEFAULT_VERSION
         return response
 
 

@@ -4,6 +4,7 @@ from datetime import datetime
 from unittest import SkipTest
 
 from django.conf import settings
+from django.db import connections
 from django.test import TestCase
 
 from corehq.form_processor.backends.sql.dbaccessors import (
@@ -11,15 +12,14 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     LedgerAccessorSQL, LedgerReindexAccessor
 )
 from corehq.form_processor.models import LedgerValue, CommCareCaseSQL
-from corehq.form_processor.tests import FormProcessorTestUtils, PartitionConfig, create_form_for_test
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, PartitionConfig, create_form_for_test
 
 
 class BaseReindexAccessorTest(object):
     accessor_class = None
 
     @classmethod
-    def setUpClass(cls):
-        super(BaseReindexAccessorTest, cls).setUpClass()
+    def class_setup_reindex(cls):
         cls.domain = uuid.uuid4().hex
         # since this test depends on the global form list just wipe everything
         FormProcessorTestUtils.delete_all_sql_forms()
@@ -33,12 +33,13 @@ class BaseReindexAccessorTest(object):
         time.sleep(.02)
         cls.end = datetime.utcnow()
 
+        cls._analyse()
+
     @classmethod
-    def tearDownClass(cls):
+    def class_teardown_reindex(cls):
         FormProcessorTestUtils.delete_all_sql_forms()
         FormProcessorTestUtils.delete_all_v2_ledgers()
         FormProcessorTestUtils.delete_all_sql_cases()
-        super(BaseReindexAccessorTest, cls).tearDownClass()
 
     @classmethod
     def _get_doc_ids(cls, docs):
@@ -67,11 +68,16 @@ class BaseReindexAccessorTest(object):
 
 class BaseUnshardedAccessorMixin(object):
     @classmethod
-    def setUpClass(cls):
-        super(BaseUnshardedAccessorMixin, cls).setUpClass()
+    def class_setup(cls):
         if settings.USE_PARTITIONED_DATABASE:
             # https://github.com/nose-devs/nose/issues/946
             raise SkipTest('Only applicable if no sharding is setup')
+
+    @classmethod
+    def _analyse(cls):
+        db_cursor = connections['default'].cursor()
+        with db_cursor as cursor:
+            cursor.execute('ANALYSE')  # the doc count query relies on this
 
     def test_limit(self):
         docs = self._get_docs(None, limit=2)
@@ -83,20 +89,28 @@ class BaseUnshardedAccessorMixin(object):
         self.assertEqual(self._get_doc_ids(docs), self.second_batch[:2])
 
         last_doc = self.accessor_class().get_doc(self.second_batch[0])
-
-        docs = self._get_docs(self.middle, last_doc_pk=last_doc.pk, limit=2)
+        docs = self._get_docs(self._get_last_modified_date(last_doc), last_doc_pk=last_doc.pk, limit=2)
         self.assertEqual(self._get_doc_ids(docs), self.second_batch[1:3])
+
+    def test_get_doc_count(self):
+        self.assertEqual(8, self.accessor_class().get_doc_count('default'))
 
 
 class BaseShardedAccessorMixin(object):
     @classmethod
-    def setUpClass(cls):
-        super(BaseShardedAccessorMixin, cls).setUpClass()
+    def class_setup(cls):
         if not settings.USE_PARTITIONED_DATABASE:
             # https://github.com/nose-devs/nose/issues/946
             raise SkipTest('Only applicable if sharding is setup')
         cls.partion_config = PartitionConfig()
         assert len(cls.partion_config.get_form_processing_dbs()) > 1
+
+    @classmethod
+    def _analyse(cls):
+        for db_alias in cls.partion_config.get_form_processing_dbs():
+            db_cursor = connections[db_alias].cursor()
+            with db_cursor as cursor:
+                cursor.execute('ANALYSE')  # the doc count query relies on this
 
     def _get_docs(self, start, last_doc_pk=None, limit=500):
         accessor = self.accessor_class()
@@ -104,6 +118,13 @@ class BaseShardedAccessorMixin(object):
         for from_db in self.partion_config.get_form_processing_dbs():
             all_docs.extend(accessor.get_docs(from_db, start))
         return all_docs
+
+    def test_get_doc_count(self):
+        doc_count = sum(
+            self.accessor_class().get_doc_count(from_db)
+            for from_db in self.partion_config.get_form_processing_dbs()
+        )
+        self.assertEqual(8, doc_count)
 
 
 class BaseCaseReindexAccessorTest(BaseReindexAccessorTest):
@@ -119,13 +140,35 @@ class BaseCaseReindexAccessorTest(BaseReindexAccessorTest):
     def _get_doc_ids(cls, docs):
         return [doc.case_id for doc in docs]
 
+    @classmethod
+    def _get_last_modified_date(cls, doc):
+        return doc.server_modified_on
+
 
 class UnshardedCaseReindexAccessorTests(BaseUnshardedAccessorMixin, BaseCaseReindexAccessorTest, TestCase):
-    pass
+    @classmethod
+    def setUpClass(cls):
+        super(UnshardedCaseReindexAccessorTests, cls).class_setup()
+        super(UnshardedCaseReindexAccessorTests, cls).setUpClass()
+        super(UnshardedCaseReindexAccessorTests, cls).class_setup_reindex()
+
+    @classmethod
+    def tearDownClass(cls):
+        super(UnshardedCaseReindexAccessorTests, cls).class_teardown_reindex()
+        super(UnshardedCaseReindexAccessorTests, cls).tearDownClass()
 
 
 class ShardedCaseReindexAccessorTests(BaseShardedAccessorMixin, BaseCaseReindexAccessorTest, TestCase):
-    pass
+    @classmethod
+    def setUpClass(cls):
+        super(ShardedCaseReindexAccessorTests, cls).class_setup()
+        super(ShardedCaseReindexAccessorTests, cls).setUpClass()
+        super(ShardedCaseReindexAccessorTests, cls).class_setup_reindex()
+
+    @classmethod
+    def tearDownClass(cls):
+        super(ShardedCaseReindexAccessorTests, cls).class_teardown_reindex()
+        super(ShardedCaseReindexAccessorTests, cls).tearDownClass()
 
 
 class BaseFormReindexAccessorTest(BaseReindexAccessorTest):
@@ -139,13 +182,36 @@ class BaseFormReindexAccessorTest(BaseReindexAccessorTest):
     def _get_doc_ids(cls, docs):
         return [doc.form_id for doc in docs]
 
+    @classmethod
+    def _get_last_modified_date(cls, doc):
+        return doc.received_on
+
 
 class UnshardedFormReindexAccessorTests(BaseUnshardedAccessorMixin, BaseFormReindexAccessorTest, TestCase):
-    pass
 
+    @classmethod
+    def setUpClass(cls):
+        super(UnshardedFormReindexAccessorTests, cls).class_setup()
+        super(UnshardedFormReindexAccessorTests, cls).setUpClass()
+        super(UnshardedFormReindexAccessorTests, cls).class_setup_reindex()
+
+    @classmethod
+    def tearDownClass(cls):
+        super(UnshardedFormReindexAccessorTests, cls).class_teardown_reindex()
+        super(UnshardedFormReindexAccessorTests, cls).tearDownClass()
 
 class ShardedFormReindexAccessorTests(BaseShardedAccessorMixin, BaseFormReindexAccessorTest, TestCase):
-    pass
+
+    @classmethod
+    def setUpClass(cls):
+        super(ShardedFormReindexAccessorTests, cls).class_setup()
+        super(ShardedFormReindexAccessorTests, cls).setUpClass()
+        super(ShardedFormReindexAccessorTests, cls).class_setup_reindex()
+
+    @classmethod
+    def tearDownClass(cls):
+        super(ShardedFormReindexAccessorTests, cls).class_teardown_reindex()
+        super(ShardedFormReindexAccessorTests, cls).tearDownClass()
 
 
 class BaseLedgerReindexAccessorTest(BaseReindexAccessorTest):
@@ -159,13 +225,37 @@ class BaseLedgerReindexAccessorTest(BaseReindexAccessorTest):
     def _get_doc_ids(cls, docs):
         return [doc.ledger_reference.as_id() for doc in docs]
 
+    @classmethod
+    def _get_last_modified_date(cls, doc):
+        return doc.last_modified
+
 
 class UnshardedLedgerReindexAccessorTests(BaseUnshardedAccessorMixin, BaseLedgerReindexAccessorTest, TestCase):
-    pass
+
+    @classmethod
+    def setUpClass(cls):
+        super(UnshardedLedgerReindexAccessorTests, cls).class_setup()
+        super(UnshardedLedgerReindexAccessorTests, cls).setUpClass()
+        super(UnshardedLedgerReindexAccessorTests, cls).class_setup_reindex()
+
+    @classmethod
+    def tearDownClass(cls):
+        super(UnshardedLedgerReindexAccessorTests, cls).class_teardown_reindex()
+        super(UnshardedLedgerReindexAccessorTests, cls).tearDownClass()
 
 
 class ShardedLedgerReindexAccessorTests(BaseShardedAccessorMixin, BaseLedgerReindexAccessorTest, TestCase):
-    pass
+
+    @classmethod
+    def setUpClass(cls):
+        super(ShardedLedgerReindexAccessorTests, cls).class_setup()
+        super(ShardedLedgerReindexAccessorTests, cls).setUpClass()
+        super(ShardedLedgerReindexAccessorTests, cls).class_setup_reindex()
+
+    @classmethod
+    def tearDownClass(cls):
+        super(ShardedLedgerReindexAccessorTests, cls).class_teardown_reindex()
+        super(ShardedLedgerReindexAccessorTests, cls).tearDownClass()
 
 
 def _create_ledger(domain, entry_id, balance, case_id=None, section_id='stock'):

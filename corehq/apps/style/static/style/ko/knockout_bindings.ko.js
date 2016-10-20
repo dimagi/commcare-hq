@@ -79,6 +79,11 @@ ko.bindingHandlers.sortable = {
         list.subscribe(forceUpdate);
         $(element).sortable({
             handle: '.sortable-handle',
+            helper: function(event, element) {
+                // Use a helper element attached directly to body to get
+                // around any overflow styling in the list's ancestors
+                return element.clone().appendTo("body");
+            },
             update: function(event, ui) {
                 var parent = ui.item.parent(),
                     oldPosition = ui.item.data('order');
@@ -686,4 +691,14 @@ ko.bindingHandlers.popover = {
         var options = ko.utils.unwrapObservable(valueAccessor());
         $(element).popover(options);
     }
+};
+
+ko.bindingHandlers.initializeValue = {
+    init: function(element, valueAccessor) {
+        valueAccessor()(element.getAttribute('value'));
+    },
+    update: function(element, valueAccessor) {
+        var value = valueAccessor();
+        element.setAttribute('value', ko.utils.unwrapObservable(value));
+    },
 };

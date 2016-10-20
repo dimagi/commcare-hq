@@ -7,11 +7,12 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from corehq import toggles
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
-from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.ui import help_text
 from corehq.apps.userreports.ui.fields import ReportDataSourceField, JsonField
+from corehq.apps.userreports.util import get_table_name
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND
 
 
 class DocumentFormBase(forms.Form):
@@ -84,14 +85,18 @@ class ConfigurableReportEditForm(DocumentFormBase):
                 'configured_charts',
                 'sort_expression',
             ),
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    _("Save Changes"),
-                    type="submit",
-                    css_class="btn btn-primary",
-                ),
-            ),
         )
+        # Restrict edit for static reports
+        if not read_only:
+            self.helper.layout.append(
+                hqcrispy.FormActions(
+                    twbscrispy.StrictButton(
+                        _("Save Changes"),
+                        type="submit",
+                        css_class="btn btn-primary",
+                    ),
+                )
+            )
 
     def clean_visible(self):
         return self.cleaned_data['visible'] == 'True'
@@ -120,6 +125,12 @@ DOC_TYPE_CHOICES = (
 )
 
 
+BACKEND_CHOICES = (
+    (UCR_SQL_BACKEND, 'Postgres'),
+    (UCR_ES_BACKEND, 'ElasticSearch'),
+)
+
+
 class ConfigurableDataSourceEditForm(DocumentFormBase):
 
     table_id = forms.CharField(label=_("Table ID"),
@@ -127,7 +138,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
     referenced_doc_type = forms.ChoiceField(
         choices=DOC_TYPE_CHOICES,
         label=_("Source Type"))
-    display_name = forms.CharField(label=_("Report Title"),
+    display_name = forms.CharField(label=_("Data Source Display Name"),
                                    help_text=help_text.DISPLAY_NAME)
     description = forms.CharField(required=False,
                                   help_text=help_text.DESCRIPTION)
@@ -143,6 +154,11 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
     named_filters = JsonField(required=False, expected_type=dict,
                               label=_("Named filters (optional)"),
                               help_text=help_text.NAMED_FILTER)
+    backend_id = forms.ChoiceField(
+        choices=BACKEND_CHOICES,
+        label=_("Backend"),
+        initial=UCR_SQL_BACKEND
+    )
 
     def __init__(self, domain, *args, **kwargs):
         self.domain = domain
@@ -175,6 +191,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
                 'configured_indicators',
                 'named_expressions',
                 'named_filters',
+                'backend_id',
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
@@ -184,8 +201,6 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
                 ),
             ),
         )
-
-
 
     def clean_table_id(self):
         # todo: validate table_id as [a-z][a-z0-9_]*

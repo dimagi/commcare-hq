@@ -4,7 +4,7 @@
 {% load i18n %}
 
 {% block js-inline %}{{ block.super }}
-    <script type="text/javascript">
+    <script>
         $(function() {
             function updatePropertyInput() {
                 var caseField = $(this).closest('tr').find(".case_field");
@@ -12,7 +12,9 @@
 
                 if (this.checked) {
                     var excelField = $(this).closest('tr').find(".excel_field");
-                    customField.val(excelField.val().replace(/[^\w\s]/gi, ''));
+                    var escapedValue = excelField.val().replace(/[^\w\s]/gi, '');
+                    escapedValue = escapedValue.replace(/[\s]/gi, '_');
+                    customField.val(escapedValue);
                     customField.closest('td').removeClass('hide');
                     caseField.closest('td').addClass('hide');
                 } else {
@@ -58,7 +60,7 @@
 
                 cloned.find('input').val('');
                 cloned.find('select').val('');
-                cloned.find('input[type=checkbox]').attr('checked', false)
+                cloned.find('input[type=checkbox]').prop('checked', false)
                 cloned.find('.remove_row').removeClass('hide');
 
                 cloned.find('.case_field').closest('td').removeClass('hide');
@@ -70,7 +72,7 @@
                 table.find('tr').last().after(cloned);
             });
 
-            $('.custom_field').bind('change, keypress, keydown, keyup', function() {
+            $('.custom_field').on('change, keypress, keydown, keyup', function() {
                 // check if field is valid for xml
                 // TODO: this method seems pretty sketchy, should cleanup
                 var value = $(this).val();
@@ -87,7 +89,7 @@
 
             $('#field_form').submit(function() {
                 $('[disabled]').each(function() {
-                    $(this).removeAttr('disabled');
+                    $(this).prop('disabled', false);
                 });
 
                 $(this).find('input.is_date').each(function() {
@@ -104,40 +106,6 @@
             });
 
             $('#autofill').click(autofillProperties);
-
-            function validateSubmitButton() {
-                var invalidFields = $('.excel_field option:selected')
-                                      .filter(function(k, v) { 
-                                          return /\s+/.test(v.value.trim());
-                                      }).length;
-                $('.form-actions [type=submit]').prop('disabled', invalidFields > 0);
-            }
-
-            function populateRowErrors(tr) {
-                var field = tr.find('.excel_field'), selected;
-
-                if (field.length === 0) { return; }
-
-                selected = field.val().trim();
-                if (/\s+/.test(selected)) {
-                    tr.addClass('error');
-                    tr.find('.errorMsg')
-                      .text('{% trans "This column contains a whitespace character" %}')
-                } else {
-                    tr.removeClass('error');
-                    tr.find('.errorMsg').text('');
-                }
-            }
-
-            $('.excel_field').change(function(e) {
-                populateRowErrors($(this).closest('tr'));
-                validateSubmitButton();
-            });
-
-            $('tr').each(function(k, tr) {
-                populateRowErrors($(tr));
-            });
-            validateSubmitButton();
 
             $('#back_breadcrumb').click(function(e) {
                 e.preventDefault();
@@ -187,7 +155,6 @@
                     <th>{% trans "Data Type" %}</th>
                     <th></th>
                     <th>{% trans "Case Property" %}<button type="button" class="btn btn-primary btn-xs pull-right" id="autofill">{% trans "Auto Fill" %}</button></th>
-                    <th></th>
                     <th></th>
                 </thead>
                 <tbody>

@@ -1,10 +1,10 @@
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 from celery.utils.log import get_task_logger
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule, AUTO_UPDATE_XMLNS
 from datetime import datetime
 
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from django.conf import settings
 from django.core.cache import cache
 from django.template.loader import render_to_string
@@ -14,6 +14,8 @@ from corehq.apps.data_interfaces.utils import add_cases_to_case_group, archive_f
 from .interfaces import FormManagementMode, BulkFormManagementInterface
 from .dispatcher import EditDataInterfaceDispatcher
 from dimagi.utils.django.email import send_HTML_email
+from dimagi.utils.couch import CriticalSection
+
 
 logger = get_task_logger('data_interfaces')
 ONE_HOUR = 60 * 60
@@ -100,7 +102,7 @@ def run_case_update_rules_for_domain(domain, now=None):
 
     for case_type, rules in rules_by_case_type.iteritems():
         boundary_date = AutomaticUpdateRule.get_boundary_date(rules, now)
-        case_ids = AutomaticUpdateRule.get_case_ids(domain, boundary_date, case_type)
+        case_ids = AutomaticUpdateRule.get_case_ids(domain, case_type, boundary_date)
 
         for case in CaseAccessors(domain).iter_cases(case_ids):
             for rule in rules:
@@ -111,3 +113,20 @@ def run_case_update_rules_for_domain(domain, now=None):
         for rule in rules:
             rule.last_run = now
             rule.save()
+
+
+@task(queue='background_queue', acks_late=True, ignore_result=True)
+def run_case_update_rules_on_save(case):
+    key = 'case-update-on-save-case-{case}'.format(case=case.case_id)
+    with CriticalSection([key]):
+        update_case = True
+        if case.xform_ids:
+            last_form = FormAccessors(case.domain).get_form(case.xform_ids[-1])
+            update_case = last_form.xmlns != AUTO_UPDATE_XMLNS
+        if update_case:
+            rules = AutomaticUpdateRule.by_domain(case.domain).filter(case_type=case.type)
+            now = datetime.utcnow()
+            for rule in rules:
+                stop_processing = rule.apply_rule(case, now)
+                if stop_processing:
+                    break

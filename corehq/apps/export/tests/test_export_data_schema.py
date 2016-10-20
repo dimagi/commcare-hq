@@ -14,9 +14,9 @@ from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
 from corehq.apps.export.models import (
     FormExportDataSchema,
     CaseExportDataSchema,
-    ExportDataSchema,
     PARENT_CASE_TABLE,
 )
+from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
 from corehq.apps.export.const import PROPERTY_TAG_UPDATE, DATA_SCHEMA_VERSION
 
 
@@ -99,6 +99,41 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(form_items[1].options[0].value, 'choice1')
         self.assertEqual(form_items[1].options[1].value, 'choice2')
 
+    def test_xform_parsing_with_stock_questions(self):
+        form_xml = self.get_xml('stock_form')
+        schema = FormExportDataSchema._generate_schema_from_xform(
+            XForm(form_xml),
+            [],
+            ['en'],
+            self.app_id,
+            1
+        )
+        self.assertEqual(len(schema.group_schemas), 1)
+        group_schema = schema.group_schemas[0]
+
+        self.assertEqual(len(group_schema.items), 6)
+        self.assertTrue(all(map(lambda item: item.doc_type == 'StockItem', group_schema.items)))
+        for parent_attr in ['@type', '@entity-id', '@date', '@section-id']:
+            self.assertTrue(any(map(
+                lambda item: item.path == [
+                    PathNode(name='form'),
+                    PathNode(name='balance:balance_one'),
+                    PathNode(name=parent_attr),
+                ],
+                group_schema.items,
+            )))
+
+        for entry_attr in ['@id', '@quantity']:
+            self.assertTrue(any(map(
+                lambda item: item.path == [
+                    PathNode(name='form'),
+                    PathNode(name='balance:balance_one'),
+                    PathNode(name='entry'),
+                    PathNode(name=entry_attr),
+                ],
+                group_schema.items,
+            )))
+
     def test_question_path_to_path_nodes(self):
         """
         Confirm that _question_path_to_path_nodes() works as expected
@@ -144,6 +179,18 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
             ]
         )
 
+    def test_allow_non_data_nodes(self):
+        """
+        Ensure that we allow non data nodes
+        """
+        self.assertEqual(
+            _question_path_to_path_nodes("/nodata/question", []),
+            [
+                PathNode(name='form', is_repeat=False),
+                PathNode(name='question', is_repeat=False),
+            ]
+        )
+
 
 class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
     app_id = '1234'
@@ -178,7 +225,7 @@ class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
         group_schema = schema.group_schemas[0]
 
         update_items = filter(lambda item: item.tag == PROPERTY_TAG_UPDATE, group_schema.items)
-        self.assertEqual(len(update_items), 2)
+        self.assertEqual(len(update_items), 2 + len(KNOWN_CASE_PROPERTIES))
 
     def test_get_app_build_ids_to_process(self):
         from corehq.apps.app_manager.dbaccessors import AppBuildVersion
@@ -347,7 +394,7 @@ class TestMergingCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(group_schema2.last_occurrences[app_id], 2)
         self.assertEqual(
             len(group_schema2.items),
-            len(case_property_mapping['candy'])
+            len(case_property_mapping['candy']) + len(KNOWN_CASE_PROPERTIES),
         )
 
 
@@ -440,6 +487,7 @@ class TestExportDataSchemaVersionControl(TestCase, TestXmlMixin):
 
     def tearDown(self):
         delete_all_export_data_schemas()
+        super(TestExportDataSchemaVersionControl, self).tearDown()
 
     def test_rebuild_version_control(self):
         app = self.current_app
@@ -549,6 +597,63 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         self.assertEqual(len(new_schema.group_schemas), 2)
 
 
+class TestBuildingCaseSchemaFromMultipleApplications(TestCase, TestXmlMixin):
+    file_path = ['data']
+    root = os.path.dirname(__file__)
+    domain = 'aspace'
+    case_type = 'candy'
+
+    @classmethod
+    def setUpClass(cls):
+        cls.current_app = Application.wrap(cls.get_json('basic_case_application'))
+
+        cls.first_build = Application.wrap(cls.get_json('basic_case_application'))
+        cls.first_build._id = '123'
+        cls.first_build.copy_of = cls.current_app.get_id
+        cls.first_build.version = 3
+
+        cls.other_build = Application.wrap(cls.get_json('basic_case_application'))
+        cls.other_build._id = '456'
+        cls.other_build.copy_of = 'other-app-id'
+        cls.other_build.version = 4
+        cls.other_build.has_submissions = True
+
+        cls.apps = [
+            cls.current_app,
+            cls.first_build,
+            cls.other_build,
+        ]
+        with drop_connected_signals(app_post_save):
+            for app in cls.apps:
+                app.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        for app in cls.apps:
+            app.delete()
+
+    def tearDown(self):
+        delete_all_export_data_schemas()
+
+    def test_multiple_app_schema_generation(self):
+        schema = CaseExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            self.current_app._id,
+            self.case_type,
+        )
+
+        self.assertEqual(
+            schema.last_app_versions[self.other_build.copy_of],
+            self.other_build.version,
+        )
+        # One for case, one for case history
+        self.assertEqual(len(schema.group_schemas), 2)
+
+        group_schema = schema.group_schemas[0]
+        self.assertEqual(group_schema.last_occurrences[self.current_app._id], self.current_app.version)
+        self.assertEqual(len(group_schema.items), 2)
+
+
 class TestBuildingParentCaseSchemaFromApplication(TestCase, TestXmlMixin):
     file_path = ['data']
     root = os.path.dirname(__file__)
@@ -558,6 +663,7 @@ class TestBuildingParentCaseSchemaFromApplication(TestCase, TestXmlMixin):
     @classmethod
     def setUpClass(cls):
         cls.current_app = Application.wrap(cls.get_json('parent_child_case_application'))
+        cls.current_app.copy_of = None
 
         cls.apps = [
             cls.current_app,

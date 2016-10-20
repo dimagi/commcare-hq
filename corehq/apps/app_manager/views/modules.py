@@ -22,7 +22,9 @@ from corehq.apps.app_manager.const import (
     CAREPLAN_GOAL,
     CAREPLAN_TASK,
     USERCASE_TYPE,
-    APP_V1)
+    APP_V1,
+    CLAIM_DEFAULT_RELEVANT_CONDITION,
+)
 from corehq.apps.app_manager.util import (
     is_valid_case_type,
     is_usercase_in_use,
@@ -31,7 +33,7 @@ from corehq.apps.app_manager.util import (
     prefix_usercase_properties,
     commtrack_ledger_sections,
     module_offers_search,
-)
+    module_case_hierarchy_has_circular_reference)
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.userreports.models import ReportConfiguration, \
     StaticReportConfiguration
@@ -53,7 +55,7 @@ from corehq.apps.app_manager.models import (
     SortElement,
     ReportAppConfig,
     FixtureSelect,
-)
+    DefaultCaseSearchProperty)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 
@@ -147,6 +149,8 @@ def _get_advanced_module_view_context(app, module, lang=None):
         'child_module_enabled': True,
         'is_search_enabled': case_search_enabled_for_domain(app.domain),
         'search_properties': module.search_config.properties if module_offers_search(module) else [],
+        'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
+        'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
         'schedule_phases': [
             {
                 'id': schedule.id,
@@ -181,6 +185,8 @@ def _get_basic_module_view_context(app, module, lang=None):
         ),
         'is_search_enabled': case_search_enabled_for_domain(app.domain),
         'search_properties': module.search_config.properties if module_offers_search(module) else [],
+        'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
+        'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
     }
 
 
@@ -208,7 +214,7 @@ def _get_report_module_context(app, module):
             'description': report.description,
             'charts': [chart for chart in report.charts if
                        chart.type == 'multibar'],
-            'filter_structure': report.filters,
+            'filter_structure': report.filters_without_prefilters,
         }
 
     all_reports = ReportConfiguration.by_domain(app.domain) + \
@@ -381,6 +387,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         "source_module_id": None,
         "task_list": ('task_list-show', 'task_list-label'),
         "excl_form_ids": None,
+        "display_style": None
     }
 
     if attr not in attributes:
@@ -404,7 +411,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     resp = {'update': {}, 'corrections': {}}
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
-        if is_valid_case_type(case_type, module):
+        if not case_type or is_valid_case_type(case_type, module):
             old_case_type = module["case_type"]
             module["case_type"] = case_type
             for cp_mod in (mod for mod in app.modules if isinstance(mod, CareplanModule)):
@@ -429,6 +436,8 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             return HttpResponseBadRequest("case type is improperly formatted")
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(request.POST.get("put_in_root"))
+    if should_edit("display_style"):
+        module["display_style"] = request.POST.get("display_style")
     if should_edit("source_module_id"):
         module["source_module_id"] = request.POST.get("source_module_id")
     if should_edit("display_separately"):
@@ -436,6 +445,8 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     if should_edit("parent_module"):
         parent_module = request.POST.get("parent_module")
         module.parent_select.module_id = parent_module
+        if module_case_hierarchy_has_circular_reference(module):
+            return HttpResponseBadRequest(_("The case hierarchy for this module contains a circular reference."))
     if should_edit("auto_select_case"):
         module["auto_select_case"] = request.POST.get("auto_select_case") == 'true'
 
@@ -484,7 +495,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             name = request.POST.get(attribute, None)
             module[attribute][lang] = name
             if should_edit("name"):
-                resp['update'].update({'.variable-module_name': module.name[lang]})
+                resp['update'] = {'.variable-module_name': trans(module.name, [lang], use_delim=False)}
     if should_edit('comment'):
         module.comment = request.POST.get('comment')
     for SLUG in ('case_list', 'task_list'):
@@ -639,6 +650,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     fixture_select = params.get('fixture_select', None)
     sort_elements = params.get('sort_elements', None)
     persist_case_context = params.get('persistCaseContext', None)
+    persistent_case_context_xml = params.get('persistentCaseContextXML', None)
     use_case_tiles = params.get('useCaseTiles', None)
     persist_tile_on_forms = params.get("persistTileOnForms", None)
     pull_down_tile = params.get("enableTilePullDown", None)
@@ -665,6 +677,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
         detail.short.columns = map(DetailColumn.from_json, short)
         if persist_case_context is not None:
             detail.short.persist_case_context = persist_case_context
+            detail.short.persistent_case_context_xml = persistent_case_context_xml
         if use_case_tiles is not None:
             detail.short.use_case_tiles = use_case_tiles
         if persist_tile_on_forms is not None:
@@ -691,16 +704,35 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
             item.field = sort_element['field']
             item.type = sort_element['type']
             item.direction = sort_element['direction']
+            item.display[lang] = sort_element['display']
             detail.short.sort_elements.append(item)
     if parent_select is not None:
         module.parent_select = ParentSelect.wrap(parent_select)
+        if module_case_hierarchy_has_circular_reference(module):
+            return HttpResponseBadRequest(_("The case hierarchy for this module contains a circular reference."))
     if fixture_select is not None:
         module.fixture_select = FixtureSelect.wrap(fixture_select)
     if search_properties is not None:
-        module.search_config = CaseSearch(properties=[
-            CaseSearchProperty.wrap(p) for p in _update_search_properties(module, search_properties, lang)
-        ])
-        # TODO: Add UI and controller support for CaseSearch.command_label
+        if search_properties.get('properties') is not None:
+            module.search_config = CaseSearch(
+                properties=[
+                    CaseSearchProperty.wrap(p)
+                    for p in _update_search_properties(
+                        module,
+                        search_properties.get('properties'), lang
+                    )
+                ],
+                relevant=(
+                    search_properties.get('relevant')
+                    if search_properties.get('relevant') is not None
+                    else CLAIM_DEFAULT_RELEVANT_CONDITION
+                ),
+                include_closed=bool(search_properties.get('include_closed')),
+                default_properties=[
+                    DefaultCaseSearchProperty.wrap(p)
+                    for p in search_properties.get('default_properties')
+                ]
+            )
 
     resp = {}
     app.save(resp)
@@ -760,6 +792,7 @@ def validate_module_for_build(request, domain, app_id, module_id, ajax=True):
     lang, langs = get_langs(request, app)
 
     response_html = render_to_string('app_manager/partials/build_errors.html', {
+        'request': request,
         'app': app,
         'build_errors': errors,
         'not_actual_build': True,
@@ -820,6 +853,7 @@ def _new_careplan_module(request, domain, app, name, lang):
 
 def _save_case_list_lookup_params(short, case_list_lookup, lang):
     short.lookup_enabled = case_list_lookup.get("lookup_enabled", short.lookup_enabled)
+    short.lookup_autolaunch = case_list_lookup.get("lookup_autolaunch", short.lookup_autolaunch)
     short.lookup_action = case_list_lookup.get("lookup_action", short.lookup_action)
     short.lookup_name = case_list_lookup.get("lookup_name", short.lookup_name)
     short.lookup_extras = case_list_lookup.get("lookup_extras", short.lookup_extras)
@@ -838,31 +872,26 @@ def view_module(request, domain, app_id, module_id):
     return view_generic(request, domain, app_id, module_id)
 
 
-common_module_validations = [
-    (lambda app: app.application_version == APP_V1,
-     _('Please upgrade you app to > 2.0 in order to add this module'))
-]
-
 FN = 'fn'
 VALIDATIONS = 'validations'
 MODULE_TYPE_MAP = {
     'careplan': {
         FN: _new_careplan_module,
-        VALIDATIONS: common_module_validations + [
+        VALIDATIONS: [
             (lambda app: app.has_careplan_module,
              _('This application already has a Careplan module'))
         ]
     },
     'advanced': {
         FN: _new_advanced_module,
-        VALIDATIONS: common_module_validations
+        VALIDATIONS: []
     },
     'report': {
         FN: _new_report_module,
-        VALIDATIONS: common_module_validations
+        VALIDATIONS: []
     },
     'shadow': {
         FN: _new_shadow_module,
-        VALIDATIONS: common_module_validations
+        VALIDATIONS: []
     },
 }

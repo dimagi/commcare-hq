@@ -5,6 +5,7 @@ from corehq.util.test_utils import unit_testing_only
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
+from corehq.apps.users.models import UserRole, Permissions
 
 from ..models import Location, SQLLocation, LocationType
 
@@ -32,6 +33,7 @@ def delete_all_locations():
     iter_bulk_delete(SupplyPointCase.get_db(), ids)
     delete_all_docs_by_doc_type(Location.get_db(), ['Location'])
     SQLLocation.objects.all().delete()
+    LocationType.objects.all().delete()
 
 
 def setup_location_types(domain, location_types):
@@ -150,6 +152,15 @@ class LocationHierarchyTestCase(TestCase):
     def tearDownClass(cls):
         cls.domain_obj.delete()
         delete_all_locations()
+
+    def restrict_user_to_location(self, user):
+        role = UserRole(
+            domain=self.domain,
+            name='Regional Supervisor',
+            permissions=Permissions(access_all_locations=False),
+        )
+        role.save()
+        user.set_role(self.domain, role.get_qualified_id())
 
 
 class LocationHierarchyPerTest(TestCase):

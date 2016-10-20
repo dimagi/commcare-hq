@@ -1,9 +1,9 @@
-from django.core.management.base import LabelCommand, CommandError
+from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.domain.models import Domain
 from django.conf import settings
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Bootstrap a domain and user who owns it."
     args = "<domain> <email> <password>"
     label = ""
@@ -13,7 +13,7 @@ class Command(LabelCommand):
         if len(args) != 3:
             raise CommandError('Usage: manage.py bootstrap <domain> <email> <password>')
         domain_name, username, passwd = args
-        domain = Domain.get_or_create_with_name(domain_name, is_active=True)
+        domain = Domain.get_or_create_with_name(domain_name, is_active=True, use_sql_backend=True)
 
         couch_user = WebUser.get_by_username(username)
         membership = None

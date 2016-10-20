@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 import logging
 import urllib
 import urlparse
+from django.utils.translation import ugettext_lazy as _
+
 from requests.exceptions import Timeout, ConnectionError
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.form_processor.exceptions import XFormNotFound
@@ -40,14 +42,7 @@ from .const import (
     POST_TIMEOUT,
 )
 from .exceptions import RequestConnectionError
-
-
-repeater_types = {}
-
-
-def register_repeater_type(cls):
-    repeater_types[cls.__name__] = cls
-    return cls
+from .utils import get_all_repeater_types
 
 
 def simple_post_with_cached_timeout(data, url, expiry=60 * 60, force_send=False, *args, **kwargs):
@@ -77,6 +72,7 @@ def simple_post_with_cached_timeout(data, url, expiry=60 * 60, force_send=False,
 DELETED = "-Deleted"
 
 FormatInfo = namedtuple('FormatInfo', 'name label generator_class')
+PostInfo = namedtuple('PostInfo', 'payload headers force_send max_tries')
 
 
 class GeneratorCollection(object):
@@ -138,57 +134,6 @@ class GeneratorCollection(object):
         return self.format_generator_map[format].generator_class
 
 
-class RegisterGenerator(object):
-    """Decorator to register new formats and Payload generators for Repeaters
-
-    args:
-        repeater_cls: A child class of Repeater for which the new format is being added
-        format_name: unique identifier for the format
-        format_label: description for the format
-
-    kwargs:
-        is_default: whether the format is default to the repeater_cls
-    """
-
-    generators = {}
-
-    def __init__(self, repeater_cls, format_name, format_label, is_default=False):
-        self.format_name = format_name
-        self.format_label = format_label
-        self.repeater_cls = repeater_cls
-        self.label = format_label
-        self.is_default = is_default
-
-    def __call__(self, generator_class):
-        if not self.repeater_cls in RegisterGenerator.generators:
-            RegisterGenerator.generators[self.repeater_cls] = GeneratorCollection(self.repeater_cls)
-        RegisterGenerator.generators[self.repeater_cls].add_new_format(
-            self.format_name,
-            self.format_label,
-            generator_class,
-            is_default=self.is_default
-        )
-        return generator_class
-
-    @classmethod
-    def generator_class_by_repeater_format(cls, repeater_class, format_name):
-        """Return generator class given a Repeater class and format_name"""
-        generator_collection = cls.generators[repeater_class]
-        return generator_collection.get_generator_by_format(format_name)
-
-    @classmethod
-    def all_formats_by_repeater(cls, repeater_class, for_domain=None):
-        """Return all formats for a given Repeater class"""
-        generator_collection = cls.generators[repeater_class]
-        return generator_collection.get_all_formats(for_domain=for_domain)
-
-    @classmethod
-    def default_format_by_repeater(cls, repeater_class):
-        """Return default format_name for a Repeater class"""
-        generator_collection = cls.generators[repeater_class]
-        return generator_collection.get_default_format()
-
-
 class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     """
     Represents the configuration of a repeater. Will specify the URL to forward to and
@@ -203,6 +148,17 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     use_basic_auth = BooleanProperty(default=False)
     username = StringProperty()
     password = StringProperty()
+    friendly_name = _("Data")
+
+    @classmethod
+    def get_custom_url(cls, domain):
+        return None
+
+    @classmethod
+    def available_for_domain(cls, domain):
+        """Returns whether this repeater can be used by a particular domain
+        """
+        return True
 
     def get_pending_record_count(self):
         return get_pending_repeat_record_count(self.domain, self._id)
@@ -214,9 +170,11 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         return get_success_repeat_record_count(self.domain, self._id)
 
     def format_or_default_format(self):
+        from corehq.apps.repeaters.repeater_generators import RegisterGenerator
         return self.format or RegisterGenerator.default_format_by_repeater(self.__class__)
 
     def get_payload_generator(self, payload_format):
+        from corehq.apps.repeaters.repeater_generators import RegisterGenerator
         gen = RegisterGenerator.generator_class_by_repeater_format(self.__class__, payload_format)
         return gen(self)
 
@@ -261,7 +219,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     @quickcache(['cls.__name__', 'domain'], timeout=5 * 60, memoize_timeout=10)
     def by_domain(cls, domain):
         key = [domain]
-        if cls.__name__ in repeater_types:
+        if cls.__name__ in get_all_repeater_types():
             key.append(cls.__name__)
         elif cls.__name__ == Repeater.__name__:
             # In this case the wrap function delegates to the
@@ -298,6 +256,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     @staticmethod
     def get_class_from_doc_type(doc_type):
         doc_type = doc_type.replace(DELETED, '')
+        repeater_types = get_all_repeater_types()
         if doc_type in repeater_types:
             return repeater_types[doc_type]
         else:
@@ -314,6 +273,16 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         # to be overridden
         return self.url
 
+    def allow_retries(self, response):
+        """Whether to requeue the repeater when it fails
+        """
+        return True
+
+    def allow_immediate_retries(self, response):
+        """Whether to retry failed requests immediately a few times
+        """
+        return True
+
     def get_headers(self, repeat_record):
         # to be overridden
         generator = self.get_payload_generator(self.format_or_default_format())
@@ -324,8 +293,19 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
 
         return headers
 
+    def handle_success(self, response, repeat_record):
+        """handle a successful post
+        """
+        generator = self.get_payload_generator(self.format_or_default_format())
+        return generator.handle_success(response, self.payload_doc(repeat_record))
 
-@register_repeater_type
+    def handle_failure(self, response, repeat_record):
+        """handle a failed post
+        """
+        generator = self.get_payload_generator(self.format_or_default_format())
+        return generator.handle_failure(response, self.payload_doc(repeat_record))
+
+
 class FormRepeater(Repeater):
     """
     Record that forms should be repeated to a new url
@@ -334,6 +314,7 @@ class FormRepeater(Repeater):
 
     include_app_id_param = BooleanProperty(default=True)
     white_listed_form_xmlns = StringListProperty(default=[])  # empty value means all form xmlns are accepted
+    friendly_name = _("Forward Forms")
 
     @memoized
     def payload_doc(self, repeat_record):
@@ -368,7 +349,6 @@ class FormRepeater(Repeater):
         return "forwarding forms to: %s" % self.url
 
 
-@register_repeater_type
 class CaseRepeater(Repeater):
     """
     Record that cases should be repeated to a new url
@@ -378,11 +358,16 @@ class CaseRepeater(Repeater):
     version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
     white_listed_case_types = StringListProperty(default=[])  # empty value means all case-types are accepted
     black_listed_users = StringListProperty(default=[])  # users who caseblock submissions should be ignored
+    friendly_name = _("Forward Cases")
 
     def allowed_to_forward(self, payload):
-        allowed_case_type = not self.white_listed_case_types or payload.type in self.white_listed_case_types
-        allowed_user = self.payload_user_id(payload) not in self.black_listed_users
-        return allowed_case_type and allowed_user
+        return self._allowed_case_type(payload) and self._allowed_user(payload)
+
+    def _allowed_case_type(self, payload):
+        return not self.white_listed_case_types or payload.type in self.white_listed_case_types
+
+    def _allowed_user(self, payload):
+        return self.payload_user_id(payload) not in self.black_listed_users
 
     def payload_user_id(self, payload):
         # get the user_id who submitted the payload, note, it's not the owner_id
@@ -403,7 +388,6 @@ class CaseRepeater(Repeater):
         return "forwarding cases to: %s" % self.url
 
 
-@register_repeater_type
 class ShortFormRepeater(Repeater):
     """
     Record that form id & case ids should be repeated to a new url
@@ -411,6 +395,7 @@ class ShortFormRepeater(Repeater):
     """
 
     version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
+    friendly_name = _("Forward Form Stubs")
 
     @memoized
     def payload_doc(self, repeat_record):
@@ -430,8 +415,8 @@ class ShortFormRepeater(Repeater):
         return "forwarding short form to: %s" % self.url
 
 
-@register_repeater_type
 class AppStructureRepeater(Repeater):
+    friendly_name = _("Forward App Schema Changes")
 
     def payload_doc(self, repeat_record):
         return None
@@ -463,7 +448,7 @@ class RepeatRecord(Document):
     def url(self):
         try:
             return self.repeater.get_url(self)
-        except XFormNotFound:
+        except (XFormNotFound, ResourceNotFound):
             return None
 
     @property
@@ -496,12 +481,7 @@ class RepeatRecord(Document):
         ).one()
         return results['value'] if results else 0
 
-    def update_success(self):
-        self.last_checked = datetime.utcnow()
-        self.next_check = None
-        self.succeeded = True
-
-    def update_failure(self, reason=None):
+    def set_next_try(self, reason=None):
         # we use an exponential back-off to avoid submitting to bad urls
         # too frequently.
         assert self.succeeded is False
@@ -518,7 +498,6 @@ class RepeatRecord(Document):
 
         self.last_checked = now
         self.next_check = self.last_checked + window
-        self.failure_reason = reason
 
     def try_now(self):
         # try when we haven't succeeded and either we've
@@ -549,34 +528,62 @@ class RepeatRecord(Document):
         else:
             headers = self.repeater.get_headers(self)
             if self.try_now() or force_send:
-                # we don't use celery's version of retry because
-                # we want to override the success/fail each try
-                failure_reason = None
-                for i in range(max_tries):
-                    try:
-                        resp = simple_post_with_cached_timeout(
-                            payload,
-                            self.url,
-                            headers=headers,
-                            force_send=force_send,
-                            timeout=POST_TIMEOUT,
-                        )
-                        if 200 <= resp.status_code < 300:
-                            self.update_success()
-                            break
-                        else:
-                            failure_reason = u'{}: {}'.format(resp.status_code, resp.reason)
-                    except Exception, e:
-                        failure_reason = unicode(e)
+                tries = 0
+                post_info = PostInfo(payload, headers, force_send, max_tries)
+                self.post(post_info, tries=tries)
 
-                if not self.succeeded:
-                    # mark it failed for later and give up
-                    self.update_failure(failure_reason)
-                    log_counter(REPEATER_ERROR_COUNT, {
-                        '_id': self._id,
-                        'reason': failure_reason,
-                        'target_url': self.url,
-                    })
+    def post(self, post_info, tries=0):
+        tries += 1
+        try:
+            response = simple_post_with_cached_timeout(
+                post_info.payload,
+                self.url,
+                headers=post_info.headers,
+                force_send=post_info.force_send,
+                timeout=POST_TIMEOUT,
+            )
+        except Exception, e:
+            self.handle_exception(e)
+        else:
+            return self.handle_response(response, post_info, tries)
+
+    def handle_response(self, response, post_info, tries):
+        if 200 <= response.status_code < 300:
+            return self.handle_success(response)
+        else:
+            return self.handle_failure(response, post_info, tries)
+
+    def handle_success(self, response):
+        """Do something with the response if the repeater succeeds
+        """
+        self.last_checked = datetime.utcnow()
+        self.next_check = None
+        self.succeeded = True
+        self.repeater.handle_success(response, self)
+
+    def handle_failure(self, response, post_info, tries):
+        """Do something with the response if the repeater fails
+        """
+        if tries < post_info.max_tries and self.repeater.allow_immediate_retries(response):
+            return self.post(post_info, tries)
+        else:
+            self._fail(u'{}: {}'.format(response.status_code, response.reason), response)
+            self.repeater.handle_failure(response, self)
+
+    def handle_exception(self, exception):
+        """handle internal exceptions
+        """
+        self._fail(unicode(exception), None)
+
+    def _fail(self, reason, response):
+        if self.repeater.allow_retries(response):
+            self.set_next_try()
+        self.failure_reason = reason
+        log_counter(REPEATER_ERROR_COUNT, {
+            '_id': self._id,
+            'reason': reason,
+            'target_url': self.url,
+        })
 
 # import signals
 # Do not remove this import, its required for the signals code to run even though not explicitly used in this file

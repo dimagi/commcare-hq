@@ -30,10 +30,14 @@ from xml2json.lib import xml2json
 
 from corehq import toggles, privileges
 from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
-from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc, \
-    get_brief_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import (
+    get_latest_build_doc,
+    get_brief_apps_in_domain,
+    get_latest_released_app_doc,
+    wrap_app,
+)
 from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
-from corehq.apps.app_manager.models import Application, ApplicationBase
+from corehq.apps.app_manager.models import Application, ApplicationBase, RemoteApp
 from corehq.apps.app_manager.suite_xml.sections.details import get_instances_for_module
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.util import get_cloudcare_session_data
@@ -104,11 +108,20 @@ class CloudcareMain(View):
         if not preview:
             apps = get_cloudcare_apps(domain)
             if request.project.use_cloudcare_releases:
-                # replace the apps with the last starred build of each app, removing the ones that aren't starred
-                apps = filter(
-                    lambda app: app.is_released,
-                    [get_app(domain, app['_id'], latest=True) for app in apps]
+
+                if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or
+                        toggles.CLOUDCARE_LATEST_BUILD.enabled(request.couch_user.username)):
+                    get_cloudcare_app = get_latest_build_doc
+                else:
+                    get_cloudcare_app = get_latest_released_app_doc
+
+                apps = map(
+                    lambda app: get_cloudcare_app(domain, app['_id']),
+                    apps,
                 )
+                apps = filter(None, apps)
+                apps = map(wrap_app, apps)
+
                 # convert to json
                 apps = [get_app_json(app) for app in apps]
             else:
@@ -117,8 +130,13 @@ class CloudcareMain(View):
                 apps = [get_app_json(ApplicationBase.wrap(app)) for app in apps if app]
 
         else:
-            apps = get_brief_apps_in_domain(domain)
-            apps = [get_app_json(app) for app in apps if app and app.application_version == V2]
+            # big TODO: write a new apps view for Formplayer, can likely cut most out now
+            if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
+                apps = get_cloudcare_apps(domain)
+            else:
+                apps = get_brief_apps_in_domain(domain)
+            apps = [get_app_json(app) for app in apps if app and (
+                isinstance(app, RemoteApp) or app.application_version == V2)]
             meta = get_meta(request)
             track_clicked_preview_on_hubspot(request.couch_user, request.COOKIES, meta)
 
@@ -199,7 +217,6 @@ class CloudcareMain(View):
             "apps_raw": apps,
             "preview": preview,
             "maps_api_key": settings.GMAPS_API_KEY,
-            "offline_enabled": toggles.OFFLINE_CLOUDCARE.enabled(request.user.username),
             "sessions_enabled": request.couch_user.is_commcare_user(),
             "use_cloudcare_releases": request.project.use_cloudcare_releases,
             "username": request.user.username,
@@ -319,7 +336,7 @@ def get_cases(request, domain):
             usercase_id = CommCareUser.get_by_user_id(user_id).get_usercase_id()
             usercase = accessor.get_case(usercase_id) if usercase_id else None
             return json_response(map(
-                lambda case: CaseAPIResult(id=case['_id'], couch_doc=case, id_only=ids_only),
+                lambda case: CaseAPIResult(domain=domain, id=case['_id'], couch_doc=case, id_only=ids_only),
                 filter(None, [case, case.parent, usercase])
             ))
 
@@ -332,7 +349,7 @@ def get_cases(request, domain):
         # owned case list + footprint
         case = accessor.get_case(case_id)
         assert case.domain == domain
-        cases = [CaseAPIResult(id=case_id, couch_doc=case, id_only=ids_only)]
+        cases = [CaseAPIResult(domain=domain, id=case_id, couch_doc=case, id_only=ids_only)]
     else:
         filters = get_filters_from_request_params(request_params)
         status = api_closed_to_status(request_params.get('closed', 'false'))
@@ -580,7 +597,13 @@ class HttpResponseConflict(HttpResponse):
 class EditCloudcareUserPermissionsView(BaseUserSettingsView):
     template_name = 'cloudcare/config.html'
     urlname = 'cloudcare_app_settings'
-    page_title = ugettext_noop("CloudCare Permissions")
+
+    @property
+    def page_title(self):
+        if toggles.USE_FORMPLAYER_FRONTEND.enabled(self.domain):
+            return _("Web Apps Permissions")
+        else:
+            return _("CloudCare Permissions")
 
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.CLOUDCARE))

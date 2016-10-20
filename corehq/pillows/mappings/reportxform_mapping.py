@@ -3,7 +3,7 @@ from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 from corehq.util.elastic import es_index
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
-REPORT_XFORM_INDEX = es_index("report_xforms_20150406_1136")
+REPORT_XFORM_INDEX = es_index("report_xforms_20160824_1708")
 
 CASE_MAPPING_FRAGMENT = {
     'type': 'nested',
@@ -104,6 +104,10 @@ REPORT_XFORM_MAPPING = {
         'initial_processing_complete': {"type": "boolean"},
         'partial_submission': {"type": "boolean"},
         "#export_tag": {"type": "string", "index": "not_analyzed"},
+        'external_blobs': {
+            'dynamic': False,
+            'type': 'object'
+        },
         '_attachments': {
             'dynamic': False,
             'type': 'object'

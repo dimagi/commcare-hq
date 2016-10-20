@@ -202,10 +202,11 @@ def _get_info_by_case_id(index_infos, case_id):
     return [i for i in index_infos if i.case_id == case_id]
 
 
-def get_dependent_case_info(domain, cases):
+def get_dependent_case_info(domain, case_ids):
     """ Fetches all dependent cases of cases passed in"""
+    assert not isinstance(case_ids, basestring)
     all_dependencies = set()
-    direct_dependencies = _get_direct_dependencies(domain, cases)
+    direct_dependencies = _get_direct_dependencies(domain, case_ids)
     new_case_ids = direct_dependencies.all
     all_extensions = direct_dependencies.extension_cases
     while new_case_ids:
@@ -216,10 +217,11 @@ def get_dependent_case_info(domain, cases):
     return DependentCaseInfo(all_ids=all_dependencies, extension_ids=all_extensions)
 
 
-def _get_direct_dependencies(domain, cases):
+def _get_direct_dependencies(domain, case_ids):
+    assert not isinstance(case_ids, basestring)
     case_accessor = CaseAccessors(domain)
-    extension_cases = set(case_accessor.get_extension_case_ids(cases))
-    indexed_cases = set(case_accessor.get_indexed_case_ids(cases))
+    extension_cases = set(case_accessor.get_extension_case_ids(case_ids))
+    indexed_cases = set(case_accessor.get_indexed_case_ids(case_ids))
     return DirectDependencies(
         all=extension_cases | indexed_cases,
         indexed_cases=indexed_cases,

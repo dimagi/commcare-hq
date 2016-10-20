@@ -8,6 +8,11 @@
 
 {% block stylesheets %}{{ block.super }}
     <link rel="stylesheet" href="{% static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
+    <style>
+        .nodeset {
+            min-width: 400px;
+        }
+    </style>
 {% endblock %}
 
 {% block head %}{{ block.super }}
@@ -25,26 +30,25 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    {% if app.application_version == '2.0' %}
-        <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
-        <script src="{% static 'app_manager/js/case-config-utils.js' %}"></script>
-        {% block js_extra %}
-            <script src="{% static 'app_manager/js/case-config-ui-2.js' %}"></script>
-        {% endblock %}
-        <style>
-            #open-referral-action,
-            #update-referral-action,
-            #close-referral-action,
-            #referral-preload-action {
-                display: none;
-            }
-            .indent {
-                margin-left: 15px;
-            }
-        </style>
-    {% else %}
-        <script src="{% static 'app_manager/js/ejs.min.js' %}"></script>
-        <script src="{% static 'app_manager/js/case-config-ui-1.js' %}"></script>
+    <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
+    <script src="{% static 'app_manager/js/case-config-utils.js' %}"></script>
+    {% block js_extra %}
+        <script src="{% static 'app_manager/js/case-config-ui-2.js' %}"></script>
+    {% endblock %}
+    <style>
+        #open-referral-action,
+        #update-referral-action,
+        #close-referral-action,
+        #referral-preload-action {
+            display: none;
+        }
+        .indent {
+            margin-left: 15px;
+        }
+    </style>
+
+    {% if request|toggle_enabled:"USE_FORMPLAYER_FRONTEND"%}
+        <script src="{% static 'cloudcare/js/formplayer/apps/util/util.js' %}"></script>
     {% endif %}
 
     {% include "app_manager/partials/form_filter/value-or-none-ui.html" %}
@@ -100,125 +104,122 @@
             var form_requires = ko.observable({{ form.requires|JSON }});
         {% endblock %}
 
-        {% if app.application_version == '2.0' %}
-            {% if allow_form_filtering %}
+        {% if allow_form_filtering %}
 
-            function formFilterMatches(filter, pattern_matches, substring_matches) {
-                if(typeof(filter) != 'string') {
-                    return false;
-                }
-
-                var result = false;
-                $.each(pattern_matches, function(index, pattern) {
-                    result = result || filter.match(pattern);
-                });
-
-                $.each(substring_matches, function(index, sub) {
-                    result = result || filter.indexOf(sub) != -1;
-                });
-
-                return result;
+        function formFilterMatches(filter, pattern_matches, substring_matches) {
+            if(typeof(filter) != 'string') {
+                return false;
             }
 
-            var putInRoot = {{ module.put_in_root|BOOL }};
-            var isUserCaseInUse = {{ is_usercase_in_use|BOOL }};
-            var formFilter = ko.observable({{ form.form_filter|JSON }});
-            var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
-
-            var caseXpathPatternMatches = {{ case_xpath_pattern_matches|JSON }};
-            var caseXpathSubstringMatches = {{ case_xpath_substring_matches|JSON }};
-            var userCaseXpathPatternMatches = {{ user_case_xpath_pattern_matches|JSON }};
-            var userCaseXpathSubstringMatches = {{ user_case_xpath_substring_matches|JSON }};
-
-            var formFilterReferencesCase = ko.computed(function() {
-                // We want to determine here if the filter expression references
-                // any case but the user case.
-                var filter = formFilter();
-                if(typeof(filter) != 'string') {
-                    return false;
-                }
-
-                $.each(userCaseXpathSubstringMatches, function(index, sub) {
-                    filter = filter.replace(sub, '');
-                });
-
-                return formFilterMatches(filter, caseXpathPatternMatches, caseXpathSubstringMatches);
+            var result = false;
+            $.each(pattern_matches, function(index, pattern) {
+                result = result || filter.match(pattern);
             });
 
-            var formFilterReferencesUserCase = ko.computed(function() {
-                return formFilterMatches(formFilter(), userCaseXpathPatternMatches, userCaseXpathSubstringMatches);
+            $.each(substring_matches, function(index, sub) {
+                result = result || filter.indexOf(sub) != -1;
             });
 
-            var formFilterErrorMessage = ko.observable();
+            return result;
+        }
 
-            var formFilterAllowed = ko.computed(function () {
-                if(!formFilter()) {
-                    return true;
-                }
+        var putInRoot = {{ module.put_in_root|BOOL }};
+        var isUserCaseInUse = {{ is_usercase_in_use|BOOL }};
+        var formFilter = ko.observable({{ form.form_filter|JSON }});
+        var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
 
-                moduleUsesCase = (allOtherFormsRequireACase && form_requires() === 'case');
-                if(formFilterReferencesCase() && (!moduleUsesCase || putInRoot)) {
-                    formFilterErrorMessage($('#caseReferenceNotAllowed').html());
-                    return false;
-                }
+        var caseXpathPatternMatches = {{ case_xpath_pattern_matches|JSON }};
+        var caseXpathSubstringMatches = {{ case_xpath_substring_matches|JSON }};
+        var userCaseXpathPatternMatches = {{ user_case_xpath_pattern_matches|JSON }};
+        var userCaseXpathSubstringMatches = {{ user_case_xpath_substring_matches|JSON }};
 
-                if(formFilterReferencesUserCase() && !isUserCaseInUse) {
-                    formFilterErrorMessage($('#userCaseReferenceNotAllowed').html());
-                    return false;
-                }
+        var formFilterReferencesCase = ko.computed(function() {
+            // We want to determine here if the filter expression references
+            // any case but the user case.
+            var filter = formFilter();
+            if(typeof(filter) != 'string') {
+                return false;
+            }
 
+            $.each(userCaseXpathSubstringMatches, function(index, sub) {
+                filter = filter.replace(sub, '');
+            });
+
+            return formFilterMatches(filter, caseXpathPatternMatches, caseXpathSubstringMatches);
+        });
+
+        var formFilterReferencesUserCase = ko.computed(function() {
+            return formFilterMatches(formFilter(), userCaseXpathPatternMatches, userCaseXpathSubstringMatches);
+        });
+
+        var formFilterErrorMessage = ko.observable();
+
+        var formFilterAllowed = ko.computed(function () {
+            if(!formFilter()) {
                 return true;
-            });
+            }
 
-            $('#form-filter').koApplyBindings({
-                    formFilter: formFilter,
-                    formFilterAllowed: formFilterAllowed,
-                    errorMessages: {notAllowed: formFilterErrorMessage}
-            });
-            {% endif %}
+            moduleUsesCase = (allOtherFormsRequireACase && form_requires() === 'case');
+            if(formFilterReferencesCase() && (!moduleUsesCase || putInRoot)) {
+                formFilterErrorMessage($('#caseReferenceNotAllowed').html());
+                return false;
+            }
 
-            {% if allow_form_workflow %}
-                var FormWorkflow = hqImport('app_manager/js/form_workflow.js').FormWorkflow;
-                var labels = {};
-                labels[FormWorkflow.Values.DEFAULT] = "{% trans "Home Screen" %}";
-                labels[FormWorkflow.Values.ROOT] = "{% trans "Module Menu" %}";
-                {% with module_name=module.name|trans:langs %}
-                labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module_name|escapejs }}";
-                {% endwith %}
-                {% if module.root_module_id %}
-                {% with root_module_name=module.root_module.name|trans:langs %}
-                labels[FormWorkflow.Values.PARENT_MODULE] = "{% trans "Parent Module:" %} {{ root_module_name|escapejs }}";
-                {% endwith %}
-                {% endif %}
-                labels[FormWorkflow.Values.PREVIOUS_SCREEN] = "{% trans "Previous Screen" %}";
+            if(formFilterReferencesUserCase() && !isUserCaseInUse) {
+                formFilterErrorMessage($('#userCaseReferenceNotAllowed').html());
+                return false;
+            }
 
-                var options = {
-                    labels: labels,
-                    workflow: '{{ form.post_form_workflow }}',
-                };
+            return true;
+        });
 
-                {% if request|toggle_enabled:"FORM_LINK_WORKFLOW"%}
-                labels[FormWorkflow.Values.FORM] = "{% trans "Link to other form" %}";
-                options.forms = {{ linkable_forms|JSON}}
-                options.formLinks = {{ form.form_links|JSON }}
-                options.formDatumsUrl = '{% url 'get_form_datums' domain app.id %}'
-                {% endif %}
-
-                $('#form-workflow').koApplyBindings(new FormWorkflow(options))
-            {% endif %}
-
-            $('#auto-gps-capture').koApplyBindings({
-                auto_gps_capture: ko.observable({{ form.auto_gps_capture|JSON }})
-            });
-            {% if request|toggle_enabled:'NO_VELLUM' %}
-            $('#no-vellum').koApplyBindings({
-                no_vellum: ko.observable({{ form.no_vellum|JSON }})
-            });
-            {% endif %}
-
-            gaTrackLink($('.breadcrumb .view-form'), 'App Builder', 'View Form', 'Breadcrumb');
-
+        $('#form-filter').koApplyBindings({
+                formFilter: formFilter,
+                formFilterAllowed: formFilterAllowed,
+                errorMessages: {notAllowed: formFilterErrorMessage}
+        });
         {% endif %}
+
+        {% if allow_form_workflow %}
+            var FormWorkflow = hqImport('app_manager/js/form_workflow.js').FormWorkflow;
+            var labels = {};
+            labels[FormWorkflow.Values.DEFAULT] = "{% trans "Home Screen" %}";
+            labels[FormWorkflow.Values.ROOT] = "{% trans "Module Menu" %}";
+            {% with module_name=module.name|trans:langs %}
+            labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module_name|escapejs }}";
+            {% endwith %}
+            {% if module.root_module_id %}
+            {% with root_module_name=module.root_module.name|trans:langs %}
+            labels[FormWorkflow.Values.PARENT_MODULE] = "{% trans "Parent Module:" %} {{ root_module_name|escapejs }}";
+            {% endwith %}
+            {% endif %}
+            labels[FormWorkflow.Values.PREVIOUS_SCREEN] = "{% trans "Previous Screen" %}";
+
+            var options = {
+                labels: labels,
+                workflow: '{{ form.post_form_workflow }}',
+            };
+
+            {% if request|toggle_enabled:"FORM_LINK_WORKFLOW"%}
+            labels[FormWorkflow.Values.FORM] = "{% trans "Link to other form" %}";
+            options.forms = {{ linkable_forms|JSON}}
+            options.formLinks = {{ form.form_links|JSON }}
+            options.formDatumsUrl = '{% url 'get_form_datums' domain app.id %}'
+            {% endif %}
+
+            $('#form-workflow').koApplyBindings(new FormWorkflow(options))
+        {% endif %}
+
+        $('#auto-gps-capture').koApplyBindings({
+            auto_gps_capture: ko.observable({{ form.auto_gps_capture|JSON }})
+        });
+        {% if request|toggle_enabled:'NO_VELLUM' %}
+        $('#no-vellum').koApplyBindings({
+            no_vellum: ko.observable({{ form.no_vellum|JSON }})
+        });
+        {% endif %}
+
+        gaTrackLink($('.breadcrumb .view-form'), 'App Builder', 'View Form', 'Breadcrumb');
 
         {% if allow_cloudcare %}
             // tag the 'preview in cloudcare' button with the right url
@@ -239,7 +240,21 @@
                 }
                 return url;
             };
-            var cloudCareUrl = getCloudCareUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
+            // build the previewCommand in the format that the CommCareSession will understand
+            var getFormplayerUrl = function(urlRoot, appId, moduleId, formId) {
+                var urlObject = new Util.CloudcareUrl({
+                    'appId': appId,
+                    'previewCommand': 'm' + moduleId + '-f' + formId
+                });
+                return urlRoot + '#' + Util.objectToEncodedUrl(urlObject.toJson());
+            };
+
+            {% if request|toggle_enabled:"USE_FORMPLAYER_FRONTEND"%}
+                var cloudCareUrl = getFormplayerUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}");
+            {% else %}
+                var cloudCareUrl = getCloudCareUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
+            {% endif %}
+
             $("#cloudcare-preview-url").attr("href", cloudCareUrl);
             $('#cloudcare-preview-url').click(function(e) {
                 ga_track_event('CloudCare', 'Click "Preview Form"');
@@ -354,11 +369,9 @@
                         {% endblocktrans %}
                     </div>
                     <div class="casexml" id="casexml_home">
-                    {% if app.application_version != '1.0' %}
                         {% block case_management_content %}
                             {% include 'app_manager/partials/case_config.html' %}
                         {% endblock %}
-                    {% endif %}
                     </div>
                 {% else %}
                     <p class="alert alert-warning">

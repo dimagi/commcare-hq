@@ -68,8 +68,8 @@ class TestResumableDocsByTypeIterator(TestCase):
             pass
         return doc
 
-    def get_iterator(self):
-        return resumable_docs_by_type_iterator(self.db, self.doc_types, self.iteration_key, 2)
+    def get_iterator(self, chunk_size=2):
+        return resumable_docs_by_type_iterator(self.db, self.doc_types, self.iteration_key, chunk_size)
 
     def test_iteration(self):
         self.assertEqual([doc["_id"] for doc in self.itr], self.sorted_keys)
@@ -80,6 +80,25 @@ class TestResumableDocsByTypeIterator(TestCase):
         # stop/resume iteration
         self.itr = self.get_iterator()
         self.assertEqual([doc["_id"] for doc in self.itr], self.sorted_keys[5:])
+
+    def test_resume_iteration_with_new_chunk_size(self):
+        def data_function(*args, **kw):
+            chunk = real_data_function(*args, **kw)
+            chunks.append(len(chunk))
+            return chunk
+        chunks = []
+        real_data_function = self.itr.data_function
+        self.itr.data_function = data_function
+        itr = iter(self.itr)
+        self.assertEqual([next(itr)["_id"] for i in range(6)], self.sorted_keys[:6])
+        self.assertEqual(chunks, [2, 1, 0, 2, 1])  # max chunk: 2
+        # stop/resume iteration
+        self.itr = self.get_iterator(chunk_size=3)
+        chunks = []
+        real_data_function = self.itr.data_function
+        self.itr.data_function = data_function
+        self.assertEqual([doc["_id"] for doc in self.itr], self.sorted_keys[5:])
+        self.assertEqual(chunks, [1, 0, 3, 0])  # max chunk: 3
 
     def test_iteration_with_retry(self):
         itr = iter(self.itr)
@@ -92,8 +111,15 @@ class TestResumableDocsByTypeIterator(TestCase):
 
 class SimulateDeleteReindexAccessor(ReindexAccessor):
     def __init__(self, wrapped_accessor, deleted_doc_ids=None):
+        """
+        :type wrapped_accessor: ReindexAccessor
+        """
         self.deleted_doc_ids = deleted_doc_ids or []
         self.wrapped_accessor = wrapped_accessor
+
+    @property
+    def model_class(self):
+        return self.wrapped_accessor.model_class
 
     @property
     def startkey_attribute_name(self):
@@ -122,8 +148,7 @@ class BaseResumableSqlModelIteratorTest(object):
         raise NotImplementedError
 
     @classmethod
-    def setUpClass(cls):
-        super(BaseResumableSqlModelIteratorTest, cls).setUpClass()
+    def base_setUpClass(cls):
         cls.domain = uuid.uuid4().hex
         with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
             FormProcessorTestUtils.delete_all_cases_forms_ledgers()
@@ -131,22 +156,20 @@ class BaseResumableSqlModelIteratorTest(object):
             cls.first_doc_id = cls.all_doc_ids[0]
 
     @classmethod
-    def tearDownClass(cls):
+    def base_tearDownClass(cls):
         with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
             FormProcessorTestUtils.delete_all_cases_forms_ledgers()
-        super(BaseResumableSqlModelIteratorTest, cls).tearDownClass()
 
-    def setUp(self):
-        super(BaseResumableSqlModelIteratorTest, self).setUp()
+    def base_setUp(self):
         self.iteration_key = uuid.uuid4().hex
         self.itr = self.get_iterator()
 
-    def tearDown(self):
+    def base_tearDown(self):
         self.itr.discard_state()
 
-    def get_iterator(self, deleted_doc_ids=None):
+    def get_iterator(self, deleted_doc_ids=None, chunk_size=2):
         reindex_accessor = SimulateDeleteReindexAccessor(self.reindex_accessor, deleted_doc_ids)
-        return resumable_sql_model_iterator(self.iteration_key, reindex_accessor, 2)
+        return resumable_sql_model_iterator(self.iteration_key, reindex_accessor, chunk_size)
 
     def test_iteration(self):
         self.assertEqual([doc["_id"] for doc in self.itr], self.all_doc_ids)
@@ -157,6 +180,25 @@ class BaseResumableSqlModelIteratorTest(object):
         # stop/resume iteration
         self.itr = self.get_iterator()
         self.assertEqual([doc["_id"] for doc in self.itr], self.all_doc_ids[4:])
+
+    def test_resume_iteration_with_new_chunk_size(self):
+        def data_function(*args, **kw):
+            chunk = real_data_function(*args, **kw)
+            chunks.append(len(chunk))
+            return chunk
+        chunks = []
+        real_data_function = self.itr.data_function
+        self.itr.data_function = data_function
+        itr = iter(self.itr)
+        self.assertEqual([next(itr)["_id"] for i in range(6)], self.all_doc_ids[:6])
+        self.assertEqual(chunks, [2, 2, 2])  # max chunk: 2
+        # stop/resume iteration
+        self.itr = self.get_iterator(chunk_size=3)
+        chunks = []
+        real_data_function = self.itr.data_function
+        self.itr.data_function = data_function
+        self.assertEqual([doc["_id"] for doc in self.itr], self.all_doc_ids[4:])
+        self.assertEqual(chunks, [3, 2, 0])  # max chunk: 3
 
     def test_iteration_with_retry(self):
         itr = iter(self.itr)
@@ -182,6 +224,24 @@ class XFormResumableSqlModelIteratorTest(BaseResumableSqlModelIteratorTest, Test
 
         return form_ids
 
+    @classmethod
+    def setUpClass(cls):
+        super(XFormResumableSqlModelIteratorTest, cls).setUpClass()
+        super(XFormResumableSqlModelIteratorTest, cls).base_setUpClass()
+
+    @classmethod
+    def tearDownClass(cls):
+        super(XFormResumableSqlModelIteratorTest, cls).base_tearDownClass()
+        super(XFormResumableSqlModelIteratorTest, cls).tearDownClass()
+
+    def setUp(self):
+        super(XFormResumableSqlModelIteratorTest, self).setUp()
+        super(XFormResumableSqlModelIteratorTest, self).base_setUp()
+
+    def tearDown(self):
+        super(XFormResumableSqlModelIteratorTest, self).base_tearDown()
+        super(XFormResumableSqlModelIteratorTest, self).tearDown()
+
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class CaseResumableSqlModelIteratorTest(BaseResumableSqlModelIteratorTest, TestCase):
@@ -194,6 +254,24 @@ class CaseResumableSqlModelIteratorTest(BaseResumableSqlModelIteratorTest, TestC
         factory = CaseFactory(cls.domain)
         return [factory.create_case().case_id for i in range(count)]
 
+    @classmethod
+    def setUpClass(cls):
+        super(CaseResumableSqlModelIteratorTest, cls).setUpClass()
+        super(CaseResumableSqlModelIteratorTest, cls).base_setUpClass()
+
+    @classmethod
+    def tearDownClass(cls):
+        super(CaseResumableSqlModelIteratorTest, cls).base_tearDownClass()
+        super(CaseResumableSqlModelIteratorTest, cls).tearDownClass()
+
+    def setUp(self):
+        super(CaseResumableSqlModelIteratorTest, self).setUp()
+        super(CaseResumableSqlModelIteratorTest, self).base_setUp()
+
+    def tearDown(self):
+        super(CaseResumableSqlModelIteratorTest, self).base_tearDown()
+        super(CaseResumableSqlModelIteratorTest, self).tearDown()
+
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class LedgerResumableSqlModelIteratorTest(BaseResumableSqlModelIteratorTest, TestCase):
@@ -203,7 +281,7 @@ class LedgerResumableSqlModelIteratorTest(BaseResumableSqlModelIteratorTest, Tes
 
     @classmethod
     def create_docs(cls, domain, count):
-        from corehq.apps.commtrack.tests import get_single_balance_block
+        from corehq.apps.commtrack.tests.util import get_single_balance_block
         from corehq.apps.hqcase.utils import submit_case_blocks
         from corehq.apps.commtrack.helpers import make_product
         from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
@@ -224,9 +302,23 @@ class LedgerResumableSqlModelIteratorTest(BaseResumableSqlModelIteratorTest, Tes
         ]
 
     @classmethod
+    def setUpClass(cls):
+        super(LedgerResumableSqlModelIteratorTest, cls).setUpClass()
+        super(LedgerResumableSqlModelIteratorTest, cls).base_setUpClass()
+
+    @classmethod
     def tearDownClass(cls):
-        super(LedgerResumableSqlModelIteratorTest, cls).tearDownClass()
         cls.product.delete()
+        super(LedgerResumableSqlModelIteratorTest, cls).base_tearDownClass()
+        super(LedgerResumableSqlModelIteratorTest, cls).tearDownClass()
+
+    def setUp(self):
+        super(LedgerResumableSqlModelIteratorTest, self).setUp()
+        super(LedgerResumableSqlModelIteratorTest, self).base_setUp()
+
+    def tearDown(self):
+        super(LedgerResumableSqlModelIteratorTest, self).base_tearDown()
+        super(LedgerResumableSqlModelIteratorTest, self).tearDown()
 
 
 class DemoProcessor(BaseDocProcessor):

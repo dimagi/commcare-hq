@@ -77,7 +77,7 @@ def get_doc_info(doc, domain_hint=None, cache=None):
                 display=u'%s (#%s)' % (doc['name'], doc['version']),
                 type_display=_('Application Build'),
                 link=reverse(
-                    'corehq.apps.app_manager.views.download_index',
+                    'download_index',
                     args=[domain, doc_id],
                 ),
                 is_deleted=generic_delete,

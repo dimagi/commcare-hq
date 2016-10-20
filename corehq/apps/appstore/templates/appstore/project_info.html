@@ -230,10 +230,6 @@
                         <dd>
                             {{ app.has_media|yesno:"Yes,No" }}
                         </dd>
-                        <dt>CommCare</dt>
-                        <dd>
-                            {% trans "Version" %} {{ app.application_version }}
-                        </dd>
                         {% if app.user_type %}
                             <dt>{% trans 'User type' %}</dt>
                             <dd>{{ app.user_type }}</dd>
@@ -284,7 +280,7 @@
             <form id="new-project-form"
                   method="post"
                   class="form-inline"
-                  action="{% url "domain_copy_snapshot" project %}"
+                  action="{% url "domain_copy_snapshot" project.get_id %}"
                   style="margin-bottom: 20px;">
                 {% csrf_token %}
                 <fieldset>
@@ -328,7 +324,7 @@
                     {% endif %}
                 </fieldset>
             </form>
-            <form id="import-form" method="post" class="form-inline" action="{% url "import_app_from_snapshot" project %}">
+            <form id="import-form" method="post" class="form-inline" action="{% url "import_app_from_snapshot" project.get_id %}">
                 {% csrf_token %}
                 <div class="hide" id="import-app">
                     <select name="project" class="form-control" id="project_select">

@@ -2,7 +2,7 @@ from django.test import SimpleTestCase, TestCase
 from corehq.apps.reports.filters.api import paginate_options
 from corehq.apps.reports.filters.forms import FormsByApplicationFilterParams, FormsByApplicationFilter, \
     PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE, PARAM_SLUG_APP_ID, PARAM_SLUG_MODULE
-from corehq.apps.reports.tests import SetupSimpleAppMixin
+from corehq.apps.reports.tests.test_analytics import SetupSimpleAppMixin
 
 
 class TestEmwfPagination(SimpleTestCase):
@@ -60,7 +60,6 @@ class TestEmwfPagination(SimpleTestCase):
 
 
 class FormsByApplicationFilterDbTest(SetupSimpleAppMixin, TestCase):
-    dependent_apps = ['corehq.couchapps']
 
     @classmethod
     def setUpClass(cls):

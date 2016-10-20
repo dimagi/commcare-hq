@@ -88,27 +88,47 @@ hqDefine('cloudcare/js/util.js', function () {
         return field ? field.startsWith('parent/') : false;
     };
 
-    var showError = function (message, location, autoHideTime) {
+    var showError = function (message, $el, autoHideTime) {
         if (message === undefined) {
-            message = "sorry, there was an error";
+            message = gettext("Sorry, an error occurred while processing that request.");
         }
-        _show(message, location, autoHideTime, "alert alert-danger");
+        _show(message, $el, autoHideTime, "alert alert-danger");
     };
 
-    var showSuccess = function (message, location, autoHideTime) {
-        if (message === undefined) {
-            message = "success";
-        }
-        _show(message, location, autoHideTime, "alert alert-success");
+    var showHTMLError = function (message, $el, autoHideTime) {
+        message = message || gettext("Sorry, an error occurred while processing that request.");
+        _show(message, $el, autoHideTime, "", true);
     };
 
-    var _show = function (message, location, autoHideTime, classes) {
-        var alert = $("<div />");
-        alert.addClass(classes).text(message);
-        alert.append($("<a />").addClass("close").attr("data-dismiss", "alert").html("&times;"));
-        location.append(alert);
+    var showSuccess = function (message, $el, autoHideTime) {
+        if (message === undefined) {
+            message = "Success";
+        }
+        _show(message, $el, autoHideTime, "alert alert-success");
+    };
+
+    var _show = function (message, $el, autoHideTime, classes, isHTML) {
+        var $container = $("<div />"),
+            $alertDialog;
+        $container.addClass(classes);
+        if (isHTML) {
+            $container.html(message);
+            // HTML errors already have an alert dialog
+            $alertDialog = $container.find('.alert');
+        } else {
+            $container.text(message);
+            $alertDialog = $container;
+        }
+        $alertDialog
+            .prepend(
+                $("<a />")
+                .addClass("close")
+                .attr("data-dismiss", "alert")
+                .html("&times;")
+            );
+        $el.append($container);
         if (autoHideTime) {
-            alert.delay(autoHideTime).fadeOut(500);
+            $container.delay(autoHideTime).fadeOut(500);
         }
     };
 
@@ -120,19 +140,22 @@ hqDefine('cloudcare/js/util.js', function () {
         showLoading();
     };
 
-    var tfLoadingComplete = function (isError) {
+    var tfLoadingComplete = function (isError, message) {
         hideLoading();
         if (isError) {
-            showError(translatedStrings.errSaving, $('#cloudcare-notifications'));
+            showError(message || gettext('Error saving!'), $('#cloudcare-notifications'));
         }
     };
 
     var tfSyncComplete = function (isError) {
         hideLoading();
         if (isError) {
-            showError(translatedStrings.errSyncing, $('#cloudcare-notifications'));
+            showError(
+                gettext('Could not sync user data. Please try again and report a bug if issue persists.'),
+                $('#cloudcare-notifications')
+            );
         } else {
-            showSuccess(translatedStrings.synced, $('#cloudcare-notifications'), 5000);
+            showSuccess(gettext('User Data successfully synced.'), $('#cloudcare-notifications'), 5000);
         }
     };
 
@@ -155,6 +178,7 @@ hqDefine('cloudcare/js/util.js', function () {
         getSessionContextUrl: getSessionContextUrl,
         isParentField: isParentField,
         showError: showError,
+        showHTMLError: showHTMLError,
         showSuccess: showSuccess,
         showLoading: showLoading,
         tfLoading: tfLoading,

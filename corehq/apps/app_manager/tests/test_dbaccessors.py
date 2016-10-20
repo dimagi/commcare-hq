@@ -21,7 +21,6 @@ from corehq.util.test_utils import DocTestMixin
 
 class DBAccessorsTest(TestCase, DocTestMixin):
     domain = 'app-manager-dbaccessors-test'
-    dependent_apps = ['corehq.apps.domain', 'corehq.apps.tzmigration', 'corehq.couchapps']
     maxDiff = None
 
     @classmethod
