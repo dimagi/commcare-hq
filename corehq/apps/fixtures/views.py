@@ -320,9 +320,12 @@ class UploadItemLists(TemplateView):
         try:
             validate_file_format(file_ref.get_filename())
         except ExcelMalformatException as e:
-            messages.error(request, _(u'Upload unsuccessful: %s') %
-                           '<ul><li>{}</li></ul>'.format('</li><li>'.join(e.errors)),
-                           extra_tags='html')
+            messages.error(
+                request, _(u'Please fix the following formatting issues in your excel file: %s') %
+                '<ul><li>{}</li></ul>'.format('</li><li>'.join(e.errors)),
+                extra_tags='html'
+            )
+            return HttpResponseRedirect(fixtures_home(self.domain))
         except (FixtureUploadError, JSONReaderError, HeaderValueError) as e:
             messages.error(request, _(u'Upload unsuccessful: %s') % e)
             return HttpResponseRedirect(fixtures_home(self.domain))
