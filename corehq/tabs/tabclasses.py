@@ -1,6 +1,7 @@
 from urllib import urlencode
 from django.core.urlresolvers import reverse
 from django.http import Http404
+from django.utils.html import strip_tags
 from django.utils.safestring import mark_safe, mark_for_escaping
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from corehq import privileges, toggles
@@ -606,7 +607,7 @@ class ApplicationsTab(UITab):
     @classmethod
     def make_app_title(cls, app_name, doc_type):
         return mark_safe("%s%s" % (
-            mark_for_escaping(app_name or '(Untitled)'),
+            mark_for_escaping(strip_tags(app_name) or '(Untitled)'),
             mark_for_escaping(' (Remote)' if doc_type == 'RemoteApp' else ''),
         ))
 
