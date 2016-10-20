@@ -10,7 +10,7 @@ from django.utils.translation import ugettext as _
 from django.conf import settings
 from django.views.generic import RedirectView
 
-from corehq.apps.domain.forms import ConfidentialPasswordResetForm, HQSetPasswordForm
+from corehq.apps.domain.forms import ConfidentialPasswordResetForm, HQSetPasswordForm, CallCenterOwnerOptionsView
 from corehq.apps.domain.views import (
     EditBasicProjectInfoView, EditPrivacySecurityView,
     DefaultProjectSettingsView, EditMyProjectSettingsView,
@@ -125,6 +125,7 @@ domain_settings = patterns(
     url(r'^$', DefaultProjectSettingsView.as_view(), name=DefaultProjectSettingsView.urlname),
     url(r'^my_settings/$', EditMyProjectSettingsView.as_view(), name=EditMyProjectSettingsView.urlname),
     url(r'^basic/$', EditBasicProjectInfoView.as_view(), name=EditBasicProjectInfoView.urlname),
+    url(r'^call_center_owner_options/', CallCenterOwnerOptionsView.as_view(), name=CallCenterOwnerOptionsView.url_name),
     url(r'^privacy/$', EditPrivacySecurityView.as_view(), name=EditPrivacySecurityView.urlname),
     url(r'^openclinica/$', EditOpenClinicaSettingsView.as_view(), name=EditOpenClinicaSettingsView.urlname),
     url(r'^subscription/change/$', SelectPlanView.as_view(), name=SelectPlanView.urlname),

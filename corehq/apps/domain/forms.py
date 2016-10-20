@@ -7,6 +7,10 @@ import uuid
 from urlparse import urlparse, parse_qs
 
 from captcha.fields import CaptchaField
+
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.filters.api import EmwfOptionsView
+from corehq.apps.reports.util import _report_user_dict
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -28,7 +32,7 @@ from django.template.loader import render_to_string
 from django.utils.encoding import smart_str, force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy, ugettext
 from django_countries.data import COUNTRIES
 from PIL import Image
 from pyzxcvbn import zxcvbn
@@ -465,9 +469,65 @@ class SubAreaMixin():
         return sub_area
 
 
+USE_LOCATION_CHOICE = "user_location"
+USE_PARENT_LOCATION_CHOICE = 'user_parent_location'
+
+
+class _CallCenterOwnerOptionsUtils(object):
+    def __init__(self, domain):
+        self.domain = domain
+
+    def user_tuple(self, user):
+        user = _report_user_dict(user)
+        name = "%s [user]" % user['username_in_report']
+        return (user['user_id'], name)
+
+    def reporting_group_tuple(self, group):
+        return (group['_id'], '%s [group]' % group['name'])
+
+    def location_tuple(self, location):
+        return self.reporting_group_tuple(location.case_sharing_group_object())
+
+    @property
+    @memoized
+    def static_options(self):
+        if CALL_CENTER_LOCATION_OWNERS.enabled(self.domain):
+            return [
+                (USE_LOCATION_CHOICE, ugettext("user's location [location]")),
+                (USE_PARENT_LOCATION_CHOICE, ugettext("user's location's parent [location]")),
+            ]
+        return []
+
+
+class CallCenterOwnerOptionsView(EmwfOptionsView):
+    url_name = "call_center_owner_options"
+
+    @property
+    @memoized
+    def utils(self):
+        return _CallCenterOwnerOptionsUtils(self.domain)
+
+    def get_locations_query(self, query):
+        return SQLLocation.objects.filter_path_by_user_input(self.domain, query).filter(location_type__shares_cases=True)
+
+    def group_es_query(self, query):
+        return super(CallCenterOwnerOptionsView, self).group_es_query(query, "case_sharing")
+
+    @property
+    def data_sources(self):
+        return [
+            (self.get_static_options_size, self.get_static_options),
+            (self.get_groups_size, self.get_groups),
+            (self.get_locations_size, self.get_locations),
+            (self.get_users_size, self.get_users),
+        ]
+
+    def user_es_query(self, query):
+        q = super(CallCenterOwnerOptionsView, self).user_es_query(query)
+        return q.mobile_users()
+
+
 class DomainGlobalSettingsForm(forms.Form):
-    USE_LOCATION_CHOICE = "user_location"
-    USE_PARENT_LOCATION_CHOICE = 'user_parent_location'
     LOCATION_CHOICES = [USE_LOCATION_CHOICE, USE_PARENT_LOCATION_CHOICE]
     CASES_AND_FIXTURES_CHOICE = "cases_and_fixtures"
     CASES_ONLY_CHOICE = "cases_only"
@@ -574,8 +634,8 @@ class DomainGlobalSettingsForm(forms.Form):
                 call_center_location_choices = []
                 if CALL_CENTER_LOCATION_OWNERS.enabled(self.domain):
                     call_center_location_choices = [
-                        (self.USE_LOCATION_CHOICE, ugettext_lazy("user's location [location]")),
-                        (self.USE_PARENT_LOCATION_CHOICE, ugettext_lazy("user's location's parent [location]")),
+                        (USE_LOCATION_CHOICE, ugettext_lazy("user's location [location]")),
+                        (USE_PARENT_LOCATION_CHOICE, ugettext_lazy("user's location's parent [location]")),
                     ]
 
                 self.fields["call_center_case_owner"].choices = \
@@ -632,7 +692,7 @@ class DomainGlobalSettingsForm(forms.Form):
             if owner in self.LOCATION_CHOICES:
                 cc_config.call_center_case_owner = None
                 cc_config.use_user_location_as_owner = True
-                cc_config.user_location_ancestor_level = 1 if owner == self.USE_PARENT_LOCATION_CHOICE else 0
+                cc_config.user_location_ancestor_level = 1 if owner == USE_PARENT_LOCATION_CHOICE else 0
             else:
                 cc_config.case_owner_id = owner
                 cc_config.use_user_location_as_owner = False
