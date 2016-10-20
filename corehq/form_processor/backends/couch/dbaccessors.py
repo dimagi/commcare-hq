@@ -110,10 +110,6 @@ class FormAccessorCouch(AbstractFormAccessor):
     def soft_undelete_forms(domain, form_ids):
         return _soft_undelete(XFormInstance.get_db(), form_ids)
 
-    @staticmethod
-    def write_blob_bucket(attachment):
-        raise NotImplementedError
-
 
 class CaseAccessorCouch(AbstractCaseAccessor):
 
