@@ -2,7 +2,7 @@ from couchdbkit import ResourceNotFound
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 from corehq.apps.fixtures.exceptions import ExcelMalformatException, FixtureUploadError, \
-    FixtureAPIException
+    FixtureAPIException, DuplicateFixtureTagException
 from corehq.apps.fixtures.models import FixtureDataType, FieldList, FixtureItemField, \
     FixtureDataItem
 from corehq.apps.fixtures.utils import get_fields_without_attributes
@@ -192,7 +192,13 @@ def _diff_lists(list_a, list_b):
 
 
 def validate_fixture_upload(workbook):
-    type_sheets = workbook.get_all_type_sheets()
+
+    try:
+        type_sheets = workbook.get_all_type_sheets()
+    except DuplicateFixtureTagException as e:
+        return [e.message]
+    except ExcelMalformatException as e:
+        return e.errors
 
     error_messages = []
 
@@ -239,6 +245,11 @@ def validate_fixture_upload(workbook):
             for field in fields:
                 if len(field.properties) > 0:
                     sheet_props = data_item.get(field.field_name, {})
+                    if not isinstance(sheet_props, dict):
+                        error_messages.append(
+                            _(FAILURE_MESSAGES["invalid_field_syntax"])
+                            .format(tag=tag, field=field.field_name))
+                        continue
                     sheet_props_list = sheet_props.keys()
                     type_props = field.properties
                     not_in_sheet, not_in_types = _diff_lists(sheet_props_list, type_props)

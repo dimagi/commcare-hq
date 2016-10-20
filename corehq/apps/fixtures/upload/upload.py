@@ -36,6 +36,13 @@ FAILURE_MESSAGES = {
         "Properties should be specified as 'field 1: property 1'. In 'types' sheet, "
         "'{prop_key}' is not correctly formatted"
     ),
+    "invalid_field_name_numerical": ugettext_noop(
+        "Error in 'types' sheet for 'field {i}', '{val}'. "
+        "Field names should be strings, not numbers"
+    ),
+    "invalid_field_syntax": ugettext_noop(
+        "In excel-sheet '{tag}', field '{field}' should be numbered as 'field: {field} integer",
+    ),
     "sheet_has_no_property": ugettext_noop(
         "Excel-sheet '{tag}' does not contain property "
         "'{property}' of the field '{field}' as specified in its 'types' definition"
@@ -53,10 +60,6 @@ FAILURE_MESSAGES = {
     ),
     "wrong_field_property_combos": ugettext_noop(
         "Number of values for field '{field}' and attribute '{prop}' should be same"
-    ),
-    "replace_with_UID": ugettext_noop(
-        "Rows shouldn't contain UIDs while using replace option. "
-        "Excel sheet '{tag}' contains UID in a row."
     ),
     "type_has_no_sheet": ugettext_noop(
         "There's no sheet for type '{type}' in 'types' sheet. "
@@ -93,7 +96,8 @@ class FixtureTableDefinition(object):
     def from_row(cls, row_dict):
         tag = row_dict.get('table_id') or row_dict.get('tag')
         if tag is None:
-            raise ExcelMalformatException([_(FAILURE_MESSAGES['has_no_column']).format(column_name='table_id')])
+            raise ExcelMalformatException([
+                _(FAILURE_MESSAGES['has_no_column']).format(column_name='table_id')])
 
         field_names = row_dict.get('field')
         item_attributes = row_dict.get('property')
@@ -129,9 +133,8 @@ class FixtureTableDefinition(object):
 
         for i, field_name in enumerate(field_names):
             if is_number(field_name):
-                message = _("Error in 'types' sheet for 'field {i}', '{val}'. "
-                            "Field names should be strings, not numbers").format(
-                    i=i,
+                message = _(FAILURE_MESSAGES['invalid_field_name_numerical']).format(
+                    i=i + 1,
                     val=field_name,
                 )
                 raise ExcelMalformatException([message])
