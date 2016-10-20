@@ -76,6 +76,7 @@ from django_prbac.decorators import requires_privilege_raise404
 from tastypie.resources import Resource
 from corehq import privileges
 from functools import wraps
+from dimagi.utils.logging import notify_exception
 from django.http import Http404
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy
@@ -266,6 +267,9 @@ def conditionally_location_safe(conditional_function):
 
 def location_restricted_response(request):
     from corehq.apps.hqwebapp.views import no_permissions
+    msg = ("Someone was just denied access to a page due to location-based "
+           "access restrictions. If this happens a lot, we should investigate.")
+    notify_exception(request, msg)
     return no_permissions(request, message=LOCATION_ACCESS_DENIED)
 
 
