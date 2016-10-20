@@ -622,6 +622,7 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
 
         if group_ids:
             groups_static_user_ids = Group.get_static_user_ids_for_groups(group_ids)
+            groups_static_user_ids = [item for sublist in groups_static_user_ids for item in sublist]
             owner_filter_ids = group_ids + groups_static_user_ids
             last_modified_filter_ids = groups_static_user_ids
         else:
