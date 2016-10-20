@@ -21,7 +21,6 @@ from corehq.apps.export.models import (
     FormExportInstanceDefaults,
     MultiMediaExportColumn,
 )
-from corehq.apps.export.const import INFERRED_OCCURRENCE
 from corehq.apps.export.system_properties import MAIN_FORM_TABLE_PROPERTIES, \
     TOP_MAIN_FORM_TABLE_PROPERTIES
 
@@ -192,15 +191,15 @@ class TestExportInstanceGenerationWithInferredSchema(SimpleTestCase):
                         ExportItem(
                             path=[PathNode(name='data'), PathNode(name='case_property')],
                             label='Inferred 1',
-                            last_occurrences={INFERRED_OCCURRENCE: INFERRED_OCCURRENCE},
+                            inferred=True
                         ),
                         ExportItem(
                             path=[PathNode(name='data'), PathNode(name='case_property_2')],
                             label='Inferred 1',
-                            last_occurrences={INFERRED_OCCURRENCE: INFERRED_OCCURRENCE},
+                            inferred=True
                         ),
                     ],
-                    last_occurrences={INFERRED_OCCURRENCE: INFERRED_OCCURRENCE},
+                    inferred=True
                 ),
             ]
         )

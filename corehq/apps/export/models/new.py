@@ -54,7 +54,6 @@ from corehq.apps.export.const import (
     MISSING_VALUE,
     EMPTY_VALUE,
     KNOWN_CASE_PROPERTIES,
-    INFERRED_OCCURRENCE,
 )
 from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.export.dbaccessors import (
@@ -117,6 +116,10 @@ class ExportItem(DocumentSchema):
     last_occurrences = DictProperty()
     transform = StringProperty(choices=TRANSFORM_FUNCTIONS.keys())
 
+    # True if this item was inferred from different actions in HQ (i.e. case upload)
+    # False if the item was found in the application structure
+    inferred = BooleanProperty(default=False)
+
     @classmethod
     def wrap(cls, data):
         if cls is ExportItem:
@@ -152,6 +155,7 @@ class ExportItem(DocumentSchema):
     def merge(cls, one, two):
         item = cls(one.to_json())
         item.last_occurrences = _merge_dicts(one.last_occurrences, two.last_occurrences, max)
+        item.inferred = one.inferred or two.inferred
         return item
 
     @property
@@ -274,7 +278,10 @@ class ExportColumn(DocumentSchema):
         return column
 
     def _is_deleted(self, app_ids_and_versions):
-        return is_occurrence_deleted(self.item.last_occurrences, app_ids_and_versions)
+        return (
+            is_occurrence_deleted(self.item.last_occurrences, app_ids_and_versions) and
+            not self.item.inferred
+        )
 
     def update_properties_from_app_ids_and_versions(self, app_ids_and_versions):
         """
@@ -565,7 +572,7 @@ class ExportInstance(BlobMixin, Document):
             table.is_deleted = is_occurrence_deleted(
                 group_schema.last_occurrences,
                 latest_app_ids_and_versions,
-            )
+            ) and not group_schema.inferred
 
             prev_index = 0
             for item in group_schema.items:
@@ -932,6 +939,10 @@ class ExportGroupSchema(DocumentSchema):
     items = SchemaListProperty(ExportItem)
     last_occurrences = DictProperty()
 
+    # True if this item was inferred from different actions in HQ (i.e. case upload)
+    # False if the item was found in the application structure
+    inferred = BooleanProperty(default=False)
+
 
 class InferredExportGroupSchema(ExportGroupSchema):
     """
@@ -949,7 +960,7 @@ class InferredExportGroupSchema(ExportGroupSchema):
         item = ExportItem(
             path=path,
             label='.'.join(map(lambda node: node.name, path)),
-            last_occurrences={INFERRED_OCCURRENCE: INFERRED_OCCURRENCE}
+            inferred=True
         )
         self.items.append(item)
         return item
@@ -987,7 +998,7 @@ class InferredSchema(Document):
         group_schema = InferredExportGroupSchema(
             path=path,
             items=[],
-            last_occurrences={INFERRED_OCCURRENCE: INFERRED_OCCURRENCE}
+            inferred=True,
         )
         self.group_schemas.append(group_schema)
         return group_schema
@@ -1097,7 +1108,8 @@ class ExportDataSchema(Document):
                     group_schema1.last_occurrences,
                     group_schema2.last_occurrences,
                     max
-                )
+                ),
+                inferred=group_schema1.inferred or group_schema2.inferred
             )
             items = _merge_lists(
                 group_schema1.items,

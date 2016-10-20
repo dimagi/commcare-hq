@@ -20,6 +20,7 @@ class InferredSchemaTest(SimpleTestCase):
         )
 
         self.assertTrue(isinstance(group_schema, InferredExportGroupSchema))
+        self.assertTrue(group_schema.inferred)
         self.assertEqual(len(schema.group_schemas), 1)
 
         # After putting same group schema, should not re-add group schema
@@ -39,6 +40,7 @@ class InferredExportGroupSchemaTest(SimpleTestCase):
             [PathNode(name='random'), PathNode(name='inferred')]
         )
         self.assertTrue(isinstance(item, ExportItem))
+        self.assertTrue(item.inferred)
         self.assertEqual(len(group_schema.items), 1)
 
         # After putting same item, should not re-add group schema

@@ -57,8 +57,6 @@ CASE_EXPORT = 'case'
 MAX_EXPORTABLE_ROWS = 100000
 CASE_SCROLL_SIZE = 10000
 
-INFERRED_OCCURRENCE = 'inferred'
-
 # When a question is missing completely from a form/case this should be the value
 MISSING_VALUE = '---'
 # When a question has been answered, but is blank, this shoudl be the value
