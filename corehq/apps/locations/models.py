@@ -682,9 +682,12 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     @classmethod
     def location_and_descendants_ids(cls, location_ids):
         locations = cls.objects.filter(location_id__in=location_ids)
-        return (cls.objects
-                .get_queryset_descendants(locations, include_self=True)
-                .location_ids())
+        locations_and_descendant_ids = (
+            cls.objects
+            .get_queryset_descendants(locations, include_self=True)
+            .location_ids()
+        )
+        return [location_id for location_id in locations_and_descendant_ids]
 
 
 def filter_for_archived(locations, include_archive_ancestors):
