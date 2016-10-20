@@ -189,12 +189,6 @@
     font-size: 1.8rem;
   }
 }
-@media(max-width: 720px) {
-  .module-caselist-table-container {
-    width: 100%;
-    overflow-x: scroll;
-  }
-}
 
 #formplayer-progress {
   top: 0;
@@ -215,4 +209,37 @@
   margin: 0 auto;
   width: 80%;
   top: 50%;
+
+  // Centers container vertically
+  transform: translateY(-50%);
+  -ms-transform: translateY(-50%);
+  -webkit-transform: translateY(-50%);
+
+  .progress-title {
+    display: inline-block;
+    h1 {
+      margin-bottom: 0px;
+    }
+    .subtext {
+      margin-top: 0px;
+    }
+    margin-bottom: 14px;
+  }
+}
+
+@media(max-width: 720px) {
+  .module-caselist-table-container {
+    width: 100%;
+    overflow-x: scroll;
+  }
+  #formplayer-progress .progress-container {
+    .progress-title {
+      h1, h2 {
+        font-size: 1.3em;
+      }
+      h1 {
+        margin-bottom: 4px;
+      }
+    }
+  }
 }
