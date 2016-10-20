@@ -5883,11 +5883,11 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
         for key, value in source_properties.iteritems():
             source[key] = value
     cls = str_to_cls[source['doc_type']]
-    source['date_created'] = datetime.datetime.utcnow()
     # Allow the wrapper to update to the current default build_spec
     if 'build_spec' in source:
         del source['build_spec']
     app = cls.from_source(source, domain)
+    app.date_created = datetime.datetime.utcnow();
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
 
     with app.atomic_blobs():
