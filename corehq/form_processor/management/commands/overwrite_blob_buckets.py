@@ -37,15 +37,12 @@ class Command(BaseCommand):
 
                 bucket = attachment.blobdb_bucket(remove_dashes=False)
                 attach_id = str(attachment.attachment_id)
-                try:
-                    blob_db.get(attachment.blob_id, bucket)
+                if blob_db.exists(attachment.blob_id, bucket):
                     FormAccessorSQL.write_blob_bucket(attachment, bucket)
                     logging.info(attach_id + " overwritten blob_bucket_succesfully")
-                except NotFound:
+                else:
                     # This is the default and what we want long term
                     # verify it exists
                     bucket = attachment.blobdb_bucket(remove_dashes=True)
-                    try:
-                        blob_db.get(attachment.blob_id, bucket)
-                    except NotFound:
+                    if not blob_db.exists(attachment.blob_id, bucket):
                         logger.error(attach_id + " does not exist in either expected bucket")
