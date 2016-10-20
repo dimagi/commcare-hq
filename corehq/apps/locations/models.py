@@ -19,7 +19,6 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
-from corehq.apps.es.users import UserES
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 from corehq.util.soft_assert import soft_assert
 from mptt.models import MPTTModel, TreeForeignKey, TreeManager
@@ -679,7 +678,6 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         # For backwards compatability
         notify_of_deprecation("'sql_location' was just called on a sql_location.  That's kinda silly.")
         return self
-
 
     @classmethod
     def location_and_descendants_ids(cls, location_ids):
