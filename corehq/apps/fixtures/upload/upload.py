@@ -17,10 +17,12 @@ FAILURE_MESSAGES = {
         "Workbook 'types' has no column '{column_name}'."
     ),
     "neither_fields_nor_attributes": ugettext_noop(
-        "Lookup-tables can not have empty fields and empty properties on items. table_id '{tag}' has no fields and no properties"
+        "Lookup-tables can not have empty fields and empty properties on items. "
+        "table_id '{tag}' has no fields and no properties"
     ),
     "duplicate_tag": ugettext_noop(
-        "Lookup-tables should have unique 'table_id'. There are two rows with table_id '{tag}' in 'types' sheet."
+        "Lookup-tables should have unique 'table_id'. "
+        "There are two rows with table_id '{tag}' in 'types' sheet."
     ),
     "has_no_field_column": ugettext_noop(
         "Excel-sheet '{tag}' does not contain the column '{field}' "
@@ -53,10 +55,12 @@ FAILURE_MESSAGES = {
         "Number of values for field '{field}' and attribute '{prop}' should be same"
     ),
     "replace_with_UID": ugettext_noop(
-        "Rows shouldn't contain UIDs while using replace option. Excel sheet '{tag}' contains UID in a row."
+        "Rows shouldn't contain UIDs while using replace option. "
+        "Excel sheet '{tag}' contains UID in a row."
     ),
     "type_has_no_sheet": ugettext_noop(
-        "There's no sheet for type '{type}' in 'types' sheet. There must be one sheet per row in the 'types' sheet.",
+        "There's no sheet for type '{type}' in 'types' sheet. "
+        "There must be one sheet per row in the 'types' sheet.",
     ),
 }
 
@@ -101,7 +105,7 @@ class FixtureTableDefinition(object):
         item_attributes = [] if item_attributes is None else item_attributes
 
         def _get_field_properties(prop_key):
-            if row_dict.has_key(prop_key):
+            if prop_key in row_dict:
                 try:
                     properties = row_dict[prop_key]["property"]
                     assert isinstance(properties, list)
@@ -166,7 +170,9 @@ class FixtureWorkbook(object):
         try:
             return self.workbook.get_worksheet(title='types')
         except WorksheetNotFound as e:
-            raise FixtureUploadError(_("Workbook does not contain a sheet called '%(title)s'") % {'title': e.title})
+            raise FixtureUploadError(
+                _("Workbook does not contain a sheet called '%(title)s'")
+                % {'title': e.title})
 
     def get_data_sheet(self, data_type_tag):
         return self.workbook.get_worksheet(data_type_tag)

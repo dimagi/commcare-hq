@@ -61,11 +61,14 @@ def run_upload(domain, workbook, replace=False, task=None):
                 assert data_type.doc_type == FixtureDataType._doc_type
                 if data_type.domain != domain:
                     data_type = new_data_type
-                    return_val.errors.append(_("'%(UID)s' is not a valid UID. But the new type is created.") % {'UID': table_def.uid})
+                    return_val.errors.append(
+                        _("'%(UID)s' is not a valid UID. But the new type is created.")
+                        % {'UID': table_def.uid}
+                    )
                 if table_def.delete:
                     data_type.recursive_delete(transaction)
                     continue
-            except (ResourceNotFound, KeyError) as e:
+            except (ResourceNotFound, KeyError):
                 data_type = new_data_type
             transaction.save(data_type)
 
@@ -116,9 +119,13 @@ def run_upload(domain, workbook, replace=False, task=None):
                         pass
                     old_data_item.fields = item_fields
                     old_data_item.item_attributes = item_attributes
-                    if old_data_item.domain != domain or not old_data_item.data_type_id == data_type.get_id:
+                    if old_data_item.domain != domain \
+                            or not old_data_item.data_type_id == data_type.get_id:
                         old_data_item = new_data_item
-                        return_val.errors.append(_("'%(UID)s' is not a valid UID. But the new item is created.") % {'UID': di['UID']})
+                        return_val.errors.append(
+                            _("'%(UID)s' is not a valid UID. But the new item is created.")
+                            % {'UID': di['UID']}
+                        )
                     assert old_data_item.doc_type == FixtureDataItem._doc_type
                     if di[DELETE_HEADER] == "Y" or di[DELETE_HEADER] == "y":
                         old_data_item.recursive_delete(transaction)
@@ -142,19 +149,28 @@ def run_upload(domain, workbook, replace=False, task=None):
                     if group:
                         old_data_item.add_group(group, transaction=transaction)
                     else:
-                        return_val.errors.append(_("Unknown group: '%(name)s'. But the row is successfully added") % {'name': group_name})
+                        return_val.errors.append(
+                            _("Unknown group: '%(name)s'. But the row is successfully added")
+                            % {'name': group_name}
+                        )
 
                 for raw_username in di.get('user', []):
                     try:
                         username = normalize_username(str(raw_username), domain)
                     except ValidationError:
-                        return_val.errors.append(_("Invalid username: '%(name)s'. Row is not added") % {'name': raw_username})
+                        return_val.errors.append(
+                            _("Invalid username: '%(name)s'. Row is not added")
+                            % {'name': raw_username}
+                        )
                         continue
                     user = CommCareUser.get_by_username(username)
                     if user:
                         old_data_item.add_user(user)
                     else:
-                        return_val.errors.append(_("Unknown user: '%(name)s'. But the row is successfully added") % {'name': raw_username})
+                        return_val.errors.append(
+                            _("Unknown user: '%(name)s'. But the row is successfully added")
+                            % {'name': raw_username}
+                        )
 
                 for name in di.get('location', []):
                     location_cache = get_location(name)
@@ -199,17 +215,25 @@ def validate_fixture_upload(workbook):
             item_fields_list = data_item['field'].keys() if 'field' in data_item else []
             not_in_sheet, not_in_types = _diff_lists(item_fields_list, get_fields_without_attributes(fields))
             if len(not_in_sheet) > 0:
-                error_messages.append(_(FAILURE_MESSAGES["has_no_field_column"]).format(tag=tag, field=not_in_sheet[0]))
+                error_messages.append(
+                    _(FAILURE_MESSAGES["has_no_field_column"])
+                    .format(tag=tag, field=not_in_sheet[0]))
             if len(not_in_types) > 0:
-                error_messages.append(_(FAILURE_MESSAGES["has_extra_column"]).format(tag=tag, field=not_in_types[0]))
+                error_messages.append(
+                    _(FAILURE_MESSAGES["has_extra_column"])
+                    .format(tag=tag, field=not_in_types[0]))
 
             # check that this item has all the properties listed in its 'types' definition
             item_attributes_list = data_item['property'].keys() if 'property' in data_item else []
             not_in_sheet, not_in_types = _diff_lists(item_attributes_list, item_attributes)
             if len(not_in_sheet) > 0:
-                error_messages.append(_(FAILURE_MESSAGES["has_no_field_column"]).format(tag=tag, field=not_in_sheet[0]))
+                error_messages.append(
+                    _(FAILURE_MESSAGES["has_no_field_column"])
+                    .format(tag=tag, field=not_in_sheet[0]))
             if len(not_in_types) > 0:
-                error_messages.append(_(FAILURE_MESSAGES["has_extra_column"]).format(tag=tag, field=not_in_types[0]))
+                error_messages.append(
+                    _(FAILURE_MESSAGES["has_extra_column"])
+                    .format(tag=tag, field=not_in_types[0]))
 
             # check that properties in 'types' sheet vs item-sheet MATCH
             for field in fields:
@@ -225,26 +249,24 @@ def validate_fixture_upload(workbook):
                             field=field.field_name
                         ))
                     if len(not_in_types) > 0:
-                        error_messages.append(_(FAILURE_MESSAGES["sheet_has_extra_property"]).format(
-                            tag=tag,
-                            property=not_in_types[0],
-                            field=field.field_name
-                        ))
+                        error_messages.append(
+                            _(FAILURE_MESSAGES["sheet_has_extra_property"])
+                            .format(tag=tag, property=not_in_types[0], field=field.field_name))
                     # check that fields with properties are numbered
                     if type(data_item['field'][field.field_name]) != list:
-                        error_messages.append(_(FAILURE_MESSAGES["invalid_field_with_property"]).format(field=field.field_name))
+                        error_messages.append(
+                            _(FAILURE_MESSAGES["invalid_field_with_property"])
+                            .format(field=field.field_name))
                     field_prop_len = len(data_item['field'][field.field_name])
                     for prop in sheet_props:
                         if type(sheet_props[prop]) != list:
-                            error_messages.append(_(FAILURE_MESSAGES["invalid_property"]).format(
-                                field=field.field_name,
-                                prop=prop
-                            ))
+                            error_messages.append(
+                                _(FAILURE_MESSAGES["invalid_property"])
+                                .format(field=field.field_name, prop=prop))
                         if len(sheet_props[prop]) != field_prop_len:
-                            error_messages.append(_(FAILURE_MESSAGES["wrong_field_property_combos"]).format(
-                                field=field.field_name,
-                                prop=prop
-                            ))
+                            error_messages.append(
+                                _(FAILURE_MESSAGES["wrong_field_property_combos"])
+                                .format(field=field.field_name, prop=prop))
     return error_messages
 
 
@@ -253,15 +275,19 @@ def do_fixture_upload(domain, file_ref, replace, task=None):
     try:
         return run_upload(domain, workbook, replace=replace, task=task)
     except WorksheetNotFound as e:
-        raise FixtureUploadError(_("Workbook does not contain a sheet called '%(title)s'") % {'title': e.title})
+        raise FixtureUploadError(
+            _("Workbook does not contain a sheet called '%(title)s'")
+            % {'title': e.title})
     except ExcelMalformatException as e:
-        raise FixtureUploadError(_("Uploaded excel file has following formatting-problems: '%(e)s'") % {'e': '\n'.join(e.errors)})
+        raise FixtureUploadError(
+            _("Uploaded excel file has following formatting-problems: '%(e)s'")
+            % {'e': '\n'.join(e.errors)})
     except FixtureAPIException as e:
         raise FixtureUploadError(unicode(e))
     except Exception:
         soft_assert('@'.join(['droberts', 'dimagi.com'])).call(
             False, 'Unknown fixture upload exception',
-            {'filename': file_ref.get_filename()}
+            {'filapps/fixtures/upload/upload.py:61:116ename': file_ref.get_filename()}
         )
         raise FixtureUploadError(_("Fixture upload failed for some reason and we have noted this failure. "
                                    "Please make sure the excel file is correctly formatted and try again."))
