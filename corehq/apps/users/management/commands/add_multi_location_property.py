@@ -26,7 +26,7 @@ class Command(BaseCommand):
     def migrate_cc_user(cls, doc):
 
         # skip if doesn't have location
-        if not doc['location_id']:
+        if not doc.get('location_id'):
             return
 
         # skip if already migrated
@@ -48,7 +48,7 @@ class Command(BaseCommand):
     @classmethod
     def migrate_web_user(cls, doc):
         def should_skip(dm):
-            if not dm['location_id']:
+            if not dm.get('location_id'):
                 return True
 
             if dm['location_id'] in dm.get('assigned_location_ids', []):
@@ -74,7 +74,7 @@ class Command(BaseCommand):
 
 def apply_migration(doc):
     # doc can be a user dict or a domain_membership dict
-    if doc['location_id']:
+    if doc.get('location_id'):
         if 'assigned_location_ids' in doc:
             doc['assigned_location_ids'].append(doc['location_id'])
         else:
