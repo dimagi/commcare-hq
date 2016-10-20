@@ -41,15 +41,15 @@ FAILURE_MESSAGES = {
         "'{property}' of the field '{field}' as specified in its 'types' definition"
     ),
     "sheet_has_extra_property": ugettext_noop(
-        "Excel-sheet '{tag}'' has an extra property "
+        "Excel-sheet '{tag}' has an extra property "
         "'{property}' for the field '{field}' that's not defined in its 'types' definition. "
         "Re-check the formatting"
     ),
     "invalid_field_with_property": ugettext_noop(
-        "Fields with attributes should be numbered as 'field: {field} integer"
+        "Fields with attributes should be numbered as 'field: {field} integer'"
     ),
     "invalid_property": ugettext_noop(
-        "Attribute should be written as '{field}: {prop} interger'"
+        "Attribute should be written as '{field}: {prop} integer'"
     ),
     "wrong_field_property_combos": ugettext_noop(
         "Number of values for field '{field}' and attribute '{prop}' should be same"

@@ -243,11 +243,9 @@ def validate_fixture_upload(workbook):
                     type_props = field.properties
                     not_in_sheet, not_in_types = _diff_lists(sheet_props_list, type_props)
                     for missing_property in not_in_sheet:
-                        error_messages.append(_(FAILURE_MESSAGES["sheet_has_no_property"]).format(
-                            tag=tag,
-                            property=missing_property,
-                            field=field.field_name
-                        ))
+                        error_messages.append(
+                            _(FAILURE_MESSAGES["sheet_has_no_property"])
+                            .format(tag=tag, property=missing_property, field=field.field_name))
                     for missing_property in not_in_types:
                         error_messages.append(
                             _(FAILURE_MESSAGES["sheet_has_extra_property"])
