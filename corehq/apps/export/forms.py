@@ -180,6 +180,9 @@ class BaseFilterExportDownloadForm(forms.Form):
         _USER_SUPPLY: [utils.COMMCARE_SUPPLY_USER_TYPE]
     }
 
+    # To be used by subclasses when rendering their own layouts using filters and extra_fields
+    skip_layout = False
+
     def __init__(self, domain_object, *args, **kwargs):
         self.domain_object = domain_object
         super(BaseFilterExportDownloadForm, self).__init__(*args, **kwargs)
@@ -193,7 +196,7 @@ class BaseFilterExportDownloadForm(forms.Form):
         self.helper.form_tag = False
         self.helper.label_class = 'col-sm-3'
         self.helper.field_class = 'col-sm-5'
-        if not (hasattr(self, 'skip_layout') and self.skip_layout):
+        if not self.skip_layout:
             self.helper.layout = Layout(
                 crispy.Field(
                     'type_or_group',
