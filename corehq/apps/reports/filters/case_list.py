@@ -75,6 +75,19 @@ class CaseListFilterOptions(EmwfOptionsView):
     def utils(self):
         return CaseListFilterUtils(self.domain)
 
+    def get_users(self, query, start, size):
+        users = (self.user_es_query(query)
+                 .fields(['_id', 'username', 'first_name', 'last_name', 'doc_type'])
+                 .start(start)
+                 .size(size)
+                 .sort("username.exact"))
+        if not self.request.can_access_all_locations:
+            user_location_id = self.request.couch_user.get_location_id(self.domain)
+            all_location_ids = SQLLocation.location_and_descendants_ids([user_location_id])
+            users = users.location(all_location_ids)
+
+        return [self.utils.user_tuple(u) for u in users.run().hits]
+
     @property
     def data_sources(self):
         print 'fetching data source for filters in view'
