@@ -59,11 +59,32 @@ hqDefine('app_manager/js/app_manager.js', function () {
             return JSON.parse(r);
         }
         function resetIndexes($sortable) {
-            var $sortables = $sortable.children.get(),
-                i;
-            for (i in $sortables) {
-                if ($sortables.hasOwnProperty(i)) {
-                    $($sortables[i]).data('index', i);
+            if (COMMCAREHQ.toggleEnabled('ONBOARDING_PROTOTYPE')) {
+                _.each($sortable.find('> .js-sorted-li'), function (elem, i) {
+                    $(elem).data('index', i);
+                    var indexVar = $(elem).data('indexvar');
+                    var relatedTags = $(elem).find("[data-" + indexVar +"]");
+                    _.each(relatedTags, function (related) {
+                        $(related).data(indexVar, i);
+                    });
+                });
+                _.each($('[data-updateprop]'), function (tag) {
+                    var tagName = $(tag).data('updateprop'),
+                        tagVal = $(tag).data('updatevalue'),
+                        moduleId = $(tag).data('moduleid'),
+                        formId = $(tag).data('formid');
+                    var processedVal = tagVal
+                        .replace('replacewithmoduleid', moduleId)
+                        .replace('replacewithformid', formId);
+                    $(tag).prop(tagName, processedVal);
+                });
+            } else {
+                var $sortables = $sortable.children.get(),
+                    i;
+                for (i in $sortables) {
+                    if ($sortables.hasOwnProperty(i)) {
+                        $($sortables[i]).data('index', i);
+                    }
                 }
             }
         }
@@ -176,19 +197,24 @@ hqDefine('app_manager/js/app_manager.js', function () {
                                 $form.append('<input type="hidden" name="to_module_id"   value="' + to_module_id.toString()   + '" />');
                             }
 
-                            // disable sortable
-                            $sortable.find('.drag_handle').css('color', 'transparent').removeClass('drag_handle');
-                            $sortable.sortable('option', 'disabled', true);
-                            if ($form.find('input[name="ajax"]').first().val() === "true") {
+                            if (COMMCAREHQ.toggleEnabled('ONBOARDING_PROTOTYPE')) {
                                 resetIndexes($sortable);
-                                $.post($form.attr('action'), $form.serialize(), function (data) {
-                                    module.updateDOM(JSON.parse(data).update);
-                                    // re-enable sortable
-                                    $sortable.sortable('option', 'disabled', false);
-                                    $sortable.find('.drag_handle').show(1000);
-                                });
+                                $.post($form.attr('action'), $form.serialize(), function (data) {});
                             } else {
-                                $form.submit();
+                                // disable sortable
+                                $sortable.find('.drag_handle').css('color', 'transparent').removeClass('drag_handle');
+                                $sortable.sortable('option', 'disabled', true);
+                                if ($form.find('input[name="ajax"]').first().val() === "true") {
+                                    resetIndexes($sortable);
+                                    $.post($form.attr('action'), $form.serialize(), function (data) {
+                                        module.updateDOM(JSON.parse(data).update);
+                                        // re-enable sortable
+                                        $sortable.sortable('option', 'disabled', false);
+                                        $sortable.find('.drag_handle').show(1000);
+                                    });
+                                } else {
+                                    $form.submit();
+                                }
                             }
                         }
                     }
@@ -224,6 +250,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
                 $(this).attr('value', val);
             }
         });
+
 
         $('.new-module').on('click', function (e) {
             e.preventDefault();
