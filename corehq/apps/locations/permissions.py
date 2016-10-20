@@ -77,6 +77,7 @@ from tastypie.resources import Resource
 from corehq import privileges
 from functools import wraps
 from django.http import Http404
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy
 from django.views.generic import View
 from corehq import toggles
@@ -88,10 +89,11 @@ from corehq.apps.users.models import CommCareUser
 from .models import SQLLocation
 from .util import get_xform_location
 
-LOCATION_ACCESS_DENIED = ugettext_lazy(
-    "This project has restricted data access rules.  Please contact your "
-    "project administrator to access specific data in the project"
-)
+LOCATION_ACCESS_DENIED = mark_safe(ugettext_lazy(
+    "This project has restricted data access rules. Please contact your "
+    "project administrator to be assigned access to data in this project. "
+    'More information is available <a href="{link}">here</a>.'
+).format(link="https://wiki.commcarehq.org/display/commcarepublic/Data+Access+Restrictions"))
 
 LOCATION_SAFE_TASTYPIE_RESOURCES = set()
 
