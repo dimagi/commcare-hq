@@ -208,9 +208,11 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         toggle_enabled = toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
         copy_app_form = CopyApplicationForm(domain, app_id, export_zipped_apps_enabled=toggle_enabled)
         context.update({
-            'copy_app_form': copy_app_form,
             'domain_names': domain_names,
         })
+    context.update({
+        'copy_app_form': copy_app_form,
+    })
 
     context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]
 
