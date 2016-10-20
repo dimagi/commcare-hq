@@ -1,10 +1,11 @@
 from django.utils.translation import ugettext as _
 
 from dimagi.utils.decorators.memoized import memoized
-from corehq.apps.locations.models import LocationType
+from corehq.apps.locations.models import LocationType, SQLLocation
 
 from .users import ExpandedMobileWorkerFilter, EmwfUtils
 from .api import EmwfOptionsView
+from corehq.apps.locations.permissions import location_safe
 
 
 class CaseListFilterUtils(EmwfUtils):
@@ -65,6 +66,10 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
 
 class CaseListFilterOptions(EmwfOptionsView):
 
+    @location_safe
+    def dispatch(self, *args, **kwargs):
+        return super(CaseListFilterOptions, self).dispatch(*args, **kwargs)
+
     @property
     @memoized
     def utils(self):
@@ -76,21 +81,18 @@ class CaseListFilterOptions(EmwfOptionsView):
         locations_own_cases = (LocationType.objects
                                .filter(domain=self.domain, shares_cases=True)
                                .exists())
+        sources = [
+            (self.get_static_options_size, self.get_static_options),
+            (self.get_sharing_groups_size, self.get_sharing_groups),
+        ]
         if locations_own_cases:
-            return [
-                (self.get_static_options_size, self.get_static_options),
-                (self.get_groups_size, self.get_groups),
-                (self.get_sharing_groups_size, self.get_sharing_groups),
-                (self.get_locations_size, self.get_locations),
-                (self.get_users_size, self.get_users),
-            ]
-        else:
-            return [
-                (self.get_static_options_size, self.get_static_options),
-                (self.get_groups_size, self.get_groups),
-                (self.get_sharing_groups_size, self.get_sharing_groups),
-                (self.get_users_size, self.get_users),
-            ]
+            sources.append((self.get_locations_size, self.get_locations))
+        if self.request.can_access_all_locations:
+            sources.append((self.get_groups_size, self.get_groups))
+        # appending this in the end to avoid long list of users delaying
+        # locations, groups etc in the list on pagination
+        sources.append((self.get_users_size, self.get_users))
+        return sources
 
     def get_sharing_groups_size(self, query):
         return self.group_es_query(query, group_type="case_sharing").count()
@@ -102,3 +104,8 @@ class CaseListFilterOptions(EmwfOptionsView):
                   .size(size)
                   .sort("name.exact"))
         return map(self.utils.sharing_group_tuple, groups.run().hits)
+
+    def get_locations_query(self, query):
+        return (SQLLocation.active_objects
+                .filter_path_by_user_input(self.domain, query)
+                .accessible_to_user(self.request.domain, self.request.couch_user))
