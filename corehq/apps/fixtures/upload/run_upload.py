@@ -184,7 +184,13 @@ def validate_fixture_upload(workbook):
         fields = table_def.fields
         item_attributes = table_def.item_attributes
         try:
-            data_item = iter(workbook.get_data_sheet(tag)).next()
+            data_items = workbook.get_data_sheet(tag)
+        except WorksheetNotFound:
+            error_messages.append(_(FAILURE_MESSAGES['type_has_no_sheet']).format(type=tag))
+            continue
+
+        try:
+            data_item = iter(data_items).next()
         except StopIteration:
             continue
         else:

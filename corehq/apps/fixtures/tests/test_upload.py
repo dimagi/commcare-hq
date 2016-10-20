@@ -14,6 +14,5 @@ class TestFixtureUpload(SimpleTestCase):
         self.assertEqual(context.exception.errors, [
             "Excel-sheet 'level_1' does not contain the column 'other' as specified in its 'types' definition",
             "Excel-sheet 'level_2' does not contain the column 'other' as specified in its 'types' definition",
-            "Excel-sheet 'level_3' does not contain the column 'other' as specified in its 'types' definition",
-            "Excel-sheet 'level_4' does not contain the column 'other' as specified in its 'types' definition",
+            "There's no sheet for type 'level_3' in 'types' sheet. There must be one sheet per row in the 'types' sheet.",
         ])

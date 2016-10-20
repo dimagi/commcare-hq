@@ -55,6 +55,9 @@ FAILURE_MESSAGES = {
     "replace_with_UID": ugettext_noop(
         "Rows shouldn't contain UIDs while using replace option. Excel sheet '{tag}' contains UID in a row."
     ),
+    "type_has_no_sheet": ugettext_noop(
+        "There's no sheet for type '{type}' in 'types' sheet. There must be one sheet per row in the 'types' sheet.",
+    ),
 }
 
 
