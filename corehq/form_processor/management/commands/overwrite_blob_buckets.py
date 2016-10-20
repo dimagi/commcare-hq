@@ -20,7 +20,7 @@ class Command(BaseCommand):
             FormES()
             .submitted(
                 gte=datetime.date(2016, 10, 14),
-                lte=datetime.datetime.now()
+                lt=datetime.date(2016, 10, 20),
             )
             .filter(filters.term('backend_id', 'sql'))
             .source('_id')
