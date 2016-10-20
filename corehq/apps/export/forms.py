@@ -420,7 +420,7 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
         return filter(None, [
             self._get_datespan_filter(),
             self._get_group_filter(),
-            self._get_user_filter()
+            self._get_user_type_filter()
         ])
 
     def _get_datespan_filter(self):
@@ -434,7 +434,7 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
         if group:
             return GroupFormSubmittedByFilter(group)
 
-    def _get_user_filter(self):
+    def _get_user_type_filter(self):
         group = self.cleaned_data['group']
         if not group:
             return UserTypeFilter(self._get_es_user_types())
@@ -478,20 +478,26 @@ class EmwfFilterFormExport(FilterFormESExportDownloadForm):
         return group_ids
 
     def get_form_filter(self, mobile_user_and_group_slugs):
-        return filter(None, [
-            self._get_datespan_filter(),
+        form_filters = filter(None, [
             self._get_group_filter(mobile_user_and_group_slugs),
-            self._get_user_filter(mobile_user_and_group_slugs),
+            self._get_user_type_filter(mobile_user_and_group_slugs),
             self._get_user_ids_filter(mobile_user_and_group_slugs),
             self._get_location_ids_filter(mobile_user_and_group_slugs)
         ])
 
+        form_filters = [OR(*form_filters)]
+        form_filters.append(self._get_datespan_filter())
+        return form_filters
+
     def _get_group_filter(self, mobile_user_and_group_slugs):
         group_ids = LocationRestrictedMobileWorkerFilter.selected_group_ids(mobile_user_and_group_slugs)
         if group_ids:
-            return GroupFormSubmittedByFilter(group_ids)
+            groups_static_user_ids = Group.get_static_user_ids_for_groups(group_ids)
+            groups_static_user_ids = [item for sublist in groups_static_user_ids for item in sublist]
+            owner_filter_ids = group_ids + groups_static_user_ids
+            return GroupFormSubmittedByFilter(owner_filter_ids)
 
-    def _get_user_filter(self, mobile_user_and_group_slugs):
+    def _get_user_type_filter(self, mobile_user_and_group_slugs):
         users = LocationRestrictedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
         f_users = [self._USER_TYPES_CHOICES[i][0] for i in users]
         return UserTypeFilter(f_users)
