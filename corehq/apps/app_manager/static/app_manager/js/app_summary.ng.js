@@ -118,6 +118,7 @@
         $scope.showRelevance = false;
         $scope.showComments = false;
         $scope.appLangs = summaryConfig.appLangs;
+        $scope.formDownloadURL = summaryConfig.formDownloadURL;
         $scope.appDownloadURL = summaryConfig.appDownloadURL;
 
         self.init = function () {
