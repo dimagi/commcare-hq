@@ -134,6 +134,14 @@ hqDefine('app_manager/js/app_manager.js', function () {
                 });
             }
         });
+
+        if (COMMCAREHQ.toggleEnabled('ONBOARDING_PROTOTYPE')) {
+            $('.js-appnav-drag-module').on('mouseenter', function() {
+                $(this).closest('.js-sorted-li').addClass('appnav-highlight');
+            }).on('mouseleave', function () {
+                $(this).closest('.js-sorted-li').removeClass('appnav-highlight');
+            });
+        }
         $('.sortable').each(function () {
             var $sortable = $(this);
             var sorting_forms = $sortable.hasClass('sortable-forms');
