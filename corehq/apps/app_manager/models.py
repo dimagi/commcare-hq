@@ -4670,6 +4670,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         built_on = datetime.datetime.utcnow()
         all_files = self.create_all_files(build_profile_id)
         if save:
+            self.date_created = built_on
             self.built_on = built_on
             self.built_with = BuildRecord(
                 version=self.build_spec.version,
@@ -4992,6 +4993,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                                           choices=app_strings.CHOICES.keys())
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
+    date_created = DateTimeProperty()
     created_from_template = StringProperty()
     use_grid_menus = BooleanProperty(default=False)
     grid_form_menus = StringProperty(default='none',
@@ -5343,7 +5345,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @classmethod
     def new_app(cls, domain, name, lang="en"):
         app = cls(domain=domain, modules=[], name=name, langs=[lang],
-                  vellum_case_management=True)
+                  date_created=datetime.datetime.utcnow(), vellum_case_management=True)
         return app
 
     def add_module(self, module):
@@ -5881,6 +5883,7 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
         for key, value in source_properties.iteritems():
             source[key] = value
     cls = str_to_cls[source['doc_type']]
+    source['date_created'] = datetime.datetime.utcnow()
     # Allow the wrapper to update to the current default build_spec
     if 'build_spec' in source:
         del source['build_spec']
