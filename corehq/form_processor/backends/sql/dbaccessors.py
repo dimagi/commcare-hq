@@ -466,8 +466,8 @@ class FormAccessorSQL(AbstractFormAccessor):
     def write_blob_bucket(attachment, bucket):
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute(
-                'SELECT write_blob_bucket(%s, %s::text)',
-                [attachment.attachment_id, bucket]
+                'SELECT write_blob_bucket(%s::text, %s, %s::text)',
+                [attachment.form_id, attachment.attachment_id, bucket]
             )
 
 
