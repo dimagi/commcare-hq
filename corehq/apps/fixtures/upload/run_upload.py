@@ -176,10 +176,8 @@ def _diff_lists(list_a, list_b):
 
 def validate_fixture_upload(workbook):
     type_sheets = workbook.get_all_type_sheets()
-    return_val = FixtureUploadResult()
 
-    total_tables = len(type_sheets)
-    return_val.number_of_fixtures = total_tables
+    error_messages = []
 
     for table_number, table_def in enumerate(type_sheets):
         tag = table_def.table_id
@@ -191,21 +189,17 @@ def validate_fixture_upload(workbook):
             item_fields_list = data_item['field'].keys() if 'field' in data_item else []
             not_in_sheet, not_in_types = _diff_lists(item_fields_list, get_fields_without_attributes(fields))
             if len(not_in_sheet) > 0:
-                error_message = _(FAILURE_MESSAGES["has_no_field_column"]).format(tag=tag, field=not_in_sheet[0])
-                raise ExcelMalformatException(error_message)
+                error_messages.append(_(FAILURE_MESSAGES["has_no_field_column"]).format(tag=tag, field=not_in_sheet[0]))
             if len(not_in_types) > 0:
-                error_message = _(FAILURE_MESSAGES["has_extra_column"]).format(tag=tag, field=not_in_types[0])
-                raise ExcelMalformatException(error_message)
+                error_messages.append(_(FAILURE_MESSAGES["has_extra_column"]).format(tag=tag, field=not_in_types[0]))
 
             # check that this item has all the properties listed in its 'types' definition
             item_attributes_list = data_item['property'].keys() if 'property' in data_item else []
             not_in_sheet, not_in_types = _diff_lists(item_attributes_list, item_attributes)
             if len(not_in_sheet) > 0:
-                error_message = _(FAILURE_MESSAGES["has_no_field_column"]).format(tag=tag, field=not_in_sheet[0])
-                raise ExcelMalformatException(error_message)
+                error_messages.append(_(FAILURE_MESSAGES["has_no_field_column"]).format(tag=tag, field=not_in_sheet[0]))
             if len(not_in_types) > 0:
-                error_message = _(FAILURE_MESSAGES["has_extra_column"]).format(tag=tag, field=not_in_types[0])
-                raise ExcelMalformatException(error_message)
+                error_messages.append(_(FAILURE_MESSAGES["has_extra_column"]).format(tag=tag, field=not_in_types[0]))
 
             # check that properties in 'types' sheet vs item-sheet MATCH
             for field in fields:
@@ -215,40 +209,33 @@ def validate_fixture_upload(workbook):
                     type_props = field.properties
                     not_in_sheet, not_in_types = _diff_lists(sheet_props_list, type_props)
                     if len(not_in_sheet) > 0:
-                        error_message = _(FAILURE_MESSAGES["sheet_has_no_property"]).format(
+                        error_messages.append(_(FAILURE_MESSAGES["sheet_has_no_property"]).format(
                             tag=tag,
                             property=not_in_sheet[0],
                             field=field.field_name
-                        )
-                        raise ExcelMalformatException(error_message)
+                        ))
                     if len(not_in_types) > 0:
-                        error_message = _(FAILURE_MESSAGES["sheet_has_extra_property"]).format(
+                        error_messages.append(_(FAILURE_MESSAGES["sheet_has_extra_property"]).format(
                             tag=tag,
                             property=not_in_types[0],
                             field=field.field_name
-                        )
-                        raise ExcelMalformatException(error_message)
+                        ))
                     # check that fields with properties are numbered
                     if type(data_item['field'][field.field_name]) != list:
-                        error_message = _(FAILURE_MESSAGES["invalid_field_with_property"]).format(field=field.field_name)
-                        raise ExcelMalformatException(error_message)
+                        error_messages.append(_(FAILURE_MESSAGES["invalid_field_with_property"]).format(field=field.field_name))
                     field_prop_len = len(data_item['field'][field.field_name])
                     for prop in sheet_props:
                         if type(sheet_props[prop]) != list:
-                            error_message = _(FAILURE_MESSAGES["invalid_property"]).format(
+                            error_messages.append(_(FAILURE_MESSAGES["invalid_property"]).format(
                                 field=field.field_name,
                                 prop=prop
-                            )
-                            raise ExcelMalformatException(error_message)
+                            ))
                         if len(sheet_props[prop]) != field_prop_len:
-                            error_message = _(FAILURE_MESSAGES["wrong_field_property_combos"]).format(
+                            error_messages.append( _(FAILURE_MESSAGES["wrong_field_property_combos"]).format(
                                 field=field.field_name,
                                 prop=prop
-                            )
-                            raise ExcelMalformatException(error_message)
-
-    return return_val
-
+                            ))
+    return error_messages
 
 def do_fixture_upload(domain, file_ref, replace, task=None):
     workbook = get_workbook(file_ref.get_filename())
@@ -257,7 +244,7 @@ def do_fixture_upload(domain, file_ref, replace, task=None):
     except WorksheetNotFound as e:
         raise FixtureUploadError(_("Workbook does not contain a sheet called '%(title)s'") % {'title': e.title})
     except ExcelMalformatException as e:
-        raise FixtureUploadError(_("Uploaded excel file has following formatting-problems: '%(e)s'") % {'e': e})
+        raise FixtureUploadError(_("Uploaded excel file has following formatting-problems: '%(e)s'") % {'e': '\n'.join(e.errors)})
     except FixtureAPIException as e:
         raise FixtureUploadError(unicode(e))
     except Exception:

@@ -86,13 +86,13 @@ class FixtureTableDefinition(object):
     def from_row(cls, row_dict):
         tag = row_dict.get('table_id') or row_dict.get('tag')
         if tag is None:
-            raise ExcelMalformatException(_(FAILURE_MESSAGES['has_no_column']).format(column_name='table_id'))
+            raise ExcelMalformatException([_(FAILURE_MESSAGES['has_no_column']).format(column_name='table_id')])
 
         field_names = row_dict.get('field')
         item_attributes = row_dict.get('property')
 
         if field_names is None and item_attributes is None:
-            raise ExcelMalformatException(_(FAILURE_MESSAGES['neither_fields_nor_attributes']).format(tag=tag))
+            raise ExcelMalformatException([_(FAILURE_MESSAGES['neither_fields_nor_attributes']).format(tag=tag)])
 
         field_names = [] if field_names is None else field_names
         item_attributes = [] if item_attributes is None else item_attributes
@@ -106,7 +106,7 @@ class FixtureTableDefinition(object):
                     error_message = _(FAILURE_MESSAGES["wrong_property_syntax"]).format(
                         prop_key=prop_key,
                     )
-                    raise ExcelMalformatException(error_message)
+                    raise ExcelMalformatException([error_message])
                 else:
                     return properties
             else:
@@ -127,7 +127,7 @@ class FixtureTableDefinition(object):
                     i=i,
                     val=field_name,
                 )
-                raise ExcelMalformatException(message)
+                raise ExcelMalformatException([message])
 
         fields = [
             FixtureTypeField(
@@ -184,7 +184,9 @@ class FixtureWorkbook(object):
     def validate(self):
         from corehq.apps.fixtures.upload.run_upload import validate_fixture_upload
         self.get_types_sheet()
-        validate_fixture_upload(self)
+        error_messages = validate_fixture_upload(self)
+        if error_messages:
+            raise ExcelMalformatException(error_messages)
 
 
 def validate_file_format(file_or_filename):

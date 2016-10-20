@@ -319,6 +319,10 @@ class UploadItemLists(TemplateView):
         # catch basic validation in the synchronous UI
         try:
             validate_file_format(file_ref.get_filename())
+        except ExcelMalformatException as e:
+            messages.error(request, _(u'Upload unsuccessful: %s') %
+                           '<ul><li>{}</li></ul>'.format('</li><li>'.join(e.errors)),
+                           extra_tags='html')
         except (FixtureUploadError, JSONReaderError, HeaderValueError) as e:
             messages.error(request, _(u'Upload unsuccessful: %s') % e)
             return HttpResponseRedirect(fixtures_home(self.domain))
@@ -431,7 +435,7 @@ def upload_fixture_api(request, domain, **kwargs):
         error_message = error_messages["has_no_sheet"].format(attr=e.title)
         return _return_response(response_codes["fail"], error_message)
     except ExcelMalformatException as e:
-        return _return_response(response_codes["fail"], str(e))
+        return _return_response(response_codes["fail"], '\n'.join(e.errors))
     except DuplicateFixtureTagException as e:
         return _return_response(response_codes["fail"], str(e))
     except FixtureAPIException as e:

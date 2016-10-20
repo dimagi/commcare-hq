@@ -15,7 +15,8 @@ class DuplicateFixtureTagException(FixtureUploadError):
 
 
 class ExcelMalformatException(FixtureUploadError):
-    pass
+    def __init__(self, errors):
+        self.errors = errors
 
 
 class FixtureAPIException(Exception):
