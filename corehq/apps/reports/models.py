@@ -317,7 +317,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         raise UnsupportedSavedReportError("Unknown dispatcher: %s" % self.report_type)
 
     def get_date_range(self):
-        """Duplicated in reports.config.js"""
         date_range = self.date_range
         # allow old report email notifications to represent themselves as a
         # report config by leaving the default date range up to the report
