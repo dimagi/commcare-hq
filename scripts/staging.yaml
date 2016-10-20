@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - fixtures-upload  # Danny 10/20
   - dsr-multi-loc # sr 9/20
   - vellum-staging # J$ 11/13
   - onboarding # Jenny 9/19
