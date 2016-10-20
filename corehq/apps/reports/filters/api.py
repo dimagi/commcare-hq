@@ -162,6 +162,18 @@ class LocationRestrictedEmwfOptionsView(EmwfOptionsView):
                 .filter_path_by_user_input(self.domain, query)
                 .accessible_to_user(self.request.domain, self.request.couch_user))
 
+    def get_users(self, query, start, size):
+        users = (self.user_es_query(query)
+                 .fields(['_id', 'username', 'first_name', 'last_name', 'doc_type'])
+                 .start(start)
+                 .size(size)
+                 .sort("username.exact"))
+        if not self.request.can_access_all_locations:
+            user_location_id = self.request.couch_user.get_location_id(self.domain)
+            all_location_ids = SQLLocation.location_and_descendants_ids([user_location_id])
+            users = users.location(all_location_ids)
+
+        return [self.utils.user_tuple(u) for u in users.run().hits]
 
     @property
     def data_sources(self):
