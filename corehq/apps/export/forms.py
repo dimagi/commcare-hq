@@ -567,7 +567,6 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
             *self.extra_fields
         )
 
-
     def get_edit_url(self, export):
         from corehq.apps.export.views import EditNewCustomCaseExportView
         return reverse(EditNewCustomCaseExportView.urlname,
