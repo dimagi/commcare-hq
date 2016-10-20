@@ -34,6 +34,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import Permissions
 from corehq.util.files import file_extention_from_filename
+from corehq.util.soft_assert import soft_assert
 from corehq.util.spreadsheets.excel import JSONReaderError, HeaderValueError, \
     WorksheetNotFound
 from dimagi.utils.couch.bulk import CouchTransaction
@@ -428,6 +429,13 @@ def upload_fixture_api(request, domain, **kwargs):
         return _return_response(response_codes["fail"], error_message)
 
     try:
+        validate_file_format(upload_file)
+    except ExcelMalformatException as e:
+        return _return_response(response_codes["fail"], '\n'.join(e.errors))
+    except (FixtureUploadError, JSONReaderError, HeaderValueError) as e:
+        return _return_response(response_codes["fail"], _(u'Upload unsuccessful: %s') % e)
+
+    try:
         workbook = get_workbook(upload_file)
     except Exception:
         return _return_response(response_codes["fail"], error_messages["invalid_file"])
@@ -444,6 +452,9 @@ def upload_fixture_api(request, domain, **kwargs):
     except FixtureAPIException as e:
         return _return_response(response_codes["fail"], str(e))
     except Exception as e:
+        soft_assert('@'.join(['droberts', 'dimagi.com'])).call(
+            False, 'Unknown fixture upload api exception',
+        )
         error_message = error_messages["unknown_fail"].format(attr=e)
         return _return_response(response_codes["fail"], error_message)
 

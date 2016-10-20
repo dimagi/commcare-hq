@@ -296,7 +296,7 @@ def do_fixture_upload(domain, file_ref, replace, task=None):
     except Exception:
         soft_assert('@'.join(['droberts', 'dimagi.com'])).call(
             False, 'Unknown fixture upload exception',
-            {'filapps/fixtures/upload/upload.py:61:116ename': file_ref.get_filename()}
+            {'filename': file_ref.get_filename()}
         )
         raise FixtureUploadError(_("Fixture upload failed for some reason and we have noted this failure. "
                                    "Please make sure the excel file is correctly formatted and try again."))
