@@ -1988,6 +1988,10 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     fixture_select = SchemaProperty(FixtureSelect)
     auto_select_case = BooleanProperty(default=False)
 
+    @property
+    def is_surveys(self):
+        return self.case_type == ""
+
     @classmethod
     def wrap(cls, data):
         if cls is ModuleBase:
