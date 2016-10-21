@@ -178,6 +178,23 @@ class ExpressionFromSpecTest(SimpleTestCase):
 
 class PropertyPathExpressionTest(SimpleTestCase):
 
+    def test_datatype(self):
+        spec = {
+            'type': 'property_path',
+            'property_path': ['path', 'to', 'foo'],
+        }
+        item = {
+            'path': {'to': {'foo': '1.0'}}
+        }
+        tests = (
+            ('string', '1.0'),
+            ('decimal', Decimal(1.0)),
+            ('integer', 1)
+        )
+        for datatype, value in tests:
+            spec['datatype'] = datatype
+            self.assertEqual(value, ExpressionFactory.from_spec(spec)(item))
+
     def test_property_path_bad_type(self):
         getter = ExpressionFactory.from_spec({
             'type': 'property_path',
