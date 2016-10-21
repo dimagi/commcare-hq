@@ -58,7 +58,7 @@ class UserES(HQESQuery):
 
     def users_at_locations_and_descendants(self, location_ids):
         from corehq.apps.locations.models import SQLLocation
-        location_ids = SQLLocation.location_and_descendants_ids(location_ids)
+        location_ids = SQLLocation.objects.get_locations_and_children_ids(location_ids)
         return self.location(location_ids).run().hits
 
 
