@@ -934,6 +934,19 @@ def test_errors_in_evaluator_statements(self, eq, context, error_type):
     self.assertEqual(expression({}), None)
 
 
+class TestEvaluatorTypes(SimpleTestCase):
+
+    def test_datatype(self):
+        spec = {
+            "type": "evaluator",
+            "statement": '1.0 + a',
+            "context_variables": {'a': 1.0}
+        }
+        self.assertEqual(type(ExpressionFactory.from_spec(spec)({})), float)
+        spec['datatype'] = 'integer'
+        self.assertEqual(type(ExpressionFactory.from_spec(spec)({})), int)
+
+
 class TestFormsExpressionSpec(TestCase):
 
     def setUp(self):

@@ -258,6 +258,7 @@ class EvalExpressionSpec(JsonObject):
     type = TypeProperty('evaluator')
     statement = StringProperty(required=True)
     context_variables = DictProperty(required=True)
+    datatype = DataTypeProperty(required=False)
 
     def configure(self, context_variables):
         self._context_variables = context_variables
@@ -265,7 +266,9 @@ class EvalExpressionSpec(JsonObject):
     def __call__(self, item, context=None):
         var_dict = self.get_variables(item, context)
         try:
-            return eval_statements(self.statement, var_dict)
+            untransformed_value = eval_statements(self.statement, var_dict)
+            transform = transform_from_datatype(self.datatype)
+            return transform(untransformed_value) if transform else untransformed_value
         except (InvalidExpression, SyntaxError, TypeError, ZeroDivisionError):
             return None
 
