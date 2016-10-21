@@ -59,6 +59,7 @@ from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
+    get_inferred_schema,
 )
 from corehq.apps.export.utils import is_occurrence_deleted
 
@@ -115,6 +116,10 @@ class ExportItem(DocumentSchema):
     last_occurrences = DictProperty()
     transform = StringProperty(choices=TRANSFORM_FUNCTIONS.keys())
 
+    # True if this item was inferred from different actions in HQ (i.e. case upload)
+    # False if the item was found in the application structure
+    inferred = BooleanProperty(default=False)
+
     @classmethod
     def wrap(cls, data):
         if cls is ExportItem:
@@ -150,6 +155,7 @@ class ExportItem(DocumentSchema):
     def merge(cls, one, two):
         item = cls(one.to_json())
         item.last_occurrences = _merge_dicts(one.last_occurrences, two.last_occurrences, max)
+        item.inferred = one.inferred or two.inferred
         return item
 
     @property
@@ -272,7 +278,10 @@ class ExportColumn(DocumentSchema):
         return column
 
     def _is_deleted(self, app_ids_and_versions):
-        return is_occurrence_deleted(self.item.last_occurrences, app_ids_and_versions)
+        return (
+            is_occurrence_deleted(self.item.last_occurrences, app_ids_and_versions) and
+            not self.item.inferred
+        )
 
     def update_properties_from_app_ids_and_versions(self, app_ids_and_versions):
         """
@@ -548,7 +557,13 @@ class ExportInstance(BlobMixin, Document):
             schema.domain,
             getattr(schema, 'app_id', None),
         )
-        for group_schema in schema.group_schemas:
+        group_schemas = schema.group_schemas
+
+        inferred_schema = instance._get_inferred_schema()
+        if inferred_schema:
+            group_schemas.extend(inferred_schema.group_schemas)
+
+        for group_schema in group_schemas:
             table = instance.get_table(group_schema.path) or TableConfiguration(
                 path=group_schema.path,
                 label=instance.defaults.get_default_table_name(group_schema.path),
@@ -557,7 +572,7 @@ class ExportInstance(BlobMixin, Document):
             table.is_deleted = is_occurrence_deleted(
                 group_schema.last_occurrences,
                 latest_app_ids_and_versions,
-            )
+            ) and not group_schema.inferred
 
             prev_index = 0
             for item in group_schema.items:
@@ -727,6 +742,9 @@ class CaseExportInstance(ExportInstance):
             case_type=schema.case_type,
         )
 
+    def _get_inferred_schema(self):
+        return get_inferred_schema(self.domain, self.case_type)
+
 
 class FormExportInstance(ExportInstance):
     xmlns = StringProperty()
@@ -747,6 +765,9 @@ class FormExportInstance(ExportInstance):
             xmlns=schema.xmlns,
             app_id=schema.app_id,
         )
+
+    def _get_inferred_schema(self):
+        return None
 
 
 class ExportInstanceDefaults(object):
@@ -918,6 +939,76 @@ class ExportGroupSchema(DocumentSchema):
     items = SchemaListProperty(ExportItem)
     last_occurrences = DictProperty()
 
+    # True if this item was inferred from different actions in HQ (i.e. case upload)
+    # False if the item was found in the application structure
+    inferred = BooleanProperty(default=False)
+
+
+class InferredExportGroupSchema(ExportGroupSchema):
+    """
+    Same as an ExportGroupSchema with a few utility methods
+    """
+
+    def put_item(self, path):
+        assert self.path == path[:len(self.path)], "ExportItem's path doesn't start with the table"
+
+        item = self.get_item(path)
+
+        if item:
+            return item
+
+        item = ExportItem(
+            path=path,
+            label='.'.join(map(lambda node: node.name, path)),
+            inferred=True
+        )
+        self.items.append(item)
+        return item
+
+    def get_item(self, path):
+        for item in self.items:
+            if item.path == path and isinstance(item, ExportItem):
+                return item
+        return None
+
+
+class InferredSchema(Document):
+    """
+    An inferred schema is information we know about the application that is not
+    in the application itself. For example, inferred schemas can keep track of
+    case properties that were uploaded during a case import. This way we have a
+    record of these properties even though they were not in the application
+    structure.
+    """
+    domain = StringProperty(required=True)
+    created_on = DateTimeProperty(default=datetime.utcnow)
+    group_schemas = SchemaListProperty(InferredExportGroupSchema)
+    case_type = StringProperty(required=True)
+    version = IntegerProperty(default=1)
+
+    class Meta:
+        app_label = 'export'
+
+    def put_group_schema(self, path):
+        group_schema = self.get_group_schema(path)
+
+        if group_schema:
+            return group_schema
+
+        group_schema = InferredExportGroupSchema(
+            path=path,
+            items=[],
+            inferred=True,
+        )
+        self.group_schemas.append(group_schema)
+        return group_schema
+
+    def get_group_schema(self, path):
+        for group_schema in self.group_schemas:
+            if group_schema.path == path:
+                return group_schema
+        return None
+
 
 class ExportDataSchema(Document):
     """
@@ -1017,7 +1108,8 @@ class ExportDataSchema(Document):
                     group_schema1.last_occurrences,
                     group_schema2.last_occurrences,
                     max
-                )
+                ),
+                inferred=group_schema1.inferred or group_schema2.inferred
             )
             items = _merge_lists(
                 group_schema1.items,

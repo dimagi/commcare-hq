@@ -76,7 +76,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     if app and app.application_version == APP_V1:
         _assert = soft_assert()
         _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
-        return render(request, 'app_manager/no_longer_supported.html', {
+        return render(request, 'app_manager/v1/no_longer_supported.html', {
             'domain': domain,
             'app': app,
         })
@@ -123,7 +123,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         module_context = get_module_view_context(app, module, lang)
         context.update(module_context)
     elif app:
-        template = "app_manager/app_view.html"
+        template = "app_manager/v1/app_view.html"
         context.update(get_app_view_context(request, app))
     else:
         from corehq.apps.dashboard.views import NewUserDashboardView

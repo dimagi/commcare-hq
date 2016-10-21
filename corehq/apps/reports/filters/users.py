@@ -316,10 +316,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         users = []
 
         if limit_user_ids:
-            if not user_ids:
-                user_ids = limit_user_ids
-            else:
-                user_ids = set(limit_user_ids).intersection(set(user_ids))
+            user_ids = set(limit_user_ids).intersection(set(user_ids))
 
         if user_ids or HQUserType.REGISTERED in user_types:
             users = util.get_all_users_by_domain(

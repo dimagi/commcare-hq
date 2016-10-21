@@ -14,6 +14,10 @@ from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
 from corehq.apps.export.models import (
     FormExportDataSchema,
     CaseExportDataSchema,
+    ExportDataSchema,
+    InferredExportGroupSchema,
+    ExportGroupSchema,
+    ExportItem,
     PARENT_CASE_TABLE,
 )
 from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
@@ -396,6 +400,38 @@ class TestMergingCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
             len(group_schema2.items),
             len(case_property_mapping['candy']) + len(KNOWN_CASE_PROPERTIES),
         )
+
+    def test_inferred_schema_merge(self):
+        schema = CaseExportDataSchema(
+            domain='my-domain',
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[ExportItem(
+                        path=[PathNode(name='case_property')]
+                    )],
+                )
+            ]
+        )
+        inferred_schema = CaseExportDataSchema(
+            domain='my-domain',
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[ExportItem(
+                        path=[PathNode(name='case_property')],
+                        inferred=True,
+                    )],
+                    inferred=True,
+                )
+            ]
+        )
+        merged = ExportDataSchema._merge_schemas(schema, inferred_schema)
+        self.assertEqual(len(merged.group_schemas), 1)
+        self.assertTrue(merged.group_schemas[0].inferred)
+        group_schema = merged.group_schemas[0]
+        self.assertEqual(len(group_schema.items), 1)
+        self.assertTrue(group_schema.items[0].inferred)
 
 
 class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
