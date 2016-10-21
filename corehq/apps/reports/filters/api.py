@@ -152,11 +152,8 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         return [self.utils.reporting_group_tuple(g) for g in groups.run().hits]
 
 
+@location_safe
 class LocationRestrictedEmwfOptionsView(EmwfOptionsView):
-    @location_safe
-    def dispatch(self, *args, **kwargs):
-        return super(LocationRestrictedEmwfOptionsView, self).dispatch(*args, **kwargs)
-
     def get_locations_query(self, query):
         return (SQLLocation.active_objects
                 .filter_path_by_user_input(self.domain, query)
