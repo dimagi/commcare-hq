@@ -23,6 +23,7 @@ from corehq.apps.app_manager.dbaccessors import (
 from .dbaccessors import (
     get_form_export_instances,
     get_case_export_instances,
+    get_inferred_schema,
 )
 from .exceptions import SkipConversion
 from .const import (
@@ -55,6 +56,7 @@ def convert_saved_export_to_export_instance(
         ExportMigrationMeta,
         ConversionMeta,
         TableConfiguration,
+        InferredSchema,
     )
 
     schema = None
@@ -222,7 +224,24 @@ def convert_saved_export_to_export_instance(
                 if is_remote_app_migration or force_convert_columns:
                     # In the event that we skip a column and it's a remote application,
                     # just add a user defined column
-                    new_column = _create_user_defined_column(column, column_path, transform)
+                    if export_type == CASE_EXPORT:
+                        inferred_schema = get_inferred_schema(domain, instance.case_type)
+                        if not inferred_schema:
+                            inferred_schema = InferredSchema(
+                                domain=domain,
+                                case_type=instance.case_type,
+                            )
+                        new_column = _create_column_from_inferred_schema(
+                            inferred_schema,
+                            new_table,
+                            column,
+                            column_path,
+                            transform,
+                        )
+                        if not dryrun:
+                            inferred_schema.save()
+                    else:
+                        new_column = _create_user_defined_column(column, column_path, transform)
                     new_table.columns.append(new_column)
                     ordering.append(new_column)
                 else:
@@ -261,6 +280,19 @@ def _extract_casetype_from_index(index):
 
 def _is_repeat(index):
     return index.startswith('#') and index.endswith('#') and index != '#'
+
+
+def _create_column_from_inferred_schema(inferred_schema, new_table, old_column, column_path, transform):
+    from .models import ExportColumn
+
+    group_schema = inferred_schema.put_group_schema(new_table.path)
+    item = group_schema.put_item(column_path)
+    return ExportColumn(
+        item=item,
+        label=old_column.display,
+        selected=True,
+        deid_transform=transform,
+    )
 
 
 def _create_user_defined_column(old_column, column_path, transform):

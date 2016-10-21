@@ -44,6 +44,7 @@ from corehq.apps.export.const import (
 )
 from corehq.apps.export.dbaccessors import (
     delete_all_export_instances,
+    delete_all_inferred_schemas,
 )
 
 MockRequest = namedtuple('MockRequest', 'domain')
@@ -148,6 +149,9 @@ class TestConvertBase(TestCase, TestFileMixin):
         super(TestConvertBase, self).setUp()
         delete_all_export_instances()
 
+    def tearDown(self):
+        delete_all_inferred_schemas()
+
     def _convert_form_export(self, export_file_name, force=False):
         return self._convert_export(
             'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
@@ -192,6 +196,7 @@ class TestForceConvertExport(TestConvertBase):
         cls.project.save()
         cls.schema = CaseExportDataSchema(
             domain=cls.domain,
+            case_type='wonderwoman',
             group_schemas=[
                 ExportGroupSchema(
                     path=MAIN_TABLE,
@@ -225,12 +230,11 @@ class TestForceConvertExport(TestConvertBase):
         instance, _ = self._convert_case_export('case', force=True)
         table = instance.get_table(MAIN_TABLE)
 
-        index, column = table.get_column([PathNode(name='age')], None, None)
+        index, column = table.get_column([PathNode(name='age')], 'ExportItem', None)
         # When we do force the convert we should convert even when it's not in the schema
         self.assertIsNotNone(column)
         self.assertEqual(column.label, 'Age Label')
-        self.assertTrue(isinstance(column, UserDefinedExportColumn))
-        self.assertFalse(column.is_editable)
+        self.assertTrue(column.item.inferred)
         self.assertEqual(column.deid_transform, DEID_ID_TRANSFORM)
 
         index_dob, _ = table.get_column([PathNode(name='DOB')], 'ExportItem', None)
@@ -253,6 +257,7 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestConvertBase):
         cls.project.save()
         cls.schema = CaseExportDataSchema(
             domain=cls.domain,
+            case_type='wonderwoman',
             group_schemas=[
                 ExportGroupSchema(
                     path=MAIN_TABLE,
@@ -352,35 +357,11 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestConvertBase):
         table = instance.get_table(MAIN_TABLE)
         index, column = table.get_column(
             [PathNode(name='age')],
-            None,
+            'ExportItem',
             None,
         )
         self.assertIsNotNone(column)
         self.assertEqual(column.label, 'age')
-        self.assertTrue(meta.is_remote_app_migration)
-
-    @mock.patch(
-        'corehq.apps.export.utils._is_remote_app_conversion',
-        return_value=True,
-    )
-    def test_remote_app_conversion_with_repeats(self, _, __):
-        instance, meta = self._convert_case_export('remote_app_repeats')
-
-        table = instance.get_table([PathNode(name='form'), PathNode(name='repeat', is_repeat=True)])
-
-        self.assertTrue(table.is_user_defined)
-
-        index, column = table.get_column(
-            [
-                PathNode(name='form'),
-                PathNode(name='repeat', is_repeat=True),
-                PathNode(name='DOB'),
-            ],
-            None,
-            None,
-        )
-        self.assertIsNotNone(column)
-        self.assertEqual(column.label, 'DOB Saved')
         self.assertTrue(meta.is_remote_app_migration)
 
 
@@ -596,6 +577,27 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestConvertBase):
         for path, transform, selected in expected_paths:
             index, column = table.get_column(path, 'ExportItem', transform)
             self.assertEqual(column.selected, selected, '{} selected is not {}'.format(path, selected))
+
+    def test_remote_app_conversion_with_repeats(self, _, __):
+        with mock.patch('corehq.apps.export.utils._is_remote_app_conversion', return_value=True):
+            instance, meta = self._convert_form_export('remote_app_repeats')
+
+        table = instance.get_table([PathNode(name='form'), PathNode(name='custom_repeat', is_repeat=True)])
+
+        self.assertTrue(table.is_user_defined)
+
+        index, column = table.get_column(
+            [
+                PathNode(name='form'),
+                PathNode(name='custom_repeat', is_repeat=True),
+                PathNode(name='DOB'),
+            ],
+            None,
+            None,
+        )
+        self.assertIsNotNone(column)
+        self.assertEqual(column.label, 'DOB Saved')
+        self.assertTrue(meta.is_remote_app_migration)
 
 
 @mock.patch(
