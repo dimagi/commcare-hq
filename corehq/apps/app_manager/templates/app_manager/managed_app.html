@@ -151,31 +151,34 @@
 </div>
 <nav class="appmanager-content">
     {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
-        <h2 class="{% if not module %}active {% endif %}appmanager-title js-appmanager-nav-settings">
-            <a id="demand-releases" href="{% url "view_app" domain app.id %}releases/">
-                {{ app.name }}
-            </a>
-            <div id="app-settings-gear">
-                <a href="{% url "view_app" domain app.id %}">
+        <div class="{% if not module %}active {% endif %}appnav-name-wrapper{% if release_manager %} active{% endif %}">
+            <div class="appnav-name-settings">
+                <a href="{% url "view_app" domain app.id %}" class="{% if is_app_settings_page %}active{% endif %}">
                     <i class="fa fa-gear"></i>
                 </a>
             </div>
-            {% if app.get_doc_type == 'Application' %}
-                <span id="langs" style="right: 25px;">
-                    {% if not app.is_remote_app and app.langs|length > 1%}
-                        <select name="lang" class="form-control">
-                            {% for lang in app.langs %}
-                                <option value="{{ lang }}"
-                                        {% if lang == langs.0 %}selected=""{% endif %}>
-                                    {% if lang == app.langs.0 %}*{% endif %}
-                                    {{ lang }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    {% endif %}
-                </span>
+            <h2 class="appnav-name">
+              <a id="demand-releases" href="{% url "view_app" domain app.id %}releases/">
+                  {{ app.name }}
+              </a>
+            </h2>
+        </div>
+        {% if app.get_doc_type == 'Application' %}
+            {% if not app.is_remote_app and app.langs|length > 1%}
+                <div id="langs" class="appnav-language-select">
+                    <label for="app-language-select-nav">{% trans "Language" %}</label>
+                    <select name="lang" class="form-control input-sm">
+                        {% for lang in app.langs %}
+                            <option value="{{ lang }}"
+                                    {% if lang == langs.0 %}selected=""{% endif %}>
+                                {% if lang == app.langs.0 %}*{% endif %}
+                                {{ lang }}
+                            </option>
+                        {% endfor %}
+                    </select>
+              </div>
             {% endif %}
-        </h2>
+        {% endif %}
     {% endif %}
 
     <ul class="nav nav-hq-sidebar">
