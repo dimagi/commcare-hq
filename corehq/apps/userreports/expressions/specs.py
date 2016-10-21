@@ -52,14 +52,9 @@ class PropertyNameGetterSpec(JsonObject):
     property_name = StringProperty(required=True)
     datatype = DataTypeProperty(required=False)
 
-    @property
-    def expression(self):
-        transform = transform_from_datatype(self.datatype)
-        getter = DictGetter(self.property_name)
-        return TransformedGetter(getter, transform)
-
     def __call__(self, item, context=None):
-        return self.expression(item, context)
+        raw_value = item.get(self.property_name, None) if isinstance(item, dict) else None
+        return transform_from_datatype(self.datatype)(raw_value)
 
 
 class PropertyPathGetterSpec(JsonObject):
