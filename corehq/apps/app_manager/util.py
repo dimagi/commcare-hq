@@ -795,3 +795,18 @@ def get_sort_and_sort_only_columns(detail, sort_elements):
         for field, (element, element_order) in sort_elements.items()
     ]
     return sort_only_elements, sort_columns
+
+
+def get_app_manager_template(domain, v1, v2):
+    """
+    Given the name of the domain, a template string v1, and a template string v2,
+    return the template for V2 if the APP_MANAGER_V2 toggle is enabled.
+
+    :param domain: String, domain name
+    :param v1: String, template name for V1
+    :param v2: String, template name for V2
+    :return: String, either v1 or v2 depending on toggle
+    """
+    if toggles.APP_MANAGER_V2.enabled(domain):
+        return v2
+    return v1
