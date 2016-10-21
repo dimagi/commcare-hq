@@ -248,6 +248,8 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     if release_manager:
         context['release_manager'] = release_manager
         context.update(get_releases_context(request, domain, app_id))
+    elif not (module or form):
+        context['is_app_settings_page'] = True
     response = render(request, template, context)
 
     response.set_cookie('lang', encode_if_unicode(lang))
