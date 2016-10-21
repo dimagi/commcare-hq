@@ -1370,6 +1370,13 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 if not account_save_success:
                     return False
 
+                # changing a plan overrides future subscriptions
+                future_subscriptions = Subscription.objects.filter(
+                    subscriber=self.current_subscription.subscriber,
+                )
+                if future_subscriptions.count() > 0:
+                    future_subscriptions.update(date_end=F('date_start'))
+
                 if self.current_subscription is not None:
                     subscription = self.current_subscription.change_plan(
                         self.plan_version,
