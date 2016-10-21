@@ -18,7 +18,11 @@
        </div>
     </td>
     <td class="module-column module-column-name">
-        <h3><b><%- title %></b> opened <%- humanDateOpened %></h3>
+        <h3>
+            <b><%- title %></b>
+            <% if (caseName) { %>(<%- caseName %>)<% } %>
+            opened <%- humanDateOpened %>
+        </h3>
         <div class="module-delete-control">
             <i class="fa fa-trash module-icon module-delete-icon"></i>
         </div>

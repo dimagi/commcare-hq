@@ -166,6 +166,12 @@ class ReportDispatcher(View):
         else:
             raise Http404()
 
+    @classmethod
+    def as_view(cls, *args, **kwargs):
+        view = super(ReportDispatcher, cls).as_view(*args, **kwargs)
+        view.is_hq_report = True
+        return view
+
     @staticmethod
     def toggles_enabled(report_class, request):
         if not getattr(report_class, 'toggles', ()):

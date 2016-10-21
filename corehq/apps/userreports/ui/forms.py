@@ -138,7 +138,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
     referenced_doc_type = forms.ChoiceField(
         choices=DOC_TYPE_CHOICES,
         label=_("Source Type"))
-    display_name = forms.CharField(label=_("Report Title"),
+    display_name = forms.CharField(label=_("Data Source Display Name"),
                                    help_text=help_text.DISPLAY_NAME)
     description = forms.CharField(required=False,
                                   help_text=help_text.DESCRIPTION)

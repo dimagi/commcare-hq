@@ -528,7 +528,7 @@ MOBILE_UCR = StaticToggle(
 RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
     'restrict_web_users_by_location',
     "Allow project to restrict web user permissions by location (deprecated)",
-    TAG_PRODUCT_CORE,
+    TAG_ONE_OFF,
     namespaces=[NAMESPACE_DOMAIN],
 )
 

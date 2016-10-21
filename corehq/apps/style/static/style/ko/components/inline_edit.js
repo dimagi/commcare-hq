@@ -1,3 +1,4 @@
+/* global DOMPurify */
 /*
  * Component for an inline editing widget: a piece of text that, when clicked on, turns into an input (textarea or
  * text input). The input is accompanied by a save button capable of saving the new value to the server via ajax.
@@ -79,6 +80,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                     return;
                 }
 
+                self.value(DOMPurify.sanitize(self.value()));
                 self.readOnlyValue = self.value();
                 var data = self.saveParams;
                 _.each(data, function(value, key) {

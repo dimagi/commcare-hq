@@ -115,13 +115,13 @@ class BaseLocationView(BaseDomainView):
         return context
 
 
+@location_safe
 class LocationsListView(BaseLocationView):
     urlname = 'manage_locations'
     page_title = ugettext_noop("Organization Structure")
     template_name = 'locations/manage/locations.html'
 
     @use_jquery_ui
-    @location_safe
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, *args, **kwargs):
         return super(LocationsListView, self).dispatch(request, *args, **kwargs)
@@ -358,6 +358,7 @@ class LocationTypesView(BaseLocationView):
         return ordered_loc_types
 
 
+@location_safe
 class NewLocationView(BaseLocationView):
     urlname = 'create_location'
     page_title = ugettext_noop("New Location")
@@ -366,7 +367,6 @@ class NewLocationView(BaseLocationView):
     form_tab = 'basic'
 
     @use_multiselect
-    @location_safe
     def dispatch(self, request, *args, **kwargs):
         return super(NewLocationView, self).dispatch(request, *args, **kwargs)
 
@@ -522,12 +522,12 @@ def unarchive_location(request, domain, loc_id):
     })
 
 
+@location_safe
 class EditLocationView(NewLocationView):
     urlname = 'edit_location'
     page_title = ugettext_noop("Edit Location")
     creates_new_location = False
 
-    @location_safe
     @method_decorator(can_edit_location)
     def dispatch(self, request, *args, **kwargs):
         return super(EditLocationView, self).dispatch(request, *args, **kwargs)

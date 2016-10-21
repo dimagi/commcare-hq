@@ -547,7 +547,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
                 {'key': key, 'path': path} for key, path in form.case_preload.items()
             ],
         })
-        return "app_manager/form_view_careplan.html", context
+        return "app_manager/v1/form_view_careplan.html", context
     elif isinstance(form, AdvancedForm):
         def commtrack_programs():
             if app.commtrack_enabled:
@@ -562,12 +562,12 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             'commtrack_programs': all_programs + commtrack_programs(),
         })
         context.update(get_schedule_context(form))
-        return "app_manager/form_view_advanced.html", context
+        return "app_manager/v1/form_view_advanced.html", context
     else:
         context.update({
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled(request.user.username),
         })
-        return "app_manager/form_view.html", context
+        return "app_manager/v1/form_view.html", context
 
 
 @require_can_edit_apps
@@ -634,7 +634,7 @@ def xform_display(request, domain, form_unique_id):
     if request.GET.get('format') == 'html':
         questions = [FormQuestionResponse(q) for q in questions]
 
-        return render(request, 'app_manager/xform_display.html', {
+        return render(request, 'app_manager/v1/xform_display.html', {
             'questions': questions_in_hierarchy(questions)
         })
     else:

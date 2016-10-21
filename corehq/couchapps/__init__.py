@@ -4,6 +4,7 @@ from django.conf import settings
 CouchAppsPreindexPlugin.register('couchapps', __file__, {
     'form_question_schema': 'meta',
     'schemas_by_xmlns_or_case_type': 'meta',
+    'inferred_schemas_by_case_type': 'meta',
     'export_instances_by_domain': 'meta',
     'export_instances_by_is_daily_saved': 'meta',
     'receiverwrapper': 'receiverwrapper',

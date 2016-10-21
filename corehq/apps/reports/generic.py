@@ -582,11 +582,11 @@ class GenericReportView(object):
         rendered_filters = None
         if bool(self.request.GET.get('hq_filters')):
             self.update_filter_context()
-            rendered_filters = render_to_string(self.template_filters, self.context,
-                context_instance=RequestContext(self.request)
+            rendered_filters = render_to_string(
+                self.template_filters, self.context, request=self.request
             )
-        rendered_report = render_to_string(self.template_report, self.context,
-            context_instance=RequestContext(self.request)
+        rendered_report = render_to_string(
+            self.template_report, self.context, request=self.request
         )
 
         return dict(
@@ -611,8 +611,8 @@ class GenericReportView(object):
             Renders just the filters for the report to be fetched asynchronously.
         """
         self.update_filter_context()
-        rendered_filters = render_to_string(self.template_filters, self.context,
-            context_instance=RequestContext(self.request)
+        rendered_filters = render_to_string(
+            self.template_filters, self.context, request=self.request
         )
         return HttpResponse(json.dumps(dict(
             filters=rendered_filters,

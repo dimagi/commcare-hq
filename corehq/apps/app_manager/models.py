@@ -1575,20 +1575,20 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                 )
             if type_ == 'close_case':
                 type_meta.add_closer(self.unique_id, action.condition)
-            if type_ == 'update_case':
+            if type_ == 'update_case' or type_ == 'usercase_update':
                 for name, question_path in FormAction.get_action_properties(action):
                     self.add_property_save(
                         app_case_meta,
-                        module_case_type,
+                        USERCASE_TYPE if type_ == 'usercase_update' else module_case_type,
                         name,
                         questions,
                         question_path
                     )
-            if type_ == 'case_preload' or type_ == 'load_from_form':
+            if type_ == 'case_preload' or type_ == 'load_from_form' or type_ == 'usercase_preload':
                 for name, question_path in FormAction.get_action_properties(action):
                     self.add_property_load(
                         app_case_meta,
-                        module_case_type,
+                        USERCASE_TYPE if type_ == 'usercase_preload' else module_case_type,
                         name,
                         questions,
                         question_path
@@ -4791,10 +4791,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                                          content_type="image/png")
             return png_data
 
-    def generate_shortened_url(self, url_type, build_profile_id=None):
+    def generate_shortened_url(self, view_name, build_profile_id=None):
         try:
             if settings.BITLY_LOGIN:
-                view_name = 'corehq.apps.app_manager.views.{}'.format(url_type)
                 if build_profile_id is not None:
                     long_url = "{}{}?profile={}".format(
                         self.url_base, reverse(view_name, args=[self.domain, self._id]), build_profile_id

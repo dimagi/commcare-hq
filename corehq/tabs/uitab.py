@@ -5,11 +5,13 @@ from corehq.tabs.exceptions import UrlPrefixFormatError, UrlPrefixFormatsSuggest
 from corehq.tabs.utils import sidebar_to_dropdown
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cache import make_template_fragment_key
+from dimagi.utils.web import get_url_base
 from django.conf import settings
 
 
 def url_is_location_safe(url):
     from corehq.apps.locations.permissions import is_location_safe
+    url = url.split(get_url_base())[-1] if url else None
     try:
         match = resolve(url)
     except Resolver404:

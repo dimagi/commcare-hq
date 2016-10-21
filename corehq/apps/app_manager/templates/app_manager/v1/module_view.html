@@ -1,0 +1,313 @@
+{% extends "app_manager/v1/managed_app.html" %}
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block head %}{{ block.super }}
+    {% include 'analytics/fullstory.html' %}
+{% endblock %}
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
+    <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
+    {% include "app_manager/v1/partials/xpathValidator.html" %}
+{% endblock %}
+{% block js-inline %}{{ block.super }}
+    {% include "app_manager/v1/partials/nav_menu_media_js_common.html" %}
+    {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.menu %}
+    {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.case_list_menu_item qualifier='case_list-menu_item_' %}
+    <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
+    <script src="{% static 'app_manager/js/shadow-module-settings.js' %}"></script>
+
+    {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
+        {% for detail in details %}
+            {% if detail.type == 'case' %}
+                {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.case_list_lookup qualifier='case-list-lookup'|add:detail.type %}
+            {% else %}
+                {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.product_list_lookup qualifier='case-list-lookup'|add:detail.type %}
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    {% if case_list_form_options %}
+        {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.case_list_form qualifier='case_list_form_' %}
+    {% endif %}
+    {% include 'style/partials/key_value_mapping.html' %}
+    {% include 'app_manager/v1/partials/graph_configuration_modal.html' %}
+
+    <script>
+        {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or module.case_type != "" %}
+        $(function () {
+            var state = hqImport('app_manager/js/detail-screen-config.js').state;
+            var DetailScreenConfig = hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig;
+            state.requires_case_details({{ module.requires_case_details|BOOL }});
+
+            var details = {{ details|JSON }};
+            var lang = {{ lang|JSON }};
+            var langs = {{ app.langs|JSON }};
+            var saveUrl = "{% url "edit_module_detail_screens" domain app.id module.id %}";
+            var parentModules = {{ parent_modules|JSON }};
+            var fixture_columns_by_type = {{ fixture_columns_by_type|JSON }};
+            var searchProperties = {{ search_properties|JSON }};
+            var includeClosed = {{ include_closed|BOOL }};
+            var defaultProperties = {{ default_properties|JSON }};
+
+            for (var i = 0; i < details.length; i++) {
+                var detail = details[i];
+                var detailScreenConfig = DetailScreenConfig.init({
+                    module_id: '{{ module.id }}',
+                    state: {
+                        type: detail.type,
+                        short: detail.short,
+                        long: detail.long
+                    },
+                    sortRows: detail.sort_elements,
+                    model: detail.model,
+                    properties: detail.properties,
+                    lang: lang,
+                    langs: langs,
+                    saveUrl: saveUrl,
+                    parentModules: parentModules,
+                    childCaseTypes: detail.subcase_types,
+                    fixture_columns_by_type: fixture_columns_by_type,
+                    parentSelect: detail.parent_select,
+                    fixtureSelect: detail.fixture_select,
+                    contextVariables: state,
+                    multimedia: {{multimedia.object_map|JSON}},
+                    searchProperties: searchProperties,
+                    includeClosed: includeClosed,
+                    defaultProperties: defaultProperties,
+                    contextVariables: state,
+                });
+                var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
+                $list_home.koApplyBindings(detailScreenConfig);
+
+                if (detail.long !== undefined) {
+                    var $detail_home = $("#" + detail.type + "-detail-screen-detail-config-tab");
+                    $detail_home.koApplyBindings(detailScreenConfig);
+                }
+            }
+        });
+        {% endif %}
+        $(function () {
+            var moduleType = {{ module.module_type|JSON }};
+            var showCaseTypeError = function(message) {
+                var $caseTypeError = $('#case_type_error');
+                $caseTypeError.css('display', 'block');
+                $caseTypeError.text(message);
+            };
+            var hideCaseTypeError = function() {
+                $('#case_type_error').css('display', 'none');
+            };
+            $('#case_type').on('textchange', function () {
+                var value = $(this).val();
+                var valueNoSpaces = value.replace(/ /g, '_');
+                if (value !== valueNoSpaces) {
+                    $(this).val(valueNoSpaces);
+                }
+                {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+                    if (!valueNoSpaces) {
+                        $(this).closest('.form-group').addClass('has-error');
+                        showCaseTypeError(
+                            gettext("Case type is required.")
+                        );
+                        return;
+                    }
+                {% endif %}
+                if (!valueNoSpaces.match(/^[\w-]*$/g)) {
+                    $(this).closest('.form-group').addClass('has-error');
+                    showCaseTypeError(
+                        gettext("Case types can only include the characters a-z, 0-9, '-' and '_'")
+                    );
+                } else if (valueNoSpaces === 'commcare-user' && moduleType != 'advanced') {
+                    $(this).closest('.form-group').addClass('has-error');
+                    showCaseTypeError(
+                        gettext("'commcare-user' is a reserved case type. Please change the case type")
+                    );
+                } else {
+                    $(this).closest('.form-group').removeClass('has-error');
+                    hideCaseTypeError();
+                }
+            });
+
+            if ($('#case-list-form').length) {
+                var CaseListForm = function (data, formOptions, allowed, now_allowed_reason) {
+                    var self = this,
+                        initialOption = data.form_id ? data.form_id : 'disabled',
+                        formSet = !!data.form_id,
+                        formMissing = formSet && !formOptions[data.form_id];
+
+                    self.toggleState = function(active) {
+                        active = active && allowed;
+                        $('#case_list_form-label').toggle(active);
+                        $('#case_list_media').toggle(active);
+                    };
+
+                    self.toggleMessage = function() {
+                        self.messageVisible(!self.messageVisible());
+                    };
+
+                    self.buildOptstr = function(extra) {
+                        self.caseListFormOptstr = _.map(formOptions, function (label, value) {
+                            return {value: value, label: label};
+                        });
+                        if (extra) {
+                            self.caseListFormOptstr.push({value: extra, label: '{% trans "Unknown Form (missing)" %}'});
+                        }
+                    };
+
+                    self.allowed = allowed;
+                    self.now_allowed_reason = now_allowed_reason;
+                    self.formMissing = ko.observable(formMissing);
+                    self.messageVisible = ko.observable(false);
+                    self.caseListForm = ko.observable(data.form_id ? data.form_id : null);
+                    self.caseListFormProxy = ko.observable(initialOption);
+                    self.caseListFormDisplay = formOptions[initialOption];
+
+                    self.caseListFormProxy.subscribe(function (form_id) {
+                        var disabled = form_id === 'disabled' || !formOptions[form_id];
+                        self.caseListForm(disabled ? null : form_id);
+                        self.toggleState(!disabled);
+                    });
+
+                    if (formMissing) {
+                        var removeOld = self.caseListFormProxy.subscribe(function (oldValue) {
+                            if (formMissing && oldValue === initialOption) {
+                                // remove the missing form from the options once the user select a real form
+                                self.buildOptstr();
+                                removeOld.dispose();
+                                self.formMissing(false);
+                            }
+                        }, null, "beforeChange");
+                    }
+
+                    self.toggleState(formSet && !formMissing);
+                    self.buildOptstr(formMissing ? data.form_id : false);
+                };
+                var caseListForm = new CaseListForm(
+                    {{ module.case_list_form|JSON }},
+                    {{ case_list_form_options|JSON }},
+                    {{ case_list_form_not_allowed_reason.allow|JSON }},
+                    {{ case_list_form_not_allowed_reason.message|JSON }}
+                );
+                $('#case-list-form').koApplyBindings(caseListForm);
+                // Reset save button after bindings
+                // see http://manage.dimagi.com/default.asp?145851
+                var $form = $('#case-list-form').closest('form'),
+                    $button = $form.find('.save-button-holder').data('button');
+                $button.setStateWhenReady('saved');
+            }
+
+            if (moduleType == 'shadow') {
+                var ShadowModule = hqImport('app_manager/js/shadow-module-settings.js').ShadowModule;
+                var shadowModule = new ShadowModule(
+                    {{ modules|JSON }},
+                    {{ module.source_module_id|JSON }},
+                    {{ excluded_form_ids|JSON }}
+                );
+                $('#sourceModuleForms').koApplyBindings(shadowModule);
+            }
+
+        });
+        $(function () {
+            var setupValidation = hqImport('app_manager/js/app_manager.js').setupValidation;
+            setupValidation('{% url "validate_module_for_build" domain app.id module.id %}');
+        });
+        $(function() {
+            // show display style options only when module configured to show module and then forms
+            var $menu_mode = $('#put_in_root');
+            var $display_style_container = $('#display_style_container');
+            var update_display_view = function() {
+                if($menu_mode.val() == 'false') {
+                    $display_style_container.show();
+                } else {
+                    $display_style_container.hide();
+                }
+            }
+            update_display_view()
+            $menu_mode.on('change', update_display_view)
+        });
+    </script>
+
+    <script type="text/html" id="module-forms-template">
+        <div class="checkbox">
+            <label>
+                <input name="incl_form_ids"
+                       type="checkbox"
+                       data-bind="value: uniqueId, checked: $parent.selectedModule().includedFormIds"/>
+                <span data-bind="text: name"></span>
+            </label>
+        </div>
+    </script>
+{% endblock %}
+
+{% block form-view %}
+<<<<<<< HEAD:corehq/apps/app_manager/templates/app_manager/module_view.html
+{% include 'app_manager/partials/module_view_heading.html' %}
+=======
+    {% include 'app_manager/v1/partials/module_view_heading.html' %}
+>>>>>>> fe212c0cf094cc49e6ccd15406ad2ab41e6ea572:corehq/apps/app_manager/templates/app_manager/v1/module_view.html
+<div class="tabbable">
+{% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or module.case_type != "" %}
+<ul class="nav nav-tabs" id="module-view-tabs">
+    {% block tab-headers %}
+    <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
+    {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" and module.module_type != 'shadow' %}
+            <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
+    {% endif %}
+    {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" or module.case_type != "" %}
+    {% for detail in details %}
+    <li>
+        <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">
+            {{ detail.label }}
+        </a>
+    </li>
+    {% if detail.long %}
+    <li>
+        <a href="#{{ detail.type }}-detail-screen-detail-config-tab" data-toggle="tab">
+            {{ detail.detail_label }}
+        </a>
+    </li>
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+    {% endblock %}{# endblock tab-headers #}
+</ul>
+<div class="spacer"></div>
+{% endif %}
+<div class="tab-content">
+    {% block tab-content %}
+    <div class="tab-pane active" id="module-settings">
+        {% include "app_manager/v1/partials/module_view_settings.html" %}
+    </div>
+
+    {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+    <div class="tab-pane" id="case-settings">
+        {% include "app_manager/v1/partials/module_view_case_management.html" %}
+    </div>
+    {% endif %}
+
+    {% if module.case_type != "" or not request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+    {% for detail in details %}
+    <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
+        {% include 'app_manager/v1/partials/case_list.html' %}
+    </div>
+    {% if detail.long %}
+    <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">
+        {% include 'app_manager/v1/partials/case_detail.html' %}
+    </div>
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+    {% endblock %}{# endblock tab-content #}
+</div>
+</div>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+{% include "app_manager/v1/partials/nav_menu_media_modals.html" %}
+{% endblock modals %}
+
+{% block breadcrumbs %}
+    {{ block.super }}
+    {% include 'app_manager/v1/partials/module_view_breadcrumbs.html' %}
+{% endblock %}
