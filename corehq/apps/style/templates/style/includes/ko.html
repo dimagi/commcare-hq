@@ -2,10 +2,16 @@
 {% load compress %}
 
 {% compress js %}
-<script src="{% static 'knockout/dist/knockout.debug.js' %}"></script>
+<script src="{% static 'knockout/dist/knockout.js' %}"></script>
 <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
 <script src="{% static 'style/ko/global_handlers.ko.js' %}"></script>
 <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
+
+<!--
+    Required for inline edit widget. Also used by cloudcare, but included
+    here instead because ko.html is basically a global include.
+-->
+<script src="{% static 'DOMPurify/dist/purify.min.js' %}"></script>
 
 <script src="{% static 'style/ko/components/inline_edit.js' %}"></script>
 <script src="{% static 'style/ko/components.ko.js' %}"></script>

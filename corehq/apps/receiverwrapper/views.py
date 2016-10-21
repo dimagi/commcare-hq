@@ -136,8 +136,7 @@ def _noauth_post(request, domain, app_id=None):
     case_updates = get_case_updates(form_json)
 
     def form_ok(form_json):
-        return (from_demo_user(form_json) or is_device_report(form_json) or
-                request.GET.get('submit_mode') == DEMO_SUBMIT_MODE)
+        return (from_demo_user(form_json) or is_device_report(form_json))
 
     def case_block_ok(case_updates):
         """
@@ -175,7 +174,9 @@ def _noauth_post(request, domain, app_id=None):
         return True
 
     if not (form_ok(form_json) and case_block_ok(case_updates)):
-        return HttpResponseForbidden()
+        if request.GET.get('submit_mode') != DEMO_SUBMIT_MODE:
+            # invalid submissions under demo mode submission can be processed
+            return HttpResponseForbidden()
 
     return _process_form(
         request=request,

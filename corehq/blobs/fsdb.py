@@ -49,6 +49,10 @@ class FilesystemBlobDB(AbstractBlobDB):
             raise NotFound(identifier, bucket)
         return open(path, "rb")
 
+    def exists(self, identifier, bucket=DEFAULT_BUCKET):
+        path = self.get_path(identifier, bucket)
+        return exists(path)
+
     def delete(self, *args, **kw):
         identifier, bucket = self.get_args_for_delete(*args, **kw)
         if identifier is None:

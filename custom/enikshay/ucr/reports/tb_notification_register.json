@@ -33,6 +33,13 @@
                     "type": "location"
                 },
                 "display": "Location"
+            },
+            {
+                "type": "pre",
+                "field": "episode_type",
+                "slug": "episode_type",
+                "datatype": "string",
+                "pre_value": "confirmed_tb"
             }
         ],
         "columns": [

@@ -27,6 +27,9 @@ class PillowBase(object):
     """
     __metaclass__ = ABCMeta
 
+    # set to true to disable saving pillow retry errors
+    retry_errors = True
+
     @abstractproperty
     def pillow_id(self):
         """
@@ -171,14 +174,18 @@ class ConstructedPillow(PillowBase):
 
 def handle_pillow_error(pillow, change, exception):
     from pillow_retry.models import PillowError
-    error = PillowError.get_or_create(change, pillow)
-    error.add_attempt(exception, sys.exc_info()[2])
-    error.save()
+    error_id = None
+    if pillow.retry_errors:
+        error = PillowError.get_or_create(change, pillow)
+        error.add_attempt(exception, sys.exc_info()[2])
+        error.save()
+        error_id = error.id
+
     pillow_logging.exception(
         "[%s] Error on change: %s, %s. Logged as: %s" % (
             pillow.get_name(),
             change['id'],
             exception,
-            error.id
+            error_id
         )
     )

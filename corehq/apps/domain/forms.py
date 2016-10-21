@@ -1371,23 +1371,17 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     return False
 
                 if self.current_subscription is not None:
-                    if self.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY:
-                        self.current_subscription.cancel_subscription(
-                            adjustment_method=SubscriptionAdjustmentMethod.USER,
-                            web_user=self.creating_user,
-                        )
-                    else:
-                        subscription = self.current_subscription.change_plan(
-                            self.plan_version,
-                            web_user=self.creating_user,
-                            adjustment_method=SubscriptionAdjustmentMethod.USER,
-                            service_type=SubscriptionType.PRODUCT,
-                            pro_bono_status=ProBonoStatus.NO,
-                        )
-                        subscription.is_active = True
-                        if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
-                            subscription.do_not_invoice = True
-                        subscription.save()
+                    subscription = self.current_subscription.change_plan(
+                        self.plan_version,
+                        web_user=self.creating_user,
+                        adjustment_method=SubscriptionAdjustmentMethod.USER,
+                        service_type=SubscriptionType.PRODUCT,
+                        pro_bono_status=ProBonoStatus.NO,
+                    )
+                    subscription.is_active = True
+                    if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
+                        subscription.do_not_invoice = True
+                    subscription.save()
                 else:
                     subscription = Subscription.new_domain_subscription(
                         self.account, self.domain, self.plan_version,
