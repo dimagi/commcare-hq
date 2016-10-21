@@ -9,11 +9,6 @@ BOOTSTRAP_EDITION_TO_ROLE = {
     SoftwarePlanEdition.COMMUNITY: 'community_plan_v1',
 }
 
-FEATURE_TYPES = [
-    FeatureType.USER,
-    FeatureType.SMS,
-]
-
 BOOTSTRAP_PRODUCT_RATES = {
     SoftwarePlanEdition.COMMUNITY: dict(),
 }

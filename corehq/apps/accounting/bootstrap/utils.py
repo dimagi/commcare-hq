@@ -6,6 +6,7 @@ from collections import defaultdict
 
 from corehq.apps.accounting.exceptions import AccountingError
 from corehq.apps.accounting.models import (
+    FeatureType,
     SoftwarePlanEdition,
     SoftwarePlanVisibility,
     SoftwareProductType,
@@ -20,8 +21,13 @@ PRODUCT_TYPES = [
     SoftwareProductType.COMMTRACK,
 ]
 
+FEATURE_TYPES = [
+    FeatureType.USER,
+    FeatureType.SMS,
+]
 
-def ensure_plans(edition_to_role, edition_to_product_rate, edition_to_feature_rate, feature_types,
+
+def ensure_plans(edition_to_role, edition_to_product_rate, edition_to_feature_rate,
                  dry_run, verbose, apps):
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
     SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
@@ -29,7 +35,7 @@ def ensure_plans(edition_to_role, edition_to_product_rate, edition_to_feature_ra
     Role = apps.get_model('django_prbac', 'Role')
 
     editions = edition_to_role.keys()
-    edition_to_features = _ensure_features(feature_types, editions, dry_run=dry_run, verbose=verbose, apps=apps)
+    edition_to_features = _ensure_features(editions, dry_run=dry_run, verbose=verbose, apps=apps)
     for product_type in PRODUCT_TYPES:
         for edition in editions:
             role_slug = edition_to_role[edition]
@@ -151,7 +157,7 @@ def _ensure_product_and_rate(edition_to_product_rate, product_type, edition, dry
     return product, product_rate
 
 
-def _ensure_features(feature_types, editions, dry_run, verbose, apps):
+def _ensure_features(editions, dry_run, verbose, apps):
     """
     Ensures that all the Features necessary for the plans are created.
     """
@@ -162,7 +168,7 @@ def _ensure_features(feature_types, editions, dry_run, verbose, apps):
 
     edition_to_features = defaultdict(list)
     for edition in editions:
-        for feature_type in feature_types:
+        for feature_type in FEATURE_TYPES:
             feature = Feature(name='%s %s' % (feature_type, edition), feature_type=feature_type)
             if edition == SoftwarePlanEdition.ENTERPRISE:
                 feature.name = "Dimagi Only %s" % feature.name

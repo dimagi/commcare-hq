@@ -14,11 +14,6 @@ BOOTSTRAP_EDITION_TO_ROLE = {
     SoftwarePlanEdition.ENTERPRISE: 'enterprise_plan_v0',
 }
 
-FEATURE_TYPES = [
-    FeatureType.USER,
-    FeatureType.SMS,
-]
-
 BOOTSTRAP_PRODUCT_RATES = {
     SoftwarePlanEdition.COMMUNITY: dict(),
     SoftwarePlanEdition.STANDARD: dict(monthly_fee=Decimal('100.00')),

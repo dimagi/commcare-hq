@@ -10,11 +10,6 @@ BOOTSTRAP_EDITION_TO_ROLE = {
     SoftwarePlanEdition.RESELLER: 'reseller_plan_v0',
 }
 
-FEATURE_TYPES = [
-    FeatureType.USER,
-    FeatureType.SMS,
-]
-
 BOOTSTRAP_PRODUCT_RATES = {
     SoftwarePlanEdition.RESELLER: [
         dict(monthly_fee=Decimal('1000.00')),

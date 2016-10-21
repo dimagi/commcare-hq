@@ -7,7 +7,6 @@ from corehq.apps.accounting.bootstrap.config.new_user_numbers import (
     BOOTSTRAP_EDITION_TO_ROLE,
     BOOTSTRAP_FEATURE_RATES,
     BOOTSTRAP_PRODUCT_RATES,
-    FEATURE_TYPES,
 )
 from corehq.apps.accounting.bootstrap.utils import ensure_plans
 from corehq.sql_db.operations import HqRunPython
@@ -18,7 +17,6 @@ def _bootstrap_new_community_plan_versions(apps, schema_editor):
         edition_to_role=BOOTSTRAP_EDITION_TO_ROLE,
         edition_to_product_rate=BOOTSTRAP_PRODUCT_RATES,
         edition_to_feature_rate=BOOTSTRAP_FEATURE_RATES,
-        feature_types=FEATURE_TYPES,
         dry_run=False, verbose=True, apps=apps,
     )
 

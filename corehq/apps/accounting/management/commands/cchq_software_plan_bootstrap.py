@@ -14,7 +14,6 @@ from corehq.apps.accounting.bootstrap.config.cchq_software_plan_bootstrap import
     BOOTSTRAP_FEATURE_RATES,
     BOOTSTRAP_FEATURE_RATES_FOR_TESTING,
     BOOTSTRAP_PRODUCT_RATES,
-    FEATURE_TYPES,
 )
 from corehq.apps.accounting.bootstrap.utils import ensure_plans
 
@@ -47,6 +46,5 @@ class Command(BaseCommand):
             edition_to_role=BOOTSTRAP_EDITION_TO_ROLE,
             edition_to_product_rate=BOOTSTRAP_PRODUCT_RATES,
             edition_to_feature_rate=edition_to_feature_rate,
-            feature_types=FEATURE_TYPES,
             dry_run=dry_run, verbose=verbose, apps=default_apps,
         )
