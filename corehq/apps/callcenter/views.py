@@ -49,7 +49,9 @@ class CallCenterOwnerOptionsView(EmwfOptionsView):
         return _CallCenterOwnerOptionsUtils(self.domain)
 
     def get_locations_query(self, query):
-        return SQLLocation.objects.filter_path_by_user_input(self.domain, query).filter(location_type__shares_cases=True)
+        return SQLLocation.objects.filter_path_by_user_input(self.domain, query).filter(
+            location_type__shares_cases=True
+        )
 
     def group_es_query(self, query):
         return super(CallCenterOwnerOptionsView, self).group_es_query(query, "case_sharing")

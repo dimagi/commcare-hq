@@ -65,7 +65,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         size: The number of items to return
         """
         return map(self.utils.location_tuple,
-                   self.get_locations_query(query)[start:start+size])
+                   self.get_locations_query(query)[start:start + size])
 
     def get_locations_size(self, query):
         return self.get_locations_query(query).count()

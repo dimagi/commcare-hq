@@ -11,7 +11,6 @@ from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.toggles import CALL_CENTER_LOCATION_OWNERS, NAMESPACE_DOMAIN
@@ -69,7 +68,7 @@ class CallCenterLocationOwnerOptionsViewTest(TestCase):
         cls.location_ids = {l._id for l in cls.locations}
 
         # Create users
-        cls.users= [CommCareUser.create(TEST_DOMAIN, 'user{}'.format(i), '***') for i in range(3)]
+        cls.users = [CommCareUser.create(TEST_DOMAIN, 'user{}'.format(i), '***') for i in range(3)]
         for user in cls.users:
             send_to_elasticsearch('users', user.to_json())
         es.indices.refresh(USER_INDEX_INFO.index)
@@ -107,7 +106,7 @@ class CallCenterLocationOwnerOptionsViewTest(TestCase):
             expected_id_sets.append(self.user_ids)
 
         page_size = 3  # using a small number because more pages will hopefully be more likely to reveal bugs
-        expected_num_pages = int(math.ceil(len(expected_id_sets)/float(page_size)))
+        expected_num_pages = int(math.ceil(len(expected_id_sets) / float(page_size)))
         for i in range(expected_num_pages):
             page = i + 1
             response = client.get(reverse(
@@ -119,10 +118,8 @@ class CallCenterLocationOwnerOptionsViewTest(TestCase):
 
             for i, item in enumerate(response_json['results']):
                 id_ = item['id']
+                option_index = ((page - 1) * page_size) + i
                 self.assertTrue(
-                    id_ in expected_id_sets[((page-1)*page_size)+i],
-                    "Unexpected item {} at index {}.".format(item, ((page-1)*page_size)+i)
+                    id_ in expected_id_sets[option_index],
+                    "Unexpected item {} at index {}.".format(item, option_index)
                 )
-
-
-
