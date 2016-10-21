@@ -6,7 +6,8 @@ from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.fixtures.dbaccessors import get_owner_ids_by_type, \
     get_fixture_data_types_in_domain
 from corehq.apps.fixtures.exceptions import FixtureException, FixtureTypeCheckError
-from corehq.apps.fixtures.utils import clean_fixture_field_name
+from corehq.apps.fixtures.utils import clean_fixture_field_name, \
+    get_fields_without_attributes
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.fixtures.exceptions import FixtureVersionError
 from dimagi.ext.couchdbkit import Document, DocumentSchema, DictProperty, StringProperty, StringListProperty, SchemaListProperty, IntegerProperty, BooleanProperty
@@ -49,10 +50,7 @@ class FixtureDataType(QuickCachedDocumentMixin, Document):
     # support for old fields
     @property
     def fields_without_attributes(self):
-        fields_without_attributes = []
-        for fixt_field in self.fields:
-            fields_without_attributes.append(fixt_field.field_name)
-        return fields_without_attributes
+        return get_fields_without_attributes(self.fields)
 
     @classmethod
     def total_by_domain(cls, domain):
