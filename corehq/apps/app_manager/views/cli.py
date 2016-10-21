@@ -94,7 +94,7 @@ def direct_ccz(request, domain):
     errors = app.validate_app()
     if errors:
         lang, langs = get_langs(request, app)
-        error_html = render_to_string('app_manager/partials/build_errors.html', {
+        error_html = render_to_string('app_manager/v1/partials/build_errors.html', {
             'request': request,
             'app': app,
             'build_errors': errors,

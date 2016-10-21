@@ -320,7 +320,7 @@ def download_media_profile(request, domain, app_id):
 
 
 @safe_download
-def download_index(request, domain, app_id, template="app_manager/download_index.html"):
+def download_index(request, domain, app_id, template="app_manager/v1/download_index.html"):
     """
     A landing page, mostly for debugging, that has links the jad and jar as well as
     all the resource files that will end up zipped into the jar.
@@ -358,9 +358,9 @@ def validate_form_for_build(request, domain, app_id, unique_form_id, ajax=True):
     lang, langs = get_langs(request, app)
 
     if ajax and "blank form" in [error.get('type') for error in errors]:
-        response_html = render_to_string('app_manager/partials/create_form_prompt.html')
+        response_html = render_to_string('app_manager/v1/partials/create_form_prompt.html')
     else:
-        response_html = render_to_string('app_manager/partials/build_errors.html', {
+        response_html = render_to_string('app_manager/v1/partials/build_errors.html', {
             'request': request,
             'app': app,
             'form': form,
