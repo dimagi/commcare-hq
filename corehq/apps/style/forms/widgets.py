@@ -186,7 +186,7 @@ class Select2Ajax(forms.TextInput):
         }
         js = ('select2-3.5.2-legacy/select2.js',)
 
-    def __init__(self, attrs=None, page_size=10):
+    def __init__(self, attrs=None, page_size=20):
         self.page_size = page_size
         super(Select2Ajax, self).__init__(attrs)
 
