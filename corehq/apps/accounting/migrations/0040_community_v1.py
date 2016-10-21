@@ -8,7 +8,6 @@ from corehq.apps.accounting.bootstrap.config.community_v1 import (
     BOOTSTRAP_FEATURE_RATES,
     BOOTSTRAP_PRODUCT_RATES,
     FEATURE_TYPES,
-    PRODUCT_TYPES,
 )
 from corehq.apps.accounting.bootstrap.utils import ensure_plans
 from corehq.apps.hqadmin.management.commands.cchq_prbac_bootstrap import cchq_prbac_bootstrap
@@ -21,7 +20,6 @@ def _bootstrap_new_community_role(apps, schema_editor):
         edition_to_product_rate=BOOTSTRAP_PRODUCT_RATES,
         edition_to_feature_rate=BOOTSTRAP_FEATURE_RATES,
         feature_types=FEATURE_TYPES,
-        product_types=PRODUCT_TYPES,
         dry_run=False, verbose=True, apps=apps,
     )
 

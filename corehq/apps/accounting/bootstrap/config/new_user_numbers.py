@@ -3,7 +3,6 @@ from decimal import Decimal
 from corehq.apps.accounting.models import (
     FeatureType,
     SoftwarePlanEdition,
-    SoftwareProductType,
 )
 
 BOOTSTRAP_EDITION_TO_ROLE = {
@@ -13,11 +12,6 @@ BOOTSTRAP_EDITION_TO_ROLE = {
 FEATURE_TYPES = [
     FeatureType.USER,
     FeatureType.SMS,
-]
-PRODUCT_TYPES = [
-    SoftwareProductType.COMMCARE,
-    SoftwareProductType.COMMCONNECT,
-    SoftwareProductType.COMMTRACK,
 ]
 
 BOOTSTRAP_PRODUCT_RATES = {

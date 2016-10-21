@@ -8,12 +8,20 @@ from corehq.apps.accounting.exceptions import AccountingError
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
     SoftwarePlanVisibility,
+    SoftwareProductType,
 )
 
 logger = logging.getLogger(__name__)
 
 
-def ensure_plans(edition_to_role, edition_to_product_rate, edition_to_feature_rate, feature_types, product_types,
+PRODUCT_TYPES = [
+    SoftwareProductType.COMMCARE,
+    SoftwareProductType.COMMCONNECT,
+    SoftwareProductType.COMMTRACK,
+]
+
+
+def ensure_plans(edition_to_role, edition_to_product_rate, edition_to_feature_rate, feature_types,
                  dry_run, verbose, apps):
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
     SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
@@ -22,7 +30,7 @@ def ensure_plans(edition_to_role, edition_to_product_rate, edition_to_feature_ra
 
     editions = edition_to_role.keys()
     edition_to_features = _ensure_features(feature_types, editions, dry_run=dry_run, verbose=verbose, apps=apps)
-    for product_type in product_types:
+    for product_type in PRODUCT_TYPES:
         for edition in editions:
             role_slug = edition_to_role[edition]
             try:
