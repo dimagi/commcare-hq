@@ -423,7 +423,7 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
     @property
     @memoized
     def can_restrict_access_by_location(self):
-        return self.domain_object.has_privilege(privileges.ORGANIZATION_BASED_ACCESS_RESTRICTIONS)
+        return self.domain_object.has_privilege(privileges.RESTRICT_ACCESS_BY_LOCATION)
 
     @property
     @memoized
@@ -538,7 +538,7 @@ def post_user_role(request, domain):
     role_data = json.loads(request.body)
     role_data = dict([(p, role_data[p]) for p in set(UserRole.properties().keys() + ['_id', '_rev']) if p in role_data])
     if (
-        not domain_has_privilege(domain, privileges.ORGANIZATION_BASED_ACCESS_RESTRICTIONS)
+        not domain_has_privilege(domain, privileges.RESTRICT_ACCESS_BY_LOCATION)
         and not role_data['permissions']['access_all_locations']
     ):
         # This shouldn't be possible through the UI, but as a safeguard...
