@@ -52,7 +52,7 @@ examples).
 
 UCR and Report Builder reports will be automatically marked as location safe if
 the report contains a location choice provider. This is done using the
-`conditionally_location_safe` decorator, which is provided with a function that
+``conditionally_location_safe`` decorator, which is provided with a function that
 in this case checks that the report has at least one location choice provider.
 
 When marking a view as location safe, you must also check for restricted users
