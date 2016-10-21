@@ -813,10 +813,22 @@ def new_module(request, domain, app_id):
     lang = request.COOKIES.get('lang', app.langs[0])
     name = request.POST.get('name')
     module_type = request.POST.get('module_type', 'case')
-    if module_type == 'case':
+    if module_type == 'case' or module_type == 'survey':
+        if module_type == 'case':
+            name = name or 'Record List'
+        else:
+            name = name or 'Surveys'
         module = app.add_module(Module.new_module(name, lang))
         module_id = module.id
-        app.new_form(module_id, "Untitled Form", lang)
+        if module_type == 'case':
+            register = app.new_form(module_id, "Register", lang)
+            register.case_action = 'open'  # TODO: this doesn't work
+            followup = app.new_form(module_id, "Followup", lang)
+            followup.case_action = 'update'  # TODO: this doesn't work
+            module.case_type = 'case'  # TODO: make unique across domain
+        else:
+            form = app.new_form(module_id, "Survey", lang)
+            form.case_action = 'none'
         app.save()
         response = back_to_main(request, domain, app_id=app_id, module_id=module_id)
         response.set_cookie('suppress_build_errors', 'yes')

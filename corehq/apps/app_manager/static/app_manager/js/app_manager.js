@@ -237,6 +237,22 @@ hqDefine('app_manager/js/app_manager.js', function () {
             }
         });
 
+        if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+            $('.new-form').on('click', function (e) {
+                e.preventDefault();
+                var $a = $(this),
+                    $form = $a.siblings("form"),
+                    action = $a.data("case-action");
+                $form.find("input[name='case_action']").val(action);
+                $form.find("input[name='name']").val(action === "update" ? "Untitled Followup" : "Untitled Survey");
+                if (!$form.data('clicked')) {
+                    $form.data('clicked', 'true');
+                    $a.find(".fa-plus").removeClass("fa-plus").addClass("fa fa-refresh icon-spin");
+                    $form.submit();
+                }
+            });
+        }
+
         module.commcareVersion.subscribe(function () {
             $('.commcare-feature').each(function () {
                 // .attr() keeps zero intact in 2.10, data() doesn't
