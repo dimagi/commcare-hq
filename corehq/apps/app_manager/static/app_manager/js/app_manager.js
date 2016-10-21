@@ -305,7 +305,6 @@ hqDefine('app_manager/js/app_manager.js', function () {
                 $('.popover-additem').on('click', function (e) {
                     $(pop).popover('hide');
                     var dataType = $(e.target).closest('a').data('type');
-                    console.log(dataType);
                     $('#new-module-type').val(dataType);
                     var form = $('#new-module-form');
                     if (!form.data('clicked')) {
@@ -315,7 +314,6 @@ hqDefine('app_manager/js/app_manager.js', function () {
                     }
                 });
             }).on('click', function (e) {
-                console.log('prevent');
                 e.preventDefault();
                 $(this).popover('show');
             });
