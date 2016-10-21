@@ -256,7 +256,7 @@ def odk_install(request, domain, app_id, with_media=False):
                            params={'profile': build_profile_id}),
         "profile_url": profile_url,
     }
-    return render(request, "app_manager/odk_install.html", context)
+    return render(request, "app_manager/v1/odk_install.html", context)
 
 
 def odk_qr_code(request, domain, app_id):
@@ -346,7 +346,7 @@ def _get_app_diffs(first_app, second_app):
 class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     urlname = 'diff'
     page_title = ugettext_lazy("App diff")
-    template_name = 'app_manager/app_diff.html'
+    template_name = 'app_manager/v1/app_diff.html'
 
     @use_angular_js
     def dispatch(self, request, *args, **kwargs):

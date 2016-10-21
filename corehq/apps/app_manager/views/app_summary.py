@@ -24,7 +24,7 @@ from couchexport.shortcuts import export_response
 class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
     urlname = 'app_summary'
     page_title = ugettext_noop("Summary")
-    template_name = 'app_manager/summary.html'
+    template_name = 'app_manager/v1/summary.html'
 
     @use_angular_js
     def dispatch(self, request, *args, **kwargs):

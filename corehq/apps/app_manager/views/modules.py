@@ -64,13 +64,13 @@ logger = logging.getLogger(__name__)
 
 def get_module_template(module):
     if isinstance(module, CareplanModule):
-        return "app_manager/module_view_careplan.html"
+        return "app_manager/v1/module_view_careplan.html"
     elif isinstance(module, AdvancedModule):
-        return "app_manager/module_view_advanced.html"
+        return "app_manager/v1/module_view_advanced.html"
     elif isinstance(module, ReportModule):
-        return 'app_manager/module_view_report.html'
+        return 'app_manager/v1/module_view_report.html'
     else:
-        return "app_manager/module_view.html"
+        return "app_manager/v1/module_view.html"
 
 
 def get_module_view_context(app, module, lang=None):

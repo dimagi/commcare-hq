@@ -1,4 +1,4 @@
-{% extends "app_manager/managed_app.html" %}
+{% extends "app_manager/v1/managed_app.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -242,7 +242,7 @@
         <div class="tab-pane{% if not copy_app_form.is_bound %} active{% endif %}" id="app-settings">
             {% include "app_manager/partials/app-settings.html" %}
         </div>
-        {% include 'app_manager/languages.html' %}
+        {% include 'app_manager/v1/languages.html' %}
 
         {% if app.get_doc_type == "Application" %}
             <div class="tab-pane multimedia" id="multimedia">
