@@ -10,7 +10,7 @@ from corehq.apps.userreports.expressions.getters import (
     DictGetter,
     NestedDictGetter,
     TransformedGetter,
-    transform_from_datatype)
+    transform_from_datatype, safe_recursive_lookup)
 from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -67,14 +67,9 @@ class PropertyPathGetterSpec(JsonObject):
     property_path = ListProperty(unicode, required=True)
     datatype = DataTypeProperty(required=False)
 
-    @property
-    def expression(self):
-        transform = transform_from_datatype(self.datatype)
-        getter = NestedDictGetter(self.property_path)
-        return TransformedGetter(getter, transform)
-
     def __call__(self, item, context=None):
-        return self.expression(item, context)
+        transform = transform_from_datatype(self.datatype)
+        return transform(safe_recursive_lookup(item, self.property_path))
 
 
 class NamedExpressionSpec(JsonObject):
