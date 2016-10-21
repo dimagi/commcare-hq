@@ -141,7 +141,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'notify_facility': get_facility_for_form(domain, app_id, form.unique_id),
     })
     notify_form_opened(domain, request.couch_user, app_id, form.unique_id)
-    return render(request, 'app_manager/form_designer.html', context)
+    return render(request, 'app_manager/v1/form_designer.html', context)
 
 
 @require_GET
