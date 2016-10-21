@@ -740,6 +740,8 @@ AUDIT_MODULES = [
     'corehq.apps.userreports',
     'corehq.apps.data',
     'corehq.apps.registration',
+    'corehq.apps.hqadmin',
+    'corehq.apps.accounting',
     'tastypie',
 ]
 
