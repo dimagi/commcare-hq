@@ -3,8 +3,9 @@
 {% load hq_shared_tags %}
 
 <a href="#form_confirm_delete_{{ module.id }}_{{ form.id }}"
+   class="appnav-delete"
    data-toggle="modal">
-  <i class="fa fa-trash"></i>
+  <i class="fa fa-trash-o"></i>
 </a>
 
 <div id="form_confirm_delete_{{ module.id }}_{{ form.id }}" class="modal fade" tabindex="-1" role="dialog">
@@ -24,7 +25,9 @@
           {% endif %}
         </h4>
       </div>
-      <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">
+
+      <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}"
+            method="post">
         {% csrf_token %}
         <div class="modal-body">
           <p class="lead">
@@ -59,8 +62,8 @@
                 {% trans "Delete Form" %}
             </button>
           {% endif %}
-        </form>
-      </div>
+        </div>
+      </form>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->

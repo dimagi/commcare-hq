@@ -4,8 +4,12 @@
 
 {# For APP BUILDER PROTOTYPE use only #}
 
-<a href="{% url "view_module" domain app.id module.id %}" class="appnav-title appnav-title-secondary">
-    <i class="drag_handle appnav-drag-icon"></i>
+<a href="{% url "view_module" domain app.id module.id %}"
+   data-moduleid="{{ module.id }}"
+   data-updateprop="href"
+   data-updatevalue="{% url "view_module" domain app.id 'replacewithmoduleid' %}"
+   class="appnav-title{% if module.doc_type != 'CareplanModule' and module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %} appnav-title-secondary{% endif %}">
+    <i class="drag_handle appnav-drag-icon js-appnav-drag-module"></i>
     {% if module.module_type == 'advanced' %}
       <i class="fa fa-flask appmanager-icon-type appnav-primary-icon"></i>
     {% elif module.module_type == 'report' %}
@@ -18,6 +22,7 @@
       <i class="fa fa-folder-open appnav-primary-icon"></i>
     {% endif %}
     <span {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>
-        {{ module.name|html_trans:langs }}
+        {{ module.name|html_trans_prefix:langs }}
     </span>
 </a>
+

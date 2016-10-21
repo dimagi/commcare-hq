@@ -4,6 +4,13 @@
 
 {# For APP BUILDER PROTOTYPE use only #}
 
+
+<a href="#module_confirm_delete_{{ module.id }}"
+   data-toggle="modal"
+   class="appnav-delete">
+  <i class="fa fa-trash-o"></i>
+</a>
+
 <div id="module_confirm_delete_{{ module.id }}" class="modal fade" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -21,7 +28,8 @@
           {% endif %}
         </h4>
       </div>
-      <form action="{% url "delete_module" domain app.id module.unique_id %}" method="post">
+      <form action="{% url "delete_module" domain app.id module.unique_id %}"
+            method="post">
         {% csrf_token %}
         <div class="modal-body">
           <p class="lead">
@@ -57,9 +65,3 @@
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
-
-<a href="#module_confirm_delete_{{ module.id }}"
-   data-toggle="modal"
-   class="appnav-delete">
-  <i class="fa fa-trash-o"></i>
-</a>
