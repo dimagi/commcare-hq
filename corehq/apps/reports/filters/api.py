@@ -167,7 +167,7 @@ class LocationRestrictedEmwfOptionsView(EmwfOptionsView):
                  .sort("username.exact"))
         if not self.request.can_access_all_locations:
             user_location_id = self.request.couch_user.get_location_id(self.domain)
-            all_location_ids = SQLLocation.location_and_descendants_ids([user_location_id])
+            all_location_ids = SQLLocation.objects.get_locations_and_children_ids([user_location_id])
             users = users.location(all_location_ids)
 
         return [self.utils.user_tuple(u) for u in users.run().hits]
