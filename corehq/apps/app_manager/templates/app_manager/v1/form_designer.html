@@ -119,7 +119,7 @@
             csrftoken: $.cookie('csrftoken')
         };
 
-        {% include 'app_manager/partials/form_designer_requirejs_config.html' with vellum_debug=vellum_debug %}
+        {% include 'app_manager/v1/partials/form_designer_requirejs_config.html' with vellum_debug=vellum_debug %}
 
         require(["jquery", "jquery.vellum", "moment"], function ($) {
             $(function () {

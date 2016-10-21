@@ -327,17 +327,17 @@
         </div>
     </script>
     <script type="text/html" id="deploy-build-modal-template">
-        {% include 'app_manager/partials/releases_deploy_modal.html' %}
+        {% include 'app_manager/v1/partials/releases_deploy_modal.html' %}
     </script>
             </div>
 {% if build_profile_access %}
         </div>
         <div id="profiles-tab" class="tab-pane">
-            {% include 'app_manager/partials/build_profiles.html' %}
+            {% include 'app_manager/v1/partials/build_profiles.html' %}
         </div>
      </div>
 </div>
 {% endif %}
 
 <!-- Async Download Modals -->
-{% include 'app_manager/partials/download_async_modal.html' with element_id='download-zip-modal' %}
+{% include 'app_manager/v1/partials/download_async_modal.html' with element_id='download-zip-modal' %}

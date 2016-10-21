@@ -106,7 +106,7 @@
 
 {% block page_content %}
 {% if request|toggle_enabled:"PREVIEW_APP" %}
-{% include 'app_manager/partials/preview_app.html'%}
+{% include 'app_manager/v1/partials/preview_app.html'%}
 {% endif %}
 <div class="appmanager-loading-container">
   <div class="appmanager-loading appmanager-loading-body">
@@ -136,7 +136,7 @@
                 {% endblocktrans %}
             </p>
             <br>
-            {% include 'app_manager/partials/new_app_buttons.html' %}
+            {% include 'app_manager/v1/partials/new_app_buttons.html' %}
         </div>
     {% endif %}
 </div>

@@ -1,7 +1,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% include 'app_manager/partials/case_list_missing_warning.html' %}
+{% include 'app_manager/v1/partials/case_list_missing_warning.html' %}
 
 <div data-bind="saveButton: shortScreen.saveButton"></div>
 
@@ -64,7 +64,7 @@
             </label>
         </div>
     </div>
-    {% include 'app_manager/partials/case_list_properties.html' %}
+    {% include 'app_manager/v1/partials/case_list_properties.html' %}
 </div>
 
 {% if detail.type == 'case' %}
@@ -72,7 +72,7 @@
     {% trans "Filtering and Sorting" %}
 </legend>
 
-{% include 'app_manager/partials/case_list_filtering.html' %}
+{% include 'app_manager/v1/partials/case_list_filtering.html' %}
 
 <div data-bind="with: sortRows">
 {% if app.enable_multi_sort %}
@@ -227,14 +227,14 @@
 {% endif %}
 
 {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
-    {% include "app_manager/partials/case_list_lookup.html" %}
+    {% include "app_manager/v1/partials/case_list_lookup.html" %}
     <div class="spacer"></div>
 {% endif %}
 
 {% if detail.fixture_select and request|toggle_enabled:"FIXTURE_CASE_SELECTION" %}
-    {% include "app_manager/partials/fixture_case_selection.html" %}
+    {% include "app_manager/v1/partials/fixture_case_selection.html" %}
 {% endif %}
 
 {% if detail.type == 'case' and is_search_enabled %}
-{% include 'app_manager/partials/case_search_properties.html' %}
+{% include 'app_manager/v1/partials/case_search_properties.html' %}
 {% endif %}

@@ -791,7 +791,7 @@ def validate_module_for_build(request, domain, app_id, module_id, ajax=True):
     errors = module.validate_for_build()
     lang, langs = get_langs(request, app)
 
-    response_html = render_to_string('app_manager/partials/build_errors.html', {
+    response_html = render_to_string('app_manager/v1/partials/build_errors.html', {
         'request': request,
         'app': app,
         'build_errors': errors,

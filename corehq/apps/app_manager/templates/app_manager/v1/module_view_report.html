@@ -7,10 +7,10 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'app_manager/js/report-module.js' %}"></script>
     <script src="{% static 'reports_core/js/choice-list-api.js' %}"></script>
-    {% include "app_manager/partials/xpathValidator.html" %}
+    {% include "app_manager/v1/partials/xpathValidator.html" %}
 {% endblock %}
 {% block js-inline %}{{ block.super }}
-    {% include "app_manager/partials/report_configs_js.html" %}
+    {% include "app_manager/v1/partials/report_configs_js.html" %}
 {% endblock %}
 {% block form-view %}
     {% if warnings %}
@@ -20,15 +20,15 @@
         {% endfor %}
         </div>
     {% endif %}
-    {% include 'app_manager/partials/module_view_heading.html' %}
-    {% include 'app_manager/partials/mobile_report_configs.html' %}
+    {% include 'app_manager/v1/partials/module_view_heading.html' %}
+    {% include 'app_manager/v1/partials/mobile_report_configs.html' %}
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-{% include "app_manager/partials/nav_menu_media_modals.html" %}
+{% include "app_manager/v1/partials/nav_menu_media_modals.html" %}
 {% endblock modals %}
 
 {% block breadcrumbs %}
     {{ block.super }}
-    {% include 'app_manager/partials/module_view_breadcrumbs.html' %}
+    {% include 'app_manager/v1/partials/module_view_breadcrumbs.html' %}
 {% endblock %}

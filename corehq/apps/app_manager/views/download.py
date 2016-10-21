@@ -358,9 +358,9 @@ def validate_form_for_build(request, domain, app_id, unique_form_id, ajax=True):
     lang, langs = get_langs(request, app)
 
     if ajax and "blank form" in [error.get('type') for error in errors]:
-        response_html = render_to_string('app_manager/partials/create_form_prompt.html')
+        response_html = render_to_string('app_manager/v1/partials/create_form_prompt.html')
     else:
-        response_html = render_to_string('app_manager/partials/build_errors.html', {
+        response_html = render_to_string('app_manager/v1/partials/build_errors.html', {
             'request': request,
             'app': app,
             'form': form,

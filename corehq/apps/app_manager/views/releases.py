@@ -91,7 +91,7 @@ def paginate_releases(request, domain, app_id):
 
 
 @require_deploy_apps
-def releases_ajax(request, domain, app_id, template='app_manager/partials/releases.html'):
+def releases_ajax(request, domain, app_id, template='app_manager/v1/partials/releases.html'):
     app = get_app(domain, app_id)
     context = get_apps_base_context(request, domain, app)
     can_send_sms = domain_has_privilege(domain, privileges.OUTBOUND_SMS)
@@ -197,7 +197,7 @@ def save_copy(request, domain, app_id):
         copy['j2me_enabled'] = copy['menu_item_label'] in j2me_enabled_configs
     return json_response({
         "saved_app": copy,
-        "error_html": render_to_string('app_manager/partials/build_errors.html', {
+        "error_html": render_to_string('app_manager/v1/partials/build_errors.html', {
             'request': request,
             'app': get_app(domain, app_id),
             'build_errors': errors,

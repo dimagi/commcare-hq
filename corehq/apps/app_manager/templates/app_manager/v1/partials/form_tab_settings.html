@@ -16,7 +16,7 @@
             <div class="form-group" data-bind="
                 visible: visible,
                 css: {error: hasError()}">
-                {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
+                {% include "app_manager/v1/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
             </div>
         </div>
 
@@ -32,14 +32,14 @@
                 css: {error: hasError()}">
 
                 {% if allow_form_filtering %}
-                    {% include "app_manager/partials/form_filter/form_filter.html" %}
+                    {% include "app_manager/v1/partials/form_filter/form_filter.html" %}
                 {% else  %}
                     <div class="container-fluid">
                         <div class="alert alert-info">{% trans 'Form filtering is disabled for this form' %}</div>
                     </div>
                 {% endif %}
                 {% if allow_form_workflow %}
-                    {% include "app_manager/partials/form_workflow.html" %}
+                    {% include "app_manager/v1/partials/form_workflow.html" %}
                 {% else %}
                     <div class="container-fluid">
                         <div class="alert alert-info">{% trans 'Form workflows are disabled for this form' %}</div>
@@ -60,7 +60,7 @@
                 visible: visible,
                 css: {error: hasError()}">
 
-                {% include "app_manager/partials/form_gps_capture.html" %}
+                {% include "app_manager/v1/partials/form_gps_capture.html" %}
 
             </div>
             {% if request|toggle_enabled:'NO_VELLUM' %}

@@ -240,7 +240,7 @@
             </script>
         </div>
         <div class="tab-pane{% if not copy_app_form.is_bound %} active{% endif %}" id="app-settings">
-            {% include "app_manager/partials/app-settings.html" %}
+            {% include "app_manager/v1/partials/app-settings.html" %}
         </div>
         {% include 'app_manager/v1/languages.html' %}
 
@@ -291,5 +291,5 @@
 {% for uploader in uploaders %}
 {% include 'hqmedia/partials/multimedia_uploader.html' %}
 {% endfor %}
-{% include 'app_manager/partials/password_setter_modal.html' %}
+{% include 'app_manager/v1/partials/password_setter_modal.html' %}
 {% endblock %}

@@ -9,30 +9,30 @@
     <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
     <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
     <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
-    {% include "app_manager/partials/xpathValidator.html" %}
+    {% include "app_manager/v1/partials/xpathValidator.html" %}
 {% endblock %}
 {% block js-inline %}{{ block.super }}
-    {% include "app_manager/partials/nav_menu_media_js_common.html" %}
-    {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
-    {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_menu_item qualifier='case_list-menu_item_' %}
+    {% include "app_manager/v1/partials/nav_menu_media_js_common.html" %}
+    {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.menu %}
+    {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.case_list_menu_item qualifier='case_list-menu_item_' %}
     <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
     <script src="{% static 'app_manager/js/shadow-module-settings.js' %}"></script>
 
     {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
         {% for detail in details %}
             {% if detail.type == 'case' %}
-                {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_lookup qualifier='case-list-lookup'|add:detail.type %}
+                {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.case_list_lookup qualifier='case-list-lookup'|add:detail.type %}
             {% else %}
-                {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.product_list_lookup qualifier='case-list-lookup'|add:detail.type %}
+                {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.product_list_lookup qualifier='case-list-lookup'|add:detail.type %}
             {% endif %}
         {% endfor %}
     {% endif %}
 
     {% if case_list_form_options %}
-        {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_form qualifier='case_list_form_' %}
+        {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.case_list_form qualifier='case_list_form_' %}
     {% endif %}
     {% include 'style/partials/key_value_mapping.html' %}
-    {% include 'app_manager/partials/graph_configuration_modal.html' %}
+    {% include 'app_manager/v1/partials/graph_configuration_modal.html' %}
 
     <script>
         $(function () {
@@ -231,7 +231,7 @@
 {% endblock %}
 
 {% block form-view %}
-    {% include 'app_manager/partials/module_view_heading.html' %}
+    {% include 'app_manager/v1/partials/module_view_heading.html' %}
 <div class="tabbable">
 <ul class="nav nav-tabs" id="module-view-tabs">
     {% block tab-headers %}
@@ -259,19 +259,19 @@
 <div class="tab-content">
     {% block tab-content %}
     <div class="tab-pane active" id="module-settings">
-        {% include "app_manager/partials/module_view_settings.html" %}
+        {% include "app_manager/v1/partials/module_view_settings.html" %}
     </div>
     <div class="tab-pane" id="case-settings">
-        {% include "app_manager/partials/module_view_case_management.html" %}
+        {% include "app_manager/v1/partials/module_view_case_management.html" %}
     </div>
 
     {% for detail in details %}
     <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
-        {% include 'app_manager/partials/case_list.html' %}
+        {% include 'app_manager/v1/partials/case_list.html' %}
     </div>
     {% if detail.long %}
     <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">
-        {% include 'app_manager/partials/case_detail.html' %}
+        {% include 'app_manager/v1/partials/case_detail.html' %}
     </div>
     {% endif %}
     {% endfor %}
@@ -281,10 +281,10 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-{% include "app_manager/partials/nav_menu_media_modals.html" %}
+{% include "app_manager/v1/partials/nav_menu_media_modals.html" %}
 {% endblock modals %}
 
 {% block breadcrumbs %}
     {{ block.super }}
-    {% include 'app_manager/partials/module_view_breadcrumbs.html' %}
+    {% include 'app_manager/v1/partials/module_view_breadcrumbs.html' %}
 {% endblock %}
