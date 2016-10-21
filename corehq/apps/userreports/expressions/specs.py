@@ -6,11 +6,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.couch import get_db_by_doc_type
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from jsonobject.base_properties import DefaultProperty
-from corehq.apps.userreports.expressions.getters import (
-    DictGetter,
-    NestedDictGetter,
-    TransformedGetter,
-    transform_from_datatype, safe_recursive_lookup)
+from corehq.apps.userreports.expressions.getters import transform_from_datatype, safe_recursive_lookup
 from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
