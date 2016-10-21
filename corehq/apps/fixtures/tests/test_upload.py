@@ -58,11 +58,11 @@ class TestFixtureUpload(SimpleTestCase):
     ])
     test_multiple_errors = _upload_test('multiple_errors', [
         u"Excel-sheet 'level_1' does not contain the column "
-        u"'fun_fact' as specified in its 'types' definition",
+        u"'field: fun_fact' as specified in its 'types' definition",
         u"Excel-sheet 'level_1' does not contain the column "
-        u"'other' as specified in its 'types' definition",
+        u"'field: other' as specified in its 'types' definition",
         u"Excel-sheet 'level_2' does not contain the column "
-        u"'other' as specified in its 'types' definition",
+        u"'field: other' as specified in its 'types' definition",
         u"There's no sheet for type 'level_3' in 'types' sheet. "
         u"There must be one sheet per row in the 'types' sheet.",
     ])
@@ -71,12 +71,12 @@ class TestFixtureUpload(SimpleTestCase):
         u"There must be one sheet per row in the 'types' sheet.",
     ])
     test_has_no_field_column = _upload_test('has_no_field_column', [
-        u"Excel-sheet 'things' does not contain the column 'name' "
+        u"Excel-sheet 'things' does not contain the column 'field: name' "
         u"as specified in its 'types' definition",
     ])
     test_has_extra_column = _upload_test('has_extra_column', [
         u"Excel-sheet 'things' has an extra column"
-        u"'fun_fact' that's not defined in its 'types' definition",
+        u"'field: fun_fact' that's not defined in its 'types' definition",
     ])
     test_sheet_has_no_property = _upload_test('sheet_has_no_property', [
         u"Excel-sheet 'things' does not contain property "

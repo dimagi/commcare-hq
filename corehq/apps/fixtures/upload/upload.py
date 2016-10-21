@@ -25,12 +25,12 @@ FAILURE_MESSAGES = {
         "There are two rows with table_id '{tag}' in 'types' sheet."
     ),
     "has_no_field_column": ugettext_noop(
-        "Excel-sheet '{tag}' does not contain the column '{field}' "
+        "Excel-sheet '{tag}' does not contain the column 'field: {field}' "
         "as specified in its 'types' definition"
     ),
     "has_extra_column": ugettext_noop(
         "Excel-sheet '{tag}' has an extra column"
-        "'{field}' that's not defined in its 'types' definition"
+        "'field: {field}' that's not defined in its 'types' definition"
     ),
     "wrong_property_syntax": ugettext_noop(
         "Properties should be specified as 'field 1: property 1'. In 'types' sheet, "
