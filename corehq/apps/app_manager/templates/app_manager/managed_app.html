@@ -203,19 +203,20 @@
         </li>
         {% endif %}
 
-        {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+        {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
+    </ul>
+        {% else %}
         {% include 'app_manager/partials/sidenav_appsettings.html' %}
         {% endif %}
 
     {% if app.get_doc_type == "Application" %}
-        <li>
         {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
-          {% include 'app_manager/partials/appnav_menu.prototype.html' %}
+        {% include 'app_manager/partials/appnav_menu.prototype.html' %}
         {% else %}
+        <li>
           {% include 'app_manager/partials/appnav_menu.html' %}
-        {% endif %}
-
         </li>
+        {% endif %}
     {% endif %}
     {% if not request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
         <li class="text-hq-nav-header">{% trans "Actions" %}</li>
@@ -231,8 +232,8 @@
                 {% trans "Delete Application" %}
             </a>
         </li>
-    {% endif %}
     </ul>
+    {% endif %}
 </nav>
 {% endif %}
 {% endblock %}
