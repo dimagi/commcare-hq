@@ -909,3 +909,10 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
+
+APP_MANAGER_V2 = StaticToggle(
+    'app_manager_v2',
+    'Prototype for case management onboarding (App Manager V2)',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
