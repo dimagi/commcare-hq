@@ -21,6 +21,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.urlresolvers import reverse
 from django.db import transaction
+from django.db.models import F
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
     ImageField, IntegerField)
 from django.forms.widgets import  Select
