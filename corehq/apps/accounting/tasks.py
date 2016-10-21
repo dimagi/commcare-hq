@@ -678,7 +678,7 @@ def _apply_notices(invoice, today, total):
             cc=[settings.ACCOUNTS_EMAIL],
             email_from=get_dimagi_from_email())
     elif days_ago == 1:
-        message = ugettext('Reminder - your most {} statement is past due!'.format(
+        message = ugettext('Reminder - your {} statement is past due!'.format(
             invoice.date_created.strftime('%B')
         ))
         note = Notification.objects.create(content=message, url=context['statements_url'],
