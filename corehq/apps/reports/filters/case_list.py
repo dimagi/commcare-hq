@@ -64,11 +64,8 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
         return [('project_data', _("[Project Data]"))]
 
 
+@location_safe
 class CaseListFilterOptions(EmwfOptionsView):
-
-    @location_safe
-    def dispatch(self, *args, **kwargs):
-        return super(CaseListFilterOptions, self).dispatch(*args, **kwargs)
 
     @property
     @memoized
