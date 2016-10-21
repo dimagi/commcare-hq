@@ -336,13 +336,16 @@ def new_form(request, domain, app_id, module_id):
     lang = request.COOKIES.get('lang', app.langs[0])
     name = request.POST.get('name')
     form = app.new_form(module_id, name, lang)
-    case_action = request.POST.get('case_action', 'none')
-    if case_action != 'none':
-        form.requires = 'case'
-        if case_action == 'open':
-            pass    # TODO
-        else:
-            pass    # TODO
+
+    if toggles.APP_MANAGER_V2.enabled(domain):
+        case_action = request.POST.get('case_action', 'none')
+        if case_action != 'none':
+            form.requires = 'case'
+            if case_action == 'open':
+                pass    # TODO APP MANAGER V2
+            else:
+                pass    # TODO APP MANAFER V2
+
     app.save()
     # add form_id to locals()
     form_id = form.id
