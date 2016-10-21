@@ -267,8 +267,7 @@ class EvalExpressionSpec(JsonObject):
         var_dict = self.get_variables(item, context)
         try:
             untransformed_value = eval_statements(self.statement, var_dict)
-            transform = transform_from_datatype(self.datatype)
-            return transform(untransformed_value) if transform else untransformed_value
+            return transform_from_datatype(self.datatype)(untransformed_value)
         except (InvalidExpression, SyntaxError, TypeError, ZeroDivisionError):
             return None
 
