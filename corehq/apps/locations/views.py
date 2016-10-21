@@ -509,7 +509,7 @@ def unarchive_location(request, domain, loc_id):
         loc = SQLLocation.objects.get(domain=domain, location_id=loc_id)
     except SQLLocation.DoesNotExist:
         raise Http404()
-    loc.unarchive()
+    loc.couch_location.unarchive()
     return json_response({
         'success': True,
         'message': _("Location '{location_name}' has successfully been {action}.").format(

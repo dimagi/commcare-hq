@@ -1782,12 +1782,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         locations per user flag set. It will error if you try
         to call it on a normal domain.
         """
+        from corehq.apps.locations.models import SQLLocation
         if not self.project.supports_multiple_locations_per_user:
             raise InvalidLocationConfig(
                 "Attempting to access multiple locations for a user in a domain that does not support this."
             )
-
-        from corehq.apps.locations.models import Location
 
         def _get_linked_supply_point_ids():
             mapping = self.get_location_map_case()
@@ -1798,12 +1797,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         def _get_linked_supply_points():
             return SupplyInterface(self.domain).get_supply_points(_get_linked_supply_point_ids())
 
-        def _gen():
-            location_ids = [sp.location_id for sp in _get_linked_supply_points()]
-            for doc in iter_docs(Location.get_db(), location_ids):
-                yield Location.wrap(doc)
-
-        return list(_gen())
+        location_ids = [sp.location_id for sp in _get_linked_supply_points()]
+        return list(SQLLocation.objects
+                    .filter(domain=self.domain,
+                            location_id__in=location_ids)
+                    .couch_locations())
 
     def supply_point_index_mapping(self, supply_point, clear=False):
         from corehq.apps.commtrack.exceptions import (
