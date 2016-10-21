@@ -8,9 +8,10 @@ from urlparse import urlparse, parse_qs
 
 from captcha.fields import CaptchaField
 
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.reports.filters.api import EmwfOptionsView
 from corehq.apps.reports.util import _report_user_dict
+from corehq.apps.users.cases import get_wrapped_owner
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -26,7 +27,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
-    ImageField, IntegerField)
+                                 ImageField, IntegerField, Field)
 from django.forms.widgets import  Select
 from django.template.loader import render_to_string
 from django.utils.encoding import smart_str, force_bytes
@@ -75,7 +76,7 @@ from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
 from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.style import crispy as hqcrispy
-from corehq.apps.style.forms.widgets import BootstrapCheckboxInput
+from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, Select2Ajax
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from corehq.privileges import (
     REPORT_BUILDER_5,
@@ -526,6 +527,35 @@ class CallCenterOwnerOptionsView(EmwfOptionsView):
         q = super(CallCenterOwnerOptionsView, self).user_es_query(query)
         return q.mobile_users()
 
+    @staticmethod
+    def convert_owner_id_to_select_choice(owner_id, domain):
+        utils = _CallCenterOwnerOptionsUtils(domain)
+        for id, text in utils.static_options:
+            if owner_id == id:
+                return (id, text)
+
+        owner = get_wrapped_owner(owner_id)
+        if isinstance(owner, Group):
+            return utils.reporting_group_tuple(owner)
+        elif isinstance(owner, Location):
+            return utils.location_tuple(owner.sql_location)
+        elif isinstance(owner, CommCareUser):
+            return utils.user_tuple(owner)
+        elif owner is None:
+            return None
+        else:
+            raise Exception("Unexpcted owner type")
+
+
+class CallCenterOwnerWidget(Select2Ajax):
+
+    def set_domain(self, domain):
+        self.domain = domain
+
+    def render(self, name, value, attrs=None):
+        value_to_render = CallCenterOwnerOptionsView.convert_owner_id_to_select_choice(value, self.domain)
+        return super(CallCenterOwnerWidget, self).render(name, value_to_render, attrs=attrs)
+
 
 class DomainGlobalSettingsForm(forms.Form):
     LOCATION_CHOICES = [USE_LOCATION_CHOICE, USE_PARENT_LOCATION_CHOICE]
@@ -576,9 +606,9 @@ class DomainGlobalSettingsForm(forms.Form):
         ),
         required=False,
     )
-    call_center_case_owner = ChoiceField(
+    call_center_case_owner = Field(
+        widget=CallCenterOwnerWidget(attrs={'placeholder': ugettext_lazy('Select an Owner...')}),
         label=ugettext_lazy("Call Center Case Owner"),
-        initial=None,
         required=False,
         help_text=ugettext_lazy("Select the person who will be listed as the owner "
                     "of all cases created for call center users.")
@@ -622,27 +652,11 @@ class DomainGlobalSettingsForm(forms.Form):
                 del self.fields['call_center_case_owner']
                 del self.fields['call_center_case_type']
             else:
-                groups = Group.get_case_sharing_groups(self.domain)
-                users = CommCareUser.by_domain(self.domain)
-
-                call_center_user_choices = [
-                    (user._id, user.raw_username + ' [user]') for user in users
-                ]
-                call_center_group_choices = [
-                    (group._id, group.name + ' [group]') for group in groups
-                ]
-                call_center_location_choices = []
-                if CALL_CENTER_LOCATION_OWNERS.enabled(self.domain):
-                    call_center_location_choices = [
-                        (USE_LOCATION_CHOICE, ugettext_lazy("user's location [location]")),
-                        (USE_PARENT_LOCATION_CHOICE, ugettext_lazy("user's location's parent [location]")),
-                    ]
-
-                self.fields["call_center_case_owner"].choices = \
-                    [('', '')] + \
-                    call_center_location_choices + \
-                    call_center_user_choices + \
-                    call_center_group_choices
+                owner_field = self.fields['call_center_case_owner']
+                owner_field.widget.set_url(
+                    reverse(CallCenterOwnerOptionsView.url_name, args=(self.domain,))
+                )
+                owner_field.widget.set_domain(self.domain)
 
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
