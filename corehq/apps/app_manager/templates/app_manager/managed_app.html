@@ -64,20 +64,6 @@
                     });
                 }
             });
-
-            {% if request|toggle_enabled:"ONBOARDING_PROTOTYPE" %}
-                // TODO: this doesn't respond correctly as you jump between pages
-                // TODO: can't jump from settings to deploy
-                // TODO: un-hack
-                if (document.location.pathname.match(/(modules-|releases)/)) {
-                    $('#app-settings-gear').hide();
-                    $('.js-appmanager-nav-settings').mouseenter(function() {
-                        $('#app-settings-gear').show();
-                    }).mouseleave(function() {
-                        $('#app-settings-gear').hide();
-                    });
-                }
-            {% endif %}
         });
     </script>
     {% endif %}
