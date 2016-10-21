@@ -334,6 +334,20 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         return self.get_queryset_descendants(direct_matches, include_self=True)
 
 
+    def get_locations_and_children(self, location_ids):
+        """
+        Takes a set of location ids and returns a django queryset of those
+        locations and their children.
+        """
+        return SQLLocation.objects.get_queryset_descendants(
+            SQLLocation.objects.filter(location_id__in=location_ids),
+            include_self=True
+        )
+
+    def get_locations_and_children_ids(self, location_ids):
+        return list(self.get_locations_and_children(location_ids).location_ids())
+
+
 class OnlyUnarchivedLocationManager(LocationManager):
 
     def get_queryset(self):
@@ -678,16 +692,6 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         # For backwards compatability
         notify_of_deprecation("'sql_location' was just called on a sql_location.  That's kinda silly.")
         return self
-
-    @classmethod
-    def location_and_descendants_ids(cls, location_ids):
-        locations = cls.objects.filter(location_id__in=location_ids)
-        locations_and_descendant_ids = (
-            cls.objects
-            .get_queryset_descendants(locations, include_self=True)
-            .location_ids()
-        )
-        return list(locations_and_descendant_ids)
 
 
 def filter_for_archived(locations, include_archive_ancestors):
