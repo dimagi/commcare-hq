@@ -37,7 +37,8 @@ hqDefine('app_manager/js/preview_app.js', function () {
         $(module.SELECTORS.PREVIEW_ACTION_TEXT_HIDE).addClass('hide');
     };
 
-    _private.toggleAppPreview = function () {
+    _private.toggleAppPreview = function (e) {
+        e.preventDefault();
         if (localStorage.getItem(module.DATA.OPEN) === module.DATA.OPEN) {
             localStorage.removeItem(module.DATA.OPEN);
         } else {
