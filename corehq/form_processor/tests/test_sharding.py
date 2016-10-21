@@ -1,3 +1,4 @@
+from collections import defaultdict
 from uuid import uuid4
 
 from django.conf import settings
@@ -5,6 +6,7 @@ from django.test import TestCase
 from django.test.utils import override_settings
 from unittest import skipUnless, SkipTest
 
+from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils
 from corehq.sql_db.config import PartitionConfig
@@ -72,3 +74,28 @@ class ShardingTests(TestCase):
             all(num_cases_in_db < num_forms for num_cases_in_db in cases_per_db.values()),
             cases_per_db
         )
+
+
+class ShardAccessorTests(TestCase):
+    def test_hash_doc_ids(self):
+        N = 1001
+        doc_ids = [str(i) for i in range(N)]
+        hashes = ShardAccessor.hash_doc_ids(doc_ids)
+        self.assertEquals(len(hashes), N)
+        self.assertTrue(all(isinstance(hash_, int) for hash_ in hashes.values()))
+
+    def test_get_database_for_docs(self):
+        # test that sharding 1000 docs gives a distribution withing some tollerance
+        # (bit of a vague test)
+        N = 1000
+        doc_ids = [str(i) for i in range(N)]
+        doc_db_map = ShardAccessor.get_database_for_docs(doc_ids)
+        doc_count_per_db = defaultdict(int)
+        for db_alias in doc_db_map.values():
+            doc_count_per_db[db_alias] += 1
+
+        num_dbs = len(PartitionConfig().get_form_processing_dbs())
+        even_split = int(N / num_dbs)
+        tollerance = N * 0.05  # 5% tollerance
+        diffs = [abs(even_split - count) for count in doc_count_per_db.values()]
+        self.assertTrue(all(diff < tollerance for diff in diffs))
