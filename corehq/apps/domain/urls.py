@@ -10,7 +10,8 @@ from django.utils.translation import ugettext as _
 from django.conf import settings
 from django.views.generic import RedirectView
 
-from corehq.apps.domain.forms import ConfidentialPasswordResetForm, HQSetPasswordForm, CallCenterOwnerOptionsView
+from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
+from corehq.apps.domain.forms import ConfidentialPasswordResetForm, HQSetPasswordForm
 from corehq.apps.domain.views import (
     EditBasicProjectInfoView, EditPrivacySecurityView,
     DefaultProjectSettingsView, EditMyProjectSettingsView,

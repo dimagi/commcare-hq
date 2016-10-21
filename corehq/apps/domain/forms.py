@@ -8,10 +8,7 @@ from urlparse import urlparse, parse_qs
 
 from captcha.fields import CaptchaField
 
-from corehq.apps.locations.models import SQLLocation, Location
-from corehq.apps.reports.filters.api import EmwfOptionsView
-from corehq.apps.reports.util import _report_user_dict
-from corehq.apps.users.cases import get_wrapped_owner
+from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -33,7 +30,7 @@ from django.template.loader import render_to_string
 from django.utils.encoding import smart_str, force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy, ugettext
+from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from django_countries.data import COUNTRIES
 from PIL import Image
 from pyzxcvbn import zxcvbn
@@ -71,19 +68,18 @@ from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
 from corehq.apps.app_manager.const import AMPLIFIES_YES, AMPLIFIES_NOT_SET, AMPLIFIES_NO
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, TransferDomainRequest)
-from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
 from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, Select2Ajax
-from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
+from corehq.apps.users.models import WebUser, CouchUser
 from corehq.privileges import (
     REPORT_BUILDER_5,
     REPORT_BUILDER_ADD_ON_PRIVS,
     REPORT_BUILDER_TRIAL,
 )
-from corehq.toggles import CALL_CENTER_LOCATION_OWNERS, HIPAA_COMPLIANCE_CHECKBOX
+from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from dimagi.utils.decorators.memoized import memoized
@@ -472,79 +468,6 @@ class SubAreaMixin():
 
 USE_LOCATION_CHOICE = "user_location"
 USE_PARENT_LOCATION_CHOICE = 'user_parent_location'
-
-
-class _CallCenterOwnerOptionsUtils(object):
-    def __init__(self, domain):
-        self.domain = domain
-
-    def user_tuple(self, user):
-        user = _report_user_dict(user)
-        name = "%s [user]" % user['username_in_report']
-        return (user['user_id'], name)
-
-    def reporting_group_tuple(self, group):
-        return (group['_id'], '%s [group]' % group['name'])
-
-    def location_tuple(self, location):
-        return self.reporting_group_tuple(location.case_sharing_group_object())
-
-    @property
-    @memoized
-    def static_options(self):
-        if CALL_CENTER_LOCATION_OWNERS.enabled(self.domain):
-            return [
-                (USE_LOCATION_CHOICE, ugettext("user's location [location]")),
-                (USE_PARENT_LOCATION_CHOICE, ugettext("user's location's parent [location]")),
-            ]
-        return []
-
-
-class CallCenterOwnerOptionsView(EmwfOptionsView):
-    url_name = "call_center_owner_options"
-
-    @property
-    @memoized
-    def utils(self):
-        return _CallCenterOwnerOptionsUtils(self.domain)
-
-    def get_locations_query(self, query):
-        return SQLLocation.objects.filter_path_by_user_input(self.domain, query).filter(location_type__shares_cases=True)
-
-    def group_es_query(self, query):
-        return super(CallCenterOwnerOptionsView, self).group_es_query(query, "case_sharing")
-
-    @property
-    def data_sources(self):
-        return [
-            (self.get_static_options_size, self.get_static_options),
-            (self.get_groups_size, self.get_groups),
-            (self.get_locations_size, self.get_locations),
-            (self.get_users_size, self.get_users),
-        ]
-
-    def user_es_query(self, query):
-        q = super(CallCenterOwnerOptionsView, self).user_es_query(query)
-        return q.mobile_users()
-
-    @staticmethod
-    def convert_owner_id_to_select_choice(owner_id, domain):
-        utils = _CallCenterOwnerOptionsUtils(domain)
-        for id, text in utils.static_options:
-            if owner_id == id:
-                return (id, text)
-
-        owner = get_wrapped_owner(owner_id)
-        if isinstance(owner, Group):
-            return utils.reporting_group_tuple(owner)
-        elif isinstance(owner, Location):
-            return utils.location_tuple(owner.sql_location)
-        elif isinstance(owner, CommCareUser):
-            return utils.user_tuple(owner)
-        elif owner is None:
-            return None
-        else:
-            raise Exception("Unexpcted owner type")
 
 
 class CallCenterOwnerWidget(Select2Ajax):
