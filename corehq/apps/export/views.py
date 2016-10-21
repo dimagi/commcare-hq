@@ -1737,14 +1737,11 @@ class GenericDownloadNewExportMixin(object):
         return export_filter, export_specs
 
 
+@location_safe
 class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExportView):
     urlname = 'new_export_download_forms'
     filter_form_class = EmwfFilterFormExport
     export_filter_class = LocationRestrictedMobileWorkerFilter
-
-    @location_safe
-    def dispatch(self, request, *args, **kwargs):
-        return super(DownloadNewFormExportView, self).dispatch(request, *args, **kwargs)
 
     def _get_export(self, domain, export_id):
         return FormExportInstance.get(export_id)
@@ -1760,14 +1757,11 @@ class BulkDownloadNewFormExportView(DownloadNewFormExportView):
     page_title = ugettext_noop("Download Form Exports")
 
 
+@location_safe
 class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExportView):
     urlname = 'new_export_download_cases'
     filter_form_class = FilterCaseESExportDownloadForm
     export_filter_class = CaseListFilter
-
-    @location_safe
-    def dispatch(self, request, *args, **kwargs):
-        return super(DownloadNewCaseExportView, self).dispatch(request, *args, **kwargs)
 
     def _get_export(self, domain, export_id):
         return CaseExportInstance.get(export_id)
