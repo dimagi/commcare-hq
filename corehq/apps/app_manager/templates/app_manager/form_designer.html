@@ -112,8 +112,8 @@
                     return $('#hq-sidebar').outerWidth() + 2;
                 },
                 topOffset: function () {
-                    return $('#hq-navigation').outerHeight() + 
-                        $('.breadcrumb-hq-section').outerHeight();
+                    return ($('#hq-navigation').outerHeight() || 0) + 
+                        ($('.breadcrumb-hq-section').outerHeight() || 0);
                 }
             },
             csrftoken: $.cookie('csrftoken')
