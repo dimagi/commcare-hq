@@ -47,7 +47,7 @@ name: autostaging
 branches:
   - fixtures-upload  # Danny 10/20
   - vellum-staging # J$ 11/13
-  - onboarding # Jenny 9/19
+  #- onboarding # Jenny 9/19
 #  - np/upgrade-twofactor # Nick P 10/5
   - bmb/currentind-string # Biyeun 11/12
   - np/upgrade-django-celery # Nick P 10/13
