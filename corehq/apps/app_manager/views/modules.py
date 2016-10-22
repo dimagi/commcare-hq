@@ -821,7 +821,7 @@ def new_module(request, domain, app_id):
 
         if toggles.APP_MANAGER_V2.enabled(domain):
             if module_type == 'case':
-                name = name or 'Record List'
+                name = name or 'Case List'
             else:
                 name = name or 'Surveys'
 
@@ -847,11 +847,11 @@ def new_module(request, domain, app_id):
                 app_case_types = set(
                     [module.case_type for module in app.modules if
                      module.case_type])
-                module.case_type = 'record'
+                module.case_type = 'case'
                 suffix = 0
                 while module.case_type in app_case_types:
                     suffix = suffix + 1
-                    module.case_type = 'record-{}'.format(suffix)
+                    module.case_type = 'case-{}'.format(suffix)
             else:
                 form = app.new_form(module_id, "Survey", lang)
         else:
