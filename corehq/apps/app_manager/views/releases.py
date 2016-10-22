@@ -98,6 +98,7 @@ def releases_ajax(request, domain, app_id, template='app_manager/v1/partials/rel
     build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)
 
     context.update({
+        'intro_only': len(app.modules) == 0,
         'release_manager': True,
         'can_send_sms': can_send_sms,
         'has_mobile_workers': get_doc_count_in_domain_by_class(domain, CommCareUser) > 0,
