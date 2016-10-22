@@ -1,0 +1,85 @@
+  {% extends "style/base_section.html" %}
+  {% load xforms_extras %}
+  {% load url_extras %}
+  {% load hq_shared_tags %}
+  {% load i18n %}
+  {% load compress %}
+  {% load djangular_tags %}
+  
+  {% block stylesheets %}
+  {% if less_debug %}
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'app_manager/less/summary.debug.less' %}" />
+  {% else %}
+  {% compress css %}
+      <link type="text/less"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'app_manager/less/summary.less' %}" />
+  {% endcompress %}
+  {% endif %}
+  {% endblock stylesheets %}
+  
+  {% block js %}
+      <script src="{% static 'app_manager/js/app_summary.ng.js' %}"></script>
+  {% endblock js %}
+  
+  {% block js-inline %} {{ block.super }}
+      <script>
+          (function (angular, undefined) {
+              'use strict';
+  
+              var summaryApp = angular.module('summaryApp', ['ngRoute', 'summaryModule']);
+              summaryApp.config(['$httpProvider', function($httpProvider) {
+                  $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+                  $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+                  $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+              }]);
+              summaryApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
+                  djangoRMIProvider.configure({% djng_current_rmi %});
+              }]);
+  
+              summaryApp.constant('summaryConfig', {
+                  staticRoot: '{{ STATIC_URL }}',
+                  vellumTypes: {{ VELLUM_TYPES|JSON }},
+                  formNameMap: {{ form_name_map|JSON }},
+                  appLangs: {{ langs|JSON }},
+                  caseDownloadURL: '{% url 'download_case_summary' domain app_id %}',
+                  formDownloadURL: '{% url 'download_form_summary' domain app_id %}',
+                  appDownloadURL: '{% url 'download_app_summary' domain app_id %}',
+              });
+  
+              summaryApp.config(['$routeProvider', function($routeProvider) {
+                  $routeProvider.
+                      when('/forms', {
+                          templateUrl: '{% url 'ng_template' domain 'form_summary_view' %}',
+                          controller: 'FormController'
+                      }).
+                      when('/cases', {
+                          templateUrl: '{% url 'ng_template' domain 'case_summary_view' %}',
+                          controller: 'CaseController'
+                      }).
+                      otherwise({
+                          redirectTo: '/forms'
+                      });
+              }]);
+          }(window.angular));
+      </script>
+  {% endblock %}
+  
+  {% block content %}
+  <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
+      <li><a href="{{ section.url }}"><strong>{{ section.page_name }}</strong></a></li>
+      {% for parent in current_page.parents %}
+          <li><a href="{{ parent.url }}">{{ parent.title }}</a></li>
+      {% endfor %}
+      <li class="active">{{ current_page.page_name }}</li>
+  </ol>
+  <div class="container-fluid" ng-app="summaryApp">
+      <div class="row">
+          <ng-view></ng-view>
+      </div>
+  </div>
+  {% endblock content %}
