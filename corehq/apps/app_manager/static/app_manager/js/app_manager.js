@@ -238,7 +238,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
         });
 
         if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
-            $('.new-form').on('click', function (e) {
+            $('.js-new-form').on('click', function (e) {
                 e.preventDefault();
                 var $a = $(this),
                     $form = $a.siblings("form"),
