@@ -6,6 +6,8 @@ from django.http import HttpResponse, Http404
 from django.http import HttpResponseRedirect
 from django.views.generic import View
 from django.utils.decorators import method_decorator
+
+from corehq.apps.app_manager.util import get_app_manager_template
 from django_prbac.decorators import requires_privilege
 from django.contrib import messages
 from django.shortcuts import render
@@ -262,7 +264,12 @@ def odk_install(request, domain, app_id, with_media=False):
                            params={'profile': build_profile_id}),
         "profile_url": profile_url,
     }
-    return render(request, "app_manager/v1/odk_install.html", context)
+    template = get_app_manager_template(
+        domain,
+        "app_manager/v1/odk_install.html",
+        "app_manager/v2/odk_install.html",
+    )
+    return render(request, template, context)
 
 
 def odk_qr_code(request, domain, app_id):
@@ -356,6 +363,11 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
 
     @use_angular_js
     def dispatch(self, request, *args, **kwargs):
+        self.template_name = get_app_manager_template(
+            self.domain,
+            self.template_name,
+            'app_manager/v2/app_diff.html',
+        )
         return super(AppDiffView, self).dispatch(request, *args, **kwargs)
 
     @property
