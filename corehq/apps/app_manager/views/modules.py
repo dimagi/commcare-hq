@@ -351,11 +351,11 @@ class AllowWithReason(namedtuple('AllowWithReason', 'allow reason')):
     @property
     def message(self):
         if self.reason == self.ALL_FORMS_REQUIRE_CASE:
-            return gettext_lazy('Not all forms in the module update a case.')
+            return gettext_lazy('Not all forms in the case list update a case.')
         elif self.reason == self.MODULE_IN_ROOT:
-            return gettext_lazy("The module's 'Menu Mode' is not configured as 'Display module and then forms'")
+            return gettext_lazy("'Menu Mode' is not configured as 'Display and then forms'")
         elif self.reason == self.PARENT_SELECT_ACTIVE:
-            return gettext_lazy("The module has 'Parent Selection' configured.")
+            return gettext_lazy("'Parent Selection' is configured.")
 
 
 @no_conflict_require_POST
@@ -449,7 +449,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         parent_module = request.POST.get("parent_module")
         module.parent_select.module_id = parent_module
         if module_case_hierarchy_has_circular_reference(module):
-            return HttpResponseBadRequest(_("The case hierarchy for this module contains a circular reference."))
+            return HttpResponseBadRequest(_("The case hierarchy contains a circular reference."))
     if should_edit("auto_select_case"):
         module["auto_select_case"] = request.POST.get("auto_select_case") == 'true'
 
@@ -519,7 +519,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
                 app.get_module(module_id)
                 module["root_module_id"] = request.POST.get("root_module_id")
             except ModuleNotFoundException:
-                messages.error(_("Unknown Module"))
+                messages.error(_("Unknown Menu"))
 
     if should_edit('excl_form_ids') and isinstance(module, ShadowModule):
         excl = request.POST.getlist('excl_form_ids')
@@ -712,7 +712,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     if parent_select is not None:
         module.parent_select = ParentSelect.wrap(parent_select)
         if module_case_hierarchy_has_circular_reference(module):
-            return HttpResponseBadRequest(_("The case hierarchy for this module contains a circular reference."))
+            return HttpResponseBadRequest(_("The case hierarchy contains a circular reference."))
     if fixture_select is not None:
         module.fixture_select = FixtureSelect.wrap(fixture_select)
     if search_properties is not None:
