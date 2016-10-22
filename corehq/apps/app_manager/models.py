@@ -5447,10 +5447,24 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             pass
         try:
             form = from_module.forms.pop(j)
+            if toggles.APP_MANAGER_V2.enabled(self.domain):
+                if not to_module.is_surveys and i == 0:
+                    # first form in record list is the reg form
+                    i = 1
+                if from_module.is_surveys != to_module.is_surveys:
+                    if from_module.is_surveys:
+                        form.requires = "case"
+                        form.actions.update_case = UpdateCaseAction(
+                            condition=FormActionCondition(type='always'))
+                    else:
+                        form.requires = "none"
+                        form.actions.update_case = UpdateCaseAction(
+                            condition=FormActionCondition(type='never'))
             to_module.add_insert_form(from_module, form, index=i, with_source=True)
         except IndexError:
             raise RearrangeError()
-        if to_module.case_type != from_module.case_type:
+        if to_module.case_type != from_module.case_type \
+                and not toggles.APP_MANAGER_V2.enabled(self.domain):
             raise ConflictingCaseTypeError()
 
     def scrub_source(self, source):
