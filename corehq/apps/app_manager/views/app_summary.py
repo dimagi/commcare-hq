@@ -9,6 +9,7 @@ from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from django.views.generic import View
 
 from corehq.apps.app_manager.exceptions import XFormException
+from corehq.apps.app_manager.util import get_app_manager_template
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule, WORKFLOW_FORM
 from corehq.apps.app_manager.xform import VELLUM_TYPES
@@ -28,6 +29,11 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
 
     @use_angular_js
     def dispatch(self, request, *args, **kwargs):
+        self.template_name = get_app_manager_template(
+            self.domain,
+            self.template_name,
+            'app_manager/v2/summary.html',
+        )
         return super(AppSummaryView, self).dispatch(request, *args, **kwargs)
 
     @property
