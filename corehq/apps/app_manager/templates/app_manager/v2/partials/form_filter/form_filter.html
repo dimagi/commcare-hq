@@ -4,7 +4,7 @@
             {% trans "Display Condition" %}
             <span class="hq-help-template"
                   data-title="{% trans "Display Condition" %}"
-                  data-content="{% trans "The form will not appear in this module’s form menu unless this condition is met." %}"
+                  data-content="{% trans "The form will not appear in the menu unless this condition is met." %}"
             ></span>
         </label>
         <div id="form-filter" class="col-sm-4 row">
@@ -24,20 +24,20 @@
                     <a href="https://confluence.dimagi.com/display/commcarepublic/Form+Display+Conditions">here</a>
                 {% endblocktrans %}
                 </span>
-                <span data-slug="notAllowedButExists">{% trans "Error: Module Does Not Use Cases" %}</span>
+                <span data-slug="notAllowedButExists">{% trans "Error: Not a Case List" %}</span>
                 <span id="caseReferenceNotAllowed" data-slug="caseReferenceNotAllowed">
                     {% blocktrans %}
-                    To use display conditions in a module which reference a case, <br/>
-                        (1) the module <strong>Menu</strong> setting must be set to <em>Display module and then
+                    To use display conditions which reference a case, <br/>
+                        (1) the <strong>Menu</strong> setting must be set to <em>Display menu and then
                             forms</em> <br/>
-                        (2) all the forms in the module must update or close a case, which means registration
-                            forms must go in a separate module, or if your project uses user case management, your
+                        (2) all the forms in the case list must update or close a case, which means registration
+                            forms must go in a separate case list, or if your project uses user case management, your
                             display condition may use the user case.
                     {% endblocktrans %}
                 </span>
                 <span id="userCaseReferenceNotAllowed" data-slug="userCaseReferenceNotAllowed">
                     {% blocktrans %}
-                    To use display conditions in a module which reference a user case, user case management must be
+                    To use display conditions which reference a user case, user case management must be
                     enabled for your project.
                     {% endblocktrans %}
                 </span>
