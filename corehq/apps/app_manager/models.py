@@ -5449,7 +5449,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             form = from_module.forms.pop(j)
             if toggles.APP_MANAGER_V2.enabled(self.domain):
                 if not to_module.is_surveys and i == 0:
-                    # first form in record list is the reg form
+                    # first form is the reg form
                     i = 1
                 if from_module.is_surveys != to_module.is_surveys:
                     if from_module.is_surveys:
