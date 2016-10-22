@@ -4,12 +4,12 @@
 <div class="alert alert-warning" data-bind="visible: !contextVariables.requires_case_details()">
     {% if module.module_type == 'shadow' %}
         {% blocktrans %}
-        This module either doesn't have a source module or has a source module that doesn't use cases.
+        This menu either doesn't have a source menu or has a source menu that doesn't use cases.
         Changes made here will have no effect.
         {% endblocktrans %}
     {% else %}
         {% blocktrans %}
-        This module doesn't currently use cases.
+        This menu doesn't currently use cases.
         Changes made here will have no effect until you use:
         <ol>
             <li>forms that require a case or</li>
