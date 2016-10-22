@@ -68,8 +68,10 @@ from corehq.apps.app_manager.models import (
     DeleteFormRecord,
     Form,
     FormActions,
+    FormActionCondition,
     FormDatum,
     FormLink,
+    UpdateCaseAction,
     IncompatibleFormTypeException,
     ModuleNotFoundException,
     load_case_reserved_words,
@@ -339,12 +341,10 @@ def new_form(request, domain, app_id, module_id):
 
     if toggles.APP_MANAGER_V2.enabled(domain):
         case_action = request.POST.get('case_action', 'none')
-        if case_action != 'none':
+        if case_action == 'update':
             form.requires = 'case'
-            if case_action == 'open':
-                pass    # TODO APP MANAGER V2
-            else:
-                pass    # TODO APP MANAFER V2
+            form.actions.update_case = UpdateCaseAction(
+                condition=FormActionCondition(type='always'))
 
     app.save()
     # add form_id to locals()
