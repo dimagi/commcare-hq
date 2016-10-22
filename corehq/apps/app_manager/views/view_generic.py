@@ -45,7 +45,7 @@ from django_prbac.utils import has_privilege
 
 @retry_resource(3)
 def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
-                 copy_app_form=None):
+                 copy_app_form=None, release_manager=False):
     """
     This is the main view for the app. All other views redirect to here.
 
@@ -123,6 +123,10 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         module_context = get_module_view_context(app, module, lang)
         context.update(module_context)
     elif app:
+
+        # todo APP MANAGER V2 update template here
+        # if release_manager:
+
         template = "app_manager/v1/app_view.html"
         context.update(get_app_view_context(request, app))
     else:
