@@ -91,13 +91,12 @@ class CaseListFilterOptions(EmwfOptionsView):
         locations_own_cases = (LocationType.objects
                                .filter(domain=self.domain, shares_cases=True)
                                .exists())
-        sources = [
-            (self.get_static_options_size, self.get_static_options),
-            (self.get_sharing_groups_size, self.get_sharing_groups),
-        ]
+        sources = []
         if locations_own_cases:
             sources.append((self.get_locations_size, self.get_locations))
         if self.request.can_access_all_locations:
+            sources.append((self.get_static_options_size, self.get_static_options))
+            sources.append((self.get_sharing_groups_size, self.get_sharing_groups))
             sources.append((self.get_groups_size, self.get_groups))
         # appending this in the end to avoid long list of users delaying
         # locations, groups etc in the list on pagination

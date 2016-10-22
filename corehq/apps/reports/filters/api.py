@@ -174,10 +174,11 @@ class LocationRestrictedEmwfOptionsView(EmwfOptionsView):
 
     @property
     def data_sources(self):
-        sources = [(self.get_static_options_size, self.get_static_options)]
+        sources = []
         if toggles.LOCATIONS_IN_REPORTS.enabled(self.domain):
             sources.append((self.get_locations_size, self.get_locations))
         if self.request.can_access_all_locations:
+            sources.append((self.get_static_options_size, self.get_static_options))
             sources.append((self.get_groups_size, self.get_groups))
         # appending this in the end to avoid long list of users delaying
         # locations, groups etc in the list on pagination
