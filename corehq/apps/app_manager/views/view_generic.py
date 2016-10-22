@@ -131,7 +131,10 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         context.update(get_app_view_context(request, app))
     else:
         from corehq.apps.dashboard.views import NewUserDashboardView
-        return HttpResponseRedirect(reverse(NewUserDashboardView.urlname, args=[domain]))
+        if toggles.APP_MANAGER_V2.enabled(domain):
+            context.update(NewUserDashboardView.get_page_context(domain))
+        else:
+            return HttpResponseRedirect(reverse(NewUserDashboardView.urlname, args=[domain]))
 
     # update multimedia context for forms and modules.
     menu_host = form or module
