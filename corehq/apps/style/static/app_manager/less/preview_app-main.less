@@ -1,13 +1,14 @@
 @import '../../style/less/_hq/includes/variables.less';
 @import '../../style/less/_hq/includes/mixins.less';
 
-/* this file is included in app_manager/v1/apps_base.html and is relevant to the
+/* this file is included in app_manager/v1/apps_base.html
+AND app_manager/v2/apps_base.html and is relevant to the
 EXTERNAL styling of the preview app container in app manager.
 
 For the styling of the app preview content and layout, please check out
 preview_app/less */
 
-
+@preview-phone-wrapper-width: 300px;
 @preview-phone-width: 250px;
 @preview-phone-height: 444px;
 @preview-phone-case-offset-y: 40px;
@@ -18,21 +19,15 @@ preview_app/less */
   min-height: @preview-phone-height + 150;
 }
 
-.preview-phone-window {
-   height: @preview-phone-height;
-   width: @preview-phone-width;
-   background-color: white;
-}
-
 .preview-phone-container {
-  position: fixed;
   box-sizing: border-box;
   background-color: black;
   .border-top-radius(30px);
   .border-bottom-radius(30px);
-  top: 110px;
   right: -930px;
-  overflow: hidden;
+  position: absolute;
+  top: 50%;
+  margin-top: -(@preview-phone-height + (@preview-phone-case-offset-y * 2))/2;
 
   width: @preview-phone-width + (@preview-phone-case-offset-x * 2);
   height: @preview-phone-height + (@preview-phone-case-offset-y * 2);
@@ -40,20 +35,57 @@ preview_app/less */
   padding-left: @preview-phone-case-offset-x;
 
   .box-shadow(0 0px 10px 3px rgba(0,0,0,.45));
-
-  z-index: @zindex-app-preview;
-
   .transition(all 1s);
+}
 
-  &.small-height {
-    top: 20px;
-    position: absolute;
-  }
+#js-appmanager-body.offset-for-preview {
+  margin-right: @preview-phone-wrapper-width;
+}
+
+#hq-messages-container > div > div > .alert {
+  .transition(margin-right 1s);
+}
+
+#hq-messages-container.offset-for-preview > div > div > .alert {
+  margin-right: @preview-phone-wrapper-width + 10;
+}
+
+.preview-phone-wrapper {
+  box-sizing: border-box;
+  top: 0;
+  right: 0;
+  position: fixed;
+  z-index: @zindex-app-preview;
+  width: 0;
+  background-color: rgba(50, 50, 50, .3);
+  .transition(width 1s);
+  overflow: hidden;
+
 
   &.open {
-    right: 30px;
+    width: @preview-phone-wrapper-width;
+    .box-shadow(0 0px 10px 3px rgba(0,0,0,.45));
+  }
+
+  &.open.small-height  {
+    z-index: @zindex-app-preview + 2;
+    > .preview-phone-container {
+      top: 20px;
+      margin-top: 0;
+    }
+  }
+  &.open > .preview-phone-container {
+    right: 10px;
   }
 }
+
+.preview-phone-window {
+   height: @preview-phone-height;
+   width: @preview-phone-width;
+   background-color: white;
+}
+
+
 
 .preview-icon {
   font-size: 1.5rem;
@@ -64,7 +96,7 @@ preview_app/less */
   .transition(all 1s);
 }
 
-.btn-preview-close {
+.btn-preview-toggle {
   @preview-close-size: 30px;
   margin: 0 auto;
   display: block;
@@ -81,4 +113,8 @@ preview_app/less */
   font-size: 1.6rem;
   padding-left: 1px;
   .transition(all .6s);
+
+  position: absolute;
+  left: -5px;
+  top: -5px;
 }
