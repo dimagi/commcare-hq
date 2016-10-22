@@ -309,6 +309,7 @@
             {% endblock messages %}
             {% block content %}{% endblock content %}
         </div>
+        {% block footer %}
         <footer>
             <nav id="hq-footer"
                  role="navigation"
@@ -347,7 +348,7 @@
                 </div>
             </nav>
         </footer>
-
+        {% endblock %}
         {# modals #}
         {% block modals %}{% endblock modals %}
 
