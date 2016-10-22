@@ -1,4 +1,4 @@
-{% extends "app_manager/v1/managed_app.html" %}
+{% extends "app_manager/v2/managed_app.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -9,32 +9,33 @@
     <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
     <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
     <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
-    {% include "app_manager/v1/partials/xpathValidator.html" %}
+    {% include "app_manager/v2/partials/xpathValidator.html" %}
 {% endblock %}
 {% block js-inline %}{{ block.super }}
-    {% include "app_manager/v1/partials/nav_menu_media_js_common.html" %}
-    {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.menu %}
-    {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.case_list_menu_item qualifier='case_list-menu_item_' %}
+    {% include "app_manager/v2/partials/nav_menu_media_js_common.html" %}
+    {% include "app_manager/v2/partials/nav_menu_media_js.html" with item=multimedia.menu %}
+    {% include "app_manager/v2/partials/nav_menu_media_js.html" with item=multimedia.case_list_menu_item qualifier='case_list-menu_item_' %}
     <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
     <script src="{% static 'app_manager/js/shadow-module-settings.js' %}"></script>
 
     {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
         {% for detail in details %}
             {% if detail.type == 'case' %}
-                {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.case_list_lookup qualifier='case-list-lookup'|add:detail.type %}
+                {% include "app_manager/v2/partials/nav_menu_media_js.html" with item=multimedia.case_list_lookup qualifier='case-list-lookup'|add:detail.type %}
             {% else %}
-                {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.product_list_lookup qualifier='case-list-lookup'|add:detail.type %}
+                {% include "app_manager/v2/partials/nav_menu_media_js.html" with item=multimedia.product_list_lookup qualifier='case-list-lookup'|add:detail.type %}
             {% endif %}
         {% endfor %}
     {% endif %}
 
     {% if case_list_form_options %}
-        {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.case_list_form qualifier='case_list_form_' %}
+        {% include "app_manager/v2/partials/nav_menu_media_js.html" with item=multimedia.case_list_form qualifier='case_list_form_' %}
     {% endif %}
     {% include 'style/partials/key_value_mapping.html' %}
-    {% include 'app_manager/v1/partials/graph_configuration_modal.html' %}
+    {% include 'app_manager/v2/partials/graph_configuration_modal.html' %}
 
     <script>
+        {% if module.case_type != "" %}
         $(function () {
             var state = hqImport('app_manager/js/detail-screen-config.js').state;
             var DetailScreenConfig = hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig;
@@ -86,6 +87,7 @@
                 }
             }
         });
+        {% endif %}
         $(function () {
             var moduleType = {{ module.module_type|JSON }};
             var showCaseTypeError = function(message) {
@@ -102,6 +104,15 @@
                 if (value !== valueNoSpaces) {
                     $(this).val(valueNoSpaces);
                 }
+
+                if (!valueNoSpaces) {
+                    $(this).closest('.form-group').addClass('has-error');
+                    showCaseTypeError(
+                        gettext("Case type is required.")
+                    );
+                    return;
+                }
+
                 if (!valueNoSpaces.match(/^[\w-]*$/g)) {
                     $(this).closest('.form-group').addClass('has-error');
                     showCaseTypeError(
@@ -112,7 +123,6 @@
                     showCaseTypeError(
                         gettext("'commcare-user' is a reserved case type. Please change the case type")
                     );
-
                 } else {
                     $(this).closest('.form-group').removeClass('has-error');
                     hideCaseTypeError();
@@ -231,60 +241,66 @@
 {% endblock %}
 
 {% block form-view %}
-    {% include 'app_manager/v1/partials/module_view_heading.html' %}
+{% include 'app_manager/v2/partials/module_view_heading.html' %}
 <div class="tabbable">
-<ul class="nav nav-tabs" id="module-view-tabs">
-    {% block tab-headers %}
-    <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
-    {% if module.module_type != 'shadow' %}
-    <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
-    {% endif %}
-    {% for detail in details %}
-    <li>
-        <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">
-            {{ detail.label }}
-        </a>
-    </li>
-    {% if detail.long %}
-    <li>
-        <a href="#{{ detail.type }}-detail-screen-detail-config-tab" data-toggle="tab">
-            {{ detail.detail_label }}
-        </a>
-    </li>
-    {% endif %}
-    {% endfor %}
-    {% endblock %}{# endblock tab-headers #}
-</ul>
-<div class="spacer"></div>
+
+{% if module.case_type != "" %}
+  <ul class="nav nav-tabs" id="module-view-tabs">
+      {% block tab-headers %}
+      <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
+      {% if module.module_type == 'shadow' %}
+        <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
+      {% endif %}
+      {% if module.case_type != "" %}
+        {% for detail in details %}
+          <li>
+              <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">
+                  {{ detail.label }}
+              </a>
+          </li>
+          {% if detail.long %}
+            <li>
+                <a href="#{{ detail.type }}-detail-screen-detail-config-tab" data-toggle="tab">
+                    {{ detail.detail_label }}
+                </a>
+            </li>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+      {% endblock %}{# endblock tab-headers #}
+  </ul>
+  <div class="spacer"></div>
+{% endif %}
+
 <div class="tab-content">
     {% block tab-content %}
-    <div class="tab-pane active" id="module-settings">
-        {% include "app_manager/v1/partials/module_view_settings.html" %}
-    </div>
-    <div class="tab-pane" id="case-settings">
-        {% include "app_manager/v1/partials/module_view_case_management.html" %}
-    </div>
-
-    {% for detail in details %}
-    <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
-        {% include 'app_manager/v1/partials/case_list.html' %}
-    </div>
-    {% if detail.long %}
-    <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">
-        {% include 'app_manager/v1/partials/case_detail.html' %}
-    </div>
+      <div class="tab-pane active" id="module-settings">
+          {% include "app_manager/v2/partials/module_view_settings.html" %}
+      </div>
     {% endif %}
-    {% endfor %}
+
+    {% if module.case_type != "" %}
+      {% for detail in details %}
+        <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
+            {% include 'app_manager/v2/partials/case_list.html' %}
+        </div>
+        {% if detail.long %}
+          <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">
+              {% include 'app_manager/v2/partials/case_detail.html' %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
     {% endblock %}{# endblock tab-content #}
 </div>
 </div>
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-{% include "app_manager/v1/partials/nav_menu_media_modals.html" %}
+{% include "app_manager/v2/partials/nav_menu_media_modals.html" %}
 {% endblock modals %}
 
 {% block breadcrumbs %}
     {{ block.super }}
-    {% include 'app_manager/v1/partials/module_view_breadcrumbs.html' %}
+    {% include 'app_manager/v2/partials/module_view_breadcrumbs.html' %}
 {% endblock %}
