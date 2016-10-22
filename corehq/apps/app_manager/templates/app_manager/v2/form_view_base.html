@@ -1,4 +1,4 @@
-{% extends "app_manager/v1/managed_app.html" %}
+{% extends "app_manager/v2/managed_app.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% load compress %}
@@ -50,10 +50,10 @@
         <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
     {% endif %}
 
-    {% include "app_manager/v1/partials/form_filter/value-or-none-ui.html" %}
-    {% include "app_manager/v1/partials/xpathValidator.html" %}
-    {% include "app_manager/v1/partials/nav_menu_media_js_common.html" %}
-    {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.menu %}
+    {% include "app_manager/v2/partials/form_filter/value-or-none-ui.html" %}
+    {% include "app_manager/v2/partials/xpathValidator.html" %}
+    {% include "app_manager/v2/partials/nav_menu_media_js_common.html" %}
+    {% include "app_manager/v2/partials/nav_menu_media_js.html" with item=multimedia.menu %}
     {% if allow_form_workflow %}
         <script src="{% static 'app_manager/js/form_workflow.js' %}"></script>
     {% endif %}
@@ -356,7 +356,7 @@
         <br>
         <div class="tab-content">
             {% if nav_form %}
-                {% include "app_manager/v1/partials/form_tab_settings.html" %}
+                {% include "app_manager/v2/partials/form_tab_settings.html" %}
             {% endif %}
 
             <div class="tab-pane" id="case-configuration">
@@ -373,7 +373,7 @@
                     </div>
                     <div class="casexml" id="casexml_home">
                         {% block case_management_content %}
-                            {% include 'app_manager/v1/partials/case_config.html' %}
+                            {% include 'app_manager/v2/partials/case_config.html' %}
                         {% endblock %}
                     </div>
                 {% else %}
@@ -424,7 +424,7 @@
                                 </p>
                                 </div>
                             {% endif %}
-                            {% include 'app_manager/v1/partials/usercase_config.html' %}
+                            {% include 'app_manager/v2/partials/usercase_config.html' %}
                         {% endblock %}
                     </div>
                 {% else %}
@@ -435,21 +435,21 @@
             </div>
 
             {% if form.form_type == 'advanced_form' and module.has_schedule %}
-                {% include "app_manager/v1/partials/form_tab_visit_scheduler.html" %}
+                {% include "app_manager/v2/partials/form_tab_visit_scheduler.html" %}
             {% endif %}
-            {% include "app_manager/v1/partials/form_tab_advanced.html" %}
+            {% include "app_manager/v2/partials/form_tab_advanced.html" %}
         </div>
     </div>
     <div id="questions"></div>
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-{% include "app_manager/v1/partials/nav_menu_media_modals.html" %}
+{% include "app_manager/v2/partials/nav_menu_media_modals.html" %}
 {% endblock modals %}
 
 {% block breadcrumbs %}
     {{ block.super }}
-    {% include 'app_manager/v1/partials/module_view_breadcrumbs.html' %}
+    {% include 'app_manager/v2/partials/module_view_breadcrumbs.html' %}
     <li>
         <a class="view-form" href="{% url "view_form" domain app.id module.id form.id %}">
             <span class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</span>
