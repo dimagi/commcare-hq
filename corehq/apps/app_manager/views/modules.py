@@ -838,7 +838,8 @@ def new_module(request, domain, app_id):
                         'app_manager', 'xml', 'registration_form.xml')) as f:
                     register.source = f.read()
                 register.actions.open_case = OpenCaseAction(
-                    condition=FormActionCondition(type='always'))
+                    condition=FormActionCondition(type='always'),
+                    name_path=u'/data/name')
                 register.actions.update_case = UpdateCaseAction(
                     condition=FormActionCondition(type='always'))
 
