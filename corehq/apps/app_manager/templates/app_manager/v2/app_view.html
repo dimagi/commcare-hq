@@ -7,7 +7,12 @@
     {% include 'analytics/fullstory.html' %}
 {% endblock %}
 {% block js %}{{ block.super }}
-    <script src="{% static 'app_manager/js/commcaresettings.js' %}"></script>
+
+    {#  todo separate tempaltes #}
+    {% if not release_manager %}
+        <script src="{% static 'app_manager/js/commcaresettings.js' %}"></script>
+    {% endif %}
+
     <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
     <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
     <script src="{% static 'app_manager/js/password_setter.jquery.js' %}"></script>
@@ -46,139 +51,112 @@
             }
         };
 
+        {# todo separate templates #}
+        {% if not release_manager %}
         $(function () {
             var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
             COMMCAREHQ.appView.settings = new CommcareSettings(COMMCAREHQ.appView.settings);
             $('#commcare-settings').koApplyBindings(COMMCAREHQ.appView.settings);
         });
-
-        {% if not app.is_remote_app %}
-        $(function () {
-            var multimedia_tab = (function () {
-                var self = {};
-                self.load_state = ko.observable(null);
-                self.multimedia_page_html = ko.observable('');
-                self.load_if_necessary = function () {
-                    if (!self.load_state() || self.load_state() === 'error') {
-                        self.load_state('loading');
-                        $.ajax({
-                            url: '{% url 'app_multimedia_ajax' domain app.get_id %}',
-                            success: function(content) {
-                                self.load_state('loaded');
-                                self.multimedia_page_html(content);
-                            },
-                            error: function() {
-                                alert('Oops, there was a problem loading this section. Please try again.');
-                                self.load_state('error');
-                            },
-                        });
-                    }
-                };
-                return self;
-            }());
-            $("#multimedia").koApplyBindings(multimedia_tab);
-            $('#demand-multimedia').on('shown.bs.tab', function () {
-                if (multimedia_tab.load_state() === null) {
-                    multimedia_tab.load_if_necessary();
-                }
-            });
-        });
         {% endif %}
 
-        $(function () {
-            var state = "",
-                $main = $("#releases"),
-                $loading = $main.find(".hq-loading").remove(),
-                $loadingError = $main.find(".hq-loading-error").remove();
+        {% if not app.is_remote_app %}
+          {# todo separate templates #}
+          {% if not release_manager %}
+          $(function () {
+              var multimedia_tab = (function () {
+                  var self = {};
+                  self.load_state = ko.observable(null);
+                  self.multimedia_page_html = ko.observable('');
+                  self.load_if_necessary = function () {
+                      if (!self.load_state() || self.load_state() === 'error') {
+                          self.load_state('loading');
+                          $.ajax({
+                              url: '{% url 'app_multimedia_ajax' domain app.get_id %}',
+                              success: function(content) {
+                                  self.load_state('loaded');
+                                  self.multimedia_page_html(content);
+                              },
+                              error: function() {
+                                  alert('Oops, there was a problem loading this section. Please try again.');
+                                  self.load_state('error');
+                              },
+                          });
+                      }
+                  };
+                  return self;
+              }());
+              $("#multimedia").koApplyBindings(multimedia_tab);
+              $('#demand-multimedia').on('shown.bs.tab', function () {
+                  if (multimedia_tab.load_state() === null) {
+                      multimedia_tab.load_if_necessary();
+                  }
+              });
+          });
+          {% endif %}
+        {% endif %}
 
-            $('#demand-releases').on('shown.bs.tab', function () {
-                if (state === "loading" || state === "loaded") {
-                    return;
+      </script>
+      {# todo separate templates #}
+      {% if not release_manager %}
+        {% include 'hqmedia/partials/multimedia_init.html' %}
+        <script>
+            var refs = {{ refs|JSON }};
+            var media_info = {{ media_info|JSON }};
+            var image_refs = {};
+            for (var slug in refs) {
+                image_refs[slug] = new ImageReference(refs[slug]);
+                image_refs[slug].upload_controller = HQMediaUploaders[slug];
+                image_refs[slug].setObjReference(media_info[slug]);
+            }
+            function urlFromLogo(slug) {
+                return image_refs[slug].url;
+            }
+            function thumbUrlFromLogo(slug) {
+                return image_refs[slug].thumb_url;
+            }
+            function triggerUploadForLogo(slug) {
+                if(image_refs[slug]) {
+                    image_refs[slug].triggerUpload();
                 }
-                state = "loading";
-
-                // If the content takes a noticeable amount of time to load, show a spinner
-                var showSpinner = true;
-                _.delay(function() {
-                    if (showSpinner) {
-                        $main.html($loading.html());
+            }
+            function uploadCompleteForLogo(slug, response) {
+                if(image_refs[slug]) {
+                    image_refs[slug].uploadComplete(null, null, response);
+                }
+            }
+            function getPathFromSlug(slug) {
+                return image_refs[slug].path;
+            }
+            function removeLogo(slug) {
+                $.post(
+                    '{% url "hqmedia_remove_logo" domain app.id %}',
+                    {
+                        logo_slug: slug
+                    },
+                    function(data, status) {
+                        if(status == 'success'){
+                            image_refs[slug].url("");
+                        }
                     }
-                }, 100);
-
-                // Load the content
-                $.ajax({
-                    url: "{% url 'release_manager_ajax' domain app.get_id %}?limit={{fetchLimit}}",
-                    success: function(content) {
-                        state = "loaded";
-                        showSpinner = false;
-                        $main.html(content);
-                    },
-                    error: function() {
-                        state = "error";
-                        showSpinner = false;
-                        $main.html($loadingError.html());
-                    },
-                });
+                );
+            }
+        </script>
+        <script>
+            $(function () {
+                var langs = {{ app.langs|JSON }};
+                var saveURL = "{% url "edit_app_langs" domain app.id %}";
+                var validate = !{{ app.is_remote_app|BOOL }};
+                var SupportedLanguages = hqImport('app_manager/js/supported-languages.js').SupportedLanguages;
+                $("#supported-languages").koApplyBindings(new SupportedLanguages({
+                    langs: langs,
+                    saveURL: saveURL,
+                    validate: validate
+                }));
             });
-        });
+        </script>
+      {% endif %}
 
-    </script>
-    {% include 'hqmedia/partials/multimedia_init.html' %}
-    <script>
-        var refs = {{ refs|JSON }};
-        var media_info = {{ media_info|JSON }};
-        var image_refs = {};
-        for (var slug in refs) {
-            image_refs[slug] = new ImageReference(refs[slug]);
-            image_refs[slug].upload_controller = HQMediaUploaders[slug];
-            image_refs[slug].setObjReference(media_info[slug]);
-        }
-        function urlFromLogo(slug) {
-            return image_refs[slug].url;
-        }
-        function thumbUrlFromLogo(slug) {
-            return image_refs[slug].thumb_url;
-        }
-        function triggerUploadForLogo(slug) {
-            if(image_refs[slug]) {
-                image_refs[slug].triggerUpload();
-            }
-        }
-        function uploadCompleteForLogo(slug, response) {
-            if(image_refs[slug]) {
-                image_refs[slug].uploadComplete(null, null, response);
-            }
-        }
-        function getPathFromSlug(slug) {
-            return image_refs[slug].path;
-        }
-        function removeLogo(slug) {
-            $.post(
-                '{% url "hqmedia_remove_logo" domain app.id %}',
-                {
-                    logo_slug: slug
-                },
-                function(data, status) {
-                    if(status == 'success'){
-                        image_refs[slug].url("");
-                    }
-                }
-            );
-        }
-    </script>
-    <script>
-        $(function () {
-            var langs = {{ app.langs|JSON }};
-            var saveURL = "{% url "edit_app_langs" domain app.id %}";
-            var validate = !{{ app.is_remote_app|BOOL }};
-            var SupportedLanguages = hqImport('app_manager/js/supported-languages.js').SupportedLanguages;
-            $("#supported-languages").koApplyBindings(new SupportedLanguages({
-                langs: langs,
-                saveURL: saveURL,
-                validate: validate
-            }));
-        });
-    </script>
     {% endif %}
     {% if app.doc_type == "Application" %}
         <script>
@@ -204,6 +182,9 @@
             ga_track_event('App Builder', 'Download Multimedia');
         });
     </script>
+
+    {# todo separate templates #}
+    {% if not release_manager %}
     <script>
         // Set up typeahead for domain names
         $(function(){
@@ -212,6 +193,7 @@
             });
         });
     </script>
+    {% endif %}
 {% endblock %}
 
 {% block title %}
