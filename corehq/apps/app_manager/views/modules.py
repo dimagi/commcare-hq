@@ -47,13 +47,16 @@ from corehq.apps.app_manager.models import (
     DeleteModuleRecord,
     DetailColumn,
     DetailTab,
+    FormActionCondition,
     Module,
     ModuleNotFoundException,
+    OpenCaseAction,
     ParentSelect,
     ReportModule,
     ShadowModule,
     SortElement,
     ReportAppConfig,
+    UpdateCaseAction,
     FixtureSelect,
     DefaultCaseSearchProperty)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
@@ -825,15 +828,21 @@ def new_module(request, domain, app_id):
         module = app.add_module(Module.new_module(name, lang))
         module_id = module.id
 
-        if not toggles.APP_MANAGER_V2.enabled(domain):
-            app.new_form(module_id, "Untitled Form", lang)
-        elif module_type == 'case':
-            register = app.new_form(module_id, "Register", lang)
-            register.case_action = 'open'  # TODO: this doesn't work
-            followup = app.new_form(module_id, "Followup", lang)
-            followup.case_action = 'update'  # TODO: this doesn't work
+        if toggles.APP_MANAGER_V2.enabled(domain):
+            if module_type == 'case':
+                # registration form
+                register = app.new_form(module_id, "Register", lang)
+                register.actions.open_case = OpenCaseAction(
+                    condition=FormActionCondition(type='always'))
+                register.actions.update_case = UpdateCaseAction(
+                    condition=FormActionCondition(type='always'))
 
-            if toggles.APP_MANAGER_V2.enabled(domain):
+                # one followup form
+                followup = app.new_form(module_id, "Followup", lang)
+                followup.requires = "case"
+                followup.actions.update_case = UpdateCaseAction(
+                    condition=FormActionCondition(type='always'))
+
                 # make case type unique across app
                 app_case_types = set(
                     [module.case_type for module in app.modules if
@@ -844,11 +853,10 @@ def new_module(request, domain, app_id):
                     suffix = suffix + 1
                     module.case_type = 'record-{}'.format(suffix)
             else:
-                module.case_type = 'case'  # TODO: make unique across domain
-
+                form = app.new_form(module_id, "Survey", lang)
+                form.case_action = 'none'
         else:
-            form = app.new_form(module_id, "Survey", lang)
-            form.case_action = 'none'
+            app.new_form(module_id, "Untitled Form", lang)
 
         app.save()
         response = back_to_main(request, domain, app_id=app_id, module_id=module_id)
