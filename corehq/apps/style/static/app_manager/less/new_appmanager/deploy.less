@@ -1,0 +1,40 @@
+// Deploy page
+#releases-table {
+  .build {
+    &:hover {
+      color: black !important;
+
+      .edit-comment-pencil {
+        display: inline;
+      }
+    }
+
+    &.build-unreleased {
+      color: #888;
+    }
+
+    &.build-latest-release {
+      background-color: #EFEFFF;
+
+      .build-is-released::after{
+        content: "Latest";
+      }
+    }
+
+    .edit-comment-pencil {
+      display: none;
+      margin-left: 5px;
+      position: absolute;
+    }
+  }
+
+  .pending img {
+    width: 20px;
+    height: 20px;
+  }
+
+  .released {
+    color: #ffff00;
+    text-shadow: 1px 0px #ffa500, -1px 0px #ffa500, 0px 1px #ffa500, 0px -1px #ffa500;
+  }
+}
