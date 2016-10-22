@@ -837,12 +837,6 @@ def new_module(request, domain, app_id):
                 register.actions.update_case = UpdateCaseAction(
                     condition=FormActionCondition(type='always'))
 
-                # one followup form
-                followup = app.new_form(module_id, "Followup", lang)
-                followup.requires = "case"
-                followup.actions.update_case = UpdateCaseAction(
-                    condition=FormActionCondition(type='always'))
-
                 # make case type unique across app
                 app_case_types = set(
                     [module.case_type for module in app.modules if
