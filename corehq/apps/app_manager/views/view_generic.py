@@ -30,6 +30,7 @@ from corehq.apps.app_manager.util import (
     get_all_case_properties,
     get_commcare_versions,
     get_usercase_properties,
+    get_app_manager_template,
 )
 from corehq import toggles
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
@@ -76,7 +77,12 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     if app and app.application_version == APP_V1:
         _assert = soft_assert()
         _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
-        return render(request, 'app_manager/v1/no_longer_supported.html', {
+        template = get_app_manager_template(
+            domain,
+            'app_manager/v1/no_longer_supported.html',
+            'app_manager/v2/no_longer_supported.html',
+        )
+        return render(request, template, {
             'domain': domain,
             'app': app,
         })
@@ -117,7 +123,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
 
         context.update(form_context)
     elif module:
-        template = get_module_template(module)
+        template = get_module_template(domain, module)
         # make sure all modules have unique ids
         app.ensure_module_unique_ids(should_save=True)
         module_context = get_module_view_context(app, module, lang)
@@ -127,7 +133,11 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         # todo APP MANAGER V2 update template here
         # if release_manager:
 
-        template = "app_manager/v1/app_view.html"
+        template = get_app_manager_template(
+            domain,
+            'app_manager/v1/app_view.html',
+            'app_manager/v2/app_view.html',
+        )
         context.update(get_app_view_context(request, app))
     else:
         from corehq.apps.dashboard.views import NewUserDashboardView
