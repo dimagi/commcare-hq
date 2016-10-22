@@ -6,6 +6,14 @@
 {% load i18n %}
 {% load compress %}
 
+{% block page_sidebar_classes %}
+appmanager-sidebar
+{% endblock %}
+
+{% block page_content_classes %}
+appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% endif %}
+{% endblock %}
+
 {% block title %}{% trans "Applications" %}{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
@@ -17,25 +25,33 @@
   {% endcompress %}
 
   {% if less_debug %}
-  <link type="text/less"
-        rel="stylesheet"
-        media="all"
-        href="{% static 'app_manager/less/app_manager.debug.less' %}" />
-  <link type="text/less"
-        rel="stylesheet"
-        media="all"
-        href="{% static 'app_manager/less/preview_app.debug.less' %}"/>
-  {% else %}
-  {% compress css %}
-      <link type="text/less"
-            rel="stylesheet"
-            media="all"
-            href="{% static 'app_manager/less/app_manager.less' %}" />
-      <link type="text/less"
-            rel="stylesheet"
-            media="all"
-            href="{% static 'app_manager/less/preview_app.less' %}"/>
-  {% endcompress %}
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'app_manager/less/font-workflow.less' %}" />
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'app_manager/less/new_appmanager.debug.less' %}" />
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'app_manager/less/preview_app.debug.less' %}"/>
+    {% else %}
+    {% compress css %}
+        <link type="text/less"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'app_manager/less/font-workflow.less' %}" />
+        <link type="text/less"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'app_manager/less/new_appmanager.less' %}" />
+        <link type="text/less"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'app_manager/less/preview_app.less' %}"/>
+    {% endcompress %}
   {% endif %}
 
 {% endblock %}
@@ -90,17 +106,13 @@
        $('.appmanager-content').fadeIn();
        $('.appmanager-loading').fadeOut();
     });
+
+    hqLayout.utils.setIsAppbuilderResizing(true);
+
     </script>
 {% endblock %}
 
-{% block page_breadcrumbs %}
-    {% if not formdesigner %}
-        <ul class="breadcrumb breadcrumb-hq-section">
-            <li>{% trans 'Applications' %}</li>
-            {% block breadcrumbs %}{% endblock %}
-        </ul>
-    {% endif %}
-{% endblock %}
+{% block page_breadcrumbs %}{% endblock %}
 
 {% block content %}
   {{ block.super }}
@@ -136,7 +148,7 @@
                 {% endblocktrans %}
             </p>
             <br>
-            {% include 'app_manager/v1/partials/new_app_buttons.html' %}
+            {% include 'app_manager/v2/partials/new_app_buttons.html' %}
         </div>
     {% endif %}
 </div>
