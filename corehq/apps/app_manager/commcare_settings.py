@@ -43,7 +43,13 @@ def _load_commcare_settings_layout(doc_type, domain):
         for setting in _load_custom_commcare_settings(domain)
     ])
     path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
-    with open(os.path.join(path, 'v1/commcare-settings-layout.yaml')) as f:
+    with open(os.path.join(
+            path,
+            get_app_manager_template(
+                domain,
+                'v1/commcare-settings-layout.yaml',
+                'v2/commcare-settings-layout.yaml'
+            ))) as f:
         layout = yaml.load(f)
 
     for section in layout:
