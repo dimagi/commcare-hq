@@ -135,7 +135,9 @@ def get_app_view_context(request, app):
     is_cloudcare_allowed = has_privilege(request, privileges.CLOUDCARE)
     context = {}
 
-    settings_layout = copy.deepcopy(get_commcare_settings_layout()[app.get_doc_type()])
+    settings_layout = copy.deepcopy(
+        get_commcare_settings_layout(request.domain)[app.get_doc_type()]
+    )
     for section in settings_layout:
         new_settings = []
         for setting in section['settings']:

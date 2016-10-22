@@ -807,6 +807,6 @@ def get_app_manager_template(domain, v1, v2):
     :param v2: String, template name for V2
     :return: String, either v1 or v2 depending on toggle
     """
-    if toggles.APP_MANAGER_V2.enabled(domain):
+    if domain is not None and toggles.APP_MANAGER_V2.enabled(domain):
         return v2
     return v1
