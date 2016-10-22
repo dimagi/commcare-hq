@@ -322,12 +322,18 @@ def download_media_profile(request, domain, app_id):
 
 
 @safe_download
-def download_index(request, domain, app_id, template="app_manager/v1/download_index.html"):
+def download_index(request, domain, app_id):
     """
     A landing page, mostly for debugging, that has links the jad and jar as well as
     all the resource files that will end up zipped into the jar.
 
     """
+    template = get_app_manager_template(
+        domain,
+        "app_manager/v1/download_index.html",
+        "app_manager/v2/download_index.html",
+    )
+
     files = []
     try:
         files = source_files(request.app)
