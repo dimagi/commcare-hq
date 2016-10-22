@@ -64,9 +64,11 @@
     <script src="{% static 'style/js/ui-element.js' %}"></script>
     <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
-    {% if request|toggle_enabled:"PREVIEW_APP" %}
+
+
     <script src="{% static 'app_manager/js/preview_app.js' %}"></script>
-    {% endif %}
+
+
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -79,14 +81,10 @@
         }).on('hide.bs.modal', function () {
             window.location = "{% url "corehq.apps.app_manager.views.view_app" domain %}";
         });
-        {% if request|toggle_enabled:"PREVIEW_APP" %}
-            var previewApp = hqImport('app_manager/js/preview_app.js');
-            previewApp.initPreviewWindow(
-                    '#js-appmanager-preview',
-                    '#js-appmanager-body',
-                    '#js-toggle-app-preview'
-            );
-        {% endif %}
+
+        var previewApp = hqImport('app_manager/js/preview_app.js');
+        previewApp.initPreviewWindow(hqLayout);
+
     });
     $(function () {
        $('.appmanager-content').fadeIn();
@@ -104,10 +102,12 @@
     {% endif %}
 {% endblock %}
 
+{% block content %}
+  {{ block.super }}
+  {% include 'app_manager/v2/partials/preview_app.html'%}
+{% endblock %}
+
 {% block page_content %}
-{% if request|toggle_enabled:"PREVIEW_APP" %}
-{% include 'app_manager/v1/partials/preview_app.html'%}
-{% endif %}
 <div class="appmanager-loading-container">
   <div class="appmanager-loading appmanager-loading-body">
     <i class="fa fa-spin fa-spinner"></i>
