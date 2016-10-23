@@ -11,6 +11,13 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
 from corehq.apps.export.export import get_export_download, get_export_size
+from corehq.apps.export.filters import (
+    FormSubmittedByFilter,
+    OwnerFilter,
+    LastModifiedByFilter,
+    OR
+)
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter
@@ -92,6 +99,7 @@ from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION, has_permission_to_view_report
+from corehq.apps.es.users import UserES
 from corehq.util.couch import get_document_or_404_lite
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.soft_assert import soft_assert
@@ -1746,9 +1754,23 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
     def _get_export(self, domain, export_id):
         return FormExportInstance.get(export_id)
 
+    def scope_filter(self):
+        # Filter to be applied in AND with filters for export to add scope for restricted user
+        # Restricts to forms submitted by users at accessible locations
+        accessible_location_ids = (
+            SQLLocation.active_objects
+            .accessible_to_user(self.request.domain, self.request.couch_user)
+        ).location_ids()
+        accessible_users = UserES().users_at_locations_and_descendants(accessible_location_ids)
+        accessible_user_ids = [user['_id'] for user in accessible_users]
+        return FormSubmittedByFilter(accessible_user_ids)
+
     def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
         filter_form = self._get_filter_form(filter_form_data)
-        form_filters = filter_form.get_form_filter(mobile_user_and_group_slugs)
+        form_filters = filter_form.get_form_filter(mobile_user_and_group_slugs,
+                                                   self.request.can_access_all_locations)
+        if not self.request.can_access_all_locations:
+            form_filters.append(self.scope_filter())
         return form_filters
 
 
@@ -1766,10 +1788,26 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
     def _get_export(self, domain, export_id):
         return CaseExportInstance.get(export_id)
 
+    def scope_filter(self):
+        # Filter to be applied in AND with filters for export to add scope for restricted user
+        # Restricts to cases owned by accessible locations and their respective users Or Cases
+        # Last Modified by accessible users
+        accessible_location_ids = (
+            SQLLocation.active_objects
+            .accessible_to_user(self.request.domain, self.request.couch_user)
+        ).location_ids()
+        accessible_users = UserES().users_at_locations_and_descendants(accessible_location_ids)
+        accessible_user_ids = [user['_id'] for user in accessible_users]
+        accessible_ids = accessible_user_ids + list(accessible_location_ids)
+        return OR(OwnerFilter(accessible_ids), LastModifiedByFilter(accessible_user_ids))
+
     def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
         print 'fetching filters for export'
         filter_form = self._get_filter_form(filter_form_data)
-        form_filters = filter_form.get_case_filter(mobile_user_and_group_slugs)
+        form_filters = filter_form.get_case_filter(mobile_user_and_group_slugs,
+                                                   self.request.can_access_all_locations)
+        if not self.request.can_access_all_locations:
+            form_filters.append(self.scope_filter())
         return form_filters
 
 
