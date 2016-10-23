@@ -722,7 +722,6 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
         """Returns a the export filters and a list of JSON export specs
         """
         filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
-        # tried self.request.POST.getlist(EMWF.slug)
         try:
             export_filter = self.get_filters(filter_form_data)
         except ExportFormValidationException:
