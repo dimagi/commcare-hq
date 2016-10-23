@@ -380,7 +380,7 @@ class LocationRestrictedMobileWorkerFilter(ExpandedMobileWorkerFilter):
         else:
             accessible_location_ids = (
                 SQLLocation.active_objects
-                    .accessible_to_user(self.request.domain, self.request.couch_user)
+                .accessible_to_user(self.request.domain, self.request.couch_user)
             ).location_ids()
             all_locations = SQLLocation.objects.get_locations_and_children(accessible_location_ids)
             return map(self.utils.location_tuple, all_locations)
