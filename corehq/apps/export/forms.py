@@ -473,10 +473,9 @@ class EmwfFilterFormExport(FilterFormESExportDownloadForm):
             es_user_types.extend(export_to_es_user_types_map[type_])
         return es_user_types
 
-    def _get_group(self, mobile_user_and_group_slugs):
+    def _get_group_ids(self, mobile_user_and_group_slugs):
         # Override to fetch params from url and not form_data
-        group_ids = LocationRestrictedMobileWorkerFilter.selected_group_ids(mobile_user_and_group_slugs)
-        return group_ids
+        return LocationRestrictedMobileWorkerFilter.selected_group_ids(mobile_user_and_group_slugs)
 
     def get_form_filter(self, mobile_user_and_group_slugs, can_access_all_locations):
         form_filters = []
@@ -496,7 +495,7 @@ class EmwfFilterFormExport(FilterFormESExportDownloadForm):
         return form_filters
 
     def _get_group_filter(self, mobile_user_and_group_slugs):
-        group_ids = LocationRestrictedMobileWorkerFilter.selected_group_ids(mobile_user_and_group_slugs)
+        group_ids = self._get_group_ids(mobile_user_and_group_slugs)
         if group_ids:
             # if user_ids fetched by GroupFormSubmittedByFilter is same as static_user_ids then just use
             # return GroupFormSubmittedByFilter(group_ids)
@@ -598,10 +597,9 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
         user_ids = [user['_id'] for user in users]
         return OwnerFilter(user_ids)
 
-    def _get_group(self, mobile_user_and_group_slugs):
+    def _get_group_ids(self, mobile_user_and_group_slugs):
         # Override to fetch params from url and not form_data
-        group_ids = CaseListFilter.selected_group_ids(mobile_user_and_group_slugs)
-        return group_ids
+        return CaseListFilter.selected_group_ids(mobile_user_and_group_slugs)
 
     def _get_es_user_types(self, mobile_user_and_group_slugs):
         """
@@ -636,7 +634,7 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
         print 'fetching filter for cases'
         group_ids = None
         if can_access_all_locations:
-            group_ids = self._get_group(mobile_user_and_group_slugs)
+            group_ids = self._get_group_ids(mobile_user_and_group_slugs)
 
         if group_ids:
             groups_static_user_ids = Group.get_static_user_ids_for_groups(group_ids)
