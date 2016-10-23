@@ -15,6 +15,7 @@ from corehq.apps.es.users import UserES
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import (
     group_filter,
@@ -477,13 +478,18 @@ class EmwfFilterFormExport(FilterFormESExportDownloadForm):
         group_ids = LocationRestrictedMobileWorkerFilter.selected_group_ids(mobile_user_and_group_slugs)
         return group_ids
 
-    def get_form_filter(self, mobile_user_and_group_slugs):
-        form_filters = filter(None, [
-            self._get_group_filter(mobile_user_and_group_slugs),
-            self._get_user_type_filter(mobile_user_and_group_slugs),
-            self._get_user_ids_filter(mobile_user_and_group_slugs),
-            self._get_location_ids_filter(mobile_user_and_group_slugs)
-        ])
+    def get_form_filter(self, mobile_user_and_group_slugs, can_access_all_locations):
+        form_filters = []
+        if can_access_all_locations:
+            form_filters += filter(None, [
+                                self._get_group_filter(mobile_user_and_group_slugs),
+                                self._get_user_type_filter(mobile_user_and_group_slugs),
+                            ])
+
+        form_filters += filter(None, [
+                            self._get_user_ids_filter(mobile_user_and_group_slugs),
+                            self._get_location_ids_filter(mobile_user_and_group_slugs)
+                        ])
 
         form_filters = [OR(*form_filters)]
         form_filters.append(self._get_datespan_filter())
@@ -624,9 +630,11 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
 
         return default_filters
 
-    def get_case_filter(self, mobile_user_and_group_slugs=None):
+    def get_case_filter(self, mobile_user_and_group_slugs, can_access_all_locations):
         print 'fetching filter for cases'
-        group_ids = self._get_group(mobile_user_and_group_slugs)
+        group_ids = None
+        if can_access_all_locations:
+            group_ids = self._get_group(mobile_user_and_group_slugs)
 
         if group_ids:
             groups_static_user_ids = Group.get_static_user_ids_for_groups(group_ids)
@@ -634,10 +642,14 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
             owner_filter_ids = group_ids + groups_static_user_ids
             last_modified_filter_ids = groups_static_user_ids
         else:
-            case_sharing_group_ids = [g.get_id for g in
-                                   Group.get_case_sharing_groups(self.domain_object.name)]
-            owner_filter_ids = case_sharing_group_ids
-            last_modified_filter_ids = case_sharing_group_ids
+            if can_access_all_locations:
+                # case sharing groups returns case sharing groups and locations wrapped as Group
+                case_sharing_ids = [g.get_id for g in
+                                          Group.get_case_sharing_groups(self.domain_object.name)]
+            else:
+                case_sharing_ids = SQLLocation.get_case_sharing_locations_ids(self.domain_object.name)
+            owner_filter_ids = case_sharing_ids
+            last_modified_filter_ids = case_sharing_ids
 
         case_filter = [OR(
             OwnerFilter(owner_filter_ids),
