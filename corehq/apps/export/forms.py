@@ -606,7 +606,6 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExp
             datespan.set_timezone(self.timezone)
             return ModifiedOnRangeFilter(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
 
-
     def _get_es_user_types(self, mobile_user_and_group_slugs):
         """
         Override to fetch params from url and not form_data
