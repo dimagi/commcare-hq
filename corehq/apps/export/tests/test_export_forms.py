@@ -85,9 +85,7 @@ class TestEmwfFilterExportMixin(TestCase):
         self.assertIsInstance(user_filter, FormSubmittedByFilter)
         self.assertEqual(user_filter.submitted_by, self.user_ids)
         expected_filter = {
-            'terms':
-                {'form.meta.userID': self.user_ids
-                }
+            'terms': {'form.meta.userID': self.user_ids}
         }
         self.assertEqual(user_filter.to_es_filter(), expected_filter)
 
@@ -109,9 +107,7 @@ class TestEmwfFilterExportMixin(TestCase):
         self.assertIsInstance(locations_filter, FormSubmittedByFilter)
         self.assertEqual(locations_filter.submitted_by, self.user_ids)
         expected_filter = {
-            'terms':
-                {'form.meta.userID': self.user_ids
-                }
+            'terms': {'form.meta.userID': self.user_ids}
         }
         self.assertEqual(locations_filter.to_es_filter(), expected_filter)
 
@@ -184,7 +180,7 @@ class TestFilterCaseESExportDownloadForm(TestCase):
     @patch.object(FilterCaseESExportDownloadForm, '_get_group_independent_filters', lambda x, y, z: [])
     def test_get_case_filter_for_all_locations_access(self, case_sharing_locations_ids_patch,
                                                       case_sharing_groups_patch, static_user_ids_for_group_patch,
-                                                       group_ids_patch):
+                                                      group_ids_patch):
         group_ids_patch.return_value = self.group_ids
         self.export_filter = FilterCaseESExportDownloadForm(self.domain, pytz.utc)
         self.export_filter.get_case_filter(self.group_ids_slug, True)
