@@ -528,9 +528,9 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, FilterFormESExportDownloadForm
             return FormSubmittedByFilter(owner_filter_ids)
 
     def _get_user_type_filter(self, mobile_user_and_group_slugs):
-        users = LocationRestrictedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
-        f_users = [self._USER_TYPES_CHOICES[i][0] for i in users]
-        return UserTypeFilter(f_users)
+        user_types = self._get_es_user_types(mobile_user_and_group_slugs)
+        if user_types:
+            return UserTypeFilter(user_types)
 
 
 class GenericFilterCaseExportDownloadForm(BaseFilterExportDownloadForm):
