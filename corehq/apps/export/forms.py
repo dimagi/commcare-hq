@@ -498,10 +498,12 @@ class EmwfFilterFormExport(FilterFormESExportDownloadForm):
     def _get_group_filter(self, mobile_user_and_group_slugs):
         group_ids = LocationRestrictedMobileWorkerFilter.selected_group_ids(mobile_user_and_group_slugs)
         if group_ids:
+            # if user_ids fetched by GroupFormSubmittedByFilter is same as static_user_ids then just use
+            # return GroupFormSubmittedByFilter(group_ids)
             groups_static_user_ids = Group.get_static_user_ids_for_groups(group_ids)
             groups_static_user_ids = [item for sublist in groups_static_user_ids for item in sublist]
-            owner_filter_ids = group_ids + groups_static_user_ids
-            return GroupFormSubmittedByFilter(owner_filter_ids)
+            owner_filter_ids = groups_static_user_ids
+            return FormSubmittedByFilter(owner_filter_ids)
 
     def _get_user_type_filter(self, mobile_user_and_group_slugs):
         users = LocationRestrictedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
