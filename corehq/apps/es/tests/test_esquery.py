@@ -136,7 +136,7 @@ class TestESQuery(ElasticTestMixin, TestCase):
                                     {'terms': {'domain_memberships.assigned_location_ids': all_ids}}
                                 )
                                 }
-                            )}, {'term':{'is_active': True}},
+                            )}, {'term': {'is_active': True}},
                             {'term': {'base_doc': 'couchuser'}}
                         ]
                     },
