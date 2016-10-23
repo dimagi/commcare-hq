@@ -446,7 +446,34 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
         return kwargs
 
 
-class EmwfFilterFormExport(FilterFormESExportDownloadForm):
+class EmwfFilterExportMixin(object):
+    def _get_user_ids(self, mobile_user_and_group_slugs):
+        return self.es_user_filter.selected_user_ids(mobile_user_and_group_slugs)
+
+    def _get_users_filter(self, mobile_user_and_group_slugs):
+        user_ids = self._get_user_ids(mobile_user_and_group_slugs)
+        if user_ids:
+            return self.export_user_filter(user_ids)
+
+    def _get_locations_filter(self, mobile_user_and_group_slugs):
+        location_ids = self._get_locations_ids(mobile_user_and_group_slugs)
+        if location_ids:
+            users = UserES().users_at_locations_and_descendants(location_ids)
+            user_ids = [user['_id'] for user in users]
+            return self.export_user_filter(user_ids)
+
+    def _get_locations_ids(self, mobile_user_and_group_slugs):
+        return self.es_user_filter.selected_location_ids(mobile_user_and_group_slugs)
+
+    def _get_group_ids(self, mobile_user_and_group_slugs):
+        # Override to fetch params from url and not form_data
+        return self.es_user_filter.selected_group_ids(mobile_user_and_group_slugs)
+
+
+class EmwfFilterFormExport(EmwfFilterExportMixin, FilterFormESExportDownloadForm):
+    export_user_filter = FormSubmittedByFilter
+    es_user_filter = LocationRestrictedMobileWorkerFilter
+
     def __init__(self, domain_object, *args, **kwargs):
         self.domain_object = domain_object
         self.skip_layout = True
@@ -473,10 +500,6 @@ class EmwfFilterFormExport(FilterFormESExportDownloadForm):
             es_user_types.extend(export_to_es_user_types_map[type_])
         return es_user_types
 
-    def _get_group_ids(self, mobile_user_and_group_slugs):
-        # Override to fetch params from url and not form_data
-        return LocationRestrictedMobileWorkerFilter.selected_group_ids(mobile_user_and_group_slugs)
-
     def get_form_filter(self, mobile_user_and_group_slugs, can_access_all_locations):
         form_filters = []
         if can_access_all_locations:
@@ -486,8 +509,8 @@ class EmwfFilterFormExport(FilterFormESExportDownloadForm):
             ])
 
         form_filters += filter(None, [
-            self._get_user_ids_filter(mobile_user_and_group_slugs),
-            self._get_location_ids_filter(mobile_user_and_group_slugs)
+            self._get_users_filter(mobile_user_and_group_slugs),
+            self._get_locations_filter(mobile_user_and_group_slugs)
         ])
 
         form_filters = [OR(*form_filters)]
@@ -508,18 +531,6 @@ class EmwfFilterFormExport(FilterFormESExportDownloadForm):
         users = LocationRestrictedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
         f_users = [self._USER_TYPES_CHOICES[i][0] for i in users]
         return UserTypeFilter(f_users)
-
-    def _get_user_ids_filter(self, mobile_user_and_group_slugs):
-        user_ids = LocationRestrictedMobileWorkerFilter.selected_user_ids(mobile_user_and_group_slugs)
-        if user_ids:
-            return FormSubmittedByFilter(user_ids)
-
-    def _get_location_ids_filter(self, mobile_user_and_group_slugs):
-        location_ids = LocationRestrictedMobileWorkerFilter.selected_location_ids(mobile_user_and_group_slugs)
-        if location_ids:
-            users = UserES().users_at_locations_and_descendants(location_ids)
-            user_ids = [user['_id'] for user in users]
-            return FormSubmittedByFilter(user_ids)
 
 
 class GenericFilterCaseExportDownloadForm(BaseFilterExportDownloadForm):
@@ -547,7 +558,10 @@ class FilterCaseCouchExportDownloadForm(GenericFilterCaseExportDownloadForm):
                                     groups=case_sharing_groups)
 
 
-class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
+class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExportDownloadForm):
+    export_user_filter = OwnerFilter
+    es_user_filter = CaseListFilter
+
     _export_type = 'case'
 
     date_range = forms.CharField(
@@ -592,14 +606,6 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
             datespan.set_timezone(self.timezone)
             return ModifiedOnRangeFilter(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
 
-    def _get_location_filter(self, location_ids):
-        users = UserES().users_at_locations_and_descendants(location_ids)
-        user_ids = [user['_id'] for user in users]
-        return OwnerFilter(user_ids)
-
-    def _get_group_ids(self, mobile_user_and_group_slugs):
-        # Override to fetch params from url and not form_data
-        return CaseListFilter.selected_group_ids(mobile_user_and_group_slugs)
 
     def _get_es_user_types(self, mobile_user_and_group_slugs):
         """
@@ -616,19 +622,16 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
             es_user_types.extend(export_to_es_user_types_map[type_])
         return es_user_types
 
-    def _get_group_independent_filters(self, mobile_user_and_group_slugs):
-        default_filters = [OwnerTypeFilter(self._get_es_user_types(mobile_user_and_group_slugs))]
+    def _get_group_independent_filters(self, mobile_user_and_group_slugs, can_access_all_locations):
+        if can_access_all_locations:
+            default_filters = [OwnerTypeFilter(self._get_es_user_types(mobile_user_and_group_slugs))]
+        else:
+            default_filters = []
+        default_filters.append(self._get_locations_filter(mobile_user_and_group_slugs))
+        default_filters.append(self.export_user_filter(self._get_locations_ids(mobile_user_and_group_slugs)))
 
-        location_ids = CaseListFilter.selected_location_ids(mobile_user_and_group_slugs)
-        if location_ids:
-            default_filters.append(self._get_location_filter(location_ids))
-            default_filters.append(OwnerFilter(location_ids))
-
-        user_ids = CaseListFilter.selected_user_ids(mobile_user_and_group_slugs)
-        if user_ids:
-            default_filters.append(OwnerFilter(user_ids))
-
-        return default_filters
+        default_filters.append(self._get_users_filter(mobile_user_and_group_slugs))
+        return filter(None, default_filters)
 
     def get_case_filter(self, mobile_user_and_group_slugs, can_access_all_locations):
         print 'fetching filter for cases'
@@ -654,7 +657,7 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
         case_filter = [OR(
             OwnerFilter(owner_filter_ids),
             LastModifiedByFilter(last_modified_filter_ids),
-            *self._get_group_independent_filters(mobile_user_and_group_slugs)
+            *self._get_group_independent_filters(mobile_user_and_group_slugs, can_access_all_locations)
         )]
 
         date_filter = self._get_datespan_filter()
