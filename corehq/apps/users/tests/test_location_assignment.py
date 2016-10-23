@@ -1,4 +1,5 @@
 import copy
+from datetime import datetime
 
 from django.test import TestCase
 
@@ -16,8 +17,8 @@ class CCUserLocationAssignmentTest(TestCase):
         cls.domain = 'my-domain'
         cls.domain_obj = create_domain(cls.domain)
 
-        cls.loc1 = make_loc('1', 'loc1', cls.domain)
-        cls.loc2 = make_loc('2', 'loc2', cls.domain)
+        cls.loc1 = make_loc('1', 'loc1', cls.domain).sql_location
+        cls.loc2 = make_loc('2', 'loc2', cls.domain).sql_location
         cls.loc_ids = [l.location_id for l in [cls.loc1, cls.loc2]]
 
     @classmethod
@@ -32,6 +33,7 @@ class CCUserLocationAssignmentTest(TestCase):
             domain=self.domain,
             username='cc1',
             password='***',
+            last_login=datetime.now()
         )
 
     def tearDown(self):
@@ -139,6 +141,7 @@ class WebUserLocationAssignmentTest(TestCase):
             domain=self.domain,
             username='web1',
             password='***',
+            last_login=datetime.now()
         )
 
     def tearDown(self):
