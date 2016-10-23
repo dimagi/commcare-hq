@@ -482,14 +482,14 @@ class EmwfFilterFormExport(FilterFormESExportDownloadForm):
         form_filters = []
         if can_access_all_locations:
             form_filters += filter(None, [
-                                self._get_group_filter(mobile_user_and_group_slugs),
-                                self._get_user_type_filter(mobile_user_and_group_slugs),
-                            ])
+                self._get_group_filter(mobile_user_and_group_slugs),
+                self._get_user_type_filter(mobile_user_and_group_slugs),
+            ])
 
         form_filters += filter(None, [
-                            self._get_user_ids_filter(mobile_user_and_group_slugs),
-                            self._get_location_ids_filter(mobile_user_and_group_slugs)
-                        ])
+            self._get_user_ids_filter(mobile_user_and_group_slugs),
+            self._get_location_ids_filter(mobile_user_and_group_slugs)
+        ])
 
         form_filters = [OR(*form_filters)]
         form_filters.append(self._get_datespan_filter())
@@ -645,7 +645,7 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
             if can_access_all_locations:
                 # case sharing groups returns case sharing groups and locations wrapped as Group
                 case_sharing_ids = [g.get_id for g in
-                                          Group.get_case_sharing_groups(self.domain_object.name)]
+                                    Group.get_case_sharing_groups(self.domain_object.name)]
             else:
                 case_sharing_ids = SQLLocation.get_case_sharing_locations_ids(self.domain_object.name)
             owner_filter_ids = case_sharing_ids
