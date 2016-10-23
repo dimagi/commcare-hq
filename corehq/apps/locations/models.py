@@ -693,6 +693,9 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         notify_of_deprecation("'sql_location' was just called on a sql_location.  That's kinda silly.")
         return self
 
+    @classmethod
+    def get_case_sharing_locations_ids(cls, domain):
+        return list(SQLLocation.objects.filter(domain=domain, location_type__shares_cases=True).location_ids())
 
 def filter_for_archived(locations, include_archive_ancestors):
     """
