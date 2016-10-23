@@ -388,8 +388,8 @@ HQ_APPS = (
     'custom.common',
 
     'custom.icds_reports',
-    'custom.enikshay.integrations.ninetyninedots',
-    'custom.pnlppgi'
+    'custom.pnlppgi',
+    'custom.enikshay'
 )
 
 # DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
@@ -498,7 +498,7 @@ EXCHANGE_NOTIFICATION_RECIPIENTS = []
 SERVER_EMAIL = 'commcarehq-noreply@dimagi.com'
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
-PROBONO_SUPPORT_EMAIL = 'billing-support@dimagi.com'
+PROBONO_SUPPORT_EMAIL = 'pro-bono@dimagi.com'
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 ACCOUNTS_EMAIL = 'accounts@dimagi.com'
 FINANCE_EMAIL = 'finance@dimagi.com'
@@ -740,6 +740,8 @@ AUDIT_MODULES = [
     'corehq.apps.userreports',
     'corehq.apps.data',
     'corehq.apps.registration',
+    'corehq.apps.hqadmin',
+    'corehq.apps.accounting',
     'tastypie',
 ]
 
@@ -1841,6 +1843,7 @@ DOMAIN_MODULE_MAP = {
     'icds-cas': 'custom.icds_reports',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
+    'enikshay-test': 'custom.enikshay',
 
     'crs-remind': 'custom.apps.crs_reports',
 

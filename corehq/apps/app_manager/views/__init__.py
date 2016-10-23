@@ -24,6 +24,7 @@ from corehq.apps.app_manager.views.download import (
 from corehq.apps.app_manager.views.app_summary import (
     AppSummaryView,
     DownloadCaseSummaryView,
+    DownloadFormSummaryView,
     DownloadAppSummaryView,
 )
 from corehq.apps.app_manager.views.apps import (

@@ -79,7 +79,6 @@ describe('Entries', function() {
         assert.isTrue(spy.calledOnce);
 
         entry.rawAnswer('');
-        this.clock.tick(Formplayer.Const.KO_ENTRY_TIMEOUT);
         assert.equal(entry.answer(), Formplayer.Const.NO_ANSWER);
     });
 
@@ -195,12 +194,10 @@ describe('Entries', function() {
         assert.equal(entry.answer(), '1234');
 
         entry.rawAnswer('abc'); // Invalid entry should not answer question
-        this.clock.tick(Formplayer.Const.KO_ENTRY_TIMEOUT);
         assert.isTrue(spy.calledOnce);
         assert.isOk(entry.question.error());
 
         entry.rawAnswer('');
-        this.clock.tick(Formplayer.Const.KO_ENTRY_TIMEOUT);
         assert.equal(entry.answer(), Formplayer.Const.NO_ANSWER);
     });
 
@@ -210,15 +207,12 @@ describe('Entries', function() {
 
         entry = (new Question(questionJSON)).entry;
         entry.rawAnswer('-123.4');
-        this.clock.tick(Formplayer.Const.KO_ENTRY_TIMEOUT);
         assert.equal(entry.answer(), '-123.4');
 
         entry.rawAnswer('-+123');
-        this.clock.tick(Formplayer.Const.KO_ENTRY_TIMEOUT);
         assert.isOk(entry.question.error());
 
         entry.rawAnswer('...123');
-        this.clock.tick(Formplayer.Const.KO_ENTRY_TIMEOUT);
         assert.isOk(entry.question.error());
     });
 });

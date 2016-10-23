@@ -356,8 +356,7 @@ def copy_snapshot(request, snapshot):
                                                user=user)
                     if new_domain.commtrack_enabled:
                         new_domain.convert_to_commtrack()
-                    ensure_explicit_community_subscription(new_domain_name, date.today())
-
+                    ensure_explicit_community_subscription(new_domain.name, date.today())
                 except NameUnavailableException:
                     messages.error(request, _("A project by that name already exists"))
                     return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))

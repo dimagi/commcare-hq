@@ -426,7 +426,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
             if not self.blob_bucket and '-' in str(self.attachment_id):
                 try:
                     # http://manage.dimagi.com/default.asp?239638
-                    blob = db.get(self.blob_id, self.blobdb_bucket(True))
+                    blob = db.get(self.blob_id, self.blobdb_bucket(remove_dashes=False))
                 except (KeyError, NotFound, BadName):
                     raise AttachmentNotFound(self.name)
             else:
@@ -447,7 +447,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
 
         return deleted
 
-    def blobdb_bucket(self, remove_dashes=False):
+    def blobdb_bucket(self, remove_dashes=True):
         if self.blob_bucket is not None:
             return self.blob_bucket
         if self.attachment_id is None:

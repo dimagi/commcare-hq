@@ -1,0 +1,72 @@
+{% extends "app_manager/v1/apps_base.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block js-inline %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/lib/compression.js' %}"></script>
+    <script>
+        $(function () {
+            $(".historyBack").click(function () {
+                history.back();
+                return false;
+            });
+        });
+
+        function CompressionViewModel(source, post_url){
+            var self = this;
+            self.name = ko.observable("");
+            self.source = ko.observable(source);
+            self.save = function(formElement) {
+                $.postGo(post_url,
+                         {name : self.name(),
+                          compressed: LZW.compress(self.source())}
+                        );
+                return false;
+            };
+        }
+        var source = {{ app.export_json|JSON }};
+        var post_url = "{% url "corehq.apps.app_manager.views.import_app" domain %}";
+        $('#app-import-form').koApplyBindings(new CompressionViewModel(source, post_url));
+    </script>
+{% endblock %}
+
+{% block breadcrumbs %}
+    <li>{% trans 'Import Application' %}</li>
+{% endblock %}
+
+{% block page_content %}
+    <form action="{% url "corehq.apps.app_manager.views.import_app" domain %}" id="app-import-form" method="post" data-bind="submit: save">
+        {% csrf_token %}
+{% if app %}
+        <p>Import application <strong>{{ app.name }}</strong> from domain <strong>{{ app.domain }}</strong>?</p>
+{% else %}
+        <div class="form-horizontal{% if not is_superuser %} hide{% endif %}">
+{% endif %}
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Name</label>
+                <div class="col-sm-10">
+                    <input class="form-control" type="text" name="name" data-bind="value: name"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Source</label>
+                <div class="col-sm-10">
+                    <textarea
+                        name="source"
+                        class="form-control"
+                        placeholder="Paste application definition here"
+                        data-bind="value: source"
+                        rows="5"
+                    ></textarea>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-2"></div>
+                <div class="col-sm-10">
+                    <a href="#" class="btn btn-default historyBack">No, take me back.</a>
+                    <button class="btn btn-primary" type="submit">{% trans 'Yes, import application' %}</button>
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock %}

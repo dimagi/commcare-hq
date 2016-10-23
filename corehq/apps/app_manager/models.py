@@ -1575,20 +1575,20 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                 )
             if type_ == 'close_case':
                 type_meta.add_closer(self.unique_id, action.condition)
-            if type_ == 'update_case':
+            if type_ == 'update_case' or type_ == 'usercase_update':
                 for name, question_path in FormAction.get_action_properties(action):
                     self.add_property_save(
                         app_case_meta,
-                        module_case_type,
+                        USERCASE_TYPE if type_ == 'usercase_update' else module_case_type,
                         name,
                         questions,
                         question_path
                     )
-            if type_ == 'case_preload' or type_ == 'load_from_form':
+            if type_ == 'case_preload' or type_ == 'load_from_form' or type_ == 'usercase_preload':
                 for name, question_path in FormAction.get_action_properties(action):
                     self.add_property_load(
                         app_case_meta,
-                        module_case_type,
+                        USERCASE_TYPE if type_ == 'usercase_preload' else module_case_type,
                         name,
                         questions,
                         question_path

@@ -6,11 +6,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.couch import get_db_by_doc_type
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from jsonobject.base_properties import DefaultProperty
-from corehq.apps.userreports.expressions.getters import (
-    DictGetter,
-    NestedDictGetter,
-    TransformedGetter,
-    transform_from_datatype)
+from corehq.apps.userreports.expressions.getters import transform_from_datatype, safe_recursive_lookup
 from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -52,14 +48,9 @@ class PropertyNameGetterSpec(JsonObject):
     property_name = StringProperty(required=True)
     datatype = DataTypeProperty(required=False)
 
-    @property
-    def expression(self):
-        transform = transform_from_datatype(self.datatype)
-        getter = DictGetter(self.property_name)
-        return TransformedGetter(getter, transform)
-
     def __call__(self, item, context=None):
-        return self.expression(item, context)
+        raw_value = item.get(self.property_name, None) if isinstance(item, dict) else None
+        return transform_from_datatype(self.datatype)(raw_value)
 
 
 class PropertyPathGetterSpec(JsonObject):
@@ -67,14 +58,9 @@ class PropertyPathGetterSpec(JsonObject):
     property_path = ListProperty(unicode, required=True)
     datatype = DataTypeProperty(required=False)
 
-    @property
-    def expression(self):
-        transform = transform_from_datatype(self.datatype)
-        getter = NestedDictGetter(self.property_path)
-        return TransformedGetter(getter, transform)
-
     def __call__(self, item, context=None):
-        return self.expression(item, context)
+        transform = transform_from_datatype(self.datatype)
+        return transform(safe_recursive_lookup(item, self.property_path))
 
 
 class NamedExpressionSpec(JsonObject):
@@ -258,6 +244,7 @@ class EvalExpressionSpec(JsonObject):
     type = TypeProperty('evaluator')
     statement = StringProperty(required=True)
     context_variables = DictProperty(required=True)
+    datatype = DataTypeProperty(required=False)
 
     def configure(self, context_variables):
         self._context_variables = context_variables
@@ -265,7 +252,8 @@ class EvalExpressionSpec(JsonObject):
     def __call__(self, item, context=None):
         var_dict = self.get_variables(item, context)
         try:
-            return eval_statements(self.statement, var_dict)
+            untransformed_value = eval_statements(self.statement, var_dict)
+            return transform_from_datatype(self.datatype)(untransformed_value)
         except (InvalidExpression, SyntaxError, TypeError, ZeroDivisionError):
             return None
 
