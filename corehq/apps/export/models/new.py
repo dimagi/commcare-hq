@@ -975,6 +975,11 @@ class InferredSchema(Document):
     group_schemas = SchemaListProperty(InferredExportGroupSchema)
     case_type = StringProperty(required=True)
     version = IntegerProperty(default=1)
+
+    # This normally contains a mapping of app_id to the version number. For
+    # inferred schemas this'll always be an empty dictionary since it is
+    # inferred. It is needed because when schemas are merged, it's expected
+    # that all schema duck types have this property.
     last_app_versions = DictProperty()
 
     class Meta:
