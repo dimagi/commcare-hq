@@ -71,7 +71,7 @@ Util.setCrossDomainAjaxOptions = function (options) {
     options.dataType = "json";
     options.crossDomain = {crossDomain: true};
     options.xhrFields = {withCredentials: true};
-    options.contentType = "application/json";
+    options.contentType = "application/json;charset=UTF-8";
 };
 
 Util.CloudcareUrl = function (options) {

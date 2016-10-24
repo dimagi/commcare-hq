@@ -1,0 +1,27 @@
+{% load hq_shared_tags %}
+
+<script type="text/template" id="restore-as-view-template">
+    <div class="module-menu-container">
+        <div class="page-header menu-header">
+            <h1 class="page-title">Login as user</h1>
+        </div>
+        <table class="table module-table">
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</script>
+
+<script type="text/template" id="user-row-view-template">
+    <td class="module-column module-column-icon">
+        <div class="module-icon-container">
+            <i class="fa fa-user module-icon" aria-hidden="true"></i>
+        </div>
+    </td>
+    <td class="module-column module-column-name">
+        <h3>
+            <b><%= username %></b>
+            <span><%= first_name + ' ' + last_name %></span>
+        </h3>
+    </td>
+</script>

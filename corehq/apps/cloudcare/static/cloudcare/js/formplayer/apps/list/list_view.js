@@ -19,6 +19,7 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
         events: {
             'click .js-incomplete-sessions-item': 'incompleteSessionsClick',
             'click .js-sync-item': 'syncClick',
+            'click .js-restore-as-item': 'onClickRestoreAs',
         },
         incompleteSessionsClick: function (e) {
             e.preventDefault();
@@ -28,6 +29,10 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
             e.preventDefault();
             FormplayerFrontend.trigger("sync");
         },
+        onClickRestoreAs: function(e) {
+            e.preventDefault();
+            FormplayerFrontend.trigger("restore_as:list", this.appId);
+        }
     };
 
     AppList.GridView = Marionette.CompositeView.extend({
@@ -38,6 +43,7 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
         events: _.extend(AppList.BaseAppView.events),
         incompleteSessionsClick: _.extend(AppList.BaseAppView.incompleteSessionsClick),
         syncClick: _.extend(AppList.BaseAppView.syncClick),
+        onClickRestoreAs: _.extend(AppList.BaseAppView.onClickRestoreAs),
     });
 
     /**
@@ -56,6 +62,7 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
         }, AppList.BaseAppView.events),
         incompleteSessionsClick: _.extend(AppList.BaseAppView.incompleteSessionsClick),
         syncClick: _.extend(AppList.BaseAppView.syncClick),
+        onClickRestoreAs: _.extend(AppList.BaseAppView.onClickRestoreAs),
 
         initialize: function(options) {
             this.appId = options.appId;
