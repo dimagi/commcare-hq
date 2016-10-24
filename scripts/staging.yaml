@@ -45,7 +45,6 @@
 trunk: master
 name: autostaging
 branches:
-  - fixtures-upload  # Danny 10/20
   - vellum-staging # J$ 11/13
   #- onboarding # Jenny 9/19
 #  - np/upgrade-twofactor # Nick P 10/5

@@ -40,9 +40,8 @@ class Command(BaseCommand):
                             if form.requires != 'case' and 'load' in form.case_references:
                                 if form.case_references['load']:
                                     logger.info(
-                                        '{} ({}) is suspicious: /a/{}/apps/view/{}/modules-{}/forms-{}'.format(
-                                            form.default_name(), form.unique_id,
-                                            app.domain, app.id, module.id, form.id))
+                                        '{} is suspicious: /a/{}/apps/view/{}/modules-{}/forms-{}'.format(
+                                            form.unique_id, app.domain, app.id, module.id, form.id))
                 except Http404:
                     pass
         logger.info('done with cmitfb_identify_broken_forms')

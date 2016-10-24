@@ -88,8 +88,8 @@ class CCUserLocationAssignmentTest(TestCase):
 
     def test_deleting_location_updates_user(self):
         self.user.reset_locations(self.loc_ids)
-        self.loc1.full_delete()
-        self.loc2.full_delete()
+        self.loc1.sql_location.full_delete()
+        self.loc2.sql_location.full_delete()
         self.assertAssignedLocations([])
 
     def assertPrimaryLocation(self, expected):
