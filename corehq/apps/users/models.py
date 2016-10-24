@@ -1710,7 +1710,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             This option exists only to be backwards compatible when user can only have one location
         """
         from corehq.apps.fixtures.models import UserFixtureType
-        from corehq.apps.locations.models import Location
+        from corehq.apps.locations.models import SQLLocation
 
         old_primary_location_id = self.location_id
         self.assigned_location_ids.remove(old_primary_location_id)
@@ -1723,7 +1723,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         if self.assigned_location_ids and fall_back_to_next:
             new_primary_location_id = self.assigned_location_ids[0]
-            self.set_location(Location.get(new_primary_location_id))
+            self.set_location(SQLLocation.objects.get(location_id=new_primary_location_id))
         else:
             self.user_data.pop('commcare_location_id', None)
             self.user_data.pop('commtrack-supply-point', None)
@@ -1760,7 +1760,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             If primary-location is not set, then next available location from
             assigned_location_ids is set as the primary-location
         """
-        from corehq.apps.locations.models import Location
+        from corehq.apps.locations.models import SQLLocation
 
         self.assigned_location_ids = location_ids
         self.get_domain_membership(self.domain).assigned_location_ids = location_ids
@@ -1773,7 +1773,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         # try to set primary-location if not set already
         if not self.location_id and location_ids:
-            self.set_location(Location.get(location_ids[0]))
+            self.set_location(SQLLocation.objects.get(location_id=location_ids[0]))
         else:
             self.save()
 
