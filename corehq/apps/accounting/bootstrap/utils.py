@@ -35,8 +35,7 @@ def ensure_plans(config, dry_run, verbose, apps):
 
     for product_type in PRODUCT_TYPES:
         for plan_key, plan_deets in config.iteritems():
-            edition = plan_key[0]
-            is_trial = plan_key[1]
+            edition, is_trial = plan_key
             features = _ensure_features(edition, dry_run, verbose, apps)
             try:
                 role = _ensure_role(plan_deets['role'], apps)
