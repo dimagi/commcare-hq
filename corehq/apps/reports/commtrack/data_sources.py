@@ -204,7 +204,6 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         product_name: Name of the product
         product_id: ID of the product
         location_id: The ID of the current location.
-        location_lineage: The lineage of the current location.
         current_stock: The current stock level
         consumption: The current monthly consumption rate
         months_remaining: The number of months remaining until stock out
@@ -220,7 +219,6 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     SLUG_CONSUMPTION = 'consumption'
     SLUG_CURRENT_STOCK = 'current_stock'
     SLUG_LOCATION_ID = 'location_id'
-    SLUG_LOCATION_LINEAGE = 'location_lineage'
     SLUG_STOCKOUT_SINCE = 'stockout_since'
     SLUG_STOCKOUT_DURATION = 'stockout_duration'
     SLUG_LAST_REPORTED = 'last_reported'
@@ -277,7 +275,6 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 consumption_helper = get_consumption_helper_from_ledger_value(self.project, ledger_value)
                 result.update({
                     'location_id': ledger_value.location_id,
-                    'location_lineage': None,
                     'category': consumption_helper.get_stock_category(),
                     'consumption': consumption_helper.get_monthly_consumption(),
                     'months_remaining': consumption_helper.get_months_remaining(),
@@ -338,7 +335,6 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                         'product_id': ledger_value.entry_id,
                         'location_id': None,
                         'product_name': product.name,
-                        'location_lineage': None,
                         'resupply_quantity_needed': None,
                         'current_stock': format_decimal(ledger_value.balance),
                         'count': 1,
