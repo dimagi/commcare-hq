@@ -59,15 +59,13 @@ COMMCAREHQ.transformHelpTemplate = function ($template, wrap) {
 COMMCAREHQ.initBlock = function ($elem) {
     'use strict';
 
-    if (! COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
-        $('.submit_on_click', $elem).on("click", function (e) {
-            e.preventDefault();
-            if (!$(this).data('clicked')) {
-                $(this).prev('form').submit();
-                $(this).data('clicked', 'true').children('i').removeClass().addClass("icon-refresh icon-spin fa fa-refresh fa-spin");
-            }
-        });
-    }
+    $('.submit_on_click', $elem).on("click", function (e) {
+        e.preventDefault();
+        if (!$(this).data('clicked')) {
+            $(this).prev('form').submit();
+            $(this).data('clicked', 'true').children('i').removeClass().addClass("icon-refresh icon-spin fa fa-refresh fa-spin");
+        }
+    });
 
     $('.submit').click(function (e) {
         var $form = $(this).closest('.form, form'),
