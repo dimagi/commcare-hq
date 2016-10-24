@@ -83,7 +83,7 @@ var mk_translation_ui = function (spec) {
                         url: suggestionURL,
                         data: {
                             lang: translation_ui.lang,
-                            key: that.key.val()
+                            key: that.key.val(),
                         },
                         success: function (data) {
                             options.data = data;
@@ -92,7 +92,7 @@ var mk_translation_ui = function (spec) {
                                 $input.val($input.data("selected-value")).change();
                             });
                             $input.atwho('run');
-                        }
+                        },
                     });
                 });
             };
