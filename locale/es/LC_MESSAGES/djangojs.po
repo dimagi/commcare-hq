@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-10-04 19:28+0000\n"
+"POT-Creation-Date: 2016-10-18 19:21+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,17 +18,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: bower_components/bower_components/jquery-ui/jquery-ui.min.js:8
 #: bower_components/jquery-ui/jquery-ui.min.js:8
 msgid "'"
-msgstr ""
-
-#: bower_components/bower_components/underscore-legacy/test/utility.js:67
-#: bower_components/underscore-legacy/test/utility.js:67
-#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/test_underscore/utility.js:51
-#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/test_underscore/utility.js:51
-#: node_modules/underscore.string/test/test_underscore/utility.js:41
-msgid "champ"
 msgstr ""
 
 #: corehq/apps/accounting/static/accounting/js/accounting.billing_info_handler.js:85
@@ -75,17 +66,46 @@ msgid "(Default)"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:12
+#: submodules/formdesigner/_build/src/main-components.js:12
 msgid "label"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:359
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:365
 #: corehq/apps/export/static/export/js/models.js:95
 #: corehq/apps/style/static/style/js/main.js:227
 msgid "Save"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:135
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:136
 msgid "Form successfully saved"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/apps/sessions/session_view.js:30
+msgid "Delete incomplete form?"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/apps/sessions/session_view.js:31
+msgid "Are you sure you want to delete '"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/apps/sessions/session_view.js:32
+msgid "Yes"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/apps/sessions/session_view.js:33
+msgid "No"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/apps/util/util.js:22
+msgid "Confirm?"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/apps/util/util.js:24
+msgid "OK"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/apps/util/util.js:25
+msgid "Cancel"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/entities/menu.js:115
@@ -193,27 +213,27 @@ msgstr ""
 msgid "Add Key, Value Mapping"
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:89
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:82
 msgid "Please enter your name."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:98
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:91
 msgid "Please specify an email."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:125
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:118
 msgid "There is already a user with this email."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:133
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:126
 msgid "Checking email..."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:143
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:136
 msgid "Please specify a password."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:163
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:152
 msgid "Please specify a project name."
 msgstr ""
 
@@ -1381,6 +1401,12 @@ msgstr ""
 #: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:667
 #: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:667
 msgid "true"
+msgstr ""
+
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/test_underscore/utility.js:51
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/test_underscore/utility.js:51
+#: node_modules/underscore.string/test/test_underscore/utility.js:41
+msgid "champ"
 msgstr ""
 
 #: node_modules/underscore.string/test/strings.js:285

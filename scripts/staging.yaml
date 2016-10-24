@@ -45,16 +45,12 @@
 trunk: master
 name: autostaging
 branches:
-  - dsr-multi-loc # sr 9/20
   - vellum-staging # J$ 11/13
-  - ce/domain-list-api # Cal 8/31
-  - onboarding # Jenny 9/19
-#  - np/kill-djcelery # Nick P 10/3
-  - ce/es-restore # Cal 9/4
+  #- onboarding # Jenny 9/19
 #  - np/upgrade-twofactor # Nick P 10/5
-  - np/upgrade-django-mptt # Nick P 10/6
-  - np/19/replace-get_request_repr # Nick P 10/6
-  - np/exception # Nick P 10/6
+  - bmb/currentind-string # Biyeun 11/12
+  - np/upgrade-django-celery # Nick P 10/13
+  - je/remove-phonenumbers
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -76,4 +72,4 @@ submodules:
     branches: []
   deployment/commcare-hq-deploy:
     branches:
-      - revert-122-revert-118-br/celery-bash
+      - br/jmx-formplayer

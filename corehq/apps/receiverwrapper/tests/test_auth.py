@@ -52,6 +52,12 @@ class _AuthTest(TestCase):
         )
 
     @property
+    def simple_form(self):
+        return os.path.join(
+            os.path.dirname(__file__), "data", 'simple_form.xml'
+        )
+
+    @property
     def form_with_case(self):
         return os.path.join(
             os.path.dirname(__file__), "data", 'form_with_case.xml'
@@ -135,14 +141,24 @@ class _AuthTest(TestCase):
         accepted_response = SubmissionPost.get_success_response(None, None).content
         ignored_response = SubmissionPost.submission_ignored_response().content
 
-        # submissions with 'submit_mode=demo' param by real users should be ignored
         client = django_digest.test.Client()
         client.set_authorization(self.user.username, '1234',
                                  method='Digest')
+        # submissions with 'submit_mode=demo' param by real users should be ignored
         self._test_post(
-            file_path=self.bare_form,
+            file_path=self.simple_form,
             client=client,
             authtype='digest',
+            submit_mode=DEMO_SUBMIT_MODE,
+            expected_response=ignored_response
+        )
+
+        # submissions with 'submit_mode=demo' param by real users should be ignored
+        #   even if no authorization headers are supplied
+        self._test_post(
+            file_path=self.simple_form,
+            client=client,
+            authtype='noauth',
             submit_mode=DEMO_SUBMIT_MODE,
             expected_response=ignored_response
         )

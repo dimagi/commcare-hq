@@ -124,7 +124,7 @@ class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_trigger(self):
-        self._update_person({'mobile_number': '999999999', })
+        self._update_person({'phone_number': '999999999', })
         self.assertEqual(0, len(self.repeat_records().all()))
 
         self._create_99dots_registered_case()
@@ -133,7 +133,7 @@ class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
         self._update_person({'name': 'Elrond', })
         self.assertEqual(0, len(self.repeat_records().all()))
 
-        self._update_person({'mobile_number': '999999999', })
+        self._update_person({'phone_number': '999999999', })
         self.assertEqual(1, len(self.repeat_records().all()))
 
 
@@ -154,7 +154,7 @@ class TestRegisterPatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
         payload_generator = RegisterPatientPayloadGenerator(None)
         person = self.cases[self.person_id].dynamic_case_properties()
         expected_numbers = u"+91{}, +91{}".format(
-            person['mobile_number'].replace("0", ""),
+            person['phone_number'].replace("0", ""),
             person['backup_number'].replace("0", "")
         )
         expected_payload = json.dumps({

@@ -5,11 +5,7 @@ import sys
 import tempfile
 import uuid
 
-try:
-    from django.db.backends.base.creation import TEST_DATABASE_PREFIX
-except ImportError:
-    # TODO - remove when django >= 1.8
-    from django.db.backends.creation import TEST_DATABASE_PREFIX
+from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 
 
 def is_testing():
@@ -172,16 +168,12 @@ def celery_failure_handler(task, exc, task_id, args, kwargs, einfo):
 
 
 def get_allowed_websocket_channels(request, channels):
-    from django.conf import settings
     from django.core.exceptions import PermissionDenied
-    from corehq.apps.users.models import CouchUser
     if request.user and request.user.is_authenticated() and request.user.is_superuser:
         return channels
     else:
-        couch_user = CouchUser.from_django_user(request.user)
-        for domain in couch_user.get_domains():
-            if request.path.startswith('{}{}:'.format(settings.WEBSOCKET_URL, domain)):
-                return channels
+        # todo: support for non-superusers
+        # it might be easier to wait on supporting this until we switch to channels
         raise PermissionDenied(
             'Not allowed to subscribe or to publish to websockets without '
             'superuser permissions or domain membership!'

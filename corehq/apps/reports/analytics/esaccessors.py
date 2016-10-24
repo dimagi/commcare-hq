@@ -540,15 +540,27 @@ def get_aggregated_ledger_values(domain, case_ids, section_id, entry_ids=None):
     ).get_data()
 
 
-def get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate):
-    # TODO: Remove references to _attachments once all forms have been migrated to Riak
+def get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate, user_types=None, group=None):
     query = (FormES()
              .domain(domain)
              .app(app_id)
              .xmlns(xmlns)
              .submitted(gte=startdate, lte=enddate)
              .remove_default_filter("has_user")
-             .source(['_attachments', '_id', 'external_blobs']))
+             .source(['_id', 'external_blobs']))
+
+    if user_types:
+        query = query.user_type(user_types)
+
+    if group:
+        results = (GroupES()
+            .domain(domain)
+            .group_ids([group])
+            .source(['users'])).run().hits
+        assert len(results) <= 1
+        user_ids = results[0]['users']
+        query = query.user_id(user_ids)
+
     form_ids = set()
     for form in query.scroll():
         try:
@@ -573,6 +585,4 @@ def scroll_case_names(domain, case_ids):
 def _get_attachment_dicts_from_form(form):
     if 'external_blobs' in form:
         return form['external_blobs'].values()
-    elif '_attachments' in form:
-        return form['_attachments'].values()
     return []

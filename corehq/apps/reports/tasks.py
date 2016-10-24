@@ -19,6 +19,7 @@ from celery.utils.log import get_task_logger
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.export.dbaccessors import get_all_daily_saved_export_instances
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.util.dates import iso_string_to_datetime
 from couchexport.files import Temp
 from couchexport.groupexports import export_for_group, rebuild_export
 from couchexport.tasks import cache_file_to_be_served
@@ -45,11 +46,8 @@ from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.util.files import file_extention_from_filename
 from corehq.util.view_utils import absolute_reverse
 
-from .analytics.couchaccessors import (
-    get_form_ids_having_multimedia as couch_get_form_ids_having_multimedia
-)
 from .analytics.esaccessors import (
-    get_form_ids_having_multimedia as es_get_form_ids_having_multimedia,
+    get_form_ids_having_multimedia,
     scroll_case_names,
 )
 from .dbaccessors import get_all_hq_group_export_configs
@@ -170,11 +168,14 @@ def rebuild_export_async(config, schema):
 
 @periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
 def update_calculated_properties():
-    results = DomainES().fields(["name", "_id"]).run().hits
+    results = DomainES().fields(["name", "_id", "cp_last_updated"]).scroll()
     all_stats = _all_domain_stats()
     for r in results:
         dom = r["name"]
         try:
+            last_form_submission = CALC_FNS["last_form_submission"](dom, False)
+            if _skip_updating_domain_stats(r.get("cp_last_updated"), last_form_submission):
+                continue
             calced_props = {
                 "_id": r["_id"],
                 "cp_n_web_users": int(all_stats["web_users"].get(dom, 0)),
@@ -192,7 +193,7 @@ def update_calculated_properties():
                 "cp_n_forms_60_d": int(CALC_FNS["forms_in_last"](dom, 60)),
                 "cp_n_forms_90_d": int(CALC_FNS["forms_in_last"](dom, 90)),
                 "cp_first_form": CALC_FNS["first_form_submission"](dom, False),
-                "cp_last_form": CALC_FNS["last_form_submission"](dom, False),
+                "cp_last_form": last_form_submission,
                 "cp_is_active": CALC_FNS["active"](dom),
                 "cp_has_app": CALC_FNS["has_app"](dom),
                 "cp_last_updated": json_format_datetime(datetime.utcnow()),
@@ -225,6 +226,25 @@ def update_calculated_properties():
             send_to_elasticsearch("domains", calced_props)
         except Exception, e:
             notify_exception(None, message='Domain {} failed on stats calculations with {}'.format(dom, e))
+
+
+def _skip_updating_domain_stats(last_updated=None, last_form_submission=None):
+    """
+    Skip domain if no forms submitted in the last day
+    AND stats were updated less than a week ago.
+
+    :return: True to skip domain
+     """
+    if not last_updated:
+        return False
+
+    last_updated_ago = datetime.utcnow() - iso_string_to_datetime(last_updated)
+    if last_form_submission:
+        last_form_ago = datetime.utcnow() - iso_string_to_datetime(last_form_submission)
+        new_data = last_form_ago < timedelta(days=1)
+    else:
+        new_data = False
+    return last_updated_ago < timedelta(days=7) and not new_data
 
 
 def is_app_active(app_id, domain):
@@ -283,10 +303,28 @@ def _store_excel_in_redis(file):
 
 
 @task
-def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id,
-                              export_id, zip_name, download_id, export_is_legacy):
+def build_form_multimedia_zip(
+        domain,
+        xmlns,
+        startdate,
+        enddate,
+        app_id,
+        export_id,
+        zip_name,
+        download_id,
+        export_is_legacy,
+        user_types=None,
+        group=None):
 
-    form_ids = _get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate, export_is_legacy)
+    form_ids = get_form_ids_having_multimedia(
+        domain,
+        app_id,
+        xmlns,
+        parse(startdate),
+        parse(enddate),
+        group=group,
+        user_types=user_types,
+    )
     properties = _get_export_properties(export_id, export_is_legacy)
 
     if not app_id:
@@ -302,7 +340,7 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id,
 
     case_id_to_name = _get_case_names(
         domain,
-        set.union(*map(lambda form_info: form_info['case_ids'], forms_info)),
+        set.union(*map(lambda form_info: form_info['case_ids'], forms_info)) if forms_info else set(),
     )
 
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
@@ -355,9 +393,9 @@ def _expose_download(fpath, use_transfer, zip_name, download_id, num_forms):
 
 
 def _format_filename(form_info, question_id, extension, case_id_to_name):
-    filename = u"{}-user_{}-form_{}{}".format(
+    filename = u"{}-{}-form_{}{}".format(
         unidecode(question_id),
-        form_info['form'].user_id or 'unknown',
+        form_info['username'] or form_info['form'].user_id or 'user_unknown',
         form_info['form'].form_id or 'unknown',
         extension
     )
@@ -429,27 +467,6 @@ def _get_export_properties(export_id, export_is_legacy):
     return properties
 
 
-def _get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate, export_is_legacy):
-    """
-    Return a list of form ids.
-    Each form has a multimedia attachment and meets the given filters.
-    """
-    if not export_is_legacy:
-        fetch_fn = es_get_form_ids_having_multimedia
-        startdate = parse(startdate)
-        enddate = parse(enddate)
-    else:
-        fetch_fn = couch_get_form_ids_having_multimedia
-
-    return fetch_fn(
-        domain,
-        app_id,
-        xmlns,
-        startdate,
-        enddate,
-    )
-
-
 def _extract_form_attachment_info(form, properties):
     """
     This is a helper function for build_form_multimedia_zip.
@@ -475,6 +492,7 @@ def _extract_form_attachment_info(form, properties):
         'form': form,
         'attachments': [],
         'case_ids': {c['@case_id'] for c in case_blocks},
+        'username': form.get_data('form/meta/username')
     }
 
     # TODO make form.attachments always return objects that conform to a

@@ -11,6 +11,7 @@ from corehq.apps.locations.dbaccessors import get_users_location_ids
 from corehq.apps.locations.util import get_locations_and_children
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
@@ -18,6 +19,7 @@ from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReportParametersMixin
 from corehq.apps.reports.standard.inspect import ProjectInspectionReport
+from corehq.elastic import ESError
 
 from .data_sources import CaseInfo, CaseDisplay
 
@@ -77,7 +79,11 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     @property
     @memoized
     def es_results(self):
-        return self._build_query().run().raw
+        try:
+            return self._build_query().run().raw
+        except ESError as e:
+            if e.args[0].info.get('status') == 400:
+                raise BadRequestError()
 
     def get_special_owner_ids(self, admin, unknown, demo, commtrack):
         if not any([admin, unknown, demo]):

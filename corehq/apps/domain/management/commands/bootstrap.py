@@ -13,7 +13,7 @@ class Command(BaseCommand):
         if len(args) != 3:
             raise CommandError('Usage: manage.py bootstrap <domain> <email> <password>')
         domain_name, username, passwd = args
-        domain = Domain.get_or_create_with_name(domain_name, is_active=True)
+        domain = Domain.get_or_create_with_name(domain_name, is_active=True, use_sql_backend=True)
 
         couch_user = WebUser.get_by_username(username)
         membership = None

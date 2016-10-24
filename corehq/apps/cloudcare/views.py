@@ -109,7 +109,8 @@ class CloudcareMain(View):
             apps = get_cloudcare_apps(domain)
             if request.project.use_cloudcare_releases:
 
-                if toggles.CLOUDCARE_LATEST_BUILD.enabled(domain):
+                if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or
+                        toggles.CLOUDCARE_LATEST_BUILD.enabled(request.couch_user.username)):
                     get_cloudcare_app = get_latest_build_doc
                 else:
                     get_cloudcare_app = get_latest_released_app_doc
@@ -335,7 +336,7 @@ def get_cases(request, domain):
             usercase_id = CommCareUser.get_by_user_id(user_id).get_usercase_id()
             usercase = accessor.get_case(usercase_id) if usercase_id else None
             return json_response(map(
-                lambda case: CaseAPIResult(id=case['_id'], couch_doc=case, id_only=ids_only),
+                lambda case: CaseAPIResult(domain=domain, id=case['_id'], couch_doc=case, id_only=ids_only),
                 filter(None, [case, case.parent, usercase])
             ))
 
@@ -348,7 +349,7 @@ def get_cases(request, domain):
         # owned case list + footprint
         case = accessor.get_case(case_id)
         assert case.domain == domain
-        cases = [CaseAPIResult(id=case_id, couch_doc=case, id_only=ids_only)]
+        cases = [CaseAPIResult(domain=domain, id=case_id, couch_doc=case, id_only=ids_only)]
     else:
         filters = get_filters_from_request_params(request_params)
         status = api_closed_to_status(request_params.get('closed', 'false'))
@@ -596,7 +597,13 @@ class HttpResponseConflict(HttpResponse):
 class EditCloudcareUserPermissionsView(BaseUserSettingsView):
     template_name = 'cloudcare/config.html'
     urlname = 'cloudcare_app_settings'
-    page_title = ugettext_noop("CloudCare Permissions")
+
+    @property
+    def page_title(self):
+        if toggles.USE_FORMPLAYER_FRONTEND.enabled(self.domain):
+            return _("Web Apps Permissions")
+        else:
+            return _("CloudCare Permissions")
 
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.CLOUDCARE))

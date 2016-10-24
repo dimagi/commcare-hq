@@ -13,7 +13,6 @@
     "leaflet": "0.7.7",
     "jquery-color": "2.1.2",
     "jquery.rmi": "dimagi/jquery.rmi#8c34f32817",
-    "intl-tel-input": "9.0.7",
     "angular": "1.4.4",
     "angular-route": "1.4.4",
     "angular-resource": "1.4.4",

@@ -48,50 +48,6 @@ var ReportConfig = function (data) {
         return data;
     };
 
-    self.getDateUrlFragment = function () {
-        // duplicated in reports/models.py
-        var days, start_date, end_date = null,
-            date_range = self.date_range(),
-            today = new Date();
-
-        if (date_range === 'since') {
-            start_date = self.start_date();
-            end_date = today;
-        } else if (date_range === 'range') {
-            start_date = self.start_date();
-            end_date = self.end_date();
-        } else if (date_range === '') {
-            return '';
-        } else {
-            end_date = today;
-
-            if (date_range === 'last7') {
-                days = 7;
-            } else if (date_range === 'last30') {
-                days = 30;
-            } else if (date_range === 'lastn') {
-                days = self.days();
-            } else {
-                throw "Invalid date range.";
-            }
-
-            start_date = new Date();
-            start_date.setDate(start_date.getDate() - days);
-        }
-
-        var dateToParam = function (date) {
-            if (date && typeof date !== 'string') {
-                return date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate();
-            }
-            return date;
-        };
-
-        end_date = dateToParam(end_date);
-        start_date = dateToParam(start_date);
-
-        return "startdate=" + start_date + "&enddate=" + end_date + "&";
-    };
-
     self.dateRangeSubs = self.date_range.subscribe(function(newValue) {
         if (newValue === 'since' || newValue === 'range') {
             $('.date-picker').datepicker({
@@ -155,29 +111,10 @@ var ReportConfigsViewModel = function (options) {
 
     self.setConfigBeingViewed = function (config) {
         self.configBeingViewed(config);
-
-        var filters = config.filters,
-            href = "?";
-
-
         if (self.initialLoad) {
             self.initialLoad = false;
         } else {
-            for (var prop in filters) {
-                if (filters.hasOwnProperty(prop)) {
-                    // handle ufilter=0&ufilter=1&... etc
-                    if ($.isArray(filters[prop])) {
-                        for (var i = 0; i < filters[prop].length; i++) {
-                            href += prop + '=' + filters[prop][i] + '&';
-                        }
-                    } else {
-                        href += prop + '=' + filters[prop] + '&';
-                    }
-                }
-            }
-
-            window.location.href = href + config.getDateUrlFragment()
-                + 'config_id=' + config._id();
+            window.location.href = config.url();
         }
     };
 

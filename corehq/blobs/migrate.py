@@ -12,7 +12,7 @@ can be run:
 The migration may be done automatically when running `./manage.py migrate`
 if there are only a few documents to be migrated. However, if there are
 many documents to be migrated then the normal migration process will
-stop and propmpt you to run the blob migration manually before
+stop and prompt you to run the blob migration manually before
 continuing with the normal migration process.
 
 ## Writing new migrations
@@ -85,6 +85,8 @@ from corehq.util.doc_processor.interface import (
     BaseDocProcessor, DOCS_SKIPPED_WARNING,
     DocumentProcessorController
 )
+from corehq.util.doc_processor.sql import SqlDocumentProvider
+from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from couchdbkit import ResourceConflict
 
 # models to be migrated
@@ -92,6 +94,7 @@ import corehq.apps.hqmedia.models as hqmedia
 import couchforms.models as xform
 from corehq.apps.app_manager.models import Application, RemoteApp
 from couchexport.models import SavedBasicExport
+from dimagi.utils.decorators.memoized import memoized
 
 
 MIGRATION_INSTRUCTIONS = """
@@ -117,6 +120,14 @@ Cannot get the blob database.
 This often means that settings.SHARED_DRIVE_ROOT is not configured.
 It should be set to a real directory. Update localsettings.py and
 retry the migration.
+"""
+
+PROCESSING_COMPLETE_MESSAGE = """
+{} of {} blobs were not found in the old blob database. It
+is possible that some blobs were deleted as part of normal
+operation during the migration if the migration took a long
+time. However, it may be cause for concern if a majority of
+the total number of migrated blobs were not found.
 """
 
 
@@ -258,15 +269,95 @@ class BlobDbBackendMigrator(BaseDocMigrator):
     def processing_complete(self, skipped):
         super(BlobDbBackendMigrator, self).processing_complete(skipped)
         if self.not_found:
-            print("{} of {} blobs were not found in the old blob database. It "
-                  "is possible that some blobs were deleted as part of normal "
-                  "operation during the migration if the migration took a long "
-                  "time. However, it may be cause for concern if a majority of "
-                  "the total number of migrated blobs were not found."
-                  .format(self.not_found, self.total_blobs))
+            print(PROCESSING_COMPLETE_MESSAGE.format(self.not_found, self.total_blobs))
 
     def should_process(self, doc):
         return doc.get("external_blobs")
+
+
+class BlobDbBackendExporter(BaseDocMigrator):
+
+    def __init__(self, slug, couchdb, filename=None, domain=None):
+        super(BlobDbBackendExporter, self).__init__(slug, couchdb, filename)
+        from corehq.blobs.zipdb import get_blob_db_exporter, ZipBlobDB
+        self.db = get_blob_db_exporter(self.slug, domain)
+        self.total_blobs = 0
+        self.not_found = 0
+        self.domain = domain
+        if not isinstance(self.db, ZipBlobDB):
+            raise MigrationError(
+                "Expected to find zip blob db backend (got %r)" % self.db)
+
+    def _backup_doc(self, doc):
+        pass
+
+    def _do_migration(self, doc):
+        obj = BlobHelper(doc, self.couchdb)
+        bucket = obj._blobdb_bucket()
+        assert obj.external_blobs and obj.external_blobs == obj.blobs, doc
+        from_db = get_blob_db()
+        for name, meta in obj.blobs.iteritems():
+            self.total_blobs += 1
+            try:
+                content = from_db.get(meta.id, bucket)
+            except NotFound:
+                self.not_found += 1
+            else:
+                with content:
+                    self.db.copy_blob(content, meta.info, bucket)
+        return True
+
+    def processing_complete(self, skipped):
+        super(BlobDbBackendExporter, self).processing_complete(skipped)
+        if self.not_found:
+            print(PROCESSING_COMPLETE_MESSAGE.format(self.not_found, self.total_blobs))
+
+    def should_process(self, doc):
+        return doc.get('domain') == self.domain and doc.get("external_blobs")
+
+
+class SqlFormAttachmentExporter(BaseDocProcessor):
+    def __init__(self, slug, domain):
+        super(SqlFormAttachmentExporter, self).__init__()
+        from corehq.blobs.zipdb import get_blob_db_exporter, ZipBlobDB
+        self.slug = slug
+        self.db = get_blob_db_exporter(self.slug, domain)
+        self.total_blobs = 0
+        self.not_found = 0
+        self.domain = domain
+        if not isinstance(self.db, ZipBlobDB):
+            raise MigrationError(
+                "Expected to find zip blob db backend (got %r)" % self.db)
+
+    def handle_skip(self, doc):
+        return True  # ignore
+
+    def process_doc(self, doc):
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        from corehq.blobs import BlobInfo
+        from_db = get_blob_db()
+        for attachment in FormAccessorSQL.get_attachments(doc['_id']):
+            bucket = attachment.blobdb_bucket()
+            blob_id = attachment.blob_id
+            info = BlobInfo(identifier=blob_id, length=attachment.content_length,
+                            digest="md5="+attachment.md5)
+            self.total_blobs += 1
+            try:
+                content = from_db.get(blob_id, bucket)
+            except NotFound:
+                self.not_found += 1
+            else:
+                with content:
+                    self.db.copy_blob(content, info, bucket)
+        return True
+
+    def processing_complete(self, skipped):
+        super(SqlFormAttachmentExporter, self).processing_complete(skipped)
+        if self.not_found:
+            print(PROCESSING_COMPLETE_MESSAGE.format(self.not_found, self.total_blobs))
+
+    def should_process(self, doc):
+        return doc.get('domain') == self.domain and doc.get("external_blobs")
 
 
 class Migrator(object):
@@ -299,6 +390,67 @@ class Migrator(object):
         return processor.run()
 
 
+class ExportByDomain(Migrator):
+    domain = None
+
+    def by_domain(self, domain):
+        self.domain = domain
+        self.iteration_key = self.iteration_key + '/domain=' + self.domain
+
+    def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
+        if not self.domain:
+            raise MigrationError("Must specify domain")
+
+        doc_migrator = self.doc_migrator_class(self.slug, self.couchdb, filename, self.domain)
+
+        progress_logger = CouchProcessorProgressLogger(self.doc_types)
+
+        document_provider = CouchDocumentProvider(self.iteration_key, self.doc_types)
+
+        processor = DocumentProcessorController(
+            document_provider,
+            doc_migrator,
+            reset,
+            max_retry,
+            chunk_size,
+            progress_logger=progress_logger
+        )
+        return processor.run()
+
+
+class ExportByDomainSQL(Migrator):
+    domain = None
+
+    def __init__(self, slug, doc_types, doc_migrator_class):
+        self.slug = slug
+        self.doc_migrator_class = doc_migrator_class
+        self.doc_types = doc_types
+
+        sorted_types = sorted(doc_type_tuples_to_dict(self.doc_types))
+        self.iteration_key = "{}-blob-migration/{}".format(self.slug, " ".join(sorted_types))
+
+    def by_domain(self, domain):
+        self.domain = domain
+        self.iteration_key = self.iteration_key + '/domain=' + self.domain
+
+    def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
+        if not self.domain:
+            raise MigrationError("Must specify domain")
+
+        doc_migrator = self.doc_migrator_class(self.slug, self.domain)
+
+        document_provider = SqlDocumentProvider(self.iteration_key, FormReindexAccessor())
+
+        processor = DocumentProcessorController(
+            document_provider,
+            doc_migrator,
+            reset,
+            max_retry,
+            chunk_size,
+        )
+        return processor.run()
+
+
 MIGRATIONS = {m.slug: m for m in [
     Migrator("saved_exports", [SavedBasicExport], CouchAttachmentMigrator),
     Migrator("migrate_backend", [SavedBasicExport], BlobDbBackendMigrator),
@@ -324,6 +476,41 @@ MIGRATIONS = {m.slug: m for m in [
         xform.SubmissionErrorLog,
         ("HQSubmission", xform.XFormInstance),
     ], CouchAttachmentMigrator),
+]}
+
+EXPORTERS = {m.slug: m for m in [
+    ExportByDomain("export_domain_apps", [
+        Application,
+        RemoteApp,
+        ("Application-Deleted", Application),
+        ("RemoteApp-Deleted", RemoteApp),
+    ], BlobDbBackendExporter),
+    ExportByDomain("export_domain_media", [
+        hqmedia.CommCareAudio,
+        hqmedia.CommCareImage,
+        hqmedia.CommCareVideo,
+        hqmedia.CommCareMultimedia,
+    ], BlobDbBackendExporter),
+    ExportByDomain("export_domain_couch_xform", [
+        xform.XFormInstance,
+        ("XFormInstance-Deleted", xform.XFormInstance),
+        xform.XFormArchived,
+        xform.XFormDeprecated,
+        xform.XFormDuplicate,
+        xform.XFormError,
+        xform.SubmissionErrorLog,
+        ("HQSubmission", xform.XFormInstance),
+    ], BlobDbBackendExporter),
+    ExportByDomainSQL("export_domain_sql_xform", [
+        xform.XFormInstance,
+        ("XFormInstance-Deleted", xform.XFormInstance),
+        xform.XFormArchived,
+        xform.XFormDeprecated,
+        xform.XFormDuplicate,
+        xform.XFormError,
+        xform.SubmissionErrorLog,
+        ("HQSubmission", xform.XFormInstance),
+    ], SqlFormAttachmentExporter),
 ]}
 
 

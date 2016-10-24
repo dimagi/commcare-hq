@@ -112,9 +112,9 @@ class TestViews(TestCase):
 
         self.assertEqual(custom_properties["random"], "changed")
 
-    def _test_status_codes(self, names, kwargs):
+    def _test_status_codes(self, names, kwargs, follow=False):
         for name in names:
-            response = self.client.get(reverse(name, kwargs=kwargs), follow=False)
+            response = self.client.get(reverse(name, kwargs=kwargs), follow=follow)
             self.assertEqual(response.status_code, 200)
 
     def _json_content_from_get(self, name, kwargs, data={}):
@@ -198,6 +198,16 @@ class TestViews(TestCase):
             'app_id': self.app.id,
             'module_id': module.id,
         })
+
+    def test_dashboard(self):
+        self._test_status_codes(['dashboard_new_user'], {
+            'domain': self.domain.name,
+        })
+
+        # This redirects to the dashboard
+        self._test_status_codes(['default_app'], {
+            'domain': self.domain.name,
+        }, True)
 
 
 class TestTemplateAppViews(TestCase):

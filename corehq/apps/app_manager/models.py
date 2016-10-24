@@ -269,7 +269,7 @@ class FormActionCondition(DocumentSchema):
     type = StringProperty(choices=["if", "always", "never"], default="never")
     question = StringProperty()
     answer = StringProperty()
-    operator = StringProperty(choices=['=', 'selected'], default='=')
+    operator = StringProperty(choices=['=', 'selected', 'boolean_true'], default='=')
 
     def is_active(self):
         return self.type in ('if', 'always')
@@ -1575,20 +1575,20 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                 )
             if type_ == 'close_case':
                 type_meta.add_closer(self.unique_id, action.condition)
-            if type_ == 'update_case':
+            if type_ == 'update_case' or type_ == 'usercase_update':
                 for name, question_path in FormAction.get_action_properties(action):
                     self.add_property_save(
                         app_case_meta,
-                        module_case_type,
+                        USERCASE_TYPE if type_ == 'usercase_update' else module_case_type,
                         name,
                         questions,
                         question_path
                     )
-            if type_ == 'case_preload' or type_ == 'load_from_form':
+            if type_ == 'case_preload' or type_ == 'load_from_form' or type_ == 'usercase_preload':
                 for name, question_path in FormAction.get_action_properties(action):
                     self.add_property_load(
                         app_case_meta,
-                        module_case_type,
+                        USERCASE_TYPE if type_ == 'usercase_preload' else module_case_type,
                         name,
                         questions,
                         question_path
@@ -2099,10 +2099,12 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
 
     def validate_for_build(self):
         errors = []
-        if self.requires_case_details():
+        needs_case_detail = self.requires_case_details()
+        needs_case_type = needs_case_detail or len([1 for f in self.get_forms() if f.is_registration_form()])
+        if needs_case_detail or needs_case_type:
             errors.extend(self.get_case_errors(
-                needs_case_type=True,
-                needs_case_detail=True
+                needs_case_type=needs_case_type,
+                needs_case_detail=needs_case_detail
             ))
         if self.case_list_form.form_id:
             try:
@@ -4026,8 +4028,6 @@ class LazyBlobDoc(BlobMixin):
       save save has succeeded, save the attachment in the cache
     """
 
-    migrating_blobs_from_couch = True
-
     def __init__(self, *args, **kwargs):
         super(LazyBlobDoc, self).__init__(*args, **kwargs)
         self._LAZY_ATTACHMENTS = {}
@@ -4573,7 +4573,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @absolute_url_property
     def jar_url(self):
-        return reverse('corehq.apps.app_manager.views.download_jar', args=[self.domain, self._id])
+        return reverse('download_jar', args=[self.domain, self._id])
 
     def get_jar_path(self):
         spec = {
@@ -4749,11 +4749,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @absolute_url_property
     def odk_profile_url(self):
-        return reverse('corehq.apps.app_manager.views.download_odk_profile', args=[self.domain, self._id])
+        return reverse('download_odk_profile', args=[self.domain, self._id])
 
     @absolute_url_property
     def odk_media_profile_url(self):
-        return reverse('corehq.apps.app_manager.views.download_odk_media_profile', args=[self.domain, self._id])
+        return reverse('download_odk_media_profile', args=[self.domain, self._id])
 
     @property
     def odk_profile_display_url(self):
@@ -4787,10 +4787,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                                          content_type="image/png")
             return png_data
 
-    def generate_shortened_url(self, url_type, build_profile_id=None):
+    def generate_shortened_url(self, view_name, build_profile_id=None):
         try:
             if settings.BITLY_LOGIN:
-                view_name = 'corehq.apps.app_manager.views.{}'.format(url_type)
                 if build_profile_id is not None:
                     long_url = "{}{}?profile={}".format(
                         self.url_base, reverse(view_name, args=[self.domain, self._id]), build_profile_id

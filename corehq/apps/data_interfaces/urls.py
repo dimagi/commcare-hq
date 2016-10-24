@@ -1,4 +1,4 @@
-from django.conf.urls import *
+from django.conf.urls import include, patterns, url
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher, EditDataInterfaceDispatcher
 from corehq.apps.data_interfaces.views import (
     CaseGroupListView,

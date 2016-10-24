@@ -197,7 +197,7 @@ describe('Entries', function() {
         assert.isTrue(spy.calledOnce);
         assert.isOk(entry.question.error());
 
-        entry.rawAnswer('')
+        entry.rawAnswer('');
         assert.equal(entry.answer(), Formplayer.Const.NO_ANSWER);
     });
 

@@ -287,7 +287,8 @@ IS_DEVELOPER = StaticToggle(
 MM_CASE_PROPERTIES = StaticToggle(
     'mm_case_properties',
     'Multimedia Case Properties',
-    TAG_PRODUCT_PATH
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 VISIT_SCHEDULER = StaticToggle(
@@ -381,13 +382,6 @@ HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
     'Show HIPAA compliance checkbox',
     TAG_ONE_OFF,
     [NAMESPACE_USER],
-)
-
-REMOTE_APPS = StaticToggle(
-    'remote-apps',
-    'Allow creation of remote applications',
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN],
 )
 
 CAN_EDIT_EULA = StaticToggle(
@@ -534,7 +528,7 @@ MOBILE_UCR = StaticToggle(
 RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
     'restrict_web_users_by_location',
     "Allow project to restrict web user permissions by location (deprecated)",
-    TAG_PRODUCT_CORE,
+    TAG_ONE_OFF,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -819,28 +813,17 @@ NEW_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-TF_USES_SQLITE_BACKEND = PredictablyRandomToggle(
-    'tf_sql_backend',
-    'Use a SQLite backend for Touchforms',
-    TAG_PRODUCT_PATH,
+TF_DOES_NOT_USE_SQLITE_BACKEND = StaticToggle(
+    'not_tf_sql_backend',
+    'Domains that do not use a SQLite backend for Touchforms',
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
-    1,
-    always_disabled=['hsph-betterbirth', 'iquitos'],
 )
-
 
 CUSTOM_APP_BASE_URL = StaticToggle(
     'custom_app_base_url',
     'Allow specifying a custom base URL for an application. Main use case is to allow migrating ICDS to a new cluster.',
     TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
-)
-
-
-CASE_LIST_DISTANCE_SORT = StaticToggle(
-    'case_list_distance_sort',
-    'Allow sorting by distance from current location in the case list',
-    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
 
@@ -883,15 +866,6 @@ SEND_UCR_REBUILD_INFO = StaticToggle(
     [NAMESPACE_USER]
 )
 
-
-ZAPIER_INTEGRATION = StaticToggle(
-    'zapier_integration',
-    'Allow to use domain in Zapier application',
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
-)
-
-
 EMG_AND_REC_SMS_HANDLERS = StaticToggle(
     'emg_and_rec_sms_handlers',
     'Enable emergency and receipt sms handlers used in ILSGateway',
@@ -915,14 +889,6 @@ CUSTOM_CALENDAR_FIXTURE = StaticToggle(
 )
 
 
-NEW_BULK_LOCATION_MANAGEMENT = StaticToggle(
-    'new_bulk_location_management',
-    'Enable advanced features in Bulk Location Upload',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-)
-
-
 PREVIEW_APP = StaticToggle(
     'preview_app',
     'Preview an application in the app builder',
@@ -941,13 +907,5 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     'use_latest_build_cloudcare',
     'Uses latest build for cloudcare instead of latest starred',
     TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
-)
-
-
-APP_BUILDER_NOTIFICATIONS = StaticToggle(
-    'app_builder_notifications',
-    'Enable app builder notifications on duplicate form edits.',
-    TAG_PRODUCT_CORE,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )

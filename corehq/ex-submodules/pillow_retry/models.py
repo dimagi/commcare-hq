@@ -48,6 +48,7 @@ class PillowError(models.Model):
         change = change_from_couch_row(self.change if self.change else {'id': self.doc_id})
         if self.change_metadata:
             change.metadata = ChangeMeta.wrap(self.change_metadata)
+        change.document = None
         return change
 
     class Meta:
@@ -81,6 +82,7 @@ class PillowError(models.Model):
     @classmethod
     def get_or_create(cls, change, pillow):
         change = force_to_change(change)
+        change.document = None
         doc_id = change.id
         try:
             error = cls.objects.get(doc_id=doc_id, pillow=pillow.pillow_id)

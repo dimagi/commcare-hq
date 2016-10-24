@@ -21,6 +21,8 @@ from .new import (
     ExportDataSchema,
     FormExportDataSchema,
     CaseExportDataSchema,
+    InferredSchema,
+    InferredExportGroupSchema,
     ExportGroupSchema,
     TableConfiguration,
     ScalarItem,

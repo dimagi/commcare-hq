@@ -132,6 +132,8 @@ class Command(BaseCommand):
              description="Allows domains to create Excel dashboard html exports"),
         Role(slug=privileges.DAILY_SAVED_EXPORT, name='DAILY_SAVED_EXPORT',
              description="Allows domains to create Daily Saved Exports"),
+        Role(slug=privileges.ZAPIER_INTEGRATION, name='Zapier Integration',
+             description='Allows domains to use zapier (zapier.com) integration')
     ]
 
     BOOTSTRAP_PLANS = [
@@ -163,6 +165,7 @@ class Command(BaseCommand):
         privileges.ALLOW_EXCESS_USERS,
         privileges.LOCATIONS,
         privileges.USER_CASE,
+        privileges.ZAPIER_INTEGRATION
     ]
 
     pro_plan_features = standard_plan_features + [

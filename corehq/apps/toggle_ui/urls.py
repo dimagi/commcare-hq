@@ -1,4 +1,4 @@
-from django.conf.urls import *
+from django.conf.urls import patterns, url
 from corehq.apps.toggle_ui.views import ToggleListView, ToggleEditView
 
 urlpatterns = patterns('toggle.views',

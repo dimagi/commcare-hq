@@ -10,7 +10,7 @@ from django.views.generic import View
 
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
-from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule
+from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule, WORKFLOW_FORM
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.views import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
@@ -24,7 +24,7 @@ from couchexport.shortcuts import export_response
 class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
     urlname = 'app_summary'
     page_title = ugettext_noop("Summary")
-    template_name = 'app_manager/summary.html'
+    template_name = 'app_manager/v1/summary.html'
 
     @use_angular_js
     def dispatch(self, request, *args, **kwargs):
@@ -153,13 +153,17 @@ APP_SUMMARY_EXPORT_HEADER_NAMES = [
     'app',
     'module',
     'form',
+    'display_filter',
+    'case_list_filter',
     'case_type',
     'case_actions',
     'filter',
     'module_type',
     'comments',
+    'end_of_form_navigation',
 ]
 AppSummaryRow = namedtuple('AppSummaryRow', APP_SUMMARY_EXPORT_HEADER_NAMES)
+AppSummaryRow.__new__.__defaults__ = (None, ) * len(APP_SUMMARY_EXPORT_HEADER_NAMES)
 
 
 class DownloadAppSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
@@ -170,36 +174,61 @@ class DownloadAppSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
         language = request.GET.get('lang', 'en')
         headers = [(self.app.name, tuple(APP_SUMMARY_EXPORT_HEADER_NAMES))]
         data = [(self.app.name, [
-            AppSummaryRow(self.app.name, None, None, None, None, None, None, self.app.comment)
+            AppSummaryRow(
+                app=self.app.name,
+                comments=self.app.comment,
+            )
         ])]
 
         for module in self.app.get_modules():
+            try:
+                case_list_filter = module.case_details.short.filter
+            except AttributeError:
+                case_list_filter = None
+
             data += [
                 (self.app.name, [
                     AppSummaryRow(
-                        self.app.name,
-                        _get_translated_module_name(self.app, module.unique_id, language),
-                        None,
-                        module.case_type,
-                        None,
-                        module.module_filter,
-                        'advanced' if isinstance(module, AdvancedModule) else 'standard',
-                        module.comment,
+                        app=self.app.name,
+                        module=_get_translated_module_name(self.app, module.unique_id, language),
+                        display_filter=module.module_filter,
+                        case_type=module.case_type,
+                        case_list_filter=case_list_filter,
+                        case_actions=module.case_details.short.filter if hasattr(module, 'case_details') else None,
+                        filter=module.module_filter,
+                        module_type='advanced' if isinstance(module, AdvancedModule) else 'standard',
+                        comments=module.comment,
                     )
                 ])
             ]
             for form in module.get_forms():
+                post_form_workflow = form.post_form_workflow
+                if form.post_form_workflow == WORKFLOW_FORM:
+                    post_form_workflow = "form:\n{}".format(
+                        "\n".join(
+                            ["{form}: {xpath} [{datums}]".format(
+                                form=_get_translated_form_name(self.app, link.form_id, language),
+                                xpath=link.xpath,
+                                datums=", ".join(
+                                    "{}: {}".format(
+                                        datum.name, datum.xpath
+                                    ) for datum in link.datums)
+                            ) for link in form.form_links]
+                        )
+                    )
                 data += [
                     (self.app.name, [
                         AppSummaryRow(
-                            self.app.name,
-                            _get_translated_module_name(self.app, module.unique_id, language),
-                            _get_translated_form_name(self.app, form.get_unique_id(), language),
-                            form.get_case_type(),
-                            self._get_form_actions(form),
-                            form.form_filter,
-                            'advanced' if isinstance(module, AdvancedModule) else 'standard',
-                            form.comment,
+                            app=self.app.name,
+                            module=_get_translated_module_name(self.app, module.unique_id, language),
+                            form=_get_translated_form_name(self.app, form.get_unique_id(), language),
+                            display_filter=form.form_filter,
+                            case_type=form.get_case_type(),
+                            case_actions=self._get_form_actions(form),
+                            filter=form.form_filter,
+                            module_type='advanced' if isinstance(module, AdvancedModule) else 'standard',
+                            comments=form.comment,
+                            end_of_form_navigation=post_form_workflow,
                         )
                     ])
                 ]
@@ -234,6 +263,96 @@ class DownloadAppSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
         else:
             return form.get_action_type()
 
+
+FORM_SUMMARY_EXPORT_HEADER_NAMES = [
+    "question_id",
+    "label",
+    "translations",
+    "type",
+    "repeat",
+    "group",
+    "options",
+    "calculate",
+    "relevant",
+    "required",
+]
+FormSummaryRow = namedtuple('FormSummaryRow', FORM_SUMMARY_EXPORT_HEADER_NAMES)
+FormSummaryRow.__new__.__defaults__ = (None, ) * len(FORM_SUMMARY_EXPORT_HEADER_NAMES)
+
+
+class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
+    urlname = 'download_form_summary'
+    http_method_names = [u'get']
+
+    def get(self, request, domain, app_id):
+        language = request.GET.get('lang', 'en')
+        modules = list(self.app.get_modules())
+        headers = [('All Forms', ('module_name', 'form_name', 'comment'))]
+        headers += [
+            (self._get_form_sheet_name(module, form, language), tuple(FORM_SUMMARY_EXPORT_HEADER_NAMES))
+            for module in modules for form in module.get_forms()
+        ]
+        data = list((
+            'All Forms',
+            self.get_all_forms_row(module, form, language)
+        ) for module in modules for form in module.get_forms())
+        data += list(
+            (self._get_form_sheet_name(module, form, language), self._get_form_row(form, language))
+            for module in modules for form in module.get_forms()
+        )
+        export_string = StringIO()
+        export_raw(tuple(headers), data, export_string, Format.XLS_2007),
+        return export_response(
+            export_string,
+            Format.XLS_2007,
+            u'{app_name} v.{app_version} - Form Summary ({lang})'.format(
+                app_name=self.app.name,
+                app_version=self.app.version,
+                lang=language
+            ),
+        )
+
+    def _get_form_row(self, form, language):
+        from corehq.apps.reports.formdetails.readable import FormQuestionResponse
+        form_summary_rows = []
+        for question in form.get_questions(
+            self.app.langs,
+            include_triggers=True,
+            include_groups=True,
+            include_translations=True
+        ):
+            question_response = FormQuestionResponse(question)
+            form_summary_rows.append(
+                FormSummaryRow(
+                    question_id=question_response.value,
+                    label=_translate_name(question_response.translations, language),
+                    translations=question_response.translations,
+                    type=question_response.type,
+                    repeat=question_response.repeat,
+                    group=question_response.group,
+                    options="\n".join(
+                        ["{} - {}".format(_translate_name(option.translations, language), option.value)
+                         for option in question_response.options]
+                    ),
+                    calculate=question_response.calculate,
+                    relevant=question_response.relevant,
+                    required="true" if question_response.required else "false",
+                )
+            )
+        return tuple(form_summary_rows)
+
+    def _get_form_sheet_name(self, module, form, language):
+        return "{} - {}".format(
+            _get_translated_module_name(self.app, module.unique_id, language),
+            _get_translated_form_name(self.app, form.get_unique_id(), language),
+        )
+
+    def get_all_forms_row(self, module, form, language):
+        return ((
+            _get_translated_module_name(self.app, module.unique_id, language),
+            _get_translated_form_name(self.app, form.get_unique_id(), language),
+            form.short_comment
+        ),)
 
 CASE_SUMMARY_EXPORT_HEADER_NAMES = [
     'case_property_name',

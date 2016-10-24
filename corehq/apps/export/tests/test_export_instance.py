@@ -7,7 +7,11 @@ from corehq.apps.export.models import (
     StockItem,
     MultipleChoiceItem,
     FormExportDataSchema,
+    CaseExportDataSchema,
+    InferredSchema,
+    InferredExportGroupSchema,
     ExportGroupSchema,
+    CaseExportInstance,
     FormExportInstance,
     TableConfiguration,
     SplitExportColumn,
@@ -144,6 +148,92 @@ class TestExportInstanceGeneration(SimpleTestCase):
             ]),
             "Repeat: awesome_repeat"
         )
+
+
+@mock.patch(
+    'corehq.apps.export.models.new.get_request',
+    return_value=MockRequest(domain='my-domain'),
+)
+@mock.patch(
+    'corehq.apps.export.models.new.Domain.get_by_name',
+    return_value=mock.MagicMock(),
+)
+class TestExportInstanceGenerationWithInferredSchema(SimpleTestCase):
+    app_id = '1234'
+    case_type = 'inferred'
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestExportInstanceGenerationWithInferredSchema, cls).setUpClass()
+        cls.schema = CaseExportDataSchema(
+            app_id=cls.app_id,
+            case_type=cls.case_type,
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[
+                        ExportItem(
+                            path=[PathNode(name='data'), PathNode(name='case_property')],
+                            label='Question 1',
+                            last_occurrences={cls.app_id: 3},
+                        ),
+                    ],
+                    last_occurrences={cls.app_id: 3},
+                ),
+            ],
+        )
+        cls.inferred_schema = InferredSchema(
+            case_type=cls.case_type,
+            group_schemas=[
+                InferredExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[
+                        ExportItem(
+                            path=[PathNode(name='data'), PathNode(name='case_property')],
+                            label='Inferred 1',
+                            inferred=True
+                        ),
+                        ExportItem(
+                            path=[PathNode(name='data'), PathNode(name='case_property_2')],
+                            label='Inferred 1',
+                            inferred=True
+                        ),
+                    ],
+                    inferred=True
+                ),
+            ]
+        )
+
+    def test_generate_instance_from_schema_with_inferred(self, _, __):
+
+        build_ids_and_versions = {
+            self.app_id: 3,
+        }
+        with mock.patch(
+                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
+                return_value=build_ids_and_versions):
+            with mock.patch(
+                    'corehq.apps.export.models.new.get_inferred_schema',
+                    return_value=self.inferred_schema):
+
+                instance = CaseExportInstance.generate_instance_from_schema(self.schema)
+
+        table = instance.get_table(MAIN_TABLE)
+        index, column = table.get_column(
+            [PathNode(name='data'), PathNode(name='case_property')],
+            'ExportItem',
+            None
+        )
+        self.assertIsNotNone(column)
+        self.assertFalse(column.is_advanced)
+
+        index, column = table.get_column(
+            [PathNode(name='data'), PathNode(name='case_property_2')],
+            'ExportItem',
+            None
+        )
+        self.assertIsNotNone(column)
+        self.assertFalse(column.is_advanced)
 
 
 @mock.patch(

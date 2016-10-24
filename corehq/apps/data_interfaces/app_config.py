@@ -1,8 +1,5 @@
 from django.apps import AppConfig
 
-from casexml.apps.case.signals import case_post_save
-from corehq.form_processor.signals import sql_case_post_save
-
 from corehq.apps.data_interfaces.signals import case_changed_receiver
 
 
@@ -11,7 +8,9 @@ class DataInterfacesAppConfig(AppConfig):
 
     def ready(self):
         from casexml.apps.case.models import CommCareCase
+        from casexml.apps.case.signals import case_post_save
         from corehq.form_processor.models import CommCareCaseSQL
+        from corehq.form_processor.signals import sql_case_post_save
 
         case_post_save.connect(case_changed_receiver, CommCareCase,
                                dispatch_uid="data_interfaces_case_receiver")

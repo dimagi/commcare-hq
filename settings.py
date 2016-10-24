@@ -145,6 +145,7 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.common.BrokenLinkEmailsMiddleware',
     'django_otp.middleware.OTPMiddleware',
@@ -366,7 +367,6 @@ HQ_APPS = (
     'pact',
 
     'custom.apps.care_benin',
-    'custom.apps.cvsu',
     'custom.reports.mc',
     'custom.apps.crs_reports',
     'custom.hope',
@@ -388,8 +388,8 @@ HQ_APPS = (
     'custom.common',
 
     'custom.icds_reports',
-    'custom.enikshay.integrations.ninetyninedots',
-    'custom.pnlppgi'
+    'custom.pnlppgi',
+    'custom.enikshay'
 )
 
 # DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
@@ -498,7 +498,7 @@ EXCHANGE_NOTIFICATION_RECIPIENTS = []
 SERVER_EMAIL = 'commcarehq-noreply@dimagi.com'
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
-PROBONO_SUPPORT_EMAIL = 'billing-support@dimagi.com'
+PROBONO_SUPPORT_EMAIL = 'pro-bono@dimagi.com'
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 ACCOUNTS_EMAIL = 'accounts@dimagi.com'
 FINANCE_EMAIL = 'finance@dimagi.com'
@@ -740,6 +740,8 @@ AUDIT_MODULES = [
     'corehq.apps.userreports',
     'corehq.apps.data',
     'corehq.apps.registration',
+    'corehq.apps.hqadmin',
+    'corehq.apps.accounting',
     'tastypie',
 ]
 
@@ -940,7 +942,7 @@ LOGGING = {
             'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
         },
         'couch-request-formatter': {
-            'format': '%(asctime)s [%(username)s:%(domain)s] %(hq_url)s %(method)s %(error_status)s %(path)s %(duration)s'
+            'format': '%(asctime)s [%(username)s:%(domain)s] %(hq_url)s %(method)s %(status_code)s %(content_length)s %(path)s %(duration)s'
         },
         'datadog': {
             'format': '%(metric)s %(created)s %(value)s metric_type=%(metric_type)s %(message)s'
@@ -1282,7 +1284,6 @@ COUCHDB_APPS = [
     ('bihar', 'fluff-bihar'),
     ('opm', 'fluff-opm'),
     ('fluff', 'fluff-opm'),
-    ('cvsu', 'fluff-cvsu'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
     ('export', 'meta'),
@@ -1374,10 +1375,13 @@ WEB_USER_TERM = "Web User"
 DEFAULT_CURRENCY = "USD"
 DEFAULT_CURRENCY_SYMBOL = "$"
 
-SMS_HANDLERS = [
-    'corehq.apps.sms.handlers.forwarding.forwarding_handler',
+CUSTOM_SMS_HANDLERS = [
     'custom.ilsgateway.tanzania.handler.handle',
     'custom.ewsghana.handler.handle',
+]
+
+SMS_HANDLERS = [
+    'corehq.apps.sms.handlers.forwarding.forwarding_handler',
     'corehq.apps.commtrack.sms.handle',
     'corehq.apps.sms.handlers.keyword.sms_keyword_handler',
     'corehq.apps.sms.handlers.form_session.form_session_handler',
@@ -1698,7 +1702,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
-    os.path.join('custom', 'apps', 'cvsu', 'data_sources', 'unicef_malawi.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_locations.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_mgt_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases.json'),
@@ -1723,6 +1726,8 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test.json'),
+
     os.path.join('custom', 'pnlppgi', 'resources', 'site_reporting_rates.json'),
     os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json')
 ]
@@ -1781,7 +1786,6 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
     ('location_type_name', 'corehq.apps.locations.ucr_expressions.location_type_name'),
     ('location_parent_id', 'corehq.apps.locations.ucr_expressions.location_parent_id'),
-    ('cvsu_expression', 'custom.apps.cvsu.expressions.cvsu_expression'),
     ('eqa_expression', 'custom.eqa.expressions.eqa_expression'),
     ('cqi_action_item', 'custom.eqa.expressions.cqi_action_item'),
     ('year_expression', 'custom.pnlppgi.expressions.year_expression'),
@@ -1813,7 +1817,6 @@ DOMAIN_MODULE_MAP = {
     'a5288-study': 'a5288',
     'care-bihar': 'custom.bihar',
     'bihar': 'custom.bihar',
-    'cvsulive': 'custom.apps.cvsu',
     'fri': 'custom.fri.reports',
     'fri-testing': 'custom.fri.reports',
     'gsid': 'custom.apps.gsid',
@@ -1840,6 +1843,7 @@ DOMAIN_MODULE_MAP = {
     'icds-cas': 'custom.icds_reports',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
+    'enikshay-test': 'custom.enikshay',
 
     'crs-remind': 'custom.apps.crs_reports',
 
@@ -1865,7 +1869,7 @@ TRAVIS_TEST_GROUPS = (
         'accounting', 'api', 'app_manager', 'appstore',
         'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter', 'care_benin',
         'case', 'casegroups', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
-        'couchapps', 'couchlog', 'crud', 'cvsu', 'django_digest',
+        'couchapps', 'couchlog', 'crud', 'django_digest',
         'domain', 'domainsync', 'export',
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',

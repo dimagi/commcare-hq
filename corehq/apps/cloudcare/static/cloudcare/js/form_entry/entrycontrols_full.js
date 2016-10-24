@@ -85,12 +85,21 @@ EntryArrayAnswer.prototype.onPreProcess = function(newValue) {
  */
 EntrySingleAnswer = function(question, options) {
     var self = this;
+
     Entry.call(self, question, options);
-    if (question.answer()) {
-        self.rawAnswer = ko.observable(question.answer());
-    } else {
-        self.rawAnswer = ko.observable(Formplayer.Const.NO_ANSWER);
+    var extensions = {};
+    var displayOptions = _getDisplayOptions(question)
+    self.valueUpdate = undefined;
+    if (options.enableRateLimit && ko.utils.unwrapObservable(displayOptions.phoneMode)) {
+        extensions.rateLimit = {
+            timeout: Formplayer.Const.KO_ENTRY_TIMEOUT,
+            method: "notifyWhenChangesStop"
+        };
+        self.valueUpdate = 'keyup';
     }
+    self.rawAnswer = ko.observable(question.answer() || Formplayer.Const.NO_ANSWER)
+        .extend(extensions);
+
     self.rawAnswer.subscribe(self.onPreProcess.bind(self));
 }
 EntrySingleAnswer.prototype = Object.create(Entry.prototype);
@@ -147,7 +156,7 @@ function FreeTextEntry(question, options) {
             return false;
         }
         return true;
-    }
+    };
 
     self.getErrorMessage = function(raw) {
         return null;
@@ -363,8 +372,7 @@ function DateTimeEntryBase(question, options) {
                 }
             },
         };
-        self.$picker.datetimepicker(datepickerOpts)
-            .val(self.answer() ? moment(self.answer()).format(self.clientFormat) : self.answer());
+        self.$picker.datetimepicker(datepickerOpts);
     };
 }
 DateTimeEntryBase.prototype = Object.create(EntrySingleAnswer.prototype);
@@ -511,19 +519,19 @@ function getEntry(question) {
         case Formplayer.Const.STRING:
             rawStyle = question.style ? ko.utils.unwrapObservable(question.style.raw) === 'numeric' : false;
             if (rawStyle) {
-                entry = new PhoneEntry(question, {});
+                entry = new PhoneEntry(question, { enableRateLimit: true });
             } else {
-                entry = new FreeTextEntry(question, {});
+                entry = new FreeTextEntry(question, { enableRateLimit: true });
             }
             break;
         case Formplayer.Const.INT:
-            entry = new IntEntry(question, {});
+            entry = new IntEntry(question, { enableRateLimit: true });
             break;
         case Formplayer.Const.LONGINT:
-            entry = new IntEntry(question, { lengthLimit: 15 });
+            entry = new IntEntry(question, { lengthLimit: 15, enableRateLimit: true  });
             break;
         case Formplayer.Const.FLOAT:
-            entry = new FloatEntry(question, {});
+            entry = new FloatEntry(question, { enableRateLimit: true });
             break;
         case Formplayer.Const.SELECT:
             entry = new SingleSelectEntry(question, {});

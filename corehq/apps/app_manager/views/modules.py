@@ -64,13 +64,13 @@ logger = logging.getLogger(__name__)
 
 def get_module_template(module):
     if isinstance(module, CareplanModule):
-        return "app_manager/module_view_careplan.html"
+        return "app_manager/v1/module_view_careplan.html"
     elif isinstance(module, AdvancedModule):
-        return "app_manager/module_view_advanced.html"
+        return "app_manager/v1/module_view_advanced.html"
     elif isinstance(module, ReportModule):
-        return 'app_manager/module_view_report.html'
+        return 'app_manager/v1/module_view_report.html'
     else:
-        return "app_manager/module_view.html"
+        return "app_manager/v1/module_view.html"
 
 
 def get_module_view_context(app, module, lang=None):
@@ -411,7 +411,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     resp = {'update': {}, 'corrections': {}}
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
-        if is_valid_case_type(case_type, module):
+        if not case_type or is_valid_case_type(case_type, module):
             old_case_type = module["case_type"]
             module["case_type"] = case_type
             for cp_mod in (mod for mod in app.modules if isinstance(mod, CareplanModule)):
@@ -791,7 +791,7 @@ def validate_module_for_build(request, domain, app_id, module_id, ajax=True):
     errors = module.validate_for_build()
     lang, langs = get_langs(request, app)
 
-    response_html = render_to_string('app_manager/partials/build_errors.html', {
+    response_html = render_to_string('app_manager/v1/partials/build_errors.html', {
         'request': request,
         'app': app,
         'build_errors': errors,
