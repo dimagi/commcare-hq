@@ -56,17 +56,18 @@ def ensure_plans(config, dry_run, verbose, apps):
                 name='%s Edition' % product.name, edition=edition, visibility=SoftwarePlanVisibility.PUBLIC
             )
             if dry_run:
-                logger.info("[DRY RUN] Creating Software Plan: %s" % software_plan.name)
+                logger.info("[DRY RUN] Creating Software Plan: %s", software_plan.name)
             else:
                 try:
                     software_plan = SoftwarePlan.objects.get(name=software_plan.name)
                     if verbose:
-                        logger.info("Plan '%s' already exists. Using existing plan to add version."
-                                    % software_plan.name)
+                        logger.info(
+                            "Plan '%s' already exists. Using existing plan to add version.", software_plan.name
+                        )
                 except SoftwarePlan.DoesNotExist:
                     software_plan.save()
                     if verbose:
-                        logger.info("Creating Software Plan: %s" % software_plan.name)
+                        logger.info("Creating Software Plan: %s", software_plan.name)
 
                 software_plan_version.plan = software_plan
 
@@ -98,24 +99,21 @@ def ensure_plans(config, dry_run, verbose, apps):
             for is_trial in trials:
                 default_product_plan = DefaultProductPlan(product_type=product.product_type, edition=edition, is_trial=is_trial)
                 if dry_run:
-                    logger.info("[DRY RUN] Setting plan as default for product '%s' and edition '%s'." %
-                            (product.product_type, default_product_plan.edition))
+                    logger.info("[DRY RUN] Setting plan as default for product '%s' and edition '%s'.",
+                                product.product_type, default_product_plan.edition)
                 else:
                     try:
                         default_product_plan = DefaultProductPlan.objects.get(product_type=product.product_type,
                                                                               edition=edition, is_trial=is_trial)
                         if verbose:
-                            logger.info("Default for product '%s' and edition "
-                                        "'%s' already exists." % (
-                                            product.product_type, default_product_plan.edition
-                                        ))
+                            logger.info("Default for product '%s' and edition '%s' already exists.",
+                                        product.product_type, default_product_plan.edition)
                     except DefaultProductPlan.DoesNotExist:
                         default_product_plan.plan = software_plan
                         default_product_plan.save()
                         if verbose:
-                            logger.info("Setting plan as default for product '%s' and edition '%s'." %
-                                        (product.product_type,
-                                         default_product_plan.edition))
+                            logger.info("Setting plan as default for product '%s' and edition '%s'.",
+                                        product.product_type, default_product_plan.edition)
 
 
 def _ensure_role(role_slug, apps):
@@ -145,22 +143,19 @@ def _ensure_product_and_rate(edition_to_product_rate, product_type, edition, dry
 
     product_rate = SoftwareProductRate(**edition_to_product_rate[edition])
     if dry_run:
-        logger.info("[DRY RUN] Creating Product: %s" % product)
-        logger.info("[DRY RUN] Corresponding product rate of $%d created." % product_rate.monthly_fee)
+        logger.info("[DRY RUN] Creating Product: %s", product)
+        logger.info("[DRY RUN] Corresponding product rate of $%d created.", product_rate.monthly_fee)
     else:
         try:
             product = SoftwareProduct.objects.get(name=product.name)
             if verbose:
-                logger.info("Product '%s' already exists. Using "
-                            "existing product to add rate."
-                            % product.name)
+                logger.info("Product '%s' already exists. Using existing product to add rate.", product.name)
         except SoftwareProduct.DoesNotExist:
             product.save()
             if verbose:
-                logger.info("Creating Product: %s" % product)
+                logger.info("Creating Product: %s", product)
         if verbose:
-            logger.info("Corresponding product rate of $%d created."
-                        % product_rate.monthly_fee)
+            logger.info("Corresponding product rate of $%d created.", product_rate.monthly_fee)
     product_rate.product = product
     return product, product_rate
 
@@ -181,18 +176,18 @@ def _ensure_features(editions, dry_run, verbose, apps):
             if edition == SoftwarePlanEdition.ENTERPRISE:
                 feature.name = "Dimagi Only %s" % feature.name
             if dry_run:
-                logger.info("[DRY RUN] Creating Feature: %s" % feature)
+                logger.info("[DRY RUN] Creating Feature: %s", feature)
             else:
                 try:
                     feature = Feature.objects.get(name=feature.name)
                     if verbose:
                         logger.info("Feature '%s' already exists. Using "
-                                    "existing feature to add rate."
-                                    % feature.name)
+                                "existing feature to add rate.",
+                                feature.name)
                 except Feature.DoesNotExist:
                     feature.save()
                     if verbose:
-                        logger.info("Creating Feature: %s" % feature)
+                        logger.info("Creating Feature: %s", feature)
             edition_to_features[edition].append(feature)
     return edition_to_features
 
@@ -211,8 +206,8 @@ def _ensure_feature_rates(edition_to_feature_rate, features, edition, dry_run, v
         feature_rate = FeatureRate(**edition_to_feature_rate[edition][feature.feature_type])
         feature_rate.feature = feature
         if dry_run:
-            logger.info("[DRY RUN] Creating rate for feature '%s': %s" % (feature.name, feature_rate))
+            logger.info("[DRY RUN] Creating rate for feature '%s': %s", feature.name, feature_rate)
         elif verbose:
-            logger.info("Creating rate for feature '%s': %s" % (feature.name, feature_rate))
+            logger.info("Creating rate for feature '%s': %s", feature.name, feature_rate)
         feature_rates.append(feature_rate)
     return feature_rates
