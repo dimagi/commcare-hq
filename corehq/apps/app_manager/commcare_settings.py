@@ -24,7 +24,11 @@ def _load_custom_commcare_settings(domain=None):
                 setting['type'] = 'properties'
             settings.append(setting)
 
-    with open(os.path.join(path, 'commcare-app-settings.yaml')) as f:
+    with open(os.path.join(path, get_app_manager_template(
+        domain,
+        'v1/commcare-app-settings.yaml',
+        'v2/commcare-app-settings.yaml'
+    ))) as f:
         for setting in yaml.load(f):
             if not setting.get('type'):
                 setting['type'] = 'hq'
