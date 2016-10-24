@@ -649,7 +649,8 @@ def send_overdue_reminders():
                 context = {
                     'invoice': invoice,
                     'total': total,
-                    'subscription_url': absolute_reverse(DomainSubscriptionView.urlname, args=[invoice.get_domain()]),
+                    'subscription_url': absolute_reverse(DomainSubscriptionView.urlname,
+                                                         args=[invoice.get_domain()]),
                     'statements_url': absolute_reverse(DomainBillingStatementsView.urlname,
                                                        args=[invoice.get_domain()]),
                     'date_60': invoice.date_due + datetime.timedelta(days=60),
@@ -670,6 +671,7 @@ def _send_downgrade_notice(invoice, context):
         ugettext('Oh no! Your CommCare subscription for {} has been downgraded'.format(invoice.get_domain())),
         invoice.contact_emails,
         render_to_string('accounting/downgrade.html', context),
+        render_to_string('accounting/downgrade.txt', context),
         cc=[settings.ACCOUNTS_EMAIL],
         email_from=get_dimagi_from_email()
     )
@@ -682,6 +684,7 @@ def _send_downgrade_warning(invoice, context):
         )),
         invoice.contact_emails,
         render_to_string('accounting/downgrade_warning.html', context),
+        render_to_string('accounting/downgrade_warning.txt', context),
         cc=[settings.ACCOUNTS_EMAIL],
         email_from=get_dimagi_from_email())
 
@@ -691,6 +694,7 @@ def _send_overdue_notice(invoice, context):
         ugettext('CommCare Billing Statement 30 days Overdue for {}'.format(invoice.get_domain())),
         invoice.contact_emails,
         render_to_string('accounting/30_days.html', context),
+        render_to_string('accounting/30_days.txt', context),
         cc=[settings.ACCOUNTS_EMAIL],
         email_from=get_dimagi_from_email())
 
