@@ -1374,7 +1374,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 # changing a plan overrides future subscriptions
                 future_subscriptions = Subscription.objects.filter(
                     subscriber=self.domain,
-                    date_start__gte=datetime.date.today()
+                    date_start__gt=datetime.date.today()
                 )
                 if future_subscriptions.count() > 0:
                     future_subscriptions.update(date_end=F('date_start'))
