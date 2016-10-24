@@ -10,10 +10,7 @@ from django.apps import apps as default_apps
 from django.core.management.base import BaseCommand
 
 from corehq.apps.accounting.bootstrap.config.cchq_software_plan_bootstrap import (
-    BOOTSTRAP_EDITION_TO_ROLE,
-    BOOTSTRAP_FEATURE_RATES,
-    BOOTSTRAP_FEATURE_RATES_FOR_TESTING,
-    BOOTSTRAP_PRODUCT_RATES,
+    BOOTSTRAP_CONFIG, BOOTSTRAP_CONFIG_TESTING
 )
 from corehq.apps.accounting.bootstrap.utils import ensure_plans
 
@@ -38,13 +35,8 @@ class Command(BaseCommand):
 
         if testing:
             logger.info("Initializing Plans and Roles for Testing")
-            edition_to_feature_rate = BOOTSTRAP_FEATURE_RATES_FOR_TESTING
+            config = BOOTSTRAP_CONFIG_TESTING
         else:
-            edition_to_feature_rate = BOOTSTRAP_FEATURE_RATES
+            config = BOOTSTRAP_CONFIG
 
-        ensure_plans(
-            edition_to_role=BOOTSTRAP_EDITION_TO_ROLE,
-            edition_to_product_rate=BOOTSTRAP_PRODUCT_RATES,
-            edition_to_feature_rate=edition_to_feature_rate,
-            dry_run=dry_run, verbose=verbose, apps=default_apps,
-        )
+        ensure_plans(config, dry_run=dry_run, verbose=verbose, apps=default_apps)

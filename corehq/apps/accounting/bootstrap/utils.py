@@ -27,12 +27,15 @@ FEATURE_TYPES = [
 ]
 
 
-def ensure_plans(edition_to_role, edition_to_product_rate, edition_to_feature_rate,
-                 dry_run, verbose, apps):
+def ensure_plans(config, dry_run, verbose, apps):
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
     SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
     SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
     Role = apps.get_model('django_prbac', 'Role')
+
+    edition_to_role = {plan_name[0]: conf['role'] for plan_name, conf in config.iteritems()}
+    edition_to_product_rate = {plan_name[0]: conf['product_rate'] for plan_name, conf in config.iteritems()}
+    edition_to_feature_rate = {plan_name[0]: conf['feature_rates'] for plan_name, conf in config.iteritems()}
 
     editions = edition_to_role.keys()
     edition_to_features = _ensure_features(editions, dry_run=dry_run, verbose=verbose, apps=apps)
