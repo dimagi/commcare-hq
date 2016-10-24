@@ -31,7 +31,6 @@ def ensure_plans(config, dry_run, verbose, apps):
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
     SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
     SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
-    Role = apps.get_model('django_prbac', 'Role')
 
     edition_to_role = {plan_name[0]: conf['role'] for plan_name, conf in config.iteritems()}
     edition_to_product_rate = {plan_name[0]: conf['product_rate'] for plan_name, conf in config.iteritems()}
@@ -42,12 +41,7 @@ def ensure_plans(config, dry_run, verbose, apps):
     for product_type in PRODUCT_TYPES:
         for edition in editions:
             role_slug = edition_to_role[edition]
-            try:
-                role = Role.objects.get(slug=role_slug)
-            except Role.DoesNotExist:
-                logger.info("Could not find the role '%s'. Did you forget to run cchq_prbac_bootstrap?")
-                logger.info("Aborting. You should figure this out.")
-                return
+            role = _ensure_role(role_slug, apps)
             software_plan_version = SoftwarePlanVersion(role=role)
 
             product, product_rate = _ensure_product_and_rate(
@@ -122,6 +116,17 @@ def ensure_plans(config, dry_run, verbose, apps):
                             logger.info("Setting plan as default for product '%s' and edition '%s'." %
                                         (product.product_type,
                                          default_product_plan.edition))
+
+
+def _ensure_role(role_slug, apps):
+    Role = apps.get_model('django_prbac', 'Role')
+    try:
+        role = Role.objects.get(slug=role_slug)
+    except Role.DoesNotExist:
+        logger.error("Could not find the role '%s'. Did you forget to run cchq_prbac_bootstrap?", role_slug)
+        logger.error("Aborting. You should figure this out.")
+        raise
+    return role
 
 
 def _ensure_product_and_rate(edition_to_product_rate, product_type, edition, dry_run, verbose, apps):
