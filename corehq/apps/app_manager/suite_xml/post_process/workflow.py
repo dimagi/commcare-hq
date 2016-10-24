@@ -21,9 +21,14 @@ class WorkflowHelper(PostProcessor):
     def __init__(self, suite, app, modules):
         super(WorkflowHelper, self).__init__(suite, app, modules)
 
+    @property
+    @memoized
+    def root_module_datums(self):
         root_modules = [module for module in self.modules if getattr(module, 'put_in_root', False)]
-        self.root_module_datums = [datum for module in root_modules
-                          for datum in self.get_module_datums(u'm{}'.format(module.id)).values()]
+        return [
+            datum for module in root_modules
+            for datum in self.get_module_datums(u'm{}'.format(module.id)).values()
+        ]
 
     def update_suite(self):
         """
