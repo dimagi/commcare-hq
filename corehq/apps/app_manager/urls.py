@@ -39,6 +39,7 @@ app_urls = [
     url(r'^delete/$', view_app, name='app_delete'),
     url(r'^$', view_app, name='view_app'),
     url(r'^releases/$', view_app, name='release_manager'),
+    url(r'^settings/$', 'app_settings', name='app_settings'),
 
     # placeholder for app manager v2
     url(r'^releases_v2/$', release_manager, name='release_manager_v2'),
