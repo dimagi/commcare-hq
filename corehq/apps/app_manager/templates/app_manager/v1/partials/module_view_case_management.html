@@ -42,6 +42,6 @@
         {% if module.module_type == 'basic' and request.project.survey_management_enabled %}
             {% include 'app_manager/v1/partials/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
         {% endif %}
-        {% endblock case_management_advanced_fields %}
+        {% endblock %}
     </fieldset>
 </form>
