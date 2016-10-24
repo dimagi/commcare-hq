@@ -8,6 +8,7 @@ from corehq.apps.reports.sqlreport import SqlTabularReport, SqlData
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.util import get_INFilter_bindparams
 from corehq.apps.userreports.util import get_table_name
+from corehq.sql_db.connections import UCR_ENGINE_ID
 from custom.enikshay.reports.filters import EnikshayLocationFilter
 from custom.utils.utils import clean_IN_filter_value
 
@@ -57,6 +58,10 @@ class EnikshayReport(DatespanMixin, CustomProjectReport, SqlTabularReport):
 
 
 class EnikshaySqlData(SqlData):
+
+    @property
+    def engine_id(self):
+        return UCR_ENGINE_ID
 
     @property
     def table_name(self):
