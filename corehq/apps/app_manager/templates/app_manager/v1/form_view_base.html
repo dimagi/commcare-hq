@@ -273,7 +273,7 @@
 
 {% block form-view %}
     <div id="build_errors"></div>
-    {% inline_edit_trans form.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
+    {% inline_edit_trans form.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { document.title = data.update['.variable-form_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager.js').updateDOM(data.update);}" %}
     <br />
     <inline-edit params="
         name: 'comment',
