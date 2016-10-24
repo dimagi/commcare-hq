@@ -24,8 +24,7 @@ def get_diff(file_v1, file_v2):
         with open(file_v2, "r") as fv2:
             data_v1 = fv1.readlines()
             data_v2 = fv2.readlines()
-            differ = difflib.Differ()
-            return list(differ.compare(data_v1, data_v2))
+            return list(difflib.unified_diff(data_v1, data_v2))
 
 
 class Command(BaseCommand):
