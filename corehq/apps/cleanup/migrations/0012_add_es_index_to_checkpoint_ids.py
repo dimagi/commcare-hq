@@ -7,7 +7,7 @@ from corehq.sql_db.operations import HqRunPython
 
 
 RENAMES = (
-    ("applications-to-elasticsearch", "ApplicationToElasticsearchPillow-hqapps_2016-07-11_2128"),
+    ("applications-to-elasticsearch", "ApplicationToElasticsearchPillow-hqapps_2016-10-20_1835"),
     ("all-cases-to-elasticsearch", "CaseToElasticsearchPillow-hqcases_2016-03-04"),
     ("all-xforms-to-elasticsearch", "XFormToElasticsearchPillow-xforms_2016-07-07"),
     ("case-search-to-elasticsearch", "CaseSearchToElasticsearchPillow-case_search_2016-03-15"),
