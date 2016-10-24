@@ -363,31 +363,38 @@
 -     <div class="tab-pane" id="case-settings">
 -         {% include "app_manager/v1/partials/module_view_case_management.html" %}
 -     </div>
-- 
--     {% for detail in details %}
--     <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
--         {% include 'app_manager/v1/partials/case_list.html' %}
--     </div>
--     {% if detail.long %}
--     <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">
--         {% include 'app_manager/v1/partials/case_detail.html' %}
--     </div>
-      {% endif %}
-+ 
+  
 +     {% if module.case_type != "" %}
+-     {% for detail in details %}
 +       {% for detail in details %}
-+         <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
-+             {% include 'app_manager/v2/partials/case_list.html' %}
-+         </div>
-+         {% if detail.long %}
-+           <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">
-+               {% include 'app_manager/v2/partials/case_detail.html' %}
-+           </div>
-+         {% endif %}
--     {% endfor %}
-+       {% endfor %}
 ? ++
-+     {% endif %}
+-     <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
++         <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
+? ++++
+-         {% include 'app_manager/v1/partials/case_list.html' %}
+?                                  ^
++             {% include 'app_manager/v2/partials/case_list.html' %}
+? ++++                                 ^
+-     </div>
++         </div>
+? ++++
+-     {% if detail.long %}
++         {% if detail.long %}
+? ++++
+-     <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">
++           <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">
+? ++++++
+-         {% include 'app_manager/v1/partials/case_detail.html' %}
+?                                  ^
++               {% include 'app_manager/v2/partials/case_detail.html' %}
+? ++++++                                 ^
+-     </div>
++           </div>
+? ++++++
++         {% endif %}
++       {% endfor %}
+      {% endif %}
+-     {% endfor %}
       {% endblock %}{# endblock tab-content #}
   </div>
   </div>
