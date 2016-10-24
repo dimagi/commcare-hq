@@ -223,7 +223,8 @@ uiElement.key_value_mapping = function (o) {
     m.setEdit = function (edit) {
         m.edit(edit);
     };
-    var $div = $('<div data-bind="template: \'key_value_mapping_template\'"></div>');
+    var $div = $(document.createElement("div"));
+    $div.attr("data-bind", "template: \'key_value_mapping_template\'");
     $div.koApplyBindings(m);
     m.ui = $div;
     eventize(m);
