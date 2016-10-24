@@ -1756,12 +1756,10 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
     def scope_filter(self):
         # Filter to be applied in AND with filters for export to add scope for restricted user
         # Restricts to forms submitted by users at accessible locations
-        accessible_location_ids = (
-            SQLLocation.active_objects
-            .accessible_to_user(self.request.domain, self.request.couch_user)
-        ).location_ids()
-        accessible_users = UserES().users_at_locations_and_descendants(accessible_location_ids)
-        accessible_user_ids = [user['_id'] for user in accessible_users]
+        accessible_user_ids = (UserES()
+            .user_ids_at_accessible_locations(
+                self.request.domain, self.request.couch_user
+        ))
         return FormSubmittedByFilter(accessible_user_ids)
 
     def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
@@ -1791,12 +1789,11 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
         # Filter to be applied in AND with filters for export to add scope for restricted user
         # Restricts to cases owned by accessible locations and their respective users Or Cases
         # Last Modified by accessible users
-        accessible_location_ids = (
-            SQLLocation.active_objects
-            .accessible_to_user(self.request.domain, self.request.couch_user)
-        ).location_ids()
-        accessible_users = UserES().users_at_locations_and_descendants(accessible_location_ids)
-        accessible_user_ids = [user['_id'] for user in accessible_users]
+        accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
+            self.request.domain,
+            self.request.couch_user)
+        )
+        accessible_user_ids = UserES().user_ids_at_locations(accessible_location_ids)
         accessible_ids = accessible_user_ids + list(accessible_location_ids)
         return OR(OwnerFilter(accessible_ids), LastModifiedByFilter(accessible_user_ids))
 
