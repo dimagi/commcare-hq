@@ -6,8 +6,8 @@ from corehq.apps.reports.analytics.esaccessors import get_wrapped_ledger_values,
 
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
-from corehq.apps.locations.models import Location
-from corehq.apps.commtrack.models import SupplyPointCase, SQLLocation
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
@@ -66,7 +66,8 @@ class CommtrackDataSourceMixin(object):
     @property
     @memoized
     def active_location(self):
-        return Location.get_in_domain(self.domain, self.config.get('location_id'))
+        loc_id = self.config.get('location_id')
+        return SQLLocation.objects.get_or_None(domain=self.domain, location_id=loc_id)
 
     @property
     @memoized
@@ -140,15 +141,13 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
     def locations(self):
         if self.active_location:
-            current_location = self.active_location.sql_location
-
-            if current_location.supply_point_id:
-                locations = [current_location]
+            if self.active_location.supply_point_id:
+                locations = [self.active_location]
             else:
                 locations = []
 
             locations += list(
-                current_location.get_descendants().filter(
+                self.active_location.get_descendants().filter(
                     is_archived=False,
                     supply_point_id__isnull=False
                 )

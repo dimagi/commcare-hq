@@ -896,17 +896,6 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         """
         return list(SQLLocation.root_locations(domain).couch_locations())
 
-    @classmethod
-    def get_in_domain(cls, domain, id):
-        if id:
-            try:
-                loc = Location.get(id)
-                assert domain == loc.domain
-                return loc
-            except (ResourceNotFound, AssertionError):
-                pass
-        return None
-
     @property
     def is_root(self):
         return not self.lineage
