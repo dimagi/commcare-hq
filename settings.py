@@ -366,7 +366,6 @@ HQ_APPS = (
     'custom.opm',
     'pact',
 
-    'custom.apps.care_benin',
     'custom.reports.mc',
     'custom.apps.crs_reports',
     'custom.hope',
@@ -1266,7 +1265,6 @@ COUCHDB_APPS = [
     'openclinica',
 
     # custom reports
-    'care_benin',
     'gsid',
     'hsph',
     'mvp',
@@ -1839,7 +1837,6 @@ DOMAIN_MODULE_MAP = {
     'mvp-pampaida': 'mvp',
     'opm': 'custom.opm',
     'pact': 'pact',
-    'project': 'custom.apps.care_benin',
 
     'ipm-senegal': 'custom.intrahealth',
     'icds-test': 'custom.icds_reports',
@@ -1870,7 +1867,7 @@ CASEXML_FORCE_DOMAIN_CHECK = True
 TRAVIS_TEST_GROUPS = (
     (
         'accounting', 'api', 'app_manager', 'appstore',
-        'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter', 'care_benin',
+        'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter',
         'case', 'casegroups', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
         'couchapps', 'couchlog', 'crud', 'django_digest',
         'domain', 'domainsync', 'export',
