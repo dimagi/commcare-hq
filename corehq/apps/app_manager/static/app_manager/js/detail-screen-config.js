@@ -1,4 +1,4 @@
-/*globals $, _, uiElement, eventize, lcsMerge, COMMCAREHQ */
+/*globals $, _, uiElement, eventize, lcsMerge, COMMCAREHQ, DOMPurify */
 
 hqDefine('app_manager/js/detail-screen-config.js', function () {
     var module = {};
