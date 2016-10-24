@@ -1899,7 +1899,6 @@ class AdjustBalanceForm(forms.Form):
             ('current', 'Add Credit of Current Balance: %s' %
                         get_money_str(self.invoice.balance)),
             ('credit', 'Add CREDIT of Custom Amount'),
-            ('debit', 'Add DEBIT of Custom Amount'),
         )
         self.fields['invoice_id'].initial = invoice.id
         self.helper = FormHelper()
@@ -1960,8 +1959,6 @@ class AdjustBalanceForm(forms.Form):
             return self.invoice.balance
         elif adjustment_type == 'credit':
             return Decimal(self.cleaned_data['custom_amount'])
-        elif adjustment_type == 'debit':
-            return -Decimal(self.cleaned_data['custom_amount'])
         else:
             raise ValidationError(_("Received invalid adjustment type: %s")
                                   % adjustment_type)
