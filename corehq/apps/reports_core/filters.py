@@ -132,7 +132,7 @@ class DatespanFilter(BaseFilter):
 class QuarterFilter(BaseFilter):
     template = 'reports_core/filters/quarter_filter.html'
 
-    def __init__(self, name, label='Quarter', css_id=None):
+    def __init__(self, name, label=_('Quarter'), css_id=None):
         self.label = label
         self.css_id = css_id or name
         params = [
