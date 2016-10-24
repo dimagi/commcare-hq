@@ -1896,9 +1896,9 @@ class AdjustBalanceForm(forms.Form):
         self.invoice = invoice
         super(AdjustBalanceForm, self).__init__(*args, **kwargs)
         self.fields['adjustment_type'].choices = (
-            ('current', 'Add Credit of Current Balance: %s' %
+            ('current', 'Pay off Current Balance: %s' %
                         get_money_str(self.invoice.balance)),
-            ('credit', 'Add CREDIT of Custom Amount'),
+            ('credit', 'Pay off Custom Amount'),
         )
         self.fields['invoice_id'].initial = invoice.id
         self.helper = FormHelper()
