@@ -54,11 +54,11 @@
                   {% trans "Show some information about the case at the top of the screen when filling out forms" %}
               </label>
           </div>
-          <div class="" data-bind="visible: persistCaseContext">
+          <div class="form-inline" data-bind="visible: persistCaseContext">
               <label>
-                  {% trans "Case property to show:" %}
-                  <input type="text" data-bind="value: persistentCaseContextXML" placeholder="e.g. case_name" />
+                  {% trans "Case property to show" %}
               </label>
+              <input class="form-control" type="text" data-bind="value: persistentCaseContextXML" placeholder="e.g. case_name" />
           </div>
       </div>
       {% endif %}

@@ -124,8 +124,11 @@
                       return $('#hq-sidebar').outerWidth() + 2;
                   },
                   topOffset: function () {
-                      return $('#hq-navigation').outerHeight() + 
-                          $('.breadcrumb-hq-section').outerHeight();
+-                     return $('#hq-navigation').outerHeight();
+?                                                             ^
++                     return $('#hq-navigation').outerHeight() + 
+?                                                             ^^^
++                         $('.breadcrumb-hq-section').outerHeight();
                   }
               },
               csrftoken: $.cookie('csrftoken')
