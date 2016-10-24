@@ -101,5 +101,3 @@ class TestAppManagerV2Diffs(SimpleTestCase):
                         yaml_file, filename_v1, filename_v2
                     )
                 )
-
-

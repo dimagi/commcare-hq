@@ -3,7 +3,6 @@ import os
 import filecmp
 import difflib
 
-import sys
 from django.core.management import BaseCommand
 
 
@@ -51,5 +50,3 @@ class Command(BaseCommand):
             print(" >> Computing diff for {}".format(yaml_file))
             with open(diff_file, "w") as df:
                 df.writelines(get_diff(yaml_file_v1, yaml_file_v2))
-
-
