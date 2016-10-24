@@ -58,6 +58,7 @@ var mk_translation_ui = function (spec) {
                     at: "",
                     maxLen: Infinity,
                     suffix: "",
+                    tabSelectsMatch: false,
                     callbacks: {
                         filter: function(query, data, searchKey) {
                             return _.filter(data, function(item) {
