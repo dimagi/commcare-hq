@@ -389,7 +389,10 @@ HQ_APPS = (
 
     'custom.icds_reports',
     'custom.pnlppgi',
-    'custom.enikshay'
+
+    # eNikshay / UATBC
+    'custom.enikshay',
+    'custom.enikshay.integrations.ninetyninedots',
 )
 
 # DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
