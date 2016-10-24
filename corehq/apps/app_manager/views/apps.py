@@ -406,9 +406,17 @@ def import_app(request, domain):
 
 @require_GET
 @require_deploy_apps
-def view_app(request, domain, app_id=None):
+def app_settings(request, domain, app_id=None):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id)
+
+
+@require_GET
+@require_deploy_apps
+def view_app(request, domain, app_id=None):
+    from corehq.apps.app_manager.views.view_generic import view_generic
+    return view_generic(request, domain, app_id,
+                        release_manager=toggles.APP_MANAGER_V2.enabled(domain))
 
 
 @no_conflict_require_POST

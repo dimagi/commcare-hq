@@ -13,6 +13,7 @@ from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 
 app_urls = patterns('corehq.apps.app_manager.views',
+    url(r'^settings/$', 'app_settings', name='app_settings'),
     url(r'^languages/$', 'view_app', name='app_languages'),
     url(r'^languages/translations/download/$', 'download_bulk_ui_translations', name='download_bulk_ui_translations'),
     url(r'^languages/translations/upload/$', 'upload_bulk_ui_translations', name='upload_bulk_ui_translations'),

@@ -29,6 +29,7 @@ from corehq.apps.app_manager.views.app_summary import (
 )
 from corehq.apps.app_manager.views.apps import (
     app_from_template,
+    app_settings,
     app_source,
     copy_app,
     copy_app_check_domain,
