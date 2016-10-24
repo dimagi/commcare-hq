@@ -621,8 +621,12 @@ def assign_explicit_community_subscription(domain_name, start_date):
         service_type=SubscriptionType.PRODUCT,
     )
 
+
 @periodic_task(run_every=crontab(minute=0, hour=9), queue='background_queue', acks_late=True)
 def send_overdue_reminders():
+    from corehq.apps.domain.views import DomainSubscriptionView
+    from corehq.apps.domain.views import DomainBillingStatementsView
+
     today = datetime.date.today()
     invoices = Invoice.objects.filter(is_hidden=False,
                                       subscription__service_type=SubscriptionType.PRODUCT,
@@ -641,47 +645,61 @@ def send_overdue_reminders():
                 subscription__subscriber__domain=invoice.get_domain()
             ).aggregate(Sum('balance'))['balance__sum']
             if total >= 100:
-                _apply_notices(invoice, today, total)
+                days_ago = (today - invoice.date_due).days
+                context = {
+                    'invoice': invoice,
+                    'total': total,
+                    'subscription_url': absolute_reverse(DomainSubscriptionView.urlname, args=[invoice.get_domain()]),
+                    'statements_url': absolute_reverse(DomainBillingStatementsView.urlname,
+                                                       args=[invoice.get_domain()]),
+                    'date_60': invoice.date_due + datetime.timedelta(days=60),
+                    'contact_email': settings.INVOICING_CONTACT_EMAIL
+                }
+                if days_ago == 61:
+                    _send_downgrade_notice(invoice, context)
+                elif days_ago == 58:
+                    _send_downgrade_warning(invoice, context)
+                elif days_ago == 30:
+                    _send_overdue_notice(invoice, context)
+                elif days_ago == 1:
+                    _create_overdue_notification(invoice, context)
 
-def _apply_notices(invoice, today, total):
-    from corehq.apps.domain.views import DomainSubscriptionView
-    from corehq.apps.domain.views import DomainBillingStatementsView
 
-    days_ago = (today - invoice.date_due).days
-    context = {
-        'invoice': invoice,
-        'total': total,
-        'subscription_url': absolute_reverse(DomainSubscriptionView.urlname, args=[invoice.get_domain()]),
-        'statements_url': absolute_reverse(DomainBillingStatementsView.urlname, args=[invoice.get_domain()]),
-        'date_60': invoice.date_due + datetime.timedelta(days=60)
-    }
-    if days_ago == 61:
-        send_html_email_async.delay(
-            'Oh no! Your CommCare subscription for {} has been downgraded'.format(invoice.get_domain()),
-            invoice.contact_emails,
-            render_to_string('accounting/downgrade.html', context),
-            cc=[settings.ACCOUNTS_EMAIL],
-            email_from=get_dimagi_from_email()
-        )
-    elif days_ago == 58:
-        send_html_email_async.delay(
-            "CommCare Alert: {}'s subscription will be downgraded to Community Plan after tomorrow!".format(invoice.get_domain()),
-            invoice.contact_emails,
-            render_to_string('accounting/downgrade_warning.html', context),
-            cc=[settings.ACCOUNTS_EMAIL],
-            email_from=get_dimagi_from_email())
-    elif days_ago == 30:
-        send_html_email_async.delay(
-            'CommCare Billing Statement 30 days Overdue for {}'.format(invoice.get_domain()),
-            invoice.contact_emails,
-            render_to_string('accounting/30_days.html', context),
-            cc=[settings.ACCOUNTS_EMAIL],
-            email_from=get_dimagi_from_email())
-    elif days_ago == 1:
-        message = ugettext('Reminder - your {} statement is past due!'.format(
-            invoice.date_created.strftime('%B')
-        ))
-        note = Notification.objects.create(content=message, url=context['statements_url'],
-                                           domain_specific=True, type='billing',
-                                           domains=[invoice.get_domain()])
-        note.activate()
+def _send_downgrade_notice(invoice, context):
+    send_html_email_async.delay(
+        ugettext('Oh no! Your CommCare subscription for {} has been downgraded'.format(invoice.get_domain())),
+        invoice.contact_emails,
+        render_to_string('accounting/downgrade.html', context),
+        cc=[settings.ACCOUNTS_EMAIL],
+        email_from=get_dimagi_from_email()
+    )
+
+
+def _send_downgrade_warning(invoice, context):
+    send_html_email_async.delay(
+        ugettext("CommCare Alert: {}'s subscription will be downgraded to Community Plan after tomorrow!".format(
+            invoice.get_domain()
+        )),
+        invoice.contact_emails,
+        render_to_string('accounting/downgrade_warning.html', context),
+        cc=[settings.ACCOUNTS_EMAIL],
+        email_from=get_dimagi_from_email())
+
+
+def _send_overdue_notice(invoice, context):
+    send_html_email_async.delay(
+        ugettext('CommCare Billing Statement 30 days Overdue for {}'.format(invoice.get_domain())),
+        invoice.contact_emails,
+        render_to_string('accounting/30_days.html', context),
+        cc=[settings.ACCOUNTS_EMAIL],
+        email_from=get_dimagi_from_email())
+
+
+def _create_overdue_notification(invoice, context):
+    message = ugettext('Reminder - your {} statement is past due!'.format(
+        invoice.date_start.strftime('%B')
+    ))
+    note = Notification.objects.create(content=message, url=context['statements_url'],
+                                       domain_specific=True, type='billing',
+                                       domains=[invoice.get_domain()])
+    note.activate()
