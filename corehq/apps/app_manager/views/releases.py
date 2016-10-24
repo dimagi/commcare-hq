@@ -209,9 +209,15 @@ def save_copy(request, domain, app_id):
         # Set if build is supported for Java Phones
         j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
         copy['j2me_enabled'] = copy['menu_item_label'] in j2me_enabled_configs
+
+    template = get_app_manager_template(
+        domain,
+        "app_manager/v1/partials/build_errors.html",
+        "app_manager/v2/partials/build_errors.html",
+    )
     return json_response({
         "saved_app": copy,
-        "error_html": render_to_string('app_manager/v1/partials/build_errors.html', {
+        "error_html": render_to_string(template, {
             'request': request,
             'app': get_app(domain, app_id),
             'build_errors': errors,
