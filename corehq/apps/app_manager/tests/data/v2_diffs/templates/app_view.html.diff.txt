@@ -354,6 +354,7 @@
   {% endblock %}
   
   {% block form-view %}
+-     <div class="tab-content">
 +   <div class="pull-right">
 +     <a class="btn btn-default js-preview-toggle" style="display: none;" href="#">
 +       <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview Changes" %}</span>
@@ -389,86 +390,84 @@
 + 
 + 
 +   {% if release_manager %}
+-         <div class="tab-pane" id="releases">
+? --
 +       <div class="tab-pane" id="releases">
 +           {% include "app_manager/v2/partials/releases.html" %}
+-             <!-- templates only; will be populated asynchronously -->
+-             <script type="text/html" class="hq-loading">
+-                 <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+-                 {% trans "Loading..." %}
+-             </script>
+-             <script type="text/html" class="hq-loading-error">
+-                 <div class="alert alert-danger">
+-                     {% trans "Oops, there was a problem loading this section. Please try again." %}
+-                 </div>
+-                 <button class="btn btn-primary reload">
+-                     {% trans "Try again" %}
+-                 </button>
+-             </script>
+-         </div>
+? --
 +       </div>
 +   {% else %}
 +       <div class="tab-content">
+-         <div class="tab-pane{% if not copy_app_form.is_bound %} active{% endif %}" id="app-settings">
 +           <div class="tab-pane{% if not copy_app_form.is_bound %} active{% endif %}" id="app-settings">
-+               {% include "app_manager/v2/partials/app-settings.html" %}
-+           </div>
-+       </div>
-+   {% endif %}
-+ {% else %}
-      <div class="tab-content">
-          <div class="tab-pane" id="releases">
-              <!-- templates only; will be populated asynchronously -->
-              <script type="text/html" class="hq-loading">
-                  <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
-                  {% trans "Loading..." %}
-              </script>
-              <script type="text/html" class="hq-loading-error">
-                  <div class="alert alert-danger">
-                      {% trans "Oops, there was a problem loading this section. Please try again." %}
-                  </div>
-                  <button class="btn btn-primary reload">
-                      {% trans "Try again" %}
-                  </button>
-              </script>
-          </div>
-          <div class="tab-pane{% if not copy_app_form.is_bound %} active{% endif %}" id="app-settings">
+? ++
 -             {% include "app_manager/v1/partials/app-settings.html" %}
 ?                                      ^
-+             {% include "app_manager/v2/partials/app-settings.html" %}
-?                                      ^
-          </div>
++               {% include "app_manager/v2/partials/app-settings.html" %}
+? ++                                     ^
+-         </div>
 -         {% include 'app_manager/v1/languages.html' %}
-?                                  ^
-+         {% include 'app_manager/v2/languages.html' %}
-?                                  ^
-  
-          {% if app.get_doc_type == "Application" %}
-              <div class="tab-pane multimedia" id="multimedia">
-                  <div data-bind="if: load_state() === 'loading'">
-                      <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
-                      {% trans "Loading ..." %}
-                  </div>
-                  <div data-bind="html: multimedia_page_html"></div>
-                  <div data-bind="if: load_state() === 'error'">
-                      <button class="btn btn-default" data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
-                  </div>
-              </div>
-  
-          {% endif %}
-          <div class="tab-pane{% if copy_app_form.is_bound %} active{% endif %}" id="copy">
-              <div>
-                  <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
-                      {% crispy copy_app_form %}
-                  </form>
-                  {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
-                      <h3>Export compressed application</h3>
-                      <form action="{% url "gzip_app" domain app.id %}" method="POST">
-                          {% csrf_token %}
-                          <button type="submit" class="btn btn-primary">
-                              <i class="fa fa-arrow-down"></i>
-                              {% trans "Download" %}
-                          </button>
-                      </form>
-                  {% endif %}
-              </div>
-          </div>
-          <div class="tab-pane" id="delete">
-              <h3>{% trans "Delete Application" %}</h3>
-              <form action="{% url "corehq.apps.app_manager.views.delete_app" domain app.id %}" method="POST">
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-danger disable-on-submit">
-                      <i class="fa fa-trash"></i>
-                      {% trans "Delete this application" %}
-                  </button>
-              </form>
-          </div>
-      </div>
-+ {% endif %}
+- 
+-         {% if app.get_doc_type == "Application" %}
+-             <div class="tab-pane multimedia" id="multimedia">
+-                 <div data-bind="if: load_state() === 'loading'">
+-                     <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+-                     {% trans "Loading ..." %}
+-                 </div>
+-                 <div data-bind="html: multimedia_page_html"></div>
+-                 <div data-bind="if: load_state() === 'error'">
+-                     <button class="btn btn-default" data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
+-                 </div>
+-             </div>
+? --
++           </div>
+- 
+-         {% endif %}
+-         <div class="tab-pane{% if copy_app_form.is_bound %} active{% endif %}" id="copy">
+-             <div>
+-                 <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
+-                     {% crispy copy_app_form %}
+-                 </form>
+-                 {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
+-                     <h3>Export compressed application</h3>
+-                     <form action="{% url "gzip_app" domain app.id %}" method="POST">
+-                         {% csrf_token %}
+-                         <button type="submit" class="btn btn-primary">
+-                             <i class="fa fa-arrow-down"></i>
+-                             {% trans "Download" %}
+-                         </button>
+-                     </form>
+-                 {% endif %}
+-             </div>
+-         </div>
+? --
++       </div>
++   {% endif %}
+-         <div class="tab-pane" id="delete">
+-             <h3>{% trans "Delete Application" %}</h3>
+-             <form action="{% url "corehq.apps.app_manager.views.delete_app" domain app.id %}" method="POST">
+-                 {% csrf_token %}
+-                 <button type="submit" class="btn btn-danger disable-on-submit">
+-                     <i class="fa fa-trash"></i>
+-                     {% trans "Delete this application" %}
+-                 </button>
+-             </form>
+-         </div>
+-     </div>
   {% endblock %}
   
   {% block modals %}{{ block.super }}
