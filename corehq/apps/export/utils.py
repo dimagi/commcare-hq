@@ -14,6 +14,7 @@ from corehq.apps.reports.dbaccessors import (
 from corehq.apps.reports.models import (
     FormExportSchema,
     CaseExportSchema,
+    HQGroupExportConfiguration,
 )
 from corehq.apps.app_manager.const import STOCK_QUESTION_TAG_NAMES
 from corehq.apps.app_manager.dbaccessors import (
@@ -61,6 +62,8 @@ def convert_saved_export_to_export_instance(
     instance_cls = None
     export_type = saved_export.type
 
+    daily_saved_export_ids = _get_daily_saved_export_ids(domain)
+
     is_remote_app_migration = _is_remote_app_conversion(
         domain,
         getattr(saved_export, 'app_id', None),
@@ -95,6 +98,7 @@ def convert_saved_export_to_export_instance(
     instance.export_format = saved_export.default_format
     instance.transform_dates = getattr(saved_export, 'transform_dates', False)
     instance.legacy_saved_export_schema_id = saved_export._id
+    instance.is_daily_saved_export = saved_export._id in daily_saved_export_ids
     if saved_export.type == FORM_EXPORT:
         instance.split_multiselects = getattr(saved_export, 'split_multiselects', False)
         instance.include_errors = getattr(saved_export, 'include_errors', False)
@@ -249,6 +253,11 @@ def convert_saved_export_to_export_instance(
         saved_export.save()
 
     return instance, migration_meta
+
+
+def _get_daily_saved_export_ids(domain):
+    group_config = HQGroupExportConfiguration.get_for_domain(domain)
+    return set(group_config.custom_export_ids)
 
 
 def _extract_xmlns_from_index(index):
