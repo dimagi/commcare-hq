@@ -88,7 +88,6 @@ var mk_translation_ui = function (spec) {
                         success: function (data) {
                             options.data = data;
                             $input.atwho(options).on("inserted.atwho", function(event, $li, otherEvent) {
-                                $(this).find('.atwho-inserted').children().unwrap();
                                 $input.val($input.data("selected-value")).change();
                             });
                             $input.atwho('run');
