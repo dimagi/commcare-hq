@@ -9,6 +9,40 @@
             <tbody>
             </tbody>
         </table>
+        <nav>
+            <ul class="pagination pagination-lg">
+                <!-- Render Previous button -->
+                <li>
+                    <% if (page === 1) { %>
+                  <a class="js-user-previous disabled">
+                    <% } else { %>
+                  <a class="js-user-previous">
+                    <% } %>
+                    <span>&laquo;</span>
+                  </a>
+                </li>
+
+                <!-- Render page buttons -->
+                <% for (var i = 0; i < totalPages; i++) { %>
+                    <% if (i + 1 === page) { %>
+                    <li class="active"><a><%= i + 1 %></a></li>
+                    <% } else { %>
+                    <li><a><%= i + 1 %></a></li>
+                    <% } %>
+                <% } %>
+
+                <!-- Render Next buttons -->
+                <li>
+                <% if (page === totalPages) { %>
+                  <a class="js-user-next disabled">
+                <% } else { %>
+                  <a class="js-user-next">
+                <% } %>
+                    <span>&raquo;</span>
+                  </a>
+                </li>
+            </ul>
+        </nav>
     </div>
 </script>
 
