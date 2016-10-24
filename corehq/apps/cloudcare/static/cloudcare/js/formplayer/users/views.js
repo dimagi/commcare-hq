@@ -19,10 +19,13 @@ FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFro
         ui: {
             next: '.js-user-next',
             prev: '.js-user-previous',
+            search: '.js-user-search',
+            query: '.js-user-query',
         },
         events: {
             'click @ui.next': 'onClickNext',
             'click @ui.prev': 'onClickPrev',
+            'submit @ui.search': 'onSubmitUserSearch',
         },
         templateHelpers: function() {
             return {
@@ -36,6 +39,17 @@ FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFro
         },
         onClickPrev: function(e) {
             console.log('Prev');
+        },
+        onSubmitUserSearch: function(e) {
+            e.preventDefault();
+            this.collection.fetch({
+                reset: true,
+                data: JSON.stringify({
+                    query: this.ui.query.val(),
+                    limit: this.limit,
+                    page: this.page,
+                })
+            });
         },
     });
 });
