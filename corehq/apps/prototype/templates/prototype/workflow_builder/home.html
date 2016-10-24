@@ -1,0 +1,216 @@
+{% extends 'prototype/workflow_builder/base.html' %}
+{% load compress %}
+{% load hq_shared_tags %}
+
+{% block stylesheets %}
+  {% if less_debug %}
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'prototype/less/workflow_builder/workflow_builder.debug.less' %}" />
+  {% else %}
+    {% compress css %}
+      <link type="text/less"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'prototype/less/workflow_builder/workflow_builder.main.less' %}" />
+    {% endcompress %}
+  {% endif %}
+{% endblock %}
+
+{% block js %}
+  <script src="{% static 'jquery-ui/ui/effect.js' %}"></script>
+  <script src="{% static 'jquery-ui/ui/effect-slide.js' %}"></script>
+  <script src="{% static 'jquery-ui/ui/effect-fade.js' %}"></script>
+  <script src="{% static 'prototype/workflow_builder/js/workflowBindings.ko.js' %}"></script>
+  <script src="{% static 'prototype/workflow_builder/js/utils.ko.js' %}"></script>
+  <script src="{% static 'prototype/workflow_builder/js/forms.ko.js' %}"></script>
+  <script src="{% static 'prototype/workflow_builder/js/workflows.ko.js' %}"></script>
+  <script src="{% static 'prototype/workflow_builder/js/preview.ko.js' %}"></script>
+  <script src="{% static 'prototype/workflow_builder/js/workflowBuilder.ko.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}
+  <script>
+    $(function () {
+      var workflows = hqImport('prototype.workflow_builder.workflowBuilder');
+      var workflowModel = new workflows.AppViewModel();
+      workflowModel.init();
+      $('#workflow-builder').koApplyBindings(workflowModel);
+    });
+
+    $(function () {
+      // Resizes Appnav
+      var resizeAppnav = function () {
+        var navHeight = $('#navigation').outerHeight();
+        var curHeight = $(window).height() - navHeight;
+        $('#appnav').css('min-height', curHeight + 'px');
+      };
+      resizeAppnav();
+      $(window).resize(resizeAppnav);
+    });
+    $(function () {
+      // Resizes Appedit
+      var defaultPreviewWidth = $('#preview').outerWidth();
+      var resizeAppedit = function (event, isPreviewOpen) {
+        var $preview = $('#preview');
+        var previewWidth = 0;
+        if (isPreviewOpen === undefined) {
+          previewWidth = $preview.outerWidth()
+        } else {
+          previewWidth = (isPreviewOpen) ? defaultPreviewWidth : 70;
+        }
+        var navHeight = $('#navigation').outerHeight();
+        var appnavWidth = $('#appnav').outerWidth();
+        var maxVisibleHeight = Math.max($(window).height(), $preview.outerHeight());
+        var curHeight = maxVisibleHeight - navHeight + 40;
+        var curWidth = $(window).width() - appnavWidth - previewWidth;
+        $('#appedit')
+                .css('min-height', curHeight + 'px')
+                .css('width', curWidth + 'px');
+      };
+      resizeAppedit();
+      $(window).resize(resizeAppedit);
+      $(window).on('preview.resize', resizeAppedit);
+    });
+
+  $(function () {
+    $('#js-add-new-item').popover({
+      title: "Add",
+      container: 'body',
+      content: function () {
+        return $('#popover-template-add-item-content').text();
+      },
+      html: true,
+      trigger: 'manual',
+      placement: 'right',
+      template: $('#popover-template-add-item').text()
+    }).one('shown.bs.popover', function () {
+      var pop = this;
+      $('.popover-additem').on('click', function (e) {
+        $(pop).popover('hide');
+        $('#js-add-new-item').trigger('workflowBuilder.add.' + $(e.target).closest('a').attr('data-createtype'));
+      });
+    }).on('click', function () {
+      $(this).popover('show');
+    });
+
+    $('body').click(function (event) {
+      if (!($(event.target).hasClass('appnav-add') || $(event.target).hasClass('popover-additem-option') || $(event.target).hasClass('fa'))) {
+        $('#js-add-new-item').popover('hide');
+      }
+    });
+
+  });
+  $(function(){
+    var curDown = false,
+        curYPos = 0,
+        curXPos = 0;
+    var $phoneScroll = $('.phone-page-scrollable');
+
+    $phoneScroll.mousemove(function(m){
+      if(curDown === true){
+       $phoneScroll.scrollTop($phoneScroll.scrollTop() + (curYPos - m.pageY));
+       $phoneScroll.scrollLeft($phoneScroll.scrollLeft() + (curXPos - m.pageX));
+      }
+    });
+
+    $phoneScroll.mousedown(function(m){
+      curDown = true;
+      curYPos = m.pageY;
+      curXPos = m.pageX;
+      $phoneScroll.css('cursor', 'grabbing');
+    });
+
+    $phoneScroll.mouseup(function(){
+      curDown = false;
+      $phoneScroll.css('cursor', 'default');
+    });
+  });
+  </script>
+{% endblock %}
+
+{% block navigation %}
+  <div id="navigation">
+    <div class="navbar navbar-default navbar-static-top nabvbar-brand">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <p class="navbar-text">
+            AppBuilder
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="navbar-app-settings">
+      <a href="#"
+         class="navbar-edit"
+         data-bind="text:name, click: editAppSettings, css: { active: isEditingSettings }"></a>
+    </div>
+  </div>
+{% endblock %}
+
+{% block modals %}
+  <!-- ko template: { name: workflowModalTemplate,
+                      foreach: workflows } -->
+  <!-- /ko -->
+{% endblock %}
+
+{% block content %}
+
+  <div id="appnav">
+    <nav>
+      <ul class="appnav-menu appnav-menu-main">
+        <!-- ko template: { name: workflowNavTemplate,
+                            foreach: workflows } -->
+        <!-- /ko -->
+        <li>
+          <div class="appnav-item">
+            <a href="#" class="appnav-add" id="js-add-new-item"><i class="fa fa-plus"></i> Add&hellip;</a>
+          </div>
+        </li>
+      </ul>
+    </nav>
+  </div>
+
+  <div id="appedit">
+    <!-- ko template: { name: editItemTemplate, data: editItem } -->
+    <!-- /ko -->
+  </div>
+
+  <!-- ko with: appPreview -->
+  <div id="preview"
+       class="live-preview live-preview-open noselect"
+       data-bind="css: {'live-preview-closed': !isShown(), 'live-preview-open': isShown}">
+    <div class="live-preview-container">
+      <h2>App Preview</h2>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-appbar">
+            <ul class="phone-appbar-nav">
+              <li><a href="#" class="phone-app-back" data-bind="css: {'disabled': !isBackVisible()}, click: goBack"><i class="fa fa-chevron-left"></i></a></li>
+              <li><h3 class="phone-app-title" data-bind="text: $root.name">My New App</h3></li>
+            </ul>
+          </div>
+          <!-- ko template: { name: screenTemplate,
+                              foreach: screens } -->
+          <!-- /ko -->
+        </div>
+      </div>
+    </div>
+
+
+    <a href="#"
+       class="live-preview-toggle"
+       data-bind="click: toggleShown">
+      <i class="fa"
+         data-bind="css: {'fa-angle-double-left': !isShown(), 'fa-angle-double-right': isShown}"></i>
+    </a>
+  </div>
+  <!-- /ko -->
+
+  {% include 'prototype/workflow_builder/partials/popover_templates.html' %}
+  {% include 'prototype/workflow_builder/partials/ko_preview_templates.html' %}
+  {% include 'prototype/workflow_builder/partials/ko_nav_templates.html' %}
+  {% include 'prototype/workflow_builder/partials/ko_edit_templates.html' %}
+  {% include 'prototype/workflow_builder/partials/ko_modal_templates.html' %}
+{% endblock %}

@@ -1,0 +1,276 @@
+@preview-bg: #282828;
+
+.live-preview {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 33%;
+  min-height: 100%;
+  background-color: @preview-bg;
+  z-index: @z-index-live-preview;
+  .box-shadow(0 0 15px 5px rgba(0,0,0,0.55));
+  padding-bottoM: 40px;
+  .transition(width 1s);
+  overflow-x: hidden;
+
+  .live-preview-container {
+    position: relative;
+    width: 100%;
+    right: 0;
+    .transition(all 1s);
+  }
+
+  &.live-preview-closed {
+    width: 70px;
+    .live-preview-container {
+      right: -1000px;
+    }
+  }
+
+  h2 {
+    text-align: center;
+    color: darken(@cc-bg, 30);
+    font-weight: 200;
+    padding: 15px 20px 23px;
+    font-size: 1.8rem;
+  }
+}
+
+.live-preview-toggle {
+  @lp-toggle-width: 40px;
+  box-sizing: border-box;
+  position: absolute;
+  display: block;
+  top: 15px;
+  left: 15px;
+  width: @lp-toggle-width;
+  height: @lp-toggle-width;
+  line-height: @lp-toggle-width;
+  font-size: 3rem;
+  font-weight: bold;
+  text-align: center;
+  background-color: @preview-bg;
+  color: darken(@cc-bg, 5);
+  .border-top-radius(10px);
+  .border-bottom-radius(10px);
+  .box-shadow(0 0 15px 5px rgba(0,0,0,0.5));
+  .transition(all 1s);
+
+  >.fa-angle-double-right {
+    padding-left: 5px;
+  }
+
+  &:link, &:focus, &:visited {
+    color: darken(@cc-bg, 5);
+  }
+
+  &:focus { outline: none; }
+
+  &:hover {
+    color: white;
+    background-color: lighten(@preview-bg, 10);
+    .box-shadow(0 0 25px 10px rgba(0,0,0,0.75));
+  }
+}
+
+.phone {
+  width: 330px;
+  height: 590px;
+  background-color: #121212;
+  .border-top-radius(40px);
+  .border-bottom-radius(40px);
+  margin: 0 auto;
+  padding-top: 42px;
+  box-sizing: border-box;
+  .box-shadow(0 3px 10px 3px rgba(0,0,0,1.0));
+}
+
+@phone-screen-width: 316px;
+@phone-screen-height: 495px;
+@phone-appbar-height: 50px;
+
+.phone-screen {
+  background-color: @cc-bg;
+  width: @phone-screen-width - 1px;
+  height: @phone-screen-height;
+  margin: 0 auto;
+  overflow: hidden;
+  position: relative;
+}
+
+.phone-appbar {
+  background-color: @cc-brand-mid;
+  color: white;
+  width: @phone-screen-width;
+  height: @phone-appbar-height;
+  z-index: 8;
+  position: relative;
+  box-sizing: border-box;
+}
+
+
+.phone-appbar-nav {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  height: @phone-appbar-height;
+  .box-shadow(0 0 3px 1px rgba(0,0,0,0.45));
+
+  > li {
+    display: inline-block;
+    vertical-align: top;
+  }
+  .phone-app-title {
+    padding: 0;
+    margin: 0;
+    line-height: @phone-appbar-height;
+    font-weight: 400;
+    font-size: 1.4rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: @phone-screen-width - 57px;
+  }
+  .phone-app-back {
+    padding: 10px;
+    color: @cc-brand-hi;
+    font-size: 1.9rem;
+    line-height: @phone-appbar-height;
+    .transition(all 1s);
+    &:focus, &:link, &:visited {
+      color: @cc-brand-hi;
+    }
+    &:focus {
+      outline: none;
+    }
+    &:hover {
+      color: white;
+      text-shadow: 0 0 10px rgba(0,0,0,.8), 0 0 20px @cc-brand-low, 0 0 40px @cc-brand-low;
+    }
+    &.disabled {
+      color: fadeout(@cc-brand-hi, 90);
+      text-shadow: none;
+      cursor: default;
+    }
+  }
+}
+
+.phone-page {
+  position: absolute;
+  top: @phone-appbar-height;
+  left: 0;
+  height: @phone-screen-height - @phone-appbar-height;
+  width: @phone-screen-width;
+  overflow: hidden;
+  background-color: @cc-bg;
+  z-index: 5;
+}
+
+.phone-page-scrollable {
+  width: @phone-screen-width + 15px;
+  height: @phone-screen-height - @phone-appbar-height;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+
+.phone-navlist {
+  list-style: none;
+  background-color: white;
+  width: @phone-screen-width;
+  margin: 0;
+  padding: 0;
+  border-bottom: 1px solid darken(@cc-bg, 5);
+
+  > li {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+    .transition(all 1s);
+    &.selected {
+      .box-shadow(0px 0px 10px 2px @cc-dark-cool-accent-low inset);
+    }
+  }
+
+  .phone-navlist-title {
+    width: @phone-screen-width;
+    padding-left: 20px;
+    font-size: 1.2rem;
+    a {
+      line-height: @navbar-height;
+      color: @cc-text;
+      display: inline-block;
+      max-width: 245px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      height: @navbar-height;
+      vertical-align: top;
+
+      .fa {
+        font-size: 2rem;
+        position: relative;
+        top: 2px;
+        color: fadeout(@cc-text, 50);
+        margin-right: 5px;
+      }
+      .wf {
+        font-size: 2.5rem;
+        position: relative;
+        top: 2px;
+        color: fadeout(@cc-text, 50);
+        margin-right: 5px;
+      }
+      .transition(color 1s);
+      &:hover {
+        text-decoration: none;
+        color: @cc-brand-mid;
+      }
+    }
+  }
+  .phone-navlist-icon {
+    display: inline-block;
+    box-sizing: border-box;
+    padding: 0 20px;
+    line-height: @navbar-height;
+    border: none;
+    background: transparent;
+    font-size: 1.5rem;
+    .transition(all 1s);
+
+    &:hover {
+      text-shadow: 0 0 20px rgba(0,0,0,.6);
+      color: @cc-brand-mid;
+    }
+  }
+}
+
+.phone-questionlist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  > li {
+    background-color: white;
+    padding: 15px 37px 20px 20px;
+    border-bottom: 1px solid darken(@cc-bg, 5);
+  }
+}
+
+.phone-navlist-header {
+  h4 {
+    line-height: @navbar-height *.6;
+    font-size: 1.3rem;
+    padding-left: 20px;
+    padding-right: 20px;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  border: 1px solid @cc-bg;
+}
+
+.popover {
+  max-width: 500px !important;
+  box-sizing: border-box;
+}

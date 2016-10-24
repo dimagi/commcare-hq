@@ -1,0 +1,201 @@
+<script type="text/html" id="ko-template-edit-form">
+  <div class="appedit-title">
+    <h2>Edit Survey</h2>
+  </div>
+  <div class="appedit-content">
+    <div class="row">
+      <div class="col-xs-12">
+
+        <div class="form">
+          <div class="form-group">
+            <label class="control-label">
+              Name
+            </label>
+            <div class="controls">
+              <input type="text"
+                     class="form-control"
+                     data-bind="value: name, valueUpdate: 'keyup'" />
+            </div>
+          </div>
+
+          <fieldset>
+            <legend>Questions</legend>
+            <!-- ko foreach: questions -->
+            <p class="form-question">
+              <button type="button"
+                      class="form-question-remove btn btn-sm btn-danger"
+                      data-bind="click: remove">
+                <i class="fa fa-remove"></i>
+              </button>
+              <textarea cols="2" class="form-control" data-bind="value: text, valueUpdate: 'keyup', hasFocus: true"></textarea>
+            </p>
+            <!-- /ko -->
+            <p>
+              <button type="button"
+                      class="btn btn-primary"
+                      data-bind="click: addQuestion">
+                <i class="fa fa-plus"></i> Add Question
+              </button>
+            </p>
+          </fieldset>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</script>
+
+<script type="text/html" id="ko-template-edit-recordlist">
+  <div class="appedit-title">
+    <h2>Edit Record List</h2>
+  </div>
+  <div class="appedit-content">
+    <div class="row">
+      <div class="col-xs-12">
+
+        <div class="form">
+          <p class="lead">
+            A <strong>record list</strong> helps you track things over time.
+          </p>
+          <p>
+            What are you tracking?
+          </p>
+          <p>
+            <input type="text"
+                   class="form-control"
+                   style="width: 150px; display: inline-block;"
+                   data-bind="value: thingName, valueUpdate: 'keyup'" /> <strong>List</strong>
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</script>
+
+<script type="text/html" id="ko-template-edit-regform">
+  <div class="appedit-title">
+    <h2>Edit Registration Questions</h2>
+  </div>
+  <div class="appedit-content">
+    <div class="row">
+      <div class="col-xs-12">
+
+        <div class="form">
+          <div class="form-group">
+            <label class="control-label">
+              Name
+            </label>
+            <div class="controls">
+              <input type="text"
+                     class="form-control"
+                     data-bind="value: name, valueUpdate: 'keyup'" />
+            </div>
+          </div>
+
+          <fieldset>
+            <legend>Questions</legend>
+
+            <div class="form-group">
+              <label class="control-label">
+                Record Name Question
+              </label>
+              <div class="help-text">
+                <i class="fa fa-info-circle"></i> Every Registration form has a <strong>Name</strong> question. The response to the name question will be the name of the new record in the Record List.
+              </div>
+              <div class="controls">
+                <textarea cols="2" class="form-control" data-bind="value: recordNameQuestion, valueUpdate: 'keyup'"></textarea>
+              </div>
+            </div>
+            <!-- ko foreach: questions -->
+            <p class="form-question">
+              <button type="button"
+                      class="form-question-remove btn btn-sm btn-danger"
+                      data-bind="click: remove">
+                <i class="fa fa-remove"></i>
+              </button>
+              <textarea cols="2" class="form-control" data-bind="value: text, valueUpdate: 'keyup', hasFocus: true"></textarea>
+            </p>
+            <!-- /ko -->
+            <p>
+              <button type="button"
+                      class="btn btn-primary"
+                      data-bind="click: addQuestion">
+                <i class="fa fa-plus"></i> Add Question
+              </button>
+            </p>
+          </fieldset>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</script>
+
+<script type="text/html" id="ko-template-edit-followup">
+ <div class="appedit-title">
+    <h2>Edit Followup Questions</h2>
+  </div>
+  <div class="appedit-content">
+    <div class="row">
+      <div class="col-xs-12">
+
+        <div class="form">
+          <div class="form-group">
+            <label class="control-label">
+              Name
+            </label>
+            <div class="controls">
+              <input type="text"
+                     class="form-control"
+                     data-bind="value: name, valueUpdate: 'keyup'" />
+            </div>
+          </div>
+
+          <fieldset>
+            <legend>Questions</legend>
+            <!-- ko foreach: questions -->
+            <p class="form-question">
+              <button type="button"
+                      class="form-question-remove btn btn-sm btn-danger"
+                      data-bind="click: remove">
+                <i class="fa fa-remove"></i>
+              </button>
+              <textarea cols="2" class="form-control" data-bind="value: text, valueUpdate: 'keyup', hasFocus: true"></textarea>
+            </p>
+            <!-- /ko -->
+            <p>
+              <button type="button"
+                      class="btn btn-primary"
+                      data-bind="click: addQuestion">
+                <i class="fa fa-plus"></i> Add Question
+              </button>
+            </p>
+          </fieldset>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</script>
+
+<script type="text/html" id="ko-template-edit-appsettings">
+  <div class="appedit-title">
+      <h2>App Settings</h2>
+    </div>
+    <div class="appedit-content">
+      <div class="row">
+        <div class="col-xs-12">
+          <label class="control-label">
+            App Name
+          </label>
+          <div class="controls">
+            <input type="text" class="form-control" data-bind="value: $parent.name, valueUpdate: 'keyup'" />
+          </div>
+        </div>
+      </div>
+    </div>
+</script>

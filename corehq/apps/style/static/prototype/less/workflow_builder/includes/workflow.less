@@ -1,0 +1,141 @@
+.workflow {
+  background-color: @cc-dark-cool-accent-mid;
+  min-height: 200px;
+  min-width: 200px;
+  position: absolute;
+  cursor: move;
+  padding: 10px;
+  padding-bottom: 11px;
+  .border-top-radius(5px);
+  .border-bottom-radius(5px);
+  margin: 5px;
+  .box-shadow(0px 0px 3px 0px rgba(0,0,0,0.5));
+  .transition(box-shadow .5s);
+
+  &:hover {
+    .box-shadow(0px 0px 5px 1px rgba(0,0,0,0.75));
+  }
+  &.ui-draggable-dragging {
+    .box-shadow(0px 0px 10px 4px rgba(0,0,0,0.8));
+  }
+
+  &.workflow-selected {
+    .box-shadow(0px 0px 10px 4px @cc-dark-cool-accent-low);
+  }
+
+  .workflow-nav {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    > li {
+      padding-right: 5px;
+      display: inline-block;
+      a {
+        font-size: 1.5em;
+        color: white;
+        display: block;
+        padding: 0px 5px;
+        line-height: 1.2rem;
+        .transition(all .8s);
+
+        &:link, &:focus, &:visited {
+          color: white;
+        }
+
+        &:focus { outline: none; }
+
+        &:hover {
+          @shadow-bg: #000000;
+          text-shadow: 0 0 20px @shadow-bg, 0 0 20px @shadow-bg, 0 0 20px @shadow-bg;
+        }
+      }
+      h2 {
+        margin: 0;
+        font-size: 1.3em;
+        color: white;
+        font-weight: normal;
+        line-height: 1.2rem;
+        cursor: pointer;
+      }
+    }
+  }
+
+  .workflow-close {
+    position: absolute;
+    right: 8px;
+    top: 3px;
+    color: white;
+    font-size: 1.5rem;
+    display: block;
+    padding: 5px;
+    .transition(all .8s);
+
+    &:link, &:focus, &:visited {
+      color: white;
+    }
+
+    &:focus { outline: none; }
+
+    &:hover {
+      @shadow-bg: #000000;
+      text-shadow: 0 0 20px @shadow-bg, 0 0 20px @shadow-bg, 0 0 20px @shadow-bg;
+    }
+  }
+
+}
+
+.btn-workflow,
+.btn-workflow-records {
+  .button-variant(white; @cc-dark-cool-accent-mid; @cc-dark-cool-accent-mid);
+}
+
+.btn-workflow {
+  text-transform: uppercase;
+  .box-shadow(0px 0px 5px 0px rgba(0,0,0,0.5));
+  padding: 3px 8px;
+  .transition(all 1s ease);
+
+  &:hover {
+    background-color: lighten(@cc-dark-cool-accent-mid, 5);
+    border-color: lighten(@cc-dark-cool-accent-mid, 5);
+    .box-shadow(0px 0px 15px 4px darken(@cc-dark-cool-accent-low, 30));
+  }
+}
+
+.btn-workflow-records {
+  @btn-records-size: 65px;
+  width: @btn-records-size;
+  height: @btn-records-size;
+  .border-top-radius(@btn-records-size/2);
+  .border-bottom-radius(@btn-records-size/2);
+  font-size: 3.3rem;
+  line-height: @btn-records-size;
+  padding: 0;
+  .box-shadow(0px 0px 5px 0px rgba(0,0,0,0.5));
+  .transition(all 1s ease);
+  &:hover,
+  &.glow {
+    background-color: lighten(@cc-dark-cool-accent-mid, 5);
+    border-color: lighten(@cc-dark-cool-accent-mid, 5);
+    .box-shadow(0px 0px 40px 10px darken(@cc-dark-cool-accent-low, 20));
+  }
+}
+
+.workflow-record-list {
+  height: @form-width;
+  width: 30px;
+  display: inline-block;
+  vertical-align: top;
+  position: relative;
+
+  .btn-workflow-records {
+    position: absolute;
+    top: 50%;
+    left: -42px;
+    margin-top: -37px;
+  }
+}
