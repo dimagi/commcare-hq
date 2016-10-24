@@ -101,6 +101,7 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
@@ -1561,6 +1562,7 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
                     legacy_cls = CaseExportSchema
 
                 legacy_export = legacy_cls.get(self.export_id)
+                convert_export = True
 
                 if legacy_export.converted_saved_export_id:
                     # If this is the case, this means the user has refreshed the Export page
@@ -1569,7 +1571,12 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
                     export_instance = self.export_instance_cls.get(
                         legacy_export.converted_saved_export_id
                     )
-                else:
+
+                    # If the fetched export instance has been deleted, then we know that we
+                    # should retry the conversion
+                    convert_export = export_instance.doc_type.endswith(DELETED_SUFFIX)
+
+                if convert_export:
                     export_instance, meta = convert_saved_export_to_export_instance(
                         self.domain,
                         legacy_export,
