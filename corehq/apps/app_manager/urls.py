@@ -25,10 +25,6 @@ app_urls = patterns('corehq.apps.app_manager.views',
     url(r'^delete/$', 'view_app', name='app_delete'),
     url(r'^$', 'view_app', name='view_app'),
     url(r'^releases/$', 'view_app', name='release_manager'),
-
-    # placeholder for app manager v2
-    url(r'^releases_v2/$', 'release_manager', name='release_manager_v2'),
-
     url(r'^releases_ajax/$', 'releases_ajax', name='release_manager_ajax'),
     url(r'^current_version/$', 'current_app_version', name='current_app_version'),
     url(r'^releases/json/$', 'paginate_releases', name='paginate_releases'),
