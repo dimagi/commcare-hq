@@ -711,9 +711,14 @@ def rearrange(request, domain, app_id, key):
         elif "modules" == key:
             app.rearrange_modules(i, j)
     except IncompatibleFormTypeException:
-        messages.error(request, _(
-            'The form can not be moved into the desired module.'
-        ))
+        if toggles.APP_MANAGER_V2.enabled(domain):
+            messages.error(request, _(
+                'The form cannot be moved into the desired menu.'
+            ))
+        else:
+            messages.error(request, _(
+                'The form can not be moved into the desired module.'
+            ))
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
     except (RearrangeError, ModuleNotFoundException):
         messages.error(request, _(
