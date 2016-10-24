@@ -207,3 +207,12 @@ class TestLocationSync(TestCase):
 
     def test_sql_failure_on_sql_edit(self):
         self._failure_on_edit(class_to_edit="sql", failure="sql")
+
+    def test_to_json(self):
+        mass = couch_loc("Massachusetts", self.state)
+        couch_dict = mass.to_json()
+        couch_dict.pop('_rev')
+        couch_dict.pop('last_modified')  # this varies slightly
+        sql_dict = mass.sql_location.to_json()
+        # make sure the sql version is a superset of the couch version
+        self.assertDictContainsSubset(couch_dict, sql_dict)

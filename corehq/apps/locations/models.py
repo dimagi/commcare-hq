@@ -403,6 +403,25 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         if sync_to_couch:
             self._migration_do_sync()
 
+    def to_json(self):
+        return {
+            'name': self.name,
+            'site_code': self.site_code,
+            '_id': self.location_id,
+            'location_id': self.location_id,
+            'doc_type': 'Location',
+            'domain': self.domain,
+            'external_id': self.external_id,
+            'is_archived': self.is_archived,
+            'last_modified': self.last_modified.isoformat(),
+            'latitude': float(self.latitude) if self.latitude else None,
+            'longitude': float(self.longitude) if self.longitude else None,
+            'metadata': self.metadata,
+            'location_type': self.location_type.name,
+            "lineage": self.lineage,
+            'parent_location_id': self.parent_location_id,
+        }
+
     @property
     def lineage(self):
         return list(self.get_ancestors(ascending=True).location_ids())
