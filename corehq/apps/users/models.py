@@ -1655,6 +1655,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def get_sql_location(self, domain):
         return self.sql_location
 
+    @memoized
+    def get_location(self, domain):
+        return self.location
+
     def set_location(self, location):
         """
         Set the primary location, and all important user data, for
