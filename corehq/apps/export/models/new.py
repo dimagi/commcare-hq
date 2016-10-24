@@ -975,6 +975,7 @@ class InferredSchema(Document):
     group_schemas = SchemaListProperty(InferredExportGroupSchema)
     case_type = StringProperty(required=True)
     version = IntegerProperty(default=1)
+    last_app_versions = DictProperty()
 
     class Meta:
         app_label = 'export'
@@ -1061,14 +1062,15 @@ class ExportDataSchema(Document):
 
             current_schema.record_update(app.copy_of or app._id, app.version)
 
-        inferred_schema = current_schema._get_inferred_schema()
-        if inferred_schema:
-            current_schema = cls._merge_schemas(current_schema, inferred_schema)
-
         current_schema.domain = domain
         current_schema.app_id = app_id
         current_schema.version = DATA_SCHEMA_VERSION
         current_schema._set_identifier(identifier)
+
+        inferred_schema = current_schema._get_inferred_schema()
+        if inferred_schema:
+            current_schema = cls._merge_schemas(current_schema, inferred_schema)
+
         current_schema = cls._save_export_schema(
             current_schema,
             original_id,
