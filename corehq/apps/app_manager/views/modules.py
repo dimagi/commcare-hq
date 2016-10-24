@@ -370,7 +370,7 @@ class AllowWithReason(namedtuple('AllowWithReason', 'allow reason')):
         if self.reason == self.ALL_FORMS_REQUIRE_CASE:
             return gettext_lazy('Not all forms in the case list update a case.')
         elif self.reason == self.MODULE_IN_ROOT:
-            return gettext_lazy("'Menu Mode' is not configured as 'Display and then forms'")
+            return gettext_lazy("'Menu Mode' is not configured as 'Display menu and then forms'")
         elif self.reason == self.PARENT_SELECT_ACTIVE:
             return gettext_lazy("'Parent Selection' is configured.")
 
