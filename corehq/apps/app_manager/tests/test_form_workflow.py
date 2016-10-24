@@ -259,11 +259,8 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(self.get_xml('form_link_child_modules'), factory.app.create_suite(), "./entry[3]")
 
     def test_form_links_submodule(self):
-        """
-        Test that when linking between two forms in a submodule we match up the session variables between the source
-        and target form correctly
-        :return:
-        """
+        # Test that when linking between two forms in a submodule we match up the session variables between the source
+        # and target form correctly
         factory = AppFactory(build_version='2.9.0/latest')
         m0, m0f0 = factory.new_basic_module('child visit', 'child')
         factory.form_requires_case(m0f0)
