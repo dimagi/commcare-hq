@@ -509,7 +509,7 @@ def load_and_call(sms_handler_names, phone_number, text, sms):
 def process_incoming(msg):
     v = PhoneNumber.by_phone(msg.phone_number, include_pending=True)
 
-    if v is not None and v.verified:
+    if v:
         msg.couch_recipient_doc_type = v.owner_doc_type
         msg.couch_recipient = v.owner_id
         msg.domain = v.domain
