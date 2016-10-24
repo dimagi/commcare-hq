@@ -304,9 +304,11 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestConvertBase):
         self.assertEqual(column.selected, True)
 
     def test_daily_saved_conversion(self, _):
-        self.group_config = HQGroupExportConfiguration.get_for_domain('aspace')
         # ID is from corehq/apps/export/tests/data/saved_export_schemas/case.json
-        self.group_config.add_custom_export(self.domain, '92e5f9a6624a637c2080957475cd446d')
+        self.group_config = HQGroupExportConfiguration.add_custom_export(
+            self.domain,
+            '92e5f9a6624a637c2080957475cd446d'
+        )
         self.group_config.save()
         self.addCleanup(self.group_config.delete)
 
