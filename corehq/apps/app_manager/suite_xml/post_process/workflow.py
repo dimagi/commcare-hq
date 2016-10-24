@@ -295,9 +295,9 @@ class EndOfFormNavigationWorkflow(object):
             if not isinstance(child, WorkflowDatumMeta) or not child.requires_selection:
                 yield child
             else:
-                manual_values = manual_values_by_name.get(child.id)
-                if manual_values:
-                    yield StackDatum(id=child.id, value=manual_values)
+                manual_value = manual_values_by_name.get(child.id)
+                if manual_value:
+                    yield StackDatum(id=child.id, value=manual_value)
                 else:
                     raise SuiteValidationError("Unable to link forms, missing form variable: {}".format(
                         child.id
