@@ -286,7 +286,7 @@
                 </div>
             <![endif]-->
             {% block messages %}
-            <div class="container-fluid">
+            <div id="hq-messages-container" class="container-fluid messages-container">
                 <div class="row">
                     <div class="col-sm-12">
                        {% if messages %}
@@ -309,6 +309,7 @@
             {% endblock messages %}
             {% block content %}{% endblock content %}
         </div>
+        {% block footer %}
         <footer>
             <nav id="hq-footer"
                  role="navigation"
@@ -347,7 +348,7 @@
                 </div>
             </nav>
         </footer>
-
+        {% endblock %}
         {# modals #}
         {% block modals %}{% endblock modals %}
 

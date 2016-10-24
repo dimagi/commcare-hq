@@ -6,6 +6,8 @@ from django.http import HttpResponse, Http404
 from django.http import HttpResponseRedirect
 from django.views.generic import View
 from django.utils.decorators import method_decorator
+
+from corehq.apps.app_manager.util import get_app_manager_template
 from django_prbac.decorators import requires_privilege
 from django.contrib import messages
 from django.shortcuts import render
@@ -90,6 +92,11 @@ def paginate_releases(request, domain, app_id):
     return json_response(saved_apps)
 
 
+def release_manager(request, domain, app_id):
+    from corehq.apps.app_manager.views.view_generic import view_generic
+    return view_generic(request, domain, app_id=app_id, release_manager=True)
+
+
 @require_deploy_apps
 def releases_ajax(request, domain, app_id, template='app_manager/v1/partials/releases.html'):
     app = get_app(domain, app_id)
@@ -98,6 +105,7 @@ def releases_ajax(request, domain, app_id, template='app_manager/v1/partials/rel
     build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)
 
     context.update({
+        'intro_only': len(app.modules) == 0,
         'release_manager': True,
         'can_send_sms': can_send_sms,
         'has_mobile_workers': get_doc_count_in_domain_by_class(domain, CommCareUser) > 0,
@@ -105,7 +113,7 @@ def releases_ajax(request, domain, app_id, template='app_manager/v1/partials/rel
             get_sms_autocomplete_context(request, domain)['sms_contacts']
             if can_send_sms else []
         ),
-        'build_profile_access': build_profile_access,
+        'build_profile_access': build_profile_access and not toggles.APP_MANAGER_V2.enabled(domain),
         'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
         'vellum_case_management': app.vellum_case_management,
         'fetchLimit': request.GET.get('limit', DEFAULT_FETCH_LIMIT),
@@ -256,7 +264,12 @@ def odk_install(request, domain, app_id, with_media=False):
                            params={'profile': build_profile_id}),
         "profile_url": profile_url,
     }
-    return render(request, "app_manager/v1/odk_install.html", context)
+    template = get_app_manager_template(
+        domain,
+        "app_manager/v1/odk_install.html",
+        "app_manager/v2/odk_install.html",
+    )
+    return render(request, template, context)
 
 
 def odk_qr_code(request, domain, app_id):
@@ -350,6 +363,11 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
 
     @use_angular_js
     def dispatch(self, request, *args, **kwargs):
+        self.template_name = get_app_manager_template(
+            self.domain,
+            self.template_name,
+            'app_manager/v2/app_diff.html',
+        )
         return super(AppDiffView, self).dispatch(request, *args, **kwargs)
 
     @property

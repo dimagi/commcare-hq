@@ -1,0 +1,188 @@
+- {% extends 'app_manager/v1/managed_app.html'%}
+?                          ^
++ {% extends 'app_manager/v2/managed_app.html'%}
+?                          ^
+  {% load xforms_extras %}
+  {% load hq_shared_tags %}
+  {% load i18n %}
+  
+  {% block head %}{{ block.super }}
+      {% if include_fullstory %}
+          {% include 'analytics/fullstory.html' %}
+      {% endif %}
+      {% if not vellum_debug %}
+          <link href="{% static "app_manager/js/vellum/style.css" %}" type="text/css" rel="stylesheet"/>
+      {% elif vellum_debug == "dev-min" %}
+          <link href="{% static 'formdesigner/_build/style.css' %}" type="text/css" rel="stylesheet"/>
+      {% endif %}
++ {% endblock %}
++ 
++ {% block stylesheets %}{{ block.super }}
++   <style type="text/css">
++     .hq-container {
++       padding-bottom: 0;
++       margin-bottom: 0;
++     }
++   </style>
+  {% endblock %}
+  
+  {% block js %}{{ block.super }}
+      <script src="{% static 'moment/moment.js' %}"></script>
+      <script src="{% static 'requirejs/require.js' %}"></script>
+      <script src="{% static 'app_manager/js/app-notifications.js' %}"></script>
+      <script src="{% static 'js/ws4redis.js' %}"></script>
+  {% endblock %}
+  
+  {% block js-inline %}{{ block.super }}
+      {% if request.guided_tour %}{% include request.guided_tour.template %}{% endif %}
+      <script>
+          var VELLUM_OPTIONS = {
+              plugins: {{ plugins|JSON }},
+              features: {{ features|JSON }},
+              core: {
+                  dataSourcesEndpoint: '{% url "get_form_data_schema" domain=domain form_unique_id=form.get_unique_id %}',
+                  dataSources: [
+                      {% comment %} DEPRECATED. Use dataSourcesEndpoint {% endcomment %}
+                      {
+                          key: 'fixture',
+                          name: 'Fixtures',
+                          endpoint: '{% url 'fixture_metadata' domain=domain %}'
+                      }
+                  ],
+                  form: {{ form.source|JSON }},
+                  formId: '{{ form.get_unique_id }}',
+                  formName: "{{ form.name|trans:app.langs|escapejs }}",
+                  saveType: 'patch',
+                  saveUrl: '{% url "edit_form_attr" domain app.id form.get_unique_id "xform" %}',
+                  patchUrl: '{% url "patch_xform" domain app.id form.get_unique_id %}',
+                  allowedDataNodeReferences: [
+                      "meta/deviceID",
+                      "meta/instanceID",
+                      "meta/username",
+                      "meta/userID",
+                      "meta/timeStart",
+                      "meta/timeEnd",
+                      "meta/location"
+                  ].concat({{ scheduler_data_nodes|JSON }}),
+                  activityUrl: '{% url "ping" %}',
+                  onFormSave: function (data) {
+                      var app_manager = hqImport('app_manager/js/app_manager.js')
+                      app_manager.updateDOM(data.update);
+                  },
+                  {% if vellum_debug == "dev" %}
+                  onReady: function () {
+                      var less_error_id = "#less-error-message\\:static-style-less-hqstyle-core",
+                          less_error = $(less_error_id);
+                      if (less_error.length) {
+                          console.log("hiding less error:", less_error_id);
+                          console.log(less_error.text());
+                          less_error.hide();
+                      }
+                      {% if request.guided_tour %}
+                      form_tour_start();
+                      {% endif %}
+                  },
+                  {% else %}
+                  onReady: function() {
+                      {% if request.guided_tour %}
+                      form_tour_start();
+                      {% endif %}
+                  },
+                  {% endif %}
+                  sessionid: {{ sessionid|JSON }},
+                  externalLinks: {
+                      changeSubscription: '{% url "domain_subscription_view" domain=domain %}'
+                  },
+                  invalidCaseProperties: ['name'],
+              },
+              intents: {
+                  templates: {{ app_callout_templates|JSON }}
+              },
+              itemset: {
+                  dataSourcesFilter: function (sources) {
+                      return _.filter(sources, function (source) {
+                          return !source.uri || /^jr:\/\/fixture\//.test(source.uri);
+                      });
+                  }
+              },
+              javaRosa: {
+                  langs: {{ app.langs|JSON }},
+                  displayLanguage: {{ lang|JSON }},
+              },
+              uploader: {
+                  uploadUrls: {
+                      image: '{% url "hqmedia_uploader_image" domain app.id %}',
+                      audio: '{% url "hqmedia_uploader_audio" domain app.id %}',
+                      video: '{% url "hqmedia_uploader_video" domain app.id %}',
+                      text: '{% url "hqmedia_uploader_text" domain app.id %}',
+                  },
+                  objectMap: {{ multimedia_object_map|JSON }},
+                  sessionid: {{ sessionid|JSON }}
+              },
+              windowManager: {
+                  leftOffset: function () {
+                      return $('#hq-sidebar').outerWidth() + 2;
+                  },
+                  topOffset: function () {
+-                     return $('#hq-navigation').outerHeight();
+?                                                             ^
++                     return $('#hq-navigation').outerHeight() + 
+?                                                             ^^^
++                         $('.breadcrumb-hq-section').outerHeight();
+                  }
+              },
+              csrftoken: $.cookie('csrftoken')
+          };
+  
+-         {% include 'app_manager/v1/partials/form_designer_requirejs_config.html' with vellum_debug=vellum_debug %}
+?                                  ^
++         {% include 'app_manager/v2/partials/form_designer_requirejs_config.html' with vellum_debug=vellum_debug %}
+?                                  ^
+  
+          require(["jquery", "jquery.vellum", "moment"], function ($) {
+              $(function () {
+                  $("#edit").hide();
+-                 $('#hq-footer').hide();
+  
+                  $('#formdesigner').vellum(VELLUM_OPTIONS);
+  
+                  {% if notifications_enabled %}
+                  var userId = '{{ request.couch_user.get_id }}';
+                  var notifications = hqImport('app_manager/js/app-notifications.js');
+                  // initialize redis
+                  var ws4redis = WS4Redis({
+                      uri: '{{ WEBSOCKET_URI }}{{ notify_facility }}?subscribe-broadcast',
+                      receive_message: notifications.NotifyFunction(userId, $('#notify-bar')),
+                      heartbeat_msg: {{ WS4REDIS_HEARTBEAT }},
+                  });
+                  {% endif %}
+              });
+          });
+          analytics.workflow('Entered the Form Builder');
+  
++         $(function () {
++             var previewApp = hqImport('app_manager/js/preview_app.js');
++             previewApp.prependToggleTo('.fd-form-actions', $('#js-fd-app-preview-btn-template').html());
++         });
+      </script>
++ 
++     <script type="text/html" id="js-fd-app-preview-btn-template">
++       <div class="btn-group">
++         <a class="btn btn-default js-preview-toggle" href="#">
++           <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview Changes" %}</span>
++           <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Hide Preview" %}</span>
++         </a>
++       </div>
++     </script>
++ 
+  {% endblock %}
+  
+  {% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
+  
+  {% block form-view %}
+      <div id="formdesigner" class="clearfix"></div>
+  {% endblock %}
+  
+  {% block column_style %}hq-flush-content{% endblock %}
++ 
++ {% block footer %}{% endblock %}

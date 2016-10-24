@@ -30,6 +30,7 @@ from corehq.apps.app_manager.util import (
     get_all_case_properties,
     get_commcare_versions,
     get_usercase_properties,
+    get_app_manager_template,
 )
 from corehq import toggles
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
@@ -45,7 +46,7 @@ from django_prbac.utils import has_privilege
 
 @retry_resource(3)
 def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
-                 copy_app_form=None):
+                 copy_app_form=None, release_manager=False):
     """
     This is the main view for the app. All other views redirect to here.
 
@@ -76,7 +77,12 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     if app and app.application_version == APP_V1:
         _assert = soft_assert()
         _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
-        return render(request, 'app_manager/v1/no_longer_supported.html', {
+        template = get_app_manager_template(
+            domain,
+            'app_manager/v1/no_longer_supported.html',
+            'app_manager/v2/no_longer_supported.html',
+        )
+        return render(request, template, {
             'domain': domain,
             'app': app,
         })
@@ -117,17 +123,28 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
 
         context.update(form_context)
     elif module:
-        template = get_module_template(module)
+        template = get_module_template(domain, module)
         # make sure all modules have unique ids
         app.ensure_module_unique_ids(should_save=True)
         module_context = get_module_view_context(app, module, lang)
         context.update(module_context)
     elif app:
-        template = "app_manager/v1/app_view.html"
+
+        # todo APP MANAGER V2 update template here
+        # if release_manager:
+
+        template = get_app_manager_template(
+            domain,
+            'app_manager/v1/app_view.html',
+            'app_manager/v2/app_view.html',
+        )
         context.update(get_app_view_context(request, app))
     else:
         from corehq.apps.dashboard.views import NewUserDashboardView
-        return HttpResponseRedirect(reverse(NewUserDashboardView.urlname, args=[domain]))
+        if toggles.APP_MANAGER_V2.enabled(domain):
+            context.update(NewUserDashboardView.get_page_context(domain))
+        else:
+            return HttpResponseRedirect(reverse(NewUserDashboardView.urlname, args=[domain]))
 
     # update multimedia context for forms and modules.
     menu_host = form or module

@@ -81,11 +81,7 @@
         });
         {% if request|toggle_enabled:"PREVIEW_APP" %}
             var previewApp = hqImport('app_manager/js/preview_app.js');
-            previewApp.initPreviewWindow(
-                    '#js-appmanager-preview',
-                    '#js-appmanager-body',
-                    '#js-toggle-app-preview'
-            );
+            previewApp.initPreviewWindow(hqLayout);
         {% endif %}
     });
     $(function () {
@@ -104,10 +100,14 @@
     {% endif %}
 {% endblock %}
 
+{% block content %}
+  {{ block.super }}
+  {% if request|toggle_enabled:"PREVIEW_APP" %}
+    {% include 'app_manager/v1/partials/preview_app.html'%}
+  {% endif %}
+{% endblock %}
+
 {% block page_content %}
-{% if request|toggle_enabled:"PREVIEW_APP" %}
-{% include 'app_manager/v1/partials/preview_app.html'%}
-{% endif %}
 <div class="appmanager-loading-container">
   <div class="appmanager-loading appmanager-loading-body">
     <i class="fa fa-spin fa-spinner"></i>
