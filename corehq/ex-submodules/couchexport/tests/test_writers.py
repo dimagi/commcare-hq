@@ -95,5 +95,3 @@ class HeaderNameTest(SimpleTestCase):
         preview = writer.get_preview()
         self.assertGreater(len(table_index), writer.max_table_name_size)
         self.assertLessEqual(len(preview[0]['table_name']), writer.max_table_name_size)
-
-
