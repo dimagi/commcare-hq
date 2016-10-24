@@ -562,10 +562,10 @@ def location_edited_receiver(sender, sql_loc, moved, previous_parent, **kwargs):
         )
 
     group = last_location_group(sql_loc)
-    if not sql_loc.location_type.administrative and group != sql_loc.metadata['group']:
+    if not sql_loc.location_type.administrative and group != sql_loc.metadata.get('group'):
         PendingReportingDataRecalculation.objects.create(
             domain=sql_loc.domain,
             type='group_change',
             sql_location=sql_loc,
-            data={'previous_group': group, 'current_group': sql_loc.metadata['group']}
+            data={'previous_group': group, 'current_group': sql_loc.metadata.get('group')}
         )
