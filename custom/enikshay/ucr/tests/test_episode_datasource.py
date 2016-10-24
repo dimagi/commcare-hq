@@ -115,7 +115,7 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
                     disease_classification=disease_classification,
                     person_id="person",
                     opened_on=datetime(1989, 6, 11, 0, 0),
-                    patient_type="new",
+                    patient_type_choice="new",
                     hiv_status="reactive",
                     lab_result=lab_result
                 )

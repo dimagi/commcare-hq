@@ -2740,16 +2740,20 @@
                             "name": "new_patient"
                         },
                         {
-                            "type": "named",
-                            "name": "test_purpose_diagnostic"
-                        },
-                        {
-                            "type": "named",
-                            "name": "microscopy_test"
-                        },
-                        {
-                            "type": "named",
-                            "name": "sputum_positive"
+                            "operator": "eq",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_diagnostic_microscopy_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": "tb_detected"
                         }
                     ]
                 },
@@ -2766,16 +2770,20 @@
                             "name": "new_patient"
                         },
                         {
-                            "type": "named",
-                            "name": "test_purpose_end_of_ip"
-                        },
-                        {
-                            "type": "named",
-                            "name": "microscopy_test"
-                        },
-                        {
-                            "type": "named",
-                            "name": "sputum_negative"
+                            "operator": "eq",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_endofip_microscopy_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": "tb_not_detected"
                         },
                         {
                             "type": "named",
@@ -2796,16 +2804,20 @@
                             "name": "new_patient"
                         },
                         {
-                            "type": "named",
-                            "name": "test_purpose_end_of_ip"
-                        },
-                        {
-                            "type": "named",
-                            "name": "microscopy_test"
-                        },
-                        {
-                            "type": "named",
-                            "name": "sputum_positive"
+                            "operator": "eq",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_endofip_microscopy_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": "tb_detected"
                         },
                         {
                             "type": "named",
@@ -2826,16 +2838,20 @@
                             "name": "new_patient"
                         },
                         {
-                            "type": "named",
-                            "name": "test_purpose_end_of_ip"
-                        },
-                        {
-                            "type": "named",
-                            "name": "microscopy_test"
-                        },
-                        {
-                            "type": "named",
-                            "name": "sputum_na"
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_endofip_microscopy_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": ["", null]
                         },
                         {
                             "type": "named",
@@ -2856,16 +2872,20 @@
                             "name": "new_patient"
                         },
                         {
-                            "type": "named",
-                            "name": "test_purpose_end_of_ip"
-                        },
-                        {
-                            "type": "named",
-                            "name": "microscopy_test"
-                        },
-                        {
-                            "type": "named",
-                            "name": "sputum_negative"
+                            "operator": "eq",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_endofip_microscopy_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": "tb_not_detected"
                         },
                         {
                             "type": "named",
@@ -2886,16 +2906,20 @@
                             "name": "new_patient"
                         },
                         {
-                            "type": "named",
-                            "name": "test_purpose_end_of_ip"
-                        },
-                        {
-                            "type": "named",
-                            "name": "microscopy_test"
-                        },
-                        {
-                            "type": "named",
-                            "name": "sputum_positive"
+                            "operator": "eq",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_endofip_microscopy_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": "tb_detected"
                         },
                         {
                             "type": "named",
@@ -2916,16 +2940,20 @@
                             "name": "new_patient"
                         },
                         {
-                            "type": "named",
-                            "name": "test_purpose_end_of_ip"
-                        },
-                        {
-                            "type": "named",
-                            "name": "microscopy_test"
-                        },
-                        {
-                            "type": "named",
-                            "name": "sputum_na"
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_endofip_microscopy_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": [null, ""]
                         },
                         {
                             "type": "named",
@@ -3003,10 +3031,6 @@
                         },
                         {
                             "type": "named",
-                            "name": "microscopy_test"
-                        },
-                        {
-                            "type": "named",
                             "name": "3months_length_of_ip"
                         },
                         {
@@ -3044,10 +3068,6 @@
                         },
                         {
                             "type": "named",
-                            "name": "microscopy_test"
-                        },
-                        {
-                            "type": "named",
                             "name": "3months_length_of_ip"
                         },
                         {
@@ -3082,10 +3102,6 @@
                         {
                             "type": "named",
                             "name": "has_patient_type"
-                        },
-                        {
-                            "type": "named",
-                            "name": "microscopy_test"
                         },
                         {
                             "type": "named",
@@ -5849,7 +5865,7 @@
                 "expression": {
                     "datatype": "string",
                     "type": "property_name",
-                    "property_name": "patient_type"
+                    "property_name": "patient_type_choice"
                 },
                 "type": "boolean_expression",
                 "property_value": "new"
@@ -5859,7 +5875,7 @@
                 "expression": {
                     "datatype": "string",
                     "type": "property_name",
-                    "property_name": "patient_type"
+                    "property_name": "patient_type_choice"
                 },
                 "type": "boolean_expression",
                 "property_value": "others"
@@ -5869,7 +5885,7 @@
                 "expression": {
                     "datatype": "string",
                     "type": "property_name",
-                    "property_name": "patient_type"
+                    "property_name": "patient_type_choice"
                 },
                 "type": "boolean_expression",
                 "property_value": "recurrent"
@@ -5879,7 +5895,7 @@
                 "expression": {
                     "datatype": "string",
                     "type": "property_name",
-                    "property_name": "patient_type"
+                    "property_name": "patient_type_choice"
                 },
                 "type": "boolean_expression",
                 "property_value": "treatment_after_failure"
@@ -5889,7 +5905,7 @@
                 "expression": {
                     "datatype": "string",
                     "type": "property_name",
-                    "property_name": "patient_type"
+                    "property_name": "patient_type_choice"
                 },
                 "type": "boolean_expression",
                 "property_value": "treatment_after_loss_to_follow_up"
@@ -5899,7 +5915,7 @@
                 "expression": {
                     "datatype": "string",
                     "type": "property_name",
-                    "property_name": "patient_type"
+                    "property_name": "patient_type_choice"
                 },
                 "type": "boolean_expression",
                 "property_value": "treatment_after_failure"
@@ -6361,12 +6377,12 @@
                                 },
                                 "filter_expression": {
                                     "type": "boolean_expression",
-                                    "operator": "eq",
+                                    "operator": "in",
                                     "expression": {
                                         "type": "property_name",
                                         "property_name": "test_type_value"
                                     },
-                                    "property_value": "microscopy-zn"
+                                    "property_value": ["microscopy-zn", "microscopy-fluorescent"]
                                 }
                             },
                             "sort_expression": {
@@ -6416,24 +6432,45 @@
                 }
             },
             "2months_length_of_ip": {
-                "operator": "eq",
-                "expression": {
-                    "datatype": "string",
-                    "type": "property_name",
-                    "property_name": "length_of_ip"
-                },
-                "type": "boolean_expression",
-                "property_value": "2months"
+                "type": "and",
+                "filters": [
+                    {
+                        "operator": "lt",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "property_name",
+                            "property_name": "length_of_ip"
+                        },
+                        "type": "boolean_expression",
+                        "property_value": 90
+                    },
+                    {
+                        "type": "not",
+                        "filter": {
+                            "operator": "in",
+                            "expression": {
+                                "datatype": "string",
+                                "type": "property_name",
+                                "property_name": "length_of_ip"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": [
+                                "",
+                                null
+                            ]
+                        }
+                    }
+                ]
             },
-            "3months_length_of_ip": {
-                "operator": "eq",
+           "3months_length_of_ip": {
+                "operator": "gte",
                 "expression": {
-                    "datatype": "string",
+                    "datatype": "integer",
                     "type": "property_name",
                     "property_name": "length_of_ip"
                 },
                 "type": "boolean_expression",
-                "property_value": "3months"
+                "property_value": 90
             }
         },
         "named_expressions": {
@@ -6607,6 +6644,75 @@
                 },
                 "aggregation_fn": "last_item"
             },
+            "latest_diagnostic_microscopy_test_case": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "property_value": "test"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "purpose_of_testing"
+                                    },
+                                    "operator": "eq",
+                                    "property_value": "diagnostic"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "in",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "property_value": ["microscopy-zn", "microscopy-fluorescent"]
+                                }
+                            ]
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
             "latest_endofip_test_case": {
                 "type": "reduce_items",
                 "items_expression": {
@@ -6665,6 +6771,84 @@
                                     },
                                     "operator": "eq",
                                     "property_value": "end_of_ip"
+                                }
+                            ]
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
+            "latest_endofip_microscopy_test_case": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "property_value": "test"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "purpose_of_testing"
+                                    },
+                                    "operator": "eq",
+                                    "property_value": "follow_up"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "follow_up_test_reason"
+                                    },
+                                    "operator": "eq",
+                                    "property_value": "end_of_ip"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "in",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "property_value": ["microscopy-zn", "microscopy-fluorescent"]
                                 }
                             ]
                         }
