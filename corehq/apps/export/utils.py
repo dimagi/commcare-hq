@@ -529,7 +529,7 @@ def revert_migrate_domain(domain, dryrun=False):
         print 'Reverted export: {}'.format(reverted_export._id)
 
 
-def migrate_domain(domain, dryrun=False):
+def migrate_domain(domain, dryrun=False, force_convert_columns=False):
     from couchexport.models import SavedExportSchema
     export_count = stale_get_export_count(domain)
     metas = []
@@ -542,7 +542,8 @@ def migrate_domain(domain, dryrun=False):
                 _, migration_meta = convert_saved_export_to_export_instance(
                     domain,
                     SavedExportSchema.wrap(old_export),
-                    dryrun=dryrun
+                    dryrun=dryrun,
+                    force_convert_columns=force_convert_columns,
                 )
             except Exception, e:
                 print 'Failed parsing {}: {}'.format(old_export['_id'], e)
