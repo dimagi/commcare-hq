@@ -136,7 +136,7 @@ class LocationsListView(BaseLocationView):
         loc_restricted = self.request.project.location_restriction_for_users
         return self.can_access_all_locations and (
             not loc_restricted
-            or (loc_restricted and not self.request.couch_user.get_location(self.domain))
+            or (loc_restricted and not self.request.couch_user.get_sql_location(self.domain))
         )
 
     @property
