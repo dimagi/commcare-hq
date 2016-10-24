@@ -1659,6 +1659,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         Set the primary location, and all important user data, for
         the user.
+
+        :param location: may be a sql or couch location
         """
         from corehq.apps.fixtures.models import UserFixtureType
 
@@ -2070,7 +2072,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         if isinstance(location_object_or_id, basestring):
             location_id = location_object_or_id
         else:
-            location_id = location_object_or_id._id
+            location_id = location_object_or_id.location_id
 
         membership = self.get_domain_membership(domain)
         membership.location_id = location_id
@@ -2120,11 +2122,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         from corehq.apps.locations.models import SQLLocation
         loc_id = self.get_location_id(domain)
         if loc_id:
-            try:
-                return SQLLocation.objects.get(location_id=loc_id)
-            except SQLLocation.DoesNotExist:
-                pass
-        return None
+            return SQLLocation.objects.get_or_None(domain=domain, location_id=loc_id)
 
     @memoized
     def get_location(self, domain):
