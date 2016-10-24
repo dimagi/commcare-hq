@@ -53,37 +53,47 @@ var mk_translation_ui = function (spec) {
 
                 this.value.on('change', helperFunction);
 
-                this.value.ui.find('input').autocomplete({
-                    select: helperFunction
-                });
+                var $input = this.value.ui.find('input');
+                var options = {
+                    at: "",
+                    maxLen: Infinity,
+                    suffix: "",
+                    callbacks: {
+                        filter: function(query, data, searchKey) {
+                            return _.filter(data, function(item) {
+                                return item.name.indexOf(query) !== -1;
+                            });
+                        },
+                        matcher: function(flag, subtext, should_startWithSpace) {
+                            return $input.val();
+                        },
+                        beforeInsert: function(value, $li) {
+                            helperFunction();
 
-                this.value.ui.find('input').focus(function () {
-                    var input = $(this);
-                    if (!suggestionCache.hasOwnProperty('-' + that.key.val())) {
-                        $.ajax({
-                            type: "get",
-                            url: suggestionURL,
-                            data: {
-                                lang: translation_ui.lang,
-                                key: that.key.val()
-                            },
-                            dataType: "json",
-                            success: function (data) {
-                                suggestionCache['-' + that.key.val()] = data;
-                                input.autocomplete({
-                                    source: function(request, response) {
-                                        response($.ui.autocomplete.filter(suggestionCache['-' + that.key.val()], ''));
-                                    },
-                                    minLength: 0
-                                });
-                                input.autocomplete('search');
-                            }
-                        });
-                    } else {
-                        input.autocomplete('search');
-                    }
-                })
-                
+                            // This and the inserted.atwho handler below ensure that the entire
+                            // input's value is replaced, regardless of where the cursor is
+                            $input.data("selected-value", value);
+                        },
+                    },
+                };
+
+                $input.one('focus', function () {
+                    $.ajax({
+                        url: suggestionURL,
+                        data: {
+                            lang: translation_ui.lang,
+                            key: that.key.val()
+                        },
+                        success: function (data) {
+                            options.data = data;
+                            $input.atwho(options).on("inserted.atwho", function(event, $li, otherEvent) {
+                                $(this).find('.atwho-inserted').children().unwrap();
+                                $input.val($input.data("selected-value")).change();
+                            });
+                            $input.atwho('run');
+                        }
+                    });
+                });
             };
             Translation.init = function (key, value) {
                 return new Translation(key, value);
