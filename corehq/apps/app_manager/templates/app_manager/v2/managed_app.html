@@ -147,7 +147,7 @@
 
       <div class="{% if not module %}active {% endif %}appnav-name-wrapper{% if release_manager %} active{% endif %}">
           <div class="appnav-name-settings">
-              <a href="{% url "view_app" domain app.id %}" class="{% if is_app_settings_page %}active{% endif %}">
+              <a href="{% url "app_settings" domain app.id %}" class="{% if is_app_settings_page %}active{% endif %}">
                   <i class="fa fa-gear"></i>
               </a>
           </div>
