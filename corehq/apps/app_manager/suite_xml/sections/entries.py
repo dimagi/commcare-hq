@@ -22,6 +22,13 @@ from corehq.apps.app_manager.suite_xml.xml_models import *
 
 class FormDatumMeta(namedtuple('FormDatumMeta', 'datum case_type requires_selection action from_parent')):
     def __new__(cls, datum, case_type, requires_selection, action, from_parent=False):
+        """
+        :param datum: The actual SessionDatum object
+        :param case_type: The case type this datum represents
+        :param requires_selection: True if this datum requires the user to make a selection
+        :param action: The action that produced this datum
+        :param from_parent: True if this datum is a placeholder necessary to match the parent module's session.
+        """
         return super(FormDatumMeta, cls).__new__(cls, datum, case_type, requires_selection, action, from_parent)
 
     @property

@@ -293,24 +293,18 @@ class EndOfFormNavigationWorkflow(object):
         candidate = None
         for source_datum in source_datums:
             if source_datum.from_parent_module:
+                # if the datum is only there as a placeholder then we should ignore it
                 continue
             if target_datum.id == source_datum.id:
                 if source_datum.case_type and source_datum.case_type == target_datum.case_type:
                     # same ID, same case type
                     candidate = target_datum.to_stack_datum()
                     break
-                elif not source_datum.case_type:
-                    # same ID, no case type to compare
-                    candidate = target_datum.to_stack_datum()
             else:
                 if source_datum.case_type and source_datum.case_type == target_datum.case_type:
                     # different ID, same case type
                     candidate = target_datum.to_stack_datum(source_id=source_datum.id)
                     break
-                elif not source_datum.case_type:
-                    # different ID, no case type to compare
-                    if not candidate:
-                        candidate = target_datum.to_stack_datum(source_id=source_datum.id)
 
         return candidate
 
@@ -546,6 +540,7 @@ class WorkflowDatumMeta(object):
         self.nodeset = nodeset
         self.function = function
         self._case_type = None
+        # indicates whether this datum is here as a placeholder to match the parent module's datum
         self.from_parent_module = False
 
 
