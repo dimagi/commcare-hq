@@ -113,7 +113,6 @@ from corehq.apps.app_manager.views.releases import (
     odk_media_qr_code,
     odk_qr_code,
     paginate_releases,
-    release_manager,
     release_build,
     releases_ajax,
     revert_to_copy,
