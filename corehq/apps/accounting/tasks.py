@@ -39,7 +39,7 @@ from corehq.apps.accounting.models import (
     SubscriptionType,
     WirePrepaymentBillingRecord,
     WirePrepaymentInvoice,
-    Invoice)
+    Invoice, SoftwarePlanVersion)
 from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.accounting.utils import (
     fmt_dollar_amount,
@@ -642,8 +642,8 @@ def send_overdue_reminders():
             accounts.add(invoice.get_domain())
             total = Invoice.objects.filter(
                 is_hidden=False,
-                subscription__subscriber__domain=invoice.get_domain()
-            ).aggregate(Sum('balance'))['balance__sum']
+                subscription__subscriber__domain=invoice.get_domain())\
+            .aggregate(Sum('balance'))['balance__sum']
             if total >= 100:
                 days_ago = (today - invoice.date_due).days
                 context = {
@@ -658,6 +658,8 @@ def send_overdue_reminders():
                 }
                 if days_ago == 61:
                     _send_downgrade_notice(invoice, context)
+                elif days_ago == 60:
+                    _downgrade_domain(invoice)
                 elif days_ago == 58:
                     _send_downgrade_warning(invoice, context)
                 elif days_ago == 30:
@@ -674,6 +676,16 @@ def _send_downgrade_notice(invoice, context):
         render_to_string('accounting/downgrade.txt', context),
         cc=[settings.ACCOUNTS_EMAIL],
         email_from=get_dimagi_from_email()
+    )
+
+def _downgrade_domain(invoice):
+    invoice.subscription.change_plan(
+        SoftwarePlanVersion.get(
+            DefaultProductPlan.get_default_plan(
+                SoftwarePlanEdition.COMMUNITY
+            ).plan.get_version()
+        ),
+        note='Automatic downgrade to community for invoice 60 days late'
     )
 
 
