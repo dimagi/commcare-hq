@@ -906,10 +906,6 @@ class Subscriber(models.Model):
             internal_change=is_internal_change,
         )
 
-    def cancel_subscription(self, old_subscription):
-        assert old_subscription
-        return self._apply_upgrades_and_downgrades(old_subscription=old_subscription)
-
     def change_subscription(self, downgraded_privileges, upgraded_privileges, new_plan_version,
                             old_subscription, new_subscription, internal_change):
         return self._apply_upgrades_and_downgrades(
@@ -1114,29 +1110,6 @@ class Subscription(models.Model):
             return self.next_subscription_filter.order_by('date_start')[0]
         except (Subscription.DoesNotExist, IndexError):
             return None
-
-    def cancel_subscription(self, adjustment_method=None, web_user=None, note=None):
-        adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
-        today = datetime.date.today()
-        if self.date_end is not None and today > self.date_end:
-            raise SubscriptionAdjustmentError("The end date for this subscription already passed.")
-
-        self.date_end = today
-        if self.date_start > today:
-            self.date_start = today
-
-        self.is_active = False
-        self.save()
-
-        self.subscriber.cancel_subscription(old_subscription=self)
-
-        # transfer existing credit lines to the account
-        self.transfer_credits()
-
-        SubscriptionAdjustment.record_adjustment(
-            self, reason=SubscriptionAdjustmentReason.CANCEL,
-            method=adjustment_method, note=note, web_user=web_user,
-        )
 
     def raise_conflicting_dates(self, date_start, date_end):
         """Raises a subscription Adjustment error if the specified date range
