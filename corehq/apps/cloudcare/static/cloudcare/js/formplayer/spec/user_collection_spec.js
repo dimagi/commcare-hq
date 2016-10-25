@@ -2,9 +2,9 @@
 /* eslint-env mocha */
 describe('User', function () {
     describe('Collection', function() {
-        var UserCollection = FormplayerFrontend.Collections.User
+        var UserCollection = FormplayerFrontend.Collections.User;
         it('should instantiate a user collection', function() {
-            var collection = new UserCollection([], { domain: 'mydomain' })
+            var collection = new UserCollection([], { domain: 'mydomain' });
             assert.equal(collection.domain, 'mydomain');
         });
 

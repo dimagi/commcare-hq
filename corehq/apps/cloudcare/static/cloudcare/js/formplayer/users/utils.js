@@ -1,4 +1,4 @@
-/*global FormplayerFrontend, Util */
+/*global FormplayerFrontend */
 
 FormplayerFrontend.module("Utils", function(Utils, FormplayerFrontend, Backbone, Marionette){
     Utils.Users = {
