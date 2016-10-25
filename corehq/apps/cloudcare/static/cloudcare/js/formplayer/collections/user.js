@@ -11,6 +11,7 @@ FormplayerFrontend.module("Collections", function(Collections, FormplayerFronten
         model: FormplayerFrontend.Models.User,
 
         initialize: function(models, options) {
+            options = options || {};
             this.domain = options.domain;
         },
 
