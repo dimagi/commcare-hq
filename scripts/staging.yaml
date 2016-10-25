@@ -50,6 +50,7 @@ branches:
 #  - np/upgrade-twofactor # Nick P 10/5
   - bmb/currentind-string # Biyeun 11/12
   - je/remove-phonenumbers
+  - je/zip-db-exists
   - np/110/TEMPLATES
   - ce/billing-notification # Cal 10/25
 submodules:
