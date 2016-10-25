@@ -100,3 +100,12 @@
     </table>
 
 </script>
+<script type="text/template" id="restore-as-banner-template">
+    <% if (restoreAs) { %>
+    <div class="restore-as-banner module-banner">
+        <span>
+        You are currently working as <b><%= restoreAs %></b>.
+        </span>
+    </div>
+    <% } %>
+</script>

@@ -2,6 +2,15 @@
 
 FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFrontend, Backbone, Marionette, $){
     Users.Views = {}
+    Users.Views.RestoreAsBanner = Marionette.ItemView.extend({
+        template: '#restore-as-banner-template',
+        className: 'restore-as-banner-container',
+        templateHelpers: function() {
+            return {
+                restoreAs: this.model.restoreAs,
+            };
+        },
+    });
     Users.Views.UserRowView = Marionette.ItemView.extend({
         template: '#user-row-view-template',
         className: 'formplayer-request js-user',
