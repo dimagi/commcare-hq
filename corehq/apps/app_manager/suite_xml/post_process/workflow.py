@@ -370,55 +370,23 @@ class CaseListFormWorkflow(object):
         )
         stack_frames.append(frame_case_not_created)
 
-        def add_datums_for_target(module, source_form_dm, allow_missing=False):
-            """
-            Given a target module and a list of datums from the source module add children
-            to the stack frames that are required by the target module and present in the source datums
-            list.
-            """
-            target_form_dm = self.helper.get_frame_children(module.get_form(0), module_only=True)
-
-            used = set()
-
-            for source_meta in source_form_dm:
-                if source_meta.case_type:
-                    # This is true for registration forms where the case being created is a subcase
-                    target_dm = self.get_target_dm(target_form_dm, source_meta.case_type, module)
-                    if target_dm:
-                        used.add(source_meta)
-                        meta = WorkflowDatumMeta.from_session_datum(source_meta)
-                        frame_case_created.add_child(meta.to_stack_datum(datum_id=target_dm.id))
-                        frame_case_not_created.add_child(meta.to_stack_datum(datum_id=target_dm.id))
-                else:
-                    source_case_type = self.get_case_type_created_by_form(form, target_module)
-                    target_dm = self.get_target_dm(target_form_dm, source_case_type, module)
-                    if target_dm:
-                        used.add(source_meta)
-                        datum_meta = WorkflowDatumMeta.from_session_datum(target_dm)
-                        frame_case_created.add_child(datum_meta.to_stack_datum(source_id=source_meta.id))
-                    elif not allow_missing:
-                        raise SuiteValidationError(
-                            u"The '{}' module is not properly configured to have a Case List Registration Form. "
-                            u"All forms in the module should have the same case management configuration.".format(
-                                module.default_name()
-                            ))
-
-            # return any source datums that were not already added to the target
-            return [dm for dm in source_form_dm if dm not in used]
+        def add_datums_for_target(module):
+            existing_ids = {fc.id for fc in frame_case_created.children}
+            target_frame_children = self.helper.get_frame_children(module.get_form(0), module_only=True)
+            remaining_target_frame_children = [fc for fc in target_frame_children if fc.id not in existing_ids]
+            frame_children = EndOfFormNavigationWorkflow.get_datums_matched_to_source(
+                remaining_target_frame_children, source_form_datums
+            )
+            for child in frame_children:
+                frame_case_created.add_child(child)
+                if not isinstance(child, WorkflowDatumMeta) or child.source_id != source_session_var:
+                    frame_case_not_created.add_child(child)
 
         if target_module.root_module_id:
             # add stack children for the root module before adding any for the child module.
-            root_module = target_module.root_module
-            root_module_command = CommandId(id_strings.menu_id(root_module))
-            frame_case_created.add_child(root_module_command)
-            frame_case_not_created.add_child(root_module_command)
+            add_datums_for_target(target_module.root_module)
 
-            source_form_datums = add_datums_for_target(root_module, source_form_datums, allow_missing=True)
-
-        frame_case_created.add_child(CommandId(target_command))
-        frame_case_not_created.add_child(CommandId(target_command))
-        add_datums_for_target(target_module, source_form_datums)
-
+        add_datums_for_target(target_module)
         return stack_frames
 
     @staticmethod
