@@ -58,6 +58,7 @@ COMMCAREHQ.transformHelpTemplate = function ($template, wrap) {
 
 COMMCAREHQ.initBlock = function ($elem) {
     'use strict';
+
     $('.submit_on_click', $elem).on("click", function (e) {
         e.preventDefault();
         if (!$(this).data('clicked')) {
