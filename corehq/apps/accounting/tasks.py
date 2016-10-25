@@ -656,9 +656,8 @@ def send_overdue_reminders():
                     'contact_email': settings.INVOICING_CONTACT_EMAIL
                 }
                 if days_ago == 61:
-                    _send_downgrade_notice(invoice, context)
-                elif days_ago == 60:
                     _downgrade_domain(invoice)
+                    _send_downgrade_notice(invoice, context)
                 elif days_ago == 58:
                     _send_downgrade_warning(invoice, context)
                 elif days_ago == 30:
