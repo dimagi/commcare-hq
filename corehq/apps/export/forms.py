@@ -141,6 +141,24 @@ class CreateExportTagForm(forms.Form):
             )
         )
 
+    def clean(self):
+        cleaned_data = super(CreateExportTagForm, self).clean()
+        model_type = cleaned_data.get("model_type")
+
+        if model_type == "form":
+            # Require module and form fields if model_type is form
+            errors = []
+            if not cleaned_data.get("module"):
+                errors.append(forms.ValidationError(_("Module is required")))
+            if not cleaned_data.get("form"):
+                errors.append(forms.ValidationError(_("Form is required")))
+            if errors:
+                raise forms.ValidationError(errors)
+        elif model_type == "case":
+            # Require case_type if model_type is case
+            if not cleaned_data.get('case_type'):
+                raise forms.ValidationError(_("case type is required"))
+
 
 class BaseFilterExportDownloadForm(forms.Form):
     _export_type = 'all'  # should be form or case
