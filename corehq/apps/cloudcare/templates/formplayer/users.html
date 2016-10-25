@@ -1,4 +1,5 @@
 {% load hq_shared_tags %}
+{% load i18n %}
 
 <script type="text/template" id="restore-as-view-template">
     <div class="module-menu-container">
@@ -72,4 +73,30 @@
             <span><%= first_name + ' ' + last_name %></span>
         </h3>
     </td>
+</script>
+
+<script type="text/template" id="user-data-template">
+    <table class="table module-table module-table-casedetail">
+        <tbody>
+            <tr>
+                <th>{% trans "First Name" %}</th>
+                <td><%= user.first_name %></td>
+            </tr>
+            <tr>
+                <th>{% trans "Last Name" %}</th>
+                <td><%= user.last_name %></td>
+            </tr>
+            <tr>
+                <th>{% trans "Date Registered" %}</th>
+                <td><%= user.dateRegistered %></td>
+            </tr>
+        <% _.each(user.customFields, function(key, value) { %>
+            <tr>
+                <th><%= key %></th>
+                <td><%= value %></td>
+            </tr>
+        <% }) %>
+        </tbody>
+    </table>
+
 </script>

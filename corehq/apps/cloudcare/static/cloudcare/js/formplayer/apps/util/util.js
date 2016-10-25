@@ -27,7 +27,7 @@ Util.confirmationModal = function(options) {
     });
     var $modal = $('#js-confirmation-modal');
     $modal.find('.js-modal-title').text(options.title);
-    $modal.find('.js-modal-body').text(options.message);
+    $modal.find('.js-modal-body').html(DOMPurify.sanitize(options.message));
     $modal.find('#js-confirmation-confirm').text(options.confirmText);
     $modal.find('#js-confirmation-cancel').text(options.cancelText);
 

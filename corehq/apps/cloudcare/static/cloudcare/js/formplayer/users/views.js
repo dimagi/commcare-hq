@@ -4,8 +4,20 @@ FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFro
     Users.Views = {}
     Users.Views.UserRowView = Marionette.ItemView.extend({
         template: '#user-row-view-template',
-        className: 'formplayer-request',
+        className: 'formplayer-request js-user',
         tagName: 'tr',
+        events: {
+            'click': 'onClickUser',
+        },
+        onClickUser: function(e) {
+            Util.confirmationModal({
+                title: gettext('Log in as ' + this.model.get('username') + '?'),
+                message: _.template($('#user-data-template').html())(
+                    { user: this.model.toJSON() }
+                ),
+                confirmText: gettext('Yes, log in as this user'),
+            });
+        },
     });
     Users.Views.RestoreAsView = Marionette.CompositeView.extend({
         childView: Users.Views.UserRowView,
