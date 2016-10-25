@@ -198,7 +198,7 @@ FormplayerFrontend.on("start", function (options) {
             } else {
                 FormplayerFrontend.trigger("apps:list", options.apps);
             }
-       }
+        }
     }
 });
 
@@ -217,7 +217,7 @@ FormplayerFrontend.reqres.setHandler('restoreAsUser', function(domain, username)
     return FormplayerFrontend.Utils.Users.getRestoreAsUser(
         domain,
         username
-    )
+    );
 });
 
 /**

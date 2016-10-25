@@ -32,7 +32,7 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
         onClickRestoreAs: function(e) {
             e.preventDefault();
             FormplayerFrontend.trigger("restore_as:list", this.appId);
-        }
+        },
     };
 
     AppList.GridView = Marionette.CompositeView.extend({

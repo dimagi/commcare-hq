@@ -43,7 +43,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             if (_.isNaN(page)) {
                 page = 1;
             }
-            SessionNavigate.Users.Controller.listUsers(page, query)
+            SessionNavigate.Users.Controller.listUsers(page, query);
         },
         showDetail: function (model, detailTabIndex) {
             SessionNavigate.MenuList.Controller.showDetail(model, detailTabIndex);

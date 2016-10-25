@@ -1,4 +1,4 @@
-/*global Backbone, FormplayerFrontend */
+/*global Backbone, FormplayerFrontend, DOMPurify */
 
 function Util() {
 }

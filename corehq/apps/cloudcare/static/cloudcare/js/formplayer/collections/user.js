@@ -9,7 +9,7 @@ FormplayerFrontend.module("Collections", function(Collections, FormplayerFronten
             if (!this.domain) {
                 throw new Error('Cannot instantiate collection without domain');
             }
-            return '/a/' + this.domain + '/settings/users/commcare/'
+            return '/a/' + this.domain + '/settings/users/commcare/';
         },
         model: FormplayerFrontend.Models.User,
 
@@ -29,10 +29,10 @@ FormplayerFrontend.module("Collections", function(Collections, FormplayerFronten
             options.beforeSend = function(xhr) {
                 xhr.setRequestHeader('DjNg-Remote-Method', 'get_pagination_data');
                 xhr.setRequestHeader("X-CSRFToken", $.cookie('csrftoken'));
-            }
+            };
             options.contentType = "application/json";
             options.data = options.data || JSON.stringify({});
             return Backbone.Collection.prototype.sync.call(this, 'create', model, options);
-        }
+        },
     });
 });

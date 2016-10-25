@@ -1,7 +1,7 @@
-/*global FormplayerFrontend */
+/*global FormplayerFrontend, Util */
 
 FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFrontend, Backbone, Marionette, $){
-    Users.Views = {}
+    Users.Views = {};
     /**
      * RestoreAsBanner
      *
@@ -24,7 +24,7 @@ FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFro
             };
         },
         onClickClearUser: function() {
-            FormplayerFrontend.trigger('clearRestoreAsUser')
+            FormplayerFrontend.trigger('clearRestoreAsUser');
         },
     });
 
@@ -118,7 +118,7 @@ FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFro
                     query: this.model.get('query'),
                     limit: this.limit,
                     page: this.model.get('page'),
-                })
+                }),
             }).done(this.render.bind(this));
         },
         onClickNext: function(e) {

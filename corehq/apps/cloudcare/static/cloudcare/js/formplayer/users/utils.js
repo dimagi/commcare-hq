@@ -1,6 +1,6 @@
-/*global FormplayerFrontend */
+/*global FormplayerFrontend, Util */
 
-FormplayerFrontend.module("Utils", function(Utils, FormplayerFrontend, Backbone, Marionette, $){
+FormplayerFrontend.module("Utils", function(Utils, FormplayerFrontend, Backbone, Marionette){
     Utils.Users = {
         /**
          * logInAsUser
@@ -51,5 +51,5 @@ FormplayerFrontend.module("Utils", function(Utils, FormplayerFrontend, Backbone,
                 ''
             );
         },
-    }
+    };
 });
