@@ -39,3 +39,29 @@
   top: 30px;
 }
 
+.removed-languages {
+  margin-top: 2rem;
+}
+
+
+.ko-inline-edit {
+  .inline-edit-icon {
+    vertical-align: top;
+    i {
+      .transition(color 1s);
+    }
+  }
+  .inline-edit-icon.h3 {
+    font-size: 16px;
+  }
+  &:hover {
+    .read-only .inline-edit-icon i {
+      color: @cc-brand-mid;
+    }
+  }
+}
+
+
+.appmanager-edit-title h3 > i {
+  margin-left: 5px;
+}
