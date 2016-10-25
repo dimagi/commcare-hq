@@ -160,19 +160,22 @@ class ExportsPermissionsMixin(object):
         return self.request.couch_user.can_edit_data()
 
     @property
-    def has_view_permissions(self):
-        permissions_to_check = []
-        if self.form_or_case is None:
-            permissions_to_check = [FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION]
-        elif self.form_or_case == "form":
-            permissions_to_check = [FORM_EXPORT_PERMISSION]
-        elif self.form_or_case == "case":
-            permissions_to_check = [CASE_EXPORT_PERMISSION]
+    def has_form_export_permissions(self):
+        return has_permission_to_view_report(self.request.couch_user, self.domain, FORM_EXPORT_PERMISSION)
 
-        for permission in permissions_to_check:
-            if not has_permission_to_view_report(self.request.couch_user, self.domain, permission):
-                return False
-        return True
+    @property
+    def has_case_export_permissions(self):
+        return has_permission_to_view_report(self.request.couch_user, self.domain, CASE_EXPORT_PERMISSION)
+
+    @property
+    def has_view_permissions(self):
+        if self.form_or_case is None:
+            return self.has_form_export_permissions or self.has_case_export_permissions
+        elif self.form_or_case == "form":
+            return self.has_form_export_permissions
+        elif self.form_or_case == "case":
+            return self.has_case_export_permissions
+        return False
 
     @property
     def has_deid_view_permissions(self):
@@ -1286,9 +1289,12 @@ class DailySavedExportListView(BaseExportListView):
 
     @memoized
     def get_saved_exports(self):
-        form_exports = _get_form_exports_by_domain(self.domain, self.has_deid_view_permissions)
-        case_exports = _get_case_exports_by_domain(self.domain, self.has_deid_view_permissions)
-        combined_exports = sorted(form_exports + case_exports, key=lambda x: x.name)
+        combined_exports = []
+        if self.has_form_export_permissions:
+            combined_exports.extend(_get_form_exports_by_domain(self.domain, self.has_deid_view_permissions))
+        if self.has_case_export_permissions:
+            combined_exports.extend(_get_case_exports_by_domain(self.domain, self.has_deid_view_permissions))
+        combined_exports = sorted(combined_exports, key=lambda x: x.name)
         return filter(lambda x: x.is_daily_saved_export and not x.export_format == "html", combined_exports)
 
     @property
@@ -1441,9 +1447,12 @@ class DashboardFeedListView(DailySavedExportListView):
 
     @memoized
     def get_saved_exports(self):
-        form_exports = _get_form_exports_by_domain(self.domain, self.has_deid_view_permissions)
-        case_exports = _get_case_exports_by_domain(self.domain, self.has_deid_view_permissions)
-        combined_exports = sorted(form_exports + case_exports, key=lambda x: x.name)
+        combined_exports = []
+        if self.has_form_export_permissions:
+            combined_exports.extend(_get_form_exports_by_domain(self.domain, self.has_deid_view_permissions))
+        if self.has_case_export_permissions:
+            combined_exports.extend(_get_case_exports_by_domain(self.domain, self.has_deid_view_permissions))
+        combined_exports = sorted(combined_exports, key=lambda x: x.name)
         return filter(lambda x: x.is_daily_saved_export and x.export_format == "html", combined_exports)
 
 
