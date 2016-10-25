@@ -175,6 +175,45 @@ class WorkflowHelper(PostProcessor):
                     entry_datum.case_type = form_datum.case_type
                     entry_datum.from_parent_module = form_datum.from_parent
 
+    @staticmethod
+    def get_datums_matched_to_source(target_frame_elements, source_datums):
+        """
+        Attempt to match the target session variables with ones in the source session.
+        Making some large assumptions about how people will actually use this feature
+        """
+        unused_source_datums = list(source_datums)
+        for target_datum in target_frame_elements:
+            if not isinstance(target_datum, WorkflowDatumMeta) or not target_datum.requires_selection:
+                yield target_datum
+            else:
+                match = WorkflowHelper.find_best_match(target_datum, unused_source_datums)
+                if match:
+                    unused_source_datums = [datum for datum in unused_source_datums if datum.id != match.id]
+
+                yield match if match else target_datum
+
+    @staticmethod
+    def find_best_match(target_datum, source_datums):
+        """Find the datum in the list of source datums that best matches the target datum (if any)
+        """
+        candidate = None
+        for source_datum in source_datums:
+            if source_datum.from_parent_module:
+                # if the datum is only there as a placeholder then we should ignore it
+                continue
+            if target_datum.id == source_datum.id:
+                if source_datum.case_type and source_datum.case_type == target_datum.case_type:
+                    # same ID, same case type
+                    candidate = target_datum
+                    break
+            else:
+                if source_datum.case_type and source_datum.case_type == target_datum.case_type:
+                    # different ID, same case type
+                    candidate = target_datum.clone_to_match(source_id=source_datum.id)
+                    break
+
+        return candidate
+
 
 class EndOfFormNavigationWorkflow(object):
 
@@ -250,7 +289,7 @@ class EndOfFormNavigationWorkflow(object):
                         target_frame_children, link.datums
                     )
                 else:
-                    frame_children = EndOfFormNavigationWorkflow.get_datums_matched_to_source(
+                    frame_children = WorkflowHelper.get_datums_matched_to_source(
                         target_frame_children, source_form_datums
                     )
 
@@ -268,45 +307,6 @@ class EndOfFormNavigationWorkflow(object):
                 stack_frames.append(StackFrameMeta(link.xpath, frame_children, current_session=source_form_datums))
 
         return stack_frames
-
-    @staticmethod
-    def get_datums_matched_to_source(target_frame_elements, source_datums):
-        """
-        Attempt to match the target session variables with ones in the source session.
-        Making some large assumptions about how people will actually use this feature
-        """
-        unused_source_datums = list(source_datums)
-        for target_datum in target_frame_elements:
-            if not isinstance(target_datum, WorkflowDatumMeta) or not target_datum.requires_selection:
-                yield target_datum
-            else:
-                match = EndOfFormNavigationWorkflow.find_best_match(target_datum, unused_source_datums)
-                if match:
-                    unused_source_datums = [datum for datum in unused_source_datums if datum.id != match.id]
-
-                yield match if match else target_datum
-
-    @staticmethod
-    def find_best_match(target_datum, source_datums):
-        """Find the datum in the list of source datums that best matches the target datum (if any)
-        """
-        candidate = None
-        for source_datum in source_datums:
-            if source_datum.from_parent_module:
-                # if the datum is only there as a placeholder then we should ignore it
-                continue
-            if target_datum.id == source_datum.id:
-                if source_datum.case_type and source_datum.case_type == target_datum.case_type:
-                    # same ID, same case type
-                    candidate = target_datum
-                    break
-            else:
-                if source_datum.case_type and source_datum.case_type == target_datum.case_type:
-                    # different ID, same case type
-                    candidate = target_datum.clone_to_match(source_id=source_datum.id)
-                    break
-
-        return candidate
 
     @staticmethod
     def get_datums_matched_to_manual_values(target_frame_elements, manual_values):
@@ -374,7 +374,7 @@ class CaseListFormWorkflow(object):
             existing_ids = {fc.id for fc in frame_case_created.children}
             target_frame_children = self.helper.get_frame_children(module.get_form(0), module_only=True)
             remaining_target_frame_children = [fc for fc in target_frame_children if fc.id not in existing_ids]
-            frame_children = EndOfFormNavigationWorkflow.get_datums_matched_to_source(
+            frame_children = WorkflowHelper.get_datums_matched_to_source(
                 remaining_target_frame_children, source_form_datums
             )
             for child in frame_children:
