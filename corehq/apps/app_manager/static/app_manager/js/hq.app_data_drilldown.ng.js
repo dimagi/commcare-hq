@@ -138,6 +138,9 @@
             $(formModalSelector).on('hidden.bs.modal', function () {
                 $scope.resetForm();
             });
+            $(formModalSelector).on('show.bs.modal', function () {
+                window.analytics.workflow("Clicked New Export");
+            });
         }
 
         self._numRetries = 0;
