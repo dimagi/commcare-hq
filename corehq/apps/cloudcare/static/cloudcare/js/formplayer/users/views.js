@@ -14,10 +14,14 @@ FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFro
         limit: 10,
         initialize: function(options) {
             this.model = new Backbone.Model({
-                page: 1,
-                query: '',
+                page: options.page || 1,
+                query: options.query || '',
             });
-            this.model.on('change', this.fetchUsers.bind(this));
+            this.model.on('change', function() {
+                this.fetchUsers();
+                this.navigate();
+            }.bind(this));
+            this.fetchUsers();
         },
         ui: {
             next: '.js-user-next',
@@ -37,6 +41,13 @@ FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFro
                 total: this.collection.total,
                 totalPages: this.totalPages(),
             };
+        },
+        navigate: function() {
+            FormplayerFrontend.navigate(
+                '/restore_as/' +
+                this.model.get('page') + '/' +
+                this.model.get('query')
+            );
         },
         totalPages: function() {
             return Math.ceil(this.collection.total / this.limit);
@@ -74,7 +85,10 @@ FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFro
         },
         onSubmitUserSearch: function(e) {
             e.preventDefault();
-            this.model.set('query', this.ui.query.val());
+            this.model.set({
+                'query': this.ui.query.val(),
+                'page': 1,  // Reset page to one when doing a query
+            });
         },
     });
 });

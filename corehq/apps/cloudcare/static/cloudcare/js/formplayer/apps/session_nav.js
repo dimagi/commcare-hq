@@ -8,6 +8,8 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             "sessions": "listSessions", //list all this user's current sessions (incomplete forms)
             "sessions/:id": "getSession",
             "local/:path": "localInstall",
+            "restore_as/:page/:query": "listUsers",
+            "restore_as/:page/": "listUsers",
             "restore_as": "listUsers",
             ":session": "listMenus",  // Default route
         },
@@ -35,9 +37,13 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             );
             SessionNavigate.MenuList.Controller.selectMenu(urlObject);
         },
-        listUsers: function() {
+        listUsers: function(page, query) {
             FormplayerFrontend.trigger("clearForm");
-            SessionNavigate.Users.Controller.listUsers()
+            page = parseInt(page);
+            if (_.isNaN(page)) {
+                page = 1;
+            }
+            SessionNavigate.Users.Controller.listUsers(page, query)
         },
         showDetail: function (model, detailTabIndex) {
             SessionNavigate.MenuList.Controller.showDetail(model, detailTabIndex);

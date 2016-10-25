@@ -10,7 +10,7 @@ FormplayerFrontend.module("Collections", function(Collections, FormplayerFronten
         },
         model: FormplayerFrontend.Models.User,
 
-        initialize: function(options) {
+        initialize: function(models, options) {
             this.domain = options.domain;
         },
 
