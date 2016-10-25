@@ -33,6 +33,8 @@ class CallCenterLocationOwnerOptionsViewTest(TestCase):
 
         with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
             es = get_es_new()
+            ensure_index_deleted(USER_INDEX_INFO.index)
+            ensure_index_deleted(GROUP_INDEX_INFO.index)
             initialize_index_and_mapping(es, USER_INDEX_INFO)
             initialize_index_and_mapping(es, GROUP_INDEX_INFO)
 
@@ -54,6 +56,7 @@ class CallCenterLocationOwnerOptionsViewTest(TestCase):
             group.save()
             send_to_elasticsearch('groups', group.to_json())
             cls.groups.append(group)
+        es.indices.refresh(GROUP_INDEX_INFO.index)
         cls.group_ids = {g._id for g in cls.groups}
 
         # Create locations
