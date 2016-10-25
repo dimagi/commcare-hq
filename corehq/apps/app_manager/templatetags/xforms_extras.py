@@ -83,6 +83,24 @@ def inline_edit_trans(name, langs=None, url='', saveValueName='', readOnlyClass=
     return _input_trans(template, name, langs=langs, allow_blank=False)
 
 
+@register.simple_tag
+def inline_edit_trans_v2(name, langs=None, url='', saveValueName='', readOnlyClass='', postSave=''):
+    template = '''
+        <inline-edit-v2 params="
+            name: 'name',
+            value: '%(value)s',
+            placeholder: '%(placeholder)s',
+            nodeName: 'input',
+            lang: '%(lang)s',
+            url: '{}',
+            saveValueName: '{}',
+            readOnlyClass: '{}',
+            postSave: {},
+        "></inline-edit-v2>
+    '''.format(url, saveValueName, readOnlyClass, postSave)
+    return _input_trans(template, name, langs=langs, allow_blank=False)
+
+
 # template may have replacements for lang, placeholder, and value
 def _input_trans(template, name, langs=None, allow_blank=True):
     if langs is None:
