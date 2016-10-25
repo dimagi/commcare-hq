@@ -1279,6 +1279,7 @@ class Subscription(models.Model):
 
         today = datetime.date.today()
         new_start_date = today if self.date_start < today else self.date_start
+        assert is_active_subscription(self.date_start, self.date_end, today=today) and self.is_active
 
         if self.date_start > today:
             self.date_start = today
