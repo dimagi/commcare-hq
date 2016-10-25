@@ -170,7 +170,9 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         )
 
         factory.form_requires_case(update_person_form)
-        self.assertXmlPartialEqual(self.get_xml('case_list_form_reg_form_creates_child_case'), factory.app.create_suite(), './entry[1]')
+        self.assertXmlPartialEqual(
+            self.get_xml('case_list_form_reg_form_creates_child_case'), factory.app.create_suite(), './entry[1]'
+        )
 
     def test_case_list_form_parent_child_submodule_basic(self):
         # * Register house (case type = house, basic)

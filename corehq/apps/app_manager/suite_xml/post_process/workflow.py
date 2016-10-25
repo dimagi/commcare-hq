@@ -409,7 +409,9 @@ class CaseListFormWorkflow(object):
         frame_case_not_created = StackFrameMeta(
             self.get_if_clause(case_count.eq(0), target_command), current_session=source_form_datums
         )
-        stack_frames = CaseListFormStackFrames(case_created=frame_case_created, case_not_created=frame_case_not_created)
+        stack_frames = CaseListFormStackFrames(
+            case_created=frame_case_created, case_not_created=frame_case_not_created
+        )
         stack_frames.source_session_var = source_session_var
         return stack_frames
 
