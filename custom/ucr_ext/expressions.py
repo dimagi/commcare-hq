@@ -33,7 +33,7 @@ class DiffCalendarMonthsExpressionSpec(JsonObject):
         from_date_val = transform_date(self._from_date_expression(item, context))
         to_date_val = transform_date(self._to_date_expression(item, context))
         if from_date_val is not None and to_date_val is not None:
-            return ((to_date_val.year - from_date_val.year)*12) + to_date_val.month - from_date_val.month
+            return ((to_date_val.year - from_date_val.year) * 12) + to_date_val.month - from_date_val.month
         return None
 
 

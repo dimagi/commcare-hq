@@ -285,7 +285,7 @@ class TestGetCaseFormsExpressionTest(TestCase):
     def test_all_forms(self):
         context = EvaluationContext({"domain": self.domain}, 0)
         expression = expression = ExpressionFactory.from_spec({
-            "type":"reduce_items",
+            "type": "reduce_items",
             "aggregation_fn": "count",
             "items_expression": {
                 "type": "ext_get_case_forms_by_date",
@@ -298,7 +298,9 @@ class TestGetCaseFormsExpressionTest(TestCase):
         self.assertEqual(7, expression({"some_field", "some_value"}, context))
 
     def test_start_end(self):
-        context = EvaluationContext({"domain": self.domain, "start_date": "2015-03-01", "end_date": "2015-03-31"}, 0)
+        context = EvaluationContext(
+            {"domain": self.domain, "start_date": "2015-03-01", "end_date": "2015-03-31"},
+            0)
         expression = ExpressionFactory.from_spec({
             "type": "reduce_items",
             "aggregation_fn": "count",
