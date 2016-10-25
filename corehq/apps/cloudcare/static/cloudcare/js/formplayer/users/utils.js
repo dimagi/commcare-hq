@@ -21,7 +21,7 @@ FormplayerFrontend.module("Utils", function(Utils, FormplayerFrontend, Backbone,
                 Utils.Users.restoreAsKey(domain, username)
             );
         },
-        clearRestoreAsUser: function() {
+        clearRestoreAsUser: function(domain, username) {
             return window.localStorage.setItem(
                 Utils.Users.restoreAsKey(domain, username),
                 ''

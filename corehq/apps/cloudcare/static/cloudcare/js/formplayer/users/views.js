@@ -5,10 +5,20 @@ FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFro
     Users.Views.RestoreAsBanner = Marionette.ItemView.extend({
         template: '#restore-as-banner-template',
         className: 'restore-as-banner-container',
+        ui: {
+            clear: '.js-clear-user',
+        },
+        events: {
+            'click @ui.clear': 'onClickClearUser',
+        },
         templateHelpers: function() {
             return {
                 restoreAs: this.model.restoreAs,
+                username: this.model.username,
             };
+        },
+        onClickClearUser: function() {
+            FormplayerFrontend.trigger('clearRestoreAsUser')
         },
     });
     Users.Views.UserRowView = Marionette.ItemView.extend({

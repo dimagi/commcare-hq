@@ -197,7 +197,7 @@ FormplayerFrontend.on("start", function (options) {
             } else {
                 FormplayerFrontend.trigger("apps:list", options.apps);
             }
-        }
+       }
     }
 });
 
@@ -217,6 +217,21 @@ FormplayerFrontend.reqres.setHandler('restoreAsUser', function(domain, username)
         domain,
         username
     )
+});
+
+FormplayerFrontend.on('clearRestoreAsUser', function() {
+    var user = FormplayerFrontend.request('currentUser');
+    FormplayerFrontend.Utils.Users.clearRestoreAsUser(
+        user.domain,
+        user.username
+    );
+    user.restoreAs = '';
+    FormplayerFrontend.regions.restoreAsBanner.show(
+        new FormplayerFrontend.SessionNavigate.Users.Views.RestoreAsBanner({
+            model: user,
+        })
+    );
+    FormplayerFrontend.trigger('navigateHome');
 });
 
 FormplayerFrontend.on("sync", function () {
