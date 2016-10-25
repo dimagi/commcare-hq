@@ -397,7 +397,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                         fixture_tag: '',
                         fixture_variable: '',
                         case_property: '',
-                        auto_select: '',
+                        auto_select: false,
                         arbitrary_datum_id: '',
                         arbitrary_datum_function: '',
                     };

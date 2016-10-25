@@ -1369,7 +1369,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             {value: "enum", label: DetailScreenConfig.message.ENUM_FORMAT},
             {value: "late-flag", label: DetailScreenConfig.message.LATE_FLAG_FORMAT},
             {value: "invisible", label: DetailScreenConfig.message.INVISIBLE_FORMAT},
-            {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT}
+            {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT},
+            {value: "distance", label: DetailScreenConfig.message.DISTANCE_FORMAT}
         ];
 
         if (COMMCAREHQ.toggleEnabled('MM_CASE_PROPERTIES')) {
@@ -1391,11 +1392,6 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             );
         }
 
-        if (COMMCAREHQ.toggleEnabled('CASE_LIST_DISTANCE_SORT')) {
-            DetailScreenConfig.MENU_OPTIONS.push(
-                {value: "distance", label: DetailScreenConfig.message.DISTANCE_FORMAT + ' (Preview!)'}
-            );
-        }
         DetailScreenConfig.field_format_warning_message = "Must begin with a letter and contain only letters, numbers, '-', and '_'";
 
         DetailScreenConfig.field_val_re = new RegExp(

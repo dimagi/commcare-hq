@@ -24,6 +24,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpRequest, HttpResponse, Http404, HttpResponseBadRequest
 from django.utils.translation import ugettext as _, ugettext_noop
 from braces.views import JSONResponseMixin
+from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.dispatcher import (
     ReportDispatcher,
 )
@@ -44,6 +45,7 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.reports.util import (
     get_expanded_columns,
+    has_location_filter,
 )
 from corehq.apps.userreports.util import (
     default_language,
@@ -65,7 +67,7 @@ from corehq.apps.reports.datatables import DataTablesHeader
 UCR_EXPORT_TO_EXCEL_ROW_LIMIT = 1000
 
 
-def get_filter_values(filters, request_dict):
+def get_filter_values(filters, request_dict, user=None):
     """
     Return a dictionary mapping filter ids to specified values
     :param filters: A list of corehq.apps.reports_core.filters.BaseFilter
@@ -75,7 +77,7 @@ def get_filter_values(filters, request_dict):
     """
     try:
         return {
-            filter.css_id: filter.get_value(request_dict)
+            filter.css_id: filter.get_value(request_dict, user)
             for filter in filters
         }
     except FilterException, e:
@@ -119,6 +121,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @use_jquery_ui
     @use_datatables
     @use_nvd3
+    @conditionally_location_safe(has_location_filter)
     def dispatch(self, request, *args, **kwargs):
         original = super(ConfigurableReport, self).dispatch(request, *args, **kwargs)
         return original
@@ -184,7 +187,11 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def filter_values(self):
-        return get_filter_values(self.filters, self.request_dict)
+        try:
+            user = self.request.couch_user
+        except AttributeError:
+            user = None
+        return get_filter_values(self.filters, self.request_dict, user=user)
 
     @property
     @memoized

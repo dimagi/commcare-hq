@@ -97,32 +97,3 @@ class TestAdjustBalanceForm(BaseInvoiceTestCase):
             credit_line.balance
             for credit_line in CreditLine.get_credits_for_invoice(self.invoice)
         ))
-
-    def test_transfer_debit_without_credit(self):
-        original_credit_balance = 0
-        CreditLine.add_credit(
-            original_credit_balance,
-            account=self.subscription.account,
-            subscription=self.subscription,
-        )
-        original_balance = self.invoice.balance
-        adjustment_amount = random.randint(1, 5)
-
-        adjust_balance_form = AdjustBalanceForm(
-            self.invoice,
-            {
-                'adjustment_type': 'debit',
-                'custom_amount': adjustment_amount,
-                'method': CreditAdjustmentReason.TRANSFER,
-                'note': 'some text',
-                'invoice_id': self.invoice.id,
-            }
-        )
-        self.assertTrue(adjust_balance_form.is_valid())
-
-        adjust_balance_form.adjust_balance()
-        self.assertEqual(original_balance + adjustment_amount, self.invoice.balance)
-        self.assertEqual(original_credit_balance + adjustment_amount, sum(
-            credit_line.balance
-            for credit_line in CreditLine.get_credits_for_invoice(self.invoice)
-        ))

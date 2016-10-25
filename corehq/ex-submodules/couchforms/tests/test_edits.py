@@ -277,19 +277,3 @@ class EditFormTest(TestCase, TestFileMixin):
                 [create_form_id, create_form_id, edit_form_id, second_edit_form_id],
                 [a.xform_id for a in case.actions]
             )
-
-    def test_couch_blob_migration_edit(self):
-        form_id = uuid.uuid4().hex
-        case_id = uuid.uuid4().hex
-        case_block = CaseBlock(create=True, case_id=case_id).as_string()
-        xform = submit_case_blocks(case_block, domain=self.domain, form_id=form_id)[0]
-        # explicitly convert to old-style couch attachments to test the migration workflow
-        form_xml = xform.get_xml()
-        xform.delete_attachment('form.xml')
-        xform.get_db().put_attachment(xform.to_json(), form_xml, 'form.xml')
-        # make sure that worked
-        updated_form_xml = XFormInstance.get(xform._id).get_xml()
-        self.assertEqual(form_xml, updated_form_xml)
-        # this call was previously failing
-        updated_form = submit_case_blocks(case_block, domain=self.domain, form_id=form_id)[0]
-        self.assertEqual(form_xml, XFormInstance.get(updated_form.deprecated_form_id).get_xml())

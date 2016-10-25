@@ -29,7 +29,7 @@ var MapItem = function(item, index, mappingContext){
 
 
     var app_manager = hqImport('app_manager/js/app_manager_media.js');
-    var uploaders = hqImport('#app_manager/partials/nav_menu_media_js_common.html');
+    var uploaders = hqImport('#app_manager/v1/partials/nav_menu_media_js_common.html');
     // attach a media-manager if item.value is a file-path to icon
     if (mappingContext.values_are_icons()) {
         var actualPath = item.value[mappingContext.lang];
@@ -215,7 +215,10 @@ uiElement.key_value_mapping = function (o) {
 
         var $modal = $modalDiv.find('.modal');
         $modal.appendTo('body');
-        $modal.modal('show');
+        $modal.modal({
+            show: true,
+            backdrop: 'static',
+        });
         $modal.on('hidden', function () {
             $modal.remove();
         });
@@ -223,7 +226,8 @@ uiElement.key_value_mapping = function (o) {
     m.setEdit = function (edit) {
         m.edit(edit);
     };
-    var $div = $('<div data-bind="template: \'key_value_mapping_template\'"></div>');
+    var $div = $(document.createElement("div"));
+    $div.attr("data-bind", "template: \'key_value_mapping_template\'");
     $div.koApplyBindings(m);
     m.ui = $div;
     eventize(m);

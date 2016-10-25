@@ -43,20 +43,18 @@ class AutomaticCaseUpdateTest(TestCase):
             server_modified_boundary=30,
         )
         self.rule.save()
-        self.rule.automaticupdaterulecriteria_set = [
-            AutomaticUpdateRuleCriteria(
-                property_name='last_visit_date',
-                property_value='30',
-                match_type=AutomaticUpdateRuleCriteria.MATCH_DAYS_SINCE,
-            ),
-        ]
-        self.rule.automaticupdateaction_set = [
-            AutomaticUpdateAction(
-                action=AutomaticUpdateAction.ACTION_UPDATE,
-                property_name='update_flag',
-                property_value='Y',
-            )
-        ]
+        AutomaticUpdateRuleCriteria.objects.create(
+            property_name='last_visit_date',
+            property_value='30',
+            match_type=AutomaticUpdateRuleCriteria.MATCH_DAYS_AFTER,
+            rule=self.rule,
+        )
+        AutomaticUpdateAction.objects.create(
+            action=AutomaticUpdateAction.ACTION_UPDATE,
+            property_name='update_flag',
+            property_value='Y',
+            rule=self.rule,
+        )
 
         self.rule2 = AutomaticUpdateRule(
             domain=self.domain,
@@ -66,11 +64,10 @@ class AutomaticCaseUpdateTest(TestCase):
             server_modified_boundary=30,
         )
         self.rule2.save()
-        self.rule2.automaticupdateaction_set = [
-            AutomaticUpdateAction(
-                action=AutomaticUpdateAction.ACTION_CLOSE,
-            ),
-        ]
+        AutomaticUpdateAction.objects.create(
+            action=AutomaticUpdateAction.ACTION_CLOSE,
+            rule=self.rule2,
+        )
 
         self.rule3 = AutomaticUpdateRule(
             domain=self.domain,
@@ -80,11 +77,10 @@ class AutomaticCaseUpdateTest(TestCase):
             server_modified_boundary=50,
         )
         self.rule3.save()
-        self.rule3.automaticupdateaction_set = [
-            AutomaticUpdateAction(
-                action=AutomaticUpdateAction.ACTION_CLOSE,
-            ),
-        ]
+        AutomaticUpdateAction.objects.create(
+            action=AutomaticUpdateAction.ACTION_CLOSE,
+            rule=self.rule3,
+        )
 
         self.rule4 = AutomaticUpdateRule(
             domain=self.domain,
@@ -94,23 +90,22 @@ class AutomaticCaseUpdateTest(TestCase):
             server_modified_boundary=30,
         )
         self.rule4.save()
-        self.rule4.automaticupdaterulecriteria_set = [
-            AutomaticUpdateRuleCriteria(
-                property_name='last_visit_date',
-                property_value='40',
-                match_type=AutomaticUpdateRuleCriteria.MATCH_DAYS_SINCE,
-            ),
-        ]
-        self.rule4.automaticupdateaction_set = [
-            AutomaticUpdateAction(
-                action=AutomaticUpdateAction.ACTION_UPDATE,
-                property_name='update_flag',
-                property_value='C',
-            ),
-            AutomaticUpdateAction(
-                action=AutomaticUpdateAction.ACTION_CLOSE,
-            ),
-        ]
+        AutomaticUpdateRuleCriteria.objects.create(
+            property_name='last_visit_date',
+            property_value='40',
+            match_type=AutomaticUpdateRuleCriteria.MATCH_DAYS_AFTER,
+            rule=self.rule4,
+        )
+        AutomaticUpdateAction.objects.create(
+            action=AutomaticUpdateAction.ACTION_UPDATE,
+            property_name='update_flag',
+            property_value='C',
+            rule=self.rule4,
+        )
+        AutomaticUpdateAction.objects.create(
+            action=AutomaticUpdateAction.ACTION_CLOSE,
+            rule=self.rule4,
+        )
         self.rule5 = AutomaticUpdateRule(
             domain=self.domain,
             name='test-rule-5',
@@ -119,20 +114,18 @@ class AutomaticCaseUpdateTest(TestCase):
             filter_on_server_modified=False
         )
         self.rule5.save()
-        self.rule5.automaticupdaterulecriteria_set = [
-            AutomaticUpdateRuleCriteria(
-                property_name='name',
-                property_value='signal',
-                match_type=AutomaticUpdateRuleCriteria.MATCH_EQUAL,
-            ),
-        ]
-        self.rule5.automaticupdateaction_set = [
-            AutomaticUpdateAction(
-                action=AutomaticUpdateAction.ACTION_UPDATE,
-                property_name='after_save',
-                property_value='updated',
-            ),
-        ]
+        AutomaticUpdateRuleCriteria.objects.create(
+            property_name='name',
+            property_value='signal',
+            match_type=AutomaticUpdateRuleCriteria.MATCH_EQUAL,
+            rule=self.rule5,
+        )
+        AutomaticUpdateAction.objects.create(
+            action=AutomaticUpdateAction.ACTION_UPDATE,
+            property_name='after_save',
+            property_value='updated',
+            rule=self.rule5,
+        )
 
         with drop_connected_signals(case_post_save):
             case = self.factory.create_case(case_type='test-case-type')
@@ -214,15 +207,14 @@ class AutomaticCaseUpdateTest(TestCase):
             self.assertEqual(case.closed, True)
 
     @run_with_all_backends
-    def test_match_days_since(self):
+    def test_match_days_after(self):
         with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
-            self.rule2.automaticupdaterulecriteria_set = [
-                AutomaticUpdateRuleCriteria(
-                    property_name='last_visit_date',
-                    property_value='30',
-                    match_type=AutomaticUpdateRuleCriteria.MATCH_DAYS_SINCE,
-                ),
-            ]
+            AutomaticUpdateRuleCriteria.objects.create(
+                property_name='last_visit_date',
+                property_value='30',
+                match_type=AutomaticUpdateRuleCriteria.MATCH_DAYS_AFTER,
+                rule=self.rule2,
+            )
             self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'last_visit_date', '2015-12-30')
@@ -238,15 +230,41 @@ class AutomaticCaseUpdateTest(TestCase):
             self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
     @run_with_all_backends
+    def test_match_days_before(self):
+        with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
+            AutomaticUpdateRuleCriteria.objects.create(
+                property_name='last_visit_date',
+                property_value='30',
+                match_type=AutomaticUpdateRuleCriteria.MATCH_DAYS_BEFORE,
+                rule=self.rule2,
+            )
+            # When the case property doesn't exist, it should not match
+            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+
+            set_case_property_directly(case, 'last_visit_date', '2015-10-01')
+            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+
+            set_case_property_directly(case, 'last_visit_date', '2016-01-02')
+            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+
+            set_case_property_directly(case, 'last_visit_date', '2016-01-31')
+            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+
+            set_case_property_directly(case, 'last_visit_date', '2016-02-01')
+            self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+
+            set_case_property_directly(case, 'last_visit_date', '2016-03-01')
+            self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+
+    @run_with_all_backends
     def test_match_equal(self):
         with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
-            self.rule2.automaticupdaterulecriteria_set = [
-                AutomaticUpdateRuleCriteria(
-                    property_name='property1',
-                    property_value='value1',
-                    match_type=AutomaticUpdateRuleCriteria.MATCH_EQUAL,
-                ),
-            ]
+            AutomaticUpdateRuleCriteria.objects.create(
+                property_name='property1',
+                property_value='value1',
+                match_type=AutomaticUpdateRuleCriteria.MATCH_EQUAL,
+                rule=self.rule2,
+            )
             self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'property1', 'x')
@@ -258,13 +276,12 @@ class AutomaticCaseUpdateTest(TestCase):
     @run_with_all_backends
     def test_match_not_equal(self):
         with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
-            self.rule2.automaticupdaterulecriteria_set = [
-                AutomaticUpdateRuleCriteria(
-                    property_name='property2',
-                    property_value='value2',
-                    match_type=AutomaticUpdateRuleCriteria.MATCH_NOT_EQUAL,
-                ),
-            ]
+            AutomaticUpdateRuleCriteria.objects.create(
+                property_name='property2',
+                property_value='value2',
+                match_type=AutomaticUpdateRuleCriteria.MATCH_NOT_EQUAL,
+                rule=self.rule2,
+            )
             self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'property2', 'value2')
@@ -281,13 +298,12 @@ class AutomaticCaseUpdateTest(TestCase):
         interfere with our ability to compare dates for equality.
         """
         with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
-            self.rule2.automaticupdaterulecriteria_set = [
-                AutomaticUpdateRuleCriteria(
-                    property_name='property1',
-                    property_value='2016-02-24',
-                    match_type=AutomaticUpdateRuleCriteria.MATCH_EQUAL,
-                ),
-            ]
+            AutomaticUpdateRuleCriteria.objects.create(
+                property_name='property1',
+                property_value='2016-02-24',
+                match_type=AutomaticUpdateRuleCriteria.MATCH_EQUAL,
+                rule=self.rule2,
+            )
 
             set_case_property_directly(case, 'property1', '2016-02-24')
             self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
@@ -298,13 +314,12 @@ class AutomaticCaseUpdateTest(TestCase):
     @run_with_all_backends
     def test_date_case_properties_for_inequality(self):
         with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
-            self.rule2.automaticupdaterulecriteria_set = [
-                AutomaticUpdateRuleCriteria(
-                    property_name='property1',
-                    property_value='2016-02-24',
-                    match_type=AutomaticUpdateRuleCriteria.MATCH_NOT_EQUAL,
-                ),
-            ]
+            AutomaticUpdateRuleCriteria.objects.create(
+                property_name='property1',
+                property_value='2016-02-24',
+                match_type=AutomaticUpdateRuleCriteria.MATCH_NOT_EQUAL,
+                rule=self.rule2,
+            )
 
             set_case_property_directly(case, 'property1', '2016-02-24')
             self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
@@ -315,12 +330,11 @@ class AutomaticCaseUpdateTest(TestCase):
     @run_with_all_backends
     def test_match_has_value(self):
         with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
-            self.rule2.automaticupdaterulecriteria_set = [
-                AutomaticUpdateRuleCriteria(
-                    property_name='property3',
-                    match_type=AutomaticUpdateRuleCriteria.MATCH_HAS_VALUE,
-                ),
-            ]
+            AutomaticUpdateRuleCriteria.objects.create(
+                property_name='property3',
+                match_type=AutomaticUpdateRuleCriteria.MATCH_HAS_VALUE,
+                rule=self.rule2,
+            )
             self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'property3', 'x')
@@ -333,27 +347,29 @@ class AutomaticCaseUpdateTest(TestCase):
     def test_and_criteria(self):
         with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
 
-            self.rule2.automaticupdaterulecriteria_set = [
-                AutomaticUpdateRuleCriteria(
-                    property_name='last_visit_date',
-                    property_value='30',
-                    match_type=AutomaticUpdateRuleCriteria.MATCH_DAYS_SINCE,
-                ),
-                AutomaticUpdateRuleCriteria(
-                    property_name='property1',
-                    property_value='value1',
-                    match_type=AutomaticUpdateRuleCriteria.MATCH_EQUAL,
-                ),
-                AutomaticUpdateRuleCriteria(
-                    property_name='property2',
-                    property_value='value2',
-                    match_type=AutomaticUpdateRuleCriteria.MATCH_NOT_EQUAL,
-                ),
-                AutomaticUpdateRuleCriteria(
-                    property_name='property3',
-                    match_type=AutomaticUpdateRuleCriteria.MATCH_HAS_VALUE,
-                ),
-            ]
+            AutomaticUpdateRuleCriteria.objects.create(
+                property_name='last_visit_date',
+                property_value='30',
+                match_type=AutomaticUpdateRuleCriteria.MATCH_DAYS_AFTER,
+                rule=self.rule2,
+            )
+            AutomaticUpdateRuleCriteria.objects.create(
+                property_name='property1',
+                property_value='value1',
+                match_type=AutomaticUpdateRuleCriteria.MATCH_EQUAL,
+                rule=self.rule2,
+            )
+            AutomaticUpdateRuleCriteria.objects.create(
+                property_name='property2',
+                property_value='value2',
+                match_type=AutomaticUpdateRuleCriteria.MATCH_NOT_EQUAL,
+                rule=self.rule2,
+            )
+            AutomaticUpdateRuleCriteria.objects.create(
+                property_name='property3',
+                match_type=AutomaticUpdateRuleCriteria.MATCH_HAS_VALUE,
+                rule=self.rule2,
+            )
 
             set_case_property_directly(case, 'last_visit_date', '2015-11-01')
             set_case_property_directly(case, 'property1', 'value1')
@@ -429,26 +445,25 @@ class AutomaticCaseUpdateTest(TestCase):
             )
             rule.save()
             self.addCleanup(rule.delete)
-            rule.automaticupdaterulecriteria_set = [
-                AutomaticUpdateRuleCriteria(
-                    property_name='parent/name',
-                    property_value='abc',
-                    match_type=AutomaticUpdateRuleCriteria.MATCH_EQUAL,
-                ),
-            ]
-            rule.automaticupdateaction_set = [
-                AutomaticUpdateAction(
-                    action=AutomaticUpdateAction.ACTION_UPDATE,
-                    property_name='parent/update_flag',
-                    property_value='P',
-                ),
-                AutomaticUpdateAction(
-                    action=AutomaticUpdateAction.ACTION_UPDATE,
-                    property_name='parent_name',
-                    property_value='parent/name',
-                    property_value_type=AutomaticUpdateAction.CASE_PROPERTY
-                )
-            ]
+            AutomaticUpdateRuleCriteria.objects.create(
+                property_name='parent/name',
+                property_value='abc',
+                match_type=AutomaticUpdateRuleCriteria.MATCH_EQUAL,
+                rule=rule,
+            )
+            AutomaticUpdateAction.objects.create(
+                action=AutomaticUpdateAction.ACTION_UPDATE,
+                property_name='parent/update_flag',
+                property_value='P',
+                rule=rule,
+            )
+            AutomaticUpdateAction.objects.create(
+                action=AutomaticUpdateAction.ACTION_UPDATE,
+                property_name='parent_name',
+                property_value='parent/name',
+                property_value_type=AutomaticUpdateAction.CASE_PROPERTY,
+                rule=rule,
+            )
 
             # rule should match on parent case property and update parent case
             rule.apply_rule(child, datetime(2016, 3, 1))
@@ -459,13 +474,12 @@ class AutomaticCaseUpdateTest(TestCase):
 
             # Update the rule to match on a different name and now it shouldn't match
             rule.automaticupdaterulecriteria_set.all().delete()
-            rule.automaticupdaterulecriteria_set = [
-                AutomaticUpdateRuleCriteria(
-                    property_name='parent/name',
-                    property_value='def',
-                    match_type=AutomaticUpdateRuleCriteria.MATCH_EQUAL,
-                ),
-            ]
+            AutomaticUpdateRuleCriteria.objects.create(
+                property_name='parent/name',
+                property_value='def',
+                match_type=AutomaticUpdateRuleCriteria.MATCH_EQUAL,
+                rule=rule,
+            )
 
             self.assertFalse(rule.rule_matches_case(child, datetime(2016, 3, 1)))
 

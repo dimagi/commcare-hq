@@ -6,8 +6,8 @@
     "icds-cas-sandbox"
   ],
   "config": {
-    "table_id": "static-child_cases_monthly",
-    "display_name": "Cases - Child Health (Monthly) (Static)",
+    "table_id": "static-child_cases_monthly_tableau",
+    "display_name": "Cases - Child Health for Tableau (Monthly) (Static)",
     "referenced_doc_type": "CommCareCase",
     "description": "",
     "base_item_expression": {

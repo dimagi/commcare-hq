@@ -136,6 +136,10 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
     # we could easily remove the class and push all the stuff in __init__ to
     # get_kafka_ucr_pillow below if we wanted.
 
+    # don't retry errors until we figure out how to distinguish between
+    # doc save errors and data source config errors
+    retry_errors = False
+
     def __init__(self, processor, pillow_name):
         change_feed = KafkaChangeFeed(topics.ALL, group_id=pillow_name)
         checkpoint = PillowCheckpoint(pillow_name)

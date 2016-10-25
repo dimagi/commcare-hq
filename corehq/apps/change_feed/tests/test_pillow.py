@@ -97,7 +97,7 @@ class TestElasticProcessorPillows(SimpleTestCase):
             'doc_type': 'CommCareCase',
             'type': 'mother',
             'domain': 'rev-domain',
-            '_rev': 'match-me',
+            '_rev': '3-me',
         }
         broken_metadata = ChangeMeta(
             document_id='test-id',
@@ -107,7 +107,20 @@ class TestElasticProcessorPillows(SimpleTestCase):
         )
         good_metadata = ChangeMeta(
             document_id='test-id',
-            document_rev='match-me',
+            document_rev='3-me',
+            data_source_type='couch',
+            data_source_name='test_commcarehq'
+        )
+        newer_metadata = ChangeMeta(
+            document_id='test-id',
+            # Rev is lower than the rev in the fetched document and we should not throw an error
+            document_rev='2-me',
+            data_source_type='couch',
+            data_source_name='test_commcarehq'
+        )
+        stale_metadata = ChangeMeta(
+            document_id='test-id',
+            document_rev='4-me',  # Rev is higher than the rev in the fetched document so it is stale
             data_source_type='couch',
             data_source_name='test_commcarehq'
         )
@@ -122,6 +135,16 @@ class TestElasticProcessorPillows(SimpleTestCase):
                 )
             )
 
+        with self.assertRaises(DocumentMismatchError):
+            self.pillow.process_change(
+                Change(
+                    id='test-id',
+                    sequence_id='3',
+                    document=document,
+                    metadata=stale_metadata
+                )
+            )
+
         try:
             self.pillow.process_change(
                 Change(
@@ -129,6 +152,18 @@ class TestElasticProcessorPillows(SimpleTestCase):
                     sequence_id='3',
                     document=document,
                     metadata=good_metadata
+                )
+            )
+        except DocumentMismatchError:
+            self.fail('Incorectly raise a DocumentMismatchError for matching revs')
+
+        try:
+            self.pillow.process_change(
+                Change(
+                    id='test-id',
+                    sequence_id='3',
+                    document=document,
+                    metadata=newer_metadata
                 )
             )
         except DocumentMismatchError:

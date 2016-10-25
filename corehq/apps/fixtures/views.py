@@ -26,13 +26,15 @@ from corehq.apps.fixtures.exceptions import (
     FixtureUploadError
 )
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, FieldList, FixtureTypeField
-from corehq.apps.fixtures.upload import run_upload, validate_file_format, get_workbook
+from corehq.apps.fixtures.upload import validate_file_format, get_workbook
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
+from corehq.apps.fixtures.upload.run_upload import run_upload
 from corehq.apps.fixtures.utils import is_identifier_invalid
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import Permissions
 from corehq.util.files import file_extention_from_filename
+from corehq.util.soft_assert import soft_assert
 from corehq.util.spreadsheets.excel import JSONReaderError, HeaderValueError, \
     WorksheetNotFound
 from dimagi.utils.couch.bulk import CouchTransaction
@@ -318,6 +320,13 @@ class UploadItemLists(TemplateView):
         # catch basic validation in the synchronous UI
         try:
             validate_file_format(file_ref.get_filename())
+        except ExcelMalformatException as e:
+            messages.error(
+                request, _(u'Please fix the following formatting issues in your excel file: %s') %
+                '<ul><li>{}</li></ul>'.format('</li><li>'.join(e.errors)),
+                extra_tags='html'
+            )
+            return HttpResponseRedirect(fixtures_home(self.domain))
         except (FixtureUploadError, JSONReaderError, HeaderValueError) as e:
             messages.error(request, _(u'Upload unsuccessful: %s') % e)
             return HttpResponseRedirect(fixtures_home(self.domain))
@@ -420,6 +429,13 @@ def upload_fixture_api(request, domain, **kwargs):
         return _return_response(response_codes["fail"], error_message)
 
     try:
+        validate_file_format(upload_file)
+    except ExcelMalformatException as e:
+        return _return_response(response_codes["fail"], '\n'.join(e.errors))
+    except (FixtureUploadError, JSONReaderError, HeaderValueError) as e:
+        return _return_response(response_codes["fail"], _(u'Upload unsuccessful: %s') % e)
+
+    try:
         workbook = get_workbook(upload_file)
     except Exception:
         return _return_response(response_codes["fail"], error_messages["invalid_file"])
@@ -430,12 +446,15 @@ def upload_fixture_api(request, domain, **kwargs):
         error_message = error_messages["has_no_sheet"].format(attr=e.title)
         return _return_response(response_codes["fail"], error_message)
     except ExcelMalformatException as e:
-        return _return_response(response_codes["fail"], str(e))
+        return _return_response(response_codes["fail"], '\n'.join(e.errors))
     except DuplicateFixtureTagException as e:
         return _return_response(response_codes["fail"], str(e))
     except FixtureAPIException as e:
         return _return_response(response_codes["fail"], str(e))
     except Exception as e:
+        soft_assert('@'.join(['droberts', 'dimagi.com'])).call(
+            False, 'Unknown fixture upload api exception',
+        )
         error_message = error_messages["unknown_fail"].format(attr=e)
         return _return_response(response_codes["fail"], error_message)
 

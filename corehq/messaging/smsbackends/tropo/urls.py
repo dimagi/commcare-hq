@@ -1,4 +1,4 @@
-from django.conf.urls import *
+from django.conf.urls import patterns, url
 
 urlpatterns = patterns('corehq.messaging.smsbackends.tropo.views',
     url(r'^sms/?$', 'sms_in', name='sms_in'),

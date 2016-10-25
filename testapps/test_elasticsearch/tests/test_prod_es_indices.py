@@ -35,7 +35,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "hqapps",
-        "index": "test_hqapps_2016-07-11_2128",
+        "index": "test_hqapps_2016-10-20_1835",
         "type": "app"
     },
     {
@@ -55,7 +55,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "hqusers",
-        "index": "test_hqusers_2016-07-19",
+        "index": "test_hqusers_2016-09-29",
         "type": "user"
     },
     {

@@ -5,11 +5,7 @@ import sys
 import tempfile
 import uuid
 
-try:
-    from django.db.backends.base.creation import TEST_DATABASE_PREFIX
-except ImportError:
-    # TODO - remove when django >= 1.8
-    from django.db.backends.creation import TEST_DATABASE_PREFIX
+from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 
 
 def is_testing():

@@ -1,4 +1,5 @@
 from django.conf.urls import include, patterns, url
+
 from corehq.apps.styleguide.views import (
     ClassBasedViewStyleGuideView,
     ColorsStyleGuide,

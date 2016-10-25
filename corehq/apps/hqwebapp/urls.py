@@ -1,4 +1,4 @@
-from django.conf.urls import *
+from django.conf.urls import include, patterns, url
 from corehq.apps.domain.views import PublicSMSRatesView
 from corehq.apps.settings.views import (
     TwoFactorProfileView, TwoFactorSetupView, TwoFactorSetupCompleteView,

@@ -39,12 +39,12 @@ def trans(name, langs=None, include_lang=True, use_delim=True):
 
 @register.filter
 def html_trans(name, langs=["default"]):
-    return mark_safe(trans(name, langs, use_delim=False) or EMPTY_LABEL)
+    return mark_safe(html.strip_tags(trans(name, langs, use_delim=False)) or EMPTY_LABEL)
 
 
 @register.filter
 def html_name(name):
-    return mark_safe(name or EMPTY_LABEL)
+    return mark_safe(html.strip_tags(name) or EMPTY_LABEL)
 
 
 @register.simple_tag

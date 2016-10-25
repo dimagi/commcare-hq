@@ -21,6 +21,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.urlresolvers import reverse
 from django.db import transaction
+from django.db.models import F
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
     ImageField, IntegerField)
 from django.forms.widgets import  Select
@@ -1370,24 +1371,26 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 if not account_save_success:
                     return False
 
+                # changing a plan overrides future subscriptions
+                future_subscriptions = Subscription.objects.filter(
+                    subscriber=self.domain,
+                    date_start__gt=datetime.date.today()
+                )
+                if future_subscriptions.count() > 0:
+                    future_subscriptions.update(date_end=F('date_start'))
+
                 if self.current_subscription is not None:
-                    if self.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY:
-                        self.current_subscription.cancel_subscription(
-                            adjustment_method=SubscriptionAdjustmentMethod.USER,
-                            web_user=self.creating_user,
-                        )
-                    else:
-                        subscription = self.current_subscription.change_plan(
-                            self.plan_version,
-                            web_user=self.creating_user,
-                            adjustment_method=SubscriptionAdjustmentMethod.USER,
-                            service_type=SubscriptionType.PRODUCT,
-                            pro_bono_status=ProBonoStatus.NO,
-                        )
-                        subscription.is_active = True
-                        if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
-                            subscription.do_not_invoice = True
-                        subscription.save()
+                    subscription = self.current_subscription.change_plan(
+                        self.plan_version,
+                        web_user=self.creating_user,
+                        adjustment_method=SubscriptionAdjustmentMethod.USER,
+                        service_type=SubscriptionType.PRODUCT,
+                        pro_bono_status=ProBonoStatus.NO,
+                    )
+                    subscription.is_active = True
+                    if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
+                        subscription.do_not_invoice = True
+                    subscription.save()
                 else:
                     subscription = Subscription.new_domain_subscription(
                         self.account, self.domain, self.plan_version,

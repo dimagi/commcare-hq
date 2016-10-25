@@ -4,7 +4,7 @@
    "doc_type": "SavedExportSchema",
    "domain": null,
    "name": "Case Example",
-   "index": "[\"aspace\", \"RegCase\"]",
+   "index": "[\"convert-domain\", \"RegCase\"]",
    "transform_dates": true,
    "filter_function": "[]",
    "schema_id": "92e5f9a6624a637c2080957475cd3a85",

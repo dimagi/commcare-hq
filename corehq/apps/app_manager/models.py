@@ -269,7 +269,7 @@ class FormActionCondition(DocumentSchema):
     type = StringProperty(choices=["if", "always", "never"], default="never")
     question = StringProperty()
     answer = StringProperty()
-    operator = StringProperty(choices=['=', 'selected'], default='=')
+    operator = StringProperty(choices=['=', 'selected', 'boolean_true'], default='=')
 
     def is_active(self):
         return self.type in ('if', 'always')
@@ -1575,20 +1575,20 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                 )
             if type_ == 'close_case':
                 type_meta.add_closer(self.unique_id, action.condition)
-            if type_ == 'update_case':
+            if type_ == 'update_case' or type_ == 'usercase_update':
                 for name, question_path in FormAction.get_action_properties(action):
                     self.add_property_save(
                         app_case_meta,
-                        module_case_type,
+                        USERCASE_TYPE if type_ == 'usercase_update' else module_case_type,
                         name,
                         questions,
                         question_path
                     )
-            if type_ == 'case_preload' or type_ == 'load_from_form':
+            if type_ == 'case_preload' or type_ == 'load_from_form' or type_ == 'usercase_preload':
                 for name, question_path in FormAction.get_action_properties(action):
                     self.add_property_load(
                         app_case_meta,
-                        module_case_type,
+                        USERCASE_TYPE if type_ == 'usercase_preload' else module_case_type,
                         name,
                         questions,
                         question_path
@@ -1988,6 +1988,10 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     fixture_select = SchemaProperty(FixtureSelect)
     auto_select_case = BooleanProperty(default=False)
 
+    @property
+    def is_surveys(self):
+        return self.case_type == ""
+
     @classmethod
     def wrap(cls, data):
         if cls is ModuleBase:
@@ -2099,10 +2103,12 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
 
     def validate_for_build(self):
         errors = []
-        if self.requires_case_details():
+        needs_case_detail = self.requires_case_details()
+        needs_case_type = needs_case_detail or len([1 for f in self.get_forms() if f.is_registration_form()])
+        if needs_case_detail or needs_case_type:
             errors.extend(self.get_case_errors(
-                needs_case_type=True,
-                needs_case_detail=True
+                needs_case_type=needs_case_type,
+                needs_case_detail=needs_case_detail
             ))
         if self.case_list_form.form_id:
             try:
@@ -4026,8 +4032,6 @@ class LazyBlobDoc(BlobMixin):
       save save has succeeded, save the attachment in the cache
     """
 
-    migrating_blobs_from_couch = True
-
     def __init__(self, *args, **kwargs):
         super(LazyBlobDoc, self).__init__(*args, **kwargs)
         self._LAZY_ATTACHMENTS = {}
@@ -4670,6 +4674,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         built_on = datetime.datetime.utcnow()
         all_files = self.create_all_files(build_profile_id)
         if save:
+            self.date_created = built_on
             self.built_on = built_on
             self.built_with = BuildRecord(
                 version=self.build_spec.version,
@@ -4787,10 +4792,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                                          content_type="image/png")
             return png_data
 
-    def generate_shortened_url(self, url_type, build_profile_id=None):
+    def generate_shortened_url(self, view_name, build_profile_id=None):
         try:
             if settings.BITLY_LOGIN:
-                view_name = 'corehq.apps.app_manager.views.{}'.format(url_type)
                 if build_profile_id is not None:
                     long_url = "{}{}?profile={}".format(
                         self.url_base, reverse(view_name, args=[self.domain, self._id]), build_profile_id
@@ -4993,6 +4997,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                                           choices=app_strings.CHOICES.keys())
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
+    date_created = DateTimeProperty()
     created_from_template = StringProperty()
     use_grid_menus = BooleanProperty(default=False)
     grid_form_menus = StringProperty(default='none',
@@ -5344,7 +5349,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @classmethod
     def new_app(cls, domain, name, lang="en"):
         app = cls(domain=domain, modules=[], name=name, langs=[lang],
-                  vellum_case_management=True)
+                  date_created=datetime.datetime.utcnow(), vellum_case_management=True)
         return app
 
     def add_module(self, module):
@@ -5886,6 +5891,7 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
     if 'build_spec' in source:
         del source['build_spec']
     app = cls.from_source(source, domain)
+    app.date_created = datetime.datetime.utcnow()
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
 
     with app.atomic_blobs():

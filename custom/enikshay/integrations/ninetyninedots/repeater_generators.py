@@ -126,7 +126,7 @@ def _update_episode_case(domain, case_id, updated_properties):
 
 
 def _get_phone_numbers(case_properties):
-    primary_number = _parse_number(case_properties.get('mobile_number'))
+    primary_number = _parse_number(case_properties.get('phone_number'))
     backup_number = _parse_number(case_properties.get('backup_number'))
     if backup_number is not None:
         return ", ".join([_format_number(primary_number), _format_number(backup_number)])
