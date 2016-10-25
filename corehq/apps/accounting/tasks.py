@@ -642,7 +642,7 @@ def send_overdue_reminders():
             accounts.add(invoice.get_domain())
             total = Invoice.objects.filter(is_hidden=False,
                                            subscription__subscriber__domain=invoice.get_domain())\
-            .aggregate(Sum('balance'))['balance__sum']
+                .aggregate(Sum('balance'))['balance__sum']
             if total >= 100:
                 days_ago = (today - invoice.date_due).days
                 context = {
