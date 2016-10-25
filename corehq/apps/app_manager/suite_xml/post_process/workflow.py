@@ -556,10 +556,6 @@ class WorkflowDatumMeta(object):
         return bool(self.nodeset)
 
     @property
-    def is_new_case_id(self):
-        return self.function == 'uuid()'
-
-    @property
     def case_type(self):
         """Get the case type from the nodeset or the function if possible
         """
