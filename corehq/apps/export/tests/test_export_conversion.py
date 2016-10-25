@@ -26,6 +26,7 @@ from corehq.apps.export.models import (
     CASE_HISTORY_TABLE,
     SplitGPSExportColumn,
 )
+from corehq.apps.reports.models import HQGroupExportConfiguration
 from corehq.apps.app_manager.models import Domain, Application, RemoteApp, Module
 from corehq.apps.export.utils import (
     convert_saved_export_to_export_instance,
@@ -292,6 +293,32 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestConvertBase):
         self.assertEqual(instance.name, 'Case Example')
         self.assertEqual(instance.export_format, 'csv')
         self.assertEqual(instance.is_deidentified, False)
+        self.assertEqual(instance.is_daily_saved_export, False)
+
+        table = instance.get_table(MAIN_TABLE)
+        self.assertEqual(table.label, 'Cases')
+        self.assertTrue(table.selected)
+
+        index, column = table.get_column([PathNode(name='DOB')], 'ExportItem', None)
+        self.assertEqual(column.label, 'DOB Saved')
+        self.assertEqual(column.selected, True)
+
+    def test_daily_saved_conversion(self, _):
+        # ID is from corehq/apps/export/tests/data/saved_export_schemas/case.json
+        self.group_config = HQGroupExportConfiguration.add_custom_export(
+            self.domain,
+            '92e5f9a6624a637c2080957475cd446d'
+        )
+        self.group_config.save()
+        self.addCleanup(self.group_config.delete)
+
+        instance, _ = self._convert_case_export('case')
+
+        self.assertEqual(instance.transform_dates, True)
+        self.assertEqual(instance.name, 'Case Example')
+        self.assertEqual(instance.export_format, 'csv')
+        self.assertEqual(instance.is_deidentified, False)
+        self.assertEqual(instance.is_daily_saved_export, True)
 
         table = instance.get_table(MAIN_TABLE)
         self.assertEqual(table.label, 'Cases')
