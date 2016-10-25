@@ -56,6 +56,7 @@ var mk_translation_ui = function (spec) {
                 var $input = this.value.ui.find('input');
                 var options = {
                     at: "",
+                    limit: Infinity,
                     maxLen: Infinity,
                     suffix: "",
                     tabSelectsMatch: false,
