@@ -492,30 +492,23 @@ ko.bindingHandlers.edit = {
 
 ko.bindingHandlers.typeahead = {
     init: function (element, valueAccessor) {
-        $(element).autocomplete({
-            minLength: 0,
-            delay: 0,
-            change: function () {
-                $(element).change();
-            },
-            select: function (event, ui) {
-                $(element).val(ui.item.value);
-                $(element).trigger('textchange');
-            }
-        }).focus(function () {
-            $(element).autocomplete('search', $(element).val())
-                .autocomplete('widget').css({
-                width: '200px',
-                overflow: 'hidden'
-            });
-        }).on('textchange', function () {
-            if ($(element).val()) {
-                $(element).change();
+        var $element = $(element);
+        if (!$element.atwho) {
+           throw new Error("The typeahead binding requires Atwho.js and Caret.js");
+        }
+
+        hqImport('style/js/atwho').init($element, {}, function() {
+            $element.trigger('textchange');
+        });
+
+        $element.on("textchange", function() {
+            if ($element.val()) {
+                $element.change();
             }
         });
     },
     update: function (element, valueAccessor) {
-        $(element).autocomplete('option', 'source', ko.utils.unwrapObservable(valueAccessor()));
+        $(element).atwho('load', '', valueAccessor());
     }
 };
 
