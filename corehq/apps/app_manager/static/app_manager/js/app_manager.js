@@ -282,7 +282,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
                 $form.find("input[name='name']").val(action === "update" ? "Followup" : "Survey");
                 if (!$form.data('clicked')) {
                     $form.data('clicked', 'true');
-                    $a.find(".fa-plus").removeClass("fa-plus").addClass("fa fa-refresh icon-spin");
+                    $a.find(".fa-plus").removeClass("fa-plus").addClass("fa fa-refresh fa-spin");
                     $form.submit();
                 }
             });
@@ -304,7 +304,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
                 var pop = this;
                 $('.popover-additem').on('click', function (e) {
                     $(pop).popover('hide');
-                    var dataType = $(e.target).closest('a').data('type');
+                    var dataType = $(e.target).closest('button').data('type');
                     $('#new-module-type').val(dataType);
                     var form = $('#new-module-form');
                     if (!form.data('clicked')) {
