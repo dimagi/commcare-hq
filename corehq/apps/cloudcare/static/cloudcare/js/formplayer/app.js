@@ -220,6 +220,13 @@ FormplayerFrontend.reqres.setHandler('restoreAsUser', function(domain, username)
     )
 });
 
+/**
+ * clearRestoreAsUser
+ *
+ * This will unset the localStorage restore as user as well as
+ * unset the restore as user from the currentUser. It then
+ * navigates you to the main page.
+ */
 FormplayerFrontend.on('clearRestoreAsUser', function() {
     var user = FormplayerFrontend.request('currentUser');
     FormplayerFrontend.Utils.Users.clearRestoreAsUser(

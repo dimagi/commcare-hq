@@ -2,6 +2,12 @@
 
 FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFrontend, Backbone, Marionette, $){
     Users.Views = {}
+    /**
+     * RestoreAsBanner
+     *
+     * This View represents the banner that indicates what user your are
+     * currently logged in (or restoring) as.
+     */
     Users.Views.RestoreAsBanner = Marionette.ItemView.extend({
         template: '#restore-as-banner-template',
         className: 'restore-as-banner-container',
@@ -21,6 +27,12 @@ FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFro
             FormplayerFrontend.trigger('clearRestoreAsUser')
         },
     });
+
+    /**
+     * UserRowView
+     *
+     * Represents a single row in the Log In As User list
+     */
     Users.Views.UserRowView = Marionette.ItemView.extend({
         template: '#user-row-view-template',
         className: 'formplayer-request js-user',
@@ -47,6 +59,13 @@ FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFro
             });
         },
     });
+
+    /**
+     * RestoreAsView
+     *
+     * Renders all possible users to log in as. Equipped with pagination
+     * and custom querying.
+     */
     Users.Views.RestoreAsView = Marionette.CompositeView.extend({
         childView: Users.Views.UserRowView,
         childViewContainer: 'tbody',

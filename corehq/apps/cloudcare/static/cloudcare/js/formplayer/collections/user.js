@@ -1,6 +1,9 @@
 /*global FormplayerFrontend */
 
 FormplayerFrontend.module("Collections", function(Collections, FormplayerFrontend, Backbone) {
+    /**
+     * This collection represents a mobile worker user
+     */
     Collections.User = Backbone.Collection.extend({
         url: function() {
             if (!this.domain) {
@@ -22,6 +25,7 @@ FormplayerFrontend.module("Collections", function(Collections, FormplayerFronten
 
         sync: function (method, model, options) {
             options.xhrFields = {withCredentials: true};
+            // Need to set these headers to allow access to @allow_remote_invocation
             options.beforeSend = function(xhr) {
                 xhr.setRequestHeader('DjNg-Remote-Method', 'get_pagination_data');
                 xhr.setRequestHeader("X-CSRFToken", $.cookie('csrftoken'));
