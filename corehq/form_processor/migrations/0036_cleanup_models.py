@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
-import uuidfield.fields
 
 from corehq.sql_db.operations import HqRunSQL
 
@@ -31,7 +30,7 @@ def migrate_field_to_uuid(model, field, unique=True, db_index=True, null=False):
         state_operations=[migrations.AlterField(
             model_name=model,
             name=field,
-            field=uuidfield.fields.UUIDField(
+            field=models.UUIDField(
                 unique=unique,
                 max_length=32,
                 db_index=db_index,

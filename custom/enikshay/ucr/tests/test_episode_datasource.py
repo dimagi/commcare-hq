@@ -62,7 +62,7 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
                 "create": True,
                 "update": dict(
                     dob="1987-08-15",
-                    sex="m",
+                    sex="male",
                 )
             },
         )
@@ -94,7 +94,7 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
                 'update': dict(
                     test_type_value='microscopy-zn',
                     result=lab_result,
-                    purpose_of_testing='diagnostic_or_pretreatment'
+                    purpose_of_testing='diagnostic'
                 )
             },
             indices=[CaseIndex(
@@ -115,7 +115,7 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
                     disease_classification=disease_classification,
                     person_id="person",
                     opened_on=datetime(1989, 6, 11, 0, 0),
-                    patient_type="new",
+                    patient_type_choice="new",
                     hiv_status="reactive",
                     lab_result=lab_result
                 )

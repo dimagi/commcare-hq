@@ -64,13 +64,13 @@ logger = logging.getLogger(__name__)
 
 def get_module_template(module):
     if isinstance(module, CareplanModule):
-        return "app_manager/module_view_careplan.html"
+        return "app_manager/v1/module_view_careplan.html"
     elif isinstance(module, AdvancedModule):
-        return "app_manager/module_view_advanced.html"
+        return "app_manager/v1/module_view_advanced.html"
     elif isinstance(module, ReportModule):
-        return 'app_manager/module_view_report.html'
+        return 'app_manager/v1/module_view_report.html'
     else:
-        return "app_manager/module_view.html"
+        return "app_manager/v1/module_view.html"
 
 
 def get_module_view_context(app, module, lang=None):
@@ -411,7 +411,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     resp = {'update': {}, 'corrections': {}}
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
-        if is_valid_case_type(case_type, module):
+        if not case_type or is_valid_case_type(case_type, module):
             old_case_type = module["case_type"]
             module["case_type"] = case_type
             for cp_mod in (mod for mod in app.modules if isinstance(mod, CareplanModule)):
@@ -791,7 +791,7 @@ def validate_module_for_build(request, domain, app_id, module_id, ajax=True):
     errors = module.validate_for_build()
     lang, langs = get_langs(request, app)
 
-    response_html = render_to_string('app_manager/partials/build_errors.html', {
+    response_html = render_to_string('app_manager/v1/partials/build_errors.html', {
         'request': request,
         'app': app,
         'build_errors': errors,
@@ -813,10 +813,30 @@ def new_module(request, domain, app_id):
     lang = request.COOKIES.get('lang', app.langs[0])
     name = request.POST.get('name')
     module_type = request.POST.get('module_type', 'case')
-    if module_type == 'case':
+
+    if module_type == 'case' or module_type == 'survey':  # survey option added for V2
+
+        if toggles.APP_MANAGER_V2.enabled(domain):
+            if module_type == 'case':
+                name = name or 'Record List'
+            else:
+                name = name or 'Surveys'
+
         module = app.add_module(Module.new_module(name, lang))
         module_id = module.id
-        app.new_form(module_id, "Untitled Form", lang)
+
+        if not toggles.APP_MANAGER_V2.enabled(domain):
+            app.new_form(module_id, "Untitled Form", lang)
+        elif module_type == 'case':
+            register = app.new_form(module_id, "Register", lang)
+            register.case_action = 'open'  # TODO: this doesn't work
+            followup = app.new_form(module_id, "Followup", lang)
+            followup.case_action = 'update'  # TODO: this doesn't work
+            module.case_type = 'case'  # TODO: make unique across domain
+        else:
+            form = app.new_form(module_id, "Survey", lang)
+            form.case_action = 'none'
+
         app.save()
         response = back_to_main(request, domain, app_id=app_id, module_id=module_id)
         response.set_cookie('suppress_build_errors', 'yes')

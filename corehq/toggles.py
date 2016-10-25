@@ -528,7 +528,7 @@ MOBILE_UCR = StaticToggle(
 RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
     'restrict_web_users_by_location',
     "Allow project to restrict web user permissions by location (deprecated)",
-    TAG_PRODUCT_CORE,
+    TAG_ONE_OFF,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -828,14 +828,6 @@ CUSTOM_APP_BASE_URL = StaticToggle(
 )
 
 
-CASE_LIST_DISTANCE_SORT = StaticToggle(
-    'case_list_distance_sort',
-    'Allow sorting by distance from current location in the case list',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
-
 PROJECT_HEALTH_DASHBOARD = StaticToggle(
     'project_health_dashboard',
     'Shows the project performance dashboard in the reports navigation',
@@ -897,14 +889,6 @@ CUSTOM_CALENDAR_FIXTURE = StaticToggle(
 )
 
 
-NEW_BULK_LOCATION_MANAGEMENT = StaticToggle(
-    'new_bulk_location_management',
-    'Enable advanced features in Bulk Location Upload',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-)
-
-
 PREVIEW_APP = StaticToggle(
     'preview_app',
     'Preview an application in the app builder',
@@ -924,4 +908,11 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     'Uses latest build for cloudcare instead of latest starred',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+APP_MANAGER_V2 = StaticToggle(
+    'app_manager_v2',
+    'Prototype for case management onboarding (App Manager V2)',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
 )

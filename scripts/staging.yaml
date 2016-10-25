@@ -45,12 +45,12 @@
 trunk: master
 name: autostaging
 branches:
-  - dsr-multi-loc # sr 9/20
   - vellum-staging # J$ 11/13
-  - onboarding # Jenny 9/19
-#  - np/kill-djcelery # Nick P 10/3
+  #- onboarding # Jenny 9/19
 #  - np/upgrade-twofactor # Nick P 10/5
   - bmb/currentind-string # Biyeun 11/12
+  - np/upgrade-django-celery # Nick P 10/13
+  - je/remove-phonenumbers
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -71,4 +71,5 @@ submodules:
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
   deployment/commcare-hq-deploy:
-    branches: []
+    branches:
+      - br/jmx-formplayer

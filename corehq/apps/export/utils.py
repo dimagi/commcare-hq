@@ -14,6 +14,7 @@ from corehq.apps.reports.dbaccessors import (
 from corehq.apps.reports.models import (
     FormExportSchema,
     CaseExportSchema,
+    HQGroupExportConfiguration,
 )
 from corehq.apps.app_manager.const import STOCK_QUESTION_TAG_NAMES
 from corehq.apps.app_manager.dbaccessors import (
@@ -23,6 +24,7 @@ from corehq.apps.app_manager.dbaccessors import (
 from .dbaccessors import (
     get_form_export_instances,
     get_case_export_instances,
+    get_inferred_schema,
 )
 from .exceptions import SkipConversion
 from .const import (
@@ -55,11 +57,14 @@ def convert_saved_export_to_export_instance(
         ExportMigrationMeta,
         ConversionMeta,
         TableConfiguration,
+        InferredSchema,
     )
 
     schema = None
     instance_cls = None
     export_type = saved_export.type
+
+    daily_saved_export_ids = _get_daily_saved_export_ids(domain)
 
     is_remote_app_migration = _is_remote_app_conversion(
         domain,
@@ -95,6 +100,7 @@ def convert_saved_export_to_export_instance(
     instance.export_format = saved_export.default_format
     instance.transform_dates = getattr(saved_export, 'transform_dates', False)
     instance.legacy_saved_export_schema_id = saved_export._id
+    instance.is_daily_saved_export = saved_export._id in daily_saved_export_ids
     if saved_export.type == FORM_EXPORT:
         instance.split_multiselects = getattr(saved_export, 'split_multiselects', False)
         instance.include_errors = getattr(saved_export, 'include_errors', False)
@@ -222,7 +228,24 @@ def convert_saved_export_to_export_instance(
                 if is_remote_app_migration or force_convert_columns:
                     # In the event that we skip a column and it's a remote application,
                     # just add a user defined column
-                    new_column = _create_user_defined_column(column, column_path, transform)
+                    if export_type == CASE_EXPORT:
+                        inferred_schema = get_inferred_schema(domain, instance.case_type)
+                        if not inferred_schema:
+                            inferred_schema = InferredSchema(
+                                domain=domain,
+                                case_type=instance.case_type,
+                            )
+                        new_column = _create_column_from_inferred_schema(
+                            inferred_schema,
+                            new_table,
+                            column,
+                            column_path,
+                            transform,
+                        )
+                        if not dryrun:
+                            inferred_schema.save()
+                    else:
+                        new_column = _create_user_defined_column(column, column_path, transform)
                     new_table.columns.append(new_column)
                     ordering.append(new_column)
                 else:
@@ -251,6 +274,11 @@ def convert_saved_export_to_export_instance(
     return instance, migration_meta
 
 
+def _get_daily_saved_export_ids(domain):
+    group_config = HQGroupExportConfiguration.get_for_domain(domain)
+    return set(group_config.custom_export_ids)
+
+
 def _extract_xmlns_from_index(index):
     return index[1]
 
@@ -261,6 +289,19 @@ def _extract_casetype_from_index(index):
 
 def _is_repeat(index):
     return index.startswith('#') and index.endswith('#') and index != '#'
+
+
+def _create_column_from_inferred_schema(inferred_schema, new_table, old_column, column_path, transform):
+    from .models import ExportColumn
+
+    group_schema = inferred_schema.put_group_schema(new_table.path)
+    item = group_schema.put_item(column_path)
+    return ExportColumn(
+        item=item,
+        label=old_column.display,
+        selected=True,
+        deid_transform=transform,
+    )
 
 
 def _create_user_defined_column(old_column, column_path, transform):
@@ -529,7 +570,7 @@ def revert_migrate_domain(domain, dryrun=False):
         print 'Reverted export: {}'.format(reverted_export._id)
 
 
-def migrate_domain(domain, dryrun=False):
+def migrate_domain(domain, dryrun=False, force_convert_columns=False):
     from couchexport.models import SavedExportSchema
     export_count = stale_get_export_count(domain)
     metas = []
@@ -542,7 +583,8 @@ def migrate_domain(domain, dryrun=False):
                 _, migration_meta = convert_saved_export_to_export_instance(
                     domain,
                     SavedExportSchema.wrap(old_export),
-                    dryrun=dryrun
+                    dryrun=dryrun,
+                    force_convert_columns=force_convert_columns,
                 )
             except Exception, e:
                 print 'Failed parsing {}: {}'.format(old_export['_id'], e)

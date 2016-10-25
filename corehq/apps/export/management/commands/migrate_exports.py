@@ -26,11 +26,19 @@ class Command(BaseCommand):
             type='int',
             help='Limits the number of domains migrated'
         ),
+        make_option(
+            '--force-convert-columns',
+            action='store_true',
+            dest='force_convert_columns',
+            default=False,
+            help='Force convert columns that were not found in the new schema'
+        ),
     )
 
     def handle(self, *args, **options):
         dryrun = options.pop('dryrun')
         limit = options.pop('limit')
+        force_convert_columns = options.pop('force_convert_columns')
         count = 0
 
         if dryrun:
@@ -44,7 +52,7 @@ class Command(BaseCommand):
 
             if not use_new_exports(domain):
                 try:
-                    metas = migrate_domain(domain, True)
+                    metas = migrate_domain(domain, dryrun=True, force_convert_columns=force_convert_columns)
                 except Exception:
                     print 'Migration raised an exception, skipping.'
                     traceback.print_exc()
@@ -67,7 +75,7 @@ class Command(BaseCommand):
                 if not dryrun:
                     print 'Migrating {}'.format(domain)
                     try:
-                        migrate_domain(domain, False)
+                        migrate_domain(domain, dryrun=False, force_convert_columns=force_convert_columns)
                     except Exception:
                         print 'Migration raised an exception, skipping.'
                         skipped_domains.append(domain)

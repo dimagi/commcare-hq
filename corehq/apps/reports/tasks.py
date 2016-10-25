@@ -174,7 +174,7 @@ def update_calculated_properties():
         dom = r["name"]
         try:
             last_form_submission = CALC_FNS["last_form_submission"](dom, False)
-            if _skip_updating_domain_stats(r["cp_last_updated"], last_form_submission):
+            if _skip_updating_domain_stats(r.get("cp_last_updated"), last_form_submission):
                 continue
             calced_props = {
                 "_id": r["_id"],

@@ -90,6 +90,16 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
             ['Massachusetts', 'Suffolk', 'Boston', 'Revere']
         )
 
+    def test_multiple_locations(self, uses_locations):
+        self.user.add_to_assigned_locations(self.locations['Suffolk'].couch_location)
+        self.user.add_to_assigned_locations(self.locations['New York City'].couch_location)
+
+        self._assert_fixture_has_locations(
+            'multiple_locations',
+            ['Massachusetts', 'Suffolk', 'Boston', 'Revere', 'New York',
+             'New York City', 'Manhattan', 'Queens', 'Brooklyn']
+        )
+
     def test_all_locations_flag_returns_all_locations(self, uses_locations):
         with flag_enabled('SYNC_ALL_LOCATIONS'):
             self._assert_fixture_has_locations(
@@ -334,7 +344,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
         couch_location.save()
         after_save = datetime.utcnow()
         location = SQLLocation.objects.last()
-        self.assertEqual(couch_location._id, location.location_id)
+        self.assertEqual(couch_location.location_id, location.location_id)
         self.assertEqual('winterfell', location.name)
         location_db = LocationSet([location])
         self.assertFalse(
@@ -342,7 +352,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
         )
 
         # archive the location
-        couch_location.archive()
+        location.archive()
         after_archive = datetime.utcnow()
 
         location = SQLLocation.objects.last()

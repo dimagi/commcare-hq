@@ -8,10 +8,11 @@ from django.utils.translation import ugettext as _
 
 from couchdbkit.exceptions import ResourceNotFound
 
-from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from casexml.apps.case.models import CommCareCase, CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN
 from casexml.apps.case.util import iter_cases
-from casexml.apps.phone.caselogic import get_footprint
+from casexml.apps.phone.cleanliness import get_dependent_case_info
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.parsing import json_format_date
 from touchforms.formplayer.models import EntrySession
@@ -19,10 +20,6 @@ from touchforms.formplayer.models import EntrySession
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.cloudcare.exceptions import RemoteAppError
-from corehq.apps.hqcase.dbaccessors import (
-    get_case_ids_in_domain,
-    get_case_ids_in_domain_by_owner,
-)
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import get_es_new, ES_META
 
@@ -45,7 +42,8 @@ class CaseAPIResult(object):
     between an id-only representation and a full_blown one.
     """
 
-    def __init__(self, id=None, couch_doc=None, id_only=False, lite=True, sanitize=True):
+    def __init__(self, domain, id=None, couch_doc=None, id_only=False, lite=True, sanitize=True):
+        self.domain = domain
         self._id = id
         self._couch_doc = couch_doc
         self.id_only = id_only
@@ -61,13 +59,13 @@ class CaseAPIResult(object):
     @property
     def id(self):
         if self._id is None:
-            self._id = self._couch_doc['_id']
+            self._id = self._couch_doc['_id'] if isinstance(self._couch_doc, dict) else self._couch_doc.case_id
         return self._id
 
     @property
     def couch_doc(self):
         if self._couch_doc is None:
-            self._couch_doc = CommCareCase.get(self._id)
+            self._couch_doc = CaseAccessors(self.domain).get_case(self._id)
         return self._couch_doc
 
     @property
@@ -107,6 +105,7 @@ class CaseAPIHelper(object):
         self.footprint = footprint
         self.strip_history = strip_history
         self.filters = filters
+        self.case_accessors = CaseAccessors(self.domain)
 
     def _case_results(self, case_id_list):
         def _filter(res):
@@ -122,37 +121,37 @@ class CaseAPIHelper(object):
                             return False
                 return True
 
-        if not self.ids_only or self.filters or self.footprint:
-            # optimization hack - we know we'll need the full cases eventually
-            # so just grab them now.
-            base_results = [CaseAPIResult(couch_doc=case, id_only=self.ids_only)
-                            for case in iter_cases(case_id_list, self.strip_history, self.wrap)]
-
-        else:
-            base_results = [CaseAPIResult(id=id, id_only=True) for id in case_id_list]
-
         if self.filters and not self.footprint:
-            base_results = filter(_filter, base_results)
+            base_results = self._populate_results(case_id_list)
+            return filter(_filter, base_results)
 
-        if not self.footprint:
-            return base_results
-
-        case_list = [res.couch_doc for res in base_results]
         if self.footprint:
-            case_list = get_footprint(
-                            case_list,
-                            self.domain,
-                            strip_history=self.strip_history,
-                        ).values()
+            initial_case_ids = set(case_id_list)
+            dependent_case_ids = get_dependent_case_info(self.domain, initial_case_ids).all_ids
+            all_case_ids = initial_case_ids | dependent_case_ids
+        else:
+            all_case_ids = case_id_list
 
-        return [CaseAPIResult(couch_doc=case, id_only=self.ids_only) for case in case_list]
+        if self.ids_only:
+            return [CaseAPIResult(domain=self.domain, id=case_id, id_only=True) for case_id in all_case_ids]
+        else:
+            return self._populate_results(all_case_ids)
+
+    def _populate_results(self, case_id_list):
+        if should_use_sql_backend(self.domain):
+            base_results = [CaseAPIResult(domain=self.domain, couch_doc=case, id_only=self.ids_only)
+                            for case in self.case_accessors.iter_cases(case_id_list)]
+        else:
+            base_results = [CaseAPIResult(domain=self.domain, couch_doc=case, id_only=self.ids_only)
+                            for case in iter_cases(case_id_list, self.strip_history, self.wrap)]
+        return base_results
 
     def get_all(self):
         status = self.status or CASE_STATUS_ALL
         if status == CASE_STATUS_ALL:
-            case_ids = get_case_ids_in_domain(self.domain, type=self.case_type)
+            case_ids = self.case_accessors.get_case_ids_in_domain(self.case_type)
         elif status == CASE_STATUS_OPEN:
-            case_ids = get_open_case_ids_in_domain(self.domain, type=self.case_type)
+            case_ids = self.case_accessors.get_open_case_ids_in_domain_by_type(self.case_type)
         else:
             raise ValueError("Invalid value for 'status': '%s'" % status)
 
@@ -174,9 +173,7 @@ class CaseAPIHelper(object):
             CASE_STATUS_ALL: None,
         }[self.status]
 
-        ids = get_case_ids_in_domain_by_owner(
-            self.domain, owner_id__in=owner_ids, closed=closed)
-
+        ids = self.case_accessors.get_case_ids_by_owners(owner_ids, closed=closed)
         return self._case_results(ids)
 
 
@@ -191,6 +188,7 @@ def get_filtered_cases(domain, status, user_id=None, case_type=None,
                        filters=None, footprint=False, ids_only=False,
                        strip_history=True):
 
+    # NOTE: filters get ignored if footprint=True
     # a filter value of None means don't filter
     filters = dict((k, v) for k, v in (filters or {}).items() if v is not None)
     helper = CaseAPIHelper(domain, status, case_type=case_type, ids_only=ids_only,

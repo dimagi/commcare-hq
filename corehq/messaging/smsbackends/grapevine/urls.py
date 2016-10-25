@@ -1,4 +1,4 @@
-from django.conf.urls import *
+from django.conf.urls import include, patterns, url
 from .models import GrapevineResource
 
 gvi_resource = GrapevineResource()

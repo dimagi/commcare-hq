@@ -1,5 +1,4 @@
 from django.apps import apps
-from django.core.exceptions import ImproperlyConfigured
 from django.db import connection
 
 
@@ -10,8 +9,8 @@ class BaseDeletion(object):
 
     def is_app_installed(self):
         try:
-            return apps.get_app(self.app_label)
-        except ImproperlyConfigured:
+            return bool(apps.get_app_config(self.app_label))
+        except LookupError:
             return False
 
 

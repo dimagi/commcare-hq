@@ -19,6 +19,7 @@ FormplayerFrontend.on("before:start", function () {
 
         regions: {
             main: "#menu-region",
+            loadingProgress: "#formplayer-progress-container",
             breadcrumb: "#breadcrumb-region",
             persistentCaseTile: "#persistent-case-tile",
             phoneModeNavigation: '#phone-mode-navigation',
@@ -175,7 +176,7 @@ FormplayerFrontend.on("start", function (options) {
         phoneMode: options.phoneMode,
         oneQuestionPerScreen: options.oneQuestionPerScreen,
     };
-    
+
     FormplayerFrontend.request('gridPolyfillPath', options.gridPolyfillPath);
     if (Backbone.history) {
         Backbone.history.start();
@@ -205,22 +206,77 @@ FormplayerFrontend.reqres.setHandler('getAppDisplayProperties', function() {
 });
 
 FormplayerFrontend.on("sync", function () {
-    var user = FormplayerFrontend.request('currentUser');
-    var username = user.username;
-    var domain = user.domain;
-    var formplayer_url = user.formplayer_url;
-    var options = {
+    var user = FormplayerFrontend.request('currentUser'),
+        username = user.username,
+        domain = user.domain,
+        formplayer_url = user.formplayer_url,
+        complete,
+        options;
+
+    complete = function(response) {
+        if (response.responseJSON.status === 'retry') {
+            FormplayerFrontend.trigger('retry', response.responseJSON, function() {
+                $.ajax(options);
+            }, gettext('Please wait while we sync your user...'));
+        } else {
+            FormplayerFrontend.trigger('clearProgress');
+            tfSyncComplete(response.responseJSON.status === 'error');
+        }
+    };
+    options = {
         url: formplayer_url + "/sync-db",
         data: JSON.stringify({"username": username, "domain": domain}),
+        complete: complete,
     };
     Util.setCrossDomainAjaxOptions(options);
-    var resp = $.ajax(options);
-    resp.done(function () {
-        tfSyncComplete(false);
-    });
-    resp.error(function () {
-        tfSyncComplete(true);
-    });
+    $.ajax(options);
+});
+
+/**
+ * retry
+ *
+ * Will retry a restore when doing an async restore.
+ *
+ * @param {Object} response - An async restore response object
+ * @param {function} retryFn - The function to be called when ready to retry restoring
+ * @param {String} progressMessage - The message to be displayed above the progress bar
+ */
+FormplayerFrontend.on("retry", function(response, retryFn, progressMessage) {
+
+    var progressView = FormplayerFrontend.regions.loadingProgress.currentView,
+        progress = response.total === 0 ? 0 : response.done / response.total,
+        retryTimeout = response.retryAfter * 1000;
+    progressMessage = progressMessage || gettext('Please wait...');
+
+    if (!progressView) {
+        progressView = new FormplayerFrontend.Utils.Views.ProgressView({
+            progressMessage: progressMessage,
+        });
+        FormplayerFrontend.regions.loadingProgress.show(progressView);
+    }
+
+    progressView.setProgress(progress, retryTimeout);
+    setTimeout(retryFn, retryTimeout);
+});
+
+
+/**
+ * clearProgress
+ *
+ * Clears the progress bar. If currently in progress, wait 200 ms to transition
+ * to complete progress.
+ */
+FormplayerFrontend.on('clearProgress', function() {
+    var progressView = FormplayerFrontend.regions.loadingProgress.currentView,
+        progressFinishTimeout = 0;
+    if (progressView) {
+        progressFinishTimeout = 200;
+        progressView.setProgress(1, progressFinishTimeout);
+    }
+
+    setTimeout(function() {
+        FormplayerFrontend.regions.loadingProgress.empty();
+    }, progressFinishTimeout);
 });
 
 
