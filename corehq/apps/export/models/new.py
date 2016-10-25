@@ -559,10 +559,6 @@ class ExportInstance(BlobMixin, Document):
         )
         group_schemas = schema.group_schemas
 
-        inferred_schema = instance._get_inferred_schema()
-        if inferred_schema:
-            group_schemas.extend(inferred_schema.group_schemas)
-
         for group_schema in group_schemas:
             table = instance.get_table(group_schema.path) or TableConfiguration(
                 path=group_schema.path,
@@ -742,9 +738,6 @@ class CaseExportInstance(ExportInstance):
             case_type=schema.case_type,
         )
 
-    def _get_inferred_schema(self):
-        return get_inferred_schema(self.domain, self.case_type)
-
 
 class FormExportInstance(ExportInstance):
     xmlns = StringProperty()
@@ -765,9 +758,6 @@ class FormExportInstance(ExportInstance):
             xmlns=schema.xmlns,
             app_id=schema.app_id,
         )
-
-    def _get_inferred_schema(self):
-        return None
 
 
 class ExportInstanceDefaults(object):
@@ -986,6 +976,12 @@ class InferredSchema(Document):
     case_type = StringProperty(required=True)
     version = IntegerProperty(default=1)
 
+    # This normally contains a mapping of app_id to the version number. For
+    # inferred schemas this'll always be an empty dictionary since it is
+    # inferred. It is needed because when schemas are merged, it's expected
+    # that all schema duck types have this property.
+    last_app_versions = DictProperty()
+
     class Meta:
         app_label = 'export'
 
@@ -1075,6 +1071,11 @@ class ExportDataSchema(Document):
         current_schema.app_id = app_id
         current_schema.version = DATA_SCHEMA_VERSION
         current_schema._set_identifier(identifier)
+
+        inferred_schema = current_schema._get_inferred_schema()
+        if inferred_schema:
+            current_schema = cls._merge_schemas(current_schema, inferred_schema)
+
         current_schema = cls._save_export_schema(
             current_schema,
             original_id,
@@ -1185,6 +1186,9 @@ class FormExportDataSchema(ExportDataSchema):
     @property
     def type(self):
         return FORM_EXPORT
+
+    def _get_inferred_schema(self):
+        return None
 
     def _set_identifier(self, form_xmlns):
         self.xmlns = form_xmlns
@@ -1330,6 +1334,9 @@ class CaseExportDataSchema(ExportDataSchema):
 
     def _set_identifier(self, case_type):
         self.case_type = case_type
+
+    def _get_inferred_schema(self):
+        return get_inferred_schema(self.domain, self.case_type)
 
     @classmethod
     def _get_current_app_ids_for_domain(cls, domain):

@@ -204,37 +204,6 @@ class TestExportInstanceGenerationWithInferredSchema(SimpleTestCase):
             ]
         )
 
-    def test_generate_instance_from_schema_with_inferred(self, _, __):
-
-        build_ids_and_versions = {
-            self.app_id: 3,
-        }
-        with mock.patch(
-                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
-                return_value=build_ids_and_versions):
-            with mock.patch(
-                    'corehq.apps.export.models.new.get_inferred_schema',
-                    return_value=self.inferred_schema):
-
-                instance = CaseExportInstance.generate_instance_from_schema(self.schema)
-
-        table = instance.get_table(MAIN_TABLE)
-        index, column = table.get_column(
-            [PathNode(name='data'), PathNode(name='case_property')],
-            'ExportItem',
-            None
-        )
-        self.assertIsNotNone(column)
-        self.assertFalse(column.is_advanced)
-
-        index, column = table.get_column(
-            [PathNode(name='data'), PathNode(name='case_property_2')],
-            'ExportItem',
-            None
-        )
-        self.assertIsNotNone(column)
-        self.assertFalse(column.is_advanced)
-
 
 @mock.patch(
     'corehq.apps.export.models.new.FormExportInstanceDefaults.get_default_instance_name',

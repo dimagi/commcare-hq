@@ -117,3 +117,13 @@ def delete_all_export_instances():
     for row in db.view('export_instances_by_domain/view', reduce=False):
         doc_id = row['id']
         safe_delete(db, doc_id)
+
+
+@unit_testing_only
+def delete_all_inferred_schemas():
+    from .models import InferredSchema
+
+    db = InferredSchema.get_db()
+    for row in db.view('inferred_schemas_by_case_type/view', reduce=False):
+        doc_id = row['id']
+        safe_delete(db, doc_id)
