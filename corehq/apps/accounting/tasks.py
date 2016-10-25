@@ -608,9 +608,7 @@ def assign_explicit_community_subscription(domain_name, start_date):
             entry_point=EntryPoint.SELF_STARTED,
         )[0],
         domain=domain_name,
-        plan_version=DefaultProductPlan.get_default_plan(
-            SoftwarePlanEdition.COMMUNITY
-        ).plan.get_version(),
+        plan_version=DefaultProductPlan.get_default_plan_version(),
         date_start=start_date,
         date_end=end_date,
         skip_invoicing_if_no_feature_charges=True,

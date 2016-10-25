@@ -744,7 +744,7 @@ class DefaultProductPlan(models.Model):
         app_label = 'accounting'
 
     @classmethod
-    def get_default_plan(cls, edition=None, is_trial=False):
+    def get_default_plan_version(cls, edition=None, is_trial=False):
         edition = edition or SoftwarePlanEdition.COMMUNITY
         try:
             default_product_plan = DefaultProductPlan.objects.select_related('plan').get(
@@ -1601,10 +1601,7 @@ class Subscription(models.Model):
         domain_obj = ensure_domain_instance(domain)
         if domain_obj is None:
             try:
-                plan_version = DefaultProductPlan.objects.get(
-                    edition=SoftwarePlanEdition.COMMUNITY,
-                    product_type=SoftwareProductType.COMMCARE,
-                ).plan.get_version()
+                plan_version = DefaultProductPlan.get_default_plan_version()
                 return plan_version, None
             except DefaultProductPlan.DoesNotExist:
                 raise ProductPlanNotFoundError

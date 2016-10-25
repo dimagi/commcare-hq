@@ -1474,7 +1474,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
     @property
     @memoized
     def selected_plan_version(self):
-        return DefaultProductPlan.get_default_plan(self.edition).plan.get_version()
+        return DefaultProductPlan.get_default_plan_version(self.edition)
 
     @property
     def downgrade_messages(self):

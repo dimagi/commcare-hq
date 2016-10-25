@@ -1719,9 +1719,7 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
 
     @transaction.atomic
     def process_subscription_management(self):
-        enterprise_plan_version = DefaultProductPlan.get_default_plan(
-            SoftwarePlanEdition.ENTERPRISE
-        ).plan.get_version()
+        enterprise_plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.ENTERPRISE)
         if self.current_subscription:
             self.current_subscription.change_plan(
                 enterprise_plan_version,
