@@ -13,7 +13,6 @@ import djcelery
 djcelery.setup_loader()
 
 DEBUG = True
-TEMPLATE_DEBUG = DEBUG
 LESS_DEBUG = DEBUG
 # Enable LESS_WATCH if you want less.js to constantly recompile.
 # Useful if you're making changes to the less files and don't want to refresh
@@ -154,6 +153,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.websockets_override',
             ],
+            'debug': DEBUG,
             'loaders': [
                 'django.template.loaders.filesystem.Loader',
                 'django.template.loaders.app_directories.Loader',
