@@ -492,30 +492,44 @@ ko.bindingHandlers.edit = {
 
 ko.bindingHandlers.typeahead = {
     init: function (element, valueAccessor) {
-        $(element).autocomplete({
-            minLength: 0,
-            delay: 0,
-            change: function () {
-                $(element).change();
+        var $element = $(element);
+        if (!$element.atwho) {
+           throw new Error("The typeahead binding requires Atwho.js and Caret.js");
+        }
+
+        $element.atwho({
+            at: "",
+            limit: Infinity,
+            maxLen: Infinity,
+            suffix: "",
+            tabSelectsMatch: false,
+            callbacks: {
+                filter: function(query, data, searchKey) {
+                    return _.filter(data, function(item) {
+                        return item.name.indexOf(query) !== -1;
+                    });
+                },
+                matcher: function(flag, subtext, should_startWithSpace) {
+                    return $element.val();
+                },
+                beforeInsert: function(value, $li) {
+                    // This and the inserted.atwho handler below ensure that the entire
+                    // input's value is replaced, regardless of where the cursor is
+                    $element.data("selected-value", value);
+                },
             },
-            select: function (event, ui) {
-                $(element).val(ui.item.value);
-                $(element).trigger('textchange');
-            }
-        }).focus(function () {
-            $(element).autocomplete('search', $(element).val())
-                .autocomplete('widget').css({
-                width: '200px',
-                overflow: 'hidden'
-            });
-        }).on('textchange', function () {
-            if ($(element).val()) {
-                $(element).change();
+        });
+        $element.on("inserted.atwho", function(event, $li, otherEvent) {
+            $element.val($element.data("selected-value")).change();
+            $element.trigger('textchange');
+        }).on("textchange", function() {
+            if ($element.val()) {
+                $element.change();
             }
         });
     },
     update: function (element, valueAccessor) {
-        $(element).autocomplete('option', 'source', ko.utils.unwrapObservable(valueAccessor()));
+        $(element).atwho('load', '', valueAccessor());
     }
 };
 
