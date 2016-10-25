@@ -51,7 +51,7 @@ branches:
   - bmb/currentind-string # Biyeun 11/12
   - je/remove-phonenumbers
   - je/zip-db-exists
-  - np/110/TEMPLATES
+#  - np/110/TEMPLATES
   - ce/billing-notification # Cal 10/25
 submodules:
   submodules/touchforms-src:
