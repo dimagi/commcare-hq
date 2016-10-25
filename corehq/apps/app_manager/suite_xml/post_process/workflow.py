@@ -337,6 +337,7 @@ class CaseListFormStackFrames(namedtuple('CaseListFormStackFrames', 'case_create
             if not isinstance(child, WorkflowDatumMeta) or child.source_id != self.source_session_var:
                 self.case_not_created.add_child(child)
 
+    @property
     def ids_on_stack(self):
         return {child.id for child in self.case_created.children}
 
@@ -364,21 +365,21 @@ class CaseListFormWorkflow(object):
         source_form_datums = self.helper.get_form_datums(form)
         stack_frames = self._get_stack_frames(target_module, form, source_form_datums)
 
-        def add_datums_for_target(module):
-            ids_on_stack = stack_frames.ids_on_stack
-            target_frame_children = self.helper.get_frame_children(module.get_form(0), module_only=True)
-            remaining_target_frame_children = [fc for fc in target_frame_children if fc.id not in ids_on_stack]
-            frame_children = WorkflowHelper.get_datums_matched_to_source(
-                remaining_target_frame_children, source_form_datums
-            )
-            stack_frames.add_children(frame_children)
-
         if target_module.root_module_id:
             # add stack children for the root module before adding any for the child module.
-            add_datums_for_target(target_module.root_module)
+            self._add_datums_for_target(stack_frames, target_module.root_module, source_form_datums)
 
-        add_datums_for_target(target_module)
+        self._add_datums_for_target(stack_frames, target_module, source_form_datums)
         return stack_frames
+
+    def _add_datums_for_target(self, stack_frames, module, source_form_datums):
+        ids_on_stack = stack_frames.ids_on_stack
+        target_frame_children = self.helper.get_frame_children(module.get_form(0), module_only=True)
+        remaining_target_frame_children = [fc for fc in target_frame_children if fc.id not in ids_on_stack]
+        frame_children = WorkflowHelper.get_datums_matched_to_source(
+            remaining_target_frame_children, source_form_datums
+        )
+        stack_frames.add_children(frame_children)
 
     def _get_stack_frames(self, target_module, form, source_form_datums):
         source_session_var = self._get_source_session_var(form, target_module.case_type)
