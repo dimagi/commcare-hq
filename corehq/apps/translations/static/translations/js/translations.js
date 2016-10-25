@@ -52,49 +52,13 @@ var mk_translation_ui = function (spec) {
                 };
 
                 this.value.on('change', helperFunction);
-
-                var $input = this.value.ui.find('input');
-                var options = {
-                    at: "",
-                    limit: Infinity,
-                    maxLen: Infinity,
-                    suffix: "",
-                    tabSelectsMatch: false,
-                    callbacks: {
-                        filter: function(query, data, searchKey) {
-                            return _.filter(data, function(item) {
-                                return item.name.indexOf(query) !== -1;
-                            });
-                        },
-                        matcher: function(flag, subtext, should_startWithSpace) {
-                            return $input.val();
-                        },
-                        beforeInsert: function(value, $li) {
-                            helperFunction();
-
-                            // This and the inserted.atwho handler below ensure that the entire
-                            // input's value is replaced, regardless of where the cursor is
-                            $input.data("selected-value", value);
-                        },
+                hqImport('style/js/atwho').init(this.value.ui.find('input'), {
+                    url: suggestionURL,
+                    data: {
+                        lang: translation_ui.lang,
+                        key: that.key.val(),
                     },
-                };
-
-                $input.one('focus', function () {
-                    $.ajax({
-                        url: suggestionURL,
-                        data: {
-                            lang: translation_ui.lang,
-                            key: that.key.val(),
-                        },
-                        success: function (data) {
-                            options.data = data;
-                            $input.atwho(options).on("inserted.atwho", function(event, $li, otherEvent) {
-                                $input.val($input.data("selected-value")).change();
-                            });
-                            $input.atwho('run');
-                        },
-                    });
-                });
+                }, helperFunction);
             };
             Translation.init = function (key, value) {
                 return new Translation(key, value);
