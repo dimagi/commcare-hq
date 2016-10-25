@@ -1278,14 +1278,10 @@ class Subscription(models.Model):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         today = datetime.date.today()
-        new_start_date = today if self.date_start < today else self.date_start
         assert is_active_subscription(self.date_start, self.date_end, today=today) and self.is_active
         assert date_end is None or date_end > today
 
-        if self.date_start > today:
-            self.date_start = today
-        if self.date_end is None or self.date_end > today:
-            self.date_end = today
+        self.date_end = today
         if self.date_delay_invoicing is not None and self.date_delay_invoicing > today:
             self.date_delay_invoicing = today
         self.is_active = False
@@ -1296,10 +1292,10 @@ class Subscription(models.Model):
             plan_version=new_plan_version,
             subscriber=self.subscriber,
             salesforce_contract_id=self.salesforce_contract_id,
-            date_start=new_start_date,
+            date_start=today,
             date_end=date_end,
             date_delay_invoicing=self.date_delay_invoicing,
-            is_active=is_active_subscription(new_start_date, date_end),
+            is_active=True,
             do_not_invoice=do_not_invoice if do_not_invoice else self.do_not_invoice,
             no_invoice_reason=no_invoice_reason if no_invoice_reason else self.no_invoice_reason,
             service_type=(service_type or SubscriptionType.NOT_SET),
