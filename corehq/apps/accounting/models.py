@@ -1277,8 +1277,6 @@ class Subscription(models.Model):
         """
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
-        change_status_result = get_change_status(self.plan_version, new_plan_version)
-
         today = datetime.date.today()
         new_start_date = today if self.date_start < today else self.date_start
 
@@ -1314,6 +1312,7 @@ class Subscription(models.Model):
 
         new_subscription.set_billing_account_entry_point()
 
+        change_status_result = get_change_status(self.plan_version, new_plan_version)
         self.subscriber.change_subscription(
             downgraded_privileges=change_status_result.downgraded_privs,
             upgraded_privileges=change_status_result.upgraded_privs,
