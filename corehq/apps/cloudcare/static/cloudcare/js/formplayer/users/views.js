@@ -26,8 +26,13 @@ FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFro
                 ),
                 confirmText: gettext('Yes, log in as this user'),
                 onConfirm: function() {
-                    Users.Utils.logInAsUser(this.model.get('username'));
+                    FormplayerFrontend.Utils.Users.logInAsUser(this.model.get('username'));
                     FormplayerFrontend.trigger('navigateHome');
+                    FormplayerFrontend.regions.restoreAsBanner.show(
+                        new FormplayerFrontend.SessionNavigate.Users.Views.RestoreAsBanner({
+                            model: FormplayerFrontend.request('currentUser'),
+                        })
+                    );
                 }.bind(this),
             });
         },

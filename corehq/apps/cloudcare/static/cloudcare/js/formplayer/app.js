@@ -213,7 +213,7 @@ FormplayerFrontend.reqres.setHandler('getAppDisplayProperties', function() {
 });
 
 FormplayerFrontend.reqres.setHandler('restoreAsUser', function(domain, username) {
-    return FormplayerFrontend.SessionNavigate.Users.Utils.getRestoreAsUser(
+    return FormplayerFrontend.Utils.Users.getRestoreAsUser(
         domain,
         username
     )

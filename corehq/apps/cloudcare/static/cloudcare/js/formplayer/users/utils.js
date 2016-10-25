@@ -1,12 +1,12 @@
 /*global FormplayerFrontend */
 
-FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFrontend, Backbone, Marionette, $){
-    Users.Utils = {
+FormplayerFrontend.module("Utils", function(Utils, FormplayerFrontend, Backbone, Marionette, $){
+    Utils.Users = {
         logInAsUser: function(restoreAsUsername) {
             var currentUser = FormplayerFrontend.request('currentUser');
             currentUser.restoreAs = restoreAsUsername;
             window.localStorage.setItem(
-                Users.Utils.restoreAsKey(
+                Utils.Users.restoreAsKey(
                     currentUser.domain,
                     currentUser.username
                 ),
@@ -18,8 +18,14 @@ FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFro
         },
         getRestoreAsUser: function(domain, username) {
             return window.localStorage.getItem(
-                Users.Utils.restoreAsKey(domain, username)
+                Utils.Users.restoreAsKey(domain, username)
             );
-        }
+        },
+        clearRestoreAsUser: function() {
+            return window.localStorage.setItem(
+                Utils.Users.restoreAsKey(domain, username),
+                ''
+            );
+        },
     }
 });
