@@ -36,6 +36,11 @@ class ZipBlobDB(AbstractBlobDB):
             return bucket
         return safejoin(bucket, identifier)
 
+    def exists(self, identifier, bucket=DEFAULT_BUCKET):
+        path = self.get_path(info.identifier, bucket)
+        with zipfile.ZipFile(self.zipname, 'r') as z:
+            return path in z.namelist()
+
 
 def safejoin(root, subpath):
     if not SAFENAME.match(subpath):
