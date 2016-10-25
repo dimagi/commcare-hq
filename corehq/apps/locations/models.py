@@ -748,7 +748,7 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         location_type = kwargs.pop('location_type', None)
         super(Document, self).__init__(*args, **kwargs)
         if location_type:
-            self.location_type = location_type
+            self.set_location_type(location_type)
 
     def __unicode__(self):
         return u"{} ({})".format(self.name, self.domain)
@@ -788,6 +788,7 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
 
     @location_type.setter
     def location_type(self, value):
+        notify_of_deprecation("You should set location_type using `set_location_type`")
         self.set_location_type(value)
 
     def set_location_type(self, location_type_name):
@@ -823,11 +824,6 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         self._migration_sync_to_sql(sql_location)
 
     def save(self, *args, **kwargs):
-        """
-        Saving a couch version of Location will trigger
-        one way syncing to the SQLLocation version of this
-        location.
-        """
         self.last_modified = datetime.utcnow()
 
         # lazy migration for site_code
