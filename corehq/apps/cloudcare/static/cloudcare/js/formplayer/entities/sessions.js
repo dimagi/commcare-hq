@@ -43,6 +43,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 data: JSON.stringify({
                     "username": user.username,
                     "domain": domain,
+                    "restoreAs": user.restoreAs,
                 }),
                 url: formplayerUrl + '/get_sessions',
                 success: function (request) {
@@ -70,6 +71,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                         "sessionId": sessionId,
                         "username": user.username,
                         "domain": user.domain,
+                        "restoreAs": user.restoreAs,
                     });
 
                     options.url = formplayerUrl + '/incomplete-form';
@@ -99,6 +101,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                     "sessionId": session.get('sessionId'),
                     "username": user.username,
                     "domain": user.domain,
+                    "restoreAs": user.restoreAs,
                 }),
                 url: user.formplayer_url + '/delete-incomplete-form',
                 complete: function(xhr) {

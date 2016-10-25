@@ -96,6 +96,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
             options.data = JSON.stringify({
                 "username": user.username,
+                "restoreAs": user.restoreAs,
                 "domain": user.domain,
                 "app_id": params.appId,
                 "locale": user.language,

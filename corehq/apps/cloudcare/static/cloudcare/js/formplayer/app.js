@@ -254,7 +254,11 @@ FormplayerFrontend.on("sync", function () {
     };
     options = {
         url: formplayer_url + "/sync-db",
-        data: JSON.stringify({"username": username, "domain": domain}),
+        data: JSON.stringify({
+            "username": username,
+            "domain": domain,
+            "restoreAs": user.restoreAs,
+        }),
         complete: complete,
     };
     Util.setCrossDomainAjaxOptions(options);
@@ -328,6 +332,7 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
                 app_id: appId,
                 domain: user.domain,
                 username: user.username,
+                restoreAs: user.restoreAs,
             }),
         };
     Util.setCrossDomainAjaxOptions(options);
