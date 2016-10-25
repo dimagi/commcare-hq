@@ -288,11 +288,13 @@ class DashboardFeedFilterForm(BaseFilterExportDownloadForm):
         label=ugettext_lazy("Begin Date"),
         required=False,
         widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD"}),
+        help_text='<small class="label label-default">{}</small>'.format(ugettext_lazy("YYYY-MM-DD")),
     )
     end_date = forms.DateField(
         label=ugettext_lazy("End Date"),
         required=False,
         widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD"}),
+        help_text='<small class="label label-default">{}</small>'.format(ugettext_lazy("YYYY-MM-DD")),
     )
 
     @property
