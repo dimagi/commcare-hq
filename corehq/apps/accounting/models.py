@@ -1304,6 +1304,7 @@ class Subscription(models.Model):
             funding_source=(funding_source or FundingSource.CLIENT),
             **kwargs
         )
+
         new_subscription.save()
 
         new_subscription.set_billing_account_entry_point()

@@ -21,6 +21,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.urlresolvers import reverse
 from django.db import transaction
+from django.db.models import F
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
     ImageField, IntegerField)
 from django.forms.widgets import  Select
@@ -1369,6 +1370,14 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 account_save_success = super(ConfirmNewSubscriptionForm, self).save()
                 if not account_save_success:
                     return False
+
+                # changing a plan overrides future subscriptions
+                future_subscriptions = Subscription.objects.filter(
+                    subscriber=self.domain,
+                    date_start__gt=datetime.date.today()
+                )
+                if future_subscriptions.count() > 0:
+                    future_subscriptions.update(date_end=F('date_start'))
 
                 if self.current_subscription is not None:
                     subscription = self.current_subscription.change_plan(
