@@ -510,9 +510,7 @@ class WorkflowDatumMeta(object):
         # indicates whether this datum is here as a placeholder to match the parent module's datum
         self.from_parent_module = False
 
-        self.source_id = self.id  # can be changed if the source datum has a differnt ID
-        self.target_id = self.id  # can be changed if the target datum has a differnt ID
-
+        self.source_id = self.id  # can be changed if the source datum has a different ID
 
     @classmethod
     def from_session_datum(cls, session_datum):
@@ -548,15 +546,14 @@ class WorkflowDatumMeta(object):
             raise Exception("Datum already has a case type")
         self._case_type = case_type
 
-    def clone_to_match(self, source_id=None, target_id=None):
+    def clone_to_match(self, source_id=None):
         new_meta = WorkflowDatumMeta(self.id, self.nodeset, self.function)
         new_meta.source_id = source_id or self.id
-        new_meta.target_id = target_id or self.id
         return new_meta
 
     def to_stack_datum(self):
         value = session_var(self.source_id) if self.requires_selection else self.function
-        return StackDatum(id=self.target_id, value=value)
+        return StackDatum(id=self.id, value=value)
 
     def __lt__(self, other):
         return self.id < other.id
