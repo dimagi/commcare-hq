@@ -22,7 +22,7 @@ class UniqueHeaderGenerator(object):
 
     def next_unique(self, header):
         header = self._next_unique(header)
-        self.used.add(header)
+        self.used.add(header.lower())
         return header
 
     def _next_unique(self, string):
@@ -31,7 +31,7 @@ class UniqueHeaderGenerator(object):
             # truncate from the beginning since the end has more specific information
             string = string[-self.max_column_size:]
         orig_string = string
-        while string in self.used:
+        while string.lower() in self.used:
             string = "%s%s" % (orig_string, counter)
             if len(string) > self.max_column_size:
                 counterlen = len(str(counter))
