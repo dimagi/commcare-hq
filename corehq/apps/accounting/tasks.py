@@ -640,9 +640,8 @@ def send_overdue_reminders():
     for invoice in invoices:
         if invoice.get_domain() not in accounts:
             accounts.add(invoice.get_domain())
-            total = Invoice.objects.filter(
-                is_hidden=False,
-                subscription__subscriber__domain=invoice.get_domain())\
+            total = Invoice.objects.filter(is_hidden=False,
+                                           subscription__subscriber__domain=invoice.get_domain())\
             .aggregate(Sum('balance'))['balance__sum']
             if total >= 100:
                 days_ago = (today - invoice.date_due).days
@@ -677,6 +676,7 @@ def _send_downgrade_notice(invoice, context):
         cc=[settings.ACCOUNTS_EMAIL],
         email_from=get_dimagi_from_email()
     )
+
 
 def _downgrade_domain(invoice):
     invoice.subscription.change_plan(
