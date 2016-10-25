@@ -274,14 +274,16 @@ class LocationQueriesMixin(object):
             return itertools.imap(Location.wrap, locations)
         return locations
 
-
-class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
     def accessible_to_user(self, domain, user):
         if user.has_permission(domain, 'access_all_locations'):
-            return self
+            return self.all()
 
         users_location = user.get_sql_location(domain)
-        return self & users_location.get_descendants(include_self=True)
+        return self.all() & users_location.get_descendants(include_self=True)
+
+
+class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
+    pass
 
 
 class LocationManager(LocationQueriesMixin, TreeManager):
@@ -328,14 +330,6 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         """
         direct_matches = self.filter_by_user_input(domain, user_input)
         return self.get_queryset_descendants(direct_matches, include_self=True)
-
-
-    def accessible_to_user(self, domain, user):
-        if user.has_permission(domain, 'access_all_locations'):
-            return self.get_queryset()
-
-        users_location = user.get_sql_location(domain)
-        return users_location.get_descendants(include_self=True)
 
 
 class OnlyUnarchivedLocationManager(LocationManager):
