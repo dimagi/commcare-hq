@@ -74,7 +74,7 @@ class BasePopulation(ICDSMixin):
     @property
     def rows(self):
         if self.config['location_id']:
-            data = self.custom_data(selected_location=None, domain=self.config['domain'])
+            data = self.custom_data(selected_location=self.config['location_id'], domain=self.config['domain'])
             return [
                 [
                     "Total Population of the project:",

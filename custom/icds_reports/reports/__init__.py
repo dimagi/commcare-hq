@@ -1,3 +1,5 @@
+from dateutil.relativedelta import relativedelta
+
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, \
     MonthYearMixin
@@ -25,13 +27,28 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
     @property
     def report_config(self):
         start_date, end_date = get_first_last_days(self.year, self.month)
+        month_before = start_date - relativedelta(months=1)
+        new_start_date = month_before.replace(day=21)
+        new_end_date = month_before.replace(day=20)
+        self.datespan.startdate = new_start_date
+        self.datespan.enddate = new_end_date
+        state = self.request.GET.get('icds_state_id', None)
+        district = self.request.GET.get('icds_district_id', None)
+        block = self.request.GET.get('icds_state_id', None)
+        location_id = ''
+        if state:
+            location_id = state
+        if district:
+            location_id = district
+        if block:
+            location_id = block
         config = dict(
-            location_id=self.request.GET.get('location_id', ''),
+            location_id=location_id,
             domain=self.domain,
             month=self.month,
             year=self.year,
-            start_date=start_date,
-            end_date=end_date,
+            start_date=new_start_date,
+            end_date=new_end_date,
             date_span=self.datespan
         )
         return config

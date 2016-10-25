@@ -354,8 +354,8 @@
             "type": "daterange",
             "column": "dob",
             "operator": "between",
-            "end": 4017,
-            "start": 6576
+            "end": 0,
+            "start": 2196
           }
         ],
         "columns": [
@@ -481,6 +481,14 @@
           {
             "column_name": "disabled_speaking_count",
             "agg_fun": "sum"
+          },
+          {
+            "column_name": "F_disabled_count",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "M_disabled_count",
+            "agg_fun": "sum"
           }
         ]
       },
@@ -519,6 +527,16 @@
           {
             "column_name": "disabled_speaking_count",
             "column_in_report": "disabled_speaking_count_1",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "F_disabled_count",
+            "column_in_report": "F_disabled_count_1",
+            "agg_fun": "sum"
+          },
+          {
+            "column_name": "M_disabled_count",
+            "column_in_report": "M_disabled_count_1",
             "agg_fun": "sum"
           }
         ]
@@ -723,7 +741,7 @@
             "agg_fun": "count_if",
             "condition": {
               "operator": "==",
-              "value": "yes"
+              "value": "1"
             }
           },
           {

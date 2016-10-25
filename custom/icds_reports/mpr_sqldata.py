@@ -420,10 +420,14 @@ class MPRUsingSalt(ICDSMixin, MPRData):
             data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
             use_salt = data.get('use_salt', 0)
 
-            return "5. Number of AWCs using Iodized Salt: {0}  % of AWCs: {0}/{1}".format(
-                use_salt,
-                self.awc_number
-            )
+            return "5. Number of AWCs using Iodized Salt: {0}".format(use_salt)
+
+    @property
+    def subtitle(self):
+        data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
+        use_salt = data.get('use_salt', 0)
+        percent = "%.2f" % ((use_salt or 0) * 100 / float(self.awc_number or 1))
+        return ["% of AWCs: {0} %".format(percent)]
 
 
 class MPRProgrammeCoverage(ICDSMixin, MPRData):
@@ -554,36 +558,36 @@ class MPRProgrammeCoverage(ICDSMixin, MPRData):
                     ),
                     (
                         _('Other'),
-                        'thr_rations_female_other',
-                        'thr_rations_male_other',
-                        'thr_rations_female_other_1',
-                        'thr_rations_male_other_1',
+                        'thr_rations_female_others',
+                        'thr_rations_male_others',
+                        'thr_rations_female_others_1',
+                        'thr_rations_male_others_1',
                         {
-                            'columns': ('thr_rations_female_other', 'thr_rations_female_other_1'),
-                            'alias': 'rations_female_other'
+                            'columns': ('thr_rations_female_others', 'thr_rations_female_others_1'),
+                            'alias': 'rations_female_others'
                         },
                         {
-                            'columns': ('thr_rations_male_other', 'thr_rations_male_other_1'),
-                            'alias': 'rations_male_other'
+                            'columns': ('thr_rations_male_others', 'thr_rations_male_others_1'),
+                            'alias': 'rations_male_others'
                         },
                         {
-                            'columns': ('rations_female_other', 'rations_male_other'),
-                            'alias': 'all_rations_other'
+                            'columns': ('rations_female_others', 'rations_male_others'),
+                            'alias': 'all_rations_others'
                         },
-                        'thr_rations_pregnant_other',
-                        'thr_rations_lactating_other'
+                        'thr_rations_pregnant_others',
+                        'thr_rations_lactating_others'
                     ),
                     (
                         _('All Categories (Total)'),
-                        ('thr_rations_female_st', 'thr_rations_female_sc', 'thr_rations_female_other'),
-                        ('thr_rations_male_st', 'thr_rations_male_sc', 'thr_rations_male_other'),
-                        ('thr_rations_female_st_1', 'thr_rations_female_sc_1', 'thr_rations_female_other_1'),
-                        ('thr_rations_male_st_1', 'thr_rations_male_sc_1', 'thr_rations_male_other_1'),
-                        ('rations_female_st', 'rations_female_sc', 'rations_female_other'),
-                        ('rations_male_st', 'rations_male_sc', 'rations_male_other'),
-                        ('all_rations_st' 'all_rations_sc', 'all_rations_other'),
-                        ('thr_rations_pregnant_st', 'thr_rations_pregnant_sc', 'thr_rations_pregnant_other'),
-                        ('thr_rations_lactating_st', 'thr_rations_lactating_sc', 'thr_rations_lactating_other'),
+                        ('thr_rations_female_st', 'thr_rations_female_sc', 'thr_rations_female_others'),
+                        ('thr_rations_male_st', 'thr_rations_male_sc', 'thr_rations_male_others'),
+                        ('thr_rations_female_st_1', 'thr_rations_female_sc_1', 'thr_rations_female_others_1'),
+                        ('thr_rations_male_st_1', 'thr_rations_male_sc_1', 'thr_rations_male_others_1'),
+                        ('rations_female_st', 'rations_female_sc', 'rations_female_others'),
+                        ('rations_male_st', 'rations_male_sc', 'rations_male_others'),
+                        ('all_rations_st' 'all_rations_sc', 'all_rations_others'),
+                        ('thr_rations_pregnant_st', 'thr_rations_pregnant_sc', 'thr_rations_pregnant_others'),
+                        ('thr_rations_lactating_st', 'thr_rations_lactating_sc', 'thr_rations_lactating_others'),
                     ),
                     (
                         _('Disabled'),
@@ -645,24 +649,70 @@ class MPRProgrammeCoverage(ICDSMixin, MPRData):
                     ),
                     (
                         _('III. Total present for at least one day during the month'),
-                        'thr_rations_partial_female',
-                        'thr_rations_partial_male',
-                        'thr_rations_partial_female_1',
-                        'thr_rations_partial_male_1',
                         {
-                            'columns': ('thr_rations_partial_female', 'thr_rations_partial_female_1'),
+                            'columns': (
+                                'thr_rations_partial_female',
+                                'thr_rations_female_sc',
+                                'thr_rations_female_st',
+                                'thr_rations_female_others'
+                            ),
+                            'alias': 'sum_thr_rations_female'
+                        },
+                        {
+                            'columns': (
+                                'thr_rations_partial_male',
+                                'thr_rations_male_sc',
+                                'thr_rations_male_st',
+                                'thr_rations_male_others'
+                            ),
+                            'alias': 'sum_thr_rations_male'
+                        },
+                        {
+                            'columns': (
+                                'thr_rations_partial_female_1',
+                                'thr_rations_female_sc_1',
+                                'thr_rations_female_st_1',
+                                'thr_rations_female_others_1'
+                            ),
+                            'alias': 'sum_thr_rations_female_1'
+                        },
+                        {
+                            'columns': (
+                                'thr_rations_partial_male_1',
+                                'thr_rations_male_sc_1',
+                                'thr_rations_male_st_1',
+                                'thr_rations_male_others_1'
+                            ),
+                            'alias': 'sum_thr_rations_male_1'
+                        },
+                        {
+                            'columns': ('sum_thr_rations_female', 'sum_thr_rations_female_1'),
                             'alias': 'total_rations_partial_female',
                         },
                         {
-                            'columns': ('thr_rations_partial_male', 'thr_rations_partial_male_1'),
+                            'columns': ('sum_thr_rations_male', 'sum_thr_rations_male_1'),
                             'alias': 'total_rations_partial_male'
                         },
                         {
                             'columns': ('total_rations_partial_female', 'total_rations_partial_male'),
                             'alias': 'all_rations_partial'
                         },
-                        'thr_rations_partial_pregnant',
-                        'thr_rations_partial_lactating'
+                        {
+                            'columns': (
+                                'thr_rations_partial_pregnant',
+                                'thr_rations_pregnant_sc',
+                                'thr_rations_pregnant_st',
+                                'thr_rations_pregnant_others',
+                            )
+                        },
+                        {
+                            'columns': (
+                                'thr_rations_partial_lactating',
+                                'thr_rations_lactating_sc',
+                                'thr_rations_lactating_st',
+                                'thr_rations_lactating_others',
+                            )
+                        }
                     ),
                     (
                         _('IV. Expected Total Person Feeding Days (TPFD)'),
@@ -739,8 +789,8 @@ class MPRProgrammeCoverage(ICDSMixin, MPRData):
                             'columns': ('total_thr_total_rations_female', 'total_thr_total_rations_male'),
                             'alias': 'total_thr_total_rations'
                         },
-                        'thr_rations_pregnant_minority',
-                        'thr_rations_lactating_minority'
+                        'thr_total_rations_pregnant',
+                        'thr_total_rations_lactating'
                     ),
                     (
                         _('VI. Feeding Efficiency'),
@@ -904,18 +954,18 @@ class MPRPreschoolEducation(ICDSMixin, MPRData):
                     ),
                     (
                         _('Other'),
-                        'pse_21_days_female_other',
-                        'pse_21_days_male_other',
+                        'pse_21_days_female_others',
+                        'pse_21_days_male_others',
                         {
-                            'columns': ('pse_21_days_female_other', 'pse_21_days_male_other'),
-                            'alias': '21_days_other'
+                            'columns': ('pse_21_days_female_others', 'pse_21_days_male_others'),
+                            'alias': '21_days_others'
                         }
                     ),
                     (
                         _('All Categories (Total)'),
-                        ('pse_21_days_female_st', 'pse_21_days_female_sc', 'pse_21_days_female_other'),
-                        ('pse_21_days_male_st', 'pse_21_days_male_sc', 'pse_21_days_male_other'),
-                        ('21_days_st', '21_days_sc', '21_days_other')
+                        ('pse_21_days_female_st', 'pse_21_days_female_sc', 'pse_21_days_female_others'),
+                        ('pse_21_days_male_st', 'pse_21_days_male_sc', 'pse_21_days_male_others'),
+                        ('21_days_st', '21_days_sc', '21_days_others')
                     ),
                     (
                         _('Disabled'),
