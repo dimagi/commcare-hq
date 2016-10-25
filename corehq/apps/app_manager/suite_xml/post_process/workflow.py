@@ -284,7 +284,7 @@ class EndOfFormNavigationWorkflow(object):
                 if match:
                     unused_source_datums = [datum for datum in unused_source_datums if datum.id != match.id]
 
-                yield match if match else target_datum.to_stack_datum()
+                yield match if match else target_datum
 
     @staticmethod
     def find_best_match(target_datum, source_datums):
@@ -298,12 +298,12 @@ class EndOfFormNavigationWorkflow(object):
             if target_datum.id == source_datum.id:
                 if source_datum.case_type and source_datum.case_type == target_datum.case_type:
                     # same ID, same case type
-                    candidate = target_datum.to_stack_datum()
+                    candidate = target_datum
                     break
             else:
                 if source_datum.case_type and source_datum.case_type == target_datum.case_type:
                     # different ID, same case type
-                    candidate = target_datum.to_stack_datum(source_id=source_datum.id)
+                    candidate = target_datum.clone_to_match(source_id=source_datum.id)
                     break
 
         return candidate
@@ -542,6 +542,9 @@ class WorkflowDatumMeta(object):
         # indicates whether this datum is here as a placeholder to match the parent module's datum
         self.from_parent_module = False
 
+        self.source_id = self.id  # can be changed if the source datum has a differnt ID
+        self.target_id = self.id  # can be changed if the target datum has a differnt ID
+
 
     @classmethod
     def from_session_datum(cls, session_datum):
@@ -577,9 +580,15 @@ class WorkflowDatumMeta(object):
             raise Exception("Datum already has a case type")
         self._case_type = case_type
 
-    def to_stack_datum(self, datum_id=None, source_id=None):
-        value = session_var(source_id or self.id) if self.requires_selection else self.function
-        return StackDatum(id=datum_id or self.id, value=value)
+    def clone_to_match(self, source_id=None, target_id=None):
+        new_meta = WorkflowDatumMeta(self.id, self.nodeset, self.function)
+        new_meta.source_id = source_id or self.id
+        new_meta.target_id = target_id or self.id
+        return new_meta
+
+    def to_stack_datum(self):
+        value = session_var(self.source_id) if self.requires_selection else self.function
+        return StackDatum(id=self.target_id, value=value)
 
     def __lt__(self, other):
         return self.id < other.id
