@@ -29,7 +29,7 @@
   {% if not app.is_remote_app %}
     <script>
       $(function () {
-        var multimedia_tab = (function () {
+        var MultimediaTab = function () {
           var self = {};
           self.load_state = ko.observable(null);
           self.multimedia_page_html = ko.observable('');
@@ -50,11 +50,12 @@
             }
           };
           return self;
-        }());
-        $("#multimedia").koApplyBindings(multimedia_tab);
-        $('#demand-multimedia').on('shown.bs.tab', function () {
-          if (multimedia_tab.load_state() === null) {
-            multimedia_tab.load_if_necessary();
+        };
+        var multimediaTab = new MultimediaTab();
+        $("#multimedia-tab").koApplyBindings(multimediaTab);
+        $('[href="#multimedia-tab"]').on('shown.bs.tab', function () {
+          if (multimediaTab.load_state() === null) {
+            multimediaTab.load_if_necessary();
           }
         });
       });
@@ -93,15 +94,15 @@
     }
     function removeLogo(slug) {
       $.post(
-              '{% url "hqmedia_remove_logo" domain app.id %}',
-              {
-                logo_slug: slug
-              },
-              function(data, status) {
-                if(status == 'success'){
-                  image_refs[slug].url("");
-                }
-              }
+        '{% url "hqmedia_remove_logo" domain app.id %}',
+        {
+          logo_slug: slug
+        },
+        function(data, status) {
+          if(status == 'success'){
+            image_refs[slug].url("");
+          }
+        }
       );
     }
   </script>
@@ -184,9 +185,5 @@
 
 
 {% block app_view_tabs %}
-  <div class="tab-content">
-    <div class="tab-pane{% if not copy_app_form.is_bound %} active{% endif %}" id="app-settings">
-      {% include "app_manager/v2/partials/app-settings.html" %}
-    </div>
-  </div>
+  {% include "app_manager/v2/partials/app-settings.html" %}
 {% endblock app_view_tabs %}
