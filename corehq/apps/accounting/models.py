@@ -1310,6 +1310,7 @@ class Subscription(models.Model):
         )
 
         new_subscription.save()
+        new_subscription.raise_conflicting_dates(new_subscription.date_start, new_subscription.date_end)
 
         new_subscription.set_billing_account_entry_point()
 
