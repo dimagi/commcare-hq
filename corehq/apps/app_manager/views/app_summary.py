@@ -133,7 +133,7 @@ def _get_name_map(app):
 
 def _translate_name(names, language):
     if not names:
-        return "[{}]".format(_("Unknown"))
+        return u"[{}]".format(_("Unknown"))
     try:
         return names[language]
     except KeyError:
@@ -204,13 +204,13 @@ class DownloadAppSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             for form in module.get_forms():
                 post_form_workflow = form.post_form_workflow
                 if form.post_form_workflow == WORKFLOW_FORM:
-                    post_form_workflow = "form:\n{}".format(
-                        "\n".join(
-                            ["{form}: {xpath} [{datums}]".format(
+                    post_form_workflow = u"form:\n{}".format(
+                        u"\n".join(
+                            [u"{form}: {xpath} [{datums}]".format(
                                 form=_get_translated_form_name(self.app, link.form_id, language),
                                 xpath=link.xpath,
-                                datums=", ".join(
-                                    "{}: {}".format(
+                                datums=u", ".join(
+                                    u"{}: {}".format(
                                         datum.name, datum.xpath
                                     ) for datum in link.datums)
                             ) for link in form.form_links]
@@ -331,7 +331,7 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
                     repeat=question_response.repeat,
                     group=question_response.group,
                     options="\n".join(
-                        ["{} - {}".format(_translate_name(option.translations, language), option.value)
+                        [u"{} - {}".format(_translate_name(option.translations, language), option.value)
                          for option in question_response.options]
                     ),
                     calculate=question_response.calculate,
@@ -342,7 +342,7 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
         return tuple(form_summary_rows)
 
     def _get_form_sheet_name(self, module, form, language):
-        return "{} - {}".format(
+        return u"{} - {}".format(
             _get_translated_module_name(self.app, module.unique_id, language),
             _get_translated_form_name(self.app, form.get_unique_id(), language),
         )
