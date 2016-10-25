@@ -434,6 +434,7 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
             key=lambda role: role.name if role.name else u'\uFFFF'
         ))
 
+        # skip the admin role since it's not editable
         for role in user_roles[1:]:
             role.hasUsersAssigned = bool(role.ids_of_assigned_users)
             role.has_unpermitted_location_restriction = (
