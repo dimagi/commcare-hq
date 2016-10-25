@@ -13,43 +13,68 @@ FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFro
         template: '#restore-as-view-template',
         limit: 10,
         initialize: function(options) {
-            this.total = options.total;
-            this.page = 1;
+            this.model = new Backbone.Model({
+                page: 1,
+                query: '',
+            });
+            this.model.on('change', this.fetchUsers.bind(this));
         },
         ui: {
             next: '.js-user-next',
             prev: '.js-user-previous',
             search: '.js-user-search',
             query: '.js-user-query',
+            page: '.js-page',
         },
         events: {
             'click @ui.next': 'onClickNext',
             'click @ui.prev': 'onClickPrev',
+            'click @ui.page': 'onClickPage',
             'submit @ui.search': 'onSubmitUserSearch',
         },
         templateHelpers: function() {
             return {
-                page: this.page,
-                total: this.total,
-                totalPages: Math.ceil(this.total / this.limit)
+                total: this.collection.total,
+                totalPages: this.totalPages(),
             };
         },
-        onClickNext: function(e) {
-            console.log('Next');
+        totalPages: function() {
+            return Math.ceil(this.collection.total / this.limit);
         },
-        onClickPrev: function(e) {
-            console.log('Prev');
-        },
-        onSubmitUserSearch: function(e) {
-            e.preventDefault();
+        fetchUsers: function() {
             this.collection.fetch({
                 reset: true,
                 data: JSON.stringify({
-                    query: this.ui.query.val(),
+                    query: this.model.get('query'),
                     limit: this.limit,
-                    page: this.page,
+                    page: this.model.get('page'),
                 })
-            });
+            }).done(this.render.bind(this));
+        },
+        onClickNext: function(e) {
+            e.preventDefault();
+            if (this.model.get('page') === this.totalPages()) {
+                console.warn('Attempted to non existant page');
+                return;
+            }
+            this.model.set('page', this.model.get('page') + 1);
+        },
+        onClickPrev: function(e) {
+            e.preventDefault();
+            if (this.model.get('page') === 1) {
+                console.warn('Attempted to non existant page');
+                return;
+            }
+            this.model.set('page', this.model.get('page') - 1);
+        },
+        onClickPage: function(e) {
+            e.preventDefault();
+            var page = $(e.currentTarget).data().page;
+            this.model.set('page', page);
+        },
+        onSubmitUserSearch: function(e) {
+            e.preventDefault();
+            this.model.set('query', this.ui.query.val());
         },
     });
 });

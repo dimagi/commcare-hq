@@ -10,6 +10,7 @@
                 <input
                     type="text"
                     class="js-user-query form-control"
+                    value="<%= query %>"
                     placeholder="Filter workers" />
                 <div class="input-group-btn">
                     <button class="btn btn-default" type="submit">
@@ -22,15 +23,15 @@
             <tbody>
             </tbody>
         </table>
-        <nav>
+        <nav class="module-pagination-container text-right">
             <ul class="pagination pagination-lg">
                 <!-- Render Previous button -->
+                <% if (page === 1) { %>
+                <li class="disabled">
+                <% } else { %>
                 <li>
-                    <% if (page === 1) { %>
-                  <a class="js-user-previous disabled">
-                    <% } else { %>
-                  <a class="js-user-previous">
-                    <% } %>
+                <% } %>
+                <a class="js-user-previous">
                     <span>&laquo;</span>
                   </a>
                 </li>
@@ -38,19 +39,19 @@
                 <!-- Render page buttons -->
                 <% for (var i = 0; i < totalPages; i++) { %>
                     <% if (i + 1 === page) { %>
-                    <li class="active"><a><%= i + 1 %></a></li>
+                    <li class="js-page active" data-page="<%= i + 1 %>"><a><%= i + 1 %></a></li>
                     <% } else { %>
-                    <li><a><%= i + 1 %></a></li>
+                    <li class="js-page" data-page="<%= i + 1 %>"><a><%= i + 1 %></a></li>
                     <% } %>
                 <% } %>
 
                 <!-- Render Next buttons -->
-                <li>
                 <% if (page === totalPages) { %>
-                  <a class="js-user-next disabled">
+                <li class="disabled">
                 <% } else { %>
-                  <a class="js-user-next">
+                <li>
                 <% } %>
+                    <a class="js-user-next">
                     <span>&raquo;</span>
                   </a>
                 </li>

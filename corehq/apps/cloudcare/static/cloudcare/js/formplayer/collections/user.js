@@ -15,6 +15,7 @@ FormplayerFrontend.module("Collections", function(Collections, FormplayerFronten
         },
 
         parse: function(responseObject) {
+            this.total = responseObject.response.total;
             return responseObject.response.itemList;
         },
 

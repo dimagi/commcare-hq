@@ -10,7 +10,6 @@ FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFro
             users.fetch().done(function(responseObject) {
                 var restoreAsView = new Users.Views.RestoreAsView({
                     collection: users,
-                    total: responseObject.response.total,
                 });
 
                 FormplayerFrontend.regions.main.show(restoreAsView);
