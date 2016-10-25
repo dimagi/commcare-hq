@@ -329,16 +329,21 @@ class EndOfFormNavigationWorkflow(object):
 
 
 class CaseListFormStackFrames(namedtuple('CaseListFormStackFrames', 'case_created case_not_created')):
+    """Class that represents the two stack create blocks generated for Case List Form Actions.
+    """
     source_session_var = None
 
     def add_children(self, children):
         for child in children:
             self.case_created.add_child(child)
             if not isinstance(child, WorkflowDatumMeta) or child.source_id != self.source_session_var:
+                # add all children to the 'case not created' block unless it's the datum of the
+                # case that was supposed to be created by the form
                 self.case_not_created.add_child(child)
 
     @property
     def ids_on_stack(self):
+        """All ID's that are already part the stack block"""
         return {child.id for child in self.case_created.children}
 
 
@@ -367,14 +372,19 @@ class CaseListFormWorkflow(object):
 
         if target_module.root_module_id:
             # add stack children for the root module before adding any for the child module.
-            self._add_datums_for_target(stack_frames, target_module.root_module, source_form_datums)
+            self._add_stack_children_for_target(stack_frames, target_module.root_module, source_form_datums)
 
-        self._add_datums_for_target(stack_frames, target_module, source_form_datums)
+        self._add_stack_children_for_target(stack_frames, target_module, source_form_datums)
         return stack_frames
 
-    def _add_datums_for_target(self, stack_frames, module, source_form_datums):
+    def _add_stack_children_for_target(self, stack_frames, target_module, source_form_datums):
+        """
+        :param stack_frames: Stack to add children to
+        :param target_module: Module that we're targeting for navigating to
+        :param source_form_datums: List of datums from the source form.
+        """
         ids_on_stack = stack_frames.ids_on_stack
-        target_frame_children = self.helper.get_frame_children(module.get_form(0), module_only=True)
+        target_frame_children = self.helper.get_frame_children(target_module.get_form(0), module_only=True)
         remaining_target_frame_children = [fc for fc in target_frame_children if fc.id not in ids_on_stack]
         frame_children = WorkflowHelper.get_datums_matched_to_source(
             remaining_target_frame_children, source_form_datums
@@ -382,6 +392,13 @@ class CaseListFormWorkflow(object):
         stack_frames.add_children(frame_children)
 
     def _get_stack_frames(self, target_module, form, source_form_datums):
+        """
+        Set up the stack blocks for a single case list form action.
+        :param target_module: Module that the user is returning to
+        :param form: Case list form
+        :param source_form_datums: List of datum from the case list form
+        :return: CaseListFormStackFrames object
+        """
         source_session_var = self._get_source_session_var(form, target_module.case_type)
         source_case_id = session_var(source_session_var)
         case_count = CaseIDXPath(source_case_id).case().count()
