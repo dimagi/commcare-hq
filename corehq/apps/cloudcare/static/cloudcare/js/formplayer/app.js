@@ -172,6 +172,7 @@ FormplayerFrontend.on("start", function (options) {
     user.formplayer_url = options.formplayer_url;
     user.debuggerEnabled = options.debuggerEnabled;
     user.phoneMode = options.phoneMode;
+    user.restoreAs = FormplayerFrontend.request('restoreAsUser', user.domain, user.username);
     user.displayOptions = {
         phoneMode: options.phoneMode,
         oneQuestionPerScreen: options.oneQuestionPerScreen,
@@ -203,6 +204,13 @@ FormplayerFrontend.on('setAppDisplayProperties', function(app) {
 
 FormplayerFrontend.reqres.setHandler('getAppDisplayProperties', function() {
     return FormplayerFrontend.DisplayProperties || {};
+});
+
+FormplayerFrontend.reqres.setHandler('restoreAsUser', function(domain, username) {
+    return FormplayerFrontend.SessionNavigate.Users.Utils.getRestoreAsUser(
+        domain,
+        username
+    )
 });
 
 FormplayerFrontend.on("sync", function () {

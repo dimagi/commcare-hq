@@ -16,5 +16,10 @@ FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFro
         restoreAsKey: function(domain, username) {
             return domain + ':' + username;
         },
+        getRestoreAsUser: function(domain, username) {
+            return window.localStorage.getItem(
+                Users.Utils.restoreAsKey(domain, username)
+            );
+        }
     }
 });
