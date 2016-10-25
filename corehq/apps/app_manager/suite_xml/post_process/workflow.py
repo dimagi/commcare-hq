@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from functools import total_ordering
 from os.path import commonprefix
 import re
@@ -328,6 +328,19 @@ class EndOfFormNavigationWorkflow(object):
                     ))
 
 
+class CaseListFormStackFrames(namedtuple('CaseListFormStackFrames', 'case_created case_not_created')):
+    source_session_var = None
+
+    def add_children(self, children):
+        for child in children:
+            self.case_created.add_child(child)
+            if not isinstance(child, WorkflowDatumMeta) or child.source_id != self.source_session_var:
+                self.case_not_created.add_child(child)
+
+    def ids_on_stack(self):
+        return {child.id for child in self.case_created.children}
+
+
 class CaseListFormWorkflow(object):
 
     def __init__(self, helper):
@@ -348,39 +361,17 @@ class CaseListFormWorkflow(object):
         return stack_frames
 
     def get_stack_frames_for_case_list_form_target(self, target_module, form):
-        stack_frames = []
-        target_command = id_strings.menu_id(target_module)
-
-        if form.form_type == 'module_form':
-            [reg_action] = form.get_registration_actions(target_module.case_type)
-            source_session_var = form.session_var_for_action(reg_action)
-        if form.form_type == 'advanced_form':
-            # match case session variable
-            reg_action = form.get_registration_actions(target_module.case_type)[0]
-            source_session_var = reg_action.case_session_var
-        source_case_id = session_var(source_session_var)
         source_form_datums = self.helper.get_form_datums(form)
-        case_count = CaseIDXPath(source_case_id).case().count()
-        frame_case_created = StackFrameMeta(
-            self.get_if_clause(case_count.gt(0), target_command), current_session=source_form_datums
-        )
-        stack_frames.append(frame_case_created)
-        frame_case_not_created = StackFrameMeta(
-            self.get_if_clause(case_count.eq(0), target_command), current_session=source_form_datums
-        )
-        stack_frames.append(frame_case_not_created)
+        stack_frames = self._get_stack_frames(target_module, form, source_form_datums)
 
         def add_datums_for_target(module):
-            existing_ids = {fc.id for fc in frame_case_created.children}
+            ids_on_stack = stack_frames.ids_on_stack
             target_frame_children = self.helper.get_frame_children(module.get_form(0), module_only=True)
-            remaining_target_frame_children = [fc for fc in target_frame_children if fc.id not in existing_ids]
+            remaining_target_frame_children = [fc for fc in target_frame_children if fc.id not in ids_on_stack]
             frame_children = WorkflowHelper.get_datums_matched_to_source(
                 remaining_target_frame_children, source_form_datums
             )
-            for child in frame_children:
-                frame_case_created.add_child(child)
-                if not isinstance(child, WorkflowDatumMeta) or child.source_id != source_session_var:
-                    frame_case_not_created.add_child(child)
+            stack_frames.add_children(frame_children)
 
         if target_module.root_module_id:
             # add stack children for the root module before adding any for the child module.
@@ -388,6 +379,32 @@ class CaseListFormWorkflow(object):
 
         add_datums_for_target(target_module)
         return stack_frames
+
+    def _get_stack_frames(self, target_module, form, source_form_datums):
+        source_session_var = self._get_source_session_var(form, target_module.case_type)
+        source_case_id = session_var(source_session_var)
+        case_count = CaseIDXPath(source_case_id).case().count()
+        target_command = id_strings.menu_id(target_module)
+        frame_case_created = StackFrameMeta(
+            self.get_if_clause(case_count.gt(0), target_command), current_session=source_form_datums
+        )
+        frame_case_not_created = StackFrameMeta(
+            self.get_if_clause(case_count.eq(0), target_command), current_session=source_form_datums
+        )
+        stack_frames = CaseListFormStackFrames(case_created=frame_case_created, case_not_created=frame_case_not_created)
+        stack_frames.source_session_var = source_session_var
+        return stack_frames
+
+    @staticmethod
+    def _get_source_session_var(form, target_case_type):
+        if form.form_type == 'module_form':
+            [reg_action] = form.get_registration_actions(target_case_type)
+            source_session_var = form.session_var_for_action(reg_action)
+        if form.form_type == 'advanced_form':
+            # match case session variable
+            reg_action = form.get_registration_actions(target_case_type)[0]
+            source_session_var = reg_action.case_session_var
+        return source_session_var
 
     @staticmethod
     def get_target_dm(target_form_dm, case_type, module):
