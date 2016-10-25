@@ -121,7 +121,7 @@ class IndicatorESAdapter(IndicatorAdapter):
         if indicator_rows:
             es = get_es_new()
             for indicator_row in indicator_rows:
-                primary_key_values = [i.value for i in indicator_row if i.column.is_primary_key]
+                primary_key_values = [str(i.value) for i in indicator_row if i.column.is_primary_key]
                 all_values = {i.column.database_column_name: i.value for i in indicator_row}
                 es.index(
                     index=self.table_name, body=all_values,
