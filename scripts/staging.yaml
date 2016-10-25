@@ -73,5 +73,4 @@ submodules:
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
   deployment/commcare-hq-deploy:
-    branches:
-      - br/jmx-formplayer
+    branches: []
