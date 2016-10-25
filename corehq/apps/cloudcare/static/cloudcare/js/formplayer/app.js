@@ -127,6 +127,7 @@ FormplayerFrontend.on('startForm', function (data) {
     data.xform_url = user.formplayer_url;
     data.domain = user.domain;
     data.username = user.username;
+    data.restoreAs = user.restoreAs;
     data.formplayerEnabled = true;
     data.displayOptions = user.displayOptions;
     data.onerror = function (resp) {

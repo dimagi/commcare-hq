@@ -66,6 +66,7 @@ function WebFormSession(params) {
     self.debuggerEnabled = params.debuggerEnabled;
     self.post_url = params.post_url;
     self.displayOptions = params.displayOptions;
+    self.restoreAs = params.restoreAs;
 
     if (params.form_uid) {
         self.formSpec = {type: 'form-name', val: params.form_uid};
@@ -136,6 +137,7 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
     requestParams.form_context = self.formContext;
     requestParams.domain = self.domain;
     requestParams.username = self.username;
+    requestParams.restoreAs = self.restoreAs;
     requestParams['session-id'] = self.session_id;
     // stupid hack for now to make up for both being used in different requests
     requestParams['session_id'] = self.session_id;
