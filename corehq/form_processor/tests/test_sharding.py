@@ -1,10 +1,10 @@
 from collections import defaultdict
+from unittest import skipUnless, SkipTest
 from uuid import uuid4
 
 from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
-from unittest import skipUnless, SkipTest
 
 from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
@@ -75,7 +75,42 @@ class ShardingTests(TestCase):
             cases_per_db
         )
 
+    def test_python_hashing_gives_correct_db(self):
+        # Rudimentary test to ensure that python sharding matches SQL sharding
+        num_forms = 100
+        form_ids = [create_form_for_test(DOMAIN).form_id for i in range(num_forms)]
 
+        dbs_for_docs = ShardAccessor.get_database_for_docs(form_ids)
+        for form_id, db_alias in dbs_for_docs.items():
+            XFormInstanceSQL.objects.using(db_alias).get(form_id=form_id)
+
+
+DATABASES = {
+    key: {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': key,
+    } for key in ['default', 'proxy', 'p1', 'p2', 'p3', 'p4', 'p5']
+}
+
+
+PARTITION_DATABASE_CONFIG = {
+    'shards': {
+        'p1': [0, 204],
+        'p2': [205, 409],
+        'p3': [410, 614],
+        'p4': [615, 819],
+        'p5': [820, 1023]
+    },
+    'groups': {
+        'main': ['default'],
+        'proxy': ['proxy'],
+        'form_processing': ['p1', 'p2', 'p3', 'p4', 'p5'],
+    }
+}
+
+
+@override_settings(PARTITION_DATABASE_CONFIG=PARTITION_DATABASE_CONFIG, DATABASES=DATABASES, ALLOW_FORM_PROCESSING_QUERIES=True)
+@skipUnless(settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup')
 class ShardAccessorTests(TestCase):
     def test_hash_doc_ids(self):
         N = 1001
@@ -99,3 +134,22 @@ class ShardAccessorTests(TestCase):
         tollerance = N * 0.05  # 5% tollerance
         diffs = [abs(even_split - count) for count in doc_count_per_db.values()]
         self.assertTrue(all(diff < tollerance for diff in diffs))
+
+    def test_hash_in_python(self):
+        # test that python hashing matches with SQL hashing
+        N = 1024
+        doc_ids = [str(i) for i in range(N)]
+
+        sql_hashes = ShardAccessor.hash_doc_ids(doc_ids)
+
+        csiphash_hashes = ShardAccessor.hash_doc_ids_python(doc_ids)
+        self.assertEquals(len(csiphash_hashes), N)
+        self.assertTrue(all(isinstance(hash_, (int, long)) for hash_ in csiphash_hashes.values()))
+
+        N_shards = 1024
+        part_mask = N_shards - 1
+
+        sql_shards = {doc_id: hash_ & part_mask for doc_id, hash_ in sql_hashes.items()}
+        python_shards = {doc_id: hash_ & part_mask for doc_id, hash_ in sql_hashes.items()}
+
+        self.assertEqual(python_shards, sql_shards)

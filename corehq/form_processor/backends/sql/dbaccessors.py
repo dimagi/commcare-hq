@@ -1,4 +1,5 @@
 import logging
+import struct
 from abc import ABCMeta, abstractproperty
 from abc import abstractmethod
 from itertools import groupby
@@ -6,6 +7,7 @@ from datetime import datetime
 
 import itertools
 
+import csiphash
 import six
 from django.conf import settings
 from django.db import connections, InternalError, transaction
@@ -80,6 +82,20 @@ class ShardAccessor(object):
             rows = fetchall_as_namedtuple(cursor)
             return {row.doc_id: row.hash for row in rows}
 
+    @staticmethod
+    def hash_doc_ids_python(doc_ids):
+        key = b'\x00' * 16
+
+        def _hash_doc_id(doc_id):
+            digest = csiphash.siphash24(key, doc_id)
+            hash_long = struct.unpack("<Q", digest)[0]
+            # convert 64 bit hash to 32 bit to match Postgres
+            return hash_long & 0xffffffff
+
+        return {
+            doc_id: _hash_doc_id(doc_id)
+            for doc_id in doc_ids
+        }
 
     @staticmethod
     def get_database_for_docs(doc_ids):
@@ -91,7 +107,7 @@ class ShardAccessor(object):
         shard_map = PartitionConfig().get_django_shard_map()
         part_mask = len(shard_map) - 1
         for chunk in chunked(doc_ids, 100):
-            hashes = ShardAccessor.hash_doc_ids(chunk)
+            hashes = ShardAccessor.hash_doc_ids_python(chunk)
             shards = {doc_id: hash_ & part_mask for doc_id, hash_ in hashes.items()}
             databases.update({
                 doc_id: shard_map[shard_id].django_dbname for doc_id, shard_id in shards.items()
