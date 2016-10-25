@@ -679,11 +679,9 @@ def _send_downgrade_notice(invoice, context):
 
 def _downgrade_domain(invoice):
     invoice.subscription.change_plan(
-        SoftwarePlanVersion.get(
-            DefaultProductPlan.get_default_plan(
-                SoftwarePlanEdition.COMMUNITY
-            ).plan.get_version()
-        ),
+        DefaultProductPlan.get_default_plan(
+            SoftwarePlanEdition.COMMUNITY
+        ).plan.get_version(),
         note='Automatic downgrade to community for invoice 60 days late'
     )
 
