@@ -51,7 +51,6 @@ branches:
   - bmb/currentind-string # Biyeun 11/12
 #  - np/110/TEMPLATES
   - ce/billing-notification # Cal 10/25
-  - typeahead-to-atwho # Jenny 10/25
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
