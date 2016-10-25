@@ -16,6 +16,10 @@ FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFro
                     { user: this.model.toJSON() }
                 ),
                 confirmText: gettext('Yes, log in as this user'),
+                onConfirm: function() {
+                    Users.Utils.logInAsUser(this.model.get('username'));
+                    FormplayerFrontend.trigger('navigateHome');
+                }.bind(this),
             });
         },
     });

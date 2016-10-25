@@ -313,9 +313,14 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
 });
 
 FormplayerFrontend.on('navigateHome', function(appId) {
-    var urlObject = Util.currentUrlToObject();
+    var urlObject = Util.currentUrlToObject(),
+        currentUser = FormplayerFrontend.request('currentUser');
     urlObject.clearExceptApp();
     FormplayerFrontend.trigger("clearForm");
     FormplayerFrontend.regions.breadcrumb.empty();
-    FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });
+    if (currentUser.phoneMode) {
+        FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });
+    } else {
+        FormplayerFrontend.navigate("/apps", { trigger: true });
+    }
 });
