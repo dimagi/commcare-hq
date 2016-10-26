@@ -42,6 +42,32 @@ class TestFilters(ElasticTestMixin, TestCase):
 
         self.checkQuery(query, json_output)
 
+    def test_not_term_filter(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {
+                                "not": {
+                                    "term": {
+                                        "type": "badcasetype"
+                                    }
+                                }
+                            },
+                            {"match_all": {}}
+                        ]
+                    },
+                    "query": {"match_all": {}}
+                }
+            },
+            "size": SIZE_LIMIT
+        }
+
+        query = HQESQuery('cases').filter(filters.not_term('type', 'badcasetype'))
+
+        self.checkQuery(query, json_output)
+
 
 class TestSourceFiltering(ElasticTestMixin, TestCase):
 
