@@ -111,6 +111,14 @@ PARTITION_DATABASE_CONFIG = {
 @override_settings(PARTITION_DATABASE_CONFIG=PARTITION_DATABASE_CONFIG, DATABASES=DATABASES, ALLOW_FORM_PROCESSING_QUERIES=True)
 @skipUnless(settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup')
 class ShardAccessorTests(TestCase):
+
+    @classmethod
+    def tearDownClass(cls):
+        super(ShardAccessorTests, cls).tearDownClass()
+        partition_config.get_django_shard_map.reset_cache(partition_config)
+        partition_config.get_shards.reset_cache(partition_config)
+        partition_config._get_django_shards.reset_cache(partition_config)
+
     def test_hash_doc_ids(self):
         N = 1001
         doc_ids = [str(i) for i in range(N)]
@@ -136,7 +144,7 @@ class ShardAccessorTests(TestCase):
 
     def test_hash_in_python(self):
         # test that python hashing matches with SQL hashing
-        N = 1024
+        N = 2048
         doc_ids = [str(i) for i in range(N)]
 
         sql_hashes = ShardAccessor.hash_doc_ids_sql(doc_ids)
