@@ -494,7 +494,7 @@ ko.bindingHandlers.typeahead = {
     init: function (element, valueAccessor) {
         var $element = $(element);
         if (!$element.atwho) {
-           throw new Error("The typeahead binding requires Atwho.js and Caret.js");
+            throw new Error("The typeahead binding requires Atwho.js and Caret.js");
         }
 
         hqImport('style/js/atwho').init($element, {}, function() {
