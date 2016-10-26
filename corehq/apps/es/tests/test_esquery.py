@@ -170,3 +170,37 @@ class TestESQuery(ElasticTestMixin, TestCase):
 
             response = query.values_list('domain', flat=True)
             self.assertEqual([u'mikesproject', u'jacksproject'], response)
+
+    def test_sort(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {"match_all": {}}
+                        ]
+                    },
+                    "query": {"match_all": {}}
+                }
+            },
+            "size": SIZE_LIMIT,
+            "sort": [{
+                "timeEnd": {
+                    "order": "asc"
+                }
+            }],
+        }
+        query = (
+            HQESQuery('forms')
+            .sort('timeEnd')
+        )
+        self.checkQuery(query, json_output)
+        json_output['sort'] = [
+            {"timeStart": {"order": "asc"}},
+        ]
+        self.checkQuery(query.sort('timeStart'), json_output)
+        json_output['sort'] = [
+            {"timeEnd": {"order": "asc"}},
+            {"timeStart": {"order": "asc"}},
+        ]
+        self.checkQuery(query.sort('timeStart', reset_sort=False), json_output)
