@@ -9,7 +9,7 @@ from corehq.apps.userreports.exceptions import InvalidQueryColumn
 from corehq.apps.userreports.expressions import ExpressionFactory
 
 from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
-from corehq.apps.userreports.sql.columns import DEFAULT_MAXIMUM_EXPANSION
+from corehq.apps.userreports.const import DEFAULT_MAXIMUM_EXPANSION
 from couchforms.jsonobject_extensions import GeoPointProperty
 from dimagi.ext.jsonobject import (
     BooleanProperty,

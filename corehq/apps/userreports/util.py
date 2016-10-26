@@ -9,7 +9,6 @@ from corehq import privileges, toggles
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.userreports.const import (
     REPORT_BUILDER_EVENTS_KEY,
-    UCR_SQL_BACKEND,
     UCR_ES_BACKEND
 )
 from django_prbac.utils import has_privilege

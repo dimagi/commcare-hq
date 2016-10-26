@@ -353,12 +353,20 @@ class ESQuery(object):
         """pretty prints the JSON query that will be sent to elasticsearch."""
         print self.dumps(pretty=True)
 
-    def sort(self, field, desc=False):
+    def sort(self, field, desc=False, reset_sort=True):
         """Order the results by field."""
         query = deepcopy(self)
-        query.es_query['sort'] = {
+        sort_field = {
             field: {'order': 'desc' if desc else 'asc'}
         }
+
+        if reset_sort:
+            query.es_query['sort'] = [sort_field]
+        else:
+            if not query.es_query.get('sort'):
+                query.es_query['sort'] = []
+            query.es_query['sort'].append(sort_field)
+
         return query
 
     def remove_default_filters(self):
