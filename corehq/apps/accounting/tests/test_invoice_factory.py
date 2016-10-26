@@ -22,7 +22,7 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         self.account = BillingAccount.get_or_create_account_by_domain(
             domain=self.domain.name, created_by="TEST"
         )[0]
-        self.community = DefaultProductPlan.get_default_plan().plan.get_version()
+        self.community = DefaultProductPlan.get_default_plan_version()
         generator.arbitrary_commcare_users_for_domain(
             self.domain.name, self.community.user_limit + 1
         )

@@ -143,7 +143,7 @@ def prepare_domain(domain_name):
         domain.name,
         created_by="automated-test",
     )[0]
-    plan = DefaultProductPlan.get_default_plan(
+    plan = DefaultProductPlan.get_default_plan_version(
         edition=SoftwarePlanEdition.ADVANCED
     )
     subscription = Subscription.new_domain_subscription(

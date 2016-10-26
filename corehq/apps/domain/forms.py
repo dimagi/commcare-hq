@@ -1716,9 +1716,7 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
 
     @transaction.atomic
     def process_subscription_management(self):
-        enterprise_plan_version = DefaultProductPlan.get_default_plan(
-            SoftwarePlanEdition.ENTERPRISE
-        ).plan.get_version()
+        enterprise_plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.ENTERPRISE)
         if self.current_subscription:
             self.current_subscription.change_plan(
                 enterprise_plan_version,
@@ -1804,7 +1802,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
 
     @transaction.atomic
     def process_subscription_management(self):
-        advanced_trial_plan_version = DefaultProductPlan.get_default_plan(
+        advanced_trial_plan_version = DefaultProductPlan.get_default_plan_version(
             edition=SoftwarePlanEdition.ADVANCED, is_trial=True,
         )
         if self.current_subscription:
@@ -1988,7 +1986,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                 "CommCare %s edition with privilege REPORT_BUILDER_5 was not found! Requires manual setup."
                 % edition
             )
-            new_plan_version = DefaultProductPlan.get_default_plan(
+            new_plan_version = DefaultProductPlan.get_default_plan_version(
                 edition=self.cleaned_data['software_plan_edition'],
             )
 

@@ -121,11 +121,7 @@ def delete_all_accounts():
 
 @unit_testing_only
 def subscribable_plan(edition=SoftwarePlanEdition.STANDARD):
-    return DefaultProductPlan.objects.get(
-        edition=edition,
-        product_type=SoftwareProductType.COMMCARE,
-        is_trial=False
-    ).plan.get_version()
+    return DefaultProductPlan.get_default_plan_version(edition)
 
 
 @unit_testing_only
@@ -194,12 +190,9 @@ def arbitrary_commcare_users_for_domain(domain, num_users, is_active=True):
 
 @unit_testing_only
 def create_excess_community_users(domain):
-    community_plan = DefaultProductPlan.objects.get(
-        product_type=SoftwareProductType.COMMCARE,
-        edition=SoftwarePlanEdition.COMMUNITY
-    ).plan.get_version()
-    num_active_users = random.randint(community_plan.user_limit + 1,
-                                      community_plan.user_limit + 4)
+    community_plan_version = DefaultProductPlan.get_default_plan_version()
+    num_active_users = random.randint(community_plan_version.user_limit + 1,
+                                      community_plan_version.user_limit + 4)
     arbitrary_commcare_users_for_domain(domain.name, num_active_users)
     return num_active_users
 

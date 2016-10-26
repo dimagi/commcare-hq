@@ -32,7 +32,7 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
 
         self.account = BillingAccount.get_or_create_account_by_domain(
             self.project.name, created_by=self.admin_user.username)[0]
-        self.advanced_plan = DefaultProductPlan.get_default_plan(edition=SoftwarePlanEdition.ADVANCED)
+        self.advanced_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
         self._init_pro_with_rb_plan_and_version()
 
     def _init_pro_with_rb_plan_and_version(self):
