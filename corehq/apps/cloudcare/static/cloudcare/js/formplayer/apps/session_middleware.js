@@ -10,10 +10,10 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
                         fn(key, arguments);
                     });
                     return value(arguments);
-                }
+                };
             });
             return wrappedApi;
-        }
+        },
     };
     var backButtonShowHideMiddleware = function(name) {
         if (name === 'singleApp') {
