@@ -20,7 +20,6 @@ from corehq.apps.accounting.models import (
     FeatureRate,
     SoftwarePlan,
     SoftwarePlanEdition,
-    SoftwareProductType,
     Subscriber,
     Subscription,
     SubscriptionAdjustment,
