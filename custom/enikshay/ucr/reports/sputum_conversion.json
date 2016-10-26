@@ -18,9 +18,9 @@
                 "datatype": "string",
                 "required": false,
                 "display": "Case Open Date",
-                "field": "patient_registration_date",
+                "field": "opened_on",
                 "type": "date",
-                "slug": "patient_registration_date"
+                "slug": "date"
             },
             {
                 "compare_as_string": false,
