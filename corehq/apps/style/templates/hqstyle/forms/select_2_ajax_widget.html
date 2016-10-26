@@ -1,0 +1,27 @@
+{% load hq_shared_tags %}
+<script>
+    $(function(){
+        $('#{{ id }}').select2({
+                ajax: {
+                    url: "{{ endpoint }}",
+                    dataType: 'json',
+                    data: function (term, page) {
+                        return {
+                            q: term,
+                            page_limit: {{ page_size }},
+                            page: page,
+                         };
+                    },
+                    results: function (data, page) {
+                        var more = (page * {{ page_size }}) < data.total;
+                        return {results: data.results, more: more};
+                    }
+                },
+                initSelection: function (element, callback) {
+                    var initial = {{ initial|JSON }};
+                    callback(initial);
+                },
+                escapeMarkup: function (m) { return m; }
+            }).select2('val', {{ initial|JSON }});
+    })
+</script>
