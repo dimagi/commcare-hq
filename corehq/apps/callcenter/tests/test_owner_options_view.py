@@ -119,9 +119,9 @@ class CallCenterLocationOwnerOptionsViewTest(TestCase):
             response_json = json.loads(response.content)
             self.assertEqual(response_json['total'], len(expected_id_sets))
 
-            for i, item in enumerate(response_json['results']):
+            for item_index, item in enumerate(response_json['results']):
                 id_ = item['id']
-                option_index = ((page - 1) * page_size) + i
+                option_index = ((page - 1) * page_size) + item_index
                 self.assertTrue(
                     id_ in expected_id_sets[option_index],
                     "Unexpected item {} at index {}.".format(item, option_index)
