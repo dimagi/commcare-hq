@@ -4068,8 +4068,8 @@ class LazyBlobDoc(BlobMixin):
     def __attachment_cache_key(self, name):
         return u'lazy_attachment/{id}/{name}'.format(id=self.get_id, name=name)
 
-    def __set_cached_attachment(self, name, content):
-        cache.set(self.__attachment_cache_key(name), content, timeout=60 * 60 * 24)
+    def __set_cached_attachment(self, name, content, timeout=60*60*24):
+        cache.set(self.__attachment_cache_key(name), content, timeout=timeout)
         self._LAZY_ATTACHMENTS_CACHE[name] = content
 
     def __get_cached_attachment(self, name):
@@ -4116,8 +4116,9 @@ class LazyBlobDoc(BlobMixin):
                     if hasattr(e, 'response'):
                         del e.response
                     content = e
+                    self.__set_cached_attachment(name, content, timeout=60*5)
                     raise
-                finally:
+                else:
                     self.__set_cached_attachment(name, content)
 
         if isinstance(content, ResourceNotFound):
