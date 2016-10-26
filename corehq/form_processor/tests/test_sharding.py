@@ -114,7 +114,7 @@ class ShardAccessorTests(TestCase):
     def test_hash_doc_ids(self):
         N = 1001
         doc_ids = [str(i) for i in range(N)]
-        hashes = ShardAccessor.hash_doc_ids(doc_ids)
+        hashes = ShardAccessor.hash_doc_ids_sql(doc_ids)
         self.assertEquals(len(hashes), N)
         self.assertTrue(all(isinstance(hash_, int) for hash_ in hashes.values()))
 
@@ -139,7 +139,7 @@ class ShardAccessorTests(TestCase):
         N = 1024
         doc_ids = [str(i) for i in range(N)]
 
-        sql_hashes = ShardAccessor.hash_doc_ids(doc_ids)
+        sql_hashes = ShardAccessor.hash_doc_ids_sql(doc_ids)
 
         csiphash_hashes = ShardAccessor.hash_doc_ids_python(doc_ids)
         self.assertEquals(len(csiphash_hashes), N)
