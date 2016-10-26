@@ -809,12 +809,21 @@ def save_locations(location_stubs, types_by_code):
 
         for child_stub in child_stubs:
             child = child_stub.db_object
-            child.parent = parent_location
             if child_stub.do_delete:
                 # keep track of to be deleted items to delete them in top-to-bottom order
                 to_be_deleted.append(child)
             elif child_stub.needs_save:
                 child.location_type = types_by_code.get(child_stub.location_type)
+                if parent_location:
+                    # refetch parent_location object so that mptt related fields are updated consistently,
+                    #   since we are saving top to bottom, parent_location would not have any pending
+                    #   saves, so this is the right point to refetch the object.
+                    child.parent = SQLLocation.objects.get(
+                        domain=parent_location.domain,
+                        site_code=parent_code
+                    )
+                else:
+                    child.parent = None
                 child.save()
             update_children(child_stub)
 
