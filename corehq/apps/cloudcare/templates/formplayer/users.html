@@ -101,6 +101,7 @@
 
 </script>
 <script type="text/template" id="restore-as-banner-template">
+  {% if request|toggle_enabled:'RESTORE_AS_CLOUDCARE' %}
     <% if (restoreAs) { %>
     <div class="restore-as-banner module-banner">
         <span>
@@ -109,4 +110,5 @@
         </span>
     </div>
     <% } %>
+  {% endif %}
 </script>

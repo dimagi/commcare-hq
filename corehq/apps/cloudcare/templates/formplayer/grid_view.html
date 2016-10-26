@@ -89,12 +89,10 @@
 
 
 <script id="row-template" type="text/template">
-  {% if request|toggle_enabled:'RESTORE_AS_CLOUDCARE' %}
   <div class="appicon appicon-default">
     <i class="fcc fcc-flower appicon-icon" aria-hidden="true"></i>
     <div class="appicon-title">
       <h3><%- name %></h3>
     </div>
   </div>
-  {% endif %}
 </script>
