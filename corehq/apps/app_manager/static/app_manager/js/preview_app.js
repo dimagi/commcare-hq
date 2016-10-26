@@ -7,6 +7,7 @@ hqDefine('app_manager/js/preview_app.js', function() {
     
     module.EVENTS = {
         RESIZE: 'previewApp.resize',
+        BACK: 'click .js-preview-back',
     };
 
     module.POSITION = {
@@ -26,6 +27,7 @@ hqDefine('app_manager/js/preview_app.js', function() {
     ) {
 
         var $appPreview = $(previewWindowSelector);
+        var $appPreviewIframe = $(previewWindowSelector).find('iframe');
         var $appBody = $(appManagerBodySelector);
         var $togglePreviewBtn = $(previewToggleBtnSelector);
 
@@ -44,6 +46,13 @@ hqDefine('app_manager/js/preview_app.js', function() {
                 _hideAppPreview();
             }
         };
+
+        var _navigateBack = function() {
+            var previewWindow = $appPreviewIframe[0].contentWindow;
+            previewWindow.postMessage({
+                action: 'back',
+            }, window.location.origin);
+        }
 
         var _showAppPreview = function() {
             $('.preview-action-show').addClass('hide');
@@ -87,6 +96,7 @@ hqDefine('app_manager/js/preview_app.js', function() {
         _resizeAppPreview();
         $(window).resize(_resizeAppPreview);
         $(window).on(module.EVENTS.RESIZE, _resizeAppPreview);
+        $(document).on(module.EVENTS.BACK, _navigateBack);
 
     };
 
