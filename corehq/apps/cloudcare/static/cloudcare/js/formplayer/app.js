@@ -204,7 +204,7 @@ FormplayerFrontend.on("start", function (options) {
 
 FormplayerFrontend.on('navigation:back', function() {
     var url = Backbone.history.getFragment();
-    if (url.startsWith('/single_app')) {
+    if (!url.startsWith('/single_app')) {
         window.history.back();
     }
 });
