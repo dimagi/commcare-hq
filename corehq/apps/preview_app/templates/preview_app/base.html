@@ -151,6 +151,7 @@
         <section id="cases"></section>
         <div id="menu-container">
             <div id="phone-mode-navigation"></div>
+            <div id="formplayer-progress-container"></div>
             <div id="webforms-nav" class="webforms-nav" data-bind="template: { name: 'form-navigation-ko-template' }"></div>
             <section id="cloudcare-notifications" class="notifications-container"></section>
             <div id="breadcrumb-region"></div>
@@ -194,6 +195,7 @@
         {% include 'formplayer/session_list.html' %}
         {% include 'formplayer/navigation.html' %}
         {% include 'formplayer/confirmation_modal.html' %}
+        {% include 'formplayer/progress.html' %}
 
         {% include 'formplayer/dependencies.html' %}
         {% include "style/includes/ko.html" %}

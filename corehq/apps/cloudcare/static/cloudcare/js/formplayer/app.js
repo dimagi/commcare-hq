@@ -217,7 +217,7 @@ FormplayerFrontend.on("sync", function () {
         if (response.responseJSON.status === 'retry') {
             FormplayerFrontend.trigger('retry', response.responseJSON, function() {
                 $.ajax(options);
-            }, gettext('Please wait while we sync your user...'));
+            }, gettext('Waiting for server progress'));
         } else {
             FormplayerFrontend.trigger('clearProgress');
             tfSyncComplete(response.responseJSON.status === 'error');
@@ -244,7 +244,6 @@ FormplayerFrontend.on("sync", function () {
 FormplayerFrontend.on("retry", function(response, retryFn, progressMessage) {
 
     var progressView = FormplayerFrontend.regions.loadingProgress.currentView,
-        progress = response.total === 0 ? 0 : response.done / response.total,
         retryTimeout = response.retryAfter * 1000;
     progressMessage = progressMessage || gettext('Please wait...');
 
@@ -255,7 +254,7 @@ FormplayerFrontend.on("retry", function(response, retryFn, progressMessage) {
         FormplayerFrontend.regions.loadingProgress.show(progressView);
     }
 
-    progressView.setProgress(progress, retryTimeout);
+    progressView.setProgress(response.done, response.total, retryTimeout);
     setTimeout(retryFn, retryTimeout);
 });
 
