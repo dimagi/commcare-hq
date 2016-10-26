@@ -9,18 +9,16 @@ from casexml.apps.case.mock import CaseStructure, CaseFactory
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 
 
-def _safe_text(input_value):
-    if input_value is None:
-        return ''
-    try:
-        return str(input_value)
-    except:
-        return ''
-
-
 def _create_element_with_value(element_name, value):
+    if value is None:
+        input_value = ''
+    try:
+        input_value = str(value)
+    except Exception:
+        input_value = ''
+
     elem = ElementTree.Element(element_name)
-    elem.text = _safe_text(value)
+    elem.text = input_value
     return elem
 
 
@@ -42,6 +40,7 @@ class DiffCalendarMonthsExpressionTest(SimpleTestCase):
         self.assertEqual(12, expression({"from": "2015-06-29", "to": "2016-06-06"}))
         self.assertEqual(11, expression({"from": "2015-06-29", "to": "2016-05-01"}))
         self.assertEqual(15, expression({"from": "2015-06-29", "to": "2016-09-06"}))
+        self.assertEqual(-2, expression({"from": "2015-08-29", "to": "2015-06-06"}))
 
 
 class RootPropertyNameExpressionTest(SimpleTestCase):

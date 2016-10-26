@@ -43,26 +43,6 @@ class RootPropertyNameSpec(JsonObject):
     datatype = StringProperty(required=False)
 
 
-class IterateFromOpenedDateSpec(JsonObject):
-    type = TypeProperty('ext_iterate_from_opened_date')
-
-
-class MonthStartSpec(JsonObject):
-    type = TypeProperty('ext_month_start')
-
-
-class MonthEndSpec(JsonObject):
-    type = TypeProperty('ext_month_end')
-
-
-class ParentIdSpec(JsonObject):
-    type = TypeProperty('ext_parent_id')
-
-
-class OpenInMonthSpec(JsonObject):
-    type = TypeProperty('ext_open_in_month')
-
-
 class GetCaseFormsByDateSpec(JsonObject):
     type = TypeProperty('ext_get_case_forms_by_date')
     case_id_expression = DefaultProperty(required=False)
@@ -95,7 +75,6 @@ def root_property_name(spec, context):
 
 
 def iterate_from_opened_date(spec, context):
-    IterateFromOpenedDateSpec.wrap(spec)
     spec = {
         'type': 'evaluator',
         'datatype': 'array',
@@ -173,7 +152,6 @@ def iterate_from_opened_date(spec, context):
 
 
 def month_start(spec, context):
-    MonthStartSpec.wrap(spec)
     spec = {
         'type': 'month_start_date',
         'date_expression': {
@@ -191,7 +169,6 @@ def month_start(spec, context):
 
 
 def month_end(spec, context):
-    MonthEndSpec.wrap(spec)
     spec = {
         'type': 'month_end_date',
         'date_expression': {
@@ -209,7 +186,6 @@ def month_end(spec, context):
 
 
 def parent_id(spec, context):
-    ParentIdSpec.wrap(spec)
     spec = {
         'type': 'nested',
         'argument_expression': {
@@ -245,7 +221,6 @@ def parent_id(spec, context):
 
 
 def open_in_month(spec, context):
-    OpenInMonthSpec.wrap(spec)
     spec = {
         'type': 'conditional',
         'test': {
