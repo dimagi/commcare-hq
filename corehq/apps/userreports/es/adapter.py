@@ -8,6 +8,28 @@ from dimagi.utils.decorators.memoized import memoized
 from pillowtop.es_utils import INDEX_STANDARD_SETTINGS
 
 
+# todo have different settings for rebuilding and indexing esp. refresh_interval
+# These settings tell ES to not tokenize strings
+UCR_INDEX_SETTINGS = {
+    "settings": INDEX_STANDARD_SETTINGS,
+    "mappings": {
+        "indicator": {
+            "dynamic": "true",
+            "dynamic_templates": [{
+                "non_analyzed_string": {
+                    "match": "*",
+                    "match_mapping_type": "string",
+                    "mapping": {
+                        "type": "string",
+                        "index": "not_analyzed"
+                    }
+                }
+            }]
+        }
+    }
+}
+
+
 def normalize_id(values):
     return '-'.join(values).replace(' ', '_')
 
@@ -78,6 +100,11 @@ class ESAlchemy(object):
     def count(self):
         return self.es.count()
 
+    def distinct_values(self, column, size):
+        query = self.es.terms_aggregation(column, column, size=size).size(0)
+        results = query.run()
+        return getattr(results.aggregations, column).keys
+
 
 class IndicatorESAdapter(IndicatorAdapter):
 
@@ -88,7 +115,7 @@ class IndicatorESAdapter(IndicatorAdapter):
 
     def rebuild_table(self):
         self.drop_table()
-        self.es.indices.create(index=self.table_name, body=INDEX_STANDARD_SETTINGS)
+        self.es.indices.create(index=self.table_name, body=UCR_INDEX_SETTINGS)
 
     def drop_table(self):
         try:
@@ -121,7 +148,7 @@ class IndicatorESAdapter(IndicatorAdapter):
         if indicator_rows:
             es = get_es_new()
             for indicator_row in indicator_rows:
-                primary_key_values = [i.value for i in indicator_row if i.column.is_primary_key]
+                primary_key_values = [str(i.value) for i in indicator_row if i.column.is_primary_key]
                 all_values = {i.column.database_column_name: i.value for i in indicator_row}
                 es.index(
                     index=self.table_name, body=all_values,

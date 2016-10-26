@@ -62,31 +62,17 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
             var user = FormplayerFrontend.request('currentUser');
             var formplayerUrl = user.formplayer_url;
-
-            var menus = new Entities.MenuSelectCollection({
-
-                fetch: function (options) {
-
-                    options.data = JSON.stringify({
-                        "sessionId": sessionId,
-                        "username": user.username,
-                        "domain": user.domain,
-                        "restoreAs": user.restoreAs,
-                    });
-
-                    options.url = formplayerUrl + '/incomplete-form';
-                    Util.setCrossDomainAjaxOptions(options);
-                    return Backbone.Collection.prototype.fetch.call(this, options);
-                },
-
-                initialize: function (params) {
-                    this.fetch = params.fetch;
-                },
-
-            });
-
+            var menus = new Entities.MenuSelectCollection();
             var defer = $.Deferred();
+
             menus.fetch({
+                data: JSON.stringify({
+                    "sessionId": sessionId,
+                    "username": user.username,
+                    "domain": user.domain,
+                    "restoreAs": user.restoreAs,
+                }),
+                url: formplayerUrl + '/incomplete-form',
                 success: function (request) {
                     defer.resolve(request);
                 },

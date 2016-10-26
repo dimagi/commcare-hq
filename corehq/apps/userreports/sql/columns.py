@@ -1,6 +1,7 @@
 import sqlalchemy
 from sqlagg import SumWhen
 from django.utils.translation import ugettext as _
+from corehq.apps.userreports.const import DEFAULT_MAXIMUM_EXPANSION
 from corehq.apps.userreports.exceptions import ColumnNotFoundError
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from fluff import TYPE_STRING
@@ -74,9 +75,6 @@ def get_expanded_column_config(data_source_configuration, column_config, lang):
                 max=column_config.max_expansion,
             ))
         return ColumnConfig(_expand_column(column_config, vals, lang), warnings=column_warnings)
-
-
-DEFAULT_MAXIMUM_EXPANSION = 10
 
 
 def _get_distinct_values(data_source_configuration, column_config, expansion_limit=DEFAULT_MAXIMUM_EXPANSION):

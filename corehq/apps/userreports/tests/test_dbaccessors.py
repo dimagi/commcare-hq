@@ -30,6 +30,8 @@ class DBAccessorsTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         ReportConfiguration.get_db().bulk_delete(cls.report_configs)
+        cls.domain_1.delete()
+        cls.domain_2.delete()
 
     def test_get_number_of_report_configs_by_data_source(self):
         self.assertEqual(
