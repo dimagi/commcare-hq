@@ -12,6 +12,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         },
     });
 
+
     var API = {
         listApps: function () {
             FormplayerFrontend.regions.breadcrumb.empty();
@@ -87,6 +88,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             SessionNavigate.MenuList.Controller.showMenu(menuCollection);
         },
     };
+    API = SessionNavigate.Middleware.apply(API);
 
     FormplayerFrontend.on("apps:currentApp", function () {
         var urlObject = Util.currentUrlToObject();
