@@ -508,7 +508,7 @@ ko.bindingHandlers.typeahead = {
         });
     },
     update: function (element, valueAccessor) {
-        $(element).atwho('load', '', valueAccessor());
+        $(element).atwho('load', '', ko.utils.unwrapObservable(valueAccessor()));
     }
 };
 
