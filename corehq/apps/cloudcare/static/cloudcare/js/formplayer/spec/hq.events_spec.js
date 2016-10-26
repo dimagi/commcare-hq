@@ -1,3 +1,5 @@
+/* global FormplayerFrontend */
+/* eslint-env mocha */
 describe('HQ.Events', function() {
     describe('Receiver', function() {
         var Receiver = FormplayerFrontend.HQ.Events.Receiver,

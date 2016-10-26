@@ -37,9 +37,9 @@ FormplayerFrontend.module("HQ.Events", function(Events, FormplayerFrontend) {
 
         try {
             switch (data.action) {
-                case Events.Actions.BACK:
-                    FormplayerFrontend.trigger('navigation:back');
-                    break;
+            case Events.Actions.BACK:
+                FormplayerFrontend.trigger('navigation:back');
+                break;
             }
         } catch (e) {
             success = false;
@@ -53,6 +53,6 @@ FormplayerFrontend.module("HQ.Events", function(Events, FormplayerFrontend) {
     };
 
     Events.Actions = {
-        BACK: 'back'
+        BACK: 'back',
     };
-})
+});

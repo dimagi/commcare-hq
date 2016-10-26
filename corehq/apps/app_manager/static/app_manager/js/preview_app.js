@@ -52,7 +52,7 @@ hqDefine('app_manager/js/preview_app.js', function() {
             previewWindow.postMessage({
                 action: 'back',
             }, window.location.origin);
-        }
+        };
 
         var _showAppPreview = function() {
             $('.preview-action-show').addClass('hide');
