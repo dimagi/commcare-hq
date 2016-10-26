@@ -31,13 +31,13 @@ FormplayerFrontend.module("HQ.Events", function(Events, FormplayerFrontend) {
         if (!data.hasOwnProperty('action')) {
             throw new Error('Message must have action property');
         }
-        if (!_.contains(_.values(Actions), data.action)) {
+        if (!_.contains(_.values(Events.Actions), data.action)) {
             throw new Error('Invalid action ' + data.action);
         }
 
         try {
             switch (data.action) {
-                case Actions.BACK:
+                case Events.Actions.BACK:
                     FormplayerFrontend.trigger('navigation:back');
                     break;
             }
@@ -52,7 +52,7 @@ FormplayerFrontend.module("HQ.Events", function(Events, FormplayerFrontend) {
         }
     };
 
-    Actions = {
+    Events.Actions = {
         BACK: 'back'
     };
 })
