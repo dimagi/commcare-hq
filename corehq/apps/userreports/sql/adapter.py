@@ -1,7 +1,10 @@
+from django.utils.translation import ugettext as _
 import sqlalchemy
 from sqlalchemy.exc import IntegrityError, ProgrammingError
 from corehq.apps.userreports.adapter import IndicatorAdapter
-from corehq.apps.userreports.exceptions import TableRebuildError, TableNotFoundWarning
+from corehq.apps.userreports.exceptions import (
+    ColumnNotFoundError, TableRebuildError, TableNotFoundWarning,
+)
 from corehq.apps.userreports.sql.columns import column_to_sql
 from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.util import get_table_name
@@ -49,6 +52,28 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         Get a sqlalchemy query object ready to query this table
         """
         return self.session_helper.Session.query(self.get_table())
+
+    def get_distinct_values(self, column_config, limit):
+        too_many_values = False
+        table = self.get_table()
+        if not table.exists(bind=self.engine):
+            return [], False
+
+        if column_config.field not in table.c:
+            raise ColumnNotFoundError(_(
+                'The column "{}" does not exist in the report source! '
+                'Please double check your report configuration.').format(column_config.field)
+            )
+        column = table.c[column_config.field]
+
+        query = self.session_helper.Session.query(column).limit(limit + 1).distinct()
+        result = query.all()
+        distinct_values = [x[0] for x in result]
+        if len(distinct_values) > limit:
+            distinct_values = distinct_values[:limit]
+            too_many_values = True
+
+        return distinct_values, too_many_values
 
     def best_effort_save(self, doc):
         try:
