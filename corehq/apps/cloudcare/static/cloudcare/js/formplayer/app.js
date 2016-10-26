@@ -192,6 +192,18 @@ FormplayerFrontend.on("start", function (options) {
             }
         }
     }
+
+    if (options.allowedOrigin) {
+        window.addEventListener(
+            "message",
+            new FormplayerFrontend.HQ.Events.Receiver(options.allowedOrigin),
+            false
+        );
+    }
+});
+
+FormplayerFrontend.on('navigation:back', function() {
+    window.history.back();
 });
 
 FormplayerFrontend.on('setAppDisplayProperties', function(app) {
