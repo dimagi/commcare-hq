@@ -29,12 +29,12 @@ FormplayerFrontend.module("Utils", function(Utils, FormplayerFrontend, Backbone,
          * :param: {String} domain
          * :param: {String} username - username of the current user
          *
-         * Returns the restore as user from localstorage
+         * Returns the restore as user from localstorage or null if it doesn't exist
          */
         getRestoreAsUser: function(domain, username) {
             return window.localStorage.getItem(
                 Utils.Users.restoreAsKey(domain, username)
-            );
+            ) || null;
         },
 
         /**

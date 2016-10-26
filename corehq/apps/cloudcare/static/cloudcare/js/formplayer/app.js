@@ -233,7 +233,7 @@ FormplayerFrontend.on('clearRestoreAsUser', function() {
         user.domain,
         user.username
     );
-    user.restoreAs = '';
+    user.restoreAs = null;
     FormplayerFrontend.regions.restoreAsBanner.show(
         new FormplayerFrontend.SessionNavigate.Users.Views.RestoreAsBanner({
             model: user,
