@@ -94,8 +94,8 @@ legend .subtext {
   }
 }
 
-// Static width for select2 widgets, which otherwise grow too large on case management pages
-.app-manager-select2s(@width) {
+// Static width for select2 widgets, which otherwise grow too large on form view's case management tab
+.case-config-select2s(@width) {
     .select2-container {
         width: @width;
     }
@@ -107,13 +107,13 @@ legend .subtext {
     }
 }
 
-.appmanager-content {
+#case-config-ko {
     @select2Width: 210px;
 
-    .app-manager-select2s(@select2Width);
+    .case-config-select2s(@select2Width);
 
     .wide-select2s {
-        .app-manager-select2s(@select2Width * 1.5);
+        .case-config-select2s(@select2Width * 1.5);
     }
 }
 
