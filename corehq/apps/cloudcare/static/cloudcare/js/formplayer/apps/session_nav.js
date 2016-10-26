@@ -16,7 +16,6 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     var API = {
         listApps: function () {
             FormplayerFrontend.regions.breadcrumb.empty();
-            FormplayerFrontend.trigger("clearForm");
             SessionNavigate.AppList.Controller.listApps();
         },
         singleApp: function(appId) {
@@ -29,7 +28,6 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             });
         },
         listMenus: function (sessionObject) {
-            FormplayerFrontend.trigger("clearForm");
             var urlObject = Util.CloudcareUrl.fromJson(
                 Util.encodedUrlToObject(sessionObject || Backbone.history.getFragment())
             );
@@ -39,7 +37,6 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             SessionNavigate.MenuList.Controller.showDetail(model, detailTabIndex);
         },
         listSessions: function() {
-            FormplayerFrontend.trigger("clearForm");
             SessionNavigate.SessionList.Controller.listSessions();
         },
         getSession: function(sessionId) {
@@ -58,7 +55,6 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
          * be a form response which will route to a new form.
          */
         renderResponse: function (response) {
-            FormplayerFrontend.trigger("clearForm");
             var currentFragment,
                 urlObject,
                 encodedUrl,
@@ -166,7 +162,6 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     });
 
     FormplayerFrontend.on("breadcrumbSelect", function (index) {
-        FormplayerFrontend.trigger("clearForm");
         var urlObject = Util.currentUrlToObject();
         urlObject.spliceSteps(index);
         Util.setUrlToObject(urlObject);

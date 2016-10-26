@@ -25,9 +25,13 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     var logRouteMiddleware = function(name) {
         console.log('User navigated to ' + name);
     };
+    var clearFormMiddleware = function(name) {
+        FormplayerFrontend.trigger("clearForm");
+    };
 
     SessionNavigate.Middleware.middlewares = [
         logRouteMiddleware,
         backButtonShowHideMiddleware,
+        clearFormMiddleware,
     ];
 });
