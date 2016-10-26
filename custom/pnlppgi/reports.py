@@ -160,8 +160,8 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
             if site.location_id in user_locations:
                 yield [
                     site.name,
-                    cell_format(loc_data.get('completude', EMPTY_CELL)),
-                    cell_format(loc_data.get('promptitude', EMPTY_CELL)),
+                    cell_format(loc_data.get('completude', 0)),
+                    cell_format(loc_data.get('promptitude', 0)),
                 ]
 
 
