@@ -67,19 +67,8 @@ var reportBuilder = function () {
         });
         self.selectedColumns.extend({ rateLimit: 50 });
 
-        if (config['sourceType'] === "case") {
-            self.reportTypeOptions = [
-                {"name": "list", "label": "Case List"},
-                {"name": "agg", "label": "Case Summary"},
-                {"name": "map", "label": "Map"},
-            ];
-        } else {
-            self.reportTypeOptions = [
-                {"name": "list", "label": "Form List"},
-                {"name": "agg", "label": "Form Summary"},
-                {"name": "map", "label": "Map"},
-            ];
-        }
+        self.reportTypeListLabel = (config['sourceType'] === "case") ? "Case List" : "Form List";
+        self.reportTypeAggLabel = (config['sourceType'] === "case") ? "Case Summary" : "Form Summary";
         self.reportType = ko.observable('list');
         self.reportType.subscribe(function (newValue) {
             var wasAggregationEnabled = self.isAggregationEnabled();
