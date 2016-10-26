@@ -33,6 +33,7 @@ from corehq.apps.userreports.sql import get_expanded_column_config, ColumnConfig
 from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.util import localize
 from dimagi.utils.decorators.memoized import memoized
+from corehq.apps.userreports.es.columns import EsColumnConfig, EsColumn
 
 
 SQLAGG_COLUMN_MAP = {
@@ -149,6 +150,16 @@ class FieldColumn(ReportColumn):
             )
         ])
 
+    def get_es_column_config(self, data_source_config, lang):
+        return EsColumnConfig(columns=[
+            EsColumn(
+                header=self.get_header(lang),
+                data_slug=self.column_id,
+                format_fn=self.get_format_fn(),
+                help_text=self.description
+            )
+        ])
+
     def get_query_column_ids(self):
         return [self.column_id]
 
@@ -180,6 +191,16 @@ class LocationColumn(ReportColumn):
             )
         ])
 
+    def get_es_column_config(self, data_source_config, lang):
+        return EsColumnConfig(columns=[
+            EsColumn(
+                header=self.get_header(lang),
+                data_slug=self.column_id,
+                format_fn=self.get_format_fn(),
+                help_text=self.description
+            )
+        ])
+
 
 class ExpandedColumn(ReportColumn):
     type = TypeProperty('expanded')
@@ -195,6 +216,10 @@ class ExpandedColumn(ReportColumn):
 
     def get_column_config(self, data_source_config, lang):
         return get_expanded_column_config(data_source_config, self, lang)
+
+    def get_es_column_config(self, data_source_config, lang):
+        from corehq.apps.userreports.es.columns import get_expanded_es_column_config
+        return get_expanded_es_column_config(data_source_config, self, lang)
 
 
 class AggregateDateColumn(ReportColumn):
