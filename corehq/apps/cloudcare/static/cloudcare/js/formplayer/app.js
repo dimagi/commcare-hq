@@ -203,7 +203,10 @@ FormplayerFrontend.on("start", function (options) {
 });
 
 FormplayerFrontend.on('navigation:back', function() {
-    window.history.back();
+    var url = Backbone.history.getFragment();
+    if (url.startsWith('/single_app')) {
+        window.history.back();
+    }
 });
 
 FormplayerFrontend.on('setAppDisplayProperties', function(app) {
