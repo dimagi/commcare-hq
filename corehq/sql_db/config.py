@@ -4,6 +4,7 @@ from django.conf import settings
 from jsonobject.api import JsonObject
 from jsonobject.properties import IntegerProperty, StringProperty
 
+from dimagi.utils.decorators.memoized import memoized
 from .exceptions import PartitionValidationError, NotPowerOf2Error, NonContinuousShardsError, NotZeroStartError
 
 FORM_PROCESSING_GROUP = 'form_processing'
@@ -110,6 +111,7 @@ class PartitionConfig(object):
             assert len(dbs) == check_len
         return dbs
 
+    @memoized
     def _get_django_shards(self):
         shard_config = self.partition_config['shards']
         db_shards = []
@@ -117,12 +119,14 @@ class PartitionConfig(object):
             db_shards.extend([DbShard(shard_num, db) for shard_num in range(shard_range[0], shard_range[1] + 1)])
         return sorted(db_shards, key=lambda shard: shard.shard_id)
 
+    @memoized
     def get_shards(self):
         """Returns a list of ShardMeta objects sorted by shard ID"""
         host_map = self.partition_config.get('host_map', {})
         db_shards = self._get_django_shards()
         return [shard.to_shard_meta(host_map) for shard in db_shards]
 
+    @memoized
     def get_django_shard_map(self):
         db_shards = self._get_django_shards()
         return {shard.shard_id: shard for shard in db_shards}
@@ -152,3 +156,6 @@ def get_shards_to_update(existing_shards, new_shards):
             shards_to_update.append(new)
 
     return shards_to_update
+
+
+partition_config = PartitionConfig()

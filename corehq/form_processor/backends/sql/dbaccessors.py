@@ -50,7 +50,7 @@ from corehq.form_processor.utils.sql import (
     case_index_adapter,
     case_attachment_adapter
 )
-from corehq.sql_db.config import PartitionConfig
+from corehq.sql_db.config import partition_config
 from corehq.sql_db.routers import db_for_read_write
 from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.chunked import chunked
@@ -104,7 +104,7 @@ class ShardAccessor(object):
         :return: Dict of ``doc_id -> Django DB alias``
         """
         databases = {}
-        shard_map = PartitionConfig().get_django_shard_map()
+        shard_map = partition_config.get_django_shard_map()
         part_mask = len(shard_map) - 1
         for chunk in chunked(doc_ids, 100):
             hashes = ShardAccessor.hash_doc_ids_python(chunk)
