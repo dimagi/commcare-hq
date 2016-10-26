@@ -11,7 +11,9 @@ from corehq.sql_db.config import partition_config
 app_labels = {
     'locations.LocationType': 'domain',
     'locations.SQLLocation': 'domain',
-    'form_processor.XFormInstanceSQL': 'domain'
+    'form_processor.XFormInstanceSQL': 'domain',
+    'form_processor.XFormAttachmentSQL': 'form__domain',
+    'form_processor.XFormOperationSQL': 'form__domain',
 }
 
 
