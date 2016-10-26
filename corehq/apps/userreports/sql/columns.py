@@ -1,26 +1,12 @@
 import sqlalchemy
 from sqlagg import SumWhen
 from django.utils.translation import ugettext as _
+from corehq.apps.userreports.columns import ColumnConfig
 from corehq.apps.userreports.const import DEFAULT_MAXIMUM_EXPANSION
 from corehq.apps.userreports.exceptions import ColumnNotFoundError
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from fluff import TYPE_STRING
 from fluff.util import get_column_type
-
-
-class ColumnConfig(object):
-    """
-    Stub object to send column information to the data source
-    """
-
-    def __init__(self, columns, headers=None, warnings=None):
-        self.columns = columns
-        # default headers to column headers, but allow subclasses to override
-        if headers is not None:
-            self.headers = [c.header for c in self.columns]
-        else:
-            self.headers = headers
-        self.warnings = warnings if warnings is not None else []
 
 
 class UCRExpandDatabaseSubcolumn(DatabaseColumn):
