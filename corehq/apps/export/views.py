@@ -1265,7 +1265,7 @@ class DailySavedExportListView(BaseExportListView):
         context.update({
             "model_type": None,
             "static_model_type": False,
-            "feed_filter_form": DashboardFeedFilterForm(
+            "export_filter_form": DashboardFeedFilterForm(
                 self.domain_object,
                 initial={
                     'type_or_group': 'type',

@@ -21,7 +21,7 @@
                 </div>
 
                 <div class="modal-body">
-                    {% crispy feed_filter_form %}
+                    {% crispy export_filter_form %}
                     <div class="alert alert-danger" role="alert" ng-show="hasFormSubmitError">
                         <span>{% angularjs %}{{ formSubmitErrorMessage }}{% endangularjs %}</span>
                         <span ng-show="!formSubmitErrorMessage">There was an unknown saving the filters</span>
