@@ -111,6 +111,7 @@ from corehq.util.couch import get_document_or_404
 
 
 SAMPLE_DATA_MAX_ROWS = 100
+TEMP_REPORT_PREFIX = '__tmp'
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -727,11 +728,12 @@ class ReportPreview(BaseDomainView):
         table = ConfigurableReport.report_config_table(
             domain=domain,
             config_id=data_source,
-            title='tmp_{}_{}'.format(domain, data_source),
+            title='{}_{}_{}'.format(TEMP_REPORT_PREFIX, domain, data_source),
             description='',
             aggregation_columns=aggregation_columns,
             columns=columns,
             report_meta=ReportMeta(created_by_builder=True),
+            show_in_navigation=False,
         )
         return json_response(table[0][1])
 
