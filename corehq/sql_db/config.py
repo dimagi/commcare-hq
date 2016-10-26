@@ -158,4 +158,11 @@ def get_shards_to_update(existing_shards, new_shards):
     return shards_to_update
 
 
-partition_config = PartitionConfig()
+def _get_config():
+    if settings.USE_PARTITIONED_DATABASE:
+        return PartitionConfig()
+    else:
+        return object()
+
+
+partition_config = _get_config()
