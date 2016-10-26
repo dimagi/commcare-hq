@@ -53,8 +53,19 @@ class ConfigurableReportEsDataSource(ReportDataSource):
         return self._config
 
     @property
-    def column_configs(self):
+    def top_level_columns(self):
         return self._column_configs.values()
+
+    @property
+    def inner_columns(self):
+        """
+        This returns a list of Column objects that are contained within the top_level_columns
+        above.
+        """
+        return [
+            inner_col for col in self.top_level_columns
+            for inner_col in col.get_column_config(self.config, self.lang).columns
+        ]
 
     @property
     def table_name(self):
@@ -84,23 +95,23 @@ class ConfigurableReportEsDataSource(ReportDataSource):
                 for sort_column_id, order in self._order_by
                 for col in [self._column_configs[sort_column_id]]
             ]
-        elif self.column_configs:
-            col = self.column_configs[0]
+        elif self.top_level_columns:
+            col = self.top_level_columns[0]
             return [(col.field, ASCENDING)]
         return []
 
     @property
     def columns(self):
-        db_columns = [c for sql_conf in self.es_column_configs for c in sql_conf.columns]
+        db_columns = [c for conf in self.column_configs for c in conf.columns]
         return db_columns
 
     @property
-    def es_column_configs(self):
-        return [col.get_column_config(self.config, self.lang) for col in self.column_configs]
+    def column_configs(self):
+        return [col.get_column_config(self.config, self.lang) for col in self.top_level_columns]
 
     @property
     def column_warnings(self):
-        return [w for es_conf in self.es_column_configs for w in es_conf.warnings]
+        return [w for conf in self.column_configs for w in conf.warnings]
 
     @property
     @memoized
@@ -115,7 +126,7 @@ class ConfigurableReportEsDataSource(ReportDataSource):
         else:
             ret = self._get_query_results(start, limit)
 
-        for report_column in self.column_configs:
+        for report_column in self.top_level_columns:
             report_column.format_data(ret)
 
         return ret
@@ -127,7 +138,7 @@ class ConfigurableReportEsDataSource(ReportDataSource):
 
         for row in hits:
             r = {}
-            for report_column in self.column_configs:
+            for report_column in self.top_level_columns:
                 r[report_column.column_id] = row[report_column.field]
             ret.append(r)
 
@@ -158,7 +169,7 @@ class ConfigurableReportEsDataSource(ReportDataSource):
 
         for row in hits:
             r = {}
-            for report_column in self.column_configs:
+            for report_column in self.top_level_columns:
                 if report_column.type == 'expanded':
                     # todo aggregation only supports # of docs matching
                     for sub_col in get_expanded_column_config(self.config, report_column, 'en').columns:
@@ -187,7 +198,7 @@ class ConfigurableReportEsDataSource(ReportDataSource):
             pass
 
         aggregations = []
-        for col in self.column_configs:
+        for col in self.top_level_columns:
             if col.type == 'expanded':
                 for sub_col in get_expanded_column_config(self.config, col, 'en').columns:
                     aggregations.append(sub_col.aggregation)
@@ -203,7 +214,7 @@ class ConfigurableReportEsDataSource(ReportDataSource):
             # todo sort by more than one column
             # todo sort by by something other than the first aggregate column
             col, desc = self.order_by[0]
-            if col == self.aggregation_columns[0] or col == self.column_configs[0].field:
+            if col == self.aggregation_columns[0] or col == self.top_level_columns[0].field:
                 top_agg = top_agg.order('_count', desc)
 
         query = query.aggregation(top_agg)
@@ -212,7 +223,7 @@ class ConfigurableReportEsDataSource(ReportDataSource):
 
     @property
     def has_total_row(self):
-        return any(column_config.calculate_total for column_config in self.column_configs)
+        return any(column_config.calculate_total for column_config in self.top_level_columns)
 
     @method_decorator(catch_and_raise_exceptions)
     def get_total_records(self):
@@ -226,9 +237,10 @@ class ConfigurableReportEsDataSource(ReportDataSource):
 
     @property
     def required_fields(self):
-        ret = [c.field for c in self.column_configs]
+        ret = [c.field for c in self.top_level_columns]
         return ret + [c for c in self.aggregation_columns]
 
     @method_decorator(catch_and_raise_exceptions)
     def get_total_row(self):
+        # todo calculate total row
         return []
