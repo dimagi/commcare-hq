@@ -3,6 +3,7 @@ from django.utils.translation import ugettext
 
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation, Location
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.api import EmwfOptionsView
 from corehq.apps.reports.util import _report_user_dict
 from corehq.apps.users.cases import get_wrapped_owner
@@ -40,6 +41,7 @@ class _CallCenterOwnerOptionsUtils(object):
         return []
 
 
+@location_safe
 class CallCenterOwnerOptionsView(EmwfOptionsView):
     url_name = "call_center_owner_options"
 
@@ -49,9 +51,10 @@ class CallCenterOwnerOptionsView(EmwfOptionsView):
         return _CallCenterOwnerOptionsUtils(self.domain)
 
     def get_locations_query(self, query):
-        return SQLLocation.objects.filter_path_by_user_input(self.domain, query).filter(
-            location_type__shares_cases=True
-        )
+        return (SQLLocation.objects
+                .filter_path_by_user_input(self.domain, query)
+                .filter(location_type__shares_cases=True)
+                .accessible_to_user(self.domain, self.request.couch_user))
 
     def group_es_query(self, query):
         return super(CallCenterOwnerOptionsView, self).group_es_query(query, "case_sharing")
