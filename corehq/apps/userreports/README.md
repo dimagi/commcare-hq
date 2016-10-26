@@ -57,6 +57,7 @@ An overview of the design, API and data structures used here.
     - [Report Filters](#report-filters)
         - [Numeric Filters](#numeric-filters)
         - [Date filters](#date-filters)
+        - [Quarter filters](#quarter-filters)
         - [Dynamic choice lists](#dynamic-choice-lists)
             - [Choice providers](#choice-providers)
         - [Choice lists](#choice-lists)
@@ -1096,7 +1097,21 @@ Date filters allow you filter on a date. They will show a datepicker in the UI.
 Date filters have an optional `compare_as_string` option that allows the date
 filter to be compared against an indicator of data type `string`. You shouldn't
 ever need to use this option (make your column a `date` or `datetime` type
-instead), but it exists because the report builder needs it. 
+instead), but it exists because the report builder needs it.
+
+### Quarter filters
+
+Quarter filters are similar to date filters, but a choice is restricted only to the particular quarter of the year. They will show inputs for year and quarter in the UI.
+
+```
+{
+  "type": "quarter",
+  "slug": "modified_on",
+  "field": "modified_on",
+  "display": "Modified on",
+  "required": false
+}
+```
 
 ### Pre-Filters
 
