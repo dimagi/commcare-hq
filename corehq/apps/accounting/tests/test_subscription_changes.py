@@ -69,7 +69,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
 
         self.account = BillingAccount.get_or_create_account_by_domain(
             self.domain.name,created_by=self.admin_user.username)[0]
-        self.advanced_plan = DefaultProductPlan.get_default_plan(edition=SoftwarePlanEdition.ADVANCED)
+        self.advanced_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
 
     def test_cancellation(self):
         subscription = Subscription.new_domain_subscription(

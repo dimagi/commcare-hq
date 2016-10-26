@@ -33,8 +33,8 @@ class TestNewDomainSubscription(BaseAccountingTest):
             self.domain.name, created_by=self.admin_user.username)[0]
         self.account2 = BillingAccount.get_or_create_account_by_domain(
             self.domain2.name, created_by=self.admin_user.username)[0]
-        self.standard_plan = DefaultProductPlan.get_default_plan(edition=SoftwarePlanEdition.STANDARD)
-        self.advanced_plan = DefaultProductPlan.get_default_plan(edition=SoftwarePlanEdition.ADVANCED)
+        self.standard_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.STANDARD)
+        self.advanced_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
 
     def test_new_susbscription_in_future(self):
         """
