@@ -621,7 +621,7 @@
                                             <div class="checkbox">
                                                 <label>
                                                     <input type="checkbox"
-                                                           data-bind="checked: permissions.access_all_locations() || hasUnpermittedLocationRestriction,
+                                                           data-bind="checked: permissions.access_all_locations,
                                                                       disable: hasUnpermittedLocationRestriction" />
                                                         {% trans "Allow role to access data from all locations" %}
                                                     <span class="help-block" data-bind="visible: hasUnpermittedLocationRestriction">
