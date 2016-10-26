@@ -23,7 +23,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         }
     };
     var logRouteMiddleware = function(name) {
-        console.log('User navigated to ' + name);
+        window.console.log('User navigated to ' + name);
     };
     var clearFormMiddleware = function(name) {
         FormplayerFrontend.trigger("clearForm");
