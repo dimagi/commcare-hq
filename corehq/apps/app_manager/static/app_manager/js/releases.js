@@ -399,7 +399,7 @@ hqDefine('app_manager/js/releases.js', function () {
                     }
                     self.buildState('');
                 },
-                error: function () {
+                error: function() {
                     self.buildState('error');
                 },
             });
