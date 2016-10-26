@@ -16,4 +16,35 @@ describe('User', function () {
             assert.throws(instantiate, /without domain/);
         });
     });
+    describe('Utils', function() {
+        var Utils = FormplayerFrontend.Utils.Users,
+            username = 'clark@kent.com',
+            restoreAsUsername = 'worker@kent.com',
+            domain = 'preview-domain',
+            dummyUser;
+        beforeEach(function() {
+            dummyUser = {
+                domain: domain,
+                username: username,
+            };
+            window.localStorage.clear();
+            sinon.stub(FormplayerFrontend, 'request', function() { return dummyUser; });
+        });
+
+        afterEach(function() {
+            window.localStorage.clear();
+            FormplayerFrontend.request.restore();
+        });
+
+        it('should store and clear a restore as user', function() {
+            assert.isNull(Utils.getRestoreAsUser(domain, username));
+
+            Utils.logInAsUser(restoreAsUsername);
+
+            assert.equal(Utils.getRestoreAsUser(domain, username), restoreAsUsername);
+
+            Utils.clearRestoreAsUser(domain, username);
+            assert.isNull(Utils.getRestoreAsUser(domain, username));
+        });
+    });
 });
