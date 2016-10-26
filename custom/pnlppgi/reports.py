@@ -4,7 +4,7 @@ from operator import add
 
 from sqlagg import AliasColumn
 from sqlagg.columns import SimpleColumn, CountColumn, SumColumn
-from sqlagg.filters import LT, EQ, IN
+from sqlagg.filters import EQ, IN, LTE
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
@@ -51,7 +51,7 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
             'domain': self.domain,
             'week': week,
             'year': year,
-            'monday': monday.replace(hour=16)
+            'monday': monday.replace(hour=12)
         }
         location_filter(self.request, params=params)
         update_config(params)
@@ -88,7 +88,7 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
             DatabaseColumn('Promptitude', CountColumn(
                 'doc_id',
                 alias='promptitude',
-                filters=self.filters + [LT('opened_on', 'monday')]
+                filters=self.filters + [LTE('opened_on', 'monday')]
             )),
         ]
 
@@ -115,7 +115,7 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
 
     @property
     def charts(self):
-        chart = MultiBarChart(None, Axis(_('Sites')), Axis(''))
+        chart = MultiBarChart(None, Axis(''), Axis(''))
         chart.height = 400
         chart.marginBottom = 100
         chart.data = self.get_data_for_graph()
@@ -348,7 +348,7 @@ class WeeklyMalaria(MalariaReport):
 
 class CumulativeMalaria(MalariaReport):
     slug = 'cumulative_malaria'
-    name = u'Données cumulées'
+    name = u'Données Cumulées de S01 à la Dernière Sem transmise'
 
     report_template_path = 'pnlppgi/cumulative_malaria.html'
 
