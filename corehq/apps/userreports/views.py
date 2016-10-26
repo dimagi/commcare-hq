@@ -521,7 +521,7 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
         )
         data_source_config.validate()
         data_source_config.save()
-        rebuild_indicators(data_source_config._id, username, count=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
+        rebuild_indicators(data_source_config._id, username, limit=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
         return data_source_config._id
 
     @staticmethod
