@@ -11,7 +11,7 @@ describe('HQ.Events', function() {
             triggerSpy = sinon.spy();
             dummyEvent = {
                 origin: origin,
-                data: {}
+                data: {},
             };
             sinon.stub(FormplayerFrontend, 'trigger', triggerSpy);
         });
