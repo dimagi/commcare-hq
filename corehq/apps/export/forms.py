@@ -72,8 +72,22 @@ class CreateExportTagForm(forms.Form):
     # Case export fields
     case_type = forms.CharField(required=False)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, has_form_export_permissions, has_case_export_permissions, *args, **kwargs):
+        self.has_form_export_permissions = has_form_export_permissions
+        self.has_case_export_permissions = has_case_export_permissions
         super(CreateExportTagForm, self).__init__(*args, **kwargs)
+
+        # We shouldn't ever be showing this form if the user has neither permission
+        assert self.has_case_export_permissions or self.has_form_export_permissions
+        if not (self.has_case_export_permissions and self.has_form_export_permissions):
+            model_field = self.fields['model_type']
+            if self.has_form_export_permissions:
+                model_field.initial = "form"
+            if self.has_case_export_permissions:
+                model_field.initial = 'case'
+
+            model_field.widget.attrs['readonly'] = True
+            model_field.widget.attrs['disabled'] = True
 
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -140,6 +154,22 @@ class CreateExportTagForm(forms.Form):
                 ng_show="formData.model_type"
             )
         )
+
+    @property
+    def has_form_permissions_only(self):
+        return self.has_form_export_permissions and not self.has_case_export_permissions
+
+    @property
+    def has_case_permissions_only(self):
+        return not self.has_form_export_permissions and self.has_case_export_permissions
+
+    def clean_model_type(self):
+        model_type = self.cleaned_data['model_type']
+        if self.has_form_permissions_only:
+            model_type = "form"
+        elif self.has_case_permissions_only:
+            model_type = "case"
+        return model_type
 
     def clean(self):
         cleaned_data = super(CreateExportTagForm, self).clean()

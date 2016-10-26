@@ -1180,7 +1180,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
         This form is what will interact with the DrilldownToFormController in
         hq.app_data_drilldown.ng.js
         """
-        return CreateExportTagForm()
+        return CreateExportTagForm(self.has_form_export_permissions, self.has_case_export_permissions)
 
     @allow_remote_invocation
     def get_app_data_drilldown_values(self, in_data):
@@ -1262,8 +1262,13 @@ class DailySavedExportListView(BaseExportListView):
     @property
     def page_context(self):
         context = super(DailySavedExportListView, self).page_context
+        model_type = None
+        if self.has_form_export_permissions and not self.has_case_export_permissions:
+            model_type = "form"
+        if not self.has_form_export_permissions and self.has_case_export_permissions:
+            model_type = "case"
         context.update({
-            "model_type": None,
+            "model_type": model_type,
             "static_model_type": False,
             "export_filter_form": DashboardFeedFilterForm(
                 self.domain_object,
@@ -1344,7 +1349,11 @@ class DailySavedExportListView(BaseExportListView):
         return format_angular_success(response)
 
     def get_create_export_url(self, form_data):
-        create_form = CreateExportTagForm(form_data)
+        create_form = CreateExportTagForm(
+            self.has_form_export_permissions,
+            self.has_case_export_permissions,
+            form_data
+        )
         if not create_form.is_valid():
             raise ExportFormValidationException()
 
@@ -1406,6 +1415,7 @@ class DailySavedExportListView(BaseExportListView):
                     e.__class__, e
                 ),
             )
+
 
 class DashboardFeedListView(DailySavedExportListView):
     template_name = 'export/dashboard_feed_list.html'
@@ -1534,7 +1544,11 @@ class FormExportListView(BaseExportListView):
         return format_angular_success(response)
 
     def get_create_export_url(self, form_data):
-        create_form = CreateExportTagForm(form_data)
+        create_form = CreateExportTagForm(
+            self.has_form_export_permissions,
+            self.has_case_export_permissions,
+            form_data
+        )
         if not create_form.is_valid():
             raise ExportFormValidationException()
 
@@ -1634,7 +1648,11 @@ class CaseExportListView(BaseExportListView):
         return format_angular_success(response)
 
     def get_create_export_url(self, form_data):
-        create_form = CreateExportTagForm(form_data)
+        create_form = CreateExportTagForm(
+            self.has_form_export_permissions,
+            self.has_case_export_permissions,
+            form_data
+        )
         if not create_form.is_valid():
             raise ExportFormValidationException()
         case_type = create_form.cleaned_data['case_type']
