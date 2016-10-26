@@ -133,7 +133,6 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
-            FormplayerFrontend.trigger("clearForm");
             showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
 
             // After end of form nav, we want to clear everything except app and sesson id
@@ -232,6 +231,18 @@ FormplayerFrontend.on("sync", function () {
     $.ajax(options);
 });
 
+FormplayerFrontend.on('phone:back:hide', function() {
+    if (FormplayerFrontend.regions.phoneModeNavigation.currentView) {
+        FormplayerFrontend.regions.phoneModeNavigation.currentView.hideBackButton();
+    }
+});
+
+FormplayerFrontend.on('phone:back:show', function() {
+    if (FormplayerFrontend.regions.phoneModeNavigation.currentView) {
+        FormplayerFrontend.regions.phoneModeNavigation.currentView.showBackButton();
+    }
+});
+
 /**
  * retry
  *
@@ -314,7 +325,6 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
 FormplayerFrontend.on('navigateHome', function(appId) {
     var urlObject = Util.currentUrlToObject();
     urlObject.clearExceptApp();
-    FormplayerFrontend.trigger("clearForm");
     FormplayerFrontend.regions.breadcrumb.empty();
     FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });
 });
