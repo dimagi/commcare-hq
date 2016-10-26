@@ -235,12 +235,15 @@ def toggle_js_url(domain, username):
 def toggle_js_domain_cachebuster(domain):
     # to get fresh cachebusters on the next deploy
     # change the date below (output from *nix `date` command)
-    #   Thu Mar  3 16:21:30 EST 2016
+    #   Wed Oct 26 11:39:56 SAST 2016
     return random_hex()[:3]
 
 
 @quickcache(['username'], timeout=30 * 24 * 60 * 60)
 def toggle_js_user_cachebuster(username):
+    # to get fresh cachebusters on the next deploy
+    # change the date below (output from *nix `date` command)
+    #   Wed Oct 26 11:39:56 SAST 2016
     return random_hex()[:3]
 
 
