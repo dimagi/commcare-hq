@@ -53,6 +53,7 @@ var reportBuilder = function () {
      */
     self.ReportConfig = function (config) {
         var self = this;
+        self.reportTitle = config["reportTitle"];
         self.columns = config["columns"];
         self.dataSourceUrl = config["dataSourceUrl"];  // Fetch the preview data asynchronously.
 

@@ -588,7 +588,7 @@ class ConfigureReport(ReportBuilderView):
     page_title = ugettext_lazy("Configure Report")
     template_name = "userreports/reportbuilder/configure_report.html"
     url_args = ['report_name', 'application', 'source_type', 'source']
-    report_title = ugettext_lazy("Chart Report: {}")
+    report_title = '{}'
     existing_report = None
 
     @use_jquery_ui

@@ -9,44 +9,47 @@
     <script src="{% static 'userreports/js/report_config.js' %}"></script>
 {% endblock %}
 
-{% block page_title %}
-    {% if not editing_existing_report %}
-    {% trans "Step 2 of 2" %} -
-    {% endif %}
-    {% trans "Configure Report" %}
-{% endblock page_title %}
+{% block pre_page_content %}{% endblock %}{# Avoid the spacer #}
 
 {% block page_content %}
   <div id="reportConfig">
-    <!-- TODO: <div>Report Name ... | Save and View | Save |</div> -->
+
+    <div class="pull-right page-actions-toolbar">
+      <button class="btn btn-default">Save &amp; View</button>
+      <button class="btn btn-primary">Save</button>
+    </div>
+    {# See `style/two_column.html` #}
+    <div class="page-header" style="margin-top: 0;">
+      <h1 style="font-size: 1.8em;" data-bind="text: reportTitle"></h1>
+    </div>
+
     <!-- TODO: <div>Enter a description here</div> -->
-    <div class="col-md-4">
 
-      <div>
-        <h3>{% trans 'Type of Report' %}</h3>
-
-        <div class="btn-group">
-          <label class="btn btn-default" data-bind="css: {'active': reportType() === 'list'}">
-            <!-- TODO: Don't style here -->
-            <input type="radio" name="reportTypes" id="reportTypeList" style="display: none;"
-                   data-bind="checked: reportType, checkedValue: 'list'">
-            <i class="fa fa-bars"></i> <span data-bind="text: reportTypeListLabel"></span>
-          </label>
-          <label class="btn btn-default" data-bind="css: {'active': reportType() === 'agg'}">
-            <input type="radio" name="reportTypes" id="reportTypeAgg" style="display: none;"
-                   data-bind="checked: reportType, checkedValue: 'agg'">
-            <i class="fa fa-filter"></i> <span data-bind="text: reportTypeAggLabel"></span>
-          </label>
-          <label class="btn btn-default" data-bind="css: {'active': reportType() === 'map'}">
-            <input type="radio" name="reportTypes" id="reportTypeMap" style="display: none;"
-                   data-bind="checked: reportType, checkedValue: 'map'">
-            <i class="fa fa-map-marker"></i> Map
-          </label>
-        </div>
+    <div>
+      <h3>{% trans 'Type of Report' %}</h3>
+      <div class="btn-group">
+        <label class="btn btn-default" data-bind="css: {'active': reportType() === 'list'}">
+          <!-- TODO: Don't style here -->
+          <input type="radio" name="reportTypes" id="reportTypeList" style="display: none;"
+                 data-bind="checked: reportType, checkedValue: 'list'">
+          <i class="fa fa-bars"></i> <span data-bind="text: reportTypeListLabel"></span>
+        </label>
+        <label class="btn btn-default" data-bind="css: {'active': reportType() === 'agg'}">
+          <input type="radio" name="reportTypes" id="reportTypeAgg" style="display: none;"
+                 data-bind="checked: reportType, checkedValue: 'agg'">
+          <i class="fa fa-filter"></i> <span data-bind="text: reportTypeAggLabel"></span>
+        </label>
+        <label class="btn btn-default" data-bind="css: {'active': reportType() === 'map'}">
+          <input type="radio" name="reportTypes" id="reportTypeMap" style="display: none;"
+                 data-bind="checked: reportType, checkedValue: 'map'">
+          <i class="fa fa-map-marker"></i> Map
+        </label>
       </div>
+    </div>
 
-      <div class="spacer"></div>
+    <div class="spacer"></div>
 
+    <div class="col-md-4">
       <legend>Configure Report</legend>
 
       <div id="columns">
@@ -140,6 +143,7 @@
 
     $(document).ready(function() {
         var reportConfig = new reportBuilder.ReportConfig({
+            "reportTitle": "{{ report.title|escapejs }}",
             "columns": {{ columns|JSON }},
             "sourceType": "{{ source_type }}",
             "dataSourceUrl": "{{ data_source_url }}",
