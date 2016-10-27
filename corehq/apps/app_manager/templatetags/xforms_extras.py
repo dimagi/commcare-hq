@@ -84,7 +84,9 @@ def inline_edit_trans(name, langs=None, url='', saveValueName='', readOnlyClass=
 
 
 @register.simple_tag
-def inline_edit_trans_v2(name, langs=None, url='', saveValueName='', readOnlyClass='', postSave=''):
+def inline_edit_trans_v2(
+        name, langs=None, url='', saveValueName='', containerClass='',
+        postSave='', iconClass=''):
     template = '''
         <inline-edit-v2 params="
             name: 'name',
@@ -94,10 +96,11 @@ def inline_edit_trans_v2(name, langs=None, url='', saveValueName='', readOnlyCla
             lang: '%(lang)s',
             url: '{}',
             saveValueName: '{}',
-            readOnlyClass: '{}',
+            containerClass: '{}',
             postSave: {},
+            iconClass: '{}',
         "></inline-edit-v2>
-    '''.format(url, saveValueName, readOnlyClass, postSave)
+    '''.format(url, saveValueName, containerClass, postSave, iconClass)
     return _input_trans(template, name, langs=langs, allow_blank=False)
 
 
