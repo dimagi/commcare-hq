@@ -47,7 +47,7 @@ def get_form():
 def get_export_response(client, previous="", include_errors=False, domain=DOMAIN):
     # e.g. /a/wvtest/reports/export/?export_tag=%22http://openrosa.org/formdesigner/0B5AEAF6-0394-4E4B-B2FD-6CDDE1BCBC8D%22
     return client.get(
-        reverse("corehq.apps.reports.views.export_data", args=[domain]),
+        reverse("export_data", args=[domain]),
         {
             "export_tag": '"http://www.commcarehq.org/export/test"',
             "previous_export": previous,
