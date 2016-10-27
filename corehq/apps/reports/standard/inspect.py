@@ -107,7 +107,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
         if FormsByApplicationFilter.has_selections(self.request):
             form_values = self.all_relevant_forms.values()
             if form_values:
-                query = query.OR(self._form_filter(f) for f in form_values)
+                query = query.OR(*[self._form_filter(f) for f in form_values])
 
         # Exclude system forms unless they selected "Unknown User"
         if HQUserType.UNKNOWN not in EMWF.selected_user_types(mobile_user_and_group_slugs):
