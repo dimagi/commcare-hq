@@ -1,4 +1,4 @@
-/*globals $, _, uiElement, eventize, lcsMerge, COMMCAREHQ */
+/*globals $, _, uiElement, eventize, COMMCAREHQ, DOMPurify */
 
 hqDefine('app_manager/js/detail-screen-config.js', function () {
     var module = {};
@@ -39,39 +39,44 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
          * Enable autocomplete on the given jquery element with the given autocomplete
          * options.
          * @param $elem
-         * @param options
+         * @param options: Array of strings.
          */
         setUpAutocomplete: function($elem, options){
-            $elem.$edit_view.autocomplete({
-                source: function (request, response) {
-                    var availableTags = _.map(options, function(value) {
-                        var label = value;
-                        if (module.CC_DETAIL_SCREEN.isAttachmentProperty(value)) {
-                            label = (
-                                '<i class="fa fa-paperclip"></i> ' +
-                                label.substring(label.indexOf(":") + 1)
-                            );
-                        }
-                        return {value: value, label: label};
-                    });
-                    response(
-                        $.ui.autocomplete.filter(availableTags, request.term)
-                    );
-                },
-                minLength: 0,
+            $elem.$edit_view.select2({
+                minimumInputLength: 0,
                 delay: 0,
-                select: function (event, ui) {
-                    $elem.val(ui.item.value);
-                    $elem.fire('change');
-                }
-            }).focus(function () {
-                $(this).autocomplete('search');
-            }).data("ui-autocomplete")._renderItem = function (ul, item) {
-                return $("<li></li>")
-                    .data("item.autocomplete", item)
-                    .append($("<a></a>").html(item.label))
-                    .appendTo(ul);
-            };
+                data: {
+                    results: _.map(options, function(o) {
+                        return {
+                            id: o,
+                            text: o,
+                        };
+                    }),
+                },
+                // Allow manually entered text in drop down, which is not supported by legacy select2.
+                createSearchChoice: function(term, data) {
+                    if (!_.find(data, function(d) { return d.text === term; })) {
+                        return {
+                            id: term,
+                            text: term,
+                        };
+                    }
+                },
+                escapeMarkup: function (m) { return DOMPurify.sanitize(m); },   // injection?
+                formatResult: function(result) {
+                    var formatted = result.id;
+                    if (module.CC_DETAIL_SCREEN.isAttachmentProperty(result.id)) {
+                        formatted = (
+                            '<i class="fa fa-paperclip"></i> ' +
+                            result.id.substring(result.id.indexOf(":") + 1)
+                        );
+                    }
+                    return DOMPurify.sanitize(formatted);
+                },
+            }).on('change', function() {
+                $elem.val($elem.$edit_view.value);
+                $elem.fire('change');
+            });
             return $elem;
         }
 
