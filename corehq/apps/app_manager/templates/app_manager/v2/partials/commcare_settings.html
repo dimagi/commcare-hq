@@ -3,11 +3,9 @@
 {% load xforms_extras %}
 
 <form class="form-horizontal">
-  <div class="savebtn-container">
-    <div id="settings-save-btn"></div>
-  </div>
+  <div id="settings-save-btn"></div>
   <div data-bind="foreach: sections" id="app-settings-options" class="panel-group">
-    <div class="panel panel-appmanager">
+    <div class="panel panel-appmanager" data-bind="visible: isVisible">
       <div class="panel-heading">
         <h4 class="panel-title">
           <a data-toggle="collapse"
