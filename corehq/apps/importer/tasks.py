@@ -8,6 +8,7 @@ from corehq.apps.importer.const import LookupErrors, ImportErrors
 from corehq.apps.importer import util as importer_util
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
+from corehq.apps.export.signals import added_inferred_export_properties
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from soil import DownloadBase
 from dimagi.utils.prime_views import prime_views
@@ -57,16 +58,25 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
     caseblocks = []
     ids_seen = set()
 
-    def _submit_caseblocks(caseblocks):
+    def _submit_caseblocks(case_type, caseblocks):
         err = False
         if caseblocks:
             try:
-                form = submit_case_blocks(
+                form, cases = submit_case_blocks(
                     [cb.as_string() for cb in caseblocks],
                     domain,
                     username,
                     user_id,
-                )[0]
+                )
+
+                properties = set().union(*map(lambda c: set(c.dynamic_case_properties().keys()), cases))
+
+                added_inferred_export_properties.send(
+                    sender='CaseImporter',
+                    domain,
+                    case_type,
+                    properties=properties
+                )
                 if form.is_error:
                     errors.add(
                         error=ImportErrors.ImportErrorMessage,
@@ -132,7 +142,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
             # note: these three lines are repeated a few places, and could be converted
             # to a function that makes use of closures (and globals) to do the same thing,
             # but that seems sketchier than just beeing a little RY
-            _submit_caseblocks(caseblocks)
+            _submit_caseblocks(config.case_type, caseblocks)
             num_chunks += 1
             caseblocks = []
             ids_seen = set()  # also clear ids_seen, since all the cases will now be in the database
@@ -257,12 +267,12 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
         # check if we've reached a reasonable chunksize
         # and if so submit
         if len(caseblocks) >= chunksize:
-            _submit_caseblocks(caseblocks)
+            _submit_caseblocks(config.case_type, caseblocks)
             num_chunks += 1
             caseblocks = []
 
     # final purge of anything left in the queue
-    if _submit_caseblocks(caseblocks):
+    if _submit_caseblocks(config.case_type, caseblocks):
         match_count -= 1
     num_chunks += 1
     return {
