@@ -191,6 +191,21 @@ FormplayerFrontend.on("start", function (options) {
             }
         }
     }
+
+    if (options.allowedOrigin) {
+        window.addEventListener(
+            "message",
+            new FormplayerFrontend.HQ.Events.Receiver(options.allowedOrigin),
+            false
+        );
+    }
+});
+
+FormplayerFrontend.on('navigation:back', function() {
+    var url = Backbone.history.getFragment();
+    if (!url.startsWith('/single_app')) {
+        window.history.back();
+    }
 });
 
 FormplayerFrontend.on('setAppDisplayProperties', function(app) {

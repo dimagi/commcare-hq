@@ -181,6 +181,7 @@
                 formplayer_url: "{{ formplayer_url }}",
                 phoneMode: true,
                 oneQuestionPerScreen: true,
+                allowedOrigin: "{{ request.scheme }}://{{ request.get_host }}"
             });
             $('.dragscroll').on('scroll', function () {
               $('.form-control').blur();
