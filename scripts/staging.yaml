@@ -52,7 +52,6 @@ branches:
 #  - np/110/TEMPLATES
   - np/110/reports
   - ce/billing-notification # Cal 10/25
-  - typeahead-to-atwho # Jenny 9/26
   - sms-langcodes # Jenny 9/26
   - case-detail-select2 # Jenny 9/26
   - jquery-3-1-0 # Jenny 9/26
