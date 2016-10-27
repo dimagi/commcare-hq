@@ -6,8 +6,8 @@ from corehq.apps.reports.analytics.esaccessors import get_wrapped_ledger_values,
 
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
-from corehq.apps.locations.models import Location
-from corehq.apps.commtrack.models import SupplyPointCase, SQLLocation
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
@@ -66,7 +66,8 @@ class CommtrackDataSourceMixin(object):
     @property
     @memoized
     def active_location(self):
-        return Location.get_in_domain(self.domain, self.config.get('location_id'))
+        loc_id = self.config.get('location_id')
+        return SQLLocation.objects.get_or_None(domain=self.domain, location_id=loc_id)
 
     @property
     @memoized
@@ -140,15 +141,13 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
     def locations(self):
         if self.active_location:
-            current_location = self.active_location.sql_location
-
-            if current_location.supply_point_id:
-                locations = [current_location]
+            if self.active_location.supply_point_id:
+                locations = [self.active_location]
             else:
                 locations = []
 
             locations += list(
-                current_location.get_descendants().filter(
+                self.active_location.get_descendants().filter(
                     is_archived=False,
                     supply_point_id__isnull=False
                 )
@@ -205,7 +204,6 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         product_name: Name of the product
         product_id: ID of the product
         location_id: The ID of the current location.
-        location_lineage: The lineage of the current location.
         current_stock: The current stock level
         consumption: The current monthly consumption rate
         months_remaining: The number of months remaining until stock out
@@ -221,7 +219,6 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     SLUG_CONSUMPTION = 'consumption'
     SLUG_CURRENT_STOCK = 'current_stock'
     SLUG_LOCATION_ID = 'location_id'
-    SLUG_LOCATION_LINEAGE = 'location_lineage'
     SLUG_STOCKOUT_SINCE = 'stockout_since'
     SLUG_STOCKOUT_DURATION = 'stockout_duration'
     SLUG_LAST_REPORTED = 'last_reported'
@@ -278,7 +275,6 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 consumption_helper = get_consumption_helper_from_ledger_value(self.project, ledger_value)
                 result.update({
                     'location_id': ledger_value.location_id,
-                    'location_lineage': None,
                     'category': consumption_helper.get_stock_category(),
                     'consumption': consumption_helper.get_monthly_consumption(),
                     'months_remaining': consumption_helper.get_months_remaining(),
@@ -339,7 +335,6 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                         'product_id': ledger_value.entry_id,
                         'location_id': None,
                         'product_name': product.name,
-                        'location_lineage': None,
                         'resupply_quantity_needed': None,
                         'current_stock': format_decimal(ledger_value.balance),
                         'count': 1,

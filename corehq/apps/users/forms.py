@@ -20,7 +20,7 @@ from django_countries.data import COUNTRIES
 from corehq import toggles
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username, cc_user_domain
@@ -844,7 +844,7 @@ class CommtrackUserForm(forms.Form):
             old_location_id = user.location_id
             if location_id != old_location_id:
                 if location_id:
-                    user.set_location(Location.get(location_id))
+                    user.set_location(SQLLocation.objects.get(location_id=location_id))
                 else:
                     user.unset_location()
 
@@ -856,7 +856,7 @@ class CommtrackUserForm(forms.Form):
             old_location_id = domain_membership.location_id
             if location_id != old_location_id:
                 if location_id:
-                    user.set_location(self.domain, Location.get(location_id))
+                    user.set_location(self.domain, SQLLocation.objects.get(location_id=location_id))
                 else:
                     user.unset_location(self.domain)
 

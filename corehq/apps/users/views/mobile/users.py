@@ -775,7 +775,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 user_data=self.custom_data.get_data_to_save(),
             )
             if location_id:
-                couch_user.set_location(Location.get(location_id))
+                couch_user.set_location(SQLLocation.objects.get(location_id=location_id))
 
             return {
                 'success': True,
@@ -852,10 +852,9 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
 
             if 'location_id' in request.GET:
                 try:
-                    loc = Location.get(request['location_id'])
-                except ResourceNotFound:
-                    raise Http404()
-                if loc.domain != self.domain:
+                    loc = SQLLocation.objects.get(domain=self.domain,
+                                                  location_id=request['location_id'])
+                except SQLLocation.DoesNotExist:
                     raise Http404()
                 user.set_location(loc)
 
