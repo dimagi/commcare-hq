@@ -6,6 +6,7 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'reminders/ko/reminders.manage.js' %}"></script>
     <script src="{% static 'style/js/main.js' %}"></script>
+    {% include 'style/includes/atwho.html' %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
