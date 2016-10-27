@@ -20,17 +20,19 @@
             </div>
         {% else %}
             <div class="panel-group" data-bind="attr: {id: 'deploy-accordion_' + id()}">
-                <div class="panel panel-default">
+                <div class="panel panel-appmanager">
                     <div class="panel-heading">
-                        <a
-                            data-toggle="collapse"
-                            href="#panel-android"
-                            aria-expanded="true"
-                            aria-controls="panel-android"
-                            data-bind="attr: {'data-parent': '#deploy-accordion_' + id()}"
-                            >
-                            {% trans "Download to Android" %}
-                        </a>
+                        <h4 class="panel-title">
+                            <a
+                                data-toggle="collapse"
+                                href="#panel-android"
+                                aria-expanded="true"
+                                aria-controls="panel-android"
+                                data-bind="attr: {'data-parent': '#deploy-accordion_' + id()}"
+                                >
+                                {% trans "Download to Android" %}
+                            </a>
+                        </h4>
                     </div>
                     <div class="panel-collapse in collapse" id="panel-android">
                         <div class="panel-body">
@@ -164,7 +166,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="panel panel-default">
+                <div class="panel panel-appmanager">
                     <div class="panel-heading">
                         <a data-toggle="collapse"
                            data-bind="
@@ -207,8 +209,9 @@
                     </div>
                 </div>
                 {% if can_send_sms %}
-                <div class="panel panel-default">
+                <div class="panel panel-appmanager">
                     <div class="panel-heading">
+                        <h4 class="panel-title">
                             <a data-toggle="collapse"
                                data-bind="
                                    click: onSMSPanelClick,
@@ -219,8 +222,9 @@
                                    }
                                 "
                                aria-expanded="true" aria-controls="panel-sms">
-                            {% trans "Send to phone via SMS" %}
-                        </a>
+                                {% trans "Send to phone via SMS" %}
+                            </a>
+                        </h4>
                     </div>
                     <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_sms'}">
                         <div class="panel-body">
@@ -277,20 +281,22 @@
                 </div>
                 {% endif %}
                 {% if multimedia_state.has_media %}
-                    <div class="panel panel-default">
+                    <div class="panel panel-appmanager">
                         <div class="panel-heading">
-                            <a data-toggle="collapse"
-                               data-bind="
-                                  click: function() { track_deploy_type('Download Multimedia'); },
-                                  attr: {
-                                    href: '#' + id() + '_multimedia',
-                                    'data-target': '#' + id() + '_multimedia',
-                                    'data-parent': '#deploy-accordion_' + id()
-                                  }
-                               "
-                               aria-expanded="true" aria-controls="panel-multimedia">
-                                {% trans 'Download Multimedia' %}
-                            </a>
+                            <h4 class="panel-title">
+                                <a data-toggle="collapse"
+                                   data-bind="
+                                      click: function() { track_deploy_type('Download Multimedia'); },
+                                      attr: {
+                                        href: '#' + id() + '_multimedia',
+                                        'data-target': '#' + id() + '_multimedia',
+                                        'data-parent': '#deploy-accordion_' + id()
+                                      }
+                                   "
+                                   aria-expanded="true" aria-controls="panel-multimedia">
+                                    {% trans 'Download Multimedia' %}
+                                </a>
+                            </h4>
                         </div>
                         <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_multimedia'}">
                             <div class="panel-body">
