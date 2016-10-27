@@ -296,19 +296,6 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(problem, saved_form.problem)
         self.assertEqual(original_domain, saved_form.domain)
 
-    def test_write_blob_bucket(self):
-        form = create_form_for_test(DOMAIN)
-
-        attachments = FormAccessorSQL.get_attachments(form.form_id)
-        self.assertEqual(1, len(attachments))
-        self.assertEqual(None, attachments[0].blob_bucket)
-
-        FormAccessorSQL.write_blob_bucket(attachments[0], 'new-bucket')
-
-        attachments = FormAccessorSQL.get_attachments(form.form_id)
-        self.assertEqual(1, len(attachments))
-        self.assertEqual('new-bucket', attachments[0].blob_bucket)
-
     def _validate_deprecation(self, existing_form, new_form):
         saved_new_form = FormAccessorSQL.get_form(new_form.form_id)
         deprecated_form = FormAccessorSQL.get_form(existing_form.form_id)

@@ -15,10 +15,16 @@ FormplayerFrontend.module("Utils.Views", function (Views, FormplayerFrontend, Ba
             };
         },
 
-        setProgress: function(progress, duration) {
+        setProgress: function(done, total, duration) {
+            var progress = total === 0 ? 0 : done / total;
             // Due to jQuery bug, can't use .animate() with % until jQuery 3.0
             $(this.el).find('.js-progress-bar').css('transition', duration + 'ms');
             $(this.el).find('.js-progress-bar').width(progress * 100 + '%');
+            if (total > 0) {
+                $(this.el).find('.js-subtext small').text(
+                    gettext('Completed: ') + done + '/' + total
+                );
+            }
         },
     });
 });

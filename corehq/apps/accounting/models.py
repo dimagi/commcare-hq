@@ -744,7 +744,7 @@ class DefaultProductPlan(models.Model):
         app_label = 'accounting'
 
     @classmethod
-    def get_default_plan(cls, edition=None, is_trial=False):
+    def get_default_plan_version(cls, edition=None, is_trial=False):
         edition = edition or SoftwarePlanEdition.COMMUNITY
         try:
             default_product_plan = DefaultProductPlan.objects.select_related('plan').get(
@@ -759,9 +759,7 @@ class DefaultProductPlan(models.Model):
     @classmethod
     def get_lowest_edition(cls, requested_privileges, return_plan=False):
         for edition in SoftwarePlanEdition.SELF_SERVICE_ORDER:
-            plan_version = cls.get_default_plan(
-                edition=edition
-            )
+            plan_version = cls.get_default_plan_version(edition)
             privileges = get_privileges(plan_version) - REPORT_BUILDER_ADD_ON_PRIVS
             if privileges.issuperset(requested_privileges):
                 return (plan_version if return_plan
@@ -959,7 +957,7 @@ class Subscriber(models.Model):
 
 
         if new_plan_version is None:
-            new_plan_version = DefaultProductPlan.get_default_plan()
+            new_plan_version = DefaultProductPlan.get_default_plan_version()
 
         if downgraded_privileges is None or upgraded_privileges is None:
             change_status_result = get_change_status(None, new_plan_version)
@@ -1601,10 +1599,7 @@ class Subscription(models.Model):
         domain_obj = ensure_domain_instance(domain)
         if domain_obj is None:
             try:
-                plan_version = DefaultProductPlan.objects.get(
-                    edition=SoftwarePlanEdition.COMMUNITY,
-                    product_type=SoftwareProductType.COMMCARE,
-                ).plan.get_version()
+                plan_version = DefaultProductPlan.get_default_plan_version()
                 return plan_version, None
             except DefaultProductPlan.DoesNotExist:
                 raise ProductPlanNotFoundError
@@ -1612,7 +1607,7 @@ class Subscription(models.Model):
         subscriber = Subscriber.objects.safe_get(domain=domain.name)
         plan_version, subscription = cls._get_plan_by_subscriber(subscriber) if subscriber else (None, None)
         if plan_version is None:
-            plan_version = DefaultProductPlan.get_default_plan()
+            plan_version = DefaultProductPlan.get_default_plan_version()
         return plan_version, subscription
 
     @classmethod

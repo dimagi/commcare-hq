@@ -1,3 +1,4 @@
+import collections
 from django import forms
 from django.forms.fields import MultiValueField, CharField
 from django.forms.utils import flatatt
@@ -9,7 +10,9 @@ from django.forms.widgets import (
     RadioFieldRenderer,
     TextInput,
     MultiWidget,
+    Widget,
 )
+from django.template.loader import render_to_string
 from django.utils.encoding import force_unicode
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
@@ -166,6 +169,48 @@ class Select2MultipleChoiceWidget(forms.SelectMultiple):
                 });
             </script>
         """ % final_attrs.get('id')
+        return mark_safe(output)
+
+
+class Select2Ajax(forms.TextInput):
+    """
+    A Select2 widget that loads its options asynchronously.
+
+    You must use `set_url()` to set the url. This will usually be done in the form's __init__() method.
+    The url is not specified in the form class definition because in most cases the url will be dependent on the
+    domain of the request.
+    """
+    class Media:
+        css = {
+            'all': ('select2-3.5.2-legacy/select2.css', 'select2-3.5.2-legacy/select2-bootstrap.css')
+        }
+        js = ('select2-3.5.2-legacy/select2.js',)
+
+    def __init__(self, attrs=None, page_size=20):
+        self.page_size = page_size
+        super(Select2Ajax, self).__init__(attrs)
+
+    def set_url(self, url):
+        self.url = url
+
+    def _clean_initial(self, val):
+        if isinstance(val, collections.Sequence) and not isinstance(val, (str, unicode)):
+            return {"id": val[0], "text": val[1]}
+        else:
+            return {"id": val, "text": val}
+
+    def render(self, name, value, attrs=None):
+        final_attrs = self.build_attrs(attrs)
+        output = super(Select2Ajax, self).render(name, value, attrs)
+        output += render_to_string(
+            'hqstyle/forms/select_2_ajax_widget.html',
+            {
+                'id': final_attrs.get('id'),
+                'initial': self._clean_initial(value),
+                'endpoint': self.url,
+                'page_size': self.page_size,
+            }
+        )
         return mark_safe(output)
 
 

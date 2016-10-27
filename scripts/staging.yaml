@@ -46,11 +46,16 @@ trunk: master
 name: autostaging
 branches:
   - vellum-staging # J$ 11/13
-  #- onboarding # Jenny 9/19
+  - bmb/appmanager-v2-001  #bmb 10/26
 #  - np/upgrade-twofactor # Nick P 10/5
   - bmb/currentind-string # Biyeun 11/12
 #  - np/110/TEMPLATES
+  - np/110/reports
   - ce/billing-notification # Cal 10/25
+  - typeahead-to-atwho # Jenny 9/26
+  - sms-langcodes # Jenny 9/26
+  - case-detail-select2 # Jenny 9/26
+  - jquery-3-1-0 # Jenny 9/26
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

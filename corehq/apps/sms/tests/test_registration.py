@@ -394,7 +394,7 @@ class RegistrationAPITestCase(TestCase):
         domain_obj = Domain(name=name, sms_mobile_worker_registration_enabled=True)
         domain_obj.save()
 
-        plan = DefaultProductPlan.get_default_plan(edition=SoftwarePlanEdition.ADVANCED)
+        plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
         account = BillingAccount.get_or_create_account_by_domain(
             name, created_by="automated-test-" + cls.__name__
         )[0]

@@ -135,7 +135,6 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
-            FormplayerFrontend.trigger("clearForm");
             showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
 
             // After end of form nav, we want to clear everything except app and sesson id
@@ -254,7 +253,7 @@ FormplayerFrontend.on("sync", function () {
         if (response.responseJSON.status === 'retry') {
             FormplayerFrontend.trigger('retry', response.responseJSON, function() {
                 $.ajax(options);
-            }, gettext('Please wait while we sync your user...'));
+            }, gettext('Waiting for server progress'));
         } else {
             FormplayerFrontend.trigger('clearProgress');
             tfSyncComplete(response.responseJSON.status === 'error');
@@ -273,6 +272,18 @@ FormplayerFrontend.on("sync", function () {
     $.ajax(options);
 });
 
+FormplayerFrontend.on('phone:back:hide', function() {
+    if (FormplayerFrontend.regions.phoneModeNavigation.currentView) {
+        FormplayerFrontend.regions.phoneModeNavigation.currentView.hideBackButton();
+    }
+});
+
+FormplayerFrontend.on('phone:back:show', function() {
+    if (FormplayerFrontend.regions.phoneModeNavigation.currentView) {
+        FormplayerFrontend.regions.phoneModeNavigation.currentView.showBackButton();
+    }
+});
+
 /**
  * retry
  *
@@ -285,7 +296,6 @@ FormplayerFrontend.on("sync", function () {
 FormplayerFrontend.on("retry", function(response, retryFn, progressMessage) {
 
     var progressView = FormplayerFrontend.regions.loadingProgress.currentView,
-        progress = response.total === 0 ? 0 : response.done / response.total,
         retryTimeout = response.retryAfter * 1000;
     progressMessage = progressMessage || gettext('Please wait...');
 
@@ -296,7 +306,7 @@ FormplayerFrontend.on("retry", function(response, retryFn, progressMessage) {
         FormplayerFrontend.regions.loadingProgress.show(progressView);
     }
 
-    progressView.setProgress(progress, retryTimeout);
+    progressView.setProgress(response.done, response.total, retryTimeout);
     setTimeout(retryFn, retryTimeout);
 });
 
@@ -358,7 +368,6 @@ FormplayerFrontend.on('navigateHome', function(appId) {
     var urlObject = Util.currentUrlToObject(),
         currentUser = FormplayerFrontend.request('currentUser');
     urlObject.clearExceptApp();
-    FormplayerFrontend.trigger("clearForm");
     FormplayerFrontend.regions.breadcrumb.empty();
     if (currentUser.phoneMode) {
         FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });

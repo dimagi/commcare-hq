@@ -13,7 +13,7 @@ from corehq.apps.userreports.reports.filters.values import (
     ChoiceListFilterValue,
     DateFilterValue,
     NumericFilterValue,
-)
+    QuarterFilterValue)
 from corehq.apps.userreports.specs import TypeProperty
 
 
@@ -32,6 +32,7 @@ class ReportFilter(JsonObject):
 
     def create_filter_value(self, value):
         return {
+            'quarter': QuarterFilterValue,
             'date': DateFilterValue,
             'numeric': NumericFilterValue,
             'pre': PreFilterValue,
@@ -53,7 +54,10 @@ class FilterSpec(JsonObject):
     This is the spec for a report filter - a thing that should show up as a UI filter element
     in a report (like a date picker or a select list).
     """
-    type = StringProperty(required=True, choices=['date', 'numeric', 'pre', 'choice_list', 'dynamic_choice_list'])
+    type = StringProperty(
+        required=True,
+        choices=['date', 'quarter', 'numeric', 'pre', 'choice_list', 'dynamic_choice_list']
+    )
     # this shows up as the ID in the filter HTML.
     slug = StringProperty(required=True)
     field = StringProperty(required=True)  # this is the actual column that is queried
@@ -66,6 +70,10 @@ class FilterSpec(JsonObject):
 
 class DateFilterSpec(FilterSpec):
     compare_as_string = BooleanProperty(default=False)
+
+
+class QuarterFilterSpec(FilterSpec):
+    type = TypeProperty('quarter')
 
 
 class ChoiceListFilterSpec(FilterSpec):

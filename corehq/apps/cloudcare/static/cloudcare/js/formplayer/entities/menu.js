@@ -72,7 +72,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                     if (response.status === 'retry') {
                         FormplayerFrontend.trigger('retry', response, function() {
                             menus.fetch($.extend(true, {}, options));
-                        }, gettext('Please wait while we sync your user...'));
+                        }, gettext('Waiting for server progress'));
                     } else if (response.exception){
                         FormplayerFrontend.trigger(
                             'showError',

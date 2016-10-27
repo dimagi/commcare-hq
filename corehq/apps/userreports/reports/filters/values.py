@@ -15,7 +15,7 @@ from sqlagg.filters import (
     NOTEQFilter,
     NOTNULLFilter,
     get_column,
-)
+    ANDFilter)
 from sqlalchemy import bindparam
 
 from corehq.apps.reports.daterange import get_all_daterange_choices, get_daterange_start_end_dates
@@ -100,6 +100,29 @@ class DateFilterValue(FilterValue):
         if enddate and type(enddate) is datetime.datetime:
             enddate = enddate + datetime.timedelta(days=1) - datetime.timedelta.resolution
         return enddate
+
+
+class QuarterFilterValue(FilterValue):
+
+    @property
+    def startdate_slug(self):
+        return '%s_startdate' % self.filter.slug
+
+    @property
+    def enddate_slug(self):
+        return '%s_enddate' % self.filter.slug
+
+    def to_sql_filter(self):
+        return ANDFilter([
+            GTEFilter(self.filter.field, self.startdate_slug),
+            LTFilter(self.filter.field, self.enddate_slug)
+        ])
+
+    def to_sql_values(self):
+        return {
+            self.startdate_slug: self.value.computed_startdate,
+            self.enddate_slug: self.value.computed_enddate
+        }
 
 
 class NumericFilterValue(FilterValue):
