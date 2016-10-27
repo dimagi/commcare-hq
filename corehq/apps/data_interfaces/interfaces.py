@@ -17,7 +17,6 @@ from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.apps.reports.standard.inspect import SubmitHistoryMixin
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
-from corehq.elastic import ADD_TO_ES_FILTER
 
 from .dispatcher import EditDataInterfaceDispatcher
 
@@ -108,7 +107,6 @@ class FormManagementMode(object):
     def __init__(self, mode, validate=False):
         if mode == self.RESTORE_MODE:
             self.mode_name = self.RESTORE_MODE
-            self.xform_filter = ADD_TO_ES_FILTER['archived_forms']
             self.button_text = _("Restore selected Forms")
             self.button_class = _("btn-primary")
             self.status_page_title = _("Restore Forms Status")
@@ -121,7 +119,6 @@ class FormManagementMode(object):
                                   "filter to Normal forms")
         else:
             self.mode_name = self.ARCHIVE_MODE
-            self.xform_filter = ADD_TO_ES_FILTER['forms']
             self.button_text = _("Archive selected forms")
             self.button_class = _("btn-danger")
             self.status_page_title = _("Archive Forms Status")
@@ -187,8 +184,13 @@ class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectRepo
         })
         return context
 
-    def _es_xform_filter(self):
-        return self.mode.xform_filter
+    @property
+    def es_query(self):
+        query = super(BulkFormManagementInterface, self).es_query
+        if self.mode.mode_name == self.mode.RESTORE_MODE:
+            return query.only_archived()
+        else:
+            return query
 
     @property
     def headers(self):

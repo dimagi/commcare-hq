@@ -18,7 +18,6 @@ from corehq.apps.reports.generic import (GenericTabularReport,
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.const import MISSING_APP_ID
-from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from corehq.toggles import SUPPORT
 from dimagi.utils.decorators.memoized import memoized
 
@@ -109,9 +108,6 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
                 'not': {'term': {'xmlns.exact': SYSTEM_FORM_XMLNS}}
             }
 
-    def _es_xform_filter(self):
-        return ADD_TO_ES_FILTER['forms']
-
     @property
     def es_query(self):
         time_filter = form_es.submitted if self.by_submission_time else form_es.completed
@@ -119,8 +115,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
                 .domain(self.domain)
                 .filter(time_filter(gte=self.datespan.startdate,
                                     lt=self.datespan.enddate_adjusted))
-                .AND(self._es_xform_filter() +
-                     list(self._es_extra_filters())))
+                .AND(list(self._es_extra_filters())))
 
     @property
     @memoized
