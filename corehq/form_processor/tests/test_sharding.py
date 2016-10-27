@@ -127,7 +127,7 @@ class ShardAccessorTests(TestCase):
         self.assertTrue(all(isinstance(hash_, int) for hash_ in hashes.values()))
 
     def test_get_database_for_docs(self):
-        # test that sharding 1000 docs gives a distribution withing some tollerance
+        # test that sharding 1000 docs gives a distribution withing some tolerance
         # (bit of a vague test)
         N = 1000
         doc_ids = [str(i) for i in range(N)]
@@ -138,9 +138,11 @@ class ShardAccessorTests(TestCase):
 
         num_dbs = len(partition_config.get_form_processing_dbs())
         even_split = int(N / num_dbs)
-        tollerance = N * 0.05  # 5% tollerance
+        tolerance = N * 0.05  # 5% tollerance
         diffs = [abs(even_split - count) for count in doc_count_per_db.values()]
-        self.assertTrue(all(diff < tollerance for diff in diffs))
+        outliers = [diff for diff in diffs if diff > tolerance]
+        message = 'partitioning not within tollerance: tolerance={}, diffs={}'.format(tolerance, outliers)
+        self.assertEqual(len(outliers), 0, message)
 
     def test_hash_in_python(self):
         # test that python hashing matches with SQL hashing
