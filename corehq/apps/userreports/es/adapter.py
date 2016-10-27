@@ -134,12 +134,12 @@ class IndicatorESAdapter(IndicatorAdapter):
     def get_query_object(self):
         return ESAlchemy(self.table_name, self.config)
 
-    def get_distinct_values(self, column_config, limit):
+    def get_distinct_values(self, column, limit):
         query = self.get_query_object()
         too_many_values = False
 
         try:
-            distinct_values = query.distinct_values(column_config.field, limit + 1)
+            distinct_values = query.distinct_values(column, limit + 1)
         except ESError:
             # table doesn't exist
             return [], False

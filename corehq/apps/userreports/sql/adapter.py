@@ -53,18 +53,18 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         """
         return self.session_helper.Session.query(self.get_table())
 
-    def get_distinct_values(self, column_config, limit):
+    def get_distinct_values(self, column, limit):
         too_many_values = False
         table = self.get_table()
         if not table.exists(bind=self.engine):
             return [], False
 
-        if column_config.field not in table.c:
+        if column not in table.c:
             raise ColumnNotFoundError(_(
                 'The column "{}" does not exist in the report source! '
-                'Please double check your report configuration.').format(column_config.field)
+                'Please double check your report configuration.').format(column)
             )
-        column = table.c[column_config.field]
+        column = table.c[column]
 
         query = self.session_helper.Session.query(column).limit(limit + 1).distinct()
         result = query.all()
