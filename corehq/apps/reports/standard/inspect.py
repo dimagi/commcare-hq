@@ -59,31 +59,17 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
     def default_datespan(self):
         return datespan_from_beginning(self.domain_object, self.timezone)
 
-    def _es_extra_filters(self):
-        if FormsByApplicationFilter.has_selections(self.request):
-            def form_filter(form):
-                app_id = form.get('app_id', None)
-                if app_id and app_id != MISSING_APP_ID:
-                    return es_filters.AND(
-                        form_es.app(app_id),
-                        form_es.xmlns(form['xmlns'])
-                    )
-                return form_es.xmlns(form['xmlns'])
-            form_values = self.all_relevant_forms.values()
-            if form_values:
-                yield es_filters.OR(form_filter(f) for f in form_values)
-
+    def _get_users_filter(self, mobile_user_and_group_slugs):
         truthy_only = functools.partial(filter, None)
-        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
-        selected_user_types = EMWF.selected_user_types(mobile_user_and_group_slugs)
         users_data = EMWF.pull_users_and_groups(
             self.domain,
             mobile_user_and_group_slugs,
             include_inactive=True
         )
+        selected_user_types = EMWF.selected_user_types(mobile_user_and_group_slugs)
         all_mobile_workers_selected = HQUserType.REGISTERED in selected_user_types
         if not all_mobile_workers_selected or users_data.admin_and_demo_users:
-            yield form_es.user_id(truthy_only(
+            return form_es.user_id(truthy_only(
                 u.user_id for u in users_data.combined_users
             ))
         else:
@@ -92,21 +78,42 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
                 user_filter=HQUserType.all_but_users(),
                 simplified=True,
             )
-            yield es_filters.NOT(form_es.user_id(truthy_only(
+            return es_filters.NOT(form_es.user_id(truthy_only(
                 user.user_id for user in negated_ids
             )))
 
-        if HQUserType.UNKNOWN not in selected_user_types:
-            yield es_filters.NOT(form_es.xmlns(SYSTEM_FORM_XMLNS))
+    @staticmethod
+    def _form_filter(form):
+        app_id = form.get('app_id', None)
+        if app_id and app_id != MISSING_APP_ID:
+            return es_filters.AND(
+                form_es.app(app_id),
+                form_es.xmlns(form['xmlns'])
+            )
+        return form_es.xmlns(form['xmlns'])
 
     @property
     def es_query(self):
         time_filter = form_es.submitted if self.by_submission_time else form_es.completed
-        return (form_es.FormES()
+        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+
+        query = (form_es.FormES()
                 .domain(self.domain)
                 .filter(time_filter(gte=self.datespan.startdate,
                                     lt=self.datespan.enddate_adjusted))
-                .AND(list(self._es_extra_filters())))
+                .filter(self._get_users_filter(mobile_user_and_group_slugs)))
+
+        # filter results by app and xmlns if applicable
+        if FormsByApplicationFilter.has_selections(self.request):
+            form_values = self.all_relevant_forms.values()
+            if form_values:
+                query = query.OR(self._form_filter(f) for f in form_values)
+
+        # Exclude system forms unless they selected "Unknown User"
+        if HQUserType.UNKNOWN not in EMWF.selected_user_types(mobile_user_and_group_slugs):
+            query = query.NOT(form_es.xmlns(SYSTEM_FORM_XMLNS))
+
+        return query
 
     @property
     @memoized
