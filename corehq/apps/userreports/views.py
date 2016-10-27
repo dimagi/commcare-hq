@@ -733,7 +733,6 @@ class ReportPreview(BaseDomainView):
             aggregation_columns=aggregation_columns,
             columns=columns,
             report_meta=ReportMeta(created_by_builder=True),
-            show_in_navigation=False,
         )
         return json_response(table[0][1])
 
