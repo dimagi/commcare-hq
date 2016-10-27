@@ -5,13 +5,43 @@ from django.http import Http404
 import math
 from toggle.shortcuts import toggle_enabled, set_toggle
 
-Tag = namedtuple('Tag', 'name css_class')
-TAG_ONE_OFF = Tag(name='One-Off', css_class='danger')
-TAG_EXPERIMENTAL = Tag(name='Experimental', css_class='warning')
-TAG_PRODUCT_PATH = Tag(name='Product Path', css_class='info')
-TAG_PRODUCT_CORE = Tag(name='Core Product', css_class='success')
-TAG_PREVIEW = Tag(name='Preview', css_class='default')
-TAG_UNKNOWN = Tag(name='Unknown', css_class='default')
+Tag = namedtuple('Tag', 'name css_class description')
+TAG_ONE_OFF = Tag(
+    name='One-Off',
+    css_class='danger',
+    description="This feature flag was created for one specific use-case. "
+    "Please don't enable it for your project without first talking to the tech "
+    "team. This is not fully supported and may break other features.",
+)
+TAG_EXPERIMENTAL = Tag(
+    name='Experimental',
+    css_class='warning',
+    description="This feature flag is a proof-of-concept that we're currently "
+    "testing out. It may be changed before it is released or it may be dropped.",
+)
+TAG_PRODUCT_PATH = Tag(
+    name='Product Path',
+    css_class='info',
+    description="We intend to release this feature.  It may still be in QA or "
+    "we may have a few changes to make before it's ready for general use.",
+)
+TAG_PRODUCT_CORE = Tag(
+    name='Core Product',
+    css_class='success',
+    description="This is a core-product feature that you should feel free to "
+    "use.  We've feature-flagged it probably because it is an advanced "
+    "workflow we'd like more control over.",
+)
+TAG_PREVIEW = Tag(
+    name='Preview',
+    css_class='default',
+    description="",  # I'm not sure...
+)
+TAG_UNKNOWN = Tag(
+    name='Unknown',
+    css_class='default',
+    description="",  # I'm not sure...
+)
 ALL_TAGS = [TAG_ONE_OFF, TAG_EXPERIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, TAG_PREVIEW, TAG_UNKNOWN]
 
 
@@ -544,6 +574,10 @@ API_BLACKLIST = StaticToggle(
     ("Blacklist API access to a user or domain that spams us"),
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
+    description="For temporary, emergency use only. If a partner doesn't properly "
+    "throttle their API requests, it can hammer our infrastructure, causing "
+    "outages. This will cut off the tide, but we should communicate with them "
+    "immediately.",
 )
 
 FORM_SUBMISSION_BLACKLIST = StaticToggle(
@@ -551,6 +585,9 @@ FORM_SUBMISSION_BLACKLIST = StaticToggle(
     ("Blacklist form submissions from a domain that spams us"),
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_DOMAIN],
+    description="This is a temporary solution to an unusually high volume of "
+    "form submissions from a domain.  We have some projects that automatically "
+    "send forms. If that ever causes problems, we can use this to cut them off.",
 )
 
 
