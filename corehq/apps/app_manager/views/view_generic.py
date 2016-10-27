@@ -151,6 +151,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         from corehq.apps.dashboard.views import NewUserDashboardView
         if toggles.APP_MANAGER_V2.enabled(domain):
             context.update(NewUserDashboardView.get_page_context(domain))
+            template = NewUserDashboardView.template_name
         else:
             return HttpResponseRedirect(reverse(NewUserDashboardView.urlname, args=[domain]))
 
