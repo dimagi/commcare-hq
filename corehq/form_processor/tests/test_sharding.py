@@ -114,10 +114,10 @@ class ShardAccessorTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        super(ShardAccessorTests, cls).tearDownClass()
         partition_config.get_django_shard_map.reset_cache(partition_config)
         partition_config.get_shards.reset_cache(partition_config)
         partition_config._get_django_shards.reset_cache(partition_config)
+        super(ShardAccessorTests, cls).tearDownClass()
 
     def test_hash_doc_ids(self):
         N = 1001
