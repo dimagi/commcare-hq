@@ -369,6 +369,12 @@ class ESQuery(object):
 
         return query
 
+    def set_sorting_block(self, sorting_block):
+        """To be used with `get_sorting_block`, which interprets datatables sorting"""
+        query = deepcopy(self)
+        query.es_query['sort'] = sorting_block
+        return query
+
     def remove_default_filters(self):
         """Sensible defaults are provided.  Use this if you don't want 'em"""
         query = deepcopy(self)
