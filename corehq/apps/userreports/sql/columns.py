@@ -27,10 +27,10 @@ class UCRExpandDatabaseSubcolumn(DatabaseColumn):
     """
     A light wrapper around DatabaseColumn that stores the expand value that this DatabaseColumn is based on.
     """
-    def __init__(self, header, agg_column, expand_value, format_fn=None, slug=None, *args, **kwargs):
+    def __init__(self, header, agg_column, expand_value, *args, **kwargs):
         self.expand_value = expand_value
         super(UCRExpandDatabaseSubcolumn, self).__init__(
-            header, agg_column, format_fn=None, slug=None, *args, **kwargs
+            header, agg_column, *args, **kwargs
         )
 
 
