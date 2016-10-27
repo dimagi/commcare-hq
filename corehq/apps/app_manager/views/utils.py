@@ -59,7 +59,7 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
 
     return HttpResponseRedirect(
         "%s%s" % (
-            reverse('corehq.apps.app_manager.views.%s' % view_name, args=args),
+            reverse(view_name, args=args),
             "?%s" % urlencode(params) if params else ""
         )
     )
