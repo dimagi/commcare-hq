@@ -8,10 +8,7 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
     <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
-
-    {% include 'style/includes/atwho.html' %}
     <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
-
     {% include "app_manager/v1/partials/xpathValidator.html" %}
 {% endblock %}
 {% block js-inline %}{{ block.super }}
