@@ -6,6 +6,7 @@ from django.core import serializers
 from django.db import router
 
 from corehq.apps.dump_reload.exceptions import DomainDumpError
+from corehq.apps.dump_reload.sql.serialization import JsonLinesSerializer
 from corehq.sql_db.config import partition_config
 
 APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = {
@@ -27,9 +28,8 @@ def dump_sql_data(domain, excludes, output_stream):
     excluded_apps, excluded_models = get_excluded_apps_and_models(excludes)
     app_config_models = _get_app_list(excluded_apps)
     objects = get_objects_to_dump(domain, app_config_models, excluded_models)
-    serializers.serialize(
-        'json', objects,
-        indent=False,
+    JsonLinesSerializer().serialize(
+        objects,
         use_natural_foreign_keys=False,
         use_natural_primary_keys=False,
         stream=output_stream
