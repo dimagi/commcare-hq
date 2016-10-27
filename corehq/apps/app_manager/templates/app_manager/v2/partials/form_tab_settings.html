@@ -1,18 +1,16 @@
 {% load i18n %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
-<div class="tab-pane active" id="form-settings">
+<div class="tab-pane {% if not form.requires_case and not form.get_action_type == 'open' %}active{% endif %}" id="form-settings">
     <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'all' %}">
         {% csrf_token %}
-      <div class="savebtn-container">
-          <div class="save-button-holder clearfix"></div>
-      </div>
+      <div class="save-button-holder clearfix"></div>
       <div class="panel-group" id="form-settings-panels">
 
         <div class="panel panel-appmanager">
           <div class="panel-heading">
             <h4 class="panel-title">
-              <a class="collapse in"
+              <a class="collapsed"
                  data-parent="#form-settings-panels"
                  data-toggle="collapse"
                  data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}"
@@ -22,7 +20,7 @@
               </a>
             </h4>
           </div>
-          <div class="panel-collapse collapse in" data-bind="attr: {id: id}, css: {'in': !reallyCollapse()}" id="form-settings-multimedia">
+          <div class="panel-collapse collapse" data-bind="attr: {id: id}, css: {'in': !reallyCollapse()}" id="form-settings-multimedia">
             <div class="panel-body">
               <div class="form-group" data-bind="
                   visible: visible,
@@ -42,17 +40,18 @@
                  data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}"
                  href="#form-settings-logic">
                   <i class="fa fa-angle-double-down"></i>
-                  <span data-bind="text: title">Logic</span>{% include 'app_manager/v2/partials/case_list_form_setting.html' %}
-
-            <div class="form-group" data-bind="
-                visible: visible,
-                css: {error: hasError()}">
-
-                {% include "app_manager/v2/partials/form_gps_capture.html" %}
-
-            </div>
+                  <span data-bind="text: title">Logic</span>
             {% if request|toggle_enabled:'NO_VELLUM' %}
             <div class="form-group">
+                {% include 'app_manager/v2/partials/case_list_form_setting.html' %}
+
+                <div class="form-group" data-bind="
+                    visible: visible,
+                    css: {error: hasError()}">
+
+                    {% include "app_manager/v2/partials/form_gps_capture.html" %}
+
+                </div>
                 <label class="control-label col-sm-2">
                     {% trans "Disallow editing form in Form Builder" %}
                     <span class="hq-help-template"
