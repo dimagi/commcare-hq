@@ -34,25 +34,44 @@ def load_sql_data(data_file):
     # Keep a count of the installed objects
     loaded_object_count = 0
     total_object_count = 0
-    objects = json.load(data_file)
-    for db_alias, objects_for_db in _group_objects_by_db(objects):
-        with transaction.atomic(using=db_alias):
-            loaded_objects, num_objects = load_data_for_db(db_alias, objects)
-        loaded_object_count += loaded_objects
-        total_object_count += num_objects
+
+    def _process_chunk(chunk):
+        global total_object_count, loaded_object_count
+        chunk_total, chunk_loaded = load_objects(chunk)
+        total_object_count += len(chunk)
+        loaded_object_count += chunk_loaded
+
+    chunk = []
+    for line in data_file:
+        chunk.append(json.load(line))
+        if len(chunk) >= 1000:
+            _process_chunk(chunk)
+            chunk = []
+
+    if chunk:
+        _process_chunk(chunk)
 
     return total_object_count, loaded_object_count
+
+
+def load_objects(objects):
+    loaded_object_count = 0
+
+    for db_alias, objects_for_db in _group_objects_by_db(objects):
+        with transaction.atomic(using=db_alias):
+            loaded_objects = load_data_for_db(db_alias, objects)
+        loaded_object_count += loaded_objects
+
+    return loaded_object_count
 
 
 def load_data_for_db(db_alias, objects):
     connection = connections[db_alias]
 
-    objects_count = 0
     loaded_object_count = 0
     models = set()
     with connection.constraint_checks_disabled():
         for obj in PythonDeserializer(objects, using=db_alias):
-            objects_count += 1
             if router.allow_migrate_model(db_alias, obj.object.__class__):
                 loaded_object_count += 1
                 models.add(obj.object.__class__)
@@ -82,9 +101,8 @@ def load_data_for_db(db_alias, objects):
         if sequence_sql:
             with connection.cursor() as cursor:
                 for line in sequence_sql:
-                    print line
                     cursor.execute(line)
-    return loaded_object_count, objects_count
+    return loaded_object_count
 
 
 def _group_objects_by_db(objects):
