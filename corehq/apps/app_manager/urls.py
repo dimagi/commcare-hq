@@ -142,7 +142,7 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
 
     url(r'^save/(?P<app_id>[\w-]+)/$', 'save_copy'),
     url(r'^revert/(?P<app_id>[\w-]+)/$', 'revert_to_copy'),
-    url(r'^delete_copy/(?P<app_id>[\w-]+)/$', 'delete_copy'),
+    url(r'^delete_copy/(?P<app_id>[\w-]+)/$', 'delete_copy', name='delete_copy'),
 
     url(r'^api/list_apps/$', 'list_apps', name='list_apps'),
     url(r'^api/download_ccz/$', 'direct_ccz', name='direct_ccz'),

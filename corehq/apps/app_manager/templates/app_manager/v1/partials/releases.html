@@ -18,7 +18,7 @@
         {# The '___' in these urls will later be replaced by an app's _id ReleasesMain's url function #}
         var urls = {
             fetch: '{% url "paginate_releases" domain app.id %}',
-            delete: '{% url "corehq.apps.app_manager.views.delete_copy" domain app.id %}',
+            delete: '{% url "delete_copy" domain app.id %}',
             cloudcare: '{% url "cloudcare_get_app" domain '___' %}',
             compare: '{% url "diff" domain '___' '___' %}',
             jad: '{% url "download_jad" domain '___' %}',
