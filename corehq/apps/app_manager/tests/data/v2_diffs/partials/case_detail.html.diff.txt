@@ -1,20 +1,65 @@
 --- 
 +++ 
-@@ -1,7 +1,7 @@
+@@ -1,30 +1,39 @@
  {% load i18n %}
  {% load hq_shared_tags %}
  
 -{% include 'app_manager/v1/partials/case_list_missing_warning.html' %}
 +{% include 'app_manager/v2/partials/case_list_missing_warning.html' %}
  
- <div data-bind="saveButton: longScreen.saveButton"></div>
- <legend>
-@@ -12,7 +12,7 @@
-     ></span>
- </legend>
- <div data-bind="with: longScreen">
+-<div data-bind="saveButton: longScreen.saveButton"></div>
+-<legend>
+-    {% trans "Display Properties" %}
+-    <span class="hq-help-template"
+-        data-title="{% trans "Case Detail" %}"
+-        data-content="{% trans "These properties will be displayed on a confirmation screen after a case has been selected. If no properties are listed here the confirmation screen will not be displayed at all." %}"
+-    ></span>
+-</legend>
+-<div data-bind="with: longScreen">
 -    {% include 'app_manager/v1/partials/case_list_properties.html' %}
-+    {% include 'app_manager/v2/partials/case_list_properties.html' %}
++<div class="savebtn-container">
++    <div data-bind="saveButton: longScreen.saveButton"></div>
++</div>
++<div class="panel panel-appmanager">
++  <div class="panel-heading">
++    <h4 class="panel-title panel-title-nolink">
++        {% trans "Display Properties" %}
++        <span class="hq-help-template"
++            data-title="{% trans "Case Detail" %}"
++            data-content="{% trans "These properties will be displayed on a confirmation screen after a case has been selected. If no properties are listed here the confirmation screen will not be displayed at all." %}"
++        ></span>
++    </h4>
++  </div>
++  <div class="panel-body">
++      <div data-bind="with: longScreen">
++          {% include 'app_manager/v2/partials/case_list_properties.html' %}
++      </div>
++
++      {% if request|toggle_enabled:"DETAIL_LIST_TABS" %}
++          <button class="btn btn-default" data-bind="click: function() { longScreen.addTab(false); }">
++              <i class="fa fa-plus"></i>
++              {% trans "Add tab" %}
++          </button>
++      {% endif %}
++      {% if request|toggle_enabled:"DETAIL_LIST_TAB_NODESETS" %}
++          <button class="btn btn-default" data-bind="click: function() { longScreen.addTab(true); }">
++              <i class="fa fa-plus"></i>
++              {% trans "Add data tab" %}
++          </button>
++      {% endif %}
++  </div>
  </div>
  
- {% if request|toggle_enabled:"DETAIL_LIST_TABS" %}
+-{% if request|toggle_enabled:"DETAIL_LIST_TABS" %}
+-    <button class="btn btn-default" data-bind="click: function() { longScreen.addTab(false); }">
+-        <i class="fa fa-plus"></i>
+-        {% trans "Add tab" %}
+-    </button>
+-{% endif %}
+ 
+-{% if request|toggle_enabled:"DETAIL_LIST_TAB_NODESETS" %}
+-    <button class="btn btn-default" data-bind="click: function() { longScreen.addTab(true); }">
+-        <i class="fa fa-plus"></i>
+-        {% trans "Add data tab" %}
+-    </button>
+-{% endif %}

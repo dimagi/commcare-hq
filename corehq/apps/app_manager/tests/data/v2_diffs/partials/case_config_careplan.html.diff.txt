@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,6 +1,6 @@
+@@ -1,15 +1,15 @@
  {% load i18n %}
  
 -{% include 'app_manager/v1/partials/case_config_shared.html' %}
@@ -8,3 +8,14 @@
  
  <script type="text/html" id="case-config:case-transaction">
      <div class="row">
+         <div class="col-sm-6">
+-            <div class="panel panel-default"
++            <div class="panel panel-appmanager"
+                  data-bind="template: 'case-config:case-transaction:case-preload'"></div>
+         </div>
+         <div class="col-sm-6">
+-            <div class="panel panel-default"
++            <div class="panel panel-appmanager"
+                  data-bind="template: 'case-config:case-transaction:case-properties'"></div>
+         </div>
+     </div>
