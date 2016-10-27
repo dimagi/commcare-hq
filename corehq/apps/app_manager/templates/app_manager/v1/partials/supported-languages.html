@@ -27,11 +27,9 @@
                 <span data-bind="text: $root.languages.indexOf($data) + 1 + '.', visible: !isDefaultLang()"></span>
                 <span class="label label-info" data-bind="visible: isDefaultLang()">1. default</span>
             </td>
-            <td class="col-sm-1">
-                <span class="form-inline">
-                      <input class="short form-control"
-                             data-bind="langcode: langcode, valueUpdate: 'textchange', inputHandlers: {hasfocus: $root.seen}"/>
-                </span>
+            <td class="col-sm-3">
+                <input class="short form-control"
+                       data-bind="langcode: langcode, valueUpdate: 'textchange', inputHandlers: {hasfocus: $root.seen}"/>
             </td>
             <td class="col-sm-1">
                 <span data-bind="visible: originalLangcode() && originalLangcode() !== langcode()">
