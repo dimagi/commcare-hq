@@ -366,7 +366,7 @@ def validate_form_for_build(request, domain, app_id, unique_form_id, ajax=True):
     lang, langs = get_langs(request, app)
 
     if ajax and "blank form" in [error.get('type') for error in errors]:
-        response_html = ("" if not toggles.APP_MANAGER_V2.enabled(domain)
+        response_html = ("" if toggles.APP_MANAGER_V2.enabled(domain)
                          else render_to_string('app_manager/v1/partials/create_form_prompt.html'))
     else:
         response_html = render_to_string(
