@@ -38,16 +38,21 @@
                         <div class="panel-body">
                             <div data-bind="bootstrapTabs: true">
                                 <div class="tabbable">
-                                    <ul class="nav nav-pills">
-                                        <li class="active">
-                                            <a>{% trans "Online Install" %}</a>
-                                        </li>
-                                        <li>
-                                            <a>{% trans "Offline Install" %}</a>
-                                        </li>
+                                    <ul class="nav nav-tabs" role="tablist">
+                                      <li class="active">
+                                        <a href="#online-install-tab" data-toggle="tab">
+                                          {% trans "Online Install" %}
+                                        </a>
+                                      </li>
+
+                                      <li>
+                                        <a href="#offline-install-tab" data-toggle="tab">
+                                          {% trans "Offline Install" %}
+                                        </a>
+                                      </li>
                                     </ul>
-                                    <div class="tab-content">
-                                        <div class="tab-pane">
+                                    <div class="tab-content appmanager-tab-content">
+                                        <div class="tab-pane active" id="online-install-tab">
                                             <p>
                                                 {% trans "Download" %}
                                                 <a href="https://play.google.com/store/apps/details?id=org.commcare.dalvik">
@@ -108,7 +113,7 @@
                                                     </span>
                                                 </p>
                                             </div>
-                                        <div class="tab-pane">
+                                        <div class="tab-pane" id="offline-install-tab">
                                             <div data-bind="ifnot: hqImport('app_manager/js/app_manager.js').versionGE(build_spec.version(), '2.13.0')">
                                                 Upgrade to CommCare 2.13 to use this feature
                                             </div>
@@ -168,18 +173,20 @@
                 </div>
                 <div class="panel panel-appmanager">
                     <div class="panel-heading">
-                        <a data-toggle="collapse"
-                           data-bind="
-                           click: function() { track_deploy_type('Download to Java Phone'); },
-                           attr: {
-                               href: '#' + id() + '_download_java',
-                               'data-target': '#' + id() + '_download_java',
-                               'data-parent': '#deploy-accordion_' + id()
-                            }
-                           "
-                           aria-expanded="true" aria-controls="panel-java">
-                            {% trans "Download to Java Phone" %}
-                        </a>
+                        <h4 class="panel-title">
+                            <a data-toggle="collapse"
+                               data-bind="
+                               click: function() { track_deploy_type('Download to Java Phone'); },
+                               attr: {
+                                   href: '#' + id() + '_download_java',
+                                   'data-target': '#' + id() + '_download_java',
+                                   'data-parent': '#deploy-accordion_' + id()
+                                }
+                               "
+                               aria-expanded="true" aria-controls="panel-java">
+                                {% trans "Download to Java Phone" %}
+                            </a>
+                        </h4>
                     </div>
                     <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_download_java'}">
                         <div class="panel-body">
