@@ -26,6 +26,7 @@ from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
 from corehq import toggles, privileges
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
+from corehq.apps.dashboard.views import NewUserDashboardView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.tour import tours
@@ -90,6 +91,9 @@ def delete_app(request, domain, app_id):
     )
     app.save()
     clear_app_cache(request, domain)
+
+    if toggles.APP_MANAGER_V2.enabled(domain):
+        return HttpResponseRedirect(reverse(NewUserDashboardView.urlname, args=[domain]))
     return back_to_main(request, domain)
 
 
