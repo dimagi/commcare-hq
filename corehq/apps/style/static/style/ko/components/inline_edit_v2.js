@@ -33,6 +33,8 @@ hqDefine('style/ko/components/inline_edit_v2.js', function() {
             self.name = params.name || '';
             self.id = params.id || '';
 
+            self.iconClass = ko.observable(params.iconClass);
+
             // Data
             self.placeholder = params.placeholder || '';
             self.readOnlyValue = (ko.isObservable(params.value) ? params.value() : params.value) || '';
@@ -44,7 +46,7 @@ hqDefine('style/ko/components/inline_edit_v2.js', function() {
             self.nodeName = params.nodeName || 'textarea';
             self.rows = params.rows || 2;
             self.cols = params.cols || "";
-            self.readOnlyClass = params.readOnlyClass || '';
+            self.containerClass = params.containerClass || '';
 
             // Interaction: determine whether widget is in read or write mode
             self.isEditing = ko.observable(false);
@@ -126,16 +128,21 @@ hqDefine('style/ko/components/inline_edit_v2.js', function() {
                 <span data-bind="visible: isSaving()" class="pull-right">\
                     <img src="/static/hqstyle/img/loading.gif"/>\
                 </span>\
+                <!-- ko if: iconClass -->\
+                <span class="prefixed-icon" data-bind="css: containerClass">\
+                    <i data-bind="css: iconClass"></i>\
+                </span>\
+                <!-- /ko -->\
                 <!-- ko if: lang -->\
-                    <span class="btn btn-xs btn-info btn-langcode-preprocessed pull-right"\
+                    <span class="btn btn-xs btn-info btn-langcode-preprocessed"\
                           data-bind="text: lang, visible: !value()"\
                     ></span>\
                 <!-- /ko -->\
-                <span class="text" data-bind="text: value, css: readOnlyClass"></span>\
-                <span class="placeholder text-muted" data-bind="text: placeholder, css: readOnlyClass, visible: !value()"></span>\
-                <span class="inline-edit-icon" data-bind="css: readOnlyClass"><i class="fa fa-pencil"></i></span>\
+                <span class="text" data-bind="text: value, css: containerClass"></span>\
+                <span class="placeholder text-muted" data-bind="text: placeholder, css: containerClass, visible: !value()"></span>\
+                <span class="inline-edit-icon" data-bind="css: containerClass"><i class="fa fa-pencil"></i></span>\
             </div>\
-            <div class="read-write form-inline" data-bind="visible: isEditing()">\
+            <div class="read-write form-inline" data-bind="visible: isEditing(), css: containerClass">\
                 <div class="form-group langcode-container" data-bind="css: {\'has-lang\': lang}">\
                     <!-- ko if: nodeName === "textarea" -->\
                         <textarea class="form-control" data-bind="\
