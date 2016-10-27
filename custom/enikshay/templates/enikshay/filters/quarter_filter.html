@@ -1,0 +1,33 @@
+{% extends 'reports/filters/base.html' %}
+{% load i18n %}
+
+{% block filter_content %}
+    <div class="row">
+        <div class="col-md-6">
+            <label for="{{ slug }}-input-year">{% trans 'Year' %}: </label>
+            <select class="form-control" id="{{ slug }}-input-year" name="{{ slug }}-year">
+                {% for year_value, year_text in years %}
+                    <option value="{{ year_value }}">{{ year_text }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label for="{{ slug }}-input-quarter">{% trans 'Quarter' %}: </label>
+            <select class="form-control" id="{{ slug }}-input-quarter" name="{{ slug }}-quarter">
+                <option value="1">Q1 {% trans 'January' %} - {% trans 'March' %}</option>
+                <option value="2">Q2 {% trans 'April' %} - {% trans 'June' %}</option>
+                <option value="3">Q3 {% trans 'July' %} - {% trans 'September' %}</option>
+                <option value="4">Q4 {% trans 'October' %} - {% trans 'December' %}</option>
+            </select>
+        </div>
+    </div>
+    <style>
+        .form-horizontal .form-group > div .row select {
+            margin-left: 0 !important;
+        }
+    </style>
+    <script>
+        $('#{{ slug }}-input-year').val({{ year }});
+        $('#{{ slug }}-input-quarter').val({{ quarter }});
+    </script>
+{% endblock %}

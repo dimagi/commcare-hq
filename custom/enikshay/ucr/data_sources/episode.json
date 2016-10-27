@@ -786,6 +786,33 @@
                 "column_id": "art_initiation_date"
             },
             {
+                "display_name": "treatment_supporter_name",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "concatenate_strings",
+                    "expressions": [
+                        {
+                            "datatype": "string",
+                            "type": "property_name",
+                            "property_name": "treatment_supporter_first_name"
+                        },
+                        {
+                            "datatype": "string",
+                            "type": "property_name",
+                            "property_name": "treatment_supporter_last_name"
+                        }
+                    ],
+                    "separator": " "
+                },
+                "column_id": "treatment_supporter_name"
+            },
+            {
                 "display_name": "treatment_supporter_first_name",
                 "datatype": "string",
                 "type": "expression",
@@ -1342,23 +1369,23 @@
                     "filters": [
                         {
                             "type": "named",
-                            "name": "sputum_positive"
-                        },
-                        {
-                            "type": "named",
-                            "name": "cat2"
-                        },
-                        {
-                            "type": "named",
-                            "name": "test_purpose_diagnostic"
-                        },
-                        {
-                            "type": "named",
                             "name": "has_patient_type"
                         },
                         {
-                            "type": "named",
-                            "name": "microscopy_test"
+                            "operator": "eq",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_diagnostic_microscopy_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": "tb_detected"
                         },
                         {
                             "type": "not",
@@ -1423,15 +1450,7 @@
                     "filters": [
                         {
                             "type": "named",
-                            "name": "sputum_positive"
-                        },
-                        {
-                            "type": "named",
                             "name": "cat2"
-                        },
-                        {
-                            "type": "named",
-                            "name": "test_purpose_end_of_ip"
                         },
                         {
                             "type": "named",
@@ -1440,6 +1459,22 @@
                         {
                             "type": "named",
                             "name": "3months_length_of_ip"
+                        },
+                        {
+                            "operator": "eq",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_endofip_microscopy_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": "tb_detected"
                         },
                         {
                             "type": "not",
@@ -1460,15 +1495,7 @@
                     "filters": [
                         {
                             "type": "named",
-                            "name": "sputum_negative"
-                        },
-                        {
-                            "type": "named",
                             "name": "cat2"
-                        },
-                        {
-                            "type": "named",
-                            "name": "test_purpose_end_of_ip"
                         },
                         {
                             "type": "named",
@@ -1477,6 +1504,22 @@
                         {
                             "type": "named",
                             "name": "3months_length_of_ip"
+                        },
+                        {
+                            "operator": "eq",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_endofip_microscopy_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": "tb_not_detected"
                         },
                         {
                             "type": "not",
@@ -1496,26 +1539,8 @@
                     "type": "and",
                     "filters": [
                         {
-                            "type": "not",
-                            "filter": {
-                                "type": "named",
-                                "name": "sputum_positive"
-                            }
-                        },
-                        {
-                            "type": "not",
-                            "filter": {
-                                "type": "named",
-                                "name": "sputum_negative"
-                            }
-                        },
-                        {
                             "type": "named",
                             "name": "cat2"
-                        },
-                        {
-                            "type": "named",
-                            "name": "test_purpose_end_of_ip"
                         },
                         {
                             "type": "named",
@@ -1524,6 +1549,22 @@
                         {
                             "type": "named",
                             "name": "3months_length_of_ip"
+                        },
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_endofip_microscopy_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": ["", null]
                         },
                         {
                             "type": "not",
@@ -1787,6 +1828,25 @@
                         "property_value": ["", null]
                     }
                 }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "cpt_initiated",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "cpt_initiated"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                }
             }
         ],
         "named_filters": {
@@ -1794,10 +1854,20 @@
                 "operator": "eq",
                 "type": "boolean_expression",
                 "expression": {
-                    "type": "property_name",
-                    "property_name": "cat1_cat2"
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "previous_tb_treatment"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
                 },
-                "property_value": "cat1"
+                "property_value": "yes"
             },
             "cpt_months_delivered_zero": {
                 "operator": "eq",
