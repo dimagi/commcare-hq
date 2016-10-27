@@ -15,7 +15,7 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.factory import ReportFactory, ReportColumnFactory
 from corehq.apps.userreports.reports.specs import FieldColumn, PercentageColumn, AggregateDateColumn
-from corehq.apps.userreports.sql.columns import _expand_column
+from corehq.apps.userreports.sql.columns import expand_column
 from corehq.apps.userreports.tests.utils import run_with_all_ucr_backends
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager, UCR_ENGINE_ID
@@ -261,7 +261,7 @@ class TestExpandedColumn(TestCase):
             format="default",
             description="foo"
         ))
-        cols = _expand_column(column, ["positive", "negative"], "en")
+        cols = expand_column(column, ["positive", "negative"], "en")
 
         self.assertEqual(len(cols), 2)
         self.assertEqual(type(cols[0].view), SumWhen)

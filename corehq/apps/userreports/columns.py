@@ -1,5 +1,12 @@
-from corehq.apps.userreports.const import DEFAULT_MAXIMUM_EXPANSION
-from corehq.apps.userreports.util import get_indicator_adapter
+from django.utils.translation import ugettext as _
+
+from corehq.apps.userreports.const import (
+    DEFAULT_MAXIMUM_EXPANSION,
+    UCR_SQL_BACKEND,
+)
+from corehq.apps.userreports.exceptions import ColumnNotFoundError
+from corehq.apps.userreports.sql.columns import expand_column as sql_expand_column
+from corehq.apps.userreports.util import get_indicator_adapter, get_backend_id
 
 
 class ColumnConfig(object):
@@ -27,3 +34,53 @@ def get_distinct_values(data_source_configuration, column_config, expansion_limi
     """
     adapter = get_indicator_adapter(data_source_configuration)
     return adapter.get_distinct_values(column_config.field, expansion_limit)
+
+
+def get_expanded_column_config(data_source_configuration, column_config, lang):
+    """
+    Given an ExpandedColumn, return a list of Column-like objects. Each column
+    is configured to show the number of occurrences of one of the values present for
+    the ExpandedColumn's field.
+
+    This function also adds warnings to the column_warnings parameter.
+
+    :param data_source_configuration:
+    :param column_config:
+    :param column_warnings:
+    :return:
+    """
+    column_warnings = []
+    try:
+        vals, over_expansion_limit = get_distinct_values(
+            data_source_configuration, column_config, column_config.max_expansion
+        )
+    except ColumnNotFoundError as e:
+        return ColumnConfig([], warnings=[unicode(e)])
+
+    if over_expansion_limit:
+        column_warnings.append(_(
+            u'The "{header}" column had too many values to expand! '
+            u'Expansion limited to {max} distinct values.'
+        ).format(
+            header=column_config.get_header(lang),
+            max=column_config.max_expansion,
+        ))
+
+    column = _get_expanded_column(data_source_configuration, column_config, vals, lang)
+
+    return ColumnConfig(column, warnings=column_warnings)
+
+
+def _get_expanded_column(data_source_config, report_column, values, lang):
+    """
+    Given an ExpandedColumn, return a list of Column-like objects. Each column
+    is configured to show the number of occurrences of one of the given distinct_values.
+
+    :param report_column:
+    :param distinct_values:
+    :return:
+    """
+    backend_id = get_backend_id(data_source_config)
+    if backend_id == UCR_SQL_BACKEND:
+        fn = sql_expand_column
+    return fn(report_column, values, lang)
