@@ -101,7 +101,7 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
 
     # Scheduler Modules
     url(r'^edit_visit_schedule/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
-        'edit_visit_schedule'),
+        'edit_visit_schedule', name='edit_visit_schedule'),
     url(r'^edit_schedule_phases/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$', 'edit_schedule_phases'),
 
     # multimedia stuff
