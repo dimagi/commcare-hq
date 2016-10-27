@@ -191,7 +191,7 @@
         <ul class="nav nav-hq-sidebar sortable appmanager-main-menu">
             <li class="sort-action">
                 <form method="post"
-                      action="{% url "corehq.apps.app_manager.views.rearrange" domain app.id 'modules' %}">
+                      action="{% url "rearrange" domain app.id 'modules' %}">
                       {% csrf_token %}
                 </form>
             </li>
@@ -214,7 +214,7 @@
                         <ul class="nav nav-hq-sidebar {% ifequal module.id selected_module.id %}selected{% endifequal %} sortable-forms sortable">
                             <li class="sort-action">
                                 <form method="post"
-                                      action="{% url "corehq.apps.app_manager.views.rearrange" domain app.id 'forms' %}">
+                                      action="{% url "rearrange" domain app.id 'forms' %}">
                                       {% csrf_token %}
                                 </form>
                             </li>

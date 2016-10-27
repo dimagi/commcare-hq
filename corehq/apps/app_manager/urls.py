@@ -129,7 +129,7 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^edit_app_ui_translations/(?P<app_id>[\w-]+)/$', 'edit_app_ui_translations',
         name='edit_app_ui_translations'),
     url(r'^get_app_ui_translations/$', 'get_app_ui_translations', name='get_app_ui_translations'),
-    url(r'^rearrange/(?P<app_id>[\w-]+)/(?P<key>[\w-]+)/$', 'rearrange'),
+    url(r'^rearrange/(?P<app_id>[\w-]+)/(?P<key>[\w-]+)/$', 'rearrange', name='rearrange'),
 
     url(r'^odk/(?P<app_id>[\w-]+)/qr_code/$', 'odk_qr_code'),
     url(r'^odk/(?P<app_id>[\w-]+)/media_qr_code/$', 'odk_media_qr_code'),
