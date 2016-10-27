@@ -256,6 +256,7 @@ HQ_APPS = (
     'corehq.apps.data_analytics',
     'corehq.apps.domain',
     'corehq.apps.domainsync',
+    'corehq.apps.dump_reload',
     'corehq.apps.hqadmin',
     'corehq.apps.hqcase',
     'corehq.apps.hqcouchlog',
