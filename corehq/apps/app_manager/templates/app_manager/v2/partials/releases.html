@@ -70,7 +70,7 @@
 </script>
 
 {% if intro_only %}
-    Intro content goes here. Why don't you click on <b>New</b> on the left?
+    Please click <strong>Add...</strong> to the left to start building your application!
 {% else %}
 
 {% if intro_only and build_profile_access %}
@@ -205,7 +205,7 @@
                 </td>
                 <td>
                     <b data-bind="text: comment_user_name"></b>
-                    <inline-edit params="
+                    <inline-edit-v2 params="
                         value: build_comment,
                         rows: 1,
                         placeholder: '{% trans "(Click here to add a comment)"|escapejs %}',
@@ -213,7 +213,7 @@
                         saveParams: {'build_id': id},
                         saveValueName: 'comment',
                         errorMessage:'{% trans "Error updating comment.  Please try again."|escapejs %}',
-                    "></inline-edit>
+                    "></inline-edit-v2>
                     {% if request|toggle_enabled:"VIEW_BUILD_SOURCE" %}
                         <h6>
                             {% blocktrans %}
