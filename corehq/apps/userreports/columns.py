@@ -1,12 +1,23 @@
 from django.utils.translation import ugettext as _
 
+from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.userreports.const import (
     DEFAULT_MAXIMUM_EXPANSION,
     UCR_SQL_BACKEND,
 )
 from corehq.apps.userreports.exceptions import ColumnNotFoundError
-from corehq.apps.userreports.sql.columns import expand_column as sql_expand_column
 from corehq.apps.userreports.util import get_indicator_adapter, get_backend_id
+
+
+class UCRExpandDatabaseSubcolumn(DatabaseColumn):
+    """
+    A light wrapper around DatabaseColumn that stores the expand value that this DatabaseColumn is based on.
+    """
+    def __init__(self, header, agg_column=None, expand_value=None, *args, **kwargs):
+        self.expand_value = expand_value
+        super(UCRExpandDatabaseSubcolumn, self).__init__(
+            header, agg_column, *args, **kwargs
+        )
 
 
 class ColumnConfig(object):
@@ -80,6 +91,7 @@ def _get_expanded_column(data_source_config, report_column, values, lang):
     :param distinct_values:
     :return:
     """
+    from corehq.apps.userreports.sql.columns import expand_column as sql_expand_column
     backend_id = get_backend_id(data_source_config)
     if backend_id == UCR_SQL_BACKEND:
         fn = sql_expand_column

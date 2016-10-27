@@ -1,19 +1,9 @@
 import sqlalchemy
 from sqlagg import SumWhen
-from corehq.apps.reports.sqlreport import DatabaseColumn
 from fluff import TYPE_STRING
 from fluff.util import get_column_type
 
-
-class UCRExpandDatabaseSubcolumn(DatabaseColumn):
-    """
-    A light wrapper around DatabaseColumn that stores the expand value that this DatabaseColumn is based on.
-    """
-    def __init__(self, header, agg_column, expand_value, *args, **kwargs):
-        self.expand_value = expand_value
-        super(UCRExpandDatabaseSubcolumn, self).__init__(
-            header, agg_column, *args, **kwargs
-        )
+from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 
 
 def column_to_sql(column):
@@ -40,8 +30,8 @@ def expand_column(report_column, distinct_values, lang):
 
         columns.append(UCRExpandDatabaseSubcolumn(
             u"{}-{}".format(report_column.get_header(lang), val),
-            sql_agg_col,
-            val,
+            agg_column=sql_agg_col,
+            expand_value=val,
             sortable=False,
             data_slug=u"{}-{}".format(report_column.column_id, index),
             format_fn=report_column.get_format_fn(),
