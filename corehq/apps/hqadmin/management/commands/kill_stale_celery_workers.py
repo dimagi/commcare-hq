@@ -29,4 +29,5 @@ def _kill_stale_workers():
         pings = parse_celery_pings(worker_responses)
 
         hosts_to_stop = filter(lambda hostname: hostname in pings, expected_stopped)
-        celery.control.broadcast('shutdown', destination=hosts_to_stop)
+        if hosts_to_stop:
+            celery.control.broadcast('shutdown', destination=hosts_to_stop)
