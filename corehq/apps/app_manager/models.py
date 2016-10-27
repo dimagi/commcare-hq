@@ -2047,7 +2047,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     def root_module(self):
         if self.root_module_id:
             return self._parent.get_module_by_unique_id(self.root_module_id,
-                   error=_("Could not find parent module for '{}'").format(self.default_name()))
+                   error=_("Could not find parent menu for '{}'").format(self.default_name()))
 
     def requires_case_details(self):
         return False
@@ -4657,6 +4657,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 ) % ((name,) + setting_version + my_version))
 
     @property
+    def advanced_app_builder(self):
+        properties = (self.profile or {}).get('properties', {})
+        return properties.get('advanced_app_builder', 'false') == 'true'
+
+    @property
     def jad_settings(self):
         settings = {
             'JavaRosa-Admin-Password': self.admin_password,
@@ -5316,7 +5321,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if matches(obj):
                 return obj
         if not error:
-            error = _("Module in app '{app_id}' with unique id '{unique_id}' not found.").format(
+            error = _("Could not find '{unique_id}' in app '{app_id}'.").format(
                 app_id=self.id, unique_id=unique_id)
         raise ModuleNotFoundException(error)
 
@@ -5442,10 +5447,24 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             pass
         try:
             form = from_module.forms.pop(j)
+            if toggles.APP_MANAGER_V2.enabled(self.domain):
+                if not to_module.is_surveys and i == 0:
+                    # first form is the reg form
+                    i = 1
+                if from_module.is_surveys != to_module.is_surveys:
+                    if from_module.is_surveys:
+                        form.requires = "case"
+                        form.actions.update_case = UpdateCaseAction(
+                            condition=FormActionCondition(type='always'))
+                    else:
+                        form.requires = "none"
+                        form.actions.update_case = UpdateCaseAction(
+                            condition=FormActionCondition(type='never'))
             to_module.add_insert_form(from_module, form, index=i, with_source=True)
         except IndexError:
             raise RearrangeError()
-        if to_module.case_type != from_module.case_type:
+        if to_module.case_type != from_module.case_type \
+                and not toggles.APP_MANAGER_V2.enabled(self.domain):
             raise ConflictingCaseTypeError()
 
     def scrub_source(self, source):
@@ -5948,8 +5967,10 @@ class DeleteFormRecord(DeleteRecord):
         app = Application.get(self.app_id)
         if self.module_unique_id is not None:
             name = trans(self.form.name, app.default_language, include_lang=False)
-            module = app.get_module_by_unique_id(self.module_unique_id,
-                     error=_("Could not find module containing form '{}'").format(name))
+            module = app.get_module_by_unique_id(
+                self.module_unique_id,
+                error=_("Could not find form '{}'").format(name)
+            )
         else:
             module = app.modules[self.module_id]
         forms = module.forms
