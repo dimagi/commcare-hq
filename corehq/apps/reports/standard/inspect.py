@@ -2,9 +2,10 @@ import functools
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, get_language
 
+from corehq.apps.es import forms as form_es, filters as es_filters
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
 from corehq.apps.reports import util
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
@@ -17,7 +18,6 @@ from corehq.apps.reports.generic import (GenericTabularReport,
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.const import MISSING_APP_ID
-from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from corehq.toggles import SUPPORT
 from dimagi.utils.decorators.memoized import memoized
 
@@ -59,86 +59,70 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
     def default_datespan(self):
         return datespan_from_beginning(self.domain_object, self.timezone)
 
-    def _es_extra_filters(self):
-        if FormsByApplicationFilter.has_selections(self.request):
-            def form_filter(form):
-                app_id = form.get('app_id', None)
-                if app_id and app_id != MISSING_APP_ID:
-                    return {'and': [{'term': {'xmlns.exact': form['xmlns']}},
-                                    {'term': {'app_id': app_id}}]}
-                return {'term': {'xmlns.exact': form['xmlns']}}
-            form_values = self.all_relevant_forms.values()
-            if form_values:
-                yield {'or': [form_filter(f) for f in form_values]}
-
+    def _get_users_filter(self, mobile_user_and_group_slugs):
         truthy_only = functools.partial(filter, None)
-        mobile_user_and_group_slugs = self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
-        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
+        users_data = EMWF.pull_users_and_groups(
             self.domain,
             mobile_user_and_group_slugs,
             include_inactive=True
         )
-        all_mobile_workers_selected = 't__0' in self.request.GET.getlist('emw')
+        selected_user_types = EMWF.selected_user_types(mobile_user_and_group_slugs)
+        all_mobile_workers_selected = HQUserType.REGISTERED in selected_user_types
         if not all_mobile_workers_selected or users_data.admin_and_demo_users:
-            yield {
-                'terms': {
-                    'form.meta.userID': truthy_only(
-                        u.user_id for u in users_data.combined_users
-                    )
-                }
-            }
+            return form_es.user_id(truthy_only(
+                u.user_id for u in users_data.combined_users
+            ))
         else:
             negated_ids = util.get_all_users_by_domain(
                 self.domain,
                 user_filter=HQUserType.all_but_users(),
                 simplified=True,
             )
-            yield {
-                'not': {
-                    'terms': {
-                        'form.meta.userID': truthy_only(
-                            user.user_id for user in negated_ids
-                        )
-                    }
-                }
-            }
+            return es_filters.NOT(form_es.user_id(truthy_only(
+                user.user_id for user in negated_ids
+            )))
 
-        if HQUserType.UNKNOWN not in ExpandedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs):
-            yield {
-                'not': {'term': {'xmlns.exact': SYSTEM_FORM_XMLNS}}
-            }
+    @staticmethod
+    def _form_filter(form):
+        app_id = form.get('app_id', None)
+        if app_id and app_id != MISSING_APP_ID:
+            return es_filters.AND(
+                form_es.app(app_id),
+                form_es.xmlns(form['xmlns'])
+            )
+        return form_es.xmlns(form['xmlns'])
 
-    def _es_xform_filter(self):
-        return ADD_TO_ES_FILTER['forms']
+    @property
+    def es_query(self):
+        time_filter = form_es.submitted if self.by_submission_time else form_es.completed
+        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
 
-    def filters_as_es_query(self):
-        return {
-            'query': {
-                'range': {
-                    self.time_field: {
-                        'from': self.datespan.startdate_param,
-                        'to': self.datespan.enddate_param,
-                        'include_upper': False,
-                    }
-                }
-            },
-            'filter': {
-                'and': (self._es_xform_filter() +
-                        list(self._es_extra_filters()))
-            },
-            'sort': self.get_sorting_block(),
-        }
+        query = (form_es.FormES()
+                .domain(self.domain)
+                .filter(time_filter(gte=self.datespan.startdate,
+                                    lt=self.datespan.enddate_adjusted))
+                .filter(self._get_users_filter(mobile_user_and_group_slugs)))
+
+        # filter results by app and xmlns if applicable
+        if FormsByApplicationFilter.has_selections(self.request):
+            form_values = self.all_relevant_forms.values()
+            if form_values:
+                query = query.OR(*[self._form_filter(f) for f in form_values])
+
+        # Exclude system forms unless they selected "Unknown User"
+        if HQUserType.UNKNOWN not in EMWF.selected_user_types(mobile_user_and_group_slugs):
+            query = query.NOT(form_es.xmlns(SYSTEM_FORM_XMLNS))
+
+        return query
 
     @property
     @memoized
-    def es_results(self):
-        return es_query(
-            params={'domain.exact': self.domain},
-            q=self.filters_as_es_query(),
-            es_index='forms',
-            start_at=self.pagination.start,
-            size=self.pagination.count,
-        )
+    def es_query_result(self):
+        return (self.es_query
+                .set_sorting_block(self.get_sorting_block())
+                .start(self.pagination.start)
+                .size(self.pagination.count)
+                .run())
 
     def get_sorting_block(self):
         sorting_block = super(SubmitHistoryMixin, self).get_sorting_block()
@@ -153,7 +137,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
 
     @property
     def total_records(self):
-        return int(self.es_results['hits']['total'])
+        return int(self.es_query_result.total)
 
 
 class SubmitHistory(SubmitHistoryMixin, ProjectReport):
@@ -188,9 +172,7 @@ class SubmitHistory(SubmitHistoryMixin, ProjectReport):
 
     @property
     def rows(self):
-        submissions = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
-
-        for form in submissions:
+        for form in self.es_query_result.hits:
             display = FormDisplay(form, self, lang=get_language())
             row = [
                 display.form_data_link,
