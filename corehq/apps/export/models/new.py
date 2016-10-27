@@ -39,6 +39,7 @@ from dimagi.ext.couchdbkit import (
     ListProperty,
     StringProperty,
     DateTimeProperty,
+    SetProperty,
 )
 from corehq.apps.export.const import (
     PROPERTY_TAG_UPDATE,
@@ -54,6 +55,7 @@ from corehq.apps.export.const import (
     MISSING_VALUE,
     EMPTY_VALUE,
     KNOWN_CASE_PROPERTIES,
+    UNKNOWN_INFERRED_FROM,
 )
 from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.export.dbaccessors import (
@@ -119,6 +121,7 @@ class ExportItem(DocumentSchema):
     # True if this item was inferred from different actions in HQ (i.e. case upload)
     # False if the item was found in the application structure
     inferred = BooleanProperty(default=False)
+    inferred_from = SetProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -156,6 +159,7 @@ class ExportItem(DocumentSchema):
         item = cls(one.to_json())
         item.last_occurrences = _merge_dicts(one.last_occurrences, two.last_occurrences, max)
         item.inferred = one.inferred or two.inferred
+        item.inferred_from |= two.inferred_from
         return item
 
     @property
@@ -939,7 +943,7 @@ class InferredExportGroupSchema(ExportGroupSchema):
     Same as an ExportGroupSchema with a few utility methods
     """
 
-    def put_item(self, path):
+    def put_item(self, path, inferred_from=None):
         assert self.path == path[:len(self.path)], "ExportItem's path doesn't start with the table"
 
         item = self.get_item(path)
@@ -950,7 +954,8 @@ class InferredExportGroupSchema(ExportGroupSchema):
         item = ExportItem(
             path=path,
             label='.'.join(map(lambda node: node.name, path)),
-            inferred=True
+            inferred=True,
+            inferred_from=set().add(inferred_from or UNKNOWN_INFERRED_FROM)
         )
         self.items.append(item)
         return item
