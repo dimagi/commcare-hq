@@ -23,6 +23,7 @@ FormplayerFrontend.on("before:start", function () {
             breadcrumb: "#breadcrumb-region",
             persistentCaseTile: "#persistent-case-tile",
             phoneModeNavigation: '#phone-mode-navigation',
+            restoreAsBanner: '#restore-as-region',
         },
     });
 
@@ -126,6 +127,7 @@ FormplayerFrontend.on('startForm', function (data) {
     data.xform_url = user.formplayer_url;
     data.domain = user.domain;
     data.username = user.username;
+    data.restoreAs = user.restoreAs;
     data.formplayerEnabled = true;
     data.displayOptions = user.displayOptions;
     data.onerror = function (resp) {
@@ -171,6 +173,7 @@ FormplayerFrontend.on("start", function (options) {
     user.formplayer_url = options.formplayer_url;
     user.debuggerEnabled = options.debuggerEnabled;
     user.phoneMode = options.phoneMode;
+    user.restoreAs = FormplayerFrontend.request('restoreAsUser', user.domain, user.username);
     user.displayOptions = {
         phoneMode: options.phoneMode,
         oneQuestionPerScreen: options.oneQuestionPerScreen,
@@ -179,6 +182,11 @@ FormplayerFrontend.on("start", function (options) {
     FormplayerFrontend.request('gridPolyfillPath', options.gridPolyfillPath);
     if (Backbone.history) {
         Backbone.history.start();
+        FormplayerFrontend.regions.restoreAsBanner.show(
+            new FormplayerFrontend.SessionNavigate.Users.Views.RestoreAsBanner({
+                model: user,
+            })
+        );
         // will be the same for every domain. TODO: get domain/username/pass from django
         if (this.getCurrentRoute() === "") {
             if (options.phoneMode) {
@@ -219,6 +227,35 @@ FormplayerFrontend.reqres.setHandler('getAppDisplayProperties', function() {
     return FormplayerFrontend.DisplayProperties || {};
 });
 
+FormplayerFrontend.reqres.setHandler('restoreAsUser', function(domain, username) {
+    return FormplayerFrontend.Utils.Users.getRestoreAsUser(
+        domain,
+        username
+    );
+});
+
+/**
+ * clearRestoreAsUser
+ *
+ * This will unset the localStorage restore as user as well as
+ * unset the restore as user from the currentUser. It then
+ * navigates you to the main page.
+ */
+FormplayerFrontend.on('clearRestoreAsUser', function() {
+    var user = FormplayerFrontend.request('currentUser');
+    FormplayerFrontend.Utils.Users.clearRestoreAsUser(
+        user.domain,
+        user.username
+    );
+    user.restoreAs = null;
+    FormplayerFrontend.regions.restoreAsBanner.show(
+        new FormplayerFrontend.SessionNavigate.Users.Views.RestoreAsBanner({
+            model: user,
+        })
+    );
+    FormplayerFrontend.trigger('navigateHome');
+});
+
 FormplayerFrontend.on("sync", function () {
     var user = FormplayerFrontend.request('currentUser'),
         username = user.username,
@@ -239,7 +276,11 @@ FormplayerFrontend.on("sync", function () {
     };
     options = {
         url: formplayer_url + "/sync-db",
-        data: JSON.stringify({"username": username, "domain": domain}),
+        data: JSON.stringify({
+            "username": username,
+            "domain": domain,
+            "restoreAs": user.restoreAs,
+        }),
         complete: complete,
     };
     Util.setCrossDomainAjaxOptions(options);
@@ -324,6 +365,7 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
                 app_id: appId,
                 domain: user.domain,
                 username: user.username,
+                restoreAs: user.restoreAs,
             }),
         };
     Util.setCrossDomainAjaxOptions(options);
@@ -338,8 +380,13 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
 });
 
 FormplayerFrontend.on('navigateHome', function(appId) {
-    var urlObject = Util.currentUrlToObject();
+    var urlObject = Util.currentUrlToObject(),
+        currentUser = FormplayerFrontend.request('currentUser');
     urlObject.clearExceptApp();
     FormplayerFrontend.regions.breadcrumb.empty();
-    FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });
+    if (currentUser.phoneMode) {
+        FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });
+    } else {
+        FormplayerFrontend.navigate("/apps", { trigger: true });
+    }
 });

@@ -8,6 +8,9 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             "sessions": "listSessions", //list all this user's current sessions (incomplete forms)
             "sessions/:id": "getSession",
             "local/:path": "localInstall",
+            "restore_as/:page/:query": "listUsers",
+            "restore_as/:page/": "listUsers",
+            "restore_as": "listUsers",
             ":session": "listMenus",  // Default route
         },
     });
@@ -32,6 +35,14 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
                 Util.encodedUrlToObject(sessionObject || Backbone.history.getFragment())
             );
             SessionNavigate.MenuList.Controller.selectMenu(urlObject);
+        },
+        listUsers: function(page, query) {
+            FormplayerFrontend.trigger("clearForm");
+            page = parseInt(page);
+            if (_.isNaN(page)) {
+                page = 1;
+            }
+            SessionNavigate.Users.Controller.listUsers(page, query);
         },
         showDetail: function (model, detailTabIndex) {
             SessionNavigate.MenuList.Controller.showDetail(model, detailTabIndex);
@@ -135,6 +146,11 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         urlObject.setQuery(queryDict);
         Util.setUrlToObject(urlObject);
         API.listMenus();
+    });
+
+    FormplayerFrontend.on('restore_as:list', function() {
+        FormplayerFrontend.navigate("/restore_as");
+        API.listUsers();
     });
 
     FormplayerFrontend.on("menu:show:detail", function (model, detailTabIndex) {

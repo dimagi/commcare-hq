@@ -37,6 +37,13 @@
   }
 }
 
+.module-icon-user {
+  background-color: @cc-dark-cool-accent-mid;
+  .module-icon {
+    color: @cc-dark-cool-accent-hi;
+  }
+}
+
 .module-audio-control, .module-delete-control {
   text-align: center;
   .transition(background 1s);
@@ -104,7 +111,7 @@
   background-color: darken(@cc-bg, 5);;
 }
 
-.module-caselist-search-container {
+.module-search-container, .module-pagination-container {
   padding: 10px;
 }
 
@@ -137,6 +144,17 @@
     background-color: @cc-brand-hi;
     color: @cc-brand-low;
   }
+}
+
+.module-banner {
+  background-color: @cc-light-warm-accent-hi;
+  color: black;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  border: none;
+  margin-top: -1px;
+  text-align: center;
+  font-size: 14px;
 }
 
 .module-table-casedetail tbody tr:nth-child(odd) {

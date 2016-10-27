@@ -1,4 +1,4 @@
-/*global Backbone, FormplayerFrontend */
+/*global Backbone, FormplayerFrontend, DOMPurify */
 
 function Util() {
 }
@@ -27,7 +27,7 @@ Util.confirmationModal = function(options) {
     });
     var $modal = $('#js-confirmation-modal');
     $modal.find('.js-modal-title').text(options.title);
-    $modal.find('.js-modal-body').text(options.message);
+    $modal.find('.js-modal-body').html(DOMPurify.sanitize(options.message));
     $modal.find('#js-confirmation-confirm').text(options.confirmText);
     $modal.find('#js-confirmation-cancel').text(options.cancelText);
 
@@ -71,7 +71,7 @@ Util.setCrossDomainAjaxOptions = function (options) {
     options.dataType = "json";
     options.crossDomain = {crossDomain: true};
     options.xhrFields = {withCredentials: true};
-    options.contentType = "application/json";
+    options.contentType = "application/json;charset=UTF-8";
 };
 
 Util.CloudcareUrl = function (options) {

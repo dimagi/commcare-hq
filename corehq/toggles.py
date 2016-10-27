@@ -909,3 +909,10 @@ APP_MANAGER_V2 = StaticToggle(
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
+
+RESTORE_AS_CLOUDCARE = StaticToggle(
+    'restore_as_cloudcare',
+    'Restore as a different user for cloudcare',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
