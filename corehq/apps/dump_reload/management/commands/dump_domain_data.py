@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 
-from corehq.apps.dump_reload.sql.dump import dump_sql_data
+from corehq.apps.dump_reload.sql import dump_sql_data
 
 
 class Command(BaseCommand):
@@ -18,7 +18,6 @@ class Command(BaseCommand):
         excludes = options.get('exclude')
         output = options.get('output')
         show_traceback = options.get('traceback')
-
 
         try:
             self.stdout.ending = None
