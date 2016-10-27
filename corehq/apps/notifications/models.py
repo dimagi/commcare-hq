@@ -7,6 +7,7 @@ from django.contrib.postgres.fields import ArrayField
 
 
 NOTIFICATION_TYPES = (
+    ('billing', 'Billing Notification'),
     ('info', 'Product Notification'),
     ('alert', 'Maintenance Notification'),
 )
