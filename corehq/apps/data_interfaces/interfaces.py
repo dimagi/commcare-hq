@@ -183,7 +183,7 @@ class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectRepo
         context.update({
             "form_query_string": self.request.GET.urlencode(),
             "mode": self.mode,
-            "total_xForms": int(self.es_results['hits']['total']),
+            "total_xForms": int(self.es_query_result.total),
         })
         return context
 
@@ -216,10 +216,7 @@ class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectRepo
 
     @property
     def rows(self):
-        results = self.es_results.get('hits', {}).get('hits', [])
-
-        for result in results:
-            form = result['_source']
+        for form in self.es_query_result.hits:
             display = FormDisplay(form, self)
             checkbox = mark_safe(
                 """<input type="checkbox" class="xform-checkbox"
@@ -238,13 +235,4 @@ class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectRepo
         # returns a list of form_ids
         # this is called using ReportDispatcher.dispatch(render_as='form_ids', ***) in
         # the bulk_form_management_async task
-        from corehq.elastic import es_query
-
-        results = es_query(
-            params={'domain.exact': self.domain},
-            q=self.filters_as_es_query(),
-            es_index='forms',
-            fields=['_id'],
-        )
-        form_ids = [res['_id'] for res in results.get('hits', {}).get('hits', [])]
-        return form_ids
+        return self.es_query.exclude_source().run().doc_ids

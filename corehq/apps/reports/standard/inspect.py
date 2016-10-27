@@ -2,6 +2,7 @@ import functools
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, get_language
 
+from corehq.apps.es import forms as form_es
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
 from corehq.apps.reports import util
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
@@ -111,34 +112,24 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
     def _es_xform_filter(self):
         return ADD_TO_ES_FILTER['forms']
 
-    def filters_as_es_query(self):
-        return {
-            'query': {
-                'range': {
-                    self.time_field: {
-                        'from': self.datespan.startdate_param,
-                        'to': self.datespan.enddate_param,
-                        'include_upper': False,
-                    }
-                }
-            },
-            'filter': {
-                'and': (self._es_xform_filter() +
-                        list(self._es_extra_filters()))
-            },
-            'sort': self.get_sorting_block(),
-        }
+    @property
+    def es_query(self):
+        time_filter = form_es.submitted if self.by_submission_time else form_es.completed
+        return (form_es.FormES()
+                .domain(self.domain)
+                .filter(time_filter(gte=self.datespan.startdate,
+                                    lt=self.datespan.enddate_adjusted))
+                .AND(self._es_xform_filter() +
+                     list(self._es_extra_filters())))
 
     @property
     @memoized
-    def es_results(self):
-        return es_query(
-            params={'domain.exact': self.domain},
-            q=self.filters_as_es_query(),
-            es_index='forms',
-            start_at=self.pagination.start,
-            size=self.pagination.count,
-        )
+    def es_query_result(self):
+        return (self.es_query
+                .set_sorting_block(self.get_sorting_block())
+                .start(self.pagination.start)
+                .size(self.pagination.count)
+                .run())
 
     def get_sorting_block(self):
         sorting_block = super(SubmitHistoryMixin, self).get_sorting_block()
@@ -153,7 +144,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
 
     @property
     def total_records(self):
-        return int(self.es_results['hits']['total'])
+        return int(self.es_query_result.total)
 
 
 class SubmitHistory(SubmitHistoryMixin, ProjectReport):
@@ -188,9 +179,7 @@ class SubmitHistory(SubmitHistoryMixin, ProjectReport):
 
     @property
     def rows(self):
-        submissions = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
-
-        for form in submissions:
+        for form in self.es_query_result.hits:
             display = FormDisplay(form, self, lang=get_language())
             row = [
                 display.form_data_link,
