@@ -1,6 +1,9 @@
 from abc import abstractmethod
 from django.test import SimpleTestCase
+from django.test import TestCase
 from fakecouch import FakeCouchDb
+from mock import patch
+
 from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from pillowtop.dao.mock import MockDocumentStore
@@ -21,6 +24,7 @@ class _AbstractDocumentStoreTestCase(SimpleTestCase):
         dao = self.dao
         id = 'test-id'
         dao.save_document(id, {'hello': 'world'})
+        self.addCleanup(lambda: dao.delete_document(id))
         document = dao.get_document(id)
         self.assertEqual('world', document['hello'])
 
@@ -44,8 +48,18 @@ class MockDocumentStoreTestCase(_AbstractDocumentStoreTestCase):
         return MockDocumentStore()
 
 
-class CouchDbDocumentStoreTestCase(_AbstractDocumentStoreTestCase):
+class CouchDbDocumentStoreTestCase(_AbstractDocumentStoreTestCase, TestCase):
 
     @property
     def dao(self):
-        return CouchDocumentStore(FakeCouchDb())
+        from dimagi.utils.couch.database import get_db
+        return CouchDocumentStore(get_db())
+
+    def test_empty_doc(self):
+        dao = self.dao
+        id = 'empty_doc'
+        dao.save_document(id, {'foo': 'bar'})
+        self.addCleanup(lambda: dao.delete_document(id))
+        with patch('couchdbkit.resource.ClientResponse.body_string', return_value="{}"):
+            with self.assertRaisesRegexp(DocumentNotFoundError, 'Doc returned by Couch is empty'):
+                dao.get_document(id)
