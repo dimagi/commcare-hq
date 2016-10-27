@@ -2,10 +2,10 @@ import functools
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, get_language
 
-from corehq.apps.es import forms as form_es
+from corehq.apps.es import forms as form_es, filters as es_filters
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
 from corehq.apps.reports import util
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
@@ -64,49 +64,40 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
             def form_filter(form):
                 app_id = form.get('app_id', None)
                 if app_id and app_id != MISSING_APP_ID:
-                    return {'and': [{'term': {'xmlns.exact': form['xmlns']}},
-                                    {'term': {'app_id': app_id}}]}
-                return {'term': {'xmlns.exact': form['xmlns']}}
+                    return es_filters.AND(
+                        form_es.app(app_id),
+                        form_es.xmlns(form['xmlns'])
+                    )
+                return form_es.xmlns(form['xmlns'])
             form_values = self.all_relevant_forms.values()
             if form_values:
-                yield {'or': [form_filter(f) for f in form_values]}
+                yield es_filters.OR(form_filter(f) for f in form_values)
 
         truthy_only = functools.partial(filter, None)
-        mobile_user_and_group_slugs = self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
-        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
+        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        selected_user_types = EMWF.selected_user_types(mobile_user_and_group_slugs)
+        users_data = EMWF.pull_users_and_groups(
             self.domain,
             mobile_user_and_group_slugs,
             include_inactive=True
         )
-        all_mobile_workers_selected = 't__0' in self.request.GET.getlist('emw')
+        all_mobile_workers_selected = HQUserType.REGISTERED in selected_user_types
         if not all_mobile_workers_selected or users_data.admin_and_demo_users:
-            yield {
-                'terms': {
-                    'form.meta.userID': truthy_only(
-                        u.user_id for u in users_data.combined_users
-                    )
-                }
-            }
+            yield form_es.user_id(truthy_only(
+                u.user_id for u in users_data.combined_users
+            ))
         else:
             negated_ids = util.get_all_users_by_domain(
                 self.domain,
                 user_filter=HQUserType.all_but_users(),
                 simplified=True,
             )
-            yield {
-                'not': {
-                    'terms': {
-                        'form.meta.userID': truthy_only(
-                            user.user_id for user in negated_ids
-                        )
-                    }
-                }
-            }
+            yield es_filters.NOT(form_es.user_id(truthy_only(
+                user.user_id for user in negated_ids
+            )))
 
-        if HQUserType.UNKNOWN not in ExpandedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs):
-            yield {
-                'not': {'term': {'xmlns.exact': SYSTEM_FORM_XMLNS}}
-            }
+        if HQUserType.UNKNOWN not in selected_user_types:
+            yield es_filters.NOT(form_es.xmlns(SYSTEM_FORM_XMLNS))
 
     @property
     def es_query(self):
