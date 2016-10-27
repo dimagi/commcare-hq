@@ -1,6 +1,11 @@
 --- 
 +++ 
-@@ -5,6 +5,14 @@
+@@ -1,10 +1,19 @@
+-{% extends 'style/base_section.html' %}
++{% extends 'style/two_column.html' %}
+ {% load xforms_extras %}
+ {% load url_extras %}
+ {% load hq_shared_tags %}
  {% load timezone_tags %}
  {% load i18n %}
  {% load compress %}
@@ -9,13 +14,14 @@
 +appmanager-sidebar
 +{% endblock %}
 +
++
 +{% block page_content_classes %}
 +appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% endif %}
 +{% endblock %}
  
  {% block title %}{% trans "Applications" %}{% endblock %}
  
-@@ -17,25 +25,33 @@
+@@ -17,25 +26,33 @@
    {% endcompress %}
  
    {% if less_debug %}
@@ -68,7 +74,7 @@
    {% endif %}
  
  {% endblock %}
-@@ -64,9 +80,11 @@
+@@ -64,9 +81,11 @@
      <script src="{% static 'style/js/ui-element.js' %}"></script>
      <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
      <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
@@ -82,7 +88,7 @@
  {% endblock %}
  
  {% block js-inline %}{{ block.super }}
-@@ -79,32 +97,26 @@
+@@ -79,32 +98,26 @@
          }).on('hide.bs.modal', function () {
              window.location = "{% url "corehq.apps.app_manager.views.view_app" domain %}";
          });
@@ -124,7 +130,7 @@
  {% endblock %}
  
  {% block page_content %}
-@@ -136,7 +148,7 @@
+@@ -136,7 +149,7 @@
                  {% endblocktrans %}
              </p>
              <br>
