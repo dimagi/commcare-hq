@@ -46,7 +46,7 @@ trunk: master
 name: autostaging
 branches:
   - vellum-staging # J$ 11/13
-  #- onboarding # Jenny 9/19
+  - bmb/appmanager-v2-001  #bmb 10/26
 #  - np/upgrade-twofactor # Nick P 10/5
   - bmb/currentind-string # Biyeun 11/12
 #  - np/110/TEMPLATES
