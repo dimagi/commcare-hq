@@ -255,7 +255,7 @@
                                 {% endfor %}
                             {% endwith %}
                             <li class="sort-disabled">
-                                <form action="{% url "corehq.apps.app_manager.views.new_form" domain app.id module.id %}"
+                                <form action="{% url "new_form" domain app.id module.id %}"
                                       method="post" class="hide">{% csrf_token %}
                                 </form>
                                 {% if module.doc_type != 'CareplanModule' and module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %}
