@@ -121,7 +121,7 @@ class ExportItem(DocumentSchema):
     # True if this item was inferred from different actions in HQ (i.e. case upload)
     # False if the item was found in the application structure
     inferred = BooleanProperty(default=False)
-    inferred_from = SetProperty()
+    inferred_from = SetProperty(default=set)
 
     @classmethod
     def wrap(cls, data):
@@ -945,17 +945,17 @@ class InferredExportGroupSchema(ExportGroupSchema):
 
     def put_item(self, path, inferred_from=None):
         assert self.path == path[:len(self.path)], "ExportItem's path doesn't start with the table"
-
         item = self.get_item(path)
 
         if item:
+            item.inferred_from.add(inferred_from or UNKNOWN_INFERRED_FROM)
             return item
 
         item = ExportItem(
             path=path,
             label='.'.join(map(lambda node: node.name, path)),
             inferred=True,
-            inferred_from=set().add(inferred_from or UNKNOWN_INFERRED_FROM)
+            inferred_from=set([inferred_from or UNKNOWN_INFERRED_FROM])
         )
         self.items.append(item)
         return item

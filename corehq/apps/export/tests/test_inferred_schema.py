@@ -37,10 +37,16 @@ class InferredExportGroupSchemaTest(SimpleTestCase):
             path=[PathNode(name='random')]
         )
         item = group_schema.put_item(
-            [PathNode(name='random'), PathNode(name='inferred')]
+            [PathNode(name='random'), PathNode(name='inferred')],
+            inferred_from='Test',
+        )
+        item = group_schema.put_item(
+            [PathNode(name='random'), PathNode(name='inferred')],
+            inferred_from='TestTwo',
         )
         self.assertTrue(isinstance(item, ExportItem))
         self.assertTrue(item.inferred)
+        self.assertEqual(item.inferred_from, set(['Test', 'TestTwo']))
         self.assertEqual(len(group_schema.items), 1)
 
         # After putting same item, should not re-add group schema
