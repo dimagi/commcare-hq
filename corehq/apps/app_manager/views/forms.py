@@ -498,7 +498,10 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'allow_form_filtering': (module_filter_preview or
             (not isinstance(form, CareplanForm) and not form_has_schedule)),
         'allow_form_workflow': not isinstance(form, CareplanForm),
-        'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
+        'allow_usercase': (
+            domain_has_privilege(request.domain, privileges.USER_CASE)
+            and not toggles.USER_TESTING_SIMPLIFY.enabled(request.domain)
+        ),
         'is_usercase_in_use': is_usercase_in_use(request.domain),
         'is_module_filter_enabled': (feature_previews.MODULE_FILTER.enabled(request.domain) and
                                      app.enable_module_filtering),
