@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 import json
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 from django.apps import apps
 from django.conf import settings
@@ -26,24 +26,40 @@ partitioned_model_id_fields = {
 }
 
 
+class LoadStat(namedtuple('LoadStats', 'db_alias, loaded_object_count, models')):
+    """Simple object for keeping track of stats"""
+    def update(self, stat):
+        """
+        :type stat: LoadStat
+        """
+        assert self.db_alias == stat.db_alias
+        return LoadStat(
+            db_alias=self.db_alias,
+            loaded_object_count=self.loaded_object_count + stat.loaded_object_count,
+            models=self.models | stat.models
+        )
+
+
 def load_sql_data(data_file):
     """
     Loads data from a given file.
     :return: tuple(total object count, loaded object count)
     """
     # Keep a count of the installed objects
-    loaded_object_count = 0
-    total_object_count = 0
+    load_stats_by_db = {}
+    total_object_counts = []
 
-    def _process_chunk(chunk):
-        global total_object_count, loaded_object_count
-        chunk_total, chunk_loaded = load_objects(chunk)
-        total_object_count += len(chunk)
-        loaded_object_count += chunk_loaded
+    def _process_chunk(chunk, total_object_counts=total_object_counts, load_stats_by_db=load_stats_by_db):
+        chunk_stats = load_objects(chunk)
+        total_object_counts.append(len(chunk))
+        _update_stats(load_stats_by_db, chunk_stats)
 
     chunk = []
     for line in data_file:
-        chunk.append(json.load(line))
+        line = line.strip()
+        if not line:
+            continue
+        chunk.append(json.loads(line))
         if len(chunk) >= 1000:
             _process_chunk(chunk)
             chunk = []
@@ -51,21 +67,55 @@ def load_sql_data(data_file):
     if chunk:
         _process_chunk(chunk)
 
-    return total_object_count, loaded_object_count
+    _reset_sequences(load_stats_by_db.values())
+
+    loaded_object_count = sum(stat.loaded_object_count for stat in load_stats_by_db.values())
+
+    return sum(total_object_counts), loaded_object_count
+
+
+def _reset_sequences(load_stats):
+    """Reset DB sequences if needed"""
+    for stat in load_stats:
+        if stat.loaded_object_count > 0:
+            connection = connections[stat.db_alias]
+            sequence_sql = connection.ops.sequence_reset_sql(no_style(), stat.models)
+            if sequence_sql:
+                with connection.cursor() as cursor:
+                    for line in sequence_sql:
+                        cursor.execute(line)
 
 
 def load_objects(objects):
-    loaded_object_count = 0
+    """Load the given list of object dictionaries into the database
+    :return: List of LoadStat objects
+    """
+    load_stats_by_db = {}
 
     for db_alias, objects_for_db in _group_objects_by_db(objects):
         with transaction.atomic(using=db_alias):
-            loaded_objects = load_data_for_db(db_alias, objects)
-        loaded_object_count += loaded_objects
+            load_stat = load_data_for_db(db_alias, objects)
 
-    return loaded_object_count
+        _update_stats(load_stats_by_db, [load_stat])
+
+    return load_stats_by_db.values()
+
+
+def _update_stats(current_stats_by_db, new_stats):
+    """Helper to update stats dictionary"""
+    for new_stat in new_stats:
+        current_stat = current_stats_by_db.get(new_stat.db_alias)
+        if current_stat:
+            new_stat = current_stat.update(new_stat.db_alias)
+        current_stats_by_db[new_stat.db_alias] = new_stat
 
 
 def load_data_for_db(db_alias, objects):
+    """
+    :param db_alias: Django alias for database to load objects into
+    :param objects: List of object dictionaries to load
+    :return: LoadStats object
+    """
     connection = connections[db_alias]
 
     loaded_object_count = 0
@@ -95,17 +145,14 @@ def load_data_for_db(db_alias, objects):
         e.args = ("Problem loading data: %s" % e,)
         raise
 
-    # If we found even one object, we need to reset the database sequences.
-    if loaded_object_count > 0:
-        sequence_sql = connection.ops.sequence_reset_sql(no_style(), models)
-        if sequence_sql:
-            with connection.cursor() as cursor:
-                for line in sequence_sql:
-                    cursor.execute(line)
-    return loaded_object_count
+    return LoadStat(db_alias, loaded_object_count, models)
 
 
 def _group_objects_by_db(objects):
+    """
+    :param objects: Deserialized object dictionaries
+    :return: List of tuples of (db_alias, [object,...])
+    """
     objects_by_db = defaultdict(list)
     for obj in objects:
         app_label = obj['model']
