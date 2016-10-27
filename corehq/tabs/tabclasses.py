@@ -637,7 +637,9 @@ class ApplicationsTab(UITab):
             submenu_context.append(dropdown_dict(None, is_divider=True))
             submenu_context.append(dropdown_dict(
                 _('New Application'),
-                url=reverse('default_app', args=[self.domain]),
+                url=(reverse('default_new_app', args=[self.domain])
+                     if toggles.APP_MANAGER_V2.enabled(self.domain)
+                     else reverse('default_app', args=[self.domain])),
             ))
         return submenu_context
 
