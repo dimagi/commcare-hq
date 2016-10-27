@@ -24,8 +24,9 @@ hqLayout.utils = {
     },
     getAvailableContentWidth: function () {
         var $sidebar = $(hqLayout.selector.sidebar);
-
-        var absorbedWidth = $sidebar.outerWidth() + 2;
+        // todo fix extra 10 px padding needed when sidebar suddenly disappears
+        // on modal.
+        var absorbedWidth = $sidebar.outerWidth() + 12;
         return $(window).outerWidth() - absorbedWidth;
     },
     getAvailableContentHeight: function () {
