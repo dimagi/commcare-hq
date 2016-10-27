@@ -2,7 +2,8 @@
   "name": "CommCareHQ",
   "version": "0.0.1",
   "dependencies": {
-    "jquery": "2.2.4",
+    "jquery": "3.1.1",
+    "jquery-2.2.4": "jquery#2.2.4",
     "underscore": "1.8.3",
     "jquery-form": "3.45.0",
     "jquery.cookie": "dimagi/jquery-cookie#1.4.1",
@@ -69,9 +70,10 @@
   },
   "private": true,
   "resolutions": {
-    "jquery": "2.2.4",
+    "jquery": "3.1.1",
     "bootstrap": "3.3.7",
     "select2": "4.0.0",
-    "backbone": "0.9.1"
+    "backbone": "0.9.1",
+    "jquery-migrate": "1.2.1"
   }
 }
