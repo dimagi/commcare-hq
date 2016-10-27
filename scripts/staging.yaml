@@ -50,7 +50,6 @@ branches:
 #  - np/upgrade-twofactor # Nick P 10/5
   - bmb/currentind-string # Biyeun 11/12
 #  - np/110/TEMPLATES
-  - np/110/reports
   - ce/billing-notification # Cal 10/25
   - sms-langcodes # Jenny 9/26
   - case-detail-select2 # Jenny 9/26
