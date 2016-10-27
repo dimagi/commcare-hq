@@ -85,7 +85,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     if app and app.copy_of:
         # don't fail hard.
         return HttpResponseRedirect(reverse(
-            "corehq.apps.app_manager.views.view_app", args=[domain, app.copy_of]
+            "view_app", args=[domain, app.copy_of] # TODO - is this right?
         ))
 
     # grandfather in people who set commcare sense earlier
