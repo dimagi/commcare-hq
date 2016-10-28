@@ -21,12 +21,12 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_for
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class TestSQLDumpLoad(TestCase):
+class TestSQLDumpLoadShardedModels(TestCase):
     maxDiff = None
 
     @classmethod
     def setUpClass(cls):
-        super(TestSQLDumpLoad, cls).setUpClass()
+        super(TestSQLDumpLoadShardedModels, cls).setUpClass()
         cls.domain = uuid.uuid4().hex
         cls.factory = CaseFactory(domain=cls.domain)
         cls.form_accessors = FormAccessors(cls.domain)
@@ -36,7 +36,7 @@ class TestSQLDumpLoad(TestCase):
     @classmethod
     def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
-        super(TestSQLDumpLoad, cls).tearDownClass()
+        super(TestSQLDumpLoadShardedModels, cls).tearDownClass()
 
     @override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
     def _dump_and_load(self, expected_object_count, models):
