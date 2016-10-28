@@ -90,14 +90,20 @@ def paginate_releases(request, domain, app_id):
     return json_response(saved_apps)
 
 
+def release_manager(request, domain, app_id):
+    from corehq.apps.app_manager.views.view_generic import view_generic
+    return view_generic(request, domain, app_id=app_id, release_manager=True)
+
+
 @require_deploy_apps
-def releases_ajax(request, domain, app_id, template='app_manager/partials/releases.html'):
+def releases_ajax(request, domain, app_id, template='app_manager/v1/partials/releases.html'):
     app = get_app(domain, app_id)
     context = get_apps_base_context(request, domain, app)
     can_send_sms = domain_has_privilege(domain, privileges.OUTBOUND_SMS)
     build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)
 
     context.update({
+        'intro_only': len(app.modules) == 0,
         'release_manager': True,
         'can_send_sms': can_send_sms,
         'has_mobile_workers': get_doc_count_in_domain_by_class(domain, CommCareUser) > 0,
@@ -105,7 +111,7 @@ def releases_ajax(request, domain, app_id, template='app_manager/partials/releas
             get_sms_autocomplete_context(request, domain)['sms_contacts']
             if can_send_sms else []
         ),
-        'build_profile_access': build_profile_access,
+        'build_profile_access': build_profile_access and not toggles.APP_MANAGER_V2.enabled(domain),
         'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
         'vellum_case_management': app.vellum_case_management,
         'fetchLimit': request.GET.get('limit', DEFAULT_FETCH_LIMIT),
@@ -197,7 +203,7 @@ def save_copy(request, domain, app_id):
         copy['j2me_enabled'] = copy['menu_item_label'] in j2me_enabled_configs
     return json_response({
         "saved_app": copy,
-        "error_html": render_to_string('app_manager/partials/build_errors.html', {
+        "error_html": render_to_string('app_manager/v1/partials/build_errors.html', {
             'request': request,
             'app': get_app(domain, app_id),
             'build_errors': errors,
@@ -256,7 +262,7 @@ def odk_install(request, domain, app_id, with_media=False):
                            params={'profile': build_profile_id}),
         "profile_url": profile_url,
     }
-    return render(request, "app_manager/odk_install.html", context)
+    return render(request, "app_manager/v1/odk_install.html", context)
 
 
 def odk_qr_code(request, domain, app_id):
@@ -346,7 +352,7 @@ def _get_app_diffs(first_app, second_app):
 class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     urlname = 'diff'
     page_title = ugettext_lazy("App diff")
-    template_name = 'app_manager/app_diff.html'
+    template_name = 'app_manager/v1/app_diff.html'
 
     @use_angular_js
     def dispatch(self, request, *args, **kwargs):

@@ -206,7 +206,7 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
         actions = [_action(a, 'stock') for a in self.actions]
         if self.requisitions_enabled:
             actions += [_action(a, 'req') for a in self.requisition_config.actions]
-        return dict((a.keyword, a) for a in actions).get(keyword)
+        return dict((a.keyword.lower(), a) for a in actions).get(keyword.lower())
 
     def get_consumption_config(self):
         def _default_monthly_consumption(case_id, product_id):

@@ -29,6 +29,22 @@ def _get_latest_export_schema(cls, key):
     return cls.wrap(result['doc']) if result else None
 
 
+def get_inferred_schema(domain, case_type):
+    from .models import InferredSchema
+
+    key = [domain, 'InferredSchema', case_type]
+    result = InferredSchema.get_db().view(
+        'inferred_schemas_by_case_type/view',
+        startkey=key + [{}],
+        endkey=key,
+        include_docs=True,
+        limit=1,
+        reduce=False,
+        descending=True,
+    ).first()
+    return InferredSchema.wrap(result['doc']) if result else None
+
+
 def get_form_export_instances(domain):
     from .models import FormExportInstance
 
@@ -99,5 +115,15 @@ def delete_all_export_instances():
 
     db = ExportInstance.get_db()
     for row in db.view('export_instances_by_domain/view', reduce=False):
+        doc_id = row['id']
+        safe_delete(db, doc_id)
+
+
+@unit_testing_only
+def delete_all_inferred_schemas():
+    from .models import InferredSchema
+
+    db = InferredSchema.get_db()
+    for row in db.view('inferred_schemas_by_case_type/view', reduce=False):
         doc_id = row['id']
         safe_delete(db, doc_id)

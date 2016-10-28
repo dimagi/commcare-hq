@@ -9,7 +9,7 @@ from corehq.apps.userreports.exceptions import InvalidQueryColumn
 from corehq.apps.userreports.expressions import ExpressionFactory
 
 from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
-from corehq.apps.userreports.sql.columns import DEFAULT_MAXIMUM_EXPANSION
+from corehq.apps.userreports.const import DEFAULT_MAXIMUM_EXPANSION
 from couchforms.jsonobject_extensions import GeoPointProperty
 from dimagi.ext.jsonobject import (
     BooleanProperty,
@@ -28,8 +28,9 @@ from sqlagg.columns import (
     YearColumn,
 )
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
+from corehq.apps.userreports.columns import ColumnConfig
 from corehq.apps.userreports.specs import TypeProperty
-from corehq.apps.userreports.sql import get_expanded_column_config, ColumnConfig
+from corehq.apps.userreports.sql import get_expanded_column_config
 from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.util import localize
 from dimagi.utils.decorators.memoized import memoized

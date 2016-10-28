@@ -231,6 +231,11 @@ class LocationExporter(object):
             else:
                 return None
 
+        def coax_boolean(value):
+            if isinstance(value, bool):
+                value = 'yes' if value else 'no'
+            return value
+
         rows = []
         for lt in location_types:
             type_row = {
@@ -238,12 +243,12 @@ class LocationExporter(object):
                 headers['name']: lt.name,
                 headers['parent_code']: foreign_code(lt, 'parent_type'),
                 headers['do_delete']: '',
-                headers['shares_cases']: lt.shares_cases,
-                headers['view_descendants']: lt.view_descendants,
+                headers['shares_cases']: coax_boolean(lt.shares_cases),
+                headers['view_descendants']: coax_boolean(lt.view_descendants),
                 headers['expand_from']: foreign_code(lt, 'expand_from'),
                 headers['expand_to']: foreign_code(lt, 'expand_to'),
             }
-            rows.append(dict(flatten_json(type_row)))
+            rows.append(dict(type_row))
 
         return ('types', {
             'headers': [headers[header] for header in ['code', 'name', 'parent_code', 'do_delete',

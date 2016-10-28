@@ -1,4 +1,5 @@
 import datetime
+from dateutil.relativedelta import relativedelta
 from decimal import Decimal
 import json
 
@@ -1700,12 +1701,13 @@ class TriggerInvoiceForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(TriggerInvoiceForm, self).__init__(*args, **kwargs)
         today = datetime.date.today()
+        one_month_ago = today - relativedelta(months=1)
 
-        self.fields['month'].initial = today.month
+        self.fields['month'].initial = one_month_ago.month
         self.fields['month'].choices = MONTHS.items()
-        self.fields['year'].initial = today.year
+        self.fields['year'].initial = one_month_ago.year
         self.fields['year'].choices = [
-            (y, y) for y in range(today.year, 2012, -1)
+            (y, y) for y in range(one_month_ago.year, 2012, -1)
         ]
 
         self.helper = FormHelper()
@@ -1894,10 +1896,9 @@ class AdjustBalanceForm(forms.Form):
         self.invoice = invoice
         super(AdjustBalanceForm, self).__init__(*args, **kwargs)
         self.fields['adjustment_type'].choices = (
-            ('current', 'Add Credit of Current Balance: %s' %
+            ('current', 'Pay off Current Balance: %s' %
                         get_money_str(self.invoice.balance)),
-            ('credit', 'Add CREDIT of Custom Amount'),
-            ('debit', 'Add DEBIT of Custom Amount'),
+            ('credit', 'Pay off Custom Amount'),
         )
         self.fields['invoice_id'].initial = invoice.id
         self.helper = FormHelper()
@@ -1958,8 +1959,6 @@ class AdjustBalanceForm(forms.Form):
             return self.invoice.balance
         elif adjustment_type == 'credit':
             return Decimal(self.cleaned_data['custom_amount'])
-        elif adjustment_type == 'debit':
-            return -Decimal(self.cleaned_data['custom_amount'])
         else:
             raise ValidationError(_("Received invalid adjustment type: %s")
                                   % adjustment_type)

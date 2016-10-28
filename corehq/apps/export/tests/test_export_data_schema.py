@@ -14,6 +14,11 @@ from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
 from corehq.apps.export.models import (
     FormExportDataSchema,
     CaseExportDataSchema,
+    ExportDataSchema,
+    InferredExportGroupSchema,
+    InferredSchema,
+    ExportGroupSchema,
+    ExportItem,
     PARENT_CASE_TABLE,
 )
 from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
@@ -397,10 +402,44 @@ class TestMergingCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
             len(case_property_mapping['candy']) + len(KNOWN_CASE_PROPERTIES),
         )
 
+    def test_inferred_schema_merge(self):
+        schema = CaseExportDataSchema(
+            domain='my-domain',
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[ExportItem(
+                        path=[PathNode(name='case_property')]
+                    )],
+                )
+            ]
+        )
+        inferred_schema = CaseExportDataSchema(
+            domain='my-domain',
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[ExportItem(
+                        path=[PathNode(name='case_property')],
+                        inferred=True,
+                    )],
+                    inferred=True,
+                )
+            ]
+        )
+        merged = ExportDataSchema._merge_schemas(schema, inferred_schema)
+        self.assertEqual(len(merged.group_schemas), 1)
+        self.assertTrue(merged.group_schemas[0].inferred)
+        group_schema = merged.group_schemas[0]
+        self.assertEqual(len(group_schema.items), 1)
+        self.assertTrue(group_schema.items[0].inferred)
+
 
 class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
     file_path = ['data']
     root = os.path.dirname(__file__)
+    case_type = 'wonderwoman'
+    domain = 'aspace'
 
     @classmethod
     def setUpClass(cls):
@@ -419,11 +458,35 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
             for app in cls.apps:
                 app.save()
 
+        cls.inferred_schema = InferredSchema(
+            domain=cls.domain,
+            case_type=cls.case_type,
+            group_schemas=[
+                InferredExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[
+                        ExportItem(
+                            path=[PathNode(name='data'), PathNode(name='case_property')],
+                            label='Inferred 1',
+                            inferred=True
+                        ),
+                        ExportItem(
+                            path=[PathNode(name='data'), PathNode(name='case_property_2')],
+                            label='Inferred 1',
+                            inferred=True
+                        ),
+                    ],
+                    inferred=True
+                ),
+            ]
+        )
+        cls.inferred_schema.save()
+
     @classmethod
     def tearDownClass(cls):
         for app in cls.apps:
             app.delete()
-        # to circumvent domain.delete()'s recursive deletion that this test doesn't need
+        cls.inferred_schema.delete()
 
     def tearDown(self):
         delete_all_export_data_schemas()
@@ -468,6 +531,21 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         self.assertEqual(new_schema._id, schema._id)
         self.assertEqual(new_schema.last_app_versions[app._id], app.version)
         self.assertEqual(len(new_schema.group_schemas), 1)
+
+    def test_build_with_inferred_schema(self):
+        app = self.current_app
+
+        schema = CaseExportDataSchema.generate_schema_from_builds(
+            app.domain,
+            app._id,
+            self.case_type,
+        )
+
+        group_schema = schema.group_schemas[0]
+        self.assertEqual(group_schema.path, MAIN_TABLE)
+        self.assertTrue(group_schema.inferred)
+        inferred_items = filter(lambda item: item.inferred, group_schema.items)
+        self.assertEqual(len(inferred_items), 2)
 
 
 class TestExportDataSchemaVersionControl(TestCase, TestXmlMixin):

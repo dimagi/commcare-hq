@@ -7,6 +7,8 @@ import uuid
 from urlparse import urlparse, parse_qs
 
 from captcha.fields import CaptchaField
+
+from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -21,8 +23,9 @@ from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.urlresolvers import reverse
 from django.db import transaction
+from django.db.models import F
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
-    ImageField, IntegerField)
+                                 ImageField, IntegerField, Field)
 from django.forms.widgets import  Select
 from django.template.loader import render_to_string
 from django.utils.encoding import smart_str, force_bytes
@@ -66,19 +69,18 @@ from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
 from corehq.apps.app_manager.const import AMPLIFIES_YES, AMPLIFIES_NOT_SET, AMPLIFIES_NO
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, TransferDomainRequest)
-from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
 from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.style import crispy as hqcrispy
-from corehq.apps.style.forms.widgets import BootstrapCheckboxInput
-from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
+from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, Select2Ajax
+from corehq.apps.users.models import WebUser, CouchUser
 from corehq.privileges import (
     REPORT_BUILDER_5,
     REPORT_BUILDER_ADD_ON_PRIVS,
     REPORT_BUILDER_TRIAL,
 )
-from corehq.toggles import CALL_CENTER_LOCATION_OWNERS, HIPAA_COMPLIANCE_CHECKBOX
+from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from dimagi.utils.decorators.memoized import memoized
@@ -465,9 +467,21 @@ class SubAreaMixin():
         return sub_area
 
 
+USE_LOCATION_CHOICE = "user_location"
+USE_PARENT_LOCATION_CHOICE = 'user_parent_location'
+
+
+class CallCenterOwnerWidget(Select2Ajax):
+
+    def set_domain(self, domain):
+        self.domain = domain
+
+    def render(self, name, value, attrs=None):
+        value_to_render = CallCenterOwnerOptionsView.convert_owner_id_to_select_choice(value, self.domain)
+        return super(CallCenterOwnerWidget, self).render(name, value_to_render, attrs=attrs)
+
+
 class DomainGlobalSettingsForm(forms.Form):
-    USE_LOCATION_CHOICE = "user_location"
-    USE_PARENT_LOCATION_CHOICE = 'user_parent_location'
     LOCATION_CHOICES = [USE_LOCATION_CHOICE, USE_PARENT_LOCATION_CHOICE]
     CASES_AND_FIXTURES_CHOICE = "cases_and_fixtures"
     CASES_ONLY_CHOICE = "cases_only"
@@ -516,9 +530,9 @@ class DomainGlobalSettingsForm(forms.Form):
         ),
         required=False,
     )
-    call_center_case_owner = ChoiceField(
+    call_center_case_owner = Field(
+        widget=CallCenterOwnerWidget(attrs={'placeholder': ugettext_lazy('Select an Owner...')}),
         label=ugettext_lazy("Call Center Case Owner"),
-        initial=None,
         required=False,
         help_text=ugettext_lazy("Select the person who will be listed as the owner "
                     "of all cases created for call center users.")
@@ -562,27 +576,11 @@ class DomainGlobalSettingsForm(forms.Form):
                 del self.fields['call_center_case_owner']
                 del self.fields['call_center_case_type']
             else:
-                groups = Group.get_case_sharing_groups(self.domain)
-                users = CommCareUser.by_domain(self.domain)
-
-                call_center_user_choices = [
-                    (user._id, user.raw_username + ' [user]') for user in users
-                ]
-                call_center_group_choices = [
-                    (group._id, group.name + ' [group]') for group in groups
-                ]
-                call_center_location_choices = []
-                if CALL_CENTER_LOCATION_OWNERS.enabled(self.domain):
-                    call_center_location_choices = [
-                        (self.USE_LOCATION_CHOICE, ugettext_lazy("user's location [location]")),
-                        (self.USE_PARENT_LOCATION_CHOICE, ugettext_lazy("user's location's parent [location]")),
-                    ]
-
-                self.fields["call_center_case_owner"].choices = \
-                    [('', '')] + \
-                    call_center_location_choices + \
-                    call_center_user_choices + \
-                    call_center_group_choices
+                owner_field = self.fields['call_center_case_owner']
+                owner_field.widget.set_url(
+                    reverse(CallCenterOwnerOptionsView.url_name, args=(self.domain,))
+                )
+                owner_field.widget.set_domain(self.domain)
 
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
@@ -632,7 +630,7 @@ class DomainGlobalSettingsForm(forms.Form):
             if owner in self.LOCATION_CHOICES:
                 cc_config.call_center_case_owner = None
                 cc_config.use_user_location_as_owner = True
-                cc_config.user_location_ancestor_level = 1 if owner == self.USE_PARENT_LOCATION_CHOICE else 0
+                cc_config.user_location_ancestor_level = 1 if owner == USE_PARENT_LOCATION_CHOICE else 0
             else:
                 cc_config.case_owner_id = owner
                 cc_config.use_user_location_as_owner = False
@@ -1370,6 +1368,14 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 if not account_save_success:
                     return False
 
+                # changing a plan overrides future subscriptions
+                future_subscriptions = Subscription.objects.filter(
+                    subscriber=self.domain,
+                    date_start__gt=datetime.date.today()
+                )
+                if future_subscriptions.count() > 0:
+                    future_subscriptions.update(date_end=F('date_start'))
+
                 if self.current_subscription is not None:
                     subscription = self.current_subscription.change_plan(
                         self.plan_version,
@@ -1710,9 +1716,7 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
 
     @transaction.atomic
     def process_subscription_management(self):
-        enterprise_plan_version = DefaultProductPlan.get_default_plan(
-            SoftwarePlanEdition.ENTERPRISE
-        ).plan.get_version()
+        enterprise_plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.ENTERPRISE)
         if self.current_subscription:
             self.current_subscription.change_plan(
                 enterprise_plan_version,
@@ -1798,7 +1802,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
 
     @transaction.atomic
     def process_subscription_management(self):
-        advanced_trial_plan_version = DefaultProductPlan.get_default_plan(
+        advanced_trial_plan_version = DefaultProductPlan.get_default_plan_version(
             edition=SoftwarePlanEdition.ADVANCED, is_trial=True,
         )
         if self.current_subscription:
@@ -1982,7 +1986,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                 "CommCare %s edition with privilege REPORT_BUILDER_5 was not found! Requires manual setup."
                 % edition
             )
-            new_plan_version = DefaultProductPlan.get_default_plan(
+            new_plan_version = DefaultProductPlan.get_default_plan_version(
                 edition=self.cleaned_data['software_plan_edition'],
             )
 

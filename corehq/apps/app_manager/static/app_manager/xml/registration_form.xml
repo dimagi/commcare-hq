@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+    <h:head>
+        <h:title>Untitled Form</h:title>
+        <model>
+            <instance>
+                <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/816A3B43-DA18-4CD5-816C-A3B32CF281AE" uiVersion="1" version="1" name="Untitled Form">
+                    <name />
+                </data>
+            </instance>
+            <bind vellum:nodeset="#form/name" nodeset="/data/name" type="xsd:string" />
+            <itext>
+                <translation lang="en" default="">
+                    <text id="name-label">
+                        <value>What is your name?</value>
+                    </text>
+                </translation>
+            </itext>
+        </model>
+    </h:head>
+    <h:body>
+        <input vellum:ref="#form/name" ref="/data/name">
+            <label ref="jr:itext('name-label')" />
+        </input>
+    </h:body>
+</h:html>

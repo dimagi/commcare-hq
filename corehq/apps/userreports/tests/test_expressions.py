@@ -178,6 +178,23 @@ class ExpressionFromSpecTest(SimpleTestCase):
 
 class PropertyPathExpressionTest(SimpleTestCase):
 
+    def test_datatype(self):
+        spec = {
+            'type': 'property_path',
+            'property_path': ['path', 'to', 'foo'],
+        }
+        item = {
+            'path': {'to': {'foo': '1.0'}}
+        }
+        tests = (
+            ('string', '1.0'),
+            ('decimal', Decimal(1.0)),
+            ('integer', 1)
+        )
+        for datatype, value in tests:
+            spec['datatype'] = datatype
+            self.assertEqual(value, ExpressionFactory.from_spec(spec)(item))
+
     def test_property_path_bad_type(self):
         getter = ExpressionFactory.from_spec({
             'type': 'property_path',
@@ -932,6 +949,19 @@ def test_errors_in_evaluator_statements(self, eq, context, error_type):
         "context_variables": context
     })
     self.assertEqual(expression({}), None)
+
+
+class TestEvaluatorTypes(SimpleTestCase):
+
+    def test_datatype(self):
+        spec = {
+            "type": "evaluator",
+            "statement": '1.0 + a',
+            "context_variables": {'a': 1.0}
+        }
+        self.assertEqual(type(ExpressionFactory.from_spec(spec)({})), float)
+        spec['datatype'] = 'integer'
+        self.assertEqual(type(ExpressionFactory.from_spec(spec)({})), int)
 
 
 class TestFormsExpressionSpec(TestCase):

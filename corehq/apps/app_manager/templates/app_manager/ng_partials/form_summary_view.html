@@ -34,7 +34,7 @@
     <div class="page-header" style="margin-top: 0;">
         <h1 style="font-size: 1.8em;">{% trans "Form Summary" %}</h1>
         <div class="row">
-            <div class="col-xs-4">
+            <div class="col-xs-3">
                 <form class="form-inline" role="form">
                   <div class="form-group">
                     <label class="sr-only" for="property">{% trans "Filter questions" %}</label>
@@ -43,7 +43,7 @@
                   <button class="btn btn-default" ng-click="questionSearch.$ = ''" type="button"><i class="fa fa-times"></i></button>
                 </form>
             </div>
-            <div class="col-xs-8">
+            <div class="col-xs-9">
                 <div class="btn-toolbar pull-right" role="toolbar">
                     <div class="form-inline form-group btn-group">
                         <label for="language">{% trans "Language" %}</label>
@@ -82,6 +82,10 @@
                             &nbsp;{% trans "Show Comments" %}
                         </button>
                     </div>
+                    <a class="btn btn-primary" href="{{ formDownloadURL }}?lang={{ lang }}">
+                        <i class="fa fa-download"></i>
+                        {% trans "Download" %}
+                    </a>
                 </div>
              </div>
         </div>

@@ -45,7 +45,7 @@ from django_prbac.utils import has_privilege
 
 @retry_resource(3)
 def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
-                 copy_app_form=None):
+                 copy_app_form=None, release_manager=False):
     """
     This is the main view for the app. All other views redirect to here.
 
@@ -76,7 +76,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     if app and app.application_version == APP_V1:
         _assert = soft_assert()
         _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
-        return render(request, 'app_manager/no_longer_supported.html', {
+        return render(request, 'app_manager/v1/no_longer_supported.html', {
             'domain': domain,
             'app': app,
         })
@@ -123,11 +123,18 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         module_context = get_module_view_context(app, module, lang)
         context.update(module_context)
     elif app:
-        template = "app_manager/app_view.html"
+
+        # todo APP MANAGER V2 update template here
+        # if release_manager:
+
+        template = "app_manager/v1/app_view.html"
         context.update(get_app_view_context(request, app))
     else:
         from corehq.apps.dashboard.views import NewUserDashboardView
-        return HttpResponseRedirect(reverse(NewUserDashboardView.urlname, args=[domain]))
+        if toggles.APP_MANAGER_V2.enabled(domain):
+            context.update(NewUserDashboardView.get_page_context(domain))
+        else:
+            return HttpResponseRedirect(reverse(NewUserDashboardView.urlname, args=[domain]))
 
     # update multimedia context for forms and modules.
     menu_host = form or module
@@ -208,9 +215,11 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         toggle_enabled = toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
         copy_app_form = CopyApplicationForm(domain, app_id, export_zipped_apps_enabled=toggle_enabled)
         context.update({
-            'copy_app_form': copy_app_form,
             'domain_names': domain_names,
         })
+    context.update({
+        'copy_app_form': copy_app_form,
+    })
 
     context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]
 

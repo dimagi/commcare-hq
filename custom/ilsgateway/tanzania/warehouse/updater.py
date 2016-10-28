@@ -474,10 +474,11 @@ def process_facility_transactions(facility_id, transactions, start_date, end_dat
 
 
 def get_non_archived_facilities_below(location):
-    child_ids = location.sql_location.get_descendants(include_self=True).filter(
-        is_archived=False, location_type__name='FACILITY'
-    ).values_list('location_id', flat=True)
-    return [Location.wrap(doc) for doc in get_docs(Location.get_db(), child_ids)]
+    return list(location.sql_location
+                .get_descendants(include_self=True)
+                .filter(is_archived=False,
+                        location_type__name='FACILITY')
+                .couch_locations())
 
 
 @task(queue='logistics_background_queue')

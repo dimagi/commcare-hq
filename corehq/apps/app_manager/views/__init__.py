@@ -24,6 +24,7 @@ from corehq.apps.app_manager.views.download import (
 from corehq.apps.app_manager.views.app_summary import (
     AppSummaryView,
     DownloadCaseSummaryView,
+    DownloadFormSummaryView,
     DownloadAppSummaryView,
 )
 from corehq.apps.app_manager.views.apps import (
@@ -111,6 +112,7 @@ from corehq.apps.app_manager.views.releases import (
     odk_media_qr_code,
     odk_qr_code,
     paginate_releases,
+    release_manager,
     release_build,
     releases_ajax,
     revert_to_copy,

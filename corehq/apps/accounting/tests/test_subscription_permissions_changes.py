@@ -6,8 +6,7 @@ from django_prbac.models import Role, Grant
 from corehq import privileges
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, \
     SoftwarePlanEdition, Subscription, SoftwarePlan, SoftwarePlanVersion, \
-    SubscriptionType, ProBonoStatus, SoftwarePlanVisibility, SoftwareProduct, \
-    SoftwareProductType
+    SubscriptionType, ProBonoStatus, SoftwarePlanVisibility
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.app_manager.models import Application
@@ -32,7 +31,7 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
 
         self.account = BillingAccount.get_or_create_account_by_domain(
             self.project.name, created_by=self.admin_user.username)[0]
-        self.advanced_plan = DefaultProductPlan.get_default_plan(edition=SoftwarePlanEdition.ADVANCED)
+        self.advanced_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
         self._init_pro_with_rb_plan_and_version()
 
     def _init_pro_with_rb_plan_and_version(self):
@@ -58,10 +57,9 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
             plan=plan,
             role=role
         )
-        product = SoftwareProduct.objects.get(name='CommCare Pro', product_type=SoftwareProductType.COMMCARE)
-        rate = product.get_rate()
-        rate.save()
-        self.pro_rb_version.product_rate = rate
+        self.pro_rb_version.product_rate = DefaultProductPlan.get_default_plan_version(
+            SoftwarePlanEdition.PRO
+        ).product_rate
         self.pro_rb_version.save()
 
     def _subscribe_to_advanced(self):

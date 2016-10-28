@@ -366,7 +366,6 @@ HQ_APPS = (
     'custom.opm',
     'pact',
 
-    'custom.apps.care_benin',
     'custom.reports.mc',
     'custom.apps.crs_reports',
     'custom.hope',
@@ -388,8 +387,11 @@ HQ_APPS = (
     'custom.common',
 
     'custom.icds_reports',
+    'custom.pnlppgi',
+
+    # eNikshay / UATBC
+    'custom.enikshay',
     'custom.enikshay.integrations.ninetyninedots',
-    'custom.pnlppgi'
 )
 
 # DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
@@ -498,7 +500,7 @@ EXCHANGE_NOTIFICATION_RECIPIENTS = []
 SERVER_EMAIL = 'commcarehq-noreply@dimagi.com'
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
-PROBONO_SUPPORT_EMAIL = 'billing-support@dimagi.com'
+PROBONO_SUPPORT_EMAIL = 'pro-bono@dimagi.com'
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 ACCOUNTS_EMAIL = 'accounts@dimagi.com'
 FINANCE_EMAIL = 'finance@dimagi.com'
@@ -740,6 +742,8 @@ AUDIT_MODULES = [
     'corehq.apps.userreports',
     'corehq.apps.data',
     'corehq.apps.registration',
+    'corehq.apps.hqadmin',
+    'corehq.apps.accounting',
     'tastypie',
 ]
 
@@ -1261,7 +1265,6 @@ COUCHDB_APPS = [
     'openclinica',
 
     # custom reports
-    'care_benin',
     'gsid',
     'hsph',
     'mvp',
@@ -1787,12 +1790,14 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('eqa_expression', 'custom.eqa.expressions.eqa_expression'),
     ('cqi_action_item', 'custom.eqa.expressions.cqi_action_item'),
     ('year_expression', 'custom.pnlppgi.expressions.year_expression'),
-    ('week_expression', 'custom.pnlppgi.expressions.week_expression')
+    ('week_expression', 'custom.pnlppgi.expressions.week_expression'),
+    ('concatenate_strings', 'custom.enikshay.expressions.concatenate_strings_expression')
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
     ('mvp.ucr.reports.expressions.CUSTOM_UCR_EXPRESSIONS'),
     ('custom.icds_reports.ucr.expressions.CUSTOM_UCR_EXPRESSIONS'),
+    ('custom.ucr_ext.expressions.CUSTOM_UCR_EXPRESSIONS'),
 ]
 
 CUSTOM_MODULES = [
@@ -1834,13 +1839,13 @@ DOMAIN_MODULE_MAP = {
     'mvp-pampaida': 'mvp',
     'opm': 'custom.opm',
     'pact': 'pact',
-    'project': 'custom.apps.care_benin',
 
     'ipm-senegal': 'custom.intrahealth',
     'icds-test': 'custom.icds_reports',
     'icds-cas': 'custom.icds_reports',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
+    'enikshay-test': 'custom.enikshay',
 
     'crs-remind': 'custom.apps.crs_reports',
 
@@ -1864,7 +1869,7 @@ CASEXML_FORCE_DOMAIN_CHECK = True
 TRAVIS_TEST_GROUPS = (
     (
         'accounting', 'api', 'app_manager', 'appstore',
-        'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter', 'care_benin',
+        'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter',
         'case', 'casegroups', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
         'couchapps', 'couchlog', 'crud', 'django_digest',
         'domain', 'domainsync', 'export',

@@ -403,107 +403,73 @@
                 }
             },
             {
-                "display_name": "diagnostic_test_type",
-                "column_id": "diagnostic_test_type",
-                "datatype": "string",
-                "type": "expression",
-                "expression": {
-                    "type": "nested",
-                    "argument_expression": {
-                        "type": "named",
-                        "name": "test_request_form"
-                    },
-                    "value_expression": {
-                        "type": "conditional",
-                        "test": {
-                            "operator": "eq",
-                            "expression": {
-                                "type": "property_path",
-                                "property_path": [
-                                    "form",
-                                    "ql_request_details",
-                                    "purpose_of_testing"
-                                ],
-                                "datatype": "string"
-                            },
-                            "type": "boolean_expression",
-                            "property_value": "diagnostic"
-                        },
-                        "expression_if_true": {
-                            "type": "property_path",
-                            "property_path": [
-                                "form",
-                                "rpt_referral_details",
-                                "test_type_label"
-                            ]
-                        },
-                        "expression_if_false": {
-                            "type": "constant",
-                            "constant": ""
-                        }
-                    }
-                }
-            },
-            {
                 "display_name": "diagnostic_test_requested_date",
                 "column_id": "diagnostic_test_requested_date",
-                "datatype": "string",
+                "datatype": "date",
                 "type": "expression",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
-                        "type": "named",
-                        "name": "test_request_form"
+                        "type": "reduce_items",
+                        "items_expression": {
+                            "type": "sort_items",
+                            "items_expression": {
+                                "type": "filter_items",
+                                "items_expression": {
+                                    "type": "get_case_forms",
+                                    "case_id_expression": {
+                                        "type": "nested",
+                                        "argument_expression": {
+                                            "type": "named",
+                                            "name": "latest_diagnostic_test_case"
+                                        },
+                                        "value_expression": {
+                                            "type": "property_name",
+                                            "property_name": "_id"
+                                        }
+                                    }
+                                },
+                                "filter_expression": {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "xmlns"
+                                    },
+                                    "property_value": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F"
+                                }
+                            },
+                            "sort_expression": {
+                                "type": "property_name",
+                                "property_name": "received_on"
+                            }
+                        },
+                        "aggregation_fn": "last_item"
                     },
                     "value_expression": {
-                        "type": "conditional",
-                        "test": {
-                            "operator": "eq",
-                            "expression": {
-                                "type": "property_path",
-                                "property_path": [
-                                    "form",
-                                    "ql_request_details",
-                                    "purpose_of_testing"
-                                ],
-                                "datatype": "string"
-                            },
-                            "type": "boolean_expression",
-                            "property_value": "diagnostic"
-                        },
-                        "expression_if_true": {
-                            "type": "property_path",
-                            "property_path": [
-                                "form",
-                                "ql_request_details",
-                                "test_requested_date"
-                            ]
-                        },
-                        "expression_if_false": {
-                            "type": "constant",
-                            "constant": ""
-                        }
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "ql_request_details",
+                            "test_requested_date"
+                        ]
                     }
                 }
             },
             {
-                "display_name": "test_type_value",
-                "column_id": "test_type_value",
+                "display_name": "diagnostic_test_type",
+                "column_id": "diagnostic_test_type",
                 "datatype": "string",
                 "type": "expression",
                 "expression":{
                     "type": "nested",
                     "argument_expression": {
                         "type": "named",
-                        "name": "test_request_form"
+                        "name": "latest_diagnostic_test_case"
                     },
                     "value_expression": {
-                        "type": "property_path",
-                        "property_path": [
-                            "form",
-                            "rpt_referral_details",
-                            "test_type_value"
-                        ]
+                        "type": "property_name",
+                        "property_name": "test_type_label"
                     }
                 }
             },
@@ -512,88 +478,69 @@
                 "column_id": "diagnostic_result",
                 "datatype": "string",
                 "type": "expression",
-                "expression": {
-                    "type": "conditional",
-                    "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "nested",
-                            "argument_expression": {
-                                "type": "named",
-                                "name": "test_request_form"
-                            },
-                            "value_expression": {
-                                "type": "property_path",
-                                "property_path": [
-                                    "form",
-                                    "ql_request_details",
-                                    "purpose_of_testing"
-                                ],
-                                "datatype": "string"
-                            }
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "diagnostic"
+                "expression":{
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "latest_diagnostic_test_case"
                     },
-                    "expression_if_true": {
-                        "type": "nested",
-                        "argument_expression": {
-                            "type": "named",
-                            "name": "test_result_form"
-                        },
-                        "value_expression": {
-                            "type": "property_path",
-                            "property_path": [
-                                "form",
-                                "result_label"
-                            ]
-                        }
-                    },
-                    "expression_if_false": {
-                        "type": "constant",
-                        "constant": ""
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "result"
                     }
                 }
             },
             {
                 "display_name": "endofip_test_requested_date",
                 "column_id": "endofip_test_requested_date",
-                "datatype": "string",
+                "datatype": "date",
                 "type": "expression",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
-                        "type": "named",
-                        "name": "test_request_form"
+                        "type": "reduce_items",
+                        "items_expression": {
+                            "type": "sort_items",
+                            "items_expression": {
+                                "type": "filter_items",
+                                "items_expression": {
+                                    "type": "get_case_forms",
+                                    "case_id_expression": {
+                                        "type": "nested",
+                                        "argument_expression": {
+                                            "type": "named",
+                                            "name": "latest_endofip_test_case"
+                                        },
+                                        "value_expression": {
+                                            "type": "property_name",
+                                            "property_name": "_id"
+                                        }
+                                    }
+                                },
+                                "filter_expression": {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "xmlns"
+                                    },
+                                    "property_value": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F"
+                                }
+                            },
+                            "sort_expression": {
+                                "type": "property_name",
+                                "property_name": "received_on"
+                            }
+                        },
+                        "aggregation_fn": "last_item"
                     },
                     "value_expression": {
-                        "type": "conditional",
-                        "test": {
-                            "operator": "eq",
-                            "expression": {
-                                "type": "property_path",
-                                "property_path": [
-                                    "form",
-                                    "ql_request_details",
-                                    "purpose_of_testing"
-                                ],
-                                "datatype": "string"
-                            },
-                            "type": "boolean_expression",
-                            "property_value": "end_of_ip"
-                        },
-                        "expression_if_true": {
-                            "type": "property_path",
-                            "property_path": [
-                                "form",
-                                "ql_request_details",
-                                "test_requested_date"
-                            ]
-                        },
-                        "expression_if_false": {
-                            "type": "constant",
-                            "constant": ""
-                        }
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "ql_request_details",
+                            "test_requested_date"
+                        ]
                     }
                 }
             },
@@ -602,88 +549,69 @@
                 "column_id": "endofip_result",
                 "datatype": "string",
                 "type": "expression",
-                "expression": {
-                    "type": "conditional",
-                    "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "nested",
-                            "argument_expression": {
-                                "type": "named",
-                                "name": "test_request_form"
-                            },
-                            "value_expression": {
-                                "type": "property_path",
-                                "property_path": [
-                                    "form",
-                                    "ql_request_details",
-                                    "purpose_of_testing"
-                                ],
-                                "datatype": "string"
-                            }
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "end_of_ip"
+                "expression":{
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "latest_endofip_test_case"
                     },
-                    "expression_if_true": {
-                        "type": "nested",
-                        "argument_expression": {
-                            "type": "named",
-                            "name": "test_result_form"
-                        },
-                        "value_expression": {
-                            "type": "property_path",
-                            "property_path": [
-                                "form",
-                                "result_label"
-                            ]
-                        }
-                    },
-                    "expression_if_false": {
-                        "type": "constant",
-                        "constant": ""
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "result"
                     }
                 }
             },
-            {
+                        {
                 "display_name": "endofcp_test_requested_date",
                 "column_id": "endofcp_test_requested_date",
-                "datatype": "string",
+                "datatype": "date",
                 "type": "expression",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
-                        "type": "named",
-                        "name": "test_request_form"
+                        "type": "reduce_items",
+                        "items_expression": {
+                            "type": "sort_items",
+                            "items_expression": {
+                                "type": "filter_items",
+                                "items_expression": {
+                                    "type": "get_case_forms",
+                                    "case_id_expression": {
+                                        "type": "nested",
+                                        "argument_expression": {
+                                            "type": "named",
+                                            "name": "latest_endofcp_test_case"
+                                        },
+                                        "value_expression": {
+                                            "type": "property_name",
+                                            "property_name": "_id"
+                                        }
+                                    }
+                                },
+                                "filter_expression": {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "xmlns"
+                                    },
+                                    "property_value": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F"
+                                }
+                            },
+                            "sort_expression": {
+                                "type": "property_name",
+                                "property_name": "received_on"
+                            }
+                        },
+                        "aggregation_fn": "last_item"
                     },
                     "value_expression": {
-                        "type": "conditional",
-                        "test": {
-                            "operator": "eq",
-                            "expression": {
-                                "type": "property_path",
-                                "property_path": [
-                                    "form",
-                                    "ql_request_details",
-                                    "purpose_of_testing"
-                                ],
-                                "datatype": "string"
-                            },
-                            "type": "boolean_expression",
-                            "property_value": "end_of_cp"
-                        },
-                        "expression_if_true": {
-                            "type": "property_path",
-                            "property_path": [
-                                "form",
-                                "ql_request_details",
-                                "test_requested_date"
-                            ]
-                        },
-                        "expression_if_false": {
-                            "type": "constant",
-                            "constant": ""
-                        }
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "ql_request_details",
+                            "test_requested_date"
+                        ]
                     }
                 }
             },
@@ -692,46 +620,15 @@
                 "column_id": "endofcp_result",
                 "datatype": "string",
                 "type": "expression",
-                "expression": {
-                    "type": "conditional",
-                    "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "nested",
-                            "argument_expression": {
-                                "type": "named",
-                                "name": "test_request_form"
-                            },
-                            "value_expression": {
-                                "type": "property_path",
-                                "property_path": [
-                                    "form",
-                                    "ql_request_details",
-                                    "purpose_of_testing"
-                                ],
-                                "datatype": "string"
-                            }
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "end_of_cp"
+                "expression":{
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "latest_endofcp_test_case"
                     },
-                    "expression_if_true": {
-                        "type": "nested",
-                        "argument_expression": {
-                            "type": "named",
-                            "name": "test_result_form"
-                        },
-                        "value_expression": {
-                            "type": "property_path",
-                            "property_path": [
-                                "form",
-                                "result_label"
-                            ]
-                        }
-                    },
-                    "expression_if_false": {
-                        "type": "constant",
-                        "constant": ""
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "result"
                     }
                 }
             },
@@ -939,46 +836,16 @@
                 "datatype": "string",
                 "type": "expression",
                 "expression": {
-                    "type": "conditional",
-                    "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "nested",
-                            "argument_expression": {
-                                "type": "named",
-                                "name": "test_request_form"
-                            },
-                            "value_expression": {
-                                "type": "property_path",
-                                "property_path": [
-                                    "form",
-                                    "ql_request_details",
-                                    "purpose_of_testing"
-                                ],
-                                "datatype": "string"
-                            }
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "post_treatment_6_month"
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "latest_post_treatment_6_month_test_case"
                     },
-                    "expression_if_true": {
-                        "type": "nested",
-                        "argument_expression": {
-                            "type": "named",
-                            "name": "test_result_form"
-                        },
-                        "value_expression": {
-                            "type": "property_path",
-                            "property_path": [
-                                "form",
-                                "result_label"
-                            ]
-                        }
-                    },
-                    "expression_if_false": {
-                        "type": "constant",
-                        "constant": ""
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "result"
                     }
+
                 }
             },
             {
@@ -987,46 +854,16 @@
                 "datatype": "string",
                 "type": "expression",
                 "expression": {
-                    "type": "conditional",
-                    "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "nested",
-                            "argument_expression": {
-                                "type": "named",
-                                "name": "test_request_form"
-                            },
-                            "value_expression": {
-                                "type": "property_path",
-                                "property_path": [
-                                    "form",
-                                    "ql_request_details",
-                                    "purpose_of_testing"
-                                ],
-                                "datatype": "string"
-                            }
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "post_treatment_12_month"
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "latest_post_treatment_12_month_test_case"
                     },
-                    "expression_if_true": {
-                        "type": "nested",
-                        "argument_expression": {
-                            "type": "named",
-                            "name": "test_result_form"
-                        },
-                        "value_expression": {
-                            "type": "property_path",
-                            "property_path": [
-                                "form",
-                                "result_label"
-                            ]
-                        }
-                    },
-                    "expression_if_false": {
-                        "type": "constant",
-                        "constant": ""
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "result"
                     }
+
                 }
             },
             {
@@ -1035,46 +872,16 @@
                 "datatype": "string",
                 "type": "expression",
                 "expression": {
-                    "type": "conditional",
-                    "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "nested",
-                            "argument_expression": {
-                                "type": "named",
-                                "name": "test_request_form"
-                            },
-                            "value_expression": {
-                                "type": "property_path",
-                                "property_path": [
-                                    "form",
-                                    "ql_request_details",
-                                    "purpose_of_testing"
-                                ],
-                                "datatype": "string"
-                            }
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "post_treatment_18_month"
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "latest_post_treatment_18_month_test_case"
                     },
-                    "expression_if_true": {
-                        "type": "nested",
-                        "argument_expression": {
-                            "type": "named",
-                            "name": "test_result_form"
-                        },
-                        "value_expression": {
-                            "type": "property_path",
-                            "property_path": [
-                                "form",
-                                "result_label"
-                            ]
-                        }
-                    },
-                    "expression_if_false": {
-                        "type": "constant",
-                        "constant": ""
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "result"
                     }
+
                 }
             },
             {
@@ -1083,46 +890,16 @@
                 "datatype": "string",
                 "type": "expression",
                 "expression": {
-                    "type": "conditional",
-                    "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "nested",
-                            "argument_expression": {
-                                "type": "named",
-                                "name": "test_request_form"
-                            },
-                            "value_expression": {
-                                "type": "property_path",
-                                "property_path": [
-                                    "form",
-                                    "ql_request_details",
-                                    "purpose_of_testing"
-                                ],
-                                "datatype": "string"
-                            }
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "post_treatment_24_month"
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "latest_post_treatment_24_month_test_case"
                     },
-                    "expression_if_true": {
-                        "type": "nested",
-                        "argument_expression": {
-                            "type": "named",
-                            "name": "test_result_form"
-                        },
-                        "value_expression": {
-                            "type": "property_path",
-                            "property_path": [
-                                "form",
-                                "result_label"
-                            ]
-                        }
-                    },
-                    "expression_if_false": {
-                        "type": "constant",
-                        "constant": ""
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "result"
                     }
+
                 }
             },
             {
@@ -2963,16 +2740,20 @@
                             "name": "new_patient"
                         },
                         {
-                            "type": "named",
-                            "name": "test_purpose_diagnostic"
-                        },
-                        {
-                            "type": "named",
-                            "name": "microscopy_test"
-                        },
-                        {
-                            "type": "named",
-                            "name": "sputum_positive"
+                            "operator": "eq",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_diagnostic_microscopy_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": "tb_detected"
                         }
                     ]
                 },
@@ -2989,16 +2770,20 @@
                             "name": "new_patient"
                         },
                         {
-                            "type": "named",
-                            "name": "test_purpose_end_of_ip"
-                        },
-                        {
-                            "type": "named",
-                            "name": "microscopy_test"
-                        },
-                        {
-                            "type": "named",
-                            "name": "sputum_negative"
+                            "operator": "eq",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_endofip_microscopy_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": "tb_not_detected"
                         },
                         {
                             "type": "named",
@@ -3019,16 +2804,20 @@
                             "name": "new_patient"
                         },
                         {
-                            "type": "named",
-                            "name": "test_purpose_end_of_ip"
-                        },
-                        {
-                            "type": "named",
-                            "name": "microscopy_test"
-                        },
-                        {
-                            "type": "named",
-                            "name": "sputum_positive"
+                            "operator": "eq",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_endofip_microscopy_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": "tb_detected"
                         },
                         {
                             "type": "named",
@@ -3049,16 +2838,20 @@
                             "name": "new_patient"
                         },
                         {
-                            "type": "named",
-                            "name": "test_purpose_end_of_ip"
-                        },
-                        {
-                            "type": "named",
-                            "name": "microscopy_test"
-                        },
-                        {
-                            "type": "named",
-                            "name": "sputum_na"
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_endofip_microscopy_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": ["", null]
                         },
                         {
                             "type": "named",
@@ -3079,16 +2872,20 @@
                             "name": "new_patient"
                         },
                         {
-                            "type": "named",
-                            "name": "test_purpose_end_of_ip"
-                        },
-                        {
-                            "type": "named",
-                            "name": "microscopy_test"
-                        },
-                        {
-                            "type": "named",
-                            "name": "sputum_negative"
+                            "operator": "eq",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_endofip_microscopy_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": "tb_not_detected"
                         },
                         {
                             "type": "named",
@@ -3109,16 +2906,20 @@
                             "name": "new_patient"
                         },
                         {
-                            "type": "named",
-                            "name": "test_purpose_end_of_ip"
-                        },
-                        {
-                            "type": "named",
-                            "name": "microscopy_test"
-                        },
-                        {
-                            "type": "named",
-                            "name": "sputum_positive"
+                            "operator": "eq",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_endofip_microscopy_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": "tb_detected"
                         },
                         {
                             "type": "named",
@@ -3139,16 +2940,20 @@
                             "name": "new_patient"
                         },
                         {
-                            "type": "named",
-                            "name": "test_purpose_end_of_ip"
-                        },
-                        {
-                            "type": "named",
-                            "name": "microscopy_test"
-                        },
-                        {
-                            "type": "named",
-                            "name": "sputum_na"
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_endofip_microscopy_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": [null, ""]
                         },
                         {
                             "type": "named",
@@ -3226,10 +3031,6 @@
                         },
                         {
                             "type": "named",
-                            "name": "microscopy_test"
-                        },
-                        {
-                            "type": "named",
                             "name": "3months_length_of_ip"
                         },
                         {
@@ -3267,10 +3068,6 @@
                         },
                         {
                             "type": "named",
-                            "name": "microscopy_test"
-                        },
-                        {
-                            "type": "named",
                             "name": "3months_length_of_ip"
                         },
                         {
@@ -3305,10 +3102,6 @@
                         {
                             "type": "named",
                             "name": "has_patient_type"
-                        },
-                        {
-                            "type": "named",
-                            "name": "microscopy_test"
                         },
                         {
                             "type": "named",
@@ -5779,6 +5572,29 @@
                         "property_name": "referring_facility_name"
                     }
                 }
+            },
+            {
+                "type": "boolean",
+                "column_id": "bacteriological_examination",
+                "filter": {
+                    "type": "not",
+                    "filter": {
+                        "operator": "in",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "bacteriological_examination_test_case"
+                            },
+                            "value_expression": {
+                                "type": "property_name",
+                                "property_name": "_id"
+                            }
+                        },
+                        "property_value": ["", null]
+                    }
+                }
             }
         ],
         "named_filters": {
@@ -6049,7 +5865,7 @@
                 "expression": {
                     "datatype": "string",
                     "type": "property_name",
-                    "property_name": "patient_type"
+                    "property_name": "patient_type_choice"
                 },
                 "type": "boolean_expression",
                 "property_value": "new"
@@ -6059,7 +5875,7 @@
                 "expression": {
                     "datatype": "string",
                     "type": "property_name",
-                    "property_name": "patient_type"
+                    "property_name": "patient_type_choice"
                 },
                 "type": "boolean_expression",
                 "property_value": "others"
@@ -6069,7 +5885,7 @@
                 "expression": {
                     "datatype": "string",
                     "type": "property_name",
-                    "property_name": "patient_type"
+                    "property_name": "patient_type_choice"
                 },
                 "type": "boolean_expression",
                 "property_value": "recurrent"
@@ -6079,7 +5895,7 @@
                 "expression": {
                     "datatype": "string",
                     "type": "property_name",
-                    "property_name": "patient_type"
+                    "property_name": "patient_type_choice"
                 },
                 "type": "boolean_expression",
                 "property_value": "treatment_after_failure"
@@ -6089,7 +5905,7 @@
                 "expression": {
                     "datatype": "string",
                     "type": "property_name",
-                    "property_name": "patient_type"
+                    "property_name": "patient_type_choice"
                 },
                 "type": "boolean_expression",
                 "property_value": "treatment_after_loss_to_follow_up"
@@ -6099,7 +5915,7 @@
                 "expression": {
                     "datatype": "string",
                     "type": "property_name",
-                    "property_name": "patient_type"
+                    "property_name": "patient_type_choice"
                 },
                 "type": "boolean_expression",
                 "property_value": "treatment_after_failure"
@@ -6561,12 +6377,12 @@
                                 },
                                 "filter_expression": {
                                     "type": "boolean_expression",
-                                    "operator": "eq",
+                                    "operator": "in",
                                     "expression": {
                                         "type": "property_name",
                                         "property_name": "test_type_value"
                                     },
-                                    "property_value": "microscopy-zn"
+                                    "property_value": ["microscopy-zn", "microscopy-fluorescent"]
                                 }
                             },
                             "sort_expression": {
@@ -6616,24 +6432,45 @@
                 }
             },
             "2months_length_of_ip": {
-                "operator": "eq",
-                "expression": {
-                    "datatype": "string",
-                    "type": "property_name",
-                    "property_name": "length_of_ip"
-                },
-                "type": "boolean_expression",
-                "property_value": "2months"
+                "type": "and",
+                "filters": [
+                    {
+                        "operator": "lt",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "property_name",
+                            "property_name": "length_of_ip"
+                        },
+                        "type": "boolean_expression",
+                        "property_value": 90
+                    },
+                    {
+                        "type": "not",
+                        "filter": {
+                            "operator": "in",
+                            "expression": {
+                                "datatype": "string",
+                                "type": "property_name",
+                                "property_name": "length_of_ip"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": [
+                                "",
+                                null
+                            ]
+                        }
+                    }
+                ]
             },
-            "3months_length_of_ip": {
-                "operator": "eq",
+           "3months_length_of_ip": {
+                "operator": "gte",
                 "expression": {
-                    "datatype": "string",
+                    "datatype": "integer",
                     "type": "property_name",
                     "property_name": "length_of_ip"
                 },
                 "type": "boolean_expression",
-                "property_value": "3months"
+                "property_value": 90
             }
         },
         "named_expressions": {
@@ -6738,6 +6575,627 @@
                                 "property_name": "type"
                             },
                             "property_value": "test"
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
+            "latest_diagnostic_test_case": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "property_value": "test"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "purpose_of_testing"
+                                    },
+                                    "operator": "eq",
+                                    "property_value": "diagnostic"
+                                }
+                            ]
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
+            "latest_diagnostic_microscopy_test_case": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "property_value": "test"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "purpose_of_testing"
+                                    },
+                                    "operator": "eq",
+                                    "property_value": "diagnostic"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "in",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "property_value": ["microscopy-zn", "microscopy-fluorescent"]
+                                }
+                            ]
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
+            "latest_endofip_test_case": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "property_value": "test"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "purpose_of_testing"
+                                    },
+                                    "operator": "eq",
+                                    "property_value": "follow_up"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "follow_up_test_reason"
+                                    },
+                                    "operator": "eq",
+                                    "property_value": "end_of_ip"
+                                }
+                            ]
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
+            "latest_endofip_microscopy_test_case": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "property_value": "test"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "purpose_of_testing"
+                                    },
+                                    "operator": "eq",
+                                    "property_value": "follow_up"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "follow_up_test_reason"
+                                    },
+                                    "operator": "eq",
+                                    "property_value": "end_of_ip"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "in",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "property_value": ["microscopy-zn", "microscopy-fluorescent"]
+                                }
+                            ]
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
+            "latest_endofcp_test_case": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "property_value": "test"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "purpose_of_testing"
+                                    },
+                                    "operator": "eq",
+                                    "property_value": "follow_up"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "follow_up_test_reason"
+                                    },
+                                    "operator": "eq",
+                                    "property_value": "end_of_cp"
+                                }
+                            ]
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
+            "latest_post_treatment_6_month_test_case": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "property_value": "test"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "purpose_of_testing"
+                                    },
+                                    "operator": "eq",
+                                    "property_value": "follow_up"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "follow_up_test_reason"
+                                    },
+                                    "operator": "eq",
+                                    "property_value": "posttreatment_6month"
+                                }
+                            ]
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
+            "latest_post_treatment_12_month_test_case": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "property_value": "test"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "purpose_of_testing"
+                                    },
+                                    "operator": "eq",
+                                    "property_value": "follow_up"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "follow_up_test_reason"
+                                    },
+                                    "operator": "eq",
+                                    "property_value": "posttreatment_12month"
+                                }
+                            ]
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
+            "latest_post_treatment_18_month_test_case": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "property_value": "test"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "purpose_of_testing"
+                                    },
+                                    "operator": "eq",
+                                    "property_value": "follow_up"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "follow_up_test_reason"
+                                    },
+                                    "operator": "eq",
+                                    "property_value": "posttreatment_18month"
+                                }
+                            ]
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
+            "latest_post_treatment_24_month_test_case": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "property_value": "test"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "purpose_of_testing"
+                                    },
+                                    "operator": "eq",
+                                    "property_value": "follow_up"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "follow_up_test_reason"
+                                    },
+                                    "operator": "eq",
+                                    "property_value": "posttreatment_24month"
+                                }
+                            ]
                         }
                     },
                     "sort_expression": {
@@ -7188,6 +7646,73 @@
                     "type": "property_name",
                     "property_name": "opened_on"
                 }
+            },
+            "bacteriological_examination_test_case": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "property_value": "test"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "in",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "property_value": [
+                                        "microscopy-zn",
+                                        "microscopy-fluorescent",
+                                        "cbnaat",
+                                        "culture",
+                                        "dst",
+                                        "line_probe_assay"
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "aggregation_fn": "first_item"
             }
         }
     }

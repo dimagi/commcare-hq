@@ -95,6 +95,7 @@ class Command(BaseCommand):
         Role(slug=privileges.ACTIVE_DATA_MANAGEMENT, name='Active Data Management', description=''),
         Role(slug=privileges.CUSTOM_REPORTS, name='Custom Reports', description=''),
         Role(slug=privileges.ROLE_BASED_ACCESS, name='Role-based Access', description=''),
+        Role(slug=privileges.RESTRICT_ACCESS_BY_LOCATION, name='Restrict Access By Location', description=''),
         Role(slug=privileges.OUTBOUND_SMS, name='Outbound SMS',
              description='Use of any outbound messaging / SMS services.',
         ),
@@ -177,6 +178,7 @@ class Command(BaseCommand):
         privileges.REPORT_BUILDER,
         privileges.DATA_CLEANUP,
         privileges.TEMPLATED_INTENTS,
+        privileges.RESTRICT_ACCESS_BY_LOCATION,
     ]
 
     advanced_plan_features = pro_plan_features + [

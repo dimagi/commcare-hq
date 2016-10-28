@@ -546,8 +546,8 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
             'role_slug': plan_version.role.slug if plan_version else None,
         }
         if self.request.method == 'POST' and 'update_version' in self.request.POST:
-            return SoftwarePlanVersionForm(self.plan, self.plan.get_version(), self.request.POST, initial=initial)
-        return SoftwarePlanVersionForm(self.plan, self.plan.get_version(), initial=initial)
+            return SoftwarePlanVersionForm(self.plan, plan_version, self.request.POST, initial=initial)
+        return SoftwarePlanVersionForm(self.plan, plan_version, initial=initial)
 
     @property
     def page_context(self):

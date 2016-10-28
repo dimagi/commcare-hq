@@ -43,6 +43,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 data: JSON.stringify({
                     "username": user.username,
                     "domain": domain,
+                    "restoreAs": user.restoreAs,
                 }),
                 url: formplayerUrl + '/get_sessions',
                 success: function (request) {
@@ -61,30 +62,17 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
             var user = FormplayerFrontend.request('currentUser');
             var formplayerUrl = user.formplayer_url;
-
-            var menus = new Entities.MenuSelectCollection({
-
-                fetch: function (options) {
-
-                    options.data = JSON.stringify({
-                        "sessionId": sessionId,
-                        "username": user.username,
-                        "domain": user.domain,
-                    });
-
-                    options.url = formplayerUrl + '/incomplete-form';
-                    Util.setCrossDomainAjaxOptions(options);
-                    return Backbone.Collection.prototype.fetch.call(this, options);
-                },
-
-                initialize: function (params) {
-                    this.fetch = params.fetch;
-                },
-
-            });
-
+            var menus = new Entities.MenuSelectCollection();
             var defer = $.Deferred();
+
             menus.fetch({
+                data: JSON.stringify({
+                    "sessionId": sessionId,
+                    "username": user.username,
+                    "domain": user.domain,
+                    "restoreAs": user.restoreAs,
+                }),
+                url: formplayerUrl + '/incomplete-form',
                 success: function (request) {
                     defer.resolve(request);
                 },
@@ -99,6 +87,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                     "sessionId": session.get('sessionId'),
                     "username": user.username,
                     "domain": user.domain,
+                    "restoreAs": user.restoreAs,
                 }),
                 url: user.formplayer_url + '/delete-incomplete-form',
                 complete: function(xhr) {

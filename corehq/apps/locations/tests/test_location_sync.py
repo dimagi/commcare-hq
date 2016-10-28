@@ -42,7 +42,6 @@ class TestLocationSync(TestCase):
         cls.state = loc_types['state']
         cls.county = loc_types['county']
         cls.city = loc_types['city']
-        cls.db = Location.get_db()
 
     @classmethod
     def tearDownClass(cls):
@@ -68,7 +67,7 @@ class TestLocationSync(TestCase):
 
     def assertNumLocations(self, number):
         self.assertEqual(SQLLocation.objects.count(), number)
-        self.assertEqual(get_doc_count_by_type(self.db, 'Location'), number)
+        self.assertEqual(get_doc_count_by_type(Location.get_db(), 'Location'), number)
 
     def test_sync_couch_to_sql(self):
         mass = couch_loc("Massachusetts", self.state)

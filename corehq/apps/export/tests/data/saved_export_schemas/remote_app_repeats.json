@@ -3,14 +3,15 @@
    "_rev": "2-c5dde9983fa0c0cbd1499a4830d7843f",
    "doc_type": "SavedExportSchema",
    "domain": null,
-   "name": "Case Example",
-   "index": "[\"aspace\", \"RegCase\"]",
+   "name": "Form Example",
+   "index": "[\"aspace\", \"xmlns\"]",
    "transform_dates": true,
    "filter_function": "[]",
+   "app_id": "1234",
    "schema_id": "92e5f9a6624a637c2080957475cd3a85",
    "tables": [
        {
-           "index": "#.form.repeat.#",
+           "index": "#.form.custom_repeat.#",
            "display": "Custom Repeat",
            "columns": [
                {
@@ -27,8 +28,6 @@
        }
     ],
    "default_format": "csv",
-   "type": "case",
+   "type": "form",
    "is_safe": false
 }
-
-

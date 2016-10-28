@@ -224,9 +224,13 @@ class BaseEditUserView(BaseUserSettingsView):
         user_domain_membership = self.editable_user.get_domain_membership(self.domain)
         linked_loc = user_domain_membership.location_id
         linked_prog = user_domain_membership.program_id
+        assigned_locations = ','.join(user_domain_membership.assigned_location_ids)
         return CommtrackUserForm(
             domain=self.domain,
-            initial={'location': linked_loc, 'program_id': linked_prog}
+            initial={
+                'primary_location': linked_loc,
+                'program_id': linked_prog,
+                'assigned_locations': assigned_locations}
         )
 
     def update_user(self):
@@ -245,10 +249,8 @@ class BaseEditUserView(BaseUserSettingsView):
 
     def post(self, request, *args, **kwargs):
         if self.request.POST['form_type'] == "commtrack":
-            self.editable_user.get_domain_membership(self.domain).location_id = self.request.POST['location']
-            if self.request.project.commtrack_enabled:
-                self.editable_user.get_domain_membership(self.domain).program_id = self.request.POST['program_id']
-            self.editable_user.save()
+            if self.commtrack_form.is_valid():
+                self.commtrack_form.save(self.editable_user)
         elif self.request.POST['form_type'] == "update-user":
             if all([self.update_user(), self.custom_user_is_valid()]):
                 messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.raw_username)
@@ -420,6 +422,11 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
 
     @property
     @memoized
+    def can_restrict_access_by_location(self):
+        return self.domain_object.has_privilege(privileges.RESTRICT_ACCESS_BY_LOCATION)
+
+    @property
+    @memoized
     def user_roles(self):
         user_roles = [AdminUserRole(domain=self.domain)]
         user_roles.extend(sorted(
@@ -427,11 +434,13 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
             key=lambda role: role.name if role.name else u'\uFFFF'
         ))
 
-        #  indicate if a role has assigned users, skip admin role
-        for i in range(1, len(user_roles)):
-            role = user_roles[i]
-            role.__setattr__('hasUsersAssigned',
-                             True if len(role.ids_of_assigned_users) > 0 else False)
+        # skip the admin role since it's not editable
+        for role in user_roles[1:]:
+            role.hasUsersAssigned = bool(role.ids_of_assigned_users)
+            role.has_unpermitted_location_restriction = (
+                not self.can_restrict_access_by_location
+                and not role.permissions.access_all_locations
+            )
         return user_roles
 
     @property
@@ -458,6 +467,16 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
 
     @property
     def page_context(self):
+        if (not self.can_restrict_access_by_location
+            and any(not role.permissions.access_all_locations
+                    for role in self.user_roles)
+        ):
+            messages.warning(self.request, _(
+                "This project has user roles that restrict data access by "
+                "organization, but the software plan no longer supports that. "
+                "Any users assigned to roles that are restricted in data access "
+                "by organization can no longer access this project.  Please "
+                "update the existing roles."))
         return {
             'user_roles': self.user_roles,
             'can_edit_roles': self.can_edit_roles,
@@ -468,6 +487,7 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
             'admins': WebUser.get_admins_by_domain(self.domain),
             'domain_object': self.domain_object,
             'uses_locations': self.domain_object.uses_locations,
+            'can_restrict_access_by_location': self.can_restrict_access_by_location,
         }
 
 
@@ -518,6 +538,13 @@ def post_user_role(request, domain):
         return json_response({})
     role_data = json.loads(request.body)
     role_data = dict([(p, role_data[p]) for p in set(UserRole.properties().keys() + ['_id', '_rev']) if p in role_data])
+    if (
+        not domain_has_privilege(domain, privileges.RESTRICT_ACCESS_BY_LOCATION)
+        and not role_data['permissions']['access_all_locations']
+    ):
+        # This shouldn't be possible through the UI, but as a safeguard...
+        role_data['permissions']['access_all_locations'] = True
+
     role = UserRole.wrap(role_data)
     role.domain = domain
     if role.get_id:

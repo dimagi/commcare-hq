@@ -1,10 +1,9 @@
 from abc import ABCMeta, abstractmethod
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase
 import mock
 from functools import partial
 
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
-from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.fake.groups_fake import GroupESFake
 from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.groups.models import Group

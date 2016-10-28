@@ -60,8 +60,12 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         return SQLLocation.active_objects.filter_path_by_user_input(self.domain, query)
 
     def get_locations(self, query, start, size):
+        """
+        start: The index of the first item to be returned
+        size: The number of items to return
+        """
         return map(self.utils.location_tuple,
-                   self.get_locations_query(query)[start:size])
+                   self.get_locations_query(query)[start:start + size])
 
     def get_locations_size(self, query):
         return self.get_locations_query(query).count()
@@ -105,7 +109,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
             return ['%s*' % tokens.pop()] + tokens
 
     def user_es_query(self, query):
-        search_fields = ["first_name", "last_name", "username"]
+        search_fields = ["first_name", "last_name", "base_username"]
         return (UserES()
                 .domain(self.domain)
                 .search_string_query(query, default_fields=search_fields))

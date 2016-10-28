@@ -104,7 +104,8 @@ from corehq.apps.domain.forms import (
     ConfirmNewSubscriptionForm, ProBonoForm, EditBillingAccountInfoForm,
     ConfirmSubscriptionRenewalForm, SnapshotFixtureForm, TransferDomainForm,
     SelectSubscriptionTypeForm, INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS, AdvancedExtendedTrialForm,
-    ContractedPartnerForm, DimagiOnlyEnterpriseForm)
+    ContractedPartnerForm, DimagiOnlyEnterpriseForm, USE_PARENT_LOCATION_CHOICE,
+    USE_LOCATION_CHOICE)
 from corehq.apps.domain.models import (
     Domain,
     LICENSES,
@@ -425,8 +426,8 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
         config = self.domain_object.call_center_config
         if config.use_user_location_as_owner:
             if config.user_location_ancestor_level == 1:
-                return DomainGlobalSettingsForm.USE_PARENT_LOCATION_CHOICE
-            return DomainGlobalSettingsForm.USE_LOCATION_CHOICE
+                return USE_PARENT_LOCATION_CHOICE
+            return USE_LOCATION_CHOICE
         return self.domain_object.call_center_config.case_owner_id
 
     @property
@@ -1474,7 +1475,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
     @property
     @memoized
     def selected_plan_version(self):
-        return DefaultProductPlan.get_default_plan(self.edition).plan.get_version()
+        return DefaultProductPlan.get_default_plan_version(self.edition)
 
     @property
     def downgrade_messages(self):
@@ -1662,7 +1663,7 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
     @property
     @memoized
     def next_plan_version(self):
-        plan_version = DefaultProductPlan.get_default_plan(self.new_edition)
+        plan_version = DefaultProductPlan.get_default_plan_version(self.new_edition)
         if plan_version is None:
             log_accounting_error(
                 "Could not find a matching renewable plan "

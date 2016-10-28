@@ -68,8 +68,10 @@ from corehq.apps.app_manager.models import (
     DeleteFormRecord,
     Form,
     FormActions,
+    FormActionCondition,
     FormDatum,
     FormLink,
+    UpdateCaseAction,
     IncompatibleFormTypeException,
     ModuleNotFoundException,
     load_case_reserved_words,
@@ -336,6 +338,14 @@ def new_form(request, domain, app_id, module_id):
     lang = request.COOKIES.get('lang', app.langs[0])
     name = request.POST.get('name')
     form = app.new_form(module_id, name, lang)
+
+    if toggles.APP_MANAGER_V2.enabled(domain):
+        case_action = request.POST.get('case_action', 'none')
+        if case_action == 'update':
+            form.requires = 'case'
+            form.actions.update_case = UpdateCaseAction(
+                condition=FormActionCondition(type='always'))
+
     app.save()
     # add form_id to locals()
     form_id = form.id
@@ -539,7 +549,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
                 {'key': key, 'path': path} for key, path in form.case_preload.items()
             ],
         })
-        return "app_manager/form_view_careplan.html", context
+        return "app_manager/v1/form_view_careplan.html", context
     elif isinstance(form, AdvancedForm):
         def commtrack_programs():
             if app.commtrack_enabled:
@@ -554,12 +564,12 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             'commtrack_programs': all_programs + commtrack_programs(),
         })
         context.update(get_schedule_context(form))
-        return "app_manager/form_view_advanced.html", context
+        return "app_manager/v1/form_view_advanced.html", context
     else:
         context.update({
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled(request.user.username),
         })
-        return "app_manager/form_view.html", context
+        return "app_manager/v1/form_view.html", context
 
 
 @require_can_edit_apps
@@ -626,7 +636,7 @@ def xform_display(request, domain, form_unique_id):
     if request.GET.get('format') == 'html':
         questions = [FormQuestionResponse(q) for q in questions]
 
-        return render(request, 'app_manager/xform_display.html', {
+        return render(request, 'app_manager/v1/xform_display.html', {
             'questions': questions_in_hierarchy(questions)
         })
     else:

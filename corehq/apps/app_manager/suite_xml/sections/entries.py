@@ -20,7 +20,16 @@ from corehq.apps.app_manager.xpath import CaseIDXPath, session_var, \
 from corehq.apps.app_manager.suite_xml.xml_models import *
 
 
-class FormDatumMeta(namedtuple('FormDatumMeta', 'datum case_type requires_selection action')):
+class FormDatumMeta(namedtuple('FormDatumMeta', 'datum case_type requires_selection action from_parent')):
+    def __new__(cls, datum, case_type, requires_selection, action, from_parent=False):
+        """
+        :param datum: The actual SessionDatum object
+        :param case_type: The case type this datum represents
+        :param requires_selection: True if this datum requires the user to make a selection
+        :param action: The action that produced this datum
+        :param from_parent: True if this datum is a placeholder necessary to match the parent module's session.
+        """
+        return super(FormDatumMeta, cls).__new__(cls, datum, case_type, requires_selection, action, from_parent)
 
     @property
     def is_new_case_id(self):
@@ -767,7 +776,7 @@ class EntriesHelper(object):
                 if not this_datum_meta or this_datum_meta.datum.id != parent_datum_meta.datum.id:
                     if not parent_datum_meta.requires_selection:
                         # Add parent datums of opened subcases and automatically-selected cases
-                        datums.insert(index, parent_datum_meta)
+                        datums.insert(index, parent_datum_meta._replace(from_parent=True))
                     elif this_datum_meta and this_datum_meta.case_type == parent_datum_meta.case_type:
                         append_update(changed_ids_by_case_tag,
                                       rename_other_id(this_datum_meta, parent_datum_meta, datum_ids))

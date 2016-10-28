@@ -1988,6 +1988,10 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     fixture_select = SchemaProperty(FixtureSelect)
     auto_select_case = BooleanProperty(default=False)
 
+    @property
+    def is_surveys(self):
+        return self.case_type == ""
+
     @classmethod
     def wrap(cls, data):
         if cls is ModuleBase:
@@ -2043,7 +2047,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     def root_module(self):
         if self.root_module_id:
             return self._parent.get_module_by_unique_id(self.root_module_id,
-                   error=_("Could not find parent module for '{}'").format(self.default_name()))
+                   error=_("Could not find parent menu for '{}'").format(self.default_name()))
 
     def requires_case_details(self):
         return False
@@ -4064,8 +4068,8 @@ class LazyBlobDoc(BlobMixin):
     def __attachment_cache_key(self, name):
         return u'lazy_attachment/{id}/{name}'.format(id=self.get_id, name=name)
 
-    def __set_cached_attachment(self, name, content):
-        cache.set(self.__attachment_cache_key(name), content, timeout=60 * 60 * 24)
+    def __set_cached_attachment(self, name, content, timeout=60*60*24):
+        cache.set(self.__attachment_cache_key(name), content, timeout=timeout)
         self._LAZY_ATTACHMENTS_CACHE[name] = content
 
     def __get_cached_attachment(self, name):
@@ -4112,8 +4116,9 @@ class LazyBlobDoc(BlobMixin):
                     if hasattr(e, 'response'):
                         del e.response
                     content = e
+                    self.__set_cached_attachment(name, content, timeout=60*5)
                     raise
-                finally:
+                else:
                     self.__set_cached_attachment(name, content)
 
         if isinstance(content, ResourceNotFound):
@@ -4653,6 +4658,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 ) % ((name,) + setting_version + my_version))
 
     @property
+    def advanced_app_builder(self):
+        properties = (self.profile or {}).get('properties', {})
+        return properties.get('advanced_app_builder', 'false') == 'true'
+
+    @property
     def jad_settings(self):
         settings = {
             'JavaRosa-Admin-Password': self.admin_password,
@@ -4670,6 +4680,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         built_on = datetime.datetime.utcnow()
         all_files = self.create_all_files(build_profile_id)
         if save:
+            self.date_created = built_on
             self.built_on = built_on
             self.built_with = BuildRecord(
                 version=self.build_spec.version,
@@ -4992,6 +5003,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                                           choices=app_strings.CHOICES.keys())
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
+    date_created = DateTimeProperty()
     created_from_template = StringProperty()
     use_grid_menus = BooleanProperty(default=False)
     grid_form_menus = StringProperty(default='none',
@@ -5310,7 +5322,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if matches(obj):
                 return obj
         if not error:
-            error = _("Module in app '{app_id}' with unique id '{unique_id}' not found.").format(
+            error = _("Could not find '{unique_id}' in app '{app_id}'.").format(
                 app_id=self.id, unique_id=unique_id)
         raise ModuleNotFoundException(error)
 
@@ -5343,7 +5355,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @classmethod
     def new_app(cls, domain, name, lang="en"):
         app = cls(domain=domain, modules=[], name=name, langs=[lang],
-                  vellum_case_management=True)
+                  date_created=datetime.datetime.utcnow(), vellum_case_management=True)
         return app
 
     def add_module(self, module):
@@ -5436,10 +5448,24 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             pass
         try:
             form = from_module.forms.pop(j)
+            if toggles.APP_MANAGER_V2.enabled(self.domain):
+                if not to_module.is_surveys and i == 0:
+                    # first form is the reg form
+                    i = 1
+                if from_module.is_surveys != to_module.is_surveys:
+                    if from_module.is_surveys:
+                        form.requires = "case"
+                        form.actions.update_case = UpdateCaseAction(
+                            condition=FormActionCondition(type='always'))
+                    else:
+                        form.requires = "none"
+                        form.actions.update_case = UpdateCaseAction(
+                            condition=FormActionCondition(type='never'))
             to_module.add_insert_form(from_module, form, index=i, with_source=True)
         except IndexError:
             raise RearrangeError()
-        if to_module.case_type != from_module.case_type:
+        if to_module.case_type != from_module.case_type \
+                and not toggles.APP_MANAGER_V2.enabled(self.domain):
             raise ConflictingCaseTypeError()
 
     def scrub_source(self, source):
@@ -5885,6 +5911,7 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
     if 'build_spec' in source:
         del source['build_spec']
     app = cls.from_source(source, domain)
+    app.date_created = datetime.datetime.utcnow()
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
 
     with app.atomic_blobs():
@@ -5941,8 +5968,10 @@ class DeleteFormRecord(DeleteRecord):
         app = Application.get(self.app_id)
         if self.module_unique_id is not None:
             name = trans(self.form.name, app.default_language, include_lang=False)
-            module = app.get_module_by_unique_id(self.module_unique_id,
-                     error=_("Could not find module containing form '{}'").format(name))
+            module = app.get_module_by_unique_id(
+                self.module_unique_id,
+                error=_("Could not find form '{}'").format(name)
+            )
         else:
             module = app.modules[self.module_id]
         forms = module.forms

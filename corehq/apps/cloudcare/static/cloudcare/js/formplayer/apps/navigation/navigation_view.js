@@ -10,9 +10,13 @@ FormplayerFrontend.module("Navigation", function (Navigation, FormplayerFrontend
     Navigation.PhoneNavigation = Marionette.ItemView.extend({
         className: 'formplayer-phone-navigation',
         template: '#formplayer-phone-navigation-template',
+        ui: {
+            backButton: '.formplayer-back',
+            reloadButton: '.formplayer-reload',
+        },
         events: {
-            'click .formplayer-back': 'onBack',
-            'click .formplayer-reload': 'onReload',
+            'click @ui.backButton': 'onBack',
+            'click @ui.reloadButton': 'onReload',
         },
         initialize: function(options) {
             this.appId = options.appId;
@@ -24,6 +28,12 @@ FormplayerFrontend.module("Navigation", function (Navigation, FormplayerFrontend
         onReload: function(e) {
             e.preventDefault();
             FormplayerFrontend.trigger('refreshApplication', this.appId);
+        },
+        hideBackButton: function() {
+            this.ui.backButton.hide();
+        },
+        showBackButton: function() {
+            this.ui.backButton.show();
         },
     });
 });

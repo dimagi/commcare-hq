@@ -274,14 +274,16 @@ class LocationQueriesMixin(object):
             return itertools.imap(Location.wrap, locations)
         return locations
 
-
-class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
     def accessible_to_user(self, domain, user):
         if user.has_permission(domain, 'access_all_locations'):
-            return self
+            return self.all()
 
         users_location = user.get_sql_location(domain)
-        return self & users_location.get_descendants(include_self=True)
+        return self.all() & users_location.get_descendants(include_self=True)
+
+
+class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
+    pass
 
 
 class LocationManager(LocationQueriesMixin, TreeManager):
@@ -328,14 +330,6 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         """
         direct_matches = self.filter_by_user_input(domain, user_input)
         return self.get_queryset_descendants(direct_matches, include_self=True)
-
-
-    def accessible_to_user(self, domain, user):
-        if user.has_permission(domain, 'access_all_locations'):
-            return self.get_queryset()
-
-        users_location = user.get_sql_location(domain)
-        return users_location.get_descendants(include_self=True)
 
 
 class OnlyUnarchivedLocationManager(LocationManager):
@@ -429,6 +423,85 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
                                     set(SQLProduct.by_domain(self.domain)))
 
         self._products = value
+
+    def _close_case_and_remove_users(self):
+        """
+        Closes linked supply point cases for a location and unassigns the users
+        assigned to that location.
+
+        Used by both archive and delete methods
+        """
+        sp = self.linked_supply_point()
+        # sanity check that the supply point exists and is still open.
+        # this is important because if you archive a child, then try
+        # to archive the parent, we don't want to try to close again
+        if sp and not sp.closed:
+            close_case(sp.case_id, self.domain, COMMTRACK_USERNAME)
+
+        _unassign_users_from_location(self.domain, self.location_id)
+
+    def _archive_single_location(self):
+        """
+        Archive a single location, caller is expected to handle
+        archiving children as well.
+
+        This is just used to prevent having to do recursive
+        couch queries in `archive()`.
+        """
+        self.is_archived = True
+        self.save()
+
+        self._close_case_and_remove_users()
+
+    def archive(self):
+        """
+        Mark a location and its descendants as archived.
+        This will cause it (and its data) to not show up in default Couch and
+        SQL views.  This also unassigns users assigned to the location.
+        """
+        for loc in self.get_descendants(include_self=True):
+            loc._archive_single_location()
+
+    def _unarchive_single_location(self):
+        """
+        Unarchive a single location, caller is expected to handle
+        unarchiving children as well.
+
+        This is just used to prevent having to do recursive
+        couch queries in `unarchive()`.
+        """
+        self.is_archived = False
+        self.save()
+
+        # reopen supply point case if needed
+        sp = self.linked_supply_point()
+        # sanity check that the supply point exists and is not open.
+        # this is important because if you unarchive a child, then try
+        # to unarchive the parent, we don't want to try to open again
+        if sp and sp.closed:
+            for action in sp.actions:
+                if action.action_type == 'close':
+                    action.xform.archive(user_id=COMMTRACK_USERNAME)
+                    break
+
+    def unarchive(self):
+        """
+        Unarchive a location and reopen supply point case if it
+        exists.
+        """
+        for loc in self.get_descendants(include_self=True):
+            loc._unarchive_single_location()
+
+    def full_delete(self):
+        """
+        Delete a location and its dependants.
+        This also unassigns users assigned to the location.
+        """
+        to_delete = self.get_descendants(include_self=True).couch_locations()
+        # if there are errors deleting couch locations, roll back sql delete
+        with transaction.atomic():
+            self.sql_full_delete()
+            Location.get_db().bulk_delete(to_delete)
 
     def sql_full_delete(self):
         """
@@ -669,7 +742,7 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         location_type = kwargs.pop('location_type', None)
         super(Document, self).__init__(*args, **kwargs)
         if location_type:
-            self.location_type = location_type
+            self.set_location_type(location_type)
 
     def __unicode__(self):
         return u"{} ({})".format(self.name, self.domain)
@@ -709,6 +782,7 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
 
     @location_type.setter
     def location_type(self, value):
+        notify_of_deprecation("You should set location_type using `set_location_type`")
         self.set_location_type(value)
 
     def set_location_type(self, location_type_name):
@@ -722,86 +796,6 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
             )
         except LocationType.DoesNotExist:
             raise LocationType.DoesNotExist(msg)
-
-    def _archive_single_location(self):
-        """
-        Archive a single location, caller is expected to handle
-        archiving children as well.
-
-        This is just used to prevent having to do recursive
-        couch queries in `archive()`.
-        """
-        self.is_archived = True
-        self.save()
-
-        self._close_case_and_remove_users()
-
-    def archive(self):
-        """
-        Mark a location and its descendants as archived.
-        This will cause it (and its data) to not show up in default Couch and
-        SQL views.  This also unassigns users assigned to the location.
-        """
-        for loc in [self] + self.descendants:
-            loc._archive_single_location()
-
-    def _unarchive_single_location(self):
-        """
-        Unarchive a single location, caller is expected to handle
-        unarchiving children as well.
-
-        This is just used to prevent having to do recursive
-        couch queries in `unarchive()`.
-        """
-        self.is_archived = False
-        self.save()
-
-        # reopen supply point case if needed
-        sp = self.linked_supply_point()
-        # sanity check that the supply point exists and is not open.
-        # this is important because if you unarchive a child, then try
-        # to unarchive the parent, we don't want to try to open again
-        if sp and sp.closed:
-            for action in sp.actions:
-                if action.action_type == 'close':
-                    action.xform.archive(user_id=COMMTRACK_USERNAME)
-                    break
-
-    def unarchive(self):
-        """
-        Unarchive a location and reopen supply point case if it
-        exists.
-        """
-        for loc in [self] + self.descendants:
-            loc._unarchive_single_location()
-
-    def _close_case_and_remove_users(self):
-        """
-        Closes linked supply point cases for a location and unassigns the users
-        assigned to that location.
-
-        Used by both archive and delete methods
-        """
-
-        sp = self.linked_supply_point()
-        # sanity check that the supply point exists and is still open.
-        # this is important because if you archive a child, then try
-        # to archive the parent, we don't want to try to close again
-        if sp and not sp.closed:
-            close_case(sp.case_id, self.domain, COMMTRACK_USERNAME)
-
-        _unassign_users_from_location(self.domain, self._id)
-
-    def full_delete(self):
-        """
-        Delete a location and its dependants.
-        This also unassigns users assigned to the location.
-        """
-        to_delete = [self] + self.descendants
-        # if there are errors deleting couch locations, roll back sql delete
-        with transaction.atomic():
-            self.sql_location.sql_full_delete()
-            Location.get_db().bulk_delete(to_delete)
 
     @classmethod
     def _migration_get_fields(cls):
@@ -824,11 +818,6 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         self._migration_sync_to_sql(sql_location)
 
     def save(self, *args, **kwargs):
-        """
-        Saving a couch version of Location will trigger
-        one way syncing to the SQLLocation version of this
-        location.
-        """
         self.last_modified = datetime.utcnow()
 
         # lazy migration for site_code
@@ -897,17 +886,6 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         """
         return list(SQLLocation.root_locations(domain).couch_locations())
 
-    @classmethod
-    def get_in_domain(cls, domain, id):
-        if id:
-            try:
-                loc = Location.get(id)
-                assert domain == loc.domain
-                return loc
-            except (ResourceNotFound, AssertionError):
-                pass
-        return None
-
     @property
     def is_root(self):
         return not self.lineage
@@ -975,6 +953,6 @@ def _unassign_users_from_location(domain, location_id):
     from corehq.apps.locations.dbaccessors import get_all_users_by_location
     for user in get_all_users_by_location(domain, location_id):
         if user.is_web_user():
-            user.unset_location(domain)
+            user.unset_location_by_id(domain, location_id, fall_back_to_next=True)
         elif user.is_commcare_user():
-            user.unset_location()
+            user.unset_location_by_id(location_id, fall_back_to_next=True)

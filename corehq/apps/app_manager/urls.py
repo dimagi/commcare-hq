@@ -6,6 +6,7 @@ from corehq.apps.app_manager.views import (
     AppDiffView,
     LanguageProfilesView,
     DownloadCaseSummaryView,
+    DownloadFormSummaryView,
     DownloadAppSummaryView,
 )
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
@@ -23,6 +24,10 @@ app_urls = patterns('corehq.apps.app_manager.views',
     url(r'^delete/$', 'view_app', name='app_delete'),
     url(r'^$', 'view_app', name='view_app'),
     url(r'^releases/$', 'view_app', name='release_manager'),
+
+    # placeholder for app manager v2
+    url(r'^releases_v2/$', 'release_manager', name='release_manager_v2'),
+
     url(r'^releases_ajax/$', 'releases_ajax', name='release_manager_ajax'),
     url(r'^current_version/$', 'current_app_version', name='current_app_version'),
     url(r'^releases/json/$', 'paginate_releases', name='paginate_releases'),
@@ -39,6 +44,7 @@ app_urls = patterns('corehq.apps.app_manager.views',
         'form_designer', name='form_source'),
     url(r'^summary/$', AppSummaryView.as_view(), name=AppSummaryView.urlname),
     url(r'^summary/case/download/$', DownloadCaseSummaryView.as_view(), name=DownloadCaseSummaryView.urlname),
+    url(r'^summary/form/download/$', DownloadFormSummaryView.as_view(), name=DownloadFormSummaryView.urlname),
     url(r'^summary/app/download/$', DownloadAppSummaryView.as_view(), name=DownloadAppSummaryView.urlname),
     url(r'^update_build_comment/$', 'update_build_comment',
         name='update_build_comment'),
