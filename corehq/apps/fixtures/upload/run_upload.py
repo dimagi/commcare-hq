@@ -279,8 +279,8 @@ def validate_fixture_upload(workbook):
     return error_messages
 
 
-def do_fixture_upload(domain, file_ref, replace, task=None):
-    workbook = get_workbook(file_ref.get_filename())
+def do_fixture_upload(domain, filename, replace, task=None):
+    workbook = get_workbook(filename)
     try:
         return run_upload(domain, workbook, replace=replace, task=task)
     except WorksheetNotFound as e:
@@ -294,15 +294,15 @@ def do_fixture_upload(domain, file_ref, replace, task=None):
     except Exception:
         soft_assert('@'.join(['droberts', 'dimagi.com'])).call(
             False, 'Unknown fixture upload exception',
-            {'filename': file_ref.get_filename()}
+            {'filename': filename}
         )
         raise FixtureUploadError(_("Fixture upload failed for some reason and we have noted this failure. "
                                    "Please make sure the excel file is correctly formatted and try again."))
 
 
-def safe_fixture_upload(domain, file_ref, replace, task=None):
+def safe_fixture_upload(domain, filename, replace, task=None):
     try:
-        return do_fixture_upload(domain, file_ref, replace, task)
+        return do_fixture_upload(domain, filename, replace, task)
     except FixtureUploadError as e:
         result = FixtureUploadResult()
         result.success = False
