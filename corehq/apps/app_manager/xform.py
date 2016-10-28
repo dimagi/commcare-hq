@@ -887,6 +887,7 @@ class XForm(WrappedNode):
         excluded_paths = set()
 
         control_nodes = self.get_control_nodes()
+        leaf_data_nodes = self.get_leaf_data_nodes()
         use_hashtags = False
         if form:
             use_hashtags = form.get_app().vellum_case_management
@@ -910,7 +911,8 @@ class XForm(WrappedNode):
                 "group": group,
                 "type": data_type,
                 "relevant": relevant,
-                "required": required == "true()"
+                "required": required == "true()",
+                "comment": self._get_comment(leaf_data_nodes, path),
             }
             if use_hashtags:
                 question.update({"hashtagValue": self.hashtag_path(path)})
@@ -938,7 +940,7 @@ class XForm(WrappedNode):
 
         repeat_contexts = sorted(repeat_contexts, reverse=True)
 
-        for data_node, path in self.get_leaf_data_nodes():
+        for path, data_node in leaf_data_nodes.iteritems():
             if path not in excluded_paths:
                 bind = self.get_bind(path)
                 try:
@@ -1052,6 +1054,12 @@ class XForm(WrappedNode):
         for_each_control_node(self.find('{h}body'))
         return control_nodes
 
+    def _get_comment(self, leaf_data_nodes, path):
+        try:
+            return leaf_data_nodes[path].attrib.get('{v}comment')
+        except KeyError:
+            return None
+
     def get_path(self, node):
         # TODO: add safety tests so that when something fails it fails with a good error
         path = None
@@ -1072,19 +1080,19 @@ class XForm(WrappedNode):
         else:
             raise XFormException(_(u"Node <{}> has no 'ref' or 'bind'").format(node.tag_name))
         return path
-    
+
     def get_leaf_data_nodes(self):
         if not self.exists():
             return []
-       
-        data_nodes = []
+
+        data_nodes = {}
 
         def for_each_data_node(parent, path_context=""):
             for child in parent.findall('*'):
                 path = self.resolve_path(child.tag_name, path_context)
                 for_each_data_node(child, path_context=path)
             if not parent.findall('*'):
-                data_nodes.append((parent, path_context))
+                data_nodes[path_context] = parent
 
         for_each_data_node(self.data_node)
         return data_nodes
