@@ -1847,7 +1847,7 @@ class TestConfigurableReportDataResource(APIResourceTest):
     api_name = "v0.5"
 
     @property
-    def list_endpoint(cls):
+    def list_endpoint(self):
         return None
 
     def single_endpoint(self, id, get_params=None):
