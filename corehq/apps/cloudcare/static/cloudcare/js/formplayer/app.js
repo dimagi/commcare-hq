@@ -211,7 +211,7 @@ FormplayerFrontend.on("start", function (options) {
 
 FormplayerFrontend.on('navigation:back', function() {
     var url = Backbone.history.getFragment();
-    if (url.indexOf('single_app') === -1) {
+    if (!url.includes('single_app')) {
         window.history.back();
     }
 });
