@@ -68,6 +68,9 @@ FAILURE_MESSAGES = {
         "There's no sheet for type '{type}' in 'types' sheet. "
         "There must be one sheet per row in the 'types' sheet.",
     ),
+    "no_types_sheet": ugettext_noop(
+        "Workbook does not contain a sheet called types"
+    ),
 }
 
 
@@ -173,6 +176,7 @@ class FixtureWorkbook(object):
         try:
             self.workbook = WorkbookJSONReader(file_or_filename)
         except AttributeError:
+            # todo: I don't know what would cause this error and it's a bad message
             raise FixtureUploadError([_("Error processing your Excel (.xlsx) file")])
         except InvalidExcelFileException:
             raise FixtureUploadError([FAILURE_MESSAGES['not_excel_file']])
@@ -185,9 +189,7 @@ class FixtureWorkbook(object):
         try:
             return self.workbook.get_worksheet(title='types')
         except WorksheetNotFound as e:
-            raise FixtureUploadError([
-                _("Workbook does not contain a sheet called '%(title)s'")
-                % {'title': e.title}])
+            raise FixtureUploadError([FAILURE_MESSAGES['no_types_sheet']])
 
     def get_data_sheet(self, data_type_tag):
         return self.workbook.get_worksheet(data_type_tag)

@@ -120,3 +120,6 @@ class TestFixtureUpload(SimpleTestCase):
     test_not_excel_file = _upload_test('not_excel_file', [
         u"Invalid file-format. Please upload a valid xlsx file.",
     ])
+    test_no_types_sheet = _upload_test('no_types_sheet', [
+        u"Workbook does not contain a sheet called types",
+    ])
