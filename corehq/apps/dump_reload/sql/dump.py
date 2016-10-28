@@ -7,24 +7,25 @@ from django.db import router
 from django.db.models import Q
 
 from corehq.apps.dump_reload.exceptions import DomainDumpError
+from corehq.apps.dump_reload.sql.filters import SimpleFilter
 from corehq.apps.dump_reload.sql.serialization import JsonLinesSerializer
 from corehq.sql_db.config import partition_config
 
 APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = {
-    'locations.LocationType': 'domain',
-    'locations.SQLLocation': 'domain',
-    'form_processor.XFormInstanceSQL': 'domain',
-    'form_processor.XFormAttachmentSQL': 'form__domain',
-    'form_processor.XFormOperationSQL': 'form__domain',
-    'form_processor.CommCareCaseSQL': 'domain',
-    'form_processor.CommCareCaseIndexSQL': 'domain',
-    'form_processor.CaseTransaction': 'case__domain',
-    'form_processor.LedgerValue': 'domain',
-    'form_processor.LedgerTransaction': 'case__domain',
-    'case_search.CaseSearchConfig': 'domain',
-    'data_interfaces.AutomaticUpdateRule': 'domain',
-    'data_interfaces.AutomaticUpdateRuleCriteria': 'rule__domain',
-    'data_interfaces.AutomaticUpdateAction': 'rule__domain',
+    'locations.LocationType': SimpleFilter('domain'),
+    'locations.SQLLocation': SimpleFilter('domain'),
+    'form_processor.XFormInstanceSQL': SimpleFilter('domain'),
+    'form_processor.XFormAttachmentSQL': SimpleFilter('form__domain'),
+    'form_processor.XFormOperationSQL': SimpleFilter('form__domain'),
+    'form_processor.CommCareCaseSQL': SimpleFilter('domain'),
+    'form_processor.CommCareCaseIndexSQL': SimpleFilter('domain'),
+    'form_processor.CaseTransaction': SimpleFilter('case__domain'),
+    'form_processor.LedgerValue': SimpleFilter('domain'),
+    'form_processor.LedgerTransaction': SimpleFilter('case__domain'),
+    'case_search.CaseSearchConfig': SimpleFilter('domain'),
+    'data_interfaces.AutomaticUpdateRule': SimpleFilter('domain'),
+    'data_interfaces.AutomaticUpdateRuleCriteria': SimpleFilter('rule__domain'),
+    'data_interfaces.AutomaticUpdateAction': SimpleFilter('rule__domain'),
 }
 
 
@@ -68,20 +69,18 @@ def get_objects_to_dump(domain, app_config_models, excluded_models):
             if not model._meta.proxy and router.allow_migrate_model(db_alias, model):
                 objects = model._default_manager
 
-                filter = get_model_domain_filter(model, domain)
+                queryset = objects.using(db_alias).order_by(model._meta.pk.name)
 
-                queryset = objects.using(db_alias) \
-                    .filter(filter) \
-                    .order_by(model._meta.pk.name)
-
-                for obj in queryset.iterator():
-                    yield obj
+                filters = get_model_domain_filters(model, domain)
+                for filter in filters:
+                    for obj in queryset.filter(filter).iterator():
+                        yield obj
 
 
-def get_model_domain_filter(model, domain):
+def get_model_domain_filters(model, domain):
     label = '{}.{}'.format(model._meta.app_label, model.__name__)
-    filter_kwarg = APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP[label]
-    return Q(**{filter_kwarg: domain})
+    filter = APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP[label]
+    return filter.get_filters(domain)
 
 
 def get_excluded_apps_and_models(excludes):

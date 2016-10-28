@@ -9,7 +9,7 @@ from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.dump_reload.sql import dump_sql_data
 from corehq.apps.dump_reload.sql import load_sql_data
-from corehq.apps.dump_reload.sql.dump import get_model_domain_filter
+from corehq.apps.dump_reload.sql.dump import get_model_domain_filters
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
@@ -33,8 +33,9 @@ class BaseDumpLoadTest(TestCase):
         dump_sql_data(self.domain, [], output_stream)
 
         for model in models:
-            filter = get_model_domain_filter(model, self.domain)
-            model.objects.filter(filter).delete()
+            filters = get_model_domain_filters(model, self.domain)
+            for filter in filters:
+                model.objects.filter(filter).delete()
             self.assertFalse(model.objects.all().exists())
 
         dump_output = output_stream.getvalue()
