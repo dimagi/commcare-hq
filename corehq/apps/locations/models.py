@@ -279,6 +279,8 @@ class LocationQueriesMixin(object):
             return self.all()
 
         users_location = user.get_sql_location(domain)
+        if not users_location:
+            return self.none()  # No locations are accessible to this user
         return self.all() & users_location.get_descendants(include_self=True)
 
 
