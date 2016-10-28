@@ -3,7 +3,7 @@ import os
 from django.test import SimpleTestCase
 from corehq.apps.fixtures.exceptions import FixtureUploadError
 from corehq.apps.fixtures.upload import validate_fixture_file_format
-from corehq.apps.fixtures.upload.upload import FAILURE_MESSAGES
+from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
 
 
 def _make_path(*args):

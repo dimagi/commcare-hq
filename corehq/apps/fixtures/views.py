@@ -25,9 +25,8 @@ from corehq.apps.fixtures.exceptions import (
     FixtureUploadError,
     FixtureAPIRequestError)
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, FieldList, FixtureTypeField
-from corehq.apps.fixtures.upload import validate_fixture_file_format
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
-from corehq.apps.fixtures.upload import upload_fixture_file
+from corehq.apps.fixtures.upload import upload_fixture_file, validate_fixture_file_format
 from corehq.apps.fixtures.utils import is_identifier_invalid
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.util import format_datatables_data
