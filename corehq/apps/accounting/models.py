@@ -1043,7 +1043,7 @@ class Subscription(models.Model):
     )
     last_modified = models.DateTimeField(auto_now=True)
     is_hidden_to_ops = models.BooleanField(default=False)
-    manual_downgrade = models.BooleanField(default=False)
+    skip_auto_downgrade = models.BooleanField(default=False)
 
     objects = SubscriptionManager()
     api_objects = Manager()
@@ -1091,7 +1091,7 @@ class Subscription(models.Model):
         changed while the subscription is active (or reactivated)
         """
         return ['do_not_invoice', 'no_invoice_reason',
-                'salesforce_contract_id', 'manual_downgrade']
+                'salesforce_contract_id', 'skip_auto_downgrade']
 
     @property
     def next_subscription_filter(self):
@@ -1192,7 +1192,7 @@ class Subscription(models.Model):
                             auto_generate_credits=None,
                             web_user=None, note=None, adjustment_method=None,
                             service_type=None, pro_bono_status=None, funding_source=None,
-                            skip_invoicing_if_no_feature_charges=None, manual_downgrade=None):
+                            skip_invoicing_if_no_feature_charges=None, skip_auto_downgrade=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         self._update_dates(date_start, date_end)
@@ -1211,7 +1211,7 @@ class Subscription(models.Model):
             service_type=service_type,
             pro_bono_status=pro_bono_status,
             funding_source=funding_source,
-            manual_downgrade=manual_downgrade
+            skip_auto_downgrade=skip_auto_downgrade
         )
 
         self.save()
@@ -1254,7 +1254,7 @@ class Subscription(models.Model):
             'service_type',
             'pro_bono_status',
             'funding_source',
-            'manual_downgrade'
+            'skip_auto_downgrade'
         }
 
         assert property_names >= set(kwargs.keys())
@@ -1269,7 +1269,7 @@ class Subscription(models.Model):
                     service_type=None, pro_bono_status=None, funding_source=None,
                     transfer_credits=True, internal_change=False, account=None,
                     do_not_invoice=None, no_invoice_reason=None,
-                    manual_downgrade=None, **kwargs):
+                    skip_auto_downgrade=None, **kwargs):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -1305,7 +1305,7 @@ class Subscription(models.Model):
             service_type=(service_type or SubscriptionType.NOT_SET),
             pro_bono_status=(pro_bono_status or ProBonoStatus.NO),
             funding_source=(funding_source or FundingSource.CLIENT),
-            manual_downgrade=manual_downgrade if manual_downgrade else self.manual_downgrade,
+            skip_auto_downgrade=skip_auto_downgrade if skip_auto_downgrade is not None else self.skip_auto_downgrade,
             **kwargs
         )
 

@@ -173,7 +173,7 @@ class SubscriptionResource(ModelResource):
         fields = ['id', 'salesforce_contract_id', 'date_start', 'date_end', 'date_delay_invoicing',
                   'date_created', 'is_active', 'do_not_invoice', 'auto_generate_credits', 'is_trial',
                   'service_type', 'pro_bono_status', 'last_modified', 'funding_source', 'is_hidden_to_ops',
-                  'manual_downgrade']
+                  'skip_auto_downgrade']
         resource_name = 'subscription'
 
 

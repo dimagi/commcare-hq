@@ -20,7 +20,7 @@
                             <div class="modal-body">
                                 <form method="POST"
                                       enctype="multipart/form-data"
-                                      action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'xform' %}">
+                                      action="{% url "edit_form_attr" domain app.id form.get_unique_id 'xform' %}">
                                     {% csrf_token %}
                                     <input type="file" id="xform_file_input" name="xform" />
                                     <input type="hidden" name="ajax" value="false" />
@@ -54,7 +54,7 @@
                 <div class="xml-source modal fade">
                     <div class="modal-dialog">
                         <div class="modal-content">
-                            <form action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'xform' %}" method="POST">
+                            <form action="{% url "edit_form_attr" domain app.id form.get_unique_id 'xform' %}" method="POST">
                             {% csrf_token %}
                             <div class="modal-header">
                                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
