@@ -5,12 +5,14 @@ hqLayout.selector = {
     content: '#hq-content',
     footer: '#hq-footer',
     sidebar: '#hq-sidebar',
-    breadcrumbs: '#hq-breadcrumbs'
+    breadcrumbs: '#hq-breadcrumbs',
+    messages: '#hq-messages-container',
 };
 
 hqLayout.values = {
     footerHeight: 0,
-    isFooterVisible: true
+    isFooterVisible: true,
+    isAppbuilderResizing: false,
 };
 
 hqLayout.utils = {
@@ -19,6 +21,13 @@ hqLayout.utils = {
     },
     getFooterShowPosition: function () {
         return $(document).height() - (hqLayout.values.footerHeight / 3);
+    },
+    getAvailableContentWidth: function () {
+        var $sidebar = $(hqLayout.selector.sidebar);
+        // todo fix extra 10 px padding needed when sidebar suddenly disappears
+        // on modal.
+        var absorbedWidth = $sidebar.outerWidth() + 12;
+        return $(window).outerWidth() - absorbedWidth;
     },
     getAvailableContentHeight: function () {
         var $navigation = $(hqLayout.selector.navigation),
@@ -35,6 +44,12 @@ hqLayout.utils = {
     },
     isScrollable: function () {
         return $(document).height() > $(window).height();
+    },
+    setIsAppbuilderResizing: function (isOn) {
+        hqLayout.values.isAppbuilderResizing = isOn;
+    },
+    setBalancePreviewFn: function (fn) {
+        hqLayout.actions.balancePreview = fn;
     }
 };
 
@@ -53,21 +68,44 @@ hqLayout.actions = {
                 contentHeight = $content.outerHeight();
             }
 
-            if ($sidebar.length) {
+            if ($sidebar.length && !hqLayout.values.isAppbuilderResizing) {
                 var newSidebarHeight = Math.max(availableHeight, contentHeight);
                 $sidebar.css('min-height', newSidebarHeight + 'px');
+            } else {
+                if ($sidebar.outerHeight() >  $content.outerHeight()) {
+                    $content.css('min-height', $sidebar.outerHeight() + 'px');
+                }
             }
         }
     },
+    balanceWidths: function () {
+        var $content = $(hqLayout.selector.content),
+            $sidebar = $(hqLayout.selector.sidebar);
+        if ($content.length && $sidebar.length) {
+            $content.css('width', hqLayout.utils.getAvailableContentWidth() + 'px');
+        }
+
+    },
+    balancePreview: function () {
+        // set with setBalancePreviewFn in utils.
+    }
 };
 
 $(window).on('load', function () {
     hqLayout.actions.initialize();
+    if (hqLayout.values.isAppbuilderResizing) {
+        hqLayout.actions.balanceWidths();
+    }
     hqLayout.actions.balanceSidebar();
+    hqLayout.actions.balancePreview();
 });
 
 $(window).resize(function () {
+    if (hqLayout.values.isAppbuilderResizing) {
+        hqLayout.actions.balanceWidths();
+    }
     hqLayout.actions.balanceSidebar();
+    hqLayout.actions.balancePreview();
 });
 
 $(window).scroll(function () {
