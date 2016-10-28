@@ -4,6 +4,7 @@ from django.apps import apps
 from django.conf import settings
 from django.core import serializers
 from django.db import router
+from django.db.models import Q
 
 from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.sql.serialization import JsonLinesSerializer
@@ -58,15 +59,20 @@ def get_objects_to_dump(domain, app_config_models, excluded_models):
             if not model._meta.proxy and router.allow_migrate_model(db_alias, model):
                 objects = model._default_manager
 
-                label = '{}.{}'.format(model._meta.app_label, model.__name__)
-                filter_kwarg = APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP[label]
+                filter = get_model_domain_filter(model, domain)
 
                 queryset = objects.using(db_alias) \
-                    .filter(**{filter_kwarg: domain}) \
+                    .filter(filter) \
                     .order_by(model._meta.pk.name)
 
                 for obj in queryset.iterator():
                     yield obj
+
+
+def get_model_domain_filter(model, domain):
+    label = '{}.{}'.format(model._meta.app_label, model.__name__)
+    filter_kwarg = APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP[label]
+    return Q(**{filter_kwarg: domain})
 
 
 def get_excluded_apps_and_models(excludes):
