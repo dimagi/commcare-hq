@@ -24,7 +24,7 @@ from ..permissions import can_edit_form_location
 from .util import LocationHierarchyTestCase, delete_all_locations
 
 
-class TestPermissions(LocationHierarchyTestCase):
+class FormEditRestrictionsMixin(object):
     location_type_names = ['state', 'county', 'city']
     stock_tracking_types = ['state', 'county', 'city']
     location_structure = [
@@ -101,12 +101,7 @@ class TestPermissions(LocationHierarchyTestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(cls, TestPermissions).setUpClass()
-        # enable feature flag
-        RESTRICT_FORM_EDIT_BY_LOCATION.set(cls.domain, True, NAMESPACE_DOMAIN)
-        # check checkbox
-        cls.domain_obj.location_restriction_for_users = True
-        cls.domain_obj.save()
+        super(FormEditRestrictionsMixin, cls).setUpClass()
 
         cls.middlesex_web_user = cls.make_web_user('Middlesex')
         cls.massachusetts_web_user = cls.make_web_user('Massachusetts')
@@ -139,6 +134,35 @@ class TestPermissions(LocationHierarchyTestCase):
         self.assertFalse(can_edit_form_location(self.domain, user, form), msg=msg)
 
 
+class TestDeprecatedFormEditRestrictions(FormEditRestrictionsMixin, LocationHierarchyTestCase):
+    """This class mostly just tests the RESTRICT_FORM_EDIT_BY_LOCATION feature flag"""
+    domain = 'TestDeprecatedFormEditRestrictions-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestDeprecatedFormEditRestrictions, cls).setUpClass()
+        # enable flag
+        RESTRICT_FORM_EDIT_BY_LOCATION.set(cls.domain, True, NAMESPACE_DOMAIN)
+        # check checkbox
+        cls.domain_obj.location_restriction_for_users = True
+        cls.domain_obj.save()
+
+
+class TestNewFormEditRestrictions(FormEditRestrictionsMixin, LocationHierarchyTestCase):
+    """Tests the new way of doing location-based restrictions.
+    TODO: reconcile with the Mixin after removing the old permissions"""
+    domain = 'TestNewFormEditRestrictions-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestNewFormEditRestrictions, cls).setUpClass()
+        cls.restrict_user_to_location(cls.middlesex_web_user)
+        cls.restrict_user_to_location(cls.massachusetts_web_user)
+        cls.restrict_user_to_location(cls.locationless_web_user)
+
+    # TODO add more tests, maybe with cls.project_admin?
+
+
 @mock.patch('django_prbac.decorators.has_privilege', new=lambda *args, **kwargs: True)
 @mock.patch('corehq.apps.users.analytics.UserES', UserESFake)
 class TestAccessRestrictions(LocationHierarchyTestCase):
@@ -163,16 +187,7 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
         super(TestAccessRestrictions, cls).setUpClass()
         cls.suffolk_user = WebUser.create(cls.domain, 'suffolk-joe', 'password')
         cls.suffolk_user.set_location(cls.domain, cls.locations['Suffolk'].couch_location)
-        role = UserRole(
-            domain=cls.domain,
-            name='Regional Supervisor',
-            permissions=Permissions(access_all_locations=False,
-                                    edit_commcare_users=True),
-
-        )
-        role.save()
-        cls.suffolk_user.set_role(cls.domain, role.get_qualified_id())
-        cls.suffolk_user.save()
+        cls.restrict_user_to_location(cls.suffolk_user)
 
         def make_mobile_worker(username, location):
             worker = CommCareUser.create(cls.domain, username, '123')
