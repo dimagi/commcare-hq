@@ -5,11 +5,11 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         apply: function(api) {
             var wrappedApi = {};
             _.each(api, function(value, key) {
-                wrappedApi[key] = function(arguments) {
+                wrappedApi[key] = function() {
                     _.each(SessionNavigate.Middleware.middlewares, function(fn) {
-                        fn(key, arguments);
+                        fn.call(null, key);
                     });
-                    return value(arguments);
+                    return value.apply(null, arguments);
                 };
             });
             return wrappedApi;
