@@ -43,4 +43,3 @@ class InferredSchemaSignalTest(TestCase):
             set(map(lambda item: item.path[0].name, group_schema.items)),
             set(['one', 'two', 'three'])
         )
-
