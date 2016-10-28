@@ -1,4 +1,5 @@
 import json
+from tempfile import NamedTemporaryFile
 from couchdbkit import ResourceNotFound
 from collections import OrderedDict
 
@@ -428,15 +429,28 @@ def upload_fixture_api(request, domain, **kwargs):
         error_message = error_messages["has_no_permission"].format(attr=request.couch_user.username)
         return _return_response(response_codes["fail"], error_message)
 
+    with NamedTemporaryFile(suffix='.xlsx') as tempfile:
+        # copy upload_file into tempfile (flush guarantees the operation is completed)
+        for chunk in upload_file.chunks():
+            tempfile.write(chunk)
+        tempfile.flush()
+
+        return _upload_fixture_api(
+            domain, tempfile.name, replace=replace, _return_response=_return_response,
+            response_codes=response_codes, error_messages=error_messages)
+
+
+def _upload_fixture_api(domain, filename, replace, _return_response, response_codes,
+                        error_messages):
     try:
-        validate_file_format(upload_file)
+        validate_file_format(filename)
     except ExcelMalformatException as e:
         return _return_response(response_codes["fail"], '\n'.join(e.errors))
     except (FixtureUploadError, JSONReaderError, HeaderValueError) as e:
         return _return_response(response_codes["fail"], _(u'Upload unsuccessful: %s') % e)
 
     try:
-        workbook = get_workbook(upload_file)
+        workbook = get_workbook(filename)
     except Exception:
         return _return_response(response_codes["fail"], error_messages["invalid_file"])
 
