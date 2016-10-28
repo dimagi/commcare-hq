@@ -1016,7 +1016,7 @@ class ExportDataSchema(Document):
     An object representing the things that can be exported for a particular
     form xmlns or case type. It contains a list of ExportGroupSchema.
     """
-    domain = StringProperty()
+    domain = StringProperty(required=True)
     created_on = DateTimeProperty(default=datetime.utcnow)
     group_schemas = SchemaListProperty(ExportGroupSchema)
     app_id = StringProperty()
@@ -1179,7 +1179,7 @@ class ExportDataSchema(Document):
 
 class FormExportDataSchema(ExportDataSchema):
 
-    xmlns = StringProperty()
+    xmlns = StringProperty(required=True)
     datatype_mapping = defaultdict(lambda: ScalarItem, {
         'MSelect': MultipleChoiceItem,
         'Geopoint': GeopointItem,
@@ -1331,7 +1331,7 @@ class FormExportDataSchema(ExportDataSchema):
 
 class CaseExportDataSchema(ExportDataSchema):
 
-    case_type = StringProperty()
+    case_type = StringProperty(required=True)
 
     @property
     def type(self):

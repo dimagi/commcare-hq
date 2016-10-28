@@ -53,7 +53,7 @@ class TestExportDBAccessors(TestCase):
             domain=cls.domain,
             case_type='other',
         )
-        cls.case_schema_before = FormExportDataSchema(
+        cls.case_schema_before = CaseExportDataSchema(
             domain=cls.domain,
             case_type=cls.case_type,
             created_on=datetime.utcnow() - timedelta(1)
