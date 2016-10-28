@@ -77,7 +77,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
             web_user=self.admin_user.username
         )
         self._change_std_roles()
-        subscription.cancel_subscription(web_user=self.admin_user.username)
+        subscription.change_plan(DefaultProductPlan.get_default_plan_version())
 
         custom_role = UserRole.get(self.custom_role.get_id)
         self.assertTrue(custom_role.is_archived)
@@ -103,13 +103,10 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
             web_user=self.admin_user.username
         )
         self._change_std_roles()
-        subscription.cancel_subscription(web_user=self.admin_user.username)
+        new_subscription = subscription.change_plan(DefaultProductPlan.get_default_plan_version())
         custom_role = UserRole.get(self.custom_role.get_id)
         self.assertTrue(custom_role.is_archived)
-        subscription = Subscription.new_domain_subscription(
-            self.account, self.domain.name, self.advanced_plan,
-            web_user=self.admin_user.username
-        )
+        new_subscription.change_plan(self.advanced_plan, web_user=self.admin_user.username)
         custom_role = UserRole.get(self.custom_role.get_id)
         self.assertFalse(custom_role.is_archived)
 
@@ -127,7 +124,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
 
         self._assertInitialRoles()
         self._assertStdUsers()
-        subscription.cancel_subscription(web_user=self.admin_user.username)
+        subscription.change_plan(DefaultProductPlan.get_default_plan_version())
 
     def _change_std_roles(self):
         for u in self.user_roles:
