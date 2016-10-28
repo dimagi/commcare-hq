@@ -1,6 +1,6 @@
 from django.conf import settings
 
-from .config import PartitionConfig
+from .config import partition_config
 
 PROXY_APP = 'sql_proxy_accessors'
 FORM_PROCESSOR_APP = 'form_processor'
@@ -34,7 +34,6 @@ def allow_migrate(db, app_label):
     if not settings.USE_PARTITIONED_DATABASE:
         return app_label != PROXY_APP
 
-    partition_config = PartitionConfig()
     if app_label == PROXY_APP:
         return db == partition_config.get_proxy_db()
     elif app_label == FORM_PROCESSOR_APP:
@@ -53,8 +52,7 @@ def db_for_read_write(model):
         return 'default'
 
     app_label = model._meta.app_label
-    config = PartitionConfig()
     if app_label == FORM_PROCESSOR_APP:
-        return config.get_proxy_db()
+        return partition_config.get_proxy_db()
     else:
-        return config.get_main_db()
+        return partition_config.get_main_db()
