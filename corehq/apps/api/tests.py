@@ -50,10 +50,13 @@ from custom.ilsgateway.resources.v0_1 import ILSLocationResource
 from custom.ewsghana.resources.v0_1 import EWSLocationResource
 from corehq.apps.users.analytics import update_analytics_indexes
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole, Permissions
+from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.pillows.reportxform import transform_xform_for_report_forms_index
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from custom.hope.models import CC_BIHAR_PREGNANCY
+from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class FakeXFormES(object):
@@ -1674,6 +1677,11 @@ class ILSLocationResourceTest(APIResourceTest, InternalTestMixin):
 
 class AdminAPITest(APIResourceTest):
     api_name = 'global'
+
+    @classmethod
+    def setUpClass(cls):
+        initialize_index_and_mapping(get_es_new(), DOMAIN_INDEX_INFO)
+        super(AdminAPITest, cls).setUpClass()
 
     def assert_admin_resource(self, url):
         # normal user can't access admin resource
