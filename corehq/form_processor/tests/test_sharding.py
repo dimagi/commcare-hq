@@ -113,6 +113,13 @@ PARTITION_DATABASE_CONFIG = {
 class ShardAccessorTests(TestCase):
 
     @classmethod
+    def setUpClass(cls):
+        super(ShardAccessorTests, cls).setUpClass()
+        partition_config.get_django_shard_map.reset_cache(partition_config)
+        partition_config.get_shards.reset_cache(partition_config)
+        partition_config._get_django_shards.reset_cache(partition_config)
+
+    @classmethod
     def tearDownClass(cls):
         partition_config.get_django_shard_map.reset_cache(partition_config)
         partition_config.get_shards.reset_cache(partition_config)
