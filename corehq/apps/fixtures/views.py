@@ -22,7 +22,6 @@ from corehq.apps.fixtures.download import prepare_fixture_download, prepare_fixt
 from corehq.apps.fixtures.exceptions import (
     FixtureDownloadError,
     ExcelMalformatException,
-    FixtureAPIException,
     DuplicateFixtureTagException,
     FixtureUploadError
 )
@@ -462,8 +461,6 @@ def _upload_fixture_api(domain, filename, replace, _return_response, response_co
     except ExcelMalformatException as e:
         return _return_response(response_codes["fail"], '\n'.join(e.errors))
     except DuplicateFixtureTagException as e:
-        return _return_response(response_codes["fail"], str(e))
-    except FixtureAPIException as e:
         return _return_response(response_codes["fail"], str(e))
     except Exception as e:
         soft_assert('@'.join(['droberts', 'dimagi.com'])).call(

@@ -19,10 +19,6 @@ class ExcelMalformatException(FixtureUploadError):
         self.errors = errors
 
 
-class FixtureAPIException(Exception):
-    pass
-
-
 class FixtureTypeCheckError(Exception):
     pass
 

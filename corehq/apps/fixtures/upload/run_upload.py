@@ -2,7 +2,7 @@ from couchdbkit import ResourceNotFound
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 from corehq.apps.fixtures.exceptions import ExcelMalformatException, FixtureUploadError, \
-    FixtureAPIException, DuplicateFixtureTagException
+    DuplicateFixtureTagException
 from corehq.apps.fixtures.models import FixtureDataType, FieldList, FixtureItemField, \
     FixtureDataItem
 from corehq.apps.fixtures.utils import get_fields_without_attributes
@@ -291,8 +291,6 @@ def do_fixture_upload(domain, file_ref, replace, task=None):
         raise FixtureUploadError(
             _("Uploaded excel file has following formatting-problems: '%(e)s'")
             % {'e': '\n'.join(e.errors)})
-    except FixtureAPIException as e:
-        raise FixtureUploadError(unicode(e))
     except Exception:
         soft_assert('@'.join(['droberts', 'dimagi.com'])).call(
             False, 'Unknown fixture upload exception',
