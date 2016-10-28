@@ -378,11 +378,9 @@ class LocationRestrictedMobileWorkerFilter(ExpandedMobileWorkerFilter):
         if self.request.can_access_all_locations:
             return super(LocationRestrictedMobileWorkerFilter, self).get_default_selections()
         else:
-            accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(
-                self.request.domain,
-                self.request.couch_user
+            all_locations = self.request.couch_user.get_assigned_sql_locations(
+                self.request.domain
             )
-            all_locations = SQLLocation.objects.get_locations(accessible_location_ids)
             return map(self.utils.location_tuple, all_locations)
 
 def get_user_toggle(request):
