@@ -117,3 +117,6 @@ class TestFixtureUpload(SimpleTestCase):
         u"Error in 'types' sheet for 'field 1', '100'. "
         u"Field names should be strings, not numbers",
     ])
+    test_not_excel_file = _upload_test('not_excel_file', [
+        u"Invalid file-format. Please upload a valid xlsx file.",
+    ])

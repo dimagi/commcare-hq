@@ -13,6 +13,9 @@ from corehq.apps.locations.models import SQLLocation
 
 DELETE_HEADER = "Delete(Y/N)"
 FAILURE_MESSAGES = {
+    "not_excel_file": ugettext_noop(
+        "Invalid file-format. Please upload a valid xlsx file."
+    ),
     "has_no_column": ugettext_noop(
         "Workbook 'types' has no column '{column_name}'."
     ),
@@ -172,7 +175,7 @@ class FixtureWorkbook(object):
         except AttributeError:
             raise FixtureUploadError([_("Error processing your Excel (.xlsx) file")])
         except InvalidExcelFileException:
-            raise FixtureUploadError([_("Invalid file-format. Please upload a valid xlsx file.")])
+            raise FixtureUploadError([FAILURE_MESSAGES['not_excel_file']])
         except HeaderValueError as e:
             raise FixtureUploadError([unicode(e)])
         except JSONReaderError as e:
