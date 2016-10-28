@@ -16,6 +16,9 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = {
     'form_processor.XFormInstanceSQL': 'domain',
     'form_processor.XFormAttachmentSQL': 'form__domain',
     'form_processor.XFormOperationSQL': 'form__domain',
+    'form_processor.CommCareCaseSQL': 'domain',
+    'form_processor.CommCareCaseIndexSQL': 'domain',
+    'form_processor.CaseTransaction': 'case__domain',
 }
 
 
