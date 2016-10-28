@@ -5,8 +5,11 @@ import json
 import os
 import uuid
 
+from mock import patch
+
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import data_sources
+from corehq.apps.userreports.const import UCR_SQL_BACKEND
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.feed.interface import Change, ChangeMeta
@@ -108,3 +111,12 @@ run_with_all_ucr_backends = functools.partial(
         ),
     ]
 )
+
+
+def mock_sql_backend():
+    return patch('corehq.apps.userreports.reports.data_source.get_backend_id', return_value=UCR_SQL_BACKEND)
+
+
+def mock_datasource_config():
+    return patch('corehq.apps.userreports.reports.data_source.get_datasource_config',
+                 return_value=("id_doesnt_matter", None))

@@ -8,7 +8,9 @@ from corehq.apps.app_manager.models import Application, ReportModule, ReportAppC
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.userreports.tests.utils import get_sample_report_config
+from corehq.apps.userreports.tests.utils import (
+    get_sample_report_config, mock_datasource_config, mock_sql_backend
+)
 
 
 class AppAwareSyncTests(TestCase):
@@ -71,7 +73,9 @@ class AppAwareSyncTests(TestCase):
         from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
         with patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock:
             get_data_mock.return_value = self.rows
-            fixtures = report_fixture_generator(self.user, '2.0', None)
+            with mock_sql_backend():
+                with mock_datasource_config():
+                    fixtures = report_fixture_generator(self.user, '2.0', None)
         reports = fixtures[0].findall('.//report')
         self.assertEqual(len(reports), 2)
         report_ids = {r.attrib.get('id') for r in reports}
@@ -84,7 +88,9 @@ class AppAwareSyncTests(TestCase):
         from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
         with patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock:
             get_data_mock.return_value = self.rows
-            fixtures = report_fixture_generator(self.user, '2.0', None, app=self.app1)
+            with mock_sql_backend():
+                with mock_datasource_config():
+                    fixtures = report_fixture_generator(self.user, '2.0', None, app=self.app1)
         reports = fixtures[0].findall('.//report')
         self.assertEqual(len(reports), 1)
         self.assertEqual(reports[0].attrib.get('id'), '123456')
