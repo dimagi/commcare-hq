@@ -141,7 +141,7 @@ class ShardAccessorTests(TestCase):
         tolerance = N * 0.05  # 5% tollerance
         diffs = [abs(even_split - count) for count in doc_count_per_db.values()]
         outliers = [diff for diff in diffs if diff > tolerance]
-        message = 'partitioning not within tollerance: tolerance={}, diffs={}'.format(tolerance, outliers)
+        message = 'partitioning not within tollerance: tolerance={}, diffs={}'.format(tolerance, diffs)
         self.assertEqual(len(outliers), 0, message)
 
     def test_hash_in_python(self):
