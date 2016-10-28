@@ -93,7 +93,6 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
     """
     Convenience class to allow easy adjustment of API resource base classes.
     """
-
     def dispatch(self, request_type, request, **kwargs):
         if toggles.API_BLACKLIST.enabled_for_request(request):
             msg = ("API access has been temporarily cut off due to too many "

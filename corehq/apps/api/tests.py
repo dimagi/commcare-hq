@@ -34,10 +34,12 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustment
 )
 from corehq.apps.accounting.tests import generator
+from corehq.apps.api import accounting
 from corehq.apps.api.es import ElasticAPIQuerySet
 from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested, ToManyDictField
 from corehq.apps.api.resources import v0_4, v0_5
 from corehq.apps.api.util import get_obj
+from corehq.apps.api.urls import ADMIN_API_LIST
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -103,7 +105,6 @@ class APIResourceTest(TestCase):
         Role.get_cache().clear()
         generator.instantiate_accounting()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
-        cls.list_endpoint = cls._get_list_endpoint()
         cls.username = 'rudolph@qwerty.commcarehq.org'
         cls.password = '***'
         cls.user = WebUser.create(cls.domain.name, cls.username, cls.password)
@@ -113,12 +114,16 @@ class APIResourceTest(TestCase):
         cls.domain = Domain.get(cls.domain._id)
         cls.api_key, _ = ApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.user))
 
-    @classmethod
-    def _get_list_endpoint(cls):
-        return reverse('api_dispatch_list',
-                kwargs=dict(domain=cls.domain.name,
-                            api_name=cls.api_name,
-                            resource_name=cls.resource._meta.resource_name))
+    @property
+    def list_endpoint(self):
+        return reverse(
+            'api_dispatch_list',
+            kwargs={
+                'domain': self.domain.name,
+                'api_name': self.api_name,
+                'resource_name': self.resource._meta.resource_name
+            }
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -1667,6 +1672,41 @@ class ILSLocationResourceTest(APIResourceTest, InternalTestMixin):
         self.assert_accessible_via_sessions(self.list_endpoint)
 
 
+class AdminAPITest(APIResourceTest):
+    api_name = 'global'
+
+    def assert_admin_resource(self, url):
+        # normal user can't access admin resource
+        response = self._assert_auth_get_resource(url)
+        self.assertEqual(response.status_code, 403)
+        # admin user should be able to access
+        response = self._assert_auth_get_resource(url, username='admin', password='pass')
+        self.assertEqual(response.status_code, 200)
+
+    def test_basic(self):
+        community_domain = Domain.get_or_create_with_name('dm', is_active=True)
+        new_user = WebUser.create(community_domain.name, 'admin', 'pass', is_superuser=True)
+        new_user.save()
+
+        self.addCleanup(community_domain.delete)
+        self.addCleanup(new_user.delete)
+
+        for resource in ADMIN_API_LIST:
+            if resource is accounting.DefaultProductPlanResource:
+                # this reource has a bug
+                continue
+            url = self.list_endpoint(resource)
+            self.assert_admin_resource(url)
+
+    def list_endpoint(self, resource):
+        return reverse(
+            'api_dispatch_list',
+            kwargs={
+                'api_name': self.api_name, 'resource_name': resource.Meta.resource_name
+            }
+        )
+
+
 class TestSimpleReportConfigurationResource(APIResourceTest):
     resource = v0_5.SimpleReportConfigurationResource
     api_name = "v0.5"
@@ -1798,8 +1838,8 @@ class TestConfigurableReportDataResource(APIResourceTest):
     resource = v0_5.ConfigurableReportDataResource
     api_name = "v0.5"
 
-    @classmethod
-    def _get_list_endpoint(cls):
+    @property
+    def list_endpoint(cls):
         return None
 
     def single_endpoint(self, id, get_params=None):

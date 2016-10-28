@@ -339,7 +339,8 @@ class AdminWebUserResource(v0_1.UserResource):
 
     def obj_get_list(self, bundle, **kwargs):
         if 'username' in bundle.request.GET:
-            return [WebUser.get_by_username(bundle.request.GET['username'])]
+            user = WebUser.get_by_username(bundle.request.GET['username'])
+            return [user] if user else []
         return [WebUser.wrap(u) for u in UserES().web_users().run().hits]
 
     class Meta(WebUserResource.Meta):

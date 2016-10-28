@@ -1,6 +1,5 @@
 # Standard library imports
 import datetime
-
 from tastypie import fields
 from tastypie.exceptions import BadRequest
 

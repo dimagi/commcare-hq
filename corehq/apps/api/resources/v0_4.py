@@ -6,7 +6,11 @@ from tastypie.authentication import Authentication
 from tastypie.exceptions import BadRequest
 
 from corehq.apps.api.models import ESXFormInstance, ESCase
-from corehq.apps.api.resources.auth import DomainAdminAuthentication, RequirePermissionAuthentication
+from corehq.apps.api.resources.auth import (
+    DomainAdminAuthentication,
+    RequirePermissionAuthentication,
+    api_access_allowed
+)
 from corehq.apps.api.resources.v0_1 import _safe_bool
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
@@ -324,6 +328,11 @@ class SingleSignOnResource(HqBaseResource, DomainSpecificResourceMixin):
     """
 
     def post_list(self, request, **kwargs):
+        # this should be ideally on class.meta.authentication.is_authenticated
+        # but it's a one-off, so keeping it here
+        if not api_access_allowed(request):
+            return HttpResponseForbidden()
+
         domain = kwargs.get('domain')
         request.domain = domain
         username = request.POST.get('username')

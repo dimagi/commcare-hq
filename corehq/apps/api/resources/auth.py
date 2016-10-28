@@ -5,6 +5,8 @@ from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse, HttpResponseForbidden
 from tastypie.authentication import Authentication
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.auth import determine_authtype_from_header
 from corehq.apps.domain.decorators import (
     digest_auth,
@@ -15,6 +17,12 @@ from corehq.apps.domain.decorators import (
     login_or_api_key)
 from corehq.apps.users.decorators import require_permission, require_permission_raw
 from corehq.toggles import IS_DEVELOPER
+
+
+def api_access_allowed(request):
+    # Checks if request.user or request.domain has API access permission
+    return (request.user.is_superuser or
+            (hasattr(request, 'domain') and domain_has_privilege(request.domain, privileges.API_ACCESS)))
 
 
 def api_auth(view_func):
