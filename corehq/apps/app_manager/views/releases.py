@@ -257,7 +257,7 @@ def odk_install(request, domain, app_id, with_media=False):
     context = {
         "domain": domain,
         "app": app,
-        "qr_code": reverse("corehq.apps.app_manager.views.%s" % qr_code_view,
+        "qr_code": reverse(qr_code_view,
                            args=[domain, app_id],
                            params={'profile': build_profile_id}),
         "profile_url": profile_url,

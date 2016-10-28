@@ -23,6 +23,8 @@ NULL_CACHE_VALUE = "___NULL_CACHE_VAL___"
 
 
 def _cached_case_id_to_case_name(case_id, domain):
+    if not case_id:
+        return None
     key = 'case_id_to_case_name_cache_{id}'.format(id=case_id)
     ret = cache.get(key, NULL_CACHE_VALUE)
     if ret != NULL_CACHE_VALUE:
