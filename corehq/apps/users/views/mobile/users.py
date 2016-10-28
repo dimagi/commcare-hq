@@ -3,7 +3,6 @@ import io
 import json
 from collections import defaultdict
 from datetime import datetime
-from zipfile import BadZipfile
 
 from django.conf import settings
 from django.contrib import messages
@@ -24,7 +23,6 @@ from django.views.generic import View, TemplateView
 from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
-from openpyxl.utils.exceptions import InvalidFileException
 import re
 
 from couchexport.models import Format
@@ -902,7 +900,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         upload = request.FILES.get('bulk_upload_file')
         try:
             self.workbook = WorkbookJSONReader(upload)
-        except (InvalidFileException, BadZipfile):
+        except InvalidExcelFileException:
             try:
                 csv.DictReader(io.StringIO(upload.read().decode('ascii'),
                                            newline=None))

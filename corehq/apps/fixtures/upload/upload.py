@@ -2,13 +2,12 @@ from collections import namedtuple
 import re
 from django.template.loader import render_to_string
 
-from openpyxl.utils.exceptions import InvalidFileException
 from django.utils.translation import ugettext as _, ugettext_noop
 
 from corehq.apps.fixtures.exceptions import FixtureUploadError
 from corehq.apps.fixtures.models import FixtureTypeField
 from corehq.util.spreadsheets.excel import WorksheetNotFound, \
-    WorkbookJSONReader, JSONReaderError, HeaderValueError
+    WorkbookJSONReader, JSONReaderError, HeaderValueError, InvalidExcelFileException
 from corehq.apps.locations.models import SQLLocation
 
 
@@ -172,7 +171,7 @@ class FixtureWorkbook(object):
             self.workbook = WorkbookJSONReader(file_or_filename)
         except AttributeError:
             raise FixtureUploadError([_("Error processing your Excel (.xlsx) file")])
-        except InvalidFileException:
+        except InvalidExcelFileException:
             raise FixtureUploadError([_("Invalid file-format. Please upload a valid xlsx file.")])
         except HeaderValueError as e:
             raise FixtureUploadError([unicode(e)])
