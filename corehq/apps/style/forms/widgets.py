@@ -151,7 +151,7 @@ $(function() {
         return output
 
 
-class Select2MultipleChoiceWidget(forms.SelectMultiple):
+class _Select2Mixin(object):
 
     class Media:
         css = {
@@ -160,16 +160,23 @@ class Select2MultipleChoiceWidget(forms.SelectMultiple):
         js = ('select2-3.4.5-legacy/select2.js',)
 
     def render(self, name, value, attrs=None, choices=()):
-        final_attrs = self.build_attrs(attrs)
-        output = super(Select2MultipleChoiceWidget, self).render(name, value, attrs, choices)
+        output = super(_Select2Mixin, self).render(name, value, attrs, choices)
         output += """
             <script>
                 $(function() {
                     $('#%s').select2({ width: 'resolve' });
                 });
             </script>
-        """ % final_attrs.get('id')
+        """ % attrs.get('id')
         return mark_safe(output)
+
+
+class Select2(_Select2Mixin, forms.Select):
+    pass
+
+
+class Select2MultipleChoiceWidget(_Select2Mixin, forms.SelectMultiple):
+    pass
 
 
 class Select2Ajax(forms.TextInput):
@@ -200,12 +207,11 @@ class Select2Ajax(forms.TextInput):
             return {"id": val, "text": val}
 
     def render(self, name, value, attrs=None):
-        final_attrs = self.build_attrs(attrs)
         output = super(Select2Ajax, self).render(name, value, attrs)
         output += render_to_string(
             'hqstyle/forms/select_2_ajax_widget.html',
             {
-                'id': final_attrs.get('id'),
+                'id': attrs.get('id'),
                 'initial': self._clean_initial(value),
                 'endpoint': self.url,
                 'page_size': self.page_size,
