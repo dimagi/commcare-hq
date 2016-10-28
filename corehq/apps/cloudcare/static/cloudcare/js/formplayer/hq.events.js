@@ -7,8 +7,8 @@
  */
 FormplayerFrontend.module("HQ.Events", function(Events, FormplayerFrontend) {
 
-    Events.Receiver = function(allowedOrigin) {
-        this.allowedOrigin = allowedOrigin;
+    Events.Receiver = function(allowedHost) {
+        this.allowedHost = allowedHost;
         return receiver.bind(this);
     };
 
@@ -24,7 +24,7 @@ FormplayerFrontend.module("HQ.Events", function(Events, FormplayerFrontend) {
             error: function() {},
             complete: function() {},
         });
-        if (origin !== this.allowedOrigin) {
+        if (!origin.endsWith(this.allowedHost)) {
             throw new Error('Disallowed origin ' + origin);
         }
 

@@ -200,10 +200,10 @@ FormplayerFrontend.on("start", function (options) {
         }
     }
 
-    if (options.allowedOrigin) {
+    if (options.allowedHost) {
         window.addEventListener(
             "message",
-            new FormplayerFrontend.HQ.Events.Receiver(options.allowedOrigin),
+            new FormplayerFrontend.HQ.Events.Receiver(options.allowedHost),
             false
         );
     }
@@ -211,7 +211,7 @@ FormplayerFrontend.on("start", function (options) {
 
 FormplayerFrontend.on('navigation:back', function() {
     var url = Backbone.history.getFragment();
-    if (!url.startsWith('/single_app')) {
+    if (url.indexOf('single_app') === -1) {
         window.history.back();
     }
 });
