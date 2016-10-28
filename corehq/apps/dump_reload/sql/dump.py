@@ -22,6 +22,9 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = {
     'form_processor.LedgerValue': 'domain',
     'form_processor.LedgerTransaction': 'case__domain',
     'case_search.CaseSearchConfig': 'domain',
+    'data_interfaces.AutomaticUpdateRule': 'domain',
+    'data_interfaces.AutomaticUpdateRuleCriteria': 'rule__domain',
+    'data_interfaces.AutomaticUpdateAction': 'rule__domain',
 }
 
 

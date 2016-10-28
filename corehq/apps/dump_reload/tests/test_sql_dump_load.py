@@ -18,6 +18,7 @@ from corehq.form_processor.models import (
     CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction,
     LedgerValue, LedgerTransaction)
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_form_for_test
+from django.core import serializers
 
 
 class BaseDumpLoadTest(TestCase):
@@ -142,6 +143,12 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
 
 
 class TestSQLDumpLoad(BaseDumpLoadTest):
+    def assertModelsEqual(self, pre_models, post_models):
+        for pre, post in zip(pre_models, post_models):
+            pre_json = serializers.serialize('python', [pre])[0]
+            post_json = serializers.serialize('python', [post])[0]
+            self.assertDictEqual(pre_json, post_json)
+
     def test_case_search_config(self):
         from corehq.apps.case_search.models import CaseSearchConfig, CaseSearchConfigJSON
         pre_config, created = CaseSearchConfig.objects.get_or_create(pk=self.domain)
@@ -157,3 +164,45 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         post_config = CaseSearchConfig.objects.get(domain=self.domain)
         self.assertTrue(post_config.enabled)
         self.assertDictEqual(pre_config.config.to_json(), post_config.config.to_json())
+
+    def test_auto_case_update_rules(self):
+        from corehq.apps.data_interfaces.models import (
+            AutomaticUpdateRule, AutomaticUpdateRuleCriteria, AutomaticUpdateAction
+        )
+        pre_rule = AutomaticUpdateRule(
+            domain=self.domain,
+            name='test-rule',
+            case_type='test-case-type',
+            active=True,
+            server_modified_boundary=30,
+        )
+        pre_rule.save()
+        pre_criteria = AutomaticUpdateRuleCriteria.objects.create(
+            property_name='last_visit_date',
+            property_value='30',
+            match_type=AutomaticUpdateRuleCriteria.MATCH_DAYS_AFTER,
+            rule=pre_rule,
+        )
+        pre_action_update = AutomaticUpdateAction.objects.create(
+            action=AutomaticUpdateAction.ACTION_UPDATE,
+            property_name='update_flag',
+            property_value='Y',
+            rule=pre_rule,
+        )
+        pre_action_close = AutomaticUpdateAction.objects.create(
+            action=AutomaticUpdateAction.ACTION_CLOSE,
+            rule=pre_rule,
+        )
+
+        self._dump_and_load(4, [AutomaticUpdateAction, AutomaticUpdateRuleCriteria, AutomaticUpdateRule])
+
+        post_rule = AutomaticUpdateRule.objects.get(pk=pre_rule.pk)
+        post_criteria = AutomaticUpdateRuleCriteria.objects.get(pk=pre_criteria.pk)
+        post_action_update = AutomaticUpdateAction.objects.get(pk=pre_action_update.pk)
+        post_action_close = AutomaticUpdateAction.objects.get(pk=pre_action_close.pk)
+
+        self.assertModelsEqual(
+            [pre_rule, pre_criteria, pre_action_update, pre_action_close],
+            [post_rule, post_criteria, post_action_update, post_action_close]
+        )
+
