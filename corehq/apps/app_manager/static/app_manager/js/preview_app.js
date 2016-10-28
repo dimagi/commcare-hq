@@ -56,7 +56,7 @@ hqDefine('app_manager/js/preview_app.js', function() {
     module.initPreviewWindow = function (layoutController) {
 
         var $appPreview = $(module.SELECTORS.PREVIEW_WINDOW),
-            $appPreviewIframe = $(previewWindowSelector).find('iframe');
+            $appPreviewIframe = $(module.SELECTORS.PREVIEW_WINDOW).find('iframe'),
             $appBody = $(module.SELECTORS.APP_MANAGER_BODY),
             $togglePreviewBtn = $(module.SELECTORS.BTN_TOGGLE_PREVIEW),
             $messages = $(layoutController.selector.messages);
