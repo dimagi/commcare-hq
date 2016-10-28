@@ -1305,7 +1305,7 @@ class Subscription(models.Model):
             service_type=(service_type or SubscriptionType.NOT_SET),
             pro_bono_status=(pro_bono_status or ProBonoStatus.NO),
             funding_source=(funding_source or FundingSource.CLIENT),
-            manual_downgrade=manual_downgrade if manual_downgrade else self.manual_downgrade,
+            manual_downgrade=manual_downgrade if manual_downgrade is not None else self.manual_downgrade,
             **kwargs
         )
 
