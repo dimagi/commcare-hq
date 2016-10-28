@@ -115,6 +115,9 @@ class ShardAccessorTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super(ShardAccessorTests, cls).setUpClass()
+        if not settings.USE_PARTITIONED_DATABASE:
+            # https://github.com/nose-devs/nose/issues/946
+            raise SkipTest('Only applicable if sharding is setup')
         partition_config.get_django_shard_map.reset_cache(partition_config)
         partition_config.get_shards.reset_cache(partition_config)
         partition_config._get_django_shards.reset_cache(partition_config)
