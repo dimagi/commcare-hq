@@ -7,7 +7,6 @@ hqDefine('app_manager/js/preview_app.js', function() {
     
     module.EVENTS = {
         RESIZE: 'previewApp.resize',
-        BACK: 'click .js-preview-back',
     };
 
     module.POSITION = {
@@ -96,7 +95,7 @@ hqDefine('app_manager/js/preview_app.js', function() {
         _resizeAppPreview();
         $(window).resize(_resizeAppPreview);
         $(window).on(module.EVENTS.RESIZE, _resizeAppPreview);
-        $(document).on(module.EVENTS.BACK, _navigateBack);
+        $(document).on('click', '.js-preview-back', _navigateBack);
 
     };
 
