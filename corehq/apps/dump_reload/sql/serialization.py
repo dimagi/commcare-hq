@@ -2,9 +2,12 @@ from __future__ import absolute_import, unicode_literals
 
 import json
 
+import datetime
 from django.core.serializers.json import (
     Serializer as JsonSerializer,
     DjangoJSONEncoder)
+
+from dimagi.utils.parsing import json_format_datetime
 
 
 class JsonLinesSerializer(JsonSerializer):
@@ -21,5 +24,16 @@ class JsonLinesSerializer(JsonSerializer):
         # self._current has the field data
         self.stream.write("\n")
         json.dump(self.get_dump_object(obj), self.stream,
-                  cls=DjangoJSONEncoder, **self.json_kwargs)
+                  cls=CommCareJSONEncoder, **self.json_kwargs)
         self._current = None
+
+
+class CommCareJSONEncoder(DjangoJSONEncoder):
+    """
+    Custom version of the DjangoJSONEncoder that formats datetime's with all 6 microsecond digits
+    """
+    def default(self, o):
+        if isinstance(o, datetime.datetime):
+            return json_format_datetime(o)
+        else:
+            super(CommCareJSONEncoder, self).default(o)
