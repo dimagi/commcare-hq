@@ -634,14 +634,16 @@ def send_overdue_reminders():
         .order_by('date_due')\
         .select_related('subscription__subscriber')
 
-    accounts = set()
+    domains = set()
     for invoice in invoices:
-        if invoice.get_domain() not in accounts:
-            accounts.add(invoice.get_domain())
-            total = Invoice.objects.filter(is_hidden=False,
-                                           subscription__subscriber__domain=invoice.get_domain())\
-                .aggregate(Sum('balance'))['balance__sum']
-            if total >= 100:
+        if invoice.get_domain() not in domains:
+            domains.add(invoice.get_domain())
+            domain_invoices = Invoice.objects.filter(is_hidden=False,
+                                                     subscription__subscriber__domain=invoice.get_domain())\
+                .prefetch_related('subscription')
+            total = sum(i.balance for i in domain_invoices)
+            manual_downgrade = any(sub.manual_downgrade for sub in domain_invoices.subscription)
+            if total >= 100 and not manual_downgrade:
                 days_ago = (today - invoice.date_due).days
                 context = {
                     'invoice': invoice,
@@ -677,9 +679,9 @@ def _send_downgrade_notice(invoice, context):
 
 def _downgrade_domain(invoice):
     invoice.subscription.change_plan(
-        DefaultProductPlan.get_default_plan(
+        DefaultProductPlan.get_default_plan_version(
             SoftwarePlanEdition.COMMUNITY
-        ).plan.get_version(),
+        ),
         note='Automatic downgrade to community for invoice 60 days late'
     )
 
