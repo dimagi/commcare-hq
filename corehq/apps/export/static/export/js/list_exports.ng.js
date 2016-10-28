@@ -140,12 +140,21 @@
         $scope.isSubmittingForm = false;
         $scope.hasFormSubmitError = false;
         $scope.formSubmitErrorMessage = null;
-
-        var formElement = filterFormElements;
         $scope.hasGroups = true;
+        $scope.dateRegex = '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]';
+        self.nonPristineExportFilters = {};
+        var formElement = filterFormElements;
+
 
         $rootScope.$watch("filterModalExport", function (newSelectedExport, oldSelectedExport) {
             if (newSelectedExport) {
+                if (!(newSelectedExport.id in self.nonPristineExportFilters)) {
+                    // Mark the form as pristine if we are editing filters of a different export than before
+                    self.nonPristineExportFilters[newSelectedExport.id] = true;
+                    $scope.feedFiltersForm.$setPristine();
+
+                }
+
                 $scope.formData = newSelectedExport.emailedExport.filters;
                 // select2s require programmatic update
                 formElement.user_type().select2("val", $scope.formData.user_types);
@@ -156,6 +165,8 @@
         $scope.$watch("formData.date_range", function(newDateRange, oldDateRange) {
             if (!newDateRange) {
                 $scope.formData.date_range = "last7";
+            } else {
+                self._clearSubmitError();
             }
         });
         $scope.$watch("formData.type_or_group", function(newVal, oldVal) {

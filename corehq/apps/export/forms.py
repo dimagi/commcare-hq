@@ -297,6 +297,19 @@ class BaseFilterExportDownloadForm(forms.Form):
         }
 
 
+def _date_help_text(field):
+    return """
+        <small class="label label-default">{fmt}</small>
+        <div ng-show="feedFiltersForm.{field}.$invalid && !feedFiltersForm.{field}.$pristine" class="help-block">
+            {msg}
+        </div>
+    """.format(
+        field=field,
+        fmt=ugettext_lazy("YYYY-MM-DD"),
+        msg=ugettext_lazy("Invalid date format"),
+    )
+
+
 class DashboardFeedFilterForm(BaseFilterExportDownloadForm):
     """
     A form used to configure the filters on a Dashboard Feed export
@@ -323,15 +336,30 @@ class DashboardFeedFilterForm(BaseFilterExportDownloadForm):
     start_date = forms.DateField(
         label=ugettext_lazy("Begin Date"),
         required=False,
-        widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD"}),
-        help_text='<small class="label label-default">{}</small>'.format(ugettext_lazy("YYYY-MM-DD")),
+        widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD", "ng-pattern": "dateRegex"}),
+        help_text=_date_help_text("start_date")
     )
     end_date = forms.DateField(
         label=ugettext_lazy("End Date"),
         required=False,
-        widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD"}),
-        help_text='<small class="label label-default">{}</small>'.format(ugettext_lazy("YYYY-MM-DD")),
+        widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD", "ng-pattern": "dateRegex"}),
+        help_text=_date_help_text("end_date"),
     )
+
+    def clean(self):
+        cleaned_data = super(DashboardFeedFilterForm, self).clean()
+        date_range = cleaned_data['date_range']
+        errors = []
+        if date_range in ("since", "range") and not cleaned_data.get('start_date', None):
+            errors.append(
+                forms.ValidationError(_("A valid start date is required"))
+            )
+        if date_range == "range" and not cleaned_data.get('end_date', None):
+            errors.append(
+                forms.ValidationError(_("A valid end date is required"))
+            )
+        if errors:
+            raise forms.ValidationError(errors)
 
     @property
     def extra_fields(self):
@@ -346,12 +374,22 @@ class DashboardFeedFilterForm(BaseFilterExportDownloadForm):
                 ng_show="formData.date_range === 'lastn'"
             ),
             crispy.Div(
-                crispy.Field("start_date", ng_model="formData.start_date",),
-                ng_show="formData.date_range === 'range' || formData.date_range === 'since'"
+                crispy.Field(
+                    "start_date",
+                    ng_model="formData.start_date",
+                    ng_required="formData.date_range === 'since' || formData.date_range === 'range'"
+                ),
+                ng_show="formData.date_range === 'range' || formData.date_range === 'since'",
+                ng_class="{'has-error': feedFiltersForm.start_date.$invalid && !feedFiltersForm.start_date.$pristine}",
             ),
             crispy.Div(
-                crispy.Field("end_date", ng_model="formData.end_date"),
-                ng_show="formData.date_range === 'range'"
+                crispy.Field(
+                    "end_date",
+                    ng_model="formData.end_date",
+                    ng_required="formData.date_range === 'range'"
+                ),
+                ng_show="formData.date_range === 'range'",
+                ng_class="{'has-error': feedFiltersForm.end_date.$invalid && !feedFiltersForm.end_date.$pristine}",
             )
         ]
 
