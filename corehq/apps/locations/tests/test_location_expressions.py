@@ -69,15 +69,18 @@ class TestLocationTypeExpression(TestCase):
         self._check_expression(doc, None)
 
 
-class TestLocationParentIdExpression(SimpleTestCase):
+class TestLocationParentIdExpression(TestCase):
+    # todo: convert back to SimpleTestCase
+    # once https://github.com/dimagi/commcare-hq/pull/13749 resolved
 
     def setUp(self):
         # we have to set the fake database before any other calls
         self.domain = 'test-loc-parent-id'
         self.evaluation_context = EvaluationContext({"domain": self.domain})
         self.orig_db = Location.get_db()
-        self.database = FakeCouchDb()
-        Location.set_db(self.database)
+        self.database = self.orig_db
+        # self.database = FakeCouchDb()
+        # Location.set_db(self.database)
         self.parent = self._make_location(_id=uuid.uuid4().hex)
         self.child = self._make_location(
             _id=uuid.uuid4().hex,
@@ -96,8 +99,8 @@ class TestLocationParentIdExpression(SimpleTestCase):
         }
         self.expression = ExpressionFactory.from_spec(self.expression_spec)
 
-    def tearDown(self):
-        Location.set_db(self.orig_db)
+    # def tearDown(self):
+    #     Location.set_db(self.orig_db)
 
     def test_location_parent_id(self):
         self.assertEqual(
