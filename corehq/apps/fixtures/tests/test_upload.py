@@ -2,7 +2,7 @@ from collections import namedtuple
 import os
 from django.test import SimpleTestCase
 from corehq.apps.fixtures.exceptions import FixtureUploadError
-from corehq.apps.fixtures.upload import FixtureWorkbook
+from corehq.apps.fixtures.upload import validate_fixture_file_format
 from corehq.apps.fixtures.upload.upload import FAILURE_MESSAGES
 
 
@@ -29,14 +29,13 @@ class TestFixtureUpload(SimpleTestCase):
     maxDiff = None
 
     def _test(self, config):
-        wb = FixtureWorkbook(config.upload_file)
         if config.error_messages:
             with self.assertRaises(FixtureUploadError) as context:
-                wb.validate()
+                validate_fixture_file_format(config.upload_file)
             self.assertEqual(context.exception.errors, config.error_messages)
         else:
             # assert doesn't raise anything
-            wb.validate()
+            validate_fixture_file_format(config.upload_file)
 
     test_ok = _upload_test('ok', [])
 

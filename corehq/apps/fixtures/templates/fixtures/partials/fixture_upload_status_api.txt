@@ -1,0 +1,21 @@
+{% load i18n %}
+{% if result.success %}
+{% blocktrans with count=result.number_of_fixtures %}Successfully uploaded {{ count }} tables.{% endblocktrans %}
+{% if result.errors %}
+{% trans "However, we ran into the following problems:" %}
+{% for e in result.errors %}
+{{ e }}
+{% endfor %}
+{% endif %}
+{% if result.messages %}
+{% trans "Additional information:" %}
+{% for msg in result.messages %}
+{{ msg }}
+{% endfor %}
+{% endif %}
+{% else %}
+{% trans "Upload failed! Details:" %}
+{% for e in result.errors %}
+{{ e }}
+{% endfor %}
+{% endif %}

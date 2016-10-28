@@ -1,13 +1,14 @@
 from collections import namedtuple
+import re
+from django.template.loader import render_to_string
 
 from openpyxl.utils.exceptions import InvalidFileException
 from django.utils.translation import ugettext as _, ugettext_noop
 
-from corehq.apps.fixtures.exceptions import FixtureUploadError, ExcelMalformatException, \
-    DuplicateFixtureTagException
+from corehq.apps.fixtures.exceptions import FixtureUploadError
 from corehq.apps.fixtures.models import FixtureTypeField
 from corehq.util.spreadsheets.excel import WorksheetNotFound, \
-    WorkbookJSONReader
+    WorkbookJSONReader, JSONReaderError, HeaderValueError
 from corehq.apps.locations.models import SQLLocation
 
 
@@ -75,11 +76,16 @@ class FixtureUploadResult(object):
 
     def __init__(self):
         self.success = True
-        self.unknown_groups = []
-        self.unknown_users = []
         self.messages = []
         self.errors = []
         self.number_of_fixtures = 0
+
+    def get_display_message(self):
+        message = render_to_string('fixtures/partials/fixture_upload_status_api.txt', {
+            'result': self,
+        })
+        message = u'\n'.join(re.split(r'\n*', message)).strip()
+        return message
 
 
 class FixtureTableDefinition(object):
@@ -96,14 +102,14 @@ class FixtureTableDefinition(object):
     def from_row(cls, row_dict):
         tag = row_dict.get('table_id') or row_dict.get('tag')
         if tag is None:
-            raise ExcelMalformatException([
+            raise FixtureUploadError([
                 _(FAILURE_MESSAGES['has_no_column']).format(column_name='table_id')])
 
         field_names = row_dict.get('field')
         item_attributes = row_dict.get('property')
 
         if field_names is None and item_attributes is None:
-            raise ExcelMalformatException([_(FAILURE_MESSAGES['neither_fields_nor_attributes']).format(tag=tag)])
+            raise FixtureUploadError([_(FAILURE_MESSAGES['neither_fields_nor_attributes']).format(tag=tag)])
 
         field_names = [] if field_names is None else field_names
         item_attributes = [] if item_attributes is None else item_attributes
@@ -117,7 +123,7 @@ class FixtureTableDefinition(object):
                     error_message = _(FAILURE_MESSAGES["wrong_property_syntax"]).format(
                         prop_key=prop_key,
                     )
-                    raise ExcelMalformatException([error_message])
+                    raise FixtureUploadError([error_message])
                 else:
                     return properties
             else:
@@ -137,7 +143,7 @@ class FixtureTableDefinition(object):
                     i=i + 1,
                     val=field_name,
                 )
-                raise ExcelMalformatException([message])
+                raise FixtureUploadError([message])
 
         fields = [
             FixtureTypeField(
@@ -165,17 +171,21 @@ class FixtureWorkbook(object):
         try:
             self.workbook = WorkbookJSONReader(file_or_filename)
         except AttributeError:
-            raise FixtureUploadError(_("Error processing your Excel (.xlsx) file"))
+            raise FixtureUploadError([_("Error processing your Excel (.xlsx) file")])
         except InvalidFileException:
-            raise FixtureUploadError(_("Invalid file-format. Please upload a valid xlsx file."))
+            raise FixtureUploadError([_("Invalid file-format. Please upload a valid xlsx file.")])
+        except HeaderValueError as e:
+            raise FixtureUploadError([unicode(e)])
+        except JSONReaderError as e:
+            raise FixtureUploadError([unicode(e)])
 
     def get_types_sheet(self):
         try:
             return self.workbook.get_worksheet(title='types')
         except WorksheetNotFound as e:
-            raise FixtureUploadError(
+            raise FixtureUploadError([
                 _("Workbook does not contain a sheet called '%(title)s'")
-                % {'title': e.title})
+                % {'title': e.title}])
 
     def get_data_sheet(self, data_type_tag):
         return self.workbook.get_worksheet(data_type_tag)
@@ -186,8 +196,9 @@ class FixtureWorkbook(object):
         for number_of_fixtures, dt in enumerate(self.get_types_sheet()):
             table_definition = FixtureTableDefinition.from_row(dt)
             if table_definition.table_id in seen_tags:
-                raise DuplicateFixtureTagException(
-                    _(FAILURE_MESSAGES['duplicate_tag']).format(tag=table_definition.table_id))
+                raise FixtureUploadError([
+                    _(FAILURE_MESSAGES['duplicate_tag'])
+                    .format(tag=table_definition.table_id)])
 
             seen_tags.add(table_definition.table_id)
             type_sheets.append(table_definition)
@@ -198,10 +209,10 @@ class FixtureWorkbook(object):
         self.get_types_sheet()
         error_messages = validate_fixture_upload(self)
         if error_messages:
-            raise ExcelMalformatException(error_messages)
+            raise FixtureUploadError(error_messages)
 
 
-def validate_file_format(file_or_filename):
+def validate_fixture_file_format(file_or_filename):
     """
     Does basic validation on the uploaded file. Raises a FixtureUploadError if
     something goes wrong.

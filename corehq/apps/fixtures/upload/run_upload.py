@@ -1,12 +1,10 @@
 from couchdbkit import ResourceNotFound
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
-from corehq.apps.fixtures.exceptions import ExcelMalformatException, FixtureUploadError, \
-    DuplicateFixtureTagException
+from corehq.apps.fixtures.exceptions import FixtureUploadError
 from corehq.apps.fixtures.models import FixtureDataType, FieldList, FixtureItemField, \
     FixtureDataItem
 from corehq.apps.fixtures.utils import get_fields_without_attributes
-from corehq.util.soft_assert import soft_assert
 from corehq.util.spreadsheets.excel import WorksheetNotFound
 from .upload import DELETE_HEADER, FixtureUploadResult, \
     get_memoized_location, FAILURE_MESSAGES, get_workbook
@@ -195,9 +193,7 @@ def validate_fixture_upload(workbook):
 
     try:
         type_sheets = workbook.get_all_type_sheets()
-    except DuplicateFixtureTagException as e:
-        return [e.message]
-    except ExcelMalformatException as e:
+    except FixtureUploadError as e:
         return e.errors
 
     error_messages = []
@@ -279,7 +275,7 @@ def validate_fixture_upload(workbook):
     return error_messages
 
 
-def upload_fixtures_for_domain(domain, filename, replace, task=None):
+def upload_fixture_file(domain, filename, replace, task=None):
     """
     should only ever be called after the same file has been validated
     using validate_fixture_upload
@@ -287,17 +283,4 @@ def upload_fixtures_for_domain(domain, filename, replace, task=None):
     """
 
     workbook = get_workbook(filename)
-    try:
-        return run_upload(domain, workbook, replace=replace, task=task)
-    except Exception as e:
-        soft_assert('@'.join(['droberts', 'dimagi.com'])).call(
-            False, 'Unknown fixture upload exception',
-            {'filename': filename, 'exception': '{!r}'.format(e)}
-        )
-
-        result = FixtureUploadResult()
-        result.success = False
-        result.errors.append(
-            _("Fixture upload failed for some reason and we have noted this failure. "
-              "Please make sure the excel file is correctly formatted and try again."))
-        return result
+    return run_upload(domain, workbook, replace=replace, task=task)
