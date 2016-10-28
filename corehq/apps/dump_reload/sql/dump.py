@@ -19,6 +19,8 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = {
     'form_processor.CommCareCaseSQL': 'domain',
     'form_processor.CommCareCaseIndexSQL': 'domain',
     'form_processor.CaseTransaction': 'case__domain',
+    'form_processor.LedgerValue': 'domain',
+    'form_processor.LedgerTransaction': 'case__domain',
 }
 
 

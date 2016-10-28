@@ -19,13 +19,15 @@ from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
 from corehq.sql_db.config import partition_config
 
 
-PARTITIONED_MODEL_ID_FIELDS = {
+PARTITIONED_MODEL_SHARD_ID_FIELDS = {
     'form_processor.XFormInstanceSQL': 'form_id',
     'form_processor.XFormAttachmentSQL': 'form',
     'form_processor.XFormOperationSQL': 'form',
     'form_processor.CommCareCaseSQL': 'case_id',
     'form_processor.CommCareCaseIndexSQL': 'case',
     'form_processor.CaseTransaction': 'case',
+    'form_processor.LedgerValue': 'case',
+    'form_processor.LedgerTransaction': 'case',
 }
 
 
@@ -170,5 +172,5 @@ def _group_objects_by_db(objects):
 
 
 def _get_doc_id(app_label, model_json):
-    field = PARTITIONED_MODEL_ID_FIELDS[app_label]
+    field = PARTITIONED_MODEL_SHARD_ID_FIELDS[app_label]
     return model_json[field]
