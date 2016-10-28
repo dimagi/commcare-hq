@@ -280,17 +280,14 @@ def validate_fixture_upload(workbook):
 
 
 def do_fixture_upload(domain, filename, replace, task=None):
+    """
+    should only ever be called after the same file has been validated
+    using validate_fixture_upload
+
+    """
     workbook = get_workbook(filename)
     try:
         return run_upload(domain, workbook, replace=replace, task=task)
-    except WorksheetNotFound as e:
-        raise FixtureUploadError(
-            _("Workbook does not contain a sheet called '%(title)s'")
-            % {'title': e.title})
-    except ExcelMalformatException as e:
-        raise FixtureUploadError(
-            _("Uploaded excel file has following formatting-problems: '%(e)s'")
-            % {'e': '\n'.join(e.errors)})
     except Exception:
         soft_assert('@'.join(['droberts', 'dimagi.com'])).call(
             False, 'Unknown fixture upload exception',
