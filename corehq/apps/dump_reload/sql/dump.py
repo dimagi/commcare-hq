@@ -21,6 +21,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = {
     'form_processor.CaseTransaction': 'case__domain',
     'form_processor.LedgerValue': 'domain',
     'form_processor.LedgerTransaction': 'case__domain',
+    'case_search.CaseSearchConfig': 'domain',
 }
 
 

@@ -20,23 +20,11 @@ from corehq.form_processor.models import (
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_form_for_test
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class TestSQLDumpLoadShardedModels(TestCase):
-    maxDiff = None
-
+class BaseDumpLoadTest(TestCase):
     @classmethod
     def setUpClass(cls):
-        super(TestSQLDumpLoadShardedModels, cls).setUpClass()
+        super(BaseDumpLoadTest, cls).setUpClass()
         cls.domain = uuid.uuid4().hex
-        cls.factory = CaseFactory(domain=cls.domain)
-        cls.form_accessors = FormAccessors(cls.domain)
-        cls.case_accessors = CaseAccessors(cls.domain)
-        cls.product = make_product(cls.domain, 'A Product', 'prodcode_a')
-
-    @classmethod
-    def tearDownClass(cls):
-        FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
-        super(TestSQLDumpLoadShardedModels, cls).tearDownClass()
 
     @override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
     def _dump_and_load(self, expected_object_count, models):
@@ -58,6 +46,24 @@ class TestSQLDumpLoadShardedModels(TestCase):
         self.assertEqual(expected_object_count, total_object_count)
 
         return dump_lines
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
+    maxDiff = None
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestSQLDumpLoadShardedModels, cls).setUpClass()
+        cls.factory = CaseFactory(domain=cls.domain)
+        cls.form_accessors = FormAccessors(cls.domain)
+        cls.case_accessors = CaseAccessors(cls.domain)
+        cls.product = make_product(cls.domain, 'A Product', 'prodcode_a')
+
+    @classmethod
+    def tearDownClass(cls):
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
+        super(TestSQLDumpLoadShardedModels, cls).tearDownClass()
 
     def test_dump_laod_form(self):
         pre_forms = [
@@ -133,3 +139,21 @@ class TestSQLDumpLoadShardedModels(TestCase):
         post_ledger_transactions = sorted(post_ledger_transactions, key=lambda t: t.pk)
         for pre, post in zip(pre_ledger_transactions, post_ledger_transactions):
             self.assertEqual(str(pre), str(post))
+
+
+class TestSQLDumpLoad(BaseDumpLoadTest):
+    def test_case_search_config(self):
+        from corehq.apps.case_search.models import CaseSearchConfig, CaseSearchConfigJSON
+        pre_config, created = CaseSearchConfig.objects.get_or_create(pk=self.domain)
+        pre_config.enabled = True
+        fuzzies = CaseSearchConfigJSON()
+        fuzzies.add_fuzzy_properties('dog', ['breed', 'color'])
+        fuzzies.add_fuzzy_properties('owner', ['name'])
+        pre_config.config = fuzzies
+        pre_config.save()
+
+        self._dump_and_load(1, [CaseSearchConfig])
+
+        post_config = CaseSearchConfig.objects.get(domain=self.domain)
+        self.assertTrue(post_config.enabled)
+        self.assertDictEqual(pre_config.config.to_json(), post_config.config.to_json())
