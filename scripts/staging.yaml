@@ -50,7 +50,7 @@ branches:
 #  - np/upgrade-twofactor # Nick P 10/5
   #- bmb/currentind-string # Biyeun 11/12
 #  - np/110/TEMPLATES
-  #- ce/billing-notification # Cal 10/25
+  - ce/billing-notification # Cal 10/25
   - sms-langcodes # Jenny 9/26
   - jquery-3-1-0 # Jenny 9/26
   - es/refactor-submit-history  # Ethan 2016-10-27
