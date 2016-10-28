@@ -1,4 +1,4 @@
-from corehq.apps.fixtures.upload.run_upload import run_upload, safe_fixture_upload
+from corehq.apps.fixtures.upload.run_upload import run_upload, upload_fixtures_for_domain
 from .upload import (
     DELETE_HEADER,
     FixtureWorkbook,
@@ -10,6 +10,6 @@ __all__ = [
     'FixtureWorkbook',
     'get_workbook',
     'run_upload',
-    'safe_fixture_upload',
+    'upload_fixtures_for_domain',
     'validate_file_format',
 ]

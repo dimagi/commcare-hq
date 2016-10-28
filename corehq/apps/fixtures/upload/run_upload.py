@@ -279,29 +279,25 @@ def validate_fixture_upload(workbook):
     return error_messages
 
 
-def do_fixture_upload(domain, filename, replace, task=None):
+def upload_fixtures_for_domain(domain, filename, replace, task=None):
     """
     should only ever be called after the same file has been validated
     using validate_fixture_upload
 
     """
+
     workbook = get_workbook(filename)
     try:
         return run_upload(domain, workbook, replace=replace, task=task)
-    except Exception:
+    except Exception as e:
         soft_assert('@'.join(['droberts', 'dimagi.com'])).call(
             False, 'Unknown fixture upload exception',
-            {'filename': filename}
+            {'filename': filename, 'exception': '{!r}'.format(e)}
         )
-        raise FixtureUploadError(_("Fixture upload failed for some reason and we have noted this failure. "
-                                   "Please make sure the excel file is correctly formatted and try again."))
 
-
-def safe_fixture_upload(domain, filename, replace, task=None):
-    try:
-        return do_fixture_upload(domain, filename, replace, task)
-    except FixtureUploadError as e:
         result = FixtureUploadResult()
         result.success = False
-        result.errors.append(unicode(e))
+        result.errors.append(
+            _("Fixture upload failed for some reason and we have noted this failure. "
+              "Please make sure the excel file is correctly formatted and try again."))
         return result
