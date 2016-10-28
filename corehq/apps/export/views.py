@@ -1374,24 +1374,6 @@ class DailySavedExportListView(BaseExportListView):
             export_tag=export_tag,
         ))
 
-    # TODO: Coppied straight from BaseDownloadExportView ...
-    @allow_remote_invocation
-    def get_group_options(self, in_data):
-        """Returns list of groups for the group filters
-        :param in_data: dict passed by the  angular js controller.
-        :return: {
-            'success': True,
-            'groups': [<..list of groups..>],
-        }
-        """
-        groups = map(
-            lambda g: {'id': g._id, 'text': g.name},
-            Group.get_reporting_groups(self.domain)
-        )
-        return format_angular_success({
-            'groups': groups,
-        })
-
     @allow_remote_invocation
     def commit_filters(self, in_data):
         export_id = in_data['export']['id']

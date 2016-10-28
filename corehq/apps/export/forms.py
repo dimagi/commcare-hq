@@ -15,7 +15,7 @@ from corehq.apps.style.crispy import B3MultiField, CrispyTemplate
 from corehq.apps.style.forms.widgets import (
     Select2MultipleChoiceWidget,
     DateRangePickerWidget,
-)
+    Select2)
 
 from crispy_forms.bootstrap import InlineField
 from crispy_forms.helper import FormHelper
@@ -205,14 +205,20 @@ class BaseFilterExportDownloadForm(forms.Form):
         label=ugettext_lazy("Select User Types"),
         required=False,
     )
-    group = forms.CharField(
+    group = forms.ChoiceField(
         label=ugettext_lazy("Select Group"),
         required=False,
+        widget=Select2()
     )
 
     def __init__(self, domain_object, *args, **kwargs):
         self.domain_object = domain_object
         super(BaseFilterExportDownloadForm, self).__init__(*args, **kwargs)
+
+        self.fields['group'].choices = [("", "")] + map(
+            lambda g: (g._id, g.name),
+            Group.get_reporting_groups(self.domain_object.name)
+        )
 
         if not self.domain_object.uses_locations:
             # don't use CommCare Supply as a user_types choice if the domain
