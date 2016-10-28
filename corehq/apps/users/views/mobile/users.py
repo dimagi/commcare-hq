@@ -83,7 +83,8 @@ from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_
 from corehq.const import USER_DATE_FORMAT, GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.util.couch import get_document_or_404
 from corehq.util.spreadsheets.excel import JSONReaderError, HeaderValueError, \
-    WorksheetNotFound, WorkbookJSONReader, enforce_string_type, StringTypeRequiredError
+    WorksheetNotFound, WorkbookJSONReader, enforce_string_type, StringTypeRequiredError, \
+    InvalidExcelFileException
 from soil import DownloadBase
 from .custom_data_fields import UserFieldsView
 
