@@ -588,7 +588,7 @@ class SubscriptionForm(forms.Form):
                 'service_type',
                 'pro_bono_status',
                 'funding_source',
-                hqcrispy.B3MultiField("Downgrade Manually",'manual_downgrade'),
+                hqcrispy.B3MultiField("Downgrade Manually", 'manual_downgrade'),
                 'set_subscription'
             ),
             hqcrispy.FormActions(
