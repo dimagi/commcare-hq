@@ -9,7 +9,7 @@ from corehq.apps.export.filters import (
     ReceivedOnRangeFilter,
     GroupFormSubmittedByFilter,
     OR, OwnerFilter, LastModifiedByFilter, UserTypeFilter,
-    OwnerTypeFilter, ModifiedOnRangeFilter, FormSubmittedByFilter
+    OwnerTypeFilter, ModifiedOnRangeFilter, FormSubmittedByFilter, NOT
 )
 from corehq.apps.es.users import UserES
 from corehq.apps.reports.filters.case_list import CaseListFilter
@@ -146,6 +146,7 @@ class BaseFilterExportDownloadForm(forms.Form):
     _USER_DEMO = 'demo_user'
     _USER_UNKNOWN = 'unknown'
     _USER_SUPPLY = 'supply'
+    _USER_ADMIN = 'admin'
 
     _USER_TYPES_CHOICES = [
         (_USER_MOBILE, ugettext_lazy("All Mobile Workers")),
@@ -492,13 +493,7 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, FilterFormESExportDownloadForm
         is in corehq.pillows.utils.USER_TYPES) corresponding to the selected
         export user types.
         """
-        es_user_types = []
-        user_types = LocationRestrictedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
-        export_user_types = [self._USER_TYPES_CHOICES[i][0] for i in user_types]
-        export_to_es_user_types_map = self._EXPORT_TO_ES_USER_TYPES_MAP
-        for type_ in export_user_types:
-            es_user_types.extend(export_to_es_user_types_map[type_])
-        return es_user_types
+        return LocationRestrictedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
 
     def get_form_filter(self, mobile_user_and_group_slugs, can_access_all_locations):
         form_filters = []
@@ -527,10 +522,45 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, FilterFormESExportDownloadForm
             owner_filter_ids = groups_static_user_ids
             return FormSubmittedByFilter(owner_filter_ids)
 
+    def get_special_owner_ids(self, mobile, admin, unknown, demo, commtrack):
+        # referenced from CaseListMixin to fetch user_ids for each user type
+        from corehq.apps.es import filters, users as user_es
+        if not any([mobile, admin, unknown, demo]):
+            return []
+
+        user_filters = [filter_ for include, filter_ in [
+            (mobile, user_es.mobile_users()),
+            (admin, user_es.admin_users()),
+            (unknown, filters.OR(user_es.unknown_users(), user_es.web_users())),
+            (demo, user_es.demo_users()),
+        ] if include]
+
+        query = (user_es.UserES()
+                 .domain(self.domain_object.name)
+                 .OR(*user_filters)
+                 .show_inactive()
+                 .fields([]))
+        owner_ids = query.run().doc_ids
+
+        if commtrack:
+            owner_ids.append("commtrack-system")
+        if demo:
+            owner_ids.append("demo_user_group_id")
+            owner_ids.append("demo_user")
+        return owner_ids
+
     def _get_user_type_filter(self, mobile_user_and_group_slugs):
         user_types = self._get_es_user_types(mobile_user_and_group_slugs)
         if user_types:
-            return UserTypeFilter(user_types)
+            # return UserTypeFilter(user_types)
+            user_ids = self.get_special_owner_ids(
+                mobile=HQUserType.REGISTERED in user_types,
+                admin=HQUserType.ADMIN in user_types,
+                unknown=HQUserType.UNKNOWN in user_types,
+                demo=HQUserType.DEMO_USER in user_types,
+                commtrack=False,
+            )
+            return FormSubmittedByFilter(user_ids)
 
 
 class GenericFilterCaseExportDownloadForm(BaseFilterExportDownloadForm):
@@ -613,17 +643,18 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExp
         is in corehq.pillows.utils.USER_TYPES) corresponding to the selected
         export user types.
         """
-        es_user_types = []
-        user_types = CaseListFilter.selected_user_types(mobile_user_and_group_slugs)
-        export_user_types = [self._USER_TYPES_CHOICES[i][0] for i in user_types]
-        export_to_es_user_types_map = self._EXPORT_TO_ES_USER_TYPES_MAP
-        for type_ in export_user_types:
-            es_user_types.extend(export_to_es_user_types_map[type_])
-        return es_user_types
+        return CaseListFilter.selected_user_types(mobile_user_and_group_slugs)
 
     def _get_group_independent_filters(self, mobile_user_and_group_slugs, can_access_all_locations):
         if can_access_all_locations:
-            default_filters = [OwnerTypeFilter(self._get_es_user_types(mobile_user_and_group_slugs))]
+            user_types = CaseListFilter.selected_user_types(mobile_user_and_group_slugs)
+            ids_to_include = self.get_special_owner_ids(
+                admin=HQUserType.ADMIN in user_types,
+                unknown=HQUserType.UNKNOWN in user_types,
+                demo=HQUserType.DEMO_USER in user_types,
+                commtrack=False,
+            )
+            default_filters = [OwnerFilter(ids_to_include)]
         else:
             default_filters = []
         default_filters.append(self._get_locations_filter(mobile_user_and_group_slugs))
@@ -632,32 +663,72 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExp
         default_filters.append(self._get_users_filter(mobile_user_and_group_slugs))
         return filter(None, default_filters)
 
+    def get_special_owner_ids(self, admin, unknown, demo, commtrack):
+        # referenced from CaseListMixin to fetch user_ids for each user type
+        from corehq.apps.es import filters, users as user_es
+        if not any([admin, unknown, demo]):
+            return []
+
+        user_filters = [filter_ for include, filter_ in [
+            (admin, user_es.admin_users()),
+            (unknown, filters.OR(user_es.unknown_users(), user_es.web_users())),
+            (demo, user_es.demo_users()),
+        ] if include]
+
+        query = (user_es.UserES()
+                 .domain(self.domain_object.name)
+                 .OR(*user_filters)
+                 .show_inactive()
+                 .fields([]))
+        owner_ids = query.run().doc_ids
+
+        if commtrack:
+            owner_ids.append("commtrack-system")
+        if demo:
+            owner_ids.append("demo_user_group_id")
+            owner_ids.append("demo_user")
+        return owner_ids
+
     def get_case_filter(self, mobile_user_and_group_slugs, can_access_all_locations):
-        print 'fetching filter for cases'
-        group_ids = None
-        if can_access_all_locations:
-            group_ids = self._get_group_ids(mobile_user_and_group_slugs)
-
-        if group_ids:
-            groups_static_user_ids = Group.get_static_user_ids_for_groups(group_ids)
-            groups_static_user_ids = [item for sublist in groups_static_user_ids for item in sublist]
-            owner_filter_ids = group_ids + groups_static_user_ids
-            last_modified_filter_ids = groups_static_user_ids
+        # if all data then just filter by date
+        if can_access_all_locations and self.es_user_filter.show_all_data(mobile_user_and_group_slugs):
+            case_filter = []
+        elif can_access_all_locations and self.es_user_filter.show_project_data(mobile_user_and_group_slugs):
+            # exclude ids
+            user_types = LocationRestrictedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
+            ids_to_exclude = self.get_special_owner_ids(
+                admin=HQUserType.ADMIN not in user_types,
+                unknown=HQUserType.UNKNOWN not in user_types,
+                demo=HQUserType.DEMO_USER not in user_types,
+                commtrack=False,
+            )
+            case_filter = [NOT(OwnerFilter(ids_to_exclude))]
         else:
-            if can_access_all_locations:
-                # case sharing groups returns case sharing groups and locations wrapped as Group
-                case_sharing_ids = [g.get_id for g in
-                                    Group.get_case_sharing_groups(self.domain_object.name)]
-            else:
-                case_sharing_ids = SQLLocation.get_case_sharing_locations_ids(self.domain_object.name)
-            owner_filter_ids = case_sharing_ids
-            last_modified_filter_ids = case_sharing_ids
+            group_ids = None
 
-        case_filter = [OR(
-            OwnerFilter(owner_filter_ids),
-            LastModifiedByFilter(last_modified_filter_ids),
-            *self._get_group_independent_filters(mobile_user_and_group_slugs, can_access_all_locations)
-        )]
+            if can_access_all_locations:
+                group_ids = self._get_group_ids(mobile_user_and_group_slugs)
+
+            if group_ids:
+                groups_static_user_ids = Group.get_static_user_ids_for_groups(group_ids)
+                groups_static_user_ids = [item for sublist in groups_static_user_ids for item in sublist]
+                owner_filter_ids = group_ids + groups_static_user_ids
+                last_modified_filter_ids = groups_static_user_ids
+            else:
+                if can_access_all_locations:
+                    # case sharing groups returns case sharing groups and locations wrapped as Group
+                    case_sharing_ids = [g.get_id for g in
+                                        Group.get_case_sharing_groups(self.domain_object.name)]
+                else:
+                    case_sharing_ids = SQLLocation.get_case_sharing_locations_ids(self.domain_object.name)
+                owner_filter_ids = case_sharing_ids
+                last_modified_filter_ids = case_sharing_ids
+
+            case_filter = [OR(
+                OwnerFilter(owner_filter_ids),
+                LastModifiedByFilter(last_modified_filter_ids),
+                *self._get_group_independent_filters(mobile_user_and_group_slugs, can_access_all_locations)
+            )]
 
         date_filter = self._get_datespan_filter()
         if date_filter:

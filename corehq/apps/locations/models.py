@@ -333,7 +333,6 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         direct_matches = self.filter_by_user_input(domain, user_input)
         return self.get_queryset_descendants(direct_matches, include_self=True)
 
-
     def get_locations(self, location_ids):
         return self.filter(location_id__in=location_ids)
 
