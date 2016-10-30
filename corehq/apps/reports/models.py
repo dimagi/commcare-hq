@@ -80,6 +80,16 @@ class HQUserType(object):
     included_defaults = (True, True, True, True, False)
 
     @classmethod
+    def user_type_mapping(cls):
+        from corehq.apps.export.forms import BaseFilterExportDownloadForm
+        return {
+            cls.REGISTERED: BaseFilterExportDownloadForm._USER_MOBILE,
+            cls.DEMO_USER: BaseFilterExportDownloadForm._USER_DEMO,
+            cls.ADMIN: BaseFilterExportDownloadForm._USER_ADMIN,
+            cls.UNKNOWN: BaseFilterExportDownloadForm._USER_UNKNOWN
+        }
+
+    @classmethod
     def use_defaults(cls):
         return cls._get_manual_filterset(cls.included_defaults, cls.toggle_defaults)
 
