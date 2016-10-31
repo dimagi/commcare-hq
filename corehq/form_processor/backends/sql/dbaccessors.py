@@ -1,4 +1,5 @@
 import logging
+import struct
 from abc import ABCMeta, abstractproperty
 from abc import abstractmethod
 from itertools import groupby
@@ -6,7 +7,9 @@ from datetime import datetime
 
 import itertools
 
+import csiphash
 import six
+from django.conf import settings
 from django.db import connections, InternalError, transaction
 
 from corehq.blobs import get_blob_db
@@ -47,8 +50,10 @@ from corehq.form_processor.utils.sql import (
     case_index_adapter,
     case_attachment_adapter
 )
+from corehq.sql_db.config import partition_config
 from corehq.sql_db.routers import db_for_read_write
 from corehq.util.test_utils import unit_testing_only
+from dimagi.utils.chunked import chunked
 
 doc_type_to_state = {
     "XFormInstance": XFormInstanceSQL.NORMAL,
@@ -63,6 +68,72 @@ doc_type_to_state = {
 def get_cursor(model):
     db = db_for_read_write(model)
     return connections[db].cursor()
+
+
+class ShardAccessor(object):
+    hash_key = b'\x00' * 16
+
+    @staticmethod
+    def hash_doc_ids_sql(doc_ids):
+        """Get HASH for each doc_id from PostgreSQL
+
+        This is used to ensure the python version is consistent with what's
+        being used by PL/Proxy
+        """
+        assert settings.USE_PARTITIONED_DATABASE
+
+        params = ','.join(["(%s)"] * len(doc_ids))
+        query = """
+            SELECT doc_id, hash_string(doc_id, 'siphash24') AS hash
+            FROM (VALUES {}) AS t (doc_id)
+        """.format(params)
+        with get_cursor(XFormInstanceSQL) as cursor:
+            cursor.execute(query, doc_ids)
+            rows = fetchall_as_namedtuple(cursor)
+            return {row.doc_id: row.hash for row in rows}
+
+    @staticmethod
+    def hash_doc_ids_python(doc_ids):
+        return {
+            doc_id: ShardAccessor.hash_doc_id_python(doc_id)
+            for doc_id in doc_ids
+        }
+
+    @staticmethod
+    def hash_doc_id_python(doc_id):
+        digest = csiphash.siphash24(ShardAccessor.hash_key, doc_id)
+        hash_long = struct.unpack("<Q", digest)[0]  # convert byte string to long
+        # convert 64 bit hash to 32 bit to match Postgres
+        return hash_long & 0xffffffff
+
+    @staticmethod
+    def get_database_for_docs(doc_ids):
+        """
+        :param doc_ids:
+        :return: Dict of ``doc_id -> Django DB alias``
+        """
+        databases = {}
+        shard_map = partition_config.get_django_shard_map()
+        part_mask = len(shard_map) - 1
+        for chunk in chunked(doc_ids, 100):
+            hashes = ShardAccessor.hash_doc_ids_python(chunk)
+            shards = {doc_id: hash_ & part_mask for doc_id, hash_ in hashes.items()}
+            databases.update({
+                doc_id: shard_map[shard_id].django_dbname for doc_id, shard_id in shards.items()
+            })
+
+        return databases
+
+    @staticmethod
+    def get_database_for_doc(doc_id):
+        """
+        :return: Django DB alias in which the doc should be stored
+        """
+        shard_map = partition_config.get_django_shard_map()
+        part_mask = len(shard_map) - 1
+        hash_ = ShardAccessor.hash_doc_id_python(doc_id)
+        shard_id = hash_ & part_mask
+        return shard_map[shard_id].django_dbname
 
 
 class ReindexAccessor(six.with_metaclass(ABCMeta)):

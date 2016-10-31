@@ -95,6 +95,4 @@ def _get_db_aliases_to_query():
     if not settings.USE_PARTITIONED_DATABASE:
         return [None]  # use the default database
     else:
-        from corehq.sql_db.config import PartitionConfig
-        partition_config = PartitionConfig()
         return partition_config.get_form_processing_dbs()
