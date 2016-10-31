@@ -34,7 +34,7 @@ from corehq.apps.app_manager.util import (
     prefix_usercase_properties,
     commtrack_ledger_sections,
     module_offers_search,
-    module_case_hierarchy_has_circular_reference)
+    module_case_hierarchy_has_circular_reference, get_app_manager_template)
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.userreports.models import ReportConfiguration, \
     StaticReportConfiguration
@@ -66,15 +66,31 @@ from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
 logger = logging.getLogger(__name__)
 
 
-def get_module_template(module):
+def get_module_template(domain, module):
     if isinstance(module, CareplanModule):
-        return "app_manager/v1/module_view_careplan.html"
+        return get_app_manager_template(
+            domain,
+            "app_manager/v1/module_view_careplan.html",
+            "app_manager/v2/module_view_careplan.html",
+        )
     elif isinstance(module, AdvancedModule):
-        return "app_manager/v1/module_view_advanced.html"
+        return get_app_manager_template(
+            domain,
+            "app_manager/v1/module_view_advanced.html",
+            "app_manager/v2/module_view_advanced.html",
+        )
     elif isinstance(module, ReportModule):
-        return 'app_manager/v1/module_view_report.html'
+        return get_app_manager_template(
+            domain,
+            'app_manager/v1/module_view_report.html',
+            'app_manager/v2/module_view_report.html',
+        )
     else:
-        return "app_manager/v1/module_view.html"
+        return get_app_manager_template(
+            domain,
+            "app_manager/v1/module_view.html",
+            "app_manager/v2/module_view.html",
+        )
 
 
 def get_module_view_context(app, module, lang=None):
@@ -354,7 +370,7 @@ class AllowWithReason(namedtuple('AllowWithReason', 'allow reason')):
         if self.reason == self.ALL_FORMS_REQUIRE_CASE:
             return gettext_lazy('Not all forms in the case list update a case.')
         elif self.reason == self.MODULE_IN_ROOT:
-            return gettext_lazy("'Menu Mode' is not configured as 'Display and then forms'")
+            return gettext_lazy("'Menu Mode' is not configured as 'Display menu and then forms'")
         elif self.reason == self.PARENT_SELECT_ACTIVE:
             return gettext_lazy("'Parent Selection' is configured.")
 
@@ -795,7 +811,11 @@ def validate_module_for_build(request, domain, app_id, module_id, ajax=True):
     errors = module.validate_for_build()
     lang, langs = get_langs(request, app)
 
-    response_html = render_to_string('app_manager/v1/partials/build_errors.html', {
+    response_html = render_to_string(get_app_manager_template(
+            domain,
+            'app_manager/v1/partials/build_errors.html',
+            'app_manager/v2/partials/build_errors.html',
+        ), {
         'request': request,
         'app': app,
         'build_errors': errors,
