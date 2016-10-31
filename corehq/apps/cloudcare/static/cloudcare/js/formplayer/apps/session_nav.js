@@ -11,6 +11,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             "restore_as/:page/:query": "listUsers",
             "restore_as/:page/": "listUsers",
             "restore_as": "listUsers",
+            "settings": "listSettings",
             ":session": "listMenus",  // Default route
         },
     });
@@ -43,6 +44,9 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
                 page = 1;
             }
             SessionNavigate.Users.Controller.listUsers(page, query);
+        },
+        listSettings: function() {
+            SessionNavigate.AppList.Controller.listSettings();
         },
         showDetail: function (model, detailTabIndex) {
             SessionNavigate.MenuList.Controller.showDetail(model, detailTabIndex);
@@ -151,6 +155,11 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     FormplayerFrontend.on('restore_as:list', function() {
         FormplayerFrontend.navigate("/restore_as");
         API.listUsers();
+    });
+
+    FormplayerFrontend.on('settings:list', function() {
+        FormplayerFrontend.navigate("/settings");
+        API.listSettings();
     });
 
     FormplayerFrontend.on("menu:show:detail", function (model, detailTabIndex) {
