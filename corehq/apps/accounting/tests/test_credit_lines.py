@@ -275,12 +275,15 @@ class TestCreditTransfers(BaseAccountingTest):
         self.account = BillingAccount.get_or_create_account_by_domain(
             self.domain, created_by="biyeun@dimagi.com",
         )[0]
-        self.other_account = generator.billing_account(generator.arbitrary_web_user(), generator.arbitrary_web_user())
+        self.web_user = generator.arbitrary_web_user()
+        # TODO - refactor interface to generator.billing_account so web user object is not required
+        self.other_account = generator.billing_account(self.web_user, self.web_user)
 
     def tearDown(self):
         CreditAdjustment.objects.all().delete()
         CreditLine.objects.all().delete()
         generator.delete_all_subscriptions()
+        self.web_user.delete()
         super(TestCreditTransfers, self).tearDown()
 
     def _ensure_transfer(self, original_credits):
