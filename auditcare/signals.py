@@ -31,10 +31,13 @@ def model_to_json(instance):
     return DummyObject(**model_to_dict(instance)).to_json()
 
 
-def django_audit_save(sender, instance, created, **kwargs):
+def django_audit_save(sender, instance, created, raw=False, **kwargs):
     """
     Audit Save is a signal to attach post_save to any arbitrary django model
     """
+    if raw:
+        return
+
     usr = get_current_user()
 
     instance_json = model_to_json(instance)
