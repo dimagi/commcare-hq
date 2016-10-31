@@ -43,9 +43,7 @@ def dump_sql_data(domain, excludes, output_stream):
     :param excludes: List of app labels ("app_label.model_name" or "app_label") to exclude
     :param output_stream: Stream to write json encoded objects to
     """
-    excluded_apps, excluded_models = get_excluded_apps_and_models(excludes)
-    app_config_models = _get_app_list(excluded_apps)
-    objects = get_objects_to_dump(domain, app_config_models, excluded_models)
+    objects = get_objects_to_dump(domain, excludes)
     JsonLinesSerializer().serialize(
         objects,
         use_natural_foreign_keys=False,
@@ -54,13 +52,16 @@ def dump_sql_data(domain, excludes, output_stream):
     )
 
 
-def get_objects_to_dump(domain, app_config_models, excluded_models):
+def get_objects_to_dump(domain, excludes):
     """
     :param domain: domain name to filter with
     :param app_list: List of (app_config, model) tuples to dump
     :param excluded_models: List of model classes to exclude
     :return: generator yielding models objects
     """
+    excluded_apps, excluded_models = get_excluded_apps_and_models(excludes)
+    app_config_models = _get_app_list(excluded_apps)
+
     # Collate the objects to be serialized.
     for model in serializers.sort_dependencies(app_config_models.items()):
         if model in excluded_models:

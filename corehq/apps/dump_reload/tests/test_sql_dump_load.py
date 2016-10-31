@@ -2,6 +2,7 @@ import inspect
 import uuid
 from StringIO import StringIO
 import functools
+from collections import Counter
 
 from django.db.models.signals import post_save
 from django.test import TestCase
@@ -13,7 +14,7 @@ from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.domain.models import Domain
 from corehq.apps.dump_reload.sql import dump_sql_data
 from corehq.apps.dump_reload.sql import load_sql_data
-from corehq.apps.dump_reload.sql.dump import get_model_domain_filters
+from corehq.apps.dump_reload.sql.dump import get_model_domain_filters, get_objects_to_dump
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
@@ -50,6 +51,12 @@ class BaseDumpLoadTest(TestCase):
         dump_sql_data(self.domain, [], output_stream)
 
         delete_sql_data(self, models, self.domain)
+
+        # make sure that there's no data left in the DB
+        objects_remaining = list(get_objects_to_dump(self.domain, []))
+        object_classes = [obj.__class__.__name__ for obj in objects_remaining]
+        counts = Counter(object_classes)
+        self.assertEqual([], objects_remaining, 'Not all data deleted: {}'.format(counts))
 
         dump_output = output_stream.getvalue()
         dump_lines = [line.strip() for line in dump_output.split('\n') if line.strip()]
