@@ -172,7 +172,6 @@ FormplayerFrontend.on("start", function (options) {
     user.domain = options.domain;
     user.formplayer_url = options.formplayer_url;
     user.debuggerEnabled = options.debuggerEnabled;
-    user.phoneMode = options.phoneMode;
     user.restoreAs = FormplayerFrontend.request('restoreAsUser', user.domain, user.username);
     user.displayOptions = {
         phoneMode: options.phoneMode,
@@ -252,6 +251,18 @@ FormplayerFrontend.reqres.setHandler('restoreAsUser', function(domain, username)
         domain,
         username
     );
+});
+
+FormplayerFrontend.reqres.setHandler('setDisplayOptions', function(property, value) {
+    var user = FormplayerFrontend.request('currentUser');
+    user.displayOptions[property] = value;
+    return user.displayOptions;
+});
+
+FormplayerFrontend.reqres.setHandler('getDisplayOptions', function() {
+    var user = FormplayerFrontend.request('currentUser');
+    user.displayOptions[property] = value;
+    return user.displayOptions;
 });
 
 /**
@@ -408,7 +419,7 @@ FormplayerFrontend.on('navigateHome', function(appId) {
         currentUser = FormplayerFrontend.request('currentUser');
     urlObject.clearExceptApp();
     FormplayerFrontend.regions.breadcrumb.empty();
-    if (currentUser.phoneMode) {
+    if (currentUser.displayOptions.phoneMode) {
         FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });
     } else {
         FormplayerFrontend.navigate("/apps", { trigger: true });
