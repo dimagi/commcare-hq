@@ -320,3 +320,35 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
 
         expected_object_count = 12  # 1 user, 7 device reports, 1 user entry, 2 user errors, 1 force close
         self._dump_and_load(expected_object_count, expected_models)
+
+    def test_demo_user_restore(self):
+        from corehq.apps.users.models import CommCareUser
+        from corehq.apps.ota.models import DemoUserRestore
+        from django.contrib.auth.models import User
+
+        expected_models = [DemoUserRestore, User]
+        register_cleanup(self, expected_models, self.domain)
+
+        domain = Domain(name=self.domain)
+        domain.save()
+        self.addCleanup(domain.delete)
+
+        user_id = uuid.uuid4().hex
+        user = CommCareUser.create(
+            domain=self.domain,
+            username='user_1',
+            password='secret',
+            email='email@example.com',
+            uuid=user_id
+        )
+        self.addCleanup(user.delete)
+
+        DemoUserRestore(
+            demo_user_id=user_id,
+            restore_blob_id=uuid.uuid4().hex,
+            content_length=1027,
+            restore_comment="Test migrate demo user restore"
+        ).save()
+
+        expected_object_count = 2  # 1 user, 1 demo ser restore
+        self._dump_and_load(expected_object_count, expected_models)

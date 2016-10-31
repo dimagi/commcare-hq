@@ -32,6 +32,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = {
     'phonelog.ForceCloseEntry': SimpleFilter('domain'),
     'phonelog.UserErrorEntry': SimpleFilter('domain'),
     'phonelog.UserEntry': UserIDFilter('user_id'),
+    'ota.DemoUserRestore': UserIDFilter('demo_user_id', include_web_users=False),
 }
 
 
