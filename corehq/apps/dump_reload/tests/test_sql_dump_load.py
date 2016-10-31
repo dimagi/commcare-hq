@@ -35,7 +35,7 @@ def delete_sql_data(test, models, domain):
         filters = get_model_domain_filters(model, domain)
         for filter in filters:
             model.objects.filter(filter).delete()
-        test.assertFalse(model.objects.all().exists(), model)
+            test.assertFalse(model.objects.filter(filter).exists(), model)
 
 
 class BaseDumpLoadTest(TestCase):
