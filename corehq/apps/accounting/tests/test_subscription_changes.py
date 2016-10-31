@@ -124,7 +124,6 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
 
         self._assertInitialRoles()
         self._assertStdUsers()
-        subscription.change_plan(DefaultProductPlan.get_default_plan_version())
 
     def _change_std_roles(self):
         for u in self.user_roles:
