@@ -114,7 +114,7 @@ def _deactivate_subscription(subscription):
         )
         new_plan_version = next_subscription.plan_version
     _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
-    if next_subscription and subscription.account == next_subscription.account:
+    if subscription.account == next_subscription.account:
         subscription.transfer_credits(subscription=next_subscription)
     else:
         subscription.transfer_credits()

@@ -12,9 +12,10 @@ from corehq.apps.accounting.models import (
     Subscription,
 )
 from corehq.apps.accounting.tests import generator
+from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 
 
-class TestCreditAdjustmentValidation(TransactionTestCase):
+class TestCreditAdjustmentValidation(BaseAccountingTest):
 
     def tearDown(self):
         CreditAdjustment.objects.all().delete()
