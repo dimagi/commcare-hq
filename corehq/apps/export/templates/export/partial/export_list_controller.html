@@ -137,9 +137,9 @@
                                         <strong>{% trans "Size:" %}</strong> {{ export.emailedExport.fileData.size }}&nbsp;&nbsp;&nbsp;
                                         <strong>{% trans "Last Updated:" %}</strong> {{ export.emailedExport.fileData.lastUpdated }}
                                     </span>
+                                    &nbsp;&nbsp;
                                     {% if has_edit_permissions %}
                                     {% angularjs %}
-                                    &nbsp;&nbsp;
                                     <button type="button"
                                             class="btn btn-default btn-xs"
                                             ng-show="!export.emailedExport.updatingData"

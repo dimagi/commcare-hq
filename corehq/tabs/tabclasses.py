@@ -416,12 +416,16 @@ class ProjectDataTab(UITab):
     @property
     @memoized
     def can_view_dashboard_feeds(self):
-        return True  #TODO: write me
+        return (
+            use_new_exports(self.domain)
+        )
 
     @property
     @memoized
     def can_view_daily_saved_exports(self):
-        return True  # TODO: write me
+        return (
+            use_new_exports(self.domain)
+        )
 
     @property
     @memoized

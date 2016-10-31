@@ -1464,13 +1464,18 @@ class FormExportListView(BaseExportListView):
     @memoized
     def get_saved_exports(self):
         exports = _get_case_exports_by_domain(self.domain, self.has_deid_view_permissions)
-        return filter(lambda x: not x.is_daily_saved_export, exports)
+        if use_new_exports(self.domain):
+            # New exports display daily saved exports in their own view
+            exports = filter(lambda x: not x.is_daily_saved_export, exports)
+        return exports
 
     @property
     @memoized
     def daily_emailed_exports(self):
-        # Display daily saved (emailed) exports as "Dashboard Feed"s
-        return []
+        all_form_exports = []
+        for group in self.emailed_export_groups:
+            all_form_exports.extend(group.form_exports)
+        return all_form_exports
 
     @property
     def create_export_form_title(self):
@@ -1571,13 +1576,17 @@ class CaseExportListView(BaseExportListView):
     @property
     @memoized
     def daily_emailed_exports(self):
-        # Display daily saved (emailed) exports in dashboard feed list view, not here.
-        return []
+        all_case_exports = []
+        for group in self.emailed_export_groups:
+            all_case_exports.extend(group.case_exports)
+        return all_case_exports
 
     @memoized
     def get_saved_exports(self):
         exports = _get_case_exports_by_domain(self.domain, self.has_deid_view_permissions)
-        return filter(lambda x: not x.is_daily_saved_export, exports)
+        if use_new_exports(self.domain):
+            exports = filter(lambda x: not x.is_daily_saved_export, exports)
+        return exports
 
     @property
     def create_export_form_title(self):
@@ -1965,7 +1974,7 @@ class DeleteNewCustomExportView(BaseModifyNewCustomView):
     @memoized
     def report_class(self):
         # The user will be redirected to the view class returned by this function after a successfull deletion
-        if self.export_instance.is_daily_saved_export:
+        if self.export_instance.is_daily_saved_export and use_new_exports(self.domain):
             if self.export_instance.export_format == "html":
                 return DashboardFeedListView
             return DailySavedExportListView
