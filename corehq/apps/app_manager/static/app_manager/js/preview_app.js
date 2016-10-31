@@ -9,6 +9,7 @@ hqDefine('app_manager/js/preview_app.js', function() {
     module.SELECTORS = {
         BTN_TOGGLE_PREVIEW: '.js-preview-toggle',
         PREVIEW_WINDOW: '#js-appmanager-preview',
+        PREVIEW_WINDOW_IFRAME: '#js-appmanager-preview iframe',
         APP_MANAGER_BODY: '#js-appmanager-body',
         PREVIEW_ACTION_TEXT_SHOW: '.js-preview-action-show',
         PREVIEW_ACTION_TEXT_HIDE: '.js-preview-action-hide',
@@ -38,7 +39,8 @@ hqDefine('app_manager/js/preview_app.js', function() {
     };
 
     _private.navigateBack = function() {
-        var previewWindow = $appPreviewIframe[0].contentWindow;
+        var $appPreviewIframe = $(module.SELECTORS.PREVIEW_WINDOW.IFRAME),
+            previewWindow = $appPreviewIframe[0].contentWindow;
         previewWindow.postMessage({
             action: 'back',
         }, window.location.origin);
