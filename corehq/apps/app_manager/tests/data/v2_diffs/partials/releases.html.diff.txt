@@ -1,0 +1,88 @@
+--- 
++++ 
+@@ -46,9 +46,11 @@
+             fetchLimit: {{ fetchLimit }},
+         };
+         var el = $('#releases-table');
+-        var releasesMain = new ReleasesMain(o);
+-        _.defer(function(){ releasesMain.getMoreSavedApps(false); });
+-        el.koApplyBindings(releasesMain);
++        if (el.length) {
++            var releasesMain = new ReleasesMain(o);
++            _.defer(function(){ releasesMain.getMoreSavedApps(false); });
++            el.koApplyBindings(releasesMain);
++        }
+ 
+         var app_langs = {{ app.langs|JSON }};
+         var app_profiles = {{ app.build_profiles|JSON }}
+@@ -59,7 +61,7 @@
+         {% endif %}
+     });
+ 
+-    analytics.workflow('Visited the Release Manager');
++    //analytics.workflow('Visited the Release Manager');
+ </script>
+ <script>
+     $(function () {
+@@ -67,7 +69,11 @@
+     });
+ </script>
+ 
+-{% if build_profile_access %}
++{% if intro_only %}
++    Please click <strong>Add...</strong> to the left to start building your application!
++{% else %}
++
++{% if intro_only and build_profile_access %}
+ <div class="tabbable">
+     <ul class="nav nav-tabs">
+         <li class="active"><a href="#versions-tab" data-toggle="tab">{% trans "Versions" %}</a></li>
+@@ -104,7 +110,7 @@
+                 ">{% trans 'Make New Version' %}</button>
+ 
+     <div id="build-errors-wrapper"></div>
+-    <table class="table">
++    <table class="table table-releases">
+         <tr>
+             <th colspan="2">{% trans "Version" %}</th>
+             <th colspan="2">{% trans "Date &amp; Time" %}</th>
+@@ -199,7 +205,7 @@
+                 </td>
+                 <td>
+                     <b data-bind="text: comment_user_name"></b>
+-                    <inline-edit params="
++                    <inline-edit-v2 params="
+                         value: build_comment,
+                         rows: 1,
+                         placeholder: '{% trans "(Click here to add a comment)"|escapejs %}',
+@@ -207,7 +213,7 @@
+                         saveParams: {'build_id': id},
+                         saveValueName: 'comment',
+                         errorMessage:'{% trans "Error updating comment.  Please try again."|escapejs %}',
+-                    "></inline-edit>
++                    "></inline-edit-v2>
+                     {% if request|toggle_enabled:"VIEW_BUILD_SOURCE" %}
+                         <h6>
+                             {% blocktrans %}
+@@ -327,17 +333,18 @@
+         </div>
+     </script>
+     <script type="text/html" id="deploy-build-modal-template">
+-        {% include 'app_manager/v1/partials/releases_deploy_modal.html' %}
++        {% include 'app_manager/v2/partials/releases_deploy_modal.html' %}
+     </script>
+             </div>
+ {% if build_profile_access %}
+         </div>
+         <div id="profiles-tab" class="tab-pane">
+-            {% include 'app_manager/v1/partials/build_profiles.html' %}
++            {% include 'app_manager/v2/partials/build_profiles.html' %}
+         </div>
+      </div>
+ </div>
+ {% endif %}
++{% endif %}
+ 
+ <!-- Async Download Modals -->
+-{% include 'app_manager/v1/partials/download_async_modal.html' with element_id='download-zip-modal' %}
++{% include 'app_manager/v2/partials/download_async_modal.html' with element_id='download-zip-modal' %}
