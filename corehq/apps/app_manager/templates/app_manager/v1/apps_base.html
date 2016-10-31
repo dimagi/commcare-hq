@@ -77,7 +77,7 @@
             keyboard: false,
             show: true
         }).on('hide.bs.modal', function () {
-            window.location = "{% url "corehq.apps.app_manager.views.view_app" domain %}";
+            window.location = "{% url "default_app" domain %}";
         });
         {% if request|toggle_enabled:"PREVIEW_APP" %}
             var previewApp = hqImport('app_manager/js/preview_app.js');

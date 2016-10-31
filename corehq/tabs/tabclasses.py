@@ -596,7 +596,7 @@ class ProjectDataTab(UITab):
 
 
 class ApplicationsTab(UITab):
-    view = "corehq.apps.app_manager.views.view_app"
+    view = "default_app"
 
     url_prefix_formats = ('/a/{domain}/apps/',)
 
