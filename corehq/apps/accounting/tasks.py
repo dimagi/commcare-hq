@@ -642,8 +642,8 @@ def send_overdue_reminders(today=None):
                                            subscription__subscriber__domain=invoice.get_domain())\
                 .aggregate(Sum('balance'))['balance__sum']
             if total >= 100:
-                current_subscription = Subscription.objects.get(is_active=True,
-                                                                subscriber__domain=invoice.get_domain())
+                domain = Domain.get_by_name(invoice.get_domain())
+                current_subscription = Subscription.get_subscribed_plan_by_domain(domain)
                 if not current_subscription.skip_auto_downgrade:
                     days_ago = (today - invoice.date_due).days
                     context = {

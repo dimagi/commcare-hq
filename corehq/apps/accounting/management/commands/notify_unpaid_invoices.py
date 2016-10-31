@@ -1,14 +1,18 @@
 import datetime
 from django.core.management import BaseCommand
 from django.core.management import CommandError
+from django.db.models import Sum
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
 
 import settings
-from corehq.apps.accounting.models import Invoice, SoftwarePlanEdition, SubscriptionType, DefaultProductPlan
+from corehq.apps.accounting.models import Invoice, SoftwarePlanEdition, SubscriptionType, DefaultProductPlan, \
+    Subscription
 from corehq.apps.accounting.utils import get_dimagi_from_email
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainSubscriptionView
 from corehq.apps.domain.views import DomainBillingStatementsView
+from corehq.apps.notifications.models import Notification
 from corehq.util.view_utils import absolute_reverse
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 
@@ -33,32 +37,33 @@ class Command(BaseCommand):
         for invoice in invoices:
             if invoice.get_domain() not in domains:
                 domains.add(invoice.get_domain())
-                domain_invoices = Invoice.objects.filter(is_hidden=False,
-                                                         subscription__subscriber__domain=invoice.get_domain())\
-                    .prefetch_related('subscription')
-                total = sum(i.balance for i in domain_invoices)
-                manual_downgrade = any(sub.manual_downgrade for sub in domain_invoices.subscription)
-                if total >= 100 and not manual_downgrade:
-                    days_ago = (today - invoice.date_due).days
-                    context = {
-                        'invoice': invoice,
-                        'total': total,
-                        'subscription_url': absolute_reverse(DomainSubscriptionView.urlname,
-                                                             args=[invoice.get_domain()]),
-                        'statements_url': absolute_reverse(DomainBillingStatementsView.urlname,
-                                                           args=[invoice.get_domain()]),
-                        'date_60': invoice.date_due + datetime.timedelta(days=60),
-                        'contact_email': settings.INVOICING_CONTACT_EMAIL
-                    }
-                    if days_ago == 61:
-                        _downgrade_domain(invoice)
-                        _send_downgrade_notice(invoice, context)
-                    elif days_ago == 58:
-                        _send_downgrade_warning(invoice, context)
-                    elif days_ago == 30:
-                        _send_overdue_notice(invoice, context)
-                    elif days_ago == 1:
-                        _create_overdue_notification(invoice, context)
+                total = Invoice.objects.filter(is_hidden=False,
+                                               subscription__subscriber__domain=invoice.get_domain())\
+                    .aggregate(Sum('balance'))['balance__sum']
+                if total >= 100:
+                    domain = Domain.get_by_name(invoice.get_domain())
+                    current_subscription = Subscription.get_subscribed_plan_by_domain(domain)
+                    if not current_subscription.skip_auto_downgrade:
+                        days_ago = (today - invoice.date_due).days
+                        context = {
+                            'invoice': invoice,
+                            'total': total,
+                            'subscription_url': absolute_reverse(DomainSubscriptionView.urlname,
+                                                                 args=[invoice.get_domain()]),
+                            'statements_url': absolute_reverse(DomainBillingStatementsView.urlname,
+                                                               args=[invoice.get_domain()]),
+                            'date_60': invoice.date_due + datetime.timedelta(days=60),
+                            'contact_email': settings.INVOICING_CONTACT_EMAIL
+                        }
+                        if days_ago == 61:
+                            _downgrade_domain(invoice)
+                            _send_downgrade_notice(invoice, context)
+                        elif 61 > days_ago >= 58:
+                            _send_downgrade_warning(invoice, context)
+                        elif 58 > days_ago >= 30:
+                            _send_overdue_notice(invoice, context)
+                        elif 61 > days_ago >= 1:
+                            _create_overdue_notification(invoice, context)
 
 
 def _send_downgrade_notice(invoice, context):
