@@ -34,3 +34,18 @@ class UsernameFilter(DomainFilter):
             for username in chunk:
                 filter |= Q(username__iexact=username)
             yield filter
+
+
+class UserIDFilter(DomainFilter):
+    def __init__(self, user_id_field):
+        self.user_id_field = user_id_field
+
+    def get_filters(self, domain_name):
+        """
+        :return: A generator of filters each filtering for at most 1000 users.
+        """
+        from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_ids_by_domain
+        user_ids = get_all_user_ids_by_domain(domain_name)
+        for chunk in chunked(user_ids, 1000):
+            query_kwarg = '{}__in'.format(self.user_id_field)
+            yield Q(**{query_kwarg: chunk})

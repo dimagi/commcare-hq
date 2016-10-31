@@ -292,3 +292,31 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         self.addCleanup(web_user.delete)
 
         self._dump_and_load(3, [User])
+
+    def test_device_logs(self):
+        from corehq.apps.receiverwrapper.util import submit_form_locally
+        from phonelog.models import DeviceReportEntry, ForceCloseEntry, UserEntry, UserErrorEntry
+        from corehq.apps.users.models import CommCareUser
+
+        expected_models = [DeviceReportEntry, ForceCloseEntry, UserEntry, UserErrorEntry]
+        register_cleanup(self, expected_models, self.domain)
+
+        domain = Domain(name=self.domain)
+        domain.save()
+        self.addCleanup(domain.delete)
+
+        user = CommCareUser.create(
+            domain=self.domain,
+            username='user_1',
+            password='secret',
+            email='email@example.com',
+            uuid='428d454aa9abc74e1964e16d3565d6b6'
+        )
+        self.addCleanup(user.delete)
+
+        with open('corehq/ex-submodules/couchforms/tests/data/devicelogs/devicelog.xml') as f:
+            xml = f.read()
+        submit_form_locally(xml, self.domain)
+
+        expected_object_count = 12  # 1 user, 7 device reports, 1 user entry, 2 user errors, 1 force close
+        self._dump_and_load(expected_object_count, expected_models)

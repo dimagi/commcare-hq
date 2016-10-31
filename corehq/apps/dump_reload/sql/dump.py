@@ -7,7 +7,7 @@ from django.db import router
 from django.db.models import Q
 
 from corehq.apps.dump_reload.exceptions import DomainDumpError
-from corehq.apps.dump_reload.sql.filters import SimpleFilter, UsernameFilter
+from corehq.apps.dump_reload.sql.filters import SimpleFilter, UsernameFilter, UserIDFilter
 from corehq.apps.dump_reload.sql.serialization import JsonLinesSerializer
 from corehq.sql_db.config import partition_config
 
@@ -28,6 +28,10 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = {
     'data_interfaces.AutomaticUpdateRuleCriteria': SimpleFilter('rule__domain'),
     'data_interfaces.AutomaticUpdateAction': SimpleFilter('rule__domain'),
     'auth.User': UsernameFilter(),
+    'phonelog.DeviceReportEntry': SimpleFilter('domain'),
+    'phonelog.ForceCloseEntry': SimpleFilter('domain'),
+    'phonelog.UserErrorEntry': SimpleFilter('domain'),
+    'phonelog.UserEntry': UserIDFilter('user_id'),
 }
 
 
