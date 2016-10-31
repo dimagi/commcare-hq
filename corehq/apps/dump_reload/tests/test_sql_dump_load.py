@@ -1,4 +1,5 @@
 import inspect
+import json
 import uuid
 from StringIO import StringIO
 import functools
@@ -62,7 +63,8 @@ class BaseDumpLoadTest(TestCase):
         dump_lines = [line.strip() for line in dump_output.split('\n') if line.strip()]
         total_object_count, loaded_object_count = load_sql_data(dump_lines)
 
-        msg = "{} != {}\n{}".format(expected_object_count, len(dump_lines), dump_output)
+        model_counts = Counter([json.loads(line)['model'] for line in dump_lines])
+        msg = "{} != {}\n{}".format(expected_object_count, len(dump_lines), model_counts)
         self.assertEqual(expected_object_count, len(dump_lines), msg)
         self.assertEqual(expected_object_count, loaded_object_count)
         self.assertEqual(expected_object_count, total_object_count)
@@ -268,8 +270,9 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         from corehq.apps.users.models import CommCareUser
         from corehq.apps.users.models import WebUser
         from django.contrib.auth.models import User
+        from corehq.apps.tzmigration.models import TimezoneMigrationProgress
 
-        models_under_test = [User]
+        models_under_test = [User, TimezoneMigrationProgress]
         register_cleanup(self, models_under_test, self.domain)
 
         ccdomain = Domain(name=self.domain)
@@ -298,15 +301,19 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         self.addCleanup(ccuser_2.delete)
         self.addCleanup(web_user.delete)
 
-        self._dump_and_load(3, [User])
+        expected_object_count = 4  # 3 users, 1 time zone migration
+        self._dump_and_load(expected_object_count, models_under_test)
 
     def test_device_logs(self):
         from corehq.apps.receiverwrapper.util import submit_form_locally
         from phonelog.models import DeviceReportEntry, ForceCloseEntry, UserEntry, UserErrorEntry
         from corehq.apps.users.models import CommCareUser
         from django.contrib.auth.models import User
+        from corehq.apps.tzmigration.models import TimezoneMigrationProgress
 
-        expected_models = [DeviceReportEntry, ForceCloseEntry, UserEntry, UserErrorEntry, User]
+        expected_models = [
+            DeviceReportEntry, ForceCloseEntry, UserEntry, UserErrorEntry, User, TimezoneMigrationProgress
+        ]
         register_cleanup(self, expected_models, self.domain)
 
         domain = Domain(name=self.domain)
@@ -326,15 +333,17 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             xml = f.read()
         submit_form_locally(xml, self.domain)
 
-        expected_object_count = 12  # 1 user, 7 device reports, 1 user entry, 2 user errors, 1 force close
+        # 1 user, 7 device reports, 1 user entry, 2 user errors, 1 force close, 1 timezone migration
+        expected_object_count = 13
         self._dump_and_load(expected_object_count, expected_models)
 
     def test_demo_user_restore(self):
         from corehq.apps.users.models import CommCareUser
         from corehq.apps.ota.models import DemoUserRestore
         from django.contrib.auth.models import User
+        from corehq.apps.tzmigration.models import TimezoneMigrationProgress
 
-        expected_models = [DemoUserRestore, User]
+        expected_models = [DemoUserRestore, User, TimezoneMigrationProgress]
         register_cleanup(self, expected_models, self.domain)
 
         domain = Domain(name=self.domain)
@@ -358,5 +367,15 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             restore_comment="Test migrate demo user restore"
         ).save()
 
-        expected_object_count = 2  # 1 user, 1 demo ser restore
+        expected_object_count = 3  # 1 user, 1 demo ser restore, 1 timezone migration
         self._dump_and_load(expected_object_count, expected_models)
+
+    def test_timezone_migration_progress(self):
+        from corehq.apps.tzmigration.models import TimezoneMigrationProgress
+
+        expected_models = [TimezoneMigrationProgress]
+        register_cleanup(self, expected_models, self.domain)
+
+        TimezoneMigrationProgress(domain=self.domain).save()
+
+        self._dump_and_load(1, expected_models)
