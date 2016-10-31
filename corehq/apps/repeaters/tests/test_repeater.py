@@ -394,6 +394,16 @@ class RepeaterFailureTest(BaseRepeaterTest):
         super(RepeaterFailureTest, self).tearDown()
 
     @run_with_all_backends
+    def test_get_payload_exception(self):
+        repeat_record = self.repeater.register(CaseAccessors(self.domain_name).get_case(CASE_ID))
+        with self.assertRaises(Exception):
+            with patch.object(CaseRepeater, 'get_payload', side_effect=Exception('Boom!')):
+                repeat_record.fire()
+
+        self.assertEquals(repeat_record.failure_reason, 'Boom!')
+        self.assertFalse(repeat_record.succeeded)
+
+    @run_with_all_backends
     def test_failure(self):
         repeat_record = self.repeater.register(CaseAccessors(self.domain_name).get_case(CASE_ID))
         with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout', side_effect=Exception('Boom!')):

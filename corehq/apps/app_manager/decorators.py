@@ -33,7 +33,7 @@ def safe_download(f):
         except (AppEditingError, CaseError, ValueError), e:
             logging.exception(e)
             messages.error(request, "Problem downloading file: %s" % e)
-            return HttpResponseRedirect(reverse("corehq.apps.app_manager.views.view_app", args=[domain,app_id]))
+            return HttpResponseRedirect(reverse("view_app", args=[domain,app_id]))
     return _safe_download
 
 

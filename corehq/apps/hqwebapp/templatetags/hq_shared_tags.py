@@ -235,7 +235,7 @@ def toggle_js_url(domain, username):
 def toggle_js_domain_cachebuster(domain):
     # to get fresh cachebusters on the next deploy
     # change the date below (output from *nix `date` command)
-    #   Thu Mar  3 16:21:30 EST 2016
+    #   Mon Oct 31 10:30:09 EDT 2016
     return random_hex()[:3]
 
 

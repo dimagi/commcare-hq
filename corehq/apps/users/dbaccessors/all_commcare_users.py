@@ -23,6 +23,26 @@ def get_all_commcare_users_by_domain(domain):
     return imap(CommCareUser.wrap, iter_docs(CommCareUser.get_db(), get_ids()))
 
 
+def get_all_usernames_by_domain(domain):
+    """Returns all usernames by domain regardless of their active status"""
+    from corehq.apps.users.models import CommCareUser, WebUser
+
+    def get_usernames():
+        for flag in ['active', 'inactive']:
+            for doc_type in [CommCareUser.__name__, WebUser.__name__]:
+                key = [flag, domain, doc_type]
+                for row in CommCareUser.get_db().view(
+                        'users/by_domain',
+                        startkey=key,
+                        endkey=key + [{}],
+                        reduce=False,
+                        include_docs=False
+                ):
+                    yield row['key'][3]
+
+    return list(get_usernames())
+
+
 def get_user_docs_by_username(usernames):
     from corehq.apps.users.models import CouchUser
     return [res['doc'] for res in CouchUser.get_db().view(
