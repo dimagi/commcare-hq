@@ -29,6 +29,7 @@ def register_cleanup(test, models, domain):
     test.addCleanup(functools.partial(delete_sql_data, test, models, domain))
 
 
+@override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
 def delete_sql_data(test, models, domain):
     for model in models:
         filters = get_model_domain_filters(model, domain)
@@ -42,13 +43,6 @@ class BaseDumpLoadTest(TestCase):
     def setUpClass(cls):
         super(BaseDumpLoadTest, cls).setUpClass()
         cls.domain = uuid.uuid4().hex
-
-    def _delete_data(self, models):
-        for model in models:
-            filters = get_model_domain_filters(model, self.domain)
-            for filter in filters:
-                model.objects.filter(filter).delete()
-            self.assertFalse(model.objects.all().exists())
 
     @override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
     def _dump_and_load(self, expected_object_count, models):
