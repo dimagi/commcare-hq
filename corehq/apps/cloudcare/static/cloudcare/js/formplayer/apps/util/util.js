@@ -75,16 +75,23 @@ Util.setCrossDomainAjaxOptions = function (options) {
 };
 
 Util.saveDisplayOptions = function(displayOptions) {
-    localStorage.setItem('displayOptions', JSON.stringify(displayOptions));
+    var displayOptionsKey = Util.getDisplayOptionsKey();
+    localStorage.setItem(displayOptionsKey, JSON.stringify(displayOptions));
 }
 
 Util.getSavedDisplayOptions = function() {
+    var displayOptionsKey = Util.getDisplayOptionsKey();
     try {
-        return JSON.parse(localStorage.getItem('displayOptions'));
+        return JSON.parse(localStorage.getItem(displayOptionsKey));
     } catch (e) {
         window.console.warn('Unabled to parse saved display options')
         return {};
     }
+}
+
+Util.getDisplayOptionsKey = function() {
+    var user = FormplayerFrontend.request('currentUser');
+    return user.domain + ':' + user.username + ':' + 'displayOptions';
 }
 
 Util.CloudcareUrl = function (options) {
