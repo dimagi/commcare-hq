@@ -647,7 +647,7 @@ def send_overdue_reminders(today=None):
                 if not current_subscription.skip_auto_downgrade:
                     days_ago = (today - invoice.date_due).days
                     context = {
-                        'invoice': invoice,
+                        'domain': invoice.get_domain(),
                         'total': total,
                         'subscription_url': absolute_reverse(DomainSubscriptionView.urlname,
                                                              args=[invoice.get_domain()]),

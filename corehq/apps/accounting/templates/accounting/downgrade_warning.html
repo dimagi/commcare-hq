@@ -1,13 +1,13 @@
 {% load i18n %}
 <p>
     {% blocktrans %}
-        Dear {{ invoice.get_domain }} administrator,
+        Dear {{ domain }} administrator,
     {% endblocktrans %}
 </p>
 
 <p>
     {% blocktrans %}
-        Your CommCare subscription for {{ invoice.get_domain }} will be downgraded <b><i>after tomorrow</i></b> because your CommCare Billing Statements are more than 60 days overdue. If you do not make a payment before tomorrow, you will automatically be subscribed to the CommCare Community plan and lose access to all pay-only features and direct email support!
+        Your CommCare subscription for {{ domain }} will be downgraded <b><i>after tomorrow</i></b> because your CommCare Billing Statements are more than 60 days overdue. If you do not make a payment before tomorrow, you will automatically be subscribed to the CommCare Community plan and lose access to all pay-only features and direct email support!
     {% endblocktrans %}
 </p>
 
