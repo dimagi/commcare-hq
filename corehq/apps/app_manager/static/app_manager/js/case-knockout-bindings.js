@@ -74,7 +74,7 @@
     };
 }());
 
-ko.bindingHandlers.casePropertyTypeahead = {
+ko.bindingHandlers.casePropertySelect2 = {
     /*
      * Strip attachment: prefix and show icon for attachment properties
      */
