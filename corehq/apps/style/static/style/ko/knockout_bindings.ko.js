@@ -529,8 +529,10 @@ ko.bindingHandlers.select2 = new function(){
 
     this.SOURCE_KEY = "select2-source";
 
-    this.init = function(element, valueAccessor){
-        var $el = $(element);
+    this.init = function(element, valueAccessor, allBindingsAccessor) {
+        var $el = $(element),
+            allBindings = allBindingsAccessor(),
+            koOptions = allBindings.select2options || {};
 
         // The select2 jquery element uses the array stored at
         // $el.data(that.SOURCE_KEY) as its data source. Therefore, the options
@@ -538,11 +540,23 @@ ko.bindingHandlers.select2 = new function(){
         // not change the select options.
         $el.data(that.SOURCE_KEY, []);
 
-        $el.select2({
+        var options = {
             multiple: false,
-            width: "element",
+            width: koOptions.width || "element",
             data: $el.data(that.SOURCE_KEY)
-        });
+        };
+        if (koOptions.allowFreetext) {
+            // Allow manually entered text in drop down, which is not supported by legacy
+            options.createSearchChoice = function(term, data) {
+                if (!_.find(data, function(d) { return d.text === term; })) {
+                    return {
+                        id: term,
+                        text: term,
+                    };
+                }
+            };
+        }
+        $el.select2(options);
     };
 
     this.update = function(element, valueAccessor, allBindings){

@@ -62,7 +62,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         };
                     }
                 },
-                escapeMarkup: function (m) { return DOMPurify.sanitize(m); },   // injection?
+                escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
                 formatResult: function(result) {
                     var formatted = result.id;
                     if (module.CC_DETAIL_SCREEN.isAttachmentProperty(result.id)) {

@@ -11,7 +11,9 @@ from corehq.apps.style import crispy as hqcrispy
 class CopyApplicationForm(forms.Form):
     domain = forms.CharField(
         label=_("Copy this app to project"),
-        widget=forms.TextInput(attrs={"data-bind": "typeahead: domain_names"}))
+        widget=forms.TextInput(attrs={
+            "data-bind": "select2: domain_names, select2options: {width: 'off', allowFreetext: 1}",
+        }))
     name = forms.CharField(required=True, label=_('Name'))
 
     def __init__(self, from_domain, app_id, *args, **kwargs):
