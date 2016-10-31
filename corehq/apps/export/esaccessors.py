@@ -42,8 +42,7 @@ def get_ledger_section_entry_combinations(domain):
     return NestedTermAggregationsHelper(base_query=query, terms=terms).get_data()
 
 
-def get_case_name(case_id, domain):
+def get_case_name(case_id):
     return (CaseES()
-            .domain(domain)
             .case_ids([case_id])
             .values('name'))
