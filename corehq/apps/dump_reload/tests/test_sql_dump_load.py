@@ -304,8 +304,9 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         from corehq.apps.receiverwrapper.util import submit_form_locally
         from phonelog.models import DeviceReportEntry, ForceCloseEntry, UserEntry, UserErrorEntry
         from corehq.apps.users.models import CommCareUser
+        from django.contrib.auth.models import User
 
-        expected_models = [DeviceReportEntry, ForceCloseEntry, UserEntry, UserErrorEntry]
+        expected_models = [DeviceReportEntry, ForceCloseEntry, UserEntry, UserErrorEntry, User]
         register_cleanup(self, expected_models, self.domain)
 
         domain = Domain(name=self.domain)
@@ -317,7 +318,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             username='user_1',
             password='secret',
             email='email@example.com',
-            uuid='428d454aa9abc74e1964e16d3565d6b6'
+            uuid='428d454aa9abc74e1964e16d3565d6b6'  # match ID in devicelog.xml
         )
         self.addCleanup(user.delete)
 
