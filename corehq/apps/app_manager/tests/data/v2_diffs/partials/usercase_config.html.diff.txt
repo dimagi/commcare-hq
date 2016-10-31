@@ -1,0 +1,16 @@
+--- 
++++ 
+@@ -3,11 +3,11 @@
+ <script type="text/html" id="usercase-config:case-transaction">
+     <div class="row top-spacer">
+         <div class="col-sm-6">
+-            <div class="panel panel-default"
++            <div class="panel panel-appmanager"
+                  data-bind="template: 'case-config:case-transaction:case-preload'"></div>
+         </div>
+         <div class="col-sm-6">
+-            <div class="panel panel-default"
++            <div class="panel panel-appmanager"
+                  data-bind="template: 'case-config:case-transaction:case-properties'"></div>
+         </div>
+     </div>
