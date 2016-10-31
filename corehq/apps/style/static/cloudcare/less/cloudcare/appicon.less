@@ -126,6 +126,17 @@
   }
 }
 
+.appicon-settings {
+  background-color: @cc-neutral-low;
+  .appicon-icon {
+    color: @cc-neutral-hi;
+  }
+  &:hover {
+    background-color: darken(@cc-neutral-low, 5);
+    .appicon-icon { color: lighten(@cc-neutral-hi, 5); }
+  }
+}
+
 .appicon-default {
   background-color: white;
   color: lighten(@cc-text, 30);
