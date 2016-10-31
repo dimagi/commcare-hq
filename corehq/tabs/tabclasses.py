@@ -27,6 +27,7 @@ from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports
 from corehq.apps.users.models import Permissions
 from corehq.form_processor.utils import use_new_exports
+from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
 from custom.world_vision import WORLD_VISION_DOMAINS
@@ -417,14 +418,18 @@ class ProjectDataTab(UITab):
     @memoized
     def can_view_dashboard_feeds(self):
         return (
-            use_new_exports(self.domain)
+            use_new_exports(self.domain) and
+            (self.can_view_case_exports or self.can_view_form_exports) and
+            domain_has_privilege(self.domain, EXCEL_DASHBOARD)
         )
 
     @property
     @memoized
     def can_view_daily_saved_exports(self):
         return (
-            use_new_exports(self.domain)
+            use_new_exports(self.domain) and
+            (self.can_view_case_exports or self.can_view_form_exports) and
+            domain_has_privilege(self.domain, DAILY_SAVED_EXPORT)
         )
 
     @property
