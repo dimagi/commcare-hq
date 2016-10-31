@@ -422,17 +422,33 @@ class TestMergingCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
                     items=[ExportItem(
                         path=[PathNode(name='case_property')],
                         inferred=True,
+                        inferred_from=set(['One']),
                     )],
                     inferred=True,
                 )
             ]
         )
-        merged = ExportDataSchema._merge_schemas(schema, inferred_schema)
+        inferred_schema_two = CaseExportDataSchema(
+            domain='my-domain',
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[ExportItem(
+                        path=[PathNode(name='case_property')],
+                        inferred=True,
+                        inferred_from=set(['Two']),
+                    )],
+                    inferred=True,
+                )
+            ]
+        )
+        merged = ExportDataSchema._merge_schemas(schema, inferred_schema, inferred_schema_two)
         self.assertEqual(len(merged.group_schemas), 1)
         self.assertTrue(merged.group_schemas[0].inferred)
         group_schema = merged.group_schemas[0]
         self.assertEqual(len(group_schema.items), 1)
         self.assertTrue(group_schema.items[0].inferred)
+        self.assertEqual(group_schema.items[0].inferred_from, set(['One', 'Two']))
 
 
 class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
