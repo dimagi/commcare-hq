@@ -1,5 +1,6 @@
 import uuid
 from StringIO import StringIO
+import functools
 
 from django.test import TestCase
 from django.test.utils import override_settings
@@ -7,6 +8,7 @@ from django.test.utils import override_settings
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.commtrack.tests.util import get_single_balance_block
+from corehq.apps.domain.models import Domain
 from corehq.apps.dump_reload.sql import dump_sql_data
 from corehq.apps.dump_reload.sql import load_sql_data
 from corehq.apps.dump_reload.sql.dump import get_model_domain_filters
@@ -21,22 +23,37 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_for
 from django.core import serializers
 
 
+def register_cleanup(test, models, domain):
+    test.addCleanup(functools.partial(delete_sql_data, test, models, domain))
+
+
+def delete_sql_data(test, models, domain):
+    for model in models:
+        filters = get_model_domain_filters(model, domain)
+        for filter in filters:
+            model.objects.filter(filter).delete()
+        test.assertFalse(model.objects.all().exists(), model)
+
+
 class BaseDumpLoadTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(BaseDumpLoadTest, cls).setUpClass()
         cls.domain = uuid.uuid4().hex
 
-    @override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
-    def _dump_and_load(self, expected_object_count, models):
-        output_stream = StringIO()
-        dump_sql_data(self.domain, [], output_stream)
-
+    def _delete_data(self, models):
         for model in models:
             filters = get_model_domain_filters(model, self.domain)
             for filter in filters:
                 model.objects.filter(filter).delete()
             self.assertFalse(model.objects.all().exists())
+
+    @override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
+    def _dump_and_load(self, expected_object_count, models):
+        output_stream = StringIO()
+        dump_sql_data(self.domain, [], output_stream)
+
+        delete_sql_data(self, models, self.domain)
 
         dump_output = output_stream.getvalue()
         dump_lines = [line.strip() for line in dump_output.split('\n') if line.strip()]
@@ -68,12 +85,15 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
         super(TestSQLDumpLoadShardedModels, cls).tearDownClass()
 
     def test_dump_laod_form(self):
+        models_under_test = [XFormInstanceSQL, XFormAttachmentSQL, XFormOperationSQL]
+        register_cleanup(self, models_under_test, self.domain)
+
         pre_forms = [
             create_form_for_test(self.domain),
             create_form_for_test(self.domain)
         ]
         expected_object_count = 4  # 2 forms, 2 form attachments
-        self._dump_and_load(expected_object_count, [XFormInstanceSQL, XFormAttachmentSQL, XFormOperationSQL])
+        self._dump_and_load(expected_object_count, models_under_test)
 
         form_ids = self.form_accessors.get_all_form_ids_in_domain('XFormInstance')
         self.assertEqual(set(form_ids), set(form.form_id for form in pre_forms))
@@ -83,6 +103,12 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
             self.assertDictEqual(pre_form.to_json(), post_form.to_json())
 
     def test_sql_dump_load_case(self):
+        models_under_test = [
+            XFormInstanceSQL, XFormAttachmentSQL, XFormOperationSQL,
+            CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction
+        ]
+        register_cleanup(self, models_under_test, self.domain)
+
         pre_cases = self.factory.create_or_update_case(
             CaseStructure(
                 attrs={'case_name': 'child', 'update': {'age': 3, 'diabetic': False}},
@@ -97,10 +123,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
         ))[0]
 
         object_count = 10  # 2 forms, 2 form attachment, 2 cases, 3 case transactions, 1 case index
-        self._dump_and_load(object_count, [
-            XFormInstanceSQL, XFormAttachmentSQL, XFormOperationSQL,
-            CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction
-        ])
+        self._dump_and_load(object_count, models_under_test)
 
         case_ids = self.case_accessors.get_case_ids_in_domain()
         self.assertEqual(set(case_ids), set(case.case_id for case in pre_cases))
@@ -109,6 +132,13 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
             self.assertDictEqual(pre_case.to_json(), post_case.to_json())
 
     def test_ledgers(self):
+        models_under_test = [
+            XFormInstanceSQL, XFormAttachmentSQL, XFormOperationSQL,
+            CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction,
+            LedgerValue, LedgerTransaction
+        ]
+        register_cleanup(self, models_under_test, self.domain)
+
         case = self.factory.create_case()
         submit_case_blocks([
             get_single_balance_block(case.case_id, self.product._id, 10)
@@ -124,11 +154,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
 
         # 3 forms, 3 form attachments, 1 case, 3 case transactions, 1 ledger value, 2 ledger transactions
         expected_doc_count = 13
-        self._dump_and_load(expected_doc_count, [
-            XFormInstanceSQL, XFormAttachmentSQL, XFormOperationSQL,
-            CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction,
-            LedgerValue, LedgerTransaction
-        ])
+        self._dump_and_load(expected_doc_count, models_under_test)
 
         post_ledger_values = LedgerAccessorSQL.get_ledger_values_for_case(case.case_id)
         post_ledger_transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case.case_id)
@@ -152,6 +178,9 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
 
     def test_case_search_config(self):
         from corehq.apps.case_search.models import CaseSearchConfig, CaseSearchConfigJSON
+        models_under_test = [CaseSearchConfig]
+        register_cleanup(self, models_under_test, self.domain)
+
         pre_config, created = CaseSearchConfig.objects.get_or_create(pk=self.domain)
         pre_config.enabled = True
         fuzzies = CaseSearchConfigJSON()
@@ -160,7 +189,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         pre_config.config = fuzzies
         pre_config.save()
 
-        self._dump_and_load(1, [CaseSearchConfig])
+        self._dump_and_load(1, models_under_test)
 
         post_config = CaseSearchConfig.objects.get(domain=self.domain)
         self.assertTrue(post_config.enabled)
@@ -170,6 +199,9 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         from corehq.apps.data_interfaces.models import (
             AutomaticUpdateRule, AutomaticUpdateRuleCriteria, AutomaticUpdateAction
         )
+        models_under_test = [AutomaticUpdateAction, AutomaticUpdateRuleCriteria, AutomaticUpdateRule]
+        register_cleanup(self, models_under_test, self.domain)
+
         pre_rule = AutomaticUpdateRule(
             domain=self.domain,
             name='test-rule',
@@ -195,7 +227,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             rule=pre_rule,
         )
 
-        self._dump_and_load(4, [AutomaticUpdateAction, AutomaticUpdateRuleCriteria, AutomaticUpdateRule])
+        self._dump_and_load(4, models_under_test)
 
         post_rule = AutomaticUpdateRule.objects.get(pk=pre_rule.pk)
         post_criteria = AutomaticUpdateRuleCriteria.objects.get(pk=pre_criteria.pk)
@@ -207,3 +239,39 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             [post_rule, post_criteria, post_action_update, post_action_close]
         )
 
+    @override_settings(AUDIT_MODEL_SAVE=[])
+    def test_users(self):
+        from corehq.apps.users.models import CommCareUser
+        from corehq.apps.users.models import WebUser
+        from django.contrib.auth.models import User
+
+        models_under_test = [User]
+        register_cleanup(self, models_under_test, self.domain)
+
+        ccdomain = Domain(name=self.domain)
+        ccdomain.save()
+        self.addCleanup(ccdomain.delete)
+
+        ccuser_1 = CommCareUser.create(
+            domain=self.domain,
+            username='user_1',
+            password='secret',
+            email='email@example.com',
+        )
+        ccuser_2 = CommCareUser.create(
+            domain=self.domain,
+            username='user_2',
+            password='secret',
+            email='email1@example.com',
+        )
+        web_user = WebUser.create(
+            domain=self.domain,
+            username='webuser_1',
+            password='secret',
+            email='webuser@example.com',
+        )
+        self.addCleanup(ccuser_1.delete)
+        self.addCleanup(ccuser_2.delete)
+        self.addCleanup(web_user.delete)
+
+        self._dump_and_load(3, [User])
