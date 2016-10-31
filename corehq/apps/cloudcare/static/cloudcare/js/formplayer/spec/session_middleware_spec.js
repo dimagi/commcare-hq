@@ -9,7 +9,7 @@ describe('SessionMiddle', function() {
             result,
             API = {
                 myRoute: sinon.spy(function(one, two, three) {
-                    return two;
+                    return one + two + three;
                 }),
             };
 
@@ -25,6 +25,6 @@ describe('SessionMiddle', function() {
 
         // Ensure actual route is called with proper arguments and return value
         assert.deepEqual(API.myRoute.getCall(0).args, [1, 2, 3]);
-        assert.equal(result, 2);
+        assert.equal(result, 6);
     });
 });

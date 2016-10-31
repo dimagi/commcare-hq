@@ -216,7 +216,7 @@ FormplayerFrontend.reqres.setHandler('getCurrentAppId', function() {
         user = FormplayerFrontend.request('currentUser'),
         appId;
 
-    appId = urlObject.appId
+    appId = urlObject.appId;
 
     if (appId) {
         return appId;
