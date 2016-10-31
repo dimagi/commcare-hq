@@ -1,7 +1,9 @@
+import inspect
 import uuid
 from StringIO import StringIO
 import functools
 
+from django.db.models.signals import post_save
 from django.test import TestCase
 from django.test.utils import override_settings
 
@@ -65,6 +67,27 @@ class BaseDumpLoadTest(TestCase):
         self.assertEqual(expected_object_count, total_object_count)
 
         return dump_lines
+
+    def _check_signals_handle_raw(self, models):
+        """Ensure that any post_save signal handlers have been updated
+        to handle 'raw' calls."""
+        whitelist_receivers = [
+            'django_digest.models._post_save_persist_partial_digests'
+        ]
+        post_save_receivers = post_save.receivers
+        for model in models:
+            target_id = id(model)
+            for receiver in post_save_receivers:
+                if receiver[0][1] == target_id:
+                    receiver_fn = receiver[1]()
+                    receiver_path = receiver_fn.__module__ + '.' + receiver_fn.__name__
+                    if receiver_path in whitelist_receivers:
+                        continue
+                    args = inspect.getargspec(receiver_fn).args
+                    message = 'Signal handler "{}" for model "{}" missing raw arg'.format(
+                        receiver_fn, model
+                    )
+                    self.assertIn('raw', args, message)
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
