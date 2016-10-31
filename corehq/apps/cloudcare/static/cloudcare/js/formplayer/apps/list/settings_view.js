@@ -1,4 +1,4 @@
-/*global FormplayerFrontend */
+/*global FormplayerFrontend, Util */
 
 FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, FormplayerFrontend, Backbone, Marionette) {
     AppList.SettingsView = Marionette.ItemView.extend({
@@ -18,7 +18,7 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
             this.ui.oneQuestionPerScreen.bootstrapSwitch(
                 'state',
                 this.currentUser.displayOptions.oneQuestionPerScreen
-            )
+            );
         },
         onChangeOneQuestionPerScreen: function(e, switchValue) {
             this.currentUser.displayOptions.oneQuestionPerScreen = switchValue;

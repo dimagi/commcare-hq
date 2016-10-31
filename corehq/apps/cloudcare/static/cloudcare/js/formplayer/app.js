@@ -179,7 +179,6 @@ FormplayerFrontend.on("start", function (options) {
         Util.getSavedDisplayOptions(),
         FormplayerFrontend.Constants.ALLOWED_SAVED_OPTIONS
     );
-    console.log(savedDisplayOptions);
     user.displayOptions = _.defaults(savedDisplayOptions, {
         phoneMode: options.phoneMode,
         oneQuestionPerScreen: options.oneQuestionPerScreen,
