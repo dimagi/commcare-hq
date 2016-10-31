@@ -1,0 +1,36 @@
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div id="sourceModuleForms">
+  <div class="form-group">
+      <label class="col-sm-2 control-label">
+          {% trans "Source Menu" %}
+      </label>
+      <div class="col-sm-4">
+          <select name="source_module_id" class="form-control"
+                  data-bind="options: modules,
+                             optionsText: 'name',
+                             optionsValue: 'uniqueId',
+                             value: selectedModuleId"></select>
+      </div>
+  </div>
+  <div class="form-group" data-bind="visible: selectedModule().forms().length">
+      <label class="col-sm-2 control-label">
+          {% trans "Include Forms" %}
+      </label>s
+      <div class="col-sm-4"
+           data-bind="template: {name: 'module-forms-template',
+                                 foreach: selectedModule().forms()}"></div>
+      <div class="hidden">
+          <select name="excl_form_ids"
+                  multiple="multiple"
+                  data-bind="options: selectedModule().forms,
+                             optionsText: 'name',
+                             optionsValue: 'uniqueId',
+                             selectedOptions: excludedFormIds"></select>
+          {# POST a value, even if no forms are excluded #}
+          <input name="excl_form_ids" type="checkbox" value="0" checked="">
+      </div>
+  </div>
+</div>

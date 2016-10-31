@@ -250,6 +250,9 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
                     (!el || !el.classList.contains("in")) &&
                     !_(section.settings).some(function (setting) { return setting.hasError(); });
             });
+            section.isVisible = ko.computed(function () {
+                return section.always_show !== false;
+            });
         });
 
         // set value to computed default whenever a contingent variable changes

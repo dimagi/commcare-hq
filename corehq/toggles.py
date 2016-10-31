@@ -943,9 +943,18 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
 APP_MANAGER_V2 = StaticToggle(
     'app_manager_v2',
     'Prototype for case management onboarding (App Manager V2)',
-    TAG_EXPERIMENTAL,
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
+
+
+USER_TESTING_SIMPLIFY = StaticToggle(
+    'user_testing_simplify',
+    'Simplify the UI for user testing experiments',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+)
+
 
 RESTORE_AS_CLOUDCARE = StaticToggle(
     'restore_as_cloudcare',
