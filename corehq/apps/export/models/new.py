@@ -39,7 +39,6 @@ from dimagi.ext.couchdbkit import (
     ListProperty,
     StringProperty,
     DateTimeProperty,
-    SetProperty,
 )
 from corehq.apps.export.const import (
     PROPERTY_TAG_UPDATE,
@@ -55,7 +54,6 @@ from corehq.apps.export.const import (
     MISSING_VALUE,
     EMPTY_VALUE,
     KNOWN_CASE_PROPERTIES,
-    UNKNOWN_INFERRED_FROM,
 )
 from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.export.dbaccessors import (
@@ -121,7 +119,6 @@ class ExportItem(DocumentSchema):
     # True if this item was inferred from different actions in HQ (i.e. case upload)
     # False if the item was found in the application structure
     inferred = BooleanProperty(default=False)
-    inferred_from = SetProperty(default=set)
 
     @classmethod
     def wrap(cls, data):
@@ -159,7 +156,6 @@ class ExportItem(DocumentSchema):
         item = cls(one.to_json())
         item.last_occurrences = _merge_dicts(one.last_occurrences, two.last_occurrences, max)
         item.inferred = one.inferred or two.inferred
-        item.inferred_from |= two.inferred_from
         return item
 
     @property
@@ -943,19 +939,18 @@ class InferredExportGroupSchema(ExportGroupSchema):
     Same as an ExportGroupSchema with a few utility methods
     """
 
-    def put_item(self, path, inferred_from=None):
+    def put_item(self, path):
         assert self.path == path[:len(self.path)], "ExportItem's path doesn't start with the table"
+
         item = self.get_item(path)
 
         if item:
-            item.inferred_from.add(inferred_from or UNKNOWN_INFERRED_FROM)
             return item
 
         item = ExportItem(
             path=path,
             label='.'.join(map(lambda node: node.name, path)),
-            inferred=True,
-            inferred_from=set([inferred_from or UNKNOWN_INFERRED_FROM])
+            inferred=True
         )
         self.items.append(item)
         return item
@@ -1016,7 +1011,7 @@ class ExportDataSchema(Document):
     An object representing the things that can be exported for a particular
     form xmlns or case type. It contains a list of ExportGroupSchema.
     """
-    domain = StringProperty(required=True)
+    domain = StringProperty()
     created_on = DateTimeProperty(default=datetime.utcnow)
     group_schemas = SchemaListProperty(ExportGroupSchema)
     app_id = StringProperty()
@@ -1072,14 +1067,14 @@ class ExportDataSchema(Document):
 
             current_schema.record_update(app.copy_of or app._id, app.version)
 
-        inferred_schema = cls._get_inferred_schema(domain, identifier)
-        if inferred_schema:
-            current_schema = cls._merge_schemas(current_schema, inferred_schema)
-
         current_schema.domain = domain
         current_schema.app_id = app_id
         current_schema.version = DATA_SCHEMA_VERSION
         current_schema._set_identifier(identifier)
+
+        inferred_schema = current_schema._get_inferred_schema()
+        if inferred_schema:
+            current_schema = cls._merge_schemas(current_schema, inferred_schema)
 
         current_schema = cls._save_export_schema(
             current_schema,
@@ -1179,7 +1174,7 @@ class ExportDataSchema(Document):
 
 class FormExportDataSchema(ExportDataSchema):
 
-    xmlns = StringProperty(required=True)
+    xmlns = StringProperty()
     datatype_mapping = defaultdict(lambda: ScalarItem, {
         'MSelect': MultipleChoiceItem,
         'Geopoint': GeopointItem,
@@ -1192,8 +1187,7 @@ class FormExportDataSchema(ExportDataSchema):
     def type(self):
         return FORM_EXPORT
 
-    @classmethod
-    def _get_inferred_schema(cls, domain, xmlns):
+    def _get_inferred_schema(self):
         return None
 
     def _set_identifier(self, form_xmlns):
@@ -1332,7 +1326,7 @@ class FormExportDataSchema(ExportDataSchema):
 
 class CaseExportDataSchema(ExportDataSchema):
 
-    case_type = StringProperty(required=True)
+    case_type = StringProperty()
 
     @property
     def type(self):
@@ -1341,9 +1335,8 @@ class CaseExportDataSchema(ExportDataSchema):
     def _set_identifier(self, case_type):
         self.case_type = case_type
 
-    @classmethod
-    def _get_inferred_schema(cls, domain, case_type):
-        return get_inferred_schema(domain, case_type)
+    def _get_inferred_schema(self):
+        return get_inferred_schema(self.domain, self.case_type)
 
     @classmethod
     def _get_current_app_ids_for_domain(cls, domain):
