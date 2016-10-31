@@ -191,6 +191,7 @@ FormplayerFrontend.on("start", function (options) {
         if (this.getCurrentRoute() === "") {
             if (options.phoneMode) {
                 appId = options.apps[0]['_id'];
+                user.previewAppId = appId;
 
                 FormplayerFrontend.trigger('setAppDisplayProperties', options.apps[0]);
                 FormplayerFrontend.trigger("app:singleApp", appId);
@@ -207,6 +208,25 @@ FormplayerFrontend.on("start", function (options) {
             false
         );
     }
+});
+
+FormplayerFrontend.reqres.setHandler('getCurrentAppId', function() {
+    // First attempt to grab app id from URL
+    var urlObject = Util.currentUrlToObject(),
+        user = FormplayerFrontend.request('currentUser'),
+        appId;
+
+    appId = urlObject.appId;
+
+    if (appId) {
+        return appId;
+    }
+
+    // If it's not in the URL, then we are either on the home screen of formplayer
+    // and there is no app selected, or we are in preview mode.
+    appId = user.previewAppId;
+
+    return appId || null;
 });
 
 FormplayerFrontend.on('navigation:back', function() {
@@ -242,7 +262,8 @@ FormplayerFrontend.reqres.setHandler('restoreAsUser', function(domain, username)
  * navigates you to the main page.
  */
 FormplayerFrontend.on('clearRestoreAsUser', function() {
-    var user = FormplayerFrontend.request('currentUser');
+    var user = FormplayerFrontend.request('currentUser'),
+        appId;
     FormplayerFrontend.Utils.Users.clearRestoreAsUser(
         user.domain,
         user.username
@@ -253,7 +274,10 @@ FormplayerFrontend.on('clearRestoreAsUser', function() {
             model: user,
         })
     );
-    FormplayerFrontend.trigger('navigateHome');
+
+    appId = FormplayerFrontend.request('getCurrentAppId');
+
+    FormplayerFrontend.trigger('navigateHome', appId);
 });
 
 FormplayerFrontend.on("sync", function () {
