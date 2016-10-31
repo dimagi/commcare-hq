@@ -1,3 +1,5 @@
+/* global DOMPurify */
+
 ko.bindingHandlers.staticChecked = {
     init: function (element) {
         $('<span class="icon"></span>').appendTo(element);
@@ -543,7 +545,7 @@ ko.bindingHandlers.select2 = new function(){
         var options = {
             multiple: false,
             width: koOptions.width || "element",
-            data: $el.data(that.SOURCE_KEY)
+            data: $el.data(that.SOURCE_KEY),
         };
         if (koOptions.allowFreetext) {
             // Allow manually entered text in drop down, which is not supported by legacy
@@ -554,6 +556,11 @@ ko.bindingHandlers.select2 = new function(){
                         text: term,
                     };
                 }
+            };
+        }
+        if (koOptions.allowHtml) {
+            options.escapeMarkup = function(text) {
+                return DOMPurify.sanitize(text);
             };
         }
         $el.select2(options);

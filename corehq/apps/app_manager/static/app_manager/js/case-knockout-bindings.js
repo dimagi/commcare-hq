@@ -78,27 +78,21 @@ ko.bindingHandlers.casePropertyTypeahead = {
     /*
      * Strip attachment: prefix and show icon for attachment properties
      */
-    init: function (element, valueAccessor) {
-        ko.bindingHandlers.typeahead.init(element, valueAccessor);
-        $(element).data("ui-autocomplete")._renderItem = function (ul, item) {
-            return $("<li></li>")
-                .data("item.autocomplete", item)
-                .append($("<a></a>").html(item.label))
-                .appendTo(ul);
-        };
+    init: function (element, valueAccessor, allBindingsAccessor) {
+        ko.bindingHandlers.select2.init(element, valueAccessor, allBindingsAccessor);
     },
-    update: function (element, valueAccessor) {
+    update: function (element, valueAccessor, allBindingsAccessor) {
         function wrappedValueAccessor() {
             return _.map(ko.unwrap(valueAccessor()), function(value) {
                 if (value.indexOf("attachment:") === 0) {
                     var text = value.substring(11),
                         html = '<i class="fa fa-paperclip"></i> ' + text;
-                    return {value: text, label: html};
+                    return {id: text, text: html};
                 }
-                return {value: value, label: value};
+                return {id: value, text: value};
             })
         }
-        ko.bindingHandlers.typeahead.update(element, wrappedValueAccessor);
+        ko.bindingHandlers.select2.update(element, wrappedValueAccessor, allBindingsAccessor);
     }
 };
 
