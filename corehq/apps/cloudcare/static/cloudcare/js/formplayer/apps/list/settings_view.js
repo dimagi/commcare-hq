@@ -16,11 +16,13 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
         },
         onRender: function() {
             this.ui.oneQuestionPerScreen.bootstrapSwitch(
+                'state',
                 this.currentUser.displayOptions.oneQuestionPerScreen
             )
         },
         onChangeOneQuestionPerScreen: function(e, switchValue) {
             this.currentUser.displayOptions.oneQuestionPerScreen = switchValue;
+            Util.saveDisplayOptions(this.currentUser.displayOptions);
         },
         onClickDone: function() {
             FormplayerFrontend.trigger('navigateHome');

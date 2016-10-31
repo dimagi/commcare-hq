@@ -74,6 +74,19 @@ Util.setCrossDomainAjaxOptions = function (options) {
     options.contentType = "application/json;charset=UTF-8";
 };
 
+Util.saveDisplayOptions = function(displayOptions) {
+    localStorage.setItem('displayOptions', JSON.stringify(displayOptions));
+}
+
+Util.getSavedDisplayOptions = function() {
+    try {
+        return JSON.parse(localStorage.getItem('displayOptions'));
+    } catch (e) {
+        window.console.warn('Unabled to parse saved display options')
+        return {};
+    }
+}
+
 Util.CloudcareUrl = function (options) {
     this.appId = options.appId;
     this.sessionId = options.sessionId;

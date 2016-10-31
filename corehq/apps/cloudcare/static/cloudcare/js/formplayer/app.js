@@ -165,6 +165,7 @@ FormplayerFrontend.on('startForm', function (data) {
 
 FormplayerFrontend.on("start", function (options) {
     var user = FormplayerFrontend.request('currentUser'),
+        savedDisplayOptions,
         appId;
     user.username = options.username;
     user.language = options.language;
@@ -173,10 +174,16 @@ FormplayerFrontend.on("start", function (options) {
     user.formplayer_url = options.formplayer_url;
     user.debuggerEnabled = options.debuggerEnabled;
     user.restoreAs = FormplayerFrontend.request('restoreAsUser', user.domain, user.username);
-    user.displayOptions = {
+
+    savedDisplayOptions = _.pick(
+        Util.getSavedDisplayOptions(),
+        FormplayerFrontend.Constants.ALLOWED_SAVED_OPTIONS
+    );
+    console.log(savedDisplayOptions);
+    user.displayOptions = _.defaults(savedDisplayOptions, {
         phoneMode: options.phoneMode,
         oneQuestionPerScreen: options.oneQuestionPerScreen,
-    };
+    });
 
     FormplayerFrontend.request('gridPolyfillPath', options.gridPolyfillPath);
     if (Backbone.history) {
@@ -251,18 +258,6 @@ FormplayerFrontend.reqres.setHandler('restoreAsUser', function(domain, username)
         domain,
         username
     );
-});
-
-FormplayerFrontend.reqres.setHandler('setDisplayOptions', function(property, value) {
-    var user = FormplayerFrontend.request('currentUser');
-    user.displayOptions[property] = value;
-    return user.displayOptions;
-});
-
-FormplayerFrontend.reqres.setHandler('getDisplayOptions', function() {
-    var user = FormplayerFrontend.request('currentUser');
-    user.displayOptions[property] = value;
-    return user.displayOptions;
 });
 
 /**
