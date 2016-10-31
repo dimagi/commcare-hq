@@ -281,6 +281,7 @@
                             >
                                 {{ Export_type }}
                             </a>
+                            {% if has_edit_permissions %}
                             <a class="btn btn-default"
                                ng-show="export.isDailySaved"
                                href="#setFeedFiltersModal"
@@ -290,6 +291,7 @@
                             >
                                 {% trans "Edit Filters" %}
                             </a>
+                            {% endif %}
                         </td>
                         {% if allow_bulk_export %}
                         {% angularjs %}

@@ -454,11 +454,15 @@ class ProjectDataTab(UITab):
 
         export_data_views = []
         if self.can_only_see_deid_exports:
-            from corehq.apps.export.views import DeIdFormExportListView, DownloadFormExportView
+            from corehq.apps.export.views import (
+                DeIdFormExportListView,
+                DownloadFormExportView,
+                DeIdDailySavedExportListView,
+                DeIdDashboardFeedListView,
+            )
             export_data_views.append({
                 'title': DeIdFormExportListView.page_title,
-                'url': reverse(DeIdFormExportListView.urlname,
-                               args=(self.domain,)),
+                'url': reverse(DeIdFormExportListView.urlname, args=(self.domain,)),
                 'subpages': [
                     {
                         'title': DownloadFormExportView.page_title,
@@ -466,6 +470,18 @@ class ProjectDataTab(UITab):
                     },
                 ]
             })
+            if use_new_exports(self.domain):
+                export_data_views.extend([
+                    {
+                        'title': DeIdDailySavedExportListView.page_title,
+                        'url': reverse(DeIdDailySavedExportListView.urlname, args=(self.domain,)),
+                    },
+                    {
+                        'title': DeIdDashboardFeedListView.page_title,
+                        'url': reverse(DeIdDashboardFeedListView.urlname, args=(self.domain,)),
+                    },
+                ])
+
         elif self.can_export_data:
             from corehq.apps.export.views import (
                 FormExportListView,

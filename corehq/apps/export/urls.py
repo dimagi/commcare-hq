@@ -30,7 +30,7 @@ from corehq.apps.export.views import (
     DailySavedExportListView,
     CreateNewDailySavedCaseExport,
     CreateNewDailySavedFormExport,
-)
+    DeIdDailySavedExportListView, DeIdDashboardFeedListView)
 
 urlpatterns = patterns(
     'corehq.apps.export.views',
@@ -42,6 +42,12 @@ urlpatterns = patterns(
     url(r"^custom/form_deid/$",
         DeIdFormExportListView.as_view(),
         name=DeIdFormExportListView.urlname),
+    url(r"^custom/daily_saved_deid/$",
+        DeIdDailySavedExportListView.as_view(),
+        name=DeIdDailySavedExportListView.urlname),
+    url(r"^custom/feed_deid/$",
+        DeIdDashboardFeedListView.as_view(),
+        name=DeIdDashboardFeedListView.urlname),
     url(r"^custom/case/$",
         CaseExportListView.as_view(),
         name=CaseExportListView.urlname),

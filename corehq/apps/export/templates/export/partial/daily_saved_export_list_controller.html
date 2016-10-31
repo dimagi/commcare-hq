@@ -8,5 +8,7 @@
 {% endblock %}
 
 {% block third_column_header %}
-    {% trans "Edit Filters" %}
+    {% if has_edit_permissions %}
+        {% trans "Edit Filters" %}
+    {% endif %}
 {% endblock %}

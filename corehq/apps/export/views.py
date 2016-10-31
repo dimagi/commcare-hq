@@ -1376,6 +1376,9 @@ class DailySavedExportListView(BaseExportListView):
 
     @allow_remote_invocation
     def commit_filters(self, in_data):
+        if not self.has_edit_permissions:
+            raise Http404
+
         export_id = in_data['export']['id']
         form_data = in_data['form_data']
         try:
@@ -1559,6 +1562,39 @@ class DeIdFormExportListView(FormExportListView):
     page_title = ugettext_noop("Export De-Identified Forms")
     urlname = 'list_form_deid_exports'
     is_deid = True
+
+    @property
+    def create_export_form(self):
+        return None
+
+
+class _DeidMixin(object):
+    is_deid = True
+
+    @property
+    def create_export_form(self):
+        return None
+
+    def get_saved_exports(self):
+        return [x for x in get_form_export_instances(self.domain) if x.is_safe]
+
+
+class DeIdDailySavedExportListView(_DeidMixin, DailySavedExportListView):
+    urlname = 'list_deid_daily_saved_exports'
+    page_title = ugettext_noop("Export De-Identified Daily Saved Exports")
+
+    def get_saved_exports(self):
+        exports = super(DeIdDailySavedExportListView, self).get_saved_exports()
+        return [x for x in exports if x.is_daily_saved_export and not x.export_format == "html"]
+
+
+class DeIdDashboardFeedListView(_DeidMixin, DashboardFeedListView):
+    urlname = 'list_deid_dashboard_feeds'
+    page_title = ugettext_noop("Export De-Identified Dashboard Feeds")
+
+    def get_saved_exports(self):
+        exports = super(DeIdDashboardFeedListView, self).get_saved_exports()
+        return [x for x in exports if x.is_daily_saved_export and x.export_format == "html"]
 
 
 class CaseExportListView(BaseExportListView):
