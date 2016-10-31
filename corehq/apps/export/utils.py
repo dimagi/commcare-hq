@@ -295,7 +295,7 @@ def _create_column_from_inferred_schema(inferred_schema, new_table, old_column, 
     from .models import ExportColumn
 
     group_schema = inferred_schema.put_group_schema(new_table.path)
-    item = group_schema.put_item(column_path, inferred_from='Export Migration')
+    item = group_schema.put_item(column_path)
     return ExportColumn(
         item=item,
         label=old_column.display,

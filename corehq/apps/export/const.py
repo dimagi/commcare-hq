@@ -61,5 +61,3 @@ CASE_SCROLL_SIZE = 10000
 MISSING_VALUE = '---'
 # When a question has been answered, but is blank, this shoudl be the value
 EMPTY_VALUE = ''
-
-UNKNOWN_INFERRED_FROM = 'unknown'
