@@ -230,6 +230,8 @@ def can_edit_form_location(domain, web_user, form):
         return False
 
     form_user = CouchUser.get_by_user_id(form.user_id)
+    if not form_user:
+        return False  # It's a special form, deny to be safe
     form_location_ids = form_user.get_location_ids(domain)
     return user_can_access_any_location_id(domain, web_user, form_location_ids)
 
