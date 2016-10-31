@@ -19,6 +19,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = {
     'form_processor.XFormOperationSQL': SimpleFilter('form__domain'),
     'form_processor.CommCareCaseSQL': SimpleFilter('domain'),
     'form_processor.CommCareCaseIndexSQL': SimpleFilter('domain'),
+    'form_processor.CaseAttachmentSQL': SimpleFilter('case__domain'),
     'form_processor.CaseTransaction': SimpleFilter('case__domain'),
     'form_processor.LedgerValue': SimpleFilter('domain'),
     'form_processor.LedgerTransaction': SimpleFilter('case__domain'),
