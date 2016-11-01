@@ -1,6 +1,9 @@
+from elasticsearch import ElasticsearchException
+
 from corehq.apps.es import CaseES, GroupES, LedgerES
 from corehq.apps.es import FormES
 from corehq.apps.es.aggregations import AggregationTerm, NestedTermAggregationsHelper
+from corehq.elastic import get_es_new
 
 
 def get_form_export_base_query(domain, app_id, xmlns, include_errors):
@@ -43,6 +46,10 @@ def get_ledger_section_entry_combinations(domain):
 
 
 def get_case_name(case_id):
-    return (CaseES()
-            .case_ids([case_id])
-            .values('name'))
+    from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
+    try:
+        result = get_es_new().get(CASE_INDEX_INFO.index, case_id, _source_include=['name'])
+    except ElasticsearchException:
+        return []
+
+    return result['_source']['name']
