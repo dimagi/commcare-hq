@@ -1721,7 +1721,7 @@ class GenericDownloadNewExportMixin(object):
     @property
     def page_context(self):
         parent_context = super(GenericDownloadNewExportMixin, self).page_context
-        parent_context['new_export_filters'] = self.export_filter_class(
+        parent_context['dynamic_filters'] = self.export_filter_class(
             self.request, self.request.domain).render()
         return parent_context
 
