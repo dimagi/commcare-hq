@@ -573,7 +573,9 @@ ko.bindingHandlers.autocompleteSelect2 = new function(){
     }
 
     this._init = function(element, select2Options) {
-        $(element).select2(select2Options);
+        $(element).select2(select2Options).on('change', function() {
+            $(element).trigger('textchange');
+        });
     };
 
     this.update = function(element, valueAccessor, allBindings){
@@ -600,7 +602,7 @@ ko.bindingHandlers.autocompleteSelect2 = new function(){
 
         // Update the selected item
         $el.val(newValue);
-        $el.select2("val", newValue, true);
+        $el.select2("val", newValue);
     };
 }();
 
